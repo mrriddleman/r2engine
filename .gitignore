@@ -1,0 +1,14 @@
+
+# project files/dirs
+
+*.xcworkspace/
+
+/bin/
+
+# sandbox files/dirs
+
+Sandbox/*.xcodeproj/
+
+# r2engine files/dirs
+
+r2engine/*xcodeproj/
