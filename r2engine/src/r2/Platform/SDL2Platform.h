@@ -19,7 +19,7 @@ namespace r2
     class R2_API SDL2Platform: public Platform
     {
     public:
-        SDL2Platform();
+        
         virtual bool Init(std::unique_ptr<r2::Application> app) override;
 
         virtual void Run() override;
@@ -30,6 +30,8 @@ namespace r2
         
     private:
         friend Platform;
+        SDL2Platform();
+        static std::unique_ptr<Platform> CreatePlatform();
 
         SDL_Window * moptrWindow;
         bool mRunning;

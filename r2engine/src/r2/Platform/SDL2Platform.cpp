@@ -13,17 +13,20 @@ namespace r2
 {
     static std::unique_ptr<Platform> s_platform = nullptr;
     
-    
-    std::unique_ptr<Platform> CreatePlatform()
+    std::unique_ptr<Platform> SDL2Platform::CreatePlatform()
     {
-        return std::make_unique<SDL2Platform>();
+        auto platform = new SDL2Platform();
+        std::unique_ptr<Platform> ptr;
+        ptr.reset(platform);
+        
+        return ptr;
     }
     
     const r2::Platform& Platform::GetConst()
     {
         if(!s_platform)
         {
-            s_platform = CreatePlatform();
+            s_platform = SDL2Platform::CreatePlatform();
         }
         return *s_platform;
     }
@@ -32,7 +35,7 @@ namespace r2
     {
         if(!s_platform)
         {
-            s_platform = CreatePlatform();
+            s_platform = SDL2Platform::CreatePlatform();
         }
         
         return *s_platform;
