@@ -22,6 +22,9 @@ namespace r2
         Platform(){}
         virtual ~Platform(){}
         
+        static const r2::Platform& GetConst();
+        static r2::Platform& Get();
+        
         Platform(const Platform&) = delete;
         Platform& operator=(const Platform&) = delete;
         Platform(Platform && ) = delete;
@@ -42,8 +45,6 @@ namespace r2
     protected:
         std::unique_ptr<r2::Application> mApplication;
     };
-    
-    std::unique_ptr<r2::Platform> CreatePlatform();
 }
 
 

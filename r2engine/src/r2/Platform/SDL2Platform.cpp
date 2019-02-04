@@ -11,12 +11,33 @@
 
 namespace r2
 {
+    static std::unique_ptr<Platform> s_platform = nullptr;
+    
     
     std::unique_ptr<Platform> CreatePlatform()
     {
         return std::make_unique<SDL2Platform>();
     }
     
+    const r2::Platform& Platform::GetConst()
+    {
+        if(!s_platform)
+        {
+            s_platform = CreatePlatform();
+        }
+        return *s_platform;
+    }
+    
+    r2::Platform& Platform::Get()
+    {
+        if(!s_platform)
+        {
+            s_platform = CreatePlatform();
+        }
+        
+        return *s_platform;
+    }
+
     SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)
     {
         

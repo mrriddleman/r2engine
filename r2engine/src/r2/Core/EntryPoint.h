@@ -12,16 +12,16 @@
 #include "r2/Platform/Platform.h"
 
 extern std::unique_ptr<r2::Application> r2::CreateApplication();
-extern std::unique_ptr<r2::Platform> r2::CreatePlatform();
+
 
 int main(int argc, char ** argv)
 {
-    auto platform = r2::CreatePlatform();
+    auto& platform = r2::Platform::Get();
     auto app = r2::CreateApplication();
     
-    platform->Init(std::move(app));
-    platform->Run();
-    platform->Shutdown();
+    platform.Init(std::move(app));
+    platform.Run();
+    platform.Shutdown();
     
     return 0;
 }
