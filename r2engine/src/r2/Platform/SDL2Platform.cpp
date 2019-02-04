@@ -11,7 +11,7 @@
 
 namespace r2
 {
-    static std::unique_ptr<Platform> s_platform = nullptr;
+    std::unique_ptr<Platform> SDL2Platform::s_platform = nullptr;
     
     std::unique_ptr<Platform> SDL2Platform::CreatePlatform()
     {
@@ -24,21 +24,21 @@ namespace r2
     
     const r2::Platform& Platform::GetConst()
     {
-        if(!s_platform)
+        if(!SDL2Platform::s_platform)
         {
-            s_platform = SDL2Platform::CreatePlatform();
+            SDL2Platform::s_platform = SDL2Platform::CreatePlatform();
         }
-        return *s_platform;
+        return *SDL2Platform::s_platform;
     }
     
     r2::Platform& Platform::Get()
     {
-        if(!s_platform)
+        if(!SDL2Platform::s_platform)
         {
-            s_platform = SDL2Platform::CreatePlatform();
+            SDL2Platform::s_platform = SDL2Platform::CreatePlatform();
         }
         
-        return *s_platform;
+        return *SDL2Platform::s_platform;
     }
 
     SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)

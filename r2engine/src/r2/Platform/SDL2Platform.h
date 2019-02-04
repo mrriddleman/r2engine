@@ -32,7 +32,7 @@ namespace r2
         friend Platform;
         SDL2Platform();
         static std::unique_ptr<Platform> CreatePlatform();
-
+        static std::unique_ptr<Platform> s_platform;
         SDL_Window * moptrWindow;
         bool mRunning;
     };
