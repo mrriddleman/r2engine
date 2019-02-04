@@ -10,6 +10,9 @@
 #define Application_hpp
 
 #include "r2/Platform/MacroDefines.h"
+#include "r2/Utils/Utils.h"
+#include <memory>
+#include <string>
 
 namespace r2
 {
@@ -26,8 +29,14 @@ namespace r2
             
         }
         
-        virtual void Run();
+        virtual bool Init();
+        virtual void Update();
+        virtual void Shutdown();
+        virtual std::string GetApplicationName() const;
+        virtual Resolution GetInitialResolution() const;
     };
+    
+    std::unique_ptr<Application> CreateApplication();
 }
 
 #endif /* Application_hpp */

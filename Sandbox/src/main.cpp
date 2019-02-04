@@ -9,12 +9,14 @@
 #include <iostream>
 #include "r2.h"
 
-int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
+class Sandbox: public r2::Application
+{
+public:
     
-    
+};
 
-    
-    return 0;
+
+std::unique_ptr<r2::Application> r2::CreateApplication()
+{
+    return std::make_unique<Sandbox>();
 }

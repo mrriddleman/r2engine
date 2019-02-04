@@ -10,9 +10,33 @@
 
 namespace r2
 {
-    void Application::Run()
+    bool Application::Init()
     {
-        while(true);
+        return true;
+    }
+    
+    void Application::Update()
+    {
+        
+    }
+    
+    void Application::Shutdown()
+    {
+        
+    }
+    
+    std::string Application::GetApplicationName() const
+    {
+        return "Test App";
+    }
+    
+    Resolution Application::GetInitialResolution() const
+    {
+        Resolution res;
+        res.width = 1024;
+        res.height = 720;
+        
+        return res;
     }
 }
 

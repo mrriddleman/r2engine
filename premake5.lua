@@ -22,16 +22,26 @@ project "r2engine"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
 
+	pchheader "src/r2pch.h"
+	pchsource "src/r2pch.cpp"
+
 	files
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp"
 	}
 
-	includedirs
-	{
-		"%{prj.name}/src"
-	}
+	includedirs {"%{prj.name}/src"}
+
+
+	configuration { "macosx" }
+		buildoptions {"-F %{prj.location}/vendor/MacOSX/SDL2"}
+    	linkoptions {"-F %{prj.location}/vendor/MacOSX/SDL2"}
+		includedirs {"/vendor/MacOSX/SDL2/SDL2.framework/Headers"}
+		links
+		{
+			"SDL2.framework"
+		}
 
 	filter "system:macosx"
 		cppdialect "C++17"
@@ -49,7 +59,6 @@ project "r2engine"
 		--	("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
 		}
 
-
 	filter "system:windows"
 		cppdialect "C++17"
 		systemversion "latest"
@@ -63,6 +72,15 @@ project "r2engine"
 		postbuildcommands
 		{
 			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
+		}
+
+	filter "system:linux"
+		cppdialect "C++17"
+		systemversion "latest"
+
+		defines
+		{
+			R2_PLATFORM_LINUX
 		}
 
 	filter "configurations:Debug"
@@ -122,5 +140,14 @@ project "Sandbox"
 		defines
 		{
 			"R2_PLATFORM_MAC"
+		}
+		
+	filter "system:linux"
+		cppdialect "C++17"
+		systemversion "latest"
+
+		defines
+		{
+			R2_PLATFORM_LINUX
 		}
 
