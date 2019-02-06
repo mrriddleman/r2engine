@@ -5,9 +5,9 @@
 //  Created by Serge Lansiquot on 2019-02-03.
 //
 
-#include "SDL2Platform.h"
-#include <SDL2/SDL.h>
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
+#include "SDL2Platform.h"
+#include "glad/glad.h"
 
 namespace r2
 {
@@ -56,22 +56,39 @@ namespace r2
             return false;
         }
         
+        SDL_GL_LoadLibrary(nullptr);
+        
         if(!mApplication->Init())
         {
             //TODO(Serge): add logging for error
             return false;
         }
         
-        Resolution res = mApplication->GetInitialResolution();
+        utils::Size res = mApplication->GetInitialResolution();
         
-        moptrWindow = SDL_CreateWindow(mApplication->GetApplicationName().c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, 0);
+        moptrWindow = SDL_CreateWindow(mApplication->GetApplicationName().c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, SDL_WINDOW_OPENGL);
         
-        if(moptrWindow)
+        SDL_assert(moptrWindow != nullptr);
+        
+        mglContext = SDL_GL_CreateContext(moptrWindow);
+        
+        SDL_assert(mglContext != nullptr);
+        
+        
+        gladLoadGLLoader(SDL_GL_GetProcAddress);
+        
+        
+        if(moptrWindow && mglContext)
         {
             mRunning = true;
         }
         
-        return moptrWindow != nullptr;
+        int w,h;
+        SDL_GetWindowSize(moptrWindow, &w, &h);
+        glViewport(0, 0, w, h);
+        glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
+        
+        return moptrWindow != nullptr && mglContext != nullptr;
     }
     
     void SDL2Platform::Run()
@@ -81,7 +98,7 @@ namespace r2
         
        // u32 lastTime = currentTime;
         u32 t = 0;
-        u32 dt = TickRate();
+        const u32 dt = TickRate();
         
         while (mRunning)
         {
@@ -117,12 +134,18 @@ namespace r2
                 t+= dt;
                 accumulator -= dt;
             }
+            
+            
+            glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            SDL_GL_SwapWindow(moptrWindow);
         }
     }
 
     void SDL2Platform::Shutdown()
     {
         mApplication->Shutdown();
+        
+        SDL_GL_DeleteContext(mglContext);
         
         if (moptrWindow)
         {
@@ -138,11 +161,28 @@ namespace r2
         return basePath;
     }
     
-    u32 SDL2Platform::TickRate() const
+    const u32 SDL2Platform::TickRate() const
     {
         return 1;
     }
+    
+    //--------------------------------------------------
+    //                  Private
+    //--------------------------------------------------
+    
+    void SDL2Platform::SetupSDLOpenGL()
+    {
+        //TODO(Serge): should be in the renderer or something, Also should be system dependent
+        
+        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    }
 }
+
+
 
 
 #endif

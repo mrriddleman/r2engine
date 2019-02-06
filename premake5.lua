@@ -1,3 +1,6 @@
+
+local ROOT = "../"    -- Path to project root
+
 workspace "r2"
 	architecture "x64"
 	startproject "Sandbox"
@@ -11,7 +14,7 @@ workspace "r2"
 
 outputdir = "%{cfg.buildcfg}_%{cfg.system}_%{cfg.architecture}"
 
-IncludeDir = {}
+include "r2engine/vendor/glad"
 
 project "r2engine"
 	location "r2engine"
@@ -19,8 +22,11 @@ project "r2engine"
 	language "C++"
 	--staticruntime "off"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
+	local output_dir_root	= ROOT .. "bin/" .. outputdir .. "/%{prj.name}"
+	local obj_dir_root = ROOT .. "bin_int/" .. outputdir .. "/%{prj.name}"
+
+	targetdir (output_dir_root)
+	objdir (obj_dir_root)
 
 	pchheader "src/r2pch.h"
 	pchsource "src/r2pch.cpp"
@@ -35,14 +41,49 @@ project "r2engine"
 
 
 	configuration { "macosx" }
-		buildoptions {"-F %{prj.location}/vendor/MacOSX/SDL2"}
-    	linkoptions {"-F %{prj.location}/vendor/MacOSX/SDL2"}
-		includedirs {"/vendor/MacOSX/SDL2/SDL2.framework/Headers"}
-		links
+		buildoptions 
 		{
-			"SDL2.framework"
+			"-F %{prj.location}/vendor/SDL2/MacOSX",
+		}
+    	
+    	linkoptions
+    	{
+    		"-F %{prj.location}/vendor/SDL2/MacOSX"
+    	}
+
+		includedirs 
+		{
+			"%{prj.location}/vendor/glad/MacOSX/include"
 		}
 
+		libdirs
+		{
+			
+		}
+
+		links
+		{
+			"glad",
+			"SDL2.framework",
+			"OpenGL.framework",
+		--	"Cocoa.framework"
+		}
+
+--[[
+local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
+    local MKDIR     = "mkdir -p "
+    local COPY      = "cp -rf "
+
+    local SEPARATOR = "/"
+
+    if(os.get() == "windows") then
+      CWD      = "chdir " .. os.getcwd() .. " && "
+      MKDIR     = "mkdir "
+      COPY      = "xcopy /Q /E /Y /I "
+      SEPARATOR = "\\"
+    end
+]]
+	
 	filter "system:macosx"
 		cppdialect "C++17"
 		systemversion "latest"

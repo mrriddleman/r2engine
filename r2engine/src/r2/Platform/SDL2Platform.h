@@ -11,6 +11,7 @@
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
 #include "r2/Platform/Platform.h"
+#include <SDL2/SDL.h>
 
 struct SDL_Window;
 
@@ -26,14 +27,18 @@ namespace r2
         virtual void Shutdown() override;
         
         virtual const std::string& GetBasePath() const override;
-        virtual u32 TickRate() const override;
+        virtual const u32 TickRate() const override;
         
     private:
         friend Platform;
         SDL2Platform();
+        
+        void SetupSDLOpenGL();
+        
         static std::unique_ptr<Platform> CreatePlatform();
         static std::unique_ptr<Platform> s_platform;
         SDL_Window * moptrWindow;
+        SDL_GLContext mglContext;
         bool mRunning;
     };
 }

@@ -22,10 +22,19 @@ using b32 = u32;
 
 namespace r2
 {
-    struct Resolution
+    namespace utils
     {
-        u32 width, height;
-    };
+        struct Size
+        {
+            u32 width, height;
+        };
+        
+        struct Rect
+        {
+            s32 x, y;
+            s32 w, h;
+        };
+    }
 }
 
 #endif /* Utils_h */
