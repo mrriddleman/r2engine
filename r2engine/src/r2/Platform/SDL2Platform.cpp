@@ -9,6 +9,7 @@
 #include "SDL2Platform.h"
 #include "glad/glad.h"
 #include "glm/glm.hpp"
+#include "flatbuffers/flatbuffers.h"
 
 namespace r2
 {

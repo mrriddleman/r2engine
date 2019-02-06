@@ -16,7 +16,7 @@ outputdir = "%{cfg.buildcfg}_%{cfg.system}_%{cfg.architecture}"
 
 includeDirs = {}
 includeDirs["glm"] = "%{prj.name}/vendor/glm"
-
+includeDirs["flatbuffers"] = "%{prj.name}/vendor/flatbuffers/include"
 
 include "r2engine/vendor/glad"
 
@@ -44,7 +44,8 @@ project "r2engine"
 	includedirs
 	{
 		"%{prj.name}/src",
-		"%{includeDirs.glm}"
+		"%{includeDirs.glm}",
+		"%{includeDirs.flatbuffers}"
 	}
 
 
