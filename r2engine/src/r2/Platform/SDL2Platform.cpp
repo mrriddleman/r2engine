@@ -8,6 +8,7 @@
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 #include "SDL2Platform.h"
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 
 namespace r2
 {

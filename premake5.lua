@@ -14,6 +14,10 @@ workspace "r2"
 
 outputdir = "%{cfg.buildcfg}_%{cfg.system}_%{cfg.architecture}"
 
+includeDirs = {}
+includeDirs["glm"] = "%{prj.name}/vendor/glm"
+
+
 include "r2engine/vendor/glad"
 
 project "r2engine"
@@ -37,7 +41,11 @@ project "r2engine"
 		"%{prj.name}/src/**.cpp"
 	}
 
-	includedirs {"%{prj.name}/src"}
+	includedirs
+	{
+		"%{prj.name}/src",
+		"%{includeDirs.glm}"
+	}
 
 
 	configuration { "macosx" }
@@ -53,12 +61,7 @@ project "r2engine"
 
 		includedirs 
 		{
-			"%{prj.location}/vendor/glad/MacOSX/include"
-		}
-
-		libdirs
-		{
-			
+			"%{prj.name}/vendor/glad/MacOSX/include"
 		}
 
 		links
@@ -66,7 +69,6 @@ project "r2engine"
 			"glad",
 			"SDL2.framework",
 			"OpenGL.framework",
-		--	"Cocoa.framework"
 		}
 
 --[[
