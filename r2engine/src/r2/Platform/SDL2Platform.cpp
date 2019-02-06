@@ -10,6 +10,7 @@
 #include "glad/glad.h"
 #include "glm/glm.hpp"
 #include "flatbuffers/flatbuffers.h"
+#include "miniz.h"
 
 namespace r2
 {

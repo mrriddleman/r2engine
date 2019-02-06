@@ -1,0 +1,245 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5F5B2A2F8B0392E746ED0666BA9561D99002B3D095A2A127 /* miniz.c in Sources */ = {isa = PBXBuildFile; fileRef = 35E8F8AC363F140FF3DF9771D92D3AC16CF1480868531A4F /* miniz.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		35E8F8AC363F140FF3DF9771D92D3AC16CF1480868531A4F /* miniz.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = miniz.c; path = src/miniz.c; sourceTree = "<group>"; };
+		6707163A75D8F0D5691513D69BFF20877E233DCA03061715 /* miniz.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = miniz.h; path = include/miniz.h; sourceTree = "<group>"; };
+		B4F9DA5F2DADB1767CABFE369F38C9E84A099EB74E39EFB6 /* libminiz.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; name = libminiz.a; path = libminiz.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CAF00D5D2A455BE66D1AD53837020B5895BAE80CABEC7A26 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7806C7175E8C72505F8A8A5402DF10029C2CF7B715175890 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				6707163A75D8F0D5691513D69BFF20877E233DCA03061715 /* miniz.h */,
+			);
+			name = include;
+			sourceTree = "<group>";
+		};
+		8E1F9F995775D418C4C07E444366DFCA4A20803959E7A58 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				35E8F8AC363F140FF3DF9771D92D3AC16CF1480868531A4F /* miniz.c */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		A8A67AFB4477F6875E4ACC95DE946AF9A27E9A192ACFB4C7 /* miniz */ = {
+			isa = PBXGroup;
+			children = (
+				7806C7175E8C72505F8A8A5402DF10029C2CF7B715175890 /* include */,
+				8E1F9F995775D418C4C07E444366DFCA4A20803959E7A58 /* src */,
+				DE2FD571A6C936B48E134D4D9B3FADE6BA17F9BDEA134CF4 /* Products */,
+			);
+			name = miniz;
+			sourceTree = "<group>";
+		};
+		DE2FD571A6C936B48E134D4D9B3FADE6BA17F9BDEA134CF4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B4F9DA5F2DADB1767CABFE369F38C9E84A099EB74E39EFB6 /* libminiz.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2C4634FCAE2A329C3C7B9F3B19B04CEF2BB0C643307A8DC /* miniz */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAF00D5C1880A4456D1AD537253D53B795BAE80B9A27C285 /* Build configuration list for PBXNativeTarget "miniz" */;
+			buildPhases = (
+				CAF00D609A2CDC866D1AD53BA6E98BF895BAE8101BD3FAC6 /* Resources */,
+				CAF00D6103D9F5DD6D1AD53C1096A54F95BAE8108581141D /* Sources */,
+				CAF00D5D2A455BE66D1AD53837020B5895BAE80CABEC7A26 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = miniz;
+			productName = miniz;
+			productReference = B4F9DA5F2DADB1767CABFE369F38C9E84A099EB74E39EFB6 /* libminiz.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "miniz" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = A8A67AFB4477F6875E4ACC95DE946AF9A27E9A192ACFB4C7 /* miniz */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2C4634FCAE2A329C3C7B9F3B19B04CEF2BB0C643307A8DC /* libminiz.a */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CAF00D609A2CDC866D1AD53BA6E98BF895BAE8101BD3FAC6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CAF00D6103D9F5DD6D1AD53C1096A54F95BAE8108581141D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5F5B2A2F8B0392E746ED0666BA9561D99002B3D095A2A127 /* miniz.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		1AD0250E66F8488B88CEA215BD85B2FD421DA3A795FEC6CB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Debug_macosx_x86_64/miniz;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_DYNAMIC_NO_PIC = NO;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = miniz;
+			};
+			name = Debug;
+		};
+		3222D2354CEFB24519B4AE6C7C81813762CA5BD6578EC085 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Release_macosx_x86_64/miniz;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_DYNAMIC_NO_PIC = NO;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = miniz;
+			};
+			name = Release;
+		};
+		CA5F54DB8800ECFBB1F13112B792BBEDFB06DE7C929FFB3B /* Publish */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CONFIGURATION_BUILD_DIR = bin/Publish_macosx_x86_64/miniz;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_DYNAMIC_NO_PIC = NO;
+				INSTALL_PATH = /usr/local/lib;
+				PRODUCT_NAME = miniz;
+			};
+			name = Publish;
+		};
+		D93C828247B45DE6EDAA6988EAFFE718443AE63A05D0B426 /* Publish */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "bin-int/Publish_macosx_x86_64/%{prj.name";
+				ONLY_ACTIVE_ARCH = NO;
+				SYMROOT = bin/Publish_macosx_x86_64/miniz;
+				USER_HEADER_SEARCH_PATHS = (
+					include,
+				);
+			};
+			name = Publish;
+		};
+		D944CD91C0CC1EB0EDB2B4986417A7E2444331497EE874F0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "bin-int/Release_macosx_x86_64/%{prj.name";
+				ONLY_ACTIVE_ARCH = NO;
+				SYMROOT = bin/Release_macosx_x86_64/miniz;
+				USER_HEADER_SEARCH_PATHS = (
+					include,
+				);
+			};
+			name = Release;
+		};
+		E3C13A333A7CAEF627B60B658A9043A82CBA2C6C0D0E7536 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				OBJROOT = "bin-int/Debug_macosx_x86_64/%{prj.name";
+				ONLY_ACTIVE_ARCH = NO;
+				SYMROOT = bin/Debug_macosx_x86_64/miniz;
+				USER_HEADER_SEARCH_PATHS = (
+					include,
+				);
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "miniz" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3C13A333A7CAEF627B60B658A9043A82CBA2C6C0D0E7536 /* Debug */,
+				D944CD91C0CC1EB0EDB2B4986417A7E2444331497EE874F0 /* Release */,
+				D93C828247B45DE6EDAA6988EAFFE718443AE63A05D0B426 /* Publish */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CAF00D5C1880A4456D1AD537253D53B795BAE80B9A27C285 /* Build configuration list for PBXNativeTarget "libminiz.a" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1AD0250E66F8488B88CEA215BD85B2FD421DA3A795FEC6CB /* Debug */,
+				3222D2354CEFB24519B4AE6C7C81813762CA5BD6578EC085 /* Release */,
+				CA5F54DB8800ECFBB1F13112B792BBEDFB06DE7C929FFB3B /* Publish */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+};
+rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
