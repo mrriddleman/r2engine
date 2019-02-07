@@ -11,6 +11,7 @@
 #include "glm/glm.hpp"
 #include "flatbuffers/flatbuffers.h"
 #include "miniz.h"
+#include "loguru.hpp"
 
 namespace r2
 {
