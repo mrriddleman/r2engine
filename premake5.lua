@@ -19,10 +19,12 @@ includeDirs["glm"] = "%{prj.name}/vendor/glm"
 includeDirs["flatbuffers"] = "%{prj.name}/vendor/flatbuffers/include"
 includeDirs["miniz"] = "%{prj.name}/vendor/miniz/include"
 includeDirs["loguru"] = "%{prj.name}/vendor/loguru/src"
+includeDirs["imgui"] = "%{prj.name}/vendor/imgui"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
 include "r2engine/vendor/loguru"
+include "r2engine/vendor/imgui"
 
 project "r2engine"
 	location "r2engine"
@@ -51,13 +53,15 @@ project "r2engine"
 		"%{includeDirs.glm}",
 		"%{includeDirs.flatbuffers}",
 		"%{includeDirs.miniz}",
-		"%{includeDirs.loguru}"
+		"%{includeDirs.loguru}",
+		"%{includeDirs.imgui}"
 	}
 
 	links
 	{
 		"miniz",
-		"loguru"
+		"loguru",
+		"imgui"
 	}
 
 

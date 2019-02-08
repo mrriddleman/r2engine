@@ -12,6 +12,7 @@
 #include "flatbuffers/flatbuffers.h"
 #include "miniz.h"
 #include "loguru.hpp"
+#include "imgui.h"
 
 namespace r2
 {
