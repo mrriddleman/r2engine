@@ -1,4 +1,0 @@
-[submodule "r2engine/vendor/imgui"]
-	path = r2engine/vendor/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = master
