@@ -22,23 +22,26 @@ namespace r2
     public:
         
         virtual bool Init(std::unique_ptr<r2::Application> app) override;
-
         virtual void Run() override;
         virtual void Shutdown() override;
         
-        virtual const std::string& GetBasePath() const override;
+        virtual const std::string& RootPath() const override;
         virtual const u32 TickRate() const override;
-        
+        virtual const s32 NumLogicalCPUCores() const override;
+        virtual const s32 SystemRAM() const override;
+        virtual const s32 CPUCacheLineSize() const override;
+        virtual const std::string& AppPath() const override;
     private:
         friend Platform;
         SDL2Platform();
         
-        void SetupSDLOpenGL();
+        int SetupSDLOpenGL();
         
         static std::unique_ptr<Platform> CreatePlatform();
         static std::unique_ptr<Platform> s_platform;
         SDL_Window * moptrWindow;
         SDL_GLContext mglContext;
+        std::string mPrefPath;
         bool mRunning;
     };
 }

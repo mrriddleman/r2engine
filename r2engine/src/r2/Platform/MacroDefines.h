@@ -21,4 +21,7 @@
         #error r2 is only supported by Windows and Mac
     #endif
 
+
+#define BIT(x) (1 << x)
+#define R2_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 #endif /* r2_macro_h */

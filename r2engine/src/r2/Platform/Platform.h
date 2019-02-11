@@ -8,11 +8,13 @@
 #ifndef Platform_hpp
 #define Platform_hpp
 
-//TODO(Serge): Remove
-#include <memory>
-#include <string>
+#include "r2/Core/Engine.h"
 
-#include "r2/Core/Application.h"
+#define CPLAT r2::Platform::GetConst()
+#define MPLAT r2::Platform::Get()
+
+#define CENG r2::Platform::GetConst().EngineConst()
+#define MENG r2::Platform::Get().EngineMutable()
 
 namespace r2
 {
@@ -30,20 +32,22 @@ namespace r2
         Platform(Platform && ) = delete;
         Platform& operator=(Platform &&) = delete;
         
-        virtual bool Init(std::unique_ptr<r2::Application> app)
-        {
-            mApplication = std::move(app);
-            return true;
-        }
-        
+        //Pure virtual methods
+        virtual bool Init(std::unique_ptr<r2::Application> app) = 0;
         virtual void Run() = 0;
         virtual void Shutdown() = 0;
-        
-        virtual const std::string& GetBasePath() const = 0;
+        virtual const std::string& RootPath() const = 0;
         virtual const u32 TickRate() const = 0;
-
+        virtual const s32 NumLogicalCPUCores() const = 0;
+        virtual const s32 SystemRAM() const = 0;
+        virtual const s32 CPUCacheLineSize() const = 0;
+        virtual const std::string& AppPath() const = 0;
+        
+        const Engine& EngineConst() { return mEngine; }
+        Engine& EngineMutable() {return mEngine;}
+        
     protected:
-        std::unique_ptr<r2::Application> mApplication;
+        Engine mEngine;
     };
 }
 

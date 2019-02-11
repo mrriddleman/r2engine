@@ -1,0 +1,56 @@
+//
+//  AppEvent.h
+//  r2engine
+//
+//  Created by Serge Lansiquot on 2019-02-10.
+//
+
+#ifndef AppEvent_h
+#define AppEvent_h
+
+#include "r2/Core/Events/Event.h"
+
+namespace r2
+{
+    namespace evt
+    {
+        class R2_API WindowResizeEvent: public Event
+        {
+        public:
+            WindowResizeEvent(u32 width, u32 height): mWidth(width), mHeight(height){}
+            
+            inline u32 Width() const {return mWidth;}
+            inline u32 Height() const {return mHeight;}
+            
+            std::string ToString() const override
+            {
+                std::stringstream ss;
+                
+                ss << "WindowResizeEvent to: " << mWidth << ", " << mHeight;
+                return ss.str();
+            }
+            
+            EVENT_CLASS_TYPE(EVT_WINDOW_RESIZED)
+            EVENT_CLASS_CATEGORY(ECAT_APP)
+        private:
+            u32 mWidth, mHeight;
+        };
+        
+        class R2_API WindowCloseEvent: public Event
+        {
+        public:
+            WindowCloseEvent() {}
+            
+            EVENT_CLASS_TYPE(EVT_WINDOW_CLOSE)
+            EVENT_CLASS_CATEGORY(ECAT_APP)
+            
+            std::string ToString() const override
+            {
+                return "WindowCloseEvent";
+            }
+        };
+    }
+}
+
+
+#endif /* AppEvent_h */

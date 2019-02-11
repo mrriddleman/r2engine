@@ -9,6 +9,12 @@
 #define r2pch_h
 
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <sstream>
+#include <functional>
+#include <algorithm>
+#include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
 
 
