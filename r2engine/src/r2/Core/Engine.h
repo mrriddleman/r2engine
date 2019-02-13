@@ -10,7 +10,7 @@
 
 #include "r2/Core/Application.h"
 #include "r2/Platform/IO.h"
-
+#include "r2/Core/Layer/LayerStack.h"
 
 
 namespace r2
@@ -35,6 +35,11 @@ namespace r2
         utils::Size GetInitialResolution() const;
         const std::string& OrganizationName() const;
         
+        //Layers
+        void PushLayer(std::unique_ptr<Layer> layer);
+        void PushOverlay(std::unique_ptr<Layer> overlay);
+        
+        //Platform callbacks
         inline void SetVSyncCallback(SetVSyncFunc vsync) { mSetVSyncFunc = vsync; }
         inline void SetFullscreenCallback(SetFullScreenFunc fullscreen) {mFullScreenFunc = fullscreen;}
         inline void SetScreenSize(SetWindowSizeFunc windowSize) {mWindowSizeFunc = windowSize;}
@@ -63,6 +68,8 @@ namespace r2
         SetVSyncFunc mSetVSyncFunc;
         SetFullScreenFunc mFullScreenFunc;
         SetWindowSizeFunc mWindowSizeFunc;
+        
+        LayerStack mLayerStack;
     };
 }
 

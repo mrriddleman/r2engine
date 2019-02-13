@@ -152,7 +152,7 @@ namespace r2
 
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
-#include "SDL2Input.h"
+#include "SDL2/SDL2Input.h"
 
 #endif
 

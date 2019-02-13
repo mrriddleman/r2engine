@@ -14,6 +14,7 @@
 #include <sstream>
 #include <functional>
 #include <algorithm>
+#include <vector>
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
 

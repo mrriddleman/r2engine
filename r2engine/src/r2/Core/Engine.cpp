@@ -8,6 +8,7 @@
 #include "Engine.h"
 #include "glad/glad.h"
 #include "r2/Core/Events/Events.h"
+#include <iostream>
 
 namespace r2
 {
@@ -39,17 +40,23 @@ namespace r2
     
     void Engine::Update()
     {
-        mApp->Update();
+        mApp->Update(); //@TODO(Serge): remove
+        
+        mLayerStack.Update();
     }
     
     void Engine::Shutdown()
     {
-        mApp->Shutdown();
+        mApp->Shutdown(); //@TODO(Serge): remove
+        
+        mLayerStack.ShutdownAll();
     }
     
     void Engine::Render(float alpha)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        mLayerStack.Render(alpha);
     }
     
     utils::Size Engine::GetInitialResolution() const
@@ -65,6 +72,18 @@ namespace r2
     {
         static std::string org = "ScreamStudios";
         return org;
+    }
+    
+    void Engine::PushLayer(std::unique_ptr<Layer> layer)
+    {
+        layer->Init();
+        mLayerStack.PushLayer(std::move(layer));
+    }
+    
+    void Engine::PushOverlay(std::unique_ptr<Layer> overlay)
+    {
+        overlay->Init();
+        mLayerStack.PushOverlay(std::move(overlay));
     }
     
     void Engine::WindowResizedEvent(u32 width, u32 height)
@@ -134,8 +153,6 @@ namespace r2
     
     void Engine::OnEvent(evt::Event& e)
     {
-        //does the brute force OnEvent stuff
+        mLayerStack.OnEvent(e);
     }
-
-    
 }
