@@ -43,17 +43,43 @@ namespace r2
         void OverlayMoveBefore(LayerIt layerToMove, Layer* beforeLayer);
         void OverlayMoveAfter(LayerIt layerToMove, Layer* afterLayer);
         
-        inline std::vector<std::unique_ptr<Layer>>::iterator LayerBegin() {return mLayers.begin();}
-        inline ConstLayerIt CLayerBegin() const {return mLayers.cbegin();}
+        inline LayerIt BottomLayer() {return mLayers.begin();}
+        inline ConstLayerIt CBottomLayer() const {return mLayers.cbegin();}
 
-        inline std::vector<std::unique_ptr<Layer>>::iterator LayerEnd() {return mLayers.end();}
-        inline ConstLayerIt CLayerEnd() const {return mLayers.cend();}
+        inline LayerIt TopLayer()
+        {
+            if(mLayers.size() > 0)
+                return --mLayers.end();
+            return mLayers.end();
+        }
         
-        inline std::vector<std::unique_ptr<Layer>>::iterator OverlayBegin() {return mOverlays.begin();}
-        inline ConstLayerIt COverlayBegin() const {return mOverlays.cbegin();}
+        inline ConstLayerIt CTopLayer() const
+        {
+            if(mLayers.size() > 0)
+                return --mLayers.cend();
+            return mLayers.cend();
+        }
         
-        inline std::vector<std::unique_ptr<Layer>>::iterator OverlayEnd() {return mOverlays.end();}
-        inline ConstLayerIt COverlayEnd() const {return mOverlays.cend();}
+        inline LayerIt BottomOverlay() {return mOverlays.begin();}
+        inline ConstLayerIt CBottomOverlay() const {return mOverlays.cbegin();}
+        
+        inline LayerIt TopOverlay()
+        {
+            if(mOverlays.size() > 0)
+                return --mOverlays.end();
+            return mOverlays.end();
+        }
+        
+        inline ConstLayerIt CTopOverlay() const
+        {
+            if(mOverlays.size() > 0)
+                return --mOverlays.cend();
+            return mOverlays.cend();
+        }
+        
+        //DEBUG
+        
+        void PrintLayerStack(b32 topToBottom = true);
         
     private:
         LayerStackContainer mLayers;

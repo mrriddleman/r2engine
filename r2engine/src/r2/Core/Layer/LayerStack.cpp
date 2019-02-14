@@ -7,6 +7,7 @@
 
 #include "LayerStack.h"
 #include <cassert> //@TODO(Serge): replace with our own assert
+#include <iostream>
 
 namespace r2
 {
@@ -162,6 +163,9 @@ namespace r2
         if(it == layers.end())
             return;
         
+        if(it->get() == beforeLayer)
+            return;
+        
         std::unique_ptr<Layer> movedLayer = std::move(*layerToMove);
         
         layers.erase(layerToMove);
@@ -171,17 +175,28 @@ namespace r2
         {
             if(itr->get() == beforeLayer)
             {
-                beforeLayerIt = itr;
+                beforeLayerIt = ++itr;
+                break;
             }
         }
         
-        layers.insert(beforeLayerIt, std::move(movedLayer));
+        if(beforeLayerIt == layers.end())
+        {
+            layers.emplace_back(std::move(movedLayer));
+        }
+        else
+        {
+            layers.emplace(beforeLayerIt, std::move(movedLayer));
+        }
     }
 
     void LayerStack::MoveAfter(LayerStackContainer& layers, LayerIt layerToMove, Layer* afterLayer)
     {
         auto it = std::find(layers.begin(), layers.end(), *layerToMove);
         if(it == layers.end())
+            return;
+        
+        if(it->get() == afterLayer)
             return;
 
         std::unique_ptr<Layer> movedLayer = std::move(*layerToMove);
@@ -197,14 +212,30 @@ namespace r2
             }
         }
 
-        if(afterLayerIt == layers.end())
+        layers.emplace(afterLayerIt, std::move(movedLayer));
+    }
+    
+    void LayerStack::PrintLayerStack(b32 topToBottom)
+    {
+        std::cout << "====================================" << std::endl;
+        
+        if(topToBottom)
         {
-            layers.insert(afterLayerIt, std::move(movedLayer));
+            for(auto layer = mLayers.end(); layer != mLayers.begin(); )
+            {
+                --layer;
+                std::cout << layer->get()->DebugName() << std::endl;
+            }
         }
         else
         {
-            layers.insert(++afterLayerIt, std::move(movedLayer));
+            for(auto& layer : mLayers)
+            {
+                std::cout << layer->DebugName() << std::endl;
+            }
         }
+        
+        std::cout << "====================================" << std::endl <<std::endl;
     }
 }
 

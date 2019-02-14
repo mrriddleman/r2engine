@@ -9,6 +9,7 @@
 #include "glad/glad.h"
 #include "r2/Core/Events/Events.h"
 #include <iostream>
+#include <cassert>
 
 namespace r2
 {
