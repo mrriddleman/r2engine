@@ -8,8 +8,9 @@
 #include "Engine.h"
 #include "glad/glad.h"
 #include "r2/Core/Events/Events.h"
-#include <iostream>
+#include "r2/ImGui/ImGuiLayer.h"
 #include <cassert>
+#include "imgui.h"
 
 namespace r2
 {
@@ -29,10 +30,13 @@ namespace r2
         
         if(mApp)
         {
+            mDisplaySize = GetInitialResolution();
             bool appInitialized = mApp->Init();
             glClearColor(0.f, 0.5f, 1.0f, 1.0f);
-            glViewport(0, 0, GetInitialResolution().width, GetInitialResolution().height);
+            glViewport(0, 0, mDisplaySize.width, mDisplaySize.height);
             
+            PushLayer(std::make_unique<ImGuiLayer>());
+        
             return appInitialized;
         }
 
@@ -60,9 +64,9 @@ namespace r2
         mLayerStack.Render(alpha);
     }
     
-    utils::Size Engine::GetInitialResolution() const
+    util::Size Engine::GetInitialResolution() const
     {
-        utils::Size res;
+        util::Size res;
         res.width = 1024;
         res.height = 720;
         
@@ -73,6 +77,20 @@ namespace r2
     {
         static std::string org = "ScreamStudios";
         return org;
+    }
+    
+    u64 Engine::GetPerformanceFrequency() const
+    {
+        if(mGetPerformanceFrequencyFunc)
+            return mGetPerformanceFrequencyFunc();
+        return 0;
+    }
+    
+    u64 Engine::GetPerformanceCounter() const
+    {
+        if(mGetPerformanceCounterFunc)
+            return mGetPerformanceCounterFunc();
+        return 0;
     }
     
     void Engine::PushLayer(std::unique_ptr<Layer> layer)
@@ -89,6 +107,8 @@ namespace r2
     
     void Engine::WindowResizedEvent(u32 width, u32 height)
     {
+        mDisplaySize.width = width;
+        mDisplaySize.height = height;
         evt::WindowResizeEvent e(width, height);
         OnEvent(e);
         glViewport(0, 0, width, height);
@@ -96,6 +116,8 @@ namespace r2
     
     void Engine::WindowSizeChangedEvent(u32 width, u32 height)
     {
+        mDisplaySize.width = width;
+        mDisplaySize.height = height;
         evt::WindowResizeEvent e(width, height);
         OnEvent(e);
         glViewport(0, 0, width, height);
@@ -147,9 +169,15 @@ namespace r2
         }
         else
         {
-            evt::KeyReleasedEvent e(keyData.code);
+            evt::KeyReleasedEvent e(keyData.code, keyData.modifiers);
             OnEvent(e);
         }
+    }
+    
+    void Engine::TextEvent(const char* text)
+    {
+        evt::KeyTypedEvent e(text);
+        OnEvent(e);
     }
     
     void Engine::OnEvent(evt::Event& e)

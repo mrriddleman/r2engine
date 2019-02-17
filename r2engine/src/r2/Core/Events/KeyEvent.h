@@ -19,24 +19,25 @@ namespace r2
         {
         public:
             
-            inline u32 KeyCode() const {return mKeyCode;}
-            
+            inline s32 KeyCode() const {return mKeyCode;}
+            inline u32 Modifiers() const {return mModifiers;}
             EVENT_CLASS_CATEGORY(ECAT_KEY | ECAT_INPUT)
             
         protected:
             
-            KeyEvent(u32 keyCode): mKeyCode(keyCode) {}
+            KeyEvent(s32 keyCode, u32 modifiers): mKeyCode(keyCode), mModifiers(modifiers) {}
             
-            u32 mKeyCode;
+            s32 mKeyCode;
+            u32 mModifiers;
         };
         
         class R2_API KeyPressedEvent : public KeyEvent
         {
         public:
             
-            KeyPressedEvent(u32 keyCode, u32 modifiers, b32 repeated): KeyEvent(keyCode), mModifiers(modifiers), mRepeated(repeated) {}
+            KeyPressedEvent(s32 keyCode, u32 modifiers, b32 repeated): KeyEvent(keyCode, modifiers), mRepeated(repeated) {}
             
-            inline u32 Modifiers() const {return mModifiers;}
+            
             inline b32 Repeated() const {return mRepeated;}
             
             std::string ToString() const override
@@ -49,14 +50,14 @@ namespace r2
             EVENT_CLASS_TYPE(EVT_KEY_PRESSED)
             
         private:
-            u32 mModifiers;
+            
             b32 mRepeated;
         };
         
         class R2_API KeyReleasedEvent : public KeyEvent
         {
         public:
-            KeyReleasedEvent(u32 keycode): KeyEvent(keycode) {}
+            KeyReleasedEvent(s32 keycode, u32 modifiers): KeyEvent(keycode, modifiers) {}
             
             std::string ToString() const override
             {
@@ -68,19 +69,25 @@ namespace r2
             EVENT_CLASS_TYPE(EVT_KEY_RELEASED)
         };
         
-        class R2_API KeyTypedEvent: public KeyEvent
+        class R2_API KeyTypedEvent: public Event
         {
         public:
-            KeyTypedEvent(u32 keycode): KeyEvent(keycode) {}
+            KeyTypedEvent(const char* text):mText(text) {}
+            
+            const char* Text() const {return mText;}
             
             std::string ToString() const override
             {
                 std::stringstream ss;
-                ss << "KeyTypedEvent keycode: " << mKeyCode;
+                ss << "KeyTypedEvent keycode: " << mText;
                 return ss.str();
             }
             
+            EVENT_CLASS_CATEGORY(ECAT_KEY | ECAT_INPUT)
             EVENT_CLASS_TYPE(EVT_KEY_TYPED)
+            
+        private:
+            const char* mText;
         };
     }
 }

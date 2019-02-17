@@ -30,9 +30,9 @@ namespace r2
         return "Test App";
     }
     
-    utils::Size Application::GetPreferredResolution() const
+    util::Size Application::GetPreferredResolution() const
     {
-        utils::Size res;
+        util::Size res;
         res.width = 1024;
         res.height = 720;
         

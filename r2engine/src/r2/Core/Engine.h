@@ -22,6 +22,10 @@ namespace r2
     using SetVSyncFunc = std::function<bool (bool)>;
     using SetFullScreenFunc = std::function<bool (u32 flags)>;
     using SetWindowSizeFunc = std::function<void (s32 width, s32 height)>;
+    typedef const char* (*GetClipboardTextFunc)(void* user_data);
+    typedef void (*SetClipboardTextFunc)(void* user_data, const char* text);
+    using GetPerformanceFrequencyFunc = std::function<u64 (void)>;
+    using GetPerformanceCounterFunc = std::function<u64 (void)>;
     
     class R2_API Engine
     {
@@ -32,8 +36,15 @@ namespace r2
         void Update();
         void Shutdown();
         void Render(float alpha);
-        utils::Size GetInitialResolution() const;
+        util::Size GetInitialResolution() const;
+        inline util::Size DisplaySize() const {return mDisplaySize;}
+        
         const std::string& OrganizationName() const;
+        
+        
+        u64 GetPerformanceFrequency() const;
+        u64 GetPerformanceCounter() const;
+        
         
         //Layers
         void PushLayer(std::unique_ptr<Layer> layer);
@@ -42,7 +53,11 @@ namespace r2
         //Platform callbacks
         inline void SetVSyncCallback(SetVSyncFunc vsync) { mSetVSyncFunc = vsync; }
         inline void SetFullscreenCallback(SetFullScreenFunc fullscreen) {mFullScreenFunc = fullscreen;}
-        inline void SetScreenSize(SetWindowSizeFunc windowSize) {mWindowSizeFunc = windowSize;}
+        inline void SetScreenSizeCallback(SetWindowSizeFunc windowSize) {mWindowSizeFunc = windowSize;}
+        SetClipboardTextFunc mSetClipboardTextFunc;
+        GetClipboardTextFunc mGetClipboardTextFunc;
+        inline void SetGetPerformanceFrequencyCallback(GetPerformanceFrequencyFunc func) {mGetPerformanceFrequencyFunc = func;}
+        inline void SetGetPerformanceCounterCallback(GetPerformanceCounterFunc func) {mGetPerformanceCounterFunc = func;}
         
         //Events
         //@TODO(Serge): have different windows?
@@ -59,15 +74,19 @@ namespace r2
         
         //KeyEvents
         void KeyEvent(io::Key keyData);
+        void TextEvent(const char* text);
         
     private:
         
         void OnEvent(evt::Event& e);
         
         std::unique_ptr<Application> mApp;
-        SetVSyncFunc mSetVSyncFunc;
-        SetFullScreenFunc mFullScreenFunc;
-        SetWindowSizeFunc mWindowSizeFunc;
+        util::Size mDisplaySize;
+        SetVSyncFunc mSetVSyncFunc = nullptr;
+        SetFullScreenFunc mFullScreenFunc = nullptr;
+        SetWindowSizeFunc mWindowSizeFunc = nullptr;
+        GetPerformanceFrequencyFunc mGetPerformanceFrequencyFunc = nullptr;
+        GetPerformanceCounterFunc mGetPerformanceCounterFunc = nullptr;
         
         LayerStack mLayerStack;
     };

@@ -33,7 +33,7 @@ namespace r2
         virtual void Update();
         virtual void Shutdown();
         virtual std::string GetApplicationName() const;
-        virtual utils::Size GetPreferredResolution() const;
+        virtual util::Size GetPreferredResolution() const;
     };
     
     std::unique_ptr<Application> CreateApplication();

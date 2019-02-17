@@ -43,6 +43,8 @@ namespace r2
         SDL_GLContext mglContext;
         std::string mPrefPath;
         bool mRunning;
+        
+        
     };
 }
 

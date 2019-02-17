@@ -13,7 +13,26 @@
 
 namespace r2
 {
+    static char * mClipboardTextData = nullptr;
+    
     std::unique_ptr<Platform> SDL2Platform::s_platform = nullptr;
+    
+    void SDL2SetClipboardTextFunc(void*, const char* text)
+    {
+        SDL_SetClipboardText(text);
+    }
+    
+    const char* SDL2GetClipboardTextFunc(void*)
+    {
+        if(mClipboardTextData)
+        {
+            SDL_free(mClipboardTextData);
+        }
+        
+        mClipboardTextData = SDL_GetClipboardText();
+        return mClipboardTextData;
+    }
+    
     
     std::unique_ptr<Platform> SDL2Platform::CreatePlatform()
     {
@@ -60,7 +79,7 @@ namespace r2
         
         SDL_GL_LoadLibrary(nullptr);
         
-        utils::Size res = mEngine.GetInitialResolution();
+        util::Size res = mEngine.GetInitialResolution();
         
         moptrWindow = SDL_CreateWindow("r2engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, SetupSDLOpenGL() | SDL_WINDOW_RESIZABLE);
         
@@ -80,13 +99,7 @@ namespace r2
         
         //@NOTE: maybe it's a bad idea to get the initial resolution without initializing the ngine first?
         
-        if(!mEngine.Init(std::move(app)))
-        {
-            //@TODO(Serge): add logging for error
-            return false;
-        }
-        
-        //Setup engine
+        //Setup engine - bad that it's being set before initialization?
         {
             mEngine.SetVSyncCallback([](bool vsync){
                 return SDL_GL_SetSwapInterval(static_cast<int>(vsync));
@@ -96,11 +109,29 @@ namespace r2
                 return SDL_SetWindowFullscreen(moptrWindow, flags);
             });
             
-            mEngine.SetScreenSize([this](s32 width, s32 height){
+            mEngine.SetScreenSizeCallback([this](s32 width, s32 height){
                 SDL_SetWindowSize(moptrWindow, width, height);
             });
+            
+            mEngine.SetGetPerformanceFrequencyCallback([]{
+                static u64 frequency = SDL_GetPerformanceFrequency();
+                return frequency;
+            });
+            
+            mEngine.SetGetPerformanceCounterCallback([]{
+                return SDL_GetPerformanceCounter();
+            });
+            
+            mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
+            mEngine.mGetClipboardTextFunc = SDL2GetClipboardTextFunc;
         }
         
+        if(!mEngine.Init(std::move(app)))
+        {
+            //@TODO(Serge): add logging for error
+            return false;
+        }
+
         return moptrWindow != nullptr && mglContext != nullptr;
     }
     
@@ -184,7 +215,7 @@ namespace r2
                         
                         keyData.state = e.key.state;
                         keyData.repeated = e.key.repeat;
-                        keyData.code = e.key.keysym.sym;
+                        keyData.code = e.key.keysym.scancode;
                         
                         //@NOTE: Right now we make no distinction between left or right versions of these keys
                         if(e.key.keysym.mod & KMOD_ALT)
@@ -203,6 +234,12 @@ namespace r2
                         }
                         
                         mEngine.KeyEvent(keyData);
+                    }
+                        break;
+                        
+                    case SDL_TEXTINPUT:
+                    {
+                        mEngine.TextEvent(e.text.text);
                     }
                         break;
                     default:
@@ -238,6 +275,13 @@ namespace r2
     void SDL2Platform::Shutdown()
     {
         mEngine.Shutdown();
+        
+        if(mClipboardTextData)
+        {
+            SDL_free(mClipboardTextData);
+        }
+        
+        mClipboardTextData = nullptr;
         
         SDL_GL_DeleteContext(mglContext);
         

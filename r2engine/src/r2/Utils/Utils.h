@@ -24,17 +24,17 @@ using b32 = u32;
 
 namespace r2
 {
-    namespace utils
+    namespace util
     {
         struct Size
         {
-            u32 width, height;
+            u32 width = 0, height = 0;
         };
         
         struct Rect
         {
-            s32 x, y;
-            s32 w, h;
+            s32 x = 0, y = 0;
+            s32 w = 0, h = 0;
         };
     }
 }

@@ -13,7 +13,7 @@
 #define CPLAT r2::Platform::GetConst()
 #define MPLAT r2::Platform::Get()
 
-#define CENG r2::Platform::GetConst().EngineConst()
+#define CENG r2::Platform::Get().EngineConst()
 #define MENG r2::Platform::Get().EngineMutable()
 
 namespace r2
