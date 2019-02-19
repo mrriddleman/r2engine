@@ -87,12 +87,12 @@ namespace r2
         static bool show = true;
         ImGui::ShowDemoWindow(&show);
         
-        ImGui::EndFrame();
+        ImGui::Render();
     }
     
     void ImGuiLayer::Render(float alpha)
     {
-        ImGui::Render();
+        
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
     

@@ -9,6 +9,7 @@
 #include "glad/glad.h"
 #include "r2/Core/Events/Events.h"
 #include "r2/ImGui/ImGuiLayer.h"
+#include "r2/Core/Layer/AppLayer.h"
 #include <cassert>
 #include "imgui.h"
 
@@ -26,18 +27,20 @@ namespace r2
     
     bool Engine::Init(std::unique_ptr<Application> app)
     {
-        mApp = std::move(app);
-        
-        if(mApp)
+        if(app)
         {
-            mDisplaySize = GetInitialResolution();
-            bool appInitialized = mApp->Init();
-            glClearColor(0.f, 0.5f, 1.0f, 1.0f);
-            glViewport(0, 0, mDisplaySize.width, mDisplaySize.height);
             
+            const Application * noptrApp = app.get();
+            //@TODO(Serge): should check to see if the app initialized!
+            PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
         
-            return appInitialized;
+            mDisplaySize = noptrApp->GetPreferredResolution();
+            glClearColor(0.f, 0.5f, 1.0f, 1.0f);
+            
+            mWindowSizeFunc(mDisplaySize.width, mDisplaySize.height);
+            WindowSizeChangedEvent(mDisplaySize.width, mDisplaySize.height);
+            return true;
         }
 
         return false;
@@ -45,15 +48,11 @@ namespace r2
     
     void Engine::Update()
     {
-        mApp->Update(); //@TODO(Serge): remove
-        
         mLayerStack.Update();
     }
     
     void Engine::Shutdown()
     {
-        mApp->Shutdown(); //@TODO(Serge): remove
-        
         mLayerStack.ShutdownAll();
     }
     

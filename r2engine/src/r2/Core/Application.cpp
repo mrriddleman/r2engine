@@ -20,7 +20,17 @@ namespace r2
         
     }
     
+    void Application::Render(float alpha)
+    {
+        
+    }
+    
     void Application::Shutdown()
+    {
+        
+    }
+    
+    void Application::OnEvent(evt::Event& e)
     {
         
     }

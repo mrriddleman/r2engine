@@ -11,11 +11,18 @@
 
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
+
 #include <memory>
 #include <string>
 
 namespace r2
 {
+    namespace evt
+    {
+        class Event;
+    }
+    
+    
     class R2_API Application
     {
     public:
@@ -32,6 +39,8 @@ namespace r2
         virtual bool Init();
         virtual void Update();
         virtual void Shutdown();
+        virtual void Render(float alpha);
+        virtual void OnEvent(evt::Event& e);
         virtual std::string GetApplicationName() const;
         virtual util::Size GetPreferredResolution() const;
     };

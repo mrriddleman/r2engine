@@ -79,8 +79,7 @@ namespace r2
     private:
         
         void OnEvent(evt::Event& e);
-        
-        std::unique_ptr<Application> mApp;
+    
         util::Size mDisplaySize;
         SetVSyncFunc mSetVSyncFunc = nullptr;
         SetFullScreenFunc mFullScreenFunc = nullptr;
