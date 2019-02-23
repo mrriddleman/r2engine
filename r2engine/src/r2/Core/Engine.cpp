@@ -10,6 +10,7 @@
 #include "r2/Core/Events/Events.h"
 #include "r2/ImGui/ImGuiLayer.h"
 #include "r2/Core/Layer/AppLayer.h"
+#include "r2/Platform/Platform.h"
 #include <cassert>
 #include "imgui.h"
 
@@ -29,8 +30,8 @@ namespace r2
     {
         if(app)
         {
-            
             const Application * noptrApp = app.get();
+            r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
             //@TODO(Serge): should check to see if the app initialized!
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
@@ -40,6 +41,9 @@ namespace r2
             
             mWindowSizeFunc(mDisplaySize.width, mDisplaySize.height);
             WindowSizeChangedEvent(mDisplaySize.width, mDisplaySize.height);
+        
+            R2_LOG(INFO, "Test to see if we get a log file");
+            
             return true;
         }
 

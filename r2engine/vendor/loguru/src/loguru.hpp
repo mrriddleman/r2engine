@@ -232,6 +232,8 @@ Website: www.ilikebigbits.com
 	#include "fmt/format.h"
 #endif
 
+#include <cstdarg>
+
 // --------------------------------------------------------------------
 
 namespace loguru
@@ -392,6 +394,9 @@ namespace loguru
 	LOGURU_EXPORT
 	void init(int& argc, char* argv[], const char* verbosity_flag = "-v");
 
+    LOGURU_EXPORT
+    void r2_init(Verbosity stderrverbosity);
+    
 	// Will call remove_all_callbacks(). After calling this, logging will still go to stderr.
 	// You generally don't need to call this.
 	LOGURU_EXPORT
@@ -523,6 +528,10 @@ namespace loguru
 	// Actual logging function. Use the LOG macro instead of calling this directly.
 	LOGURU_EXPORT
 	void log(Verbosity verbosity, const char* file, unsigned line, LOGURU_FORMAT_STRING_TYPE format, ...) LOGURU_PRINTF_LIKE(4, 5);
+    
+
+    LOGURU_EXPORT
+    void r2log(Verbosity verbosity, const char* file, unsigned line, LOGURU_FORMAT_STRING_TYPE format, va_list list);
 
 	// Log without any preamble or indentation.
 	LOGURU_EXPORT
@@ -578,6 +587,9 @@ namespace loguru
 	LOGURU_EXPORT
 	LOGURU_NORETURN void log_and_abort(int stack_trace_skip, const char* expr, const char* file, unsigned line);
 
+    LOGURU_EXPORT
+    LOGURU_NORETURN void r2_log_and_abort(int stack_trace_skip, const char* expr, const char* file, unsigned line, const char* format, va_list list);
+    
 	// Flush output to stderr and files.
 	// If g_flush_interval_ms is set to non-zero, this will be called automatically this often.
 	// If not set, you do not need to call this at all.

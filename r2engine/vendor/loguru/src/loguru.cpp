@@ -596,6 +596,66 @@ namespace loguru
 
 		atexit(on_atexit);
 	}
+    
+    void r2_init(Verbosity stderrverbosity)
+    {
+        g_stderr_verbosity = stderrverbosity;
+        
+        #ifdef _WIN32
+            #define getcwd _getcwd
+        #endif
+        
+        if (!getcwd(s_current_dir, sizeof(s_current_dir)))
+        {
+            const auto error_text = errno_as_text();
+            LOG_F(WARNING, "Failed to get current working directory: %s", error_text.c_str());
+        }
+        
+        s_arguments = "";
+        
+#if LOGURU_PTLS_NAMES || LOGURU_WINTHREADS
+        set_thread_name("main thread");
+#elif LOGURU_PTHREADS
+        char old_thread_name[16] = {0};
+        auto this_thread = pthread_self();
+#if defined(__APPLE__) || defined(__linux__)
+        pthread_getname_np(this_thread, old_thread_name, sizeof(old_thread_name));
+#endif
+        if (old_thread_name[0] == 0) {
+#ifdef __APPLE__
+            pthread_setname_np("main thread");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+            pthread_set_name_np(this_thread, "main thread");
+#elif defined(__linux__)
+            pthread_setname_np(this_thread, "main thread");
+#endif
+        }
+#endif // LOGURU_PTHREADS
+        
+        if (g_stderr_verbosity >= Verbosity_INFO) {
+            if (g_preamble) {
+                char preamble_explain[LOGURU_PREAMBLE_WIDTH];
+                print_preamble_header(preamble_explain, sizeof(preamble_explain));
+                if (g_colorlogtostderr && s_terminal_has_color) {
+                    fprintf(stderr, "%s%s%s\n", terminal_reset(), terminal_dim(), preamble_explain);
+                } else {
+                    fprintf(stderr, "%s\n", preamble_explain);
+                }
+            }
+            fflush(stderr);
+        }
+        
+        if (strlen(s_current_dir) != 0)
+        {
+            LOG_F(INFO, "Current dir: %s", s_current_dir);
+        }
+        LOG_F(INFO, "stderr verbosity: %d", g_stderr_verbosity);
+        LOG_F(INFO, "-----------------------------------");
+        
+        install_signal_handlers();
+        
+        atexit(on_atexit);
+    }
 
 	void shutdown()
 	{
@@ -1331,6 +1391,12 @@ namespace loguru
 		log_to_everywhere(1, verbosity, file, line, "", buff.c_str());
 		va_end(vlist);
 	}
+        
+    void r2log(Verbosity verbosity, const char* file, unsigned line, const char* format, va_list list)
+    {
+        auto buff = vtextprintf(format, list);
+        log_to_everywhere(1, verbosity, file, line, "", buff.c_str());
+    }
 
 	void raw_log(Verbosity verbosity, const char* file, unsigned line, const char* format, ...)
 	{
@@ -1423,6 +1489,13 @@ namespace loguru
 	{
 		log_and_abort(stack_trace_skip + 1, expr, file, line, " ");
 	}
+        
+    void r2_log_and_abort(int stack_trace_skip, const char* expr, const char* file, unsigned line, const char* format, va_list list)
+    {
+        auto buff = vtextprintf(format, list);
+        log_to_everywhere(stack_trace_skip + 1, Verbosity_FATAL, file, line, expr, buff.c_str());
+        abort(); // log_to_everywhere already does this, but this makes the analyzer happy.
+    }
 
 	// ----------------------------------------------------------------------------
 	// Streams:

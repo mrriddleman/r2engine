@@ -13,6 +13,6 @@
 #include "r2/Core/Application.h"
 #include "r2/Utils/Utils.h"
 #include "r2/Core/EntryPoint.h"
-
+#include "r2/Core/Logging/Log.h"
 
 #endif /* r2_h */

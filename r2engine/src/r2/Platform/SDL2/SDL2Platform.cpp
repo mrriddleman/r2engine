@@ -74,7 +74,7 @@ namespace r2
             //@TODO(Serge): add logging for error
             return false;
         }
-        
+
         mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
         
         SDL_GL_LoadLibrary(nullptr);
@@ -131,6 +131,8 @@ namespace r2
             //@TODO(Serge): add logging for error
             return false;
         }
+        
+        
 
         return moptrWindow != nullptr && mglContext != nullptr;
     }

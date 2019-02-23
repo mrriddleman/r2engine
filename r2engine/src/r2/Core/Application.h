@@ -43,6 +43,8 @@ namespace r2
         virtual void OnEvent(evt::Event& e);
         virtual std::string GetApplicationName() const;
         virtual util::Size GetPreferredResolution() const;
+        virtual std::string GetAppLogPath() const;
+        
     };
     
     std::unique_ptr<Application> CreateApplication();

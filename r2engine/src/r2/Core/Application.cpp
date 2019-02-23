@@ -7,11 +7,13 @@
 //
 
 #include "Application.h"
+#include "r2/Platform/Platform.h"
 
 namespace r2
 {
     bool Application::Init()
     {
+        R2_LOG_I("App Init()");
         return true;
     }
     
@@ -37,7 +39,7 @@ namespace r2
     
     std::string Application::GetApplicationName() const
     {
-        return "Test App";
+        return "Test_App";
     }
     
     util::Size Application::GetPreferredResolution() const
@@ -48,6 +50,9 @@ namespace r2
         
         return res;
     }
+    
+    std::string Application::GetAppLogPath() const
+    {
+        return CPLAT.AppPath() + "logs/";
+    }
 }
-
-

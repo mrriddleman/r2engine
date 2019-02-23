@@ -17,7 +17,7 @@
 #include <vector>
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
-
+#include "r2/Core/Logging/Log.h"
 
 
 #endif /* r2pch_hpp */
