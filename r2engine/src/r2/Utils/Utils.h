@@ -19,8 +19,14 @@ using s32 = int32_t;
 using s64 = int64_t;
 
 using b32 = u32;
+using byte = u8;
 
+using uptr = uintptr_t;
 
+#define Kilobytes(x) ((x)*1024LL)
+#define Megabytes(x) (Kilobytes(x)*1024LL)
+#define Gigabytes(x) (Megabytes(x)*1024LL)
+#define Terabytes(x) (Gigabytes(x)*1024LL)
 
 namespace r2
 {
