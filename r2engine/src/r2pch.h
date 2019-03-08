@@ -15,6 +15,7 @@
 #include <functional>
 #include <algorithm>
 #include <vector>
+#include <array>
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Logging/Log.h"

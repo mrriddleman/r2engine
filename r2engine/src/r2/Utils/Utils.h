@@ -19,7 +19,7 @@ using s32 = int32_t;
 using s64 = int64_t;
 
 using b32 = u32;
-using byte = u8;
+using byte = char;
 
 using uptr = uintptr_t;
 

@@ -20,6 +20,7 @@ includeDirs["flatbuffers"] = "%{prj.name}/vendor/flatbuffers/include"
 includeDirs["miniz"] = "%{prj.name}/vendor/miniz/include"
 includeDirs["loguru"] = "%{prj.name}/vendor/loguru/src"
 includeDirs["imgui"] = "%{prj.name}/vendor/imgui"
+includeDirs["catch2"] = "%{prj.nam}/vendor/Catch2"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -44,7 +45,10 @@ project "r2engine"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/Catch2/catch/**.hpp"
 	}
 
 	includedirs
@@ -54,7 +58,8 @@ project "r2engine"
 		"%{includeDirs.flatbuffers}",
 		"%{includeDirs.miniz}",
 		"%{includeDirs.loguru}",
-		"%{includeDirs.imgui}"
+		"%{includeDirs.imgui}",
+		"%{includeDirs.catch2}"
 	}
 
 	links
@@ -176,7 +181,8 @@ project "Sandbox"
 
 	includedirs
 	{
-		"r2engine/src"
+		"r2engine/src",
+		"%{includeDirs.glm}"
 	}
 
 	links

@@ -14,6 +14,6 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/EntryPoint.h"
 #include "r2/Core/Logging/Log.h"
-
+#include "r2/Core/Memory/Memory.h"
 
 #endif /* r2_h */

@@ -16,13 +16,11 @@
 #define alignof(x) __alignof(x)
 #endif
 
-#define PTRALLOC(ptrAllocator, size, align) ptrAllocator->Allocate(size, align, __FILE__, __LINE__)
-#define REFALLOC(allocator, size, align) allocator.Allocate(size, align, __FILE__, __LINE__)
-
-#define ALLOC(allocator, T1) r2::mem::utils::Alloc<T1>(allocator, __FILE__, __LINE__)
-#define DEALLOC(allocator, objPtr) r2::mem::utils::Dealloc(allocator, objPtr, __FILE__, __LINE__)
-#define ALLOC_ARRAY(allocator, T1, length) r2::mem::utils::AllocArray<T1>(allocator, length, __FILE__, __LINE__)
-#define DEALLOC_ARRAY(allocator, T1, array) r2::mem::utils::DeallocArray<T1>(allocator, array, __FILE__, __LINE__)
+#define ALLOC(type, ARENA) r2::mem::utils::Alloc(ARENA, __FILE__, __LINE__, "")
+#define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::Alloc(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
+#define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
+#define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<TypeAndCount<type>::Type>(ARENA, TypeAndCount<type>::Count, __FILE__, __LINE__, "", IntToType<IsPOD<TypeAndCount<type>::Type>::Value>())
+#define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
 namespace r2
 {
@@ -34,7 +32,6 @@ namespace r2
             {
                 u64 size = 0;
                 void* location = nullptr;
-                char name[Kilobytes(1)];
             };
             
             struct Header
@@ -42,12 +39,26 @@ namespace r2
                 u32 size;
             };
             
+            struct MemoryTag
+            {
+                char fileName[Kilobytes(2)];
+                u64 alignment = 0;
+                u64 size = 0;
+                s32 line = -1;
+                void* memPtr = nullptr;
+                
+                MemoryTag(){}
+                MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line);
+                MemoryTag(const MemoryTag& tag);
+                MemoryTag& operator=(const MemoryTag& tag);
+                ~MemoryTag() = default;
+                MemoryTag(MemoryTag&& tag) = default;
+                MemoryTag& operator=(MemoryTag&& tag) = default;
+            };
+            
             const u32 HEADER_PAD_VALUE = 0xffffffffu;
             static const u8 DEFAULT_ALIGN = 8;
-            inline bool IsAligned(const void* p, u8 align);
-            inline void* AlignForward(void *p, u8 align);
-            inline void* AlignForward(const void *p, u8 align);
-            inline u8 AlignForwardAdjustment(const void* address, u8 alignment);
+            inline void* AlignForward(void *p, u64 align);
             inline void* PointerAdd(void* p, u64 bytes);
             inline const void* PointerAdd(const void *p, u64 bytes);
             inline void* PointerSubtract(void *p, u64 bytes);
@@ -61,97 +72,174 @@ namespace r2
             // data pointer.
             inline void Fill(Header* header, void* data, u64 size);
             static inline u64 SizeWithPadding(u64 size, u8 align);
-            
-            template<typename T>
-            inline u8 AlignForwardAdjustmentWithHeader(const void* address, u8 alignment);
         }
         
-        class Allocator
+        //From https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/
+        
+        class R2_API SingleThreadPolicy
         {
         public:
-
-            static const u32 SIZE_NOT_TRACKED = 0xffffffffu;
-            
-            Allocator(const char* name = "");
-            virtual ~Allocator() {}
-            
-            Allocator(const Allocator& other) = delete;
-            Allocator& operator=(const Allocator& other) = delete;
-            
-            virtual void* Allocate(u64 size, u8 align = utils::DEFAULT_ALIGN, const char* file = "", s32 line = -1, const char* description = "") = 0;
-            /// Frees an allocation previously made with allocate().
-            //returns true if it deallocated something
-            virtual bool Deallocate(void* ptr, const char* file = "", s32 line = -1, const char* description = "" ) = 0;
-            
-            /// Returns the amount of usable memory allocated at p. p must be a pointer
-            /// returned by allocate() that has not yet been deallocated. The value returned
-            /// will be at least the size specified to allocate(), but it can be bigger.
-            /// (The allocator may round up the allocation to fit into a set of predefined
-            /// slot sizes.)
-            ///
-            /// Not all allocators support tracking the size of individual allocations.
-            /// An allocator that doesn't suppor it will return SIZE_NOT_TRACKED.
-            virtual u64 AllocatedSize(void* p) = 0;
-            
-            /// Returns the total amount of memory allocated by this allocator. Note that the
-            /// size returned can be bigger than the size of all individual allocations made,
-            /// because the allocator may keep additional structures.
-            ///
-            /// If the allocator doesn't track memory, this function returns SIZE_NOT_TRACKED.
-            virtual u64 TotalAllocated() = 0;
-            
-            virtual bool HasHeader() const = 0;
-            
-            inline const std::string Name() const {return mName;}
-            inline const std::string BoundaryName() const {return mBoundary.name;}
-            
-        protected:
-            utils::MemBoundary mBoundary;
-            char mName[Kilobytes(1)];
+            inline void Enter() const {}
+            inline void Leave() const {}
         };
         
+        class MemoryArenaBase
+        {
+        public:
+            virtual const u64 TotalSize() const = 0;
+            virtual const void* StartPtr() const = 0;
+            virtual const u64 NumAllocations() const = 0;
+            virtual const std::vector<utils::MemoryTag> Tags() const = 0;
+        };
+        
+        class R2_API MemoryArea
+        {
+        public:
+            using Handle = s64;
+            static const Handle Invalid = -1;
+            
+            struct R2_API MemorySubArea
+            {
+                using Handle = s64;
+                static const Handle Invalid = -1;
+                //@TODO(Serge): add in a debug name?
+                utils::MemBoundary mBoundary;
+                MemoryArenaBase* mnoptrArena = nullptr;
+                
+                ~MemorySubArea();
+            };
+            
+            MemoryArea(const char* debugName);
+            bool Init(u64 sizeInBytes);
+            MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
+            utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
+            void Shutdown();
+            
+            inline std::string Name() const {return &mDebugName[0];}
+            inline const utils::MemBoundary& AreaBoundary() const {return mBoundary;}
+        private:
+            //The entire boundary of this region
+            utils::MemBoundary mBoundary;
+            //@Temporary - should be static?
+            std::vector<MemorySubArea> mSubAreas;
+            //#if defined(R2_DEBUG) || defined(R2_RELEASE)
+            std::array<char, Kilobytes(1)> mDebugName;
+            void* mCurrentNext = nullptr;
+            //char mDebugName[Kilobytes(1)];
+            //#endif
+            bool mInitialized;
+        };
+        
+        
+        template <class AllocationPolicy, class ThreadPolicy, class BoundsCheckingPolicy, class MemoryTrackingPolicy, class MemoryTaggingPolicy>
+        class R2_API MemoryArena: public MemoryArenaBase
+        {
+        public:
+            explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
+            {
+                subArea.mnoptrArena = this;
+            }
+            
+            void* Allocate(u64 size, u64 alignment, const char* file, s32 line, const char* description)
+            {
+                mThreadGuard.Enter();
+                
+                const u64 originalSize = size;
+                const u64 newSize = size + BoundsCheckingPolicy::SIZE_FRONT + BoundsCheckingPolicy::SIZE_BACK;
+                
+                byte* plainMemory = static_cast<byte*>(mAllocator.Allocate(newSize, alignment, BoundsCheckingPolicy::SIZE_FRONT));
+                
+                mBoundsChecker.GuardFront(plainMemory);
+                mMemoryTagger.TagAllocation(plainMemory + BoundsCheckingPolicy::SIZE_FRONT, originalSize);
+                mBoundsChecker.GuardBack(plainMemory + BoundsCheckingPolicy::SIZE_FRONT + originalSize);
+                
+                mMemoryTracker.OnAllocation(plainMemory, newSize, alignment, file, line, description);
+                
+                mThreadGuard.Leave();
+                
+                return plainMemory + BoundsCheckingPolicy::SIZE_FRONT;
+            }
+            
+            void Free(void* ptr, const char* file, s32 line, const char* description)
+            {
+                mThreadGuard.Enter();
+                
+                byte* originalMemory = static_cast<byte*>(ptr) - BoundsCheckingPolicy::SIZE_FRONT;
+                const u64 allocationSize = mAllocator.GetAllocationSize(originalMemory);
+                
+                mBoundsChecker.CheckFront(originalMemory);
+                mBoundsChecker.CheckBack(originalMemory + allocationSize - BoundsCheckingPolicy::SIZE_BACK);
+                
+                mMemoryTracker.OnDeallocation(originalMemory, file, line, description);
+                
+                mMemoryTagger.TagDeallocation(originalMemory, allocationSize);
+                
+                mAllocator.Free(originalMemory);
+                
+                mThreadGuard.Leave();
+            }
+            
+            virtual const u64 TotalSize() const override
+            {
+                return mAllocator.GetTotalAllocationSize();
+            }
+            
+            virtual const void* StartPtr() const override
+            {
+                return utils::PointerSubtract(mAllocator.StartPtr(), BoundsCheckingPolicy::SIZE_FRONT);
+            }
+            
+            virtual const u64 NumAllocations() const override
+            {
+                return mMemoryTracker.NumAllocations();
+            }
+            
+            virtual const std::vector<utils::MemoryTag> Tags() const override
+            {
+                return mMemoryTracker.Tags();
+            }
+            
+        private:
+            AllocationPolicy mAllocator;
+            ThreadPolicy mThreadGuard;
+            BoundsCheckingPolicy mBoundsChecker;
+            //@Note: Maybe we want this to be a reference or pointer? I think this will be tied to a per system
+            //thing
+            MemoryTrackingPolicy mMemoryTracker;
+            MemoryTaggingPolicy mMemoryTagger;
+        };
+
+        class R2_API GlobalMemory
+        {
+        public:
+            //Internal to r2
+            static bool Init(u64 numMemoryAreas);
+            static void Shutdown();
+            
+            //Can be used outside of r2
+            static MemoryArea::Handle AddMemoryArea(const char* debugName);
+            static MemoryArea* GetMemoryArea(MemoryArea::Handle handle);
+            static inline const std::vector<MemoryArea>& MemoryAreas() {return mMemoryAreas;}
+        private:
+            //@TODO(Serge): make into static array
+            static std::vector<MemoryArea> mMemoryAreas;
+        };
+
         namespace utils
         {
             // ---------------------------------------------------------------
             // Inline function implementations
             // ---------------------------------------------------------------
             
-            inline bool IsAligned(const void* p, u8 align)
-            {
-                return AlignForwardAdjustment(p, align);
-            }
-            
             // Aligns p to the specified alignment by moving it forward if necessary
             // and returns the result.
-            inline void* AlignForward(void *p, u8 align)
+            inline void* AlignForward(void *p, u64 align)
             {
-                return (void*)((reinterpret_cast<uptr>(p)+static_cast<uptr>(align - 1)) & static_cast<uptr>(~(align - 1)));
-            }
-            
-            inline void* AlignForward(const void *p, u8 align)
-            {
-                return (void*)((reinterpret_cast<uptr>(p)+static_cast<uptr>(align - 1)) & static_cast<uptr>(~(align - 1)));
-            }
-            
-            inline u8 AlignForwardAdjustment(const void* address, u8 alignment)
-            {
-                u8 adjustment =  alignment - ( reinterpret_cast<uptr>(address) & static_cast<uptr>(alignment-1) );
-                
-                if(adjustment == alignment)
-                    return 0; //already aligned
-                
-                return adjustment;
-            }
-            
-            template<typename T>
-            inline u8 AlignForwardAdjustmentWithHeader(const void* address, u8 alignment)
-            {
-                if(alignof(T) > alignment)
-                    alignment = alignof(T);
-                
-                u8 adjustment = sizeof(T) + AlignForwardAdjustment(PointerAdd(address, sizeof(T)), alignment);
-                
-                return adjustment;
+                uptr pi = uptr(p);
+                const u64 mod = pi % align;
+                if (mod)
+                    pi += (align - mod);
+                return (void *)pi;
             }
             
             /// Returns the result of advancing p by the specified number of bytes
@@ -212,29 +300,57 @@ namespace r2
                 return size + (u64)align + sizeof(Header);
             }
             
-            template <class T> T* Alloc(Allocator& allocator, const char* file = "", s32 line = -1, const char* description = "")
+            template <typename T, class ARENA>
+            T* Alloc(ARENA& arena, const char* file, s32 line, const char* description)
             {
-                return new (allocator.Allocate(sizeof(T), alignof(T), file, line, description)) T();
+                return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T();
             }
             
-            template <class T, class... Args>
-            T* Alloc(Allocator& allocator,const char* file, s32 line, const char* description, Args&&... args)
+            template <typename T, class ARENA, class... Args>
+            T* Alloc(ARENA& arena,const char* file, s32 line, const char* description, Args&&... args)
             {
-                return new (allocator.Allocate(sizeof(T), alignof(T), file, line, description)) T(std::forward<Args>(args)...);
+                return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T(std::forward<Args>(args)...);
             }
             
-            //we must call the destructor manually now since we used the placement new call for MakeNew
-            template <class T> void Dealloc(Allocator& allocator, T *p, const char* file = "", s32 line = -1, const char* description = "")
+            //we must call the destructor manually now since we used the placement new call for Alloc
+            template <typename T, class ARENA>
+            void Dealloc(T *p, ARENA& arena, const char* file = "", s32 line = -1, const char* description = "")
             {
                 if (p)
                 {
                     p->~T();
-                    allocator.Deallocate(p, file, line, description);
+                    arena.Free(p, file, line, description);
                 }
             }
             
-            //Can only be used with MallocAllocator
-            template <class T> T* AllocArray(Allocator& allocator, u64 length, const char* file = "", s32 line = -1, const char* description = "")
+            template <class T>
+            struct TypeAndCount
+            {
+            };
+            
+            template <class T, u64 N>
+            struct TypeAndCount<T[N]>
+            {
+                typedef T Type;
+                static const u64 Count = N;
+            };
+            
+            template <typename T>
+            struct IsPOD
+            {
+                static const bool Value = std::is_pod<T>::value;
+            };
+            
+            template <bool I>
+            struct IntToType
+            {
+            };
+            
+            typedef IntToType<false> NonPODType;
+            typedef IntToType<true> PODType;
+            
+            template <typename T, class ARENA>
+            T* AllocArray(ARENA& arena, u64 length, const char* file, s32 line, const char* description, NonPODType)
             {
                 assert(length != 0);
                 u8 headerSize = sizeof(u64) /sizeof(T);
@@ -242,7 +358,7 @@ namespace r2
                 if(sizeof(u64)%sizeof(T) > 0) headerSize += 1;
                 
                 //Allocate extra space to store array length in the bytes before the array
-                T* p =  ((T*) allocator.Allocate(sizeof(T)*(length + headerSize), alignof(T), file, line, description)) + headerSize;
+                T* p =  ((T*) arena.Allocate(sizeof(T)*(length + headerSize), alignof(T), file, line, description)) + headerSize;
                 
                 *(((u64*)p) - 1) = length;
                 
@@ -254,15 +370,21 @@ namespace r2
                 return p;
             }
             
-            //Can only be used with MallocAllocator
-            template<class T> void DeallocArray(Allocator& allocator, T* array, const char* file = "", s32 line = -1, const char* description = "")
+            template <typename T, class ARENA>
+            T* AllocArray(ARENA& arena, u64 length, const char* file, s32 line, const char* description, PODType)
+            {
+                return (T*)arena.Allocate(sizeof(T)*length, alignof(T), file, line, description);
+            }
+            
+            template<typename T, class ARENA>
+            void DeallocArray(T* array, ARENA& arena, const char* file, s32 line, const char* description, NonPODType)
             {
                 assert(array != nullptr);
                 
                 u64 length = *(((u64*)array) - 1);
                 
-                for(u64 i = 0; i < length; i++)
-                    array[i].~T();
+                for(u64 i = length; i > 0; --i)
+                    array[i-1].~T();
                 
                 u8 headerSize = sizeof(u64) / sizeof(T);
                 
@@ -271,7 +393,19 @@ namespace r2
                     headerSize += 1;
                 }
                 
-                allocator.Deallocate(array - headerSize, file, line, description);
+                arena.Free(array - headerSize, file, line, description);
+            }
+            
+            template<typename T, class ARENA>
+            void DeallocArray(T* array, ARENA& arena, const char* file, s32 line, const char* description, PODType)
+            {
+                arena.Free(array, file, line, description);
+            }
+            
+            template<typename T, class ARENA>
+            void DeallocArray(T* array, ARENA& arena, const char* file, s32 line, const char* description)
+            {
+                DeallocArray(array, arena, file, line, description, IntToType<IsPOD<T>::Value>());
             }
         }
     }

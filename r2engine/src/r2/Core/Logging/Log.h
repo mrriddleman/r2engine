@@ -98,9 +98,9 @@ namespace r2
 
 #define R2_LOG(verbosity_name, ...) R2_VLOG(r2::Log::verbosity_name, __VA_ARGS__)
 
-#define R2_LOG_I(...) R2_LOG(INFO, __VA_ARGS__)
-#define R2_LOG_W(...) R2_LOG(WARN, __VA_ARGS__)
-#define R2_LOG_E(...) R2_LOG(ERR, __VA_ARGS__)
+#define R2_LOGI(...) R2_LOG(INFO, __VA_ARGS__)
+#define R2_LOGW(...) R2_LOG(WARN, __VA_ARGS__)
+#define R2_LOGE(...) R2_LOG(ERR, __VA_ARGS__)
 
 #define R2_VLOG_IF(verbosity, cond, ...)                                                            \
 ((verbosity) > r2::Log::CurrentVerbosityCutoff() || (cond) == false)                          \

@@ -13,7 +13,7 @@ namespace r2
 {
     bool Application::Init()
     {
-        R2_LOG_I("App Init()");
+        R2_LOGI("App Init()");
         return true;
     }
     
