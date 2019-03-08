@@ -121,6 +121,11 @@ namespace r2
         
         MemoryArea::MemorySubArea::Handle MemoryArea::AddSubArea(u64 sizeInBytes)
         {
+            
+            if(!mInitialized)
+            {
+                return MemoryArea::MemorySubArea::Invalid;
+            }
             //first check to see if we have enough space left in the MemoryArea
             u64 bytesLeftInArea = utils::PointerOffset(mCurrentNext, utils::PointerAdd(mBoundary.location, mBoundary.size));
             
@@ -144,6 +149,11 @@ namespace r2
         
         utils::MemBoundary MemoryArea::SubAreaBoundary(MemoryArea::MemorySubArea::Handle subAreaHandle) const
         {
+            if(!mInitialized)
+            {
+                return utils::MemBoundary();
+            }
+            
             utils::MemBoundary boundary;
             R2_CHECK(subAreaHandle <  static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::MemorySubArea::Invalid, "We didn't get a proper MemorySubArea Handle!");
             
