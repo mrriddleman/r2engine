@@ -58,20 +58,21 @@ namespace r2
             
             const u32 HEADER_PAD_VALUE = 0xffffffffu;
             static const u8 DEFAULT_ALIGN = 8;
+            inline bool IsAligned(void* p, u64 align);
             inline void* AlignForward(void *p, u64 align);
             inline void* PointerAdd(void* p, u64 bytes);
             inline const void* PointerAdd(const void *p, u64 bytes);
             inline void* PointerSubtract(void *p, u64 bytes);
             inline const void* PointerSubtract(const void *p, u64 bytes);
             inline u64 PointerOffset(void* p1, void* p2);
-            inline void* DataPointer(Header *header, u8 align);
+            inline void* DataPointer(Header *header, u64 align);
             // Given a pointer to the data, returns a pointer to the header before it.
             inline Header* GetHeader(void* data);
             
             // Stores the size in the header and pads with HEADER_PAD_VALUE up to the
             // data pointer.
             inline void Fill(Header* header, void* data, u64 size);
-            static inline u64 SizeWithPadding(u64 size, u8 align);
+            static inline u64 SizeWithPadding(u64 size, u64 align);
         }
         
         //From https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/
@@ -183,7 +184,7 @@ namespace r2
             
             virtual const u64 TotalSize() const override
             {
-                return mAllocator.GetTotalAllocationSize();
+                return mAllocator.GetTotalBytesAllocated();
             }
             
             virtual const void* StartPtr() const override
@@ -238,6 +239,14 @@ namespace r2
             // Inline function implementations
             // ---------------------------------------------------------------
             
+            inline bool IsAligned(void* p, u64 align)
+            {
+                uptr pi = uptr(p);
+                const u64 mod = pi % align;
+                
+                return mod == 0;
+            }
+            
             // Aligns p to the specified alignment by moving it forward if necessary
             // and returns the result.
             inline void* AlignForward(void *p, u64 align)
@@ -276,7 +285,7 @@ namespace r2
                 return (uptr*)p2 - (uptr*)p1;
             }
             
-            inline void * DataPointer(Header *header, u8 align) {
+            inline void * DataPointer(Header *header, u64 align) {
                 void *p = header + 1;
                 return AlignForward(p, align);
             }
@@ -302,7 +311,7 @@ namespace r2
                     *p++ = HEADER_PAD_VALUE;
             }
             
-            static inline u64 SizeWithPadding(u64 size, u8 align)
+            static inline u64 SizeWithPadding(u64 size, u64 align)
             {
                 return size + (u64)align + sizeof(Header);
             }
