@@ -13,6 +13,7 @@
 #include "r2/Platform/Platform.h"
 #include <cassert>
 #include "imgui.h"
+#include "r2/Core/Memory/Memory.h"
 
 namespace r2
 {
@@ -30,6 +31,8 @@ namespace r2
     {
         if(app)
         {
+            r2::mem::GlobalMemory::Init<1>();
+            
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
             //@TODO(Serge): should check to see if the app initialized!
@@ -58,6 +61,8 @@ namespace r2
     void Engine::Shutdown()
     {
         mLayerStack.ShutdownAll();
+        
+        r2::mem::GlobalMemory::Shutdown();
     }
     
     void Engine::Render(float alpha)

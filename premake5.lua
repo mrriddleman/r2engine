@@ -20,7 +20,7 @@ includeDirs["flatbuffers"] = "%{prj.name}/vendor/flatbuffers/include"
 includeDirs["miniz"] = "%{prj.name}/vendor/miniz/include"
 includeDirs["loguru"] = "%{prj.name}/vendor/loguru/src"
 includeDirs["imgui"] = "%{prj.name}/vendor/imgui"
-includeDirs["catch2"] = "%{prj.nam}/vendor/Catch2"
+includeDirs["catch2"] = "r2engine/vendor/Catch2"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -145,7 +145,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 		defines
 		{
-			R2_PLATFORM_LINUX
+			"R2_PLATFORM_LINUX"
 		}
 
 	filter "configurations:Debug"
@@ -163,6 +163,50 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		runtime "Release"
 		optimize "On"
 		
+
+project "r2Tests"
+	location "r2Tests"
+	kind "ConsoleApp"
+	language "C++"
+
+	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"%{prj.name}/src/**.h",
+		"%{prj.name}/src/**.cpp"
+	}
+
+	includedirs
+	{
+		"%{includeDirs.catch2}",
+		"r2engine/src"
+	}
+
+	links
+	{
+		"r2engine"
+	}
+
+	filter "system:windows"
+	cppdialect "C++17"
+	systemversion "latest"
+
+	defines
+	{
+		"R2_PLATFORM_WINDOWS"
+	}
+
+	filter "system:macosx"
+	cppdialect "C++17"
+	systemversion "latest"
+
+	defines
+	{
+		"R2_PLATFORM_MAC"
+	}
+
 
 project "Sandbox"
 	location "Sandbox"
@@ -214,6 +258,6 @@ project "Sandbox"
 
 		defines
 		{
-			R2_PLATFORM_LINUX
+			"R2_PLATFORM_LINUX"
 		}
 

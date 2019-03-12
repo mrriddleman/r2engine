@@ -41,7 +41,7 @@ namespace r2
             
             struct MemoryTag
             {
-                char fileName[Kilobytes(2)];
+                char fileName[Kilobytes(1)];
                 u64 alignment = 0;
                 u64 size = 0;
                 s32 line = -1;
@@ -105,11 +105,10 @@ namespace r2
                 //@TODO(Serge): add in a debug name?
                 utils::MemBoundary mBoundary;
                 MemoryArenaBase* mnoptrArena = nullptr;
-                
-                ~MemorySubArea();
             };
             
             MemoryArea(const char* debugName);
+            ~MemoryArea();
             bool Init(u64 sizeInBytes);
             MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
             utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
@@ -117,6 +116,9 @@ namespace r2
             
             inline std::string Name() const {return &mDebugName[0];}
             inline const utils::MemBoundary& AreaBoundary() const {return mBoundary;}
+            
+            inline const std::vector<MemorySubArea>& SubAreas() const {return mSubAreas;}
+            
         private:
             //The entire boundary of this region
             utils::MemBoundary mBoundary;
@@ -213,7 +215,12 @@ namespace r2
         {
         public:
             //Internal to r2
-            static bool Init(u64 numMemoryAreas);
+            template<u64 N>
+            constexpr static bool Init()
+            {
+                mMemoryAreas.reserve(static_cast<size_t>(N));
+                return true;
+            }
             static void Shutdown();
             
             //Can be used outside of r2

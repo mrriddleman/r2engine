@@ -14,12 +14,6 @@ namespace r2
     {
         std::vector<MemoryArea> GlobalMemory::mMemoryAreas;
         
-        bool GlobalMemory::Init(u64 numMemoryAreas)
-        {
-            mMemoryAreas.reserve(static_cast<size_t>(numMemoryAreas));
-            return true;
-        }
-        
         void GlobalMemory::Shutdown()
         {
             for(MemoryArea& area : mMemoryAreas)
@@ -33,8 +27,8 @@ namespace r2
         //Can be used outside of r2
         MemoryArea::Handle GlobalMemory::AddMemoryArea(const char* debugName)
         {
-            R2_CHECK(mMemoryAreas.size() + 1 < mMemoryAreas.capacity(), "We shouldn't be able to add more MemoryAreas than expected");
-            if(mMemoryAreas.size() + 1 < mMemoryAreas.capacity())
+            R2_CHECK(mMemoryAreas.size() + 1 <= mMemoryAreas.capacity(), "We shouldn't be able to add more MemoryAreas than expected");
+            if(mMemoryAreas.size() + 1 <= mMemoryAreas.capacity())
             {
                 mMemoryAreas.emplace_back(debugName);
                 return static_cast<MemoryArea::Handle>(mMemoryAreas.size() - 1);
@@ -89,7 +83,15 @@ namespace r2
                 return *this;
             }
         }
-
+        
+        const MemoryArea::Handle MemoryArea::Invalid;
+        const MemoryArea::MemorySubArea::Handle MemoryArea::MemorySubArea::Invalid;
+        
+        MemoryArea::~MemoryArea()
+        {
+            Shutdown();
+        }
+        
         MemoryArea::MemoryArea(const char* debugName):mInitialized(false)
         {
             strcpy(&mDebugName[0], debugName);
@@ -129,7 +131,7 @@ namespace r2
             //first check to see if we have enough space left in the MemoryArea
             u64 bytesLeftInArea = utils::PointerOffset(mCurrentNext, utils::PointerAdd(mBoundary.location, mBoundary.size));
             
-            R2_CHECK(sizeInBytes <= bytesLeftInArea, "Requested too many bytes for this MemoryArea to hold!");
+            //R2_CHECK(sizeInBytes <= bytesLeftInArea, "Requested too many bytes for this MemoryArea to hold!");
             
             if(sizeInBytes <= bytesLeftInArea)
             {
@@ -171,21 +173,16 @@ namespace r2
             {
                 mSubAreas.clear();
                 
-                free(mBoundary.location);
+                if(mBoundary.location)
+                {
+                    free(mBoundary.location);
+                }
                 
                 mBoundary.location = nullptr;
                 mBoundary.size = 0;
                 mCurrentNext = nullptr;
                 mInitialized = false;
             }
-        }
-        
-        MemoryArea::MemorySubArea::~MemorySubArea()
-        {
-            R2_CHECK(mnoptrArena && mnoptrArena->NumAllocations() == 0, "We shouldn't have anymore allocations at this point");
-            mnoptrArena = nullptr;
-            mBoundary.location = nullptr;
-            mBoundary.size = 0;
         }
     }
 }
