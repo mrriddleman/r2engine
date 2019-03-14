@@ -69,7 +69,6 @@ project "r2engine"
 		"imgui"
 	}
 
-
 	configuration { "macosx" }
 		buildoptions 
 		{
@@ -162,6 +161,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		defines "R2_PUBLISH"
 		runtime "Release"
 		optimize "On"
+
 		
 
 project "r2Tests"
@@ -190,22 +190,22 @@ project "r2Tests"
 	}
 
 	filter "system:windows"
-	cppdialect "C++17"
-	systemversion "latest"
+		cppdialect "C++17"
+		systemversion "latest"
 
-	defines
-	{
-		"R2_PLATFORM_WINDOWS"
-	}
+		defines
+		{
+			"R2_PLATFORM_WINDOWS"
+		}
 
 	filter "system:macosx"
-	cppdialect "C++17"
-	systemversion "latest"
+		cppdialect "C++17"
+		systemversion "latest"
 
-	defines
-	{
-		"R2_PLATFORM_MAC"
-	}
+		defines
+		{
+			"R2_PLATFORM_MAC"
+		}
 
 
 project "Sandbox"
@@ -260,4 +260,19 @@ project "Sandbox"
 		{
 			"R2_PLATFORM_LINUX"
 		}
+
+	filter "configurations:Debug"
+		defines "R2_DEBUG"
+		runtime "Debug"
+		symbols "On"
+
+	filter "configurations:Release"
+		defines "R2_RELEASE"
+		runtime "Release"
+		optimize "On"
+
+	filter "configurations:Publish"
+		defines "R2_PUBLISH"
+		runtime "Release"
+		optimize "On"
 

@@ -20,7 +20,11 @@ namespace r2
             inline void OnDeallocation(void*, const char* file, s32 line, const char* description) const {}
         
             inline u64 NumAllocations() const {return 0;}
-            inline const std::vector<utils::MemoryTag>& Tags() const;
+            inline const std::vector<utils::MemoryTag>& Tags() const
+            {
+                static std::vector<utils::MemoryTag> tags;
+                return tags;
+            }
         };
         
         class R2_API BasicMemoryTracking

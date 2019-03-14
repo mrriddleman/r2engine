@@ -16,10 +16,10 @@
 #define alignof(x) __alignof(x)
 #endif
 
-#define ALLOC(type, ARENA) r2::mem::utils::Alloc(ARENA, __FILE__, __LINE__, "")
-#define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::Alloc(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
+#define ALLOC(T, ARENA) r2::mem::utils::Alloc<T>(ARENA, __FILE__, __LINE__, "")
+#define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::AllocParams<type>(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
 #define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
-#define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<TypeAndCount<type>::Type>(ARENA, TypeAndCount<type>::Count, __FILE__, __LINE__, "", IntToType<IsPOD<TypeAndCount<type>::Type>::Value>())
+#define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
 namespace r2
@@ -113,13 +113,12 @@ namespace r2
             bool Init(u64 sizeInBytes);
             MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
             utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
+            MemorySubArea* GetSubArea(MemorySubArea::Handle);
             void Shutdown();
             
             inline std::string Name() const {return &mDebugName[0];}
             inline const utils::MemBoundary& AreaBoundary() const {return mBoundary;}
-            
             inline const std::vector<MemorySubArea>& SubAreas() const {return mSubAreas;}
-            
         private:
             //The entire boundary of this region
             utils::MemBoundary mBoundary;
@@ -323,7 +322,7 @@ namespace r2
             }
             
             template <typename T, class ARENA, class... Args>
-            T* Alloc(ARENA& arena,const char* file, s32 line, const char* description, Args&&... args)
+            T* AllocParams(ARENA& arena,const char* file, s32 line, const char* description, Args&&... args)
             {
                 return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T(std::forward<Args>(args)...);
             }
@@ -368,7 +367,7 @@ namespace r2
             template <typename T, class ARENA>
             T* AllocArray(ARENA& arena, u64 length, const char* file, s32 line, const char* description, NonPODType)
             {
-                assert(length != 0);
+                R2_CHECK(length != 0, "Can't make a 0 length Array");
                 u8 headerSize = sizeof(u64) /sizeof(T);
                 
                 if(sizeof(u64)%sizeof(T) > 0) headerSize += 1;
@@ -389,6 +388,7 @@ namespace r2
             template <typename T, class ARENA>
             T* AllocArray(ARENA& arena, u64 length, const char* file, s32 line, const char* description, PODType)
             {
+                R2_CHECK(length != 0, "Can't make a 0 length Array");
                 return (T*)arena.Allocate(sizeof(T)*length, alignof(T), file, line, description);
             }
             

@@ -167,6 +167,22 @@ namespace r2
             return boundary;
         }
         
+        MemoryArea::MemorySubArea* MemoryArea::GetSubArea(MemoryArea::MemorySubArea::Handle subAreaHandle)
+        {
+            if(!mInitialized)
+            {
+                return nullptr;
+            }
+            
+            MemoryArea::MemorySubArea* subArea = nullptr;
+            if(subAreaHandle < static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::MemorySubArea::Invalid)
+            {
+                subArea = &mSubAreas[static_cast<size_t>(subAreaHandle)];
+            }
+            
+            return subArea;
+        }
+        
         void MemoryArea::Shutdown()
         {
             if (mInitialized)
