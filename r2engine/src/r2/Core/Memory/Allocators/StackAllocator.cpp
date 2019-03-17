@@ -1,0 +1,135 @@
+//
+//  StackAllocator.cpp
+//  r2engine
+//
+//  Created by Serge Lansiquot on 2019-03-16.
+//
+
+#include "StackAllocator.h"
+
+namespace r2
+{
+    namespace mem
+    {
+        
+        /*
+         Stack Header (Each 4 bytes)
+         +-----------------+-------------------+---------------+
+         | Allocation Size | Allocation Offset | Allocation ID |
+         +-----------------+-------------------+---------------+
+         */
+        
+        namespace
+        {
+            static const u64 SIZE_OF_ALLOCATION_OFFSET = sizeof(u32);
+            static_assert(SIZE_OF_ALLOCATION_OFFSET == 4, "Allocation offset has wrong size.");
+            static const u64 NUM_HEADERS = 3;
+        }
+        
+        StackAllocator::StackAllocator(const utils::MemBoundary& boundary):mStart(boundary.location), mEnd(utils::PointerAdd(mStart, boundary.size)), mCurrent(mStart), mLastAllocationID(-1)
+        {
+            
+        }
+        
+        StackAllocator::~StackAllocator()
+        {
+#if R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
+            R2_CHECK(mStart == mCurrent, "We still have Memory Allocated!!");
+#endif
+            mStart = nullptr;
+            mEnd = nullptr;
+            mCurrent = nullptr;
+        }
+        
+        void* StackAllocator::Allocate(u64 size, u64 alignment, u64 offset)
+        {
+            size += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
+            offset += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
+            
+            const u32 allocationOffset = utils::PointerOffset(mCurrent, mStart);
+            
+            void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset), alignment), offset);
+            
+            if(utils::PointerAdd(pointer, size) > mEnd)
+            {
+                R2_CHECK(false, "We can't fit that size!");
+                return nullptr;
+            }
+            
+            mCurrent = utils::PointerAdd(pointer, size);
+            
+            union
+            {
+                void * as_void;
+                byte * as_byte;
+                u32 * as_u32;
+            };
+            
+            as_byte = (byte*)pointer;
+            
+            *as_u32 = static_cast<u32>(size);
+            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            *as_u32 = allocationOffset;
+            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            *as_u32 = ++mLastAllocationID;
+            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            
+            return as_void;
+        }
+        
+        void StackAllocator::Free(void* memoryPtr)
+        {
+            R2_CHECK(memoryPtr != nullptr, "Why you giving me a nullptr bro?");
+            
+            R2_CHECK(utils::PointerSubtract(memoryPtr, SIZE_OF_ALLOCATION_OFFSET*2) >= mStart, "You're outside of the proper allocator range bro!");
+            
+            R2_CHECK(memoryPtr < mCurrent, "The memoryPtr can't be beyond our current pointer!");
+
+            union
+            {
+                void * as_void;
+                byte * as_byte;
+                u32 * as_u32;
+            };
+            
+            as_void = memoryPtr;
+            
+            as_byte -= SIZE_OF_ALLOCATION_OFFSET;
+
+#ifdef STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER
+            const u32 allocationId = *as_u32;
+            R2_CHECK(allocationId == mLastAllocationID, "Hey you're trying to free memory out of order!");
+#endif
+            as_byte -= SIZE_OF_ALLOCATION_OFFSET;
+            const u32 allocationOffset = *as_u32;
+            
+            mCurrent = utils::PointerAdd(mStart, allocationOffset);
+            
+            --mLastAllocationID;
+        }
+        
+        u32 StackAllocator::GetAllocationSize(void* memoryPtr) const
+        {
+            R2_CHECK(memoryPtr != nullptr, "Why you giving me a nullptr bro?");
+            
+            R2_CHECK(utils::PointerSubtract(memoryPtr, SIZE_OF_ALLOCATION_OFFSET*2) >= mStart, "You're outside of the proper allocator range bro!");
+            
+            R2_CHECK(memoryPtr < mCurrent, "The memoryPtr can't be beyond our current pointer!");
+
+            union
+            {
+                void * as_void;
+                byte * as_byte;
+                u32 * as_u32;
+            };
+            
+            as_void = memoryPtr;
+            
+            as_byte -= SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS-1;
+            
+            const u32 allocationSize = *as_u32;
+            
+            return allocationSize;
+        }
+    }
+}

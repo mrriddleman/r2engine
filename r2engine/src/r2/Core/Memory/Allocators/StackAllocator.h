@@ -1,34 +1,35 @@
 //
-//  LinearAllocator.h
+//  StackAllocator.h
 //  r2engine
 //
-//  Created by Serge Lansiquot on 2019-03-11.
+//  Created by Serge Lansiquot on 2019-03-16.
 //
 
-#ifndef LinearAllocator_h
-#define LinearAllocator_h
+#ifndef StackAllocator_h
+#define StackAllocator_h
+
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/MemoryBoundsChecking.h"
 #include "r2/Core/Memory/MemoryTagging.h"
 #include "r2/Core/Memory/MemoryTracking.h"
-/*Based on:
- https://blog.molecular-matters.com/2012/08/14/memory-allocation-strategies-a-linear-allocator/
- */
+
+#ifndef STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER
+    #define STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER 1
+#endif
 
 namespace r2
 {
     namespace mem
     {
-        class LinearAllocator
+        class StackAllocator
         {
         public:
-            explicit LinearAllocator(const utils::MemBoundary& boundary);
+            explicit StackAllocator(const utils::MemBoundary& boundary);
             
-            ~LinearAllocator();
-
+            ~StackAllocator();
+            
             void* Allocate(u64 size, u64 alignment, u64 offset);
             void Free(void* ptr);
-            void Reset(void);
             
             u32 GetAllocationSize(void* memoryPtr) const;
             
@@ -39,15 +40,18 @@ namespace r2
             void* mStart;
             void* mEnd;
             void* mCurrent;
+            
+            s32 mLastAllocationID;
         };
         
         //@TODO(Serge): Add in more verbose tracking etc
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
-        typedef MemoryArena<LinearAllocator, SingleThreadPolicy, BasicBoundsChecking, BasicMemoryTracking, BasicMemoryTagging> LinearArena;
+        typedef MemoryArena<StackAllocator, SingleThreadPolicy, BasicBoundsChecking, BasicMemoryTracking, BasicMemoryTagging> StackArena;
 #else
-        typedef MemoryArena<LinearAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> LinearArena;
+        typedef MemoryArena<StackAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> StackArena;
 #endif
+    
     }
 }
 
-#endif /* LinearAllocator_h */
+#endif /* StackAllocator_h */

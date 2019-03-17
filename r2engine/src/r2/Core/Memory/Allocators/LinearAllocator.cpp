@@ -18,7 +18,12 @@ namespace r2
         
         LinearAllocator::~LinearAllocator()
         {
-            //R2_CHECK(mStart == mCurrent, "We still have Memory Allocated!!");
+#if R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
+            R2_CHECK(mStart == mCurrent, "We still have Memory Allocated!!");
+#endif
+            mStart = nullptr;
+            mEnd = nullptr;
+            mCurrent = nullptr;
         }
         
         void* LinearAllocator::Allocate(u64 size, u64 alignment, u64 offset)
@@ -70,11 +75,6 @@ namespace r2
             utils::Header* header = (utils::Header*)utils::PointerSubtract(memoryPtr, sizeof(utils::Header));
 
             return header->size;
-        }
-        
-        u64 LinearAllocator::GetTotalBytesAllocated() const
-        {
-            return utils::PointerOffset(mCurrent, mStart);
         }
     }
 }
