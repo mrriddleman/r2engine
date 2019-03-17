@@ -154,7 +154,7 @@ private:
     int mX;
 };
 
-TEST_CASE("Test Linear Memory Arena")
+TEST_CASE("Test Linear Memory Arena No Checking")
 {
     r2::mem::GlobalMemory::Init<1>();
     SECTION("Test Linear Allocator Arena")

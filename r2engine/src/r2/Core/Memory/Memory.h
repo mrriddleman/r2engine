@@ -212,8 +212,6 @@ namespace r2
             AllocationPolicy mAllocator;
             ThreadPolicy mThreadGuard;
             BoundsCheckingPolicy mBoundsChecker;
-            //@Note: Maybe we want this to be a reference or pointer? I think this will be tied to a per system
-            //thing
             MemoryTrackingPolicy mMemoryTracker;
             MemoryTaggingPolicy mMemoryTagger;
         };
