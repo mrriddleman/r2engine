@@ -46,7 +46,7 @@ namespace r2
             size += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             offset += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             
-            const u32 allocationOffset = utils::PointerOffset(mCurrent, mStart);
+            const u32 allocationOffset = static_cast<u32>(utils::PointerOffset(mCurrent, mStart));
             
             void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset), alignment), offset);
             
@@ -73,6 +73,8 @@ namespace r2
             as_byte += SIZE_OF_ALLOCATION_OFFSET;
             *as_u32 = ++mLastAllocationID;
             as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            
+            R2_CHECK(utils::IsAligned(utils::PointerAdd(as_void, offset), alignment), "The pointer to the actual memory is not aligned!!!!!");
             
             return as_void;
         }

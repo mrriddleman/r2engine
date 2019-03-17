@@ -35,6 +35,9 @@ namespace r2
             struct MemBoundary
             {
                 u64 size = 0;
+                u64 elementSize = 0;
+                u64 alignment = 0;
+                u64 offset = 0;
                 void* location = nullptr;
             };
             
