@@ -147,17 +147,17 @@ class TestClass
 {
 public:
     TestClass():x(0){}
-    int Square() const {return x * x;}
-    int x;
+    u64 Square() const {return x * x;}
+    u64 x;
 };
 
 class TestClass2
 {
 public:
-    TestClass2(int x):mX(x){}
-    inline int X() const {return mX;}
+    TestClass2(u64 x):mX(x){}
+    inline u64 X() const {return mX;}
 private:
-    int mX;
+    u64 mX;
 };
 
 TEST_CASE("Test Linear Memory Arena No Checking")
@@ -270,7 +270,7 @@ TEST_CASE("Test Stack Allocator")
         
         char* stringPtr = static_cast<char*>(firstStackAllocation);
         
-        memset(stringPtr, '\0', Kilobytes(0));
+        memset(stringPtr, '\0', Kilobytes(1));
 
         strcpy(stringPtr, "My String");
         
@@ -366,6 +366,170 @@ TEST_CASE("Test Stack Memory Arena No Checking")
         REQUIRE(testArray[9].Square() == 81);
         
         FREE_ARRAY(testArray, stackArena);
+    }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Pool Allocator")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    SECTION("Test Pool Allocator")
+    {
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1));
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::utils::MemBoundary poolBoundary = testMemoryArea->SubAreaBoundary(subAreaHandle);
+        
+        poolBoundary.elementSize = 32;
+        poolBoundary.offset = 0;
+        poolBoundary.alignment = alignof(u64);
+        
+        r2::mem::PoolAllocator poolAllocator(poolBoundary);
+        
+        REQUIRE(poolAllocator.StartPtr() == poolBoundary.location);
+        REQUIRE(poolAllocator.GetTotalMemory() == Megabytes(1));
+        REQUIRE(poolAllocator.GetTotalBytesAllocated() == 0);
+        REQUIRE(poolAllocator.NumElementsAllocated() == 0);
+        
+        const u64 TOTAL_NUM_ELEMENTS = poolAllocator.TotalElements();
+        
+        void* poolElement = poolAllocator.Allocate(poolBoundary.elementSize, alignof(u64), 0);
+        
+        REQUIRE(poolAllocator.GetAllocationSize(poolElement) == poolBoundary.elementSize);
+        REQUIRE(poolAllocator.NumElementsAllocated() == 1);
+        REQUIRE(poolAllocator.GetTotalBytesAllocated() == poolBoundary.elementSize);
+        
+        char* stringPtr = static_cast<char*>(poolElement);
+        
+        memset(stringPtr, '\0', poolBoundary.elementSize);
+        
+        strcpy(stringPtr, "My String");
+        
+        size_t lengthOfString = strlen(stringPtr);
+        
+        REQUIRE(lengthOfString == 9);
+        
+        REQUIRE(strcmp(stringPtr, "My String") == 0);
+        
+        poolAllocator.Free(poolElement);
+        
+        REQUIRE(poolAllocator.NumElementsAllocated() == 0);
+        REQUIRE(poolAllocator.GetTotalBytesAllocated() == 0);
+        
+        std::vector<void*> poolElements;
+        
+        poolElements.reserve(TOTAL_NUM_ELEMENTS);
+        
+        //Max out the pool
+        for (u64 i = 0; i < TOTAL_NUM_ELEMENTS; ++i)
+        {
+            void* pointer = poolAllocator.Allocate(poolBoundary.elementSize, poolBoundary.alignment, poolBoundary.offset);
+            REQUIRE(pointer != nullptr);
+            REQUIRE(poolAllocator.GetAllocationSize(pointer) == poolBoundary.elementSize);
+            REQUIRE(poolAllocator.NumElementsAllocated() == i+1);
+            
+            poolElements.push_back(pointer);
+        }
+        
+        REQUIRE(poolAllocator.Allocate(poolBoundary.elementSize, poolBoundary.alignment, poolBoundary.offset) == nullptr);
+        
+        REQUIRE(poolAllocator.NumElementsAllocated() == TOTAL_NUM_ELEMENTS);
+        REQUIRE(poolAllocator.GetTotalBytesAllocated() == TOTAL_NUM_ELEMENTS*poolBoundary.elementSize);
+        
+        for (u64 i = TOTAL_NUM_ELEMENTS; i > 0; --i)
+        {
+            poolAllocator.Free(poolElements[i-1]);
+            REQUIRE(poolAllocator.NumElementsAllocated() == i-1);
+            REQUIRE(poolAllocator.GetTotalBytesAllocated() == poolAllocator.NumElementsAllocated()*poolBoundary.elementSize);
+        }
+        poolElements.clear();
+        
+        REQUIRE(poolAllocator.NumElementsAllocated() == 0);
+        REQUIRE(poolAllocator.GetTotalBytesAllocated() == 0);
+    }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Pool Memory Arena No Checking")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    SECTION("Test Pool Allocator Arena")
+    {
+        //
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1));
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::utils::MemBoundary* boundary = testMemoryArea->SubAreaBoundaryPtr(subAreaHandle);
+        
+        REQUIRE(boundary != nullptr);
+        boundary->elementSize = 64 * sizeof(TestClass);
+        boundary->alignment = alignof(TestClass);
+        boundary->offset = 0;
+        
+        r2::mem::PoolArena poolArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        
+        TestClass* tc = ALLOC(TestClass, poolArena);
+        
+        tc->x = 5;
+        
+        REQUIRE(tc->x == 5);
+        
+        FREE(tc, poolArena);
+        
+        TestClass2* tc2 = ALLOC_PARAMS(TestClass2, poolArena, 10);
+        
+        REQUIRE(tc2->X() == 10);
+        
+        FREE(tc2, poolArena);
+        
+        TestClass* testArray = ALLOC_ARRAY(TestClass[10], poolArena);
+        
+        for (size_t i = 0; i < 10; ++i)
+        {
+            testArray[i].x = i;
+        }
+        
+        REQUIRE(testArray[9].Square() == 81);
+        
+        FREE_ARRAY(testArray, poolArena);
     }
     r2::mem::GlobalMemory::Shutdown();
 }

@@ -120,6 +120,7 @@ namespace r2
             bool Init(u64 sizeInBytes);
             MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
             utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
+            utils::MemBoundary* SubAreaBoundaryPtr(MemorySubArea::Handle);
             MemorySubArea* GetSubArea(MemorySubArea::Handle);
             void Shutdown();
             

@@ -27,7 +27,8 @@ namespace r2
             void Free(void* ptr);
             
             u32 GetAllocationSize(void* memoryPtr) const;
-            
+            u64 TotalElements() const {return mFreeList.NumElements();}
+            u64 NumElementsAllocated() const {return mNumAllocations;}
             //I think this is wrong since this doesn't take into account the alignment
             inline u64 GetTotalBytesAllocated() const {return mElementSize * mNumAllocations;}
             inline u64 GetTotalMemory() const {return utils::PointerOffset(mStart, mEnd);}
@@ -39,8 +40,10 @@ namespace r2
                 Freelist(void* start, void* end, u64 elementSize, u64 alignment, u64 offset);
                 inline void* Obtain(void);
                 inline void Return(void* memoryPtr);
+                inline u64 NumElements() const {return mNumElements;}
             private:
                 Freelist* mNext;
+                u64 mNumElements;
             };
             
             Freelist mFreeList;

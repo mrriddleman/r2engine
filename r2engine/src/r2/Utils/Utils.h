@@ -42,6 +42,10 @@ namespace r2
             s32 x = 0, y = 0;
             s32 w = 0, h = 0;
         };
+        
+        u32 NextPowerOfTwo32Bit(u32 n);
+        u64 NextPowerOfTwo64Bit(u64 n);
+        bool IsPowerOfTwo(u64 n);
     }
 }
 
