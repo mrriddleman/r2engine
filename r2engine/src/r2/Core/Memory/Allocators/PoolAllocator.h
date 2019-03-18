@@ -30,7 +30,7 @@ namespace r2
             
             //I think this is wrong since this doesn't take into account the alignment
             inline u64 GetTotalBytesAllocated() const {return mElementSize * mNumAllocations;}
-            inline u64 GetTotalMemory() const {return utils::PointerOffset(mEnd, mStart);}
+            inline u64 GetTotalMemory() const {return utils::PointerOffset(mStart, mEnd);}
             inline const void* StartPtr() const {return mStart;}
         private:
             class Freelist

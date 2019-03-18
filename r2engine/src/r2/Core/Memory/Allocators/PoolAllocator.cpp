@@ -69,7 +69,7 @@ namespace r2
             
             as_self = static_cast<Freelist*>(utils::PointerAdd(pointer, offset));
             
-            u64 totalMem = utils::PointerOffset(end, as_void);
+            u64 totalMem = utils::PointerOffset(as_void, end);
             R2_CHECK(totalMem % elementSize == 0, "totalMem should be a multiple of elementSize");
             u64 numElements = totalMem/elementSize;
             

@@ -33,8 +33,8 @@ namespace r2
             
             u32 GetAllocationSize(void* memoryPtr) const;
             
-            inline u64 GetTotalBytesAllocated() const {return utils::PointerOffset(mCurrent, mStart);}
-            inline u64 GetTotalMemory() const {return utils::PointerOffset(mEnd, mStart);}
+            inline u64 GetTotalBytesAllocated() const {return utils::PointerOffset(mStart, mCurrent);}
+            inline u64 GetTotalMemory() const {return utils::PointerOffset(mStart, mEnd);}
             inline const void* StartPtr() const {return mStart;}
         private:
             void* mStart;

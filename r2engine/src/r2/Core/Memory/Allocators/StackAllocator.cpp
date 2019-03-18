@@ -26,7 +26,7 @@ namespace r2
             static const u64 NUM_HEADERS = 3;
         }
         
-        StackAllocator::StackAllocator(const utils::MemBoundary& boundary):mStart(boundary.location), mEnd(utils::PointerAdd(mStart, boundary.size)), mCurrent(mStart), mLastAllocationID(-1)
+        StackAllocator::StackAllocator(const utils::MemBoundary& boundary):mStart(boundary.location), mEnd(utils::PointerAdd(boundary.location, boundary.size)), mCurrent(mStart), mLastAllocationID(-1)
         {
             
         }
@@ -43,10 +43,11 @@ namespace r2
         
         void* StackAllocator::Allocate(u64 size, u64 alignment, u64 offset)
         {
+            u64 originalSize = size;
             size += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             offset += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             
-            const u32 allocationOffset = static_cast<u32>(utils::PointerOffset(mCurrent, mStart));
+            const u32 allocationOffset = static_cast<u32>(utils::PointerOffset(mStart, mCurrent));
             
             void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset), alignment), offset);
             
@@ -65,14 +66,14 @@ namespace r2
                 u32 * as_u32;
             };
             
-            as_byte = (byte*)pointer;
+            as_void = pointer;
             
-            *as_u32 = static_cast<u32>(size);
-            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            *as_u32 = static_cast<u32>(originalSize);
+            as_void = utils::PointerAdd(as_void, SIZE_OF_ALLOCATION_OFFSET);
             *as_u32 = allocationOffset;
-            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            as_void = utils::PointerAdd(as_void, SIZE_OF_ALLOCATION_OFFSET);
             *as_u32 = ++mLastAllocationID;
-            as_byte += SIZE_OF_ALLOCATION_OFFSET;
+            as_void = utils::PointerAdd(as_void, SIZE_OF_ALLOCATION_OFFSET);
             
             R2_CHECK(utils::IsAligned(utils::PointerAdd(as_void, offset), alignment), "The pointer to the actual memory is not aligned!!!!!");
             
@@ -95,14 +96,15 @@ namespace r2
             };
             
             as_void = memoryPtr;
-            
-            as_byte -= SIZE_OF_ALLOCATION_OFFSET;
 
+            //Should give us the allocation id
+            as_void = utils::PointerSubtract(as_void, SIZE_OF_ALLOCATION_OFFSET);
+            
 #ifdef STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER
             const u32 allocationId = *as_u32;
             R2_CHECK(allocationId == mLastAllocationID, "Hey you're trying to free memory out of order!");
 #endif
-            as_byte -= SIZE_OF_ALLOCATION_OFFSET;
+            as_void = utils::PointerSubtract(as_void, SIZE_OF_ALLOCATION_OFFSET);
             const u32 allocationOffset = *as_u32;
             
             mCurrent = utils::PointerAdd(mStart, allocationOffset);
@@ -114,7 +116,7 @@ namespace r2
         {
             R2_CHECK(memoryPtr != nullptr, "Why you giving me a nullptr bro?");
             
-            R2_CHECK(utils::PointerSubtract(memoryPtr, SIZE_OF_ALLOCATION_OFFSET*2) >= mStart, "You're outside of the proper allocator range bro!");
+            R2_CHECK(utils::PointerSubtract(memoryPtr, SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS) >= mStart, "You're outside of the proper allocator range bro!");
             
             R2_CHECK(memoryPtr < mCurrent, "The memoryPtr can't be beyond our current pointer!");
 
@@ -127,7 +129,7 @@ namespace r2
             
             as_void = memoryPtr;
             
-            as_byte -= SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS-1;
+            as_void = utils::PointerSubtract(as_void, SIZE_OF_ALLOCATION_OFFSET*(NUM_HEADERS));
             
             const u32 allocationSize = *as_u32;
             

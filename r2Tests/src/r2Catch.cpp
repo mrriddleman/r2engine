@@ -9,6 +9,8 @@
 #include "catch/catch.hpp"
 #include "r2.h"
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
+#include "r2/Core/Memory/Allocators/StackAllocator.h"
+#include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include <cstring>
 
 TEST_CASE("TEST GLOBAL MEMORY")
@@ -92,6 +94,10 @@ TEST_CASE("TEST LINEAR ALLOCATOR")
         r2::mem::LinearAllocator linearAllocator(testMemoryArea->SubAreaBoundary(subAreaHandle));
         
         REQUIRE(linearAllocator.GetTotalBytesAllocated() == 0);
+        
+        const u64 totalMem = linearAllocator.GetTotalMemory();
+        
+        REQUIRE(totalMem == Megabytes(1));
         
         int* intArray = (int*)linearAllocator.Allocate(512 * sizeof(int), alignof(int), 0);
         
@@ -209,6 +215,98 @@ TEST_CASE("Test Linear Memory Arena No Checking")
         
         FREE_ARRAY(testArray, linearArena);
         
+    }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Stack Allocator")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    SECTION("Test Stack Allocator")
+    {
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1));
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::StackAllocator stackAllocator(testMemoryArea->SubAreaBoundary(subAreaHandle));
+        
+        //Test basic stack allocator methods
+        REQUIRE(stackAllocator.GetTotalBytesAllocated() == 0);
+        
+        const u64 subareaSize = testMemoryArea->SubAreaBoundary(subAreaHandle).size;
+        const u64 totalMemoryForAllocator = stackAllocator.GetTotalMemory();
+        
+        REQUIRE(totalMemoryForAllocator == subareaSize);
+        
+        REQUIRE(stackAllocator.StartPtr() == testMemoryArea->SubAreaBoundary(subAreaHandle).location);
+        
+        //Test Alocations
+        
+        void* firstStackAllocation = stackAllocator.Allocate(Kilobytes(1), alignof(byte), 0);
+        
+        REQUIRE(firstStackAllocation != nullptr);
+        
+        const u64 allocSize = stackAllocator.GetAllocationSize(firstStackAllocation);
+        
+        REQUIRE(allocSize == Kilobytes(1));
+        
+        char* stringPtr = static_cast<char*>(firstStackAllocation);
+        
+        memset(stringPtr, '\0', Kilobytes(0));
+
+        strcpy(stringPtr, "My String");
+        
+        size_t lengthOfString = strlen(stringPtr);
+        
+        REQUIRE(lengthOfString == 9);
+        
+        REQUIRE(strcmp(stringPtr, "My String") == 0);
+        
+        const u64 u64ArraySize = 512 * sizeof(u64);
+        
+        u64* u64Array = (u64*)stackAllocator.Allocate(u64ArraySize, alignof(u64), 0);
+        
+        REQUIRE(u64Array != nullptr);
+        
+        REQUIRE(stackAllocator.GetAllocationSize(u64Array) == u64ArraySize);
+        
+        REQUIRE(stackAllocator.GetTotalBytesAllocated() >= (u64ArraySize + Kilobytes(1)));
+        
+        for (u64 i = 0; i < 512; ++i)
+        {
+            u64Array[i] = i;
+        }
+        
+        REQUIRE(u64Array[0] == 0);
+        REQUIRE(u64Array[511] == 511);
+        
+        stackAllocator.Free(u64Array);
+        
+        REQUIRE(stackAllocator.GetAllocationSize(firstStackAllocation) == Kilobytes(1));
+        
+        REQUIRE(stackAllocator.GetTotalBytesAllocated() >= Kilobytes(1));
+        
+        stackAllocator.Free(firstStackAllocation);
+        
+        REQUIRE(stackAllocator.GetTotalBytesAllocated() == 0);
     }
     r2::mem::GlobalMemory::Shutdown();
 }
