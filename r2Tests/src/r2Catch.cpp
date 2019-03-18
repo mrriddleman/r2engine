@@ -308,5 +308,64 @@ TEST_CASE("Test Stack Allocator")
         
         REQUIRE(stackAllocator.GetTotalBytesAllocated() == 0);
     }
+    
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Stack Memory Arena No Checking")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    SECTION("Test Stack Allocator Arena")
+    {
+        //
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1));
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::StackArena stackArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        
+        TestClass* tc = ALLOC(TestClass, stackArena);
+        
+        tc->x = 5;
+        
+        REQUIRE(tc->x == 5);
+        
+        FREE(tc, stackArena);
+        
+        TestClass2* tc2 = ALLOC_PARAMS(TestClass2, stackArena, 10);
+        
+        REQUIRE(tc2->X() == 10);
+        
+        FREE(tc2, stackArena);
+        
+        TestClass* testArray = ALLOC_ARRAY(TestClass[10], stackArena);
+        
+        for (size_t i = 0; i < 10; ++i)
+        {
+            testArray[i].x = i;
+        }
+        
+        REQUIRE(testArray[9].Square() == 81);
+        
+        FREE_ARRAY(testArray, stackArena);
+    }
     r2::mem::GlobalMemory::Shutdown();
 }
