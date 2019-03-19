@@ -14,6 +14,7 @@
 #include <cassert>
 #include "imgui.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2
 {

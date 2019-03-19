@@ -17,6 +17,7 @@
 #endif
 
 #define ALLOC(T, ARENA) r2::mem::utils::Alloc<T>(ARENA, __FILE__, __LINE__, "")
+#define ALLOC_BYTES(ARENA, n, alignment, file, line, description) r2::mem::utils::AllocBytes(ARENA, n, alignment, file, line, description)
 #define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::AllocParams<type>(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
 #define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
@@ -303,6 +304,12 @@ namespace r2
             T* Alloc(ARENA& arena, const char* file, s32 line, const char* description)
             {
                 return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T();
+            }
+            
+            template <class ARENA>
+            byte* AllocBytes(ARENA& arena, u64 nBytes, u64 alignment, const char* file, s32 line, const char* description)
+            {
+                return arena.Allocate(nBytes, alignment, file, line, description);
             }
             
             template <typename T, class ARENA, class... Args>
