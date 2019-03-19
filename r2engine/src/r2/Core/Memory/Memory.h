@@ -63,7 +63,6 @@ namespace r2
                 MemoryTag& operator=(MemoryTag&& tag) = default;
             };
             
-            const u32 HEADER_PAD_VALUE = 0xffffffffu;
             static const u8 DEFAULT_ALIGN = 8;
             inline bool IsAligned(void* p, u64 align);
             inline void* AlignForward(void *p, u64 align);
@@ -72,14 +71,6 @@ namespace r2
             inline void* PointerSubtract(void *p, u64 bytes);
             inline const void* PointerSubtract(const void *p, u64 bytes);
             inline u64 PointerOffset(void* p1, void* p2);
-            inline void* DataPointer(Header *header, u64 align);
-            // Given a pointer to the data, returns a pointer to the header before it.
-            inline Header* GetHeader(void* data);
-            
-            // Stores the size in the header and pads with HEADER_PAD_VALUE up to the
-            // data pointer.
-            inline void Fill(Header* header, void* data, u64 size);
-            static inline u64 SizeWithPadding(u64 size, u64 align);
         }
         
         //From https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/
@@ -98,6 +89,9 @@ namespace r2
             virtual const void* StartPtr() const = 0;
             virtual const u64 NumAllocations() const = 0;
             virtual const std::vector<utils::MemoryTag> Tags() const = 0;
+            virtual const u32 HeaderSize() const = 0;
+            virtual const u32 FooterSize() const = 0;
+            virtual const u64 UnallocatedBytes() const = 0;
         };
         
         class R2_API MemoryArea
@@ -209,6 +203,21 @@ namespace r2
                 return mMemoryTracker.Tags();
             }
             
+            virtual const u32 HeaderSize() const override
+            {
+                return BoundsCheckingPolicy::SIZE_FRONT + mAllocator.HeaderSize();
+            }
+            
+            virtual const u32 FooterSize() const override
+            {
+                return BoundsCheckingPolicy::SIZE_BACK;
+            }
+            
+            virtual const u64 UnallocatedBytes() const override
+            {
+                return mAllocator.UnallocatedBytes();
+            }
+            
         private:
             AllocationPolicy mAllocator;
             ThreadPolicy mThreadGuard;
@@ -266,61 +275,30 @@ namespace r2
             /// Returns the result of advancing p by the specified number of bytes
             inline void* PointerAdd(void *p, u64 bytes)
             {
-                return (void*)((uptr*)p + bytes);
+                return (void*)((byte*)p + bytes);
             }
             
             inline const void* PointerAdd(const void *p, u64 bytes)
             {
-                return (const void*)((uptr*)p + bytes);
+                return (const void*)((byte*)p + bytes);
             }
             
             /// Returns the result of moving p back by the specified number of bytes
             inline void* PointerSubtract(void *p, u64 bytes)
             {
-                return (void*)((uptr*)p - bytes);
+                return (void*)((byte*)p - bytes);
             }
             
             inline const void* PointerSubtract(const void *p, u64 bytes)
             {
-                return (const void*)((uptr*)p - bytes);
+                return (const void*)((byte*)p - bytes);
             }
             
             inline u64 PointerOffset(void* p1, void* p2)
             {
-                return (uptr*)p2 - (uptr*)p1;
+                return (byte*)p2 - (byte*)p1;
             }
-            
-            inline void * DataPointer(Header *header, u64 align) {
-                void *p = header + 1;
-                return AlignForward(p, align);
-            }
-            
-            // Given a pointer to the data, returns a pointer to the header before it.
-            inline Header * GetHeader(void *data)
-            {
-                u32* p = (u32*)data;
-                
-                while (p[-1] == HEADER_PAD_VALUE)
-                    --p;
-                
-                return (Header*)p - 1;
-            }
-            
-            // Stores the size in the header and pads with HEADER_PAD_VALUE up to the
-            // data pointer.
-            inline void Fill(Header *header, void *data, u64 size)
-            {
-                header->size = (u32)size; //this sets the total size including the header
-                u32* p = (u32*)(header + 1);
-                while (p < data)
-                    *p++ = HEADER_PAD_VALUE;
-            }
-            
-            static inline u64 SizeWithPadding(u64 size, u64 align)
-            {
-                return size + (u64)align + sizeof(Header);
-            }
-            
+
             template <typename T, class ARENA>
             T* Alloc(ARENA& arena, const char* file, s32 line, const char* description)
             {

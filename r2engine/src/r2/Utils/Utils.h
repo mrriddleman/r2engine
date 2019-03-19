@@ -18,8 +18,11 @@ using s16 = int16_t;
 using s32 = int32_t;
 using s64 = int64_t;
 
+using f32 = float;
+using f64 = double;
+
 using b32 = u32;
-using byte = char;
+using byte = u8;
 
 using uptr = uintptr_t;
 

@@ -11,7 +11,7 @@ namespace r2
 {
     namespace mem
     {
-        LinearAllocator::LinearAllocator(const utils::MemBoundary& boundary):mStart(boundary.location), mEnd(utils::PointerAdd(mStart, boundary.size)), mCurrent(mStart)
+        LinearAllocator::LinearAllocator(const utils::MemBoundary& boundary):mStart((byte*)boundary.location), mEnd((byte*)utils::PointerAdd(mStart, boundary.size)), mCurrent(mStart)
         {
             
         }
@@ -29,7 +29,7 @@ namespace r2
         void* LinearAllocator::Allocate(u64 size, u64 alignment, u64 offset)
         {
            //this should point to before the offset and header
-            void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
+            byte* pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
             
             if(static_cast<byte*>(utils::PointerAdd(pointer, size + sizeof(utils::Header))) >= static_cast<byte*>(mEnd))
             {
@@ -37,7 +37,7 @@ namespace r2
                 return nullptr;
             }
             
-            mCurrent = utils::PointerAdd(pointer, size + sizeof(utils::Header));
+            mCurrent = (byte*)utils::PointerAdd(pointer, size + sizeof(utils::Header));
             
             utils::Header* header = (utils::Header*)pointer;
             header->size = static_cast<u32>(size);

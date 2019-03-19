@@ -26,7 +26,7 @@ namespace r2
             static const u64 NUM_HEADERS = 3;
         }
         
-        StackAllocator::StackAllocator(const utils::MemBoundary& boundary):mStart(boundary.location), mEnd(utils::PointerAdd(boundary.location, boundary.size)), mCurrent(mStart), mLastAllocationID(-1)
+        StackAllocator::StackAllocator(const utils::MemBoundary& boundary):mStart((byte*)boundary.location), mEnd((byte*)utils::PointerAdd(boundary.location, boundary.size)), mCurrent(mStart), mLastAllocationID(-1)
         {
             
         }
@@ -44,6 +44,7 @@ namespace r2
         void* StackAllocator::Allocate(u64 size, u64 alignment, u64 offset)
         {
             u64 originalSize = size;
+            u64 originalOffset = offset;
             size += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             offset += SIZE_OF_ALLOCATION_OFFSET*NUM_HEADERS;
             
@@ -57,7 +58,7 @@ namespace r2
                 return nullptr;
             }
             
-            mCurrent = utils::PointerAdd(pointer, size);
+            mCurrent = (byte*)utils::PointerAdd(pointer, size);
             
             union
             {
@@ -75,7 +76,7 @@ namespace r2
             *as_u32 = ++mLastAllocationID;
             as_void = utils::PointerAdd(as_void, SIZE_OF_ALLOCATION_OFFSET);
             
-            R2_CHECK(utils::IsAligned(utils::PointerAdd(as_void, offset), alignment), "The pointer to the actual memory is not aligned!!!!!");
+            R2_CHECK(utils::IsAligned(utils::PointerAdd(as_void, originalOffset), alignment), "The pointer to the actual memory is not aligned!!!!!");
             
             return as_void;
         }
@@ -107,7 +108,7 @@ namespace r2
             as_void = utils::PointerSubtract(as_void, SIZE_OF_ALLOCATION_OFFSET);
             const u32 allocationOffset = *as_u32;
             
-            mCurrent = utils::PointerAdd(mStart, allocationOffset);
+            mCurrent = (byte*)utils::PointerAdd(mStart, allocationOffset);
             
             --mLastAllocationID;
         }
@@ -134,6 +135,11 @@ namespace r2
             const u32 allocationSize = *as_u32;
             
             return allocationSize;
+        }
+        
+        inline u32 StackAllocator::HeaderSize() const
+        {
+            return static_cast<u32>(SIZE_OF_ALLOCATION_OFFSET * NUM_HEADERS);
         }
     }
 }

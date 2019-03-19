@@ -36,10 +36,12 @@ namespace r2
             inline u64 GetTotalBytesAllocated() const {return utils::PointerOffset(mStart, mCurrent);}
             inline u64 GetTotalMemory() const {return utils::PointerOffset(mStart, mEnd);}
             inline const void* StartPtr() const {return mStart;}
+            inline u32 HeaderSize() const;
+            inline u64 UnallocatedBytes() const {return utils::PointerOffset(mCurrent, mEnd);}
         private:
-            void* mStart;
-            void* mEnd;
-            void* mCurrent;
+            byte* mStart;
+            byte* mEnd;
+            byte* mCurrent;
             
             s32 mLastAllocationID;
         };

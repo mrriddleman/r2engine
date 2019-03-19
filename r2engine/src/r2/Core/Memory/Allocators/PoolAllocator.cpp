@@ -15,8 +15,8 @@ namespace r2
         
         PoolAllocator::PoolAllocator(const utils::MemBoundary& boundary):
         mFreeList(boundary.location, utils::PointerAdd(boundary.location, boundary.size), boundary.elementSize, boundary.alignment, boundary.offset),
-        mStart(boundary.location),
-        mEnd(utils::PointerAdd(boundary.location, boundary.size)),
+        mStart((byte*)boundary.location),
+        mEnd((byte*)utils::PointerAdd(boundary.location, boundary.size)),
         mElementSize(boundary.elementSize),
         mAlignment(boundary.alignment),
         mNumAllocations(0)
@@ -48,6 +48,8 @@ namespace r2
         
         void PoolAllocator::Free(void* ptr)
         {
+            R2_CHECK(ptr != nullptr, "Why are you passing a nullptr to free?");
+            R2_CHECK(ptr >= mStart && ptr < mEnd, "Pointer should be within the pool!");
             mFreeList.Return(ptr);
             --mNumAllocations;
         }
@@ -59,10 +61,7 @@ namespace r2
         
         PoolAllocator::Freelist::Freelist(void* start, void* end, u64 elementSize, u64 alignment, u64 offset)
         {
-            R2_CHECK(elementSize >= sizeof(uptr), "elementSize must be greater than or equal to a pointer");
-            
-            //Currently I don't know why this is needed, blows up otherwise - Investigate some day
-            R2_CHECK(r2::util::IsPowerOfTwo(elementSize), "Element size should be a power of 2");
+            R2_CHECK(elementSize >= sizeof(Freelist), "elementSize must be greater than or equal to a freelist object which is %zu bytes", sizeof(Freelist));
             
             void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(start, offset), alignment), offset);
             
@@ -85,14 +84,14 @@ namespace r2
             mNumElements = totalMem/elementSize;
             
             mNext = as_self;
-            as_byte += elementSize;
-            
+            as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
+        
             Freelist* runner = mNext;
             for (u64 i = 1; i < mNumElements; ++i)
             {
                 runner->mNext = as_self;
                 runner = as_self;
-                as_byte += elementSize;
+                as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
             }
         }
         

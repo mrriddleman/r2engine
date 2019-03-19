@@ -500,7 +500,7 @@ TEST_CASE("Test Pool Memory Arena No Checking")
         r2::mem::utils::MemBoundary* boundary = testMemoryArea->SubAreaBoundaryPtr(subAreaHandle);
         
         REQUIRE(boundary != nullptr);
-        boundary->elementSize = 64 * sizeof(TestClass);
+        boundary->elementSize = 11 * sizeof(TestClass);
         boundary->alignment = alignof(TestClass);
         boundary->offset = 0;
         
