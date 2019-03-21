@@ -309,7 +309,7 @@ namespace r2
             template <class ARENA>
             byte* AllocBytes(ARENA& arena, u64 nBytes, u64 alignment, const char* file, s32 line, const char* description)
             {
-                return arena.Allocate(nBytes, alignment, file, line, description);
+                return (byte*)arena.Allocate(nBytes, alignment, file, line, description);
             }
             
             template <typename T, class ARENA, class... Args>

@@ -10,7 +10,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 
-#define MAKE_SARRAY(arena, T, capacity) r2::sarray::CreateSArray<T>(arena, capacity, __FILE__, __LINE__, "")
+#define MAKE_SARRAY(arena, T, capacity) r2::sarr::CreateSArray<T>(arena, capacity, __FILE__, __LINE__, "")
 
 namespace r2
 {
@@ -58,11 +58,11 @@ namespace r2
         template<typename T> inline void Pop(SArray<T>& arr);
         
         template<typename T> inline T& At(SArray<T>& arr, u64 index);
-        template<typename T> inline const T& At(SArray<T>& arr, u64 index);
+        template<typename T> inline const T& At(const SArray<T>& arr, u64 index);
         
         template<typename T> inline void Clear(SArray<T>& arr);
         
-        template<typename T, class ARENA> SArray<T*> CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+        template<typename T, class ARENA> r2::SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     }
     
     namespace sarr
@@ -145,7 +145,7 @@ namespace r2
             return arr[index];
         }
         
-        template<typename T> inline const T& At(SArray<T>& arr, u64 index)
+        template<typename T> inline const T& At(const SArray<T>& arr, u64 index)
         {
             return arr[index];
         }
@@ -155,11 +155,11 @@ namespace r2
             arr.mSize = 0;
         }
         
-        template<typename T, class ARENA> SArray<T*> CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+        template<typename T, class ARENA> SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
         {
             SArray<T>* array = new (ALLOC_BYTES(arena, sizeof(SArray<T>) + sizeof(T)*capacity, alignof(T), file, line, description)) SArray<T>();
             
-            array->Create(mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
+            array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
             
             return array;
         }
@@ -223,14 +223,14 @@ namespace r2
     template <typename T>
     T& SArray<T>::operator[](u64 i)
     {
-        R2_CHECK(i >= 0 && i < mCapacity, "i: %zu is out of bounds in this array", i);
+        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     
     template <typename T>
     const T& SArray<T>::operator[](u64 i) const
     {
-        R2_CHECK(i >= 0 && i < mCapacity, "i: %zu is out of bounds in this array", i);
+        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     

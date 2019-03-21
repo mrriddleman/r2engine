@@ -11,6 +11,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#include "r2/Core/Containers/SArray.h"
 #include <cstring>
 
 TEST_CASE("TEST GLOBAL MEMORY")
@@ -530,6 +531,114 @@ TEST_CASE("Test Pool Memory Arena No Checking")
         REQUIRE(testArray[9].Square() == 81);
         
         FREE_ARRAY(testArray, poolArena);
+    }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Basic SArray")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    
+    auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+    REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+    r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+    REQUIRE(testMemoryArea != nullptr);
+    REQUIRE(testMemoryArea->Name() == "TestArea");
+    auto result = testMemoryArea->Init(Megabytes(1));
+    REQUIRE(result);
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+    auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+    REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+    
+    SECTION("Test Basic SArray operations linear allocator")
+    {
+        r2::mem::LinearArena linearArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        r2::SArray<int>* intArray = MAKE_SARRAY(linearArena, int, 100);
+        
+        r2::sarr::Push(*intArray, 10);
+        
+        for (int i = 1; i < 100; i++) {
+            r2::sarr::Push(*intArray, 55);
+        }
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 100);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == false);
+        REQUIRE(r2::sarr::At(*intArray, 99) == 55);
+        REQUIRE(r2::sarr::At(*intArray, 0) == 10);
+        REQUIRE(r2::sarr::At(*intArray, 50) == 55);
+        
+        REQUIRE(r2::sarr::First(*intArray) == 10);
+        REQUIRE(r2::sarr::Last(*intArray) == 55);
+        
+        REQUIRE(r2::sarr::Begin(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>)));
+        REQUIRE(r2::sarr::End(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>) + sizeof(int) * r2::sarr::Size(*intArray)));
+        
+        r2::sarr::Pop(*intArray);
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 99);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == false);
+        
+        
+        for (int i = 0; i < 99; ++i) {
+            r2::sarr::Pop(*intArray);
+        }
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 0);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == true);
+        
+        REQUIRE(r2::sarr::Begin(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>)));
+        REQUIRE(r2::sarr::End(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>) + sizeof(int) * r2::sarr::Size(*intArray)));
+        
+        FREE(intArray, linearArena);
+    }
+    
+    SECTION("Test Basic SArray operations stack allocator")
+    {
+        r2::mem::StackArena stackArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        r2::SArray<int>* intArray = MAKE_SARRAY(stackArena, int, 100);
+        
+        r2::sarr::Push(*intArray, 10);
+        
+        for (int i = 1; i < 100; i++) {
+            r2::sarr::Push(*intArray, 55);
+        }
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 100);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == false);
+        REQUIRE(r2::sarr::At(*intArray, 99) == 55);
+        REQUIRE(r2::sarr::At(*intArray, 0) == 10);
+        REQUIRE(r2::sarr::At(*intArray, 50) == 55);
+        
+        REQUIRE(r2::sarr::First(*intArray) == 10);
+        REQUIRE(r2::sarr::Last(*intArray) == 55);
+        
+        REQUIRE(r2::sarr::Begin(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>)));
+        REQUIRE(r2::sarr::End(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>) + sizeof(int) * r2::sarr::Size(*intArray)));
+        
+        r2::sarr::Pop(*intArray);
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 99);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == false);
+        
+        
+        for (int i = 0; i < 99; ++i) {
+            r2::sarr::Pop(*intArray);
+        }
+        
+        REQUIRE(r2::sarr::Size(*intArray) == 0);
+        REQUIRE(r2::sarr::Capacity(*intArray) == 100);
+        REQUIRE(r2::sarr::IsEmpty(*intArray) == true);
+        
+        REQUIRE(r2::sarr::Begin(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>)));
+        REQUIRE(r2::sarr::End(*intArray) == r2::mem::utils::PointerAdd(intArray, sizeof(r2::SArray<int>) + sizeof(int) * r2::sarr::Size(*intArray)));
+        
+        FREE(intArray, stackArena);
     }
     r2::mem::GlobalMemory::Shutdown();
 }
