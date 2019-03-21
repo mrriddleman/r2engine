@@ -12,6 +12,7 @@
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Containers/SQueue.h"
 #include <cstring>
 
 TEST_CASE("TEST GLOBAL MEMORY")
@@ -640,5 +641,125 @@ TEST_CASE("Test Basic SArray")
         
         FREE(intArray, stackArena);
     }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+
+bool cmp(const int& a, const int& b)
+{
+    return a < b;
+}
+
+bool cmp2(const int& a, const int& b)
+{
+    return a > b;
+}
+
+TEST_CASE("Test SQueue")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    
+    auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+    REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+    r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+    REQUIRE(testMemoryArea != nullptr);
+    REQUIRE(testMemoryArea->Name() == "TestArea");
+    auto result = testMemoryArea->Init(Megabytes(1));
+    REQUIRE(result);
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+    auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+    REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+    
+    SECTION("Basic SQueue Functionality")
+    {
+        r2::mem::LinearArena linearArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        r2::SQueue<int>* intQueue = MAKE_SQUEUE(linearArena, int, 100);
+        
+        REQUIRE(r2::squeue::Space(*intQueue) == 100);
+        REQUIRE(r2::squeue::Size(*intQueue) == 0);
+        
+        r2::squeue::PushBack(*intQueue, 31);
+        
+        REQUIRE(r2::squeue::First(*intQueue) == 31);
+        REQUIRE(r2::squeue::Last(*intQueue) == 31);
+        
+        REQUIRE(r2::squeue::Size(*intQueue) == 1);
+        REQUIRE(r2::squeue::Space(*intQueue) == 99);
+        
+        r2::squeue::PushFront(*intQueue, 20);
+        
+        REQUIRE(r2::squeue::First(*intQueue) == 20);
+        REQUIRE(r2::squeue::Last(*intQueue) == 31);
+        
+        REQUIRE(r2::squeue::Size(*intQueue) == 2);
+        REQUIRE(r2::squeue::Space(*intQueue) == 98);
+        
+        for (int i = 2; i < 100; i++) {
+            r2::squeue::PushBack(*intQueue, 55);
+        }
+        
+        REQUIRE(r2::squeue::Size(*intQueue) == 100);
+        REQUIRE(r2::squeue::Space(*intQueue) == 0);
+        
+        REQUIRE(r2::squeue::First(*intQueue) == 20);
+        REQUIRE(r2::squeue::Last(*intQueue) == 55);
+        REQUIRE((*intQueue)[1] == 31);
+        
+        for (int i = 0 ; i < 100; ++i)
+        {
+            r2::squeue::PopBack(*intQueue);
+        }
+        
+        REQUIRE(r2::squeue::Size(*intQueue) == 0);
+        REQUIRE(r2::squeue::Space(*intQueue) == 100);
+        
+        for(int i = 0; i < 5; ++i)
+        {
+            r2::squeue::PushBack(*intQueue, i + 1);
+        }
+        
+        for (int i = 0; i < 5; ++i)
+        {
+            REQUIRE((*intQueue)[i] == i + 1);
+        }
+        
+        r2::squeue::PopBack(*intQueue);
+        r2::squeue::PopFront(*intQueue);
+        
+        REQUIRE(r2::squeue::First(*intQueue) == 2);
+        REQUIRE(r2::squeue::Last(*intQueue) == 4);
+        
+        
+        
+        r2::squeue::ConsumeAll(*intQueue);
+        
+        REQUIRE(r2::squeue::Size(*intQueue) == 0);
+        REQUIRE(r2::squeue::Space(*intQueue) == 100);
+        
+        
+        for (int i = 0; i < 5; ++i)
+        {
+            r2::squeue::PushFront(*intQueue, i);
+        }
+        
+        r2::squeue::Sort(*intQueue, cmp);
+        
+        
+        for (int i = 0; i < 5; ++i)
+        {
+            REQUIRE((*intQueue)[i] == i);
+        }
+        
+        r2::squeue::Sort(*intQueue, cmp2);
+        
+        for (int i = 0; i < 5; ++i)
+        {
+            REQUIRE((*intQueue)[i] == (4-i));
+        }
+        
+        FREE(intQueue, linearArena);
+    }
+    
     r2::mem::GlobalMemory::Shutdown();
 }
