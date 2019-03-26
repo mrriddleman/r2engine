@@ -16,6 +16,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
+#include "r2/Core/Containers/SHashMap.h"
 
 namespace r2
 {

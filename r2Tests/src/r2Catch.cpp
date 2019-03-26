@@ -13,6 +13,7 @@
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
+#include "r2/Core/Containers/SHashMap.h"
 #include <cstring>
 
 TEST_CASE("TEST GLOBAL MEMORY")
@@ -759,6 +760,224 @@ TEST_CASE("Test SQueue")
         }
         
         FREE(intQueue, linearArena);
+    }
+    
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+
+TEST_CASE("Test SHashMap")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    
+    auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+    REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+    r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+    REQUIRE(testMemoryArea != nullptr);
+    REQUIRE(testMemoryArea->Name() == "TestArea");
+    auto result = testMemoryArea->Init(Megabytes(1));
+    REQUIRE(result);
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+    auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+    REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+ 
+    SECTION("Test shashmap functionality")
+    {
+        r2::mem::StackArena stackArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        r2::SHashMap<char>* hashMap = MAKE_SHASHMAP(stackArena, char, 255);
+        
+        REQUIRE(hashMap != nullptr);
+        
+        size_t key = 88;
+        const char& defaultChar = '~';
+        char valInHashMap = 'c';
+        
+        //88 is a key here
+        REQUIRE(!r2::shashmap::Has(*hashMap, 88));
+        
+        const char& shouldBeDefault = r2::shashmap::Get(*hashMap, key, defaultChar);
+        
+        REQUIRE(shouldBeDefault == defaultChar);
+        
+        //add something new
+        r2::shashmap::Set(*hashMap, key, valInHashMap);
+        
+        REQUIRE(r2::shashmap::Has(*hashMap, key));
+        
+        const char& val = r2::shashmap::Get(*hashMap, key, defaultChar);
+        
+        REQUIRE(val == valInHashMap);
+        
+        r2::shashmap::Remove(*hashMap, key);
+        
+        REQUIRE(!r2::shashmap::Has(*hashMap, key));
+        
+        r2::shashmap::Set(*hashMap, key, valInHashMap);
+        
+        r2::shashmap::Clear(*hashMap);
+        
+        REQUIRE(!r2::shashmap::Has(*hashMap, key));
+        
+        //add a bunch
+        for (size_t i = 32; i < 127; ++i)
+        {
+            r2::shashmap::Set(*hashMap, i, (char)i);
+            REQUIRE(r2::shashmap::Has(*hashMap, i));
+        }
+        
+        size_t keyToRemove = (size_t)'F';
+        
+        r2::shashmap::Remove(*hashMap, keyToRemove);
+        
+        REQUIRE(!r2::shashmap::Has(*hashMap, keyToRemove));
+        
+        for (size_t i = 32; i < 127; ++i)
+        {
+            if (i != keyToRemove)
+            {
+                REQUIRE(r2::shashmap::Has(*hashMap, i));
+                
+                const char& val = r2::shashmap::Get(*hashMap, i, defaultChar);
+                
+                REQUIRE(val == (char)i);
+            }
+        }
+        
+        FREE(hashMap, stackArena);
+    }
+    
+    SECTION("Test smultihash functionality")
+    {
+        r2::mem::StackArena stackArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        
+        r2::SHashMap<float>* hashMap = MAKE_SHASHMAP(stackArena, float, 255);
+        
+        r2::SArray<float>* results = MAKE_SARRAY(stackArena, float, 255);
+        
+        REQUIRE(hashMap != nullptr);
+        REQUIRE(results != nullptr);
+        
+        size_t key = 100;
+        float testVal1 = 100.1;
+        float testVal2 = 100.2;
+        
+        //basic empty tests
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 0);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 0);
+        
+        auto firstResult = r2::smultihash::FindFirst(*hashMap, key);
+        
+        REQUIRE(firstResult == nullptr);
+        
+        //test 1 element
+        r2::smultihash::Insert(*hashMap, key, testVal1);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 1);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 1);
+        
+        REQUIRE( r2::sarr::At(*results, 0) == testVal1 );
+        
+        r2::sarr::Clear(*results);
+        
+        firstResult = r2::smultihash::FindFirst(*hashMap, key);
+        
+        r2::smultihash::Remove(*hashMap, firstResult);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 0);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 0);
+        
+        
+        //test 2 elements with the same key
+        
+        r2::smultihash::Insert(*hashMap, key, testVal1);
+        r2::smultihash::Insert(*hashMap, key, testVal2);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 2);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 2);
+        
+        
+        r2::sarr::Clear(*results);
+        
+        firstResult = r2::smultihash::FindFirst(*hashMap, key);
+        
+        REQUIRE( firstResult->value == testVal2);
+        
+        auto nextResult = r2::smultihash::FindNext(*hashMap, firstResult);
+        
+        REQUIRE(nextResult->value == testVal1);
+        
+        
+        //Remove first one
+        r2::smultihash::Remove(*hashMap, firstResult);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 1);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 1);
+        
+        REQUIRE(r2::sarr::At(*results, 0) == testVal1);
+        
+        r2::sarr::Clear(*results);
+        
+        firstResult = r2::smultihash::FindFirst(*hashMap, key);
+        
+        REQUIRE( firstResult->value == testVal1 );
+        
+        nextResult = r2::smultihash::FindNext(*hashMap, firstResult);
+        
+        REQUIRE(nextResult == nullptr);
+        
+        
+        //Add first one back
+        r2::smultihash::Insert(*hashMap, key, testVal1);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 2);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 2);
+        
+        
+        
+        r2::sarr::Clear(*results);
+        
+        
+        //Test remove all
+        r2::smultihash::RemoveAll(*hashMap, key);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 0);
+        
+        r2::smultihash::Get(*hashMap, key, *results);
+        
+        REQUIRE(r2::sarr::Size(*results) == 0);
+        
+        firstResult = r2::smultihash::FindFirst(*hashMap, key);
+        
+        REQUIRE(firstResult == nullptr);
+        
+        
+        //Test to see if things still work
+        r2::smultihash::Insert(*hashMap, key, testVal1);
+        
+        REQUIRE(r2::smultihash::Count(*hashMap, key) == 1);
+        
+        
+        FREE(results, stackArena);
+        FREE(hashMap, stackArena);
     }
     
     r2::mem::GlobalMemory::Shutdown();
