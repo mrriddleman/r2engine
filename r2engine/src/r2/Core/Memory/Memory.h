@@ -100,6 +100,7 @@ namespace r2
         public:
             using Handle = s64;
             static const Handle Invalid = -1;
+            static const u64 DefaultScratchBufferSize = Megabytes(4);
             
             struct R2_API MemorySubArea
             {
@@ -112,10 +113,15 @@ namespace r2
             
             MemoryArea(const char* debugName);
             ~MemoryArea();
-            bool Init(u64 sizeInBytes);
+            //Add in scratch buffer here?
+            bool Init(u64 sizeInBytes, u64 scratchBufferSize = DefaultScratchBufferSize);
             MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
             utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
             utils::MemBoundary* SubAreaBoundaryPtr(MemorySubArea::Handle);
+            
+            utils::MemBoundary ScratchBoundary() const;
+            utils::MemBoundary* ScratchBoundaryPtr();
+            
             MemorySubArea* GetSubArea(MemorySubArea::Handle);
             void Shutdown();
             
@@ -130,6 +136,9 @@ namespace r2
             //#if defined(R2_DEBUG) || defined(R2_RELEASE)
             std::array<char, Kilobytes(1)> mDebugName;
             void* mCurrentNext = nullptr;
+            
+            MemorySubArea::Handle mScratchAreaHandle;
+            
             //char mDebugName[Kilobytes(1)];
             //#endif
             bool mInitialized;

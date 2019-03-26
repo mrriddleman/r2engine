@@ -36,7 +36,7 @@ TEST_CASE("TEST GLOBAL MEMORY")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -52,7 +52,7 @@ TEST_CASE("TEST GLOBAL MEMORY")
         
         REQUIRE(subArea3Handle == r2::mem::MemoryArea::MemorySubArea::Invalid);
         
-        REQUIRE(testMemoryArea->SubAreas().size() == 2);
+        REQUIRE(testMemoryArea->SubAreas().size() == 3);
         
         r2::mem::utils::MemBoundary subBoundary1 = testMemoryArea->SubAreaBoundary(subArea1Handle);
         
@@ -86,7 +86,7 @@ TEST_CASE("TEST LINEAR ALLOCATOR")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -183,7 +183,7 @@ TEST_CASE("Test Linear Memory Arena No Checking")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -241,7 +241,7 @@ TEST_CASE("Test Stack Allocator")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -335,7 +335,7 @@ TEST_CASE("Test Stack Memory Arena No Checking")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -392,7 +392,7 @@ TEST_CASE("Test Pool Allocator")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -492,7 +492,7 @@ TEST_CASE("Test Pool Memory Arena No Checking")
         
         REQUIRE(result);
         
-        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
         
         REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
         
@@ -548,7 +548,7 @@ TEST_CASE("Test Basic SArray")
     REQUIRE(testMemoryArea->Name() == "TestArea");
     auto result = testMemoryArea->Init(Megabytes(1));
     REQUIRE(result);
-    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
     REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
     auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
     REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
@@ -667,7 +667,7 @@ TEST_CASE("Test SQueue")
     REQUIRE(testMemoryArea->Name() == "TestArea");
     auto result = testMemoryArea->Init(Megabytes(1));
     REQUIRE(result);
-    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
     REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
     auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
     REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
@@ -777,7 +777,7 @@ TEST_CASE("Test SHashMap")
     REQUIRE(testMemoryArea->Name() == "TestArea");
     auto result = testMemoryArea->Init(Megabytes(1));
     REQUIRE(result);
-    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
     REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
     auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
     REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);

@@ -86,26 +86,29 @@ namespace r2
         
         const MemoryArea::Handle MemoryArea::Invalid;
         const MemoryArea::MemorySubArea::Handle MemoryArea::MemorySubArea::Invalid;
+        const u64 MemoryArea::DefaultScratchBufferSize;
         
         MemoryArea::~MemoryArea()
         {
             Shutdown();
         }
         
-        MemoryArea::MemoryArea(const char* debugName):mInitialized(false)
+        MemoryArea::MemoryArea(const char* debugName):mInitialized(false), mScratchAreaHandle(MemorySubArea::Invalid)
         {
             strcpy(&mDebugName[0], debugName);
         }
         
-        bool MemoryArea::Init(u64 sizeInBytes)
+        bool MemoryArea::Init(u64 sizeInBytes, u64 scratchBufferSizeInBytes)
         {
+            R2_CHECK(scratchBufferSizeInBytes != 0, "scratchBufferSize cannot be 0!");
             //Only initialize once
             if (mInitialized)
             {
                 return mInitialized;
             }
+            u64 boundarySize = sizeInBytes + scratchBufferSizeInBytes;
             
-            mBoundary.location = malloc(sizeInBytes);
+            mBoundary.location = malloc(boundarySize);
             
             R2_CHECK(mBoundary.location != nullptr, "Failed to allocate MemoryArea!");
             
@@ -114,16 +117,18 @@ namespace r2
                 return false;
             }
             
-            mBoundary.size = sizeInBytes;
+            mBoundary.size = boundarySize;
             mCurrentNext = mBoundary.location;
             mInitialized = true;
             
+            mScratchAreaHandle = AddSubArea(scratchBufferSizeInBytes);
+
+            R2_CHECK(mScratchAreaHandle != Invalid, "mScratchAreaHandle is INVALID???");
             return mInitialized;
         }
         
         MemoryArea::MemorySubArea::Handle MemoryArea::AddSubArea(u64 sizeInBytes)
         {
-            
             if(!mInitialized)
             {
                 return MemoryArea::MemorySubArea::Invalid;
@@ -184,6 +189,16 @@ namespace r2
             return nullptr;
         }
         
+        utils::MemBoundary MemoryArea::ScratchBoundary() const
+        {
+            return SubAreaBoundary(mScratchAreaHandle);
+        }
+        
+        utils::MemBoundary* MemoryArea::ScratchBoundaryPtr()
+        {
+            return SubAreaBoundaryPtr(mScratchAreaHandle);
+        }
+        
         MemoryArea::MemorySubArea* MemoryArea::GetSubArea(MemoryArea::MemorySubArea::Handle subAreaHandle)
         {
             if(!mInitialized)
@@ -215,6 +230,7 @@ namespace r2
                 mBoundary.size = 0;
                 mCurrentNext = nullptr;
                 mInitialized = false;
+                mScratchAreaHandle = MemorySubArea::Invalid;
             }
         }
     }
