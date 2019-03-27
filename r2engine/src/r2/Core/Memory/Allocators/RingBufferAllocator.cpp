@@ -114,6 +114,16 @@ namespace r2
             return noptrP >= mWhereToFree || noptrP < mWhereToAllocate;
         }
         
+        inline u32 RingBufferAllocator::GetTotalBytesAllocated() const
+        {
+            if (mWhereToAllocate > mWhereToFree)
+            {
+                return static_cast<u32>(utils::PointerOffset(mWhereToFree, mWhereToAllocate));
+            }
+            
+            return static_cast<u32>(utils::PointerOffset(mWhereToAllocate, mWhereToFree));
+        }
+        
         u32 RingBufferAllocator::GetAllocationSize(void* memoryPtr) const
         {
             
