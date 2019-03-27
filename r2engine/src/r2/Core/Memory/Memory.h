@@ -23,6 +23,8 @@
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
+#define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, COUNT_OF(array))
+
 #ifndef R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
     #define R2_CHECK_ALLOCATIONS_ON_DESTRUCTION 0
 #endif
@@ -72,6 +74,34 @@ namespace r2
             inline void* PointerSubtract(void *p, u64 bytes);
             inline const void* PointerSubtract(const void *p, u64 bytes);
             inline u64 PointerOffset(void* p1, void* p2);
+            
+            template <class T>
+            struct TypeAndCount
+            {
+            };
+            
+            template <class T, u64 N>
+            struct TypeAndCount<T[N]>
+            {
+                typedef T Type;
+                static const u64 Count = N;
+            };
+            
+            template <typename T>
+            struct IsPOD
+            {
+                static const bool Value = std::is_pod<T>::value;
+            };
+            
+            template <bool I>
+            struct IntToType
+            {
+            };
+            
+            typedef IntToType<false> NonPODType;
+            typedef IntToType<true> PODType;
+            
+            inline MemBoundary GetBoundary(void* type, u64 count);
         }
         
         //From https://blog.molecular-matters.com/2011/08/03/memory-system-part-5/
@@ -152,6 +182,11 @@ namespace r2
             explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
             {
                 subArea.mnoptrArena = this;
+            }
+            
+            explicit MemoryArena(const utils::MemBoundary& boundary):mAllocator(boundary)
+            {
+                
             }
             
             void* Allocate(u64 size, u64 alignment, const char* file, s32 line, const char* description)
@@ -338,31 +373,7 @@ namespace r2
                 }
             }
             
-            template <class T>
-            struct TypeAndCount
-            {
-            };
             
-            template <class T, u64 N>
-            struct TypeAndCount<T[N]>
-            {
-                typedef T Type;
-                static const u64 Count = N;
-            };
-            
-            template <typename T>
-            struct IsPOD
-            {
-                static const bool Value = std::is_pod<T>::value;
-            };
-            
-            template <bool I>
-            struct IntToType
-            {
-            };
-            
-            typedef IntToType<false> NonPODType;
-            typedef IntToType<true> PODType;
             
             template <typename T, class ARENA>
             T* AllocArray(ARENA& arena, u64 length, const char* file, s32 line, const char* description, NonPODType)
@@ -422,6 +433,14 @@ namespace r2
             void DeallocArray(T* array, ARENA& arena, const char* file, s32 line, const char* description)
             {
                 DeallocArray(array, arena, file, line, description, IntToType<IsPOD<T>::Value>());
+            }
+            
+            inline MemBoundary GetBoundary(void* p, u64 count)
+            {
+                MemBoundary boundary;
+                boundary.location = p;
+                boundary.size = count;
+                return boundary;
             }
         }
     }

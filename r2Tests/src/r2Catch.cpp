@@ -22,6 +22,16 @@ TEST_CASE("TEST GLOBAL MEMORY")
     
     SECTION("Test Create Memory Area")
     {
+        int test[50];
+        
+        r2::mem::utils::MemBoundary boundary = STACK_BOUNDARY(test);
+    
+        REQUIRE(boundary.location == &test);
+        
+        int* test2 = (int*)boundary.location;
+        
+        REQUIRE(test2[45] == test[45]);
+        
         auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
         
         REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);

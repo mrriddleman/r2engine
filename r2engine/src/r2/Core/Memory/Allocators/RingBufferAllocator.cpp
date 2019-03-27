@@ -126,7 +126,6 @@ namespace r2
         
         u32 RingBufferAllocator::GetAllocationSize(void* memoryPtr) const
         {
-            
             R2_CHECK(memoryPtr != nullptr, "Why you giving me a nullptr bro?");
             
             R2_CHECK(InUse(memoryPtr), "This memory should be in Use!");

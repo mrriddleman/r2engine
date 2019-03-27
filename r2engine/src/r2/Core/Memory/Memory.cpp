@@ -28,6 +28,7 @@ namespace r2
         MemoryArea::Handle GlobalMemory::AddMemoryArea(const char* debugName)
         {
             R2_CHECK(mMemoryAreas.size() + 1 <= mMemoryAreas.capacity(), "We shouldn't be able to add more MemoryAreas than expected");
+
             if(mMemoryAreas.size() + 1 <= mMemoryAreas.capacity())
             {
                 mMemoryAreas.emplace_back(debugName);

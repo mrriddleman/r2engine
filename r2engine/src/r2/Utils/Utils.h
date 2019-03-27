@@ -30,6 +30,7 @@ using uptr = uintptr_t;
 #define Megabytes(x) (Kilobytes(x)*1024LL)
 #define Gigabytes(x) (Megabytes(x)*1024LL)
 #define Terabytes(x) (Gigabytes(x)*1024LL)
+#define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 namespace r2
 {
