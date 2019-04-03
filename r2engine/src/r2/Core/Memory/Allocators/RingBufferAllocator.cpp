@@ -13,7 +13,7 @@ namespace r2
     {
         RingBufferAllocator::RingBufferAllocator(const utils::MemBoundary& boundary)
         : mStart((byte*)boundary.location)
-        , mEnd((byte*)utils::PointerAdd(boundary.location, boundary.size))
+        , mEnd((byte*)utils::PointerAdd(mStart, boundary.size))
         , mWhereToAllocate(mStart)
         , mWhereToFree(mStart)
         {
@@ -46,7 +46,7 @@ namespace r2
             utils::Header* ptrToHeader = (utils::Header*)pointer;
             byte* ptrData = (byte*)utils::PointerAdd(ptrToHeader, sizeof(utils::Header));
             
-            pointer = (byte*)utils::PointerAdd(pointer, size + sizeof(utils::Header));
+            pointer = (byte*)utils::PointerAdd(ptrData, size);
             
             if (pointer >= mEnd)
             {
@@ -75,11 +75,23 @@ namespace r2
         {
             R2_CHECK(ptr != nullptr, "Can't free nullptr bro!");
             
+            if (!ptr)
+            {
+                return;
+            }
+            
             R2_CHECK(InUse(ptr), "The ptr should be in use!");
             
-            utils::Header* header = (utils::Header*)utils::PointerSubtract(ptr, sizeof(utils::Header));
+            if (ptr < mStart || ptr >= mEnd)
+            {
+                return;
+            }
             
-            R2_CHECK((header->size & FREE_BLOCK) == 0, "Make sure that it hasn't been freed!");
+            utils::Header* h = (utils::Header*)utils::PointerSubtract(ptr, sizeof(utils::Header));
+            
+            R2_CHECK((h->size & FREE_BLOCK) == 0, "Make sure that it hasn't been freed!");
+
+            h->size = h->size | FREE_BLOCK;
             
             while (mWhereToFree != mWhereToAllocate)
             {
@@ -90,7 +102,7 @@ namespace r2
                     break;
                 }
                 
-                mWhereToFree += header->size & ALLOCATED_BLOCK;
+                mWhereToFree = (byte*)utils::PointerAdd(mWhereToFree, (header->size & ALLOCATED_BLOCK) + sizeof(utils::Header));
                 
                 if (mWhereToFree == mEnd)
                 {
@@ -114,7 +126,7 @@ namespace r2
             return noptrP >= mWhereToFree || noptrP < mWhereToAllocate;
         }
         
-        inline u32 RingBufferAllocator::GetTotalBytesAllocated() const
+        u32 RingBufferAllocator::GetTotalBytesAllocated() const
         {
             if (mWhereToAllocate > mWhereToFree)
             {

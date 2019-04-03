@@ -23,7 +23,7 @@
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
-#define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, COUNT_OF(array))
+#define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, sizeof(array))
 
 #ifndef R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
     #define R2_CHECK_ALLOCATIONS_ON_DESTRUCTION 0

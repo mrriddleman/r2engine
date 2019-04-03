@@ -31,7 +31,7 @@ namespace r2
             
             u32 GetAllocationSize(void* memoryPtr) const;
             
-            inline u32 GetTotalBytesAllocated() const; 
+            u32 GetTotalBytesAllocated() const; 
             inline u32 GetTotalMemory() const {return static_cast<u32>(utils::PointerOffset(mStart, mEnd));}
             inline const void* StartPtr() const {return mStart;}
             inline u32 HeaderSize() const {return sizeof(utils::Header);}
@@ -46,6 +46,12 @@ namespace r2
             byte* mWhereToAllocate;
             byte* mWhereToFree;
         };
+        
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
+        typedef MemoryArena<RingBufferAllocator, SingleThreadPolicy, BasicBoundsChecking, BasicMemoryTracking, BasicMemoryTagging> RingArena;
+#else
+        typedef MemoryArena<RingBufferAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> RingArena;
+#endif
     }
 }
 

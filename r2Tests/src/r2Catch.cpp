@@ -11,6 +11,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#include "r2/Core/Memory/Allocators/RingBufferAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
@@ -988,6 +989,64 @@ TEST_CASE("Test SHashMap")
         
         FREE(results, stackArena);
         FREE(hashMap, stackArena);
+    }
+    
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Ring Buffer")
+{
+    r2::mem::GlobalMemory::Init<1>();
+    
+    auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+    REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+    r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+    REQUIRE(testMemoryArea != nullptr);
+    REQUIRE(testMemoryArea->Name() == "TestArea");
+    auto result = testMemoryArea->Init(Megabytes(1));
+    REQUIRE(result);
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(5));
+    REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+    auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+    REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+    
+    SECTION("Test Ring Buffer with Temp Memory")
+    {
+        r2::mem::utils::MemBoundary scratchBoundary = testMemoryArea->ScratchBoundary();
+        
+        r2::mem::RingBufferAllocator ringAllocator(scratchBoundary);
+        
+        REQUIRE(ringAllocator.GetTotalBytesAllocated() == 0);
+        
+        const u64 totalMem = ringAllocator.GetTotalMemory();
+        
+        REQUIRE(totalMem == Megabytes(4));
+        
+        int* intArray = (int*)ringAllocator.Allocate(512 * sizeof(int), alignof(int), 0);
+        
+        REQUIRE(intArray != nullptr);
+        REQUIRE(ringAllocator.InUse(intArray));
+        
+        u32 allocationSize = ringAllocator.GetAllocationSize(intArray);
+        
+        REQUIRE(allocationSize == 512 * sizeof(int));
+        
+        memset(intArray, 0, sizeof(int) * 512);
+        for (int i = 1; i < 511; ++i)
+        {
+            intArray[i] = i;
+        }
+        
+        REQUIRE(intArray[0] == 0);
+        REQUIRE(intArray[1] == 1);
+        
+        REQUIRE(ringAllocator.GetTotalBytesAllocated() >= 512 * sizeof(int));
+
+        ringAllocator.Free(intArray);
+        REQUIRE(!ringAllocator.InUse(intArray));
+        
+        REQUIRE(ringAllocator.GetTotalBytesAllocated() == 0);
+        
     }
     
     r2::mem::GlobalMemory::Shutdown();
