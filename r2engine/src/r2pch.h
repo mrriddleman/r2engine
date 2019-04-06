@@ -19,6 +19,6 @@
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Logging/Log.h"
-
+#include "r2/Utils/Flags.h"
 
 #endif /* r2pch_hpp */

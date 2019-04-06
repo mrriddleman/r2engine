@@ -131,8 +131,6 @@ namespace r2
             //@TODO(Serge): add logging for error
             return false;
         }
-        
-        
 
         return moptrWindow != nullptr && mglContext != nullptr;
     }
