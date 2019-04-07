@@ -11,7 +11,7 @@
 
 namespace r2
 {
-    namespace file
+    namespace fs
     {
         enum Mode
         {
@@ -23,39 +23,24 @@ namespace r2
         };
         
         using FileMode = r2::Flags<Mode, u32>;
-        
-        using FileHandle = void*;
-        
+
         class File
         {
         public:
+            virtual ~File() {};
             
-            File();
-            ~File();
+            virtual u64 Read(void* buffer, u64 length) = 0;
+            virtual u64 Write(const void* buffer, u64 length) = 0;
             
-            File(const File& o) = delete;
-            File& operator=(const File& o) = delete;
+            virtual bool ReadAll(void* buffer) = 0;
             
-            File(File && o) = delete;
-            File& operator=(File && o) = delete;
+            virtual void Seek(u64 position) = 0;
+            virtual void SeekToEnd(void) = 0;
+            virtual void Skip(u64 bytes) = 0;
+            virtual s64 Tell(void) const = 0;
             
-            bool Open(const char* path, FileMode mode);
-            void Close();
-            u64 Read(void* buffer, u64 length);
-            u64 Write(const void* buffer, u64 length);
-            
-            bool ReadAll(void* buffer);
-            
-            void Seek(u64 position);
-            void SeekToEnd(void);
-            void Skip(u64 bytes);
-            s64 Tell(void) const;
-            
-            bool IsOpen() const;
-            s64 Size() const;
-            
-        private:
-            FileHandle mHandle;
+            virtual bool IsOpen() const = 0;
+            virtual s64 Size() const = 0;
         };
     }
 }
