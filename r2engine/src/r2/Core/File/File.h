@@ -24,7 +24,7 @@ namespace r2
         
         using FileMode = r2::Flags<Mode, u32>;
 
-        class File
+        class R2_API File
         {
         public:
             virtual ~File() {};

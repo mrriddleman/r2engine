@@ -12,7 +12,7 @@ namespace r2
 {
     namespace fs
     {
-        class FileStorageArea
+        class R2_API FileStorageArea
         {
         public:
             

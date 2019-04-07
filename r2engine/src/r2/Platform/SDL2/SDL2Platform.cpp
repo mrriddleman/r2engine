@@ -9,6 +9,7 @@
 #include "SDL2Platform.h"
 #include "r2/Platform/IO.h"
 #include "r2/Core/Engine.h"
+#include "r2/Core/File/FileStorageArea.h"
 #include "glad/glad.h"
 
 namespace r2
@@ -69,35 +70,44 @@ namespace r2
     
     bool SDL2Platform::Init(std::unique_ptr<r2::Application> app)
     {
+        //@TODO(Serge): add in more subsystems here
         if(SDL_Init(SDL_INIT_VIDEO) != 0)
         {
-            //@TODO(Serge): add logging for error
+            R2_LOGE("Failed to initialize SDL!");
             return false;
         }
 
-        mBasePath = SDL_GetBasePath();
-        mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
-        
-        SDL_GL_LoadLibrary(nullptr);
-        
-        util::Size res = mEngine.GetInitialResolution();
-        
-        moptrWindow = SDL_CreateWindow("r2engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, SetupSDLOpenGL() | SDL_WINDOW_RESIZABLE);
-        
-        SDL_assert(moptrWindow != nullptr);
-        
-        mglContext = SDL_GL_CreateContext(moptrWindow);
-        
-        SDL_assert(mglContext != nullptr);
-    
-        gladLoadGLLoader(SDL_GL_GetProcAddress);
-        SDL_GL_SetSwapInterval(1);
-        
-        if(moptrWindow && mglContext)
+        //Initialize file system
         {
-            mRunning = true;
+            mBasePath = SDL_GetBasePath();
+            mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
+            
+            //@TODO(Serge): add file storage areas here to filesystem
         }
         
+        //Init OpenGL
+        {
+            SDL_GL_LoadLibrary(nullptr);
+            
+            util::Size res = mEngine.GetInitialResolution();
+            
+            moptrWindow = SDL_CreateWindow("r2engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, SetupSDLOpenGL() | SDL_WINDOW_RESIZABLE);
+            
+            R2_CHECK(moptrWindow != nullptr, "We should have a window pointer!");
+            
+            mglContext = SDL_GL_CreateContext(moptrWindow);
+            
+            SDL_assert(mglContext != nullptr);
+            
+            gladLoadGLLoader(SDL_GL_GetProcAddress);
+            SDL_GL_SetSwapInterval(1);
+            
+            if(moptrWindow && mglContext)
+            {
+                mRunning = true;
+            }
+        }
+
         //@NOTE: maybe it's a bad idea to get the initial resolution without initializing the ngine first?
         
         //Setup engine - bad that it's being set before initialization?

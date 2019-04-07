@@ -169,7 +169,7 @@ namespace r2
             
             MemorySubArea::Handle mScratchAreaHandle;
             
-            //char mDebugName[Kilobytes(1)];
+            
             //#endif
             bool mInitialized;
         };

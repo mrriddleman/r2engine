@@ -30,6 +30,9 @@ namespace r2
     class R2_API Engine
     {
     public:
+        
+        static const u64 MAX_NUM_MEMORY_AREAS;
+        
         Engine();
         ~Engine();
         bool Init(std::unique_ptr<Application> app);

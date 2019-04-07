@@ -20,6 +20,8 @@
 
 namespace r2
 {
+    const u64 Engine::MAX_NUM_MEMORY_AREAS = 10;
+    
     Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr)
     {
         
@@ -34,8 +36,8 @@ namespace r2
     {
         if(app)
         {
-            r2::mem::GlobalMemory::Init<1>();
-            
+            r2::mem::GlobalMemory::Init<MAX_NUM_MEMORY_AREAS>();
+
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
             //@TODO(Serge): should check to see if the app initialized!
