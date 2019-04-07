@@ -19,11 +19,11 @@ namespace r2
             FileStorageArea(const char* rootPath);
             virtual ~FileStorageArea();
             
-            virtual bool Mount() {};
-            virtual bool Unmount() {};
-            virtual bool Commit() {};
+            virtual bool Mount() {return true;}
+            virtual bool Unmount() {return true;}
+            virtual bool Commit() {return true;}
             
-            inline const char* RootPath() const {return &rootPath[0];}
+            inline const char* RootPath() const {return &mRootPath[0];}
         private:
             char mRootPath[Kilobytes(1)];
         };
