@@ -11,7 +11,6 @@
 #include "r2/ImGui/ImGuiLayer.h"
 #include "r2/Core/Layer/AppLayer.h"
 #include "r2/Platform/Platform.h"
-#include <cassert>
 #include "imgui.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"

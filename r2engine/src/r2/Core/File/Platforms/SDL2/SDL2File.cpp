@@ -8,7 +8,7 @@
 
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
-#include "r2/Core/File/Platforms/SDL2/SDL2File.h"
+#include "r2/Core/File/DiskFile.h"
 #include <SDL2/SDL.h>
 
 namespace r2
@@ -66,11 +66,11 @@ namespace r2
             return buf;
         }
 
-        SDL2File::SDL2File():mHandle(nullptr)
+        DiskFile::DiskFile():mHandle(nullptr)
         {
         }
         
-        SDL2File::~SDL2File()
+        DiskFile::~DiskFile()
         {
             if (IsOpen())
             {
@@ -78,21 +78,21 @@ namespace r2
             }
         }
 
-        bool SDL2File::Open(const char* path, FileMode mode)
+        bool DiskFile::Open(const char* path, FileMode mode)
         {
             mHandle = SDL_RWFromFile(path, GetStringFileMode(mode));
             return mHandle != nullptr;
         }
         
-        void SDL2File::Close()
+        void DiskFile::Close()
         {
             R2_CHECK(IsOpen(), "Trying to close a closed file?");
-            SDL_RWclose(mHandle);
+            SDL_RWclose((SDL_RWops*)mHandle);
             
             mHandle = nullptr;
         }
         
-        u64 SDL2File::Read(void* buffer, u64 length)
+        u64 DiskFile::Read(void* buffer, u64 length)
         {
             R2_CHECK(IsOpen(), "The file isn't open?");
             R2_CHECK(buffer != nullptr, "The buffer is null?");
@@ -100,14 +100,14 @@ namespace r2
             
             if (IsOpen() && buffer != nullptr && length > 0)
             {
-                u64 readBytes = SDL_RWread(mHandle, buffer, sizeof(byte), length);
+                u64 readBytes = SDL_RWread((SDL_RWops*)mHandle, buffer, sizeof(byte), length);
                 return readBytes;
             }
             
             return 0;
         }
         
-        u64 SDL2File::Write(const void* buffer, u64 length)
+        u64 DiskFile::Write(const void* buffer, u64 length)
         {
             R2_CHECK(IsOpen(), "The file isn't open?");
             R2_CHECK(buffer != nullptr, "nullptr buffer?");
@@ -115,14 +115,14 @@ namespace r2
             
             if (IsOpen() && buffer != nullptr && length > 0)
             {
-                u64 numBytesWritten = SDL_RWwrite(mHandle, buffer, sizeof(byte), length);
+                u64 numBytesWritten = SDL_RWwrite((SDL_RWops*)mHandle, buffer, sizeof(byte), length);
                 return numBytesWritten;
             }
             
             return 0;
         }
         
-        bool SDL2File::ReadAll(void* buffer)
+        bool DiskFile::ReadAll(void* buffer)
         {
             R2_CHECK(IsOpen(), "The file isn't open?");
             R2_CHECK(buffer != nullptr, "nullptr buffer?");
@@ -135,39 +135,39 @@ namespace r2
             return bytesRead == size;
         }
         
-        void SDL2File::Seek(u64 position)
+        void DiskFile::Seek(u64 position)
         {
             R2_CHECK(IsOpen(), "The file should be open");
-            SDL_RWseek(mHandle, position, RW_SEEK_SET);
+            SDL_RWseek((SDL_RWops*)mHandle, position, RW_SEEK_SET);
         }
         
-        void SDL2File::SeekToEnd(void)
+        void DiskFile::SeekToEnd(void)
         {
             R2_CHECK(IsOpen(), "The file should be open");
-            SDL_RWseek(mHandle, 0, RW_SEEK_END);
+            SDL_RWseek((SDL_RWops*)mHandle, 0, RW_SEEK_END);
         }
         
-        void SDL2File::Skip(u64 bytes)
+        void DiskFile::Skip(u64 bytes)
         {
             R2_CHECK(IsOpen(), "The file should be open");
-            SDL_RWseek(mHandle, bytes, RW_SEEK_CUR);
+            SDL_RWseek((SDL_RWops*)mHandle, bytes, RW_SEEK_CUR);
         }
         
-        s64 SDL2File::Tell(void) const
+        s64 DiskFile::Tell(void) const
         {
             R2_CHECK(IsOpen(), "The file should be open");
-            return SDL_RWtell(mHandle);
+            return SDL_RWtell((SDL_RWops*)mHandle);
         }
         
-        bool SDL2File::IsOpen() const
+        bool DiskFile::IsOpen() const
         {
             return mHandle != nullptr;
         }
         
-        s64 SDL2File::Size() const
+        s64 DiskFile::Size() const
         {
             R2_CHECK(IsOpen(), "The file should be open");
-            return SDL_RWsize(mHandle);
+            return SDL_RWsize((SDL_RWops*)mHandle);
         }
     }
 }
