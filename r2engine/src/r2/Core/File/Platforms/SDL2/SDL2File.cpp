@@ -8,7 +8,7 @@
 
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
-#include "r2/Core/File/Platforms/SDL2File.h"
+#include "r2/Core/File/Platforms/SDL2/SDL2File.h"
 #include <SDL2/SDL.h>
 
 namespace r2

@@ -25,12 +25,14 @@ namespace r2
         virtual void Run() override;
         virtual void Shutdown() override;
         
-        virtual const std::string& RootPath() const override;
+        
         virtual const u32 TickRate() const override;
         virtual const s32 NumLogicalCPUCores() const override;
         virtual const s32 SystemRAM() const override;
         virtual const s32 CPUCacheLineSize() const override;
-        virtual const std::string& AppPath() const override;
+        
+        virtual const std::string RootPath() const override;
+        virtual const std::string AppPath() const override;
     private:
         friend Platform;
         SDL2Platform();
@@ -41,7 +43,8 @@ namespace r2
         static std::unique_ptr<Platform> s_platform;
         SDL_Window * moptrWindow;
         SDL_GLContext mglContext;
-        std::string mPrefPath;
+        char* mPrefPath;
+        char* mBasePath;
         bool mRunning;
         
         

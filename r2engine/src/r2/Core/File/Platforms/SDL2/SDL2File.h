@@ -16,7 +16,7 @@ namespace r2
 {
     namespace fs
     {
-        class SDL2File: public File
+        class SDL2File final: public File
         {
         public:
             

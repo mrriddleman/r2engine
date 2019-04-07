@@ -36,12 +36,13 @@ namespace r2
         virtual bool Init(std::unique_ptr<r2::Application> app) = 0;
         virtual void Run() = 0;
         virtual void Shutdown() = 0;
-        virtual const std::string& RootPath() const = 0;
+        
         virtual const u32 TickRate() const = 0;
         virtual const s32 NumLogicalCPUCores() const = 0;
         virtual const s32 SystemRAM() const = 0;
         virtual const s32 CPUCacheLineSize() const = 0;
-        virtual const std::string& AppPath() const = 0;
+        virtual const std::string RootPath() const = 0;
+        virtual const std::string AppPath() const = 0;
         
         const Engine& EngineConst() { return mEngine; }
         Engine& EngineMutable() {return mEngine;}

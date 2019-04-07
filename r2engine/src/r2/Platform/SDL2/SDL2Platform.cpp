@@ -62,7 +62,7 @@ namespace r2
         return *SDL2Platform::s_platform;
     }
 
-    SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)
+    SDL2Platform::SDL2Platform():moptrWindow(nullptr), mBasePath(nullptr), mPrefPath(nullptr), mRunning(false)
     {
         
     }
@@ -75,6 +75,7 @@ namespace r2
             return false;
         }
 
+        mBasePath = SDL_GetBasePath();
         mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
         
         SDL_GL_LoadLibrary(nullptr);
@@ -290,14 +291,20 @@ namespace r2
             SDL_DestroyWindow(moptrWindow);
         }
         
+        if (mPrefPath)
+        {
+            SDL_free(mPrefPath);
+        }
+        
+        if (mBasePath)
+        {
+            SDL_free(mBasePath);
+        }
+        
         SDL_Quit();
     }
     
-    const std::string& SDL2Platform::RootPath() const
-    {
-        static std::string basePath = SDL_GetBasePath();
-        return basePath;
-    }
+
     
     const u32 SDL2Platform::TickRate() const
     {
@@ -319,7 +326,12 @@ namespace r2
         return SDL_GetCPUCacheLineSize();
     }
     
-    const std::string& SDL2Platform::AppPath() const
+    const std::string SDL2Platform::RootPath() const
+    {
+        return mBasePath;
+    }
+    
+    const std::string SDL2Platform::AppPath() const
     {
         return mPrefPath;
     }
