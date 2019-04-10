@@ -115,3 +115,29 @@ namespace r2
         }
     }
 }
+
+namespace r2::mem::utils
+{
+    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u64 elementSize, const char* file, s32 line, const char* description)
+    {
+        //we need to figure out how much space we have and calculate a memory boundary for the Allocator
+        R2_CHECK(subArea.mBoundary.size > sizeof(PoolArena), "subArea size(%llu) must be greater than sizeof(PoolArena)(%lu)!", subArea.mBoundary.size, sizeof(PoolArena));
+        if (subArea.mBoundary.size <= sizeof(PoolArena))
+        {
+            return nullptr;
+        }
+        
+        u64 leftOverSize = subArea.mBoundary.size - sizeof(PoolArena);
+        u64 modResult = leftOverSize % elementSize;
+        void* poolAllocatorStartPtr = PointerAdd(subArea.mBoundary.location, sizeof(PoolArena) + modResult);
+        leftOverSize -= modResult;
+        
+        MemBoundary poolAllocatorBoundary;
+        poolAllocatorBoundary.location = poolAllocatorStartPtr;
+        poolAllocatorBoundary.size = leftOverSize;
+        
+        PoolArena* stackArena = new (subArea.mBoundary.location) PoolArena(subArea, poolAllocatorBoundary);
+        
+        return stackArena;
+    }
+}

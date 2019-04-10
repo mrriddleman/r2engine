@@ -184,6 +184,11 @@ namespace r2
                 subArea.mnoptrArena = this;
             }
             
+            MemoryArena(MemoryArea::MemorySubArea& subArea, const utils::MemBoundary& boundary):mAllocator(boundary)
+            {
+                subArea.mnoptrArena = this;
+            }
+            
             explicit MemoryArena(const utils::MemBoundary& boundary):mAllocator(boundary)
             {
                 
@@ -271,17 +276,25 @@ namespace r2
             MemoryTaggingPolicy mMemoryTagger;
         };
 
+        
+       // class LinearArena;
+        
+        struct R2_API EngineMemory
+        {
+            mem::MemoryArea::Handle internalEngineMemoryHandle;
+            mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle;
+         //   mem::LinearArena* permanentStorageArena;
+        };
+        
+        struct InternalEngineMemory;
+        
         class R2_API GlobalMemory
         {
         public:
             //Internal to r2
-            template<u64 N>
-            constexpr static bool Init()
-            {
-                mMemoryAreas.reserve(static_cast<size_t>(N));
-                return true;
-            }
+            static bool Init(u64 numMemoryAreas, u64 internalEngineMemory = 0, u64 permanentStorageSize = 0);
             static void Shutdown();
+            static InternalEngineMemory& EngineMemory() {return mEngineMemory;}
             
             //Can be used outside of r2
             static MemoryArea::Handle AddMemoryArea(const char* debugName);
@@ -290,6 +303,7 @@ namespace r2
         private:
             //@TODO(Serge): make into static array
             static std::vector<MemoryArea> mMemoryAreas;
+            static InternalEngineMemory mEngineMemory;
         };
 
         namespace utils

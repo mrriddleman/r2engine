@@ -12,7 +12,6 @@
 #include "r2/Platform/IO.h"
 #include "r2/Core/Layer/LayerStack.h"
 
-
 namespace r2
 {
     namespace evt
@@ -30,11 +29,9 @@ namespace r2
     class R2_API Engine
     {
     public:
-        
-        static const u64 MAX_NUM_MEMORY_AREAS;
-        
         Engine();
         ~Engine();
+        
         bool Init(std::unique_ptr<Application> app);
         void Update();
         void Shutdown();
@@ -61,6 +58,9 @@ namespace r2
         GetClipboardTextFunc mGetClipboardTextFunc;
         inline void SetGetPerformanceFrequencyCallback(GetPerformanceFrequencyFunc func) {mGetPerformanceFrequencyFunc = func;}
         inline void SetGetPerformanceCounterCallback(GetPerformanceCounterFunc func) {mGetPerformanceCounterFunc = func;}
+        
+        //Memory
+        
         
         //Events
         //@TODO(Serge): have different windows?

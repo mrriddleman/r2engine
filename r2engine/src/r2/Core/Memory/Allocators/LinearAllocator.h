@@ -15,6 +15,12 @@
  https://blog.molecular-matters.com/2012/08/14/memory-allocation-strategies-a-linear-allocator/
  */
 
+#define MAKE_LINEARA(arena, capacity) r2::mem::utils::CreateLinearAllocator(arena, capacity, __FILE__, __LINE__, "")
+
+#define MAKE_LINEAR_ARENA(arena, capacity) r2::mem::utils::CreateLinearArena(arena, capacity, __FILE__, __LINE__, "")
+
+#define EMPLACE_LINEAR_ARENA(subarea) r2::mem::utils::EmplaceLinearArena(subarea, __FILE__, __LINE__, "")
+
 namespace r2
 {
     namespace mem
@@ -51,6 +57,58 @@ namespace r2
         typedef MemoryArena<LinearAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> LinearArena;
 #endif
     }
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::LinearAllocator* CreateLinearAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+    
+    template<class ARENA> r2::mem::LinearArena* CreateLinearArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+    
+    LinearArena* EmplaceLinearArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description);
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::LinearAllocator* CreateLinearAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        void* linearAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(LinearAllocator) + capacity, 64, file, line, description);
+        
+        R2_CHECK(linearAllocatorStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(linearAllocatorStartPtr, sizeof(LinearAllocator));
+        
+        utils::MemBoundary linearBoundary;
+        linearBoundary.location = boundaryStart;
+        linearBoundary.size = capacity;
+        
+        LinearAllocator* linearAllocator = new (linearAllocatorStartPtr) LinearAllocator(linearBoundary);
+        
+        R2_CHECK(linearAllocator != nullptr, "Couldn't placement new?");
+        
+        return linearAllocator;
+    }
+    
+    template<class ARENA> r2::mem::LinearArena* CreateLinearArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        void* linearArenaStartPtr = ALLOC_BYTES(arena, sizeof(LinearArena) + capacity, 64, file, line, description);
+        
+        R2_CHECK(linearArenaStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(linearArenaStartPtr, sizeof(LinearArena));
+        
+        utils::MemBoundary linearBoundary;
+        linearBoundary.location = boundaryStart;
+        linearBoundary.size = capacity;
+        
+        LinearArena* linearArena = new (linearArenaStartPtr) LinearArena(linearBoundary);
+        
+        R2_CHECK(linearArena != nullptr, "Couldn't placement new?");
+        
+        return linearArena;
+    }
+    
+    
 }
 
 #endif /* LinearAllocator_h */

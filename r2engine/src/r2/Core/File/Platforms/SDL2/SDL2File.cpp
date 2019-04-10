@@ -15,9 +15,8 @@ namespace r2
 {
     namespace fs
     {
-        const char* GetStringFileMode(FileMode mode)
+        void GetStringFileMode(char buf[4], FileMode mode)
         {
-            static char buf[4];
             u8 size = 0;
             
             if (mode.IsSet(Mode::Read) &&
@@ -62,8 +61,6 @@ namespace r2
             }
             
             buf[size] = '\0';
-            
-            return buf;
         }
 
         DiskFile::DiskFile():mHandle(nullptr)
@@ -80,7 +77,10 @@ namespace r2
 
         bool DiskFile::Open(const char* path, FileMode mode)
         {
-            mHandle = SDL_RWFromFile(path, GetStringFileMode(mode));
+            char strFileMode[4];
+            GetStringFileMode(strFileMode, mode);
+            
+            mHandle = SDL_RWFromFile(path, strFileMode);
             return mHandle != nullptr;
         }
         

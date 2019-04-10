@@ -19,7 +19,7 @@
 
 TEST_CASE("TEST GLOBAL MEMORY")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     
     SECTION("Test Create Memory Area")
     {
@@ -80,7 +80,7 @@ TEST_CASE("TEST GLOBAL MEMORY")
 
 TEST_CASE("TEST LINEAR ALLOCATOR")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Linear Allocator")
     {
         auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
@@ -176,7 +176,7 @@ private:
 
 TEST_CASE("Test Linear Memory Arena No Checking")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Linear Allocator Arena")
     {
        //
@@ -235,7 +235,7 @@ TEST_CASE("Test Linear Memory Arena No Checking")
 
 TEST_CASE("Test Stack Allocator")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Stack Allocator")
     {
         auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
@@ -328,7 +328,7 @@ TEST_CASE("Test Stack Allocator")
 
 TEST_CASE("Test Stack Memory Arena No Checking")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Stack Allocator Arena")
     {
         //
@@ -386,7 +386,7 @@ TEST_CASE("Test Stack Memory Arena No Checking")
 
 TEST_CASE("Test Pool Allocator")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Pool Allocator")
     {
         auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
@@ -485,7 +485,7 @@ TEST_CASE("Test Pool Allocator")
 
 TEST_CASE("Test Pool Memory Arena No Checking")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     SECTION("Test Pool Allocator Arena")
     {
         //
@@ -550,7 +550,7 @@ TEST_CASE("Test Pool Memory Arena No Checking")
 
 TEST_CASE("Test Basic SArray")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     
     auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
     REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
@@ -669,7 +669,7 @@ bool cmp2(const int& a, const int& b)
 
 TEST_CASE("Test SQueue")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     
     auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
     REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
@@ -779,7 +779,7 @@ TEST_CASE("Test SQueue")
 
 TEST_CASE("Test SHashMap")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     
     auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
     REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
@@ -996,7 +996,7 @@ TEST_CASE("Test SHashMap")
 
 TEST_CASE("Test Ring Buffer")
 {
-    r2::mem::GlobalMemory::Init<1>();
+    r2::mem::GlobalMemory::Init(1);
     
     auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
     REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);

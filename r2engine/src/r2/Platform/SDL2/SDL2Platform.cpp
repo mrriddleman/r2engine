@@ -11,9 +11,19 @@
 #include "r2/Core/Engine.h"
 #include "r2/Core/File/FileStorageArea.h"
 #include "glad/glad.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 
 namespace r2
 {
+    //@NOTE: Increase as needed this is for dev
+    const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
+    
+    //@NOTE: Increase as needed this is for dev
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(28);
+    
+    //@NOTE: Should never exceed the above memory
+    const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);
+    
     static char * mClipboardTextData = nullptr;
     
     std::unique_ptr<Platform> SDL2Platform::s_platform = nullptr;
@@ -77,11 +87,19 @@ namespace r2
             return false;
         }
 
+        //Global memory setup for the engine
+        {
+            r2::mem::GlobalMemory::Init(MAX_NUM_MEMORY_AREAS,
+                                        TOTAL_INTERNAL_ENGINE_MEMORY,
+                                        TOTAL_INTERNAL_PERMANENT_MEMORY);
+        }
+
         //Initialize file system
         {
             mBasePath = SDL_GetBasePath();
             mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
             
+            //@TODO(Serge): create the FileDevices
             //@TODO(Serge): add file storage areas here to filesystem
         }
         
@@ -139,7 +157,7 @@ namespace r2
         
         if(!mEngine.Init(std::move(app)))
         {
-            //@TODO(Serge): add logging for error
+            R2_LOGE("Failed to initialize the engine!\n");
             return false;
         }
 
@@ -310,6 +328,8 @@ namespace r2
         {
             SDL_free(mBasePath);
         }
+        
+        r2::mem::GlobalMemory::Shutdown();
         
         SDL_Quit();
     }

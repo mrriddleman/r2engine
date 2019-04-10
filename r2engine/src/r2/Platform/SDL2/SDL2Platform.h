@@ -20,11 +20,13 @@ namespace r2
     class R2_API SDL2Platform: public Platform
     {
     public:
+        static const u64 MAX_NUM_MEMORY_AREAS;
+        static const u64 TOTAL_INTERNAL_ENGINE_MEMORY;
+        static const u64 TOTAL_INTERNAL_PERMANENT_MEMORY;
         
         virtual bool Init(std::unique_ptr<r2::Application> app) override;
         virtual void Run() override;
         virtual void Shutdown() override;
-        
         
         virtual const u32 TickRate() const override;
         virtual const s32 NumLogicalCPUCores() const override;

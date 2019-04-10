@@ -54,6 +54,11 @@ namespace r2
             mFlags |= other.mFlags;
             return *this;
         }
+        
+        inline bool operator==(const Flags& other) const
+        {
+            return mFlags == other.mFlags;
+        }
     private:
         inline explicit Flags(N flags):mFlags(flags)
         {

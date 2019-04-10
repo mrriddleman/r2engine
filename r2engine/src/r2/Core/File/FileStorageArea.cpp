@@ -12,15 +12,17 @@ namespace r2
 {
     namespace fs
     {
-        FileStorageArea::FileStorageArea(const char* rootPath)
+        FileStorageArea::FileStorageArea(const char* rootPath, FileStorageDevice& device, FileDeviceModifierListPtr modList):mnoptrStorageDevice(&device), mnoptrModifiers(modList)
         {
             strcpy(mRootPath, rootPath);
-            Mount();
         }
         
         FileStorageArea::~FileStorageArea()
         {
             Unmount();
+            //@NOTE: we don't free these since they are a part of permanent storage
+            mnoptrStorageDevice = nullptr;
+            mnoptrModifiers = nullptr;
         }
     }
 }

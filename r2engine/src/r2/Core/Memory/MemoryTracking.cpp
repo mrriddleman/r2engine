@@ -12,6 +12,11 @@ namespace r2
 {
     namespace mem
     {
+        BasicMemoryTracking::BasicMemoryTracking()
+        {
+            strcpy(mName, "");
+        }
+        
         BasicMemoryTracking::BasicMemoryTracking(const char* name)
         {
             strcpy(mName, name);

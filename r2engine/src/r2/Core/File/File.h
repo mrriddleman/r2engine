@@ -7,23 +7,15 @@
 
 #ifndef File_h
 #define File_h
-#include <stdio.h>
+
+#include "r2/Core/File/FileTypes.h"
 
 namespace r2
 {
     namespace fs
     {
-        enum Mode
-        {
-            Read = 1 << 0,
-            Write = 1 << 1,
-            Append = 1 << 2,
-            Recreate = 1 << 3,
-            Binary = 1 << 4,
-        };
+        class FileStorageDevice;
         
-        using FileMode = r2::Flags<Mode, u32>;
-
         class R2_API File
         {
         public:
@@ -41,6 +33,10 @@ namespace r2
             
             virtual bool IsOpen() const = 0;
             virtual s64 Size() const = 0;
+            
+            void SetFileDevice(FileStorageDevice* fileDevice) {mDevice = fileDevice;}
+        protected:
+            FileStorageDevice* mDevice;
         };
     }
 }

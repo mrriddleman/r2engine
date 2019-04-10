@@ -6,8 +6,6 @@
 //
 
 #include "LayerStack.h"
-#include <cassert> //@TODO(Serge): replace with our own assert
-#include <iostream>
 
 namespace r2
 {
@@ -217,25 +215,25 @@ namespace r2
     
     void LayerStack::PrintLayerStack(b32 topToBottom)
     {
-        std::cout << "====================================" << std::endl;
+        R2_LOGI( "====================================\n" );
         
         if(topToBottom)
         {
             for(auto layer = mLayers.end(); layer != mLayers.begin(); )
             {
                 --layer;
-                std::cout << layer->get()->DebugName() << std::endl;
+                R2_LOGI("%s", layer->get()->DebugName().c_str());
             }
         }
         else
         {
             for(auto& layer : mLayers)
             {
-                std::cout << layer->DebugName() << std::endl;
+                R2_LOGI("%s", layer->DebugName().c_str());
             }
         }
         
-        std::cout << "====================================" << std::endl <<std::endl;
+        R2_LOGI( "====================================\n\n" );
     }
 }
 

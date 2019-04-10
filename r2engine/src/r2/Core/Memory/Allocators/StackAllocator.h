@@ -17,6 +17,10 @@
     #define STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER 1
 #endif
 
+#define MAKE_STACKA(arena, capacity) r2::mem::utils::CreateStackAllocator(arena, capacity, __FILE__, __LINE__, "")
+
+#define MAKE_STACK_ARENA(arena, capacity) r2::mem::utils::CreateStackArena(arena, capacity, __FILE__, __LINE_, "")
+
 namespace r2
 {
     namespace mem
@@ -52,7 +56,56 @@ namespace r2
 #else
         typedef MemoryArena<StackAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> StackArena;
 #endif
+    }
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::StackAllocator* CreateStackAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     
+    template<class ARENA> r2::mem::StackArena* CreateStackArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+    
+    StackArena* EmplaceStackArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description);
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::StackAllocator* CreateStackAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        void* stackAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(StackAllocator) + capacity, 64, file, line, description);
+        
+        R2_CHECK(stackAllocatorStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(stackAllocatorStartPtr, sizeof(StackAllocator));
+        
+        utils::MemBoundary stackBoundary;
+        stackBoundary.location = boundaryStart;
+        stackBoundary.size = capacity;
+
+        StackAllocator* stack = new (stackAllocatorStartPtr) StackAllocator(stackBoundary);
+        
+        R2_CHECK(stack != nullptr, "Couldn't placement new?");
+        
+        return stack;
+    }
+    
+    template<class ARENA> r2::mem::StackArena* CreateStackArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        void* stackArenaStartPtr = ALLOC_BYTES(arena, sizeof(StackArena) + capacity, 64, file, line, description);
+        
+        R2_CHECK(stackArenaStartPtr != nullptr, "We shouldn't have null ");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(stackArenaStartPtr, sizeof(StackArena));
+        
+        utils::MemBoundary linearBoundary;
+        linearBoundary.location = boundaryStart;
+        linearBoundary.size = capacity;
+        
+        StackArena* stackArena = new (stackArenaStartPtr) StackArena(linearBoundary);
+        
+        R2_CHECK(stackArena != nullptr, "Couldn't placement new?");
+        
+        return stackArena;
     }
 }
 

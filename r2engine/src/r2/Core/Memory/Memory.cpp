@@ -7,20 +7,57 @@
 
 #include "Memory.h"
 #include <cstring>
+#include "r2/Core/Memory/InternalEngineMemory.h"
+
 
 namespace r2
 {
     namespace mem
     {
         std::vector<MemoryArea> GlobalMemory::mMemoryAreas;
+        InternalEngineMemory GlobalMemory::mEngineMemory;
+        
+        bool GlobalMemory::Init(u64 numMemoryAreas, u64 internalEngineMemory, u64 permanentStorageSize)
+        {
+            R2_CHECK(internalEngineMemory >= permanentStorageSize, "internalEngineMemory(%llu) < permanentStorageSize(%llu", internalEngineMemory, permanentStorageSize);
+            mMemoryAreas.reserve(numMemoryAreas);
+            
+            if (internalEngineMemory > 0)
+            {
+                mEngineMemory.internalEngineMemoryHandle = AddMemoryArea("Engine Memory");
+                R2_CHECK(mEngineMemory.internalEngineMemoryHandle != r2::mem::MemoryArea::Invalid, "Our internal memory  storage handle is invalid!");
+                
+                MemoryArea* internalEngineMemoryArea = GetMemoryArea(mEngineMemory.internalEngineMemoryHandle);
+                
+                R2_CHECK(internalEngineMemoryArea != nullptr, "Couldn't get the internal engine storage memory area after we created it!");
+                
+                internalEngineMemoryArea->Init(internalEngineMemory);
+                
+                R2_CHECK(internalEngineMemoryArea->ScratchBoundaryPtr() != nullptr, "We should have a scratch boundary!");
+                
+                mEngineMemory.permanentStorageHandle = internalEngineMemoryArea->AddSubArea(permanentStorageSize);
+                
+                //Should be TOTAL_INTERNAL_ENGINE_MEMORY - TOTAL_INTERNAL_PERMANENT_MEMORY left in the Engine Memory Area
+                
+                //Setup some kind of arena for the permanent storage
+                mEngineMemory.permanentStorageArena = EMPLACE_LINEAR_ARENA(*internalEngineMemoryArea->GetSubArea(mEngineMemory.permanentStorageHandle));
+            }
+ 
+            return true;
+        }
         
         void GlobalMemory::Shutdown()
         {
+            if(mEngineMemory.permanentStorageArena)
+            {
+                mEngineMemory.permanentStorageArena->~LinearArena();
+            }
+            
             for(MemoryArea& area : mMemoryAreas)
             {
                 area.Shutdown();
             }
-            
+
             mMemoryAreas.clear();
         }
         

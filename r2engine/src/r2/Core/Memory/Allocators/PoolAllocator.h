@@ -13,6 +13,10 @@
 #include "r2/Core/Memory/MemoryTagging.h"
 #include "r2/Core/Memory/MemoryTracking.h"
 
+#define MAKE_POOLA(arena, elementSize, capacity) r2::mem::utils::CreatePoolAllocator(arena, elementSize, capacity, __FILE__, __LINE__, "")
+
+#define MAKE_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreatePoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
+
 namespace r2
 {
     namespace mem
@@ -62,6 +66,66 @@ namespace r2
 #else
         typedef MemoryArena<PoolAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> PoolArena;
 #endif
+    }
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    
+    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u64 elementSize, const char* file, s32 line, const char* description);
+}
+
+namespace r2::mem::utils
+{
+    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        u64 poolSizeInBytes = capacity * elementSize;
+        
+        void* poolAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(PoolAllocator) + poolSizeInBytes, elementSize, file, line, description);
+        
+        R2_CHECK(poolAllocatorStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(poolAllocatorStartPtr, sizeof(PoolAllocator));
+        
+        utils::MemBoundary poolBoundary;
+        poolBoundary.location = boundaryStart;
+        poolBoundary.size = poolSizeInBytes;
+        poolBoundary.elementSize = elementSize;
+        poolBoundary.alignment = elementSize;
+        poolBoundary.offset = 0; //?
+        
+        PoolAllocator* pool = new (poolAllocatorStartPtr) PoolAllocator(poolBoundary);
+        
+        R2_CHECK(pool != nullptr, "Couldn't placement new?");
+        
+        return pool;
+    }
+    
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        u64 poolSizeInBytes = capacity * elementSize;
+        
+        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, elementSize, file, line, description);
+        
+        R2_CHECK(poolArenaStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(poolArenaStartPtr, sizeof(PoolArena));
+        
+        utils::MemBoundary poolBoundary;
+        poolBoundary.location = boundaryStart;
+        poolBoundary.size = poolSizeInBytes;
+        poolBoundary.elementSize = elementSize;
+        poolBoundary.alignment = elementSize;
+        poolBoundary.offset = 0; //?
+        
+        PoolArena* pool = new (poolArenaStartPtr) PoolArena(poolBoundary);
+        
+        R2_CHECK(pool != nullptr, "Couldn't placement new?");
+        
+        return pool;
     }
 }
 

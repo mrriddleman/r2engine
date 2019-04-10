@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include "r2.h"
+#include "r2/Core/EntryPoint.h"
 
 class Sandbox: public r2::Application
 {

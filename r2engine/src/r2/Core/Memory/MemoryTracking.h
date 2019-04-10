@@ -30,7 +30,8 @@ namespace r2
         class R2_API BasicMemoryTracking
         {
         public:
-            BasicMemoryTracking(const char* name);
+            BasicMemoryTracking();
+            explicit BasicMemoryTracking(const char* name);
             ~BasicMemoryTracking();
             void OnAllocation(void* noptrMemory, u64 size, u64 alignment, const char* file, s32 line, const char* description);
             void OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description);
