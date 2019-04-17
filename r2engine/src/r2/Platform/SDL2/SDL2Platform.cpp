@@ -9,9 +9,10 @@
 #include "SDL2Platform.h"
 #include "r2/Platform/IO.h"
 #include "r2/Core/Engine.h"
-#include "r2/Core/File/FileStorageArea.h"
+
 #include "glad/glad.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/File/FileStorageArea.h"
 
 namespace r2
 {

@@ -19,7 +19,7 @@ namespace r2
         class R2_API File
         {
         public:
-            virtual ~File() {};
+            virtual ~File() {mDevice = nullptr;}
             
             virtual u64 Read(void* buffer, u64 length) = 0;
             virtual u64 Write(const void* buffer, u64 length) = 0;
@@ -34,8 +34,10 @@ namespace r2
             virtual bool IsOpen() const = 0;
             virtual s64 Size() const = 0;
             
+            //Not to be used by anyone except the file system!
             void SetFileDevice(FileStorageDevice* fileDevice) {mDevice = fileDevice;}
-        protected:
+            FileStorageDevice* GetFileDevice() {return mDevice;}
+        private:
             FileStorageDevice* mDevice;
         };
     }

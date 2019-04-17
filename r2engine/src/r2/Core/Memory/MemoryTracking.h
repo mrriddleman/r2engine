@@ -25,6 +25,8 @@ namespace r2
                 static std::vector<utils::MemoryTag> tags;
                 return tags;
             }
+            
+            //@TODO(Serge): Add name - do nothing
         };
         
         class R2_API BasicMemoryTracking
@@ -35,6 +37,8 @@ namespace r2
             ~BasicMemoryTracking();
             void OnAllocation(void* noptrMemory, u64 size, u64 alignment, const char* file, s32 line, const char* description);
             void OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description);
+            
+            //@TODO(Serge): Add name
             
             const std::string Name() {return mName;}
             inline u64 NumAllocations() const {return static_cast<u64>(mTags.size());}

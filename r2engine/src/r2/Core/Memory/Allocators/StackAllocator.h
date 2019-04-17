@@ -12,6 +12,7 @@
 #include "r2/Core/Memory/MemoryBoundsChecking.h"
 #include "r2/Core/Memory/MemoryTagging.h"
 #include "r2/Core/Memory/MemoryTracking.h"
+#include "r2/Platform/Platform.h"
 
 #ifndef STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER
     #define STACK_ALLOCATOR_CHECK_FREE_LIFO_ORDER 1
@@ -72,7 +73,7 @@ namespace r2::mem::utils
 {
     template<class ARENA> r2::mem::StackAllocator* CreateStackAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
     {
-        void* stackAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(StackAllocator) + capacity, 64, file, line, description);
+        void* stackAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(StackAllocator) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
         R2_CHECK(stackAllocatorStartPtr != nullptr, "We shouldn't have null pool!");
         
@@ -91,7 +92,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::StackArena* CreateStackArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
     {
-        void* stackArenaStartPtr = ALLOC_BYTES(arena, sizeof(StackArena) + capacity, 64, file, line, description);
+        void* stackArenaStartPtr = ALLOC_BYTES(arena, sizeof(StackArena) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
         R2_CHECK(stackArenaStartPtr != nullptr, "We shouldn't have null ");
         

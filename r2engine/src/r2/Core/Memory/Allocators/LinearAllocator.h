@@ -11,6 +11,7 @@
 #include "r2/Core/Memory/MemoryBoundsChecking.h"
 #include "r2/Core/Memory/MemoryTagging.h"
 #include "r2/Core/Memory/MemoryTracking.h"
+#include "r2/Platform/Platform.h"
 /*Based on:
  https://blog.molecular-matters.com/2012/08/14/memory-allocation-strategies-a-linear-allocator/
  */
@@ -91,7 +92,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::LinearArena* CreateLinearArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
     {
-        void* linearArenaStartPtr = ALLOC_BYTES(arena, sizeof(LinearArena) + capacity, 64, file, line, description);
+        void* linearArenaStartPtr = ALLOC_BYTES(arena, sizeof(LinearArena) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
         R2_CHECK(linearArenaStartPtr != nullptr, "We shouldn't have null pool!");
         

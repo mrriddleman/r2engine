@@ -179,6 +179,9 @@ namespace r2
         class R2_API MemoryArena: public MemoryArenaBase
         {
         public:
+            
+            //@TODO(Serge): pass debug name through to MemoryTrackingPolicy
+            
             explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
             {
                 subArea.mnoptrArena = this;

@@ -8,40 +8,37 @@
 #ifndef FileStorageArea_h
 #define FileStorageArea_h
 
-#include "r2/Core/File/FileTypes.h"
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
-#include "r2/Core/Memory/Allocators/PoolAllocator.h"
 
-namespace r2
+namespace r2::fs
 {
-    namespace fs
+    class FileStorageDevice;
+    class FileDeviceModifier;
+    
+    class R2_API FileStorageArea
     {
-        class FileStorageDevice;
-        class FileDeviceModifier;
+    public:
+        using FileDeviceModifierList = r2::SArray<FileDeviceModifier*>;
         
-        class R2_API FileStorageArea
-        {
-        public:
-            using FileDeviceModifierListPtr = r2::SArray<FileDeviceModifier*>*;
-            
-            FileStorageArea(const char* rootPath, FileStorageDevice& storageDevice, FileDeviceModifierListPtr list = nullptr);
-            virtual ~FileStorageArea();
-            
-            virtual bool Mount() {return true;}
-            virtual bool Unmount() {return true;}
-            virtual bool Commit() {return true;}
-            
-            inline const char* RootPath() const {return &mRootPath[0];}
-            inline FileStorageDevice* GetFileDevice() {return mnoptrStorageDevice;}
-            inline const FileDeviceModifierListPtr GetFileDeviceModifiers() {return mnoptrModifiers;}
-            
-        private:
+        FileStorageArea(const char* rootPath, u32 numFilesActive);
+        virtual ~FileStorageArea();
+        
+        virtual bool Mount(r2::mem::LinearArena& storage);
+        virtual bool Unmount(r2::mem::LinearArena& storage);
+        virtual bool Commit() {return true;}
+        
+        inline const char* RootPath() const {return &mRootPath[0];}
+        inline FileStorageDevice* GetFileStorageDevice() {return moptrStorageDevice;}
+        inline const FileDeviceModifierList* GetFileDeviceModifiers() {return moptrModifiers;}
 
-            char mRootPath[Kilobytes(1)];
-            FileStorageDevice* mnoptrStorageDevice;
-            FileDeviceModifierListPtr mnoptrModifiers;
-        };
-    }
+    protected:
+        FileStorageDevice* moptrStorageDevice;
+        FileDeviceModifierList* moptrModifiers;
+        
+    private:
+        const u32 mNumFilesActive; // how many files you can have on this storage area active at once
+        char mRootPath[Kilobytes(1)];
+    };
 }
 
 #endif /* FileStorageArea_h */

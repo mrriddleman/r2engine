@@ -25,23 +25,28 @@ namespace r2
             virtual ~FileStorageDevice(){}
             virtual File* Open(const char* path, FileMode mode) = 0;
             virtual void Close(File* file) = 0;
-            
+            DeviceStorage GetStorageType() const {return mStorageType;}
         private:
             DeviceStorage mStorageType;
         };
         
-        class R2_API FileDeviceModifier
+        class R2_API FileDeviceModifier: public FileStorageDevice
         {
         public:
             
-            FileDeviceModifier(DeviceModifier mod):mMod(mod){}
+            FileDeviceModifier(DeviceModifier mod):FileStorageDevice(DeviceStorage::None), mMod(mod){}
             
             virtual ~FileDeviceModifier(){}
+            virtual File* Open(const char* path, FileMode mode) override {return nullptr;}
             virtual File* Open(File* file) = 0;
-            virtual void Close(File* file) = 0;
-        
+            virtual void Close(File* file) override = 0;
+            
+            DeviceModifier GetModifier() const {return mMod;}
+        protected:
+            File* mnoptrFile;
         private:
             DeviceModifier mMod;
+            
         };
     }
 }

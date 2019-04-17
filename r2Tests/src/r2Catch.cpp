@@ -15,6 +15,7 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
+#include "r2/Core/File/PathUtils.h"
 #include <cstring>
 
 TEST_CASE("TEST GLOBAL MEMORY")
@@ -1050,4 +1051,125 @@ TEST_CASE("Test Ring Buffer")
     }
     
     r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Path Utils")
+{
+    SECTION("Test GetNextSubPath() - Good Case")
+    {
+        char path[] = "/subpath1/subpath2/subpath3/file.txt";
+        char subPath[Kilobytes(1)] = "";
+        
+        char* resultPath = r2::fs::utils::GetNextSubPath(path, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(subPath, "subpath1") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(resultPath, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(subPath, "subpath2") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(resultPath, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "/file.txt") == 0);
+        REQUIRE(strcmp(subPath, "subpath3") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(resultPath, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "") == 0);
+        REQUIRE(strcmp(subPath, "file.txt") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(resultPath, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "") == 0);
+        REQUIRE(strcmp(subPath, "") == 0);
+    }
+    
+    SECTION("Test GetNextSubPath() - Bad Case 1")
+    {
+        char path[] = "/////////subpath1/subpath2/subpath3/file.txt";
+        char subPath[Kilobytes(1)] = "";
+        
+        char* resultPath = r2::fs::utils::GetNextSubPath(path, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/////////subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(subPath, "subpath1") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(path, subPath, '.');
+        
+        REQUIRE(strcmp(path, "/////////subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(resultPath, ".txt") == 0);
+        REQUIRE(strcmp(subPath, "/////////subpath1/subpath2/subpath3/file") == 0);
+    }
+    
+    SECTION("Test GetNextSubPath() - Bad Case 2")
+    {
+        char path[] = "";
+        char subPath[Kilobytes(1)] = "Hello";
+        
+        char* resultPath = r2::fs::utils::GetNextSubPath(path, subPath, '/');
+        
+        REQUIRE(strcmp(resultPath, "") == 0);
+        REQUIRE(strcmp(subPath, "") == 0);
+        
+        resultPath = r2::fs::utils::GetNextSubPath(nullptr, subPath, '/');
+        
+        REQUIRE(resultPath == nullptr);
+    }
+    
+    SECTION("Test NumMatchingSubPaths")
+    {
+        char path[] = "/subpath1/subpath2/subpath3/file.txt";
+        char path2[] = "/subpath1/subpath4";
+        char path3[] = "/";
+        char path4[] = "/subpath1/subpath2/subpath3/";
+        char path5[] = "/subpath1/subpath4/";
+        
+        char path6[] = "subpath1/subpath2/subpath3";
+        
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path, path2, '/') == 1);
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path, path3, '/') == 0);
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path2, path3, '/') == 0);
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path, path4, '/') == 3);
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path2, path5, '/') == 2);
+        REQUIRE(r2::fs::utils::NumMatchingSubPaths(path, path6, '/') == 3);
+    }
+    
+    SECTION("Test GetLastSubPath")
+    {
+        char path[] = "/subpath1/subpath2/subpath3/file.txt";
+        char subPath[Kilobytes(1)] = "";
+        
+        char* resultPath = r2::fs::utils::GetLastSubPath(path, subPath, '/');
+        
+        REQUIRE(strcmp(path, "/subpath1/subpath2/subpath3/file.txt") == 0);
+        REQUIRE(strcmp(subPath, "file.txt") == 0);
+        REQUIRE(strcmp(resultPath, "/file.txt") == 0);
+    }
+    
+    SECTION("Test File Nam functions")
+    {
+        char path[] = "/subpath1/subpath2/subpath3/file.txt";
+        char tempBuf[Kilobytes(1)] = "";
+        
+        REQUIRE(r2::fs::utils::CopyFileNameWithExtension(path, tempBuf));
+        
+        REQUIRE(strcmp("file.txt", tempBuf) == 0);
+        
+        REQUIRE(r2::fs::utils::CopyFileName(path, tempBuf));
+        
+        REQUIRE(strcmp("file", tempBuf) == 0);
+        
+        REQUIRE(r2::fs::utils::CopyFileExtension(path, tempBuf));
+        
+        REQUIRE(strcmp(".txt", tempBuf) == 0);
+    }
+    
 }

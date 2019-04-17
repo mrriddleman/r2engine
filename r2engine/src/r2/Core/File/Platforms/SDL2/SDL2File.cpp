@@ -77,6 +77,14 @@ namespace r2
 
         bool DiskFile::Open(const char* path, FileMode mode)
         {
+            R2_CHECK(path != nullptr, "Null Path!");
+            R2_CHECK(path != "", "Empty path!");
+            
+            if (IsOpen())
+            {
+                return true;
+            }
+            
             char strFileMode[4];
             GetStringFileMode(strFileMode, mode);
             
@@ -90,6 +98,7 @@ namespace r2
             SDL_RWclose((SDL_RWops*)mHandle);
             
             mHandle = nullptr;
+            SetFileDevice(nullptr);
         }
         
         u64 DiskFile::Read(void* buffer, u64 length)
@@ -116,6 +125,7 @@ namespace r2
             if (IsOpen() && buffer != nullptr && length > 0)
             {
                 u64 numBytesWritten = SDL_RWwrite((SDL_RWops*)mHandle, buffer, sizeof(byte), length);
+                R2_CHECK(numBytesWritten == length, "We couldn't write out all %llu bytes\n", length);
                 return numBytesWritten;
             }
             

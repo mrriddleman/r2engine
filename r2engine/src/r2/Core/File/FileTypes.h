@@ -14,7 +14,8 @@ namespace r2
     {
         enum class DeviceStorage: u8
         {
-            Disk = 0,
+            None = 0,
+            Disk,
             Memory,
             Net,
             Count
@@ -58,15 +59,14 @@ namespace r2
                 mModifiers[mModCount++] = mod;
             }
             
+            inline DeviceStorage GetStorageDevice() const {return mStorage;}
+            
         private:
 
             DeviceStorage mStorage;
             std::array<DeviceModifier, DEVICE_MOD_COUNT> mModifiers;
             u8 mModCount;
         };
-        
-      
-        
     }
 }
 

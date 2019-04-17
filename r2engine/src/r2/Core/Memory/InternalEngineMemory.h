@@ -15,9 +15,9 @@ namespace r2::mem
     struct InternalEngineMemory
     {
         //@TODO(Serge): move the handles out of here
-        r2::mem::MemoryArea::Handle internalEngineMemoryHandle;
-        r2::mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle;
-        LinearArena* permanentStorageArena;
+        r2::mem::MemoryArea::Handle internalEngineMemoryHandle = MemoryArea::Invalid;
+        r2::mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle = MemoryArea::MemorySubArea::Invalid;
+        LinearArena* permanentStorageArena = nullptr;
     };
 }
 

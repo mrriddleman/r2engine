@@ -114,6 +114,10 @@ R2_VLOG(r2::Log::verbosity_name, cond, __VA_ARGS__)
 R2_PREDICT_TRUE((test) == true) ? (void)0 : r2::Log::LogAndAbort(0, "CHECK FAILED:  " info "  ", __FILE__,      \
 __LINE__, ##__VA_ARGS__)
 
+#ifdef R2_DEBUG
 #define R2_CHECK(test, ...) R2_CHECK_WITH_INFO(test, #test, ##__VA_ARGS__)
+#else
+#define R2_CHECK(test, ...)
+#endif
 
 #endif /* Log_hpp */

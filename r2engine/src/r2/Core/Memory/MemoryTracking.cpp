@@ -24,6 +24,7 @@ namespace r2
         
         BasicMemoryTracking::~BasicMemoryTracking()
         {
+            //@TODO(Serge): dump Tag Info
             R2_CHECK(mTags.size() == 0, "We still have Memory allocations that have not been freed!");
         }
         
