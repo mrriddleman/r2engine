@@ -19,12 +19,10 @@ namespace r2::fs
     class FileSystem
     {
     public:
-        
 
-        
         static bool Init(r2::mem::LinearArena& arena, u32 storageAreaCapacity);
         static void Mount(FileStorageArea& storageArea);
-        static void Shutdown();
+        static void Shutdown(r2::mem::LinearArena& arena);
         
         static File* Open(const DeviceConfig& config, const char* path, FileMode mode);
         static void Close(File* file);

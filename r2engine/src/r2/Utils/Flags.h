@@ -19,7 +19,7 @@ namespace r2
             
         }
         
-        inline explicit Flags(T flag):mFlags(flag)
+        inline Flags(T flag):mFlags(flag)
         {
             
         }

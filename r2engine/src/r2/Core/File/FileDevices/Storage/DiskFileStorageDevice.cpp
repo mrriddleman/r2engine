@@ -30,7 +30,7 @@ namespace r2::fs
             return true;// we've already mounted
         }
         
-        moptrDiskFilePool = MAKE_POOLA(permanentStorage, sizeof(DiskFile), numFilesActive);
+        moptrDiskFilePool = MAKE_NO_CHECK_POOL_ARENA(permanentStorage, sizeof(DiskFile), numFilesActive);
         R2_CHECK(moptrDiskFilePool != nullptr, "We couldn't allocate a pool of size: %llu\n", sizeof(DiskFile)*numFilesActive);
         
         return moptrDiskFilePool != nullptr;
@@ -58,7 +58,7 @@ namespace r2::fs
             return nullptr;
         }
         
-        DiskFile* diskFile = (DiskFile*)moptrDiskFilePool->Allocate(sizeof(DiskFile), alignof(DiskFile), 0);
+        DiskFile* diskFile = ALLOC(DiskFile, *moptrDiskFilePool);
         R2_CHECK(diskFile != nullptr, "We couldn't allocate a disk file!");
         if (diskFile != nullptr && diskFile->Open(path, mode))
         {
@@ -87,7 +87,7 @@ namespace r2::fs
             DiskFile* diskFile = static_cast<DiskFile*>(file);
             diskFile->Close();
             
-            moptrDiskFilePool->Free(file);
+            FREE(diskFile, *moptrDiskFilePool);
         }
     }
 }

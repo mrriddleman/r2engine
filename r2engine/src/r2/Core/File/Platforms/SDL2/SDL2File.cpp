@@ -80,6 +80,7 @@ namespace r2
             R2_CHECK(path != nullptr, "Null Path!");
             R2_CHECK(path != "", "Empty path!");
             
+            R2_CHECK(mHandle == nullptr, "We shouldn't have any handle yet?");
             if (IsOpen())
             {
                 return true;

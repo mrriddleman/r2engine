@@ -12,10 +12,21 @@
 
 #include "glad/glad.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/File/File.h"
+#include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/FileStorageArea.h"
+
+namespace
+{
+    const u32 MAX_NUM_FILES = 1024;
+    const u32 MAX_NUM_STORAGE_AREAS = 8;
+}
 
 namespace r2
 {
+    
+    
+    
     //@NOTE: Increase as needed this is for dev
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
@@ -100,8 +111,30 @@ namespace r2
             mBasePath = SDL_GetBasePath();
             mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
             
-            //@TODO(Serge): create the FileDevices
-            //@TODO(Serge): add file storage areas here to filesystem
+            mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, mBasePath, MAX_NUM_FILES);
+            
+            R2_CHECK(mRootStorage != nullptr, "Root Storage was not created!");
+            
+            mAppStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, mPrefPath, MAX_NUM_FILES);
+           
+            R2_CHECK(mAppStorage != nullptr, "App Storage was not created!");
+            
+            bool mountResult = mRootStorage->Mount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+            
+            R2_CHECK(mountResult, "We couldn't mount root storage");
+            
+            mountResult = mAppStorage->Mount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+            
+            R2_CHECK(mountResult, "We couldn't mount app storage");
+            
+            bool fileSystemCreated = r2::fs::FileSystem::Init(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, MAX_NUM_STORAGE_AREAS);
+            
+            R2_CHECK(fileSystemCreated, "File system was not initialized");
+            
+            r2::fs::FileSystem::Mount(*mRootStorage);
+            r2::fs::FileSystem::Mount(*mAppStorage);
+            
+            //TestFiles();
         }
         
         //Init OpenGL
@@ -320,6 +353,14 @@ namespace r2
             SDL_DestroyWindow(moptrWindow);
         }
         
+        r2::fs::FileSystem::Shutdown(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        
+        mAppStorage->Unmount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        mRootStorage->Unmount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        
+        FREE(mAppStorage, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        FREE(mRootStorage, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        
         if (mPrefPath)
         {
             SDL_free(mPrefPath);
@@ -383,6 +424,51 @@ namespace r2
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         
         return SDL_WINDOW_OPENGL;
+    }
+    
+    void SDL2Platform::TestFiles()
+    {
+        char filePath[Kilobytes(1)];
+        
+        strcpy(filePath, mPrefPath);
+        strcat(filePath, "test_pref_path.txt");
+        
+        R2_LOGI("filePath: %s\n", filePath);
+        
+        char textToWrite[] = "This is some text that I am writing!";
+        
+        r2::fs::FileMode mode;
+        mode |= r2::fs::Mode::Write;
+        
+        r2::fs::File* fileToWrite = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
+        
+        R2_CHECK(fileToWrite != nullptr, "We don't have a proper file!");
+        
+        u64 numBytesWritten = fileToWrite->Write(textToWrite, strlen(textToWrite));
+        
+        R2_LOGI("I wrote %llu bytes\n", numBytesWritten);
+        
+        r2::fs::FileSystem::Close(fileToWrite);
+        
+        mode = r2::fs::Mode::Read;
+        
+        r2::fs::File* fileToRead = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
+        
+        u64 fileSize = fileToRead->Size();
+        
+        R2_LOGI("file size: %llu\n", fileSize);
+        
+        char textToRead[Kilobytes(1)];
+        
+        fileToRead->Skip(5);
+        
+        u64 bytesRead = fileToRead->Read(textToRead, 2);
+        
+        R2_CHECK(bytesRead == 2, "We didn't read all of the file!");
+        
+        R2_LOGI("Here's what I read:\n%s\n", textToRead);
+        
+        r2::fs::FileSystem::Close(fileToRead);
     }
 }
 

@@ -17,6 +17,8 @@
 
 #define MAKE_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreatePoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
 
+#define MAKE_NO_CHECK_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreateNoCheckPoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
+
 namespace r2
 {
     namespace mem
@@ -63,8 +65,12 @@ namespace r2
         
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
         typedef MemoryArena<PoolAllocator, SingleThreadPolicy, BasicBoundsChecking, BasicMemoryTracking, BasicMemoryTagging> PoolArena;
+        
+        typedef MemoryArena<PoolAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> NoCheckPoolArena;
 #else
         typedef MemoryArena<PoolAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> PoolArena;
+        
+        typedef MemoryArena<PoolAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> NoCheckPoolArena;
 #endif
     }
 }
@@ -74,6 +80,8 @@ namespace r2::mem::utils
     template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
     template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    
+    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
     PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u64 elementSize, const char* file, s32 line, const char* description);
 }
@@ -122,6 +130,30 @@ namespace r2::mem::utils
         poolBoundary.offset = 0; //?
         
         PoolArena* pool = new (poolArenaStartPtr) PoolArena(poolBoundary);
+        
+        R2_CHECK(pool != nullptr, "Couldn't placement new?");
+        
+        return pool;
+    }
+    
+    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    {
+        u64 poolSizeInBytes = capacity * elementSize;
+        
+        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(NoCheckPoolArena) + poolSizeInBytes, elementSize, file, line, description);
+        
+        R2_CHECK(poolArenaStartPtr != nullptr, "We shouldn't have null pool!");
+        
+        void* boundaryStart = r2::mem::utils::PointerAdd(poolArenaStartPtr, sizeof(NoCheckPoolArena));
+        
+        utils::MemBoundary poolBoundary;
+        poolBoundary.location = boundaryStart;
+        poolBoundary.size = poolSizeInBytes;
+        poolBoundary.elementSize = elementSize;
+        poolBoundary.alignment = elementSize;
+        poolBoundary.offset = 0; //?
+        
+        NoCheckPoolArena* pool = new (poolArenaStartPtr) NoCheckPoolArena(poolBoundary);
         
         R2_CHECK(pool != nullptr, "Couldn't placement new?");
         

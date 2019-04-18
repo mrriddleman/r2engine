@@ -15,6 +15,11 @@
 
 struct SDL_Window;
 
+namespace r2::fs
+{
+    class FileStorageArea;
+}
+
 namespace r2
 {
     class R2_API SDL2Platform: public Platform
@@ -40,11 +45,16 @@ namespace r2
         SDL2Platform();
         
         int SetupSDLOpenGL();
+        void TestFiles();
         
         static std::unique_ptr<Platform> CreatePlatform();
         static std::unique_ptr<Platform> s_platform;
         SDL_Window * moptrWindow;
         SDL_GLContext mglContext;
+        
+        r2::fs::FileStorageArea* mRootStorage;
+        r2::fs::FileStorageArea* mAppStorage;
+        
         char* mPrefPath;
         char* mBasePath;
         bool mRunning;

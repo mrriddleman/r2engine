@@ -26,7 +26,7 @@ namespace r2::fs
         virtual void Close(File* file) override;
         
     private:
-        r2::mem::PoolAllocator* moptrDiskFilePool;
+        r2::mem::NoCheckPoolArena* moptrDiskFilePool;
     };
 }
 

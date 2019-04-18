@@ -31,9 +31,11 @@ namespace r2::fs
         }
     }
     
-    void FileSystem::Shutdown()
+    void FileSystem::Shutdown(r2::mem::LinearArena& arena)
     {
         UnmountStorageAreas();
+        FREE(mStorageAreas, arena);
+        mStorageAreas = nullptr;
     }
     
     File* FileSystem::Open(const DeviceConfig& config, const char* path, FileMode mode)
@@ -60,6 +62,8 @@ namespace r2::fs
             
             //This is relying on the fact that the FileDeviceModifiers will call close on their files
             device->Close(file);
+            
+            //@TODO(Serge): have the file storage area for this file commit?
         }
     }
     
