@@ -21,12 +21,14 @@ namespace r2
             using FileHandle = void*;
             
             DiskFile();
-            virtual ~DiskFile();
+            ~DiskFile();
             
             bool Open(const char* path, FileMode mode);
             void Close();
 
             virtual u64 Read(void* buffer, u64 length) override;
+            virtual u64 Read(void* buffer, u64 offset, u64 length) override;
+            
             virtual u64 Write(const void* buffer, u64 length) override;
             
             virtual bool ReadAll(void* buffer) override;
@@ -38,6 +40,8 @@ namespace r2
             
             virtual bool IsOpen() const override;
             virtual s64 Size() const override;
+            
+            FILE* GetFP();
         private:
             FileHandle mHandle;
         };

@@ -9,7 +9,7 @@
 #define FileSystemInternal_h
 
 #include "r2/Core/File/File.h"
-#include "r2/Core/File/FileDevice.h"
+#include "r2/Core/File/FileDevices/FileDevice.h"
 
 namespace r2
 {

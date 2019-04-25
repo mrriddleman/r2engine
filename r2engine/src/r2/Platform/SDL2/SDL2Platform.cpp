@@ -36,6 +36,8 @@ namespace r2
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);
     
+    const u64 SDL2Platform::TOTAL_SCRATCH_MEMORY = Megabytes(4);
+    
     static char * mClipboardTextData = nullptr;
     
     std::unique_ptr<Platform> SDL2Platform::s_platform = nullptr;
@@ -103,7 +105,8 @@ namespace r2
         {
             r2::mem::GlobalMemory::Init(MAX_NUM_MEMORY_AREAS,
                                         TOTAL_INTERNAL_ENGINE_MEMORY,
-                                        TOTAL_INTERNAL_PERMANENT_MEMORY);
+                                        TOTAL_INTERNAL_PERMANENT_MEMORY,
+                                        TOTAL_SCRATCH_MEMORY);
         }
 
         //Initialize file system
@@ -111,29 +114,29 @@ namespace r2
             mBasePath = SDL_GetBasePath();
             mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
             
-            mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, mBasePath, MAX_NUM_FILES);
+            mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *MEM_ENG_PERMANENT_PTR, mBasePath, MAX_NUM_FILES);
             
             R2_CHECK(mRootStorage != nullptr, "Root Storage was not created!");
             
-            mAppStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, mPrefPath, MAX_NUM_FILES);
+            mAppStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *MEM_ENG_PERMANENT_PTR, mPrefPath, MAX_NUM_FILES);
            
             R2_CHECK(mAppStorage != nullptr, "App Storage was not created!");
             
-            bool mountResult = mRootStorage->Mount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+            bool mountResult = mRootStorage->Mount(*MEM_ENG_PERMANENT_PTR);
             
             R2_CHECK(mountResult, "We couldn't mount root storage");
             
-            mountResult = mAppStorage->Mount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+            mountResult = mAppStorage->Mount(*MEM_ENG_PERMANENT_PTR);
             
             R2_CHECK(mountResult, "We couldn't mount app storage");
             
-            bool fileSystemCreated = r2::fs::FileSystem::Init(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena, MAX_NUM_STORAGE_AREAS);
+            bool fileSystemCreated = r2::fs::FileSystem::Init(*MEM_ENG_PERMANENT_PTR, MAX_NUM_STORAGE_AREAS);
             
             R2_CHECK(fileSystemCreated, "File system was not initialized");
             
             r2::fs::FileSystem::Mount(*mRootStorage);
             r2::fs::FileSystem::Mount(*mAppStorage);
-            
+
             //TestFiles();
         }
         
@@ -332,6 +335,10 @@ namespace r2
             mEngine.Render(alpha);
             
             SDL_GL_SwapWindow(moptrWindow);
+            
+            r2::mem::GlobalMemory::EngineMemory().singleFrameArena->EnsureZeroAllocations();
+            
+            r2::mem::GlobalMemory::EngineMemory().singleFrameArena->GetPolicyRef().Reset();
         }
     }
 

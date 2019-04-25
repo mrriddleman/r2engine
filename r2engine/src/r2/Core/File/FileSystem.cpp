@@ -64,10 +64,16 @@ namespace r2::fs
             device->Close(file);
             
             //@TODO(Serge): have the file storage area for this file commit?
+            
         }
     }
     
     bool FileSystem::FileExists(const char* path)
+    {
+        return false;
+    }
+    
+    bool FileSystem::DeleteFile(const char* path)
     {
         return false;
     }
@@ -78,6 +84,11 @@ namespace r2::fs
     }
     
     bool FileSystem::CreateDirectory(const char* path, bool recursive)
+    {
+        return false;
+    }
+    
+    bool FileSystem::DeleteDirectory(const char* path)
     {
         return false;
     }

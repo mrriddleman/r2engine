@@ -24,10 +24,10 @@ namespace r2
     void Log::Init(Verbosity stderrVerbosity, const std::string& fullLogPath, const std::string& devLogPath)
     {
         loguru::r2_init(stderrVerbosity);
-        loguru::add_file(fullLogPath.c_str(), loguru::Append, loguru::Verbosity_MAX);
+        loguru::add_file(fullLogPath.c_str(), loguru::Truncate, loguru::Verbosity_MAX);
         if(!devLogPath.empty())
         {
-            loguru::add_file(devLogPath.c_str(), loguru::Append, loguru::Verbosity_MAX);
+            loguru::add_file(devLogPath.c_str(), loguru::Truncate, loguru::Verbosity_MAX);
         }
     }
     

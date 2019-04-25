@@ -6,7 +6,7 @@
 //
 
 #include "r2/Core/File/FileStorageArea.h"
-#include "r2/Core/File/FileDevices/Storage/DiskFileStorageDevice.h"
+#include "r2/Core/File/FileDevices/Storage/Disk/DiskFileStorageDevice.h"
 #include <cstring>
 
 namespace r2::fs

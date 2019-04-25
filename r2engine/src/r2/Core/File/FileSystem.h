@@ -28,9 +28,11 @@ namespace r2::fs
         static void Close(File* file);
         
         static bool FileExists(const char* path);
+        static bool DeleteFile(const char* path);
+        
         static bool DirExists(const char* path);
         static bool CreateDirectory(const char* path, bool recursive);
-        
+        static bool DeleteDirectory(const char* path);
     private:
         static void UnmountStorageAreas();
         static FileStorageArea* FindStorageArea(const char* path);

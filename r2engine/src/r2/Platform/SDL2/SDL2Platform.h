@@ -28,6 +28,7 @@ namespace r2
         static const u64 MAX_NUM_MEMORY_AREAS;
         static const u64 TOTAL_INTERNAL_ENGINE_MEMORY;
         static const u64 TOTAL_INTERNAL_PERMANENT_MEMORY;
+        static const u64 TOTAL_SCRATCH_MEMORY;
         
         virtual bool Init(std::unique_ptr<r2::Application> app) override;
         virtual void Run() override;

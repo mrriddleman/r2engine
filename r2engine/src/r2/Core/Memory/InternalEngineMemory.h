@@ -18,6 +18,7 @@ namespace r2::mem
         r2::mem::MemoryArea::Handle internalEngineMemoryHandle = MemoryArea::Invalid;
         r2::mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle = MemoryArea::MemorySubArea::Invalid;
         LinearArena* permanentStorageArena = nullptr;
+        LinearArena* singleFrameArena = nullptr;
     };
 }
 

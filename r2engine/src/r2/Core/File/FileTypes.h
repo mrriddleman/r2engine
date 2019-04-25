@@ -25,6 +25,7 @@ namespace r2
         {
             Zip = 0,
             Crypto,
+            Safe,
             Count
         };
         

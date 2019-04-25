@@ -9,6 +9,7 @@
 #define File_h
 
 #include "r2/Core/File/FileTypes.h"
+#include <cstring>
 
 namespace r2
 {
@@ -22,6 +23,7 @@ namespace r2
             virtual ~File() {mDevice = nullptr;}
             
             virtual u64 Read(void* buffer, u64 length) = 0;
+            virtual u64 Read(void* buffer, u64 offset, u64 length) = 0;
             virtual u64 Write(const void* buffer, u64 length) = 0;
             
             virtual bool ReadAll(void* buffer) = 0;
@@ -37,9 +39,22 @@ namespace r2
             //Not to be used by anyone except the file system!
             void SetFileDevice(FileStorageDevice* fileDevice) {mDevice = fileDevice;}
             FileStorageDevice* GetFileDevice() {return mDevice;}
+            void SetFilePath(const char* filePath){strcpy(mFilename, filePath);}
+            const char* GetFilePath() const {return mFilename;}
+            DeviceConfig GetDeviceConfig() const {return mDeviceConfig;}
+            void SetStorageDeviceConfig(DeviceStorage storage) { mDeviceConfig.SetDeviceStorage(storage);}
+            void AddModifierConfig(DeviceModifier mod) {mDeviceConfig.AddModifier(mod);}
+            FileMode GetFileMode() const {return mMode;}
+            void SetFileMode(FileMode mode) {mMode = mode;}
+            
         private:
             FileStorageDevice* mDevice;
+            char mFilename[Kilobytes(1)];
+            DeviceConfig mDeviceConfig;
+            FileMode mMode;
         };
+        
+        
     }
 }
 

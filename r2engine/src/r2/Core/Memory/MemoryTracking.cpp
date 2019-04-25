@@ -7,30 +7,71 @@
 
 #include "MemoryTracking.h"
 #include <cstring>
+#include <stdio.h>
 
 namespace r2
 {
     namespace mem
     {
-        BasicMemoryTracking::BasicMemoryTracking()
+        BasicMemoryTracking::BasicMemoryTracking():mName("")
         {
-            strcpy(mName, "");
         }
         
-        BasicMemoryTracking::BasicMemoryTracking(const char* name)
+        BasicMemoryTracking::BasicMemoryTracking(const std::string& name)
         {
-            strcpy(mName, name);
+            mName = name;
+        }
+        
+        void BasicMemoryTracking::SetName(const std::string& name)
+        {
+            mName = name;
         }
         
         BasicMemoryTracking::~BasicMemoryTracking()
         {
-            //@TODO(Serge): dump Tag Info
-            R2_CHECK(mTags.size() == 0, "We still have Memory allocations that have not been freed!");
+            Verify();
         }
         
-        void BasicMemoryTracking::OnAllocation(void* noptrMemory, u64 size, u64 alignment, const char* file, s32 line, const char* description)
+        void BasicMemoryTracking::Verify()
         {
-            mTags.emplace_back(noptrMemory, file, alignment, size, line);
+            auto size = mTags.size();
+            
+            if (size > 0)
+            {
+                u64 totalAskedForSize = 0;
+                u64 totalAllocatedSize = 0;
+                
+                //@TODO(Serge): figure out a way to make loguru do just printf (without the ugly timestamp etc. log
+                
+                printf("=================================================================\n");
+                printf("Arena Dump for: %s\n", mName.c_str());
+                printf("=================================================================\n\n");
+                printf("-----------------------------------------------------------------\n");
+                for (decltype(size) i = 0; i < size; ++i)
+                {
+                    const utils::MemoryTag& tag = mTags[i];
+                    
+                    totalAskedForSize += tag.requestedSize;
+                    totalAllocatedSize += tag.size;
+                    
+                    printf("Allocation: Memory address: %p, requested size: %llu, total allocated: %llu, file: %s, line: %i\n", tag.memPtr, tag.requestedSize, tag.size, tag.fileName, tag.line);
+                    printf("-----------------------------------------------------------------\n");
+                }
+                
+                if (totalAskedForSize > 0)
+                {
+                    printf("\n\nTotal Asked For size: %llu\n", totalAskedForSize);
+                    printf("Total Allocated size: %llu\n", totalAllocatedSize);
+                    printf("=================================================================\n");
+                }
+                
+                R2_CHECK(size == 0, "We still have Memory allocations that have not been freed!");
+            }
+        }
+        
+        void BasicMemoryTracking::OnAllocation(utils::MemoryTag&& tag)
+        {
+            mTags.push_back(tag);
         }
         
         void BasicMemoryTracking::OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description)

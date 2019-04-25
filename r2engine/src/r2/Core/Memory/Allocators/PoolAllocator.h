@@ -124,11 +124,16 @@ namespace r2::mem::utils
         
         utils::MemBoundary poolBoundary;
         poolBoundary.location = boundaryStart;
+        //@Cleanup: kinda ugly but whatevs
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
+        poolBoundary.size = poolSizeInBytes + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
+#else
         poolBoundary.size = poolSizeInBytes;
+#endif
         poolBoundary.elementSize = elementSize;
         poolBoundary.alignment = elementSize;
         poolBoundary.offset = 0; //?
-        
+
         PoolArena* pool = new (poolArenaStartPtr) PoolArena(poolBoundary);
         
         R2_CHECK(pool != nullptr, "Couldn't placement new?");

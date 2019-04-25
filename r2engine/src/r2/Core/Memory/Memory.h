@@ -23,6 +23,9 @@
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
+#define MEM_ENG_PERMANENT_PTR r2::mem::GlobalMemory::EngineMemory().permanentStorageArena
+#define MEM_ENG_SCRATCH_PTR r2::mem::GlobalMemory::EngineMemory().singleFrameArena
+
 #define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, sizeof(array))
 
 #ifndef R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
@@ -38,9 +41,9 @@ namespace r2
             struct MemBoundary
             {
                 u64 size = 0;
-                u64 elementSize = 0;
-                u64 alignment = 0;
-                u64 offset = 0;
+                u32 elementSize = 0;
+                u32 alignment = 0;
+                u32 offset = 0;
                 void* location = nullptr;
             };
             
@@ -54,6 +57,7 @@ namespace r2
                 char fileName[Kilobytes(1)];
                 u64 alignment = 0;
                 u64 size = 0;
+                u64 requestedSize = 0;
                 s32 line = -1;
                 void* memPtr = nullptr;
                 
@@ -136,25 +140,28 @@ namespace r2
             {
                 using Handle = s64;
                 static const Handle Invalid = -1;
-                //@TODO(Serge): add in a debug name?
                 utils::MemBoundary mBoundary;
                 MemoryArenaBase* mnoptrArena = nullptr;
+            
+                std::string mSubArenaName;
             };
             
             MemoryArea(const char* debugName);
             ~MemoryArea();
             //Add in scratch buffer here?
             bool Init(u64 sizeInBytes, u64 scratchBufferSize = DefaultScratchBufferSize);
-            MemorySubArea::Handle AddSubArea(u64 sizeInBytes);
+            MemorySubArea::Handle AddSubArea(u64 sizeInBytes, const std::string& subAreaName = "");
             utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
             utils::MemBoundary* SubAreaBoundaryPtr(MemorySubArea::Handle);
             
             utils::MemBoundary ScratchBoundary() const;
             utils::MemBoundary* ScratchBoundaryPtr();
+            MemorySubArea::Handle ScratchSubAreaHandle() const {return mScratchAreaHandle;}
             
             MemorySubArea* GetSubArea(MemorySubArea::Handle);
             void Shutdown();
             
+
             inline std::string Name() const {return &mDebugName[0];}
             inline const utils::MemBoundary& AreaBoundary() const {return mBoundary;}
             inline const std::vector<MemorySubArea>& SubAreas() const {return mSubAreas;}
@@ -163,8 +170,9 @@ namespace r2
             utils::MemBoundary mBoundary;
             //@Temporary - should be static?
             std::vector<MemorySubArea> mSubAreas;
-            //#if defined(R2_DEBUG) || defined(R2_RELEASE)
+            
             std::array<char, Kilobytes(1)> mDebugName;
+
             void* mCurrentNext = nullptr;
             
             MemorySubArea::Handle mScratchAreaHandle;
@@ -190,6 +198,7 @@ namespace r2
             MemoryArena(MemoryArea::MemorySubArea& subArea, const utils::MemBoundary& boundary):mAllocator(boundary)
             {
                 subArea.mnoptrArena = this;
+                mMemoryTracker.SetName(subArea.mSubArenaName);
             }
             
             explicit MemoryArena(const utils::MemBoundary& boundary):mAllocator(boundary)
@@ -210,7 +219,10 @@ namespace r2
                 mMemoryTagger.TagAllocation(plainMemory + BoundsCheckingPolicy::SIZE_FRONT, originalSize);
                 mBoundsChecker.GuardBack(plainMemory + BoundsCheckingPolicy::SIZE_FRONT + originalSize);
                 
-                mMemoryTracker.OnAllocation(plainMemory, newSize, alignment, file, line, description);
+                utils::MemoryTag tag(plainMemory, file, alignment, newSize, line);
+                tag.requestedSize = originalSize;
+                
+                mMemoryTracker.OnAllocation(std::move(tag));
                 
                 mThreadGuard.Leave();
                 
@@ -234,6 +246,11 @@ namespace r2
                 mAllocator.Free(originalMemory);
                 
                 mThreadGuard.Leave();
+            }
+            
+            void EnsureZeroAllocations()
+            {
+                mMemoryTracker.Verify();
             }
             
             virtual const u64 TotalSize() const override
@@ -271,6 +288,11 @@ namespace r2
                 return mAllocator.UnallocatedBytes();
             }
             
+            AllocationPolicy& GetPolicyRef()
+            {
+                return mAllocator;
+            }
+            
         private:
             AllocationPolicy mAllocator;
             ThreadPolicy mThreadGuard;
@@ -282,12 +304,7 @@ namespace r2
         
        // class LinearArena;
         
-        struct R2_API EngineMemory
-        {
-            mem::MemoryArea::Handle internalEngineMemoryHandle;
-            mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle;
-         //   mem::LinearArena* permanentStorageArena;
-        };
+
         
         struct InternalEngineMemory;
         
@@ -295,7 +312,7 @@ namespace r2
         {
         public:
             //Internal to r2
-            static bool Init(u64 numMemoryAreas, u64 internalEngineMemory = 0, u64 permanentStorageSize = 0);
+            static bool Init(u64 numMemoryAreas, u64 internalEngineMemory = 0, u64 permanentStorageSize = 0, u64 singleFrameStorageSize = 0);
             static void Shutdown();
             static InternalEngineMemory& EngineMemory() {return mEngineMemory;}
             

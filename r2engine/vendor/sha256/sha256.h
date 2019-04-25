@@ -2,10 +2,6 @@
 #define SHA256_H
 #include <string>
 
-/*
- If you want to see if the file is what you expect or not, you can calculate a hash of the file, like SHA-256 or whatever hashing algorithm you like, store the hash values, and then in your application simply calculate the hash values of the files, compare to what you expect, and if they're the same, there is most probably no corruption.
- */
-
 class SHA256
 {
 protected:

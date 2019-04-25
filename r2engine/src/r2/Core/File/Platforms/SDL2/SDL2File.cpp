@@ -8,7 +8,7 @@
 
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
-#include "r2/Core/File/DiskFile.h"
+#include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
 #include <SDL2/SDL.h>
 
 namespace r2
@@ -88,8 +88,15 @@ namespace r2
             
             char strFileMode[4];
             GetStringFileMode(strFileMode, mode);
-            
+
             mHandle = SDL_RWFromFile(path, strFileMode);
+            R2_CHECK(mHandle != nullptr, "Handle should not be nullptr!");
+            if (mHandle)
+            {
+                SetFilePath(path);
+                SetFileMode(mode);
+            }
+            
             return mHandle != nullptr;
         }
         
@@ -100,6 +107,7 @@ namespace r2
             
             mHandle = nullptr;
             SetFileDevice(nullptr);
+            
         }
         
         u64 DiskFile::Read(void* buffer, u64 length)
@@ -112,6 +120,21 @@ namespace r2
             {
                 u64 readBytes = SDL_RWread((SDL_RWops*)mHandle, buffer, sizeof(byte), length);
                 return readBytes;
+            }
+            
+            return 0;
+        }
+        
+        u64 DiskFile::Read(void* buffer, u64 offset, u64 length)
+        {
+            R2_CHECK(IsOpen(), "The file isn't open?");
+            R2_CHECK(buffer != nullptr, "The buffer is null?");
+            R2_CHECK(length > 0, "You should want to read more than 0 bytes!");
+            
+            if (IsOpen() && buffer != nullptr && length > 0 && offset < length)
+            {
+                Seek(Tell() + offset);
+                return Read(buffer, length);
             }
             
             return 0;
@@ -138,8 +161,8 @@ namespace r2
             R2_CHECK(IsOpen(), "The file isn't open?");
             R2_CHECK(buffer != nullptr, "nullptr buffer?");
             
+            Seek(0);
             const u64 size = Size();
-            
             u64 bytesRead = Read(buffer, size);
             
             R2_CHECK(bytesRead == size, "We should have read the whole file!");
@@ -179,6 +202,13 @@ namespace r2
         {
             R2_CHECK(IsOpen(), "The file should be open");
             return SDL_RWsize((SDL_RWops*)mHandle);
+        }
+        
+        FILE* DiskFile::GetFP()
+        {
+            R2_CHECK(IsOpen(), "The file should be open");
+            SDL_RWops* ops = (SDL_RWops*)mHandle;
+            return ops->hidden.stdio.fp;
         }
     }
 }

@@ -16,7 +16,7 @@ namespace r2
         class R2_API NoMemoryTracking
         {
         public:
-            inline void OnAllocation(void*, u64, u64, const char* file, s32 line, const char* description) const {}
+            inline void OnAllocation(utils::MemoryTag&& tag) const {}
             inline void OnDeallocation(void*, const char* file, s32 line, const char* description) const {}
         
             inline u64 NumAllocations() const {return 0;}
@@ -25,27 +25,29 @@ namespace r2
                 static std::vector<utils::MemoryTag> tags;
                 return tags;
             }
+            void SetName(const std::string& name){}
             
-            //@TODO(Serge): Add name - do nothing
+            void Verify(){}
+            
         };
         
         class R2_API BasicMemoryTracking
         {
         public:
             BasicMemoryTracking();
-            explicit BasicMemoryTracking(const char* name);
+            explicit BasicMemoryTracking(const std::string& name);
             ~BasicMemoryTracking();
-            void OnAllocation(void* noptrMemory, u64 size, u64 alignment, const char* file, s32 line, const char* description);
+            void OnAllocation(utils::MemoryTag&& tag);
             void OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description);
+            void Verify();
             
-            //@TODO(Serge): Add name
+            void SetName(const std::string& name);
             
             const std::string Name() {return mName;}
             inline u64 NumAllocations() const {return static_cast<u64>(mTags.size());}
             inline const std::vector<utils::MemoryTag>& Tags() const {return mTags;}
         private:
-            char mName[Kilobytes(1)];
-            //@TODO(Serge): temp - replace with static array
+            std::string mName;
             std::vector<utils::MemoryTag> mTags;
         };
         
