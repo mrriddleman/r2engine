@@ -19,6 +19,8 @@
 
 #define MAKE_NO_CHECK_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreateNoCheckPoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
 
+#define EMPLACE_POOL_ARENA(subarea) r2::mem::utils::EmplacePoolArena(subarea, __FILE__, __LINE__, "")
+
 namespace r2
 {
     namespace mem

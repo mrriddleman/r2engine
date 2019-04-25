@@ -127,6 +127,9 @@ namespace r2::mem::utils
             return nullptr;
         }
         
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
+        elementSize = elementSize + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
+#endif
         u64 leftOverSize = subArea.mBoundary.size - sizeof(PoolArena);
         u64 modResult = leftOverSize % elementSize;
         void* poolAllocatorStartPtr = PointerAdd(subArea.mBoundary.location, sizeof(PoolArena) + modResult);
@@ -135,7 +138,10 @@ namespace r2::mem::utils
         MemBoundary poolAllocatorBoundary;
         poolAllocatorBoundary.location = poolAllocatorStartPtr;
         poolAllocatorBoundary.size = leftOverSize;
-        
+        poolAllocatorBoundary.elementSize = elementSize;
+        poolAllocatorBoundary.alignment = elementSize;
+        poolAllocatorBoundary.offset = 0; //?
+
         PoolArena* stackArena = new (subArea.mBoundary.location) PoolArena(subArea, poolAllocatorBoundary);
         
         return stackArena;
