@@ -1190,7 +1190,15 @@ TEST_CASE("Path Utils")
         
         REQUIRE(r2::fs::utils::AppendSubPath(path, tempBuf, "subpath3", '/'));
         REQUIRE(strcmp(tempBuf, "/subpath1/subpath2/subpath3") == 0);
+    }
+    
+    SECTION("Test Append Path")
+    {
+        char path[] = "/subpath1/subpath2";
+        char tempBuf[Kilobytes(1)] = "";
         
+        REQUIRE(r2::fs::utils::AppendSubPath(path, tempBuf, "subpath3", '/'));
+        REQUIRE(strcmp(tempBuf, "/subpath1/subpath2/subpath3") == 0);
     }
     
 }
