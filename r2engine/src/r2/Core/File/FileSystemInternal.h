@@ -25,11 +25,6 @@ namespace r2
             ~FileSystemInternal();
 
             File* Open(const DeviceConfig& config, const char* path, FileMode mode);
-
-            bool FileExists(const char* path) const;
-            bool DirExists(const char* path) const;
-            
-            bool CreateDirectory(const char* path, bool recursive);
         private:
             FileStorageArea& mFSArea;
             

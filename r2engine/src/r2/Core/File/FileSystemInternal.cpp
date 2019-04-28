@@ -65,21 +65,6 @@ namespace r2
 
             return file;
         }
-        
-        bool FileSystemInternal::FileExists(const char* path) const
-        {
-            return false;
-        }
-        
-        bool FileSystemInternal::DirExists(const char* path) const
-        {
-            return false;
-        }
-        
-        bool FileSystemInternal::CreateDirectory(const char* path, bool recursive)
-        {
-            return false;
-        }
 
         FileDeviceModifier* FileSystemInternal::GetModifier(DeviceModifier modType)
         {

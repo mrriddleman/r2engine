@@ -7,7 +7,11 @@
 
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFileStorageDevice.h"
+#include "r2/Core/File/File.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include <cstring>
+#include <cstdio>
 
 namespace r2::fs
 {
@@ -41,7 +45,7 @@ namespace r2::fs
             return diskDevice->Mount(storage, mNumFilesActive);
         }
         
-        //@TODO(Serge): add in a modifier for zip
+        //@TODO(Serge): add in a modifiers
         
         return false;
     }
@@ -68,4 +72,108 @@ namespace r2::fs
         return false;
     }
     
+    bool FileStorageArea::FileExists(const char* filePath)
+    {
+        if (moptrStorageDevice == nullptr)
+        {
+            return false; //already unmounted
+        }
+        
+        R2_CHECK(filePath != nullptr, "File Path is nullptr");
+
+        if (filePath)
+        {
+            DiskFileStorageDevice* diskDevice = static_cast<DiskFileStorageDevice*>(moptrStorageDevice);
+            File* file = diskDevice->Open(filePath, Mode::Read);
+            if (file)
+            {
+                diskDevice->Close(file);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    bool FileStorageArea::DeleteFile(const char* filePath)
+    {
+        R2_CHECK(filePath != nullptr, "File Path is nullptr");
+        
+        if (filePath)
+        {
+            return std::remove(filePath) == 0;
+        }
+        
+        return false;
+    }
+    
+    bool FileStorageArea::RenameFile(const char* existingFile, const char* newName)
+    {
+        R2_CHECK(existingFile != nullptr, "existingFile is nullptr");
+        R2_CHECK(newName != nullptr, "newName is nullptr");
+        
+        if (existingFile && newName)
+        {
+            return std::rename(existingFile, newName) == 0;
+        }
+        
+        return false;
+    }
+    
+    bool FileStorageArea::CopyFile(const char* existingFile, const char* newName)
+    {
+        R2_CHECK(existingFile != nullptr, "existingFile is nullptr");
+        R2_CHECK(newName != nullptr, "newName is nullptr");
+        
+        bool success = false;
+        
+        if (existingFile && newName)
+        {
+            DiskFileStorageDevice* diskDevice = static_cast<DiskFileStorageDevice*>(moptrStorageDevice);
+            
+            FileMode readMode;
+            readMode |= Mode::Read;
+            readMode |= Mode::Binary;
+            
+            FileMode writeMode;
+            writeMode |= Mode::Write;
+            writeMode |= Mode::Binary;
+            
+            File* readFile = diskDevice->Open(existingFile, readMode);
+            File* writeFile = diskDevice->Open(newName, writeMode);
+            
+            R2_CHECK(readFile != nullptr, "We should have a read file");
+            R2_CHECK(writeFile != nullptr, "We should have a write file");
+            
+            if (readFile && writeFile)
+            {
+                u64 sizeOfFile = readFile->Size();
+                byte* fileData = nullptr;
+                
+                fileData = ALLOC_BYTES(*MEM_ENG_SCRATCH_PTR, sizeOfFile, sizeof(byte), __FILE__, __LINE__, "");
+                
+                if(readFile->ReadAll(fileData))
+                {
+                    if( writeFile->Write(fileData, sizeOfFile) )
+                    {
+                        success = true;
+                    }
+                }
+                
+                FREE(fileData, *MEM_ENG_SCRATCH_PTR);
+            }
+            
+            if (readFile)
+            {
+                diskDevice->Close(readFile);
+            }
+            
+            if (writeFile)
+            {
+                diskDevice->Close(writeFile);
+            }
+        }
+        
+        return success;
+    }
 }

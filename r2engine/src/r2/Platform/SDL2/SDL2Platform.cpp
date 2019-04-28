@@ -137,7 +137,7 @@ namespace r2
             r2::fs::FileSystem::Mount(*mRootStorage);
             r2::fs::FileSystem::Mount(*mAppStorage);
 
-            //TestFiles();
+            TestFiles();
         }
         
         //Init OpenGL
@@ -436,8 +436,13 @@ namespace r2
     void SDL2Platform::TestFiles()
     {
         char filePath[Kilobytes(1)];
+        char filePath2[Kilobytes(1)];
+        char filePath3[Kilobytes(1)];
         
         strcpy(filePath, mPrefPath);
+        strcpy(filePath2, mPrefPath);
+        strcpy(filePath3, mPrefPath);
+        
         strcat(filePath, "test_pref_path.txt");
         
         R2_LOGI("filePath: %s\n", filePath);
@@ -476,6 +481,29 @@ namespace r2
         R2_LOGI("Here's what I read:\n%s\n", textToRead);
         
         r2::fs::FileSystem::Close(fileToRead);
+        
+        //Test file exists, file delete, file rename, and file copy
+        
+        R2_CHECK(r2::fs::FileSystem::FileExists(filePath), "This file should exist!");
+        
+        R2_CHECK(!r2::fs::FileSystem::FileExists("some_fake_file.txt"), "This file should not exist!");
+        
+        strcat(filePath2, "copy_of_file.txt");
+        
+        
+        R2_CHECK(r2::fs::FileSystem::CopyFile(filePath, filePath2), "We should be able to copy files!");
+        
+        R2_CHECK(r2::fs::FileSystem::FileExists(filePath2), "filePath2 should exist!");
+        
+        strcat(filePath3, "renamed_file.txt");
+        
+        R2_CHECK(r2::fs::FileSystem::RenameFile(filePath2, filePath3), "We should be able to rename a file");
+        
+        R2_CHECK(r2::fs::FileSystem::FileExists(filePath3), "filePath3 should exist");
+        R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
+        
+        R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
+        
     }
 }
 

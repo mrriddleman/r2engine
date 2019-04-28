@@ -90,7 +90,7 @@ namespace r2
             GetStringFileMode(strFileMode, mode);
 
             mHandle = SDL_RWFromFile(path, strFileMode);
-            R2_CHECK(mHandle != nullptr, "Handle should not be nullptr!");
+            //R2_CHECK(mHandle != nullptr, "Handle should not be nullptr!");
             if (mHandle)
             {
                 SetFilePath(path);

@@ -29,6 +29,8 @@ namespace r2::fs
         
         static bool FileExists(const char* path);
         static bool DeleteFile(const char* path);
+        static bool RenameFile(const char* existingFile, const char* newName);
+        static bool CopyFile(const char* existingFile, const char* newName);
         
         static bool DirExists(const char* path);
         static bool CreateDirectory(const char* path, bool recursive);

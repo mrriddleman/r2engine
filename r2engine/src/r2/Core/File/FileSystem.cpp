@@ -70,11 +70,81 @@ namespace r2::fs
     
     bool FileSystem::FileExists(const char* path)
     {
+        R2_CHECK(path != nullptr, "You passed nullptr to path");
+        if (!path)
+        {
+            return false;
+        }
+        
+        FileStorageArea* storageArea = FindStorageArea(path);
+        if (storageArea)
+        {
+            return storageArea->FileExists(path);
+        }
+        
         return false;
     }
     
     bool FileSystem::DeleteFile(const char* path)
     {
+        R2_CHECK(path != nullptr, "You passed nullptr to path");
+        if (!path)
+        {
+            return false;
+        }
+        
+        FileStorageArea* storageArea = FindStorageArea(path);
+        if (storageArea)
+        {
+            return storageArea->DeleteFile(path);
+        }
+        
+        return false;
+    }
+    
+    bool FileSystem::RenameFile(const char* existingFile, const char* newName)
+    {
+        R2_CHECK(existingFile != nullptr, "You passed nullptr for existingFile");
+        R2_CHECK(newName != nullptr, "You passed nullptr for newName");
+        
+        if (!existingFile || !newName)
+        {
+            return false;
+        }
+        
+        FileStorageArea* storageArea1 = FindStorageArea(existingFile);
+        FileStorageArea* storageArea2 = FindStorageArea(newName);
+        
+        R2_CHECK(storageArea1 == storageArea2, "We don't have inter-storage area rename right now");
+        
+        if (storageArea1 == storageArea2)
+        {
+            return storageArea1->RenameFile(existingFile, newName);
+        }
+        
+        return false;
+    }
+    
+    bool FileSystem::CopyFile(const char* existingFile, const char* newName)
+    {
+        R2_CHECK(existingFile != nullptr, "You passed nullptr for existingFile");
+        R2_CHECK(newName != nullptr, "You passed nullptr for newName");
+        
+        if (!existingFile || !newName)
+        {
+            return false;
+        }
+        
+        FileStorageArea* storageArea1 = FindStorageArea(existingFile);
+        FileStorageArea* storageArea2 = FindStorageArea(newName);
+        
+        R2_CHECK(storageArea1 == storageArea2, "We don't have inter-storage area copy right now");
+        
+        if (storageArea1 == storageArea2)
+        {
+            return storageArea1->CopyFile(existingFile, newName);
+        }
+        
         return false;
     }
     

@@ -27,6 +27,11 @@ namespace r2::fs
         virtual bool Unmount(r2::mem::LinearArena& storage);
         virtual bool Commit() {return true;}
         
+        bool FileExists(const char* filePath);
+        bool DeleteFile(const char* filePath);
+        bool RenameFile(const char* existingFile, const char* newName);
+        bool CopyFile(const char* existingFile, const char* newName);
+        
         inline const char* RootPath() const {return &mRootPath[0];}
         inline FileStorageDevice* GetFileStorageDevice() {return moptrStorageDevice;}
         inline const FileDeviceModifierList* GetFileDeviceModifiers() {return moptrModifiers;}
