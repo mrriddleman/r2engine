@@ -1172,4 +1172,25 @@ TEST_CASE("Path Utils")
         REQUIRE(strcmp(".txt", tempBuf) == 0);
     }
     
+    
+    SECTION("Test CopyPathOfFile")
+    {
+        char path[] = "/subpath1/subpath2/subpath3/file.txt";
+        char tempBuf[Kilobytes(1)] = "";
+        
+        REQUIRE(r2::fs::utils::CopyPathOfFile(path, tempBuf));
+        
+        REQUIRE(strcmp(tempBuf, "/subpath1/subpath2/subpath3/") == 0);
+    }
+    
+    SECTION("Test Append Path")
+    {
+        char path[] = "/subpath1/subpath2/";
+        char tempBuf[Kilobytes(1)] = "";
+        
+        REQUIRE(r2::fs::utils::AppendSubPath(path, tempBuf, "subpath3", '/'));
+        REQUIRE(strcmp(tempBuf, "/subpath1/subpath2/subpath3") == 0);
+        
+    }
+    
 }

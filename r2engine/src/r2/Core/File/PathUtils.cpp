@@ -76,6 +76,55 @@ namespace r2::fs::utils
         return result && ext && strlen(ext) > 0;
     }
     
+    bool CopyPathOfFile(const char* filePath, char* path)
+    {
+        if (!filePath || !path)
+        {
+            return false;
+        }
+        
+        strcpy(path, "");
+        
+        char filenameWithExtension[Kilobytes(1)];
+        
+        bool result = CopyFileNameWithExtension(filePath, filenameWithExtension);
+        
+        if (!result)
+        {
+            return false;
+        }
+        
+        char nexSubPath[Kilobytes(1)];
+        char* nextPath = const_cast<char*>(filePath);
+        
+        if (nextPath[0] == PATH_SEPARATOR)
+        {
+            path[0] = PATH_SEPARATOR;
+            path[1] = '\0';
+        }
+        
+        while (true)
+        {
+            nextPath = GetNextSubPath(nextPath, nexSubPath, PATH_SEPARATOR);
+            
+            if (strlen(nexSubPath) <= 0 || strcmp(nexSubPath, filenameWithExtension) == 0)
+            {
+                //done
+                break;
+            }
+
+            strcat(path, nexSubPath);
+            auto len = strlen(path);
+
+            R2_CHECK(len < Kilobytes(1), "should be less than 1 kilobyte");
+            path[len++] = PATH_SEPARATOR;
+            R2_CHECK(len < Kilobytes(1), "should be less than 1 kilobyte");
+            path[len] = '\0';
+        }
+        
+        return true;
+    }
+    
     char* GetLastSubPath(const char* path, char* subPath, const char delim)
     {
         if (!path || !subPath)
@@ -161,5 +210,21 @@ namespace r2::fs::utils
         }
         
         return numSubMatches;
+    }
+    
+    bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim)
+    {
+        auto len = strlen(path);
+        strcpy(resultPath, path);
+        
+        if (resultPath[len-1] != delim)
+        {
+            resultPath[len++] = delim;
+            resultPath[len] = '\0';
+        }
+        
+        strcat(resultPath, subPath);
+        
+        return true;
     }
 }

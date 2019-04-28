@@ -26,9 +26,13 @@ namespace r2::fs::utils
     
     bool CopyFileExtension(const char* path, char* ext);
     
+    bool CopyPathOfFile(const char* filePath, char* path);
+    
     char* GetLastSubPath(const char* path, char* subPath, const char delim);
     
     u32 NumMatchingSubPaths(const char* path1, const char* path2, const char delim);
+    
+    bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim);
     
 }
 
