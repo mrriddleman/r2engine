@@ -7,6 +7,7 @@
 
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFileStorageDevice.h"
+#include "r2/Core/File/FileDevices/Modifiers/Safe/SafeFileModifierDevice.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -36,18 +37,31 @@ namespace r2::fs
         {
             return true; //already mounted!
         }
-        
+        bool mounted = false;
         moptrStorageDevice = ALLOC(DiskFileStorageDevice, storage);
         R2_CHECK(moptrStorageDevice != nullptr, "We couldn't allocate a DiskFileStorageDevice!\n");
         if(moptrStorageDevice)
         {
             DiskFileStorageDevice* diskDevice = static_cast<DiskFileStorageDevice*>(moptrStorageDevice);
-            return diskDevice->Mount(storage, mNumFilesActive);
+            mounted = diskDevice->Mount(storage, mNumFilesActive);
         }
         
-        //@TODO(Serge): add in a modifiers
+        moptrModifiers = MAKE_SARRAY(storage, FileDeviceModifier*, 10);
         
-        return false;
+        R2_CHECK(moptrModifiers != nullptr, "We should have a file device modifier list created");
+        
+        DiskFileStorageDevice* storageDevice = static_cast<DiskFileStorageDevice*>(moptrStorageDevice);
+        
+        FileDeviceModifier* safeMod = (FileDeviceModifier*)ALLOC_PARAMS(SafeFileModifierDevice, storage, *storageDevice);
+        
+        if (safeMod)
+        {
+            mounted = safeMod->Mount(storage, mNumFilesActive);
+            r2::sarr::Push(*moptrModifiers, safeMod);
+            
+        }
+        
+        return mounted;
     }
     
     bool FileStorageArea::Unmount(r2::mem::LinearArena& storage)
@@ -56,7 +70,7 @@ namespace r2::fs
         {
             return true; //already unmounted
         }
-        
+
         DiskFileStorageDevice* diskDevice = static_cast<DiskFileStorageDevice*>(moptrStorageDevice);
         bool result = diskDevice->Unmount(storage);
         R2_CHECK(result, "We couldn't unmount our storage device!");
@@ -64,12 +78,24 @@ namespace r2::fs
         {
             FREE(moptrStorageDevice, storage);
             moptrStorageDevice = nullptr;
-            return true;
+            
         }
         
-        //@TODO(Serge): add in modifiers here
+        auto size = r2::sarr::Size(*moptrModifiers);
         
-        return false;
+        for (u64 i = 0; i < size; ++i)
+        {
+            FileDeviceModifier* mod = r2::sarr::At(*moptrModifiers, i);
+            mod->Unmount(storage);
+            FREE(mod, storage);
+        }
+        
+        r2::sarr::Clear(*moptrModifiers);
+        
+        FREE(moptrModifiers, storage);
+        moptrModifiers = nullptr;
+        
+        return true;
     }
     
     bool FileStorageArea::FileExists(const char* filePath)
