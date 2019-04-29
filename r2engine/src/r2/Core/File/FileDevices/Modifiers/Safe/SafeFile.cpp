@@ -6,7 +6,18 @@
 //
 
 #include "SafeFile.h"
+#include "r2/Core/File/PathUtils.h"
+#include "r2/Core/File/FileSystem.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "sha256.h"
+#include <string>
 
+namespace
+{
+    const char* SHA_EXT = ".sha";
+    const char* BACKUP_EXT = ".bak";
+}
 
 namespace r2::fs
 {
@@ -29,6 +40,86 @@ namespace r2::fs
         if (noptrFile == nullptr)
         {
             return false;
+        }
+        
+        char fileName[Kilobytes(1)];
+        char filePath[Kilobytes(1)];
+        char fileBackup[Kilobytes(1)];
+        char fileSha[Kilobytes(1)];
+        
+        r2::fs::utils::CopyFileName(noptrFile->GetFilePath(), fileName);
+        
+        r2::fs::utils::CopyPathOfFile(noptrFile->GetFilePath(), filePath);
+
+        r2::fs::utils::AppendSubPath(filePath, fileSha, fileName, r2::fs::utils::PATH_SEPARATOR);
+        r2::fs::utils::AppendSubPath(filePath, fileBackup, fileName, r2::fs::utils::PATH_SEPARATOR);
+        
+        r2::fs::utils::AppendExt(fileSha, SHA_EXT);
+        r2::fs::utils::AppendExt(fileBackup, BACKUP_EXT);
+        
+        if (r2::fs::FileSystem::FileExists(fileSha))
+        {
+            char shaFromShaFileBuf[NUM_CHARS_FOR_HASH];
+            
+            FileMode mode;
+            mode |= Mode::Read;
+            
+            File* optrShaFile = mStorageDevice.Open(fileSha, mode);
+            R2_CHECK(optrShaFile != nullptr, "We should be able to open the file");
+            bool result = optrShaFile->ReadAll(shaFromShaFileBuf);
+            R2_CHECK(result, "Should be able to read a file we have already!");
+            
+            shaFromShaFileBuf[NUM_CHARS_FOR_HASH-1] = '\0';
+            
+            std::string shaFromShaFile = sha256(shaFromShaFileBuf);
+            
+            std::string shaFromFile = GetShaFromFile(noptrFile);
+
+            if (shaFromFile == shaFromShaFile)
+            {
+                mnoptrFile = noptrFile;
+                return true;
+            }
+            else
+            {
+                if (r2::fs::FileSystem::FileExists(fileBackup))
+                {
+                    auto mode = noptrFile->GetFileMode();
+                    
+                    std::string filePathString = noptrFile->GetFilePath();
+                    
+                    r2::fs::FileSystem::Close(noptrFile);
+                    
+                    r2::fs::FileSystem::DeleteFile(filePathString.c_str());
+                    
+                    File* backupFile = mStorageDevice.Open(fileBackup, mode);
+                    
+                    R2_CHECK(backupFile != nullptr, "We should have a backup");
+                    std::string backupSha = GetShaFromFile(backupFile);
+                    r2::fs::FileSystem::Close(backupFile);
+
+                    if (backupSha == shaFromShaFile)
+                    {
+                        r2::fs::FileSystem::RenameFile(fileBackup, filePathString.c_str());
+                        r2::fs::FileSystem::CopyFile(filePathString.c_str(), fileBackup);
+                        
+                        mnoptrFile = mStorageDevice.Open(filePathString.c_str(), mode);
+                        return mnoptrFile->IsOpen();
+                    }
+                    else
+                    {
+                        R2_CHECK(false, "How was backup not correct?!");
+                        //backup is not correct
+                        r2::fs::FileSystem::DeleteFile(fileBackup);
+                        return false;
+                    }
+                }
+            }
+        }
+        else
+        {
+            mnoptrFile = noptrFile;
+            return mnoptrFile->IsOpen();
         }
         
         //read the file name
@@ -66,11 +157,41 @@ namespace r2::fs
     
     bool SafeFile::Close()
     {
+        char fileName[Kilobytes(1)];
+        char filePath[Kilobytes(1)];
+        char fileBackup[Kilobytes(1)];
+        char fileSha[Kilobytes(1)];
+        
+        r2::fs::utils::CopyFileName(mnoptrFile->GetFilePath(), fileName);
+        
+        r2::fs::utils::CopyPathOfFile(mnoptrFile->GetFilePath(), filePath);
+        
+        r2::fs::utils::AppendSubPath(filePath, fileSha, fileName, r2::fs::utils::PATH_SEPARATOR);
+        r2::fs::utils::AppendSubPath(filePath, fileBackup, fileName, r2::fs::utils::PATH_SEPARATOR);
+        
+        r2::fs::utils::AppendExt(fileSha, SHA_EXT);
+        r2::fs::utils::AppendExt(fileBackup, BACKUP_EXT);
+        
+        std::string sha = GetShaFromFile(mnoptrFile);
+        
+        FileMode mode;
+        mode |= Mode::Write;
+        mode |= Mode::Binary;
+        
+        File* shaFile = mStorageDevice.Open(fileSha, mode);
+        shaFile->Write(sha.c_str(), sha.length());
+        mStorageDevice.Close(shaFile);
+        
+        r2::fs::FileSystem::DeleteFile(fileBackup);
+        r2::fs::FileSystem::CopyFile(mnoptrFile->GetFilePath(), fileBackup);
+        
+        FileStorageDevice* device = mnoptrFile->GetFileDevice();
+        device->Close(mnoptrFile);
         //make sha256 of file
         //write it out to <filename>.sha
         //write out <filename>.bak
         //close mnoptrFile
-        return false;
+        return true;
     }
     
     u64 SafeFile::Read(void* buffer, u64 length)
@@ -121,5 +242,22 @@ namespace r2::fs
     s64 SafeFile::Size() const
     {
         return mnoptrFile->Size();
+    }
+    
+    std::string SafeFile::GetShaFromFile(File* noptrFile)
+    {
+        const auto fileSize = noptrFile->Size();
+        
+        char* fileBuf = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, alignof(char));
+        
+        bool result = noptrFile->ReadAll(fileBuf);
+        R2_CHECK(result, "Should be able to read all of the file");
+        fileBuf[fileSize] = '\0';
+        
+        std::string shaFromFile = sha256(fileBuf);
+        
+        FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
+        
+        return shaFromFile;
     }
 }

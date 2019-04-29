@@ -35,6 +35,8 @@ namespace r2::fs
         virtual bool IsOpen() const override;
         virtual s64 Size() const override;
     private:
+        
+        std::string GetShaFromFile(File* file);
         static const u8 NUM_CHARS_FOR_HASH = 64+1;
         File* mnoptrFile;
         DiskFileStorageDevice& mStorageDevice;

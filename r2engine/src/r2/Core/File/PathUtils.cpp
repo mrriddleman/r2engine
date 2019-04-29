@@ -227,4 +227,10 @@ namespace r2::fs::utils
         
         return true;
     }
+    
+    bool AppendExt(char* path, const char* ext)
+    {
+        strcat(path, ext);
+        return true;
+    }
 }
