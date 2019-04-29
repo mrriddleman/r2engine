@@ -447,7 +447,7 @@ namespace r2
         
         R2_LOGI("filePath: %s\n", filePath);
         
-        char textToWrite[] = "This is some text that I am writing!";
+        char textToWrite[] = "This is some text that I am writin!";
         
         r2::fs::FileMode mode;
         mode |= r2::fs::Mode::Write;
@@ -503,6 +503,14 @@ namespace r2
         R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
         
         R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
+        
+        
+        r2::fs::DeviceConfig safeConfig;
+        safeConfig.AddModifier(r2::fs::DeviceModifier::Safe);
+        
+        r2::fs::File* safeFile = r2::fs::FileSystem::Open(safeConfig, filePath, mode);
+        
+        r2::fs::FileSystem::Close(safeFile);
         
     }
 }

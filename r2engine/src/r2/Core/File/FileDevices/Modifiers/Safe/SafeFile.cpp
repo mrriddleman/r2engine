@@ -71,7 +71,7 @@ namespace r2::fs
             
             shaFromShaFileBuf[NUM_CHARS_FOR_HASH-1] = '\0';
             
-            std::string shaFromShaFile = sha256(shaFromShaFileBuf);
+            std::string shaFromShaFile = shaFromShaFileBuf;
             
             std::string shaFromFile = GetShaFromFile(noptrFile);
 
