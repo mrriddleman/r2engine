@@ -21,6 +21,8 @@ namespace
 
 namespace r2::fs
 {
+    bool DefaultVerifyFunction(SafeFile& safeFile) {return true;}
+    void DefaultVerifyFailedFunction(SafeFile& safeFile){}
     
     const u8 SafeFile::NUM_CHARS_FOR_HASH;
     

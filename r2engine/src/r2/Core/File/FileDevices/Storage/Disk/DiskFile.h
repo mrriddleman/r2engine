@@ -9,6 +9,7 @@
 #define SDL2File_h
 
 #include "r2/Core/File/File.h"
+#include "r2/Core/File/FileDevices/Storage/Disk/DiskFileAsyncOperation.h"
 
 namespace r2
 {
@@ -17,8 +18,6 @@ namespace r2
         class R2_API DiskFile final: public File
         {
         public:
-            
-            using FileHandle = void*;
             
             DiskFile();
             ~DiskFile();
@@ -40,6 +39,10 @@ namespace r2
             
             virtual bool IsOpen() const override;
             virtual s64 Size() const override;
+            
+            DiskFileAsyncOperation ReadAsync(void* buffer, u64 length, u64 position);
+            DiskFileAsyncOperation WriteAsync(const void* buffer, u64 length, u64 position);
+            
             
             FILE* GetFP();
         private:

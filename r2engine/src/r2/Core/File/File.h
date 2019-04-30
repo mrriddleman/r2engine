@@ -16,6 +16,7 @@ namespace r2
     namespace fs
     {
         class FileStorageDevice;
+        using FileHandle = void*;
         
         class R2_API File
         {

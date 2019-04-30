@@ -58,8 +58,7 @@ namespace r2::fs
         SafeFileVerifyFailedFunc mVerifyFailedFunc;
     };
     
-    bool DefaultVerifyFunction(SafeFile& safeFile) {return true;}
-    void DefaultVerifyFailedFunction(SafeFile& safeFile){}
+
 }
 
 #endif /* SafeFile_h */

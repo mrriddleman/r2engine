@@ -210,6 +210,16 @@ namespace r2
             SDL_RWops* ops = (SDL_RWops*)mHandle;
             return ops->hidden.stdio.fp;
         }
+        
+        DiskFileAsyncOperation DiskFile::ReadAsync(void* buffer, u64 length, u64 position)
+        {
+            return DiskFileAsyncOperation(mHandle, 0);
+        }
+        
+        DiskFileAsyncOperation DiskFile::WriteAsync(const void* buffer, u64 length, u64 position)
+        {
+            return DiskFileAsyncOperation(mHandle, 0);
+        }
     }
 }
 
