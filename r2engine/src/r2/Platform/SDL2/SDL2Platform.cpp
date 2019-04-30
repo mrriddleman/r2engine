@@ -447,7 +447,7 @@ namespace r2
         
         R2_LOGI("filePath: %s\n", filePath);
         
-        char textToWrite[] = "This is some text that I am writin!";
+        char textToWrite[] = "This is some text that I am writing!";
         
         r2::fs::FileMode mode;
         mode |= r2::fs::Mode::Write;
