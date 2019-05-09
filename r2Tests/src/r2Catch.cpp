@@ -1030,7 +1030,7 @@ TEST_CASE("Test Ring Buffer")
         
         u32 allocationSize = ringAllocator.GetAllocationSize(intArray);
         
-        REQUIRE(allocationSize == 512 * sizeof(int));
+        REQUIRE(allocationSize == 513 * sizeof(int)); //1 more for the header
         
         memset(intArray, 0, sizeof(int) * 512);
         for (int i = 1; i < 511; ++i)

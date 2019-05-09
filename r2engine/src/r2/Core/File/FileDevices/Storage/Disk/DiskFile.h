@@ -48,6 +48,8 @@ namespace r2
         private:
             FileHandle mHandle;
         };
+        
+        
     }
 }
 

@@ -48,7 +48,7 @@ namespace r2
             
             pointer = (byte*)utils::PointerAdd(ptrData, size);
             
-            if (pointer >= mEnd)
+            if (pointer > mEnd)
             {
                 ptrToHeader->size = static_cast<u32>(utils::PointerOffset(ptrToHeader, mEnd)) | FREE_BLOCK;
                 
@@ -60,7 +60,7 @@ namespace r2
             
             R2_CHECK(!InUse(pointer), "We've ran out of memory!");
 
-            ptrToHeader->size = size;
+            ptrToHeader->size = size + sizeof(utils::Header);
             
             if (pointer == mEnd)
             {
@@ -102,7 +102,7 @@ namespace r2
                     break;
                 }
                 
-                mWhereToFree = (byte*)utils::PointerAdd(mWhereToFree, (header->size & ALLOCATED_BLOCK) + sizeof(utils::Header));
+                mWhereToFree = (byte*)utils::PointerAdd(mWhereToFree, (header->size & ALLOCATED_BLOCK));
                 
                 if (mWhereToFree == mEnd)
                 {

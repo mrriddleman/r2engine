@@ -11,13 +11,25 @@
 #include "r2/Core/File/File.h"
 #include <memory>
 
+#if defined(R2_PLATFORM_MAC)
+#include <aio.h>
+struct Request
+{
+    s64 reqNum = -1;
+    int status = -1;
+    aiocb aiocbp;
+    int returnVal = -1;
+};
+
+#endif
+
 namespace r2::fs
 {
     class R2_API DiskFileAsyncOperation
     {
     public:
         
-        DiskFileAsyncOperation(FileHandle file, u64 position);
+        DiskFileAsyncOperation(FileHandle file);
         DiskFileAsyncOperation(const DiskFileAsyncOperation& other);
         DiskFileAsyncOperation& operator=(const DiskFileAsyncOperation& other);
         ~DiskFileAsyncOperation(void);
@@ -29,13 +41,17 @@ namespace r2::fs
         bool HasFinished(void) const;
         
         /// Waits until the asynchronous operation has finished. Returns the number of transferred bytes.
-        u64 WaitUntilFinished(void) const;
+        u64 WaitUntilFinished(u32 usleepAmount) const;
         
         /// Cancels the asynchronous operation
-        void Cancel(void);
+        bool Cancel(void);
         
     private:
+        
+        friend class DiskFile;
+        
         FileHandle mHandle;
+        std::shared_ptr<Request> mRequest;
     };
 }
 
