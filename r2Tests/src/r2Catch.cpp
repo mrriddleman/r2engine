@@ -1102,11 +1102,11 @@ TEST_CASE("Test Ring Arena")
             testClassObjects[i] = nullptr;
         }
         
-        byte* bytes = ALLOC_BYTESN(ringArena, Megabytes(1)-3*ringArena.HeaderSize(), 4);
+        byte* bytes = ALLOC_BYTESN(ringArena, Megabytes(1)-2*ringArena.HeaderSize(), 4);
         
-        REQUIRE(bytes != nullptr);
+        REQUIRE(bytes == nullptr);
         
-        FREE(bytes, ringArena);
+        
         
     }
     

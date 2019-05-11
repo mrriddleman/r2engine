@@ -67,19 +67,20 @@ namespace r2
             }
             
             //R2_CHECK(!InUse(pointer), "We've ran out of memory!");
-            if (InUse(pointer))
+            if (InUse(pointer) || pointer == mWhereToFree)
             {
                 //We've run out of memory!
                 //R2_CHECK(false, "We've ran out of memory!");
                 return nullptr;
             }
+            
 
             ptrToHeader->size = size + sizeof(utils::Header);
             
-//            if (pointer == mEnd && mWhereToFree != mStart)
-//            {
-//                pointer = mStart;
-//            }
+            if (pointer == mEnd && mWhereToFree != mStart)
+            {
+                pointer = mStart;
+            }
             
             mWhereToAllocate = pointer;
             return ptrData;
