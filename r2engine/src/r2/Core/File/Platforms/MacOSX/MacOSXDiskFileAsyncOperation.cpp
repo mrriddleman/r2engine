@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-04-29.
 //
 
+/*
 #if defined(R2_PLATFORM_MAC)
 
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFileAsyncOperation.h"
@@ -19,32 +20,32 @@ namespace
 {
     #define IO_SIGNAL SIGUSR1
 
-    const u32 NUM_ACTIVE_REQUESTS = 4096;
+   // const u32 NUM_ACTIVE_REQUESTS = 4096;
     
     static volatile sig_atomic_t gotSIGQUIT = 0;
     static u64 nextRequestId = 0; //maybe should be atomic - I dunno yet
-    static u32 openRequests = 0;
+    //static u32 openRequests = 0;
     struct sigaction sa;
     
-    std::shared_ptr<Request> gRequests[NUM_ACTIVE_REQUESTS];
+    //std::shared_ptr<Request> gRequests[NUM_ACTIVE_REQUESTS];
     
-    bool RemoveRequest(const Request& request)
-    {
-        for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
-        {
-            if (gRequests[i].get() == &request)
-            {
-                gRequests[i] = nullptr;
-                
-                openRequests--;
-                return true;
-            }
-        }
-        
-        R2_CHECK(false, "Remove request failed!");
-        
-        return false;
-    }
+//    bool RemoveRequest(const Request& request)
+//    {
+//        for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
+//        {
+//            if (gRequests[i].get() == &request)
+//            {
+//                gRequests[i] = nullptr;
+//
+//                openRequests--;
+//                return true;
+//            }
+//        }
+//
+//        R2_CHECK(false, "Remove request failed!");
+//
+//        return false;
+//    }
     
     bool CancelRequest(Request& request)
     {
@@ -53,7 +54,7 @@ namespace
         if (status == AIO_CANCELED)
         {
             request.status = status;
-            return RemoveRequest(request);
+            return true;//RemoveRequest(request);
         }
         
         return false;
@@ -63,16 +64,16 @@ namespace
     {
         gotSIGQUIT = 1;
         
-        if (openRequests > 0)
-        {
-            for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
-            {
-                if (gRequests[i] != nullptr)
-                {
-                    CancelRequest(*gRequests[i]);
-                }
-            }
-        }
+//        if (openRequests > 0)
+//        {
+//            for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
+//            {
+//                if (gRequests[i] != nullptr)
+//                {
+//                    CancelRequest(*gRequests[i]);
+//                }
+//            }
+//        }
     }
 
     void aioSigHandler(int sig, siginfo_t *si, void *ucontext)
@@ -85,18 +86,18 @@ namespace
             ioReq->status = AIO_ALLDONE;
             ioReq->returnVal = aio_return(&ioReq->aiocbp);
             
-            RemoveRequest(*ioReq);
+          //  RemoveRequest(*ioReq);
         }
     }
     
     void InitSig()
     {
-        sa.sa_flags = SA_RESTART;
+       // sa.sa_flags = SA_RESTART;
         sigemptyset(&sa.sa_mask);
         
-        sa.sa_handler = quitHandler;
-        if (sigaction(SIGQUIT, &sa, NULL) == -1)
-            R2_CHECK(false, "Failed to set sigaction for quit");
+//        sa.sa_handler = quitHandler;
+//        if (sigaction(SIGQUIT, &sa, NULL) == -1)
+//            R2_CHECK(false, "Failed to set sigaction for quit");
         
         sa.sa_flags = SA_RESTART | SA_SIGINFO;
         sa.sa_sigaction = aioSigHandler;
@@ -109,24 +110,24 @@ namespace
         return aio_error(&request.aiocbp);
     }
     
-    bool AddRequest(std::shared_ptr<Request> request)
-    {
-        static std::once_flag initFlag;
-        std::call_once(initFlag, InitSig);
-        
-        //find next empty request slot
-        for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
-        {
-            if (!gRequests[i])
-            {
-                gRequests[i] = request;
-                openRequests++;
-                return true;
-            }
-        }
-        R2_CHECK(false, "We're full of async requests!");
-        return false;
-    }
+//    bool AddRequest(std::shared_ptr<Request> request)
+//    {
+//        static std::once_flag initFlag;
+//        std::call_once(initFlag, InitSig);
+//
+//        //find next empty request slot
+//        for (u32 i = 0; i < NUM_ACTIVE_REQUESTS; ++i)
+//        {
+//            if (!gRequests[i])
+//            {
+//                gRequests[i] = request;
+//                openRequests++;
+//                return true;
+//            }
+//        }
+//        R2_CHECK(false, "We're full of async requests!");
+//        return false;
+//    }
 
     bool MakeReadRequest(std::shared_ptr<Request>& request, void* buffer, u64 length, u64 position)
     {
@@ -149,7 +150,7 @@ namespace
             return false;
         }
         
-        return AddRequest(request);
+        return true;//AddRequest(request);
     }
     
     bool MakeWriteRequest(std::shared_ptr<Request>& request, void* buffer, u64 length, u64 position)
@@ -173,7 +174,7 @@ namespace
             return false;
         }
         
-        return AddRequest(request);
+        return true;//AddRequest(request);
     }
 }
 
@@ -222,7 +223,7 @@ namespace r2::fs
             return true;
         }
         
-        auto requestStatus = GetRequestStatus(*mRequest);
+        auto requestStatus = GetRequestStatus(*(mRequest.get()));
         
         if (requestStatus == 0)
         {
@@ -246,7 +247,7 @@ namespace r2::fs
         {
             if (usleepAmount != 0)
             {
-                usleep(usleepAmount);
+             //   usleep(usleepAmount);
             }
         }
         
@@ -288,3 +289,4 @@ namespace r2::fs
 
 
 #endif
+*/

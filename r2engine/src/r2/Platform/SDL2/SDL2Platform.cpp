@@ -15,6 +15,7 @@
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/FileStorageArea.h"
+#include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
 
 namespace
 {
@@ -475,6 +476,7 @@ namespace r2
         fileToRead->Skip(5);
         
         u64 bytesRead = fileToRead->Read(textToRead, 2);
+        textToRead[2] = '\0';
         
         R2_CHECK(bytesRead == 2, "We didn't read all of the file!");
         
@@ -511,6 +513,20 @@ namespace r2
         r2::fs::File* safeFile = r2::fs::FileSystem::Open(safeConfig, filePath, mode);
         
         r2::fs::FileSystem::Close(safeFile);
+        
+        /* @TODO(Serge): TOO PROBLEMATIC right now enable some day
+        r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
+        
+        strcpy(textToRead, "");
+        
+        R2_LOGI("textToRead: %s\n", textToRead);
+        r2::fs::DiskFileAsyncOperation op = asyncFile->ReadAsync(textToRead, asyncFile->Size(), 0);
+        op.WaitUntilFinished(0);
+        textToRead[asyncFile->Size()] = '\0';
+        R2_LOGI("textToRead: %s", textToRead);
+        
+        */
+        
         
     }
 }
