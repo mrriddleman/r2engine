@@ -122,6 +122,11 @@ namespace r2
                 if (mWhereToFree == mEnd)
                 {
                     mWhereToFree = mStart;
+                    
+                    if (mWhereToAllocate == mEnd)
+                    {
+                        mWhereToAllocate = mStart;
+                    }
                 }
             }
         }
