@@ -38,11 +38,12 @@ namespace r2
             }
             
             R2_CHECK(alignment % 4 == 0, "Alignment should be multiples of 4!");
+            R2_CHECK(offset % 4 == 0, "Offset should be multiples of 4!");
             
             size = ((size + 3)/4)*4;
             
-            byte* pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mWhereToAllocate, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
-            
+          //  byte* pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mWhereToAllocate, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
+            byte* pointer = mWhereToAllocate;
             utils::Header* ptrToHeader = (utils::Header*)pointer;
             byte* ptrData = (byte*)utils::PointerAdd(ptrToHeader, sizeof(utils::Header));
             
@@ -50,22 +51,35 @@ namespace r2
             
             if (pointer > mEnd)
             {
+                if (mWhereToFree == mStart && (void*)ptrToHeader == (void*)mEnd)
+                {
+                   // we don't have any more space
+                    return nullptr;
+                }
+
                 ptrToHeader->size = static_cast<u32>(utils::PointerOffset(ptrToHeader, mEnd)) | FREE_BLOCK;
                 
-                pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mStart, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
+                pointer = mStart;
+               // pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mStart, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
                 ptrToHeader = (utils::Header*)pointer;
                 ptrData = (byte*)utils::PointerAdd(ptrToHeader, sizeof(utils::Header));
                 pointer = (byte*)utils::PointerAdd(ptrData, size);
             }
             
-            R2_CHECK(!InUse(pointer), "We've ran out of memory!");
+            //R2_CHECK(!InUse(pointer), "We've ran out of memory!");
+            if (InUse(pointer))
+            {
+                //We've run out of memory!
+                //R2_CHECK(false, "We've ran out of memory!");
+                return nullptr;
+            }
 
             ptrToHeader->size = size + sizeof(utils::Header);
             
-            if (pointer == mEnd)
-            {
-                pointer = mStart;
-            }
+//            if (pointer == mEnd && mWhereToFree != mStart)
+//            {
+//                pointer = mStart;
+//            }
             
             mWhereToAllocate = pointer;
             return ptrData;
@@ -113,17 +127,20 @@ namespace r2
         
         bool RingBufferAllocator::InUse(void* noptrP) const
         {
-            if (mWhereToFree == mWhereToAllocate)
+            void* free = mWhereToFree;
+            void* alloc = mWhereToAllocate;
+            
+            if (free == alloc)
             {
                 return false;
             }
             
-            if (mWhereToAllocate > mWhereToFree)
+            if (alloc > free)
             {
-                return noptrP >= mWhereToFree && noptrP < mWhereToAllocate;
+                return noptrP >= free && noptrP < alloc;
             }
             
-            return noptrP >= mWhereToFree || noptrP < mWhereToAllocate;
+            return noptrP >= free || noptrP < alloc;
         }
         
         u32 RingBufferAllocator::GetTotalBytesAllocated() const

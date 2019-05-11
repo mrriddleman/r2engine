@@ -384,7 +384,14 @@ namespace r2
             template <typename T, class ARENA>
             T* Alloc(ARENA& arena, const char* file, s32 line, const char* description)
             {
-                return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T();
+                void* ptr = arena.Allocate(sizeof(T), alignof(T), file, line, description);
+                
+                if (ptr)
+                {
+                    return new (ptr) T();
+                }
+                
+                return nullptr;
             }
             
             template <class ARENA>
@@ -396,7 +403,14 @@ namespace r2
             template <typename T, class ARENA, class... Args>
             T* AllocParams(ARENA& arena,const char* file, s32 line, const char* description, Args&&... args)
             {
-                return new (arena.Allocate(sizeof(T), alignof(T), file, line, description)) T(std::forward<Args>(args)...);
+                void* ptr = arena.Allocate(sizeof(T), alignof(T), file, line, description);
+
+                if (ptr)
+                {
+                    return new (ptr) T(std::forward<Args>(args)...);
+                }
+
+                return nullptr;
             }
             
             //we must call the destructor manually now since we used the placement new call for Alloc

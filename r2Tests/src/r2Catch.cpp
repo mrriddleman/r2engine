@@ -1053,6 +1053,66 @@ TEST_CASE("Test Ring Buffer")
     r2::mem::GlobalMemory::Shutdown();
 }
 
+
+TEST_CASE("Test Ring Arena")
+{
+    r2::mem::GlobalMemory::Init(1);
+    auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+    REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+    r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+    REQUIRE(testMemoryArea != nullptr);
+    REQUIRE(testMemoryArea->Name() == "TestArea");
+    auto result = testMemoryArea->Init(Megabytes(1), 0);
+    REQUIRE(result);
+    REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+    REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+    auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+    REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+    
+    SECTION("Test Ring Arena allocator")
+    {
+        const int NUM_TEST_CLASSES = 87381;
+        r2::mem::RingArena ringArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        
+        u64 sizeOfTestClass = sizeof(TestClass);
+        
+        u64 numTestClassesWeCanAllocate = testMemoryArea->GetSubArea(subAreaHandle)->mBoundary.size/(sizeOfTestClass + sizeof(r2::mem::utils::Header));
+        
+        REQUIRE(numTestClassesWeCanAllocate == NUM_TEST_CLASSES);
+        
+        TestClass* testClassObjects[NUM_TEST_CLASSES];
+        
+        for (u64 i = 0; i < numTestClassesWeCanAllocate; ++i)
+        {
+            testClassObjects[i] = ALLOC(TestClass, ringArena);
+            REQUIRE(testClassObjects[i] != nullptr);
+        }
+
+        TestClass* t = ALLOC(TestClass, ringArena);
+        
+        REQUIRE(t == nullptr);
+        
+        TestClass* t2 = ALLOC(TestClass, ringArena);
+        
+        REQUIRE(t2 == nullptr);
+        
+        for (u64 i = 0; i < numTestClassesWeCanAllocate; ++i)
+        {
+            FREE(testClassObjects[i], ringArena);
+            testClassObjects[i] = nullptr;
+        }
+        
+        byte* bytes = ALLOC_BYTESN(ringArena, Megabytes(1)-3*ringArena.HeaderSize(), 4);
+        
+        REQUIRE(bytes != nullptr);
+        
+        FREE(bytes, ringArena);
+        
+    }
+    
+    r2::mem::GlobalMemory::Shutdown();
+}
+
 TEST_CASE("Path Utils")
 {
     SECTION("Test GetNextSubPath() - Good Case")
