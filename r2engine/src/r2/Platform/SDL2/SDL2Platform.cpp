@@ -514,20 +514,47 @@ namespace r2
         
         r2::fs::FileSystem::Close(safeFile);
         
-        /* @TODO(Serge): TOO PROBLEMATIC right now enable some day
+        // @TODO(Serge): TOO PROBLEMATIC right now enable some day
         r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
         
+        char filePath4[Kilobytes(1)];
+        strcpy(filePath4, mPrefPath);
+        strcat(filePath4, "test_async_write.txt");
+        
+        
+        r2::fs::FileMode asyncWriteMode;
+        asyncWriteMode |= r2::fs::Mode::Write;
+        
+        r2::fs::DiskFile* asyncFile2 = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath4, asyncWriteMode);
+
+        char textToRead2[Kilobytes(1)];
         strcpy(textToRead, "");
+        strcpy(textToRead2, "");
         
-        R2_LOGI("textToRead: %s\n", textToRead);
         r2::fs::DiskFileAsyncOperation op = asyncFile->ReadAsync(textToRead, asyncFile->Size(), 0);
-        op.WaitUntilFinished(0);
+        r2::fs::DiskFileAsyncOperation op2 = asyncFile->ReadAsync(textToRead2, asyncFile->Size(), 0);
+        
+        
+        
+        op.WaitUntilFinished(1);
+        op2.WaitUntilFinished(1);
         textToRead[asyncFile->Size()] = '\0';
+        textToRead2[asyncFile->Size()] = '\0';
+        
+        
+        r2::fs::DiskFileAsyncOperation op3 = asyncFile2->WriteAsync(textToRead2, asyncFile->Size(), 0);
+        
+        op3.WaitUntilFinished(1);
+        
+        
+        
         R2_LOGI("textToRead: %s", textToRead);
+        R2_LOGI("textToRead2: %s", textToRead2);
         
-        */
+        R2_LOGI("temp");
         
-        
+        r2::fs::FileSystem::Close(asyncFile);
+        r2::fs::FileSystem::Close(asyncFile2);
     }
 }
 

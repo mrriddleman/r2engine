@@ -40,10 +40,10 @@ namespace r2
             virtual bool IsOpen() const override;
             virtual s64 Size() const override;
             
-            /*@TODO(Serge): re-enable when you figure out what's wrong here
+            //@TODO(Serge): re-enable when you figure out what's wrong here
             DiskFileAsyncOperation ReadAsync(void* buffer, u64 length, u64 position);
             DiskFileAsyncOperation WriteAsync(const void* buffer, u64 length, u64 position);
-             */
+           //  */
             FILE* GetFP();
         private:
             FileHandle mHandle;
