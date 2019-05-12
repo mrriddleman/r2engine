@@ -33,6 +33,7 @@ namespace r2
             
             DeviceStorage GetStorageType() const {return mStorageType;}
         protected:
+            //@TODO(Serge): make this into a checking pool
             r2::mem::NoCheckPoolArena* moptrFilePool;
         private:
             DeviceStorage mStorageType;
