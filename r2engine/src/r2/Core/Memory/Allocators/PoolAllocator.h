@@ -116,6 +116,10 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
     {
+        
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
+        elementSize = elementSize + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
+#endif
         u64 poolSizeInBytes = capacity * elementSize;
         
         void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, elementSize, file, line, description);
@@ -126,12 +130,7 @@ namespace r2::mem::utils
         
         utils::MemBoundary poolBoundary;
         poolBoundary.location = boundaryStart;
-        //@Cleanup: kinda ugly but whatevs
-#if defined(R2_DEBUG) || defined(R2_RELEASE)
-        poolBoundary.size = poolSizeInBytes + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
-#else
         poolBoundary.size = poolSizeInBytes;
-#endif
         poolBoundary.elementSize = elementSize;
         poolBoundary.alignment = elementSize;
         poolBoundary.offset = 0; //?

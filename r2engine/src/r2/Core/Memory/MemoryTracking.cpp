@@ -65,11 +65,11 @@ namespace r2
                     printf("=================================================================\n");
                 }
                 
-                R2_CHECK(size == 0, "We still have Memory allocations that have not been freed!");
+                R2_CHECK(size == 0, "We still have %lu allocations that have not been freed!", size);
             }
         }
         
-        void BasicMemoryTracking::OnAllocation(utils::MemoryTag&& tag)
+        void BasicMemoryTracking::OnAllocation(const utils::MemoryTag& tag)
         {
             mTags.push_back(tag);
         }

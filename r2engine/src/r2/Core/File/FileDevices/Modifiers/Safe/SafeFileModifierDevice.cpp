@@ -31,7 +31,7 @@ namespace r2::fs
             return true;
         }
         
-        moptrFilePool = MAKE_NO_CHECK_POOL_ARENA(permanentStorage, sizeof(SafeFile), numFiles);
+        moptrFilePool = MAKE_POOL_ARENA(permanentStorage, sizeof(SafeFile), numFiles);
         R2_CHECK(moptrFilePool != nullptr, "We couldn't allocate a pool of size: %llu\n", sizeof(SafeFile)*numFiles);
         
         return moptrFilePool != nullptr;
@@ -66,6 +66,11 @@ namespace r2::fs
             safeFile->SetFileDevice(this);
             safeFile->AddModifierConfig(GetModifier());
             return safeFile;
+        }
+        
+        if (safeFile)
+        {
+            FREE(safeFile, *moptrFilePool);
         }
         
         return nullptr;

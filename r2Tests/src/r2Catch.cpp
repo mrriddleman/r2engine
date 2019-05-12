@@ -519,7 +519,7 @@ TEST_CASE("Test Pool Memory Arena No Checking")
         boundary->alignment = alignof(TestClass);
         boundary->offset = 0;
         
-        r2::mem::PoolArena poolArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        r2::mem::NoCheckPoolArena poolArena(*testMemoryArea->GetSubArea(subAreaHandle));
         
         TestClass* tc = ALLOC(TestClass, poolArena);
         

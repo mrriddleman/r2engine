@@ -62,7 +62,6 @@ namespace r2
         PoolAllocator::Freelist::Freelist(void* start, void* end, u64 elementSize, u64 alignment, u64 offset)
         {
             R2_CHECK(elementSize >= sizeof(Freelist), "elementSize must be greater than or equal to a freelist object which is %zu bytes", sizeof(Freelist));
-            
             void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(start, offset), alignment), offset);
             
             union

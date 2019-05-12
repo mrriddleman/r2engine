@@ -79,6 +79,7 @@ namespace r2::fs
             R2_CHECK(result, "Should be able to read a file we have already!");
             
             mSha[NUM_CHARS_FOR_HASH-1] = '\0';
+            mStorageDevice.Close(optrShaFile);
             
             std::string shaFromShaFile = mSha;
             

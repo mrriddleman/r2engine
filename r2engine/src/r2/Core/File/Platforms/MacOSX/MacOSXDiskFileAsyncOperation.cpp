@@ -43,7 +43,7 @@ namespace
         request->status = EINPROGRESS;
         request->returnVal = -1;
         
-        memset(&request->aiocbp, 0, sizeof(aiocb));
+      //  memset(&request->aiocbp, 0, sizeof(aiocb));
         request->aiocbp.aio_nbytes = length;
         request->aiocbp.aio_reqprio = 0;
         request->aiocbp.aio_offset = position;
@@ -65,7 +65,7 @@ namespace
         request->status = EINPROGRESS;
         request->returnVal = -1;
         
-        memset(&request->aiocbp, 0, sizeof(aiocb));
+     //   memset(&request->aiocbp, 0, sizeof(aiocb));
         request->aiocbp.aio_nbytes = length;
         request->aiocbp.aio_reqprio = 0;
         request->aiocbp.aio_offset = position;

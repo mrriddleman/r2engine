@@ -29,7 +29,7 @@ namespace r2::fs
             return true;// we've already mounted
         }
         
-        moptrFilePool = MAKE_NO_CHECK_POOL_ARENA(permanentStorage, sizeof(DiskFile), numFilesActive);
+        moptrFilePool = MAKE_POOL_ARENA(permanentStorage, sizeof(DiskFile), numFilesActive);
         R2_CHECK(moptrFilePool != nullptr, "We couldn't allocate a pool of size: %llu\n", sizeof(DiskFile)*numFilesActive);
         
         return moptrFilePool != nullptr;
@@ -64,6 +64,11 @@ namespace r2::fs
             diskFile->SetFileDevice(this);
             diskFile->SetStorageDeviceConfig(GetStorageType());
             return diskFile;
+        }
+        
+        if (diskFile)
+        {
+            FREE(diskFile, *moptrFilePool);
         }
         
         return nullptr;

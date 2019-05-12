@@ -502,6 +502,7 @@ namespace r2
         R2_CHECK(r2::fs::FileSystem::RenameFile(filePath2, filePath3), "We should be able to rename a file");
         
         R2_CHECK(r2::fs::FileSystem::FileExists(filePath3), "filePath3 should exist");
+        
         R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
         
         R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
@@ -514,47 +515,48 @@ namespace r2
         
         r2::fs::FileSystem::Close(safeFile);
         
-        // @TODO(Serge): TOO PROBLEMATIC right now enable some day
+        /* @TODO(Serge): fix async files... again...
         r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
         
-        char filePath4[Kilobytes(1)];
-        strcpy(filePath4, mPrefPath);
-        strcat(filePath4, "test_async_write.txt");
+       // char filePath4[Kilobytes(1)];
+       // strcpy(filePath4, mPrefPath);
+      //  strcat(filePath4, "test_async_write.txt");
         
         
-        r2::fs::FileMode asyncWriteMode;
-        asyncWriteMode |= r2::fs::Mode::Write;
-        
-        r2::fs::DiskFile* asyncFile2 = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath4, asyncWriteMode);
-
-        char textToRead2[Kilobytes(1)];
-        strcpy(textToRead, "");
-        strcpy(textToRead2, "");
+//        r2::fs::FileMode asyncWriteMode;
+//        asyncWriteMode |= r2::fs::Mode::Write;
+//
+//        r2::fs::DiskFile* asyncFile2 = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath4, asyncWriteMode);
+//
+//        char textToRead2[Kilobytes(1)];
+//        strcpy(textToRead, "");
+//        strcpy(textToRead2, "");
         
         r2::fs::DiskFileAsyncOperation op = asyncFile->ReadAsync(textToRead, asyncFile->Size(), 0);
-        r2::fs::DiskFileAsyncOperation op2 = asyncFile->ReadAsync(textToRead2, asyncFile->Size(), 0);
+       // r2::fs::DiskFileAsyncOperation op2 = asyncFile->ReadAsync(textToRead2, asyncFile->Size(), 0);
         
         
         
         op.WaitUntilFinished(1);
-        op2.WaitUntilFinished(1);
+       // op2.WaitUntilFinished(1);
         textToRead[asyncFile->Size()] = '\0';
-        textToRead2[asyncFile->Size()] = '\0';
+        //textToRead2[asyncFile->Size()] = '\0';
         
         
-        r2::fs::DiskFileAsyncOperation op3 = asyncFile2->WriteAsync(textToRead2, asyncFile->Size(), 0);
+       // r2::fs::DiskFileAsyncOperation op3 = asyncFile2->WriteAsync(textToRead2, asyncFile->Size(), 0);
         
-        op3.WaitUntilFinished(1);
+      //  op3.WaitUntilFinished(1);
         
         
         
         R2_LOGI("textToRead: %s", textToRead);
-        R2_LOGI("textToRead2: %s", textToRead2);
+       // R2_LOGI("textToRead2: %s", textToRead2);
         
         R2_LOGI("temp");
         
         r2::fs::FileSystem::Close(asyncFile);
-        r2::fs::FileSystem::Close(asyncFile2);
+       // r2::fs::FileSystem::Close(asyncFile2);
+        */
     }
 }
 

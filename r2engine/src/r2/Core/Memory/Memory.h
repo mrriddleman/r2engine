@@ -190,9 +190,6 @@ namespace r2
         class R2_API MemoryArena: public MemoryArenaBase
         {
         public:
-            
-            //@TODO(Serge): pass debug name through to MemoryTrackingPolicy
-            
             explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
             {
                 subArea.mnoptrArena = this;
@@ -225,7 +222,7 @@ namespace r2
                 utils::MemoryTag tag(plainMemory, file, alignment, newSize, line);
                 tag.requestedSize = originalSize;
                 
-                mMemoryTracker.OnAllocation(std::move(tag));
+                mMemoryTracker.OnAllocation(tag);
                 
                 mThreadGuard.Leave();
                 

@@ -16,7 +16,7 @@ namespace r2
         class R2_API NoMemoryTracking
         {
         public:
-            inline void OnAllocation(utils::MemoryTag&& tag) const {}
+            inline void OnAllocation(const utils::MemoryTag& tag) const {}
             inline void OnDeallocation(void*, const char* file, s32 line, const char* description) const {}
         
             inline u64 NumAllocations() const {return 0;}
@@ -37,7 +37,7 @@ namespace r2
             BasicMemoryTracking();
             explicit BasicMemoryTracking(const std::string& name);
             ~BasicMemoryTracking();
-            void OnAllocation(utils::MemoryTag&& tag);
+            void OnAllocation(const utils::MemoryTag& tag);
             void OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description);
             void Verify();
             
