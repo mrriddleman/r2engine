@@ -16,7 +16,7 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
-
+#include "r2/Utils/Handle.h"
 namespace
 {
     const u32 MAX_NUM_FILES = 1024;
