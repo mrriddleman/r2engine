@@ -78,7 +78,7 @@ namespace r2
     {
     public:
         
-        Handle(T* data): mData(data){}
+        Handle(T* data, u32 salt): mData(data){}
         
         const T* GetConstPtr() const
         {

@@ -436,9 +436,9 @@ namespace r2
     
     void SDL2Platform::TestFiles()
     {
-        char filePath[Kilobytes(1)];
-        char filePath2[Kilobytes(1)];
-        char filePath3[Kilobytes(1)];
+        char filePath[r2::fs::FILE_PATH_LENGTH];
+        char filePath2[r2::fs::FILE_PATH_LENGTH];
+        char filePath3[r2::fs::FILE_PATH_LENGTH];
         
         strcpy(filePath, mPrefPath);
         strcpy(filePath2, mPrefPath);
@@ -471,7 +471,7 @@ namespace r2
         
         R2_LOGI("file size: %llu\n", fileSize);
         
-        char textToRead[Kilobytes(1)];
+        char textToRead[r2::fs::FILE_PATH_LENGTH];
         
         fileToRead->Skip(5);
         

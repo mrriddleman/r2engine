@@ -9,6 +9,7 @@
 #define FileStorageArea_h
 
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
+#include "r2/Core/File/File.h"
 
 namespace r2::fs
 {
@@ -42,7 +43,7 @@ namespace r2::fs
         
     private:
         const u32 mNumFilesActive; // how many files you can have on this storage area active at once
-        char mRootPath[Kilobytes(1)];
+        char mRootPath[r2::fs::FILE_PATH_LENGTH];
     };
 }
 

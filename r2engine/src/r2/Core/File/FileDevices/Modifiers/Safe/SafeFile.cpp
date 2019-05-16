@@ -53,10 +53,10 @@ namespace r2::fs
             return false;
         }
         
-        char fileName[Kilobytes(1)];
-        char filePath[Kilobytes(1)];
-        char fileBackup[Kilobytes(1)];
-        char fileSha[Kilobytes(1)];
+        char fileName[r2::fs::FILE_PATH_LENGTH];
+        char filePath[r2::fs::FILE_PATH_LENGTH];
+        char fileBackup[r2::fs::FILE_PATH_LENGTH];
+        char fileSha[r2::fs::FILE_PATH_LENGTH];
         
         r2::fs::utils::CopyFileName(noptrFile->GetFilePath(), fileName);
         
@@ -169,10 +169,10 @@ namespace r2::fs
     {
         if (IsOpen())
         {
-            char fileName[Kilobytes(1)];
-            char filePath[Kilobytes(1)];
-            char fileBackup[Kilobytes(1)];
-            char fileSha[Kilobytes(1)];
+            char fileName[r2::fs::FILE_PATH_LENGTH];
+            char filePath[r2::fs::FILE_PATH_LENGTH];
+            char fileBackup[r2::fs::FILE_PATH_LENGTH];
+            char fileSha[r2::fs::FILE_PATH_LENGTH];
             
             r2::fs::utils::CopyFileName(mnoptrFile->GetFilePath(), fileName);
             

@@ -6,6 +6,7 @@
 //
 
 #include "PathUtils.h"
+#include "r2/Core/File/File.h"
 
 namespace r2::fs::utils
 {
@@ -85,7 +86,7 @@ namespace r2::fs::utils
         
         strcpy(path, "");
         
-        char filenameWithExtension[Kilobytes(1)];
+        char filenameWithExtension[r2::fs::FILE_PATH_LENGTH];
         
         bool result = CopyFileNameWithExtension(filePath, filenameWithExtension);
         
@@ -94,7 +95,7 @@ namespace r2::fs::utils
             return false;
         }
         
-        char nexSubPath[Kilobytes(1)];
+        char nexSubPath[r2::fs::FILE_PATH_LENGTH];
         char* nextPath = const_cast<char*>(filePath);
         
         if (nextPath[0] == PATH_SEPARATOR)
@@ -116,9 +117,9 @@ namespace r2::fs::utils
             strcat(path, nexSubPath);
             auto len = strlen(path);
 
-            R2_CHECK(len < Kilobytes(1), "should be less than 1 kilobyte");
+            R2_CHECK(len < r2::fs::FILE_PATH_LENGTH, "should be less than 1 kilobyte");
             path[len++] = PATH_SEPARATOR;
-            R2_CHECK(len < Kilobytes(1), "should be less than 1 kilobyte");
+            R2_CHECK(len < r2::fs::FILE_PATH_LENGTH, "should be less than 1 kilobyte");
             path[len] = '\0';
         }
         
@@ -184,8 +185,8 @@ namespace r2::fs::utils
             return 0;
         }
         
-        char subPath[Kilobytes(1)] = "";
-        char storageSubPath[Kilobytes(1)] = "";
+        char subPath[r2::fs::FILE_PATH_LENGTH] = "";
+        char storageSubPath[r2::fs::FILE_PATH_LENGTH] = "";
         
         //Promise you won't modify me
         char* splitPath = const_cast<char*>(path1);
