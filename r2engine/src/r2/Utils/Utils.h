@@ -32,6 +32,11 @@ using uptr = uintptr_t;
 #define Terabytes(x) (Gigabytes(x)*1024LL)
 #define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
+namespace r2::fs
+{
+    static const u32 FILE_PATH_LENGTH = Kilobytes(1);
+}
+
 namespace r2
 {
     namespace util

@@ -57,7 +57,7 @@ namespace r2
             
             struct MemoryTag
             {
-                char fileName[Kilobytes(1)];
+                char fileName[r2::fs::FILE_PATH_LENGTH];
                 u64 alignment = 0;
                 u64 size = 0;
                 u64 requestedSize = 0;
@@ -174,7 +174,7 @@ namespace r2
             //@Temporary - should be static?
             std::vector<MemorySubArea> mSubAreas;
             
-            std::array<char, Kilobytes(1)> mDebugName;
+            std::array<char, r2::fs::FILE_PATH_LENGTH> mDebugName;
 
             void* mCurrentNext = nullptr;
             

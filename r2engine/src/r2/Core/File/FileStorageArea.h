@@ -9,7 +9,6 @@
 #define FileStorageArea_h
 
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
-#include "r2/Core/File/File.h"
 
 namespace r2::fs
 {

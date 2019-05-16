@@ -15,7 +15,6 @@ namespace r2::fs
 {
     class FileStorageDevice;
     using FileHandle = void*;
-    static const u32 FILE_PATH_LENGTH = Kilobytes(1);
     
     class R2_API File
     {
