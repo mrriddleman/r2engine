@@ -32,6 +32,7 @@ project "r2engine"
 	location "r2engine"
 	kind "SharedLib"
 	language "C++"
+	cppdialect "C++17"
 	--staticruntime "off"
 
 	local output_dir_root	= ROOT .. "bin/" .. outputdir .. "/%{prj.name}"
@@ -73,29 +74,6 @@ project "r2engine"
 		"imgui"
 	}
 
-	configuration { "macosx" }
-		buildoptions 
-		{
-			"-F %{prj.location}/vendor/SDL2/MacOSX",
-		}
-    	
-    	linkoptions
-    	{
-    		"-F %{prj.location}/vendor/SDL2/MacOSX"
-    	}
-
-		includedirs 
-		{
-			"%{prj.name}/vendor/glad/MacOSX/include"
-		}
-
-		links
-		{
-			"glad",
-			"SDL2.framework",
-			"OpenGL.framework",
-		}
-
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
     local MKDIR     = "mkdir -p "
@@ -112,7 +90,6 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 ]]
 	
 	filter "system:macosx"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -120,15 +97,51 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"R2_PLATFORM_MAC"
 		}
 
-		filter{"configurations:"}
-
-		postbuildcommands
+		buildoptions 
 		{
-		--	("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
+			"-F %{prj.location}/vendor/SDL2/MacOSX",
+		}
+    	
+    	linkoptions
+    	{
+    		"-F %{prj.location}/vendor/SDL2/MacOSX"
+    	}
+
+		includedirs 
+		{
+			"%{prj.name}/vendor/glad/MacOSX/include",
+			"%{prj.name}/vendor/FMOD/MacOSX/core/inc",
+			"%{prj.name}/vendor/FMOD/MacOSX/studio/inc"
 		}
 
+		libdirs 
+		{
+			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
+			"%{prj.name}/vendor/FMOD/MacOSX/studio/lib"
+		}
+
+		links
+		{
+			"glad",
+			"SDL2.framework",
+			"OpenGL.framework",
+		}
+
+		filter "configurations:Debug"
+			links
+			{
+				"fmodstudioL",
+				"fmodL"
+			}
+		filter "configurations:not Debug"
+			links
+			{
+				"fmod",
+				"fmodstudio"
+			}
+
+
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -143,7 +156,6 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		}
 
 	filter "system:linux"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -172,6 +184,7 @@ project "r2Tests"
 	location "r2Tests"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++17"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
@@ -194,7 +207,6 @@ project "r2Tests"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -203,7 +215,6 @@ project "r2Tests"
 		}
 
 	filter "system:macosx"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -214,8 +225,9 @@ project "r2Tests"
 
 project "Sandbox"
 	location "Sandbox"
-	kind "ConsoleApp"
+	kind "ConsoleApp" 
 	language "C++"
+	cppdialect "C++17"
 	--staticruntme "off"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -239,7 +251,6 @@ project "Sandbox"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -257,7 +268,6 @@ project "Sandbox"
 		}
 		
 	filter "system:linux"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
