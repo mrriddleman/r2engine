@@ -29,13 +29,16 @@ namespace r2::audio
         SoundID LoadSound(const char* soundName, bool is3D = true, bool loop=false, bool stream=false);
         void UnloadSound(SoundID handle);
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
-        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f);
-        void StopChannel(ChannelID channel);
-        void PauseChannel(ChannelID channel);
+        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float picth = 1.0f);
+        void StopChannel(ChannelID channelID);
+        void PauseChannel(ChannelID channelID);
         void StopAllChannels();
-        void SetChannel3DPosition(ChannelID channel, const glm::vec3& position);
-        void SetChannelVolume(ChannelID channel, float volume);
-        bool IsChannelPlaying(ChannelID channel) const;
+        void SetChannel3DPosition(ChannelID channelID, const glm::vec3& position);
+        void SetChannelVolume(ChannelID channelID, float volume);
+        bool IsChannelPlaying(ChannelID channelID) const;
+        float GetChannelPitch(ChannelID channelID) const;
+        void SetChannelPitch(ChannelID channelID, float picth);
+        
     private:
         static r2::mem::MemoryArea::MemorySubArea::Handle mSoundMemoryAreaHandle;
         static r2::mem::LinearArena* mSoundAllocator;

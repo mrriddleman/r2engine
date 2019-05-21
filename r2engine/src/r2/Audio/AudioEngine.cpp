@@ -219,7 +219,7 @@ namespace r2::audio
         gImpl->mSystem->set3DListenerAttributes(0, &pos, nullptr, &forward, &upVec);
     }
     
-    AudioEngine::ChannelID AudioEngine::PlaySound(AudioEngine::SoundID soundID, const glm::vec3& pos, float volume)
+    AudioEngine::ChannelID AudioEngine::PlaySound(AudioEngine::SoundID soundID, const glm::vec3& pos, float volume, float pitch)
     {
 
         FMOD::Sound* soundPtr = r2::sarr::At(*gImpl->mSounds, soundID);
@@ -236,6 +236,7 @@ namespace r2::audio
             FMOD_VECTOR position = GLMToFMODVector(pos);
             channelPtr->set3DAttributes(&position, nullptr);
             channelPtr->setVolume(volume);
+            channelPtr->setPitch(pitch);
             channelPtr->setPaused(false);
             
             u32 channelID = NextAvailableChannelID();
@@ -318,6 +319,30 @@ namespace r2::audio
         bool isPlaying;
         channel->isPlaying(&isPlaying);
         return isPlaying;
+    }
+    
+    float AudioEngine::GetChannelPitch(AudioEngine::ChannelID channelID) const
+    {
+        FMOD::Channel* channel = r2::sarr::At(*gImpl->mChannels, channelID);
+        if (!channel)
+        {
+            return InvalidChannelID;
+        }
+        
+        float pitch;
+        channel->getPitch(&pitch);
+        return pitch;
+    }
+    
+    void AudioEngine::SetChannelPitch(AudioEngine::ChannelID channelID, float pitch)
+    {
+        FMOD::Channel* channel = r2::sarr::At(*gImpl->mChannels, channelID);
+        if (!channel)
+        {
+            return;
+        }
+        
+        channel->setPitch(pitch);
     }
  
     AudioEngine::SoundID AudioEngine::NextAvailableSoundID()
