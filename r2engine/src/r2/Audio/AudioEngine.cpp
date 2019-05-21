@@ -170,7 +170,7 @@ namespace r2::audio
             if (sound != nullptr)
             {
                 char name[fs::FILE_PATH_LENGTH];
-                sound->getName(name, fs::FILE_PATH_LENGTH);
+                CheckFMODResult( sound->getName(name, fs::FILE_PATH_LENGTH) );
                 
                 if (strcmp(soundName, name) == 0)
                 {
@@ -185,7 +185,7 @@ namespace r2::audio
         mode |= stream ? FMOD_CREATESTREAM : FMOD_CREATECOMPRESSEDSAMPLE;
         
         FMOD::Sound* ptrSound = nullptr;
-        gImpl->mSystem->createSound(soundName, mode, nullptr, &ptrSound);
+        CheckFMODResult( gImpl->mSystem->createSound(soundName, mode, nullptr, &ptrSound) );
         
         if (ptrSound)
         {
@@ -205,7 +205,7 @@ namespace r2::audio
         FMOD::Sound* sound = r2::sarr::At(*gImpl->mSounds, soundID);
         if (sound)
         {
-            sound->release();
+            CheckFMODResult( sound->release() );
             r2::sarr::At(*gImpl->mSounds, soundID) = nullptr;
         }
     }
@@ -216,7 +216,7 @@ namespace r2::audio
         FMOD_VECTOR forward = GLMToFMODVector(look);
         FMOD_VECTOR upVec = GLMToFMODVector(up);
         
-        gImpl->mSystem->set3DListenerAttributes(0, &pos, nullptr, &forward, &upVec);
+        CheckFMODResult( gImpl->mSystem->set3DListenerAttributes(0, &pos, nullptr, &forward, &upVec) );
     }
     
     AudioEngine::ChannelID AudioEngine::PlaySound(AudioEngine::SoundID soundID, const glm::vec3& pos, float volume, float pitch)
@@ -234,10 +234,10 @@ namespace r2::audio
         if (channelPtr)
         {
             FMOD_VECTOR position = GLMToFMODVector(pos);
-            channelPtr->set3DAttributes(&position, nullptr);
-            channelPtr->setVolume(volume);
-            channelPtr->setPitch(pitch);
-            channelPtr->setPaused(false);
+            CheckFMODResult( channelPtr->set3DAttributes(&position, nullptr) );
+            CheckFMODResult( channelPtr->setVolume(volume) );
+            CheckFMODResult( channelPtr->setPitch(pitch) );
+            CheckFMODResult( channelPtr->setPaused(false) );
             
             u32 channelID = NextAvailableChannelID();
             r2::sarr::At(*gImpl->mChannels, channelID) = channelPtr;
@@ -256,7 +256,7 @@ namespace r2::audio
             return;
         }
         
-        channel->stop();
+        CheckFMODResult( channel->stop() );
     }
     
     void AudioEngine::PauseChannel(AudioEngine::ChannelID channelID)
@@ -268,9 +268,9 @@ namespace r2::audio
         }
         
         bool isPaused;
-        channel->getPaused(&isPaused);
+        CheckFMODResult( channel->getPaused(&isPaused) );
         isPaused = !isPaused;
-        channel->setPaused(isPaused);
+        CheckFMODResult( channel->setPaused(isPaused) );
     }
     
     void AudioEngine::StopAllChannels()
@@ -280,7 +280,7 @@ namespace r2::audio
             FMOD::Channel* channel = r2::sarr::At(*gImpl->mChannels, i);
             if (channel)
             {
-                channel->stop();
+                CheckFMODResult( channel->stop() );
             }
         }
     }
@@ -294,7 +294,7 @@ namespace r2::audio
         }
         
         FMOD_VECTOR pos = GLMToFMODVector(position);
-        channel->set3DAttributes(&pos, nullptr);
+        CheckFMODResult( channel->set3DAttributes(&pos, nullptr) );
     }
     
     void AudioEngine::SetChannelVolume(AudioEngine::ChannelID channelID, float volume)
@@ -305,7 +305,7 @@ namespace r2::audio
             return;
         }
         
-        channel->setVolume(volume);
+        CheckFMODResult( channel->setVolume(volume) );
     }
     
     bool AudioEngine::IsChannelPlaying(AudioEngine::ChannelID channelID) const
@@ -317,7 +317,7 @@ namespace r2::audio
         }
         
         bool isPlaying;
-        channel->isPlaying(&isPlaying);
+        CheckFMODResult( channel->isPlaying(&isPlaying) );
         return isPlaying;
     }
     
@@ -330,7 +330,7 @@ namespace r2::audio
         }
         
         float pitch;
-        channel->getPitch(&pitch);
+        CheckFMODResult( channel->getPitch(&pitch) );
         return pitch;
     }
     
@@ -342,7 +342,7 @@ namespace r2::audio
             return;
         }
         
-        channel->setPitch(pitch);
+        CheckFMODResult( channel->setPitch(pitch) );
     }
  
     AudioEngine::SoundID AudioEngine::NextAvailableSoundID()
