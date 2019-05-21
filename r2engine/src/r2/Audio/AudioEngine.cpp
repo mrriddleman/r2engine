@@ -110,6 +110,10 @@ namespace r2::audio
     
     void Implementation::Shutdown(r2::mem::LinearArena& allocator)
     {
+        
+        
+        
+        
         CheckFMODResult( mSystem->release() );
         
         FREE(mSoundPool, allocator);
@@ -157,6 +161,14 @@ namespace r2::audio
     
     void AudioEngine::Shutdown()
     {
+        AudioEngine audio;
+        audio.StopAllChannels();
+        
+        for (u64 i = 0; i < MAX_NUM_SOUNDS; ++i)
+        {
+            audio.UnloadSound(i);
+        }
+        
         gImpl->Shutdown(*AudioEngine::mSoundAllocator);
         
         FREE(gImpl, *AudioEngine::mSoundAllocator);
