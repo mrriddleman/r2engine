@@ -272,13 +272,15 @@ project "Sandbox"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-				"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}/"
+				"{RMDIR} ../bin/Debug_macosx_x86_64/%{prj.name}/sounds",
+				"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}"
 			}
 
 		filter "configurations:Release"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+				"{RMDIR} ../bin/Release_macosx_x86_64/%{prj.name}/sounds",
 				"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
 			}    
 		
