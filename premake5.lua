@@ -35,8 +35,8 @@ project "r2engine"
 	cppdialect "C++17"
 	--staticruntime "off"
 
-	local output_dir_root	= ROOT .. "bin/" .. outputdir .. "/%{prj.name}"
-	local obj_dir_root = ROOT .. "bin_int/" .. outputdir .. "/%{prj.name}"
+	local output_dir_root	= "bin/" .. outputdir .. "/%{prj.name}"
+	local obj_dir_root = "bin_int/" .. outputdir .. "/%{prj.name}"
 
 	targetdir (output_dir_root)
 	objdir (obj_dir_root)
@@ -111,13 +111,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		{
 			"%{prj.name}/vendor/glad/MacOSX/include",
 			"%{prj.name}/vendor/FMOD/MacOSX/core/inc",
-			"%{prj.name}/vendor/FMOD/MacOSX/studio/inc"
+			--"%{prj.name}/vendor/FMOD/MacOSX/studio/inc"
 		}
 
 		libdirs 
 		{
 			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
-			"%{prj.name}/vendor/FMOD/MacOSX/studio/lib"
+			--"%{prj.name}/vendor/FMOD/MacOSX/studio/lib"
 		}
 
 		links
@@ -130,14 +130,14 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		filter "configurations:Debug"
 			links
 			{
-				"fmodstudioL",
+				--//"fmodstudioL",
 				"fmodL"
 			}
 		filter "configurations:not Debug"
 			links
 			{
-				"fmod",
-				"fmodstudio"
+				"fmod"
+				--"fmodstudio"
 			}
 
 
@@ -230,7 +230,9 @@ project "Sandbox"
 	cppdialect "C++17"
 	--staticruntme "off"
 
-	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"
+
+	targetdir (sandboxOutputDir)
 	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
 
 	files
@@ -259,13 +261,26 @@ project "Sandbox"
 		}
 
 	filter "system:macosx"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
 		{
 			"R2_PLATFORM_MAC"
 		}
+
+		filter "configurations:Debug"
+			postbuildcommands 
+			{
+				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+				"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}/"
+			}
+
+		filter "configurations:Release"
+			postbuildcommands 
+			{
+				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+				"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
+			}    
 		
 	filter "system:linux"
 		systemversion "latest"

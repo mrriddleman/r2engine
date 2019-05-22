@@ -55,6 +55,7 @@ namespace r2
         u32 NextPowerOfTwo32Bit(u32 n);
         u64 NextPowerOfTwo64Bit(u64 n);
         bool IsPowerOfTwo(u64 n);
+        u64 RoundUp(u64 numToRound, u64 multiple);
     }
 }
 

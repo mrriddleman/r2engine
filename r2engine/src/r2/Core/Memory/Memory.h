@@ -8,6 +8,9 @@
 #ifndef Memory_h
 #define Memory_h
 
+#include <vector>
+#include <array>
+
 #if defined(_MSC_VER)
 #define _ALLOW_KEYWORD_MACROS
 #endif

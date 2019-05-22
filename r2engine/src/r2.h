@@ -9,9 +9,8 @@
 #ifndef r2_h
 #define r2_h
 
-
-#include "r2/Core/Application.h"
 #include "r2/Utils/Utils.h"
+#include "r2/Core/Application.h"
 #include "r2/Core/Logging/Log.h"
 #include "r2/Core/Memory/Memory.h"
 

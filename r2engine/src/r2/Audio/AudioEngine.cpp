@@ -86,7 +86,7 @@ namespace r2::audio
             r2::sarr::At(*mChannels, i) = nullptr;
         }
         
-        ALLOC_BYTESN(allocator, SoundPoolSize(), 16);
+        mSoundPool = ALLOC_BYTESN(allocator, SoundPoolSize(), 16);
         
         CheckFMODResult( FMOD::Memory_Initialize(mSoundPool, SoundPoolSize(), 0, 0, 0) );
         CheckFMODResult( FMOD::System_Create(&mSystem) );
@@ -110,10 +110,6 @@ namespace r2::audio
     
     void Implementation::Shutdown(r2::mem::LinearArena& allocator)
     {
-        
-        
-        
-        
         CheckFMODResult( mSystem->release() );
         
         FREE(mSoundPool, allocator);
@@ -134,6 +130,8 @@ namespace r2::audio
             sizeof(Implementation) +
             Implementation::TotalAllocatedSize() +
             Implementation::SoundPoolSize();
+            
+            soundAreaSize = util::RoundUp(soundAreaSize, Megabytes(1));
 
             AudioEngine::mSoundMemoryAreaHandle = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->AddSubArea(soundAreaSize);
             
@@ -242,11 +240,18 @@ namespace r2::audio
         
         FMOD::Channel* channelPtr = nullptr;
         
-        gImpl->mSystem->playSound(soundPtr, nullptr, true, &channelPtr);
+        CheckFMODResult( gImpl->mSystem->playSound(soundPtr, nullptr, true, &channelPtr) );
         if (channelPtr)
         {
-            FMOD_VECTOR position = GLMToFMODVector(pos);
-            CheckFMODResult( channelPtr->set3DAttributes(&position, nullptr) );
+            FMOD_MODE mode;
+            CheckFMODResult( soundPtr->getMode(&mode) );
+            
+            if ((mode & FMOD_3D) != 0)
+            {
+                FMOD_VECTOR position = GLMToFMODVector(pos);
+                CheckFMODResult( channelPtr->set3DAttributes(&position, nullptr) );
+            }
+
             CheckFMODResult( channelPtr->setVolume(volume) );
             CheckFMODResult( channelPtr->setPitch(pitch) );
             CheckFMODResult( channelPtr->setPaused(false) );

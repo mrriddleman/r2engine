@@ -10,15 +10,29 @@
 #include "r2/Core/Events/Events.h"
 #include "r2/ImGui/ImGuiLayer.h"
 #include "r2/Core/Layer/AppLayer.h"
+#include "r2/Core/Layer/SoundLayer.h"
 #include "r2/Platform/Platform.h"
 #include "imgui.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
-
+#include "r2/Audio/AudioEngine.h"
 namespace r2
 {
+    void TestSound(const std::string& appPath)
+    {
+        r2::audio::AudioEngine audio;
+        
+        //std::string wavePath = appPath + "sounds" + "/wave.mp3";
+        std::string swishPath = appPath + "sounds" + "/swish.wav";
+        
+        //auto waveSoundID = audio.LoadSound(wavePath.c_str(), false, true, false);
+        auto swishSoundID = audio.LoadSound(swishPath.c_str(), true, true, false);
+        
+        audio.PlaySound(swishSoundID, glm::vec3(0, 0, -100));
+    }
+    
     Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr)
     {
         
@@ -38,7 +52,9 @@ namespace r2
             //@TODO(Serge): should check to see if the app initialized!
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
-        
+            PushLayer(std::make_unique<SoundLayer>());
+            
+            TestSound(CPLAT.RootPath());
             mDisplaySize = noptrApp->GetPreferredResolution();
             glClearColor(0.f, 0.5f, 1.0f, 1.0f);
             

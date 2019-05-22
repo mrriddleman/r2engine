@@ -43,5 +43,17 @@ namespace r2
         {
             return ceil(log2(n)) == floor(log2(n));
         }
+        
+        u64 RoundUp(u64 numToRound, u64 multiple)
+        {
+            if (multiple == 0)
+                return numToRound;
+            
+            u64 remainder = numToRound % multiple;
+            if (remainder == 0)
+                return numToRound;
+            
+            return numToRound + multiple - remainder;
+        }
     }
 }

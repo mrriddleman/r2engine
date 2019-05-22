@@ -16,6 +16,7 @@ namespace r2::audio
 {
     class AudioEngine
     {
+    public:
         static void Init();
         static void Update();
         static void Shutdown();
@@ -29,7 +30,7 @@ namespace r2::audio
         SoundID LoadSound(const char* soundName, bool is3D = true, bool loop=false, bool stream=false);
         void UnloadSound(SoundID handle);
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
-        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float picth = 1.0f);
+        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.1f, float pitch = 1.0f);
         void StopChannel(ChannelID channelID);
         void PauseChannel(ChannelID channelID);
         void StopAllChannels();
