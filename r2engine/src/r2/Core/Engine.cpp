@@ -18,19 +18,40 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Audio/AudioEngine.h"
+#include <unistd.h>
+
 namespace r2
 {
     void TestSound(const std::string& appPath)
     {
         r2::audio::AudioEngine audio;
         
-        //std::string wavePath = appPath + "sounds" + "/wave.mp3";
+        std::string wavePath = appPath + "sounds" + "/wave.mp3";
         std::string swishPath = appPath + "sounds" + "/swish.wav";
         
-        //auto waveSoundID = audio.LoadSound(wavePath.c_str(), false, true, false);
-        auto swishSoundID = audio.LoadSound(swishPath.c_str(), true, true, false);
+        r2::audio::AudioEngine::SoundDefinition waveSoundDef;
+        strcpy( waveSoundDef.soundName, wavePath.c_str() );
+        waveSoundDef.defaultVolume = 1.0f;
+        waveSoundDef.minDistance = 0.0f;
+        waveSoundDef.maxDistance = 1.0f;
+        waveSoundDef.flags |= r2::audio::AudioEngine::LOOP;
+        waveSoundDef.flags |= r2::audio::AudioEngine::STREAM;
         
-        audio.PlaySound(swishSoundID, glm::vec3(0, 0, -100));
+        auto waveSoundID = audio.RegisterSound(waveSoundDef);
+        
+        r2::audio::AudioEngine::SoundDefinition swishSoundDef;
+        strcpy( swishSoundDef.soundName, swishPath.c_str() );
+        swishSoundDef.defaultVolume = 1.0f;
+        swishSoundDef.minDistance = 0.0f;
+        swishSoundDef.maxDistance = 1.0f;
+        swishSoundDef.flags |= r2::audio::AudioEngine::STREAM;
+        
+        auto swishSoundID = audio.RegisterSound(swishSoundDef);
+        
+        audio.PlaySound(swishSoundID, glm::vec3(0,0,0), 0.5, 0.5);
+       // sleep(10);
+        
+       // audio.StopChannel(channelID, 10);
     }
     
     Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr)
@@ -72,6 +93,26 @@ namespace r2
     void Engine::Update()
     {
         mLayerStack.Update();
+        
+//        static u32 ticks = 0;
+//        static bool pauseRequested = false;
+//        static bool dontPauseAnymore = false;
+//        ticks += CPLAT.TickRate();
+//
+//        if (ticks > 5000 && !pauseRequested && !dontPauseAnymore)
+//        {
+//            r2::audio::AudioEngine audio;
+//            audio.PauseChannel(0);
+//            pauseRequested = true;
+//        }
+//
+//        if (ticks > 10000 && pauseRequested && !dontPauseAnymore)
+//        {
+//            r2::audio::AudioEngine audio;
+//            audio.PauseChannel(0);
+//            dontPauseAnymore = true;
+//        }
+        
     }
     
     void Engine::Shutdown()

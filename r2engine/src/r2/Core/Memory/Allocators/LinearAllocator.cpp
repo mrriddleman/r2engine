@@ -31,7 +31,9 @@ namespace r2::mem
         
         if(static_cast<byte*>(utils::PointerAdd(pointer, size + sizeof(utils::Header))) >= static_cast<byte*>(mEnd))
         {
-            R2_CHECK(false, "We can't fit that size!");
+            u64 bytesLeft = utils::PointerOffset(mCurrent, mEnd);
+            u64 bytesRequested = size + sizeof(utils::Header);
+            R2_CHECK(false, "We can't fit that size! We have: %llu and requesting: %llu, difference of: %llu", bytesLeft, bytesRequested, bytesRequested - bytesLeft);
             return nullptr;
         }
         

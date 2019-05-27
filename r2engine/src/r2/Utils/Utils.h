@@ -37,26 +37,30 @@ namespace r2::fs
     static const u32 FILE_PATH_LENGTH = Kilobytes(1);
 }
 
-namespace r2
+namespace r2::mem::utils
 {
-    namespace util
+    u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment);
+}
+
+namespace r2::util
+{
+    struct Size
     {
-        struct Size
-        {
-            u32 width = 0, height = 0;
-        };
-        
-        struct Rect
-        {
-            s32 x = 0, y = 0;
-            s32 w = 0, h = 0;
-        };
-        
-        u32 NextPowerOfTwo32Bit(u32 n);
-        u64 NextPowerOfTwo64Bit(u64 n);
-        bool IsPowerOfTwo(u64 n);
-        u64 RoundUp(u64 numToRound, u64 multiple);
-    }
+        u32 width = 0, height = 0;
+    };
+    
+    struct Rect
+    {
+        s32 x = 0, y = 0;
+        s32 w = 0, h = 0;
+    };
+    
+    u32 NextPowerOfTwo32Bit(u32 n);
+    u64 NextPowerOfTwo64Bit(u64 n);
+    bool IsPowerOfTwo(u64 n);
+    u64 RoundUp(u64 numToRound, u64 multiple);
+    float MillisecondsToSeconds(u32 milliseconds);
+    u32 SecondsToMilliseconds(float seconds);
 }
 
 #endif /* Utils_h */

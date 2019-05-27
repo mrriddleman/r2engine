@@ -41,7 +41,7 @@ namespace r2
             inline u64 GetTotalBytesAllocated() const {return mElementSize * mNumAllocations;}
             inline u64 GetTotalMemory() const {return utils::PointerOffset(mStart, mEnd);}
             inline const void* StartPtr() const {return mStart;}
-            inline u32 HeaderSize() const {return 0;}
+            static inline u32 HeaderSize() {return 0;}
             inline u64 UnallocatedBytes() const {return (TotalElements() - mNumAllocations)*mElementSize;}
         private:
             class Freelist

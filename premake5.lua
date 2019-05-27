@@ -111,13 +111,11 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		{
 			"%{prj.name}/vendor/glad/MacOSX/include",
 			"%{prj.name}/vendor/FMOD/MacOSX/core/inc",
-			--"%{prj.name}/vendor/FMOD/MacOSX/studio/inc"
 		}
 
 		libdirs 
 		{
 			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
-			--"%{prj.name}/vendor/FMOD/MacOSX/studio/lib"
 		}
 
 		links
@@ -130,14 +128,12 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		filter "configurations:Debug"
 			links
 			{
-				--//"fmodstudioL",
 				"fmodL"
 			}
 		filter "configurations:not Debug"
 			links
 			{
 				"fmod"
-				--"fmodstudio"
 			}
 
 

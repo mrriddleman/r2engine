@@ -34,7 +34,7 @@ namespace r2
             u32 GetTotalBytesAllocated() const; 
             inline u32 GetTotalMemory() const {return static_cast<u32>(utils::PointerOffset(mStart, mEnd));}
             inline const void* StartPtr() const {return mStart;}
-            inline u32 HeaderSize() const {return sizeof(utils::Header);}
+            static inline u32 HeaderSize() {return sizeof(utils::Header);}
             inline u32 UnallocatedBytes() const {return GetTotalMemory() - GetTotalBytesAllocated();}
             
         private:

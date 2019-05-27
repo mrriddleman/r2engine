@@ -137,7 +137,7 @@ namespace r2
             return allocationSize;
         }
         
-        u32 StackAllocator::HeaderSize() const
+        u32 StackAllocator::HeaderSize()
         {
             return static_cast<u32>(SIZE_OF_ALLOCATION_OFFSET * NUM_HEADERS);
         }
