@@ -17,6 +17,8 @@
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
 #include "r2/Utils/Handle.h"
+#include "r2/Utils/Hash.h"
+
 namespace
 {
     const u32 MAX_NUM_FILES = 1024;
@@ -101,6 +103,12 @@ namespace r2
             R2_LOGE("Failed to initialize SDL!");
             return false;
         }
+        
+        const char* testStr = "/test/mydir/file.txt";
+        size_t testHash = r2::utils::Hash<const char*>{}(testStr);
+        
+        R2_LOGI("Test hash is: %lu", testHash);
+        
 
         //Global memory setup for the engine
         {
