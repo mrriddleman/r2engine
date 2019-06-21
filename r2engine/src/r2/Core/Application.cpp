@@ -9,6 +9,19 @@
 #include "Application.h"
 #include "r2/Platform/Platform.h"
 
+namespace
+{
+    bool ResolveCategoryPath(u32 category, char* path)
+    {
+        
+        
+        
+        
+        strcpy(path, CPLAT.AppPath().c_str());
+        return true;
+    }
+}
+
 namespace r2
 {
     bool Application::Init()
@@ -54,5 +67,10 @@ namespace r2
     std::string Application::GetAppLogPath() const
     {
         return CPLAT.AppPath() + "logs/";
+    }
+    
+    r2::asset::PathResolver Application::GetPathResolver() const
+    {
+        return ResolveCategoryPath;
     }
 }

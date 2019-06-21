@@ -11,6 +11,7 @@
 
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
+#include "r2/Core/Assets/Asset.h"
 
 #include <memory>
 #include <string>
@@ -44,7 +45,7 @@ namespace r2
         virtual std::string GetApplicationName() const;
         virtual util::Size GetPreferredResolution() const;
         virtual std::string GetAppLogPath() const;
-        
+        virtual r2::asset::PathResolver GetPathResolver() const;
     };
     
     std::unique_ptr<Application> CreateApplication();
