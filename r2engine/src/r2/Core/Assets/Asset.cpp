@@ -20,7 +20,16 @@ namespace r2::asset
         
         pathResolver(category, categoryPath);
         
-        bool result = r2::fs::utils::AppendSubPath(categoryPath, mPath, name, r2::fs::utils::PATH_SEPARATOR);
+        bool result = false;
+        if (strcmp(categoryPath, "") != 0)
+        {
+            result = r2::fs::utils::AppendSubPath(categoryPath, mPath, name, r2::fs::utils::PATH_SEPARATOR);
+        }
+        else
+        {
+            strcpy(mPath, name);
+            result = true;
+        }
         
         R2_CHECK(result, "Asset::Asset() - couldn't append path");
         
