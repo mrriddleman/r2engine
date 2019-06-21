@@ -14,8 +14,7 @@ namespace
     bool ResolveCategoryPath(u32 category, char* path)
     {
         
-        
-        
+        //@TODO(Serge): implement some basic categories for testing later
         
         strcpy(path, CPLAT.AppPath().c_str());
         return true;

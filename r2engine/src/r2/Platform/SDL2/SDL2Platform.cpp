@@ -146,7 +146,7 @@ namespace r2
             r2::fs::FileSystem::Mount(*mRootStorage);
             r2::fs::FileSystem::Mount(*mAppStorage);
 
-            TestFiles();
+            mAssetPathResolver = app->GetPathResolver();
         }
         
         //Init OpenGL
@@ -172,7 +172,7 @@ namespace r2
             }
         }
 
-        //@NOTE: maybe it's a bad idea to get the initial resolution without initializing the ngine first?
+        //@NOTE: maybe it's a bad idea to get the initial resolution without initializing the engine first?
         
         //Setup engine - bad that it's being set before initialization?
         {

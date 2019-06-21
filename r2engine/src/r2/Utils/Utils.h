@@ -42,6 +42,11 @@ namespace r2::mem::utils
     u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment);
 }
 
+namespace r2::asset
+{
+    using PathResolver = std::function<bool (u32 category, char* path)>;
+}
+
 namespace r2::util
 {
     struct Size

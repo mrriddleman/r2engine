@@ -10,15 +10,12 @@
 
 namespace r2::asset
 {
-    
-    using PathResolver = std::function<bool (u32 category, char* path)>;
-    
     class R2_API Asset
     {
     public:
         
-        Asset(u32 category, const char* name, PathResolver pathResolver);
-        inline const char* ResolvePath() const {return mPath;}
+        Asset(u32 category, const char* name);
+        inline const char* Path() const {return mPath;}
         inline u64 HashID() const {return mHashedPathID;}
     private:
         char mPath[r2::fs::FILE_PATH_LENGTH];

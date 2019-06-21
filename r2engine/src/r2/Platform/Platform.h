@@ -44,11 +44,14 @@ namespace r2
         virtual const std::string RootPath() const = 0;
         virtual const std::string AppPath() const = 0;
         
+        inline r2::asset::PathResolver GetPathResolver() const {return mAssetPathResolver;}
+        
         const Engine& EngineConst() { return mEngine; }
         Engine& EngineMutable() {return mEngine;}
         
     protected:
         Engine mEngine;
+        r2::asset::PathResolver mAssetPathResolver;
     };
 }
 

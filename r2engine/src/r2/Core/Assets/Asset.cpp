@@ -8,12 +8,15 @@
 #include "Asset.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Platform/Platform.h"
 
 namespace r2::asset
 {
-    Asset::Asset(u32 category, const char* name, PathResolver pathResolver)
+    Asset::Asset(u32 category, const char* name)
     {
         char categoryPath[r2::fs::FILE_PATH_LENGTH];
+  
+        PathResolver pathResolver = CPLAT.GetPathResolver();
         
         pathResolver(category, categoryPath);
         
