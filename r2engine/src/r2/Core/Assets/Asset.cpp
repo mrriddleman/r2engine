@@ -12,6 +12,12 @@
 
 namespace r2::asset
 {
+    Asset::Asset()
+    : mHashedPathID(0)
+    {
+        strcpy(mPath, "");
+    }
+    
     Asset::Asset(u32 category, const char* name)
     {
         char categoryPath[r2::fs::FILE_PATH_LENGTH];
@@ -36,5 +42,23 @@ namespace r2::asset
         std::transform(std::begin(mPath), std::end(mPath), std::begin(mPath), (int(*)(int))std::tolower);
         
         mHashedPathID = r2::utils::Hash<const char*>{}(mPath);
+    }
+    
+    Asset::Asset(const Asset& asset)
+    {
+        strcpy(mPath, asset.mPath);
+        mHashedPathID = asset.mHashedPathID;
+    }
+    
+    Asset& Asset::operator=(const Asset& asset)
+    {
+        if (this == &asset)
+        {
+            return *this;
+        }
+        
+        strcpy(mPath, asset.mPath);
+        mHashedPathID = asset.mHashedPathID;
+        return *this;
     }
 }
