@@ -16,17 +16,17 @@ namespace r2::asset
     {
     public:
         AssetBuffer();
-        void Load(const Asset& asset, char* data, u64 dataSize);
+        void Load(const Asset& asset, byte* data, u64 dataSize);
         
-        inline char* Data() const {return moptrData;}
-        inline char* MutableData() {return moptrData;}
+        inline const byte* Data() const {return moptrData;}
+        inline byte* MutableData() {return moptrData;}
         inline bool IsLoaded() const {return moptrData != nullptr;}
         inline u64 Size() const {return mDataSize;}
         
     private:
         
         Asset mAsset;
-        char* moptrData;
+        byte* moptrData;
         u64 mDataSize;
     };
 }

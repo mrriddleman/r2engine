@@ -17,8 +17,8 @@ namespace r2::asset
     public:
         
         virtual bool ShouldProcess() = 0;
-        virtual u64 GetLoadedAssetSize(char* rawBuffer, u64 size) = 0;
-        virtual bool LoadAsset(char* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) = 0;
+        virtual u64 GetLoadedAssetSize(byte* rawBuffer, u64 size) = 0;
+        virtual bool LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) = 0;
     };
 }
 
