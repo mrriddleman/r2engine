@@ -18,6 +18,7 @@ namespace r2::mem
     class MallocAllocator
     {
     public:
+        MallocAllocator() = default;
         explicit MallocAllocator(const utils::MemBoundary& boundary);
         
         ~MallocAllocator();

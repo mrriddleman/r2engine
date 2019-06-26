@@ -16,6 +16,7 @@ namespace r2::asset
         , mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetFileMap(nullptr)
+        , mMallocArena(r2::mem::utils::MemBoundary())
     {
         
     }

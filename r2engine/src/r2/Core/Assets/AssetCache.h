@@ -14,6 +14,7 @@
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetFile.h"
 #include "r2/Core/Assets/Asset.h"
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 
 namespace r2::asset
 {
@@ -55,6 +56,9 @@ namespace r2::asset
         
         r2::mem::utils::MemBoundary mMemBoundary;
         //@TODO(Serge): figure out the Allocator/memory scheme
+        
+        //@TODO(Serge): this is for debug only
+        r2::mem::MallocArena mMallocArena;
         
     };
 }
