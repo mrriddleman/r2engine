@@ -17,6 +17,7 @@ namespace r2::asset
     public:
         virtual bool Open() = 0;
         virtual bool Close() = 0;
+        virtual bool IsOpen() = 0;
         virtual u64 RawAssetSize(const Asset& asset) = 0;
         virtual u64 RawAsset(const Asset& asset, byte* data) = 0;
         virtual u64 NumAssets() const = 0;

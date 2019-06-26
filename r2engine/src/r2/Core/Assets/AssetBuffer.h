@@ -15,6 +15,10 @@ namespace r2::asset
     class AssetBuffer
     {
     public:
+        //@TODO(Serge): POSSIBLE CHANGE
+        //add in reference to the AssetCache for this buffer, we can check to see if this buffer is stale
+        //
+        
         AssetBuffer();
         void Load(const Asset& asset, byte* data, u64 dataSize);
         
@@ -22,7 +26,7 @@ namespace r2::asset
         inline byte* MutableData() {return moptrData;}
         inline bool IsLoaded() const {return moptrData != nullptr;}
         inline u64 Size() const {return mDataSize;}
-        
+        const Asset& GetAsset() const {return mAsset;}
     private:
         
         Asset mAsset;
