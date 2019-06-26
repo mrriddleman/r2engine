@@ -12,6 +12,7 @@
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Memory/Allocators/RingBufferAllocator.h"
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
@@ -547,6 +548,102 @@ TEST_CASE("Test Pool Memory Arena No Checking")
         FREE_ARRAY(testArray, poolArena);
     }
     r2::mem::GlobalMemory::Shutdown();
+}
+
+
+TEST_CASE("Test Malloc Allocator")
+{
+    SECTION("Test Malloc Allocator")
+    {
+        r2::mem::MallocAllocator mallocAllocator;
+        
+        //Test basic stack allocator methods
+        REQUIRE(mallocAllocator.GetTotalBytesAllocated() == 0);
+        
+        //Test Alocations
+        
+        void* firstAllocation = mallocAllocator.Allocate(Kilobytes(1), alignof(byte), 0);
+        
+        REQUIRE(firstAllocation != nullptr);
+        
+        const u64 allocSize = mallocAllocator.GetAllocationSize(firstAllocation);
+        
+        REQUIRE(allocSize == Kilobytes(1));
+        
+        char* stringPtr = static_cast<char*>(firstAllocation);
+        
+        memset(stringPtr, '\0', Kilobytes(1));
+        
+        strcpy(stringPtr, "My String");
+        
+        size_t lengthOfString = strlen(stringPtr);
+        
+        REQUIRE(lengthOfString == 9);
+        
+        REQUIRE(strcmp(stringPtr, "My String") == 0);
+        
+        const u64 u64ArraySize = 512 * sizeof(u64);
+        
+        u64* u64Array = (u64*)mallocAllocator.Allocate(u64ArraySize, alignof(u64), 0);
+        
+        REQUIRE(u64Array != nullptr);
+        
+        REQUIRE(mallocAllocator.GetAllocationSize(u64Array) == u64ArraySize);
+        
+        REQUIRE(mallocAllocator.GetTotalBytesAllocated() >= (u64ArraySize + Kilobytes(1)));
+        
+        for (u64 i = 0; i < 512; ++i)
+        {
+            u64Array[i] = i;
+        }
+        
+        REQUIRE(u64Array[0] == 0);
+        REQUIRE(u64Array[511] == 511);
+        
+        mallocAllocator.Free(u64Array);
+        
+        REQUIRE(mallocAllocator.GetAllocationSize(firstAllocation) == Kilobytes(1));
+        
+        REQUIRE(mallocAllocator.GetTotalBytesAllocated() >= Kilobytes(1));
+        
+        mallocAllocator.Free(firstAllocation);
+        
+        REQUIRE(mallocAllocator.GetTotalBytesAllocated() == 0);
+    }
+}
+
+TEST_CASE("Test Malloc Memory Arena No Checking")
+{
+    SECTION("Test Malloc Allocator Arena")
+    {
+        r2::mem::utils::MemBoundary boundary;
+        r2::mem::MallocArena mallocArena(boundary);
+        
+        TestClass* tc = ALLOC(TestClass, mallocArena);
+        
+        tc->x = 5;
+        
+        REQUIRE(tc->x == 5);
+        
+        FREE(tc, mallocArena);
+        
+        TestClass2* tc2 = ALLOC_PARAMS(TestClass2, mallocArena, 10);
+        
+        REQUIRE(tc2->X() == 10);
+        
+        FREE(tc2, mallocArena);
+        
+        TestClass* testArray = ALLOC_ARRAY(TestClass[10], mallocArena);
+        
+        for (size_t i = 0; i < 10; ++i)
+        {
+            testArray[i].x = i;
+        }
+        
+        REQUIRE(testArray[9].Square() == 81);
+        
+        FREE_ARRAY(testArray, mallocArena);
+    }
 }
 
 TEST_CASE("Test Basic SArray")

@@ -18,7 +18,7 @@ namespace r2::mem
     class MallocAllocator
     {
     public:
-        MallocAllocator() = default;
+        MallocAllocator();
         explicit MallocAllocator(const utils::MemBoundary& boundary);
         
         ~MallocAllocator();
@@ -28,16 +28,21 @@ namespace r2::mem
         
         u32 GetAllocationSize(void* memoryPtr) const;
         
-        inline u64 GetTotalBytesAllocated() const {return 0;}
+        inline u64 GetTotalBytesAllocated() const {return mAllocatedMemory;}
         inline u64 GetTotalMemory() const {return mBoundary.size;}
         inline const void* StartPtr() const {return nullptr;}
         static u32 HeaderSize() {return sizeof(utils::Header);}
         inline u64 UnallocatedBytes() const {return mBoundary.size;}
     private:
         utils::MemBoundary mBoundary;
+        u64 mAllocatedMemory;
     };
     
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
     typedef MemoryArena<MallocAllocator, SingleThreadPolicy, BasicBoundsChecking, BasicMemoryTracking, BasicMemoryTagging> MallocArena;
+#else
+    typedef MemoryArena<MallocAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> MallocArena;
+#endif
 }
 
 #endif /* MallocAllocator_h */

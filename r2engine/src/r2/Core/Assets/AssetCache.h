@@ -54,7 +54,6 @@ namespace r2::asset
         AssetMap mAssetMap;
         AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
         
-        r2::mem::utils::MemBoundary mMemBoundary;
         //@TODO(Serge): figure out the Allocator/memory scheme
         
         //@TODO(Serge): this is for debug only

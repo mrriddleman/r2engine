@@ -218,6 +218,17 @@ project "r2Tests"
 			"R2_PLATFORM_MAC"
 		}
 
+		filter "configurations:Debug"
+			postbuildcommands 
+			{
+				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+			}
+
+		filter "configurations:Release"
+			postbuildcommands 
+			{
+				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+			}  
 
 project "Sandbox"
 	location "Sandbox"

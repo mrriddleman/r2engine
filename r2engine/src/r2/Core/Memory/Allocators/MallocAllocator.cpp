@@ -9,8 +9,15 @@
 
 namespace r2::mem
 {
+    
+    MallocAllocator::MallocAllocator():mAllocatedMemory(0)
+    {
+        
+    }
+    
     MallocAllocator::MallocAllocator(const utils::MemBoundary& boundary)
         :mBoundary(boundary)
+        , mAllocatedMemory(0)
     {
         
     }
@@ -30,13 +37,17 @@ namespace r2::mem
         
         header->size = static_cast<u32>(size);
         
+        mAllocatedMemory += realSize;
+        
         return utils::PointerAdd(pointer, HeaderSize());
     }
     
     void MallocAllocator::Free(void* ptr)
     {
+        u64 allocationSize = GetAllocationSize(ptr);
         void* realPtr = utils::PointerSubtract(ptr, HeaderSize());
         free(realPtr);
+        mAllocatedMemory -= HeaderSize() + allocationSize;
     }
     
     u32 MallocAllocator::GetAllocationSize(void* memoryPtr) const
