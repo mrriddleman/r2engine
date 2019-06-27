@@ -23,6 +23,20 @@ namespace r2::audio
         static const SoundID InvalidSoundID = -1;
         static const ChannelID InvalidChannelID = -1;
         
+        enum SpeakerMode
+        {
+            DEFAULT,
+            RAW,
+            MONO,
+            STEREO,
+            QUAD,
+            SURROUND,
+            FIVE_POINT1,
+            SEVEN_POINT1,
+            SEVEN_POINT1POINT4,
+            MAX
+        };
+        
         static void Init();
         static void Update();
         static void Shutdown();
@@ -69,6 +83,15 @@ namespace r2::audio
         bool IsChannelPlaying(ChannelID channelID) const;
         float GetChannelPitch(ChannelID channelID) const;
         void SetChannelPitch(ChannelID channelID, float picth);
+        
+        int GetSampleRate() const;
+        SpeakerMode GetSpeakerMode() const;
+        
+        
+        u32 GetNumberOfDrivers() const;
+        u32 GetCurrentDriver() const;
+        void SetDriver(int driverId);
+        void GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels);
         
     private:
         static r2::mem::MemoryArea::MemorySubArea::Handle mSoundMemoryAreaHandle;

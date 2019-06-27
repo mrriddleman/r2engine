@@ -921,7 +921,62 @@ namespace r2::audio
         
         return AudioEngine::InvalidSoundID;
     }
-                         
+    
+    int AudioEngine::GetSampleRate() const
+    {
+        int sampleRate, numRawSpeakers;
+        FMOD_SPEAKERMODE speakerMode;
+        
+        CheckFMODResult( gImpl->mSystem->getSoftwareFormat(&sampleRate, &speakerMode, &numRawSpeakers) );
+        return sampleRate;
+    }
+    
+    AudioEngine::SpeakerMode AudioEngine::GetSpeakerMode() const
+    {
+        int sampleRate, numRawSpeakers;
+        FMOD_SPEAKERMODE speakerMode;
+        
+        CheckFMODResult( gImpl->mSystem->getSoftwareFormat(&sampleRate, &speakerMode, &numRawSpeakers) );
+        return static_cast<SpeakerMode>(speakerMode);
+    }
+    
+    u32 AudioEngine::GetNumberOfDrivers() const
+    {
+        int numDrivers = 0;
+        CheckFMODResult(gImpl->mSystem->getNumDrivers(&numDrivers));
+        return numDrivers;
+    }
+    
+    u32 AudioEngine::GetCurrentDriver() const
+    {
+        int driverId;
+        CheckFMODResult(gImpl->mSystem->getDriver(&driverId));
+        return driverId;
+    }
+    
+    void AudioEngine::SetDriver(int driverId)
+    {
+        u32 numDrivers = GetNumberOfDrivers();
+        
+        R2_CHECK(driverId >= 0 && driverId < numDrivers, "Passed in a driver id that isn't in range");
+        
+        CheckFMODResult(gImpl->mSystem->setDriver(driverId));
+    }
+    
+    void AudioEngine::GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels)
+    {
+        u32 numDrivers = GetNumberOfDrivers();
+        
+        R2_CHECK(driverId >= 0 && driverId < numDrivers, "Passed in a driver id that isn't in range");
+        int rate, channels;
+        FMOD_SPEAKERMODE fmodSpeakerMode;
+        CheckFMODResult(gImpl->mSystem->getDriverInfo(driverId, driverName, driverNameLength, nullptr, &rate, &fmodSpeakerMode, &channels));
+        
+        systemRate = rate;
+        mode = static_cast<SpeakerMode>(fmodSpeakerMode);
+        speakerModeChannels = channels;
+    }
+    
     AudioEngine::ChannelID AudioEngine::NextAvailableChannelID()
     {
         for (u64 i = 0; i < MAX_NUM_CHANNELS; ++i)
