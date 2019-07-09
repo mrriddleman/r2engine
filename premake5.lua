@@ -251,7 +251,8 @@ project "Sandbox"
 	includedirs
 	{
 		"r2engine/src",
-		"%{includeDirs.glm}"
+		"%{includeDirs.glm}",
+		"%{includeDirs.flatbuffers}"
 	}
 
 	links

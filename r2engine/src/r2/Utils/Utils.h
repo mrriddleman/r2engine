@@ -8,6 +8,9 @@
 #ifndef Utils_h
 #define Utils_h
 
+#include <cstdint>
+#include <functional>
+
 using u8  = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
@@ -66,6 +69,7 @@ namespace r2::util
     u64 RoundUp(u64 numToRound, u64 multiple);
     float MillisecondsToSeconds(u32 milliseconds);
     u32 SecondsToMilliseconds(float seconds);
+    bool WildcardMatch(const char* pTameText, const char* pWildText, bool bCaseSensitive = false, char cAltTerminator ='\0');
 }
 
 #endif /* Utils_h */

@@ -73,6 +73,7 @@ namespace r2
         
         template<typename T> using SQueueCompareFunction = bool (*)(const T & a, const T& b);
         template<typename T> void Sort(SQueue<T>& q, SQueueCompareFunction<T> cmp);
+        template<typename T> void MoveToFront(SQueue<T>& q, u64 index);
     }
     
     namespace squeue
@@ -211,6 +212,16 @@ namespace r2
         template<typename T> void Sort(SQueue<T>& q, SQueueCompareFunction<T> cmp)
         {
             std::sort(BeginFront(q), EndFront(q), cmp);
+        }
+        
+        template<typename T> void MoveToFront(SQueue<T>& q, u64 index)
+        {
+            s64 prevIndex = index -1;
+            while (prevIndex >= 0)
+            {
+                std::swap(q[prevIndex], q[prevIndex+1]);
+                --prevIndex;
+            }
         }
     }
     

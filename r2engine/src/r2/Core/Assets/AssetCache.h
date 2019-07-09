@@ -10,17 +10,22 @@
 
 
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
-#include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssetFile.h"
-#include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 
 namespace r2::asset
 {
-    using FileList = r2::SArray<AssetFile*>*;
+    class AssetFile;
+    class AssetLoader;
+    class AssetBuffer;
+    class Asset;
+    class DefaultAssetLoader;
     
+    using FileList = r2::SArray<AssetFile*>*;
     using AssetHandle = u64;
+    using FileHandle = s64;
+    using AssetLoadProgressCallback = std::function<void (int, bool&)>;
     
     class AssetCache
     {
@@ -29,34 +34,45 @@ namespace r2::asset
         bool Init(r2::mem::utils::MemBoundary boundary, FileList list);
         void Shutdown();
         
+        void RegisterAssetLoader(AssetLoader* assetLoader);
+        
         AssetBuffer* GetAssetBuffer(const Asset& asset);
         void FlushAll();
         
+        int Preload(const char* pattern, AssetLoadProgressCallback callback);
+        
+        //To be used for files and loaders
+        byte* Allocate(u64 size, u64 alignment);
         
     private:
         
-        using AssetList = r2::SArray<u64>*;
+        using AssetList = r2::SQueue<AssetHandle>*;
         using AssetMap = r2::SHashMap<AssetBuffer*>*;
-        using AssetFileMap = r2::SHashMap<u64>*;
-
-        AssetBuffer* Load(AssetHandle handle);
+        //using AssetFileMap = r2::SHashMap<FileHandle>*;
+        using AssetLoaderList = r2::SArray<AssetLoader*>*;
+       
+        AssetBuffer* Load(const Asset& asset);
         void UpdateLRU(AssetHandle handle);
-        u64 FindInFiles(const Asset& asset);
-        u64 FindAsset(u64 fileIndex, const Asset& asset);
+        FileHandle FindInFiles(const Asset& asset);
+        AssetBuffer* Find(AssetHandle handle);
         
-        byte* Allocate(u64 size, u64 alignment);
+        
         void Free(AssetHandle handle);
         bool MakeRoom(u64 amount);
+        void FreeOneResource();
+        s64 GetLRUIndex(AssetHandle handle);
         
         
         FileList mFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;
-        AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
+        AssetLoaderList mAssetLoaders;
+        DefaultAssetLoader* mDefaultLoader;
+     //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
         
         //@TODO(Serge): figure out the Allocator/memory scheme
         
-        //@TODO(Serge): this is for debug only
+        //This is for debug only
         r2::mem::MallocArena mMallocArena;
         
     };

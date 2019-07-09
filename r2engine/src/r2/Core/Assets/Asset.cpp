@@ -15,38 +15,26 @@ namespace r2::asset
     Asset::Asset()
     : mHashedPathID(0)
     {
-        strcpy(mPath, "");
+        strcpy(mName, "");
     }
     
-    Asset::Asset(u32 category, const char* name)
+    Asset::Asset(const char* name)
     {
-        char categoryPath[r2::fs::FILE_PATH_LENGTH];
-  
-        PathResolver pathResolver = CPLAT.GetPathResolver();
-        
-        pathResolver(category, categoryPath);
-        
         bool result = false;
-        if (strcmp(categoryPath, "") != 0)
-        {
-            result = r2::fs::utils::AppendSubPath(categoryPath, mPath, name, r2::fs::utils::PATH_SEPARATOR);
-        }
-        else
-        {
-            strcpy(mPath, name);
-            result = true;
-        }
+
+        strcpy(mName, name);
+        result = true;
         
         R2_CHECK(result, "Asset::Asset() - couldn't append path");
         
-        std::transform(std::begin(mPath), std::end(mPath), std::begin(mPath), (int(*)(int))std::tolower);
+        std::transform(std::begin(mName), std::end(mName), std::begin(mName), (int(*)(int))std::tolower);
         
-        mHashedPathID = r2::utils::Hash<const char*>{}(mPath);
+        mHashedPathID = r2::utils::Hash<const char*>{}(mName);
     }
     
     Asset::Asset(const Asset& asset)
     {
-        strcpy(mPath, asset.mPath);
+        strcpy(mName, asset.mName);
         mHashedPathID = asset.mHashedPathID;
     }
     
@@ -57,7 +45,7 @@ namespace r2::asset
             return *this;
         }
         
-        strcpy(mPath, asset.mPath);
+        strcpy(mName, asset.mName);
         mHashedPathID = asset.mHashedPathID;
         return *this;
     }

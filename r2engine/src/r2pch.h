@@ -8,11 +8,9 @@
 #ifndef r2pch_h
 #define r2pch_h
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <sstream>
-#include <functional>
 #include <algorithm>
 #include <vector>
 #include <array>

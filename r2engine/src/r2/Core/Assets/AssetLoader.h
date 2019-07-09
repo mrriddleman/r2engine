@@ -16,9 +16,11 @@ namespace r2::asset
     {
     public:
         
+        virtual const char* GetPattern() = 0;
         virtual bool ShouldProcess() = 0;
         virtual u64 GetLoadedAssetSize(byte* rawBuffer, u64 size) = 0;
         virtual bool LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) = 0;
+        virtual ~AssetLoader(){}
     };
 }
 

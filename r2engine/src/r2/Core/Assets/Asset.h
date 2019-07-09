@@ -15,15 +15,16 @@ namespace r2::asset
     public:
         
         Asset();
-        Asset(u32 category, const char* name);
+        Asset(const char* name);
         Asset(const Asset& asset);
         Asset& operator=(const Asset& asset);
         
-        inline bool Empty() const {return mHashedPathID == 0 || strcmp(mPath, "") == 0;}
-        inline const char* Path() const {return mPath;}
+        inline bool Empty() const {return mHashedPathID == 0 || strcmp(mName, "") == 0;}
+        inline const char* Name() const {return mName;}
         inline u64 HashID() const {return mHashedPathID;}
+        
     private:
-        char mPath[r2::fs::FILE_PATH_LENGTH];
+        char mName[r2::fs::FILE_PATH_LENGTH];
         u64 mHashedPathID;
     };
 }
