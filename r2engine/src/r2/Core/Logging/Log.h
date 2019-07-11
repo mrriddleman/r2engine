@@ -26,6 +26,9 @@
 #define R2_PREDICT_TRUE(x)  (__builtin_expect(!!(x), 1))
 #endif
 
+#include "r2/Platform/MacroDefines.h"
+#include <string>
+
 namespace loguru
 {
     struct Message;

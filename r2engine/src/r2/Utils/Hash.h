@@ -83,12 +83,12 @@ namespace r2::utils
     };
     
     using fnv1a_32 = basic_fnv1a<std::uint32_t,
-    UINT32_C(2166136261),
-    UINT32_C(16777619)>;
+    0x811C9DC5,
+    0x01000193>;
     
     using fnv1a_64 = basic_fnv1a<std::uint64_t,
-    UINT64_C(14695981039346656037),
-    UINT64_C(1099511628211)>;
+    0xcbf29ce484222645ULL,
+    0x00000100000001b3ULL>;
     
     template <std::size_t Bits>
     struct fnv1a;
@@ -114,6 +114,7 @@ namespace r2::utils
         auto hashfn = fnv1a_t<CHAR_BIT * sizeof(std::size_t)> {};
         hashfn.update(data, size);
         return hashfn.digest();
+        
     }
 }
 

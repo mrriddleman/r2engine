@@ -18,7 +18,7 @@ namespace r2::fs::utils
     
     static const char FILE_EXTENSION_DELIM = '.';
     
-    char* GetNextSubPath(const char* path, char* subPath, const char delim);
+    char* GetNextSubPath(const char* path, char* subPath, const char delim = PATH_SEPARATOR);
     
     bool CopyFileNameWithExtension(const char* path, char* filename);
     
@@ -28,11 +28,12 @@ namespace r2::fs::utils
     
     bool CopyPathOfFile(const char* filePath, char* path);
     
-    char* GetLastSubPath(const char* path, char* subPath, const char delim);
+    char* GetLastSubPath(const char* path, char* subPath, const char delim = PATH_SEPARATOR);
     
-    u32 NumMatchingSubPaths(const char* path1, const char* path2, const char delim);
+    u32 NumMatchingSubPaths(const char* path1, const char* path2, const char delim = PATH_SEPARATOR);
     
-    bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim);
+    //@TODO(Serge): fix ordering of the params - resultPath should be first?
+    bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim = PATH_SEPARATOR);
     
     bool AppendExt(char* path, const char* ext);
 }

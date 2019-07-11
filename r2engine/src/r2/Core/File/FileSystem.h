@@ -10,6 +10,7 @@
 
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/File/FileTypes.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2::fs
 {
@@ -20,6 +21,7 @@ namespace r2::fs
     {
     public:
 
+        //Not to be used by application
         static bool Init(r2::mem::LinearArena& arena, u32 storageAreaCapacity);
         static void Mount(FileStorageArea& storageArea);
         static void Shutdown(r2::mem::LinearArena& arena);

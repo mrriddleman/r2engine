@@ -6,20 +6,47 @@
 //
 
 #include "BreakoutLevelsFile.h"
+#include "r2/Core/File/FileSystem.h"
+#include "flatbuffers/flatbuffers.h"
+
+BreakoutLevelsFile::BreakoutLevelsFile(): mFile(nullptr)
+{
+    
+    strcpy(mPath, "");
+}
+
+bool BreakoutLevelsFile::Init(const char* path)
+{
+    if (!path)
+    {
+        return false;
+    }
+
+    strcpy(mPath, path);
+    return strcmp(mPath, "") != 0;
+}
 
 bool BreakoutLevelsFile::Open()
 {
-    return false;
+    r2::fs::DeviceConfig config;
+    r2::fs::FileMode mode;
+    mode = r2::fs::Mode::Read;
+    mode |= r2::fs::Mode::Binary;
+    
+    mFile = r2::fs::FileSystem::Open(config, mPath, mode);
+    
+    return mFile != nullptr;
 }
 
 bool BreakoutLevelsFile::Close()
 {
-    return false;
+    r2::fs::FileSystem::Close(mFile);
+    return true;
 }
 
 bool BreakoutLevelsFile::IsOpen()
 {
-    return false;
+    return mFile != nullptr;
 }
 
 u64 BreakoutLevelsFile::RawAssetSize(const r2::asset::Asset& asset)

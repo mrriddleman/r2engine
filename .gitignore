@@ -14,3 +14,5 @@ Sandbox/*.xcodeproj/
 r2engine/*xcodeproj/
 
 r2Tests/*.xcodeproj/
+
+engine_assets/

@@ -104,7 +104,7 @@ namespace r2
             return false;
         }
         
-        const char* testStr = "/test/mydir/file.txt";
+        const char* testStr = "Level3";
         size_t testHash = r2::utils::Hash<const char*>{}(testStr);
         
         R2_LOGI("Test hash is: %lu", testHash);

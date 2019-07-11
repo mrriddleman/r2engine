@@ -16,7 +16,7 @@ namespace
         
         //@TODO(Serge): implement some basic categories for testing later
         
-        strcpy(path, CPLAT.AppPath().c_str());
+        strcpy(path, CPLAT.RootPath().c_str());
         return true;
     }
 }
