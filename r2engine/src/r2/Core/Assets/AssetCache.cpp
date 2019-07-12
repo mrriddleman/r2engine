@@ -44,7 +44,7 @@ namespace r2::asset
         //Memory allocations for our lists and maps
         {
             mAssetLRU = MAKE_SQUEUE(mMallocArena, AssetHandle, LRU_CAPACITY);
-            mAssetMap = MAKE_SHASHMAP(mMallocArena, AssetBuffer*, MAP_CAPACITY);
+            mAssetMap = MAKE_SHASHMAP(mMallocArena, AssetBufferRef, MAP_CAPACITY);
           //  mAssetFileMap = MAKE_SHASHMAP(mMallocArena, FileHandle, MAP_CAPACITY);
             mDefaultLoader = ALLOC(DefaultAssetLoader, mMallocArena);
             
@@ -102,15 +102,34 @@ namespace r2::asset
         }
         
         AssetHandle handle = asset.HashID();
-        AssetBuffer* assetBuffer = Find(handle);
+        AssetBufferRef theDefault;
+        AssetBufferRef& bufferRef = Find(handle, theDefault);
         
-        if (assetBuffer != nullptr)
+        if (bufferRef.mAssetBuffer != nullptr)
         {
             UpdateLRU(handle);
-            return assetBuffer;
+            
+            ++bufferRef.mRefCount;
+            
+            return bufferRef.mAssetBuffer;
         }
         
         return Load(asset);
+    }
+    
+    bool AssetCache::ReturnAssetBuffer(AssetBuffer* buffer)
+    {
+        AssetBufferRef theDefault;
+        AssetBufferRef& bufferRef = Find(buffer->GetAsset().HashID(), theDefault);
+        
+        bool found = bufferRef.mAssetBuffer != nullptr;
+        
+        if (found)
+        {
+            Free(buffer->GetAsset().HashID(), false);
+        }
+        
+        return found;
     }
     
     void AssetCache::FlushAll()
@@ -125,7 +144,7 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            FreeOneResource();
+            FreeOneResource(true);
         }
     }
     
@@ -244,8 +263,11 @@ namespace r2::asset
                 return nullptr;
             }
         }
+        AssetBufferRef bufferRef;
+        bufferRef.mRefCount = 1;
+        bufferRef.mAssetBuffer = assetBuffer;
 
-        r2::shashmap::Set(*mAssetMap, handle, assetBuffer);
+        r2::shashmap::Set(*mAssetMap, handle, bufferRef);
         UpdateLRU(handle);
         
         return assetBuffer;
@@ -259,8 +281,9 @@ namespace r2::asset
         {
             if (r2::squeue::Size(*mAssetLRU) + 1 > LRU_CAPACITY)
             {
-                AssetHandle handleToFree = r2::squeue::Last(*mAssetLRU);
-                Free(handleToFree);
+                FreeOneResource(true);
+                //R2_CHECK(false, "AssetCache::UpdateLRU() - We have too many assets in our LRU");
+                return;
             }
             
             r2::squeue::PushFront(*mAssetLRU, handle);
@@ -296,11 +319,9 @@ namespace r2::asset
         return INVALID_FILE_INDEX;
     }
     
-    AssetBuffer* AssetCache::Find(AssetHandle handle)
+    AssetCache::AssetBufferRef& AssetCache::Find(AssetHandle handle, AssetCache::AssetBufferRef& theDefault)
     {
-        AssetBuffer* assetBuffer = nullptr;
-        
-        return r2::shashmap::Get(*mAssetMap, handle, assetBuffer);
+        return r2::shashmap::Get(*mAssetMap, handle, theDefault);
     }
     
     byte* AssetCache::Allocate(u64 size, u64 alignment)
@@ -308,39 +329,49 @@ namespace r2::asset
         return ALLOC_BYTESN(mMallocArena, size, alignment);
     }
     
-    void AssetCache::Free(AssetHandle handle)
+    void AssetCache::Free(AssetHandle handle, bool forceFree)
     {
-        AssetBuffer* assetBuffer = Find(handle);
+        AssetBufferRef theDefault;
         
-        if (assetBuffer != nullptr)
+        AssetBufferRef& assetBufferRef = Find(handle, theDefault);
+        
+        if (assetBufferRef.mAssetBuffer != nullptr)
         {
-            FREE( assetBuffer->MutableData(), mMallocArena);
-            //@TODO(Serge): ensure that no one is holding on to this buffer anywhere somehow
-            FREE(assetBuffer, mMallocArena);
-        }
-        
-        s64 lruIndex = GetLRUIndex(handle);
-        
-        if (lruIndex != -1)
-        {
-            r2::squeue::MoveToFront(*mAssetLRU, lruIndex);
-            r2::squeue::PopFront(*mAssetLRU);
+            --assetBufferRef.mRefCount;
+            
+            if (forceFree && assetBufferRef.mRefCount != 0)
+            {
+                R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", assetBufferRef.mAssetBuffer->GetAsset().Name(),  assetBufferRef.mRefCount);
+            }
+            
+            if (assetBufferRef.mRefCount == 0)
+            {
+                FREE( assetBufferRef.mAssetBuffer->MutableData(), mMallocArena);
+                
+                FREE(assetBufferRef.mAssetBuffer, mMallocArena);
+            
+                r2::shashmap::Remove(*mAssetMap, handle);
+                
+                RemoveFromLRU(handle);
+            }
         }
     }
     
     bool AssetCache::MakeRoom(u64 amount)
     {
-        return true;
+        return false;
     }
     
-    void AssetCache::FreeOneResource()
+    void AssetCache::FreeOneResource(bool forceFree)
     {
         const u64 size = r2::squeue::Size(*mAssetLRU);
         
         if (size > 0)
         {
             AssetHandle handle = r2::squeue::Last(*mAssetLRU);
-            Free(handle);
+            Free(handle, forceFree);
+            
+            RemoveFromLRU(handle);
         }
     }
     
@@ -357,5 +388,16 @@ namespace r2::asset
         }
         
         return -1;
+    }
+    
+    void AssetCache::RemoveFromLRU(AssetHandle handle)
+    {
+        s64 lruIndex = GetLRUIndex(handle);
+        
+        if (lruIndex != -1)
+        {
+            r2::squeue::MoveToFront(*mAssetLRU, lruIndex);
+            r2::squeue::PopFront(*mAssetLRU);
+        }
     }
 }

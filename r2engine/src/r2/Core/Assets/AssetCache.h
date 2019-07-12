@@ -37,6 +37,9 @@ namespace r2::asset
         void RegisterAssetLoader(AssetLoader* assetLoader);
         
         AssetBuffer* GetAssetBuffer(const Asset& asset);
+        
+        bool ReturnAssetBuffer(AssetBuffer* buffer);
+        
         void FlushAll();
         
         int Preload(const char* pattern, AssetLoadProgressCallback callback);
@@ -46,22 +49,28 @@ namespace r2::asset
         
     private:
         
+        struct AssetBufferRef
+        {
+            AssetBuffer* mAssetBuffer = nullptr;
+            u32 mRefCount = 0;
+        };
+        
         using AssetList = r2::SQueue<AssetHandle>*;
-        using AssetMap = r2::SHashMap<AssetBuffer*>*;
+        using AssetMap = r2::SHashMap<AssetBufferRef>*;
         //using AssetFileMap = r2::SHashMap<FileHandle>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
        
         AssetBuffer* Load(const Asset& asset);
         void UpdateLRU(AssetHandle handle);
         FileHandle FindInFiles(const Asset& asset);
-        AssetBuffer* Find(AssetHandle handle);
+        AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
         
         
-        void Free(AssetHandle handle);
+        void Free(AssetHandle handle, bool forceFree);
         bool MakeRoom(u64 amount);
-        void FreeOneResource();
+        void FreeOneResource(bool forceFree);
         s64 GetLRUIndex(AssetHandle handle);
-        
+        void RemoveFromLRU(AssetHandle handle);
         
         FileList mFiles;
         AssetList mAssetLRU;

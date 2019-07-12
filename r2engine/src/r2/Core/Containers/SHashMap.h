@@ -45,6 +45,8 @@ namespace r2
     {
         template<typename T> bool Has(const SHashMap<T>& h, u64 key);
         
+        template<typename T> T& Get(SHashMap<T>& h, u64 key, T& theDefault);
+        
         template<typename T> const T& Get(const SHashMap<T>& h, u64 key, const T& theDefault);
         
         template<typename T> void Set(SHashMap<T>& h, u64 key, const T& value);
@@ -258,6 +260,12 @@ namespace r2
         template<typename T> bool Has(const SHashMap<T>& h, u64 key)
         {
             return hashmap_internal::FindOrFail(h, key) != hashmap_internal::END_OF_LIST;
+        }
+        
+        template<typename T> T& Get(SHashMap<T>& h, u64 key, T& theDefault)
+        {
+            const u64 i = hashmap_internal::FindOrFail(h, key);
+            return i == hashmap_internal::END_OF_LIST ? theDefault : (*h.mData)[i].value;
         }
         
         template<typename T> const T& Get(const SHashMap<T>& h, u64 key, const T& theDefault)
