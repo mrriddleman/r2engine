@@ -8,11 +8,13 @@
 #ifndef AssetCache_h
 #define AssetCache_h
 
-
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#include <type_traits>
+
+#define ASSET_CACHE_DEBUG 1
 
 namespace r2::asset
 {
@@ -30,8 +32,14 @@ namespace r2::asset
     class AssetCache
     {
     public:
+        
+        static const u32 LRU_CAPACITY = 1000;
+        static const u32 MAP_CAPACITY = 1000;
+        
         AssetCache();
-        bool Init(r2::mem::utils::MemBoundary boundary, FileList list);
+
+        bool Init(r2::mem::utils::MemBoundary boundary, FileList list, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        
         void Shutdown();
         
         void RegisterAssetLoader(AssetLoader* assetLoader);
@@ -45,7 +53,28 @@ namespace r2::asset
         int Preload(const char* pattern, AssetLoadProgressCallback callback);
         
         //To be used for files and loaders
-        byte* Allocate(u64 size, u64 alignment);
+        template<class T>
+        AssetLoader* MakeAssetLoader()
+        {
+            //bool value = std::is_convertible<AssetLoader*, T*>::value;
+           // R2_CHECK(value, "Passed in type is not have AssetLoader as it's base type!");
+            return ALLOC(T, mMallocArena);
+        }
+        
+        template<class T>
+        AssetFile* MakeAssetFile()
+        {
+          //  bool value = std::is_base_of<AssetFile, T>::value;
+          //  R2_CHECK(value, "Passed in type is not have AssetFile as it's base type!");
+            return ALLOC(T, mMallocArena);
+        }
+        
+        //NOTE: don't use T* for the type here, it's taken care of for you
+       
+        FileList MakeFileList(u64 capacity)
+        {
+            return MAKE_SARRAY(mMallocArena, AssetFile*, capacity);
+        }
         
     private:
         
@@ -84,6 +113,14 @@ namespace r2::asset
         //This is for debug only
         r2::mem::MallocArena mMallocArena;
         
+        //Debug stuff
+#if ASSET_CACHE_DEBUG 
+        void PrintLRU();
+        void PrintAssetMap();
+        void PrintAllAssetsInFiles();
+        void PrintAssetsInFile(AssetFile* file);
+        void PrintAsset(const char* asset, AssetHandle assetHandle, u32 refcount);
+#endif
     };
 }
 

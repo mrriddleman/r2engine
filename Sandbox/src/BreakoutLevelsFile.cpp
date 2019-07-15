@@ -7,12 +7,20 @@
 
 #include "BreakoutLevelsFile.h"
 #include "r2/Core/File/FileSystem.h"
-#include "flatbuffers/flatbuffers.h"
+#include "r2/Core/File/PathUtils.h"
+#include "r2/Utils/Hash.h"
 
 BreakoutLevelsFile::BreakoutLevelsFile(): mFile(nullptr)
 {
-    
     strcpy(mPath, "");
+}
+
+BreakoutLevelsFile::~BreakoutLevelsFile()
+{
+    if (mFile)
+    {
+        Close();
+    }
 }
 
 bool BreakoutLevelsFile::Init(const char* path)
@@ -41,6 +49,7 @@ bool BreakoutLevelsFile::Open()
 bool BreakoutLevelsFile::Close()
 {
     r2::fs::FileSystem::Close(mFile);
+    mFile = nullptr;
     return true;
 }
 
@@ -51,35 +60,38 @@ bool BreakoutLevelsFile::IsOpen()
 
 u64 BreakoutLevelsFile::RawAssetSize(const r2::asset::Asset& asset)
 {
-    return 0;
+    return mFile->Size();
 }
 
 u64 BreakoutLevelsFile::RawAssetSizeFromHandle(u64 handle)
 {
-    return 0;
+    return mFile->Size();
 }
 
 u64 BreakoutLevelsFile::GetRawAsset(const r2::asset::Asset& asset, byte* data)
 {
-    return 0;
+    return mFile->ReadAll(data);
 }
 
 u64 BreakoutLevelsFile::GetRawAssetFromHandle(u64 handle, byte* data)
 {
-    return 0;
+    return mFile->ReadAll(data);
 }
 
 u64 BreakoutLevelsFile::NumAssets() const
 {
-    return 0;
+    return 1;
 }
 
-char* BreakoutLevelsFile::GetAssetName(u64 index) const
+void BreakoutLevelsFile::GetAssetName(u64 index, char* name) const
 {
-    return 0;
+    r2::fs::utils::CopyFileNameWithExtension(mPath, name);
 }
 
 u64 BreakoutLevelsFile::GetAssetHandle(u64 index) const
 {
-    return 0;
+    char fileName[r2::fs::FILE_PATH_LENGTH];
+    r2::fs::utils::CopyFileNameWithExtension(mPath, fileName);
+    auto hash = r2::utils::Hash<const char*>{}(fileName);
+    return hash;
 }

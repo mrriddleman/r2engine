@@ -12,11 +12,82 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Assets/AssetCache.h"
+#include "BreakoutLevelsFile.h"
+#include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Assets/AssetBuffer.h"
 
 class Sandbox: public r2::Application
 {
     virtual bool Init() override
     {
+        r2::asset::AssetCache assetCache;
+        
+        BreakoutLevelsFile* levelsFile = (BreakoutLevelsFile*)assetCache.MakeAssetFile<BreakoutLevelsFile>();
+        
+        char levelsFilePath[r2::fs::FILE_PATH_LENGTH];
+        
+        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), levelsFilePath, "breakout_level_pack.breakout_level");
+        
+        levelsFile->Init(levelsFilePath);
+        
+        r2::asset::FileList files = assetCache.MakeFileList(10);
+        
+        r2::sarr::Push(*files, (r2::asset::AssetFile*)levelsFile);
+        
+        assetCache.Init(r2::mem::utils::MemBoundary(), files);
+        
+        r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
+        
+        r2::asset::AssetBuffer* assetBuffer = assetCache.GetAssetBuffer(levelsAsset);
+        
+        R2_CHECK(assetBuffer != nullptr, "Asset buffer is nullptr");
+        
+        const byte* data = assetBuffer->Data();
+        
+        const auto levelPack = Breakout::GetLevelPack(data);
+        
+        const auto levels = levelPack->levels();
+        
+        printf("======================Levels==========================");
+        
+        for (u32 i = 0; i < levels->Length(); ++i)
+        {
+            printf("Level: %s\n", levels->Get(i)->name()->c_str());
+            
+            printf("Hash: %llu\n", levels->Get(i)->hashName());
+            
+            const auto blocks = levels->Get(i)->blocks();
+            
+            for (u32 j = 0; j < blocks->Length(); ++j)
+            {
+                auto fillColor = blocks->Get(j)->fillColor();
+                printf("-------------------Block--------------------\n");
+                
+                printf("Color: r: %f g: %f b: %f a: %f\n", fillColor->r(), fillColor->g(), fillColor->b(), fillColor->a());
+                
+                printf("HP: %i\n", blocks->Get(j)->hp());
+                
+                printf("Symbol: %c\n", blocks->Get(j)->symbol());
+                
+                printf("--------------------------------------------\n");
+            }
+            
+            printf("----------------------Layout-----------------\n");
+            
+            printf("Height: %u\n", levels->Get(i)->layout()->height());
+            
+            printf("Width: %u\n\n", levels->Get(i)->layout()->width());
+            
+            printf("%s\n", levels->Get(i)->layout()->layout()->c_str());
+
+            printf("---------------------------------------------\n");
+        }
+        printf("======================================================");
+        
+        assetCache.ReturnAssetBuffer(assetBuffer);
+        
+        assetCache.Shutdown();
         
 //        flatbuffers::FlatBufferBuilder builder;
 //

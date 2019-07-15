@@ -16,14 +16,16 @@
 
 namespace
 {
-    const u64 MAP_CAPACITY = 1000;
-    const u64 LRU_CAPACITY = 1000;
     const s64 INVALID_FILE_INDEX = -1;
     const u64 INVALID_ASSET_ID = 0;
 }
 
 namespace r2::asset
 {
+    
+    const u32 AssetCache::LRU_CAPACITY;
+    const u32 AssetCache::MAP_CAPACITY;
+    
     AssetCache::AssetCache()
         : mFiles(nullptr)
         , mAssetLRU(nullptr)
@@ -35,25 +37,26 @@ namespace r2::asset
         
     }
     
-    bool AssetCache::Init(r2::mem::utils::MemBoundary boundary, FileList list)
+    bool AssetCache::Init(r2::mem::utils::MemBoundary boundary, FileList list, u32 lruCapacity, u32 mapCapacity)
     {
         //@TODO(Serge): do something with the memory boundary - for now we don't care, just malloc!
         
         mFiles = list;
         
+#if ASSET_CACHE_DEBUG
+        PrintAllAssetsInFiles();
+#endif
+        
         //Memory allocations for our lists and maps
         {
-            mAssetLRU = MAKE_SQUEUE(mMallocArena, AssetHandle, LRU_CAPACITY);
-            mAssetMap = MAKE_SHASHMAP(mMallocArena, AssetBufferRef, MAP_CAPACITY);
+            mAssetLRU = MAKE_SQUEUE(mMallocArena, AssetHandle, lruCapacity);
+            mAssetMap = MAKE_SHASHMAP(mMallocArena, AssetBufferRef, mapCapacity);
           //  mAssetFileMap = MAKE_SHASHMAP(mMallocArena, FileHandle, MAP_CAPACITY);
             mDefaultLoader = ALLOC(DefaultAssetLoader, mMallocArena);
             
-            mAssetLoaders = MAKE_SARRAY(mMallocArena, AssetLoader*, LRU_CAPACITY);
+            mAssetLoaders = MAKE_SARRAY(mMallocArena, AssetLoader*, lruCapacity);
         }
-        
-        
-        
-        
+
         return true;
     }
     
@@ -64,6 +67,13 @@ namespace r2::asset
         {
             return;
         }
+        
+#if ASSET_CACHE_DEBUG
+        
+        PrintLRU();
+        PrintAssetMap();
+        
+#endif
         
         FlushAll();
         
@@ -78,18 +88,25 @@ namespace r2::asset
         for (u64 i = 0; i < numFiles; ++i)
         {
             AssetFile* file = r2::sarr::At(*mFiles, i);
+            
+            file->Close();
+            
             FREE(file, mMallocArena);
         }
         
+        FREE(mFiles, mMallocArena);
         FREE(mDefaultLoader, mMallocArena);
         FREE(mAssetLRU, mMallocArena);
         FREE(mAssetMap, mMallocArena);
         FREE(mAssetLoaders, mMallocArena);
+        
         //FREE(mAssetFileMap, mMallocArena);
         
         mAssetLRU = nullptr;
         mAssetMap = nullptr;
         mAssetLoaders = nullptr;
+        mFiles = nullptr;
+        mDefaultLoader = nullptr;
      //   mAssetFileMap = nullptr;
     }
     
@@ -185,7 +202,7 @@ namespace r2::asset
             }
         }
         
-        if (loader != nullptr)
+        if (loader == nullptr)
         {
             loader = mDefaultLoader;
         }
@@ -193,7 +210,7 @@ namespace r2::asset
         R2_CHECK(loader != nullptr, "couldn't find asset loader");
         
         FileHandle fileIndex = FindInFiles(asset);
-        if(fileIndex == INVALID_ASSET_ID)
+        if(fileIndex == INVALID_FILE_INDEX)
         {
             R2_CHECK(false, "We failed to find the asset in any of our asset files");
             return nullptr;
@@ -211,7 +228,7 @@ namespace r2::asset
         AssetHandle handle = asset.HashID();
         u64 rawAssetSize = theAssetFile->RawAssetSizeFromHandle(handle);
         
-        byte* rawAssetBuffer = Allocate(rawAssetSize, 4);
+        byte* rawAssetBuffer = ALLOC_BYTESN(mMallocArena, rawAssetSize, 4);
         
         R2_CHECK(rawAssetBuffer != nullptr, "failed to allocate asset handle: %lli of size: %llu", handle, rawAssetSize);
         
@@ -241,7 +258,7 @@ namespace r2::asset
         else
         {
             u64 size = loader->GetLoadedAssetSize(rawAssetBuffer, rawAssetSize);
-            byte* buffer = Allocate(size, 4);
+            byte* buffer = ALLOC_BYTESN(mMallocArena, size, 4);
             
             R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
             
@@ -270,6 +287,10 @@ namespace r2::asset
         r2::shashmap::Set(*mAssetMap, handle, bufferRef);
         UpdateLRU(handle);
         
+#if ASSET_CACHE_DEBUG
+        PrintAssetMap();
+#endif
+        
         return assetBuffer;
     }
     
@@ -279,7 +300,7 @@ namespace r2::asset
         
         if (lruIndex == -1)
         {
-            if (r2::squeue::Size(*mAssetLRU) + 1 > LRU_CAPACITY)
+            if (r2::squeue::Space(*mAssetLRU) - 1 <= 0)
             {
                 FreeOneResource(true);
                 //R2_CHECK(false, "AssetCache::UpdateLRU() - We have too many assets in our LRU");
@@ -293,6 +314,10 @@ namespace r2::asset
             //otherwise move it to the front
             r2::squeue::MoveToFront(*mAssetLRU, lruIndex);
         }
+        
+#if ASSET_CACHE_DEBUG
+        PrintLRU();
+#endif
     }
     
     FileHandle AssetCache::FindInFiles(const Asset& asset)
@@ -322,11 +347,6 @@ namespace r2::asset
     AssetCache::AssetBufferRef& AssetCache::Find(AssetHandle handle, AssetCache::AssetBufferRef& theDefault)
     {
         return r2::shashmap::Get(*mAssetMap, handle, theDefault);
-    }
-    
-    byte* AssetCache::Allocate(u64 size, u64 alignment)
-    {
-        return ALLOC_BYTESN(mMallocArena, size, alignment);
     }
     
     void AssetCache::Free(AssetHandle handle, bool forceFree)
@@ -400,4 +420,106 @@ namespace r2::asset
             r2::squeue::PopFront(*mAssetLRU);
         }
     }
+    
+#if ASSET_CACHE_DEBUG
+    //Debug stuff
+    void AssetCache::PrintLRU()
+    {
+        printf("==========================PrintLRU==========================\n");
+        
+        u64 size = r2::squeue::Size(*mAssetLRU);
+        
+        AssetBufferRef defaultRef;
+        
+        for (u64 i = 0; i < size; ++i)
+        {
+            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i], defaultRef);
+            
+            if (bufRef.mAssetBuffer != nullptr)
+            {
+                const Asset& asset = bufRef.mAssetBuffer->GetAsset();
+                
+                PrintAsset(asset.Name(), asset.HashID(), bufRef.mRefCount);
+            }
+        }
+        
+        printf("============================================================\n");
+    }
+    
+    void AssetCache::PrintAssetMap()
+    {
+        printf("==========================PrintAssetMap==========================\n");
+        
+        u64 capacity = r2::sarr::Capacity( *mAssetMap->mHash);
+
+        for (u64 i = 0; i < capacity; ++i)
+        {
+            if((*mAssetMap->mHash)[i] != r2::hashmap_internal::END_OF_LIST)
+            {
+                u64 hash = (*mAssetMap->mHash)[i];
+                
+                const AssetBufferRef& ref = (*mAssetMap->mData)[hash].value;
+                
+                if (ref.mAssetBuffer != nullptr)
+                {
+                    PrintAsset(ref.mAssetBuffer->GetAsset().Name(), ref.mAssetBuffer->GetAsset().HashID(), ref.mRefCount);
+                }
+                
+                
+            }
+        }
+        
+        printf("=================================================================\n");
+    }
+    
+    void AssetCache::PrintAllAssetsInFiles()
+    {
+        auto size = r2::sarr::Size(*mFiles);
+        
+        for (decltype(size) i = 0; i < size; ++i)
+        {
+            AssetFile* file = r2::sarr::At(*mFiles, i);
+            if (!file->IsOpen())
+            {
+                bool result = file->Open();
+                
+                R2_CHECK(result, "Couldn't open the file!");
+            }
+            
+            PrintAssetsInFile(file);
+        }
+    }
+    
+    void AssetCache::PrintAssetsInFile(AssetFile* file)
+    {
+        printf("======================PrintAssetsInFile=======================\n");
+        
+        auto numAssets = file->NumAssets();
+        
+        char nameBuf[r2::fs::FILE_PATH_LENGTH];
+        
+        for (decltype(numAssets) i = 0; i < numAssets; ++i)
+        {
+            file->GetAssetName(i, nameBuf);
+            
+            AssetHandle handle = file->GetAssetHandle(i);
+            
+            PrintAsset(nameBuf, handle, 0);
+        }
+        
+        printf("==============================================================\n");
+    }
+    
+    void AssetCache::PrintAsset(const char* asset, AssetHandle assetHandle, u32 refcount)
+    {
+        if (refcount == 0)
+        {
+            printf("Asset name: %s handle: %llu\n", asset, assetHandle);
+        }
+        else
+        {
+            printf("Asset name: %s handle: %llu #references: %u\n", asset, assetHandle, refcount);
+        }
+    }
+#endif
 }

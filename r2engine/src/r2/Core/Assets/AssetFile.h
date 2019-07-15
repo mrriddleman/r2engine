@@ -23,7 +23,7 @@ namespace r2::asset
         virtual u64 GetRawAsset(const Asset& asset, byte* data) = 0;
         virtual u64 GetRawAssetFromHandle(u64 handle, byte* data) = 0;
         virtual u64 NumAssets() const = 0;
-        virtual char* GetAssetName(u64 index) const = 0;
+        virtual void GetAssetName(u64 index, char* name) const = 0;
         virtual u64 GetAssetHandle(u64 index) const = 0;
         virtual ~AssetFile() {}
     };
