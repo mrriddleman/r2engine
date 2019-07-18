@@ -95,9 +95,9 @@ namespace r2::asset
         AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
         
         
-        void Free(AssetHandle handle, bool forceFree);
+        void Free(AssetHandle handle, bool decrementRefCount, bool forceFree);
         bool MakeRoom(u64 amount);
-        void FreeOneResource(bool forceFree);
+        void FreeOneResource(bool decrementRefCount, bool forceFree);
         s64 GetLRUIndex(AssetHandle handle);
         void RemoveFromLRU(AssetHandle handle);
         

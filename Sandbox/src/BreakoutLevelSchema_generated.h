@@ -54,7 +54,8 @@ struct Block FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_SYMBOL = 4,
     VT_FILLCOLOR = 6,
-    VT_HP = 8
+    VT_HP = 8,
+    VT_POINTS = 10
   };
   int8_t symbol() const {
     return GetField<int8_t>(VT_SYMBOL, 0);
@@ -65,11 +66,15 @@ struct Block FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   int32_t hp() const {
     return GetField<int32_t>(VT_HP, 0);
   }
+  uint32_t points() const {
+    return GetField<uint32_t>(VT_POINTS, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int8_t>(verifier, VT_SYMBOL) &&
            VerifyField<color4>(verifier, VT_FILLCOLOR) &&
            VerifyField<int32_t>(verifier, VT_HP) &&
+           VerifyField<uint32_t>(verifier, VT_POINTS) &&
            verifier.EndTable();
   }
 };
@@ -85,6 +90,9 @@ struct BlockBuilder {
   }
   void add_hp(int32_t hp) {
     fbb_.AddElement<int32_t>(Block::VT_HP, hp, 0);
+  }
+  void add_points(uint32_t points) {
+    fbb_.AddElement<uint32_t>(Block::VT_POINTS, points, 0);
   }
   explicit BlockBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -102,8 +110,10 @@ inline flatbuffers::Offset<Block> CreateBlock(
     flatbuffers::FlatBufferBuilder &_fbb,
     int8_t symbol = 0,
     const color4 *fillColor = 0,
-    int32_t hp = 0) {
+    int32_t hp = 0,
+    uint32_t points = 0) {
   BlockBuilder builder_(_fbb);
+  builder_.add_points(points);
   builder_.add_hp(hp);
   builder_.add_fillColor(fillColor);
   builder_.add_symbol(symbol);

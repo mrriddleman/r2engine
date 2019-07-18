@@ -124,10 +124,8 @@ namespace r2::asset
         
         if (bufferRef.mAssetBuffer != nullptr)
         {
-            UpdateLRU(handle);
-            
             ++bufferRef.mRefCount;
-            
+            UpdateLRU(handle);
             return bufferRef.mAssetBuffer;
         }
         
@@ -143,7 +141,7 @@ namespace r2::asset
         
         if (found)
         {
-            Free(buffer->GetAsset().HashID(), false);
+            Free(buffer->GetAsset().HashID(), true, false);
         }
         
         return found;
@@ -161,7 +159,7 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            FreeOneResource(true);
+            FreeOneResource(false, true);
         }
     }
     
@@ -302,7 +300,7 @@ namespace r2::asset
         {
             if (r2::squeue::Space(*mAssetLRU) - 1 <= 0)
             {
-                FreeOneResource(true);
+                FreeOneResource(false, true);
                 //R2_CHECK(false, "AssetCache::UpdateLRU() - We have too many assets in our LRU");
                 return;
             }
@@ -349,7 +347,7 @@ namespace r2::asset
         return r2::shashmap::Get(*mAssetMap, handle, theDefault);
     }
     
-    void AssetCache::Free(AssetHandle handle, bool forceFree)
+    void AssetCache::Free(AssetHandle handle, bool decrementRefCount, bool forceFree)
     {
         AssetBufferRef theDefault;
         
@@ -357,7 +355,10 @@ namespace r2::asset
         
         if (assetBufferRef.mAssetBuffer != nullptr)
         {
-            --assetBufferRef.mRefCount;
+            if (decrementRefCount)
+            {
+                --assetBufferRef.mRefCount;
+            }
             
             if (forceFree && assetBufferRef.mRefCount != 0)
             {
@@ -382,14 +383,14 @@ namespace r2::asset
         return false;
     }
     
-    void AssetCache::FreeOneResource(bool forceFree)
+    void AssetCache::FreeOneResource(bool decrementRefCount, bool forceFree)
     {
         const u64 size = r2::squeue::Size(*mAssetLRU);
         
         if (size > 0)
         {
             AssetHandle handle = r2::squeue::Last(*mAssetLRU);
-            Free(handle, forceFree);
+            Free(handle, decrementRefCount, forceFree);
             
             RemoveFromLRU(handle);
         }
@@ -449,25 +450,42 @@ namespace r2::asset
     void AssetCache::PrintAssetMap()
     {
         printf("==========================PrintAssetMap==========================\n");
-        
-        u64 capacity = r2::sarr::Capacity( *mAssetMap->mHash);
 
-        for (u64 i = 0; i < capacity; ++i)
+        
+        u64 size = r2::squeue::Size(*mAssetLRU);
+        
+        AssetBufferRef defaultRef;
+        
+        for (u64 i = 0; i < size; ++i)
         {
-            if((*mAssetMap->mHash)[i] != r2::hashmap_internal::END_OF_LIST)
+            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i], defaultRef);
+            
+            if (bufRef.mAssetBuffer != nullptr)
             {
-                u64 hash = (*mAssetMap->mHash)[i];
+                const Asset& asset = bufRef.mAssetBuffer->GetAsset();
                 
-                const AssetBufferRef& ref = (*mAssetMap->mData)[hash].value;
-                
-                if (ref.mAssetBuffer != nullptr)
-                {
-                    PrintAsset(ref.mAssetBuffer->GetAsset().Name(), ref.mAssetBuffer->GetAsset().HashID(), ref.mRefCount);
-                }
-                
-                
+                PrintAsset(asset.Name(), asset.HashID(), bufRef.mRefCount);
             }
         }
+        
+//        u64 capacity = r2::sarr::Capacity( *mAssetMap->mHash);
+//
+//        for (u64 i = 0; i < capacity; ++i)
+//        {
+//            if((*mAssetMap->mHash)[i] != r2::hashmap_internal::END_OF_LIST)
+//            {
+//                u64 hash = (*mAssetMap->mHash)[i];
+//
+//                const AssetBufferRef& ref = (*mAssetMap->mData)[hash].value;
+//
+//                if (ref.mAssetBuffer != nullptr)
+//                {
+//                    PrintAsset(ref.mAssetBuffer->GetAsset().Name(), ref.mAssetBuffer->GetAsset().HashID(), ref.mRefCount);
+//                }
+//
+//
+//            }
+//        }
         
         printf("=================================================================\n");
     }

@@ -17,6 +17,7 @@ table Block
 	symbol:byte;
 	fillColor:color4;
 	hp:int;
+	points:uint;
 }
 
 table Layout
