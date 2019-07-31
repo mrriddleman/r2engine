@@ -39,7 +39,7 @@ namespace r2::fs
         Binary = 1 << 4,
     };
     
-    using FileMode = r2::Flags<Mode, u32>;
+    using FileMode = r2::Flags<u32, u32>;
     
     class DeviceConfig
     {
@@ -62,7 +62,7 @@ namespace r2::fs
         }
         
         inline DeviceStorage GetStorageDevice() const {return mStorage;}
-        
+
     private:
 
         DeviceStorage mStorage;

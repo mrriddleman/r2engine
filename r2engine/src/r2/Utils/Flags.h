@@ -21,7 +21,7 @@ namespace r2
         
         inline Flags(T flag):mFlags(flag)
         {
-            
+           
         }
         
         inline void Set(T flag)
@@ -49,6 +49,11 @@ namespace r2
             return Flags(mFlags | other.mFlags);
         }
         
+        inline Flags operator|(T flag) const
+        {
+            return Flags(mFlags | flag);
+        }
+        
         inline Flags& operator|=(Flags other)
         {
             mFlags |= other.mFlags;
@@ -60,10 +65,10 @@ namespace r2
             return mFlags == other.mFlags;
         }
     private:
-        inline explicit Flags(N flags):mFlags(flags)
-        {
-            
-        }
+//        inline explicit Flags(N flags):mFlags(flags)
+//        {
+//            
+//        }
         N mFlags;
     };
 }

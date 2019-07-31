@@ -17,10 +17,12 @@ namespace r2::fs
     {
     public:
         ZipFileModifierDevice();
+        ~ZipFileModifierDevice();
         virtual bool Mount(r2::mem::LinearArena& permanentStorage, u64 numFiles) override;
         virtual bool Unmount(r2::mem::LinearArena& permanentStorage) override;
         virtual File* Open(File* file) override;
         virtual void Close(File* file) override;
+
     };
 }
 

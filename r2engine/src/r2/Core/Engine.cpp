@@ -37,7 +37,7 @@ namespace r2
         waveSoundDef.flags |= r2::audio::AudioEngine::LOOP;
         waveSoundDef.flags |= r2::audio::AudioEngine::STREAM;
         
-        auto waveSoundID = audio.RegisterSound(waveSoundDef);
+      //  auto waveSoundID = audio.RegisterSound(waveSoundDef);
         
         r2::audio::AudioEngine::SoundDefinition swishSoundDef;
         strcpy( swishSoundDef.soundName, swishPath.c_str() );

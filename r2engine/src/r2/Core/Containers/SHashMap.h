@@ -98,7 +98,6 @@ namespace r2
             e.next = END_OF_LIST;
             u64 ei = r2::sarr::Size(*h.mData);
             r2::sarr::Push(*h.mData, e);
-            
             return ei;
         }
         
@@ -248,7 +247,7 @@ namespace r2
         
         template<typename T> bool IsFull(const SHashMap<T>& h)
         {
-            const float maxLoadFactor = 0.8f;
+            const float maxLoadFactor = 0.75f;
             
             return r2::sarr::Size(*h.mData) >= h.mCapacity * maxLoadFactor;
         }

@@ -17,7 +17,6 @@
 namespace
 {
     const s64 INVALID_FILE_INDEX = -1;
-    const u64 INVALID_ASSET_ID = 0;
 }
 
 namespace r2::asset

@@ -8,6 +8,7 @@
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFileStorageDevice.h"
 #include "r2/Core/File/FileDevices/Modifiers/Safe/SafeFileModifierDevice.h"
+#include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFileModifierDevice.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -58,8 +59,16 @@ namespace r2::fs
         {
             mounted = safeMod->Mount(storage, mNumFilesActive);
             r2::sarr::Push(*moptrModifiers, safeMod);
-            
         }
+        
+        FileDeviceModifier* zipMod = (FileDeviceModifier*)ALLOC(ZipFileModifierDevice, storage);
+        
+        if (zipMod)
+        {
+            mounted = zipMod->Mount(storage, mNumFilesActive);
+            r2::sarr::Push(*moptrModifiers, zipMod);
+        }
+        
         
         return mounted;
     }
@@ -78,7 +87,6 @@ namespace r2::fs
         {
             FREE(moptrStorageDevice, storage);
             moptrStorageDevice = nullptr;
-            
         }
         
         auto size = r2::sarr::Size(*moptrModifiers);

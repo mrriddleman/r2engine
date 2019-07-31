@@ -42,6 +42,9 @@ namespace r2
 {
     namespace mem
     {
+        using AllocateFunc = std::function<void* (u64 size, u64 alignment)>;
+        using FreeFunc = std::function<void (byte*)>;
+        
         namespace utils
         {
             struct MemBoundary
@@ -147,7 +150,7 @@ namespace r2
                 using Handle = s64;
                 static const Handle Invalid = -1;
                 utils::MemBoundary mBoundary;
-                MemoryArenaBase* mnoptrArena = nullptr;
+               // MemoryArenaBase* mnoptrArena = nullptr;
             
                 std::string mSubArenaName;
             };
@@ -190,17 +193,17 @@ namespace r2
         
         
         template <class AllocationPolicy, class ThreadPolicy, class BoundsCheckingPolicy, class MemoryTrackingPolicy, class MemoryTaggingPolicy>
-        class R2_API MemoryArena: public MemoryArenaBase
+        class R2_API MemoryArena//: public MemoryArenaBase
         {
         public:
             explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
             {
-                subArea.mnoptrArena = this;
+            //    subArea.mnoptrArena = this;
             }
             
             MemoryArena(MemoryArea::MemorySubArea& subArea, const utils::MemBoundary& boundary):mAllocator(boundary)
             {
-                subArea.mnoptrArena = this;
+             //   subArea.mnoptrArena = this;
                 mMemoryTracker.SetName(subArea.mSubArenaName);
             }
             
@@ -256,37 +259,37 @@ namespace r2
                 mMemoryTracker.Verify();
             }
             
-            virtual const u64 TotalSize() const override
+            const u64 TotalSize() const
             {
                 return mAllocator.GetTotalBytesAllocated();
             }
             
-            virtual const void* StartPtr() const override
+            const void* StartPtr() const
             {
                 return utils::PointerSubtract(mAllocator.StartPtr(), BoundsCheckingPolicy::SIZE_FRONT);
             }
             
-            virtual const u64 NumAllocations() const override
+            const u64 NumAllocations() const
             {
                 return mMemoryTracker.NumAllocations();
             }
             
-            virtual const std::vector<utils::MemoryTag> Tags() const override
+            const std::vector<utils::MemoryTag> Tags() const
             {
                 return mMemoryTracker.Tags();
             }
             
-            virtual const u32 HeaderSize() const override
+            const u32 HeaderSize() const
             {
                 return BoundsCheckingPolicy::SIZE_FRONT + mAllocator.HeaderSize();
             }
             
-            virtual const u32 FooterSize() const override
+            const u32 FooterSize() const
             {
                 return BoundsCheckingPolicy::SIZE_BACK;
             }
             
-            virtual const u64 UnallocatedBytes() const override
+            const u64 UnallocatedBytes() const 
             {
                 return mAllocator.UnallocatedBytes();
             }

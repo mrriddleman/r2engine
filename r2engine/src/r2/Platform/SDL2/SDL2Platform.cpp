@@ -16,13 +16,28 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/FileStorageArea.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
+#include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
 #include "r2/Utils/Handle.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 
 namespace
 {
     const u32 MAX_NUM_FILES = 1024;
     const u32 MAX_NUM_STORAGE_AREAS = 8;
+    
+    r2::mem::MallocArena zipArena{r2::mem::utils::MemBoundary()};
+    
+    void* AllocZip(u64 size, u64 align)
+    {
+        return ALLOC_BYTESN(zipArena, size, align);
+    }
+    
+    void FreeZip(byte* ptr)
+    {
+        FREE(ptr, zipArena);
+    }
 }
 
 namespace r2
@@ -147,6 +162,8 @@ namespace r2
             r2::fs::FileSystem::Mount(*mAppStorage);
 
             mAssetPathResolver = app->GetPathResolver();
+            
+            TestFiles();
         }
         
         //Init OpenGL
@@ -444,84 +461,118 @@ namespace r2
     
     void SDL2Platform::TestFiles()
     {
-        char filePath[r2::fs::FILE_PATH_LENGTH];
-        char filePath2[r2::fs::FILE_PATH_LENGTH];
-        char filePath3[r2::fs::FILE_PATH_LENGTH];
+//        char filePath[r2::fs::FILE_PATH_LENGTH];
+//        char filePath2[r2::fs::FILE_PATH_LENGTH];
+//        char filePath3[r2::fs::FILE_PATH_LENGTH];
+//
+//
+//        strcpy(filePath, mPrefPath);
+//        strcpy(filePath2, mPrefPath);
+//        strcpy(filePath3, mPrefPath);
+//
+//
+//        strcat(filePath, "test_pref_path.txt");
+//
+//        R2_LOGI("filePath: %s\n", filePath);
+//
+//        char textToWrite[] = "This is some text that I am writing!";
+//
+//        r2::fs::FileMode mode;
+//        mode |= r2::fs::Mode::Write;
+//
+//        r2::fs::File* fileToWrite = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
+//
+//        R2_CHECK(fileToWrite != nullptr, "We don't have a proper file!");
+//
+//        u64 numBytesWritten = fileToWrite->Write(textToWrite, strlen(textToWrite));
+//
+//        R2_LOGI("I wrote %llu bytes\n", numBytesWritten);
+//
+//        r2::fs::FileSystem::Close(fileToWrite);
+//
+//        mode = r2::fs::Mode::Read;
+//
+//        r2::fs::File* fileToRead = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
+//
+//        u64 fileSize = fileToRead->Size();
+//
+//        R2_LOGI("file size: %llu\n", fileSize);
+//
+//        char textToRead[r2::fs::FILE_PATH_LENGTH];
+//
+//        fileToRead->Skip(5);
+//
+//        u64 bytesRead = fileToRead->Read(textToRead, 2);
+//        textToRead[2] = '\0';
+//
+//        R2_CHECK(bytesRead == 2, "We didn't read all of the file!");
+//
+//        R2_LOGI("Here's what I read:\n%s\n", textToRead);
+//
+//        r2::fs::FileSystem::Close(fileToRead);
+//
+//        //Test file exists, file delete, file rename, and file copy
+//
+//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath), "This file should exist!");
+//
+//        R2_CHECK(!r2::fs::FileSystem::FileExists("some_fake_file.txt"), "This file should not exist!");
+//
+//        strcat(filePath2, "copy_of_file.txt");
+//
+//
+//        R2_CHECK(r2::fs::FileSystem::CopyFile(filePath, filePath2), "We should be able to copy files!");
+//
+//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath2), "filePath2 should exist!");
+//
+//        strcat(filePath3, "renamed_file.txt");
+//
+//        R2_CHECK(r2::fs::FileSystem::RenameFile(filePath2, filePath3), "We should be able to rename a file");
+//
+//        R2_CHECK(r2::fs::FileSystem::FileExists(filePath3), "filePath3 should exist");
+//
+//        R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
+//
+//        R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
+//
+//
+//        r2::fs::DeviceConfig safeConfig;
+//        safeConfig.AddModifier(r2::fs::DeviceModifier::Safe);
+//
+//        r2::fs::File* safeFile = r2::fs::FileSystem::Open(safeConfig, filePath, mode);
+//
+//        r2::fs::FileSystem::Close(safeFile);
         
-        strcpy(filePath, mPrefPath);
-        strcpy(filePath2, mPrefPath);
-        strcpy(filePath3, mPrefPath);
+        //Zipity do da
         
-        strcat(filePath, "test_pref_path.txt");
+        char filePath4[r2::fs::FILE_PATH_LENGTH];
         
-        R2_LOGI("filePath: %s\n", filePath);
+        r2::fs::utils::AppendSubPath(mBasePath, filePath4, "Archive.zip");
         
-        char textToWrite[] = "This is some text that I am writing!";
+        r2::fs::DeviceConfig zipConfig;
+        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
         
-        r2::fs::FileMode mode;
-        mode |= r2::fs::Mode::Write;
+        r2::fs::ZipFile* zipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, filePath4, r2::fs::Mode::Read | r2::fs::Mode::Binary);
         
-        r2::fs::File* fileToWrite = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
-        
-        R2_CHECK(fileToWrite != nullptr, "We don't have a proper file!");
-        
-        u64 numBytesWritten = fileToWrite->Write(textToWrite, strlen(textToWrite));
-        
-        R2_LOGI("I wrote %llu bytes\n", numBytesWritten);
-        
-        r2::fs::FileSystem::Close(fileToWrite);
-        
-        mode = r2::fs::Mode::Read;
-        
-        r2::fs::File* fileToRead = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);
-        
-        u64 fileSize = fileToRead->Size();
-        
-        R2_LOGI("file size: %llu\n", fileSize);
-        
-        char textToRead[r2::fs::FILE_PATH_LENGTH];
-        
-        fileToRead->Skip(5);
-        
-        u64 bytesRead = fileToRead->Read(textToRead, 2);
-        textToRead[2] = '\0';
-        
-        R2_CHECK(bytesRead == 2, "We didn't read all of the file!");
-        
-        R2_LOGI("Here's what I read:\n%s\n", textToRead);
-        
-        r2::fs::FileSystem::Close(fileToRead);
-        
-        //Test file exists, file delete, file rename, and file copy
-        
-        R2_CHECK(r2::fs::FileSystem::FileExists(filePath), "This file should exist!");
-        
-        R2_CHECK(!r2::fs::FileSystem::FileExists("some_fake_file.txt"), "This file should not exist!");
-        
-        strcat(filePath2, "copy_of_file.txt");
+        R2_CHECK(zipFile != nullptr, "We have a zip file");
+        R2_CHECK(!zipFile->IsOpen(), "Zip file shouldn't be open");
         
         
-        R2_CHECK(r2::fs::FileSystem::CopyFile(filePath, filePath2), "We should be able to copy files!");
+        zipFile->InitArchive(AllocZip, FreeZip);
         
-        R2_CHECK(r2::fs::FileSystem::FileExists(filePath2), "filePath2 should exist!");
+        const auto numFiles = zipFile->GetNumberOfFiles();
         
-        strcat(filePath3, "renamed_file.txt");
+        for (u64 i = 0; i < numFiles; ++i)
+        {
+            r2::fs::ZipFile::ZipFileInfo info;
+            bool foundExtra = false;
+            
+            if (zipFile->GetFileInfo(i, info, &foundExtra))
+            {
+                printf("Filename: \"%s\", Comment: \"%s\", Uncompressed size: %u, Compressed size: %u, Is Dir: %u\n", info.filename, info.comment, (uint)info.uncompressedSize, (uint)info.compressedSize, info.isDirectory);
+            }
+        }
         
-        R2_CHECK(r2::fs::FileSystem::RenameFile(filePath2, filePath3), "We should be able to rename a file");
-        
-        R2_CHECK(r2::fs::FileSystem::FileExists(filePath3), "filePath3 should exist");
-        
-        R2_CHECK(!r2::fs::FileSystem::FileExists(filePath2), "filePath2 should not exist");
-        
-        R2_CHECK(r2::fs::FileSystem::DeleteFile(filePath3), "FilePath3 should be deleted");
-        
-        
-        r2::fs::DeviceConfig safeConfig;
-        safeConfig.AddModifier(r2::fs::DeviceModifier::Safe);
-        
-        r2::fs::File* safeFile = r2::fs::FileSystem::Open(safeConfig, filePath, mode);
-        
-        r2::fs::FileSystem::Close(safeFile);
+        r2::fs::FileSystem::Close(zipFile);
         
         /* @TODO(Serge): fix async files... again...
         r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);

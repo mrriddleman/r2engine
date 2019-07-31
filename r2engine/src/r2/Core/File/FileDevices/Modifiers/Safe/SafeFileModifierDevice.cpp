@@ -7,7 +7,6 @@
 
 #include "SafeFileModifierDevice.h"
 #include "r2/Core/File/FileDevices/Modifiers/Safe/SafeFile.h"
-#include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 
 namespace r2::fs
