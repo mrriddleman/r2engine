@@ -544,35 +544,35 @@ namespace r2
         
         //Zipity do da
         
-        char filePath4[r2::fs::FILE_PATH_LENGTH];
-        
-        r2::fs::utils::AppendSubPath(mBasePath, filePath4, "Archive.zip");
-        
-        r2::fs::DeviceConfig zipConfig;
-        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
-        
-        r2::fs::ZipFile* zipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, filePath4, r2::fs::Mode::Read | r2::fs::Mode::Binary);
-        
-        R2_CHECK(zipFile != nullptr, "We have a zip file");
-        R2_CHECK(!zipFile->IsOpen(), "Zip file shouldn't be open");
-        
-        
-        zipFile->InitArchive(AllocZip, FreeZip);
-        
-        const auto numFiles = zipFile->GetNumberOfFiles();
-        
-        for (u64 i = 0; i < numFiles; ++i)
-        {
-            r2::fs::ZipFile::ZipFileInfo info;
-            bool foundExtra = false;
-            
-            if (zipFile->GetFileInfo(i, info, &foundExtra))
-            {
-                printf("Filename: \"%s\", Comment: \"%s\", Uncompressed size: %u, Compressed size: %u, Is Dir: %u\n", info.filename, info.comment, (uint)info.uncompressedSize, (uint)info.compressedSize, info.isDirectory);
-            }
-        }
-        
-        r2::fs::FileSystem::Close(zipFile);
+//        char filePath4[r2::fs::FILE_PATH_LENGTH];
+//        
+//        r2::fs::utils::AppendSubPath(mBasePath, filePath4, "Archive.zip");
+//        
+//        r2::fs::DeviceConfig zipConfig;
+//        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
+//        
+//        r2::fs::ZipFile* zipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, filePath4, r2::fs::Mode::Read | r2::fs::Mode::Binary);
+//        
+//        R2_CHECK(zipFile != nullptr, "We have a zip file");
+//        R2_CHECK(!zipFile->IsOpen(), "Zip file shouldn't be open");
+//        
+//        
+//        zipFile->InitArchive(AllocZip, FreeZip);
+//        
+//        const auto numFiles = zipFile->GetNumberOfFiles();
+//        
+//        for (u64 i = 0; i < numFiles; ++i)
+//        {
+//            r2::fs::ZipFile::ZipFileInfo info;
+//            bool foundExtra = false;
+//            
+//            if (zipFile->GetFileInfo(i, info, &foundExtra))
+//            {
+//                printf("Filename: \"%s\", Comment: \"%s\", Uncompressed size: %u, Compressed size: %u, Is Dir: %u\n", info.filename, info.comment, (uint)info.uncompressedSize, (uint)info.compressedSize, info.isDirectory);
+//            }
+//        }
+//        
+//        r2::fs::FileSystem::Close(zipFile);
         
         /* @TODO(Serge): fix async files... again...
         r2::fs::DiskFile* asyncFile = (r2::fs::DiskFile*)r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), filePath, mode);

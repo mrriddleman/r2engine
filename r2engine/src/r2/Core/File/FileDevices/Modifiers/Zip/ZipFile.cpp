@@ -1088,7 +1088,7 @@ namespace r2::fs
             return false;
         }
         
-        curFileOffset = MZ_MAX((u64)mArchive.archiveSize - (s64)sizeof(buf), 0);
+        curFileOffset = MZ_MAX((s64)mArchive.archiveSize - (s64)sizeof(buf), 0);
         
         for (; ; )
         {

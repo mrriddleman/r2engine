@@ -11,6 +11,8 @@
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Assets/AssetLoader.h"
 #include "r2/Core/Assets/DefaultAssetLoader.h"
+#include "r2/Core/Assets/RawAssetFile.h"
+#include "r2/Core/Assets/ZipAssetFile.h"
 
 #define NOT_INITIALIZED !mFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders
 
@@ -223,13 +225,13 @@ namespace r2::asset
         
         
         AssetHandle handle = asset.HashID();
-        u64 rawAssetSize = theAssetFile->RawAssetSizeFromHandle(handle);
+        u64 rawAssetSize = theAssetFile->RawAssetSize(asset);
         
         byte* rawAssetBuffer = ALLOC_BYTESN(mMallocArena, rawAssetSize, 4);
         
         R2_CHECK(rawAssetBuffer != nullptr, "failed to allocate asset handle: %lli of size: %llu", handle, rawAssetSize);
         
-        theAssetFile->GetRawAssetFromHandle(handle, rawAssetBuffer);
+        theAssetFile->GetRawAsset(asset, rawAssetBuffer, (u32)rawAssetSize);
         
         if (rawAssetBuffer == nullptr)
         {
@@ -421,6 +423,33 @@ namespace r2::asset
         }
     }
     
+    RawAssetFile* AssetCache::MakeRawAssetFile(const char* path)
+    {
+        RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, mMallocArena);
+        
+        bool result = rawAssetFile->Init(path);
+        R2_CHECK(result, "Failed to initialize raw asset file");
+        return rawAssetFile;
+    }
+    
+    ZipAssetFile* AssetCache::MakeZipAssetFile(const char* path)
+    {
+        ZipAssetFile* zipAssetFile = ALLOC(ZipAssetFile, mMallocArena);
+        
+        bool result = zipAssetFile->Init(path,
+        [this](u64 size, u64 alignment)
+        {
+            return ALLOC_BYTESN(mMallocArena, size, alignment);
+        },
+        [this](byte* ptr)
+        {
+            FREE(ptr, mMallocArena);
+        });
+        
+        R2_CHECK(result, "Failed to initialize zip asset file");
+        return zipAssetFile;
+    }
+    
 #if ASSET_CACHE_DEBUG
     //Debug stuff
     void AssetCache::PrintLRU()
@@ -517,7 +546,7 @@ namespace r2::asset
         
         for (decltype(numAssets) i = 0; i < numAssets; ++i)
         {
-            file->GetAssetName(i, nameBuf);
+            file->GetAssetName(i, nameBuf, r2::fs::FILE_PATH_LENGTH);
             
             AssetHandle handle = file->GetAssetHandle(i);
             

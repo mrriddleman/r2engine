@@ -22,48 +22,49 @@
 #include "BreakoutLevelsFile.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-
+#include "r2/Core/Assets/RawAssetFile.h"
+#include "r2/Core/Assets/ZipAssetFile.h"
 
 namespace
 {
     void TestAssetCache()
     {
         r2::asset::AssetCache assetCache;
-        
-        BreakoutLevelsFile* levelsFile = (BreakoutLevelsFile*)assetCache.MakeAssetFile<BreakoutLevelsFile>();
-        
         char filePath[r2::fs::FILE_PATH_LENGTH];
         
-        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_level_pack.breakout_level");
+        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "AllBreakoutData.zip");
         
-        levelsFile->Init(filePath);
+        r2::asset::ZipAssetFile* zipFile = assetCache.MakeZipAssetFile(filePath);
         
-        BreakoutLevelsFile* powerupsFile = (BreakoutLevelsFile*)assetCache.MakeAssetFile<BreakoutLevelsFile>();
-        
-        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_powerups.powerup");
-        
-        powerupsFile->Init(filePath);
-        
-        BreakoutLevelsFile* highscoresFile = (BreakoutLevelsFile*)assetCache.MakeAssetFile<BreakoutLevelsFile>();
-        
-        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_high_scores.scores");
-        
-        highscoresFile->Init(filePath);
-        
-        BreakoutLevelsFile* settingsFile = (BreakoutLevelsFile*)assetCache.MakeAssetFile<BreakoutLevelsFile>();
-        
-        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_player_save.player");
-        
-        settingsFile->Init(filePath);
+//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_level_pack.breakout_level");
+//
+//        r2::asset::RawAssetFile* levelsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//
+//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_powerups.powerup");
+//
+//        r2::asset::RawAssetFile* powerupsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//
+//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_high_scores.scores");
+//
+//        r2::asset::RawAssetFile* highscoresFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//
+//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_player_save.player");
+//
+//        r2::asset::RawAssetFile* settingsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//
+//
+//
+//        r2::sarr::Push(*files, (r2::asset::AssetFile*)levelsFile);
+//        r2::sarr::Push(*files, (r2::asset::AssetFile*)powerupsFile);
+//        r2::sarr::Push(*files, (r2::asset::AssetFile*)highscoresFile);
+//        r2::sarr::Push(*files, (r2::asset::AssetFile*)settingsFile);
         
         r2::asset::FileList files = assetCache.MakeFileList(10);
+        r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)levelsFile);
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)powerupsFile);
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)highscoresFile);
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)settingsFile);
+        bool assetCacheInitialized = assetCache.Init(r2::mem::utils::MemBoundary(), files);
         
-        assetCache.Init(r2::mem::utils::MemBoundary(), files);
+        R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
         
         r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
         

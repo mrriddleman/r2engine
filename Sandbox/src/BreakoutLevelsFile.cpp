@@ -63,17 +63,7 @@ u64 BreakoutLevelsFile::RawAssetSize(const r2::asset::Asset& asset)
     return mFile->Size();
 }
 
-u64 BreakoutLevelsFile::RawAssetSizeFromHandle(u64 handle)
-{
-    return mFile->Size();
-}
-
-u64 BreakoutLevelsFile::GetRawAsset(const r2::asset::Asset& asset, byte* data)
-{
-    return mFile->ReadAll(data);
-}
-
-u64 BreakoutLevelsFile::GetRawAssetFromHandle(u64 handle, byte* data)
+u64 BreakoutLevelsFile::GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
 {
     return mFile->ReadAll(data);
 }
@@ -83,7 +73,7 @@ u64 BreakoutLevelsFile::NumAssets() const
     return 1;
 }
 
-void BreakoutLevelsFile::GetAssetName(u64 index, char* name) const
+void BreakoutLevelsFile::GetAssetName(u64 index, char* name, u32 nameBufSize) const
 {
     r2::fs::utils::CopyFileNameWithExtension(mPath, name);
 }

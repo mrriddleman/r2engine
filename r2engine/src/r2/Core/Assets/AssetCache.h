@@ -23,6 +23,8 @@ namespace r2::asset
     class AssetBuffer;
     class Asset;
     class DefaultAssetLoader;
+    class RawAssetFile;
+    class ZipAssetFile;
     
     using FileList = r2::SArray<AssetFile*>*;
     using AssetHandle = u64;
@@ -61,13 +63,8 @@ namespace r2::asset
             return ALLOC(T, mMallocArena);
         }
         
-        template<class T>
-        AssetFile* MakeAssetFile()
-        {
-          //  bool value = std::is_base_of<AssetFile, T>::value;
-          //  R2_CHECK(value, "Passed in type is not have AssetFile as it's base type!");
-            return ALLOC(T, mMallocArena);
-        }
+        RawAssetFile* MakeRawAssetFile(const char* path);
+        ZipAssetFile* MakeZipAssetFile(const char* path);
         
         //NOTE: don't use T* for the type here, it's taken care of for you
        

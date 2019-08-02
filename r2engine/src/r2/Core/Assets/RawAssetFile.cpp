@@ -65,17 +65,7 @@ namespace r2::asset
         return mFile->Size();
     }
     
-    u64 RawAssetFile::RawAssetSizeFromHandle(u64 handle)
-    {
-        return mFile->Size();
-    }
-    
-    u64 RawAssetFile::GetRawAsset(const r2::asset::Asset& asset, byte* data)
-    {
-        return mFile->ReadAll(data);
-    }
-    
-    u64 RawAssetFile::GetRawAssetFromHandle(u64 handle, byte* data)
+    u64 RawAssetFile::GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
     {
         return mFile->ReadAll(data);
     }
@@ -85,7 +75,7 @@ namespace r2::asset
         return 1;
     }
     
-    void RawAssetFile::GetAssetName(u64 index, char* name) const
+    void RawAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
     {
         r2::fs::utils::CopyFileNameWithExtension(mPath, name);
     }
