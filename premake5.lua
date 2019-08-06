@@ -92,6 +92,11 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 	filter "system:macosx"
 		systemversion "latest"
 
+
+		xcodebuildsettings { ["CC"] = "/usr/local/Cellar/llvm/8.0.0_1/bin/clang", ["COMPILER_INDEX_STORE_ENABLE"] = "No"}
+
+
+
 		defines
 		{
 			"R2_PLATFORM_MAC"
@@ -100,6 +105,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		buildoptions 
 		{
 			"-F %{prj.location}/vendor/SDL2/MacOSX",
+
 		}
     	
     	linkoptions
@@ -213,6 +219,7 @@ project "r2Tests"
 	filter "system:macosx"
 		systemversion "latest"
 
+		xcodebuildsettings { ["CC"] = "/usr/local/Cellar/llvm/8.0.0_1/bin/clang", ["COMPILER_INDEX_STORE_ENABLE"] = "No"}
 		defines
 		{
 			"R2_PLATFORM_MAC"
@@ -236,7 +243,7 @@ project "Sandbox"
 	language "C++"
 	cppdialect "C++17"
 	--staticruntme "off"
-
+	
 	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"
 
 	targetdir (sandboxOutputDir)
@@ -271,6 +278,7 @@ project "Sandbox"
 	filter "system:macosx"
 		systemversion "latest"
 
+		xcodebuildsettings { ["CC"] = "/usr/local/Cellar/llvm/8.0.0_1/bin/clang", ["COMPILER_INDEX_STORE_ENABLE"] = "No"}
 		defines
 		{
 			"R2_PLATFORM_MAC"

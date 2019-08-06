@@ -82,7 +82,7 @@ namespace r2
         auto platform = new SDL2Platform();
         std::unique_ptr<Platform> ptr;
         ptr.reset(platform);
-        
+
         return ptr;
     }
     
