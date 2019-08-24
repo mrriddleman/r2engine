@@ -47,7 +47,7 @@ namespace r2::asset::pln
             auto it = mPaths.begin();
             while(it != mPaths.end())
             {
-                if (!std::filesystem::exists(it->first))
+                if (!std::filesystem::is_directory(it->first) && !std::filesystem::exists(it->first))
                 {
                     for (auto listener : mRemovedListeners)
                     {
@@ -64,7 +64,7 @@ namespace r2::asset::pln
             
             for (auto& file: std::filesystem::recursive_directory_iterator(mPathToWatch))
             {
-                if(!std::filesystem::is_regular_file(file))
+                if(std::filesystem::is_directory(file.path().string()))
                 {
                     continue;
                 }
