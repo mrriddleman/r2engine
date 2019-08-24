@@ -1,7 +1,8 @@
 import os
 import platform
 
-path = "vendor/bin/premake/"
+path = os.path.dirname(os.path.abspath(__file__)) + "/vendor/bin/premake/"
+
 platformSystem = platform.system();
 osCall = ""
 

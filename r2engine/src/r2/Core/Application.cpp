@@ -72,4 +72,21 @@ namespace r2
     {
         return ResolveCategoryPath;
     }
+    
+#ifdef R2_DEBUG
+    std::vector<std::string> Application::GetAssetWatchPaths() const
+    {
+        
+        std::vector<std::string> paths = {
+            //Add watch paths here
+            R2_ENGINE_ASSETS
+        };
+        return paths;
+    }
+    
+    std::string Application::GetAssetManifestPath() const
+    {
+        return "";
+    }
+#endif
 }

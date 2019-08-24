@@ -163,7 +163,9 @@ namespace r2
 
             mAssetPathResolver = app->GetPathResolver();
             
-            TestFiles();
+
+            
+            //TestFiles();
         }
         
         //Init OpenGL

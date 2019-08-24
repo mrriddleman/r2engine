@@ -98,6 +98,9 @@ namespace r2::asset
         s64 GetLRUIndex(AssetHandle handle);
         void RemoveFromLRU(AssetHandle handle);
         
+        
+        
+        
         FileList mFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;

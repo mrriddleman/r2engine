@@ -20,6 +20,11 @@
 #include "r2/Audio/AudioEngine.h"
 #include <unistd.h>
 
+#ifdef R2_DEBUG
+#include <chrono>
+#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+#endif
+
 namespace r2
 {
     void TestSound(const std::string& appPath)
@@ -70,6 +75,12 @@ namespace r2
         {
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
+#ifdef R2_DEBUG
+            std::string flatcPath = R2_FLATC;
+            r2::asset::pln::Init(noptrApp->GetAssetManifestPath(), flatcPath);
+            r2::asset::pln::AddWatchPaths(std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths());
+#endif
+            
             //@TODO(Serge): should check to see if the app initialized!
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
@@ -84,6 +95,9 @@ namespace r2
         
             R2_LOG(INFO, "Test to see if we get a log file");
             
+
+            
+            
             return true;
         }
 
@@ -92,6 +106,11 @@ namespace r2
     
     void Engine::Update()
     {
+#ifdef R2_DEBUG
+        r2::asset::pln::Update();
+#endif
+        
+        
         mLayerStack.Update();
         
 //        static u32 ticks = 0;

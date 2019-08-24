@@ -46,7 +46,10 @@ namespace r2
         virtual util::Size GetPreferredResolution() const;
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
-        
+#ifdef R2_DEBUG
+        virtual std::vector<std::string> GetAssetWatchPaths() const;
+        virtual std::string GetAssetManifestPath() const;
+#endif
     };
     
     std::unique_ptr<Application> CreateApplication();

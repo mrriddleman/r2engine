@@ -14,6 +14,9 @@
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 
+//@TODO(Serge): add debug define
+#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+
 #define NOT_INITIALIZED !mFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders
 
 namespace
@@ -57,6 +60,14 @@ namespace r2::asset
             
             mAssetLoaders = MAKE_SARRAY(mMallocArena, AssetLoader*, lruCapacity);
         }
+        
+        //@TODO(Serge): only in debug
+        r2::asset::pln::AddAssetChangedListener([this](const std::vector<std::string>& assets){
+            
+            //when changed do something
+            
+        });
+        
 
         return true;
     }
@@ -449,6 +460,8 @@ namespace r2::asset
         R2_CHECK(result, "Failed to initialize zip asset file");
         return zipAssetFile;
     }
+    
+    
     
 #if ASSET_CACHE_DEBUG
     //Debug stuff

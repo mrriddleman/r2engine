@@ -33,6 +33,7 @@ project "r2engine"
 	kind "SharedLib"
 	language "C++"
 	cppdialect "C++17"
+	exceptionhandling "Off"
 	--staticruntime "off"
 
 	local output_dir_root	= "bin/" .. outputdir .. "/%{prj.name}"
@@ -91,15 +92,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 	
 	filter "system:macosx"
 		systemversion "latest"
-
-
 		xcodebuildsettings { ["CC"] = "/usr/local/Cellar/llvm/8.0.0_1/bin/clang", ["COMPILER_INDEX_STORE_ENABLE"] = "No"}
-
-
 
 		defines
 		{
-			"R2_PLATFORM_MAC"
+			"R2_PLATFORM_MAC",
+			'R2_FLATC="'..os.realpath('.')..'/vendor/flatbuffers/bin/MacOSX/flatc"',
+			'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"'
 		}
 
 		buildoptions 
@@ -117,11 +116,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		{
 			"%{prj.name}/vendor/glad/MacOSX/include",
 			"%{prj.name}/vendor/FMOD/MacOSX/core/inc",
+			"/usr/local/Cellar/llvm/8.0.0_1/include/c++/v1"
 		}
 
 		libdirs 
 		{
 			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
+			"/usr/local/opt/llvm/lib"
 		}
 
 		links
@@ -129,6 +130,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"glad",
 			"SDL2.framework",
 			"OpenGL.framework",
+			"c++fs"
 		}
 
 		filter "configurations:Debug"
@@ -166,7 +168,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		}
 
 	filter "configurations:Debug"
-		defines "R2_DEBUG"
+		defines  {"R2_DEBUG"}
 		runtime "Debug"
 		symbols "On"
 
@@ -187,6 +189,8 @@ project "r2Tests"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
+	exceptionhandling "Off"
+
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin_int/" .. outputdir .. "/%{prj.name}")
@@ -242,6 +246,8 @@ project "Sandbox"
 	kind "ConsoleApp" 
 	language "C++"
 	cppdialect "C++17"
+	exceptionhandling "Off"
+
 	--staticruntme "off"
 	
 	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"
