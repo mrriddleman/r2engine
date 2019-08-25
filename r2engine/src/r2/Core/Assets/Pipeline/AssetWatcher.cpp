@@ -34,7 +34,6 @@ namespace r2::asset::pln
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
         s_manifestsPath = assetManifestsPath;
         
-        BuildManifests();
         ReloadManifests();
         
         s_manifestFileWatcher.Init(std::chrono::milliseconds(1000), assetManifestsPath);
@@ -107,6 +106,8 @@ namespace r2::asset::pln
     
     void ReloadManifests()
     {
+        BuildManifests();
+        
         LoadAssetManifests(s_manifests, s_manifestsPath);
         s_reloadManifests = false;
     }
