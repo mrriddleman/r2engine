@@ -381,7 +381,7 @@ class Sandbox: public r2::Application
 {
     virtual bool Init() override
     {
-        MakeAssetManifest(GetAssetManifestPath());
+      //  MakeAssetManifest(GetAssetManifestPath());
         
         //TestAssetCache();
         //MakeAllData();

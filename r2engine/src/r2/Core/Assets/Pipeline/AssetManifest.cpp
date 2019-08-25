@@ -14,6 +14,9 @@
 
 namespace r2::asset::pln
 {
+    const std::string MANIFEST_EXT = ".aman";
+    const std::string JSON_EXT = ".json";
+    
     bool WriteAssetManifest(const AssetManifest& manifest, const std::string& manifestName, const std::string& manifestDir)
     {
         flatbuffers::FlatBufferBuilder builder;
@@ -55,7 +58,6 @@ namespace r2::asset::pln
         if(fs.fail())
             return false;
         
-        /*
         std::string dataPath = R2_ENGINE_DATA_PATH;
         std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
         std::string assetManifestFbsPath = flatBufferPath + "AssetManifest.fbs";
@@ -65,7 +67,7 @@ namespace r2::asset::pln
         {
             return false;
         }
-        */
+        
         return true;
     }
     
@@ -74,7 +76,7 @@ namespace r2::asset::pln
         for(auto& file : std::filesystem::recursive_directory_iterator(manifestDir))
         {
             //UGH MAC - ignore .DS_Store
-            if (std::filesystem::file_size(file.path()) <= 0 || std::filesystem::path(file.path()).extension().string() != ".aman")
+            if (std::filesystem::file_size(file.path()) <= 0 || std::filesystem::path(file.path()).extension().string() != MANIFEST_EXT)
             {
                 continue;
             }
@@ -122,6 +124,31 @@ namespace r2::asset::pln
             }
             
             manifests.push_back(manifest);
+        }
+        
+        return true;
+    }
+    
+    bool BuildAssetManifestsFromJson(const std::string& manifestDir)
+    {
+        const std::string dataPath = R2_ENGINE_DATA_PATH;
+        const std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
+        const std::string assetManifestFbsPath = flatBufferPath + "AssetManifest.fbs";
+        
+        for(auto& file : std::filesystem::recursive_directory_iterator(manifestDir))
+        {
+            
+            if (std::filesystem::file_size(file.path()) <= 0 || std::filesystem::path(file.path()).extension().string() != JSON_EXT)
+            {
+                continue;
+            }
+            
+            //generate json files
+            if(!flat::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
+            {
+                R2_LOGE("Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
+                return false;
+            }
         }
         
         return true;

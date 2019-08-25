@@ -47,7 +47,7 @@ namespace r2::asset::pln
     
     bool WriteAssetManifest(const AssetManifest& manifest, const std::string& manifestName, const std::string& manifestDir);
     bool LoadAssetManifests(std::vector<AssetManifest>& manifests, const std::string& manifestDir);
-    
+    bool BuildAssetManifestsFromJson(const std::string& manifestDir);
 }
 
 #endif /* AssetManifest_h */

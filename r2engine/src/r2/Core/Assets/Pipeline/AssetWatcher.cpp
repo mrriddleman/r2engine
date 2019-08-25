@@ -25,7 +25,7 @@ namespace r2::asset::pln
     
     void SetReloadManifests(const std::string& changedPath);
     void ReloadManifests();
-    
+    void BuildManifests();
     void NotifyAssetChanged();
     
     void Init(const std::string& assetManifestsPath,
@@ -34,7 +34,8 @@ namespace r2::asset::pln
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
         s_manifestsPath = assetManifestsPath;
         
-        //ReloadManifests();
+        BuildManifests();
+        ReloadManifests();
         
         s_manifestFileWatcher.Init(std::chrono::milliseconds(1000), assetManifestsPath);
         //@TODO(Serge): modify these to be their own functions
@@ -108,5 +109,10 @@ namespace r2::asset::pln
     {
         LoadAssetManifests(s_manifests, s_manifestsPath);
         s_reloadManifests = false;
+    }
+    
+    void BuildManifests()
+    {
+        BuildAssetManifestsFromJson(s_manifestsPath);
     }
 }
