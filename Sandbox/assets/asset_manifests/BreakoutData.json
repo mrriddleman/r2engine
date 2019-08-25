@@ -1,0 +1,38 @@
+{
+  outputPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_bin/AllBreakoutData.zip",
+  inputFiles: [
+    {
+      inputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_raw/breakout_high_scores.json",
+      outputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_bin/breakout_high_scores.scores",
+      buildCommand: {
+        compileCommand: "FLAT_BUFFER_COMPILE",
+        schemaPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_fbs_schemas/BreakoutHighScoresSchema.fbs"
+      }
+    },
+    {
+      inputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_raw/breakout_level_pack.json",
+      outputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_bin/breakout_level_pack.breakout_level",
+      buildCommand: {
+        compileCommand: "FLAT_BUFFER_COMPILE",
+        schemaPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_fbs_schemas/BreakoutLevelSchema.fbs"
+      }
+    },
+    {
+      inputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_raw/breakout_player_save.json",
+      outputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_bin/breakout_player_save.player",
+      buildCommand: {
+        compileCommand: "FLAT_BUFFER_COMPILE",
+        schemaPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_fbs_schemas/BreakoutPlayerSettings.fbs"
+      }
+    },
+    {
+      inputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_raw/breakout_powerups.json",
+      outputFile: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_bin/breakout_powerups.powerup",
+      buildCommand: {
+        compileCommand: "FLAT_BUFFER_COMPILE",
+        schemaPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/asset_fbs_schemas/BreakoutPowerupSchema.fbs"
+      }
+    }
+  ],
+  outputType: "ZIP"
+}

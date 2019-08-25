@@ -2,12 +2,15 @@
 # project files/dirs
 
 *.xcworkspace/
+*.aman
+*.bin
 
 /bin/
 
 # sandbox files/dirs
 
 Sandbox/*.xcodeproj/
+Sandbox/assets/asset_bin/
 
 # r2engine files/dirs
 
@@ -16,3 +19,4 @@ r2engine/*xcodeproj/
 r2Tests/*.xcodeproj/
 
 engine_assets/
+
