@@ -1,0 +1,18 @@
+namespace Breakout;
+
+file_identifier "bsco";
+
+file_extension "scores";
+
+table HighScore
+{
+	name:string;
+	points:uint;
+}
+
+table HighScores
+{
+	scores:[HighScore];
+}
+
+root_type HighScores;

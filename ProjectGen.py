@@ -1,7 +1,11 @@
 import os
 import platform
+import subprocess 
 
 path = os.path.dirname(os.path.abspath(__file__)) + "/vendor/bin/premake/"
+generateCodePath = "./r2engine/scripts/GenerateFlatbufferCode.py"
+
+subprocess.call(['python', generateCodePath])
 
 platformSystem = platform.system();
 osCall = ""

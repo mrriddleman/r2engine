@@ -1,0 +1,40 @@
+namespace r2;
+
+file_identifier "aman";
+
+file_extension "aman";
+
+
+enum AssetCompileCommand: byte
+{
+	NONE = 0,
+	FLAT_BUFFER_COMPILE
+}
+
+enum AssetType: byte
+{
+	RAW = 0,
+	ZIP
+}
+
+table AssetBuildCommand
+{
+	compileCommand:AssetCompileCommand;
+	schemaPath:string;
+}
+
+table AssetFileCommand
+{
+	inputFile:string;
+	outputFile:string;
+	buildCommand:AssetBuildCommand;
+}
+
+table AssetManifest
+{
+	outputPath:string;
+	inputFiles:[AssetFileCommand];
+	outputType:AssetType;
+}
+
+root_type AssetManifest;

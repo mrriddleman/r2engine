@@ -77,7 +77,8 @@ namespace r2
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
 #ifdef R2_DEBUG
             std::string flatcPath = R2_FLATC;
-            r2::asset::pln::Init(noptrApp->GetAssetManifestPath(), flatcPath);
+            std::string manifestDir = noptrApp->GetAssetManifestPath();
+            r2::asset::pln::Init(manifestDir, flatcPath);
             r2::asset::pln::AddWatchPaths(std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths());
 #endif
             

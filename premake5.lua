@@ -75,6 +75,7 @@ project "r2engine"
 		"imgui"
 	}
 
+	defines {'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"', 'R2_ENGINE_DATA_PATH="'..os.realpath('.')..'/r2engine/data"'}
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
     local MKDIR     = "mkdir -p "
@@ -97,8 +98,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		defines
 		{
 			"R2_PLATFORM_MAC",
-			'R2_FLATC="'..os.realpath('.')..'/vendor/flatbuffers/bin/MacOSX/flatc"',
-			'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"'
+			'R2_FLATC="'..os.realpath('.')..'/%{prj.name}/vendor/flatbuffers/bin/MacOSX/flatc"',
 		}
 
 		buildoptions 
@@ -271,6 +271,14 @@ project "Sandbox"
 	links
 	{
 		"r2engine"
+	}
+
+	defines 
+	{
+		'MANIFESTS_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_manifests"',
+		'ASSET_BIN_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_bin"',
+		'ASSET_RAW_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_raw"',
+		'ASSET_FBS_SCHEMA_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_fbs_schemas"',
 	}
 
 	filter "system:windows"

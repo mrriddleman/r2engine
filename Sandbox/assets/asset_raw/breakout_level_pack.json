@@ -1,0 +1,127 @@
+{
+  levels: [
+    {
+      name: "Level1",
+      hashName: 1,
+      blocks: [
+        {
+          symbol: 114,
+          fillColor: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 98,
+          fillColor: {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 103,
+          fillColor: {
+            r: 0.0,
+            g: 1.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        }
+      ],
+      layout: {
+        width: 10,
+        height: 3,
+        layout: "rrrrrrrrrr\nbbbbbbbbbb\ngggggggggg"
+      }
+    },
+    {
+      name: "Level2",
+      hashName: 2,
+      blocks: [
+        {
+          symbol: 114,
+          fillColor: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 98,
+          fillColor: {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 103,
+          fillColor: {
+            r: 0.0,
+            g: 1.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        }
+      ],
+      layout: {
+        width: 10,
+        height: 3,
+        layout: "bbbbbbbbbb\nrrrrrrrrrr\ngggggggggg"
+      }
+    },
+    {
+      name: "Level3",
+      hashName: 3,
+      blocks: [
+        {
+          symbol: 114,
+          fillColor: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 98,
+          fillColor: {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0
+          },
+          hp: 1
+        },
+        {
+          symbol: 103,
+          fillColor: {
+            r: 0.0,
+            g: 1.0,
+            b: 0.0,
+            a: 1.0
+          },
+          hp: 1
+        }
+      ],
+      layout: {
+        width: 10,
+        height: 3,
+        layout: "gggggggggg\nbbbbbbbbbb\nrrrrrrrrrr"
+      }
+    }
+  ]
+}

@@ -6,42 +6,10 @@
 //
 
 #include "AssetWatcher.h"
+#include "r2/Core/Assets/Pipeline/AssetManifest.h"
 
 namespace r2::asset::pln
 {
-    enum class AssetCompileCommand
-    {
-        None,
-        FlatBufferCompile
-    };
-    
-    enum class AssetType
-    {
-        Raw,
-        Zip
-    };
-    
-    struct AssetCommand
-    {
-        AssetCompileCommand compile = AssetCompileCommand::None;
-        AssetType outputType = AssetType::Zip; //output type
-    };
-    
-    struct AssetInputFile
-    {
-        std::string path = "";
-        std::string schemaPath = "";
-    };
-    
-    struct AssetManifest
-    {
-        std::string outputPath = "";
-        std::vector<std::string> outputFiles;
-        std::vector<AssetInputFile> inputFiles;
-        
-        AssetCommand command; //what to do
-    };
-    
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
     static std::vector<AssetChangedFunc> s_assetChangedListeners;
@@ -66,23 +34,23 @@ namespace r2::asset::pln
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
         s_manifestsPath = assetManifestsPath;
         
-        ReloadManifests();
-        /*
+        //ReloadManifests();
+        
         s_manifestFileWatcher.Init(std::chrono::milliseconds(1000), assetManifestsPath);
+        //@TODO(Serge): modify these to be their own functions
         s_manifestFileWatcher.AddCreatedListener(SetReloadManifests);
         s_manifestFileWatcher.AddModifyListener(SetReloadManifests);
         s_manifestFileWatcher.AddRemovedListener(SetReloadManifests);
-         */
     }
     
     void Update()
     {
-        //s_manifestFileWatcher.Run();
+        s_manifestFileWatcher.Run();
         
         if (s_reloadManifests)
         {
             ReloadManifests();
-            s_reloadManifests = false;
+            
         }
         
         for (auto& fileWatcher: s_fileWatchers)
@@ -138,6 +106,7 @@ namespace r2::asset::pln
     
     void ReloadManifests()
     {
-        
+        LoadAssetManifests(s_manifests, s_manifestsPath);
+        s_reloadManifests = false;
     }
 }

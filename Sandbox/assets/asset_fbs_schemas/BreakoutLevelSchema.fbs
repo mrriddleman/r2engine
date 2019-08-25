@@ -1,0 +1,43 @@
+namespace Breakout;
+
+file_identifier "blvl";
+
+file_extension "breakout_level";
+
+struct color4
+{
+	r:float;
+	g:float;
+	b:float;
+	a:float;
+}
+
+table Block
+{
+	symbol:byte;
+	fillColor:color4;
+	hp:int;
+	points:uint;
+}
+
+table Layout
+{
+	width:uint;
+	height:uint;
+	layout:string;
+}
+
+table Level
+{
+	name:string;
+	hashName:uint64 (hash: "fnv1a_64");
+	blocks:[Block];
+	layout:Layout;
+}
+
+table LevelPack
+{
+	levels:[Level];
+}
+
+root_type LevelPack;

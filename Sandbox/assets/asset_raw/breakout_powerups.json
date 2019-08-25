@@ -1,0 +1,44 @@
+{
+  powerups: [
+    {
+      sizeMultiplier: 2.0
+    },
+    {
+      type: "BPUT_INCREASE_PADDLE_SIZE",
+      sizeMultiplier: 2.0
+    },
+    {
+      type: "BPUT_MULTIBALL",
+      sizeMultiplier: 1.0,
+      increaseAmount: 2
+    },
+    {
+      type: "BPUT_MULTIBALL",
+      sizeMultiplier: 1.0,
+      increaseAmount: 3
+    },
+    {
+      type: "BPUT_LIFE_UP",
+      sizeMultiplier: 1.0,
+      increaseAmount: 1
+    },
+    {
+      type: "BPUT_IGNORE_COLLISIONS"
+    },
+    {
+      type: "BPUT_PADDLE_LASER"
+    },
+    {
+      type: "BPUT_DECREASE_BALL_SIZE",
+      sizeMultiplier: 0.5
+    },
+    {
+      type: "BPUT_DECREASE_PADDLE_SIZE",
+      sizeMultiplier: 0.5
+    },
+    {
+      type: "BPUT_INCREASE_BRICK_HP",
+      increaseAmount: 2
+    }
+  ]
+}

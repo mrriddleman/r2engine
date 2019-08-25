@@ -1,0 +1,20 @@
+{
+  scores: [
+    {
+      name: "John Smith",
+      points: 10
+    },
+    {
+      name: "A. Adams",
+      points: 50
+    },
+    {
+      name: "B. Bana",
+      points: 100
+    },
+    {
+      name: "S. Lansiquot",
+      points: 100000000
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+namespace Breakout;
+
+file_identifier "bpwr";
+
+file_extension "powerup";
+
+enum BreakoutPowerupType: byte
+{
+	BPUT_INCREASE_BALL_SIZE = 0,
+	BPUT_INCREASE_PADDLE_SIZE,
+	BPUT_MULTIBALL,
+	BPUT_LIFE_UP,
+	BPUT_IGNORE_COLLISIONS,
+	BPUT_PADDLE_LASER,
+	BPUT_DECREASE_BALL_SIZE,
+	BPUT_DECREASE_PADDLE_SIZE,
+	BPUT_INCREASE_BRICK_HP
+}
+
+table Powerup
+{
+	type:BreakoutPowerupType;
+	sizeMultiplier:float;
+	increaseAmount:int;
+}
+
+table Powerups
+{
+	powerups:[Powerup];
+}
+
+root_type Powerups;

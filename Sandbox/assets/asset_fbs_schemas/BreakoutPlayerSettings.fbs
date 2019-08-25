@@ -1,0 +1,14 @@
+namespace Breakout;
+
+file_identifier "bpla";
+
+file_extension "player";
+
+table PlayerSettings
+{
+	startingLevel:uint;
+	lives:uint;
+	points:uint;
+}
+
+root_type PlayerSettings;
