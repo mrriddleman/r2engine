@@ -279,6 +279,7 @@ project "Sandbox"
 		'ASSET_BIN_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_bin"',
 		'ASSET_RAW_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_raw"',
 		'ASSET_FBS_SCHEMA_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_fbs_schemas"',
+		'ASSET_TEMP_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_temp"'
 	}
 
 	filter "system:windows"

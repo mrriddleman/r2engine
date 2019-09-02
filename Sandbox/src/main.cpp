@@ -349,27 +349,28 @@ namespace
         
         r2::asset::pln::AssetFileCommand inputFile;
         inputFile.command.compile = r2::asset::pln::AssetCompileCommand::FlatBufferCompile;
-        inputFile.command.schemaPath = assetFBSSchemaDir + r2::fs::utils::PATH_SEPARATOR + "BreakoutHighScoresSchema.fbs";
-        inputFile.inputFile = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_high_scores.json";
-        inputFile.outputFile = assetBinDir + r2::fs::utils::PATH_SEPARATOR + "breakout_high_scores.scores";
+        inputFile.command.schemaPath = assetFBSSchemaDir + r2::fs::utils::PATH_SEPARATOR + "BreakoutHighScoreSchema.fbs";
+        
+        inputFile.inputPath = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_high_scores.json";
+        inputFile.outputFileName = "breakout_high_scores.scores";
         manifest.fileCommands.push_back(inputFile);
         
         inputFile.command.compile = r2::asset::pln::AssetCompileCommand::FlatBufferCompile;
         inputFile.command.schemaPath = assetFBSSchemaDir + r2::fs::utils::PATH_SEPARATOR + "BreakoutLevelSchema.fbs";
-        inputFile.inputFile = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_level_pack.json";
-        inputFile.outputFile = assetBinDir + r2::fs::utils::PATH_SEPARATOR + "breakout_level_pack.breakout_level";
+        inputFile.inputPath = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_level_pack.json";
+        inputFile.outputFileName = "breakout_level_pack.breakout_level";
         manifest.fileCommands.push_back(inputFile);
         
         inputFile.command.compile = r2::asset::pln::AssetCompileCommand::FlatBufferCompile;
         inputFile.command.schemaPath = assetFBSSchemaDir + r2::fs::utils::PATH_SEPARATOR + "BreakoutPlayerSettings.fbs";
-        inputFile.inputFile = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_player_save.json";
-        inputFile.outputFile = assetBinDir + r2::fs::utils::PATH_SEPARATOR + "breakout_player_save.player";
+        inputFile.inputPath = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_player_save.json";
+        inputFile.outputFileName = "breakout_player_save.player";
         manifest.fileCommands.push_back(inputFile);
         
         inputFile.command.compile = r2::asset::pln::AssetCompileCommand::FlatBufferCompile;
         inputFile.command.schemaPath = assetFBSSchemaDir + r2::fs::utils::PATH_SEPARATOR + "BreakoutPowerupSchema.fbs";
-        inputFile.inputFile = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_powerups.json";
-        inputFile.outputFile = assetBinDir + r2::fs::utils::PATH_SEPARATOR + "breakout_powerups.powerup";
+        inputFile.inputPath = assetRawDir + r2::fs::utils::PATH_SEPARATOR + "breakout_powerups.json";
+        inputFile.outputFileName = "breakout_powerups.powerup";
         manifest.fileCommands.push_back(inputFile);
         
         r2::asset::pln::WriteAssetManifest(manifest, "BreakoutData.aman", manifestPath);
@@ -381,7 +382,7 @@ class Sandbox: public r2::Application
 {
     virtual bool Init() override
     {
-      //  MakeAssetManifest(GetAssetManifestPath());
+        MakeAssetManifest(GetAssetManifestPath());
         
         //TestAssetCache();
         //MakeAllData();
@@ -389,13 +390,26 @@ class Sandbox: public r2::Application
     }
     
 #ifdef R2_DEBUG
+    virtual std::vector<std::string> GetAssetWatchPaths() const override
+    {
+        std::vector<std::string> assetWatchPaths = {
+            ASSET_RAW_DIR
+        };
+        
+        return assetWatchPaths;
+    }
+    
     virtual std::string GetAssetManifestPath() const override
     {
         return MANIFESTS_DIR;
     }
+    
+    virtual std::string GetAssetCompilerTempPath() const override
+    {
+        return ASSET_TEMP_DIR;
+    }
 #endif
 };
-
 
 std::unique_ptr<r2::Application> r2::CreateApplication()
 {

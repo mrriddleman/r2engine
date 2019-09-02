@@ -47,8 +47,9 @@ namespace r2
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
 #ifdef R2_DEBUG
-        virtual std::vector<std::string> GetAssetWatchPaths() const;
+        virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;
+        virtual std::string GetAssetCompilerTempPath() const = 0; 
 #endif
     };
     

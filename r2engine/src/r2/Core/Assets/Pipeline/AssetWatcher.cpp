@@ -7,6 +7,8 @@
 
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
+#include "r2/Core/Assets/Pipeline/AssetCompiler.h"
+
 
 namespace r2::asset::pln
 {
@@ -27,8 +29,10 @@ namespace r2::asset::pln
     void ReloadManifests();
     void BuildManifests();
     void NotifyAssetChanged();
+    void PushBuildRequest(const std::string& changedPath);
     
     void Init(const std::string& assetManifestsPath,
+              const std::string& assetTempPath,
               const std::string& flatbufferCompilerLocation)
     {
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
@@ -41,6 +45,8 @@ namespace r2::asset::pln
         s_manifestFileWatcher.AddCreatedListener(SetReloadManifests);
         s_manifestFileWatcher.AddModifyListener(SetReloadManifests);
         s_manifestFileWatcher.AddRemovedListener(SetReloadManifests);
+        
+        r2::asset::pln::cmp::Init(assetTempPath);
     }
     
     void Update()
@@ -60,6 +66,7 @@ namespace r2::asset::pln
         
         //pull commands from the queue to request asset builds
         
+        r2::asset::pln::cmp::Update();
     }
     
     void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths)
@@ -78,14 +85,16 @@ namespace r2::asset::pln
     
     void ModifiedWatchPathDispatch(const std::string& path)
     {
-        R2_LOGI("Asset watcher - Modified path: %s\n", path.c_str());
+        //R2_LOGI("Asset watcher - Modified path: %s\n", path.c_str());
         //Push some sort of command to a queue here
+        PushBuildRequest(path);
     }
     
     void CreatedWatchPathDispatch(const std::string& path)
     {
-        R2_LOGI("Asset watcher - Created path: %s\n", path.c_str());
+        //R2_LOGI("Asset watcher - Created path: %s\n", path.c_str());
         //Push some sort of command to a queue here
+        PushBuildRequest(path);
     }
     
     void RemovedWatchPathDispatch(const std::string& path)
@@ -115,5 +124,20 @@ namespace r2::asset::pln
     void BuildManifests()
     {
         BuildAssetManifestsFromJson(s_manifestsPath);
+    }
+    
+    void PushBuildRequest(const std::string& changedPath)
+    {
+        for (const auto& manifest : s_manifests)
+        {
+            for (const auto& fileCommand : manifest.fileCommands)
+            {
+                if(std::filesystem::path(fileCommand.inputPath) == std::filesystem::path(changedPath))
+                {
+                    r2::asset::pln::cmp::PushBuildRequest(manifest);
+                    return;
+                }
+            }
+        }
     }
 }

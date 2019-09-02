@@ -75,10 +75,12 @@ namespace r2
         {
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
+            
 #ifdef R2_DEBUG
             std::string flatcPath = R2_FLATC;
             std::string manifestDir = noptrApp->GetAssetManifestPath();
-            r2::asset::pln::Init(manifestDir, flatcPath);
+            std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
+            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath);
             r2::asset::pln::AddWatchPaths(std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths());
 #endif
             
@@ -95,10 +97,7 @@ namespace r2
             WindowSizeChangedEvent(mDisplaySize.width, mDisplaySize.height);
         
             R2_LOG(INFO, "Test to see if we get a log file");
-            
 
-            
-            
             return true;
         }
 

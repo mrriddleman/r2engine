@@ -76,11 +76,7 @@ namespace r2
 #ifdef R2_DEBUG
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {
-        
-        std::vector<std::string> paths = {
-            //Add watch paths here
-            R2_ENGINE_ASSETS
-        };
+        std::vector<std::string> paths;
         return paths;
     }
     
@@ -89,5 +85,9 @@ namespace r2
         return "";
     }
 
+    std::string Application::GetAssetCompilerTempPath() const
+    {
+        return "";
+    }
 #endif
 }

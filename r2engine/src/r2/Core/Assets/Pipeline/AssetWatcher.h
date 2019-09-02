@@ -18,6 +18,7 @@ namespace r2::asset::pln
     using AssetChangedFunc = std::function<void (const std::vector<std::string>& assets)>;
     
     void Init( const std::string& assetManifestsPath,
+               const std::string& assetTempPath,
                const std::string& flatbufferCompilerLocation);
     
     void Update();

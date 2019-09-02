@@ -11,10 +11,14 @@
 
 namespace r2::asset::pln::flat
 {
-    void RunSystemCommand(const char* command)
+    int RunSystemCommand(const char* command)
     {
         int result = system(command);
-        R2_LOGI("RunSystemCommand generated result: %i\n", result);
+        if(result != 0)
+        {
+            R2_LOGE("Failed to run command: %s\n\n with result: %i\n", command, result);
+        }
+        return result;
     }
     
     bool GenerateFlatbufferJSONFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath)
@@ -25,10 +29,10 @@ namespace r2::asset::pln::flat
 #ifdef R2_PLATFORM_WINDOWS
         sprintf_s(command, sizeof(command), "\"%s\" -t -o \"%s\" \"%s\" -- \"%s\" --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #else
-        sprintf(command, "\"%s\" -t -o \"%s\" \"%s\" -- \"%s\" --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
+        sprintf(command, "%s -t -o %s %s -- %s --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #endif
-        RunSystemCommand(command);
-        return true;
+        
+        return RunSystemCommand(command) == 0;
     }
     
     bool GenerateFlatbufferBinaryFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath)
@@ -39,10 +43,9 @@ namespace r2::asset::pln::flat
 #ifdef R2_PLATFORM_WINDOWS
         sprintf_s(command, sizeof(command), "\"%s\" -b -o \"%s\" \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #else
-        sprintf(command, "\"%s\" -b -o \"%s\" \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
+        sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #endif
-        RunSystemCommand(command);
-        return true;
+        return RunSystemCommand(command) == 0;
     }
     
     bool GenerateFlatbufferCodeFromSchema(const std::string& outputDir, const std::string& fbsPath)
@@ -55,7 +58,6 @@ namespace r2::asset::pln::flat
 #else
         sprintf(command, "\"%s\" -c -o \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
 #endif
-        RunSystemCommand(command);
-        return true;
+        return RunSystemCommand(command) == 0;
     }
 }

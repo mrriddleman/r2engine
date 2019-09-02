@@ -33,8 +33,8 @@ namespace r2::asset::pln
     
     struct AssetFileCommand
     {
-        std::string inputFile = "";
-        std::string outputFile = "";
+        std::string inputPath = "";
+        std::string outputFileName = "";
         AssetBuildCommand command;
     };
     

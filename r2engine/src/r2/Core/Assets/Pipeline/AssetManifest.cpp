@@ -9,7 +9,7 @@
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest_generated.h"
 #include "r2/Core/File/PathUtils.h"
-#include "filesystem"
+#include <filesystem>
 #include <fstream>
 
 namespace r2::asset::pln
@@ -25,7 +25,7 @@ namespace r2::asset::pln
         
         for (const auto& assetFileCommand: manifest.fileCommands)
         {
-            fileCommands.push_back(r2::CreateAssetFileCommand(builder, builder.CreateString(assetFileCommand.inputFile), builder.CreateString(assetFileCommand.outputFile), r2::CreateAssetBuildCommand(builder, static_cast<r2::AssetCompileCommand>(assetFileCommand.command.compile), builder.CreateString(assetFileCommand.command.schemaPath))));
+            fileCommands.push_back(r2::CreateAssetFileCommand(builder, builder.CreateString(assetFileCommand.inputPath), builder.CreateString(assetFileCommand.outputFileName), r2::CreateAssetBuildCommand(builder, static_cast<r2::AssetCompileCommand>(assetFileCommand.command.compile), builder.CreateString(assetFileCommand.command.schemaPath))));
         }
         
         auto inputFiles = builder.CreateVector(fileCommands);
@@ -115,8 +115,8 @@ namespace r2::asset::pln
             for (u32 i = 0; i < assetManifest->inputFiles()->Length(); ++i)
             {
                 AssetFileCommand fileCommand;
-                fileCommand.inputFile = assetManifest->inputFiles()->Get(i)->inputFile()->str();
-                fileCommand.outputFile = assetManifest->inputFiles()->Get(i)->outputFile()->str();
+                fileCommand.inputPath = assetManifest->inputFiles()->Get(i)->inputFile()->str();
+                fileCommand.outputFileName = assetManifest->inputFiles()->Get(i)->outputFile()->str();
                 fileCommand.command.compile = static_cast<AssetCompileCommand>( assetManifest->inputFiles()->Get(i)->buildCommand()->compileCommand() );
                 fileCommand.command.schemaPath = assetManifest->inputFiles()->Get(i)->buildCommand()->schemaPath()->str();
                 
