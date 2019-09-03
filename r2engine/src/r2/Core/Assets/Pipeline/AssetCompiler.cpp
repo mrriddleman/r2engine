@@ -54,7 +54,7 @@ namespace r2::asset::pln::cmp
                 
                 for (const std::string& path: files)
                 {
-                    mz_bool result = mz_zip_writer_add_file(&archive, outputFileName.c_str(), path.c_str(), "", 0, MZ_DEFAULT_COMPRESSION);
+                    mz_bool result = mz_zip_writer_add_file(&archive, std::filesystem::path(path).filename().c_str(), path.c_str(), "", 0, MZ_DEFAULT_COMPRESSION);
                     
                     if (!result)
                     {
