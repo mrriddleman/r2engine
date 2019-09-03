@@ -8,6 +8,7 @@
 #ifndef AssetCompiler_h
 #define AssetCompiler_h
 
+#ifdef R2_DEBUG
 #include <string>
 
 namespace r2::asset::pln
@@ -23,5 +24,5 @@ namespace r2::asset::pln::cmp
     void Update();
     
 }
-
+#endif
 #endif /* AssetCompiler_h */

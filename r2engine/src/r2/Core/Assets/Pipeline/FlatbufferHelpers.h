@@ -8,6 +8,7 @@
 #ifndef FlatbufferHelpers_h
 #define FlatbufferHelpers_h
 
+#ifdef R2_DEBUG
 #include <string>
 
 namespace r2::asset::pln::flat
@@ -17,4 +18,5 @@ namespace r2::asset::pln::flat
     bool GenerateFlatbufferCodeFromSchema(const std::string& outputDir, const std::string& fbsPath);
 }
 
+#endif
 #endif /* FlatbufferHelpers_h */

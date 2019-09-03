@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-08.
 //
 
+#ifdef R2_DEBUG
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
@@ -14,7 +15,6 @@ namespace r2::asset::pln
 {
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
-    static std::vector<AssetChangedFunc> s_assetChangedListeners;
     static FileWatcher s_manifestFileWatcher;
     static std::string s_flatBufferCompilerPath;
     static std::string s_manifestsPath;
@@ -103,11 +103,6 @@ namespace r2::asset::pln
         //Push some sort of command to a queue here
     }
     
-    void AddAssetChangedListener(AssetChangedFunc func)
-    {
-        s_assetChangedListeners.push_back(func);
-    }
-    
     void SetReloadManifests(const std::string& changedPath)
     {
         s_reloadManifests = true;
@@ -141,3 +136,5 @@ namespace r2::asset::pln
         }
     }
 }
+
+#endif

@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-24.
 //
 
+#ifdef R2_DEBUG
 #include "FlatbufferHelpers.h"
 #include <cstdlib>
 #include <cstdio>
@@ -61,3 +62,5 @@ namespace r2::asset::pln::flat
         return RunSystemCommand(command) == 0;
     }
 }
+
+#endif

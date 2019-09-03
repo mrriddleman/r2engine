@@ -8,6 +8,7 @@
 #ifndef FileWatcher_h
 #define FileWatcher_h
 
+#ifdef R2_DEBUG
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -48,4 +49,5 @@ namespace r2::asset::pln
     };
 }
 
+#endif
 #endif /* FileWatcher_h */

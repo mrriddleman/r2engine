@@ -8,6 +8,8 @@
 #ifndef AssetWatcher_h
 #define AssetWatcher_h
 
+#ifdef R2_DEBUG
+
 #include <vector>
 #include <string>
 #include <functional>
@@ -15,17 +17,15 @@
 
 namespace r2::asset::pln
 {
-    using AssetChangedFunc = std::function<void (const std::vector<std::string>& assets)>;
-    
     void Init( const std::string& assetManifestsPath,
                const std::string& assetTempPath,
                const std::string& flatbufferCompilerLocation);
     
     void Update();
+    
     void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths);
-    
-    void AddAssetChangedListener(AssetChangedFunc func);
-    
 }
+
+#endif
 
 #endif /* AssetWatcher_h */

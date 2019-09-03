@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-25.
 //
 
+#ifdef R2_DEBUG
 #include "AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
@@ -183,3 +184,4 @@ namespace r2::asset::pln::cmp
         std::filesystem::remove_all(s_tempBuildPath);
     }
 }
+#endif

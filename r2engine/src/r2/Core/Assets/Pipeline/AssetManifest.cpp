@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-08-24.
 //
-
+#ifdef R2_DEBUG
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest_generated.h"
@@ -154,3 +154,4 @@ namespace r2::asset::pln
         return true;
     }
 }
+#endif

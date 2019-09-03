@@ -7,6 +7,7 @@
 
 #ifndef AssetManifest_h
 #define AssetManifest_h
+#ifdef R2_DEBUG
 
 #include <vector>
 #include <string>
@@ -50,4 +51,5 @@ namespace r2::asset::pln
     bool BuildAssetManifestsFromJson(const std::string& manifestDir);
 }
 
+#endif
 #endif /* AssetManifest_h */

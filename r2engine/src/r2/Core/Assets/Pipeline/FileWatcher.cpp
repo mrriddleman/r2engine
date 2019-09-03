@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-07.
 //
 
+#ifdef R2_DEBUG
 #include "FileWatcher.h"
 
 namespace r2::asset::pln
@@ -116,3 +117,4 @@ namespace r2::asset::pln
         return timeEntry != mPaths.end();
     }
 }
+#endif

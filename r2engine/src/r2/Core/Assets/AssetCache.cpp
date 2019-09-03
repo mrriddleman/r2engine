@@ -61,12 +61,10 @@ namespace r2::asset
             mAssetLoaders = MAKE_SARRAY(mMallocArena, AssetLoader*, lruCapacity);
         }
         
-        //@TODO(Serge): only in debug
-        r2::asset::pln::AddAssetChangedListener([this](const std::vector<std::string>& assets){
-            
-            //when changed do something
-            
-        });
+        
+#ifdef R2_DEBUG
+        //@TODO(Serge): add in watch paths for file watcher
+#endif
         
 
         return true;
