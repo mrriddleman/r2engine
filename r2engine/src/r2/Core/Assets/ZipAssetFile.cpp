@@ -28,23 +28,32 @@ namespace r2::asset
     
     bool ZipAssetFile::Init(const char* assetPath, r2::mem::AllocateFunc alloc, r2::mem::FreeFunc free)
     {
-        r2::fs::DeviceConfig zipConfig;
-        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
+        R2_CHECK(alloc != nullptr, "Cannot pass in nullptr for alloc function!");
+        R2_CHECK(free != nullptr, "Cannot pass in nullptr for free function!");
+        R2_CHECK(assetPath != nullptr, "Cannot pass in nullptr for asset path!");
+        R2_CHECK(assetPath != "", "Do not pass in empty path!");
         
-        mZipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, assetPath, r2::fs::Mode::Read | r2::fs::Mode::Binary);
-        
-        R2_CHECK(mZipFile != nullptr, "We should have a zip file!");
-        
-        bool result = mZipFile->InitArchive(alloc, free);
-        
-        R2_CHECK(result, "We should be able to initialize the archive!");
-        
-        return result;
+        strcpy(mPath, assetPath);
+        mAlloc = alloc;
+        mFree = free;
+        mZipFile = nullptr;
+        return strcmp(mPath, "") != 0;
     }
     
     bool ZipAssetFile::Open()
     {
-        return mZipFile != nullptr;
+        r2::fs::DeviceConfig zipConfig;
+        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
+        
+        mZipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, mPath, r2::fs::Mode::Read | r2::fs::Mode::Binary);
+        
+        R2_CHECK(mZipFile != nullptr, "We should have a zip file!");
+        
+        bool result = mZipFile->InitArchive(mAlloc, mFree);
+        
+        R2_CHECK(result, "We should be able to initialize the archive!");
+        
+        return result;
     }
     
     bool ZipAssetFile::Close()

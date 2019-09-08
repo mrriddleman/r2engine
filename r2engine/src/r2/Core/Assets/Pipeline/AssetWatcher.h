@@ -17,6 +17,10 @@
 
 namespace r2::asset::pln
 {
+    
+    using AssetBuiltFunc = std::function<void(std::vector<std::string> paths)>;
+    
+    
     void Init( const std::string& assetManifestsPath,
                const std::string& assetTempPath,
                const std::string& flatbufferCompilerLocation);
@@ -24,6 +28,12 @@ namespace r2::asset::pln
     void Update();
     
     void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths);
+    
+    
+    void PushNewlyBuiltAssets(std::vector<std::string> paths);
+    
+
+    void AddAssetBuiltFunction(AssetBuiltFunc func);
 }
 
 #endif

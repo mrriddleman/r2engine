@@ -24,6 +24,7 @@ namespace r2::asset
         virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) const = 0;
         virtual u64 GetAssetHandle(u64 index) const = 0;
         virtual ~AssetFile() {}
+        virtual const char* FilePath() const = 0;
     };
 }
 

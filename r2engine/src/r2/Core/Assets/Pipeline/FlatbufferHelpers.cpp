@@ -57,7 +57,7 @@ namespace r2::asset::pln::flat
 #ifdef R2_PLATFORM_WINDOWS
         sprintf_s(command, sizeof(command), "\"%s\" -c -o \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
 #else
-        sprintf(command, "\"%s\" -c -o \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
+        sprintf(command, "%s -c -o %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
 #endif
         return RunSystemCommand(command) == 0;
     }

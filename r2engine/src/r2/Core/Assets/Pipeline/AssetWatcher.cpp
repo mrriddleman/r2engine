@@ -15,6 +15,8 @@ namespace r2::asset::pln
 {
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
+    static std::vector<AssetBuiltFunc> s_assetsBuiltListeners;
+    
     static FileWatcher s_manifestFileWatcher;
     static std::string s_flatBufferCompilerPath;
     static std::string s_manifestsPath;
@@ -134,6 +136,19 @@ namespace r2::asset::pln
                 }
             }
         }
+    }
+    
+    void PushNewlyBuiltAssets(std::vector<std::string> paths)
+    {
+        for (AssetBuiltFunc& func : s_assetsBuiltListeners)
+        {
+            func(paths);
+        }
+    }
+    
+    void AddAssetBuiltFunction(AssetBuiltFunc func)
+    {
+        s_assetsBuiltListeners.push_back(func);
     }
 }
 

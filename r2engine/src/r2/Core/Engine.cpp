@@ -89,7 +89,7 @@ namespace r2
             PushLayer(std::make_unique<ImGuiLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             
-            TestSound(CPLAT.RootPath());
+           // TestSound(CPLAT.RootPath());
             mDisplaySize = noptrApp->GetPreferredResolution();
             glClearColor(0.f, 0.5f, 1.0f, 1.0f);
             
@@ -106,7 +106,9 @@ namespace r2
     
     void Engine::Update()
     {
+        
 #ifdef R2_DEBUG
+        //Should be first
         r2::asset::pln::Update();
 #endif
         

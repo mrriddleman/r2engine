@@ -10,11 +10,11 @@
     },
     {
       name: "B. Bana",
-      points: 100
+      points: 1
     },
     {
       name: "S. Lansiquot",
-      points: 10000000
+      points: 100009
     }
   ]
 }

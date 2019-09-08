@@ -10,6 +10,7 @@
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 #include <filesystem>
 #include <stdio.h>
 #include "miniz.h"
@@ -127,6 +128,7 @@ namespace r2::asset::pln::cmp
             R2_CHECK(result, "Failed to create temporary directory: %s\n", s_tempBuildPath.c_str());
         }
         
+        std::vector<std::string> outputFiles;
         while (s_manifestWorkQueue.size() > 0)
         {
             const r2::asset::pln::AssetManifest& nextAsset = s_manifestWorkQueue.front();
@@ -172,6 +174,10 @@ namespace r2::asset::pln::cmp
                 {
                     R2_LOGE("Failed to output asset: %s\n", nextAsset.assetOutputPath.c_str());
                 }
+                else
+                {
+                    outputFiles.push_back(nextAsset.assetOutputPath);
+                }
             }
             else
             {
@@ -182,6 +188,11 @@ namespace r2::asset::pln::cmp
         }
         
         std::filesystem::remove_all(s_tempBuildPath);
+        
+        if (outputFiles.size() > 0)
+        {
+            r2::asset::pln::PushNewlyBuiltAssets(outputFiles);
+        }
     }
 }
 #endif

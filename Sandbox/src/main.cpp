@@ -33,185 +33,160 @@ namespace
 {
     void TestAssetCache()
     {
-        r2::asset::AssetCache assetCache;
-        char filePath[r2::fs::FILE_PATH_LENGTH];
-        
-        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "AllBreakoutData.zip");
-        
-        r2::asset::ZipAssetFile* zipFile = assetCache.MakeZipAssetFile(filePath);
-        
-//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_level_pack.breakout_level");
+//        r2::asset::AssetCache assetCache;
+//        char filePath[r2::fs::FILE_PATH_LENGTH];
 //
-//        r2::asset::RawAssetFile* levelsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//        r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
 //
-//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_powerups.powerup");
-//
-//        r2::asset::RawAssetFile* powerupsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
-//
-//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_high_scores.scores");
-//
-//        r2::asset::RawAssetFile* highscoresFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
-//
-//        r2::fs::utils::AppendSubPath(CPLAT.RootPath().c_str(), filePath, "breakout_player_save.player");
-//
-//        r2::asset::RawAssetFile* settingsFile = (r2::asset::RawAssetFile*)assetCache.MakeRawAssetFile(filePath);
+//        r2::asset::ZipAssetFile* zipFile = assetCache.MakeZipAssetFile(filePath);
 //
 //
+//        r2::asset::FileList files = assetCache.MakeFileList(10);
+//        r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
 //
-//        r2::sarr::Push(*files, (r2::asset::AssetFile*)levelsFile);
-//        r2::sarr::Push(*files, (r2::asset::AssetFile*)powerupsFile);
-//        r2::sarr::Push(*files, (r2::asset::AssetFile*)highscoresFile);
-//        r2::sarr::Push(*files, (r2::asset::AssetFile*)settingsFile);
+//        bool assetCacheInitialized = assetCache.Init(r2::mem::utils::MemBoundary(), files);
+//
+//        R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
         
-        r2::asset::FileList files = assetCache.MakeFileList(10);
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
+//        r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
+//
+//        auto levelAssetHandle = assetCache.LoadAsset(levelsAsset);
+//        r2::asset::AssetBuffer* assetBuffer = assetCache.GetAssetBuffer(levelAssetHandle);
+//
+//        R2_CHECK(assetBuffer != nullptr, "Asset buffer is nullptr");
+//
+//        const byte* data = assetBuffer->Data();
+//
+//        const auto levelPack = Breakout::GetLevelPack(data);
+//
+//        const auto levels = levelPack->levels();
+//
+//        printf("======================Levels==========================\n");
+//
+//        for (u32 i = 0; i < levels->Length(); ++i)
+//        {
+//            printf("Level: %s\n", levels->Get(i)->name()->c_str());
+//
+//            printf("Hash: %llu\n", levels->Get(i)->hashName());
+//
+//            const auto blocks = levels->Get(i)->blocks();
+//
+//            for (u32 j = 0; j < blocks->Length(); ++j)
+//            {
+//                auto fillColor = blocks->Get(j)->fillColor();
+//                printf("-------------------Block--------------------\n");
+//
+//                printf("Color: r: %f g: %f b: %f a: %f\n", fillColor->r(), fillColor->g(), fillColor->b(), fillColor->a());
+//
+//                printf("HP: %i\n", blocks->Get(j)->hp());
+//
+//                printf("Symbol: %c\n", blocks->Get(j)->symbol());
+//
+//                printf("--------------------------------------------\n");
+//            }
+//
+//            printf("----------------------Layout-----------------\n");
+//
+//            printf("Height: %u\n", levels->Get(i)->layout()->height());
+//
+//            printf("Width: %u\n\n", levels->Get(i)->layout()->width());
+//
+//            printf("%s\n", levels->Get(i)->layout()->layout()->c_str());
+//
+//            printf("---------------------------------------------\n");
+//        }
+//        printf("======================================================\n");
+//
+//
+//
+//        printf("======================Powerups==========================\n");
+//
+//        r2::asset::Asset powerupsAsset("breakout_powerups.powerup");
+//
+//        auto powerupsAssetHandle = assetCache.LoadAsset(powerupsAsset);
+//        r2::asset::AssetBuffer* powerupAssetBuffer = assetCache.GetAssetBuffer(powerupsAssetHandle);
+//
+//        R2_CHECK(powerupAssetBuffer != nullptr, "Asset buffer is nullptr");
+//
+//        const byte* powerupsData = powerupAssetBuffer->Data();
+//
+//        const auto powerupsfbb = Breakout::GetPowerups(powerupsData);
+//
+//        const auto powerups = powerupsfbb->powerups();
+//
+//        for (u32 i = 0; i < powerups->Length(); ++i)
+//        {
+//            auto powerup = powerups->Get(i);
+//            printf("----------------------Powerup-----------------\n");
+//
+//            printf("type: %i\n", powerup->type());
+//
+//            printf("size multiplier: %f\n", powerup->sizeMultiplier());
+//
+//            printf("increase amount: %i\n", powerup->increaseAmount());
+//
+//            printf("----------------------------------------------\n");
+//        }
+//
+//        printf("========================================================\n");
+//
+//        r2::asset::Asset highScoresAsset("breakout_high_scores.scores");
+//
+//        auto highScoreAssetHandle = assetCache.LoadAsset(highScoresAsset);
+//        r2::asset::AssetBuffer* highScoreAssetBuffer = assetCache.GetAssetBuffer(highScoreAssetHandle);
+//
+//        R2_CHECK(highScoreAssetBuffer != nullptr, "Asset buffer is nullptr");
+//
+//        const auto scores = Breakout::GetHighScores(highScoreAssetBuffer->Data())->scores();
+//
+//        printf("======================Scores==========================\n");
+//
+//        for (u32 i = 0; i < scores->Length(); ++i)
+//        {
+//            auto score = scores->Get(i);
+//
+//            printf("Player: %s\t\tScore: %u\n", score->name()->c_str(), score->points());
+//        }
+//
+//        printf("======================================================\n");
+//
+//        r2::asset::Asset playerSettingsAsset("breakout_player_save.player");
+//
+//        auto playerSettingsAssetHandle = assetCache.LoadAsset(playerSettingsAsset);
+//        r2::asset::AssetBuffer* settingsAssetBuffer = assetCache.GetAssetBuffer(playerSettingsAssetHandle);
+//
+//        R2_CHECK(settingsAssetBuffer != nullptr, "Asset buffer is nullptr");
+//
+//        const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer->Data());
+//
+//        printf("======================Settings==========================\n");
+//
+//        printf("Player Starting Level: %u\n", settings->startingLevel());
+//
+//        printf("Player Starting Lives: %u\n", settings->lives());
+//
+//        printf("Player points: %u\n", settings->points());
+//
+//        printf("========================================================\n");
+//
         
-        bool assetCacheInitialized = assetCache.Init(r2::mem::utils::MemBoundary(), files);
+//        auto oneMoreLevelRef = assetCache.GetAssetBuffer(levelAssetHandle);
+//
+//        auto oneMoreScoreRef = assetCache.GetAssetBuffer(highScoreAssetHandle);
+//
+//        assetCache.ReturnAssetBuffer(assetBuffer);
+//
+//        assetCache.ReturnAssetBuffer(powerupAssetBuffer);
+//
+//        assetCache.ReturnAssetBuffer(highScoreAssetBuffer);
+//
+//        assetCache.ReturnAssetBuffer(settingsAssetBuffer);
+//
+//        assetCache.ReturnAssetBuffer(oneMoreLevelRef);
+//
+//        assetCache.ReturnAssetBuffer(oneMoreScoreRef);
         
-        R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
-        
-        r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
-        
-        r2::asset::AssetBuffer* assetBuffer = assetCache.GetAssetBuffer(levelsAsset);
-        
-        R2_CHECK(assetBuffer != nullptr, "Asset buffer is nullptr");
-        
-        const byte* data = assetBuffer->Data();
-        
-        const auto levelPack = Breakout::GetLevelPack(data);
-        
-        const auto levels = levelPack->levels();
-        
-        printf("======================Levels==========================\n");
-        
-        for (u32 i = 0; i < levels->Length(); ++i)
-        {
-            printf("Level: %s\n", levels->Get(i)->name()->c_str());
-            
-            printf("Hash: %llu\n", levels->Get(i)->hashName());
-            
-            const auto blocks = levels->Get(i)->blocks();
-            
-            for (u32 j = 0; j < blocks->Length(); ++j)
-            {
-                auto fillColor = blocks->Get(j)->fillColor();
-                printf("-------------------Block--------------------\n");
-                
-                printf("Color: r: %f g: %f b: %f a: %f\n", fillColor->r(), fillColor->g(), fillColor->b(), fillColor->a());
-                
-                printf("HP: %i\n", blocks->Get(j)->hp());
-                
-                printf("Symbol: %c\n", blocks->Get(j)->symbol());
-                
-                printf("--------------------------------------------\n");
-            }
-            
-            printf("----------------------Layout-----------------\n");
-            
-            printf("Height: %u\n", levels->Get(i)->layout()->height());
-            
-            printf("Width: %u\n\n", levels->Get(i)->layout()->width());
-            
-            printf("%s\n", levels->Get(i)->layout()->layout()->c_str());
-            
-            printf("---------------------------------------------\n");
-        }
-        printf("======================================================\n");
-        
-        
-        
-        printf("======================Powerups==========================\n");
-        
-        r2::asset::Asset powerupsAsset("breakout_powerups.powerup");
-        
-        r2::asset::AssetBuffer* powerupAssetBuffer = assetCache.GetAssetBuffer(powerupsAsset);
-        
-        R2_CHECK(powerupAssetBuffer != nullptr, "Asset buffer is nullptr");
-        
-        const byte* powerupsData = powerupAssetBuffer->Data();
-        
-        const auto powerupsfbb = Breakout::GetPowerups(powerupsData);
-        
-        const auto powerups = powerupsfbb->powerups();
-        
-        for (u32 i = 0; i < powerups->Length(); ++i)
-        {
-            auto powerup = powerups->Get(i);
-            printf("----------------------Powerup-----------------\n");
-            
-            printf("type: %i\n", powerup->type());
-            
-            printf("size multiplier: %f\n", powerup->sizeMultiplier());
-            
-            printf("increase amount: %i\n", powerup->increaseAmount());
-            
-            printf("----------------------------------------------\n");
-        }
-        
-        printf("========================================================\n");
-        
-        
-        
-        
-        r2::asset::Asset highScoresAsset("breakout_high_scores.scores");
-        
-        r2::asset::AssetBuffer* highScoreAssetBuffer = assetCache.GetAssetBuffer(highScoresAsset);
-        
-        R2_CHECK(highScoreAssetBuffer != nullptr, "Asset buffer is nullptr");
-        
-        const auto scores = Breakout::GetHighScores(highScoreAssetBuffer->Data())->scores();
-        
-        printf("======================Scores==========================\n");
-        
-        for (u32 i = 0; i < scores->Length(); ++i)
-        {
-            auto score = scores->Get(i);
-            
-            printf("Player: %s\t\tScore: %u\n", score->name()->c_str(), score->points());
-        }
-        
-        printf("======================================================\n");
-        
-        
-        
-        r2::asset::Asset playerSettingsAsset("breakout_player_save.player");
-        
-        r2::asset::AssetBuffer* settingsAssetBuffer = assetCache.GetAssetBuffer(playerSettingsAsset);
-        
-        R2_CHECK(settingsAssetBuffer != nullptr, "Asset buffer is nullptr");
-        
-        const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer->Data());
-        
-        printf("======================Settings==========================\n");
-        
-        printf("Player Starting Level: %u\n", settings->startingLevel());
-        
-        printf("Player Starting Lives: %u\n", settings->lives());
-        
-        printf("Player points: %u\n", settings->points());
-        
-        printf("========================================================\n");
-        
-        
-        auto oneMoreLevelRef = assetCache.GetAssetBuffer(levelsAsset);
-        
-        auto oneMoreScoreRef = assetCache.GetAssetBuffer(highScoresAsset);
-        
-        
-        assetCache.ReturnAssetBuffer(assetBuffer);
-        
-        assetCache.ReturnAssetBuffer(powerupAssetBuffer);
-        
-        assetCache.ReturnAssetBuffer(highScoreAssetBuffer);
-        
-        assetCache.ReturnAssetBuffer(settingsAssetBuffer);
-        
-        assetCache.ReturnAssetBuffer(oneMoreLevelRef);
-        
-        assetCache.ReturnAssetBuffer(oneMoreScoreRef);
-        
-        
-        assetCache.Shutdown();
+//        assetCache.Shutdown();
     }
     
     void WriteBuffer(const char* name, flatbuffers::FlatBufferBuilder& builder)
@@ -380,13 +355,186 @@ namespace
 
 class Sandbox: public r2::Application
 {
+public:
     virtual bool Init() override
     {
-        MakeAssetManifest(GetAssetManifestPath());
+        char filePath[r2::fs::FILE_PATH_LENGTH];
         
-        //TestAssetCache();
-        //MakeAllData();
-        return true;
+        r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
+        
+        r2::asset::ZipAssetFile* zipFile = assetCache.MakeZipAssetFile(filePath);
+        
+        r2::asset::FileList files = assetCache.MakeFileList(10);
+        
+        r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
+        
+        bool assetCacheInitialized = assetCache.Init(r2::mem::utils::MemBoundary(), files);
+        
+        R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
+        
+        reload = true;
+        
+        if (assetCacheInitialized)
+        {
+            assetCache.AddReloadFunction([this](r2::asset::AssetHandle handle){
+                reload = true;
+            });
+        }
+        
+        return assetCacheInitialized;
+    }
+    
+    virtual void Update() override
+    {
+        if (reload)
+        {
+            reload = false;
+            
+            r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
+            
+            auto levelAssetHandle = assetCache.LoadAsset(levelsAsset);
+            
+            r2::asset::AssetBuffer* assetBuffer = assetCache.GetAssetBuffer(levelAssetHandle);
+            
+            R2_CHECK(assetBuffer != nullptr, "Asset buffer is nullptr");
+            
+            const byte* data = assetBuffer->Data();
+            
+            const auto levelPack = Breakout::GetLevelPack(data);
+            
+            const auto levels = levelPack->levels();
+            
+            printf("======================Levels==========================\n");
+            
+            for (u32 i = 0; i < levels->Length(); ++i)
+            {
+                printf("Level: %s\n", levels->Get(i)->name()->c_str());
+                
+                printf("Hash: %llu\n", levels->Get(i)->hashName());
+                
+                const auto blocks = levels->Get(i)->blocks();
+                
+                for (u32 j = 0; j < blocks->Length(); ++j)
+                {
+                    auto fillColor = blocks->Get(j)->fillColor();
+                    printf("-------------------Block--------------------\n");
+                    
+                    printf("Color: r: %f g: %f b: %f a: %f\n", fillColor->r(), fillColor->g(), fillColor->b(), fillColor->a());
+                    
+                    printf("HP: %i\n", blocks->Get(j)->hp());
+                    
+                    printf("Symbol: %c\n", blocks->Get(j)->symbol());
+                    
+                    printf("--------------------------------------------\n");
+                }
+                
+                printf("----------------------Layout-----------------\n");
+                
+                printf("Height: %u\n", levels->Get(i)->layout()->height());
+                
+                printf("Width: %u\n\n", levels->Get(i)->layout()->width());
+                
+                printf("%s\n", levels->Get(i)->layout()->layout()->c_str());
+                
+                printf("---------------------------------------------\n");
+            }
+            printf("======================================================\n");
+            
+            
+            
+            printf("======================Powerups==========================\n");
+            
+            r2::asset::Asset powerupsAsset("breakout_powerups.powerup");
+            
+            auto powerupsAssetHandle = assetCache.LoadAsset(powerupsAsset);
+            r2::asset::AssetBuffer* powerupAssetBuffer = assetCache.GetAssetBuffer(powerupsAssetHandle);
+            
+            R2_CHECK(powerupAssetBuffer != nullptr, "Asset buffer is nullptr");
+            
+            const byte* powerupsData = powerupAssetBuffer->Data();
+            
+            const auto powerupsfbb = Breakout::GetPowerups(powerupsData);
+            
+            const auto powerups = powerupsfbb->powerups();
+            
+            for (u32 i = 0; i < powerups->Length(); ++i)
+            {
+                auto powerup = powerups->Get(i);
+                printf("----------------------Powerup-----------------\n");
+                
+                printf("type: %i\n", powerup->type());
+                
+                printf("size multiplier: %f\n", powerup->sizeMultiplier());
+                
+                printf("increase amount: %i\n", powerup->increaseAmount());
+                
+                printf("----------------------------------------------\n");
+            }
+            
+            printf("========================================================\n");
+            
+            r2::asset::Asset highScoresAsset("breakout_high_scores.scores");
+            
+            auto highScoreAssetHandle = assetCache.LoadAsset(highScoresAsset);
+            r2::asset::AssetBuffer* highScoreAssetBuffer = assetCache.GetAssetBuffer(highScoreAssetHandle);
+            
+            R2_CHECK(highScoreAssetBuffer != nullptr, "Asset buffer is nullptr");
+            
+            const auto scores = Breakout::GetHighScores(highScoreAssetBuffer->Data())->scores();
+            
+            printf("======================Scores==========================\n");
+            
+            for (u32 i = 0; i < scores->Length(); ++i)
+            {
+                auto score = scores->Get(i);
+                
+                printf("Player: %s\t\tScore: %u\n", score->name()->c_str(), score->points());
+            }
+            
+            printf("======================================================\n");
+            
+            r2::asset::Asset playerSettingsAsset("breakout_player_save.player");
+            
+            auto playerSettingsAssetHandle = assetCache.LoadAsset(playerSettingsAsset);
+            r2::asset::AssetBuffer* settingsAssetBuffer = assetCache.GetAssetBuffer(playerSettingsAssetHandle);
+            
+            R2_CHECK(settingsAssetBuffer != nullptr, "Asset buffer is nullptr");
+            
+            const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer->Data());
+            
+            printf("======================Settings==========================\n");
+            
+            printf("Player Starting Level: %u\n", settings->startingLevel());
+            
+            printf("Player Starting Lives: %u\n", settings->lives());
+            
+            printf("Player points: %u\n", settings->points());
+            
+            printf("========================================================\n");
+            
+            auto oneMoreLevelRef = assetCache.GetAssetBuffer(levelAssetHandle);
+            
+            auto oneMoreScoreRef = assetCache.GetAssetBuffer(highScoreAssetHandle);
+            
+            assetCache.ReturnAssetBuffer(assetBuffer);
+            
+            assetCache.ReturnAssetBuffer(powerupAssetBuffer);
+            
+            assetCache.ReturnAssetBuffer(highScoreAssetBuffer);
+            
+            assetCache.ReturnAssetBuffer(settingsAssetBuffer);
+            
+            assetCache.ReturnAssetBuffer(oneMoreLevelRef);
+            
+            assetCache.ReturnAssetBuffer(oneMoreScoreRef);
+        }
+        
+        
+    }
+    
+    virtual void Shutdown() override
+    {
+        assetCache.Shutdown();
     }
     
 #ifdef R2_DEBUG
@@ -409,6 +557,10 @@ class Sandbox: public r2::Application
         return ASSET_TEMP_DIR;
     }
 #endif
+    
+private:
+    r2::asset::AssetCache assetCache;
+    bool reload;
 };
 
 std::unique_ptr<r2::Application> r2::CreateApplication()

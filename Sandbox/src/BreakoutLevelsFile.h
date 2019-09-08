@@ -28,6 +28,8 @@ public:
     virtual u64 NumAssets() const override;
     virtual void GetAssetName(u64 index, char* name,u32 nameBufSize) const override;
     virtual u64 GetAssetHandle(u64 index) const override;
+    
+    virtual const char* FilePath() const override {return mPath;}
 private:
     char mPath[r2::fs::FILE_PATH_LENGTH];
     r2::fs::File* mFile;

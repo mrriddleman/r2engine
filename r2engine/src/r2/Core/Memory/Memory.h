@@ -42,7 +42,7 @@ namespace r2
 {
     namespace mem
     {
-        using AllocateFunc = std::function<void* (u64 size, u64 alignment)>;
+        using AllocateFunc = std::function<byte* (u64 size, u64 alignment)>;
         using FreeFunc = std::function<void (byte*)>;
         
         namespace utils

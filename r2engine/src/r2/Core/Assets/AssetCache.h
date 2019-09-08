@@ -12,7 +12,6 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
-#include <type_traits>
 
 #define ASSET_CACHE_DEBUG 1
 
@@ -31,12 +30,16 @@ namespace r2::asset
     using FileHandle = s64;
     using AssetLoadProgressCallback = std::function<void (int, bool&)>;
     
+    const u64 INVALID_ASSET_HANDLE = 0;
+    
     class AssetCache
     {
     public:
         
         static const u32 LRU_CAPACITY = 1000;
         static const u32 MAP_CAPACITY = 1000;
+        
+        using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
         
         AssetCache();
 
@@ -46,8 +49,12 @@ namespace r2::asset
         
         void RegisterAssetLoader(AssetLoader* assetLoader);
         
-        AssetBuffer* GetAssetBuffer(const Asset& asset);
+        //The handle should remain valid across the run of the game
+        AssetHandle LoadAsset(const Asset& asset);
         
+        //Should not keep this pointer around for longer than necessary to use it as it can change in debug
+        AssetBuffer* GetAssetBuffer(AssetHandle handle);
+
         bool ReturnAssetBuffer(AssetBuffer* buffer);
         
         void FlushAll();
@@ -73,12 +80,14 @@ namespace r2::asset
             return MAKE_SARRAY(mMallocArena, AssetFile*, capacity);
         }
         
+        void AddReloadFunction(AssetReloadedFunc func);
+        
     private:
         
         struct AssetBufferRef
         {
             AssetBuffer* mAssetBuffer = nullptr;
-            u32 mRefCount = 0;
+            s32 mRefCount = 0;
         };
         
         using AssetList = r2::SQueue<AssetHandle>*;
@@ -86,21 +95,19 @@ namespace r2::asset
         //using AssetFileMap = r2::SHashMap<FileHandle>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
        
-        AssetBuffer* Load(const Asset& asset);
+        AssetBuffer* Load(const Asset& asset, bool startCountAtOne = false);
         void UpdateLRU(AssetHandle handle);
         FileHandle FindInFiles(const Asset& asset);
         AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
         
         
-        void Free(AssetHandle handle, bool decrementRefCount, bool forceFree);
+        void Free(AssetHandle handle, bool forceFree);
         bool MakeRoom(u64 amount);
-        void FreeOneResource(bool decrementRefCount, bool forceFree);
+        void FreeOneResource(bool forceFree);
         s64 GetLRUIndex(AssetHandle handle);
         void RemoveFromLRU(AssetHandle handle);
         
-        
-        
-        
+
         FileList mFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;
@@ -112,6 +119,27 @@ namespace r2::asset
         
         //This is for debug only
         r2::mem::MallocArena mMallocArena;
+        
+        //@TODO(Serge): put in R2_DEBUG
+        
+        struct AssetRecord
+        {
+            AssetHandle handle;
+            std::string name;
+        };
+        struct AssetsToFile
+        {
+            FileHandle file;
+            std::vector<AssetRecord> assets;
+        };
+        
+        std::vector<AssetReloadedFunc> mReloadFunctions;
+        
+        void AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord);
+        void RemoveAssetFromAssetForFileList(AssetHandle assetHandle);
+        void InvalidateAssetsForFile(FileHandle fileHandle);
+
+        std::vector<AssetsToFile> mAssetsForFiles;
         
         //Debug stuff
 #if ASSET_CACHE_DEBUG 
