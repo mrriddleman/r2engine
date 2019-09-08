@@ -32,6 +32,12 @@ namespace r2::asset
     
     const u64 INVALID_ASSET_HANDLE = 0;
     
+    struct AssetCacheRecord
+    {
+        r2::asset::AssetHandle handle = INVALID_ASSET_HANDLE;
+        r2::asset::AssetBuffer* buffer = nullptr;
+    };
+    
     class AssetCache
     {
     public:
@@ -53,9 +59,9 @@ namespace r2::asset
         AssetHandle LoadAsset(const Asset& asset);
         
         //Should not keep this pointer around for longer than necessary to use it as it can change in debug
-        AssetBuffer* GetAssetBuffer(AssetHandle handle);
+        AssetCacheRecord GetAssetBuffer(AssetHandle handle);
 
-        bool ReturnAssetBuffer(AssetBuffer* buffer);
+        bool ReturnAssetBuffer(const AssetCacheRecord& buffer);
         
         void FlushAll();
         

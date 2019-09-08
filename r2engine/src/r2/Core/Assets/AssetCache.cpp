@@ -167,12 +167,13 @@ namespace r2::asset
         return handle;
     }
     
-    AssetBuffer* AssetCache::GetAssetBuffer(AssetHandle handle)
+    AssetCacheRecord AssetCache::GetAssetBuffer(AssetHandle handle)
     {
         R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
         if (NOT_INITIALIZED)
         {
-            return nullptr;
+            AssetCacheRecord record;
+            return record;
         }
         
         AssetBufferRef theDefault;
@@ -184,19 +185,23 @@ namespace r2::asset
             UpdateLRU(handle);
         }
         
-        return bufferRef.mAssetBuffer;
+        AssetCacheRecord record;
+        record.handle = handle;
+        record.buffer = bufferRef.mAssetBuffer;
+        
+        return record;
     }
     
-    bool AssetCache::ReturnAssetBuffer(AssetBuffer* buffer)
+    bool AssetCache::ReturnAssetBuffer(const AssetCacheRecord& buffer)
     {
         AssetBufferRef theDefault;
-        AssetBufferRef& bufferRef = Find(buffer->GetAsset().HashID(), theDefault);
+        AssetBufferRef& bufferRef = Find(buffer.buffer->GetAsset().HashID(), theDefault);
         
         bool found = bufferRef.mAssetBuffer != nullptr;
         
         if (found)
         {
-            Free(buffer->GetAsset().HashID(), false);
+            Free(buffer.buffer->GetAsset().HashID(), false);
         }
         
         return found;
