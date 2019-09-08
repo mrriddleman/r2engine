@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-07.
 //
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include "FileWatcher.h"
 
 namespace r2::asset::pln

@@ -14,7 +14,7 @@
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 #endif
 
@@ -62,7 +62,7 @@ namespace r2::asset
             mAssetLoaders = MAKE_SARRAY(mMallocArena, AssetLoader*, lruCapacity);
         }
         
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
         
         //@TODO(Serge): may need an update function that does the following instead
         //The below will just add paths to a vector or something
@@ -357,7 +357,10 @@ namespace r2::asset
         AssetRecord record;
         record.handle = handle;
         record.name = asset.Name();
+        
+#ifdef R2_ASSET_PIPELINE
         AddAssetToAssetsForFileList(fileIndex, record);
+#endif
         
 #if ASSET_CACHE_DEBUG
         PrintAssetMap();
@@ -445,8 +448,9 @@ namespace r2::asset
                 r2::shashmap::Remove(*mAssetMap, handle);
                 
                 RemoveFromLRU(handle);
-                
+#ifdef R2_ASSET_PIPELINE
                 RemoveAssetFromAssetForFileList(handle);
+#endif
             }
         }
     }
@@ -522,6 +526,7 @@ namespace r2::asset
         return zipAssetFile;
     }
     
+#ifdef R2_ASSET_PIPELINE
     void AssetCache::AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord)
     {
         bool found = false;
@@ -638,6 +643,7 @@ namespace r2::asset
     {
         mReloadFunctions.push_back(func);
     }
+#endif
     
 #if ASSET_CACHE_DEBUG
     //Debug stuff

@@ -8,7 +8,7 @@
 #ifndef AssetWatcher_h
 #define AssetWatcher_h
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 
 #include <vector>
 #include <string>

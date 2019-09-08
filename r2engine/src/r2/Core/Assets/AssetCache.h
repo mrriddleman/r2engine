@@ -85,9 +85,9 @@ namespace r2::asset
         {
             return MAKE_SARRAY(mMallocArena, AssetFile*, capacity);
         }
-        
+#ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
-        
+#endif
     private:
         
         struct AssetBufferRef
@@ -122,12 +122,12 @@ namespace r2::asset
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
         
         //@TODO(Serge): figure out the Allocator/memory scheme
-        
+
         //This is for debug only
         r2::mem::MallocArena mMallocArena;
         
         //@TODO(Serge): put in R2_DEBUG
-        
+#ifdef R2_ASSET_PIPELINE
         struct AssetRecord
         {
             AssetHandle handle;
@@ -146,7 +146,7 @@ namespace r2::asset
         void InvalidateAssetsForFile(FileHandle fileHandle);
 
         std::vector<AssetsToFile> mAssetsForFiles;
-        
+#endif
         //Debug stuff
 #if ASSET_CACHE_DEBUG 
         void PrintLRU();

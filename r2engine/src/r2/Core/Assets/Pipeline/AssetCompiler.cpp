@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-25.
 //
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include "AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"

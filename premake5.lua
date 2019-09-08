@@ -168,7 +168,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		}
 
 	filter "configurations:Debug"
-		defines  {"R2_DEBUG"}
+		defines  {"R2_DEBUG", "R2_ASSET_PIPELINE"}
 		runtime "Debug"
 		symbols "On"
 
@@ -324,7 +324,7 @@ project "Sandbox"
 		}
 
 	filter "configurations:Debug"
-		defines "R2_DEBUG"
+		defines {"R2_DEBUG", "R2_ASSET_PIPELINE"}
 		runtime "Debug"
 		symbols "On"
 

@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-08-08.
 //
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"

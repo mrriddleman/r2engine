@@ -8,7 +8,7 @@
 #ifndef FlatbufferHelpers_h
 #define FlatbufferHelpers_h
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include <string>
 
 namespace r2::asset::pln::flat

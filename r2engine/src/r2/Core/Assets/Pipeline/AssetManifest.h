@@ -7,7 +7,7 @@
 
 #ifndef AssetManifest_h
 #define AssetManifest_h
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 
 #include <vector>
 #include <string>

@@ -8,7 +8,7 @@
 #ifndef FileWatcher_h
 #define FileWatcher_h
 
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
 #include <filesystem>
 #include <string>
 #include <unordered_map>
