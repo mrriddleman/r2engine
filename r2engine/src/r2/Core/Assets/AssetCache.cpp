@@ -15,7 +15,8 @@
 #include "r2/Core/Assets/ZipAssetFile.h"
 
 #ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+#include <filesystem>
+#include "r2/Core/Assets/AssetLib.h"
 #endif
 
 #define NOT_INITIALIZED !mFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders
@@ -31,22 +32,25 @@ namespace r2::asset
     const u32 AssetCache::LRU_CAPACITY;
     const u32 AssetCache::MAP_CAPACITY;
     
-    AssetCache::AssetCache()
+    AssetCache::AssetCache(u64 slot)
         : mFiles(nullptr)
         , mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
+        , mSlot(slot)
     //    , mAssetFileMap(nullptr)
         , mMallocArena(r2::mem::utils::MemBoundary())
     {
         
     }
     
-    bool AssetCache::Init(r2::mem::utils::MemBoundary boundary, FileList list, u32 lruCapacity, u32 mapCapacity)
+    bool AssetCache::Init(FileList list, u32 lruCapacity, u32 mapCapacity)
     {
         //@TODO(Serge): do something with the memory boundary - for now we don't care, just malloc!
         
         mFiles = list;
+        
+        
         
 #if ASSET_CACHE_DEBUG
         PrintAllAssetsInFiles();
@@ -64,23 +68,24 @@ namespace r2::asset
         
 #ifdef R2_ASSET_PIPELINE
         
+        r2::asset::lib::AddFiles(*this, mFiles);
         //@TODO(Serge): may need an update function that does the following instead
         //The below will just add paths to a vector or something
-        r2::asset::pln::AddAssetBuiltFunction([this](std::vector<std::string> paths)
+        r2::asset::lib::AddAssetFilesBuiltListener([this](std::vector<std::string> paths)
         {
             //@TODO(Serge): implement next
             //Reload the asset if needed
             for (const std::string& path : paths)
             {
                 u64 numFiles = r2::sarr::Size(*this->mFiles);
-                
+
                 for (u64 i = 0; i < numFiles; ++i)
                 {
                     AssetFile* file = r2::sarr::At(*this->mFiles, i);
-                    
+
                     if (std::filesystem::path(file->FilePath()) == std::filesystem::path(path))
                     {
-                        
+
                         this->InvalidateAssetsForFile(i);
                     }
                 }

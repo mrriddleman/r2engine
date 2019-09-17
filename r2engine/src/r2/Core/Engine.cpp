@@ -19,6 +19,7 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Audio/AudioEngine.h"
 #include <unistd.h>
+#include "r2/Core/Assets/AssetLib.h"
 
 #ifdef R2_DEBUG
 #include <chrono>
@@ -76,14 +77,15 @@ namespace r2
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
             
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
             std::string flatcPath = R2_FLATC;
             std::string manifestDir = noptrApp->GetAssetManifestPath();
             std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
-            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath);
-            r2::asset::pln::AddWatchPaths(std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths());
+            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
+            
 #endif
             
+            r2::asset::lib::Init();
             //@TODO(Serge): should check to see if the app initialized!
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
@@ -111,7 +113,7 @@ namespace r2
         //Should be first
         r2::asset::pln::Update();
 #endif
-        
+        r2::asset::lib::Update();
         
         mLayerStack.Update();
         
@@ -139,6 +141,7 @@ namespace r2
     void Engine::Shutdown()
     {
         mLayerStack.ShutdownAll();
+        r2::asset::lib::Shutdown();
     }
     
     void Engine::Render(float alpha)

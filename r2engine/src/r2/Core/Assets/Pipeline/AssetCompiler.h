@@ -10,6 +10,7 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include <string>
+#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 
 namespace r2::asset::pln
 {
@@ -18,7 +19,7 @@ namespace r2::asset::pln
 
 namespace r2::asset::pln::cmp
 {
-    bool Init(const std::string& tempBuildPath);
+    bool Init(const std::string& tempBuildPath, r2::asset::pln::AssetsBuiltFunc assetsBuiltFunc);
     //Should ignore dups
     void PushBuildRequest(const r2::asset::pln::AssetManifest& manifest);
     void Update();

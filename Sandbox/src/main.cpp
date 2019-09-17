@@ -24,6 +24,7 @@
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
+#include "r2/Core/Assets/AssetLib.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -224,15 +225,17 @@ public:
         
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
-        r2::asset::ZipAssetFile* zipFile = assetCache.MakeZipAssetFile(filePath);
+        assetCache = r2::asset::lib::CreateAssetCache(r2::mem::utils::MemBoundary());
         
-        r2::asset::FileList files = assetCache.MakeFileList(10);
+        r2::asset::ZipAssetFile* zipFile = assetCache->MakeZipAssetFile(filePath);
+        
+        r2::asset::FileList files = assetCache->MakeFileList(10);
         
         r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
         assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
         
-        bool assetCacheInitialized = assetCache.Init(r2::mem::utils::MemBoundary(), files);
+        bool assetCacheInitialized = assetCache->Init(files);
         
         R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
         
@@ -241,7 +244,7 @@ public:
 #ifdef R2_ASSET_PIPELINE
         if (assetCacheInitialized)
         {
-            assetCache.AddReloadFunction([this](r2::asset::AssetHandle handle)
+            assetCache->AddReloadFunction([this](r2::asset::AssetHandle handle)
             {
                 reload = true;
                 
@@ -255,7 +258,7 @@ public:
                         
                         if(record.handle == handle)
                         {
-                            assetCache.ReturnAssetBuffer(record);
+                            assetCache->ReturnAssetBuffer(record);
                         }
                     }
                 }
@@ -277,9 +280,9 @@ public:
             
             r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
             
-            auto levelAssetHandle = assetCache.LoadAsset(levelsAsset);
+            auto levelAssetHandle = assetCache->LoadAsset(levelsAsset);
             
-            auto assetBuffer = assetCache.GetAssetBuffer(levelAssetHandle);
+            auto assetBuffer = assetCache->GetAssetBuffer(levelAssetHandle);
             
             r2::sarr::Push(*assetsBuffers, assetBuffer);
             
@@ -333,8 +336,8 @@ public:
             
             r2::asset::Asset powerupsAsset("breakout_powerups.powerup");
             
-            auto powerupsAssetHandle = assetCache.LoadAsset(powerupsAsset);
-            auto powerupAssetBuffer = assetCache.GetAssetBuffer(powerupsAssetHandle);
+            auto powerupsAssetHandle = assetCache->LoadAsset(powerupsAsset);
+            auto powerupAssetBuffer = assetCache->GetAssetBuffer(powerupsAssetHandle);
             
             r2::sarr::Push(*assetsBuffers, powerupAssetBuffer);
             
@@ -364,8 +367,8 @@ public:
             
             r2::asset::Asset highScoresAsset("breakout_high_scores.scores");
             
-            auto highScoreAssetHandle = assetCache.LoadAsset(highScoresAsset);
-            auto highScoreAssetBuffer = assetCache.GetAssetBuffer(highScoreAssetHandle);
+            auto highScoreAssetHandle = assetCache->LoadAsset(highScoresAsset);
+            auto highScoreAssetBuffer = assetCache->GetAssetBuffer(highScoreAssetHandle);
             
             r2::sarr::Push(*assetsBuffers, highScoreAssetBuffer);
             
@@ -386,8 +389,8 @@ public:
             
             r2::asset::Asset playerSettingsAsset("breakout_player_save.player");
             
-            auto playerSettingsAssetHandle = assetCache.LoadAsset(playerSettingsAsset);
-            auto settingsAssetBuffer = assetCache.GetAssetBuffer(playerSettingsAssetHandle);
+            auto playerSettingsAssetHandle = assetCache->LoadAsset(playerSettingsAsset);
+            auto settingsAssetBuffer = assetCache->GetAssetBuffer(playerSettingsAssetHandle);
             
             r2::sarr::Push(*assetsBuffers, settingsAssetBuffer);
             
@@ -405,9 +408,9 @@ public:
             
             printf("========================================================\n");
             
-            auto oneMoreLevelRef = assetCache.GetAssetBuffer(levelAssetHandle);
+            auto oneMoreLevelRef = assetCache->GetAssetBuffer(levelAssetHandle);
             
-            auto oneMoreScoreRef = assetCache.GetAssetBuffer(highScoreAssetHandle);
+            auto oneMoreScoreRef = assetCache->GetAssetBuffer(highScoreAssetHandle);
             
             r2::sarr::Push(*assetsBuffers, oneMoreLevelRef);
             
@@ -425,14 +428,14 @@ public:
         {
             auto record = r2::sarr::At(*assetsBuffers, i);
             
-            assetCache.ReturnAssetBuffer(record);
+            assetCache->ReturnAssetBuffer(record);
         }
         
         FREE(assetsBuffers, *linearArenaPtr);
-        assetCache.Shutdown();
+        assetCache->Shutdown();
     }
     
-#ifdef R2_DEBUG
+#ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {
         std::vector<std::string> assetWatchPaths = {
@@ -457,7 +460,7 @@ private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
     r2::mem::MemoryArea::MemorySubArea::Handle subMemoryAreaHandle;
     
-    r2::asset::AssetCache assetCache;
+    r2::asset::AssetCache* assetCache;
     bool reload;
     
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;

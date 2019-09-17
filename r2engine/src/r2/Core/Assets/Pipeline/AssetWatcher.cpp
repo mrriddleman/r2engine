@@ -9,13 +9,14 @@
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
-
+#include <string>
+#include <queue>
 
 namespace r2::asset::pln
 {
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
-    static std::vector<AssetBuiltFunc> s_assetsBuiltListeners;
+
     
     static FileWatcher s_manifestFileWatcher;
     static std::string s_flatBufferCompilerPath;
@@ -32,10 +33,14 @@ namespace r2::asset::pln
     void BuildManifests();
     void NotifyAssetChanged();
     void PushBuildRequest(const std::string& changedPath);
+    void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths);
     
     void Init(const std::string& assetManifestsPath,
               const std::string& assetTempPath,
-              const std::string& flatbufferCompilerLocation)
+              const std::string& flatbufferCompilerLocation,
+              Milliseconds delay,
+              const std::vector<std::string>& paths,
+              AssetsBuiltFunc builtFunc)
     {
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
         s_manifestsPath = assetManifestsPath;
@@ -48,7 +53,9 @@ namespace r2::asset::pln
         s_manifestFileWatcher.AddModifyListener(SetReloadManifests);
         s_manifestFileWatcher.AddRemovedListener(SetReloadManifests);
         
-        r2::asset::pln::cmp::Init(assetTempPath);
+        r2::asset::pln::cmp::Init(assetTempPath, builtFunc);
+        
+        AddWatchPaths(delay, paths);
     }
     
     void Update()
@@ -136,19 +143,6 @@ namespace r2::asset::pln
                 }
             }
         }
-    }
-    
-    void PushNewlyBuiltAssets(std::vector<std::string> paths)
-    {
-        for (AssetBuiltFunc& func : s_assetsBuiltListeners)
-        {
-            func(paths);
-        }
-    }
-    
-    void AddAssetBuiltFunction(AssetBuiltFunc func)
-    {
-        s_assetsBuiltListeners.push_back(func);
     }
 }
 

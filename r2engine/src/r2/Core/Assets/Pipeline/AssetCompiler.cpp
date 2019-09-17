@@ -6,11 +6,10 @@
 //
 
 #ifdef R2_ASSET_PIPELINE
-#include "AssetCompiler.h"
+#include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/File/PathUtils.h"
-#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 #include <filesystem>
 #include <stdio.h>
 #include "miniz.h"
@@ -20,6 +19,7 @@ namespace r2::asset::pln::cmp
 {
     static std::string s_tempBuildPath;
     static std::deque<r2::asset::pln::AssetManifest> s_manifestWorkQueue;
+    static r2::asset::pln::AssetsBuiltFunc s_assetsBuiltFunc;
     
     std::string BuildTempOutputPath(const std::string& inputFileName)
     {
@@ -100,9 +100,10 @@ namespace r2::asset::pln::cmp
         return false;
     }
     
-    bool Init(const std::string& tempBuildPath)
+    bool Init(const std::string& tempBuildPath, r2::asset::pln::AssetsBuiltFunc assetsBuiltFunc)
     {
         s_tempBuildPath = tempBuildPath;
+        s_assetsBuiltFunc = assetsBuiltFunc;
         return true;
     }
     
@@ -191,7 +192,7 @@ namespace r2::asset::pln::cmp
         
         if (outputFiles.size() > 0)
         {
-            r2::asset::pln::PushNewlyBuiltAssets(outputFiles);
+            s_assetsBuiltFunc(outputFiles);
         }
     }
 }

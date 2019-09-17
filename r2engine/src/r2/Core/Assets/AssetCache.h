@@ -47,9 +47,9 @@ namespace r2::asset
         
         using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
         
-        AssetCache();
+        explicit AssetCache(u64 slot);
 
-        bool Init(r2::mem::utils::MemBoundary boundary, FileList list, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        bool Init(FileList list, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         
         void Shutdown();
         
@@ -85,6 +85,8 @@ namespace r2::asset
         {
             return MAKE_SARRAY(mMallocArena, AssetFile*, capacity);
         }
+        
+        u64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
 #endif
@@ -119,6 +121,8 @@ namespace r2::asset
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
         DefaultAssetLoader* mDefaultLoader;
+        u64 mSlot;
+        
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
         
         //@TODO(Serge): figure out the Allocator/memory scheme
