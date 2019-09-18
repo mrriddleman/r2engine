@@ -432,7 +432,7 @@ public:
         }
         
         FREE(assetsBuffers, *linearArenaPtr);
-        assetCache->Shutdown();
+        r2::asset::lib::DestroyCache(assetCache);
     }
     
 #ifdef R2_ASSET_PIPELINE

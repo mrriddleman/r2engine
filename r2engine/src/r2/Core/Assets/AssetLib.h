@@ -20,9 +20,7 @@ namespace r2::asset
 
 namespace r2::asset::lib
 {
-    const u32 MAX_ASSET_CACHES = 1000;
-    
-    bool Init(u32 numAssetCaches = MAX_ASSET_CACHES);
+    bool Init();
     void Update();
     void Shutdown();
     void AddFiles(const r2::asset::AssetCache& cache, FileList list);
@@ -35,6 +33,8 @@ namespace r2::asset::lib
     
     //returns uninitialized non owning ptr to an AssetCache - @TODO(Serge): clean this up so it will actually be initialized
     r2::asset::AssetCache* CreateAssetCache(r2::mem::utils::MemBoundary boundary);
+    void DestroyCache(r2::asset::AssetCache* cache);
+    
 }
 
 #endif /* AssetLib_h */

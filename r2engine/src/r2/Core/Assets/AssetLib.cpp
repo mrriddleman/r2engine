@@ -15,7 +15,8 @@
 namespace r2::asset::lib
 {
     r2::mem::utils::MemBoundary s_boundary;
-    r2::SArray<AssetCache*>* s_assetCaches = nullptr;
+    AssetCache** s_assetCaches = nullptr;
+    u64 s_numCaches = 0;
     r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
 #ifdef R2_ASSET_PIPELINE
     std::queue<std::vector<std::string>> s_assetsBuiltQueue;
@@ -25,10 +26,17 @@ namespace r2::asset::lib
     r2::mem::MallocArena s_arena{r2::mem::utils::MemBoundary()};
 
     const u32 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
+    const u32 MAX_ASSET_CACHES = 1000;
     
-    bool Init(u32 numAssetCaches)
+    bool Init()
     {
-        s_assetCaches = MAKE_SARRAY(s_arena, AssetCache*, numAssetCaches);
+        s_assetCaches = ALLOC_ARRAY(r2::asset::AssetCache*[MAX_ASSET_CACHES], s_arena);
+        
+        for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
+        {
+            s_assetCaches[i] = nullptr;
+        }
+        
         s_fileToAssetCacheMap = MAKE_SHASHMAP(s_arena, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
         
         return s_assetCaches != nullptr && s_fileToAssetCacheMap != nullptr;
@@ -54,12 +62,14 @@ namespace r2::asset::lib
     {
         if (s_assetCaches && s_fileToAssetCacheMap)
         {
-            u64 size = r2::sarr::Size(*s_assetCaches);
-            
-            for (u64 i = 0; i < size; ++i)
+
+            for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
             {
-                r2::asset::AssetCache* cache = r2::sarr::At(*s_assetCaches, i);
-                FREE(cache, s_arena);
+                r2::asset::AssetCache* cache = s_assetCaches[i];
+                if (cache != nullptr)
+                {
+                    FREE(cache, s_arena);
+                }
             }
             
             FREE(s_fileToAssetCacheMap, s_arena);
@@ -99,18 +109,47 @@ namespace r2::asset::lib
     {
         if (s_assetCaches)
         {
-            u64 size = r2::sarr::Size(*s_assetCaches);
+            s64 slot = -1;
+            for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
+            {
+                if (s_assetCaches[i] == nullptr)
+                {
+                    slot = i;
+                    break;
+                }
+            }
             
-            r2::asset::AssetCache* cache = ALLOC_PARAMS(r2::asset::AssetCache, s_arena, size);
+            if (slot == -1)
+            {
+                return nullptr;
+            }
+            
+            r2::asset::AssetCache* cache = ALLOC_PARAMS(r2::asset::AssetCache, s_arena, slot);
             
             if (cache)
             {
-                r2::sarr::Push(*s_assetCaches, cache);
+                s_assetCaches[slot] = cache;
             }
             
             return cache;
         }
         
         return nullptr;
+    }
+    
+    void DestroyCache(r2::asset::AssetCache* cache)
+    {
+        if (s_assetCaches)
+        {
+            u64 slot = cache->GetSlot();
+            
+            R2_CHECK(s_assetCaches[slot] == cache, "We don't have the proper cache for this slot!");
+            
+            cache->Shutdown();
+            
+            FREE(cache, s_arena);
+            
+            s_assetCaches[slot] = nullptr;
+        }
     }
 }
