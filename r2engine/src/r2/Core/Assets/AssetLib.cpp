@@ -10,7 +10,9 @@
 #include "r2/Core/Assets/AssetFile.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Utils/Hash.h"
-#include <queue>
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+#endif
 
 namespace r2::asset::lib
 {
@@ -19,7 +21,8 @@ namespace r2::asset::lib
     u64 s_numCaches = 0;
     r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
 #ifdef R2_ASSET_PIPELINE
-    std::queue<std::vector<std::string>> s_assetsBuiltQueue;
+    r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_assetsBuiltQueue;
+    //std::queue<std::vector<std::string>> s_assetsBuiltQueue;
     std::vector<AssetFilesBuiltListener> s_listeners;
 #endif
     //Change to something real
@@ -46,15 +49,17 @@ namespace r2::asset::lib
     {
         if (s_assetCaches && s_fileToAssetCacheMap)
         {
-            while (!s_assetsBuiltQueue.empty())
+#ifdef R2_ASSET_PIPELINE
+            std::vector<std::string> paths;
+            
+            if(s_assetsBuiltQueue.TryPop(paths))
             {
                 for (r2::asset::lib::AssetFilesBuiltListener listener : s_listeners)
                 {
-                    listener(s_assetsBuiltQueue.front());
+                    listener(paths);
                 }
-                
-                s_assetsBuiltQueue.pop();
             }
+#endif
         }
     }
     
@@ -96,7 +101,7 @@ namespace r2::asset::lib
 #ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths)
     {
-        s_assetsBuiltQueue.push(paths);
+        s_assetsBuiltQueue.Push(paths);
     }
     
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func)

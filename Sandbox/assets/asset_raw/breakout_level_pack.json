@@ -120,7 +120,7 @@
       layout: {
         width: 10,
         height: 3,
-        layout: "gggggggggg\nbbbbbbbbbb\nrrrrrrrrrr"
+        layout: "gggggggggg\nbbbbbbbbbb\nbrrrrrrrrb"
       }
     }
   ]

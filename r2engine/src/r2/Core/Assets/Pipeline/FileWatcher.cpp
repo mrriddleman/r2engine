@@ -42,7 +42,7 @@ namespace r2::asset::pln
     {
         auto now = std::chrono::steady_clock::now();
         auto dt = std::chrono::duration_cast<Milliseconds>(now - mLastTime);
-        if(dt >= mDelay)
+        //if(dt >= mDelay)
         {
             mLastTime = now;
             auto it = mPaths.begin();

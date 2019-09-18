@@ -81,8 +81,7 @@ namespace r2
             std::string flatcPath = R2_FLATC;
             std::string manifestDir = noptrApp->GetAssetManifestPath();
             std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
-            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(5000), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
-            
+            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(500), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
 #endif
             
             r2::asset::lib::Init();
@@ -108,11 +107,6 @@ namespace r2
     
     void Engine::Update()
     {
-        
-#ifdef R2_DEBUG
-        //Should be first
-        r2::asset::pln::Update();
-#endif
         r2::asset::lib::Update();
         
         mLayerStack.Update();
@@ -141,7 +135,11 @@ namespace r2
     void Engine::Shutdown()
     {
         mLayerStack.ShutdownAll();
+        
         r2::asset::lib::Shutdown();
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::pln::Shutdown();
+#endif
     }
     
     void Engine::Render(float alpha)

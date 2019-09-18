@@ -10,19 +10,25 @@
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include <string>
-#include <queue>
+#include <thread>
 
 namespace r2::asset::pln
 {
+    
+    void Update();
+    
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
-
+    Milliseconds s_delay;
     
     static FileWatcher s_manifestFileWatcher;
     static std::string s_flatBufferCompilerPath;
     static std::string s_manifestsPath;
     
     static bool s_reloadManifests = false;
+    
+    std::thread s_assetWatcherThread;
+    std::atomic_bool s_end;
     
     void ModifiedWatchPathDispatch(const std::string& path);
     void CreatedWatchPathDispatch(const std::string& path);
@@ -44,10 +50,10 @@ namespace r2::asset::pln
     {
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
         s_manifestsPath = assetManifestsPath;
-        
+        s_delay = delay;
         ReloadManifests();
         
-        s_manifestFileWatcher.Init(std::chrono::milliseconds(1000), assetManifestsPath);
+        s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), assetManifestsPath);
         //@TODO(Serge): modify these to be their own functions
         s_manifestFileWatcher.AddCreatedListener(SetReloadManifests);
         s_manifestFileWatcher.AddModifyListener(SetReloadManifests);
@@ -56,26 +62,40 @@ namespace r2::asset::pln
         r2::asset::pln::cmp::Init(assetTempPath, builtFunc);
         
         AddWatchPaths(delay, paths);
+        s_end = false;
+        
+        std::thread t = std::thread(&Update);
+        
+        s_assetWatcherThread = std::move(t);
     }
     
     void Update()
     {
-        s_manifestFileWatcher.Run();
-        
-        if (s_reloadManifests)
+        while (!s_end)
         {
-            ReloadManifests();
+            std::this_thread::sleep_for(s_delay);
             
+            s_manifestFileWatcher.Run();
+            
+            if (s_reloadManifests)
+            {
+                ReloadManifests();
+            }
+            
+            for (auto& fileWatcher: s_fileWatchers)
+            {
+                fileWatcher.Run();
+            }
+            
+            //pull commands from the queue to request asset builds
+            r2::asset::pln::cmp::Update();
         }
-        
-        for (auto& fileWatcher: s_fileWatchers)
-        {
-            fileWatcher.Run();
-        }
-        
-        //pull commands from the queue to request asset builds
-        
-        r2::asset::pln::cmp::Update();
+    }
+    
+    void Shutdown()
+    {
+        s_end = true;
+        s_assetWatcherThread.join();
     }
     
     void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths)

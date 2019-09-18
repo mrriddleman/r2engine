@@ -28,8 +28,9 @@ namespace r2::asset::pln
                const std::vector<std::string>& paths,
                AssetsBuiltFunc assetsBuiltFunc);
     
-    void Update();
     
+    
+    void Shutdown();
     //@NOTE: if we want this functionality again, we could add another queue that would push more watch paths
     //void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths);
 }

@@ -15,6 +15,10 @@
     {
       name: "S. Lansiquot",
       points: 987654321
+    },
+    {
+      name: "The new guy",
+      points: 1000
     }
   ]
 }
