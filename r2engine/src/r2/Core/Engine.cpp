@@ -81,7 +81,7 @@ namespace r2
             std::string flatcPath = R2_FLATC;
             std::string manifestDir = noptrApp->GetAssetManifestPath();
             std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
-            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(500), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
+            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(200), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
 #endif
             
             r2::asset::lib::Init();
