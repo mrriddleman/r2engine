@@ -31,6 +31,8 @@ namespace r2
         T& operator[](u64 index);
         const T& operator[](u64 index) const;
         
+        static u64 MemorySize(u64 capacity);
+        
         u64 mSize;
         u64 mOffset;
         SArray<T>* mData;
@@ -192,7 +194,7 @@ namespace r2
         
         template<typename T, class ARENA> SQueue<T>* CreateSQueue(ARENA& a, u64 capacity, const char* file, int line, const char* description)
         {
-            SQueue<T>* q = new (ALLOC_BYTES(a, sizeof(SQueue<T>) + sizeof(SArray<T>) + sizeof(T)*capacity, alignof(T), file, line, description)) SQueue<T>;
+            SQueue<T>* q = new (ALLOC_BYTES(a, SQueue<T>::MemorySize(capacity), alignof(T), file, line, description)) SQueue<T>;
             
             SArray<T>* startOfArray = new (r2::mem::utils::PointerAdd(q, sizeof(SQueue<T>))) SArray<T>();
             
@@ -273,6 +275,12 @@ namespace r2
     {
         R2_CHECK(mData && index >= 0 && index < r2::sarr::Capacity(*mData), "i: %llu is out of bounds in this array", index);
         return (*mData)[(index + mOffset) % r2::sarr::Capacity(*mData)];
+    }
+    
+    template<typename T>
+    u64 SQueue<T>::MemorySize(u64 capacity)
+    {
+        return sizeof(SQueue<T>) + SArray<T>::MemorySize(capacity);
     }
 }
 

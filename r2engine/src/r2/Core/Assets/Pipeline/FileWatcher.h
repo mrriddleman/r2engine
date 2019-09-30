@@ -19,9 +19,9 @@
 namespace r2::asset::pln
 {
     using Milliseconds = std::chrono::duration<int, std::milli>;
-    using ModifiedFunc = std::function<void (const std::string& path)>;
-    using CreatedFunc  = std::function<void (const std::string& path)>;
-    using RemovedFunc  = std::function<void (const std::string& path)>;
+    using ModifiedFunc = std::function<void (std::string path)>;
+    using CreatedFunc  = std::function<void (std::string path)>;
+    using RemovedFunc  = std::function<void (std::string path)>;
     
     class FileWatcher
     {

@@ -91,14 +91,17 @@ namespace r2::asset::pln
             char* buf = new(std::nothrow) char[length];
             if (!buf)
             {
+                fs.close();
                 R2_LOGE("Failed to allocate %zu bytes for %s\n", length, file.path().string().c_str());
                 return false;
             }
             
             fs.read(buf, length);
             
-            if (!fs)
+            if (!fs.good())
             {
+                fs.close();
+                delete [] buf;
                 R2_LOGE("Failed read file %s\n", file.path().string().c_str());
                 return false;
             }
@@ -109,9 +112,9 @@ namespace r2::asset::pln
             
             AssetManifest manifest;
             
-            manifest.outputType = static_cast<AssetType>( assetManifest->outputType() );
-            manifest.assetOutputPath = assetManifest->outputPath()->str();
             
+            manifest.assetOutputPath = assetManifest->outputPath()->str();
+            manifest.outputType = static_cast<AssetType>( assetManifest->outputType() );
             for (u32 i = 0; i < assetManifest->inputFiles()->Length(); ++i)
             {
                 AssetFileCommand fileCommand;
@@ -124,6 +127,8 @@ namespace r2::asset::pln
             }
             
             manifests.push_back(manifest);
+            
+            delete [] buf;
         }
         
         return true;

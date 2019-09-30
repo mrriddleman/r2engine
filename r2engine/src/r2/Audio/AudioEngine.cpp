@@ -9,7 +9,14 @@
 #include "fmod.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/MemoryBoundsChecking.h"
+#include "r2/Audio/SoundDefinition_generated.h"
+#include "r2/Core/File/FileSystem.h"
+#include "r2/Core/File/File.h"
+#include "r2/Core/File/PathUtils.h"
+#include "r2/Utils/Hash.h"
+
 #include <cstring>
 
 namespace
@@ -17,6 +24,7 @@ namespace
     const u32 MAX_NUM_SOUNDS = 512;
     const u32 MAX_NUM_CHANNELS = 128;
     const u64 SOUND_ALIGNMENT = 512;
+    const u32 MAX_NUM_DEFINITIONS = MAX_NUM_SOUNDS*2;
     const f32 SILENCE = 0.0f;
     const u32 VIRTUALIZE_FADE_TIME = 3 * 1000;
     
@@ -35,7 +43,6 @@ namespace
         {
             R2_CHECK(result == FMOD_OK, "We had an error in FMOD: %i", result);
         }
-        
     }
 }
 
@@ -134,9 +141,11 @@ namespace r2::audio
         
         using SoundList = r2::SArray<Sound>*;
         using ChannelList = r2::SArray<Channel*>*;
+        using DefinitionMap = r2::SHashMap<AudioEngine::SoundID>*;
         
         FMOD::System* mSystem = nullptr;
         SoundList mSounds = nullptr;
+        DefinitionMap mDefinitions = nullptr;
         ChannelList mChannels = nullptr;
         byte* mFMODMemory = nullptr;
         r2::mem::PoolArena* mChannelPool = nullptr;
@@ -146,13 +155,29 @@ namespace r2::audio
     {
         u64 totalAllocationSizeNeeded = 0;
         
-        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_SOUNDS * sizeof(Sound) + headerSize + boundsCheckingSize + sizeof(SoundList), alignof(Sound)); //for mSounds
+        u64 sizeForSystem = r2::mem::utils::GetMaxMemoryForAllocation( sizeof(FMOD::System) + sizeof(FMOD::System*), SOUND_ALIGNMENT); //for mSystem
+
+        totalAllocationSizeNeeded += sizeForSystem;
         
-        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * sizeof(Channel*) + boundsCheckingSize + headerSize + sizeof(ChannelList), alignof(Channel*)); //for mChannels
+        u64 sizeForSounds = r2::mem::utils::GetMaxMemoryForAllocation(SArray<Sound>::MemorySize(MAX_NUM_SOUNDS) + headerSize + boundsCheckingSize + sizeof(SoundList), SOUND_ALIGNMENT); //for mSounds
+
+        totalAllocationSizeNeeded += sizeForSounds;
         
-        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * (sizeof(Channel) + boundsCheckingSize) + headerSize + boundsCheckingSize + sizeof(r2::mem::PoolArena), sizeof(Channel) + boundsCheckingSize ); //for mChannelPool
+        u64 sizeForDefinitions = r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AudioEngine::SoundID>::MemorySize(MAX_NUM_DEFINITIONS) + sizeof(DefinitionMap) + headerSize + boundsCheckingSize, SOUND_ALIGNMENT); //for mDefinitions
+
+        totalAllocationSizeNeeded += sizeForDefinitions;
         
-        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(FMODMemorySize() + headerSize + boundsCheckingSize, 16); //for mSoundPool
+        u64 sizeForChannelList = r2::mem::utils::GetMaxMemoryForAllocation( SArray<Channel*>::MemorySize(MAX_NUM_CHANNELS) + boundsCheckingSize + headerSize + sizeof(ChannelList), SOUND_ALIGNMENT); //for mChannels
+
+        totalAllocationSizeNeeded += sizeForChannelList;
+        
+        u64 sizeForChannelPool = r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * (sizeof(Channel) + boundsCheckingSize) + headerSize + boundsCheckingSize + sizeof(r2::mem::PoolArena), SOUND_ALIGNMENT); //for mChannelPool
+
+        totalAllocationSizeNeeded += sizeForChannelPool;
+        
+        u64 sizeForFMODMemory = r2::mem::utils::GetMaxMemoryForAllocation(FMODMemorySize() + sizeof(byte*) + headerSize + boundsCheckingSize, SOUND_ALIGNMENT); //for mFMODMemory
+
+        totalAllocationSizeNeeded += sizeForFMODMemory;
         
         return totalAllocationSizeNeeded;
     }
@@ -175,6 +200,10 @@ namespace r2::audio
             sound.fmodSound = nullptr;
         }
         
+        mDefinitions = MAKE_SHASHMAP(allocator, AudioEngine::SoundID, MAX_NUM_DEFINITIONS);
+        
+        R2_CHECK(mDefinitions != nullptr, "Failed to allocate mDefinitions");
+        
         mChannels = MAKE_SARRAY(allocator, Channel*, MAX_NUM_CHANNELS);
         
         R2_CHECK(mChannels != nullptr, "We should have channels initialized!");
@@ -185,7 +214,8 @@ namespace r2::audio
         }
         
         mChannelPool = MAKE_POOL_ARENA(allocator, sizeof(Channel), MAX_NUM_CHANNELS);
-        mFMODMemory = ALLOC_BYTESN(allocator, FMODMemorySize(), 16);
+ 
+        mFMODMemory = ALLOC_BYTESN(allocator, FMODMemorySize(), SOUND_ALIGNMENT);
         
         CheckFMODResult( FMOD::Memory_Initialize(mFMODMemory, FMODMemorySize(), 0, 0, 0) );
         CheckFMODResult( FMOD::System_Create(&mSystem) );
@@ -230,11 +260,13 @@ namespace r2::audio
         FREE(mFMODMemory, allocator);
         FREE(mChannelPool, allocator);
         FREE(mChannels, allocator);
+        FREE(mDefinitions, allocator);
         FREE(mSounds, allocator);
         
         mFMODMemory = nullptr;
         mChannels = nullptr;
         mChannelPool = nullptr;
+        mDefinitions = nullptr;
         mSounds = nullptr;
     }
     
@@ -547,7 +579,8 @@ namespace r2::audio
             Implementation::TotalAllocatedSize(r2::mem::LinearAllocator::HeaderSize(), boundsChecking);
             
             soundAreaSize = r2::mem::utils::GetMaxMemoryForAllocation(soundAreaSize, SOUND_ALIGNMENT);
-
+            R2_LOGI("sound area size: %llu\n", soundAreaSize);
+            
             AudioEngine::mSoundMemoryAreaHandle = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->AddSubArea(soundAreaSize);
             
             R2_CHECK(AudioEngine::mSoundMemoryAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid, "We have an invalid sound memory area!");
@@ -591,9 +624,88 @@ namespace r2::audio
         gAudioEngineInitialize = false;
     }
     
+    void AudioEngine::ReloadSoundDefinitions(const char* path)
+    {
+        if (gAudioEngineInitialize)
+        {
+            r2::fs::File* file = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), path, r2::fs::Read | r2::fs::Binary);
+            
+            R2_CHECK(file != nullptr, "AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
+            
+            if (file)
+            {
+                u64 fileSize = file->Size();
+                
+                byte* fileBuf = (byte*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize, 4);
+                
+                R2_CHECK(fileBuf != nullptr, "Failed to allocate bytes for sound definitions");
+                
+                if (!fileBuf)
+                {
+                    return;
+                }
+                
+                bool succeeded = file->ReadAll(fileBuf);
+                
+                R2_CHECK(succeeded, "Failed to read the whole file!");
+                
+                if (!succeeded)
+                {
+                    FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
+                    return;
+                }
+                
+                auto soundDefinitions = r2::GetSoundDefinitions(fileBuf);
+                
+                const auto size = soundDefinitions->definitions()->Length();
+                
+                for (u32 i = 0; i < size; ++i)
+                {
+                    const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
+                    
+                    SoundDefinition soundDef;
+                    strcpy(soundDef.soundName, def->soundName()->c_str());
+                    soundDef.minDistance = def->minDistance();
+                    soundDef.maxDistance = def->maxDistance();
+                    soundDef.defaultVolume = def->defaultVolume();
+                    soundDef.loadOnRegister = def->loadOnRegister();
+                    
+                    if (def->loop())
+                    {
+                        soundDef.flags |= LOOP;
+                    }
+                    
+                    if (def->is3D())
+                    {
+                        soundDef.flags |= IS_3D;
+                    }
+                    
+                    if (def->stream())
+                    {
+                        soundDef.flags |= STREAM;
+                    }
+                    AudioEngine audio;
+                    char fileName[r2::fs::FILE_PATH_LENGTH];
+                    r2::fs::utils::CopyFileNameWithExtension(soundDef.soundName, fileName);
+                    
+                    soundDef.soundKey = STRING_ID(fileName);
+                    SoundID soundID = audio.RegisterSound(soundDef);
+                    
+                    r2::shashmap::Set(*gImpl->mDefinitions, soundDef.soundKey, soundID);
+                }
+                
+                FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
+                
+                r2::fs::FileSystem::Close(file);
+            }
+        }
+    }
+    
     AudioEngine::SoundID AudioEngine::RegisterSound(const SoundDefinition& soundDef, bool load)
     {
         //check to see if this was already registered
+        SoundID soundID = InvalidSoundID;
+        
         for (u64 i = 0; i < MAX_NUM_SOUNDS; ++i)
         {
             const Sound& sound = r2::sarr::At(*gImpl->mSounds, i);
@@ -601,11 +713,15 @@ namespace r2::audio
             {
                 //return the index that we already had for this sound definition
                 R2_CHECK(false, "AudioEngine::RegisterSound - sound definition has already been registered!");
-                return i;
+                soundID = i;
+                break;
             }
         }
         
-        auto soundID = NextAvailableSoundID();
+        if (soundID == InvalidSoundID)
+        {
+            soundID = NextAvailableSoundID();
+        }
         
         if (soundID == InvalidSoundID)
         {
@@ -621,7 +737,7 @@ namespace r2::audio
         sound.mSoundDefinition.defaultVolume = soundDef.defaultVolume;
         strcpy( sound.mSoundDefinition.soundName, soundDef.soundName );
         
-        if (load)
+        if (soundDef.loadOnRegister)
         {
             bool result = LoadSound(soundID);
             R2_CHECK(result, "AudioEngine::RegisterSound - we couldn't load the sound: %s", soundDef.soundName);
@@ -656,6 +772,22 @@ namespace r2::audio
         sound.mSoundDefinition.flags.Clear();
         sound.mSoundDefinition.minDistance = 0.0f;
         sound.mSoundDefinition.maxDistance = 0.0f;
+        sound.mSoundDefinition.flags = NONE;
+        sound.mSoundDefinition.loadOnRegister = false;
+    }
+    
+    bool AudioEngine::LoadSound(const char* soundName)
+    {
+        SoundID defaultID = AudioEngine::InvalidSoundID;
+        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+        
+        if (theSoundID == defaultID)
+        {
+            R2_CHECK(false, "AudioEngine::LoadSound - Couldn't find sound: %s", soundName);
+            return false;
+        }
+        
+        return LoadSound(theSoundID);
     }
     
     bool AudioEngine::LoadSound(SoundID soundID)

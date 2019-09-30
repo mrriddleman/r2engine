@@ -52,6 +52,7 @@ namespace r2
         swishSoundDef.maxDistance = 1.0f;
         swishSoundDef.flags |= r2::audio::AudioEngine::STREAM;
         
+        
         auto swishSoundID = audio.RegisterSound(swishSoundDef);
         
         audio.PlaySound(swishSoundID, glm::vec3(0,0,0), 0.5, 0.5);
@@ -78,17 +79,25 @@ namespace r2
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
             
 #ifdef R2_ASSET_PIPELINE
+            r2::asset::pln::SoundDefinitionCommand soundCommand;
+            
+            soundCommand.soundDefinitionFilePath = noptrApp->GetSoundDefinitionPath();
+            soundCommand.soundDirectories = noptrApp->GetSoundDirectoryWatchPaths();
+            
             std::string flatcPath = R2_FLATC;
             std::string manifestDir = noptrApp->GetAssetManifestPath();
             std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
-            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(200), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt);
+            r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(200), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt, soundCommand);
 #endif
             
             r2::asset::lib::Init();
             //@TODO(Serge): should check to see if the app initialized!
-            PushLayer(std::make_unique<AppLayer>(std::move(app)));
             PushLayer(std::make_unique<ImGuiLayer>());
             PushLayer(std::make_unique<SoundLayer>());
+            
+            //Should be last
+            PushLayer(std::make_unique<AppLayer>(std::move(app)));
+            
             
            // TestSound(CPLAT.RootPath());
             mDisplaySize = noptrApp->GetPreferredResolution();

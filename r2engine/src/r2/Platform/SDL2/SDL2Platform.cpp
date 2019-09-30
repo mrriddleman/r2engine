@@ -42,9 +42,6 @@ namespace
 
 namespace r2
 {
-    
-    
-    
     //@NOTE: Increase as needed this is for dev
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
@@ -107,7 +104,7 @@ namespace r2
 
     SDL2Platform::SDL2Platform():moptrWindow(nullptr), mBasePath(nullptr), mPrefPath(nullptr), mRunning(false)
     {
-        
+        strcpy( mSoundDefinitionPath, "" );
     }
     
     bool SDL2Platform::Init(std::unique_ptr<r2::Application> app)
@@ -137,6 +134,8 @@ namespace r2
         {
             mBasePath = SDL_GetBasePath();
             mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
+            
+            strcpy(mSoundDefinitionPath, app->GetSoundDefinitionPath().c_str());
             
             mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *MEM_ENG_PERMANENT_PTR, mBasePath, MAX_NUM_FILES);
             
@@ -441,6 +440,11 @@ namespace r2
     const std::string SDL2Platform::AppPath() const
     {
         return mPrefPath;
+    }
+    
+    const std::string SDL2Platform::SoundDefinitionsPath() const
+    {
+        return mSoundDefinitionPath;
     }
     
     //--------------------------------------------------

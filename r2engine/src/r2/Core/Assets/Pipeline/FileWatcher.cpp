@@ -88,7 +88,7 @@ namespace r2::asset::pln
                         mPaths[file.path().string()] = currentFileLastWriteTime;
                         for (auto listener : mModifierListeners)
                         {
-                            listener(file.path().string());
+                           listener(file.path().string());
                         }
                     }
                 }

@@ -4,6 +4,7 @@
 *.xcworkspace/
 *.aman
 *.bin
+*.sdef
 
 /bin/
 

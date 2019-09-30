@@ -7,6 +7,7 @@
 
 #include "SoundLayer.h"
 #include "r2/Audio/AudioEngine.h"
+#include "r2/Platform/Platform.h"
 
 namespace r2
 {
@@ -15,6 +16,8 @@ namespace r2
     void SoundLayer::Init()
     {
         r2::audio::AudioEngine::Init();
+        
+        r2::audio::AudioEngine::ReloadSoundDefinitions(CPLAT.SoundDefinitionsPath().c_str());
     }
     
     void SoundLayer::Shutdown()

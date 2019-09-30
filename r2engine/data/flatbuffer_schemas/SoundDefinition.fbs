@@ -1,0 +1,24 @@
+namespace r2;
+
+file_identifier "sdef";
+
+file_extension "sdef";
+
+table SoundDefinition
+{
+	soundName:string;
+	defaultVolume:float;
+	minDistance:float;
+	maxDistance:float;
+	is3D:bool;
+	loop:bool;
+	stream:bool;
+	loadOnRegister:bool;
+}
+
+table SoundDefinitions
+{
+	definitions:[SoundDefinition];
+}
+
+root_type SoundDefinitions;

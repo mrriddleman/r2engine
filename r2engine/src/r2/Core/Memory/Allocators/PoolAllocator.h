@@ -122,7 +122,7 @@ namespace r2::mem::utils
 #endif
         u64 poolSizeInBytes = capacity * elementSize;
         
-        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, elementSize, file, line, description);
+        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, alignof(elementSize), file, line, description);
         
         R2_CHECK(poolArenaStartPtr != nullptr, "We shouldn't have null pool!");
         
@@ -146,7 +146,7 @@ namespace r2::mem::utils
     {
         u64 poolSizeInBytes = capacity * elementSize;
         
-        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(NoCheckPoolArena) + poolSizeInBytes, elementSize, file, line, description);
+        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(NoCheckPoolArena) + poolSizeInBytes, alignof(elementSize), file, line, description);
         
         R2_CHECK(poolArenaStartPtr != nullptr, "We shouldn't have null pool!");
         

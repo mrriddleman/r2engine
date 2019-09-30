@@ -13,11 +13,7 @@ namespace
 {
     bool ResolveCategoryPath(u32 category, char* path)
     {
-        
-        //@TODO(Serge): implement some basic categories for testing later
-        
-        strcpy(path, CPLAT.RootPath().c_str());
-        return true;
+        return false;
     }
 }
 
@@ -73,7 +69,13 @@ namespace r2
         return ResolveCategoryPath;
     }
     
-#ifdef R2_DEBUG
+    std::string Application::GetSoundDefinitionPath() const
+    {
+        std::string soundDefitionPath = "";
+        return soundDefitionPath;
+    }
+    
+#ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {
         std::vector<std::string> paths;
@@ -88,6 +90,12 @@ namespace r2
     std::string Application::GetAssetCompilerTempPath() const
     {
         return "";
+    }
+    
+    std::vector<std::string> Application::GetSoundDirectoryWatchPaths() const
+    {
+        std::vector<std::string> paths;
+        return paths;
     }
 #endif
 }

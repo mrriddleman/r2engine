@@ -47,9 +47,9 @@ namespace r2::asset::lib
     
     void Update()
     {
+#ifdef R2_ASSET_PIPELINE
         if (s_assetCaches && s_fileToAssetCacheMap)
         {
-#ifdef R2_ASSET_PIPELINE
             std::vector<std::string> paths;
             
             if(s_assetsBuiltQueue.TryPop(paths))

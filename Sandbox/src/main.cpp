@@ -196,9 +196,24 @@ namespace
     }
 }
 
+namespace
+{
+    bool ResolveCategoryPath(u32 category, char* path);
+}
+
 class Sandbox: public r2::Application
 {
 public:
+    
+    enum Directory: u32
+    {
+        ROOT = 0,
+        SOUND_DEFINITIONS,
+        SOUND_FX,
+        MUSIC,
+    };
+    
+    
     virtual bool Init() override
     {
         memoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("SandboxArea");
@@ -435,6 +450,16 @@ public:
         r2::asset::lib::DestroyCache(assetCache);
     }
     
+    virtual std::string GetSoundDefinitionPath() const override
+    {
+        char soundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
+        char result [r2::fs::FILE_PATH_LENGTH];
+        ResolveCategoryPath(SOUND_DEFINITIONS, soundDefinitionPath);
+        r2::fs::utils::AppendSubPath(soundDefinitionPath, result, "sounds.sdef");
+        
+        return result;
+    }
+    
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {
@@ -454,7 +479,27 @@ public:
     {
         return ASSET_TEMP_DIR;
     }
+    
+    virtual std::vector<std::string> GetSoundDirectoryWatchPaths() const override
+    {
+        char soundFXPath[r2::fs::FILE_PATH_LENGTH];
+        char musicPath [r2::fs::FILE_PATH_LENGTH];
+        ResolveCategoryPath(SOUND_FX, soundFXPath);
+        ResolveCategoryPath(MUSIC, musicPath);
+        
+        std::vector<std::string> soundPaths = {
+            std::string(soundFXPath),
+            std::string(musicPath)
+        };
+        
+        return soundPaths;
+    }
 #endif
+    
+    r2::asset::PathResolver GetPathResolver() const override
+    {
+        return ResolveCategoryPath;
+    }
     
 private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
@@ -466,6 +511,42 @@ private:
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
 };
+
+namespace
+{
+    bool ResolveCategoryPath(u32 category, char* path)
+    {
+        char subpath[r2::fs::FILE_PATH_LENGTH];
+        bool result = true;
+        switch (category)
+        {
+            case Sandbox::ROOT:
+                strcpy(subpath, "");
+                break;
+            case Sandbox::SOUND_DEFINITIONS:
+                strcpy(subpath, "assets/sound/sound_definitions");
+                break;
+            case Sandbox::SOUND_FX:
+                strcpy(subpath, "assets/sound/sound_fx");
+                break;
+            case Sandbox::MUSIC:
+                strcpy(subpath, "assets/sound/music");
+                break;
+            default:
+                result = false;
+                break;
+        }
+        
+        if (result)
+        {
+            //@TODO(Serge): fix APP_DIR such that it's correct when making a release build
+            //this is just for testing right now
+            r2::fs::utils::AppendSubPath(APP_DIR, path, subpath);
+        }
+        
+        return result;
+    }
+}
 
 std::unique_ptr<r2::Application> r2::CreateApplication()
 {

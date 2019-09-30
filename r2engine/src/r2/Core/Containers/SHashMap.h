@@ -36,6 +36,8 @@ namespace r2
         SHashMap(SHashMap && other) = delete;
         SHashMap& operator=(SHashMap && other) = delete;
         
+        static u64 MemorySize(u64 capacity);
+        
         u64 mCapacity;
         SArray<u64>* mHash;
         SArray<HashMapEntry>* mData;
@@ -310,7 +312,7 @@ namespace r2
         
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description)
         {
-            SHashMap<T>* h = new (ALLOC_BYTES(a, sizeof(SHashMap<T>) + sizeof(SArray<u64>) + sizeof(SArray<u64>)*capacity + sizeof(SArray<typename SHashMap<T>::HashMapEntry>) + sizeof(typename SHashMap<T>::HashMapEntry)*capacity, alignof(u64), file, line, description)) SHashMap<T>();
+            SHashMap<T>* h = new (ALLOC_BYTES(a, SHashMap<T>::MemorySize(capacity), alignof(u64), file, line, description)) SHashMap<T>();
             
             SArray<u64>* startOfHashArray = new(r2::mem::utils::PointerAdd(h, sizeof(SHashMap<T>))) SArray<u64>();
             
@@ -411,6 +413,12 @@ namespace r2
         mHash = nullptr;
         mData->~SArray();
         mData = nullptr;
+    }
+    
+    template <typename T>
+    u64 SHashMap<T>::MemorySize(u64 capacity)
+    {
+        return SArray<SHashMap<T>::HashMapEntry>::MemorySize(capacity) + SArray<u64>::MemorySize(capacity) + sizeof(SHashMap<T>);
     }
     
     template <typename T> void SHashMap<T>::Create(SArray<u64>* hashStart, u64* hashDataStart, SArray<HashMapEntry>* dataArrayStart, HashMapEntry* dataStart, u64 capacity)

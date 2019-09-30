@@ -75,7 +75,12 @@ project "r2engine"
 		"imgui"
 	}
 
-	defines {'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"', 'R2_ENGINE_DATA_PATH="'..os.realpath('.')..'/r2engine/data"'}
+	defines 
+	{
+		'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"',
+		'R2_ENGINE_DATA_PATH="'..os.realpath('.')..'/r2engine/data"',
+		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.realpath('.')..'/r2engine/data/flatbuffer_schemas"'
+	}
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
     local MKDIR     = "mkdir -p "
@@ -276,10 +281,12 @@ project "Sandbox"
 	defines 
 	{
 		'MANIFESTS_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_manifests"',
+		'ASSET_DIR="'..os.realpath('.')..'/%{prj.name}/assets"',
 		'ASSET_BIN_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_bin"',
 		'ASSET_RAW_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_raw"',
 		'ASSET_FBS_SCHEMA_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_fbs_schemas"',
-		'ASSET_TEMP_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_temp"'
+		'ASSET_TEMP_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_temp"',
+		'APP_DIR="'..os.realpath('.')..'/%{prj.name}"',
 	}
 
 	filter "system:windows"

@@ -40,9 +40,11 @@ namespace r2::audio
         static void Init();
         static void Update();
         static void Shutdown();
+        static void ReloadSoundDefinitions(const char* path);
         
         enum _SoundFlags
         {
+            NONE = 0,
             IS_3D = 1 << 0,
             LOOP = 1 << 1,
             STREAM = 1 << 2,
@@ -53,10 +55,13 @@ namespace r2::audio
         struct SoundDefinition
         {
             char soundName[fs::FILE_PATH_LENGTH];
-            float defaultVolume = 0.0f;
+            u64 soundKey = 0;
+            float defaultVolume = 1.0f;
             float minDistance = 0.0f;
             float maxDistance = 0.0f;
-            SoundFlags flags;
+            b32 loadOnRegister = false;
+            SoundFlags flags = NONE;
+            
             
             SoundDefinition() = default;
             ~SoundDefinition() = default;
@@ -69,6 +74,7 @@ namespace r2::audio
         SoundID RegisterSound(const SoundDefinition& soundDef, bool load = true);
         void UnregisterSound(SoundID soundID);
         
+        bool LoadSound(const char* soundName);
         bool LoadSound(SoundID soundID);
         void UnloadSound(SoundID handle);
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);

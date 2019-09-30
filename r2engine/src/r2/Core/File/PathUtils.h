@@ -36,6 +36,9 @@ namespace r2::fs::utils
     bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim = PATH_SEPARATOR);
     
     bool AppendExt(char* path, const char* ext);
+    
+    bool BuildPathFromCategory(char* outPath, u32 category, const char* fileName);
+    
 }
 
 #endif /* PathUtils_h */

@@ -20,15 +20,22 @@ namespace r2::asset::pln
     
     using AssetsBuiltFunc = std::function<void(std::vector<std::string> paths)>;
     
+    //@TODO(Serge): we need a way here to specifically build sound definitions based on a vector of sound directories - might be separate from these
+    
+    struct SoundDefinitionCommand
+    {
+        std::vector<std::string> soundDirectories;
+        std::string soundDefinitionFilePath;
+        AssetsBuiltFunc buildFunc;
+    };
     
     void Init( const std::string& assetManifestsPath,
                const std::string& assetTempPath,
                const std::string& flatbufferCompilerLocation,
                Milliseconds delay,
                const std::vector<std::string>& paths,
-               AssetsBuiltFunc assetsBuiltFunc);
-    
-    
+               AssetsBuiltFunc assetsBuiltFunc,
+               const SoundDefinitionCommand& soundDefinitionCommand);
     
     void Shutdown();
     //@NOTE: if we want this functionality again, we could add another queue that would push more watch paths

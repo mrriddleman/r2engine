@@ -8,6 +8,8 @@
 #ifndef Hash_h
 #define Hash_h
 
+#define STRING_ID(fileName) r2::utils::Hash<const char*>{}(fileName)
+
 namespace r2::utils
 {
     constexpr size_t HashBytes(const void* data, size_t size);

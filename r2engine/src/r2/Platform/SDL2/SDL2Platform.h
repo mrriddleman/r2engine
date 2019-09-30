@@ -41,6 +41,7 @@ namespace r2
         
         virtual const std::string RootPath() const override;
         virtual const std::string AppPath() const override;
+        virtual const std::string SoundDefinitionsPath() const override;
     private:
         friend Platform;
         SDL2Platform();
@@ -58,6 +59,7 @@ namespace r2
         
         char* mPrefPath;
         char* mBasePath;
+        char mSoundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
         bool mRunning;
         
         

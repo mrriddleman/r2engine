@@ -73,7 +73,7 @@ namespace r2::mem::utils
 {
     template<class ARENA> r2::mem::LinearAllocator* CreateLinearAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
     {
-        void* linearAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(LinearAllocator) + capacity, 64, file, line, description);
+        void* linearAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(LinearAllocator) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
         R2_CHECK(linearAllocatorStartPtr != nullptr, "We shouldn't have null pool!");
         

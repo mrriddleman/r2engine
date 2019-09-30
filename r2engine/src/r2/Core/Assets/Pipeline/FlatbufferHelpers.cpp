@@ -42,7 +42,7 @@ namespace r2::asset::pln::flat
         std::string flatc = R2_FLATC;
         
 #ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(command, sizeof(command), "\"%s\" -b -o \"%s\" \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
+        sprintf_s(command, sizeof(command), "\"%s\" -b -o \"%s\" \"%s\" -- \"%s\" --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #else
         sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
 #endif

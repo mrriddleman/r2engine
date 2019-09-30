@@ -33,6 +33,8 @@ namespace r2
         T& operator[](u64 i);
         const T& operator[](u64 i) const;
         
+        static u64 MemorySize(u64 capacity);
+        
         u64 mSize = 0;
         u64 mCapacity = 0;
         T* mData = nullptr;
@@ -157,7 +159,7 @@ namespace r2
         
         template<typename T, class ARENA> SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
         {
-            SArray<T>* array = new (ALLOC_BYTES(arena, sizeof(SArray<T>) + sizeof(T)*capacity, alignof(T), file, line, description)) SArray<T>();
+            SArray<T>* array = new (ALLOC_BYTES(arena, SArray<T>::MemorySize(capacity), alignof(T), file, line, description)) SArray<T>();
             
             array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
             
@@ -234,6 +236,12 @@ namespace r2
     {
         R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
+    }
+    
+    template <typename T>
+    u64 SArray<T>::MemorySize(u64 capacity)
+    {
+        return sizeof(SArray<T>) + capacity * sizeof(T);
     }
     
 }

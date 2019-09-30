@@ -7,6 +7,7 @@
 
 #include "PathUtils.h"
 #include "r2/Core/File/File.h"
+#include "r2/Platform/Platform.h"
 
 namespace r2::fs::utils
 {
@@ -233,5 +234,18 @@ namespace r2::fs::utils
     {
         strcat(path, ext);
         return true;
+    }
+    
+    bool BuildPathFromCategory(char* outPath, u32 category, const char* fileName)
+    {
+        auto platformResolver = CPLAT.GetPathResolver();
+        char rootPath[r2::fs::FILE_PATH_LENGTH];
+        
+        if (platformResolver(category, rootPath))
+        {
+            return AppendSubPath(rootPath, outPath, fileName);
+        }
+        
+        return false;
     }
 }
