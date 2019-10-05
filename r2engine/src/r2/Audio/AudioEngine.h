@@ -40,6 +40,10 @@ namespace r2::audio
         static void Init();
         static void Update();
         static void Shutdown();
+
+#ifdef R2_ASSET_PIPELINE
+        static void PushNewlyBuiltSoundDefinitions(std::vector<std::string> paths);
+#endif
         static void ReloadSoundDefinitions(const char* path);
         
         enum _SoundFlags
@@ -71,7 +75,7 @@ namespace r2::audio
             SoundDefinition& operator=(SoundDefinition&& soundDef) = default;
         };
         
-        SoundID RegisterSound(const SoundDefinition& soundDef, bool load = true);
+        SoundID RegisterSound(const SoundDefinition& soundDef);
         void UnregisterSound(SoundID soundID);
         
         bool LoadSound(const char* soundName);

@@ -34,7 +34,7 @@ namespace r2::asset::pln
     
     static SoundDefinitionCommand s_soundDefinitionCommand;
     static bool s_reloadManifests = false;
-    static bool s_reloadSoundDefinitions = false;
+    static bool s_callRebuiltSoundDefinitions = false;
     
     std::thread s_assetWatcherThread;
     std::atomic_bool s_end;
@@ -131,10 +131,10 @@ namespace r2::asset::pln
                 soundFileWatcher.Run();
             }
             
-            if (s_reloadSoundDefinitions && s_soundDefinitionCommand.buildFunc)
+            if (s_callRebuiltSoundDefinitions && s_soundDefinitionCommand.buildFunc)
             {
                 s_soundDefinitionCommand.buildFunc({s_soundDefinitionCommand.soundDefinitionFilePath});
-                s_reloadSoundDefinitions = false;
+                s_callRebuiltSoundDefinitions = false;
             }
         }
     }
@@ -207,12 +207,12 @@ namespace r2::asset::pln
         
         R2_CHECK(result, "Failed to write sound definition file");
         
-        s_reloadSoundDefinitions = true;
+        s_callRebuiltSoundDefinitions = true;
     }
     
     void RemovedSoundDefinitionFromFile(std::string path)
     {
-        s_reloadSoundDefinitions = true;
+        //s_callRebuiltSoundDefinitions = true;
     }
     
     void SoundDefinitionsChanged(std::string path)
@@ -224,7 +224,7 @@ namespace r2::asset::pln
             
             s_soundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(s_soundDefinitionCommand.soundDefinitionFilePath);
             
-            s_reloadSoundDefinitions = true;
+            s_callRebuiltSoundDefinitions = true;
         }
     }
     
@@ -257,7 +257,7 @@ namespace r2::asset::pln
                 
             }
             soundDefinitionFile = s_soundDefinitionCommand.soundDefinitionFilePath;
-            s_reloadSoundDefinitions = true;
+            s_callRebuiltSoundDefinitions = true;
         }
         
         if (!soundDefinitionFile.empty())

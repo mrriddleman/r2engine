@@ -19,6 +19,10 @@
 
 #include <cstring>
 
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+#endif
+
 namespace
 {
     const u32 MAX_NUM_SOUNDS = 512;
@@ -44,6 +48,10 @@ namespace
             R2_CHECK(result == FMOD_OK, "We had an error in FMOD: %i", result);
         }
     }
+#ifdef R2_ASSET_PIPELINE
+    r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_soundDefsBuiltQueue;
+#endif
+    
 }
 
 namespace r2::audio
@@ -604,6 +612,23 @@ namespace r2::audio
     
     void AudioEngine::Update()
     {
+#ifdef R2_ASSET_PIPELINE
+        std::vector<std::string> paths;
+        
+        if(s_soundDefsBuiltQueue.TryPop(paths))
+        {
+            //TODO(Serge): could be smarter and only unload the sounds that were actually modified
+            AudioEngine audio;
+            audio.StopAllChannels();
+            
+            for (u64 i = 0; i < MAX_NUM_SOUNDS; ++i)
+            {
+                audio.UnloadSound(i);
+            }
+            
+            ReloadSoundDefinitions(CPLAT.SoundDefinitionsPath().c_str());
+        }
+#endif
         gImpl->Update();
     }
     
@@ -623,6 +648,13 @@ namespace r2::audio
         gImpl = nullptr;
         gAudioEngineInitialize = false;
     }
+    
+#ifdef R2_ASSET_PIPELINE
+    void AudioEngine::PushNewlyBuiltSoundDefinitions(std::vector<std::string> paths)
+    {
+        s_soundDefsBuiltQueue.Push(paths);
+    }
+#endif
     
     void AudioEngine::ReloadSoundDefinitions(const char* path)
     {
@@ -701,7 +733,7 @@ namespace r2::audio
         }
     }
     
-    AudioEngine::SoundID AudioEngine::RegisterSound(const SoundDefinition& soundDef, bool load)
+    AudioEngine::SoundID AudioEngine::RegisterSound(const SoundDefinition& soundDef)
     {
         //check to see if this was already registered
         SoundID soundID = InvalidSoundID;
@@ -712,7 +744,6 @@ namespace r2::audio
             if (strcmp(sound.mSoundDefinition.soundName, soundDef.soundName) == 0)
             {
                 //return the index that we already had for this sound definition
-                R2_CHECK(false, "AudioEngine::RegisterSound - sound definition has already been registered!");
                 soundID = i;
                 break;
             }
