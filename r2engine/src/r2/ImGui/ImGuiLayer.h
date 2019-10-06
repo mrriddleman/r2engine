@@ -22,19 +22,13 @@ namespace r2
         
         virtual void Init() override;
         virtual void Shutdown() override;
-        virtual void Update() override;
-        virtual void Render(float alpha) override;
-        virtual void OnEvent(evt::Event& event) override;
+
+        virtual void ImGuiRender() override;
+        
+        void Begin();
+        void End();
         
     private:
-        bool OnMouseButtonPressedEvent(evt::MouseButtonPressedEvent & e);
-        bool OnMouseButtonReleasedEvent(evt::MouseButtonReleasedEvent& e);
-        bool OnMouseMovedEvent(evt::MouseMovedEvent& e);
-        bool OnMouseWheelEvent(evt::MouseWheelEvent& e);
-        bool OnKeyPressedEvent(evt::KeyPressedEvent& e);
-        bool OnKeyReleasedEvent(evt::KeyReleasedEvent& e);
-        bool OnKeyTypedEvent(evt::KeyTypedEvent& e);
-        bool OnWindowResizeEvent(evt::WindowResizeEvent& e);
         
         u64 mTime = 0;
     };

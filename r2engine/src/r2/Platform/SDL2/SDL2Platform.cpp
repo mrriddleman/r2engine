@@ -465,6 +465,11 @@ namespace r2
         return SDL_WINDOW_OPENGL;
     }
     
+    void SDL2Platform::MakeCurrent()
+    {
+        SDL_GL_MakeCurrent(moptrWindow, mglContext);
+    }
+    
     void SDL2Platform::TestFiles()
     {
 //        char filePath[r2::fs::FILE_PATH_LENGTH];

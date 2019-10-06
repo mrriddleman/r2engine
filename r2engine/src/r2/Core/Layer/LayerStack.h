@@ -28,6 +28,7 @@ namespace r2
         
         void Update();
         void Render(float alpha);
+        void ImGuiRender();
         void OnEvent(evt::Event& e);
         
         void PushLayer(std::unique_ptr<Layer> layer);

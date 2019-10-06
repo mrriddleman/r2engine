@@ -63,6 +63,21 @@ namespace r2
         }
     }
     
+    void LayerStack::ImGuiRender()
+    {
+        for(auto& layer : mLayers)
+        {
+            if(!layer->IsDisabled())
+                layer->ImGuiRender();
+        }
+        
+        for(auto& layer : mOverlays)
+        {
+            if(!layer->IsDisabled())
+                layer->ImGuiRender();
+        }
+    }
+    
     void LayerStack::OnEvent(evt::Event& e)
     {
         for(auto layer = mOverlays.end(); layer != mOverlays.begin(); )

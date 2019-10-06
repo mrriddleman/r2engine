@@ -64,7 +64,13 @@ namespace r2
 #endif
             
             //@TODO(Serge): should check to see if the app initialized!
-            PushLayer(std::make_unique<ImGuiLayer>());
+            //PushLayer(std::make_unique<ImGuiLayer>());
+            
+            std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
+            mImGuiLayer = imguiLayer.get();
+            
+            PushOverlay(std::move(imguiLayer));
+            
             PushLayer(std::make_unique<SoundLayer>());
             
             //Should be last
@@ -92,6 +98,9 @@ namespace r2
         r2::asset::lib::Update();
         
         mLayerStack.Update();
+       
+        
+        
         
 //        static u32 ticks = 0;
 //        static bool pauseRequested = false;
@@ -129,6 +138,10 @@ namespace r2
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         mLayerStack.Render(alpha);
+        
+        mImGuiLayer->Begin();
+        mLayerStack.ImGuiRender();
+        mImGuiLayer->End();
     }
     
     util::Size Engine::GetInitialResolution() const

@@ -42,6 +42,10 @@ namespace r2
         virtual const std::string RootPath() const override;
         virtual const std::string AppPath() const override;
         virtual const std::string SoundDefinitionsPath() const override;
+        
+        virtual void* GetNativeWindowPtr() const override {return moptrWindow;}
+        virtual void* GetRenderingContext() const override {return mglContext;}
+        virtual void MakeCurrent() override;
     private:
         friend Platform;
         SDL2Platform();

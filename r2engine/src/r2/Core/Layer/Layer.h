@@ -21,6 +21,7 @@ namespace r2
         virtual void Init(){}
         virtual void Shutdown(){}
         virtual void Update(){}
+        virtual void ImGuiRender() {}
         virtual void Render(float alpha){}
         virtual void OnEvent(evt::Event& event){}
         inline const std::string& DebugName() const {return mDebugName;}

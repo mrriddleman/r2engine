@@ -14,6 +14,8 @@
 
 namespace r2
 {
+    class ImGuiLayer;
+    
     namespace evt
     {
         class Event;
@@ -91,6 +93,7 @@ namespace r2
         GetPerformanceCounterFunc mGetPerformanceCounterFunc = nullptr;
         
         LayerStack mLayerStack;
+        ImGuiLayer* mImGuiLayer;
     };
 }
 
