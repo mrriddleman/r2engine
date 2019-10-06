@@ -64,6 +64,7 @@ namespace r2::audio
 
     AudioEngine::SoundDefinition::SoundDefinition(const AudioEngine::SoundDefinition& soundDef)
     : defaultVolume(soundDef.defaultVolume)
+    , defaultPitch(soundDef.defaultPitch)
     , minDistance(soundDef.minDistance)
     , maxDistance(soundDef.maxDistance)
     , flags(soundDef.flags)
@@ -79,6 +80,7 @@ namespace r2::audio
         }
         
         defaultVolume = soundDef.defaultVolume;
+        defaultPitch = soundDef.defaultPitch;
         minDistance = soundDef.minDistance;
         maxDistance = soundDef.maxDistance;
         flags = soundDef.flags;
@@ -118,6 +120,7 @@ namespace r2::audio
             
             Implementation& mImpl;
             FMOD::Channel* moptrChannel = nullptr;
+            
             AudioEngine::SoundID mSoundID = AudioEngine::InvalidSoundID;
             AudioEngine::SoundDefinition mSoundDef;
             glm::vec3 mPos;
@@ -261,7 +264,10 @@ namespace r2::audio
             if (channel)
             {
                 FREE(channel, *mChannelPool);
+                r2::sarr::At(*mChannels, i) = nullptr;
             }
+            
+            
         }
 
         //Free in reverse order
@@ -506,7 +512,7 @@ namespace r2::audio
             CheckFMODResult( moptrChannel->set3DAttributes(&position, nullptr) );
         }
         
-        CheckFMODResult( moptrChannel->setVolume(GetVolume()) );
+        CheckFMODResult( moptrChannel->setVolume(mVolume) );
         
         CheckFMODResult( moptrChannel->setPitch(mPitch) );
     }
@@ -536,9 +542,7 @@ namespace r2::audio
             return 0.0f;
         }
         
-        float volume = 0.0f;
-        CheckFMODResult(moptrChannel->getVolume(&volume));
-        return volume;
+        return mVolume;
     }
 
     void Implementation::Channel::Stop(float fadeOutInSeconds)
@@ -615,17 +619,27 @@ namespace r2::audio
 #ifdef R2_ASSET_PIPELINE
         std::vector<std::string> paths;
         
-        if(s_soundDefsBuiltQueue.TryPop(paths))
+        if(gAudioEngineInitialize && s_soundDefsBuiltQueue.TryPop(paths))
         {
             //TODO(Serge): could be smarter and only unload the sounds that were actually modified
             AudioEngine audio;
             audio.StopAllChannels();
-            
+
             for (u64 i = 0; i < MAX_NUM_SOUNDS; ++i)
             {
                 audio.UnloadSound(i);
             }
             
+            for (u64 i = 0; i < MAX_NUM_CHANNELS; ++i)
+            {
+                r2::audio::Implementation::Channel* channel = r2::sarr::At(*gImpl->mChannels, i);
+                if (channel)
+                {
+                    FREE(channel, *gImpl->mChannelPool);
+                    r2::sarr::At(*gImpl->mChannels, i) = nullptr;
+                }
+            }
+
             ReloadSoundDefinitions(CPLAT.SoundDefinitionsPath().c_str());
         }
 #endif
@@ -700,6 +714,7 @@ namespace r2::audio
                     soundDef.minDistance = def->minDistance();
                     soundDef.maxDistance = def->maxDistance();
                     soundDef.defaultVolume = def->defaultVolume();
+                    soundDef.defaultPitch = def->pitch();
                     soundDef.loadOnRegister = def->loadOnRegister();
                     
                     if (def->loop())
@@ -766,6 +781,7 @@ namespace r2::audio
         sound.mSoundDefinition.maxDistance = soundDef.maxDistance;
         sound.mSoundDefinition.minDistance = soundDef.minDistance;
         sound.mSoundDefinition.defaultVolume = soundDef.defaultVolume;
+        sound.mSoundDefinition.defaultPitch = soundDef.defaultPitch;
         strcpy( sound.mSoundDefinition.soundName, soundDef.soundName );
         
         if (soundDef.loadOnRegister)
@@ -800,6 +816,7 @@ namespace r2::audio
         
         strcpy(sound.mSoundDefinition.soundName, "");
         sound.mSoundDefinition.defaultVolume = 0.0f;
+        sound.mSoundDefinition.defaultPitch = 0.0f;
         sound.mSoundDefinition.flags.Clear();
         sound.mSoundDefinition.minDistance = 0.0f;
         sound.mSoundDefinition.maxDistance = 0.0f;
@@ -884,6 +901,20 @@ namespace r2::audio
         CheckFMODResult( gImpl->mSystem->set3DListenerAttributes(0, &pos, nullptr, &forward, &upVec) );
     }
     
+    AudioEngine::ChannelID AudioEngine::PlaySound(const char* soundName, const glm::vec3& pos, float volume, float pitch)
+    {
+        SoundID defaultID = AudioEngine::InvalidSoundID;
+        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+        
+        if (theSoundID == defaultID)
+        {
+            R2_CHECK(false, "AudioEngine::PlaySound - Couldn't find sound: %s", soundName);
+            return InvalidChannelID;
+        }
+        
+        return PlaySound(theSoundID, pos, volume, pitch);
+    }
+    
     AudioEngine::ChannelID AudioEngine::PlaySound(AudioEngine::SoundID soundID, const glm::vec3& pos, float volume, float pitch)
     {
         if (soundID == InvalidSoundID)
@@ -913,7 +944,10 @@ namespace r2::audio
             return InvalidChannelID;
         }
         
-        r2::sarr::At( *gImpl->mChannels, nextChannelID ) = ALLOC_PARAMS(Implementation::Channel, *gImpl->mChannelPool, *gImpl, soundID, sound.mSoundDefinition, pos, volume, pitch);
+        float volumeToPlay = volume > 0.0f ? volume : sound.mSoundDefinition.defaultVolume;
+        float pitchToPlay = pitch > 0.0f ? pitch : sound.mSoundDefinition.defaultPitch;
+        
+        r2::sarr::At( *gImpl->mChannels, nextChannelID ) = ALLOC_PARAMS(Implementation::Channel, *gImpl->mChannelPool, *gImpl, soundID, sound.mSoundDefinition, pos, volumeToPlay, pitchToPlay);
         
         return nextChannelID;
     }

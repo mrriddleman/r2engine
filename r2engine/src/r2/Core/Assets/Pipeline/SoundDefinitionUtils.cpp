@@ -148,6 +148,7 @@ namespace r2::asset::pln::audio
                 definition.minDistance = soundDef->minDistance();
                 definition.maxDistance = soundDef->maxDistance();
                 definition.loadOnRegister = soundDef->loadOnRegister();
+                definition.defaultPitch = soundDef->pitch();
                 
                 if (soundDef->loop())
                 {
@@ -190,12 +191,13 @@ namespace r2::asset::pln::audio
                                     (builder,
                                      builder.CreateString(std::string(soundDef.soundName)),
                                      soundDef.defaultVolume,
+                                     soundDef.defaultPitch,
                                      soundDef.minDistance,
                                      soundDef.maxDistance,
                                      soundDef.flags.IsSet(r2::audio::AudioEngine::IS_3D),
                                      soundDef.flags.IsSet(r2::audio::AudioEngine::LOOP),
                                      soundDef.flags.IsSet(r2::audio::AudioEngine::STREAM),
-                                     soundDef.loadOnRegister > 0));
+                                     soundDef.loadOnRegister));
         }
         
         auto sounds = r2::CreateSoundDefinitions(builder, builder.CreateVector(flatSoundDefs));

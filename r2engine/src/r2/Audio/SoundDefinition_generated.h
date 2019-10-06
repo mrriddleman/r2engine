@@ -16,18 +16,22 @@ struct SoundDefinition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_SOUNDNAME = 4,
     VT_DEFAULTVOLUME = 6,
-    VT_MINDISTANCE = 8,
-    VT_MAXDISTANCE = 10,
-    VT_IS3D = 12,
-    VT_LOOP = 14,
-    VT_STREAM = 16,
-    VT_LOADONREGISTER = 18
+    VT_PITCH = 8,
+    VT_MINDISTANCE = 10,
+    VT_MAXDISTANCE = 12,
+    VT_IS3D = 14,
+    VT_LOOP = 16,
+    VT_STREAM = 18,
+    VT_LOADONREGISTER = 20
   };
   const flatbuffers::String *soundName() const {
     return GetPointer<const flatbuffers::String *>(VT_SOUNDNAME);
   }
   float defaultVolume() const {
     return GetField<float>(VT_DEFAULTVOLUME, 0.0f);
+  }
+  float pitch() const {
+    return GetField<float>(VT_PITCH, 0.0f);
   }
   float minDistance() const {
     return GetField<float>(VT_MINDISTANCE, 0.0f);
@@ -52,6 +56,7 @@ struct SoundDefinition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_SOUNDNAME) &&
            verifier.VerifyString(soundName()) &&
            VerifyField<float>(verifier, VT_DEFAULTVOLUME) &&
+           VerifyField<float>(verifier, VT_PITCH) &&
            VerifyField<float>(verifier, VT_MINDISTANCE) &&
            VerifyField<float>(verifier, VT_MAXDISTANCE) &&
            VerifyField<uint8_t>(verifier, VT_IS3D) &&
@@ -70,6 +75,9 @@ struct SoundDefinitionBuilder {
   }
   void add_defaultVolume(float defaultVolume) {
     fbb_.AddElement<float>(SoundDefinition::VT_DEFAULTVOLUME, defaultVolume, 0.0f);
+  }
+  void add_pitch(float pitch) {
+    fbb_.AddElement<float>(SoundDefinition::VT_PITCH, pitch, 0.0f);
   }
   void add_minDistance(float minDistance) {
     fbb_.AddElement<float>(SoundDefinition::VT_MINDISTANCE, minDistance, 0.0f);
@@ -105,6 +113,7 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinition(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> soundName = 0,
     float defaultVolume = 0.0f,
+    float pitch = 0.0f,
     float minDistance = 0.0f,
     float maxDistance = 0.0f,
     bool is3D = false,
@@ -114,6 +123,7 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinition(
   SoundDefinitionBuilder builder_(_fbb);
   builder_.add_maxDistance(maxDistance);
   builder_.add_minDistance(minDistance);
+  builder_.add_pitch(pitch);
   builder_.add_defaultVolume(defaultVolume);
   builder_.add_soundName(soundName);
   builder_.add_loadOnRegister(loadOnRegister);
@@ -127,6 +137,7 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinitionDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *soundName = nullptr,
     float defaultVolume = 0.0f,
+    float pitch = 0.0f,
     float minDistance = 0.0f,
     float maxDistance = 0.0f,
     bool is3D = false,
@@ -137,6 +148,7 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinitionDirect(
       _fbb,
       soundName ? _fbb.CreateString(soundName) : 0,
       defaultVolume,
+      pitch,
       minDistance,
       maxDistance,
       is3D,

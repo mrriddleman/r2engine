@@ -8,6 +8,7 @@ table SoundDefinition
 {
 	soundName:string;
 	defaultVolume:float;
+	pitch:float;
 	minDistance:float;
 	maxDistance:float;
 	is3D:bool;

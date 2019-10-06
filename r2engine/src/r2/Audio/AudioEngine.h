@@ -61,11 +61,11 @@ namespace r2::audio
             char soundName[fs::FILE_PATH_LENGTH];
             u64 soundKey = 0;
             float defaultVolume = 1.0f;
+            float defaultPitch = 1.0f;
             float minDistance = 0.0f;
             float maxDistance = 0.0f;
-            b32 loadOnRegister = false;
             SoundFlags flags = NONE;
-            
+            bool loadOnRegister = false;
             
             SoundDefinition() = default;
             ~SoundDefinition() = default;
@@ -82,7 +82,10 @@ namespace r2::audio
         bool LoadSound(SoundID soundID);
         void UnloadSound(SoundID handle);
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
-        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.5f, float pitch = 1.0f);
+        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
+        
+        ChannelID PlaySound(const char* soundName, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
+        
         void StopChannel(ChannelID channelID, float fadeOutInSeconds = 0.0f);
         
         void StopAllChannels(float fadeOutInSeconds = 0.0f);

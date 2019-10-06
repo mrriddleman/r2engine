@@ -28,39 +28,6 @@
 
 namespace r2
 {
-    void TestSound(const std::string& appPath)
-    {
-        r2::audio::AudioEngine audio;
-        
-        std::string wavePath = appPath + "sounds" + "/wave.mp3";
-        std::string swishPath = appPath + "sounds" + "/swish.wav";
-        
-        r2::audio::AudioEngine::SoundDefinition waveSoundDef;
-        strcpy( waveSoundDef.soundName, wavePath.c_str() );
-        waveSoundDef.defaultVolume = 1.0f;
-        waveSoundDef.minDistance = 0.0f;
-        waveSoundDef.maxDistance = 1.0f;
-        waveSoundDef.flags |= r2::audio::AudioEngine::LOOP;
-        waveSoundDef.flags |= r2::audio::AudioEngine::STREAM;
-        
-      //  auto waveSoundID = audio.RegisterSound(waveSoundDef);
-        
-        r2::audio::AudioEngine::SoundDefinition swishSoundDef;
-        strcpy( swishSoundDef.soundName, swishPath.c_str() );
-        swishSoundDef.defaultVolume = 1.0f;
-        swishSoundDef.minDistance = 0.0f;
-        swishSoundDef.maxDistance = 1.0f;
-        swishSoundDef.flags |= r2::audio::AudioEngine::STREAM;
-        
-        
-        auto swishSoundID = audio.RegisterSound(swishSoundDef);
-        
-        audio.PlaySound(swishSoundID, glm::vec3(0,0,0), 0.5, 0.5);
-       // sleep(10);
-        
-       // audio.StopChannel(channelID, 10);
-    }
-    
     Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr)
     {
         
@@ -105,7 +72,7 @@ namespace r2
             
 
             
-           // TestSound(CPLAT.RootPath());
+           
             mDisplaySize = noptrApp->GetPreferredResolution();
             glClearColor(0.f, 0.5f, 1.0f, 1.0f);
             

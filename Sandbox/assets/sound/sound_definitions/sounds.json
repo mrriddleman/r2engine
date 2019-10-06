@@ -2,11 +2,19 @@
   definitions: [
     {
       soundName: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/sound/sound_fx/swish.wav",
-      defaultVolume: 0.7
+      defaultVolume: 1.0,
+      pitch: 1.0
     },
     {
       soundName: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/sound/music/wave.mp3",
-      defaultVolume: 1.0
+      defaultVolume: 0.1,
+      pitch: 1.1,
+      minDistance:0.0,
+      maxDistance:0.0,
+      is3D:false,
+      loop:true,
+      stream:true,
+      loadOnRegister:true,
     }
   ]
 }
