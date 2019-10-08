@@ -15,9 +15,10 @@ namespace r2
         enum EventType
         {
             EVT_NONE = 0,
-            EVT_WINDOW_CLOSE, EVT_WINDOW_RESIZED, EVT_WINDOW_SIZE_CHANGED,
+            EVT_WINDOW_CLOSE, EVT_WINDOW_RESIZED, EVT_WINDOW_SIZE_CHANGED, EVT_WINDOW_MINIMIZED, EVT_WINDOW_EXPOSED,
             EVT_KEY_PRESSED, EVT_KEY_RELEASED, EVT_KEY_TYPED,
-            EVT_MOUSE_BUTTON_PRESSED, EVT_MOUSE_BUTTON_RELEASED, EVT_MOUSE_MOVED, EVT_MOUSE_WHEEL
+            EVT_MOUSE_BUTTON_PRESSED, EVT_MOUSE_BUTTON_RELEASED, EVT_MOUSE_MOVED, EVT_MOUSE_WHEEL,
+            EVT_CONTROLLER_DISCONNECTED, EVT_CONTROLLER_AXIS, EVT_CONTROLLER_BUTTON, EVT_CONTROLLER_DETECTED, EVT_CONTROLLER_REMAPPED
         };
         
         enum EventCategory
@@ -27,7 +28,8 @@ namespace r2
             ECAT_INPUT        = BIT(1),
             ECAT_KEY          = BIT(2),
             ECAT_MOUSE        = BIT(3),
-            ECAT_MOUSE_BUTTON = BIT(4)
+            ECAT_MOUSE_BUTTON = BIT(4),
+            ECAT_CONTROLLER   = BIT(5),
         };
         
 #define EVENT_CLASS_TYPE(type) static EventType GetStaticType() { return type; }\

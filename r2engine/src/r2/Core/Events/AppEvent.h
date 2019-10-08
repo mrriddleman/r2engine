@@ -44,9 +44,35 @@ namespace r2
             EVENT_CLASS_TYPE(EVT_WINDOW_CLOSE)
             EVENT_CLASS_CATEGORY(ECAT_APP)
             
-            std::string ToString() const override
+            virtual std::string ToString() const override
             {
                 return "WindowCloseEvent";
+            }
+        };
+        
+        class R2_API WindowMinimizedEvent: public Event
+        {
+        public:
+            WindowMinimizedEvent(){}
+            
+            EVENT_CLASS_TYPE(EVT_WINDOW_MINIMIZED)
+            EVENT_CLASS_CATEGORY(ECAT_APP)
+            virtual std::string ToString() const override
+            {
+                return "WindowMinimizedEvent";
+            }
+        };
+        
+        class R2_API WindowUnMinimizedEvent: public Event
+        {
+        public:
+            WindowUnMinimizedEvent(){}
+            
+            EVENT_CLASS_TYPE(EVT_WINDOW_EXPOSED)
+            EVENT_CLASS_CATEGORY(ECAT_APP)
+            virtual std::string ToString() const override
+            {
+                return "WindowUnMinimizedEvent";
             }
         };
     }

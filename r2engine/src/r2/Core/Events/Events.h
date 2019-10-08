@@ -11,5 +11,6 @@
 #include "r2/Core/Events/AppEvent.h"
 #include "r2/Core/Events/MouseEvent.h"
 #include "r2/Core/Events/KeyEvent.h"
+#include "r2/Core/Events/GameControllerEvent.h"
 
 #endif /* Events_h */

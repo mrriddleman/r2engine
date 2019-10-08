@@ -116,6 +116,8 @@ namespace r2
             return false;
         }
         
+        SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+        
         const char* testStr = "Level3";
         size_t testHash = r2::utils::Hash<const char*>{}(testStr);
         
@@ -214,9 +216,61 @@ namespace r2
             mEngine.SetGetPerformanceCounterCallback([]{
                 return SDL_GetPerformanceCounter();
             });
-            
+           
             mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
             mEngine.mGetClipboardTextFunc = SDL2GetClipboardTextFunc;
+            
+            //Game Controller stuff
+            mEngine.SetOpenGameControllerCallback([](r2::io::ControllerID controllerID){
+                SDL_GameController* controller = nullptr;
+                
+                if(SDL_IsGameController(controllerID))
+                {
+                    controller = SDL_GameControllerOpen(controllerID);
+                }
+                
+                return controller;
+            });
+            
+            mEngine.SetNumberOfGameControllersCallback([](){
+                return SDL_NumJoysticks();
+            });
+            
+            mEngine.SetIsGameControllerCallback([](r2::io::ControllerID controllerID){
+                return SDL_IsGameController(controllerID);
+            });
+            
+            mEngine.SetCloseGameControllerCallback([](void* controller){
+                SDL_GameControllerClose((SDL_GameController*)controller);
+            });
+            
+            mEngine.SetIsGameControllerAttchedCallback([](void* gameController){
+                return SDL_GameControllerGetAttached((SDL_GameController*)gameController);
+            });
+            
+            mEngine.SetGetGameControllerMappingCallback([](void* gameController){
+                return SDL_GameControllerMapping((SDL_GameController*)gameController);
+            });
+            
+            mEngine.SetGetGameControllerButtonStateCallback([](void* gameController, r2::io::ControllerButtonName buttonName){
+                return SDL_GameControllerGetButton((SDL_GameController*)gameController, (SDL_GameControllerButton)buttonName);
+            });
+            
+            mEngine.SetGetGameControllerAxisValueCallback([](void* gameController, r2::io::ControllerAxisName axisName){
+                return SDL_GameControllerGetAxis((SDL_GameController*)gameController, (SDL_GameControllerAxis)axisName);
+            });
+            
+            mEngine.SetGetStringForButtonCallback([](r2::io::ControllerButtonName name){
+                return SDL_GameControllerGetStringForButton((SDL_GameControllerButton)name);
+            });
+            
+            mEngine.SetGetStringForAxisCallback([](r2::io::ControllerAxisName name){
+                return SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)name);
+            });
+            
+            mEngine.SetGetGameControllerNameFunc([](void* gameController){
+                return SDL_GameControllerName((SDL_GameController*)gameController);
+            });
         }
         
         if(!mEngine.Init(std::move(app)))
@@ -249,13 +303,23 @@ namespace r2
                         mEngine.QuitTriggered();
                         break;
                     case SDL_WINDOWEVENT:
-                        switch (e.window.type)
+                        switch (e.window.event)
                         {
                             case SDL_WINDOWEVENT_RESIZED:
                                 mEngine.WindowResizedEvent(e.window.data1, e.window.data2);
                                 break;
                             case SDL_WINDOWEVENT_SIZE_CHANGED:
                                 mEngine.WindowSizeChangedEvent(e.window.data1, e.window.data2);
+                                break;
+                            case SDL_WINDOWEVENT_MINIMIZED:
+                                mEngine.WindowMinimizedEvent();
+                                break;
+                            case SDL_WINDOWEVENT_EXPOSED:
+                                mEngine.WindowUnMinimizedEvent();
+                                break;
+                            case SDL_WINDOWEVENT_MAXIMIZED:
+                                
+                                break;
                             default:
                                 break;
                         }
@@ -334,7 +398,34 @@ namespace r2
                     {
                         mEngine.TextEvent(e.text.text);
                     }
-                        break;
+                    break;
+                        
+                    case SDL_CONTROLLERDEVICEADDED:
+                    {
+                        mEngine.ControllerDetectedEvent(e.cdevice.which);
+                    }
+                    break;
+                    case SDL_CONTROLLERDEVICEREMOVED:
+                    {
+                        mEngine.ControllerDisonnectedEvent(e.cdevice.which);
+                    }
+                    break;
+                    case SDL_CONTROLLERDEVICEREMAPPED:
+                    {
+                        mEngine.ControllerRemappedEvent(e.cdevice.which);
+                    }
+                    break;
+                    case SDL_CONTROLLERBUTTONUP:
+                    case SDL_CONTROLLERBUTTONDOWN:
+                    {
+                        mEngine.ControllerButtonEvent(e.cbutton.which, (r2::io::ControllerButtonName)e.cbutton.button, e.cbutton.state);
+                    }
+                    break;
+                    case SDL_CONTROLLERAXISMOTION:
+                    {
+                        mEngine.ControllerAxisEvent(e.caxis.which, (r2::io::ControllerAxisName)e.caxis.axis, e.caxis.value);
+                    }
+                    break;
                     default:
                         break;
                 }

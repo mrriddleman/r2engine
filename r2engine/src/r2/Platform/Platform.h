@@ -54,6 +54,7 @@ namespace r2
         Engine& EngineMutable() {return mEngine;}
         
     protected:
+        
         Engine mEngine;
         r2::asset::PathResolver mAssetPathResolver;
     };
