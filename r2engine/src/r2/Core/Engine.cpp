@@ -110,6 +110,14 @@ namespace r2
     {
         mLayerStack.ShutdownAll();
         
+        for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
+        {
+            if (mPlatformControllers[i] != nullptr)
+            {
+                CloseGameController(i);
+            }
+        }
+        
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::Shutdown();
@@ -169,6 +177,8 @@ namespace r2
             {
                 mPlatformControllers[controllerID] = mOpenGameControllerFunc(controllerID);
                 
+                evt::GameControllerConnectedEvent e(controllerID);
+                OnEvent(e);
                 return controllerID;
             }
         }
@@ -391,9 +401,16 @@ namespace r2
     
     void Engine::ControllerDetectedEvent(io::ControllerID controllerID)
     {
-        evt::GameControllerDetectedEvent e(controllerID);
-        R2_LOGI("%s", e.ToString().c_str());
-        OnEvent(e);
+        if (mPlatformControllers[controllerID] == nullptr)
+        {
+            evt::GameControllerDetectedEvent e(controllerID);
+            //  R2_LOGI("%s", e.ToString().c_str());
+            OnEvent(e);
+            
+            auto connectedControllerID = OpenGameController(controllerID);
+            
+            R2_CHECK(connectedControllerID == controllerID, "controller id should be the same");
+        }
     }
     
     void Engine::ControllerDisonnectedEvent(io::ControllerID controllerID)
@@ -406,7 +423,7 @@ namespace r2
     void Engine::ControllerRemappedEvent(io::ControllerID controllerID)
     {
         evt::GameControllerRemappedEvent e(controllerID);
-        R2_LOGI("%s", e.ToString().c_str());
+      //  R2_LOGI("%s", e.ToString().c_str());
         OnEvent(e);
     }
     
@@ -432,8 +449,7 @@ namespace r2
         {
             if (IsGameController(i))
             {
-                evt::GameControllerDetectedEvent e(i);
-                OnEvent(e);
+                ControllerDetectedEvent(i);
             }
         }
     }

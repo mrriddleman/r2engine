@@ -40,6 +40,21 @@ namespace r2::evt
         EVENT_CLASS_TYPE(EVT_CONTROLLER_DISCONNECTED);
     };
     
+    class R2_API GameControllerConnectedEvent: public GameControllerEvent
+    {
+    public:
+        
+        GameControllerConnectedEvent(r2::io::ControllerID controllerID):GameControllerEvent(controllerID){}
+        
+        virtual std::string ToString() const override
+        {
+            std::stringstream ss;
+            ss << "GameControllerConnectedEvent controllerId: " << GetControllerID();
+            return ss.str();
+        }
+        EVENT_CLASS_TYPE(EVT_CONTROLLER_CONNECTED);
+    };
+    
     class R2_API GameControllerAxisEvent: public GameControllerEvent
     {
     public:
@@ -78,7 +93,8 @@ namespace r2::evt
         virtual std::string ToString() const override
         {
             std::stringstream ss;
-            ss << "GameControllerButtonEvent controllerId: " << GetControllerID() << " button name: " << ButtonName() <<", state: " << ButtonState();
+            std::string state = ButtonState() > 0 ? "Pressed" : "Released";
+            ss << "GameControllerButtonEvent controllerId: " << GetControllerID() << " button name: " << ButtonName() <<", state: " << state;
             return ss.str();
         }
         

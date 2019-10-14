@@ -418,7 +418,7 @@ namespace r2
                     case SDL_CONTROLLERBUTTONUP:
                     case SDL_CONTROLLERBUTTONDOWN:
                     {
-                        mEngine.ControllerButtonEvent(e.cbutton.which, (r2::io::ControllerButtonName)e.cbutton.button, e.cbutton.state);
+                        mEngine.ControllerButtonEvent(e.cbutton.which, (r2::io::ControllerButtonName)e.cbutton.button, u8(e.cbutton.state == SDL_PRESSED));
                     }
                     break;
                     case SDL_CONTROLLERAXISMOTION:
