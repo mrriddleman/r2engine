@@ -9,7 +9,7 @@
 #define InternalEngineMemory_h
 
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
-
+#include "r2/Core/Memory/Allocators/StackAllocator.h"
 namespace r2::mem
 {
     struct InternalEngineMemory
@@ -18,7 +18,7 @@ namespace r2::mem
         r2::mem::MemoryArea::Handle internalEngineMemoryHandle = MemoryArea::Invalid;
         r2::mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle = MemoryArea::MemorySubArea::Invalid;
         LinearArena* permanentStorageArena = nullptr;
-        LinearArena* singleFrameArena = nullptr;
+        StackArena* singleFrameArena = nullptr;
     };
 }
 

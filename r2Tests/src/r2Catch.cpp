@@ -13,6 +13,7 @@
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Memory/Allocators/RingBufferAllocator.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
@@ -174,6 +175,18 @@ public:
     inline u64 X() const {return mX;}
 private:
     u64 mX;
+};
+
+class PointClass
+{
+public:
+    PointClass():x(0), y(0){}
+    PointClass(u64 _x, u64 _y):x(_x), y(_y){}
+    u64 Square() const {return x*x;}
+    inline u64 X() const {return x;}
+    inline u64 Y() const {return y;}
+    
+    u64 x, y;
 };
 
 TEST_CASE("Test Linear Memory Arena No Checking")
@@ -645,6 +658,203 @@ TEST_CASE("Test Malloc Memory Arena No Checking")
         FREE_ARRAY(testArray, mallocArena);
     }
 }
+
+TEST_CASE("Test Free List")
+{
+    r2::mem::GlobalMemory::Init(1);
+    SECTION("Test Free List Allocator")
+    {
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1), 0);
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::FreeListAllocator freeListAllocator(testMemoryArea->SubAreaBoundary(subAreaHandle));
+        
+        //Test basic free list allocator methods
+        REQUIRE(freeListAllocator.GetTotalBytesAllocated() == 0);
+        REQUIRE(freeListAllocator.UnallocatedBytes() == Megabytes(1));
+        
+        const u64 subareaSize = testMemoryArea->SubAreaBoundary(subAreaHandle).size;
+        const u64 totalMemoryForAllocator = freeListAllocator.GetTotalMemory();
+        
+        REQUIRE(totalMemoryForAllocator == subareaSize);
+        
+        REQUIRE(freeListAllocator.StartPtr() == testMemoryArea->SubAreaBoundary(subAreaHandle).location);
+        
+        REQUIRE(freeListAllocator.HeaderSize() == sizeof(r2::mem::FreeListAllocator::AllocationHeader));
+        
+        //Do some allocations
+        //@Note(Serge): this could change depending on 32 bit platforms
+        const u64 overhead = alignof(byte*) + sizeof(size_t);
+        const u64 max1KBAllocations = std::floor((float)freeListAllocator.GetTotalMemory() / (float)(Kilobytes(1) + overhead));
+        const u64 max1KBAllocationSize = max1KBAllocations * (Kilobytes(1) + overhead);
+        const u64 leftoverMemory = freeListAllocator.GetTotalMemory() - max1KBAllocationSize;
+        
+        std::vector<byte*> pointers;
+        byte* firstAllocation = (byte*)freeListAllocator.Allocate(Kilobytes(1), alignof(byte*), 0);
+        pointers.push_back(firstAllocation);
+        
+        REQUIRE(firstAllocation != nullptr);
+        
+        const u64 allocSize = freeListAllocator.GetAllocationSize(firstAllocation);
+        
+        REQUIRE(allocSize == Kilobytes(1) + overhead);
+        
+        
+        pointers.reserve(max1KBAllocations-1);
+        
+        for (u64 i = 0; i < (max1KBAllocations-1); ++i)
+        {
+            byte* nextPointer = (byte*)freeListAllocator.Allocate(Kilobytes(1), alignof(byte*), 0);
+            
+            REQUIRE(nextPointer != nullptr);
+            
+            pointers.push_back(nextPointer);
+        }
+        
+        REQUIRE(freeListAllocator.GetTotalBytesAllocated() == max1KBAllocationSize);
+        REQUIRE(freeListAllocator.UnallocatedBytes() == leftoverMemory);
+        
+        void* shouldBeNull = freeListAllocator.Allocate(Kilobytes(1), alignof(byte*), 0);
+        
+        REQUIRE(shouldBeNull == nullptr);
+        
+        for (u64 i = 0; i < max1KBAllocations; ++i)
+        {
+            if (i % 2 == 1)
+            {
+                freeListAllocator.Free(pointers[i]);
+                pointers[i] = nullptr;
+            }
+        }
+        
+        byte* tooBigOfAnAllocation = (byte*)freeListAllocator.Allocate(Kilobytes(2), alignof(byte*), 0);
+        
+        REQUIRE(tooBigOfAnAllocation == nullptr);
+        
+        REQUIRE(pointers[0] != nullptr);
+        freeListAllocator.Free(pointers[0]);
+        
+        tooBigOfAnAllocation = (byte*)freeListAllocator.Allocate(Kilobytes(2), alignof(byte*), 0);
+        
+        REQUIRE(tooBigOfAnAllocation != nullptr);
+        
+        for (u64 i = 0; i < max1KBAllocations; ++i)
+        {
+            if(pointers[i] != nullptr)
+            {
+                freeListAllocator.Free(pointers[i]);
+                pointers[i] = nullptr;
+            }
+        }
+        
+        pointers.clear();
+        
+        REQUIRE(freeListAllocator.GetTotalBytesAllocated() == 0);
+       
+        byte* shouldBeAbleToAllocate2KB = (byte*)freeListAllocator.Allocate(Kilobytes(2), alignof(byte*), 0);
+        
+        REQUIRE(shouldBeAbleToAllocate2KB != nullptr);
+        
+        freeListAllocator.Free(shouldBeAbleToAllocate2KB);
+        
+        const u64 maxAllocationSize = freeListAllocator.GetTotalMemory() - overhead;
+        
+        byte* maxAllocation = (byte*)freeListAllocator.Allocate(maxAllocationSize, alignof(byte*), 0);
+        
+        REQUIRE(maxAllocation != nullptr);
+        REQUIRE(freeListAllocator.GetTotalBytesAllocated() == freeListAllocator.GetTotalMemory());
+        
+        byte* noRoom = (byte*)freeListAllocator.Allocate(16, alignof(byte*), 0);
+        
+        REQUIRE(noRoom == nullptr);
+        
+        freeListAllocator.Reset();
+        
+        REQUIRE(freeListAllocator.GetTotalBytesAllocated() == 0);
+        REQUIRE(freeListAllocator.UnallocatedBytes() == Megabytes(1));
+    }
+    
+    r2::mem::GlobalMemory::Shutdown();
+}
+
+TEST_CASE("Test Free List Memory Arena No Checking")
+{
+    r2::mem::GlobalMemory::Init(1);
+    SECTION("Test Free List Arena")
+    {
+        auto testAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("TestArea");
+        
+        REQUIRE(testAreaHandle != r2::mem::MemoryArea::Invalid);
+        
+        r2::mem::MemoryArea* testMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(testAreaHandle);
+        
+        REQUIRE(testMemoryArea != nullptr);
+        
+        REQUIRE(testMemoryArea->Name() == "TestArea");
+        
+        auto result = testMemoryArea->Init(Megabytes(1), 0);
+        
+        REQUIRE(result);
+        
+        REQUIRE(testMemoryArea->AreaBoundary().size == Megabytes(1));
+        
+        REQUIRE(testMemoryArea->AreaBoundary().location != nullptr);
+        
+        auto subAreaHandle = testMemoryArea->AddSubArea(Megabytes(1));
+        
+        REQUIRE(subAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid);
+        
+        r2::mem::FreeListArena freeListArena(*testMemoryArea->GetSubArea(subAreaHandle));
+        
+        PointClass* tc = ALLOC(PointClass, freeListArena);
+        
+        tc->x = 5;
+        
+        REQUIRE(tc->x == 5);
+        
+        FREE(tc, freeListArena);
+        
+        PointClass* tc2 = ALLOC_PARAMS(PointClass, freeListArena, 10, 6);
+        
+        REQUIRE(tc2->X() == 10);
+        REQUIRE(tc2->Y() == 6);
+        
+        FREE(tc2, freeListArena);
+        
+        PointClass* testArray = ALLOC_ARRAY(PointClass[10], freeListArena);
+        
+        for (size_t i = 0; i < 10; ++i)
+        {
+            testArray[i].x = i;
+            testArray[i].y = 10 - i;
+        }
+        
+        REQUIRE(testArray[9].Square() == 81);
+        REQUIRE(testArray[5].Y() * testArray[5].Y() == 25);
+        FREE_ARRAY(testArray, freeListArena);
+    }
+    r2::mem::GlobalMemory::Shutdown();
+}
+
 
 TEST_CASE("Test Basic SArray")
 {

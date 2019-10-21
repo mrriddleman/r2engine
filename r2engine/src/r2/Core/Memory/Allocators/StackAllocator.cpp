@@ -113,6 +113,12 @@ namespace r2
             --mLastAllocationID;
         }
         
+        void StackAllocator::Reset()
+        {
+            mCurrent = mStart;
+            mLastAllocationID = -1;
+        }
+        
         u32 StackAllocator::GetAllocationSize(void* memoryPtr) const
         {
             R2_CHECK(memoryPtr != nullptr, "Why you giving me a nullptr bro?");

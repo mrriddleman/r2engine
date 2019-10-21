@@ -47,7 +47,7 @@ namespace r2
                 
                 if (singleFrameStorageSize > 0)
                 {
-                    mEngineMemory.singleFrameArena = EMPLACE_LINEAR_ARENA(*internalEngineMemoryArea->GetSubArea(internalEngineMemoryArea->ScratchSubAreaHandle()));
+                    mEngineMemory.singleFrameArena = EMPLACE_STACK_ARENA(*internalEngineMemoryArea->GetSubArea(internalEngineMemoryArea->ScratchSubAreaHandle()));
                 }
             }
  

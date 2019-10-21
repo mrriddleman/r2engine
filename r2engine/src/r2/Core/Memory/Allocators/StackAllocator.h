@@ -37,6 +37,7 @@ namespace r2
             
             void* Allocate(u64 size, u64 alignment, u64 offset);
             void Free(void* ptr);
+            void Reset();
             
             u32 GetAllocationSize(void* memoryPtr) const;
             
