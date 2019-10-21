@@ -14,7 +14,7 @@ namespace r2::mem
     , mTotalSize(boundary.size)
     , mUsed(0)
     , mPeak(0)
-    , mPolicy(FIND_FIRST)//TODO(Serge): somehow pass in the policy
+    , mPolicy(FIND_BEST)//TODO(Serge): somehow pass in the policy
     {
         Reset();
     }
@@ -200,6 +200,7 @@ namespace r2::mem
         size_t smallestDiff = std::numeric_limits<size_t>::max();
         
         Node* bestBlock = nullptr;
+        Node* bestBlockPrev = nullptr;
         Node* it = mFreeList.head;
         Node* itPrev = nullptr;
         
@@ -212,6 +213,7 @@ namespace r2::mem
             if (it->data.blockSize >= requiredSpace && (it->data.blockSize - requiredSpace < smallestDiff))
             {
                 bestBlock = it;
+                bestBlockPrev = bestBlockPrev;
                 smallestDiff = it->data.blockSize - requiredSpace;
             }
             
@@ -219,7 +221,7 @@ namespace r2::mem
             it = it->next;
         }
         
-        previousNode = itPrev;
+        previousNode = bestBlockPrev;
         foundNode = bestBlock;
     }
 }
