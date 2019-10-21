@@ -45,6 +45,12 @@ namespace r2
         using AllocateFunc = std::function<byte* (u64 size, u64 alignment)>;
         using FreeFunc = std::function<void (byte*)>;
         
+        enum PlacementPolicy
+        {
+            FIND_FIRST,
+            FIND_BEST
+        };
+        
         namespace utils
         {
             struct MemBoundary
@@ -53,6 +59,7 @@ namespace r2
                 u32 elementSize = 0;
                 u32 alignment = 0;
                 u32 offset = 0;
+                PlacementPolicy policy = FIND_FIRST;
                 void* location = nullptr;
             };
             

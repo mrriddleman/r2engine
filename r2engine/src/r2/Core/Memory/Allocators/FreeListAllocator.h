@@ -19,20 +19,14 @@
  Based on: https://github.com/mtrebi/memory-allocators/blob/master/includes/FreeListAllocator.h
  */
 
-#define MAKE_FREELISTA(arena, capacity) r2::mem::utils::CreateFreeListAllocator(arena, capacity, __FILE__, __LINE__, "")
+#define MAKE_FREELISTA(arena, capacity, policy) r2::mem::utils::CreateFreeListAllocator(arena, capacity, policy, __FILE__, __LINE__, "")
 
-#define MAKE_FREELIST_ARENA(arena, capacity) r2::mem::utils::CreateFreeListArena(arena, capacity, __FILE__, __LINE__, "")
+#define MAKE_FREELIST_ARENA(arena, capacity, policy) r2::mem::utils::CreateFreeListArena(arena, capacity, policy, __FILE__, __LINE__, "")
 
-#define EMPLACE_FREELIST_ARENA(subarea) r2::mem::utils::EmplaceFreeListArena(subarea, __FILE__, __LINE__, "")
+#define EMPLACE_FREELIST_ARENA(subarea, policy) r2::mem::utils::EmplaceFreeListArena(subarea, policy, __FILE__, __LINE__, "")
 
 namespace r2::mem
 {
-    enum PlacementPolicy
-    {
-        FIND_FIRST,
-        FIND_BEST
-    };
-    
     class FreeListAllocator
     {
     public:
@@ -92,16 +86,16 @@ namespace r2::mem
 
 namespace r2::mem::utils
 {
-    template<class ARENA> r2::mem::FreeListAllocator* CreateFreeListAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::FreeListAllocator* CreateFreeListAllocator(ARENA& arena, PlacementPolicy policy, u64 capacity, const char* file, s32 line, const char* description);
     
-    template<class ARENA> r2::mem::FreeListArena* CreateFreeListArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::FreeListArena* CreateFreeListArena(ARENA& arena, u64 capacity, PlacementPolicy policy, const char* file, s32 line, const char* description);
     
-    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description);
+    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils
 {
-    template<class ARENA> r2::mem::FreeListAllocator* CreateFreeListAllocator(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::FreeListAllocator* CreateFreeListAllocator(ARENA& arena, u64 capacity, PlacementPolicy policy, const char* file, s32 line, const char* description)
     {
         void* freeListAllocatorStartPtr = ALLOC_BYTES(arena, sizeof(FreeListAllocator) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
@@ -112,6 +106,7 @@ namespace r2::mem::utils
         utils::MemBoundary boundary;
         boundary.location = boundaryStart;
         boundary.size = capacity;
+        boundary.policy = policy;
         
         FreeListAllocator* freeListAllocator = new (freeListAllocatorStartPtr) FreeListAllocator(boundary);
         
@@ -120,7 +115,7 @@ namespace r2::mem::utils
         return freeListAllocator;
     }
     
-    template<class ARENA> r2::mem::FreeListArena* CreateFreeListArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::FreeListArena* CreateFreeListArena(ARENA& arena, u64 capacity, PlacementPolicy policy, const char* file, s32 line, const char* description)
     {
         void* freeListArenaStartPtr = ALLOC_BYTES(arena, sizeof(FreeListArena) + capacity, CPLAT.CPUCacheLineSize(), file, line, description);
         
@@ -131,6 +126,7 @@ namespace r2::mem::utils
         utils::MemBoundary boundary;
         boundary.location = boundaryStart;
         boundary.size = capacity;
+        boundary.policy = policy;
         
         FreeListArena* freeListArena = new (freeListArenaStartPtr) FreeListArena(boundary);
         

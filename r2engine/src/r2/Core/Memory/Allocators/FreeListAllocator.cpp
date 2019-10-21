@@ -14,7 +14,7 @@ namespace r2::mem
     , mTotalSize(boundary.size)
     , mUsed(0)
     , mPeak(0)
-    , mPolicy(FIND_BEST)//TODO(Serge): somehow pass in the policy
+    , mPolicy(boundary.policy)
     {
         Reset();
     }
@@ -228,7 +228,7 @@ namespace r2::mem
 
 namespace r2::mem::utils
 {
-    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description)
+    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description)
     {
         //we need to figure out how much space we have and calculate a memory boundary for the Allocator
         R2_CHECK(subArea.mBoundary.size > sizeof(FreeListArena), "subArea size(%llu) must be greater than sizeof(LinearArena)(%lu)!", subArea.mBoundary.size, sizeof(FreeListArena));
@@ -240,6 +240,7 @@ namespace r2::mem::utils
         MemBoundary freeListAllocatorBoundary;
         freeListAllocatorBoundary.location = PointerAdd(subArea.mBoundary.location, sizeof(FreeListArena));
         freeListAllocatorBoundary.size = subArea.mBoundary.size - sizeof(FreeListArena);
+        freeListAllocatorBoundary.policy = policy;
         
         FreeListArena* freeListArena = new (subArea.mBoundary.location) FreeListArena(subArea, freeListAllocatorBoundary);
         
