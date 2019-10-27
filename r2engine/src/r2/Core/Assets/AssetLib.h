@@ -16,11 +16,13 @@ namespace r2::asset
     class AssetCache;
     class AssetFile;
     using FileList = r2::SArray<AssetFile*>*;
+    class RawAssetFile;
+    class ZipAssetFile;
 }
 
 namespace r2::asset::lib
 {
-    bool Init();
+    bool Init(const r2::mem::utils::MemBoundary& boundary);
     void Update();
     void Shutdown();
     void AddFiles(const r2::asset::AssetCache& cache, FileList list);
@@ -31,10 +33,14 @@ namespace r2::asset::lib
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);
 #endif
     
-    //returns uninitialized non owning ptr to an AssetCache - @TODO(Serge): clean this up so it will actually be initialized
-    r2::asset::AssetCache* CreateAssetCache(r2::mem::utils::MemBoundary boundary);
+    RawAssetFile* MakeRawAssetFile(const char* path);
+    ZipAssetFile* MakeZipAssetFile(const char* path);  
+    FileList MakeFileList(u64 capacity);
+    
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files);
     void DestroyCache(r2::asset::AssetCache* cache);
     
+    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u32 maxFilesInList);
 }
 
 #endif /* AssetLib_h */

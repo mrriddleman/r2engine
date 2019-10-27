@@ -37,7 +37,7 @@ using uptr = uintptr_t;
 
 namespace r2::fs
 {
-    static const u32 FILE_PATH_LENGTH = Kilobytes(1);
+    static const u32 FILE_PATH_LENGTH = 512;
 }
 
 namespace r2::mem::utils

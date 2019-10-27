@@ -266,9 +266,14 @@ namespace r2
                 mMemoryTracker.Verify();
             }
             
-            const u64 TotalSize() const
+            const u64 TotalBytesAllocated() const
             {
                 return mAllocator.GetTotalBytesAllocated();
+            }
+            
+            const u64 MemorySize() const
+            {
+                return mAllocator.GetTotalMemory();
             }
             
             const void* StartPtr() const

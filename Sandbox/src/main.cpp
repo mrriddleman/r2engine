@@ -240,24 +240,19 @@ public:
         
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
-        assetCache = r2::asset::lib::CreateAssetCache(r2::mem::utils::MemBoundary());
-        
-        r2::asset::ZipAssetFile* zipFile = assetCache->MakeZipAssetFile(filePath);
-        
-        r2::asset::FileList files = assetCache->MakeFileList(10);
-        
+        r2::asset::ZipAssetFile* zipFile = r2::asset::lib::MakeZipAssetFile(filePath);
+        r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
         r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
+        r2::mem::utils::MemBoundary boundary = r2::mem::utils::MemBoundary();
+        assetCache = r2::asset::lib::CreateAssetCache(boundary, files);
+
         assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
-        
-        bool assetCacheInitialized = assetCache->Init(files);
-        
-        R2_CHECK(assetCacheInitialized, "Asset cache didn't initialize");
         
         reload = true;
         
 #ifdef R2_ASSET_PIPELINE
-        if (assetCacheInitialized)
+        if (assetCache)
         {
             assetCache->AddReloadFunction([this](r2::asset::AssetHandle handle)
             {
@@ -282,7 +277,7 @@ public:
         }
 #endif
         
-        return assetCacheInitialized;
+        return assetCache != nullptr;
     }
     
     virtual void Update() override

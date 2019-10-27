@@ -8,39 +8,62 @@
 #include "AssetLib.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetFile.h"
-#include "r2/Core/Memory/Allocators/MallocAllocator.h"
+
 #include "r2/Utils/Hash.h"
+#include "r2/Core/Assets/RawAssetFile.h"
+#include "r2/Core/Assets/ZipAssetFile.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
 #ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+#else
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
 
 namespace r2::asset::lib
 {
     r2::mem::utils::MemBoundary s_boundary;
     AssetCache** s_assetCaches = nullptr;
+    FileList* s_filesForCaches = nullptr;
+    
     u64 s_numCaches = 0;
     r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
 #ifdef R2_ASSET_PIPELINE
     r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_assetsBuiltQueue;
-    //std::queue<std::vector<std::string>> s_assetsBuiltQueue;
     std::vector<AssetFilesBuiltListener> s_listeners;
 #endif
-    //Change to something real
-    r2::mem::MallocArena s_arena{r2::mem::utils::MemBoundary()};
-
+    
+    //@TODO(Serge): Change to something real
+    
+#ifdef R2_ASSET_PIPELINE
+    r2::mem::MallocArena* s_arenaPtr = nullptr;
+#else
+    r2::mem::FreeListArena* s_arenaPtr = nullptr;
+#endif
+    
     const u32 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
     const u32 MAX_ASSET_CACHES = 1000;
     
-    bool Init()
+    bool Init(const r2::mem::utils::MemBoundary& boundary)
     {
-        s_assetCaches = ALLOC_ARRAY(r2::asset::AssetCache*[MAX_ASSET_CACHES], s_arena);
+#ifdef R2_ASSET_PIPELINE
+        s_arenaPtr = ALLOC_PARAMS(r2::mem::MallocArena, *MEM_ENG_PERMANENT_PTR, r2::mem::utils::MemBoundary());
+#else
+        s_arenaPtr = ALLOC_PARAMS(r2::mem::FreeListArena, *MEM_ENG_PERMANENT_PTR, boundary);
+#endif
+        
+        
+        s_assetCaches = ALLOC_ARRAY(r2::asset::AssetCache*[MAX_ASSET_CACHES], *s_arenaPtr);
+        s_filesForCaches = ALLOC_ARRAY(FileList[MAX_ASSET_CACHES], *s_arenaPtr);
         
         for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
         {
             s_assetCaches[i] = nullptr;
+            s_filesForCaches[i] = nullptr;
         }
         
-        s_fileToAssetCacheMap = MAKE_SHASHMAP(s_arena, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
+        s_fileToAssetCacheMap = MAKE_SHASHMAP(*s_arenaPtr, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
         
         return s_assetCaches != nullptr && s_fileToAssetCacheMap != nullptr;
     }
@@ -73,13 +96,37 @@ namespace r2::asset::lib
                 r2::asset::AssetCache* cache = s_assetCaches[i];
                 if (cache != nullptr)
                 {
-                    FREE(cache, s_arena);
+                    FREE(cache, *s_arenaPtr);
+                }
+                
+                FileList fileList = s_filesForCaches[i];
+                
+                if (fileList != nullptr)
+                {
+                    u64 numFiles = r2::sarr::Size(*fileList);
+                    for (u64 i = 0; i < numFiles; ++i)
+                    {
+                        AssetFile* file = r2::sarr::At(*fileList, i);
+                        
+                        if (file->IsOpen())
+                        {
+                            file->Close();
+                        }
+                        
+                        FREE(file, *s_arenaPtr);
+                    }
+                    
+                    FREE(fileList, *s_arenaPtr);
                 }
             }
             
-            FREE(s_fileToAssetCacheMap, s_arena);
-            FREE(s_assetCaches, s_arena);
+            FREE(s_fileToAssetCacheMap, *s_arenaPtr);
+            FREE(s_assetCaches, *s_arenaPtr);
+            FREE(s_filesForCaches, *s_arenaPtr);
         }
+        
+        FREE(s_arenaPtr, *MEM_ENG_PERMANENT_PTR);
+        s_arenaPtr = nullptr;
     }
     
     void AddFiles(const r2::asset::AssetCache& cache, FileList list)
@@ -110,7 +157,39 @@ namespace r2::asset::lib
     }
 #endif
     
-    r2::asset::AssetCache* CreateAssetCache(r2::mem::utils::MemBoundary boundary)
+    FileList MakeFileList(u64 capacity)
+    {
+        return MAKE_SARRAY(*s_arenaPtr, AssetFile*, capacity);
+    }
+    
+    RawAssetFile* MakeRawAssetFile(const char* path)
+    {
+        RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, *s_arenaPtr);
+        
+        bool result = rawAssetFile->Init(path);
+        R2_CHECK(result, "Failed to initialize raw asset file");
+        return rawAssetFile;
+    }
+    
+    ZipAssetFile* MakeZipAssetFile(const char* path)
+    {
+        ZipAssetFile* zipAssetFile = ALLOC(ZipAssetFile, *s_arenaPtr);
+        
+        bool result = zipAssetFile->Init(path,
+                                     [](u64 size, u64 alignment)
+                                     {
+                                         return ALLOC_BYTESN(*s_arenaPtr, size, alignment);
+                                     },
+                                     [](byte* ptr)
+                                     {
+                                         FREE(ptr, *s_arenaPtr);
+                                     });
+        
+        R2_CHECK(result, "Failed to initialize zip asset file");
+        return zipAssetFile;
+    }
+    
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files)
     {
         if (s_assetCaches)
         {
@@ -129,11 +208,20 @@ namespace r2::asset::lib
                 return nullptr;
             }
             
-            r2::asset::AssetCache* cache = ALLOC_PARAMS(r2::asset::AssetCache, s_arena, slot);
+            r2::asset::AssetCache* cache = ALLOC_PARAMS(r2::asset::AssetCache, *s_arenaPtr, slot, boundary);
             
             if (cache)
             {
+                bool created = cache->Init(files);
+                R2_CHECK(created, "Failed to initialize asset cache for slot: %llu", slot);
+                if (!created)
+                {
+                    FREE(cache, *s_arenaPtr);
+                    return nullptr;
+                }
+                
                 s_assetCaches[slot] = cache;
+                s_filesForCaches[slot] = files;
             }
             
             return cache;
@@ -152,9 +240,37 @@ namespace r2::asset::lib
             
             cache->Shutdown();
             
-            FREE(cache, s_arena);
+            FREE(cache, *s_arenaPtr);
+            
+            FileList fileList = s_filesForCaches[slot];
+            R2_CHECK(fileList != nullptr, "FileList should not be nullptr");
+            u64 numFiles = r2::sarr::Size(*fileList);
+            for (u64 i = 0; i < numFiles; ++i)
+            {
+                AssetFile* file = r2::sarr::At(*fileList, i);
+                
+                if (file->IsOpen())
+                {
+                    file->Close();
+                }
+
+                FREE(file, *s_arenaPtr);
+            }
+            
+            FREE(fileList, *s_arenaPtr);
             
             s_assetCaches[slot] = nullptr;
+            s_filesForCaches[slot] = nullptr;
         }
+    }
+    
+    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u32 maxFilesInList)
+    {
+        u64 assetMemUsage = r2::SHashMap<u64>::MemorySize(MAX_FILES_TO_ASSET_CACHE_CAPACITY) + r2::SArray<AssetCache*>::MemorySize(MAX_ASSET_CACHES) +
+            sizeof(AssetCache) * MAX_ASSET_CACHES;
+        
+        u64 filesMemUsage = r2::SArray<FileList>::MemorySize(MAX_ASSET_CACHES) + MAX_ASSET_CACHES * maxFilesInList * (sizeof(ZipAssetFile) + sizeof(r2::fs::ZipFile) + maxZipArchiveCentralDirSize);
+        
+        return filesMemUsage + assetMemUsage;
     }
 }

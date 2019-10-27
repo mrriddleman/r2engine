@@ -11,7 +11,12 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
+#include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#else
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
+#endif
 
 #define ASSET_CACHE_DEBUG 1
 
@@ -22,8 +27,6 @@ namespace r2::asset
     class AssetBuffer;
     class Asset;
     class DefaultAssetLoader;
-    class RawAssetFile;
-    class ZipAssetFile;
     
     using FileList = r2::SArray<AssetFile*>*;
     using AssetHandle = u64;
@@ -42,14 +45,14 @@ namespace r2::asset
     {
     public:
         
-        static const u32 LRU_CAPACITY = 1000;
-        static const u32 MAP_CAPACITY = 1000;
+        static const u32 LRU_CAPACITY = 1024;
+        static const u32 MAP_CAPACITY = 1024;
         
         using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
         
-        explicit AssetCache(u64 slot);
+        explicit AssetCache(u64 slot, const r2::mem::utils::MemBoundary& boundary);
 
-        bool Init(FileList list, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        bool Init(FileList noptrList, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         
         void Shutdown();
         
@@ -67,29 +70,25 @@ namespace r2::asset
         
         int Preload(const char* pattern, AssetLoadProgressCallback callback);
         
+        
+
+
         //To be used for files and loaders
         template<class T>
         AssetLoader* MakeAssetLoader()
         {
             //bool value = std::is_convertible<AssetLoader*, T*>::value;
            // R2_CHECK(value, "Passed in type is not have AssetLoader as it's base type!");
-            return ALLOC(T, mMallocArena);
-        }
-        
-        RawAssetFile* MakeRawAssetFile(const char* path);
-        ZipAssetFile* MakeZipAssetFile(const char* path);
-        
-        //NOTE: don't use T* for the type here, it's taken care of for you
-       
-        FileList MakeFileList(u64 capacity)
-        {
-            return MAKE_SARRAY(mMallocArena, AssetFile*, capacity);
+            return ALLOC(T, mAssetCacheArena);
         }
         
         u64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
 #endif
+        
+        static u64 TotalMemoryNeeded(u64 assetCapacity, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        
     private:
         
         struct AssetBufferRef
@@ -108,27 +107,27 @@ namespace r2::asset
         FileHandle FindInFiles(const Asset& asset);
         AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
         
-        
         void Free(AssetHandle handle, bool forceFree);
         bool MakeRoom(u64 amount);
         void FreeOneResource(bool forceFree);
         s64 GetLRUIndex(AssetHandle handle);
         void RemoveFromLRU(AssetHandle handle);
-        
 
-        FileList mFiles;
+        FileList mnoptrFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
         DefaultAssetLoader* mDefaultLoader;
         u64 mSlot;
         
+        r2::mem::PoolArena* mAssetBufferPoolPtr;
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
-        
-        //@TODO(Serge): figure out the Allocator/memory scheme
-
+#ifdef R2_ASSET_PIPELINE
+        r2::mem::MallocArena mAssetCacheArena;
+#else
         //This is for debug only
-        r2::mem::MallocArena mMallocArena;
+        r2::mem::FreeListArena mAssetCacheArena;
+#endif
         
         //@TODO(Serge): put in R2_DEBUG
 #ifdef R2_ASSET_PIPELINE

@@ -50,7 +50,8 @@ namespace r2
             const Application * noptrApp = app.get();
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
 
-            r2::asset::lib::Init();
+            //@TODO(Serge): figure out how much to give the asset lib
+            r2::asset::lib::Init(r2::mem::utils::MemBoundary());
             
 #ifdef R2_ASSET_PIPELINE
             r2::asset::pln::SoundDefinitionCommand soundCommand;
