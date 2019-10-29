@@ -58,7 +58,12 @@ namespace r2
         {
             if(mEngineMemory.permanentStorageArena)
             {
-                mEngineMemory.permanentStorageArena->~LinearArena();
+                FREE_EMPLACED_ARENA(mEngineMemory.permanentStorageArena);
+            }
+            
+            if(mEngineMemory.singleFrameArena)
+            {
+                FREE_EMPLACED_ARENA(mEngineMemory.singleFrameArena);
             }
             
             for(MemoryArea& area : mMemoryAreas)

@@ -661,6 +661,8 @@ namespace r2::audio
         FREE(gImpl, *AudioEngine::mSoundAllocator);
         gImpl = nullptr;
         gAudioEngineInitialize = false;
+        
+        FREE_EMPLACED_ARENA(AudioEngine::mSoundAllocator);
     }
     
 #ifdef R2_ASSET_PIPELINE
