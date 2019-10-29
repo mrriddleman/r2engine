@@ -34,6 +34,8 @@
 
 #define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, sizeof(array))
 
+#define MAKE_BOUNDARY(arena, size, alignment) r2::mem::utils::MakeMemBoundary(arena, size, alignment)
+
 #ifndef R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
     #define R2_CHECK_ALLOCATIONS_ON_DESTRUCTION 0
 #endif
@@ -94,6 +96,8 @@ namespace r2
             inline void* PointerSubtract(void *p, u64 bytes);
             inline const void* PointerSubtract(const void *p, u64 bytes);
             inline u64 PointerOffset(void* p1, void* p2);
+            template<typename ARENA>
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u64 alignment, u32 elementSize = 0, u32 offset = 0, PlacementPolicy policy = FIND_FIRST);
             
             template <class T>
             struct TypeAndCount
@@ -227,6 +231,8 @@ namespace r2
                 const u64 newSize = size + BoundsCheckingPolicy::SIZE_FRONT + BoundsCheckingPolicy::SIZE_BACK;
                 
                 byte* plainMemory = static_cast<byte*>(mAllocator.Allocate(newSize, alignment, BoundsCheckingPolicy::SIZE_FRONT));
+                
+                R2_CHECK(plainMemory != nullptr, "Failed to allocate memory for size: %llu, alignment: %llu", newSize, alignment);
                 
                 mBoundsChecker.GuardFront(plainMemory);
                 mMemoryTagger.TagAllocation(plainMemory + BoundsCheckingPolicy::SIZE_FRONT, originalSize);
@@ -395,6 +401,8 @@ namespace r2
             {
                 return (byte*)p2 - (byte*)p1;
             }
+            
+            
 
             template <typename T, class ARENA>
             T* Alloc(ARENA& arena, const char* file, s32 line, const char* description)
@@ -506,6 +514,20 @@ namespace r2
                 MemBoundary boundary;
                 boundary.location = p;
                 boundary.size = count;
+                return boundary;
+            }
+            
+            template<typename ARENA>
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u64 alignment, u32 elementSize, u32 offset, PlacementPolicy policy)
+            {
+                MemBoundary boundary;
+                boundary.location = ALLOC_BYTESN(arena, size, alignment);
+                boundary.size = size;
+                boundary.elementSize = elementSize;
+                boundary.alignment = alignment;
+                boundary.offset = offset;
+                boundary.policy = policy;
+                
                 return boundary;
             }
         }

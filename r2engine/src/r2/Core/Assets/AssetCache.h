@@ -14,6 +14,7 @@
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #else
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
@@ -123,7 +124,7 @@ namespace r2::asset
         r2::mem::PoolArena* mAssetBufferPoolPtr;
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
 #ifdef R2_ASSET_PIPELINE
-        r2::mem::MallocArena mAssetCacheArena;
+        r2::mem::FreeListArena mAssetCacheArena;
 #else
         //This is for debug only
         r2::mem::FreeListArena mAssetCacheArena;

@@ -244,7 +244,7 @@ public:
         r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
         r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
-        r2::mem::utils::MemBoundary boundary = r2::mem::utils::MemBoundary();
+        r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
         assetCache = r2::asset::lib::CreateAssetCache(boundary, files);
 
         assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);

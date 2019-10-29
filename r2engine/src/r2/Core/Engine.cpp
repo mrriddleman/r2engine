@@ -14,6 +14,7 @@
 #include "r2/Platform/Platform.h"
 #include "imgui.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
@@ -51,7 +52,12 @@ namespace r2
             r2::Log::Init(r2::Log::INFO, noptrApp->GetAppLogPath() + "full.log", CPLAT.RootPath() + "logs/" + "full.log");
 
             //@TODO(Serge): figure out how much to give the asset lib
-            r2::asset::lib::Init(r2::mem::utils::MemBoundary());
+            //@Test
+            {
+                mAssetLibMemBoundary = MAKE_BOUNDARY(*MEM_ENG_PERMANENT_PTR, Megabytes(1), CPLAT.CPUCacheLineSize());
+            }
+            
+            r2::asset::lib::Init(mAssetLibMemBoundary);
             
 #ifdef R2_ASSET_PIPELINE
             r2::asset::pln::SoundDefinitionCommand soundCommand;
@@ -123,6 +129,8 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::Shutdown();
 #endif
+        
+        FREE((byte*)mAssetLibMemBoundary.location, *MEM_ENG_PERMANENT_PTR);
     }
     
     void Engine::Render(float alpha)

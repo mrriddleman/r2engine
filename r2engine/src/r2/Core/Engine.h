@@ -198,6 +198,7 @@ namespace r2
         ImGuiLayer* mImGuiLayer;
         void* mPlatformControllers[NUM_PLATFORM_CONTROLLERS];
         b32 mMinimized;
+        r2::mem::utils::MemBoundary mAssetLibMemBoundary;
     };
 }
 

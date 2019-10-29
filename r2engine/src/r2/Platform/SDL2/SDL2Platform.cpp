@@ -483,8 +483,8 @@ namespace r2
         mAppStorage->Unmount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
         mRootStorage->Unmount(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
         
-        FREE(mAppStorage, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
-        FREE(mRootStorage, *r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
+        FREE(mAppStorage, *MEM_ENG_PERMANENT_PTR);
+        FREE(mRootStorage, *MEM_ENG_PERMANENT_PTR);
         
         if (mPrefPath)
         {

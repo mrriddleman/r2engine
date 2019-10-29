@@ -663,7 +663,7 @@ namespace r2::fs
             return false;
         }
         
-        if (nullptr == (readBuf = mAlloc(readBufSize, alignof(byte))))
+        if (nullptr == (readBuf = mAlloc(readBufSize, alignof(size_t))))
         {
             R2_CHECK(false, "Allocation failed");
             return false;
@@ -906,8 +906,8 @@ namespace r2::fs
         if (mArchive.totalFiles)
         {
             u32 i, n;
-            if (!AllocateZipArray<byte>(mAlloc, mArchive.state.centralDir, cDirSize, alignof(byte))
-                ||!AllocateZipArray<u32>(mAlloc, mArchive.state.centralDirOffsets, mArchive.totalFiles, alignof(u32)))
+            if (!AllocateZipArray<byte>(mAlloc, mArchive.state.centralDir, cDirSize, alignof(u64))
+                ||!AllocateZipArray<u32>(mAlloc, mArchive.state.centralDirOffsets, mArchive.totalFiles, alignof(size_t)))
             {
                 R2_CHECK(false, "Failed to allocate our zip arrays!");
             }
@@ -957,7 +957,7 @@ namespace r2::fs
                         if (R2_ZIP_CENTRAL_DIR_HEADER_SIZE + filenameSize + extDataSize > n)
                         {
                             //@TODO(Serge): add in file, line number etc
-                            buf = mAlloc(extDataSize, alignof(byte));
+                            buf = mAlloc(extDataSize, alignof(size_t));
                             if (buf == nullptr)
                             {
                                 R2_CHECK(false, "Failed to allocate buf");

@@ -17,6 +17,7 @@
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #else
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
@@ -37,7 +38,7 @@ namespace r2::asset::lib
     //@TODO(Serge): Change to something real
     
 #ifdef R2_ASSET_PIPELINE
-    r2::mem::MallocArena* s_arenaPtr = nullptr;
+    r2::mem::FreeListArena* s_arenaPtr = nullptr;
 #else
     r2::mem::FreeListArena* s_arenaPtr = nullptr;
 #endif
@@ -48,7 +49,7 @@ namespace r2::asset::lib
     bool Init(const r2::mem::utils::MemBoundary& boundary)
     {
 #ifdef R2_ASSET_PIPELINE
-        s_arenaPtr = ALLOC_PARAMS(r2::mem::MallocArena, *MEM_ENG_PERMANENT_PTR, r2::mem::utils::MemBoundary());
+        s_arenaPtr = ALLOC_PARAMS(r2::mem::FreeListArena, *MEM_ENG_PERMANENT_PTR, boundary);
 #else
         s_arenaPtr = ALLOC_PARAMS(r2::mem::FreeListArena, *MEM_ENG_PERMANENT_PTR, boundary);
 #endif

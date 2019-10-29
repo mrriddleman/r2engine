@@ -292,7 +292,7 @@ namespace r2::asset
         
         R2_CHECK(result, "We don't have enough room to fit this asset!");
         
-        byte* rawAssetBuffer = ALLOC_BYTESN(mAssetCacheArena, rawAssetSize, 4);
+        byte* rawAssetBuffer = ALLOC_BYTESN(mAssetCacheArena, rawAssetSize, alignof(size_t));
         
         R2_CHECK(rawAssetBuffer != nullptr, "failed to allocate asset handle: %lli of size: %llu", handle, rawAssetSize);
         
@@ -322,7 +322,7 @@ namespace r2::asset
         else
         {
             u64 size = loader->GetLoadedAssetSize(rawAssetBuffer, rawAssetSize);
-            byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, 4);
+            byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, alignof(size_t));
             
             R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
             

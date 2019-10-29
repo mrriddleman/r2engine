@@ -31,7 +31,6 @@ namespace r2::mem
     void* FreeListAllocator::Allocate(u64 size, u64 alignment, u64 offset)
     {
         const u64 allocationHeaderSize = sizeof(FreeListAllocator::AllocationHeader);
-        
         R2_CHECK(size >= sizeof(Node), "Allocation size must be bigger than: %zu",sizeof(Node));
         R2_CHECK(alignment >= 8, "Alignment must be 8 at least");
         
@@ -114,7 +113,7 @@ namespace r2::mem
         const size_t headerAddress = currentAddress - sizeof(FreeListAllocator::AllocationHeader);
         const FreeListAllocator::AllocationHeader* allocationHeader{ (FreeListAllocator::AllocationHeader*)headerAddress};
         
-        return allocationHeader->blockSize;
+        return allocationHeader->blockSize - HeaderSize() - allocationHeader->padding;
     }
     
     u64 FreeListAllocator::GetTotalBytesAllocated() const
