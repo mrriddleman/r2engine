@@ -8,6 +8,7 @@
 #ifndef Events_h
 #define Events_h
 
+#include "r2/Core/Events/Event.h"
 #include "r2/Core/Events/AppEvent.h"
 #include "r2/Core/Events/MouseEvent.h"
 #include "r2/Core/Events/KeyEvent.h"

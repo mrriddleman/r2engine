@@ -6,13 +6,12 @@
 //
 
 #include "Engine.h"
-#include "glad/glad.h"
 #include "r2/Core/Events/Events.h"
 #include "r2/ImGui/ImGuiLayer.h"
 #include "r2/Core/Layer/AppLayer.h"
 #include "r2/Core/Layer/SoundLayer.h"
+#include "r2/Core/Layer/RenderLayer.h"
 #include "r2/Platform/Platform.h"
-#include "imgui.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Containers/SArray.h"
@@ -76,20 +75,19 @@ namespace r2
 #endif
             
             //@TODO(Serge): should check to see if the app initialized!
-            //PushLayer(std::make_unique<ImGuiLayer>());
+
+            //@TODO(Serge): don't use make unique!
+            PushLayer(std::make_unique<RenderLayer>());
+            PushLayer(std::make_unique<SoundLayer>());
             
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
             mImGuiLayer = imguiLayer.get();
-            
             PushOverlay(std::move(imguiLayer));
-            
-            PushLayer(std::make_unique<SoundLayer>());
-            
             //Should be last
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
 
             mDisplaySize = noptrApp->GetPreferredResolution();
-            glClearColor(0.f, 0.5f, 1.0f, 1.0f);
+            
             
             mWindowSizeFunc(mDisplaySize.width, mDisplaySize.height);
             WindowSizeChangedEvent(mDisplaySize.width, mDisplaySize.height);
@@ -135,7 +133,7 @@ namespace r2
     
     void Engine::Render(float alpha)
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
         
         if (!mMinimized)
         {
@@ -325,7 +323,7 @@ namespace r2
         mDisplaySize.height = height;
         evt::WindowResizeEvent e(width, height);
         OnEvent(e);
-        glViewport(0, 0, width, height);
+        
     }
     
     void Engine::WindowSizeChangedEvent(u32 width, u32 height)
@@ -334,7 +332,6 @@ namespace r2
         mDisplaySize.height = height;
         evt::WindowResizeEvent e(width, height);
         OnEvent(e);
-        glViewport(0, 0, width, height);
     }
     
     void Engine::WindowMinimizedEvent()
@@ -425,7 +422,7 @@ namespace r2
     void Engine::ControllerDisonnectedEvent(io::ControllerID controllerID)
     {
         evt::GameControllerDisconnectedEvent e(controllerID);
-        R2_LOGI("%s", e.ToString().c_str());
+        //R2_LOGI("%s", e.ToString().c_str());
         OnEvent(e);
     }
     
@@ -439,14 +436,14 @@ namespace r2
     void Engine::ControllerAxisEvent(io::ControllerID controllerID, io::ControllerAxisName axis, s16 value)
     {
         evt::GameControllerAxisEvent e(controllerID, {axis, value});
-        R2_LOGI("%s", e.ToString().c_str());
+      //  R2_LOGI("%s", e.ToString().c_str());
         OnEvent(e);
     }
     
     void Engine::ControllerButtonEvent(io::ControllerID controllerID, io::ControllerButtonName buttonName, u8 state)
     {
         evt::GameControllerButtonEvent e(controllerID, {buttonName, state});
-        R2_LOGI("%s", e.ToString().c_str());
+     //   R2_LOGI("%s", e.ToString().c_str());
         OnEvent(e);
     }
     

@@ -89,8 +89,8 @@ namespace r2
     
     void ImGuiLayer::ImGuiRender()
     {
-        static bool show = true;
-        ImGui::ShowDemoWindow(&show);
+        static bool show = false;
+       // ImGui::ShowDemoWindow(&show);
     }
    
 }

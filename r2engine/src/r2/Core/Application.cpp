@@ -43,7 +43,7 @@ namespace r2
     
     void Application::OnEvent(evt::Event& e)
     {
-        R2_LOGI("%s", e.ToString().c_str());
+
     }
     
     std::string Application::GetApplicationName() const

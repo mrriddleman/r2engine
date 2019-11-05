@@ -57,7 +57,7 @@ virtual const char* GetName() const override { return #type; }
         class EventDispatcher
         {
             template<typename T>
-            using EventFn = std::function<bool(T&)>;
+            using EventFn = std::function<bool(const T&)>;
         public:
             EventDispatcher(Event& event)
             : m_Event(event)
