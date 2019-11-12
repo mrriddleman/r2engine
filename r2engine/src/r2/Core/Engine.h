@@ -38,6 +38,7 @@ namespace r2
         
         u64 GetPerformanceFrequency() const;
         u64 GetPerformanceCounter() const;
+        u32 GetTicks() const;
         
         //Game Controllers functions
         r2::io::ControllerID OpenGameController(r2::io::ControllerID controllerID);
@@ -68,11 +69,12 @@ namespace r2
         typedef void (*SetClipboardTextFunc)(void* user_data, const char* text);
         using GetPerformanceFrequencyFunc = std::function<u64 (void)>;
         using GetPerformanceCounterFunc = std::function<u64 (void)>;
+        using GetTicksFunc = std::function<u32 (void)>;
         
         //Game Controller callbacks from the platform
         using OpenGameControllerFunc = std::function<void* (r2::io::ControllerID controllerID)>;
         using IsGameControllerFunc = std::function<bool (r2::io::ControllerID controllerID)>;
-        using NumberOfGameControllersFunc = std::function<u32 ()>;
+        using NumberOfGameControllersFunc = std::function<u32 (void)>;
         using CloseGameControllerFunc = std::function<void (void*)>;
         using IsGameControllerAttachedFunc = std::function<bool (void*)>;
         using GetGameControllerMappingFunc = std::function<const char* (void*)>;
@@ -90,6 +92,10 @@ namespace r2
         GetClipboardTextFunc mGetClipboardTextFunc;
         inline void SetGetPerformanceFrequencyCallback(GetPerformanceFrequencyFunc func) {mGetPerformanceFrequencyFunc = func;}
         inline void SetGetPerformanceCounterCallback(GetPerformanceCounterFunc func) {mGetPerformanceCounterFunc = func;}
+        inline void SetGetTicksCallback(GetTicksFunc func)
+        {
+            mGetTicksFunc = func;
+        }
         
         //Platform Game Controller callbacks
         inline void SetOpenGameControllerCallback(OpenGameControllerFunc func)
@@ -181,6 +187,7 @@ namespace r2
         SetWindowSizeFunc mWindowSizeFunc = nullptr;
         GetPerformanceFrequencyFunc mGetPerformanceFrequencyFunc = nullptr;
         GetPerformanceCounterFunc mGetPerformanceCounterFunc = nullptr;
+        GetTicksFunc mGetTicksFunc = nullptr;
         OpenGameControllerFunc mOpenGameControllerFunc = nullptr;
         IsGameControllerFunc mIsGameControllerFunc = nullptr;
         NumberOfGameControllersFunc mNumberOfGameControllersFunc = nullptr;

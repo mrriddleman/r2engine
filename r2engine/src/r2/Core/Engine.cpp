@@ -174,6 +174,13 @@ namespace r2
         return 0;
     }
     
+    u32 Engine::GetTicks() const
+    {
+        if(mGetTicksFunc)
+            return mGetTicksFunc();
+        return 0;
+    }
+    
     r2::io::ControllerID Engine::OpenGameController(r2::io::ControllerID controllerID)
     {
         if (mOpenGameControllerFunc)

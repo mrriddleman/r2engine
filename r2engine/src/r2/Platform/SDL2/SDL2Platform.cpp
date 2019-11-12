@@ -216,6 +216,10 @@ namespace r2
             mEngine.SetGetPerformanceCounterCallback([]{
                 return SDL_GetPerformanceCounter();
             });
+            
+            mEngine.SetGetTicksCallback([]{
+                return SDL_GetTicks();
+            });
            
             mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
             mEngine.mGetClipboardTextFunc = SDL2GetClipboardTextFunc;
