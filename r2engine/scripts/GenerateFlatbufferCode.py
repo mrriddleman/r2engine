@@ -24,7 +24,6 @@ fbsCodeOutputMap = {"AssetManifest.fbs": "/r2/Core/Assets/Pipeline/", "SoundDefi
 
 for filename in os.listdir(dataPath):
 	outputPath = srcPath + fbsCodeOutputMap[filename]
-	print(outputPath)
 	if os.path.exists(outputPath):
 		GeneratedCode(flatcPath, outputPath, dataPath, filename)
 

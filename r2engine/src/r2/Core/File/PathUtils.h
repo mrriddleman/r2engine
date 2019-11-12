@@ -10,6 +10,15 @@
 
 namespace r2::fs::utils
 {
+    enum Directory: u32
+    {
+        ROOT = 0,
+        SOUND_DEFINITIONS,
+        SOUND_FX,
+        MUSIC,
+        TEXTURES
+    };
+    
 #ifdef R2_PLATFORM_WINDOWS
     static const char PATH_SEPARATOR = '\\';
 #else
@@ -37,7 +46,7 @@ namespace r2::fs::utils
     
     bool AppendExt(char* path, const char* ext);
     
-    bool BuildPathFromCategory(char* outPath, u32 category, const char* fileName);
+    bool BuildPathFromCategory(Directory category, const char* fileName, char* outPath);
     
 }
 

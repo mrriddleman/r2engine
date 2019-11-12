@@ -205,13 +205,7 @@ class Sandbox: public r2::Application
 {
 public:
     
-    enum Directory: u32
-    {
-        ROOT = 0,
-        SOUND_DEFINITIONS,
-        SOUND_FX,
-        MUSIC,
-    };
+    
     
     
     virtual bool Init() override
@@ -449,7 +443,7 @@ public:
     {
         char soundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
         char result [r2::fs::FILE_PATH_LENGTH];
-        ResolveCategoryPath(SOUND_DEFINITIONS, soundDefinitionPath);
+        ResolveCategoryPath(r2::fs::utils::SOUND_DEFINITIONS, soundDefinitionPath);
         r2::fs::utils::AppendSubPath(soundDefinitionPath, result, "sounds.sdef");
         
         return result;
@@ -479,8 +473,8 @@ public:
     {
         char soundFXPath[r2::fs::FILE_PATH_LENGTH];
         char musicPath [r2::fs::FILE_PATH_LENGTH];
-        ResolveCategoryPath(SOUND_FX, soundFXPath);
-        ResolveCategoryPath(MUSIC, musicPath);
+        ResolveCategoryPath(r2::fs::utils::SOUND_FX, soundFXPath);
+        ResolveCategoryPath(r2::fs::utils::MUSIC, musicPath);
         
         std::vector<std::string> soundPaths = {
             std::string(soundFXPath),
@@ -515,17 +509,20 @@ namespace
         bool result = true;
         switch (category)
         {
-            case Sandbox::ROOT:
+            case r2::fs::utils::ROOT:
                 strcpy(subpath, "");
                 break;
-            case Sandbox::SOUND_DEFINITIONS:
+            case r2::fs::utils::SOUND_DEFINITIONS:
                 strcpy(subpath, "assets/sound/sound_definitions");
                 break;
-            case Sandbox::SOUND_FX:
+            case r2::fs::utils::SOUND_FX:
                 strcpy(subpath, "assets/sound/sound_fx");
                 break;
-            case Sandbox::MUSIC:
+            case r2::fs::utils::MUSIC:
                 strcpy(subpath, "assets/sound/music");
+                break;
+            case r2::fs::utils::TEXTURES:
+                strcpy(subpath, "assets/textures");
                 break;
             default:
                 result = false;

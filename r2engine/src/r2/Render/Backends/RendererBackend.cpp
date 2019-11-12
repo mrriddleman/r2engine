@@ -9,15 +9,17 @@
 #include "glad/glad.h"
 #include "r2/Platform/Platform.h"
 #include "glm/glm.hpp"
+#include "stb_image.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace
 {
     float vertices[] = {
-        //positions        colors
-        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f,  // top right
-        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f   // top left
+        //positions(3)        colors(3)     texture coords(2)
+        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f   // top left
     };
     
     unsigned int indices[] = {  // note that we start from 0!
@@ -28,21 +30,26 @@ namespace
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 aColor;\n"
+    "layout (location = 2) in vec2 aTexCoord;\n"
     "out vec3 ourColor;\n"
+    "out vec2 TexCoord;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "   gl_Position = vec4(aPos, 1.0);\n"
     "   ourColor = aColor;\n"
+    "   TexCoord = aTexCoord;\n"
     "}\0";
     const char *fragmentShaderSource = "#version 410 core\n"
     "out vec4 FragColor;\n"
     "in vec3 ourColor;\n"
+    "in vec2 TexCoord;\n"
     "uniform float time;\n"
+    "uniform sampler2D ourTexture;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(ourColor, 1.0) * 1.0 - ((cos(time)/5.0f));\n"
+    "   FragColor = texture(ourTexture, TexCoord) * vec4(ourColor,1.0) * ((1.0 - (sin(time)/2.0)) + 0.5)  ;\n"
     "}\n\0";
-    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO;
+    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture;
 }
 
 namespace r2::draw
@@ -68,17 +75,41 @@ namespace r2::draw
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
         
         //position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
         
         //color attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 *sizeof(float), (void*)(3*sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(1);
+        
+        //uv attribute
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+        glEnableVertexAttribArray(2);
+        
+        //load and create texture
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        //set the texture wrapping/filtering options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //load the image
+        char path[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container.jpg", path);
+        s32 width, height, channels;
+        u8* data = stbi_load(path, &width, &height, &channels, 0);
+        R2_CHECK(data != nullptr, "We didn't load the image!");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+        
         
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         
         glBindVertexArray(0);
         
+        glUseProgram(g_ShaderProg);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     
@@ -88,9 +119,8 @@ namespace r2::draw
         
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
-        glUseProgram(g_ShaderProg);
         glUniform1f(uniformTimeLocation, timeVal);
-
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(g_VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }

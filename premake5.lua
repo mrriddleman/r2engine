@@ -22,6 +22,7 @@ includeDirs["loguru"] = "r2engine/vendor/loguru/src"
 includeDirs["imgui"] = "r2engine/vendor/imgui"
 includeDirs["catch2"] = "r2engine/vendor/Catch2"
 includeDirs["sha256"] = "r2engine/vendor/sha256"
+includeDirs["stb"] = "r2engine/vendor/stb"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -53,7 +54,9 @@ project "r2engine"
 		"%{prj.name}/vendor/glm/glm/**.inl",
 		"%{prj.name}/vendor/Catch2/catch/**.hpp",
 		"%{prj.name}/vendor/sha256/*.h",
-		"%{prj.name}/vendor/sha256/*.cpp"
+		"%{prj.name}/vendor/sha256/*.cpp",
+		"%{prj.name}/vendor/stb/*.h",
+		"%{prj.name}/vendor/stb/*.cpp"
 	}
 
 	includedirs
@@ -65,7 +68,8 @@ project "r2engine"
 		"%{includeDirs.loguru}",
 		"%{includeDirs.imgui}",
 		"%{includeDirs.catch2}",
-		"%{includeDirs.sha256}"
+		"%{includeDirs.sha256}",
+		"%{includeDirs.stb}"
 	}
 
 	links

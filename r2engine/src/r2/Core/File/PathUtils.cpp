@@ -236,12 +236,12 @@ namespace r2::fs::utils
         return true;
     }
     
-    bool BuildPathFromCategory(char* outPath, u32 category, const char* fileName)
+    bool BuildPathFromCategory(Directory category, const char* fileName, char* outPath)
     {
-        auto platformResolver = CPLAT.GetPathResolver();
+        auto pathResolver = CPLAT.GetPathResolver();
         char rootPath[r2::fs::FILE_PATH_LENGTH];
         
-        if (platformResolver(category, rootPath))
+        if (pathResolver(category, rootPath))
         {
             return AppendSubPath(rootPath, outPath, fileName);
         }
