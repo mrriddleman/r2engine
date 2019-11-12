@@ -44,20 +44,22 @@ namespace
     "in vec3 ourColor;\n"
     "in vec2 TexCoord;\n"
     "uniform float time;\n"
-    "uniform sampler2D ourTexture;\n"
+    "uniform sampler2D texture1;\n"
+    "uniform sampler2D texture2;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = texture(ourTexture, TexCoord) * vec4(ourColor,1.0) * ((1.0 - (sin(time)/2.0)) + 0.5)  ;\n"
+    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2) * vec4(ourColor,1.0) * ((1.0 - (sin(time)/2.0)) + 0.5);\n"
     "}\n\0";
-    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture;
+    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
 }
-
+//
 namespace r2::draw
 {
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr);
     
     void OpenGLInit()
     {
+        stbi_set_flip_vertically_on_load(true);
         glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
         
         g_ShaderProg = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
@@ -87,8 +89,8 @@ namespace r2::draw
         glEnableVertexAttribArray(2);
         
         //load and create texture
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glGenTextures(1, &texture1);
+        glBindTexture(GL_TEXTURE_2D, texture1);
         //set the texture wrapping/filtering options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -105,11 +107,34 @@ namespace r2::draw
         stbi_image_free(data);
         
         
+        //load and create texture
+        glGenTextures(1, &texture2);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        //set the texture wrapping/filtering options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //load the image
+       // char path[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "awesomeface.png", path);
+        
+        data = stbi_load(path, &width, &height, &channels, 0);
+        R2_CHECK(data != nullptr, "We didn't load the image!");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+        
+        
+        
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         
         glBindVertexArray(0);
         
         glUseProgram(g_ShaderProg);
+        
+        glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
+        glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     
@@ -120,7 +145,11 @@ namespace r2::draw
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+        
         glBindVertexArray(g_VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
