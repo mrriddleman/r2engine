@@ -9,6 +9,8 @@
 #include "glad/glad.h"
 #include "r2/Platform/Platform.h"
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
 #include "r2/Core/File/PathUtils.h"
 
@@ -33,9 +35,10 @@ namespace
     "layout (location = 2) in vec2 aTexCoord;\n"
     "out vec3 ourColor;\n"
     "out vec2 TexCoord;\n"
+    "uniform mat4 transform;"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos, 1.0);\n"
+    "   gl_Position = transform * vec4(aPos, 1.0);\n"
     "   ourColor = aColor;\n"
     "   TexCoord = aTexCoord;\n"
     "}\0";
@@ -48,7 +51,7 @@ namespace
     "uniform sampler2D texture2;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2) * vec4(ourColor,1.0) * ((1.0 - (sin(time)/2.0)) + 0.5);\n"
+    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(-1.0, 1.0)*TexCoord), 0.2) * vec4(ourColor,1.0) * ((1.0 - (sin(time)/2.0)) + 0.5);\n"
     "}\n\0";
     u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
 }
@@ -92,8 +95,8 @@ namespace r2::draw
         glGenTextures(1, &texture1);
         glBindTexture(GL_TEXTURE_2D, texture1);
         //set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         //load the image
@@ -145,6 +148,15 @@ namespace r2::draw
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
+        
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, timeVal, glm::vec3(0.0f, 0.0f, 1.0f));
+        
+        int transformLoc = glGetUniformLocation(g_ShaderProg, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        
+        
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
