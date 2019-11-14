@@ -7,6 +7,7 @@
 
 #include "RenderLayer.h"
 #include "r2/Core/Events/Events.h"
+#include "r2/Platform/Platform.h"
 //temp
 #include "r2/Render/Backends/RendererBackend.h"
 
@@ -20,7 +21,7 @@ namespace r2
     void RenderLayer::Init()
     {
         //@Temp
-        r2::draw::OpenGLInit();
+        r2::draw::OpenGLInit(CENG.DisplaySize().width, CENG.DisplaySize().height);
     }
     
     void RenderLayer::Update()

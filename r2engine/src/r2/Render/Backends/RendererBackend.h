@@ -11,7 +11,7 @@
 namespace r2::draw
 {
     //Temp
-    void OpenGLInit();
+    void OpenGLInit(u32 width, u32 height);
     void OpenGLDraw(float alpha);
     void OpenGLShutdown();
     void OpenGLResizeWindow(u32 width, u32 height);

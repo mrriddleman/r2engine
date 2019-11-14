@@ -73,7 +73,7 @@ namespace r2
             std::string assetTemp = noptrApp->GetAssetCompilerTempPath();
             r2::asset::pln::Init(manifestDir, assetTemp, flatcPath, std::chrono::milliseconds(200), noptrApp->GetAssetWatchPaths(), r2::asset::lib::PushFilesBuilt, soundCommand);
 #endif
-            
+            mDisplaySize = noptrApp->GetPreferredResolution();
             //@TODO(Serge): should check to see if the app initialized!
 
             //@TODO(Serge): don't use make unique!
@@ -85,14 +85,6 @@ namespace r2
             PushOverlay(std::move(imguiLayer));
             //Should be last
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
-
-            mDisplaySize = noptrApp->GetPreferredResolution();
-            
-            
-            mWindowSizeFunc(mDisplaySize.width, mDisplaySize.height);
-            WindowSizeChangedEvent(mDisplaySize.width, mDisplaySize.height);
-        
-            R2_LOG(INFO, "Test to see if we get a log file");
 
             DetectGameControllers();
             
