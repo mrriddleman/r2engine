@@ -18,7 +18,7 @@ namespace r2::draw
     void OpenGLShutdown();
     void OpenGLResizeWindow(u32 width, u32 height);
     
-    //Replace with just a set of the camera object
+    //@TODO(Serge): Replace with just a function that takes in a camera
     void OpenGLMoveCameraForward(bool pressed);
     void OpenGLMoveCameraBack(bool pressed);
     void OpenGLMoveCameraLeft(bool pressed);

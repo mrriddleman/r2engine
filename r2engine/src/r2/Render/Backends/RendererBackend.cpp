@@ -354,8 +354,8 @@ namespace r2::draw
         }
         else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
         {
-            yawDir.x *= cos(glm::radians(yaw));
-            yawDir.y *= sin(glm::radians(yaw));
+            yawDir.x *= sin(glm::radians(yaw));
+            yawDir.y *= cos(glm::radians(yaw));
         }
         else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
         {
