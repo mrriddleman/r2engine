@@ -8,6 +8,8 @@
 #ifndef RendererBackend_h
 #define RendererBackend_h
 
+#include "glm/glm.hpp"
+
 namespace r2::draw
 {
     //Temp
@@ -16,7 +18,13 @@ namespace r2::draw
     void OpenGLShutdown();
     void OpenGLResizeWindow(u32 width, u32 height);
     
-    
+    //Replace with just a set of the camera object
+    void OpenGLMoveCameraForward(bool pressed);
+    void OpenGLMoveCameraBack(bool pressed);
+    void OpenGLMoveCameraLeft(bool pressed);
+    void OpenGLMoveCameraRight(bool pressed);
+    void OpenGLSetCameraFacing(float pitch, float yaw, const glm::vec3& up);
+    void OpenGLSetCameraZoom(float zoom);
 }
 
 #endif /* RendererBackend_h */

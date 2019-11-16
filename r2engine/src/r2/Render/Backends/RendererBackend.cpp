@@ -8,7 +8,7 @@
 #include "RendererBackend.h"
 #include "glad/glad.h"
 #include "r2/Platform/Platform.h"
-#include "glm/glm.hpp"
+
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
@@ -88,6 +88,16 @@ namespace
         1, 2, 3   // second Triangle
     };
     
+    glm::vec3 g_CameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 g_CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 g_CameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    float g_CameraSpeed = 0.15f;
+    float dt = 0.0f;
+    float lastT = 0.0f;
+    float g_FOV = 45.0f;
+    
+    bool forwardPressed = false, backPressed = false, leftPressed = false, rightPressed = false;
+    
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTexCoord;\n"
@@ -112,6 +122,9 @@ namespace
     "}\n\0";
     u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
     u32 g_ScreenWidth, g_ScreenHeight;
+    
+    
+    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
 }
 //
 namespace r2::draw
@@ -204,17 +217,9 @@ namespace r2::draw
         //Setup matrix uniforms
         
         
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
         
-        int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), static_cast<float>(g_ScreenWidth) / static_cast<float>(g_ScreenHeight), 0.1f, 100.0f);
-        
-        int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     }
     
     void OpenGLDraw(float alpha)
@@ -231,8 +236,49 @@ namespace r2::draw
         glBindVertexArray(g_VAO);
         
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+        dt = timeVal - lastT;
+        lastT = timeVal;
+        
+        
+        
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
+        
+        if(forwardPressed)
+        {
+            g_CameraPos += g_CameraSpeed * g_CameraFront;
+           // forwardPressed = false;
+        }
+        
+        if(backPressed)
+        {
+            g_CameraPos -= g_CameraSpeed * g_CameraFront;
+           // backPressed = false;
+        }
+
+        if(leftPressed)
+        {
+            g_CameraPos -= glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * g_CameraSpeed;
+          //  leftPressed = false;
+        }
+        
+        if(rightPressed)
+        {
+            g_CameraPos += glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * g_CameraSpeed;
+           // rightPressed = false;
+        }
+        
+        glm::mat4 view = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraFront, g_CameraUp);
+        
+        int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(g_FOV), static_cast<float>(g_ScreenWidth) / static_cast<float>(g_ScreenHeight), 0.1f, 100.0f);
+        
+        int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        
         
         for (u32 i = 0; i < 10; ++i)
         {
@@ -241,6 +287,7 @@ namespace r2::draw
             model = glm::translate(model, cubePositions[i]);
             
             float angle = 20.0f*i;
+
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
@@ -250,6 +297,11 @@ namespace r2::draw
         }
 
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
+    
+    void OpenGLSetCameraZoom(float zoom)
+    {
+        g_FOV = zoom;
     }
     
     void OpenGLShutdown()
@@ -265,6 +317,62 @@ namespace r2::draw
         g_ScreenWidth = width;
         g_ScreenHeight = height;
         glViewport(0, 0, width, height);
+    }
+    
+    void OpenGLMoveCameraForward(bool pressed)
+    {
+        forwardPressed = pressed;
+    }
+    
+    void OpenGLMoveCameraBack(bool pressed)
+    {
+        backPressed = pressed;
+    }
+    
+    void OpenGLMoveCameraLeft(bool pressed)
+    {
+        leftPressed = pressed;
+    }
+    
+    void OpenGLMoveCameraRight(bool pressed)
+    {
+        rightPressed = pressed;
+    }
+    
+    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
+    {
+        glm::vec3 facingDir(0.0f);
+        glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
+        facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
+        
+        yawDir += upDir;
+        
+        if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
+        {
+            yawDir.x *= cos(glm::radians(yaw));
+            yawDir.z *= sin(glm::radians(yaw));
+        }
+        else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
+        {
+            yawDir.x *= cos(glm::radians(yaw));
+            yawDir.y *= sin(glm::radians(yaw));
+        }
+        else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
+        {
+            yawDir.z *= cos(glm::radians(yaw));
+            yawDir.y *= sin(glm::radians(yaw));
+        }
+        else
+        {
+            R2_CHECK(false, "Up direction not supported!");
+        }
+        
+        return glm::normalize(facingDir * yawDir);
+    }
+    
+    void OpenGLSetCameraFacing(float pitch, float yaw, const glm::vec3& up)
+    {
+        g_CameraFront = CalculateCameraFacingDirection(pitch, yaw, up);
     }
     
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)
