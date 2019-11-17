@@ -1,37 +1,36 @@
 //
-//  PerspectiveCameraController_h
+//  OrthoCameraController.h
 //  r2engine
 //
 //  Created by Serge Lansiquot on 2019-11-16.
 //
 
-#ifndef CameraController_h
-#define CameraController_h
+#ifndef OrthoCameraController_h
+#define OrthoCameraController_h
+
 #include "r2/Render/Camera/Camera.h"
 #include "r2/Core/Events/Events.h"
 
-
 namespace r2::cam
 {
-    class PerspectiveController
+    class OrthoCameraController
     {
     public:
-        
-        void Init(float camMoveSpeed, float fov, float aspect, float near, float far);
-        void OnEvent(r2::evt::Event& e);
+        void Init(float cameraMoveSpeed, float aspect, float near, float far);
         void Update();
+        void OnEvent(evt::Event& e);
         const Camera& GetCamera() const {return mCamera;}
-    private:
-
-        Camera mCamera;
-        CameraDirectionPressed mDirectionPressed;
         
+    private:
+        Camera mCamera;
+        
+        CameraDirectionPressed mDirectionPressed;
         float mCameraMoveSpeed;
-        float mFOV;
+        float mZoom = 1.0f;
         float mAspect;
         float mNear;
         float mFar;
     };
 }
 
-#endif /* PerspectiveCameraController_h */
+#endif /* OrthoCameraController_h */

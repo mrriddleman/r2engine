@@ -17,9 +17,9 @@ namespace r2::cam
         cam.vp = cam.proj * cam.view;
     }
     
-    void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top)
+    void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far)
     {
-        cam.proj = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+        cam.proj = glm::ortho(left, right, bottom, top, near, far);
         cam.vp = cam.proj * cam.view;
     }
     

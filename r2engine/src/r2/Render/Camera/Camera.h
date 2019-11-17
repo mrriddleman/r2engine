@@ -9,6 +9,7 @@
 #define Camera_h
 
 #include "glm/glm.hpp"
+#include "r2/Utils/Flags.h"
 
 namespace r2
 {
@@ -26,8 +27,18 @@ namespace r2
 
 namespace r2::cam
 {
+    enum CameraDirection
+    {
+        FORWARD = 1 << 0,
+        BACKWARD = 1 << 1,
+        LEFT = 1 << 2,
+        RIGHT = 1 << 3
+    };
+    
+    using CameraDirectionPressed = r2::Flags<u8, u8>;
+    
     void SetPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far);
-    void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top);
+    void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far);
     void MoveCameraTo(Camera& cam, const glm::vec3& pos);
     void MoveCameraBy(Camera& cam, const glm::vec3& offset);
     void SetFacingDir(Camera& cam, float pitch, float yaw);
