@@ -25,7 +25,7 @@ namespace r2
         virtual void Shutdown() override;
         virtual void Update() override;
     private:
-        cam::OrthoCameraController mPersController;
+        cam::PerspectiveController mPersController;
     };
 }
 

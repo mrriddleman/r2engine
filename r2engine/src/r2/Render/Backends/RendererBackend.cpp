@@ -17,58 +17,43 @@
 
 namespace
 {
-//    float vertices[] = {
-//        //positions(3)        colors(3)     texture coords(2)
-//        //
-//        0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top right
-//        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-//        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
-//        -0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f,   // top left
-//
-//    };
-    
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    float cubeVerts[] = {
+        //front face
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, //top right
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, //bottom right
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, //bottom left
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, // top left
         
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        //right face
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, //top left 4
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, //bottom left 5
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 6
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top right 7
         
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        //left face
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom  left 8
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 9
+        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, //bottom right 10
+        -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, //top right 11
         
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        //back face
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom left 12
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 13
+        -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 14
+        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, //top right 15
         
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        //top face
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, //bottom left 16
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 17
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, //bottom right 18
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, //top right 19
         
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        //bottom face
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom left 20
+        -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, //top left 21
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 22
+        0.5f, -0.5f, 0.5f, 1.0f, 1.0f //top right 23
+        
     };
     
     glm::vec3 cubePositions[] = {
@@ -86,21 +71,21 @@ namespace
     
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
+        1, 2, 3,   // second Triangle
+        4, 6, 5,
+        6, 4, 7,
+        8, 9, 10,
+        9, 11, 10,
+        12, 13, 14,
+        13, 15, 14,
+        16, 17, 18,
+        17, 19, 18,
+        20, 21, 22,
+        21, 23, 22
     };
-    
-//    glm::vec3 g_CameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-//    glm::vec3 g_CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-//    glm::vec3 g_CameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
-//    float g_CameraSpeed = 0.15f;
-//    float dt = 0.0f;
-//    float lastT = 0.0f;
-//    float g_FOV = 45.0f;
     
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
-    
-    bool forwardPressed = false, backPressed = false, leftPressed = false, rightPressed = false;
     
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
@@ -125,11 +110,8 @@ namespace
     "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0, 1.0)*TexCoord), 0.2);\n"
     "}\n\0";
     u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
-    
-    
-    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
 }
-//
+
 namespace r2::draw
 {
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr);
@@ -143,15 +125,15 @@ namespace r2::draw
         
         glGenVertexArrays(1, &g_VAO);
         glGenBuffers(1, &g_VBO);
-       // glGenBuffers(1, &g_EBO);
+        glGenBuffers(1, &g_EBO);
         
         glBindVertexArray(g_VAO);
         
         glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
         
-       // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
-       // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
         
         //position attribute
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -213,23 +195,15 @@ namespace r2::draw
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        
-        
         //Setup matrix uniforms
         
         glEnable(GL_DEPTH_TEST);
 
-        
-        
     }
     
     void OpenGLDraw(float alpha)
     {
-        
-        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
@@ -239,45 +213,12 @@ namespace r2::draw
         glBindVertexArray(g_VAO);
         
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-//        dt = timeVal - lastT;
-//        lastT = timeVal;
-        
-     //   float speed = g_CameraSpeed * dt;
-        
+
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
         
-//        if(forwardPressed)
-//        {
-//            g_CameraPos += speed * g_CameraFront;
-//           // forwardPressed = false;
-//        }
-//
-//        if(backPressed)
-//        {
-//            g_CameraPos -= speed * g_CameraFront;
-//           // backPressed = false;
-//        }
-//
-//        if(leftPressed)
-//        {
-//            g_CameraPos -= glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * speed;
-//          //  leftPressed = false;
-//        }
-//
-//        if(rightPressed)
-//        {
-//            g_CameraPos += glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * speed;
-//           // rightPressed = false;
-//        }
-        
-//        glm::mat4 view = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraFront, g_CameraUp);
-        
         int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-        
-//        glm::mat4 projection;
-//        projection = glm::perspective(glm::radians(g_FOV), static_cast<float>(g_ScreenWidth) / static_cast<float>(g_ScreenHeight), 0.1f, 100.0f);
         
         int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
@@ -296,16 +237,9 @@ namespace r2::draw
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
         }
-
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
-    
-//    void OpenGLSetCameraZoom(float zoom)
-//    {
-//        g_FOV = zoom;
-//    }
     
     void OpenGLShutdown()
     {
@@ -325,63 +259,6 @@ namespace r2::draw
         g_View = cam.view;
         g_Proj = cam.proj;
     }
-    
-//    void OpenGLMoveCameraForward(bool pressed)
-//    {
-//        forwardPressed = pressed;
-//    }
-//
-//    void OpenGLMoveCameraBack(bool pressed)
-//    {
-//        backPressed = pressed;
-//    }
-//
-//    void OpenGLMoveCameraLeft(bool pressed)
-//    {
-//        leftPressed = pressed;
-//    }
-//
-//    void OpenGLMoveCameraRight(bool pressed)
-//    {
-//        rightPressed = pressed;
-//    }
-    
-//    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
-//    {
-//        glm::vec3 facingDir(0.0f);
-//        glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
-//        facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
-//        
-//        yawDir += upDir;
-//        
-//        if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
-//        {
-//            yawDir.x *= cos(glm::radians(yaw));
-//            yawDir.z *= sin(glm::radians(yaw));
-//        }
-//        else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
-//        {
-//            yawDir.x *= cos(glm::radians(yaw));
-//            yawDir.y *= -sin(glm::radians(yaw));
-//            //yawDir.y *= cos(glm::radians(yaw));
-//        }
-//        else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
-//        {
-//            yawDir.z *= cos(glm::radians(yaw));
-//            yawDir.y *= sin(glm::radians(yaw));
-//        }
-//        else
-//        {
-//            R2_CHECK(false, "Up direction not supported!");
-//        }
-//        
-//        return glm::normalize(facingDir * yawDir);
-//    }
-    
-//    void OpenGLSetCameraFacing(float pitch, float yaw, const glm::vec3& up)
-//    {
-//        g_CameraFront = CalculateCameraFacingDirection(pitch, yaw, up);
-//    }
     
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)
     {
