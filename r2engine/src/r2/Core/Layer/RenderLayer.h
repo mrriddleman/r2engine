@@ -9,7 +9,7 @@
 #define RenderLayer_h
 
 #include "r2/Core/Layer/Layer.h"
-
+#include "r2/Render/Camera/PerspectiveCameraController.h"
 namespace r2
 {
     class RenderLayer: public Layer
@@ -22,6 +22,8 @@ namespace r2
         virtual void OnEvent(evt::Event& event) override;
         virtual void Shutdown() override;
         virtual void Update() override;
+    private:
+        cam::PerspectiveController mPersController;
     };
 }
 

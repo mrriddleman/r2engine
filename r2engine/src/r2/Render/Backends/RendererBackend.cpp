@@ -13,6 +13,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "stb_image.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Render/Camera/Camera.h"
 
 namespace
 {
@@ -88,13 +89,16 @@ namespace
         1, 2, 3   // second Triangle
     };
     
-    glm::vec3 g_CameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-    glm::vec3 g_CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 g_CameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    float g_CameraSpeed = 0.15f;
-    float dt = 0.0f;
-    float lastT = 0.0f;
-    float g_FOV = 45.0f;
+//    glm::vec3 g_CameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+//    glm::vec3 g_CameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+//    glm::vec3 g_CameraUp = glm::vec3(0.0f, 0.0f, 1.0f);
+//    float g_CameraSpeed = 0.15f;
+//    float dt = 0.0f;
+//    float lastT = 0.0f;
+//    float g_FOV = 45.0f;
+    
+    glm::mat4 g_View = glm::mat4(1.0f);
+    glm::mat4 g_Proj = glm::mat4(1.0f);
     
     bool forwardPressed = false, backPressed = false, leftPressed = false, rightPressed = false;
     
@@ -121,7 +125,6 @@ namespace
     "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0, 1.0)*TexCoord), 0.2);\n"
     "}\n\0";
     u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
-    u32 g_ScreenWidth, g_ScreenHeight;
     
     
     glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
@@ -131,10 +134,8 @@ namespace r2::draw
 {
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr);
     
-    void OpenGLInit(u32 width, u32 height)
+    void OpenGLInit()
     {
-        g_ScreenWidth = width;
-        g_ScreenHeight = height;
         stbi_set_flip_vertically_on_load(true);
         glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
         
@@ -212,11 +213,11 @@ namespace r2::draw
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glEnable(GL_DEPTH_TEST);
+        
         
         //Setup matrix uniforms
         
-        
+        glEnable(GL_DEPTH_TEST);
 
         
         
@@ -224,6 +225,8 @@ namespace r2::draw
     
     void OpenGLDraw(float alpha)
     {
+        
+        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         
@@ -236,48 +239,48 @@ namespace r2::draw
         glBindVertexArray(g_VAO);
         
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-        dt = timeVal - lastT;
-        lastT = timeVal;
+//        dt = timeVal - lastT;
+//        lastT = timeVal;
         
-        
+     //   float speed = g_CameraSpeed * dt;
         
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
         
-        if(forwardPressed)
-        {
-            g_CameraPos += g_CameraSpeed * g_CameraFront;
-           // forwardPressed = false;
-        }
+//        if(forwardPressed)
+//        {
+//            g_CameraPos += speed * g_CameraFront;
+//           // forwardPressed = false;
+//        }
+//
+//        if(backPressed)
+//        {
+//            g_CameraPos -= speed * g_CameraFront;
+//           // backPressed = false;
+//        }
+//
+//        if(leftPressed)
+//        {
+//            g_CameraPos -= glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * speed;
+//          //  leftPressed = false;
+//        }
+//
+//        if(rightPressed)
+//        {
+//            g_CameraPos += glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * speed;
+//           // rightPressed = false;
+//        }
         
-        if(backPressed)
-        {
-            g_CameraPos -= g_CameraSpeed * g_CameraFront;
-           // backPressed = false;
-        }
-
-        if(leftPressed)
-        {
-            g_CameraPos -= glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * g_CameraSpeed;
-          //  leftPressed = false;
-        }
-        
-        if(rightPressed)
-        {
-            g_CameraPos += glm::normalize(glm::cross(g_CameraFront, g_CameraUp)) * g_CameraSpeed;
-           // rightPressed = false;
-        }
-        
-        glm::mat4 view = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraFront, g_CameraUp);
+//        glm::mat4 view = glm::lookAt(g_CameraPos, g_CameraPos + g_CameraFront, g_CameraUp);
         
         int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
         
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(g_FOV), static_cast<float>(g_ScreenWidth) / static_cast<float>(g_ScreenHeight), 0.1f, 100.0f);
+//        glm::mat4 projection;
+//        projection = glm::perspective(glm::radians(g_FOV), static_cast<float>(g_ScreenWidth) / static_cast<float>(g_ScreenHeight), 0.1f, 100.0f);
         
         int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
         
         
         for (u32 i = 0; i < 10; ++i)
@@ -299,10 +302,10 @@ namespace r2::draw
         //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
     
-    void OpenGLSetCameraZoom(float zoom)
-    {
-        g_FOV = zoom;
-    }
+//    void OpenGLSetCameraZoom(float zoom)
+//    {
+//        g_FOV = zoom;
+//    }
     
     void OpenGLShutdown()
     {
@@ -314,66 +317,71 @@ namespace r2::draw
     
     void OpenGLResizeWindow(u32 width, u32 height)
     {
-        g_ScreenWidth = width;
-        g_ScreenHeight = height;
         glViewport(0, 0, width, height);
     }
     
-    void OpenGLMoveCameraForward(bool pressed)
+    void OpenGLSetCamera(const r2::Camera& cam)
     {
-        forwardPressed = pressed;
+        g_View = cam.view;
+        g_Proj = cam.proj;
     }
     
-    void OpenGLMoveCameraBack(bool pressed)
-    {
-        backPressed = pressed;
-    }
+//    void OpenGLMoveCameraForward(bool pressed)
+//    {
+//        forwardPressed = pressed;
+//    }
+//
+//    void OpenGLMoveCameraBack(bool pressed)
+//    {
+//        backPressed = pressed;
+//    }
+//
+//    void OpenGLMoveCameraLeft(bool pressed)
+//    {
+//        leftPressed = pressed;
+//    }
+//
+//    void OpenGLMoveCameraRight(bool pressed)
+//    {
+//        rightPressed = pressed;
+//    }
     
-    void OpenGLMoveCameraLeft(bool pressed)
-    {
-        leftPressed = pressed;
-    }
+//    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
+//    {
+//        glm::vec3 facingDir(0.0f);
+//        glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
+//        facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
+//        
+//        yawDir += upDir;
+//        
+//        if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
+//        {
+//            yawDir.x *= cos(glm::radians(yaw));
+//            yawDir.z *= sin(glm::radians(yaw));
+//        }
+//        else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
+//        {
+//            yawDir.x *= cos(glm::radians(yaw));
+//            yawDir.y *= -sin(glm::radians(yaw));
+//            //yawDir.y *= cos(glm::radians(yaw));
+//        }
+//        else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
+//        {
+//            yawDir.z *= cos(glm::radians(yaw));
+//            yawDir.y *= sin(glm::radians(yaw));
+//        }
+//        else
+//        {
+//            R2_CHECK(false, "Up direction not supported!");
+//        }
+//        
+//        return glm::normalize(facingDir * yawDir);
+//    }
     
-    void OpenGLMoveCameraRight(bool pressed)
-    {
-        rightPressed = pressed;
-    }
-    
-    glm::vec3 CalculateCameraFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
-    {
-        glm::vec3 facingDir(0.0f);
-        glm::vec3 yawDir = glm::vec3(1.0f) - upDir;
-        facingDir = sin(glm::radians(pitch)) * upDir + cos(glm::radians(pitch))*yawDir;
-        
-        yawDir += upDir;
-        
-        if(glm::dot(glm::vec3(0.0f, 1.0f, 0.0), upDir))
-        {
-            yawDir.x *= cos(glm::radians(yaw));
-            yawDir.z *= sin(glm::radians(yaw));
-        }
-        else if(glm::dot(glm::vec3(0.0f, 0.0f, 1.0f), upDir))
-        {
-            yawDir.x *= sin(glm::radians(yaw));
-            yawDir.y *= cos(glm::radians(yaw));
-        }
-        else if(glm::dot(glm::vec3(1.0f, 0.0f, 0.0f), upDir))
-        {
-            yawDir.z *= cos(glm::radians(yaw));
-            yawDir.y *= sin(glm::radians(yaw));
-        }
-        else
-        {
-            R2_CHECK(false, "Up direction not supported!");
-        }
-        
-        return glm::normalize(facingDir * yawDir);
-    }
-    
-    void OpenGLSetCameraFacing(float pitch, float yaw, const glm::vec3& up)
-    {
-        g_CameraFront = CalculateCameraFacingDirection(pitch, yaw, up);
-    }
+//    void OpenGLSetCameraFacing(float pitch, float yaw, const glm::vec3& up)
+//    {
+//        g_CameraFront = CalculateCameraFacingDirection(pitch, yaw, up);
+//    }
     
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)
     {
