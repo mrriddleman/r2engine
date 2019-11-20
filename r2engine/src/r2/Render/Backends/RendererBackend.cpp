@@ -14,6 +14,7 @@
 #include "stb_image.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Camera/Camera.h"
+#include "r2/Core/Math/Ray.h"
 
 namespace
 {
@@ -56,6 +57,12 @@ namespace
         
     };
     
+    float lineVerts[] = {
+        -0.5, 0, 0, 0, 0,
+        0.5, 0, 0, 0, 0
+        
+    };
+    
     glm::vec3 cubePositions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f),
         glm::vec3( 2.0f,  5.0f, -15.0f),
@@ -87,6 +94,15 @@ namespace
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
     
+    
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec2 uv = glm::vec2(0.0f);
+    };
+    
+    std::vector<Vertex> g_debugVerts;
+    
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTexCoord;\n"
@@ -105,11 +121,12 @@ namespace
     "uniform float time;\n"
     "uniform sampler2D texture1;\n"
     "uniform sampler2D texture2;\n"
+    "uniform vec4 color;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0, 1.0)*TexCoord), 0.2);\n"
+    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2) * color;\n"
     "}\n\0";
-    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2;
+    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2, g_DebugVAO, g_DebugVBO, defaultTexture;
 }
 
 namespace r2::draw
@@ -120,32 +137,40 @@ namespace r2::draw
     {
         stbi_set_flip_vertically_on_load(true);
         glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
-        
+        //glClearColor(0,0,0,1);
         g_ShaderProg = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
         
         glGenVertexArrays(1, &g_VAO);
         glGenBuffers(1, &g_VBO);
         glGenBuffers(1, &g_EBO);
-        
+
         glBindVertexArray(g_VAO);
-        
+
         glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
-        
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-        
+
         //position attribute
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
-        
-        //color attribute
-//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
-//        glEnableVertexAttribArray(1);
-        
+
         //uv attribute
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
         glEnableVertexAttribArray(1);
+        
+        
+        glGenTextures(1, &defaultTexture);
+        glBindTexture(GL_TEXTURE_2D, defaultTexture);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1, 1);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        
+        u32 whiteTexture = 0xffffffff;
+        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &whiteTexture);
         
         //load and create texture
         glGenTextures(1, &texture1);
@@ -186,19 +211,40 @@ namespace r2::draw
         
         
         
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+       // glBindBuffer(GL_ARRAY_BUFFER, 0);
         
         glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        
+        glGenVertexArrays(1, &g_DebugVAO);
+        glGenBuffers(1, &g_DebugVBO);
+        
+        
+        glBindVertexArray(g_DebugVAO);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, g_DebugVBO);
+        glBufferData(GL_ARRAY_BUFFER, 100 * 5 * 2 * sizeof(float), nullptr, GL_STREAM_DRAW);
+        
+        //position attribute
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        //uv attribute
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+        glEnableVertexAttribArray(1);
+        
+        //
+        glBindVertexArray(0);
+       // glBindBuffer(GL_ARRAY_BUFFER, 0);
         
         glUseProgram(g_ShaderProg);
         
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
         glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        //Setup matrix uniforms
-        
-        glEnable(GL_DEPTH_TEST);
 
+        glEnable(GL_DEPTH_TEST);
+        
     }
     
     void OpenGLDraw(float alpha)
@@ -209,35 +255,56 @@ namespace r2::draw
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-        
+
         glBindVertexArray(g_VAO);
-        
+
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
 
         int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
         glUniform1f(uniformTimeLocation, timeVal);
-        
+//
         int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-        
+//
         int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-        
+//
+        int colorLoc = glGetUniformLocation(g_ShaderProg, "color");
+        glUniform4fv(colorLoc, 1, glm::value_ptr(glm::vec4(1.0f)));
+        int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
         
         for (u32 i = 0; i < 10; ++i)
         {
             glm::mat4 model = glm::mat4(1.0f);
 
             model = glm::translate(model, cubePositions[i]);
-            
+
             float angle = 20.0f*i;
 
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            
-            int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
+
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+        }
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, defaultTexture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, defaultTexture);
+       
+        glUniform4fv(colorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+        
+        if (g_debugVerts.size() > 0)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             
-            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            glBindVertexArray(g_DebugVAO);
+            
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex)*g_debugVerts.size(), &g_debugVerts[0]);
+            
+            glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
     }
     
@@ -258,6 +325,18 @@ namespace r2::draw
     {
         g_View = cam.view;
         g_Proj = cam.proj;
+    }
+    
+    void OpenGLDrawRay(const r2::math::Ray& ray)
+    {
+        Vertex v0;
+        
+        v0.position = ray.origin + ray.direction;
+        Vertex v1;
+        v1.position = v0.position + ray.direction * 100.0f;
+        
+        g_debugVerts.push_back(v0);
+        g_debugVerts.push_back(v1);
     }
     
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)

@@ -6,7 +6,11 @@
 //
 
 #include "r2/Render/Camera/Camera.h"
+
 #include "glm/gtc/matrix_transform.hpp"
+#include "r2/Platform/Platform.h"
+
+
 
 namespace r2::cam
 {
@@ -83,4 +87,15 @@ namespace r2::cam
         return glm::normalize(facingDir * yawDir);
     }
     
+    r2::math::Ray CalculateRayFromMousePosition(const Camera& cam, u32 mouseX, u32 mouseY)
+    {
+        float x = (2.0f * mouseX) / static_cast<float>(CENG.DisplaySize().width) - 1.0f;
+        float y = 1.0f - (2.0f * mouseY) / static_cast<float>(CENG.DisplaySize().height);
+        
+        glm::vec4 rayClip = glm::vec4(x, y, -1.0f, 1.0f);
+        glm::vec4 rayEye = glm::inverse(cam.proj) * rayClip;
+        glm::vec4 rayWorld = glm::inverse(cam.view) * glm::vec4(rayEye.xy, -1.0, 0);
+        
+        return r2::math::CreateRay(cam.position, glm::normalize(glm::vec3(rayWorld.x, rayWorld.y, rayWorld.z)));
+    }
 }

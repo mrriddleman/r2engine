@@ -8,8 +8,10 @@
 #ifndef Camera_h
 #define Camera_h
 
+#define GLM_FORCE_SWIZZLE
 #include "glm/glm.hpp"
 #include "r2/Utils/Flags.h"
+#include "r2/Core/Math/Ray.h"
 
 namespace r2
 {
@@ -45,6 +47,8 @@ namespace r2::cam
     void SetFacingDir(Camera& cam, const glm::vec3& facingDir);
     
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
+    
+    r2::math::Ray CalculateRayFromMousePosition(const Camera& cam, u32 mouseX, u32 mouseY);
 }
 
 #endif /* Camera_h */
