@@ -93,15 +93,14 @@ namespace
     
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     
-    
-    struct Vertex
+    struct DebugVertex
     {
         glm::vec3 position;
-        glm::vec2 uv = glm::vec2(0.0f);
     };
     
-    std::vector<Vertex> g_debugVerts;
+    std::vector<DebugVertex> g_debugVerts;
     
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
@@ -121,188 +120,227 @@ namespace
     "uniform float time;\n"
     "uniform sampler2D texture1;\n"
     "uniform sampler2D texture2;\n"
-    "uniform vec4 color;\n"
+    "uniform vec3 objectColor;\n"
+    "uniform vec3 lightColor;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2) * color;\n"
+    "   FragColor = vec4(objectColor * lightColor, 1.0);\n"
     "}\n\0";
-    u32 g_ShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2, g_DebugVAO, g_DebugVBO, defaultTexture;
+    
+    const char* lampVertexShaderSource = "#version 410 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+    "}\n\0";
+    
+    const char* lampFragmentShaderSource = "#version 410 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0);\n"
+    "}\n\0";
+    
+    const char* debugVertexShaderSource = "#version 410 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+    "}\n\0";
+    
+    const char* debugFragmentShaderSource = "#version 410 core\n"
+    "out vec4 FragColor;\n"
+    "uniform vec4 debugColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = debugColor;\n"
+    "}\n\0";
+    
+    
+    u32 g_ShaderProg, g_lightShaderProg, g_debugShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
 
 namespace r2::draw
 {
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr);
+    u32 LoadImageTexture(const char* path);
+    u32 CreateImageTexture(u32 width, u32 height, void* data);
     
     void OpenGLInit()
     {
         stbi_set_flip_vertically_on_load(true);
         glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
-        //glClearColor(0,0,0,1);
-        g_ShaderProg = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
         
-        glGenVertexArrays(1, &g_VAO);
-        glGenBuffers(1, &g_VBO);
-        glGenBuffers(1, &g_EBO);
+        //basic object stuff
+        {
+            g_ShaderProg = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
+            
+            glGenVertexArrays(1, &g_VAO);
+            glGenBuffers(1, &g_VBO);
+            glGenBuffers(1, &g_EBO);
+            
+            glBindVertexArray(g_VAO);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
+            
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+            
+            //position attribute
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(0);
+            
+            //uv attribute
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+            glEnableVertexAttribArray(1);
+            
+            glBindVertexArray(0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            
+            glUseProgram(g_ShaderProg);
+            
+            glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
+            glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
+            
+            glUseProgram(0);
+        }
+        
+        //lamp setup
+        {
+            g_lightShaderProg = CreateShaderProgram(lampVertexShaderSource, lampFragmentShaderSource);
+            
+            glGenVertexArrays(1, &g_lightVAO);
+            glad_glBindVertexArray(g_lightVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
+            
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(0);
+            
+            glBindVertexArray(0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        }
+        
+        //debug setup
+        {
+            g_debugShaderProg = CreateShaderProgram(debugVertexShaderSource, debugFragmentShaderSource);
+            
+            glGenVertexArrays(1, &g_DebugVAO);
+            glGenBuffers(1, &g_DebugVBO);
+            
+            glBindVertexArray(g_DebugVAO);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, g_DebugVBO);
+            glBufferData(GL_ARRAY_BUFFER, 100 * 3 * 2 * sizeof(float), nullptr, GL_STREAM_DRAW);
+            
+            //position attribute
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)0);
+            glEnableVertexAttribArray(0);
+            
+            glBindVertexArray(0);
+        }
 
-        glBindVertexArray(g_VAO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        //position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        //uv attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
-        glEnableVertexAttribArray(1);
-        
-        
-        glGenTextures(1, &defaultTexture);
-        glBindTexture(GL_TEXTURE_2D, defaultTexture);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1, 1);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        
-        u32 whiteTexture = 0xffffffff;
-        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &whiteTexture);
-        
-        //load and create texture
-        glGenTextures(1, &texture1);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        //set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        //load the image
-        char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container.jpg", path);
-        s32 texWidth, texHeight, channels;
-        u8* data = stbi_load(path, &texWidth, &texHeight, &channels, 0);
-        R2_CHECK(data != nullptr, "We didn't load the image!");
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        stbi_image_free(data);
-        
-        
-        //load and create texture
-        glGenTextures(1, &texture2);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-        //set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        //load the image
-       // char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "awesomeface.png", path);
-        
-        data = stbi_load(path, &texWidth, &texHeight, &channels, 0);
-        R2_CHECK(data != nullptr, "We didn't load the image!");
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texWidth, texHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        stbi_image_free(data);
-        
-        
-        
-       // glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
-        glBindVertexArray(0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        
-        glGenVertexArrays(1, &g_DebugVAO);
-        glGenBuffers(1, &g_DebugVBO);
-        
-        
-        glBindVertexArray(g_DebugVAO);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, g_DebugVBO);
-        glBufferData(GL_ARRAY_BUFFER, 100 * 5 * 2 * sizeof(float), nullptr, GL_STREAM_DRAW);
-        
-        //position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        //uv attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
-        glEnableVertexAttribArray(1);
-        
-        //
-        glBindVertexArray(0);
-       // glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
-        glUseProgram(g_ShaderProg);
-        
-        glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
-        glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glEnable(GL_DEPTH_TEST);
         
+        u32 whiteColor = 0xffffffff;
+        defaultTexture = CreateImageTexture(1, 1, &whiteColor);
+        
+        char path[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container.jpg", path);
+        texture1 = LoadImageTexture(path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "awesomeface.png", path);
+        texture2 = LoadImageTexture(path);
     }
     
     void OpenGLDraw(float alpha)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-
-        glBindVertexArray(g_VAO);
-
-        float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-
-        int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
-        glUniform1f(uniformTimeLocation, timeVal);
-//
-        int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-//
-        int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-//
-        int colorLoc = glGetUniformLocation(g_ShaderProg, "color");
-        glUniform4fv(colorLoc, 1, glm::value_ptr(glm::vec4(1.0f)));
-        int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
-        
-        for (u32 i = 0; i < 10; ++i)
+        //Draw the cube
         {
+            glUseProgram(g_ShaderProg);
+            
+            //        glActiveTexture(GL_TEXTURE0);
+            //        glBindTexture(GL_TEXTURE_2D, texture1);
+            //        glActiveTexture(GL_TEXTURE1);
+            //        glBindTexture(GL_TEXTURE_2D, texture2);
+            
+            glBindVertexArray(g_VAO);
+            
+            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+            
+            int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
+            glUniform1f(uniformTimeLocation, timeVal);
+            //
+            int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
+            //
+            int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
+            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
+            //
+            int colorLoc = glGetUniformLocation(g_ShaderProg, "objectColor");
+            glUniform3fv(colorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
+            
+            int lightColorLoc = glGetUniformLocation(g_ShaderProg, "lightColor");
+            glUniform3fv(lightColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+            
             glm::mat4 model = glm::mat4(1.0f);
-
-            model = glm::translate(model, cubePositions[i]);
-
-            float angle = 20.0f*i;
-
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
+            int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
+            
             glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
         }
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, defaultTexture);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, defaultTexture);
-       
-        glUniform4fv(colorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+        //Draw lamp
+        {
+            glUseProgram(g_lightShaderProg);
+            
+            int lightViewLoc = glGetUniformLocation(g_lightShaderProg, "view");
+            glUniformMatrix4fv(lightViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
+            //
+            int lightProjectionLoc = glGetUniformLocation(g_lightShaderProg, "projection");
+            glUniformMatrix4fv(lightProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
+            
+            glm::mat4 lightModel = glm::mat4(1.0f);
+            lightModel = glm::translate(lightModel, lightPos);
+            lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+            
+            int lightModelLoc = glGetUniformLocation(g_lightShaderProg, "model");
+            glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
+            
+            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+        }
         
+        //draw debug stuff
         if (g_debugVerts.size() > 0)
         {
-            glm::mat4 model = glm::mat4(1.0f);
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            glUseProgram(g_debugShaderProg);
+            
+            glm::mat4 debugModel = glm::mat4(1.0f);
+            int debugModelLoc = glGetUniformLocation(g_debugShaderProg, "model");
+            glUniformMatrix4fv(debugModelLoc, 1, GL_FALSE, glm::value_ptr(debugModel));
+            
+            int debugViewLoc = glGetUniformLocation(g_debugShaderProg, "view");
+            glUniformMatrix4fv(debugViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
+            //
+            int debugProjectionLoc = glGetUniformLocation(g_debugShaderProg, "projection");
+            glUniformMatrix4fv(debugProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
+            //
+            int debugColorLoc = glGetUniformLocation(g_debugShaderProg, "debugColor");
+            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
             
             glBindVertexArray(g_DebugVAO);
             
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex)*g_debugVerts.size(), &g_debugVerts[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(DebugVertex)*g_debugVerts.size(), &g_debugVerts[0]);
             
             glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
@@ -313,7 +351,18 @@ namespace r2::draw
         glDeleteVertexArrays(1, &g_VAO);
         glDeleteBuffers(1, &g_VBO);
         glDeleteBuffers(1, &g_EBO);
+        
+        glDeleteVertexArrays(1, &g_lightVAO);
+        glDeleteVertexArrays(1, &g_DebugVAO);
+        glDeleteBuffers(1, &g_DebugVBO);
+        
         glDeleteProgram(g_ShaderProg);
+        glDeleteProgram(g_lightShaderProg);
+        glDeleteProgram(g_debugShaderProg);
+        
+        glDeleteTextures(1, &texture1);
+        glDeleteTextures(1, &texture2);
+        glDeleteTextures(1, &defaultTexture);
     }
     
     void OpenGLResizeWindow(u32 width, u32 height)
@@ -329,14 +378,67 @@ namespace r2::draw
     
     void OpenGLDrawRay(const r2::math::Ray& ray)
     {
-        Vertex v0;
+        DebugVertex v0;
         
         v0.position = ray.origin + ray.direction;
-        Vertex v1;
+        DebugVertex v1;
         v1.position = v0.position + ray.direction * 100.0f;
         
         g_debugVerts.push_back(v0);
         g_debugVerts.push_back(v1);
+    }
+    
+    u32 LoadImageTexture(const char* path)
+    {
+        //load and create texture
+        u32 newTex;
+        glGenTextures(1, &newTex);
+        glBindTexture(GL_TEXTURE_2D, newTex);
+        //set the texture wrapping/filtering options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //load the image
+        
+        s32 texWidth, texHeight, channels;
+        u8* data = stbi_load(path, &texWidth, &texHeight, &channels, 0);
+        R2_CHECK(data != nullptr, "We didn't load the image!");
+        
+        GLenum format;
+        if (channels == 3)
+        {
+            format = GL_RGB;
+        }
+        else if(channels == 4)
+        {
+            format = GL_RGBA;
+        }
+        else
+        {
+            R2_CHECK(false, "UNKNOWN image format");
+        }
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+        return newTex;
+    }
+    
+    u32 CreateImageTexture(u32 width, u32 height, void* data)
+    {
+        u32 newTex;
+        glGenTextures(1, &newTex);
+        glBindTexture(GL_TEXTURE_2D, newTex);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        
+        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        
+        return newTex;
     }
     
     u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)

@@ -10,14 +10,15 @@
 namespace r2::cam
 {
 
-    void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far)
+    void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position)
     {
+        
         mCameraMoveSpeed = camMoveSpeed;
         mFOV = fov;
         mAspect = aspect;
         mNear = near;
         mFar = far;
-        SetPerspectiveCam(mCamera, fov, aspect, near, far);
+        InitPerspectiveCam(mCamera, fov, aspect, near, far, position);
     }
     
     void PerspectiveController::Update()
@@ -42,6 +43,18 @@ namespace r2::cam
         {
             MoveCameraBy(mCamera, glm::normalize(glm::cross(mCamera.facing, mCamera.up)) * speed);
         }
+    }
+    
+    void PerspectiveController::SetAspect(float aspect)
+    {
+        mAspect = aspect;
+        SetPerspectiveCam(mCamera, mFOV, aspect, mNear, mFar);
+    }
+    
+    void PerspectiveController::SetFOV(float fov)
+    {
+        mFOV = fov;
+        SetPerspectiveCam(mCamera, fov, mAspect, mNear, mFar);
     }
     
     void PerspectiveController::OnEvent(r2::evt::Event& event)

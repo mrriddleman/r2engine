@@ -10,10 +10,25 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "r2/Platform/Platform.h"
 
-
-
 namespace r2::cam
 {
+    
+    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& pos)
+    {
+        cam.position = pos;
+        cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
+        cam.proj = glm::perspective(glm::radians(fovDegrees), aspect, near, far);
+        
+        cam.vp = cam.proj * cam.view;
+    }
+    
+    void InitOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far, const glm::vec3& pos)
+    {
+        cam.position = pos;
+        cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
+        cam.proj = glm::ortho(left, right, bottom, top, near, far);
+        cam.vp = cam.proj * cam.view;
+    }
 
     void SetPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far)
     {

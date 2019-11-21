@@ -21,7 +21,7 @@ namespace r2
     void RenderLayer::Init()
     {
         //@Temp
-        mPersController.Init(2.5f,45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f);
+        mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 1.0f, 5.0f));
         
         r2::draw::OpenGLInit();
     }
@@ -43,8 +43,10 @@ namespace r2
     {
         r2::evt::EventDispatcher dispatcher(event);
         
-        dispatcher.Dispatch<r2::evt::WindowResizeEvent>([](const r2::evt::WindowResizeEvent& e)
+        dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
         {
+            mPersController.SetAspect(static_cast<float>(e.Width()) / static_cast<float>(e.Height()));
+            
             r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
             return true;
         });

@@ -10,13 +10,13 @@
 
 namespace r2::cam
 {
-    void OrthoCameraController::Init(float cameraMoveSpeed, float aspect, float near, float far)
+    void OrthoCameraController::Init(float cameraMoveSpeed, float aspect, float near, float far, const glm::vec3& position)
     {
         mAspect = aspect;
         mCameraMoveSpeed = cameraMoveSpeed;
         mNear = near;
         mFar = far;
-        SetOrthoCam(mCamera, -aspect * mZoom, aspect * mZoom, -mZoom, mZoom, near, far);
+        InitOrthoCam(mCamera, -aspect * mZoom, aspect * mZoom, -mZoom, mZoom, near, far, position);
     }
     
     void OrthoCameraController::Update()
@@ -38,6 +38,18 @@ namespace r2::cam
         {
             MoveCameraBy(mCamera, glm::normalize(glm::cross(mCamera.facing, mCamera.up)) * speed);
         }
+    }
+    
+    void OrthoCameraController::SetZoom(float zoom)
+    {
+        mZoom = zoom;
+        SetOrthoCam(mCamera, -mAspect * mZoom, mAspect * mZoom, -mZoom, mZoom, mNear, mFar);
+    }
+    
+    void OrthoCameraController::SetAspect(float aspect)
+    {
+        mAspect = aspect;
+        SetOrthoCam(mCamera, -mAspect * mZoom, mAspect * mZoom, -mZoom, mZoom, mNear, mFar);
     }
     
     void OrthoCameraController::OnEvent(evt::Event& event)

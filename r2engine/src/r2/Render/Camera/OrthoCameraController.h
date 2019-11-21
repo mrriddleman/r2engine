@@ -16,10 +16,13 @@ namespace r2::cam
     class OrthoCameraController
     {
     public:
-        void Init(float cameraMoveSpeed, float aspect, float near, float far);
+        void Init(float cameraMoveSpeed, float aspect, float near, float far, const glm::vec3& position);
         void Update();
         void OnEvent(evt::Event& e);
         const Camera& GetCamera() const {return mCamera;}
+        
+        void SetZoom(float zoom);
+        void SetAspect(float aspect);
         
     private:
         Camera mCamera;

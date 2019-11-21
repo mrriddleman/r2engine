@@ -21,7 +21,7 @@ namespace r2
         glm::mat4 proj = glm::mat4(1.0f);
         glm::mat4 vp = glm::mat4(1.0f);
         
-        glm::vec3 position = glm::vec3(0.0f);
+        glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 facing = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
     };
@@ -38,6 +38,10 @@ namespace r2::cam
     };
     
     using CameraDirectionPressed = r2::Flags<u8, u8>;
+    
+    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& position);
+    
+    void InitOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far, const glm::vec3& position);
     
     void SetPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far);
     void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far);
