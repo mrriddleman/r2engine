@@ -20,46 +20,40 @@ namespace
 {
     float cubeVerts[] = {
         //front face
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, //top right
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, //bottom right
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, //bottom left
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, // top left
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //top right
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //bottom right
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //bottom left
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // top left
         
         //right face
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, //top left 4
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, //bottom left 5
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 6
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, // top right 7
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, //top left 4
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //bottom left 5
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, //bottom right 6
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // top right 7
         
         //left face
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom  left 8
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 9
-        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, //bottom right 10
-        -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, //top right 11
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //bottom  left 8
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, //top left 9
+        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, //bottom right 10
+        -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, //top right 11
         
         //back face
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom left 12
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 13
-        -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 14
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, //top right 15
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, //bottom left 12
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, //top left 13
+        -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, //bottom right 14
+        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, //top right 15
         
         //top face
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, //bottom left 16
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, //top left 17
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, //bottom right 18
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, //top right 19
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0, 1.0f, 0.0f, //bottom left 16
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, //top left 17
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //bottom right 18
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, //top right 19
         
         //bottom face
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //bottom left 20
-        -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, //top left 21
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, //bottom right 22
-        0.5f, -0.5f, 0.5f, 1.0f, 1.0f //top right 23
-        
-    };
-    
-    float lineVerts[] = {
-        -0.5, 0, 0, 0, 0,
-        0.5, 0, 0, 0, 0
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, //bottom left 20
+        -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, //top left 21
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, //bottom right 22
+        0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f //top right 23
         
     };
     
@@ -93,6 +87,7 @@ namespace
     
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
+    glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     
     struct DebugVertex
@@ -100,31 +95,62 @@ namespace
         glm::vec3 position;
     };
     
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec2 texCoord;
+        glm::vec3 normal;
+    };
+    
     std::vector<DebugVertex> g_debugVerts;
     
     const char *vertexShaderSource = "#version 410 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTexCoord;\n"
+    "layout (location = 2) in vec3 aNormal;\n"
     "out vec2 TexCoord;\n"
+    "out vec3 Normal;\n"
+    "out vec3 FragPos;\n"
+    "out vec3 LightPos;\n"
     "uniform mat4 model;"
     "uniform mat4 view;"
     "uniform mat4 projection;"
+    "uniform vec3 lightPos;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
     "   TexCoord = aTexCoord;\n"
+    "   FragPos = vec3( view * model * vec4(aPos, 1.0));\n"
+    "   Normal = mat3(transpose(inverse(view*model))) * aNormal;\n"
+    "   LightPos = vec3(view * vec4(lightPos, 1.0));\n"
     "}\0";
     const char *fragmentShaderSource = "#version 410 core\n"
     "out vec4 FragColor;\n"
     "in vec2 TexCoord;\n"
+    "in vec3 Normal;\n"
+    "in vec3 FragPos;\n"
+    "in vec3 LightPos;\n"
     "uniform float time;\n"
     "uniform sampler2D texture1;\n"
     "uniform sampler2D texture2;\n"
     "uniform vec3 objectColor;\n"
     "uniform vec3 lightColor;\n"
+    "uniform vec3 viewPos;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(objectColor * lightColor, 1.0);\n"
+    "   vec3 norm = normalize(Normal);\n"
+    "   vec3 lightDir = normalize(LightPos - FragPos);\n"
+    "   float diff = max(dot(norm, lightDir), 0.0);\n"
+    "   vec3 diffuse = diff * lightColor;\n"
+    "   float ambientStrength = 0.1;\n"
+    "   vec3 ambient = ambientStrength * lightColor;\n"
+    "   float specularStrength = 0.5;\n"
+    "   vec3 viewDir = normalize(-FragPos);\n"
+    "   vec3 reflectDir = reflect(-lightDir, norm);\n"
+    "   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
+    "   vec3 specular = specularStrength * spec * lightColor;\n"
+    "   vec3 result = (ambient + diffuse + specular) * objectColor;\n"
+    "   FragColor = vec4(result, 1.0);\n"
     "}\n\0";
     
     const char* lampVertexShaderSource = "#version 410 core\n"
@@ -194,12 +220,15 @@ namespace r2::draw
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
             
             //position attribute
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
             glEnableVertexAttribArray(0);
             
             //uv attribute
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3*sizeof(float)));
             glEnableVertexAttribArray(1);
+            
+            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(5*sizeof(float)));
+            glEnableVertexAttribArray(2);
             
             glBindVertexArray(0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -293,6 +322,20 @@ namespace r2::draw
             int lightColorLoc = glGetUniformLocation(g_ShaderProg, "lightColor");
             glUniform3fv(lightColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
             
+            int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
+            
+            glm::mat4 lightMat = glm::mat4(1.0f);
+
+            float dt = float(CPLAT.TickRate()) / 1000.f;
+            lightMat = glm::rotate(lightMat, 5*dt, glm::vec3(0,1,0));
+            
+            lightPos = glm::vec3(lightMat * glm::vec4(lightPos,0.0));
+            
+            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
+            
+            int viewPosLoc = glGetUniformLocation(g_ShaderProg, "viewPos");
+            glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
+            
             glm::mat4 model = glm::mat4(1.0f);
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -374,6 +417,7 @@ namespace r2::draw
     {
         g_View = cam.view;
         g_Proj = cam.proj;
+        g_CameraPos = cam.position;
     }
     
     void OpenGLDrawRay(const r2::math::Ray& ray)
