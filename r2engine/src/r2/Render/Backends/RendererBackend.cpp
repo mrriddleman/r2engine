@@ -88,7 +88,7 @@ namespace
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    glm::vec3 lightPos(1.2f, 0.2f, 2.0f);
     
     struct DebugVertex
     {
@@ -133,23 +133,35 @@ namespace
     "uniform float time;\n"
     "uniform sampler2D texture1;\n"
     "uniform sampler2D texture2;\n"
-    "uniform vec3 objectColor;\n"
-    "uniform vec3 lightColor;\n"
     "uniform vec3 viewPos;\n"
+    "struct Material {\n"
+    "   vec3 ambient;\n"
+    "   vec3 diffuse;\n"
+    "   vec3 specular;\n"
+    "   float shininess;\n"
+    "};\n"
+    "uniform Material material;"
+    "struct Light{\n"
+    "   vec3 ambient;\n"
+    "   vec3 diffuse;\n"
+    "   vec3 specular;\n"
+    "};\n"
+    "uniform Light light;\n"
     "void main()\n"
     "{\n"
+    "   vec3 ambient = material.ambient * light.ambient;\n"
+    
     "   vec3 norm = normalize(Normal);\n"
     "   vec3 lightDir = normalize(LightPos - FragPos);\n"
     "   float diff = max(dot(norm, lightDir), 0.0);\n"
-    "   vec3 diffuse = diff * lightColor;\n"
-    "   float ambientStrength = 0.1;\n"
-    "   vec3 ambient = ambientStrength * lightColor;\n"
-    "   float specularStrength = 0.5;\n"
+    "   vec3 diffuse = (diff * material.diffuse) * light.diffuse;\n"
+    
     "   vec3 viewDir = normalize(-FragPos);\n"
     "   vec3 reflectDir = reflect(-lightDir, norm);\n"
-    "   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
-    "   vec3 specular = specularStrength * spec * lightColor;\n"
-    "   vec3 result = (ambient + diffuse + specular) * objectColor;\n"
+    "   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
+    "   vec3 specular = (material.specular * spec) * light.specular;\n"
+    
+    "   vec3 result = (ambient + diffuse + specular);\n"
     "   FragColor = vec4(result, 1.0);\n"
     "}\n\0";
     
@@ -315,12 +327,6 @@ namespace r2::draw
             //
             int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-            //
-            int colorLoc = glGetUniformLocation(g_ShaderProg, "objectColor");
-            glUniform3fv(colorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
-            
-            int lightColorLoc = glGetUniformLocation(g_ShaderProg, "lightColor");
-            glUniform3fv(lightColorLoc, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
             
             int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
             
@@ -339,6 +345,36 @@ namespace r2::draw
             glm::mat4 model = glm::mat4(1.0f);
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            
+            int materialAmbientLoc = glGetUniformLocation(g_ShaderProg, "material.ambient");
+            glUniform3fv(materialAmbientLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
+            
+            int materialDiffuseLoc = glGetUniformLocation(g_ShaderProg, "material.diffuse");
+            glUniform3fv(materialDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
+            
+            int materialSpecularLoc = glGetUniformLocation(g_ShaderProg, "material.specular");
+            glUniform3fv(materialSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
+            
+            int materialShininessLoc = glGetUniformLocation(g_ShaderProg, "material.shininess");
+            glUniform1f(materialShininessLoc, 32.0f);
+            
+            
+            glm::vec3 lightColor;
+            lightColor.x = sin(timeVal * 2.0f);
+            lightColor.y = sin(timeVal * 0.7f);
+            lightColor.z = sin(timeVal * 1.3f);
+            
+            glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+            glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+            
+            int lightAmbientLoc = glGetUniformLocation(g_ShaderProg, "light.ambient");
+            glUniform3fv(lightAmbientLoc, 1, glm::value_ptr(ambientColor));
+            
+            int lightDiffuseLoc = glGetUniformLocation(g_ShaderProg, "light.diffuse");
+            glUniform3fv(lightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
+            
+            int lightSpecularLoc = glGetUniformLocation(g_ShaderProg, "light.specular");
+            glUniform3fv(lightSpecularLoc, 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
             
             glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
         }
