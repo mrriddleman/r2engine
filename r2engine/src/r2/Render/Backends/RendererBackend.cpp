@@ -131,14 +131,12 @@ namespace
     "in vec3 FragPos;\n"
     "in vec3 LightPos;\n"
     "uniform float time;\n"
-    "uniform sampler2D texture1;\n"
-    "uniform sampler2D texture2;\n"
     "uniform vec3 viewPos;\n"
     "struct Material {\n"
-    "   vec3 ambient;\n"
-    "   vec3 diffuse;\n"
-    "   vec3 specular;\n"
-    "   float shininess;\n"
+    "   sampler2D   diffuse;\n"
+    "   sampler2D   specular;\n"
+    "   sampler2D   emission;\n"
+    "   float       shininess;\n"
     "};\n"
     "uniform Material material;"
     "struct Light{\n"
@@ -149,19 +147,28 @@ namespace
     "uniform Light light;\n"
     "void main()\n"
     "{\n"
-    "   vec3 ambient = material.ambient * light.ambient;\n"
+    "   vec3 diffuseVec = vec3(texture(material.diffuse, TexCoord));\n"
+    "   vec3 ambient = diffuseVec * light.ambient;\n"
     
     "   vec3 norm = normalize(Normal);\n"
     "   vec3 lightDir = normalize(LightPos - FragPos);\n"
     "   float diff = max(dot(norm, lightDir), 0.0);\n"
-    "   vec3 diffuse = (diff * material.diffuse) * light.diffuse;\n"
+    "   vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
     
     "   vec3 viewDir = normalize(-FragPos);\n"
     "   vec3 reflectDir = reflect(-lightDir, norm);\n"
     "   float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-    "   vec3 specular = (material.specular * spec) * light.specular;\n"
+    "   vec3 specularTex = texture(material.specular, TexCoord).rgb;"
+    "   vec3 specular = specularTex * spec * light.specular;\n"
     
-    "   vec3 result = (ambient + diffuse + specular);\n"
+    "   vec3 emission = vec3(0.0);"
+    "   vec3 emissionTex = texture(material.emission, TexCoord).rgb;\n"
+
+    "   emission = emissionTex;\n"
+    "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in y
+    "   emission = floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f;\n"//this will fade the emission in and out
+
+    "   vec3 result = (ambient + diffuse + specular + emission);\n"
     "   FragColor = vec4(result, 1.0);\n"
     "}\n\0";
     
@@ -201,7 +208,7 @@ namespace
     "}\n\0";
     
     
-    u32 g_ShaderProg, g_lightShaderProg, g_debugShaderProg, g_VBO, g_VAO, g_EBO, texture1, texture2, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
+    u32 g_ShaderProg, g_lightShaderProg, g_debugShaderProg, g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
 
 namespace r2::draw
@@ -247,8 +254,13 @@ namespace r2::draw
             
             glUseProgram(g_ShaderProg);
             
-            glUniform1i(glGetUniformLocation(g_ShaderProg, "texture1"), 0);
-            glUniform1i(glGetUniformLocation(g_ShaderProg, "texture2"), 1);
+            //how we set our sampler2Ds in our shaders - note we set our shader program above
+            //First is set to Texture0 - this means material.diffuse is set to Texture0
+            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.diffuse"), 0);
+            //Second is set to Texture1 - this means material.specular is set to Texture1
+            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.specular"), 1);
+            
+            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.emission"), 2);
             
             glUseProgram(0);
         }
@@ -296,10 +308,17 @@ namespace r2::draw
         defaultTexture = CreateImageTexture(1, 1, &whiteColor);
         
         char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container.jpg", path);
-        texture1 = LoadImageTexture(path);
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "awesomeface.png", path);
-        texture2 = LoadImageTexture(path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container2.png", path);
+        //Creates and sets the image to the textureID
+        diffuseMap = LoadImageTexture(path);
+        
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container2_specular.png", path);
+        //Same here
+        specularMap = LoadImageTexture(path);
+        
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "matrix.jpg", path);
+        
+        emissionMap = LoadImageTexture(path);
     }
     
     void OpenGLDraw(float alpha)
@@ -310,10 +329,16 @@ namespace r2::draw
         {
             glUseProgram(g_ShaderProg);
             
-            //        glActiveTexture(GL_TEXTURE0);
-            //        glBindTexture(GL_TEXTURE_2D, texture1);
-            //        glActiveTexture(GL_TEXTURE1);
-            //        glBindTexture(GL_TEXTURE_2D, texture2);
+            //We need to activate the texture slot
+            glActiveTexture(GL_TEXTURE0);
+            //then bind the textureID we desire
+            glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, specularMap);
+
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, emissionMap);
             
             glBindVertexArray(g_VAO);
             
@@ -333,7 +358,7 @@ namespace r2::draw
             glm::mat4 lightMat = glm::mat4(1.0f);
 
             float dt = float(CPLAT.TickRate()) / 1000.f;
-            lightMat = glm::rotate(lightMat, 5*dt, glm::vec3(0,1,0));
+            lightMat = glm::rotate(lightMat, 1*dt, glm::vec3(0,1,0));
             
             lightPos = glm::vec3(lightMat * glm::vec4(lightPos,0.0));
             
@@ -346,26 +371,11 @@ namespace r2::draw
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             
-            int materialAmbientLoc = glGetUniformLocation(g_ShaderProg, "material.ambient");
-            glUniform3fv(materialAmbientLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
-            
-            int materialDiffuseLoc = glGetUniformLocation(g_ShaderProg, "material.diffuse");
-            glUniform3fv(materialDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f, 0.5f, 0.31f)));
-            
-            int materialSpecularLoc = glGetUniformLocation(g_ShaderProg, "material.specular");
-            glUniform3fv(materialSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.5f)));
-            
             int materialShininessLoc = glGetUniformLocation(g_ShaderProg, "material.shininess");
-            glUniform1f(materialShininessLoc, 32.0f);
+            glUniform1f(materialShininessLoc, 64.0f);
             
-            
-            glm::vec3 lightColor;
-            lightColor.x = sin(timeVal * 2.0f);
-            lightColor.y = sin(timeVal * 0.7f);
-            lightColor.z = sin(timeVal * 1.3f);
-            
-            glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-            glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+            glm::vec3 diffuseColor = glm::vec3(0.5f, 0.5f, 0.5f);
+            glm::vec3 ambientColor = glm::vec3(0.2f);
             
             int lightAmbientLoc = glGetUniformLocation(g_ShaderProg, "light.ambient");
             glUniform3fv(lightAmbientLoc, 1, glm::value_ptr(ambientColor));
@@ -439,8 +449,8 @@ namespace r2::draw
         glDeleteProgram(g_lightShaderProg);
         glDeleteProgram(g_debugShaderProg);
         
-        glDeleteTextures(1, &texture1);
-        glDeleteTextures(1, &texture2);
+        glDeleteTextures(1, &diffuseMap);
+        glDeleteTextures(1, &specularMap);
         glDeleteTextures(1, &defaultTexture);
     }
     
@@ -475,8 +485,8 @@ namespace r2::draw
         glGenTextures(1, &newTex);
         glBindTexture(GL_TEXTURE_2D, newTex);
         //set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         //load the image
