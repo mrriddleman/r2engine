@@ -148,6 +148,7 @@ namespace
     "   vec3 position;\n"
     "   vec3 direction;\n"
     "   float cutoff;\n"
+    "   float outerCutoff;\n"
     
     "};\n"
     "uniform Light light;\n"
@@ -160,8 +161,9 @@ namespace
     "   vec3 lightPos = light.position;"
     "   vec3 lightDir = normalize(lightPos - FragPos);\n"
     "   float theta = dot(lightDir, normalize(-light.direction));\n"
-
-    "   if(theta > light.cutoff) {\n"
+    "   float epsilon = light.cutoff - light.outerCutoff;\n"
+    "   float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);"
+    
     
     "       vec3 norm = normalize(Normal);\n"
     "       float diff = max(dot(norm, lightDir), 0.0);\n"
@@ -184,15 +186,12 @@ namespace
     "       float distance = length(lightPos - FragPos);\n"
     "       float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\n"
     
-    "       diffuse *= attenuation;\n"
-    "       specular *= attenuation;\n"
+    "       diffuse *= attenuation * intensity;\n"
+    "       specular *= attenuation * intensity;\n"
     
     "       vec3 result = (ambient + diffuse + specular + emission);\n"
     "       FragColor = vec4(result, 1.0);\n"
-    "   }\n"
-    "   else{\n"
-    "       FragColor = vec4(ambient, 1.0);\n"
-    "   }\n"
+
     
     "}\n\0";
     
@@ -421,6 +420,9 @@ namespace r2::draw
             
             int lightCutoffLoc = glGetUniformLocation(g_ShaderProg, "light.cutoff");
             glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
+            
+            int lightOuterCutoffLoc = glGetUniformLocation(g_ShaderProg, "light.outerCutoff");
+            glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(17.5f)));
             
             int lightConstantLoc = glGetUniformLocation(g_ShaderProg, "light.constant");
             glUniform1f(lightConstantLoc, 1.0f);
