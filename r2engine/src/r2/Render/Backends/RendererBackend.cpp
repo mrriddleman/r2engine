@@ -111,6 +111,7 @@ namespace
     "out vec2 TexCoord;\n"
     "out vec3 Normal;\n"
     "out vec3 FragPos;\n"
+    "out mat4 View;\n"
     "uniform mat4 model;"
     "uniform mat4 view;"
     "uniform mat4 projection;"
@@ -120,12 +121,14 @@ namespace
     "   TexCoord = aTexCoord;\n"
     "   Normal = mat3(transpose(inverse(view*model))) * aNormal;\n"
     "   FragPos = vec3(view * model * vec4(aPos, 1.0));\n"
+    "   View = view;\n"
     "}\0";
     const char *fragmentShaderSource = "#version 410 core\n"
     "out vec4 FragColor;\n"
     "in vec2 TexCoord;\n"
     "in vec3 Normal;\n"
     "in vec3 FragPos;\n"
+    "in mat4 View;\n"
     "uniform float time;\n"
     "uniform vec3 viewPos;\n"
     "struct Material {\n"
@@ -140,16 +143,24 @@ namespace
     "   vec3 diffuse;\n"
     "   vec3 specular;\n"
     "   vec3 emission;\n"
-    "   vec3 direction;\n"
+    
+    "   vec3 position;\n"
+    "   float constant;\n"
+    "   float linear;\n"
+    "   float quadratic;\n"
     "};\n"
     "uniform Light light;\n"
     "void main()\n"
     "{\n"
+    "   vec3 norm = normalize(Normal);\n"
+    "   vec3 lightPos = vec3(View*vec4(light.position,1.0));\n"
+    
+    "   float distance = length(lightPos - FragPos);\n"
+    "   float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\n"
     "   vec3 diffuseVec = vec3(texture(material.diffuse, TexCoord));\n"
     "   vec3 ambient = diffuseVec * light.ambient;\n"
     
-    "   vec3 norm = normalize(Normal);\n"
-    "   vec3 lightDir = normalize(-light.direction);\n"
+    "   vec3 lightDir = normalize(lightPos - FragPos);\n"
     "   float diff = max(dot(norm, lightDir), 0.0);\n"
     "   vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
     
@@ -166,6 +177,10 @@ namespace
     "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in x,y
     "   emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);\n"//this will fade the emission in and out
 */
+    "   ambient *= attenuation;\n"
+    "   diffuse *= attenuation;\n"
+    "   specular *= attenuation;\n"
+    
     "   vec3 result = (ambient + diffuse + specular + emission);\n"
     "   FragColor = vec4(result, 1.0);\n"
     "}\n\0";
@@ -387,8 +402,17 @@ namespace r2::draw
             int lightEmissionLoc = glGetUniformLocation(g_ShaderProg, "light.emission");
             glUniform3fv(lightEmissionLoc, 1, glm::value_ptr(glm::vec3(1.f)));
             
-            int lightDirectionLoc = glGetUniformLocation(g_ShaderProg, "light.direction");
-            glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+            int lightPositionLoc = glGetUniformLocation(g_ShaderProg, "light.position");
+            glUniform3fv(lightPositionLoc, 1, glm::value_ptr(lightPos));
+            
+            int lightConstantLoc = glGetUniformLocation(g_ShaderProg, "light.constant");
+            glUniform1f(lightConstantLoc, 1.0f);
+            
+            int lightLinearLoc = glGetUniformLocation(g_ShaderProg, "light.linear");
+            glUniform1f(lightLinearLoc, 0.09f);
+            
+            int lightQuadraticLoc = glGetUniformLocation(g_ShaderProg, "light.quadratic");
+            glUniform1f(lightQuadraticLoc, 0.032f);
             
             for (u32 i = 0; i < 10; ++i)
             {
