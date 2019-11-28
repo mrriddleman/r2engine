@@ -111,25 +111,21 @@ namespace
     "out vec2 TexCoord;\n"
     "out vec3 Normal;\n"
     "out vec3 FragPos;\n"
-    "out vec3 LightPos;\n"
     "uniform mat4 model;"
     "uniform mat4 view;"
     "uniform mat4 projection;"
-    "uniform vec3 lightPos;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
     "   TexCoord = aTexCoord;\n"
-    "   FragPos = vec3( view * model * vec4(aPos, 1.0));\n"
     "   Normal = mat3(transpose(inverse(view*model))) * aNormal;\n"
-    "   LightPos = vec3(view * vec4(lightPos, 1.0));\n"
+    "   FragPos = vec3(view * model * vec4(aPos, 1.0));\n"
     "}\0";
     const char *fragmentShaderSource = "#version 410 core\n"
     "out vec4 FragColor;\n"
     "in vec2 TexCoord;\n"
     "in vec3 Normal;\n"
     "in vec3 FragPos;\n"
-    "in vec3 LightPos;\n"
     "uniform float time;\n"
     "uniform vec3 viewPos;\n"
     "struct Material {\n"
@@ -143,6 +139,8 @@ namespace
     "   vec3 ambient;\n"
     "   vec3 diffuse;\n"
     "   vec3 specular;\n"
+    "   vec3 emission;\n"
+    "   vec3 direction;\n"
     "};\n"
     "uniform Light light;\n"
     "void main()\n"
@@ -151,7 +149,7 @@ namespace
     "   vec3 ambient = diffuseVec * light.ambient;\n"
     
     "   vec3 norm = normalize(Normal);\n"
-    "   vec3 lightDir = normalize(LightPos - FragPos);\n"
+    "   vec3 lightDir = normalize(-light.direction);\n"
     "   float diff = max(dot(norm, lightDir), 0.0);\n"
     "   vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
     
@@ -162,12 +160,12 @@ namespace
     "   vec3 specular = specularTex * spec * light.specular;\n"
     
     "   vec3 emission = vec3(0.0);"
+    /*
     "   vec3 emissionTex = texture(material.emission, TexCoord).rgb;\n"
-
     "   emission = emissionTex;\n"
-    "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in y
-    "   emission = floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f;\n"//this will fade the emission in and out
-
+    "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in x,y
+    "   emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);\n"//this will fade the emission in and out
+*/
     "   vec3 result = (ambient + diffuse + specular + emission);\n"
     "   FragColor = vec4(result, 1.0);\n"
     "}\n\0";
@@ -353,23 +351,23 @@ namespace r2::draw
             int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
-            int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
-            
-            glm::mat4 lightMat = glm::mat4(1.0f);
-
-            float dt = float(CPLAT.TickRate()) / 1000.f;
-            lightMat = glm::rotate(lightMat, 1*dt, glm::vec3(0,1,0));
-            
-            lightPos = glm::vec3(lightMat * glm::vec4(lightPos,0.0));
-            
-            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
+//            int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
+//
+//            glm::mat4 lightMat = glm::mat4(1.0f);
+//
+//            float dt = float(CPLAT.TickRate()) / 1000.f;
+//            lightMat = glm::rotate(lightMat, 1*dt, glm::vec3(0,1,0));
+//
+//            lightPos = glm::vec3(lightMat * glm::vec4(lightPos,0.0));
+//
+//            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
             
             int viewPosLoc = glGetUniformLocation(g_ShaderProg, "viewPos");
             glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
             
-            glm::mat4 model = glm::mat4(1.0f);
+          //  glm::mat4 model = glm::mat4(1.0f);
             int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+           
             
             int materialShininessLoc = glGetUniformLocation(g_ShaderProg, "material.shininess");
             glUniform1f(materialShininessLoc, 64.0f);
@@ -386,7 +384,23 @@ namespace r2::draw
             int lightSpecularLoc = glGetUniformLocation(g_ShaderProg, "light.specular");
             glUniform3fv(lightSpecularLoc, 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
             
-            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            int lightEmissionLoc = glGetUniformLocation(g_ShaderProg, "light.emission");
+            glUniform3fv(lightEmissionLoc, 1, glm::value_ptr(glm::vec3(1.f)));
+            
+            int lightDirectionLoc = glGetUniformLocation(g_ShaderProg, "light.direction");
+            glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+            
+            for (u32 i = 0; i < 10; ++i)
+            {
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, cubePositions[i]);
+                float angle = 20.f * i;
+                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+                glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            }
+            
+            
         }
 
         //Draw lamp
