@@ -10,6 +10,8 @@
 
 #include "r2/Utils/Flags.h"
 
+#define DISK_CONFIG r2::fs::DeviceConfig()
+
 namespace r2::fs
 {
 

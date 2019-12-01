@@ -31,6 +31,7 @@ namespace r2::draw
     void OpenGLSetCamera(const r2::Camera& cam);
     void OpenGLDrawRay(const r2::math::Ray& ray);
 
+    
 }
 
 #endif /* RendererBackend_h */

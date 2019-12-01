@@ -524,6 +524,12 @@ namespace
             case r2::fs::utils::TEXTURES:
                 strcpy(subpath, "assets/textures");
                 break;
+            case r2::fs::utils::SHADERS_BIN:
+                strcpy(subpath, "assets/shaders/bin");
+                break;
+            case r2::fs::utils::SHADERS_RAW:
+                strcpy(subpath, "assets/shaders/raw");
+                break;
             default:
                 result = false;
                 break;

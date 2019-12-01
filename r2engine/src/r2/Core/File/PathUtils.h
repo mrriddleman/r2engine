@@ -16,7 +16,9 @@ namespace r2::fs::utils
         SOUND_DEFINITIONS,
         SOUND_FX,
         MUSIC,
-        TEXTURES
+        TEXTURES,
+        SHADERS_RAW,
+        SHADERS_BIN
     };
     
 #ifdef R2_PLATFORM_WINDOWS

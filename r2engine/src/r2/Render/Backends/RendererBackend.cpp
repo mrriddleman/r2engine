@@ -16,6 +16,12 @@
 #include "r2/Render/Camera/Camera.h"
 #include "r2/Core/Math/Ray.h"
 
+//For loading shader files
+#include "r2/Core/File/FileSystem.h"
+#include "r2/Core/File/File.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+
 namespace
 {
     float cubeVerts[] = {
@@ -105,130 +111,130 @@ namespace
     
     std::vector<DebugVertex> g_debugVerts;
     
-    const char *vertexShaderSource = "#version 410 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec2 aTexCoord;\n"
-    "layout (location = 2) in vec3 aNormal;\n"
-    "out vec2 TexCoord;\n"
-    "out vec3 Normal;\n"
-    "out vec3 FragPos;\n"
-    "uniform mat4 model;"
-    "uniform mat4 view;"
-    "uniform mat4 projection;"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-    "   TexCoord = aTexCoord;\n"
-    "   Normal = mat3(transpose(inverse(model))) * aNormal;\n"
-    "   FragPos = vec3(model * vec4(aPos, 1.0));\n"
-    "}\0";
-    const char *fragmentShaderSource = "#version 410 core\n"
-    "out vec4 FragColor;\n"
-    "in vec2 TexCoord;\n"
-    "in vec3 Normal;\n"
-    "in vec3 FragPos;\n"
-    "uniform float time;\n"
-    "uniform vec3 viewPos;\n"
-    "struct Material {\n"
-    "   sampler2D   diffuse;\n"
-    "   sampler2D   specular;\n"
-    "   sampler2D   emission;\n"
-    "   float       shininess;\n"
-    "};\n"
-    "uniform Material material;"
-    "struct Light{\n"
-    "   vec3 ambient;\n"
-    "   vec3 diffuse;\n"
-    "   vec3 specular;\n"
-    "   vec3 emission;\n"
-    
-    "   float constant;\n"
-    "   float linear;\n"
-    "   float quadratic;\n"
-    "   vec3 position;\n"
-    "   vec3 direction;\n"
-    "   float cutoff;\n"
-    "   float outerCutoff;\n"
-    
-    "};\n"
-    "uniform Light light;\n"
-    "void main()\n"
-    "{\n"
-    
-    "   vec3 diffuseVec = vec3(texture(material.diffuse, TexCoord));\n"
-    "   vec3 ambient = diffuseVec * light.ambient;\n"
-    
-    "   vec3 lightPos = light.position;"
-    "   vec3 lightDir = normalize(lightPos - FragPos);\n"
-    "   float theta = dot(lightDir, normalize(-light.direction));\n"
-    "   float epsilon = light.cutoff - light.outerCutoff;\n"
-    "   float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);"
-    
-    
-    "       vec3 norm = normalize(Normal);\n"
-    "       float diff = max(dot(norm, lightDir), 0.0);\n"
-    "       vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
-    
-    "       vec3 viewDir = normalize(viewPos - FragPos);\n"
-    "       vec3 reflectDir = reflect(-lightDir, norm);\n"
-    "       float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-    "       vec3 specularTex = texture(material.specular, TexCoord).rgb;"
-    "       vec3 specular = specularTex * spec * light.specular;\n"
-    
-    "       vec3 emission = vec3(0.0);"
-    /*
-     "   vec3 emissionTex = texture(material.emission, TexCoord).rgb;\n"
-     "   emission = emissionTex;\n"
-     "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in x,y
-     "   emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);\n"//this will fade the emission in and out
-     */
-    
-    "       float distance = length(lightPos - FragPos);\n"
-    "       float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\n"
-    
-    "       diffuse *= attenuation * intensity;\n"
-    "       specular *= attenuation * intensity;\n"
-    
-    "       vec3 result = (ambient + diffuse + specular + emission);\n"
-    "       FragColor = vec4(result, 1.0);\n"
-
-    
-    "}\n\0";
-    
-    const char* lampVertexShaderSource = "#version 410 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "uniform mat4 model;\n"
-    "uniform mat4 view;\n"
-    "uniform mat4 projection;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-    "}\n\0";
-    
-    const char* lampFragmentShaderSource = "#version 410 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0);\n"
-    "}\n\0";
-    
-    const char* debugVertexShaderSource = "#version 410 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "uniform mat4 model;\n"
-    "uniform mat4 view;\n"
-    "uniform mat4 projection;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-    "}\n\0";
-    
-    const char* debugFragmentShaderSource = "#version 410 core\n"
-    "out vec4 FragColor;\n"
-    "uniform vec4 debugColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = debugColor;\n"
-    "}\n\0";
+//    const char *vertexShaderSource = "#version 410 core\n"
+//    "layout (location = 0) in vec3 aPos;\n"
+//    "layout (location = 1) in vec2 aTexCoord;\n"
+//    "layout (location = 2) in vec3 aNormal;\n"
+//    "out vec2 TexCoord;\n"
+//    "out vec3 Normal;\n"
+//    "out vec3 FragPos;\n"
+//    "uniform mat4 model;"
+//    "uniform mat4 view;"
+//    "uniform mat4 projection;"
+//    "void main()\n"
+//    "{\n"
+//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+//    "   TexCoord = aTexCoord;\n"
+//    "   Normal = mat3(transpose(inverse(model))) * aNormal;\n"
+//    "   FragPos = vec3(model * vec4(aPos, 1.0));\n"
+//    "}\0";
+//    const char *fragmentShaderSource = "#version 410 core\n"
+//    "out vec4 FragColor;\n"
+//    "in vec2 TexCoord;\n"
+//    "in vec3 Normal;\n"
+//    "in vec3 FragPos;\n"
+//    "uniform float time;\n"
+//    "uniform vec3 viewPos;\n"
+//    "struct Material {\n"
+//    "   sampler2D   diffuse;\n"
+//    "   sampler2D   specular;\n"
+//    "   sampler2D   emission;\n"
+//    "   float       shininess;\n"
+//    "};\n"
+//    "uniform Material material;"
+//    "struct Light{\n"
+//    "   vec3 ambient;\n"
+//    "   vec3 diffuse;\n"
+//    "   vec3 specular;\n"
+//    "   vec3 emission;\n"
+//
+//    "   float constant;\n"
+//    "   float linear;\n"
+//    "   float quadratic;\n"
+//    "   vec3 position;\n"
+//    "   vec3 direction;\n"
+//    "   float cutoff;\n"
+//    "   float outerCutoff;\n"
+//
+//    "};\n"
+//    "uniform Light light;\n"
+//    "void main()\n"
+//    "{\n"
+//
+//    "   vec3 diffuseVec = vec3(texture(material.diffuse, TexCoord));\n"
+//    "   vec3 ambient = diffuseVec * light.ambient;\n"
+//
+//    "   vec3 lightPos = light.position;"
+//    "   vec3 lightDir = normalize(lightPos - FragPos);\n"
+//    "   float theta = dot(lightDir, normalize(-light.direction));\n"
+//    "   float epsilon = light.cutoff - light.outerCutoff;\n"
+//    "   float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);"
+//
+//
+//    "       vec3 norm = normalize(Normal);\n"
+//    "       float diff = max(dot(norm, lightDir), 0.0);\n"
+//    "       vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
+//
+//    "       vec3 viewDir = normalize(viewPos - FragPos);\n"
+//    "       vec3 reflectDir = reflect(-lightDir, norm);\n"
+//    "       float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
+//    "       vec3 specularTex = texture(material.specular, TexCoord).rgb;"
+//    "       vec3 specular = specularTex * spec * light.specular;\n"
+//
+//    "       vec3 emission = vec3(0.0);"
+//    /*
+//     "   vec3 emissionTex = texture(material.emission, TexCoord).rgb;\n"
+//     "   emission = emissionTex;\n"
+//     "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in x,y
+//     "   emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);\n"//this will fade the emission in and out
+//     */
+//
+//    "       float distance = length(lightPos - FragPos);\n"
+//    "       float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\n"
+//
+//    "       diffuse *= attenuation * intensity;\n"
+//    "       specular *= attenuation * intensity;\n"
+//
+//    "       vec3 result = (ambient + diffuse + specular + emission);\n"
+//    "       FragColor = vec4(result, 1.0);\n"
+//
+//
+//    "}\n\0";
+//
+//    const char* lampVertexShaderSource = "#version 410 core\n"
+//    "layout (location = 0) in vec3 aPos;\n"
+//    "uniform mat4 model;\n"
+//    "uniform mat4 view;\n"
+//    "uniform mat4 projection;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+//    "}\n\0";
+//
+//    const char* lampFragmentShaderSource = "#version 410 core\n"
+//    "out vec4 FragColor;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   FragColor = vec4(1.0);\n"
+//    "}\n\0";
+//
+//    const char* debugVertexShaderSource = "#version 410 core\n"
+//    "layout (location = 0) in vec3 aPos;\n"
+//    "uniform mat4 model;\n"
+//    "uniform mat4 view;\n"
+//    "uniform mat4 projection;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+//    "}\n\0";
+//
+//    const char* debugFragmentShaderSource = "#version 410 core\n"
+//    "out vec4 FragColor;\n"
+//    "uniform vec4 debugColor;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   FragColor = debugColor;\n"
+//    "}\n\0";
     
     
     u32 g_ShaderProg, g_lightShaderProg, g_debugShaderProg, g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
@@ -236,7 +242,11 @@ namespace
 
 namespace r2::draw
 {
-    u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr);
+    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr);
+    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
+    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
+    
+    
     u32 LoadImageTexture(const char* path);
     u32 CreateImageTexture(u32 width, u32 height, void* data);
     
@@ -245,9 +255,16 @@ namespace r2::draw
         stbi_set_flip_vertically_on_load(true);
         glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
         
+        char vertexPath[r2::fs::FILE_PATH_LENGTH];
+        char fragmentPath[r2::fs::FILE_PATH_LENGTH];
+        
         //basic object stuff
         {
-            g_ShaderProg = CreateShaderProgram(vertexShaderSource, fragmentShaderSource);
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.fs", fragmentPath);
+            
+            g_ShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             
             glGenVertexArrays(1, &g_VAO);
             glGenBuffers(1, &g_VBO);
@@ -290,7 +307,11 @@ namespace r2::draw
         
         //lamp setup
         {
-            g_lightShaderProg = CreateShaderProgram(lampVertexShaderSource, lampFragmentShaderSource);
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.fs", fragmentPath);
+            
+            g_lightShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             
             glGenVertexArrays(1, &g_lightVAO);
             glad_glBindVertexArray(g_lightVAO);
@@ -306,7 +327,10 @@ namespace r2::draw
         
         //debug setup
         {
-            g_debugShaderProg = CreateShaderProgram(debugVertexShaderSource, debugFragmentShaderSource);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.fs", fragmentPath);
+            
+            g_debugShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             
             glGenVertexArrays(1, &g_DebugVAO);
             glGenBuffers(1, &g_DebugVBO);
@@ -589,7 +613,8 @@ namespace r2::draw
         return newTex;
     }
     
-    u32 CreateShaderProgram(const char* vertexShaderStr, const char* fragShaderStr)
+    
+    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr)
     {
         R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
         
@@ -672,5 +697,109 @@ namespace r2::draw
         }
         
         return shaderProgram;
+    }
+    
+    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath)
+    {
+        R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
+        R2_CHECK(fragmentShaderFilePath != nullptr, "Fragment shader is null");
+        
+        char* vertexFileData = nullptr;
+        char* fragmentFileData = nullptr;
+        {
+            r2::fs::File* vertexFile = r2::fs::FileSystem::Open(DISK_CONFIG, vertexShaderFilePath, r2::fs::Read | r2::fs::Binary);
+            
+            R2_CHECK(vertexFile != nullptr, "Failed to open file: %s\n", vertexShaderFilePath);
+            if(!vertexFile)
+            {
+                R2_LOGE("Failed to open file: %s\n", vertexShaderFilePath);
+                return 0;
+            }
+            
+            u64 fileSize = vertexFile->Size();
+            
+            vertexFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
+            
+            if(!vertexFileData)
+            {
+                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
+                return 0;
+            }
+            
+            bool success = vertexFile->ReadAll(vertexFileData);
+            
+            if(!success)
+            {
+                FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
+                R2_LOGE("Failed to read file: %s", vertexShaderFilePath);
+                return 0;
+            }
+            
+            vertexFileData[fileSize] = '\0';
+            r2::fs::FileSystem::Close(vertexFile);
+        }
+        
+        {
+            r2::fs::File* fragmentFile = r2::fs::FileSystem::Open(DISK_CONFIG, fragmentShaderFilePath, r2::fs::Read | r2::fs::Binary);
+            
+            R2_CHECK(fragmentFile != nullptr, "Failed to open file: %s\n", fragmentShaderFilePath);
+            if(!fragmentFile)
+            {
+                R2_LOGE("Failed to open file: %s\n", fragmentShaderFilePath);
+                return 0;
+            }
+            
+            u64 fileSize = fragmentFile->Size();
+            
+            fragmentFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
+            
+            if(!fragmentFileData)
+            {
+                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
+                return 0;
+            }
+            
+            bool success = fragmentFile->ReadAll(fragmentFileData);
+            
+            if(!success)
+            {
+                FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
+                R2_LOGE("Failed to read file: %s", fragmentShaderFilePath);
+                return 0;
+            }
+            
+            fragmentFileData[fileSize] = '\0';
+            r2::fs::FileSystem::Close(fragmentFile);
+        }
+        
+        u32 shaderProg = CreateShaderProgramFromStrings(vertexFileData, fragmentFileData);
+        
+        FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);//fragment first since it was allocated last - this is a stack currently
+        FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
+        
+        if (!shaderProg)
+        {
+            R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+            
+            R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+            return 0;
+        }
+        
+        return shaderProg;
+    }
+    
+    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath)
+    {
+        R2_CHECK(program != nullptr, "Shader Program is nullptr");
+        R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
+        R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
+        
+        u32 reloadedShaderProgram = CreateShaderProgramFromRawFiles(vertexShaderFilePath, fragmentShaderFilePath);
+        
+        if (reloadedShaderProgram)
+        {
+            glDeleteProgram(*program);
+            *program = reloadedShaderProgram;
+        }
     }
 }
