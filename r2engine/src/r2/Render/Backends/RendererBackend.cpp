@@ -22,8 +22,30 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/ShaderManifest.h"
+#endif
+
 namespace
 {
+    struct Shader
+    {
+        u32 shaderProg = 0;
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::pln::ShaderManifest manifest;
+#endif
+    };
+    
+    enum
+    {
+        LIGHTING_SHADER = 0,
+        LAMP_SHADER,
+        DEBUG_SHADER
+    };
+    
+    //@Temp
+    std::vector<Shader> s_shaders;
+    
     float cubeVerts[] = {
         //front face
         0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //top right
@@ -111,133 +133,7 @@ namespace
     
     std::vector<DebugVertex> g_debugVerts;
     
-//    const char *vertexShaderSource = "#version 410 core\n"
-//    "layout (location = 0) in vec3 aPos;\n"
-//    "layout (location = 1) in vec2 aTexCoord;\n"
-//    "layout (location = 2) in vec3 aNormal;\n"
-//    "out vec2 TexCoord;\n"
-//    "out vec3 Normal;\n"
-//    "out vec3 FragPos;\n"
-//    "uniform mat4 model;"
-//    "uniform mat4 view;"
-//    "uniform mat4 projection;"
-//    "void main()\n"
-//    "{\n"
-//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-//    "   TexCoord = aTexCoord;\n"
-//    "   Normal = mat3(transpose(inverse(model))) * aNormal;\n"
-//    "   FragPos = vec3(model * vec4(aPos, 1.0));\n"
-//    "}\0";
-//    const char *fragmentShaderSource = "#version 410 core\n"
-//    "out vec4 FragColor;\n"
-//    "in vec2 TexCoord;\n"
-//    "in vec3 Normal;\n"
-//    "in vec3 FragPos;\n"
-//    "uniform float time;\n"
-//    "uniform vec3 viewPos;\n"
-//    "struct Material {\n"
-//    "   sampler2D   diffuse;\n"
-//    "   sampler2D   specular;\n"
-//    "   sampler2D   emission;\n"
-//    "   float       shininess;\n"
-//    "};\n"
-//    "uniform Material material;"
-//    "struct Light{\n"
-//    "   vec3 ambient;\n"
-//    "   vec3 diffuse;\n"
-//    "   vec3 specular;\n"
-//    "   vec3 emission;\n"
-//
-//    "   float constant;\n"
-//    "   float linear;\n"
-//    "   float quadratic;\n"
-//    "   vec3 position;\n"
-//    "   vec3 direction;\n"
-//    "   float cutoff;\n"
-//    "   float outerCutoff;\n"
-//
-//    "};\n"
-//    "uniform Light light;\n"
-//    "void main()\n"
-//    "{\n"
-//
-//    "   vec3 diffuseVec = vec3(texture(material.diffuse, TexCoord));\n"
-//    "   vec3 ambient = diffuseVec * light.ambient;\n"
-//
-//    "   vec3 lightPos = light.position;"
-//    "   vec3 lightDir = normalize(lightPos - FragPos);\n"
-//    "   float theta = dot(lightDir, normalize(-light.direction));\n"
-//    "   float epsilon = light.cutoff - light.outerCutoff;\n"
-//    "   float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);"
-//
-//
-//    "       vec3 norm = normalize(Normal);\n"
-//    "       float diff = max(dot(norm, lightDir), 0.0);\n"
-//    "       vec3 diffuse = (diff * diffuseVec) * light.diffuse;\n"
-//
-//    "       vec3 viewDir = normalize(viewPos - FragPos);\n"
-//    "       vec3 reflectDir = reflect(-lightDir, norm);\n"
-//    "       float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\n"
-//    "       vec3 specularTex = texture(material.specular, TexCoord).rgb;"
-//    "       vec3 specular = specularTex * spec * light.specular;\n"
-//
-//    "       vec3 emission = vec3(0.0);"
-//    /*
-//     "   vec3 emissionTex = texture(material.emission, TexCoord).rgb;\n"
-//     "   emission = emissionTex;\n"
-//     "   emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb;\n" //this moves the texture in x,y
-//     "   emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);\n"//this will fade the emission in and out
-//     */
-//
-//    "       float distance = length(lightPos - FragPos);\n"
-//    "       float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\n"
-//
-//    "       diffuse *= attenuation * intensity;\n"
-//    "       specular *= attenuation * intensity;\n"
-//
-//    "       vec3 result = (ambient + diffuse + specular + emission);\n"
-//    "       FragColor = vec4(result, 1.0);\n"
-//
-//
-//    "}\n\0";
-//
-//    const char* lampVertexShaderSource = "#version 410 core\n"
-//    "layout (location = 0) in vec3 aPos;\n"
-//    "uniform mat4 model;\n"
-//    "uniform mat4 view;\n"
-//    "uniform mat4 projection;\n"
-//    "void main()\n"
-//    "{\n"
-//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-//    "}\n\0";
-//
-//    const char* lampFragmentShaderSource = "#version 410 core\n"
-//    "out vec4 FragColor;\n"
-//    "void main()\n"
-//    "{\n"
-//    "   FragColor = vec4(1.0);\n"
-//    "}\n\0";
-//
-//    const char* debugVertexShaderSource = "#version 410 core\n"
-//    "layout (location = 0) in vec3 aPos;\n"
-//    "uniform mat4 model;\n"
-//    "uniform mat4 view;\n"
-//    "uniform mat4 projection;\n"
-//    "void main()\n"
-//    "{\n"
-//    "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
-//    "}\n\0";
-//
-//    const char* debugFragmentShaderSource = "#version 410 core\n"
-//    "out vec4 FragColor;\n"
-//    "uniform vec4 debugColor;\n"
-//    "void main()\n"
-//    "{\n"
-//    "   FragColor = debugColor;\n"
-//    "}\n\0";
-    
-    
-    u32 g_ShaderProg, g_lightShaderProg, g_debugShaderProg, g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
+    u32 g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
 
 namespace r2::draw
@@ -258,14 +154,46 @@ namespace r2::draw
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
         
-        //basic object stuff
+        s_shaders.push_back(Shader());
+        s_shaders.push_back(Shader());
+        s_shaders.push_back(Shader());
+        
+#ifdef R2_ASSET_PIPELINE
+        //load the shader pipeline assets
         {
+            r2::asset::pln::ShaderManifest shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.vs", vertexPath);
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.fs", fragmentPath);
             
-            g_ShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+
+            s_shaders[LIGHTING_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LIGHTING_SHADER].manifest = shaderManifest;
             
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[LAMP_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LAMP_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[DEBUG_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[DEBUG_SHADER].manifest = shaderManifest;
+        }
+#endif
+
+        //basic object stuff
+        {
             glGenVertexArrays(1, &g_VAO);
             glGenBuffers(1, &g_VBO);
             glGenBuffers(1, &g_EBO);
@@ -292,27 +220,21 @@ namespace r2::draw
             glBindVertexArray(0);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
             
-            glUseProgram(g_ShaderProg);
+            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
             
             //how we set our sampler2Ds in our shaders - note we set our shader program above
             //First is set to Texture0 - this means material.diffuse is set to Texture0
-            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.diffuse"), 0);
+            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.diffuse"), 0);
             //Second is set to Texture1 - this means material.specular is set to Texture1
-            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.specular"), 1);
+            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.specular"), 1);
             
-            glUniform1i(glGetUniformLocation(g_ShaderProg, "material.emission"), 2);
+            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.emission"), 2);
             
             glUseProgram(0);
         }
         
         //lamp setup
         {
-            
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.vs", vertexPath);
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.fs", fragmentPath);
-            
-            g_lightShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
-            
             glGenVertexArrays(1, &g_lightVAO);
             glad_glBindVertexArray(g_lightVAO);
             glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
@@ -327,11 +249,6 @@ namespace r2::draw
         
         //debug setup
         {
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.vs", vertexPath);
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.fs", fragmentPath);
-            
-            g_debugShaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
-            
             glGenVertexArrays(1, &g_DebugVAO);
             glGenBuffers(1, &g_DebugVBO);
             
@@ -374,7 +291,7 @@ namespace r2::draw
         
         //Draw the cube
         {
-            glUseProgram(g_ShaderProg);
+            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
             
             //We need to activate the texture slot
             glActiveTexture(GL_TEXTURE0);
@@ -391,13 +308,13 @@ namespace r2::draw
             
             float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
             
-            int uniformTimeLocation = glGetUniformLocation(g_ShaderProg, "time");
+            int uniformTimeLocation = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "time");
             glUniform1f(uniformTimeLocation, timeVal);
             //
-            int viewLoc = glGetUniformLocation(g_ShaderProg, "view");
+            int viewLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "view");
             glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
             //
-            int projectionLoc = glGetUniformLocation(g_ShaderProg, "projection");
+            int projectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
 //            int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
@@ -411,50 +328,50 @@ namespace r2::draw
 //
 //            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
             
-            int viewPosLoc = glGetUniformLocation(g_ShaderProg, "viewPos");
+            int viewPosLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "viewPos");
             glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
             
           //  glm::mat4 model = glm::mat4(1.0f);
-            int modelLoc = glGetUniformLocation(g_ShaderProg, "model");
+            int modelLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "model");
            
             
-            int materialShininessLoc = glGetUniformLocation(g_ShaderProg, "material.shininess");
+            int materialShininessLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.shininess");
             glUniform1f(materialShininessLoc, 64.0f);
             
             glm::vec3 diffuseColor = glm::vec3(0.5f, 0.5f, 0.5f);
             glm::vec3 ambientColor = glm::vec3(0.2f);
             
-            int lightAmbientLoc = glGetUniformLocation(g_ShaderProg, "light.ambient");
+            int lightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.ambient");
             glUniform3fv(lightAmbientLoc, 1, glm::value_ptr(ambientColor));
             
-            int lightDiffuseLoc = glGetUniformLocation(g_ShaderProg, "light.diffuse");
+            int lightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.diffuse");
             glUniform3fv(lightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
             
-            int lightSpecularLoc = glGetUniformLocation(g_ShaderProg, "light.specular");
+            int lightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.specular");
             glUniform3fv(lightSpecularLoc, 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
             
-            int lightEmissionLoc = glGetUniformLocation(g_ShaderProg, "light.emission");
+            int lightEmissionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.emission");
             glUniform3fv(lightEmissionLoc, 1, glm::value_ptr(glm::vec3(1.f)));
             
-            int lightPositionLoc = glGetUniformLocation(g_ShaderProg, "light.position");
+            int lightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.position");
             glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
             
-            int lightDirectionLoc = glGetUniformLocation(g_ShaderProg, "light.direction");
+            int lightDirectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.direction");
             glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));//for View-Space
             
-            int lightCutoffLoc = glGetUniformLocation(g_ShaderProg, "light.cutoff");
+            int lightCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.cutoff");
             glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
             
-            int lightOuterCutoffLoc = glGetUniformLocation(g_ShaderProg, "light.outerCutoff");
+            int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.outerCutoff");
             glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(17.5f)));
             
-            int lightConstantLoc = glGetUniformLocation(g_ShaderProg, "light.constant");
+            int lightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.constant");
             glUniform1f(lightConstantLoc, 1.0f);
             
-            int lightLinearLoc = glGetUniformLocation(g_ShaderProg, "light.linear");
+            int lightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.linear");
             glUniform1f(lightLinearLoc, 0.09f);
             
-            int lightQuadraticLoc = glGetUniformLocation(g_ShaderProg, "light.quadratic");
+            int lightQuadraticLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.quadratic");
             glUniform1f(lightQuadraticLoc, 0.032f);
             
             for (u32 i = 0; i < 10; ++i)
@@ -472,19 +389,19 @@ namespace r2::draw
 
         //Draw lamp
         {
-            glUseProgram(g_lightShaderProg);
+            glUseProgram(s_shaders[LAMP_SHADER].shaderProg);
             
-            int lightViewLoc = glGetUniformLocation(g_lightShaderProg, "view");
+            int lightViewLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "view");
             glUniformMatrix4fv(lightViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
             //
-            int lightProjectionLoc = glGetUniformLocation(g_lightShaderProg, "projection");
+            int lightProjectionLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(lightProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
             glm::mat4 lightModel = glm::mat4(1.0f);
             lightModel = glm::translate(lightModel, lightPos);
             lightModel = glm::scale(lightModel, glm::vec3(0.2f));
             
-            int lightModelLoc = glGetUniformLocation(g_lightShaderProg, "model");
+            int lightModelLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "model");
             glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
             
             glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
@@ -493,19 +410,19 @@ namespace r2::draw
         //draw debug stuff
         if (g_debugVerts.size() > 0)
         {
-            glUseProgram(g_debugShaderProg);
+            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
             
             glm::mat4 debugModel = glm::mat4(1.0f);
-            int debugModelLoc = glGetUniformLocation(g_debugShaderProg, "model");
+            int debugModelLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "model");
             glUniformMatrix4fv(debugModelLoc, 1, GL_FALSE, glm::value_ptr(debugModel));
             
-            int debugViewLoc = glGetUniformLocation(g_debugShaderProg, "view");
+            int debugViewLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "view");
             glUniformMatrix4fv(debugViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
             //
-            int debugProjectionLoc = glGetUniformLocation(g_debugShaderProg, "projection");
+            int debugProjectionLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(debugProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             //
-            int debugColorLoc = glGetUniformLocation(g_debugShaderProg, "debugColor");
+            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
             glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
             
             glBindVertexArray(g_DebugVAO);
@@ -526,9 +443,9 @@ namespace r2::draw
         glDeleteVertexArrays(1, &g_DebugVAO);
         glDeleteBuffers(1, &g_DebugVBO);
         
-        glDeleteProgram(g_ShaderProg);
-        glDeleteProgram(g_lightShaderProg);
-        glDeleteProgram(g_debugShaderProg);
+        glDeleteProgram(s_shaders[LIGHTING_SHADER].shaderProg);
+        glDeleteProgram(s_shaders[LAMP_SHADER].shaderProg);
+        glDeleteProgram(s_shaders[DEBUG_SHADER].shaderProg);
         
         glDeleteTextures(1, &diffuseMap);
         glDeleteTextures(1, &specularMap);
@@ -618,7 +535,7 @@ namespace r2::draw
     {
         R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
         
-        GLuint shaderProgram         = glCreateProgram();
+        GLuint shaderProgram          = glCreateProgram();
         GLuint vertexShaderHandle     = glCreateShader( GL_VERTEX_SHADER );
         GLuint fragmentShaderHandle   = glCreateShader( GL_FRAGMENT_SHADER );
         
@@ -798,8 +715,26 @@ namespace r2::draw
         
         if (reloadedShaderProgram)
         {
-            glDeleteProgram(*program);
+            if(*program != 0)
+            {
+                glDeleteProgram(*program);
+            }
+            
             *program = reloadedShaderProgram;
         }
     }
+    
+#ifdef R2_ASSET_PIPELINE
+    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest)
+    {
+        for (auto& shaderAsset : s_shaders)
+        {
+            if (shaderAsset.manifest.vertexShaderPath == manifest.vertexShaderPath &&
+                shaderAsset.manifest.fragmentShaderPath == manifest.fragmentShaderPath)
+            {
+                ReloadShaderProgramFromRawFiles(&shaderAsset.shaderProg, shaderAsset.manifest.vertexShaderPath.c_str(), shaderAsset.manifest.fragmentShaderPath.c_str());
+            }
+        }
+    }
+#endif
 }

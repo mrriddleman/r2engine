@@ -18,7 +18,8 @@ namespace r2::fs::utils
         MUSIC,
         TEXTURES,
         SHADERS_RAW,
-        SHADERS_BIN
+        SHADERS_BIN,
+        SHADERS_MANIFEST,
     };
     
 #ifdef R2_PLATFORM_WINDOWS

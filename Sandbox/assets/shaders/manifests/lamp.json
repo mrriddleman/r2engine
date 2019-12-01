@@ -1,0 +1,5 @@
+{
+	vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.vs",
+	fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.fs",
+	binaryPath:""
+}

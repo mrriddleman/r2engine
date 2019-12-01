@@ -5,6 +5,7 @@
 *.aman
 *.bin
 *.sdef
+*.sman
 
 /bin/
 

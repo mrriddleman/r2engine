@@ -8,9 +8,13 @@
 #ifdef R2_ASSET_PIPELINE
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
+#include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/SoundDefinitionUtils.h"
 #include "r2/Audio/AudioEngine.h"
+//@Temp
+#include "r2/Render/Backends/RendererBackend.h"
+
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
 #include <string>
@@ -19,22 +23,33 @@
 namespace r2::asset::pln
 {
     
-    void Update();
+    void ThreadProc();
     
     static std::vector<FileWatcher> s_fileWatchers;
     static std::vector<AssetManifest> s_manifests;
     Milliseconds s_delay;
+    std::chrono::steady_clock::time_point s_lastTime;
     
     static FileWatcher s_manifestFileWatcher;
     static std::vector<FileWatcher> s_soundDefinitionFileWatchers;
     static std::vector<r2::audio::AudioEngine::SoundDefinition> s_soundDefinitions;
+    static std::vector<ShaderManifest> s_shaderManifests;
+    
     static std::string s_flatBufferCompilerPath;
-    static std::string s_manifestsPath;
+    
     static std::string s_soundDefinitionsDirectory;
+    
+    AssetCommand s_assetCommand;
     
     static SoundDefinitionCommand s_soundDefinitionCommand;
     static bool s_reloadManifests = false;
     static bool s_callRebuiltSoundDefinitions = false;
+    
+    //Shader data
+    ShaderManifestCommand s_shaderCommand;
+    FileWatcher s_shaderManifestFileWatcher;
+    FileWatcher s_shadersFileWatcher;
+    bool s_reloadShaderManifests = false;
     
     std::thread s_assetWatcherThread;
     std::atomic_bool s_end;
@@ -43,37 +58,63 @@ namespace r2::asset::pln
     void CreatedWatchPathDispatch(std::string path);
     void RemovedWatchPathDispatch(std::string path);
     
+    //Assets
     void SetReloadManifests(std::string changedPath);
     void ReloadManifests();
     
-    void AddNewSoundDefinitionFromFile(std::string path);
-    void SoundDefinitionsChanged(std::string path);
-    void RemovedSoundDefinitionFromFile(std::string path);
-    
-    void LoadSoundDefinitions();
     void BuildManifests();
     void NotifyAssetChanged();
     void PushBuildRequest(std::string changedPath);
     void AddWatchPaths(Milliseconds delay, const std::vector<std::string>& paths);
     
-    void Init(const std::string& assetManifestsPath,
-              const std::string& assetTempPath,
-              const std::string& flatbufferCompilerLocation,
+    //Sound Definitions
+    void AddNewSoundDefinitionFromFile(std::string path);
+    void SoundDefinitionsChanged(std::string path);
+    void RemovedSoundDefinitionFromFile(std::string path);
+    
+    void LoadSoundDefinitions();
+
+    //Shaders
+    void ReloadShaderManifests();
+    void SetReloadShaderManifests(std::string changedPath);
+    void ShaderChangedRequest(std::string changedPath);
+    
+    void Init(  const std::string& flatbufferCompilerLocation,
               Milliseconds delay,
-              const std::vector<std::string>& paths,
-              AssetsBuiltFunc builtFunc,
-              const SoundDefinitionCommand& soundDefinitionCommand)
+              const AssetCommand& assetCommand,
+              const SoundDefinitionCommand& soundDefinitionCommand,
+              const ShaderManifestCommand& shaderCommand)
     {
+        
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
-        s_manifestsPath = assetManifestsPath;
         s_delay = delay;
+        s_lastTime = std::chrono::steady_clock::now();
+        s_assetCommand = assetCommand;
         s_soundDefinitionCommand = soundDefinitionCommand;
+        s_shaderCommand = shaderCommand;
+        
         std::filesystem::path p = soundDefinitionCommand.soundDefinitionFilePath;
         s_soundDefinitionsDirectory = p.parent_path().string();
         ReloadManifests();
         LoadSoundDefinitions();
         
-        s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), assetManifestsPath);
+        
+        //Shaders
+        {
+            ReloadShaderManifests();
+            s_shaderManifestFileWatcher.Init(delay, s_shaderCommand.manifestDirectory);
+            
+            s_shaderManifestFileWatcher.AddModifyListener(SetReloadShaderManifests);
+            s_shaderManifestFileWatcher.AddCreatedListener(SetReloadShaderManifests);
+            s_shaderManifestFileWatcher.AddRemovedListener(SetReloadShaderManifests);
+            
+            s_shadersFileWatcher.Init(s_delay, s_shaderCommand.shaderWatchPath);
+            s_shadersFileWatcher.AddModifyListener(ShaderChangedRequest);
+            s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
+        }
+        
+        
+        s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), s_assetCommand.assetManifestsPath);
         //@TODO(Serge): modify these to be their own functions
         s_manifestFileWatcher.AddCreatedListener(SetReloadManifests);
         s_manifestFileWatcher.AddModifyListener(SetReloadManifests);
@@ -94,17 +135,36 @@ namespace r2::asset::pln
         fw.AddModifyListener(SoundDefinitionsChanged);
         s_soundDefinitionFileWatchers.push_back(fw);
         
-        r2::asset::pln::cmp::Init(assetTempPath, builtFunc);
+        r2::asset::pln::cmp::Init(s_assetCommand.assetTempPath, s_assetCommand.assetsBuldFunc);
         
-        AddWatchPaths(delay, paths);
+        AddWatchPaths(delay, s_assetCommand.pathsToWatch);
         s_end = false;
         
-        std::thread t(r2::asset::pln::Update);
+        std::thread t(r2::asset::pln::ThreadProc);
         
         s_assetWatcherThread = std::move(t);
     }
     
     void Update()
+    {
+        auto now = std::chrono::steady_clock::now();
+        auto dt = std::chrono::duration_cast<Milliseconds>(now - s_lastTime);
+        
+        if (dt >= s_delay)
+        {
+            //@NOTE(Serge): shaders need to run on the main thread because of OpenGL context
+            s_shaderManifestFileWatcher.Run();
+            
+            if (s_reloadShaderManifests)
+            {
+                ReloadShaderManifests();
+            }
+            
+            s_shadersFileWatcher.Run();
+        }
+    }
+    
+    void ThreadProc()
     {
         while (!s_end)
         {
@@ -188,7 +248,7 @@ namespace r2::asset::pln
     {
         BuildManifests();
         
-        LoadAssetManifests(s_manifests, s_manifestsPath);
+        LoadAssetManifests(s_manifests, s_assetCommand.assetManifestsPath);
         s_reloadManifests = false;
     }
     
@@ -267,9 +327,34 @@ namespace r2::asset::pln
         }
     }
     
+    void ReloadShaderManifests()
+    {
+        BuildShaderManifestsFromJson(s_shaderCommand.manifestDirectory);
+        s_shaderManifests = LoadAllShaderManifests(s_shaderCommand.manifestDirectory);
+        s_reloadShaderManifests = false;
+    }
+    
+    void SetReloadShaderManifests(std::string changedPath)
+    {
+        s_reloadShaderManifests = true;
+    }
+    
+    void ShaderChangedRequest(std::string changedPath)
+    {
+        //look through the manifests and find which need to be re-compiled and linked
+        for (const auto& shaderManifest : s_shaderManifests)
+        {
+            if (changedPath == shaderManifest.vertexShaderPath ||
+                changedPath == shaderManifest.fragmentShaderPath)
+            {
+                r2::draw::ReloadShader(shaderManifest);
+            }
+        }
+    }
+    
     void BuildManifests()
     {
-        BuildAssetManifestsFromJson(s_manifestsPath);
+        BuildAssetManifestsFromJson(s_assetCommand.assetManifestsPath);
     }
     
     void PushBuildRequest(std::string changedPath)

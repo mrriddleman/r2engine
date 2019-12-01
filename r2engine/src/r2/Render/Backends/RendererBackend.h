@@ -21,6 +21,13 @@ namespace r2::math
     struct Ray;
 }
 
+#ifdef R2_ASSET_PIPELINE
+namespace r2::asset::pln
+{
+    struct ShaderManifest;
+}
+#endif
+
 namespace r2::draw
 {
     //Temp
@@ -31,7 +38,9 @@ namespace r2::draw
     void OpenGLSetCamera(const r2::Camera& cam);
     void OpenGLDrawRay(const r2::math::Ray& ray);
 
-    
+#ifdef R2_ASSET_PIPELINE
+    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);
+#endif
 }
 
 #endif /* RendererBackend_h */

@@ -530,6 +530,9 @@ namespace
             case r2::fs::utils::SHADERS_RAW:
                 strcpy(subpath, "assets/shaders/raw");
                 break;
+            case r2::fs::utils::SHADERS_MANIFEST:
+                strcpy(subpath, "assets/shaders/manifests");
+                break;
             default:
                 result = false;
                 break;

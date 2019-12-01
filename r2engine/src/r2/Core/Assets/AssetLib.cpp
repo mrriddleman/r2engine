@@ -83,8 +83,9 @@ namespace r2::asset::lib
                     listener(paths);
                 }
             }
-#endif
+
         }
+#endif
     }
     
     void Shutdown()

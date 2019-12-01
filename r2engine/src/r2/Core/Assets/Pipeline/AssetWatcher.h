@@ -29,13 +29,28 @@ namespace r2::asset::pln
         AssetsBuiltFunc buildFunc;
     };
     
-    void Init( const std::string& assetManifestsPath,
-               const std::string& assetTempPath,
-               const std::string& flatbufferCompilerLocation,
-               Milliseconds delay,
-               const std::vector<std::string>& paths,
-               AssetsBuiltFunc assetsBuiltFunc,
-               const SoundDefinitionCommand& soundDefinitionCommand);
+    struct ShaderManifestCommand
+    {
+        std::string manifestDirectory;
+        std::string shaderWatchPath;
+        AssetsBuiltFunc buildFunc;
+    };
+    
+    struct AssetCommand
+    {
+        std::string assetManifestsPath;
+        std::string assetTempPath;
+        std::vector<std::string> pathsToWatch;
+        AssetsBuiltFunc assetsBuldFunc;
+    };
+    
+    void Init(  const std::string& flatbufferCompilerLocation,
+                Milliseconds delay,
+                const AssetCommand& assetCommand,
+                const SoundDefinitionCommand& soundDefinitionCommand,
+                const ShaderManifestCommand& shaderCommand);
+    
+    void Update();
     
     void Shutdown();
     //@NOTE: if we want this functionality again, we could add another queue that would push more watch paths

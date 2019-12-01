@@ -1,0 +1,13 @@
+namespace r2;
+
+file_identifier "sman";
+file_extension "sman";
+
+table ShaderManifest
+{
+	vertexPath:string;
+	fragmentPath:string;
+	binaryPath:string;
+}
+
+root_type ShaderManifest;
