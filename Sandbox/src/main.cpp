@@ -449,6 +449,16 @@ public:
         return result;
     }
     
+    virtual std::string GetShaderManifestsPath() const override
+    {
+        char shaderManifestsPath[r2::fs::FILE_PATH_LENGTH];
+        char result [r2::fs::FILE_PATH_LENGTH];
+        ResolveCategoryPath(r2::fs::utils::SHADERS_MANIFEST, shaderManifestsPath);
+        r2::fs::utils::AppendSubPath(shaderManifestsPath, result, "shaders.sman");
+        
+        return result;
+    }
+    
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {

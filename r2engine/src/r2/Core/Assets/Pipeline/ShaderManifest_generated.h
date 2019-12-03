@@ -10,6 +10,8 @@ namespace r2 {
 
 struct ShaderManifest;
 
+struct ShaderManifests;
+
 struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_VERTEXPATH = 4,
@@ -85,47 +87,97 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifestDirect(
       binaryPath ? _fbb.CreateString(binaryPath) : 0);
 }
 
-inline const r2::ShaderManifest *GetShaderManifest(const void *buf) {
-  return flatbuffers::GetRoot<r2::ShaderManifest>(buf);
+struct ShaderManifests FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_MANIFESTS = 4
+  };
+  const flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>> *manifests() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>> *>(VT_MANIFESTS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_MANIFESTS) &&
+           verifier.VerifyVector(manifests()) &&
+           verifier.VerifyVectorOfTables(manifests()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ShaderManifestsBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_manifests(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>>> manifests) {
+    fbb_.AddOffset(ShaderManifests::VT_MANIFESTS, manifests);
+  }
+  explicit ShaderManifestsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ShaderManifestsBuilder &operator=(const ShaderManifestsBuilder &);
+  flatbuffers::Offset<ShaderManifests> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ShaderManifests>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ShaderManifests> CreateShaderManifests(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>>> manifests = 0) {
+  ShaderManifestsBuilder builder_(_fbb);
+  builder_.add_manifests(manifests);
+  return builder_.Finish();
 }
 
-inline const r2::ShaderManifest *GetSizePrefixedShaderManifest(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<r2::ShaderManifest>(buf);
+inline flatbuffers::Offset<ShaderManifests> CreateShaderManifestsDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<flatbuffers::Offset<ShaderManifest>> *manifests = nullptr) {
+  return r2::CreateShaderManifests(
+      _fbb,
+      manifests ? _fbb.CreateVector<flatbuffers::Offset<ShaderManifest>>(*manifests) : 0);
 }
 
-inline const char *ShaderManifestIdentifier() {
+inline const r2::ShaderManifests *GetShaderManifests(const void *buf) {
+  return flatbuffers::GetRoot<r2::ShaderManifests>(buf);
+}
+
+inline const r2::ShaderManifests *GetSizePrefixedShaderManifests(const void *buf) {
+  return flatbuffers::GetSizePrefixedRoot<r2::ShaderManifests>(buf);
+}
+
+inline const char *ShaderManifestsIdentifier() {
   return "sman";
 }
 
-inline bool ShaderManifestBufferHasIdentifier(const void *buf) {
+inline bool ShaderManifestsBufferHasIdentifier(const void *buf) {
   return flatbuffers::BufferHasIdentifier(
-      buf, ShaderManifestIdentifier());
+      buf, ShaderManifestsIdentifier());
 }
 
-inline bool VerifyShaderManifestBuffer(
+inline bool VerifyShaderManifestsBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<r2::ShaderManifest>(ShaderManifestIdentifier());
+  return verifier.VerifyBuffer<r2::ShaderManifests>(ShaderManifestsIdentifier());
 }
 
-inline bool VerifySizePrefixedShaderManifestBuffer(
+inline bool VerifySizePrefixedShaderManifestsBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<r2::ShaderManifest>(ShaderManifestIdentifier());
+  return verifier.VerifySizePrefixedBuffer<r2::ShaderManifests>(ShaderManifestsIdentifier());
 }
 
-inline const char *ShaderManifestExtension() {
+inline const char *ShaderManifestsExtension() {
   return "sman";
 }
 
-inline void FinishShaderManifestBuffer(
+inline void FinishShaderManifestsBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<r2::ShaderManifest> root) {
-  fbb.Finish(root, ShaderManifestIdentifier());
+    flatbuffers::Offset<r2::ShaderManifests> root) {
+  fbb.Finish(root, ShaderManifestsIdentifier());
 }
 
-inline void FinishSizePrefixedShaderManifestBuffer(
+inline void FinishSizePrefixedShaderManifestsBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<r2::ShaderManifest> root) {
-  fbb.FinishSizePrefixed(root, ShaderManifestIdentifier());
+    flatbuffers::Offset<r2::ShaderManifests> root) {
+  fbb.FinishSizePrefixed(root, ShaderManifestsIdentifier());
 }
 
 }  // namespace r2

@@ -47,7 +47,7 @@ namespace r2
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
         virtual std::string GetSoundDefinitionPath() const;
-
+        virtual std::string GetShaderManifestsPath() const;
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;

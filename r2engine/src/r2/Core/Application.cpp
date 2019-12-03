@@ -76,6 +76,12 @@ namespace r2
         return soundDefitionPath;
     }
     
+    std::string Application::GetShaderManifestsPath() const
+    {
+        std::string shaderManifestsPath = "";
+        return shaderManifestsPath;
+    }
+    
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {

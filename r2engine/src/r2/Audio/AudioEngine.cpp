@@ -678,7 +678,13 @@ namespace r2::audio
         {
             r2::fs::File* file = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), path, r2::fs::Read | r2::fs::Binary);
             
-            R2_CHECK(file != nullptr, "AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
+      //      R2_CHECK(file != nullptr, "AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
+            if(!file)
+            {
+                R2_LOGE("AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
+                return;
+            }
+            
             
             if (file)
             {

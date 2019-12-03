@@ -97,6 +97,7 @@ namespace r2
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
             shaderCommand.manifestDirectory = std::string(path);
+            shaderCommand.manifestFilePath = noptrApp->GetShaderManifestsPath();
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
             shaderCommand.shaderWatchPath = std::string(path);

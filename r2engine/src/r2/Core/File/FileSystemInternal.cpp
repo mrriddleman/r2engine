@@ -38,7 +38,7 @@ namespace r2
             }
             
             File* file = storageDevice->Open(path, mode);
-            R2_CHECK(file != nullptr, "File is nullptr!");
+           // R2_CHECK(file != nullptr, "File is nullptr!");
             
             if (file == nullptr)
             {

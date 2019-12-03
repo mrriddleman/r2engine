@@ -33,6 +33,7 @@ namespace r2::asset::pln
     {
         std::string manifestDirectory;
         std::string shaderWatchPath;
+        std::string manifestFilePath;
         AssetsBuiltFunc buildFunc;
     };
     

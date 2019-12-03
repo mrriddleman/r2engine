@@ -1,0 +1,19 @@
+{
+  manifests: [
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.fs",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.fs",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.fs",
+      binaryPath: ""
+    }
+  ]
+}

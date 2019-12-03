@@ -47,9 +47,9 @@ namespace r2::asset::pln
     
     //Shader data
     ShaderManifestCommand s_shaderCommand;
-    FileWatcher s_shaderManifestFileWatcher;
+    //FileWatcher s_shaderManifestFileWatcher;
     FileWatcher s_shadersFileWatcher;
-    bool s_reloadShaderManifests = false;
+    //bool s_reloadShaderManifests = false;
     
     std::thread s_assetWatcherThread;
     std::atomic_bool s_end;
@@ -76,7 +76,7 @@ namespace r2::asset::pln
 
     //Shaders
     void ReloadShaderManifests();
-    void SetReloadShaderManifests(std::string changedPath);
+  //  void SetReloadShaderManifests(std::string changedPath);
     void ShaderChangedRequest(std::string changedPath);
     
     void Init(  const std::string& flatbufferCompilerLocation,
@@ -102,12 +102,12 @@ namespace r2::asset::pln
         //Shaders
         {
             ReloadShaderManifests();
-            s_shaderManifestFileWatcher.Init(delay, s_shaderCommand.manifestDirectory);
+           // s_shaderManifestFileWatcher.Init(delay, s_shaderCommand.manifestDirectory);
             
-            s_shaderManifestFileWatcher.AddModifyListener(SetReloadShaderManifests);
-            s_shaderManifestFileWatcher.AddCreatedListener(SetReloadShaderManifests);
-            s_shaderManifestFileWatcher.AddRemovedListener(SetReloadShaderManifests);
-            
+//            s_shaderManifestFileWatcher.AddModifyListener(SetReloadShaderManifests);
+//            s_shaderManifestFileWatcher.AddCreatedListener(SetReloadShaderManifests);
+//            s_shaderManifestFileWatcher.AddRemovedListener(SetReloadShaderManifests);
+//
             s_shadersFileWatcher.Init(s_delay, s_shaderCommand.shaderWatchPath);
             s_shadersFileWatcher.AddModifyListener(ShaderChangedRequest);
             s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
@@ -153,13 +153,6 @@ namespace r2::asset::pln
         if (dt >= s_delay)
         {
             //@NOTE(Serge): shaders need to run on the main thread because of OpenGL context
-            s_shaderManifestFileWatcher.Run();
-            
-            if (s_reloadShaderManifests)
-            {
-                ReloadShaderManifests();
-            }
-            
             s_shadersFileWatcher.Run();
         }
     }
@@ -329,24 +322,31 @@ namespace r2::asset::pln
     
     void ReloadShaderManifests()
     {
-        BuildShaderManifestsFromJson(s_shaderCommand.manifestDirectory);
         s_shaderManifests = LoadAllShaderManifests(s_shaderCommand.manifestDirectory);
-        s_reloadShaderManifests = false;
+        bool success = BuildShaderManifestsIfNeeded(s_shaderManifests, s_shaderCommand.manifestFilePath, s_shaderCommand.shaderWatchPath);
+        
+        if (!success)
+        {
+            R2_LOGE("Failed to build shader manifests");
+        }
     }
-    
-    void SetReloadShaderManifests(std::string changedPath)
-    {
-        s_reloadShaderManifests = true;
-    }
-    
+
     void ShaderChangedRequest(std::string changedPath)
     {
+        bool success = BuildShaderManifestsIfNeeded(s_shaderManifests, s_shaderCommand.manifestFilePath, s_shaderCommand.shaderWatchPath);
+        
+        if (!success)
+        {
+            R2_LOGE("Failed to build shader manifests");
+        }
+        
         //look through the manifests and find which need to be re-compiled and linked
         for (const auto& shaderManifest : s_shaderManifests)
         {
             if (changedPath == shaderManifest.vertexShaderPath ||
                 changedPath == shaderManifest.fragmentShaderPath)
             {
+                //@TODO(Serge): Change this to something in the renderer instead of the backend
                 r2::draw::ReloadShader(shaderManifest);
             }
         }
