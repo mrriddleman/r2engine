@@ -322,7 +322,7 @@ namespace r2::asset::pln
     
     void ReloadShaderManifests()
     {
-        s_shaderManifests = LoadAllShaderManifests(s_shaderCommand.manifestDirectory);
+        s_shaderManifests = LoadAllShaderManifests(s_shaderCommand.manifestFilePath);
         bool success = BuildShaderManifestsIfNeeded(s_shaderManifests, s_shaderCommand.manifestFilePath, s_shaderCommand.shaderWatchPath);
         
         if (!success)

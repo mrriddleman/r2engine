@@ -113,6 +113,13 @@ namespace
         21, 23, 22
     };
     
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3( 0.7f,  0.2f,  2.0f),
+        glm::vec3( 2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3( 0.0f,  0.0f, -3.0f)
+    };
+    
     glm::mat4 g_View = glm::mat4(1.0f);
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
@@ -149,7 +156,7 @@ namespace r2::draw
     void OpenGLInit()
     {
         stbi_set_flip_vertically_on_load(true);
-        glClearColor(0.25f, 0.25f, 0.4f, 1.0f);
+        glClearColor(0.f, 0.f, 0.f, 1.0f);
         
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
@@ -338,41 +345,109 @@ namespace r2::draw
             int materialShininessLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.shininess");
             glUniform1f(materialShininessLoc, 64.0f);
             
-            glm::vec3 diffuseColor = glm::vec3(0.5f, 0.5f, 0.5f);
-            glm::vec3 ambientColor = glm::vec3(0.2f);
+            glm::vec3 diffuseColor = glm::vec3(0.8f);
+            glm::vec3 ambientColor = glm::vec3(0.05f);
+            glm::vec3 specularColor = glm::vec3(1.0f);
             
-            int lightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.ambient");
-            glUniform3fv(lightAmbientLoc, 1, glm::value_ptr(ambientColor));
+            float attenConst = 1.0f;
+            float attenLinear = 0.09f;
+            float attenQuad = 0.032f;
+            //directional light setup
+            {
+                int dirLightDirLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.direction");
+                
+                glUniform3fv(dirLightDirLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+                
+                int dirLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.ambient");
+                glUniform3fv(dirLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.05f)));
+                
+                int dirLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.diffuse");
+                glUniform3fv(dirLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(0.4f)));
+                
+                int dirLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.specular");
+                glUniform3fv(dirLightSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f)));
+            }
             
-            int lightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.diffuse");
-            glUniform3fv(lightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
+            //point light setup
+            {
+                for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
+                {
+                    char pointLightStr[512];
+                    sprintf(pointLightStr, "pointLights[%i].position", i);
+                    int pointLightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform3fv(pointLightPositionLoc, 1, glm::value_ptr(pointLightPositions[i]));
+                    
+                    sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
+                    int pointLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform1f(pointLightConstantLoc, attenConst);
+                    
+                    sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
+                    int pointLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform1f(pointLightLinearLoc, attenLinear);
+                    
+                    sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
+                    int pointLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform1f(pointLightQuadLoc, attenQuad);
+                    
+                    sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
+                    int pointLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform3fv(pointLightAmbientLoc, 1, glm::value_ptr(ambientColor));
+                    
+                    sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
+                    int pointLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform3fv(pointLightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
+                    
+                    sprintf(pointLightStr, "pointLights[%i].light.specular", i);
+                    int pointLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
+                    
+                    glUniform3fv(pointLightSpecularLoc, 1, glm::value_ptr(specularColor));
+                    
+                }
+            }
             
-            int lightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.specular");
-            glUniform3fv(lightSpecularLoc, 1, glm::value_ptr(glm::vec3(1.f, 1.f, 1.f)));
-            
-            int lightEmissionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.emission");
-            glUniform3fv(lightEmissionLoc, 1, glm::value_ptr(glm::vec3(1.f)));
-            
-            int lightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.position");
-            glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
-            
-            int lightDirectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.direction");
-            glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));//for View-Space
-            
-            int lightCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.cutoff");
-            glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
-            
-            int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.outerCutoff");
-            glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(17.5f)));
-            
-            int lightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.constant");
-            glUniform1f(lightConstantLoc, 1.0f);
-            
-            int lightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.linear");
-            glUniform1f(lightLinearLoc, 0.09f);
-            
-            int lightQuadraticLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "light.quadratic");
-            glUniform1f(lightQuadraticLoc, 0.032f);
+            //spotlight setup
+            {
+                int lightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.position");
+                glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
+                
+                int lightDirectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.direction");
+                glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));
+                
+                int spotLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.ambient");
+                glUniform3fv(spotLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.0f)));
+                
+                int spotLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.diffuse");
+                glUniform3fv(spotLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
+                
+                int spotLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.specular");
+                glUniform3fv(spotLightSpecularLoc, 1, glm::value_ptr(specularColor));
+                
+                int spotLightEmissionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.emission");
+                glUniform3fv(spotLightEmissionLoc, 1, glm::value_ptr(specularColor));
+                
+                int spotLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.constant");
+                
+                glUniform1f(spotLightConstantLoc, attenConst);
+                
+                int spotLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.linear");
+                
+                glUniform1f(spotLightLinearLoc, attenLinear);
+                
+                int spotLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.quadratic");
+                glUniform1f(spotLightQuadLoc, attenQuad);
+                
+                int lightCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.cutoff");
+                glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
+                
+                int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.outerCutoff");
+                glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
+            }
             
             for (u32 i = 0; i < 10; ++i)
             {
@@ -383,8 +458,6 @@ namespace r2::draw
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
                 glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
             }
-            
-            
         }
 
         //Draw lamp
@@ -397,14 +470,18 @@ namespace r2::draw
             int lightProjectionLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(lightProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
-            glm::mat4 lightModel = glm::mat4(1.0f);
-            lightModel = glm::translate(lightModel, lightPos);
-            lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-            
             int lightModelLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "model");
-            glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
             
-            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
+            {
+                glm::mat4 lightModel = glm::mat4(1.0f);
+                
+                lightModel = glm::translate(lightModel, pointLightPositions[i]);
+                lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+                glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
+                
+                glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            }
         }
         
         //draw debug stuff
