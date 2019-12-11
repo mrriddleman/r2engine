@@ -22,6 +22,10 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #endif

@@ -125,12 +125,19 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		{
 			"%{prj.name}/vendor/glad/MacOSX/include",
 			"%{prj.name}/vendor/FMOD/MacOSX/core/inc",
-			"/usr/local/Cellar/llvm/8.0.0_1/include/c++/v1"
+			"/usr/local/Cellar/llvm/8.0.0_1/include/c++/v1",
+			
+		}
+
+		sysincludedirs
+		{
+			"%{prj.name}/vendor/assimp/MacOSX/include"
 		}
 
 		libdirs 
 		{
 			"%{prj.name}/vendor/FMOD/MacOSX/core/lib",
+			"%{prj.name}/vendor/assimp/MacOSX/lib",
 			"/usr/local/opt/llvm/lib"
 		}
 
@@ -145,12 +152,14 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		filter "configurations:Debug"
 			links
 			{
-				"fmodL"
+				"fmodL",
+				"assimp"
 			}
 		filter "configurations:not Debug"
 			links
 			{
-				"fmod"
+				"fmod",
+				"assimp"
 			}
 
 
@@ -242,12 +251,14 @@ project "r2Tests"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}"
 			}
 
 		filter "configurations:Release"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}"
 			}  
 
 project "Sandbox"
@@ -314,6 +325,7 @@ project "Sandbox"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
 				"{RMDIR} ../bin/Debug_macosx_x86_64/%{prj.name}/sounds",
 				"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}"
 			}
@@ -322,6 +334,7 @@ project "Sandbox"
 			postbuildcommands 
 			{
 				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
 				"{RMDIR} ../bin/Release_macosx_x86_64/%{prj.name}/sounds",
 				"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
 			}    
