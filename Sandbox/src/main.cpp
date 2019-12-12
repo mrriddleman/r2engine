@@ -543,9 +543,13 @@ namespace
             case r2::fs::utils::SHADERS_MANIFEST:
                 strcpy(subpath, "assets/shaders/manifests");
                 break;
+            case r2::fs::utils::MODELS:
+                strcpy(subpath, "assets/models");
+                break;
             default:
                 result = false;
                 break;
+                
         }
         
         if (result)

@@ -22,10 +22,8 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
+#include "r2/Render/Backends/OpenGLMesh.h"
+#include "r2/Render/Renderer/Model.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #endif
@@ -52,40 +50,40 @@ namespace
     
     float cubeVerts[] = {
         //front face
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //top right
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //bottom right
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //bottom left
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // top left
+        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  //top right
+        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, //bottom right
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //bottom left
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // top left
         
         //right face
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, //top left 4
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //bottom left 5
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, //bottom right 6
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // top right 7
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //top left 4
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //bottom left 5
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //bottom right 6
+        0.5f, 0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right 7
         
         //left face
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //bottom  left 8
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, //top left 9
-        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, //bottom right 10
-        -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, //top right 11
+        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //bottom  left 8
+        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, //top left 9
+        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //bottom right 10
+        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //top right 11
         
         //back face
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, //bottom left 12
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, //top left 13
-        -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f, //bottom right 14
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, //top right 15
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, //bottom left 12
+        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, //top left 13
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, //bottom right 14
+        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f, //top right 15
         
         //top face
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0, 1.0f, 0.0f, //bottom left 16
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, //top left 17
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //bottom right 18
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, //top right 19
+        -0.5f, 0.5f, 0.5f, 0.0, 1.0f, 0.0f, 0.0f, 0.0f, //bottom left 16
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //top left 17
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, //bottom right 18
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, //top right 19
         
         //bottom face
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, //bottom left 20
-        -0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, //top left 21
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, //bottom right 22
-        0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 0.0f, -1.0f, 0.0f //top right 23
+        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, //bottom left 20
+        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, //top left 21
+        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, //bottom right 22
+        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f //top right 23
         
     };
     
@@ -138,11 +136,12 @@ namespace
     struct Vertex
     {
         glm::vec3 position;
-        glm::vec2 texCoord;
         glm::vec3 normal;
+        glm::vec2 texCoord;
     };
     
     std::vector<DebugVertex> g_debugVerts;
+    std::vector<r2::draw::opengl::OpenGLMesh> s_openglMeshes;
     
     u32 g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
@@ -153,14 +152,14 @@ namespace r2::draw
     u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
     void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
     
+    void DrawOpenGLMesh(const Shader& shader, const opengl::OpenGLMesh& mesh);
+    void DrawOpenGLMeshes(const Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
     
-    u32 LoadImageTexture(const char* path);
-    u32 CreateImageTexture(u32 width, u32 height, void* data);
     
     void OpenGLInit()
     {
         stbi_set_flip_vertically_on_load(true);
-        glClearColor(0.f, 0.f, 0.f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
@@ -205,53 +204,28 @@ namespace r2::draw
 
         //basic object stuff
         {
-            glGenVertexArrays(1, &g_VAO);
+            char modelPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "nanosuit/nanosuit.obj", modelPath);
+            Model nanosuitModel;
+            LoadModel(nanosuitModel, modelPath);
+            s_openglMeshes = opengl::CreateOpenGLMeshesFromModel(nanosuitModel);
+        }
+        
+        //lamp setup
+        {
+            glGenVertexArrays(1, &g_lightVAO);
+            glBindVertexArray(g_lightVAO);
+            
             glGenBuffers(1, &g_VBO);
             glGenBuffers(1, &g_EBO);
-            
-            glBindVertexArray(g_VAO);
             
             glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
             glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
             
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-            
-            //position attribute
+
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-            glEnableVertexAttribArray(0);
-            
-            //uv attribute
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3*sizeof(float)));
-            glEnableVertexAttribArray(1);
-            
-            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(5*sizeof(float)));
-            glEnableVertexAttribArray(2);
-            
-            glBindVertexArray(0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            
-            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
-            
-            //how we set our sampler2Ds in our shaders - note we set our shader program above
-            //First is set to Texture0 - this means material.diffuse is set to Texture0
-            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.diffuse"), 0);
-            //Second is set to Texture1 - this means material.specular is set to Texture1
-            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.specular"), 1);
-            
-            glUniform1i(glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.emission"), 2);
-            
-            glUseProgram(0);
-        }
-        
-        //lamp setup
-        {
-            glGenVertexArrays(1, &g_lightVAO);
-            glad_glBindVertexArray(g_lightVAO);
-            glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
-            
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
             glEnableVertexAttribArray(0);
             
             glBindVertexArray(0);
@@ -280,20 +254,7 @@ namespace r2::draw
         glEnable(GL_DEPTH_TEST);
         
         u32 whiteColor = 0xffffffff;
-        defaultTexture = CreateImageTexture(1, 1, &whiteColor);
-        
-        char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container2.png", path);
-        //Creates and sets the image to the textureID
-        diffuseMap = LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container2_specular.png", path);
-        //Same here
-        specularMap = LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "matrix.jpg", path);
-        
-        emissionMap = LoadImageTexture(path);
+        defaultTexture = OpenGLCreateImageTexture(1, 1, &whiteColor);
     }
     
     void OpenGLDraw(float alpha)
@@ -303,20 +264,7 @@ namespace r2::draw
         //Draw the cube
         {
             glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
-            
-            //We need to activate the texture slot
-            glActiveTexture(GL_TEXTURE0);
-            //then bind the textureID we desire
-            glBindTexture(GL_TEXTURE_2D, diffuseMap);
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, specularMap);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, emissionMap);
-            
-            glBindVertexArray(g_VAO);
-            
             float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
             
             int uniformTimeLocation = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "time");
@@ -328,24 +276,11 @@ namespace r2::draw
             int projectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
-//            int lightPosLoc = glGetUniformLocation(g_ShaderProg, "lightPos");
-//
-//            glm::mat4 lightMat = glm::mat4(1.0f);
-//
-//            float dt = float(CPLAT.TickRate()) / 1000.f;
-//            lightMat = glm::rotate(lightMat, 1*dt, glm::vec3(0,1,0));
-//
-//            lightPos = glm::vec3(lightMat * glm::vec4(lightPos,0.0));
-//
-//            glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
-            
             int viewPosLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "viewPos");
             glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
             
-          //  glm::mat4 model = glm::mat4(1.0f);
             int modelLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "model");
            
-            
             int materialShininessLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.shininess");
             glUniform1f(materialShininessLoc, 64.0f);
             
@@ -452,16 +387,14 @@ namespace r2::draw
                 int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.outerCutoff");
                 glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
             }
+
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, -1.75, 0.0f));
+            model = glm::scale(model, glm::vec3(0.2f));
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
             
-            for (u32 i = 0; i < 10; ++i)
-            {
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, cubePositions[i]);
-                float angle = 20.f * i;
-                model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-                glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
-            }
+
         }
 
         //Draw lamp
@@ -475,8 +408,9 @@ namespace r2::draw
             glUniformMatrix4fv(lightProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
             
             int lightModelLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "model");
+            glBindVertexArray(g_lightVAO);
             
-            for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
+            for (u32 i = 0; i < 2; ++i)
             {
                 glm::mat4 lightModel = glm::mat4(1.0f);
                 
@@ -516,7 +450,7 @@ namespace r2::draw
     
     void OpenGLShutdown()
     {
-        glDeleteVertexArrays(1, &g_VAO);
+//        glDeleteVertexArrays(1, &g_VAO);
         glDeleteBuffers(1, &g_VBO);
         glDeleteBuffers(1, &g_EBO);
         
@@ -528,9 +462,9 @@ namespace r2::draw
         glDeleteProgram(s_shaders[LAMP_SHADER].shaderProg);
         glDeleteProgram(s_shaders[DEBUG_SHADER].shaderProg);
         
-        glDeleteTextures(1, &diffuseMap);
-        glDeleteTextures(1, &specularMap);
-        glDeleteTextures(1, &defaultTexture);
+//        glDeleteTextures(1, &diffuseMap);
+//        glDeleteTextures(1, &specularMap);
+//        glDeleteTextures(1, &defaultTexture);
     }
     
     void OpenGLResizeWindow(u32 width, u32 height)
@@ -558,7 +492,44 @@ namespace r2::draw
         g_debugVerts.push_back(v1);
     }
     
-    u32 LoadImageTexture(const char* path)
+    void DrawOpenGLMeshes(const Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes)
+    {
+        for (u32 i = 0; i < meshes.size(); ++i)
+        {
+            DrawOpenGLMesh(shader, meshes[i]);
+        }
+    }
+    
+    
+    void DrawOpenGLMesh(const Shader& shader, const opengl::OpenGLMesh& mesh)
+    {
+        u32 textureNum[TextureType::NUM_TEXTURE_TYPES];
+        for(u32 i = 0; i < TextureType::NUM_TEXTURE_TYPES; ++i)
+        {
+            textureNum[i] = 1;
+        }
+
+        for (u32 i = 0; i < mesh.numTextures; ++i)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            std::string number;
+            std::string name = TextureTypeToString(mesh.types[i]);
+            number = std::to_string(textureNum[mesh.types[i]]++);
+            int materialTextureLoc = glGetUniformLocation(shader.shaderProg, ("material." + name + number).c_str());
+            glUniform1i(materialTextureLoc, i);
+            glBindTexture(GL_TEXTURE_2D, mesh.texIDs[i]);
+        }
+
+        //draw mesh
+        glBindVertexArray(mesh.VAO);
+        glDrawElements(GL_TRIANGLES, mesh.numIndices, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
+    }
+    
+    
+    
+    u32 OpenGLLoadImageTexture(const char* path)
     {
         //load and create texture
         u32 newTex;
@@ -595,7 +566,7 @@ namespace r2::draw
         return newTex;
     }
     
-    u32 CreateImageTexture(u32 width, u32 height, void* data)
+    u32 OpenGLCreateImageTexture(u32 width, u32 height, void* data)
     {
         u32 newTex;
         glGenTextures(1, &newTex);

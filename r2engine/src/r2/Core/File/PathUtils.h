@@ -20,6 +20,7 @@ namespace r2::fs::utils
         SHADERS_RAW,
         SHADERS_BIN,
         SHADERS_MANIFEST,
+        MODELS
     };
     
 #ifdef R2_PLATFORM_WINDOWS
@@ -38,7 +39,7 @@ namespace r2::fs::utils
     
     bool CopyFileExtension(const char* path, char* ext);
     
-    bool CopyPathOfFile(const char* filePath, char* path);
+    bool CopyDirectoryOfFile(const char* filePath, char* path);
     
     char* GetLastSubPath(const char* path, char* subPath, const char delim = PATH_SEPARATOR);
     

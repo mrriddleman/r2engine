@@ -60,7 +60,7 @@ namespace r2::fs
         
         r2::fs::utils::CopyFileName(noptrFile->GetFilePath(), fileName);
         
-        r2::fs::utils::CopyPathOfFile(noptrFile->GetFilePath(), filePath);
+        r2::fs::utils::CopyDirectoryOfFile(noptrFile->GetFilePath(), filePath);
 
         r2::fs::utils::AppendSubPath(filePath, fileSha, fileName, r2::fs::utils::PATH_SEPARATOR);
         r2::fs::utils::AppendSubPath(filePath, fileBackup, fileName, r2::fs::utils::PATH_SEPARATOR);
@@ -176,7 +176,7 @@ namespace r2::fs
             
             r2::fs::utils::CopyFileName(mnoptrFile->GetFilePath(), fileName);
             
-            r2::fs::utils::CopyPathOfFile(mnoptrFile->GetFilePath(), filePath);
+            r2::fs::utils::CopyDirectoryOfFile(mnoptrFile->GetFilePath(), filePath);
             
             r2::fs::utils::AppendSubPath(filePath, fileSha, fileName, r2::fs::utils::PATH_SEPARATOR);
             r2::fs::utils::AppendSubPath(filePath, fileBackup, fileName, r2::fs::utils::PATH_SEPARATOR);

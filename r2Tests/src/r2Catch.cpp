@@ -1540,12 +1540,12 @@ TEST_CASE("Path Utils")
     }
     
     
-    SECTION("Test CopyPathOfFile")
+    SECTION("Test CopyDirectoryOfFile")
     {
         char path[] = "/subpath1/subpath2/subpath3/file.txt";
         char tempBuf[Kilobytes(1)] = "";
         
-        REQUIRE(r2::fs::utils::CopyPathOfFile(path, tempBuf));
+        REQUIRE(r2::fs::utils::CopyDirectoryOfFile(path, tempBuf));
         
         REQUIRE(strcmp(tempBuf, "/subpath1/subpath2/subpath3/") == 0);
     }

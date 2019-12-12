@@ -78,7 +78,7 @@ namespace r2::fs::utils
         return result && ext && strlen(ext) > 0;
     }
     
-    bool CopyPathOfFile(const char* filePath, char* path)
+    bool CopyDirectoryOfFile(const char* filePath, char* path)
     {
         if (!filePath || !path)
         {

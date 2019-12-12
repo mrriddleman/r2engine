@@ -2,8 +2,8 @@
 
 struct Material 
 {
-    sampler2D   diffuse;
-    sampler2D   specular;
+    sampler2D   texture_diffuse1;
+    sampler2D   texture_specular1;
     sampler2D   emission;
     float       shininess;
 };
@@ -70,7 +70,7 @@ uniform float time;
 uniform vec3 viewPos;
 uniform Material material;
 uniform DirLight dirLight;
-#define NUM_POINT_LIGHTS 4
+#define NUM_POINT_LIGHTS 2
 uniform PointLight pointLights[NUM_POINT_LIGHTS];
 uniform SpotLight spotLight;
 
@@ -80,7 +80,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    vec3 result = CalcDirLight(dirLight, norm, viewDir);
+    vec3 result = vec3(0.0);//CalcDirLight(dirLight, norm, viewDir);
 
     for(int i = 0; i < NUM_POINT_LIGHTS; i++)
     {
@@ -89,7 +89,7 @@ void main()
 
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
-    result += CalcEmissiveForMaterial(spotLight.light);
+    //result += CalcEmissiveForMaterial(spotLight.light);
 
     FragColor = vec4(result, 1.0);
 }
@@ -158,11 +158,11 @@ Light CalcLightForMaterial(Light light, float diff, float spec, float modifier)
 {
     Light result;
 
-    vec3 diffuseMat = vec3(texture(material.diffuse, TexCoord));
+    vec3 diffuseMat = vec3(texture(material.texture_diffuse1, TexCoord));
 
     result.ambient = light.ambient * diffuseMat;
     result.diffuse = light.diffuse * diff * diffuseMat;
-    result.specular = light.specular * spec * vec3(texture(material.specular, TexCoord));
+    result.specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoord));
 
     result.ambient *= modifier;
     result.diffuse *= modifier;
@@ -175,7 +175,7 @@ vec3 CalcEmissiveForMaterial(Light light)
 {
     vec3 emission = vec3(0.0);
     vec3 emissionTex = texture(material.emission, TexCoord).rgb;
-    vec3 specularTex = vec3(texture(material.specular, TexCoord));
+    vec3 specularTex = vec3(texture(material.texture_specular1, TexCoord));
 
     emission = emissionTex;
     emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb; //this moves the texture in x,y
