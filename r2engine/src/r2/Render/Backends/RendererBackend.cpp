@@ -24,6 +24,11 @@
 
 #include "r2/Render/Backends/OpenGLMesh.h"
 #include "r2/Render/Renderer/Model.h"
+#include "r2/Render/Renderer/SkinnedModel.h"
+#include "r2/Render/Renderer/LoadHelpers.h"
+
+#include "r2/Render/Renderer/AnimationPlayer.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #endif
@@ -133,15 +138,16 @@ namespace
         glm::vec3 position;
     };
     
-    struct Vertex
+    struct LampVertex
     {
         glm::vec3 position;
         glm::vec3 normal;
-        glm::vec2 texCoord;
+        glm::vec2 texCoords;
     };
     
     std::vector<DebugVertex> g_debugVerts;
     std::vector<r2::draw::opengl::OpenGLMesh> s_openglMeshes;
+    r2::draw::SkinnedModel g_Model;
     
     u32 g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
@@ -159,7 +165,7 @@ namespace r2::draw
     void OpenGLInit()
     {
         stbi_set_flip_vertically_on_load(true);
-        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
@@ -175,7 +181,7 @@ namespace r2::draw
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.vs", vertexPath);
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lighting.fs", fragmentPath);
-            
+
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
 
@@ -202,13 +208,12 @@ namespace r2::draw
         }
 #endif
 
-        //basic object stuff
+        //load the model
         {
             char modelPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "nanosuit/nanosuit.obj", modelPath);
-            Model nanosuitModel;
-            LoadModel(nanosuitModel, modelPath);
-            s_openglMeshes = opengl::CreateOpenGLMeshesFromModel(nanosuitModel);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "boblampclean/boblampclean.md5mesh", modelPath);
+            LoadSkinnedModel(g_Model, modelPath);
+            s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         }
         
         //lamp setup
@@ -225,7 +230,7 @@ namespace r2::draw
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LampVertex), (void*)0);
             glEnableVertexAttribArray(0);
             
             glBindVertexArray(0);
@@ -266,7 +271,7 @@ namespace r2::draw
             glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
 
             float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-            
+
             int uniformTimeLocation = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "time");
             glUniform1f(uniformTimeLocation, timeVal);
             //
@@ -275,38 +280,38 @@ namespace r2::draw
             //
             int projectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "projection");
             glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-            
+
             int viewPosLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "viewPos");
             glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
-            
+
             int modelLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "model");
-           
+
             int materialShininessLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.shininess");
             glUniform1f(materialShininessLoc, 64.0f);
-            
+
             glm::vec3 diffuseColor = glm::vec3(0.8f);
             glm::vec3 ambientColor = glm::vec3(0.05f);
             glm::vec3 specularColor = glm::vec3(1.0f);
-            
+
             float attenConst = 1.0f;
             float attenLinear = 0.09f;
             float attenQuad = 0.032f;
             //directional light setup
             {
                 int dirLightDirLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.direction");
-                
+
                 glUniform3fv(dirLightDirLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-                
+
                 int dirLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.ambient");
                 glUniform3fv(dirLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.05f)));
-                
+
                 int dirLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.diffuse");
                 glUniform3fv(dirLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(0.4f)));
-                
+
                 int dirLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.specular");
                 glUniform3fv(dirLightSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f)));
             }
-            
+
             //point light setup
             {
                 for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
@@ -314,87 +319,95 @@ namespace r2::draw
                     char pointLightStr[512];
                     sprintf(pointLightStr, "pointLights[%i].position", i);
                     int pointLightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform3fv(pointLightPositionLoc, 1, glm::value_ptr(pointLightPositions[i]));
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
                     int pointLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform1f(pointLightConstantLoc, attenConst);
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
                     int pointLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform1f(pointLightLinearLoc, attenLinear);
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
                     int pointLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform1f(pointLightQuadLoc, attenQuad);
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
                     int pointLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform3fv(pointLightAmbientLoc, 1, glm::value_ptr(ambientColor));
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
                     int pointLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform3fv(pointLightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
-                    
+
                     sprintf(pointLightStr, "pointLights[%i].light.specular", i);
                     int pointLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-                    
+
                     glUniform3fv(pointLightSpecularLoc, 1, glm::value_ptr(specularColor));
-                    
+
                 }
             }
-            
+
             //spotlight setup
             {
                 int lightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.position");
                 glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
-                
+
                 int lightDirectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.direction");
                 glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));
-                
+
                 int spotLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.ambient");
                 glUniform3fv(spotLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.0f)));
-                
+
                 int spotLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.diffuse");
                 glUniform3fv(spotLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-                
+
                 int spotLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.specular");
                 glUniform3fv(spotLightSpecularLoc, 1, glm::value_ptr(specularColor));
-                
+
                 int spotLightEmissionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.emission");
                 glUniform3fv(spotLightEmissionLoc, 1, glm::value_ptr(specularColor));
-                
+
                 int spotLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.constant");
-                
+
                 glUniform1f(spotLightConstantLoc, attenConst);
-                
+
                 int spotLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.linear");
-                
+
                 glUniform1f(spotLightLinearLoc, attenLinear);
-                
+
                 int spotLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.quadratic");
                 glUniform1f(spotLightQuadLoc, attenQuad);
-                
+
                 int lightCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.cutoff");
                 glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
-                
+
                 int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.outerCutoff");
                 glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
             }
 
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -1.75, 0.0f));
-            model = glm::scale(model, glm::vec3(0.2f));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
-            
+            glm::mat4 modelMat = glm::mat4(1.0f);
+            modelMat = glm::scale(modelMat, glm::vec3(0.025f));
+           
+            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 0);
 
+            for (u32 i = 0; i < boneMats.size(); ++i)
+            {
+                char boneTransformsStr[512];
+                sprintf(boneTransformsStr, "boneTransformations[%u]", i);
+                u32 boneLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, boneTransformsStr);
+                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(boneMats[i]));
+            }
+
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
+            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
         }
 
         //Draw lamp
@@ -458,7 +471,7 @@ namespace r2::draw
         glDeleteVertexArrays(1, &g_DebugVAO);
         glDeleteBuffers(1, &g_DebugVBO);
         
-        glDeleteProgram(s_shaders[LIGHTING_SHADER].shaderProg);
+      //  glDeleteProgram(s_shaders[LIGHTING_SHADER].shaderProg);
         glDeleteProgram(s_shaders[LAMP_SHADER].shaderProg);
         glDeleteProgram(s_shaders[DEBUG_SHADER].shaderProg);
         

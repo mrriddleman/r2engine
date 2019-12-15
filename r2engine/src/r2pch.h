@@ -13,6 +13,7 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 #include <array>
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"

@@ -9,6 +9,8 @@
 #include "r2/Platform/Platform.h"
 namespace r2::cam
 {
+    
+    static float yaw = -90.f, pitch=-37.f;
 
     void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position)
     {
@@ -19,6 +21,7 @@ namespace r2::cam
         mNear = near;
         mFar = far;
         InitPerspectiveCam(mCamera, fov, aspect, near, far, position);
+        SetFacingDir(mCamera, pitch, yaw);
     }
     
     void PerspectiveController::Update()
@@ -107,8 +110,10 @@ namespace r2::cam
 
         static float lastX = CENG.DisplaySize().width/2;
         static float lastY = CENG.DisplaySize().height/2;
-        static float yaw = -90.f, pitch=0.f;
+        
         dispatcher.Dispatch<r2::evt::MouseMovedEvent>([this](const r2::evt::MouseMovedEvent& e){
+            
+            
             
             float xOffset = e.X() - lastX;
             float yOffset = lastY - e.Y();
@@ -129,7 +134,9 @@ namespace r2::cam
             if(pitch < -89.0f)
                 pitch = -89.0f;
             
-            SetFacingDir(mCamera, pitch, yaw);
+            R2_LOGI("pitch: %f, yaw: %f", pitch, yaw);
+            
+           // SetFacingDir(mCamera, pitch, yaw);
             
             return true;
         });
@@ -146,7 +153,7 @@ namespace r2::cam
                 mFOV = 45.0f;
             
             SetPerspectiveCam(mCamera, mFOV, mAspect, mNear, mFar);
-           return true;
+            return true;
         });
     }
 }

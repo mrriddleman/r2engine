@@ -15,11 +15,9 @@ namespace r2::draw
     struct Model
     {
         std::vector<Mesh> meshes;
+        glm::mat4 globalInverseTransform;
         char directory[r2::fs::FILE_PATH_LENGTH];
     };
-    
-    void LoadModel(Model& model, const char* filePath);
-    
 }
 
 #endif /* Model_h */
