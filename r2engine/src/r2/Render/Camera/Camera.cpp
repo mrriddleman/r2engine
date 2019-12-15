@@ -109,7 +109,7 @@ namespace r2::cam
         
         glm::vec4 rayClip = glm::vec4(x, y, -1.0f, 1.0f);
         glm::vec4 rayEye = glm::inverse(cam.proj) * rayClip;
-        glm::vec4 rayWorld = glm::inverse(cam.view) * glm::vec4(rayEye.xy, -1.0, 0);
+        glm::vec4 rayWorld = glm::inverse(cam.view) * glm::vec4(rayEye.xy(), -1.0, 0);
         
         return r2::math::CreateRay(cam.position, glm::normalize(glm::vec3(rayWorld.x, rayWorld.y, rayWorld.z)));
     }
