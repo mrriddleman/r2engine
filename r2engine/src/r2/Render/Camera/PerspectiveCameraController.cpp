@@ -134,9 +134,9 @@ namespace r2::cam
             if(pitch < -89.0f)
                 pitch = -89.0f;
             
-            R2_LOGI("pitch: %f, yaw: %f", pitch, yaw);
+           // R2_LOGI("pitch: %f, yaw: %f", pitch, yaw);
             
-           // SetFacingDir(mCamera, pitch, yaw);
+            SetFacingDir(mCamera, pitch, yaw);
             
             return true;
         });

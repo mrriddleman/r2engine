@@ -7,8 +7,8 @@
 
 #include "AnimationPlayer.h"
 #include "r2/Render/Renderer/SkinnedModel.h"
-#include "glm/gtc/quaternion.hpp"
 
+#include "r2/Core/Math/MathUtils.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -128,10 +128,7 @@ namespace
         glm::vec3 start = channel.scaleKeys[curScalingIndex].value;
         glm::vec3 end = channel.scaleKeys[nextScalingIndex].value;
         
-        glm::vec3 delta = glm::vec3(end.x - start.x, end.y - start.y, end.z - start.z);
-        glm::vec3 result = glm::vec3(start.x + factor * delta.x, start.y + factor * delta.y, start.z + factor * delta.z);
-        
-        return result;
+        return r2::math::Lerp(start, end, factor);
     }
     
     glm::quat CalculateRotation(float animationTime, const r2::draw::AnimationChannel& channel)
@@ -150,7 +147,7 @@ namespace
         
         float factor = glm::clamp(float(animationTime - channel.rotationKeys[curRotIndex].time) / dt, 0.0f, 1.0f) ;
         
-        return glm::normalize(glm::mix(channel.rotationKeys[curRotIndex].quat, channel.rotationKeys[nextRotIndex].quat, factor));
+        return r2::math::Slerp(channel.rotationKeys[curRotIndex].quat, channel.rotationKeys[nextRotIndex].quat, factor);
     }
     
     glm::vec3 CalculateTranslation(float animationTime, const r2::draw::AnimationChannel& channel)
@@ -172,10 +169,7 @@ namespace
         glm::vec3 start = channel.positionKeys[curPositionIndex].value;
         glm::vec3 end = channel.positionKeys[nextPositionIndex].value;
 
-        glm::vec3 delta = glm::vec3(end.x - start.x, end.y - start.y, end.z - start.z);
-        glm::vec3 result = glm::vec3(start.x + factor * delta.x, start.y + factor * delta.y, start.z + factor * delta.z);
-        
-        return result;
+        return r2::math::Lerp(start, end, factor);
     }
     
     u32 FindScalingIndex(float animationTime, const r2::draw::AnimationChannel& channel)
