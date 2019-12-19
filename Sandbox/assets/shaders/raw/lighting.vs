@@ -26,9 +26,10 @@ void main()
 	finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[3]] * aBoneWeights[3];
 
 	mat4 vertexTransform = model * finalBoneVertexTransform;
-
-    gl_Position = projection * view * vertexTransform * vec4(aPos, 1.0);
+	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
+	
+    gl_Position = projection * view * modelPos;
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(vertexTransform))) * aNormal;
-    FragPos = vec3(model * vec4(aPos, 1.0));
+    FragPos = vec3(modelPos);
 }
