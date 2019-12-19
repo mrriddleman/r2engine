@@ -19,6 +19,8 @@ namespace r2::draw
         glm::vec2 texCoords;
     };
     
+#define MAX_BONE_WEIGHTS 4
+    
     struct BoneData
     {
         glm::vec4 boneWeights = glm::vec4(0.0f);

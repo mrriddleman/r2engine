@@ -8,6 +8,7 @@
 #include "LoadHelpers.h"
 
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Math/MathUtils.h"
 #include "r2/Render/Renderer/Vertex.h"
 #include "r2/Render/Renderer/Model.h"
 #include "r2/Render/Renderer/SkinnedModel.h"
@@ -44,7 +45,7 @@ namespace r2::draw
     void LoadModel(Model& model, const char* filePath)
     {
         Assimp::Importer import;
-        const aiScene* scene = import.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
+        const aiScene* scene = import.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals );
         
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -60,7 +61,21 @@ namespace r2::draw
     void LoadSkinnedModel(SkinnedModel& model, const char* filePath)
     {
         Assimp::Importer import;
-        const aiScene* scene = import.ReadFile(filePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals );
+        const aiScene* scene = import.ReadFile(filePath, //aiProcess_CalcTangentSpace |
+                                               //aiProcess_JoinIdenticalVertices |
+                                               aiProcess_Triangulate |
+                                               aiProcess_SortByPType | // ?
+                                               aiProcess_GenSmoothNormals |
+                                               aiProcess_ImproveCacheLocality |
+                                               aiProcess_RemoveRedundantMaterials |
+                                               aiProcess_FindDegenerates |
+                                               //aiProcess_GenUVCoords |
+                                               //aiProcess_TransformUVCoords |
+                                               aiProcess_FindInstances |
+                                               aiProcess_LimitBoneWeights |
+                                               aiProcess_OptimizeMeshes |
+                                               aiProcess_SplitByBoneCount 
+                                               );
         
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -258,14 +273,20 @@ namespace
                 boneIndex = model.boneMapping[boneName];
             }
 
-            for (u32 j = 0; j < mesh->mBones[i]->mNumWeights; ++j)
+            size_t numWeights = mesh->mBones[i]->mNumWeights;
+            
+            for (u32 j = 0; j < numWeights; ++j)
             {
                 u32 vertexID = model.meshEntries.back().baseVertex + mesh->mBones[i]->mWeights[j].mVertexId;
                 
                 bool found = false;
-                for (u32 k = 0; k < mesh->mBones[i]->mNumWeights; ++k)
+                
+                float currentWeightTotal = 0.0f;
+                for (u32 k = 0; k < MAX_BONE_WEIGHTS; ++k)
                 {
-                    if (model.boneDataVec[vertexID].boneWeights[k] == 0.0f)
+                    currentWeightTotal += model.boneDataVec[vertexID].boneWeights[k];
+                    
+                    if (!r2::math::NearEq(currentWeightTotal, 1.0f) && r2::math::NearEq(model.boneDataVec[vertexID].boneWeights[k],0.0f))
                     {
                         model.boneDataVec[vertexID].boneIDs[k] = boneIndex;
                         model.boneDataVec[vertexID].boneWeights[k] = mesh->mBones[i]->mWeights[j].mWeight;
@@ -275,7 +296,7 @@ namespace
                     }
                 }
                 
-                R2_CHECK(found, "We couldn't find a spot for the bone weight!");
+                //R2_CHECK(found, "We couldn't find a spot for the bone weight!");
             }
         }
     }
@@ -339,7 +360,7 @@ namespace
         
         return result;
     }
-
+    
     glm::vec3 AssimpVec3ToGLMVec3(const aiVector3D& vec3D)
     {
         return glm::vec3(vec3D.x, vec3D.y, vec3D.z);

@@ -52,6 +52,9 @@ namespace r2::fs::utils
     
     bool BuildPathFromCategory(Directory category, const char* fileName, char* outPath);
     
+    bool GetParentDirectory(const char* path, char* result);
+    
+    bool SanitizeSubPath(const char* rawSubPath, char* result);
 }
 
 #endif /* PathUtils_h */

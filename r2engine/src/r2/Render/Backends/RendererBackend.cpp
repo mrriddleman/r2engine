@@ -210,8 +210,9 @@ namespace r2::draw
 
         //load the model
         {
+            //
             char modelPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "boblampclean/boblampclean.md5mesh", modelPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "skeleton_archer_v2/animations/skeleton_archer_allinone.fbx", modelPath);
             LoadSkinnedModel(g_Model, modelPath);
             s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         }
@@ -394,6 +395,7 @@ namespace r2::draw
             }
 
             glm::mat4 modelMat = glm::mat4(1.0f);
+            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             modelMat = glm::scale(modelMat, glm::vec3(0.025f));
            
             std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 0);
@@ -403,7 +405,7 @@ namespace r2::draw
                 char boneTransformsStr[512];
                 sprintf(boneTransformsStr, "boneTransformations[%u]", i);
                 u32 boneLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, boneTransformsStr);
-                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(boneMats[i]));
+                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(boneMats[i])));
             }
 
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));

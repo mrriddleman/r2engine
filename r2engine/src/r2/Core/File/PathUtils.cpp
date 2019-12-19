@@ -225,7 +225,21 @@ namespace r2::fs::utils
             resultPath[len] = '\0';
         }
         
-        strcat(resultPath, subPath);
+        
+        char sanitizedSubPath[r2::fs::FILE_PATH_LENGTH];
+        
+        //@TODO(Serge): should do this in a loop so we can resolve /../../ etc
+        if (strlen(subPath) > 2)
+        {
+            if (subPath[0] == '.' && subPath[1] == '.')
+            {
+                GetParentDirectory(path, resultPath);
+            }
+        }
+        
+        SanitizeSubPath(subPath, sanitizedSubPath);
+        
+        strcat(resultPath, sanitizedSubPath);
         
         return true;
     }
@@ -247,5 +261,62 @@ namespace r2::fs::utils
         }
         
         return false;
+    }
+    
+    bool SanitizeSubPath(const char* rawSubPath, char* result)
+    {
+        size_t startingIndex = 0;
+        //@TODO(Serge): do in a loop
+        if (strlen(rawSubPath) > 2) {
+            if (rawSubPath[0] == '.' && rawSubPath[1] == '.')
+            {
+                startingIndex = 2;
+            }
+            else if(rawSubPath[0] == '.' && rawSubPath[1] != '.')
+            {
+                startingIndex = 1;
+            }
+        }
+        
+        size_t len = strlen(rawSubPath);
+        size_t resultIndex = 0;
+        for ( ;startingIndex < len; startingIndex++)
+        {
+            if (PATH_SEPARATOR != '\\' && rawSubPath[startingIndex] == '\\')
+            {
+                result[resultIndex] = PATH_SEPARATOR;
+            }
+            else
+            {
+                result[resultIndex] = rawSubPath[startingIndex];
+            }
+            
+            ++resultIndex;
+        }
+        
+        result[resultIndex] = '\0';
+        
+        return true;
+    }
+    
+    bool GetParentDirectory(const char* path, char* result)
+    {
+        size_t len = strlen(path);
+        size_t startingIndex = len - 1;
+        if (path[startingIndex] == PATH_SEPARATOR)
+        {
+            --startingIndex;
+        }
+        
+        for (; startingIndex > 0; --startingIndex)
+        {
+            if (path[startingIndex] == PATH_SEPARATOR)
+            {
+                break;
+            }
+        }
+        
+        strlcpy(result, path, startingIndex+2);
+        return true;
     }
 }
