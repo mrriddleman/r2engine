@@ -113,10 +113,10 @@ namespace r2::draw::opengl
         }
         
         //HACK!!!!!!
-        std::sort(meshes.begin(), meshes.end(), [](const opengl::OpenGLMesh& mesh1, const opengl::OpenGLMesh& mesh2)
-        {
-            return mesh1.numIndices > mesh2.numIndices;
-        });
+//        std::sort(meshes.begin(), meshes.end(), [](const opengl::OpenGLMesh& mesh1, const opengl::OpenGLMesh& mesh2)
+//        {
+//            return mesh1.numIndices > mesh2.numIndices;
+//        });
         
         return meshes;
     }

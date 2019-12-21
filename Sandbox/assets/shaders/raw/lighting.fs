@@ -92,6 +92,11 @@ void main()
     vec4 diffuseMat = texture(material.texture_diffuse1, TexCoord);
     //result += CalcEmissiveForMaterial(spotLight.light);
 
+    if(diffuseMat.a < 0.01)
+    {
+        discard;
+    }
+
     FragColor = vec4(result, diffuseMat.a);
 }
 

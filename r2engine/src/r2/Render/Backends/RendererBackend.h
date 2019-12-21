@@ -39,6 +39,9 @@ namespace r2::draw
     void OpenGLDrawRay(const r2::math::Ray& ray);
     u32 OpenGLLoadImageTexture(const char* path);
     u32 OpenGLCreateImageTexture(u32 width, u32 height, void* data);
+    
+    void OpenGLNextAnimation();
+    void OpenGLPrevAnimation();
 #ifdef R2_ASSET_PIPELINE
     void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);
 #endif

@@ -20,10 +20,10 @@ uniform mat4 boneTransformations[NUM_BONE_TRANSFORMATIONS];
 
 void main()
 {
-	mat4 finalBoneVertexTransform 	 = mat4(1.0);//boneTransformations[aBoneIDs[0]] * aBoneWeights[0];
-	//finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[1]] * aBoneWeights[1];
-	//finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[2]] * aBoneWeights[2];
-	//finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[3]] * aBoneWeights[3];
+	mat4 finalBoneVertexTransform 	 = boneTransformations[aBoneIDs[0]] * aBoneWeights[0];
+	finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[1]] * aBoneWeights[1];
+	finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[2]] * aBoneWeights[2];
+	finalBoneVertexTransform 		+= boneTransformations[aBoneIDs[3]] * aBoneWeights[3];
 
 	mat4 vertexTransform = model * finalBoneVertexTransform;
 	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);

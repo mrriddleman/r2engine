@@ -64,6 +64,19 @@ namespace r2
             return false;
         });
         
+        dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e){
+            if (e.KeyCode() == r2::io::KEY_LEFT)
+            {
+                r2::draw::OpenGLPrevAnimation();
+                return true;
+            }
+            else if(e.KeyCode() == r2::io::KEY_RIGHT)
+            {
+                r2::draw::OpenGLNextAnimation();
+                return true;
+            }
+            return false;
+        });
         
         mPersController.OnEvent(event);
     }
