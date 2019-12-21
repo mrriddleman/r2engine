@@ -149,7 +149,7 @@ namespace
     std::vector<r2::draw::opengl::OpenGLMesh> s_openglMeshes;
     r2::draw::SkinnedModel g_Model;
     
-    u32 g_VBO, g_VAO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
+    u32 g_VBO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
 }
 
 namespace r2::draw
@@ -212,8 +212,11 @@ namespace r2::draw
         {
             //
             char modelPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "skeleton_archer_v2/animations/skeleton_archer_allinone.fbx", modelPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/models/micro_bat.fbx", modelPath);
+            char animationsPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/animations", animationsPath);
             LoadSkinnedModel(g_Model, modelPath);
+            AddAnimations(g_Model, animationsPath);
             s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         }
         
@@ -396,9 +399,9 @@ namespace r2::draw
 
             glm::mat4 modelMat = glm::mat4(1.0f);
             modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            modelMat = glm::scale(modelMat, glm::vec3(0.025f));
+            modelMat = glm::scale(modelMat, glm::vec3(0.01f));
            
-            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 0);
+            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 6);
 
             for (u32 i = 0; i < boneMats.size(); ++i)
             {

@@ -20,6 +20,12 @@ namespace r2
         SArray();
         ~SArray();
     
+        void DeallocArray(r2::mem::utils::NonPODType);
+        
+        void DeallocArray(r2::mem::utils::PODType);
+        
+        void DeallocArray();
+        
         void Create(T* start, u64 capacity);
         
         //Copyable
@@ -178,14 +184,37 @@ namespace r2
         
     }
     
+    template<typename T>
+    void SArray<T>::DeallocArray(r2::mem::utils::NonPODType)
+    {
+
+        for(u64 i = mCapacity; i > 0; --i)
+        {
+            mData[i-1].~T();
+        }
+
+    }
+    
+    template<typename T>
+    void SArray<T>::DeallocArray(r2::mem::utils::PODType)
+    {
+        
+    }
+    
+    template<typename T>
+    void SArray<T>::DeallocArray()
+    {
+        DeallocArray(r2::mem::utils::IntToType<r2::mem::utils::IsPOD<T>::Value>());
+    }
+    
+    
     template <typename T>
     SArray<T>::~SArray()
     {
-        if(!std::is_pod<T>::value)
-        {
-            for(u64 i = mCapacity; i > 0; --i)
-                mData[i-1].~T();
-        }
+        DeallocArray();
+        mData = nullptr;
+        mCapacity = 0;
+        mSize = 0;
     }
     
     template<typename T>

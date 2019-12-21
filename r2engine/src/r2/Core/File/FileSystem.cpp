@@ -12,6 +12,8 @@
 
 namespace r2::fs
 {
+    const char* FileSystem::ALL_EXT = "*";
+    
     r2::SArray<FileStorageArea*>* FileSystem::mStorageAreas = nullptr;
     
     bool FileSystem::Init(r2::mem::LinearArena& arena, u32 storageAreaCapacity)
@@ -163,6 +165,15 @@ namespace r2::fs
         return false;
     }
 
+    void FileSystem::CreateFileListFromDirectory(const char* directory, const char* ext, r2::SArray<char[r2::fs::FILE_PATH_LENGTH]>* fileList)
+    {
+        FileStorageArea* storageArea = FindStorageArea(directory);
+        if (storageArea)
+        {
+            storageArea->CreateFileListFromDirectory(directory, ext, fileList);
+        }
+    }
+    
     void FileSystem::UnmountStorageAreas()
     {
         R2_CHECK(mStorageAreas != nullptr, "We should have a non-null mStorageAreas");

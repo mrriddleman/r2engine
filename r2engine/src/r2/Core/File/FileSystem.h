@@ -20,7 +20,7 @@ namespace r2::fs
     class FileSystem
     {
     public:
-
+        static const char* ALL_EXT;
         //Not to be used by application
         static bool Init(r2::mem::LinearArena& arena, u32 storageAreaCapacity);
         static void Mount(FileStorageArea& storageArea);
@@ -37,6 +37,9 @@ namespace r2::fs
         static bool DirExists(const char* path);
         static bool CreateDirectory(const char* path, bool recursive);
         static bool DeleteDirectory(const char* path);
+        
+        static void CreateFileListFromDirectory(const char* directory, const char* ext, r2::SArray<char[r2::fs::FILE_PATH_LENGTH]>* fileList);
+        
     private:
         static void UnmountStorageAreas();
         static FileStorageArea* FindStorageArea(const char* path);

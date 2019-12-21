@@ -32,6 +32,8 @@ namespace r2::fs
         bool RenameFile(const char* existingFile, const char* newName);
         bool CopyFile(const char* existingFile, const char* newName);
         
+        void CreateFileListFromDirectory(const char* directory, const char* ext, r2::SArray<char[r2::fs::FILE_PATH_LENGTH]>* fileList);
+        
         inline const char* RootPath() const {return &mRootPath[0];}
         inline FileStorageDevice* GetFileStorageDevice() {return moptrStorageDevice;}
         inline const FileDeviceModifierList* GetFileDeviceModifiers() {return moptrModifiers;}

@@ -41,6 +41,8 @@ namespace r2::fs
         Binary = 1 << 4,
     };
     
+  //  const char* ALL_EXT = "*";
+    
     using FileMode = r2::Flags<u32, u32>;
     
     class DeviceConfig

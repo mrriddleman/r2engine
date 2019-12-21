@@ -6,6 +6,8 @@
 //
 
 #include "r2/Core/File/FileStorageArea.h"
+
+#include "r2/Core/File/DirectoryUtils.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFileStorageDevice.h"
 #include "r2/Core/File/FileDevices/Modifiers/Safe/SafeFileModifierDevice.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFileModifierDevice.h"
@@ -209,5 +211,10 @@ namespace r2::fs
         }
         
         return success;
+    }
+    
+    void FileStorageArea::CreateFileListFromDirectory(const char* directory, const char* ext, r2::SArray<char[r2::fs::FILE_PATH_LENGTH]>* fileList)
+    {
+        dir::CreateFileListFromDirectory(directory, ext, fileList);
     }
 }

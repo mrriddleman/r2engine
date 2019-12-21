@@ -444,7 +444,11 @@ namespace r2
             {
                 if (p)
                 {
-                    p->~T();
+                    if(!IsPOD<T>::Value)
+                    {
+                        p->~T();
+                    }
+                    
                     arena.Free(p, file, line, description);
                 }
             }

@@ -15,6 +15,7 @@ namespace r2::draw
     
     void LoadModel(Model& model, const char* filePath);
     void LoadSkinnedModel(SkinnedModel& model, const char* filePath);
+    void AddAnimations(SkinnedModel& model, const char* directory);
 }
 
 #endif /* AssimpLoadHelpers_h */

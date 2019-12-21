@@ -8,12 +8,17 @@
 #include "LoadHelpers.h"
 
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/File/FileSystem.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Math/MathUtils.h"
+
 #include "r2/Render/Renderer/Vertex.h"
 #include "r2/Render/Renderer/Model.h"
 #include "r2/Render/Renderer/SkinnedModel.h"
 #include "r2/Render/Renderer/RendererUtils.h"
 #include "r2/Render/Renderer/Model.h"
+
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -56,25 +61,29 @@ namespace r2::draw
         r2::fs::utils::CopyDirectoryOfFile(filePath, model.directory);
         model.globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
         ProcessNode(model, scene->mRootNode, scene);
+        
+        import.FreeScene();
     }
     
     void LoadSkinnedModel(SkinnedModel& model, const char* filePath)
     {
+        
         Assimp::Importer import;
+        
         const aiScene* scene = import.ReadFile(filePath, //aiProcess_CalcTangentSpace |
                                                //aiProcess_JoinIdenticalVertices |
                                                aiProcess_Triangulate |
-                                               aiProcess_SortByPType | // ?
+                                              // aiProcess_SortByPType | // ?
                                                aiProcess_GenSmoothNormals |
                                                aiProcess_ImproveCacheLocality |
                                                aiProcess_RemoveRedundantMaterials |
-                                               aiProcess_FindDegenerates |
+                                              // aiProcess_FindDegenerates |
                                                //aiProcess_GenUVCoords |
                                                //aiProcess_TransformUVCoords |
-                                               aiProcess_FindInstances |
+                                              // aiProcess_FindInstances |
                                                aiProcess_LimitBoneWeights |
                                                aiProcess_OptimizeMeshes |
-                                               aiProcess_SplitByBoneCount 
+                                               aiProcess_SplitByBoneCount
                                                );
         
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -91,6 +100,32 @@ namespace r2::draw
         model.skeleton.parent = nullptr;
         ProcessNode(model, scene->mRootNode, model.skeleton, scene, 0, 0);
         ProcessAnimations(model, scene->mRootNode, scene);
+        
+        import.FreeScene();
+    }
+    
+    void AddAnimations(SkinnedModel& model, const char* directory)
+    {
+        Assimp::Importer import;
+        
+        r2::SArray<char[r2::fs::FILE_PATH_LENGTH]>* fileList = nullptr;
+        
+        fileList = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char[r2::fs::FILE_PATH_LENGTH], 100);
+        
+        r2::fs::FileSystem::CreateFileListFromDirectory(directory, ".fbx", fileList);
+        
+        u64 size = r2::sarr::Size(*fileList);
+        
+        for (u64 i = 0; i < size; ++i)
+        {
+            const char* animName = r2::sarr::At(*fileList, i);
+            
+            const aiScene* newAnim = import.ReadFile(animName, 0);
+            ProcessAnimations(model, newAnim->mRootNode, newAnim);
+            import.FreeScene();
+        }
+        
+        FREE(fileList, *MEM_ENG_SCRATCH_PTR);
     }
     
 }
@@ -305,10 +340,14 @@ namespace
     {
         if(scene->HasAnimations())
         {
-            model.animations.resize(scene->mNumAnimations);
-            for (u32 i = 0; i < scene->mNumAnimations; ++i)
+            u32 oldSize = model.animations.size();
+            u32 startingIndex = oldSize;
+            u32 newSize = oldSize + scene->mNumAnimations;
+            model.animations.resize(newSize);
+            
+            for (u32 i = startingIndex; i < newSize; ++i)
             {
-                aiAnimation* anim = scene->mAnimations[i];
+                aiAnimation* anim = scene->mAnimations[i - oldSize];
                 r2::draw::Animation& r2Anim = model.animations[i];
                 r2Anim.duration = anim->mDuration;
                 r2Anim.ticksPerSeconds = anim->mTicksPerSecond;
