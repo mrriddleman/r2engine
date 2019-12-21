@@ -167,6 +167,7 @@ namespace r2::draw
         stbi_set_flip_vertically_on_load(true);
         glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         
+        
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
         
@@ -212,11 +213,11 @@ namespace r2::draw
         {
             //
             char modelPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/models/micro_bat.fbx", modelPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_ghoul_lp_v3/models/micro_ghoul.fbx", modelPath);
             char animationsPath[r2::fs::FILE_PATH_LENGTH];
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/animations", animationsPath);
             LoadSkinnedModel(g_Model, modelPath);
-            AddAnimations(g_Model, animationsPath);
+           // AddAnimations(g_Model, animationsPath);
             s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         }
         
@@ -261,6 +262,8 @@ namespace r2::draw
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         u32 whiteColor = 0xffffffff;
         defaultTexture = OpenGLCreateImageTexture(1, 1, &whiteColor);
@@ -401,15 +404,15 @@ namespace r2::draw
             modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             modelMat = glm::scale(modelMat, glm::vec3(0.01f));
            
-            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 6);
-
-            for (u32 i = 0; i < boneMats.size(); ++i)
-            {
-                char boneTransformsStr[512];
-                sprintf(boneTransformsStr, "boneTransformations[%u]", i);
-                u32 boneLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, boneTransformsStr);
-                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(boneMats[i])));
-            }
+//            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, 0);
+//
+//            for (u32 i = 0; i < boneMats.size(); ++i)
+//            {
+//                char boneTransformsStr[512];
+//                sprintf(boneTransformsStr, "boneTransformations[%u]", i);
+//                u32 boneLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, boneTransformsStr);
+//                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat4(1.0f))));
+//            }
 
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
             DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);

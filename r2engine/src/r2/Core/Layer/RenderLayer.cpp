@@ -55,9 +55,9 @@ namespace r2
         {
             if(e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
             {
-                r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
+                //r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
                 
-                r2::draw::OpenGLDrawRay(ray);
+               // r2::draw::OpenGLDrawRay(ray);
                 return true;
             }
             

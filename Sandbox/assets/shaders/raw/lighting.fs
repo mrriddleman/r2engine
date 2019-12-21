@@ -89,9 +89,10 @@ void main()
 
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
+    vec4 diffuseMat = texture(material.texture_diffuse1, TexCoord);
     //result += CalcEmissiveForMaterial(spotLight.light);
 
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, diffuseMat.a);
 }
 
 float CalcAttenuation(AttenuationState state, vec3 lightPos, vec3 fragPos)
