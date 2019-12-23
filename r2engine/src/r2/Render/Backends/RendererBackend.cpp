@@ -327,20 +327,15 @@ namespace r2::draw
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilMask(0x00);
             glDisable(GL_DEPTH_TEST);
-            
+
             glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
-            modelMat = glm::mat4(1.0f);
-            
-           // modelMat = glm::translate(modelMat, glm::vec3(0.0f, 0.0f, -0.05f));
-            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            modelMat = glm::scale(modelMat, glm::vec3(0.0102f));
-            
+
             SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
             SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
-            
+
             int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
             glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-            
+
             DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
             glStencilMask(0xFF); //needed so that clear can write to the stencil buffer
             glEnable(GL_DEPTH_TEST);
@@ -348,6 +343,7 @@ namespace r2::draw
 
         //Draw lamp
         {
+            glStencilMask(0x00);
             glUseProgram(s_shaders[LAMP_SHADER].shaderProg);
             
             int lightViewLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "view");
@@ -387,6 +383,8 @@ namespace r2::draw
             
             glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
+        
+        glStencilMask(0xFF);
     }
     
     void OpenGLShutdown()
