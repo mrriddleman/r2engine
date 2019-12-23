@@ -47,7 +47,9 @@ namespace
     {
         LIGHTING_SHADER = 0,
         LAMP_SHADER,
-        DEBUG_SHADER
+        DEBUG_SHADER,
+        OUTLINE_SHADER,
+        NUM_SHADERS
     };
     
     //@Temp
@@ -159,6 +161,10 @@ namespace r2::draw
     u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
     void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
     
+    void SetupLighting(const Shader& shader);
+    void SetupMVP(const Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
+    void SetupBoneMats(const Shader& shader, const std::vector<glm::mat4>& boneMats);
+    
     void DrawOpenGLMesh(const Shader& shader, const opengl::OpenGLMesh& mesh);
     void DrawOpenGLMeshes(const Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
     
@@ -172,9 +178,7 @@ namespace r2::draw
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
         
-        s_shaders.push_back(Shader());
-        s_shaders.push_back(Shader());
-        s_shaders.push_back(Shader());
+        s_shaders.resize(NUM_SHADERS, Shader());
         
 #ifdef R2_ASSET_PIPELINE
         //load the shader pipeline assets
@@ -207,6 +211,15 @@ namespace r2::draw
             
             s_shaders[DEBUG_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[DEBUG_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SkeletonOutline.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SkeletonOutline.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[OUTLINE_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[OUTLINE_SHADER].manifest = shaderManifest;
         }
 #endif
 
@@ -264,7 +277,9 @@ namespace r2::draw
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
+        glEnable(GL_STENCIL_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+       
         
         u32 whiteColor = 0xffffffff;
         defaultTexture = OpenGLCreateImageTexture(1, 1, &whiteColor);
@@ -272,151 +287,63 @@ namespace r2::draw
     
     void OpenGLDraw(float alpha)
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        
+        std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
         
         //Draw the cube
         {
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+            
             glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
 
-            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+            SetupLighting(s_shaders[LIGHTING_SHADER]);
 
+            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+            
             int uniformTimeLocation = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "time");
             glUniform1f(uniformTimeLocation, timeVal);
-            //
-            int viewLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "view");
-            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-            //
-            int projectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "projection");
-            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
 
             int viewPosLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "viewPos");
             glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
-
-            int modelLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "model");
-
-            int materialShininessLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "material.shininess");
-            glUniform1f(materialShininessLoc, 64.0f);
-
-            glm::vec3 diffuseColor = glm::vec3(0.8f);
-            glm::vec3 ambientColor = glm::vec3(0.05f);
-            glm::vec3 specularColor = glm::vec3(1.0f);
-
-            float attenConst = 1.0f;
-            float attenLinear = 0.09f;
-            float attenQuad = 0.032f;
-            //directional light setup
-            {
-                int dirLightDirLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.direction");
-
-                glUniform3fv(dirLightDirLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-
-                int dirLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.ambient");
-                glUniform3fv(dirLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.05f)));
-
-                int dirLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.diffuse");
-                glUniform3fv(dirLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(0.4f)));
-
-                int dirLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "dirLight.light.specular");
-                glUniform3fv(dirLightSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f)));
-            }
-
-            //point light setup
-            {
-                for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
-                {
-                    char pointLightStr[512];
-                    sprintf(pointLightStr, "pointLights[%i].position", i);
-                    int pointLightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform3fv(pointLightPositionLoc, 1, glm::value_ptr(pointLightPositions[i]));
-
-                    sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
-                    int pointLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform1f(pointLightConstantLoc, attenConst);
-
-                    sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
-                    int pointLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform1f(pointLightLinearLoc, attenLinear);
-
-                    sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
-                    int pointLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform1f(pointLightQuadLoc, attenQuad);
-
-                    sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
-                    int pointLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform3fv(pointLightAmbientLoc, 1, glm::value_ptr(ambientColor));
-
-                    sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
-                    int pointLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform3fv(pointLightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
-
-                    sprintf(pointLightStr, "pointLights[%i].light.specular", i);
-                    int pointLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, pointLightStr);
-
-                    glUniform3fv(pointLightSpecularLoc, 1, glm::value_ptr(specularColor));
-
-                }
-            }
-
-            //spotlight setup
-            {
-                int lightPositionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.position");
-                glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
-
-                int lightDirectionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.direction");
-                glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));
-
-                int spotLightAmbientLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.ambient");
-                glUniform3fv(spotLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.0f)));
-
-                int spotLightDiffuseLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.diffuse");
-                glUniform3fv(spotLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
-
-                int spotLightSpecularLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.specular");
-                glUniform3fv(spotLightSpecularLoc, 1, glm::value_ptr(specularColor));
-
-                int spotLightEmissionLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.light.emission");
-                glUniform3fv(spotLightEmissionLoc, 1, glm::value_ptr(specularColor));
-
-                int spotLightConstantLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.constant");
-
-                glUniform1f(spotLightConstantLoc, attenConst);
-
-                int spotLightLinearLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.linear");
-
-                glUniform1f(spotLightLinearLoc, attenLinear);
-
-                int spotLightQuadLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.attenuationState.quadratic");
-                glUniform1f(spotLightQuadLoc, attenQuad);
-
-                int lightCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.cutoff");
-                glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
-
-                int lightOuterCutoffLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "spotLight.outerCutoff");
-                glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
-            }
-
+            
             glm::mat4 modelMat = glm::mat4(1.0f);
             modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             modelMat = glm::scale(modelMat, glm::vec3(0.01f));
            
-            std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
-
-            for (u32 i = 0; i < boneMats.size(); ++i)
-            {
-                char boneTransformsStr[512];
-                sprintf(boneTransformsStr, "boneTransformations[%u]", i);
-                u32 boneLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, boneTransformsStr);
-                glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(boneMats[i]));
-            }
-
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMat));
+            SetupMVP(s_shaders[LIGHTING_SHADER], modelMat, g_View, g_Proj);
+            
+            SetupBoneMats(s_shaders[LIGHTING_SHADER], boneMats);
+            
+            
             DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
+        
+        
+        //draw outline
+        
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST);
+            
+            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
+            modelMat = glm::mat4(1.0f);
+            
+           // modelMat = glm::translate(modelMat, glm::vec3(0.0f, 0.0f, -0.05f));
+            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            modelMat = glm::scale(modelMat, glm::vec3(0.0102f));
+            
+            SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
+            SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
+            
+            int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
+            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+            
+            DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
+            glStencilMask(0xFF); //needed so that clear can write to the stencil buffer
+            glEnable(GL_DEPTH_TEST);
         }
 
         //Draw lamp
@@ -448,17 +375,9 @@ namespace r2::draw
         if (g_debugVerts.size() > 0)
         {
             glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
+
+            SetupMVP(s_shaders[DEBUG_SHADER], glm::mat4(1.0f), g_View, g_Proj);
             
-            glm::mat4 debugModel = glm::mat4(1.0f);
-            int debugModelLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "model");
-            glUniformMatrix4fv(debugModelLoc, 1, GL_FALSE, glm::value_ptr(debugModel));
-            
-            int debugViewLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "view");
-            glUniformMatrix4fv(debugViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-            //
-            int debugProjectionLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "projection");
-            glUniformMatrix4fv(debugProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-            //
             int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
             glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
             
@@ -795,6 +714,140 @@ namespace r2::draw
             }
             
             *program = reloadedShaderProgram;
+        }
+    }
+    
+    
+    void SetupBoneMats(const Shader& shader, const std::vector<glm::mat4>& boneMats)
+    {
+        for (u32 i = 0; i < boneMats.size(); ++i)
+        {
+            char boneTransformsStr[512];
+            sprintf(boneTransformsStr, "boneTransformations[%u]", i);
+            u32 boneLoc = glGetUniformLocation(shader.shaderProg, boneTransformsStr);
+            glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(boneMats[i]));
+        }
+    }
+    
+    void SetupMVP(const Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj)
+    {
+        int modelLoc = glGetUniformLocation(shader.shaderProg, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        //
+        int viewLoc = glGetUniformLocation(shader.shaderProg, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        //
+        int projectionLoc = glGetUniformLocation(shader.shaderProg, "projection");
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(proj));
+    }
+    
+    void SetupLighting(const Shader& shader)
+    {
+        int materialShininessLoc = glGetUniformLocation(shader.shaderProg, "material.shininess");
+        glUniform1f(materialShininessLoc, 64.0f);
+        
+        glm::vec3 diffuseColor = glm::vec3(0.8f);
+        glm::vec3 ambientColor = glm::vec3(0.05f);
+        glm::vec3 specularColor = glm::vec3(1.0f);
+        
+        float attenConst = 1.0f;
+        float attenLinear = 0.09f;
+        float attenQuad = 0.032f;
+        //directional light setup
+        {
+            int dirLightDirLoc = glGetUniformLocation(shader.shaderProg, "dirLight.direction");
+            
+            glUniform3fv(dirLightDirLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
+            
+            int dirLightAmbientLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.ambient");
+            glUniform3fv(dirLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.05f)));
+            
+            int dirLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.diffuse");
+            glUniform3fv(dirLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(0.4f)));
+            
+            int dirLightSpecularLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.specular");
+            glUniform3fv(dirLightSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f)));
+        }
+        
+        //point light setup
+        {
+            for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
+            {
+                char pointLightStr[512];
+                sprintf(pointLightStr, "pointLights[%i].position", i);
+                int pointLightPositionLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform3fv(pointLightPositionLoc, 1, glm::value_ptr(pointLightPositions[i]));
+                
+                sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
+                int pointLightConstantLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform1f(pointLightConstantLoc, attenConst);
+                
+                sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
+                int pointLightLinearLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform1f(pointLightLinearLoc, attenLinear);
+                
+                sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
+                int pointLightQuadLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform1f(pointLightQuadLoc, attenQuad);
+                
+                sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
+                int pointLightAmbientLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform3fv(pointLightAmbientLoc, 1, glm::value_ptr(ambientColor));
+                
+                sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
+                int pointLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform3fv(pointLightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
+                
+                sprintf(pointLightStr, "pointLights[%i].light.specular", i);
+                int pointLightSpecularLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+                
+                glUniform3fv(pointLightSpecularLoc, 1, glm::value_ptr(specularColor));
+                
+            }
+        }
+        
+        //spotlight setup
+        {
+            int lightPositionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.position");
+            glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
+            
+            int lightDirectionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.direction");
+            glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));
+            
+            int spotLightAmbientLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.ambient");
+            glUniform3fv(spotLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.0f)));
+            
+            int spotLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.diffuse");
+            glUniform3fv(spotLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
+            
+            int spotLightSpecularLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.specular");
+            glUniform3fv(spotLightSpecularLoc, 1, glm::value_ptr(specularColor));
+            
+            int spotLightEmissionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.emission");
+            glUniform3fv(spotLightEmissionLoc, 1, glm::value_ptr(specularColor));
+            
+            int spotLightConstantLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.constant");
+            
+            glUniform1f(spotLightConstantLoc, attenConst);
+            
+            int spotLightLinearLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.linear");
+            
+            glUniform1f(spotLightLinearLoc, attenLinear);
+            
+            int spotLightQuadLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.quadratic");
+            glUniform1f(spotLightQuadLoc, attenQuad);
+            
+            int lightCutoffLoc = glGetUniformLocation(shader.shaderProg, "spotLight.cutoff");
+            glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
+            
+            int lightOuterCutoffLoc = glGetUniformLocation(shader.shaderProg, "spotLight.outerCutoff");
+            glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
         }
     }
     
