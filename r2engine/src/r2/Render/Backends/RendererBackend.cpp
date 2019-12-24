@@ -293,7 +293,26 @@ namespace r2::draw
         
         std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
         
-        //Draw the cube
+        //Draw a cube
+        {
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
+            glBindVertexArray(g_lightVAO);
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
+            model = glm::scale(model, glm::vec3(1.0f));
+            
+            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
+            
+            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
+            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));
+            
+            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+        }
+        
+        
+        //Draw the model
         {
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
@@ -342,25 +361,8 @@ namespace r2::draw
 //            glStencilFunc(GL_ALWAYS, 1, 0xFF);
         }
         
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glStencilMask(0xFF);
-        
         //draw a box
-        {
-            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
-            glBindVertexArray(g_lightVAO);
-            glm::mat4 model = glm::mat4(1.0f);
-            
-            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
-            model = glm::scale(model, glm::vec3(1.0f));
-            
-            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
-            
-            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
-            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));
-            
-             glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
-        }
+
 
         //draw object if it's behind
         {
