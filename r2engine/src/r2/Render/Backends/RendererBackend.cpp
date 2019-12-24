@@ -287,8 +287,8 @@ namespace r2::draw
     
     void OpenGLDraw(float alpha)
     {
-        
-         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         
         std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
@@ -324,26 +324,73 @@ namespace r2::draw
         
         //draw outline
         
+//            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+//            glStencilMask(0x00);
+//            glDisable(GL_DEPTH_TEST);
+//
+//            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
+//
+//            SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
+//            SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
+//
+//            int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
+//            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+//
+//            DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
+//            glStencilMask(0xFF); //needed so that clear can write to the stencil buffer
+//            glEnable(GL_DEPTH_TEST);
+//            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        }
+        
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glStencilMask(0xFF);
+        
+        //draw a box
+        {
+            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
+            glBindVertexArray(g_lightVAO);
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
+            model = glm::scale(model, glm::vec3(1.0f));
+            
+            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
+            
+            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
+            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));
+            
+             glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+        }
+
+        //draw object if it's behind
+        {
+            
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilMask(0x00);
             glDisable(GL_DEPTH_TEST);
-
+            
             glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
-
+            
+            glm::mat4 modelMat = glm::mat4(1.0f);
+            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            modelMat = glm::scale(modelMat, glm::vec3(0.01f));
+            
             SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
             SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
-
+            
             int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
             glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-
+            
             DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
-            glStencilMask(0xFF); //needed so that clear can write to the stencil buffer
             glEnable(GL_DEPTH_TEST);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
         }
-
+        
+        
+        
         //Draw lamp
         {
-            glStencilMask(0x00);
+            
             glUseProgram(s_shaders[LAMP_SHADER].shaderProg);
             
             int lightViewLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "view");
@@ -362,6 +409,7 @@ namespace r2::draw
                 lightModel = glm::translate(lightModel, pointLightPositions[i]);
                 lightModel = glm::scale(lightModel, glm::vec3(0.2f));
                 glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
+                
                 
                 glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
             }
@@ -384,7 +432,7 @@ namespace r2::draw
             glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
         
-        glStencilMask(0xFF);
+        
     }
     
     void OpenGLShutdown()
