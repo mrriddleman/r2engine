@@ -27,6 +27,7 @@
 
 #include "r2/Render/Backends/OpenGLShader.h"
 
+#include <map>
 namespace
 {
     enum
@@ -199,20 +200,20 @@ namespace
         5.0f, -0.5f, -5.0f,  2.0f, 2.0f
     };
     float transparentVertices[] = {
-        // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
-        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+        // positions         // texture Coords
+        0.0f,  0.5f,  0.0f,  0.0f,  1.0f,
+        0.0f, -0.5f,  0.0f,  0.0f,  0.0f,
+        1.0f, -0.5f,  0.0f,  1.0f,  0.0f,
         
-        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-        1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+        0.0f,  0.5f,  0.0f,  0.0f,  1.0f,
+        1.0f, -0.5f,  0.0f,  1.0f,  0.0f,
+        1.0f,  0.5f,  0.0f,  1.0f,  1.0f
     };
     
     //Learn OpenGL
-    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO;
-    u32 marbelTex, metalTex, windowTex;
-    
+    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO;
+    u32 marbelTex, metalTex, windowTex, grassTex;
+    std::vector<glm::vec3> vegetation;
 }
 
 namespace r2::draw
@@ -717,14 +718,23 @@ namespace r2::draw
         opengl::AddBuffer(g_planeVAO, planeVBO);
         
         opengl::UnBind(g_planeVAO);
-       // opengl::VertexBuffer transparentVBO;
-       // opengl::Create(transparentVBO, {}, transparentVertices, COUNT_OF(transparentVertices), GL_STATIC_DRAW);
         
+        opengl::Create(g_transparentVAO);
         
-       // opengl::AddBuffer(g_LearnOpenGLVAO, planeVBO);
-        //opengl::AddBuffer(g_LearnOpenGLVAO, transparentVBO);
+        opengl::VertexBuffer transparentVBO;
         
-        //opengl::UnBind(g_LearnOpenGLVAO);
+        opengl::Create(transparentVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, transparentVertices, COUNT_OF(transparentVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_transparentVAO, transparentVBO);
+        
+        vegetation.push_back(glm::vec3(-1.5f,  0.0f, -0.48f));
+        vegetation.push_back(glm::vec3( 1.5f,  0.0f,  0.51f));
+        vegetation.push_back(glm::vec3( 0.0f,  0.0f,  0.7f));
+        vegetation.push_back(glm::vec3(-0.3f,  0.0f, -2.3f));
+        vegetation.push_back(glm::vec3( 0.5f,  0.0f, -0.6f));
         
         char path[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
@@ -733,16 +743,27 @@ namespace r2::draw
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "metal.png", path);
         metalTex = opengl::OpenGLLoadImageTexture(path);
         
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "grass.png", path);
+        
+        grassTex = opengl::OpenGLLoadImageTexture(path);
+        
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "blending_transparent_window.png", path);
+        
+        windowTex = opengl::OpenGLLoadImageTexture(path);
+        
         s_shaders[LEARN_OPENGL_SHADER].UseShader();
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
         
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
     
     void DrawLearnOpenGLDemo()
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        s_shaders[LEARN_OPENGL_SHADER].UseShader();
         SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
         
         glActiveTexture(GL_TEXTURE0);
@@ -773,6 +794,32 @@ namespace r2::draw
             s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
             
             glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        
+        {
+            //sort the windows
+            
+            std::sort(vegetation.begin(), vegetation.end(), [](const glm::vec3& v1, const glm::vec3& v2){
+               
+                float distance1 = glm::length(g_CameraPos - v1);
+                float distance2 = glm::length(g_CameraPos - v2);
+                
+                //we want to draw the bigger one first
+                return distance1 > distance2;
+            });
+            
+            opengl::Bind(g_transparentVAO);
+            glBindTexture(GL_TEXTURE_2D, windowTex);
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            
+            for (auto& vPos : vegetation)
+            {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, vPos);
+                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+            }
         }
         
     }

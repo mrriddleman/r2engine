@@ -17,7 +17,7 @@ namespace r2::cam
     {
         
         mCameraMoveSpeed = camMoveSpeed;
-        mFOV = fov;
+        mFOV = fov; 
         mAspect = aspect;
         mNear = near;
         mFar = far;
