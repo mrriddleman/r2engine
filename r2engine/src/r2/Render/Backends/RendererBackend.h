@@ -37,8 +37,7 @@ namespace r2::draw
     void OpenGLResizeWindow(u32 width, u32 height);
     void OpenGLSetCamera(const r2::Camera& cam);
     void OpenGLDrawRay(const r2::math::Ray& ray);
-    u32 OpenGLLoadImageTexture(const char* path);
-    u32 OpenGLCreateImageTexture(u32 width, u32 height, void* data);
+
     
     void OpenGLNextAnimation();
     void OpenGLPrevAnimation();

@@ -118,12 +118,6 @@ namespace r2
         
         SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
         
-        const char* testStr = "Level3";
-        size_t testHash = r2::utils::Hash<const char*>{}(testStr);
-        
-        R2_LOGI("Test hash is: %lu", testHash);
-        
-
         //Global memory setup for the engine
         {
             r2::mem::GlobalMemory::Init(MAX_NUM_MEMORY_AREAS,

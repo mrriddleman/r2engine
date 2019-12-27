@@ -9,6 +9,7 @@
 #define OpenGLMesh_h
 
 #include "r2/Render/Renderer/Mesh.h"
+#include "r2/Render/Backends/OpenGLBuffer.h"
 
 namespace r2::draw
 {
@@ -21,9 +22,10 @@ namespace r2::draw::opengl
     struct OpenGLMesh
     {
         u32 VAO, VBO, EBO, BoneVBO, BoneEBO;
+        VertexArrayBuffer vertexArray;
         
-        u32 numTextures;
-        u32 numIndices;
+        size_t numTextures;
+        size_t numIndices;
         std::vector<TextureType> types;
         std::vector<u32> texIDs;
         

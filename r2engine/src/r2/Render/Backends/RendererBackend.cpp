@@ -11,16 +11,12 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "stb_image.h"
+
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Camera/Camera.h"
 #include "r2/Core/Math/Ray.h"
 
-//For loading shader files
-#include "r2/Core/File/FileSystem.h"
-#include "r2/Core/File/File.h"
-#include "r2/Core/Memory/Memory.h"
-#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Backends/OpenGLImage.h"
 
 #include "r2/Render/Backends/OpenGLMesh.h"
 #include "r2/Render/Renderer/Model.h"
@@ -29,19 +25,11 @@
 
 #include "r2/Render/Renderer/AnimationPlayer.h"
 
-#ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/ShaderManifest.h"
-#endif
+#include "r2/Render/Backends/OpenGLShader.h"
 
 namespace
 {
-    struct Shader
-    {
-        u32 shaderProg = 0;
-#ifdef R2_ASSET_PIPELINE
-        r2::asset::pln::ShaderManifest manifest;
-#endif
-    };
+
     
     enum
     {
@@ -53,7 +41,7 @@ namespace
     };
     
     //@Temp
-    std::vector<Shader> s_shaders;
+    std::vector<r2::draw::opengl::Shader> s_shaders;
     
     float cubeVerts[] = {
         //front face
@@ -152,33 +140,46 @@ namespace
     r2::draw::SkinnedModel g_Model;
     s32 g_ModelAnimation = 0;
     
-    u32 g_VBO, g_EBO, diffuseMap, specularMap, emissionMap, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
+   // u32 g_VBO, g_EBO, g_DebugVAO, g_DebugVBO, defaultTexture, g_lightVAO;
+    u32 defaultTexture;
+    
+    r2::draw::opengl::VertexArrayBuffer g_LampVAO, g_DebugVAO;
+    
 }
 
 namespace r2::draw
 {
-    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr);
-    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
-    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
+
     
-    void SetupLighting(const Shader& shader);
-    void SetupMVP(const Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
-    void SetupBoneMats(const Shader& shader, const std::vector<glm::mat4>& boneMats);
+    void SetupLighting(const opengl::Shader& shader);
+    void SetupMVP(const opengl::Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
+    void SetupVP(const opengl::Shader& shader, const glm::mat4& view, const glm::mat4& proj);
+    void SetupModelMat(const opengl::Shader& shader, const glm::mat4& model);
     
-    void DrawOpenGLMesh(const Shader& shader, const opengl::OpenGLMesh& mesh);
-    void DrawOpenGLMeshes(const Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
+    void SetupBoneMats(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
     
+    void DrawOpenGLMesh(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh);
+    void DrawOpenGLMeshes(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
+    
+    void DrawSkinnedModel(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
+    void DrawSkinnedModelOutline(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
+    
+    void DrawSkinnedModelDemo();
+    void SetupSkinnedModelDemo();
+    
+    void SetupLearnOpenGLDemo();
+    void DrawLearnOpenGLDemo();
     
     void OpenGLInit()
     {
-        stbi_set_flip_vertically_on_load(true);
+        
         glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
         
         
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
         
-        s_shaders.resize(NUM_SHADERS, Shader());
+        s_shaders.resize(NUM_SHADERS, opengl::Shader());
         
 #ifdef R2_ASSET_PIPELINE
         //load the shader pipeline assets
@@ -191,7 +192,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
 
-            s_shaders[LIGHTING_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LIGHTING_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[LIGHTING_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.vs", vertexPath);
@@ -200,7 +201,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[LAMP_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LAMP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[LAMP_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.vs", vertexPath);
@@ -209,7 +210,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[DEBUG_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[DEBUG_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[DEBUG_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SkeletonOutline.vs", vertexPath);
@@ -218,242 +219,28 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[OUTLINE_SHADER].shaderProg = CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[OUTLINE_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[OUTLINE_SHADER].manifest = shaderManifest;
         }
 #endif
 
-        //load the model
-        {
-            //
-            char modelPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/models/micro_bat.fbx", modelPath);
-            char animationsPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/animations", animationsPath);
-            LoadSkinnedModel(g_Model, modelPath);
-            AddAnimations(g_Model, animationsPath);
-            s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
-        }
-        
-        //lamp setup
-        {
-            glGenVertexArrays(1, &g_lightVAO);
-            glBindVertexArray(g_lightVAO);
-            
-            glGenBuffers(1, &g_VBO);
-            glGenBuffers(1, &g_EBO);
-            
-            glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
-            
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(LampVertex), (void*)0);
-            glEnableVertexAttribArray(0);
-            
-            glBindVertexArray(0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        }
-        
-        //debug setup
-        {
-            glGenVertexArrays(1, &g_DebugVAO);
-            glGenBuffers(1, &g_DebugVBO);
-            
-            glBindVertexArray(g_DebugVAO);
-            
-            glBindBuffer(GL_ARRAY_BUFFER, g_DebugVBO);
-            glBufferData(GL_ARRAY_BUFFER, 100 * 3 * 2 * sizeof(float), nullptr, GL_STREAM_DRAW);
-            
-            //position attribute
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (void*)0);
-            glEnableVertexAttribArray(0);
-            
-            glBindVertexArray(0);
-        }
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glEnable(GL_STENCIL_TEST);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-       
-        
-        u32 whiteColor = 0xffffffff;
-        defaultTexture = OpenGLCreateImageTexture(1, 1, &whiteColor);
+        SetupSkinnedModelDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-        glStencilMask(0xFF);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        
-        std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
-        
-        //Draw a cube
-        {
-            glStencilFunc(GL_ALWAYS, 0, 0xFF);
-            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
-            glBindVertexArray(g_lightVAO);
-            glm::mat4 model = glm::mat4(1.0f);
-            
-            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
-            model = glm::scale(model, glm::vec3(1.0f));
-            
-            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
-            
-            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
-            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)));
-            
-            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
-        }
-        
-        
-        //Draw the model
-        {
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilMask(0xFF);
-            
-            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
-
-            SetupLighting(s_shaders[LIGHTING_SHADER]);
-
-            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-            
-            int uniformTimeLocation = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "time");
-            glUniform1f(uniformTimeLocation, timeVal);
-
-            int viewPosLoc = glGetUniformLocation(s_shaders[LIGHTING_SHADER].shaderProg, "viewPos");
-            glUniform3fv(viewPosLoc, 1, glm::value_ptr(g_CameraPos));
-            
-            glm::mat4 modelMat = glm::mat4(1.0f);
-            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            modelMat = glm::scale(modelMat, glm::vec3(0.01f));
-           
-            SetupMVP(s_shaders[LIGHTING_SHADER], modelMat, g_View, g_Proj);
-            
-            SetupBoneMats(s_shaders[LIGHTING_SHADER], boneMats);
-            
-            
-            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
-        
-        
-        //draw outline
-        
-//            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-//            glStencilMask(0x00);
-//            glDisable(GL_DEPTH_TEST);
-//
-//            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
-//
-//            SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
-//            SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
-//
-//            int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
-//            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-//
-//            DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
-//            glStencilMask(0xFF); //needed so that clear can write to the stencil buffer
-//            glEnable(GL_DEPTH_TEST);
-//            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        }
-        
-        //draw a box
-
-
-        //draw object if it's behind
-        {
-            
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
-            
-            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
-            
-            glm::mat4 modelMat = glm::mat4(1.0f);
-            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            modelMat = glm::scale(modelMat, glm::vec3(0.01f));
-            
-            SetupMVP(s_shaders[OUTLINE_SHADER], modelMat, g_View, g_Proj);
-            SetupBoneMats(s_shaders[OUTLINE_SHADER], boneMats);
-            
-            int debugColorLoc = glGetUniformLocation(s_shaders[OUTLINE_SHADER].shaderProg, "outlineColor");
-            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-            
-            DrawOpenGLMeshes(s_shaders[OUTLINE_SHADER], s_openglMeshes);
-            glEnable(GL_DEPTH_TEST);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        }
-        
-        
-        
-        //Draw lamp
-        {
-            
-            glUseProgram(s_shaders[LAMP_SHADER].shaderProg);
-            
-            int lightViewLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "view");
-            glUniformMatrix4fv(lightViewLoc, 1, GL_FALSE, glm::value_ptr(g_View));
-            //
-            int lightProjectionLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "projection");
-            glUniformMatrix4fv(lightProjectionLoc, 1, GL_FALSE, glm::value_ptr(g_Proj));
-            
-            int lightModelLoc = glGetUniformLocation(s_shaders[LAMP_SHADER].shaderProg, "model");
-            glBindVertexArray(g_lightVAO);
-            
-            for (u32 i = 0; i < 2; ++i)
-            {
-                glm::mat4 lightModel = glm::mat4(1.0f);
-                
-                lightModel = glm::translate(lightModel, pointLightPositions[i]);
-                lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-                glUniformMatrix4fv(lightModelLoc, 1, GL_FALSE, glm::value_ptr(lightModel));
-                
-                
-                glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
-            }
-        }
-        
-        //draw debug stuff
-        if (g_debugVerts.size() > 0)
-        {
-            glUseProgram(s_shaders[DEBUG_SHADER].shaderProg);
-
-            SetupMVP(s_shaders[DEBUG_SHADER], glm::mat4(1.0f), g_View, g_Proj);
-            
-            int debugColorLoc = glGetUniformLocation(s_shaders[DEBUG_SHADER].shaderProg, "debugColor");
-            glUniform4fv(debugColorLoc, 1, glm::value_ptr(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-            
-            glBindVertexArray(g_DebugVAO);
-            
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(DebugVertex)*g_debugVerts.size(), &g_debugVerts[0]);
-            
-            glDrawArrays(GL_LINES, 0, g_debugVerts.size());
-        }
-        
-        
+        DrawSkinnedModelDemo();
     }
     
     void OpenGLShutdown()
     {
-//        glDeleteVertexArrays(1, &g_VAO);
-        glDeleteBuffers(1, &g_VBO);
-        glDeleteBuffers(1, &g_EBO);
+        opengl::Destroy(g_LampVAO);
+        opengl::Destroy(g_DebugVAO);
         
-        glDeleteVertexArrays(1, &g_lightVAO);
-        glDeleteVertexArrays(1, &g_DebugVAO);
-        glDeleteBuffers(1, &g_DebugVBO);
-        
-      //  glDeleteProgram(s_shaders[LIGHTING_SHADER].shaderProg);
-        glDeleteProgram(s_shaders[LAMP_SHADER].shaderProg);
-        glDeleteProgram(s_shaders[DEBUG_SHADER].shaderProg);
-        
-//        glDeleteTextures(1, &diffuseMap);
-//        glDeleteTextures(1, &specularMap);
-//        glDeleteTextures(1, &defaultTexture);
+        for (u32 i = 0; i < NUM_SHADERS; ++i)
+        {
+            glDeleteProgram(s_shaders[i].shaderProg);
+        }
     }
     
     void OpenGLResizeWindow(u32 width, u32 height)
@@ -481,7 +268,7 @@ namespace r2::draw
         g_debugVerts.push_back(v1);
     }
     
-    void DrawOpenGLMeshes(const Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes)
+    void DrawOpenGLMeshes(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes)
     {
         for (u32 i = 0; i < meshes.size(); ++i)
         {
@@ -490,7 +277,7 @@ namespace r2::draw
     }
     
     
-    void DrawOpenGLMesh(const Shader& shader, const opengl::OpenGLMesh& mesh)
+    void DrawOpenGLMesh(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh)
     {
         u32 textureNum[TextureType::NUM_TEXTURE_TYPES];
         for(u32 i = 0; i < TextureType::NUM_TEXTURE_TYPES; ++i)
@@ -504,295 +291,81 @@ namespace r2::draw
             std::string number;
             std::string name = TextureTypeToString(mesh.types[i]);
             number = std::to_string(textureNum[mesh.types[i]]++);
-            int materialTextureLoc = glGetUniformLocation(shader.shaderProg, ("material." + name + number).c_str());
-            glUniform1i(materialTextureLoc, i);
+            shader.SetUInt(("material." + name + number).c_str(), i);
             glBindTexture(GL_TEXTURE_2D, mesh.texIDs[i]);
         }
 
         //draw mesh
-        glBindVertexArray(mesh.VAO);
+        opengl::Bind(mesh.vertexArray);
         glDrawElements(GL_TRIANGLES, mesh.numIndices, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
     }
     
-    
-    
-    u32 OpenGLLoadImageTexture(const char* path)
+    void DrawSkinnedModel(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
     {
-        //load and create texture
-        u32 newTex;
-        glGenTextures(1, &newTex);
-        glBindTexture(GL_TEXTURE_2D, newTex);
-        //set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        //load the image
+        SetupLighting(shader);
         
-        s32 texWidth, texHeight, channels;
-        u8* data = stbi_load(path, &texWidth, &texHeight, &channels, 0);
-        R2_CHECK(data != nullptr, "We didn't load the image!");
+        float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
         
-        GLenum format;
-        if (channels == 3)
-        {
-            format = GL_RGB;
-        }
-        else if(channels == 4)
-        {
-            format = GL_RGBA;
-        }
-        else
-        {
-            R2_CHECK(false, "UNKNOWN image format");
-        }
+        shader.SetUFloat("time", timeVal);
+        shader.SetUVec3("viewPos", g_CameraPos);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        stbi_image_free(data);
-        return newTex;
+        glm::mat4 modelMat = glm::mat4(1.0f);
+        modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMat = glm::scale(modelMat, glm::vec3(0.01f));
+        
+        SetupMVP(shader, modelMat, g_View, g_Proj);
+        
+        SetupBoneMats(shader, boneMats);
+        
+        DrawOpenGLMeshes(shader, s_openglMeshes);
     }
     
-    u32 OpenGLCreateImageTexture(u32 width, u32 height, void* data)
+    void DrawSkinnedModelOutline(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
     {
-        u32 newTex;
-        glGenTextures(1, &newTex);
-        glBindTexture(GL_TEXTURE_2D, newTex);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glm::mat4 modelMat = glm::mat4(1.0f);
+        modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelMat = glm::scale(modelMat, glm::vec3(0.01f));
         
-        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        SetupMVP(shader, modelMat, g_View, g_Proj);
+        SetupBoneMats(shader, boneMats);
         
-        return newTex;
+        shader.SetUVec4("outlineColor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+        DrawOpenGLMeshes(shader, s_openglMeshes);
     }
-    
-    
-    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr)
-    {
-        R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
-        
-        GLuint shaderProgram          = glCreateProgram();
-        GLuint vertexShaderHandle     = glCreateShader( GL_VERTEX_SHADER );
-        GLuint fragmentShaderHandle   = glCreateShader( GL_FRAGMENT_SHADER );
-        
-        { // compile shader and check for errors
-            glShaderSource( vertexShaderHandle, 1, &vertexShaderStr, NULL );
-            glCompileShader( vertexShaderHandle );
-            int lparams = -1;
-            glGetShaderiv( vertexShaderHandle, GL_COMPILE_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: vertex shader index %u did not compile\n", vertexShaderHandle);
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char slog[2048];
-                glGetShaderInfoLog( vertexShaderHandle, max_length, &actual_length, slog );
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", vertexShaderHandle,
-                        slog );
-                
-                glDeleteShader( vertexShaderHandle );
-                glDeleteShader( fragmentShaderHandle );
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-            
-        }
-        
-        { // compile shader and check for errors
-            glShaderSource( fragmentShaderHandle, 1, &fragShaderStr, NULL );
-            glCompileShader( fragmentShaderHandle );
-            int lparams = -1;
-            glGetShaderiv( fragmentShaderHandle, GL_COMPILE_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: fragment shader index %u did not compile\n",
-                        fragmentShaderHandle );
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char slog[2048];
-                glGetShaderInfoLog( fragmentShaderHandle, max_length, &actual_length, slog );
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", fragmentShaderHandle,
-                        slog );
-                
-                glDeleteShader( vertexShaderHandle );
-                glDeleteShader( fragmentShaderHandle );
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-            
-        }
-        
-        glAttachShader( shaderProgram, fragmentShaderHandle );
-        glAttachShader( shaderProgram, vertexShaderHandle );
-        
-        { // link program and check for errors
-            glLinkProgram( shaderProgram );
-            glDeleteShader( vertexShaderHandle );
-            glDeleteShader( fragmentShaderHandle );
-            int lparams = -1;
-            glGetProgramiv( shaderProgram, GL_LINK_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: could not link shader program GL index %u\n",
-                        shaderProgram );
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char plog[2048];
-                glGetProgramInfoLog( shaderProgram, max_length, &actual_length, plog );
-                R2_LOGE("Program info log for GL index %u:\n%s", shaderProgram, plog );
-                
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-        }
-        
-        return shaderProgram;
-    }
-    
-    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath)
-    {
-        R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
-        R2_CHECK(fragmentShaderFilePath != nullptr, "Fragment shader is null");
-        
-        char* vertexFileData = nullptr;
-        char* fragmentFileData = nullptr;
-        {
-            r2::fs::File* vertexFile = r2::fs::FileSystem::Open(DISK_CONFIG, vertexShaderFilePath, r2::fs::Read | r2::fs::Binary);
-            
-            R2_CHECK(vertexFile != nullptr, "Failed to open file: %s\n", vertexShaderFilePath);
-            if(!vertexFile)
-            {
-                R2_LOGE("Failed to open file: %s\n", vertexShaderFilePath);
-                return 0;
-            }
-            
-            u64 fileSize = vertexFile->Size();
-            
-            vertexFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
-            
-            if(!vertexFileData)
-            {
-                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return 0;
-            }
-            
-            bool success = vertexFile->ReadAll(vertexFileData);
-            
-            if(!success)
-            {
-                FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
-                R2_LOGE("Failed to read file: %s", vertexShaderFilePath);
-                return 0;
-            }
-            
-            vertexFileData[fileSize] = '\0';
-            r2::fs::FileSystem::Close(vertexFile);
-        }
-        
-        {
-            r2::fs::File* fragmentFile = r2::fs::FileSystem::Open(DISK_CONFIG, fragmentShaderFilePath, r2::fs::Read | r2::fs::Binary);
-            
-            R2_CHECK(fragmentFile != nullptr, "Failed to open file: %s\n", fragmentShaderFilePath);
-            if(!fragmentFile)
-            {
-                R2_LOGE("Failed to open file: %s\n", fragmentShaderFilePath);
-                return 0;
-            }
-            
-            u64 fileSize = fragmentFile->Size();
-            
-            fragmentFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
-            
-            if(!fragmentFileData)
-            {
-                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return 0;
-            }
-            
-            bool success = fragmentFile->ReadAll(fragmentFileData);
-            
-            if(!success)
-            {
-                FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
-                R2_LOGE("Failed to read file: %s", fragmentShaderFilePath);
-                return 0;
-            }
-            
-            fragmentFileData[fileSize] = '\0';
-            r2::fs::FileSystem::Close(fragmentFile);
-        }
-        
-        u32 shaderProg = CreateShaderProgramFromStrings(vertexFileData, fragmentFileData);
-        
-        FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);//fragment first since it was allocated last - this is a stack currently
-        FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
-        
-        if (!shaderProg)
-        {
-            R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
-            
-            R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
-            return 0;
-        }
-        
-        return shaderProg;
-    }
-    
-    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath)
-    {
-        R2_CHECK(program != nullptr, "Shader Program is nullptr");
-        R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
-        R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
-        
-        u32 reloadedShaderProgram = CreateShaderProgramFromRawFiles(vertexShaderFilePath, fragmentShaderFilePath);
-        
-        if (reloadedShaderProgram)
-        {
-            if(*program != 0)
-            {
-                glDeleteProgram(*program);
-            }
-            
-            *program = reloadedShaderProgram;
-        }
-    }
-    
-    
-    void SetupBoneMats(const Shader& shader, const std::vector<glm::mat4>& boneMats)
+
+    void SetupBoneMats(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
     {
         for (u32 i = 0; i < boneMats.size(); ++i)
         {
             char boneTransformsStr[512];
             sprintf(boneTransformsStr, "boneTransformations[%u]", i);
-            u32 boneLoc = glGetUniformLocation(shader.shaderProg, boneTransformsStr);
-            glUniformMatrix4fv(boneLoc, 1, GL_FALSE, glm::value_ptr(boneMats[i]));
+            shader.SetUMat4(boneTransformsStr, boneMats[i]);
         }
     }
     
-    void SetupMVP(const Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj)
+    void SetupMVP(const opengl::Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj)
     {
-        int modelLoc = glGetUniformLocation(shader.shaderProg, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        //
-        int viewLoc = glGetUniformLocation(shader.shaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        //
-        int projectionLoc = glGetUniformLocation(shader.shaderProg, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(proj));
+        SetupModelMat(shader, model);
+        SetupVP(shader, view, proj);
     }
     
-    void SetupLighting(const Shader& shader)
+    void SetupVP(const opengl::Shader& shader, const glm::mat4& view, const glm::mat4& proj)
     {
-        int materialShininessLoc = glGetUniformLocation(shader.shaderProg, "material.shininess");
-        glUniform1f(materialShininessLoc, 64.0f);
+        shader.SetUMat4("view", view);
+        shader.SetUMat4("projection", proj);
+    }
+    
+    void SetupModelMat(const opengl::Shader& shader, const glm::mat4& model)
+    {
+        shader.SetUMat4("model", model);
+    }
+    
+    void SetupLighting(const opengl::Shader& shader)
+    {
+        shader.SetUFloat("material.shininess", 64.0f);
         
         glm::vec3 diffuseColor = glm::vec3(0.8f);
         glm::vec3 ambientColor = glm::vec3(0.05f);
@@ -803,18 +376,10 @@ namespace r2::draw
         float attenQuad = 0.032f;
         //directional light setup
         {
-            int dirLightDirLoc = glGetUniformLocation(shader.shaderProg, "dirLight.direction");
-            
-            glUniform3fv(dirLightDirLoc, 1, glm::value_ptr(glm::vec3(-0.2f, -1.0f, -0.3f)));
-            
-            int dirLightAmbientLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.ambient");
-            glUniform3fv(dirLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.05f)));
-            
-            int dirLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.diffuse");
-            glUniform3fv(dirLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(0.4f)));
-            
-            int dirLightSpecularLoc = glGetUniformLocation(shader.shaderProg, "dirLight.light.specular");
-            glUniform3fv(dirLightSpecularLoc, 1, glm::value_ptr(glm::vec3(0.5f)));
+            shader.SetUVec3("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+            shader.SetUVec3("dirLight.light.ambient", glm::vec3(0.05f));
+            shader.SetUVec3("dirLight.light.diffuse", glm::vec3(0.4f));
+            shader.SetUVec3("dirLight.light.specular", glm::vec3(0.5f));
         }
         
         //point light setup
@@ -823,99 +388,232 @@ namespace r2::draw
             {
                 char pointLightStr[512];
                 sprintf(pointLightStr, "pointLights[%i].position", i);
-                int pointLightPositionLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform3fv(pointLightPositionLoc, 1, glm::value_ptr(pointLightPositions[i]));
+
+                shader.SetUVec3(pointLightStr, pointLightPositions[i]);
                 
                 sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
-                int pointLightConstantLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform1f(pointLightConstantLoc, attenConst);
+
+                shader.SetUFloat(pointLightStr, attenConst);
                 
                 sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
-                int pointLightLinearLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
+
+                shader.SetUFloat(pointLightStr, attenLinear);
                 
-                glUniform1f(pointLightLinearLoc, attenLinear);
                 
                 sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
-                int pointLightQuadLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform1f(pointLightQuadLoc, attenQuad);
+
+                shader.SetUFloat(pointLightStr, attenQuad);
                 
                 sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
-                int pointLightAmbientLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform3fv(pointLightAmbientLoc, 1, glm::value_ptr(ambientColor));
+
+                shader.SetUVec3(pointLightStr, ambientColor);
                 
                 sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
-                int pointLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform3fv(pointLightDiffuseLoc, 1, glm::value_ptr(diffuseColor));
+
+                shader.SetUVec3(pointLightStr, diffuseColor);
                 
                 sprintf(pointLightStr, "pointLights[%i].light.specular", i);
-                int pointLightSpecularLoc = glGetUniformLocation(shader.shaderProg, pointLightStr);
-                
-                glUniform3fv(pointLightSpecularLoc, 1, glm::value_ptr(specularColor));
-                
+
+                shader.SetUVec3(pointLightStr, specularColor);
             }
         }
         
         //spotlight setup
         {
-            int lightPositionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.position");
-            glUniform3fv(lightPositionLoc, 1, glm::value_ptr(g_CameraPos));
+
+            shader.SetUVec3("spotLight.position", g_CameraPos);
             
-            int lightDirectionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.direction");
-            glUniform3fv(lightDirectionLoc, 1, glm::value_ptr(g_CameraDir));
+            shader.SetUVec3("spotLight.direction", g_CameraDir);
             
-            int spotLightAmbientLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.ambient");
-            glUniform3fv(spotLightAmbientLoc, 1, glm::value_ptr(glm::vec3(0.0f)));
+            shader.SetUVec3("spotLight.light.ambient", glm::vec3(0.0f));
             
-            int spotLightDiffuseLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.diffuse");
-            glUniform3fv(spotLightDiffuseLoc, 1, glm::value_ptr(glm::vec3(1.0f)));
+            shader.SetUVec3("spotLight.light.diffuse", glm::vec3(1.0f));
             
-            int spotLightSpecularLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.specular");
-            glUniform3fv(spotLightSpecularLoc, 1, glm::value_ptr(specularColor));
+            shader.SetUVec3("spotLight.light.specular", specularColor);
             
-            int spotLightEmissionLoc = glGetUniformLocation(shader.shaderProg, "spotLight.light.emission");
-            glUniform3fv(spotLightEmissionLoc, 1, glm::value_ptr(specularColor));
+            shader.SetUVec3("spotLight.light.emission", specularColor);
             
-            int spotLightConstantLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.constant");
+            shader.SetUFloat("spotLight.attenuationState.constant", attenConst);
             
-            glUniform1f(spotLightConstantLoc, attenConst);
+            shader.SetUFloat("spotLight.attenuationState.linear", attenLinear);
             
-            int spotLightLinearLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.linear");
+            shader.SetUFloat("spotLight.attenuationState.quadratic", attenQuad);
+
+            shader.SetUFloat("spotLight.cutoff", glm::cos(glm::radians(12.5f)));
             
-            glUniform1f(spotLightLinearLoc, attenLinear);
-            
-            int spotLightQuadLoc = glGetUniformLocation(shader.shaderProg, "spotLight.attenuationState.quadratic");
-            glUniform1f(spotLightQuadLoc, attenQuad);
-            
-            int lightCutoffLoc = glGetUniformLocation(shader.shaderProg, "spotLight.cutoff");
-            glUniform1f(lightCutoffLoc, glm::cos(glm::radians(12.5f)));
-            
-            int lightOuterCutoffLoc = glGetUniformLocation(shader.shaderProg, "spotLight.outerCutoff");
-            glUniform1f(lightOuterCutoffLoc, glm::cos(glm::radians(15.f)));
+            shader.SetUFloat("spotLight.outerCutoff", glm::cos(glm::radians(15.f)));
         }
     }
     
     void OpenGLNextAnimation()
     {
-        u32 numAnimations = g_Model.animations.size();
+        size_t numAnimations = g_Model.animations.size();
         g_ModelAnimation = (g_ModelAnimation + 1) % numAnimations;
         
     }
     
     void OpenGLPrevAnimation()
     {
-        u32 numAnimations = g_Model.animations.size();
+        size_t numAnimations = g_Model.animations.size();
         if ((g_ModelAnimation - 1) < 0)
         {
-            g_ModelAnimation = numAnimations-1;
+            g_ModelAnimation = (s32)numAnimations-1;
         }
         else
             --g_ModelAnimation;
             
+    }
+    
+    //DEMOS
+    
+    void SetupSkinnedModelDemo()
+    {
+        //load the model
+        {
+            //
+            char modelPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/models/micro_bat.fbx", modelPath);
+            char animationsPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "micro_bat_lp/animations", animationsPath);
+            LoadSkinnedModel(g_Model, modelPath);
+            AddAnimations(g_Model, animationsPath);
+            s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
+        }
+        
+        //lamp setup
+        {
+            opengl::Create(g_LampVAO);
+            
+            opengl::VertexBuffer verts;
+            opengl::Create(verts, {
+                {ShaderDataType::Float3, "aPos"},
+                {ShaderDataType::Float3, "aNormal"},
+                {ShaderDataType::Float2, "aTexCoord"}
+            }, cubeVerts, COUNT_OF(cubeVerts), GL_STATIC_DRAW);
+            
+            opengl::IndexBuffer indexBuf;
+            opengl::Create(indexBuf, indices, COUNT_OF(indices), GL_STATIC_DRAW);
+            
+            opengl::AddBuffer(g_LampVAO, verts);
+            opengl::SetIndexBuffer(g_LampVAO, indexBuf);
+            
+            opengl::UnBind(g_LampVAO);
+        }
+        
+        //debug setup
+        {
+            opengl::Create(g_DebugVAO);
+            
+            opengl::VertexBuffer vBuf;
+            
+            opengl::Create(vBuf, {
+                {ShaderDataType::Float3, "aPos"}
+            }, (float*)nullptr, 100 * 3 * 2, GL_STREAM_DRAW);
+            
+            opengl::AddBuffer(g_DebugVAO, vBuf);
+            opengl::UnBind(g_DebugVAO);
+        }
+        
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        
+        u32 whiteColor = 0xffffffff;
+        defaultTexture = opengl::OpenGLCreateImageTexture(1, 1, &whiteColor);
+    }
+    
+    void DrawSkinnedModelDemo()
+    {
+        glStencilMask(0xFF);
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        
+        std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
+        
+        //Draw a cube
+        {
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            s_shaders[DEBUG_SHADER].UseShader();
+            opengl::Bind(g_LampVAO);
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
+            model = glm::scale(model, glm::vec3(1.0f));
+            
+            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
+            
+            s_shaders[DEBUG_SHADER].SetUVec4("debugColor", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+            
+            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+        }
+        
+        //Draw the model
+        {
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+            
+            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
+            
+            DrawSkinnedModel(s_shaders[LIGHTING_SHADER], boneMats);
+        }
+        
+        //draw object if it's behind
+        {
+            
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST);
+            
+            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
+            
+            DrawSkinnedModelOutline(s_shaders[OUTLINE_SHADER], boneMats);
+            glEnable(GL_DEPTH_TEST);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        }
+        
+        //Draw lamp
+        {
+            
+            s_shaders[LAMP_SHADER].UseShader();
+
+            SetupVP(s_shaders[LAMP_SHADER], g_View, g_Proj);
+            
+            opengl::Bind(g_LampVAO);
+            
+            
+            for (u32 i = 0; i < 2; ++i)
+            {
+                glm::mat4 lightModel = glm::mat4(1.0f);
+                
+                lightModel = glm::translate(lightModel, pointLightPositions[i]);
+                lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+                
+                SetupModelMat(s_shaders[LAMP_SHADER], lightModel);
+                
+                glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            }
+        }
+        
+        //draw debug stuff
+        if (g_debugVerts.size() > 0)
+        {
+            s_shaders[DEBUG_SHADER].UseShader();
+            
+            SetupMVP(s_shaders[DEBUG_SHADER], glm::mat4(1.0f), g_View, g_Proj);
+            
+            s_shaders[DEBUG_SHADER].SetUVec4("debugColor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+            
+            opengl::Bind(g_DebugVAO);
+            
+            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(DebugVertex)*g_debugVerts.size(), &g_debugVerts[0]);
+            
+            glDrawArrays(GL_LINES, 0, g_debugVerts.size());
+        }
     }
     
 #ifdef R2_ASSET_PIPELINE
@@ -926,7 +624,7 @@ namespace r2::draw
             if (shaderAsset.manifest.vertexShaderPath == manifest.vertexShaderPath &&
                 shaderAsset.manifest.fragmentShaderPath == manifest.fragmentShaderPath)
             {
-                ReloadShaderProgramFromRawFiles(&shaderAsset.shaderProg, shaderAsset.manifest.vertexShaderPath.c_str(), shaderAsset.manifest.fragmentShaderPath.c_str());
+                opengl::ReloadShaderProgramFromRawFiles(&shaderAsset.shaderProg, shaderAsset.manifest.vertexShaderPath.c_str(), shaderAsset.manifest.fragmentShaderPath.c_str());
             }
         }
     }
