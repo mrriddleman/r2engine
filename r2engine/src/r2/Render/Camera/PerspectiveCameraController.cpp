@@ -10,8 +10,9 @@
 namespace r2::cam
 {
     
-    static float yaw = -90.f, pitch=-37.f;
+//    static float yaw = -90.f, pitch=-37.f;
 
+    static float yaw = 0.f, pitch=0.f;
     void PerspectiveController::Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position)
     {
         
@@ -21,7 +22,8 @@ namespace r2::cam
         mNear = near;
         mFar = far;
         InitPerspectiveCam(mCamera, fov, aspect, near, far, position);
-        SetFacingDir(mCamera, pitch, yaw);
+        SetFacingDir(mCamera, glm::vec3(0.0f, 0.0f, -1.0f));
+        //SetFacingDir(mCamera, pitch, yaw);
     }
     
     void PerspectiveController::Update()

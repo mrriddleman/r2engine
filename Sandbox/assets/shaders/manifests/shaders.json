@@ -19,6 +19,11 @@
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.fs",
       binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.fs",
+      binaryPath: ""
     }
   ]
 }

@@ -29,14 +29,13 @@
 
 namespace
 {
-
-    
     enum
     {
         LIGHTING_SHADER = 0,
         LAMP_SHADER,
         DEBUG_SHADER,
         OUTLINE_SHADER,
+        LEARN_OPENGL_SHADER,
         NUM_SHADERS
     };
     
@@ -145,6 +144,75 @@ namespace
     
     r2::draw::opengl::VertexArrayBuffer g_LampVAO, g_DebugVAO;
     
+    float cubeVertices[] = {
+        // positions          // texture Coords
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+    float planeVertices[] = {
+        // positions          // texture Coords
+        5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+        -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+        
+        5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+        5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+    };
+    float transparentVertices[] = {
+        // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+        0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+        
+        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+        1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+    
+    //Learn OpenGL
+    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO;
+    u32 marbelTex, metalTex, windowTex;
+    
 }
 
 namespace r2::draw
@@ -221,15 +289,26 @@ namespace r2::draw
             
             s_shaders[OUTLINE_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[OUTLINE_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[LEARN_OPENGL_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER].manifest = shaderManifest;
         }
 #endif
 
-        SetupSkinnedModelDemo();
+        //SetupSkinnedModelDemo();
+        SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-        DrawSkinnedModelDemo();
+        //DrawSkinnedModelDemo();
+        DrawLearnOpenGLDemo();
     }
     
     void OpenGLShutdown()
@@ -614,6 +693,88 @@ namespace r2::draw
             
             glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
+    }
+    
+    void SetupLearnOpenGLDemo()
+    {
+        opengl::Create(g_boxVAO);
+        
+        opengl::VertexBuffer cubeVBO;
+        opengl::Create(cubeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_boxVAO, cubeVBO);
+        
+        opengl::Create(g_planeVAO);
+        opengl::VertexBuffer planeVBO;
+        opengl::Create(planeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_planeVAO, planeVBO);
+        
+        opengl::UnBind(g_planeVAO);
+       // opengl::VertexBuffer transparentVBO;
+       // opengl::Create(transparentVBO, {}, transparentVertices, COUNT_OF(transparentVertices), GL_STATIC_DRAW);
+        
+        
+       // opengl::AddBuffer(g_LearnOpenGLVAO, planeVBO);
+        //opengl::AddBuffer(g_LearnOpenGLVAO, transparentVBO);
+        
+        //opengl::UnBind(g_LearnOpenGLVAO);
+        
+        char path[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
+        
+        marbelTex = opengl::OpenGLLoadImageTexture(path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "metal.png", path);
+        metalTex = opengl::OpenGLLoadImageTexture(path);
+        
+        s_shaders[LEARN_OPENGL_SHADER].UseShader();
+        s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
+        
+        glEnable(GL_DEPTH_TEST);
+    }
+    
+    void DrawLearnOpenGLDemo()
+    {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+        
+        glActiveTexture(GL_TEXTURE0);
+        //Draw boxes
+        {
+            opengl::Bind(g_boxVAO);
+            glBindTexture(GL_TEXTURE_2D, marbelTex);
+
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
+            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            
+            model = glm::mat4(1.0f);
+
+            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+        
+        //draw floor
+        {
+            opengl::Bind(g_planeVAO);
+            glBindTexture(GL_TEXTURE_2D, metalTex);
+            
+            glm::mat4 model = glm::mat4(1.0f);
+            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+            
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        
     }
     
 #ifdef R2_ASSET_PIPELINE
