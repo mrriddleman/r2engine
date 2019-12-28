@@ -37,6 +37,7 @@ namespace
         DEBUG_SHADER,
         OUTLINE_SHADER,
         LEARN_OPENGL_SHADER,
+        LEARN_OPENGL_SHADER2,
         NUM_SHADERS
     };
     
@@ -210,10 +211,25 @@ namespace
         1.0f,  0.5f,  0.0f,  1.0f,  1.0f
     };
     
+    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+        
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+        1.0f,  1.0f,  1.0f, 1.0f
+    };
+    
     //Learn OpenGL
-    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO;
+    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO;
     u32 marbelTex, metalTex, windowTex, grassTex;
     std::vector<glm::vec3> vegetation;
+    
+    r2::draw::opengl::FrameBuffer g_frameBuffer;
+    r2::draw::opengl::RenderBuffer g_renderBuffer;
+    u32 textureColorBuffer;
 }
 
 namespace r2::draw
@@ -299,16 +315,25 @@ namespace r2::draw
             
             s_shaders[LEARN_OPENGL_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[LEARN_OPENGL_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL2.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL2.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[LEARN_OPENGL_SHADER2].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER2].manifest = shaderManifest;
         }
 #endif
 
-        //SetupSkinnedModelDemo();
+       // SetupSkinnedModelDemo();
         SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-        //DrawSkinnedModelDemo();
+       // DrawSkinnedModelDemo();
         DrawLearnOpenGLDemo();
     }
     
@@ -604,7 +629,7 @@ namespace r2::draw
         
         
         u32 whiteColor = 0xffffffff;
-        defaultTexture = opengl::OpenGLCreateImageTexture(1, 1, &whiteColor);
+        defaultTexture = opengl::CreateImageTexture(1, 1, &whiteColor);
     }
     
     void DrawSkinnedModelDemo()
@@ -717,7 +742,6 @@ namespace r2::draw
         
         opengl::AddBuffer(g_planeVAO, planeVBO);
         
-        opengl::UnBind(g_planeVAO);
         
         opengl::Create(g_transparentVAO);
         
@@ -730,6 +754,17 @@ namespace r2::draw
         
         opengl::AddBuffer(g_transparentVAO, transparentVBO);
         
+        opengl::Create(g_quadVAO);
+        opengl::VertexBuffer quadVBO;
+        opengl::Create(quadVBO, {
+            {ShaderDataType::Float2, "aPos"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, quadVertices, COUNT_OF(quadVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_quadVAO, quadVBO);
+        
+        opengl::UnBind(g_quadVAO);
+        
         vegetation.push_back(glm::vec3(-1.5f,  0.0f, -0.48f));
         vegetation.push_back(glm::vec3( 1.5f,  0.0f,  0.51f));
         vegetation.push_back(glm::vec3( 0.0f,  0.0f,  0.7f));
@@ -739,87 +774,120 @@ namespace r2::draw
         char path[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
         
-        marbelTex = opengl::OpenGLLoadImageTexture(path);
+        marbelTex = opengl::LoadImageTexture(path);
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "metal.png", path);
-        metalTex = opengl::OpenGLLoadImageTexture(path);
+        metalTex = opengl::LoadImageTexture(path);
         
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "grass.png", path);
         
-        grassTex = opengl::OpenGLLoadImageTexture(path);
+        grassTex = opengl::LoadImageTexture(path);
         
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "blending_transparent_window.png", path);
         
-        windowTex = opengl::OpenGLLoadImageTexture(path);
+        windowTex = opengl::LoadImageTexture(path);
         
         s_shaders[LEARN_OPENGL_SHADER].UseShader();
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
         
+        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        
+        //setup framebuffers
+        opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
+        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer,g_renderBuffer);
+        opengl::UnBind(g_frameBuffer);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
     
     void DrawLearnOpenGLDemo()
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        s_shaders[LEARN_OPENGL_SHADER].UseShader();
-        SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
-        
-        glActiveTexture(GL_TEXTURE0);
-        //Draw boxes
+        //Pass 1
         {
-            opengl::Bind(g_boxVAO);
-            glBindTexture(GL_TEXTURE_2D, marbelTex);
-
-            glm::mat4 model = glm::mat4(1.0f);
+            opengl::Bind(g_frameBuffer);
+            glEnable(GL_DEPTH_TEST);
             
-            model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            model = glm::mat4(1.0f);
-
-            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-        
-        //draw floor
-        {
-            opengl::Bind(g_planeVAO);
-            glBindTexture(GL_TEXTURE_2D, metalTex);
+            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
             
-            glm::mat4 model = glm::mat4(1.0f);
-            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-            
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-        
-        {
-            //sort the windows
-            
-            std::sort(vegetation.begin(), vegetation.end(), [](const glm::vec3& v1, const glm::vec3& v2){
-               
-                float distance1 = glm::length(g_CameraPos - v1);
-                float distance2 = glm::length(g_CameraPos - v2);
-                
-                //we want to draw the bigger one first
-                return distance1 > distance2;
-            });
-            
-            opengl::Bind(g_transparentVAO);
-            glBindTexture(GL_TEXTURE_2D, windowTex);
-            glm::mat4 model = glm::mat4(1.0f);
-            
-            
-            for (auto& vPos : vegetation)
+            //Draw boxes
             {
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, vPos);
+                opengl::Bind(g_boxVAO);
+                glBindTexture(GL_TEXTURE_2D, marbelTex);
+                
+                glm::mat4 model = glm::mat4(1.0f);
+                
+                model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
                 s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+                
+                model = glm::mat4(1.0f);
+                
+                model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
+            
+            //draw floor
+            {
+                opengl::Bind(g_planeVAO);
+                glBindTexture(GL_TEXTURE_2D, metalTex);
+                
+                glm::mat4 model = glm::mat4(1.0f);
+                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                
                 glDrawArrays(GL_TRIANGLES, 0, 6);
             }
+            
+            {
+                //sort the windows
+                
+                std::sort(vegetation.begin(), vegetation.end(), [](const glm::vec3& v1, const glm::vec3& v2){
+                    
+                    float distance1 = glm::length(g_CameraPos - v1);
+                    float distance2 = glm::length(g_CameraPos - v2);
+                    
+                    //we want to draw the bigger one first
+                    return distance1 > distance2;
+                });
+                
+                opengl::Bind(g_transparentVAO);
+                glBindTexture(GL_TEXTURE_2D, windowTex);
+                glm::mat4 model = glm::mat4(1.0f);
+                
+                
+                for (auto& vPos : vegetation)
+                {
+                    model = glm::mat4(1.0f);
+                    model = glm::translate(model, vPos);
+                    s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                }
+            }
+        }
+        
+        //Pass 2
+        {
+            //Render to texture code
+            opengl::UnBind(g_frameBuffer);
+            glDisable(GL_DEPTH_TEST);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            
+            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+            opengl::Bind(g_quadVAO);
+            //Use the texture that was drawn to in the previous pass
+            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
         
     }

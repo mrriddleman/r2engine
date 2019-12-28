@@ -36,6 +36,19 @@ namespace r2::draw::opengl
         u32 vertexBufferIndex = 0;
     };
     
+    struct FrameBuffer
+    {
+        u32 FBO = EMPTY_BUFFER;
+        u32 width = 0, height = 0;
+        std::vector<u32> colorAttachments;
+        u32 depthAndStencilAttachment;
+    };
+    
+    struct RenderBuffer
+    {
+        u32 RBO = EMPTY_BUFFER;
+        u32 width = 0, height = 0;
+    };
     
     void Create(VertexArrayBuffer& buf);
     void Create(VertexBuffer& buf, const BufferLayout& layout, float * vertices, u64 size, u32 type);
@@ -45,9 +58,14 @@ namespace r2::draw::opengl
     
     void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type);
     
+    void Create(FrameBuffer& buf, u32 width, u32 height);
+    void Create(RenderBuffer& buf, u32 width, u32 height);
+    
     void Destroy(VertexArrayBuffer& buf);
     void Destroy(VertexBuffer& buf);
     void Destroy(IndexBuffer& buf);
+    void Destroy(FrameBuffer& buf);
+    void Destroy(RenderBuffer& buf);
     
     void AddBuffer(VertexArrayBuffer& arrayBuf, const VertexBuffer& buf);
     void SetIndexBuffer(VertexArrayBuffer& arrayBuf, const IndexBuffer& buf);
@@ -60,6 +78,18 @@ namespace r2::draw::opengl
     
     void Bind(const IndexBuffer& buf);
     void UnBind(const IndexBuffer& buf);
+    
+    void Bind(const FrameBuffer& buf);
+    void UnBind(const FrameBuffer& buf);
+    
+    void Bind(const RenderBuffer& buf);
+    void UnBind(const RenderBuffer& buf);
+    
+    u32 AttachTextureToFrameBuffer(FrameBuffer& buf);
+    u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
+    
+    void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
+    
 }
 
 #endif /* OpenGLBuffer_h */

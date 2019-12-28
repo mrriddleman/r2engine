@@ -26,8 +26,6 @@ namespace r2::draw
         Bool
     };
     
-    static u32 ShaderDataTypeSize(ShaderDataType type);
-    
     struct BufferElement
     {
         std::string name;

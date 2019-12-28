@@ -90,6 +90,20 @@ namespace r2::draw::opengl
         buf.size = size;
     }
     
+    void Create(FrameBuffer& buf, u32 width, u32 height)
+    {
+        glGenFramebuffers(1, &buf.FBO);
+        buf.width = width;
+        buf.height = height;
+    }
+    
+    void Create(RenderBuffer& buf, u32 width, u32 height)
+    {
+        glGenRenderbuffers(1, &buf.RBO);
+        buf.width = width;
+        buf.height = height;
+    }
+    
     void Destroy(VertexArrayBuffer& buf)
     {
         glDeleteVertexArrays(1, &buf.VAO);
@@ -119,6 +133,20 @@ namespace r2::draw::opengl
         glDeleteBuffers(1, &buf.IBO);
         buf.IBO = EMPTY_BUFFER;
         buf.size = 0;
+    }
+    
+    void Destroy(FrameBuffer& buf)
+    {
+        glDeleteFramebuffers(1, &buf.FBO);
+        buf.FBO = EMPTY_BUFFER;
+        buf.width = buf.height = 0;
+    }
+    
+    void Destroy(RenderBuffer& buf)
+    {
+        glDeleteRenderbuffers(1, &buf.RBO);
+        buf.RBO = EMPTY_BUFFER;
+        buf.width = buf.height = 0;
     }
     
     void Bind(const VertexArrayBuffer& buf)
@@ -153,6 +181,26 @@ namespace r2::draw::opengl
     void UnBind(const IndexBuffer& buf)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    
+    void Bind(const FrameBuffer& buf)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, buf.FBO);
+    }
+    
+    void UnBind(const FrameBuffer& buf)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    
+    void Bind(const RenderBuffer& buf)
+    {
+        glBindRenderbuffer(GL_RENDERBUFFER, buf.RBO);
+    }
+    
+    void UnBind(const RenderBuffer& buf)
+    {
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
     
     void AddBuffer(VertexArrayBuffer& arrayBuf, const VertexBuffer& vertexBuf)
@@ -197,4 +245,47 @@ namespace r2::draw::opengl
         arrayBuf.indexBuffer = indexBuf;
     }
     
+    u32 AttachTextureToFrameBuffer(FrameBuffer& buf)
+    {
+        u32 texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, buf.width, buf.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        Bind(buf);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        
+        buf.colorAttachments.push_back(texture);
+        return texture;
+    }
+    
+    u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf)
+    {
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, buf.width, buf.height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+        Bind(buf);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        buf.depthAndStencilAttachment = texture;
+        return texture;
+    }
+    
+    void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf)
+    {
+        Bind(frameBuf);
+        Bind(rBuf);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, rBuf.width, rBuf.height);
+        UnBind(rBuf);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBuf.RBO);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        UnBind(frameBuf);
+    }
 }

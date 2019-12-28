@@ -149,15 +149,15 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
-    vec3 lightDir = normalize(light.position - fragPos);
+    vec3 lightDirFromFrag = normalize(light.position - fragPos);
     //diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
+    float diff = max(dot(normal, lightDirFromFrag), 0.0);
     //specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 reflectDir = reflect(-lightDirFromFrag, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     //spotlight soft edges
-    float theta = dot(lightDir, normalize(-light.direction));
+    float theta = dot(lightDirFromFrag, normalize(-light.direction));
     float epsilon = (light.cutoff - light.outerCutoff);
     float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
 

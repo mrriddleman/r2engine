@@ -13,12 +13,12 @@ namespace r2::draw::utils
     u32 LoadImageTexture(const char* path)
     {
         //@TODO(Serge): make it so we don't call this directly
-        return opengl::OpenGLLoadImageTexture(path);
+        return opengl::LoadImageTexture(path);
     }
     
     u32 CreateImageTexture(u32 width, u32 height, void* data)
     {
         //@TODO(Serge): make it so we don't call this directly
-        return opengl::OpenGLCreateImageTexture(width, height, data);
+        return opengl::CreateImageTexture(width, height, data);
     }
 }

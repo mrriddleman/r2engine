@@ -11,7 +11,7 @@
 
 namespace r2::draw::opengl
 {
-    u32 OpenGLLoadImageTexture(const char* path)
+    u32 LoadImageTexture(const char* path)
     {
         stbi_set_flip_vertically_on_load(true);
         //load and create texture
@@ -50,7 +50,7 @@ namespace r2::draw::opengl
         return newTex;
     }
     
-    u32 OpenGLCreateImageTexture(u32 width, u32 height, void* data)
+    u32 CreateImageTexture(u32 width, u32 height, void* data)
     {
         u32 newTex;
         glGenTextures(1, &newTex);
