@@ -9,8 +9,10 @@ uniform sampler2D screenTexture;
 vec4 InversionPostProc();
 vec4 GrayscalePostProc();
 vec4 NarcoticPostProc();
-vec4 BlurPostProc();
+vec4 GuassBlurPostProc();
+vec4 BoxBlurPostProc();
 vec4 EdgeDetectionPostProc();
+vec4 OutlinePostProc();
 vec4 KernelPostProc(float offset, float[9] kernel);
 
 void main()
@@ -18,7 +20,7 @@ void main()
 	//Normal
 	//FragColor = vec4(vec3(texture(screenTexture, TexCoord)), 1.0);
 
-	FragColor = EdgeDetectionPostProc();
+	FragColor = BoxBlurPostProc();
 }
 
 vec4 InversionPostProc()
@@ -47,12 +49,23 @@ vec4 NarcoticPostProc()
 	return KernelPostProc(1.0/300.0, kernel);
 }
 
-vec4 BlurPostProc()
+vec4 GuassBlurPostProc()
 {
 	float kernel[9] = float[](
 		1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0,
 		2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0,
 		1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0
+	);
+
+	return KernelPostProc(1.0/300.0, kernel);
+}
+
+vec4 BoxBlurPostProc()
+{
+	float kernel[9] = float[](
+		1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0,
+		1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0,
+		1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0
 	);
 
 	return KernelPostProc(1.0/300.0, kernel);
@@ -64,6 +77,17 @@ vec4 EdgeDetectionPostProc()
 		1, 1, 1,
 		1, -8, 1,
 		1, 1, 1
+	);
+
+	return KernelPostProc(1.0/300.0, kernel);
+}
+
+vec4 OutlinePostProc()
+{
+		float kernel[9] = float[](
+		-1, -1, -1,
+		-1,  8, -1,
+		-1, -1, -1
 	);
 
 	return KernelPostProc(1.0/300.0, kernel);
