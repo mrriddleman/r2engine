@@ -258,6 +258,7 @@ namespace r2::draw::opengl
         glBindTexture(GL_TEXTURE_2D, 0);
         
         Bind(buf);
+        //Attach the texture to the frame buffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
         
@@ -272,6 +273,8 @@ namespace r2::draw::opengl
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, buf.width, buf.height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
         Bind(buf);
+        
+        //Attach the texture to the frame buffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
         buf.depthAndStencilAttachment = texture;
