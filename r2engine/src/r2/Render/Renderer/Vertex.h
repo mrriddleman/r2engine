@@ -40,6 +40,7 @@ namespace r2::draw
     {
         Diffuse = 0,
         Specular,
+        Ambient,
         NUM_TEXTURE_TYPES
     };
     

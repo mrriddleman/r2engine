@@ -252,6 +252,9 @@ namespace
                 
                 std::vector<r2::draw::Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, r2::draw::TextureType::Specular, directory);
                 r2Mesh.textures.insert(r2Mesh.textures.end(), specularMaps.begin(), specularMaps.end());
+                
+                std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
+                r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
             }
         }
         

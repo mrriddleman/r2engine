@@ -12,6 +12,7 @@ namespace r2::draw::opengl
 {
     u32 LoadImageTexture(const char* path);
     u32 CreateImageTexture(u32 width, u32 height, void* data);
+    u32 CreateCubeMap(const std::vector<std::string>& faces);
 }
 
 #endif /* OpenGLImage_h */

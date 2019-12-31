@@ -24,6 +24,8 @@ namespace r2::draw
                 return "texture_diffuse";
             case TextureType::Specular:
                 return "texture_specular";
+            case TextureType::Ambient:
+                return "texture_ambient";
             default:
                 R2_CHECK(false, "Unsupported texture type!");
                 return "";

@@ -38,6 +38,7 @@ namespace
         OUTLINE_SHADER,
         LEARN_OPENGL_SHADER,
         LEARN_OPENGL_SHADER2,
+        SKYBOX_SHADER,
         NUM_SHADERS
     };
     
@@ -147,48 +148,47 @@ namespace
     r2::draw::opengl::VertexArrayBuffer g_LampVAO, g_DebugVAO;
     
     float cubeVertices[] = {
-        // positions          // texture Coords
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
         
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
         
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
         
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
         
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
         
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
     };
     float planeVertices[] = {
         // positions          // texture Coords
@@ -223,13 +223,69 @@ namespace
     };
     
     //Learn OpenGL
-    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO;
-    u32 marbelTex, metalTex, windowTex, grassTex;
+    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO, g_skyboxVAO;
+    u32 marbelTex, metalTex, windowTex, grassTex, skyboxTex;
     std::vector<glm::vec3> vegetation;
     
     r2::draw::opengl::FrameBuffer g_frameBuffer;
     r2::draw::opengl::RenderBuffer g_renderBuffer;
     u32 textureColorBuffer;
+    
+    std::vector<std::string> g_cubeMapFaces
+    {
+        "skybox/right.jpg",
+        "skybox/left.jpg",
+        "skybox/top.jpg",
+        "skybox/bottom.jpg",
+        "skybox/front.jpg",
+        "skybox/back.jpg"
+    };
+    
+    float skyboxVertices[] = {
+        // positions
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+        
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
+    
 }
 
 namespace r2::draw
@@ -324,6 +380,16 @@ namespace r2::draw
             
             s_shaders[LEARN_OPENGL_SHADER2].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[LEARN_OPENGL_SHADER2].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Skybox.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Skybox.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[SKYBOX_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[SKYBOX_SHADER].manifest = shaderManifest;
+            
         }
 #endif
 
@@ -473,7 +539,7 @@ namespace r2::draw
         shader.SetUFloat("material.shininess", 64.0f);
         
         glm::vec3 diffuseColor = glm::vec3(0.8f);
-        glm::vec3 ambientColor = glm::vec3(0.05f);
+        glm::vec3 ambientColor = glm::vec3(0.5f);
         glm::vec3 specularColor = glm::vec3(1.0f);
         
         float attenConst = 1.0f;
@@ -482,7 +548,7 @@ namespace r2::draw
         //directional light setup
         {
             shader.SetUVec3("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-            shader.SetUVec3("dirLight.light.ambient", glm::vec3(0.05f));
+            shader.SetUVec3("dirLight.light.ambient", ambientColor);
             shader.SetUVec3("dirLight.light.diffuse", glm::vec3(0.4f));
             shader.SetUVec3("dirLight.light.specular", glm::vec3(0.5f));
         }
@@ -662,7 +728,7 @@ namespace r2::draw
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
             glStencilMask(0xFF);
             
-            glUseProgram(s_shaders[LIGHTING_SHADER].shaderProg);
+            s_shaders[LIGHTING_SHADER].UseShader();
             
             DrawSkinnedModel(s_shaders[LIGHTING_SHADER], boneMats);
         }
@@ -723,79 +789,108 @@ namespace r2::draw
     
     void SetupLearnOpenGLDemo()
     {
-        opengl::Create(g_boxVAO);
         
-        opengl::VertexBuffer cubeVBO;
-        opengl::Create(cubeVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float2, "aTexCoord"}
-        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+        //
+        char modelPath[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "nanosuit_reflection/nanosuit.obj", modelPath);
+        LoadSkinnedModel(g_Model, modelPath);
+        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         
-        opengl::AddBuffer(g_boxVAO, cubeVBO);
-        
-        opengl::Create(g_planeVAO);
-        opengl::VertexBuffer planeVBO;
-        opengl::Create(planeVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float2, "aTexCoord"}
-        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
-        
-        opengl::AddBuffer(g_planeVAO, planeVBO);
-        
-        
-        opengl::Create(g_transparentVAO);
-        
-        opengl::VertexBuffer transparentVBO;
-        
-        opengl::Create(transparentVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float2, "aTexCoord"}
-        }, transparentVertices, COUNT_OF(transparentVertices), GL_STATIC_DRAW);
-        
-        opengl::AddBuffer(g_transparentVAO, transparentVBO);
-        
+//        opengl::Create(g_boxVAO);
+//
+//        opengl::VertexBuffer cubeVBO;
+//        opengl::Create(cubeVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float3, "aNormal"}
+//        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_boxVAO, cubeVBO);
+//
+//        opengl::Create(g_planeVAO);
+//        opengl::VertexBuffer planeVBO;
+//        opengl::Create(planeVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float2, "aTexCoord"}
+//        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_planeVAO, planeVBO);
+//
+//
+//        opengl::Create(g_transparentVAO);
+//
+//        opengl::VertexBuffer transparentVBO;
+//
+//        opengl::Create(transparentVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float2, "aTexCoord"}
+//        }, transparentVertices, COUNT_OF(transparentVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_transparentVAO, transparentVBO);
+//
         opengl::Create(g_quadVAO);
         opengl::VertexBuffer quadVBO;
         opengl::Create(quadVBO, {
             {ShaderDataType::Float2, "aPos"},
             {ShaderDataType::Float2, "aTexCoord"}
         }, quadVertices, COUNT_OF(quadVertices), GL_STATIC_DRAW);
-        
+
         opengl::AddBuffer(g_quadVAO, quadVBO);
+
+//
+        opengl::Create(g_skyboxVAO);
+        opengl::VertexBuffer skyboxVBO;
+        opengl::Create(skyboxVBO, {
+            {ShaderDataType::Float3, "aPos"}
+        }, skyboxVertices, COUNT_OF(skyboxVertices), GL_STATIC_DRAW);
+
+        opengl::AddBuffer(g_skyboxVAO, skyboxVBO);
+
+        opengl::UnBind(g_skyboxVAO);
+//
+//        vegetation.push_back(glm::vec3(-1.5f,  0.0f, -0.48f));
+//        vegetation.push_back(glm::vec3( 1.5f,  0.0f,  0.51f));
+//        vegetation.push_back(glm::vec3( 0.0f,  0.0f,  0.7f));
+//        vegetation.push_back(glm::vec3(-0.3f,  0.0f, -2.3f));
+//        vegetation.push_back(glm::vec3( 0.5f,  0.0f, -0.6f));
+//
+//        char path[r2::fs::FILE_PATH_LENGTH];
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
+//
+//        marbelTex = opengl::LoadImageTexture(path);
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "metal.png", path);
+//        metalTex = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "grass.png", path);
+//
+//        grassTex = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "blending_transparent_window.png", path);
+//
+//        windowTex = opengl::LoadImageTexture(path);
+//
+        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
+//
+//        s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//        s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
+//
+//        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+//        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+//
         
-        opengl::UnBind(g_quadVAO);
         
-        vegetation.push_back(glm::vec3(-1.5f,  0.0f, -0.48f));
-        vegetation.push_back(glm::vec3( 1.5f,  0.0f,  0.51f));
-        vegetation.push_back(glm::vec3( 0.0f,  0.0f,  0.7f));
-        vegetation.push_back(glm::vec3(-0.3f,  0.0f, -2.3f));
-        vegetation.push_back(glm::vec3( 0.5f,  0.0f, -0.6f));
         
-        char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
-        
-        marbelTex = opengl::LoadImageTexture(path);
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "metal.png", path);
-        metalTex = opengl::LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "grass.png", path);
-        
-        grassTex = opengl::LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "blending_transparent_window.png", path);
-        
-        windowTex = opengl::LoadImageTexture(path);
-        
-        s_shaders[LEARN_OPENGL_SHADER].UseShader();
-        s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
-        
-        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
-        glActiveTexture(GL_TEXTURE0);
+        s_shaders[SKYBOX_SHADER].UseShader();
+        s_shaders[SKYBOX_SHADER].SetUInt("skybox", 0);
+//
+//        glActiveTexture(GL_TEXTURE0);
+//        glEnable(GL_DEPTH_TEST);
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        
         
         //setup framebuffers
         opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
@@ -804,6 +899,8 @@ namespace r2::draw
         opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer,g_renderBuffer);
         opengl::UnBind(g_frameBuffer);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        
+        
     }
     
     void DrawLearnOpenGLDemo()
@@ -811,68 +908,108 @@ namespace r2::draw
         //Pass 1
         {
             opengl::Bind(g_frameBuffer);
-            glEnable(GL_DEPTH_TEST);
             
             glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            s_shaders[LIGHTING_SHADER].UseShader();
             
-            s_shaders[LEARN_OPENGL_SHADER].UseShader();
-            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+            s_shaders[LIGHTING_SHADER].SetUInt("skybox", 3);
+            SetupLighting(s_shaders[LIGHTING_SHADER]);
             
-            //Draw boxes
-            {
-                opengl::Bind(g_boxVAO);
-                glBindTexture(GL_TEXTURE_2D, marbelTex);
-                
-                glm::mat4 model = glm::mat4(1.0f);
-                
-                model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
-                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-                
-                model = glm::mat4(1.0f);
-                
-                model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-            }
+            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+            
+            s_shaders[LIGHTING_SHADER].SetUFloat("time", timeVal);
+            s_shaders[LIGHTING_SHADER].SetUVec3("viewPos", g_CameraPos);
+            
+            glm::mat4 modelMat = glm::mat4(1.0f);
+            //modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            modelMat = glm::scale(modelMat, glm::vec3(0.1f));
+            
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
+            SetupMVP(s_shaders[LIGHTING_SHADER], modelMat, g_View, g_Proj);
+            
+            
+            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
+            
+//            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+//            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("cameraPos", g_CameraPos);
+//            //Draw boxes
+//            {
+//                opengl::Bind(g_boxVAO);
+//                glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
+//
+//                glm::mat4 model = glm::mat4(1.0f);
+//
+//                model = glm::translate(model, glm::vec3(-1.0f, 0.0f, -1.0f));
+//                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+//                glDrawArrays(GL_TRIANGLES, 0, 36);
+//
+//                model = glm::mat4(1.0f);
+//
+//                model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+//                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+//                glDrawArrays(GL_TRIANGLES, 0, 36);
+//            }
             
             //draw floor
+//            {
+//                opengl::Bind(g_planeVAO);
+//                glBindTexture(GL_TEXTURE_2D, metalTex);
+//
+//                glm::mat4 model = glm::mat4(1.0f);
+//                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+//
+//                glDrawArrays(GL_TRIANGLES, 0, 6);
+//            }
+            
+            //draw skybox
             {
-                opengl::Bind(g_planeVAO);
-                glBindTexture(GL_TEXTURE_2D, metalTex);
+                glDepthFunc(GL_LEQUAL);
+                s_shaders[SKYBOX_SHADER].UseShader();
                 
-                glm::mat4 model = glm::mat4(1.0f);
-                s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+                //change the view to not have any translation
+                glm::mat4 view = glm::mat4(glm::mat3(g_View));
                 
-                glDrawArrays(GL_TRIANGLES, 0, 6);
+                SetupVP(s_shaders[SKYBOX_SHADER], view, g_Proj);
+                opengl::Bind(g_skyboxVAO);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+                
+                glDepthFunc(GL_LESS);
             }
             
-            {
-                //sort the windows
-                
-                std::sort(vegetation.begin(), vegetation.end(), [](const glm::vec3& v1, const glm::vec3& v2){
-                    
-                    float distance1 = glm::length(g_CameraPos - v1);
-                    float distance2 = glm::length(g_CameraPos - v2);
-                    
-                    //we want to draw the bigger one first
-                    return distance1 > distance2;
-                });
-                
-                opengl::Bind(g_transparentVAO);
-                glBindTexture(GL_TEXTURE_2D, windowTex);
-                glm::mat4 model = glm::mat4(1.0f);
-                
-                
-                for (auto& vPos : vegetation)
-                {
-                    model = glm::mat4(1.0f);
-                    model = glm::translate(model, vPos);
-                    s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-                    glDrawArrays(GL_TRIANGLES, 0, 6);
-                }
-            }
+//            {
+//                //sort the windows
+//                s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//                //SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+//
+//                std::sort(vegetation.begin(), vegetation.end(), [](const glm::vec3& v1, const glm::vec3& v2){
+//
+//                    float distance1 = glm::length(g_CameraPos - v1);
+//                    float distance2 = glm::length(g_CameraPos - v2);
+//
+//                    //we want to draw the bigger one first
+//                    return distance1 > distance2;
+//                });
+//
+//                opengl::Bind(g_transparentVAO);
+//                glBindTexture(GL_TEXTURE_2D, windowTex);
+//                glm::mat4 model = glm::mat4(1.0f);
+//
+//
+//                for (auto& vPos : vegetation)
+//                {
+//                    model = glm::mat4(1.0f);
+//                    model = glm::translate(model, vPos);
+//                    s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+//                    glDrawArrays(GL_TRIANGLES, 0, 6);
+//                }
+//            }
+            
+            
         }
         
         //Pass 2
@@ -880,7 +1017,7 @@ namespace r2::draw
             //Render to texture code
             opengl::UnBind(g_frameBuffer);
             glDisable(GL_DEPTH_TEST);
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
@@ -888,6 +1025,7 @@ namespace r2::draw
             //Use the texture that was drawn to in the previous pass
             glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+            glEnable(GL_DEPTH_TEST);
         }
         
     }

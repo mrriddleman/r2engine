@@ -21,7 +21,6 @@ namespace r2::draw::opengl
 {
     struct OpenGLMesh
     {
-        u32 VAO, VBO, EBO, BoneVBO, BoneEBO;
         VertexArrayBuffer vertexArray;
         
         size_t numTextures;

@@ -18,9 +18,9 @@ vec4 KernelPostProc(float offset, float[9] kernel);
 void main()
 {
 	//Normal
-	//FragColor = vec4(vec3(texture(screenTexture, TexCoord)), 1.0);
+	FragColor = vec4(vec3(texture(screenTexture, TexCoord)), 1.0);
 
-	FragColor = BoxBlurPostProc();
+	//FragColor = BoxBlurPostProc();
 }
 
 vec4 InversionPostProc()

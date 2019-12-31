@@ -21,4 +21,9 @@ namespace r2::draw::utils
         //@TODO(Serge): make it so we don't call this directly
         return opengl::CreateImageTexture(width, height, data);
     }
+    
+    u32 CreateCubeMap(const std::vector<std::string>& faces)
+    {
+        return opengl::CreateCubeMap(faces);
+    }
 }

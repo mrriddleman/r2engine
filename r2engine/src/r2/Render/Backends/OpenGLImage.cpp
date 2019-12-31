@@ -8,6 +8,7 @@
 #include "OpenGLImage.h"
 #include "glad/glad.h"
 #include "stb_image.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace r2::draw::opengl
 {
@@ -64,5 +65,33 @@ namespace r2::draw::opengl
         glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
         
         return newTex;
+    }
+    
+    u32 CreateCubeMap(const std::vector<std::string>& faces)
+    {
+        stbi_set_flip_vertically_on_load(false);
+        u32 textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+        
+        s32 width, height, channels;
+        byte * data;
+        
+        for (u32 i = 0; i < faces.size(); ++i)
+        {
+            char path[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, faces[i].c_str(), path);
+            data = stbi_load(path, &width, &height, &channels, 0);
+            R2_CHECK(data != nullptr, "Failed to load cubemap face: %s", path);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        }
+        
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        
+        return textureID;
     }
 }

@@ -1355,7 +1355,7 @@ namespace loguru
 				abort();
 			}
 		}
-	}
+	}	
 
 	// stack_trace_skip is just if verbosity == FATAL.
 	void log_to_everywhere(int stack_trace_skip, Verbosity verbosity,

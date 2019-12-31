@@ -4,6 +4,7 @@ struct Material
 {
     sampler2D   texture_diffuse1;
     sampler2D   texture_specular1;
+    sampler2D   texture_ambient1;
     sampler2D   emission;
     float       shininess;
 };
@@ -60,6 +61,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 Light CalcLightForMaterial(Light light, float diff, float spec, float modifier);
 vec3 CalcEmissiveForMaterial(Light light);
 
+vec4 ReflectiveEnvMap();
+vec4 RefractionEnvMap(float ratio);
+
 out vec4 FragColor;
 
 in vec2 TexCoord;
@@ -73,6 +77,8 @@ uniform DirLight dirLight;
 #define NUM_POINT_LIGHTS 2
 uniform PointLight pointLights[NUM_POINT_LIGHTS];
 uniform SpotLight spotLight;
+uniform samplerCube skybox;
+
 
 float near = 0.1; 
 float far  = 100.0; 
@@ -95,18 +101,18 @@ void main()
         result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
     }
 
-    result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+    //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
     vec4 diffuseMat = texture(material.texture_diffuse1, TexCoord);
     //result += CalcEmissiveForMaterial(spotLight.light);
 
-    if(diffuseMat.a < 0.01)
-    {
-        discard;
-    }
+    // if(diffuseMat.a < 0.01)
+    // {
+    //     discard;
+    // }
 
    // float depth = LinearizeDepth(gl_FragCoord.z) / (far*0.125);
-    FragColor = vec4(result, diffuseMat.a);
+    FragColor = vec4(result, 1.0);
 }
 
 float CalcAttenuation(AttenuationState state, vec3 lightPos, vec3 fragPos)
@@ -174,8 +180,9 @@ Light CalcLightForMaterial(Light light, float diff, float spec, float modifier)
     Light result;
 
     vec3 diffuseMat = vec3(texture(material.texture_diffuse1, TexCoord));
+    vec3 ambientMat = vec3(texture(material.texture_ambient1, TexCoord));
 
-    result.ambient = light.ambient * diffuseMat;
+    result.ambient = light.ambient * ambientMat * ReflectiveEnvMap().rgb;
     result.diffuse = light.diffuse * diff * diffuseMat;
     result.specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoord));
 
@@ -196,4 +203,18 @@ vec3 CalcEmissiveForMaterial(Light light)
     emission = texture(material.emission, TexCoord + vec2(sin(time)*0.1, time)).rgb; //this moves the texture in x,y
     emission = light.emission * (floor(1.0 - specularTex.r) * emission * (sin(time) * 0.5 + 0.6) * 2.0f);//this will fade the emission in and out
     return emission;
+}
+
+vec4 ReflectiveEnvMap()
+{
+    vec3 I = normalize(FragPos - viewPos);
+    vec3 R = reflect(I, normalize(Normal));
+    return vec4(texture(skybox, R).rgb, 1.0);
+}
+
+vec4 RefractionEnvMap(float ratio)
+{
+    vec3 I = normalize(FragPos - viewPos);
+    vec3 R = refract(I, normalize(Normal), ratio);
+    return vec4(texture(skybox, R).rgb, 1.0);
 }
