@@ -21,7 +21,7 @@ namespace r2
     void RenderLayer::Init()
     {
         //@Temp
-        mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+        mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 200.f, glm::vec3(0.0f, 0.0f, 3.0f));
         
         r2::draw::OpenGLInit();
     }

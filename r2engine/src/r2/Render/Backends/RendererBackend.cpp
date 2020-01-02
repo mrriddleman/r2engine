@@ -28,6 +28,7 @@
 #include "r2/Render/Backends/OpenGLShader.h"
 
 #include <map>
+
 namespace
 {
     enum
@@ -38,6 +39,7 @@ namespace
         OUTLINE_SHADER,
         LEARN_OPENGL_SHADER,
         LEARN_OPENGL_SHADER2,
+        LEARN_OPENGL_SHADER3,
         SKYBOX_SHADER,
         NUM_SHADERS
     };
@@ -226,10 +228,18 @@ namespace
     r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO, g_skyboxVAO;
     u32 marbelTex, metalTex, windowTex, grassTex, skyboxTex;
     std::vector<glm::vec3> vegetation;
-    
+    r2::draw::Model g_planetModel;
+    r2::draw::Model g_rockModel;
+    std::vector<r2::draw::opengl::OpenGLMesh> s_planetMeshes;
+    std::vector<r2::draw::opengl::OpenGLMesh> s_rockMeshes;
     r2::draw::opengl::FrameBuffer g_frameBuffer;
     r2::draw::opengl::RenderBuffer g_renderBuffer;
     u32 textureColorBuffer;
+    std::vector<glm::mat4> g_rockModelMatrices;
+    
+    const u32 g_instanceAmount = 5000;
+    const float g_radius = 75.0f;
+    const float g_offset = 10.0f;
     
     std::vector<std::string> g_cubeMapFaces
     {
@@ -301,6 +311,8 @@ namespace r2::draw
     
     void DrawOpenGLMesh(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh);
     void DrawOpenGLMeshes(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
+    void DrawOpenGLMeshesInstanced(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes, u32 numInstances);
+    void DrawOpenGLMeshInstanced(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh, u32 numInstances);
     
     void DrawSkinnedModel(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
     void DrawSkinnedModelOutline(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
@@ -381,6 +393,15 @@ namespace r2::draw
             s_shaders[LEARN_OPENGL_SHADER2].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[LEARN_OPENGL_SHADER2].manifest = shaderManifest;
             
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL3.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL3.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[LEARN_OPENGL_SHADER3].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER3].manifest = shaderManifest;
+            
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Skybox.vs", vertexPath);
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Skybox.fs", fragmentPath);
             
@@ -447,6 +468,13 @@ namespace r2::draw
         }
     }
     
+    void DrawOpenGLMeshesInstanced(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes, u32 numInstances)
+    {
+        for (u32 i = 0; i < meshes.size(); ++i)
+        {
+            DrawOpenGLMeshInstanced(shader, meshes[i], numInstances);
+        }
+    }
     
     void DrawOpenGLMesh(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh)
     {
@@ -469,6 +497,31 @@ namespace r2::draw
         //draw mesh
         opengl::Bind(mesh.vertexArray);
         glDrawElements(GL_TRIANGLES, mesh.numIndices, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
+    }
+    
+    void DrawOpenGLMeshInstanced(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh, u32 numInstances)
+    {
+        u32 textureNum[TextureType::NUM_TEXTURE_TYPES];
+        for(u32 i = 0; i < TextureType::NUM_TEXTURE_TYPES; ++i)
+        {
+            textureNum[i] = 1;
+        }
+        
+        for (u32 i = 0; i < mesh.numTextures; ++i)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            std::string number;
+            std::string name = TextureTypeToString(mesh.types[i]);
+            number = std::to_string(textureNum[mesh.types[i]]++);
+            shader.SetUInt(("material." + name + number).c_str(), i);
+            glBindTexture(GL_TEXTURE_2D, mesh.texIDs[i]);
+        }
+        
+        //draw mesh
+        opengl::Bind(mesh.vertexArray);
+        glDrawElementsInstanced(GL_TRIANGLES, (int)mesh.numIndices, GL_UNSIGNED_INT, 0, numInstances);
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
     }
@@ -787,14 +840,63 @@ namespace r2::draw
         }
     }
     
+    void GenerateRockMatrices(u32 amount, float radius, float offset)
+    {
+        srand(CENG.GetTicks());
+        g_rockModelMatrices.clear();
+        g_rockModelMatrices.reserve(amount);
+        for (u32 i = 0; i < amount; ++i)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            float angle = (float)i / (float)amount * 360.0f;
+            
+            float displacement = (rand() % (int)(2 * offset * 100))/ 100.0f - offset;
+            float x = sin(angle) * radius + displacement;
+            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float y = displacement * 0.4f;
+            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float z = cos(angle) * radius + displacement;
+            model = glm::translate(model, glm::vec3(x, y, z));
+            
+            float scale = (rand() % 20 )/ 100.0f + 0.05;
+            model = glm::scale(model, glm::vec3(scale));
+            
+            float rotAngle = (rand() %360);
+            model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+            
+            g_rockModelMatrices.push_back(model);
+        }
+    }
+    
     void SetupLearnOpenGLDemo()
     {
         
         //
         char modelPath[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "nanosuit_reflection/nanosuit.obj", modelPath);
-        LoadSkinnedModel(g_Model, modelPath);
-        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "planet/planet.obj", modelPath);
+        LoadModel(g_planetModel, modelPath);
+        s_planetMeshes = opengl::CreateOpenGLMeshesFromModel(g_planetModel);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "rock/rock.obj", modelPath);
+        LoadModel(g_rockModel, modelPath);
+        s_rockMeshes = opengl::CreateOpenGLMeshesFromModel(g_rockModel);
+        GenerateRockMatrices(g_instanceAmount, g_radius, g_offset);
+        
+        opengl::VertexBuffer rockModelMatrixVBO;
+        opengl::Create(rockModelMatrixVBO, {{
+            {ShaderDataType::Float4, ""},
+            {ShaderDataType::Float4, ""},
+            {ShaderDataType::Float4, ""},
+            {ShaderDataType::Float4, ""}
+        }, VertexType::Instanced}, &g_rockModelMatrices[0], g_instanceAmount * sizeof(glm::mat4), GL_STATIC_DRAW);
+        
+        for (u32 i = 0; i < s_rockMeshes.size(); ++i)
+        {
+            opengl::AddBuffer( s_rockMeshes[i].vertexArray, rockModelMatrixVBO);
+        }
+        
+//        LoadSkinnedModel(g_Model, modelPath);
+//        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         
 //        opengl::Create(g_boxVAO);
 //
@@ -837,15 +939,15 @@ namespace r2::draw
         opengl::AddBuffer(g_quadVAO, quadVBO);
 
 //
-        opengl::Create(g_skyboxVAO);
-        opengl::VertexBuffer skyboxVBO;
-        opengl::Create(skyboxVBO, {
-            {ShaderDataType::Float3, "aPos"}
-        }, skyboxVertices, COUNT_OF(skyboxVertices), GL_STATIC_DRAW);
-
-        opengl::AddBuffer(g_skyboxVAO, skyboxVBO);
-
-        opengl::UnBind(g_skyboxVAO);
+//        opengl::Create(g_skyboxVAO);
+//        opengl::VertexBuffer skyboxVBO;
+//        opengl::Create(skyboxVBO, {
+//            {ShaderDataType::Float3, "aPos"}
+//        }, skyboxVertices, COUNT_OF(skyboxVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_skyboxVAO, skyboxVBO);
+//
+//        opengl::UnBind(g_skyboxVAO);
 //
 //        vegetation.push_back(glm::vec3(-1.5f,  0.0f, -0.48f));
 //        vegetation.push_back(glm::vec3( 1.5f,  0.0f,  0.51f));
@@ -868,7 +970,7 @@ namespace r2::draw
 //
 //        windowTex = opengl::LoadImageTexture(path);
 //
-        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
+//        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
 //
 //        s_shaders[LEARN_OPENGL_SHADER].UseShader();
 //        s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
@@ -879,8 +981,8 @@ namespace r2::draw
         
         
         
-        s_shaders[SKYBOX_SHADER].UseShader();
-        s_shaders[SKYBOX_SHADER].SetUInt("skybox", 0);
+//        s_shaders[SKYBOX_SHADER].UseShader();
+//        s_shaders[SKYBOX_SHADER].SetUInt("skybox", 0);
 //
 //        glActiveTexture(GL_TEXTURE0);
 //        glEnable(GL_DEPTH_TEST);
@@ -909,29 +1011,51 @@ namespace r2::draw
         {
             opengl::Bind(g_frameBuffer);
             
-            glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            s_shaders[LIGHTING_SHADER].UseShader();
+            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
             
-            s_shaders[LIGHTING_SHADER].SetUInt("skybox", 3);
-            SetupLighting(s_shaders[LIGHTING_SHADER]);
+            //draw the planet
             
-            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-            
-            s_shaders[LIGHTING_SHADER].SetUFloat("time", timeVal);
-            s_shaders[LIGHTING_SHADER].SetUVec3("viewPos", g_CameraPos);
-            
-            glm::mat4 modelMat = glm::mat4(1.0f);
-            //modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            modelMat = glm::scale(modelMat, glm::vec3(0.1f));
-            
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
-            SetupMVP(s_shaders[LIGHTING_SHADER], modelMat, g_View, g_Proj);
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(4.0f));
+            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+            DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_planetMeshes);
             
             
-            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
+            s_shaders[LEARN_OPENGL_SHADER3].UseShader();
+            SetupVP(s_shaders[LEARN_OPENGL_SHADER3], g_View, g_Proj);
+            DrawOpenGLMeshesInstanced(s_shaders[LEARN_OPENGL_SHADER3], s_rockMeshes, g_instanceAmount);
+            
+           // for (u32 i = 0; i < 1000; ++i)
+           // {
+             //   s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", g_rockModelMatrices[i]);
+            //    DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER3], s_rockMeshes);
+           // }
+            
+//            s_shaders[LIGHTING_SHADER].UseShader();
+//
+//            s_shaders[LIGHTING_SHADER].SetUInt("skybox", 3);
+//            SetupLighting(s_shaders[LIGHTING_SHADER]);
+//
+//            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+//
+//            s_shaders[LIGHTING_SHADER].SetUFloat("time", timeVal);
+//            s_shaders[LIGHTING_SHADER].SetUVec3("viewPos", g_CameraPos);
+//
+//            glm::mat4 modelMat = glm::mat4(1.0f);
+//            //modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+//            modelMat = glm::scale(modelMat, glm::vec3(0.1f));
+//
+//            glActiveTexture(GL_TEXTURE3);
+//            glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
+//            SetupMVP(s_shaders[LIGHTING_SHADER], modelMat, g_View, g_Proj);
+//
+//
+//            DrawOpenGLMeshes(s_shaders[LIGHTING_SHADER], s_openglMeshes);
             
 //            s_shaders[LEARN_OPENGL_SHADER].UseShader();
 //            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
@@ -967,18 +1091,18 @@ namespace r2::draw
             
             //draw skybox
             {
-                glDepthFunc(GL_LEQUAL);
-                s_shaders[SKYBOX_SHADER].UseShader();
-                
-                //change the view to not have any translation
-                glm::mat4 view = glm::mat4(glm::mat3(g_View));
-                
-                SetupVP(s_shaders[SKYBOX_SHADER], view, g_Proj);
-                opengl::Bind(g_skyboxVAO);
-                glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-                
-                glDepthFunc(GL_LESS);
+//                glDepthFunc(GL_LEQUAL);
+//                s_shaders[SKYBOX_SHADER].UseShader();
+//
+//                //change the view to not have any translation
+//                glm::mat4 view = glm::mat4(glm::mat3(g_View));
+//
+//                SetupVP(s_shaders[SKYBOX_SHADER], view, g_Proj);
+//                opengl::Bind(g_skyboxVAO);
+//                glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
+//                glDrawArrays(GL_TRIANGLES, 0, 36);
+//
+//                glDepthFunc(GL_LESS);
             }
             
 //            {

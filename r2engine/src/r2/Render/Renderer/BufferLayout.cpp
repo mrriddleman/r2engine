@@ -66,12 +66,14 @@ namespace r2::draw
     }
     
     BufferLayout::BufferLayout()
+    :mVertexType(VertexType::Vertex)
     {
         
     }
     
-    BufferLayout::BufferLayout(const std::initializer_list<BufferElement>& elements)
+    BufferLayout::BufferLayout(const std::initializer_list<BufferElement>& elements, VertexType vertexType)
     : mElements(elements)
+    , mVertexType(vertexType)
     {
         CalculateOffsetAndStride();
     }

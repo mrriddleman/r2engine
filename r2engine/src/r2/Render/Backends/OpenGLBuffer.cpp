@@ -81,6 +81,17 @@ namespace r2::draw::opengl
         buf.size = size;
     }
     
+    void Create(VertexBuffer& buf, const BufferLayout& layout, void* data, u64 size, u32 type)
+    {
+        glGenBuffers(1, &buf.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
+        glBufferData(GL_ARRAY_BUFFER, size, data, (GLenum)type);
+        
+        buf.layout = layout;
+        UnBind(buf);
+        buf.size = size;
+    }
+    
     void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type)
     {
         glGenBuffers(1, &buf.IBO);
@@ -207,13 +218,12 @@ namespace r2::draw::opengl
     {
         glBindVertexArray(arrayBuf.VAO);
         Bind(vertexBuf);
-        
         const auto& layout = vertexBuf.layout;
         for(const auto& element : layout)
         {
             glEnableVertexAttribArray(arrayBuf.vertexBufferIndex);
             
-            if (element.type >= ShaderDataType::Float && element.type <= ShaderDataType::Float4)
+            if (element.type >= ShaderDataType::Float && element.type <= ShaderDataType::Mat4)
             {
                 glVertexAttribPointer(arrayBuf.vertexBufferIndex,
                                       element.GetComponentCount(),
@@ -231,9 +241,15 @@ namespace r2::draw::opengl
                                        (const void*)element.offset);
             }
             
+            if (vertexBuf.layout.GetVertexType() == VertexType::Instanced)
+            {
+                glVertexAttribDivisor(arrayBuf.vertexBufferIndex, 1);
+            }
             
             ++arrayBuf.vertexBufferIndex;
         }
+        UnBind(vertexBuf);
+
         
         arrayBuf.vertexBuffers.push_back(vertexBuf);
     }

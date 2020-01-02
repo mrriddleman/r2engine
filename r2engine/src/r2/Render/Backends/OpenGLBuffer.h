@@ -56,6 +56,8 @@ namespace r2::draw::opengl
     void Create(VertexBuffer& buf, const BufferLayout& layout, const Vertex* vertices, u64 size, u32 type);
     void Create(VertexBuffer& buf, const BufferLayout& layout, const BoneData* boneData, u64 size, u32 type);
     
+    void Create(VertexBuffer& buf, const BufferLayout& layout, void* data, u64 size, u32 type);
+    
     void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type);
     
     void Create(FrameBuffer& buf, u32 width, u32 height);

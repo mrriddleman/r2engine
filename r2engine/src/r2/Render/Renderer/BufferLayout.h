@@ -26,6 +26,12 @@ namespace r2::draw
         Bool
     };
     
+    enum class VertexType
+    {
+        Vertex = 0,
+        Instanced
+    };
+    
     struct BufferElement
     {
         std::string name;
@@ -44,11 +50,11 @@ namespace r2::draw
     {
     public:
         BufferLayout();
-        BufferLayout(const std::initializer_list<BufferElement>& elements);
+        BufferLayout(const std::initializer_list<BufferElement>& elements, VertexType vertexType = VertexType::Vertex);
         
         inline u32 GetStride() const {return mStride;}
         inline const std::vector<BufferElement>& GetElements() const {return mElements;}
-        
+        inline VertexType GetVertexType() const {return mVertexType;}
         std::vector<BufferElement>::iterator begin() {return mElements.begin();}
         std::vector<BufferElement>::iterator end() {return mElements.end();}
         std::vector<BufferElement>::const_iterator begin() const {return mElements.begin();}
@@ -59,6 +65,7 @@ namespace r2::draw
         
         std::vector<BufferElement> mElements;
         u32 mStride = 0;
+        VertexType mVertexType;
     };
 }
 

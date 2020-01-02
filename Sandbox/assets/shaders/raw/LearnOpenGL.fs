@@ -4,6 +4,7 @@ out vec4 FragColor;
 
 in vec3 Normal;
 in vec3 Position;
+in vec2 TexCoord;
 
 struct Material 
 {
@@ -21,7 +22,7 @@ vec4 RefractionEnvMap(float ratio);
 
 void main()
 {             
-	FragColor = RefractionEnvMap(1.00 / 1.33);
+	FragColor = vec4(vec3(texture(material.texture_diffuse1, TexCoord)), 1.0);//RefractionEnvMap(1.00 / 1.33);
 }
 
 vec4 ReflectiveEnvMap()
