@@ -233,8 +233,10 @@ namespace
     std::vector<r2::draw::opengl::OpenGLMesh> s_planetMeshes;
     std::vector<r2::draw::opengl::OpenGLMesh> s_rockMeshes;
     r2::draw::opengl::FrameBuffer g_frameBuffer;
+    r2::draw::opengl::FrameBuffer g_intermediateFrameBuffer;
     r2::draw::opengl::RenderBuffer g_renderBuffer;
     u32 textureColorBuffer;
+    u32 screenTexture;
     std::vector<glm::mat4> g_rockModelMatrices;
     
     const u32 g_instanceAmount = 5000;
@@ -975,8 +977,7 @@ namespace r2::draw
 //        s_shaders[LEARN_OPENGL_SHADER].UseShader();
 //        s_shaders[LEARN_OPENGL_SHADER].SetUInt("texture1", 0);
 //
-//        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-//        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+
 //
         
         
@@ -996,13 +997,22 @@ namespace r2::draw
         
         //setup framebuffers
         opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
+        textureColorBuffer = opengl::AttachMultisampleTextureToFrameBuffer(g_frameBuffer, 8);
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer,g_renderBuffer);
+        
+        opengl::AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer, 8);
         opengl::UnBind(g_frameBuffer);
+        
+        
+        opengl::Create(g_intermediateFrameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        screenTexture = opengl::AttachTextureToFrameBuffer(g_intermediateFrameBuffer);
+        
+        opengl::UnBind(g_intermediateFrameBuffer);
+        
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
-        
+        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
     }
     
     void DrawLearnOpenGLDemo()
@@ -1138,16 +1148,20 @@ namespace r2::draw
         
         //Pass 2
         {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, g_frameBuffer.FBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_intermediateFrameBuffer.FBO);
+            glBlitFramebuffer(0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+            
             //Render to texture code
             opengl::UnBind(g_frameBuffer);
             glDisable(GL_DEPTH_TEST);
-            glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
             opengl::Bind(g_quadVAO);
             //Use the texture that was drawn to in the previous pass
-            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+            glBindTexture(GL_TEXTURE_2D, screenTexture);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glEnable(GL_DEPTH_TEST);
         }

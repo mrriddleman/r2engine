@@ -263,6 +263,8 @@ namespace r2::draw::opengl
     
     u32 AttachTextureToFrameBuffer(FrameBuffer& buf)
     {
+        Bind(buf);
+        
         u32 texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -273,11 +275,11 @@ namespace r2::draw::opengl
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
         
-        Bind(buf);
+        
         //Attach the texture to the frame buffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
-        
+        Bind(buf);
         buf.colorAttachments.push_back(texture);
         return texture;
     }
@@ -302,6 +304,36 @@ namespace r2::draw::opengl
         Bind(frameBuf);
         Bind(rBuf);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, rBuf.width, rBuf.height);
+        UnBind(rBuf);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBuf.RBO);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        UnBind(frameBuf);
+    }
+    
+    u32 AttachMultisampleTextureToFrameBuffer(FrameBuffer& buf, u32 samples)
+    {
+        Bind(buf);
+        u32 texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture);
+        
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB, buf.width, buf.height, GL_TRUE);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+        
+        
+        //Attach the texture to the frame buffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D_MULTISAMPLE, texture, 0);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        
+        buf.colorAttachments.push_back(texture);
+        return texture;
+    }
+    
+    void AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf, u32 samples)
+    {
+        Bind(frameBuf);
+        Bind(rBuf);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, rBuf.width, rBuf.height);
         UnBind(rBuf);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBuf.RBO);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
