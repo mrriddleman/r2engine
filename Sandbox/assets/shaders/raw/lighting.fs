@@ -64,6 +64,11 @@ vec3 CalcEmissiveForMaterial(Light light);
 vec4 ReflectiveEnvMap();
 vec4 RefractionEnvMap(float ratio);
 
+vec3 HalfVector(Light light, vec3 viewDir);
+float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
+float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
+float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, float shininess);
+
 out vec4 FragColor;
 
 in vec2 TexCoord;
@@ -106,13 +111,13 @@ void main()
     vec4 diffuseMat = texture(material.texture_diffuse1, TexCoord);
     //result += CalcEmissiveForMaterial(spotLight.light);
 
-    // if(diffuseMat.a < 0.01)
-    // {
-    //     discard;
-    // }
+    if(diffuseMat.a < 0.01)
+    {
+        discard;
+    }
 
    // float depth = LinearizeDepth(gl_FragCoord.z) / (far*0.125);
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result.rgb, 1.0);
 }
 
 float CalcAttenuation(AttenuationState state, vec3 lightPos, vec3 fragPos)
@@ -128,8 +133,8 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     //specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    //vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = BlinnPhongShading(lightDir, viewDir, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     //combine the results
     Light result = CalcLightForMaterial(light.light, diff, spec, 1.0);
 
@@ -142,8 +147,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     //diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     //specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    //vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = BlinnPhongShading(lightDir, viewDir, material.shininess);// pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     //attenuation
     float attenuation = CalcAttenuation(light.attenuationState, light.position, fragPos);
 
@@ -159,8 +164,8 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     //diffuse shading
     float diff = max(dot(normal, lightDirFromFrag), 0.0);
     //specular shading
-    vec3 reflectDir = reflect(-lightDirFromFrag, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    //vec3 reflectDir = reflect(-lightDirFromFrag, normal);
+    float spec = BlinnPhongShading(lightDirFromFrag, viewDir, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     //spotlight soft edges
     float theta = dot(lightDirFromFrag, normalize(-light.direction));
@@ -180,9 +185,9 @@ Light CalcLightForMaterial(Light light, float diff, float spec, float modifier)
     Light result;
 
     vec3 diffuseMat = vec3(texture(material.texture_diffuse1, TexCoord));
-    vec3 ambientMat = vec3(texture(material.texture_ambient1, TexCoord));
+    vec3 ambientMat = diffuseMat;//vec3(texture(material.texture_ambient1, TexCoord));
 
-    result.ambient = light.ambient * ambientMat * ReflectiveEnvMap().rgb;
+    result.ambient = light.ambient * ambientMat; //* ReflectiveEnvMap().rgb;
     result.diffuse = light.diffuse * diff * diffuseMat;
     result.specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoord));
 
@@ -217,4 +222,25 @@ vec4 RefractionEnvMap(float ratio)
     vec3 I = normalize(FragPos - viewPos);
     vec3 R = refract(I, normalize(Normal), ratio);
     return vec4(texture(skybox, R).rgb, 1.0);
+}
+
+vec3 HalfVector(vec3 lightDir, vec3 viewDir)
+{
+    return normalize(normalize(lightDir) + normalize(viewDir));
+}
+
+float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess)
+{
+    return pow(max(dot(viewDir, lightDir), 0.0), shininess);
+}
+
+float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
+{
+    vec3 reflectDir = reflect(-inLightDir, normal);
+    return CalcSpecular(reflectDir, viewDir, shininess);
+}
+
+float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, float shininess)
+{
+    return CalcSpecular(HalfVector(inLightDir, viewDir), viewDir, shininess);
 }

@@ -551,7 +551,7 @@ namespace r2
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 3);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
         
         return SDL_WINDOW_OPENGL;

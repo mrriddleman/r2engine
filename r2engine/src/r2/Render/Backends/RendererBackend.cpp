@@ -416,14 +416,14 @@ namespace r2::draw
         }
 #endif
 
-       // SetupSkinnedModelDemo();
-        SetupLearnOpenGLDemo();
+        SetupSkinnedModelDemo();
+       // SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-       // DrawSkinnedModelDemo();
-        DrawLearnOpenGLDemo();
+        DrawSkinnedModelDemo();
+       // DrawLearnOpenGLDemo();
     }
     
     void OpenGLShutdown()
@@ -1003,7 +1003,7 @@ namespace r2::draw
         opengl::AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer, 8);
         opengl::UnBind(g_frameBuffer);
         
-        
+        //We want this so we can use post proc effects
         opengl::Create(g_intermediateFrameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
         screenTexture = opengl::AttachTextureToFrameBuffer(g_intermediateFrameBuffer);
         
