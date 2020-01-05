@@ -67,7 +67,7 @@ vec4 RefractionEnvMap(float ratio);
 vec3 HalfVector(Light light, vec3 viewDir);
 float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
 float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
-float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, float shininess);
+float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
 
 out vec4 FragColor;
 
@@ -134,7 +134,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     //specular shading
     //vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = BlinnPhongShading(lightDir, viewDir, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = BlinnPhongShading(lightDir, viewDir, normal, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     //combine the results
     Light result = CalcLightForMaterial(light.light, diff, spec, 1.0);
 
@@ -148,7 +148,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     //specular shading
     //vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = BlinnPhongShading(lightDir, viewDir, material.shininess);// pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = BlinnPhongShading(lightDir, viewDir, normal, material.shininess);// pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     //attenuation
     float attenuation = CalcAttenuation(light.attenuationState, light.position, fragPos);
 
@@ -165,7 +165,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float diff = max(dot(normal, lightDirFromFrag), 0.0);
     //specular shading
     //vec3 reflectDir = reflect(-lightDirFromFrag, normal);
-    float spec = BlinnPhongShading(lightDirFromFrag, viewDir, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = BlinnPhongShading(lightDirFromFrag, viewDir, normal, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     //spotlight soft edges
     float theta = dot(lightDirFromFrag, normalize(-light.direction));
@@ -240,7 +240,7 @@ float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
     return CalcSpecular(reflectDir, viewDir, shininess);
 }
 
-float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, float shininess)
+float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
 {
-    return CalcSpecular(HalfVector(inLightDir, viewDir), viewDir, shininess);
+    return CalcSpecular(HalfVector(inLightDir, viewDir), normal, shininess);
 }
