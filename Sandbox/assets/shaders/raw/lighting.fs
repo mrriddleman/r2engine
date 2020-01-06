@@ -68,6 +68,7 @@ vec3 HalfVector(Light light, vec3 viewDir);
 float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
 float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
 float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
+vec3 GammaCorrect(vec3 color);
 
 out vec4 FragColor;
 
@@ -117,13 +118,18 @@ void main()
     }
 
    // float depth = LinearizeDepth(gl_FragCoord.z) / (far*0.125);
-    FragColor = vec4(result.rgb, 1.0);
+    FragColor = vec4(GammaCorrect(result), 1.0);
+}
+
+vec3 GammaCorrect(vec3 color)
+{
+    return pow(color, vec3(1.0/2.2));
 }
 
 float CalcAttenuation(AttenuationState state, vec3 lightPos, vec3 fragPos)
 {
     float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / (state.constant + state.linear * distance + state.quadratic * (distance * distance));
+    float attenuation = 1.0 / (distance*distance);//(state.constant + state.linear * distance + state.quadratic * (distance * distance));
     return attenuation;
 }
 
@@ -184,7 +190,8 @@ Light CalcLightForMaterial(Light light, float diff, float spec, float modifier)
 {
     Light result;
 
-    vec3 diffuseMat = vec3(texture(material.texture_diffuse1, TexCoord));
+    
+    vec3 diffuseMat = texture(material.texture_diffuse1, TexCoord).rgb;
     vec3 ambientMat = diffuseMat;//vec3(texture(material.texture_ambient1, TexCoord));
 
     result.ambient = light.ambient * ambientMat; //* ReflectiveEnvMap().rgb;
@@ -230,7 +237,7 @@ vec3 HalfVector(vec3 lightDir, vec3 viewDir)
 }
 
 float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess)
-{
+{   
     return pow(max(dot(viewDir, lightDir), 0.0), shininess);
 }
 

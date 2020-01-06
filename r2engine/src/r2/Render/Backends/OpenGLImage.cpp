@@ -31,21 +31,25 @@ namespace r2::draw::opengl
         R2_CHECK(data != nullptr, "We didn't load the image!");
         
         GLenum format;
+        GLenum internalFormat;
         if (channels == 3)
         {
+            internalFormat = GL_SRGB;
             format = GL_RGB;
         }
         else if(channels == 4)
         {
+            internalFormat = GL_SRGB_ALPHA;
             format = GL_RGBA;
         }
         else
         {
             format = GL_RGB;
+            internalFormat = GL_SRGB;
             R2_CHECK(false, "UNKNOWN image format");
         }
         
-        glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         stbi_image_free(data);
         return newTex;
