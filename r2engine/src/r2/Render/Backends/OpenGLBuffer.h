@@ -41,7 +41,8 @@ namespace r2::draw::opengl
         u32 FBO = EMPTY_BUFFER;
         u32 width = 0, height = 0;
         std::vector<u32> colorAttachments;
-        u32 depthAndStencilAttachment;
+        u32 depthAttachment;
+        u32 stencilAttachment;
     };
     
     struct RenderBuffer
@@ -90,6 +91,8 @@ namespace r2::draw::opengl
     u32 AttachTextureToFrameBuffer(FrameBuffer& buf);
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
     void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
+    u32 AttachDepthToFrameBuffer(FrameBuffer& buf);
+    
     
     u32 AttachMultisampleTextureToFrameBuffer(FrameBuffer& buf, u32 samples);
     void AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf, u32 samples);

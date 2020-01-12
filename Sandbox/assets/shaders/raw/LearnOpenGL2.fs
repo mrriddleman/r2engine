@@ -5,8 +5,11 @@ out vec4 FragColor;
 in vec2 TexCoord;
 
 uniform sampler2D screenTexture;
+uniform float near_plane;
+uniform float far_plane;
 
 vec4 InversionPostProc();
+
 vec4 GrayscalePostProc();
 vec4 NarcoticPostProc();
 vec4 GuassBlurPostProc();
@@ -15,9 +18,18 @@ vec4 EdgeDetectionPostProc();
 vec4 OutlinePostProc();
 vec4 KernelPostProc(float offset, float[9] kernel);
 
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // Back to NDC 
+    return (2.0 * near_plane * far_plane) / (far_plane + near_plane - z * (far_plane - near_plane));	
+}
+
+
 void main()
 {
 	//Normal
+	//float depthValue = texture(screenTexture, TexCoord).r;
+	//FragColor = vec4(vec3(depthValue),1.0);
 	FragColor = vec4(vec3(texture(screenTexture, TexCoord)), 1.0);
 
 	//FragColor = BoxBlurPostProc();

@@ -41,6 +41,7 @@ namespace
         LEARN_OPENGL_SHADER2,
         LEARN_OPENGL_SHADER3,
         SKYBOX_SHADER,
+        DEPTH_SHADER,
         NUM_SHADERS
     };
     
@@ -125,8 +126,8 @@ namespace
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 g_CameraDir = glm::vec3(0);
-    glm::vec3 lightPos(1.2f, 0.2f, 2.0f);
-    
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+    u32 g_width, g_height;
     struct DebugVertex
     {
         glm::vec3 position;
@@ -149,59 +150,62 @@ namespace
     
     r2::draw::opengl::VertexArrayBuffer g_LampVAO, g_DebugVAO;
     
-    float cubeVertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
     float planeVertices[] = {
-        // positions          // texture Coords
-        5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+        // positions            // normals         // texcoords
+        25.0f, -0.5f,  25.0f,  0.0f, 1.0f, 0.0f,  25.0f,  0.0f,
+        25.0f, -0.5f,  -25.0f,  0.0f, 1.0f, 0.0f,   25.0f,  25.0f,
+        -25.0f, -0.5f, -25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 25.0f,
         
-        5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-        5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+        -25.0f, -0.5f,  -25.0f,  0.0f, 1.0f, 0.0f,  0.0f,  25.0f,
+        -25.0f, -0.5f, 25.0f,  0.0f, 1.0f, 0.0f,   0.0f, 0.0f,
+        25.0f, -0.5f, 25.0f,  0.0f, 1.0f, 0.0f,  25.0f, 0.0f
     };
+    
+    float cubeVertices[] = {
+        // back face
+        -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+        1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right
+        1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+        -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+        -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+        // front face
+        -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+        1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+        1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+        1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+        -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+        -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+        // left face
+        -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+        -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+        -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+        -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+        -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+        -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+        // right face
+        1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+        1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+        1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right
+        1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+        1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+        1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left
+        // bottom face
+        -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+        1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+        1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+        1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+        -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+        -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+        // top face
+        -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+        1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+        1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right
+        1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+        -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+        -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left
+    };
+
     float transparentVertices[] = {
         // positions         // texture Coords
         0.0f,  0.5f,  0.0f,  0.0f,  1.0f,
@@ -235,8 +239,11 @@ namespace
     r2::draw::opengl::FrameBuffer g_frameBuffer;
     r2::draw::opengl::FrameBuffer g_intermediateFrameBuffer;
     r2::draw::opengl::RenderBuffer g_renderBuffer;
+    r2::draw::opengl::FrameBuffer g_depthBuffer;
     u32 textureColorBuffer;
     u32 screenTexture;
+    u32 woodTexture;
+    u32 depthTexture;
     std::vector<glm::mat4> g_rockModelMatrices;
     
     const u32 g_instanceAmount = 5000;
@@ -327,7 +334,8 @@ namespace r2::draw
     
     void OpenGLInit()
     {
-        
+        g_width = CENG.DisplaySize().width;
+        g_height = CENG.DisplaySize().height;
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
        // glEnable(GL_FRAMEBUFFER_SRGB);
         
@@ -413,17 +421,26 @@ namespace r2::draw
             s_shaders[SKYBOX_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
             s_shaders[SKYBOX_SHADER].manifest = shaderManifest;
             
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthShader.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthShader.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[DEPTH_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[DEPTH_SHADER].manifest = shaderManifest;
+            
         }
 #endif
 
-        SetupSkinnedModelDemo();
-       // SetupLearnOpenGLDemo();
+       // SetupSkinnedModelDemo();
+        SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-        DrawSkinnedModelDemo();
-       // DrawLearnOpenGLDemo();
+       // DrawSkinnedModelDemo();
+        DrawLearnOpenGLDemo();
     }
     
     void OpenGLShutdown()
@@ -440,6 +457,8 @@ namespace r2::draw
     void OpenGLResizeWindow(u32 width, u32 height)
     {
         glViewport(0, 0, width, height);
+        g_width = width;
+        g_height = height;
     }
     
     void OpenGLSetCamera(const r2::Camera& cam)
@@ -875,49 +894,51 @@ namespace r2::draw
     {
         
         //
-        char modelPath[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "planet/planet.obj", modelPath);
-        LoadModel(g_planetModel, modelPath);
-        s_planetMeshes = opengl::CreateOpenGLMeshesFromModel(g_planetModel);
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "rock/rock.obj", modelPath);
-        LoadModel(g_rockModel, modelPath);
-        s_rockMeshes = opengl::CreateOpenGLMeshesFromModel(g_rockModel);
-        GenerateRockMatrices(g_instanceAmount, g_radius, g_offset);
-        
-        opengl::VertexBuffer rockModelMatrixVBO;
-        opengl::Create(rockModelMatrixVBO, {{
-            {ShaderDataType::Float4, ""},
-            {ShaderDataType::Float4, ""},
-            {ShaderDataType::Float4, ""},
-            {ShaderDataType::Float4, ""}
-        }, VertexType::Instanced}, &g_rockModelMatrices[0], g_instanceAmount * sizeof(glm::mat4), GL_STATIC_DRAW);
-        
-        for (u32 i = 0; i < s_rockMeshes.size(); ++i)
-        {
-            opengl::AddBuffer( s_rockMeshes[i].vertexArray, rockModelMatrixVBO);
-        }
+//        char modelPath[r2::fs::FILE_PATH_LENGTH];
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "planet/planet.obj", modelPath);
+//        LoadModel(g_planetModel, modelPath);
+//        s_planetMeshes = opengl::CreateOpenGLMeshesFromModel(g_planetModel);
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "rock/rock.obj", modelPath);
+//        LoadModel(g_rockModel, modelPath);
+//        s_rockMeshes = opengl::CreateOpenGLMeshesFromModel(g_rockModel);
+//        GenerateRockMatrices(g_instanceAmount, g_radius, g_offset);
+//
+//        opengl::VertexBuffer rockModelMatrixVBO;
+//        opengl::Create(rockModelMatrixVBO, {{
+//            {ShaderDataType::Float4, ""},
+//            {ShaderDataType::Float4, ""},
+//            {ShaderDataType::Float4, ""},
+//            {ShaderDataType::Float4, ""}
+//        }, VertexType::Instanced}, &g_rockModelMatrices[0], g_instanceAmount * sizeof(glm::mat4), GL_STATIC_DRAW);
+//
+//        for (u32 i = 0; i < s_rockMeshes.size(); ++i)
+//        {
+//            opengl::AddBuffer( s_rockMeshes[i].vertexArray, rockModelMatrixVBO);
+//        }
         
 //        LoadSkinnedModel(g_Model, modelPath);
 //        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         
-//        opengl::Create(g_boxVAO);
-//
-//        opengl::VertexBuffer cubeVBO;
-//        opengl::Create(cubeVBO, {
-//            {ShaderDataType::Float3, "aPos"},
-//            {ShaderDataType::Float3, "aNormal"}
-//        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
-//
-//        opengl::AddBuffer(g_boxVAO, cubeVBO);
-//
-//        opengl::Create(g_planeVAO);
-//        opengl::VertexBuffer planeVBO;
-//        opengl::Create(planeVBO, {
-//            {ShaderDataType::Float3, "aPos"},
-//            {ShaderDataType::Float2, "aTexCoord"}
-//        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
-//
-//        opengl::AddBuffer(g_planeVAO, planeVBO);
+        opengl::Create(g_boxVAO);
+
+        opengl::VertexBuffer cubeVBO;
+        opengl::Create(cubeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+
+        opengl::AddBuffer(g_boxVAO, cubeVBO);
+
+        opengl::Create(g_planeVAO);
+        opengl::VertexBuffer planeVBO;
+        opengl::Create(planeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+
+        opengl::AddBuffer(g_planeVAO, planeVBO);
 //
 //
 //        opengl::Create(g_transparentVAO);
@@ -957,7 +978,7 @@ namespace r2::draw
 //        vegetation.push_back(glm::vec3(-0.3f,  0.0f, -2.3f));
 //        vegetation.push_back(glm::vec3( 0.5f,  0.0f, -0.6f));
 //
-//        char path[r2::fs::FILE_PATH_LENGTH];
+        char path[r2::fs::FILE_PATH_LENGTH];
 //        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
 //
 //        marbelTex = opengl::LoadImageTexture(path);
@@ -972,6 +993,12 @@ namespace r2::draw
 //
 //        windowTex = opengl::LoadImageTexture(path);
 //
+        
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
+        woodTexture = opengl::LoadImageTexture(path);
+        
+        
+        
 //        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
 //
 //        s_shaders[LEARN_OPENGL_SHADER].UseShader();
@@ -993,52 +1020,135 @@ namespace r2::draw
 //
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+       // glFrontFace(GL_CCW);
+        glCullFace(GL_BACK);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
+        
         //setup framebuffers
+        
+        opengl::Create(g_depthBuffer, 1024, 1024);
+        depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
+        
         opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        textureColorBuffer = opengl::AttachMultisampleTextureToFrameBuffer(g_frameBuffer, 8);
+        textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
+        
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer);
         
-        opengl::AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer, 8);
-        opengl::UnBind(g_frameBuffer);
-        
-        //We want this so we can use post proc effects
-        opengl::Create(g_intermediateFrameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        screenTexture = opengl::AttachTextureToFrameBuffer(g_intermediateFrameBuffer);
-        
-        opengl::UnBind(g_intermediateFrameBuffer);
+//        opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        textureColorBuffer = opengl::AttachMultisampleTextureToFrameBuffer(g_frameBuffer, 8);
+//        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+//
+//        opengl::AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer, 8);
+//        opengl::UnBind(g_frameBuffer);
+//
+//        //We want this so we can use post proc effects
+//        opengl::Create(g_intermediateFrameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        screenTexture = opengl::AttachTextureToFrameBuffer(g_intermediateFrameBuffer);
+//
+//        opengl::UnBind(g_intermediateFrameBuffer);
         
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
         s_shaders[LEARN_OPENGL_SHADER2].UseShader();
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+        
+        s_shaders[LEARN_OPENGL_SHADER].UseShader();
+        s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
+        s_shaders[LEARN_OPENGL_SHADER].SetUInt("shadowMap", 1);
+    }
+    
+    void DrawScene(const r2::draw::opengl::Shader& shader)
+    {
+        
+        //render the scene
+        
+        //draw the floor
+        glm::mat4 model = glm::mat4(1.0f);
+        SetupModelMat(shader, model);
+        opengl::Bind(g_planeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+        //draw the cubes
+        opengl::Bind(g_boxVAO);
+        model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-1.0f, 0.0f, 2.0f));
+        model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
+        model = glm::scale(model, glm::vec3(0.25f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
     }
     
     void DrawLearnOpenGLDemo()
     {
         //Pass 1
+        const float near_plane = 1.0f, far_plane = 7.5f;
         {
+            
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            s_shaders[DEPTH_SHADER].UseShader();
+            glm::mat4 lightProjection, lightView;
+            
+            lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+            lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
+            
+            glViewport(0, 0, g_depthBuffer.width, g_depthBuffer.height);
+            opengl::Bind(g_depthBuffer);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, woodTexture);
+            
+            DrawScene(s_shaders[DEPTH_SHADER]);
+            
+            //opengl::UnBind(g_depthBuffer);
+            
             opengl::Bind(g_frameBuffer);
             
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glViewport(0, 0, g_width, g_height);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            s_shaders[LEARN_OPENGL_SHADER].UseShader();
-            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
             
+            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+            
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, woodTexture);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("lightSpaceMatrix", lightProjection * lightView);
+            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
+            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
+            DrawScene(s_shaders[LEARN_OPENGL_SHADER]);
+            opengl::UnBind(g_frameBuffer);
             //draw the planet
             
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(4.0f));
-            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
-            DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_planetMeshes);
-            
-            
-            s_shaders[LEARN_OPENGL_SHADER3].UseShader();
-            SetupVP(s_shaders[LEARN_OPENGL_SHADER3], g_View, g_Proj);
-            DrawOpenGLMeshesInstanced(s_shaders[LEARN_OPENGL_SHADER3], s_rockMeshes, g_instanceAmount);
+//            glm::mat4 model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+//            model = glm::scale(model, glm::vec3(4.0f));
+//            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("model", model);
+//            DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_planetMeshes);
+//
+//
+//            s_shaders[LEARN_OPENGL_SHADER3].UseShader();
+//            SetupVP(s_shaders[LEARN_OPENGL_SHADER3], g_View, g_Proj);
+//            DrawOpenGLMeshesInstanced(s_shaders[LEARN_OPENGL_SHADER3], s_rockMeshes, g_instanceAmount);
             
            // for (u32 i = 0; i < 1000; ++i)
            // {
@@ -1148,20 +1258,23 @@ namespace r2::draw
         
         //Pass 2
         {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, g_frameBuffer.FBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_intermediateFrameBuffer.FBO);
-            glBlitFramebuffer(0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, g_frameBuffer.FBO);
+//            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_intermediateFrameBuffer.FBO);
+//            glBlitFramebuffer(0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
             
             //Render to texture code
-            opengl::UnBind(g_frameBuffer);
             glDisable(GL_DEPTH_TEST);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near_plane);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far_plane);
             opengl::Bind(g_quadVAO);
             //Use the texture that was drawn to in the previous pass
-            glBindTexture(GL_TEXTURE_2D, screenTexture);
+            
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glEnable(GL_DEPTH_TEST);
         }

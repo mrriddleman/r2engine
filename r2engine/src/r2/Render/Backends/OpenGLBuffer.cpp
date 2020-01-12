@@ -279,9 +279,33 @@ namespace r2::draw::opengl
         //Attach the texture to the frame buffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
-        Bind(buf);
         buf.colorAttachments.push_back(texture);
         return texture;
+    }
+    
+    u32 AttachDepthToFrameBuffer(FrameBuffer& buf)
+    {
+        u32 depthMap;
+        
+        glGenTextures(1, &depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, buf.width, buf.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+        
+        
+        Bind(buf);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        UnBind(buf);
+        
+        buf.depthAttachment = depthMap;
+        return depthMap;
     }
     
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf)
@@ -295,7 +319,8 @@ namespace r2::draw::opengl
         //Attach the texture to the frame buffer
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
-        buf.depthAndStencilAttachment = texture;
+        buf.depthAttachment = texture;
+        buf.stencilAttachment = texture;
         return texture;
     }
     
