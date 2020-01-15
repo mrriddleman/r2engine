@@ -308,6 +308,18 @@ namespace r2::draw::opengl
         return depthMap;
     }
     
+    void AttachDepthCubeMapToFrameBuffer(FrameBuffer& buf, u32 depthCubeMap)
+    {
+        Bind(buf);
+        
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0);
+        //we only care about depth values when generating a depth cubemap so we have to explicitly tell OpenGL this framebuffer object does not render to a color buffer
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        
+        UnBind(buf);
+    }
+    
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf)
     {
         unsigned int texture;

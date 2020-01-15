@@ -15,6 +15,7 @@ namespace r2::asset::pln
     {
         std::string vertexShaderPath = "";
         std::string fragmentShaderPath = "";
+        std::string geometryShaderPath = "";
         std::string binaryPath = "";
     };
     

@@ -38,9 +38,9 @@ namespace r2::draw::opengl
         void SetUIVec4(const char* name, const glm::ivec4& value) const;
     };
     
-    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr);
-    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
-    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath);
+    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr);
+    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath);
+    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath);
 }
 
 #endif /* OpenGLShader_h */

@@ -19,65 +19,75 @@ namespace r2::asset::pln
     const std::string JSON_EXT = ".json";
     const std::string VERTEX_EXT = ".vs";
     const std::string FRAGMENT_EXT = ".fs";
+    const std::string GEOMETRY_EXT = ".gs";
+    
     
     bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestFilePath, const std::string& rawPath)
     {
         size_t oldSize = currentManifests.size();
+        //@TODO(Serge): add in support for changes to names of files as well/adding geometry shaders names directly to the manifests
+        
+        std::vector<ShaderManifest> newManifests;
         
         for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
         {
-            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != VERTEX_EXT && file.path().extension().string() != FRAGMENT_EXT))
+            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != VERTEX_EXT))
             {
                 continue;
             }
             
-            //find the manifest for this
-            bool found = false;
-            for(u32 i = 0; i < currentManifests.size() && !found; ++i)
+            ShaderManifest newManifest;
+            newManifest.vertexShaderPath = file.path().string();
+            newManifests.push_back(newManifest);
+        }
+        
+        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+        {
+            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != FRAGMENT_EXT))
             {
-                if (currentManifests[i].vertexShaderPath == file.path().string() ||
-                    currentManifests[i].fragmentShaderPath == file.path().string())
-                {
-                    found = true;
-                }
+                continue;
             }
             
-            if (!found)
+            //find the matching vertex shader
+            for (auto& shaderManifest : newManifests)
             {
-                //generate one if we find the matching shader
-                std::string otherExt = file.path().extension().string() == VERTEX_EXT ? FRAGMENT_EXT : VERTEX_EXT;
-                
-                for(const auto& otherShaderFile : std::filesystem::recursive_directory_iterator(rawPath))
+                std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
+                if (vertexPath.stem() == file.path().stem())
                 {
-                    if (std::filesystem::file_size(file.path()) <= 0 || (otherShaderFile.path().extension().string() != otherExt))
-                    {
-                        continue;
-                    }
-                    if(file.path().stem() == otherShaderFile.path().stem())
-                    {
-                        //add an entry
-                        ShaderManifest newManifest;
-                        if(otherShaderFile.path().extension() == VERTEX_EXT)
-                        {
-                            newManifest.vertexShaderPath = otherShaderFile.path().string();
-                            newManifest.fragmentShaderPath = file.path().string();
-                        }
-                        else
-                        {
-                            newManifest.vertexShaderPath = file.path().string();
-                            newManifest.fragmentShaderPath = otherShaderFile.path().string();
-                        }
-                        
-                        currentManifests.push_back(newManifest);
-                        
-                        break;
-                    }
+                    shaderManifest.fragmentShaderPath = file.path().string();
+                    break;
                 }
             }
         }
         
-        if (oldSize != currentManifests.size())
+        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
         {
+            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != GEOMETRY_EXT))
+            {
+                continue;
+            }
+            
+            //find the matching vertex shader
+            for (auto& shaderManifest : newManifests)
+            {
+                std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
+                if (vertexPath.stem() == file.path().stem())
+                {
+                    shaderManifest.fragmentShaderPath = file.path().string();
+                    break;
+                }
+            }
+        }
+        
+        //remove all degenerate cases
+        auto iter = std::remove_if(newManifests.begin(), newManifests.end(), [](const ShaderManifest& manifest){
+            return manifest.vertexShaderPath == "" || manifest.fragmentShaderPath == "";
+        });
+        newManifests.erase(iter, newManifests.end());
+        
+        if (oldSize != newManifests.size())
+        {
+            currentManifests = newManifests;
             return GenerateShaderManifests(currentManifests, manifestFilePath);
         }
         
@@ -94,6 +104,7 @@ namespace r2::asset::pln
             flatShaderManifests.push_back(r2::CreateShaderManifest
                                     (builder, builder.CreateString(manifest.vertexShaderPath),
                                         builder.CreateString(manifest.fragmentShaderPath),
+                                        builder.CreateString(manifest.geometryShaderPath),
                                         builder.CreateString(manifest.binaryPath)));
         }
         
@@ -173,6 +184,7 @@ namespace r2::asset::pln
                 ShaderManifest newManifest;
                 newManifest.vertexShaderPath = shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str();
                 newManifest.fragmentShaderPath = shaderManifestsBuf->manifests()->Get(i)->fragmentPath()->str();
+                newManifest.geometryShaderPath = shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str();
                 newManifest.binaryPath = shaderManifestsBuf->manifests()->Get(i)->binaryPath()->str();
                 
                 shaderManifests.push_back(newManifest);

@@ -7,6 +7,7 @@ table ShaderManifest
 {
 	vertexPath:string;
 	fragmentPath:string;
+	geometryPath:string;
 	binaryPath:string;
 }
 

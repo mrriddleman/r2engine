@@ -93,6 +93,7 @@ namespace r2::draw::opengl
     void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
     u32 AttachDepthToFrameBuffer(FrameBuffer& buf);
     
+    void AttachDepthCubeMapToFrameBuffer(FrameBuffer& buf, u32 depthCubeMap);
     
     u32 AttachMultisampleTextureToFrameBuffer(FrameBuffer& buf, u32 samples);
     void AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf, u32 samples);

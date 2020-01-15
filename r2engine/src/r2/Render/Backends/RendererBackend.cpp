@@ -42,6 +42,7 @@ namespace
         LEARN_OPENGL_SHADER3,
         SKYBOX_SHADER,
         DEPTH_SHADER,
+        DEPTH_CUBE_MAP_SHADER,
         NUM_SHADERS
     };
     
@@ -126,7 +127,7 @@ namespace
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 g_CameraDir = glm::vec3(0);
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
     u32 g_width, g_height;
     struct DebugVertex
     {
@@ -240,11 +241,14 @@ namespace
     r2::draw::opengl::FrameBuffer g_intermediateFrameBuffer;
     r2::draw::opengl::RenderBuffer g_renderBuffer;
     r2::draw::opengl::FrameBuffer g_depthBuffer;
+    r2::draw::opengl::FrameBuffer g_depthMapFBO;
     u32 textureColorBuffer;
     u32 screenTexture;
     u32 woodTexture;
     u32 depthTexture;
+    u32 depthCubeMap;
     std::vector<glm::mat4> g_rockModelMatrices;
+
     
     const u32 g_instanceAmount = 5000;
     const float g_radius = 75.0f;
@@ -316,7 +320,7 @@ namespace r2::draw
     void SetupVP(const opengl::Shader& shader, const glm::mat4& view, const glm::mat4& proj);
     void SetupModelMat(const opengl::Shader& shader, const glm::mat4& model);
     
-    void SetupBoneMats(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats);
+    void SetupArrayMats(const opengl::Shader& shader, const std::string& arrayName, const std::vector<glm::mat4>& mats);
     
     void DrawOpenGLMesh(const opengl::Shader& shader, const opengl::OpenGLMesh& mesh);
     void DrawOpenGLMeshes(const opengl::Shader& shader, const std::vector<opengl::OpenGLMesh>& meshes);
@@ -341,6 +345,7 @@ namespace r2::draw
         
         char vertexPath[r2::fs::FILE_PATH_LENGTH];
         char fragmentPath[r2::fs::FILE_PATH_LENGTH];
+        char geometryPath[r2::fs::FILE_PATH_LENGTH];
         
         s_shaders.resize(NUM_SHADERS, opengl::Shader());
         
@@ -355,7 +360,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
 
-            s_shaders[LIGHTING_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LIGHTING_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[LIGHTING_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "lamp.vs", vertexPath);
@@ -364,7 +369,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[LAMP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LAMP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[LAMP_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "debug.vs", vertexPath);
@@ -373,7 +378,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[DEBUG_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[DEBUG_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[DEBUG_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SkeletonOutline.vs", vertexPath);
@@ -382,7 +387,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[OUTLINE_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[OUTLINE_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[OUTLINE_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL.vs", vertexPath);
@@ -391,7 +396,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[LEARN_OPENGL_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[LEARN_OPENGL_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL2.vs", vertexPath);
@@ -400,7 +405,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[LEARN_OPENGL_SHADER2].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER2].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[LEARN_OPENGL_SHADER2].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LearnOpenGL3.vs", vertexPath);
@@ -409,7 +414,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[LEARN_OPENGL_SHADER3].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[LEARN_OPENGL_SHADER3].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[LEARN_OPENGL_SHADER3].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Skybox.vs", vertexPath);
@@ -418,7 +423,7 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[SKYBOX_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[SKYBOX_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[SKYBOX_SHADER].manifest = shaderManifest;
             
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthShader.vs", vertexPath);
@@ -427,8 +432,20 @@ namespace r2::draw
             shaderManifest.vertexShaderPath = std::string(vertexPath);
             shaderManifest.fragmentShaderPath = std::string(fragmentPath);
             
-            s_shaders[DEPTH_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath);
+            s_shaders[DEPTH_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[DEPTH_SHADER].manifest = shaderManifest;
+            
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthCubeMap.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthCubeMap.fs", fragmentPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "DepthCubeMap.gs", geometryPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            shaderManifest.geometryShaderPath = std::string(geometryPath);
+            
+            s_shaders[DEPTH_CUBE_MAP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, geometryPath);
+            s_shaders[DEPTH_CUBE_MAP_SHADER].manifest = shaderManifest;
             
         }
 #endif
@@ -562,7 +579,7 @@ namespace r2::draw
         
         SetupMVP(shader, modelMat, g_View, g_Proj);
         
-        SetupBoneMats(shader, boneMats);
+        SetupArrayMats(shader, "boneTransformations", boneMats);
         
         DrawOpenGLMeshes(shader, s_openglMeshes);
     }
@@ -574,19 +591,19 @@ namespace r2::draw
         modelMat = glm::scale(modelMat, glm::vec3(0.01f));
         
         SetupMVP(shader, modelMat, g_View, g_Proj);
-        SetupBoneMats(shader, boneMats);
+        SetupArrayMats(shader, "boneTransformations", boneMats);
         
         shader.SetUVec4("outlineColor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
         DrawOpenGLMeshes(shader, s_openglMeshes);
     }
 
-    void SetupBoneMats(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
+    void SetupArrayMats(const opengl::Shader& shader, const std::string& uniformName, const std::vector<glm::mat4>& boneMats)
     {
         for (u32 i = 0; i < boneMats.size(); ++i)
         {
             char boneTransformsStr[512];
-            sprintf(boneTransformsStr, "boneTransformations[%u]", i);
+            sprintf(boneTransformsStr, (uniformName + std::string("[%u]")).c_str(), i);
             shader.SetUMat4(boneTransformsStr, boneMats[i]);
         }
     }
@@ -1021,8 +1038,8 @@ namespace r2::draw
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glEnable(GL_CULL_FACE);
-       // glFrontFace(GL_CCW);
-        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
+        
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         
@@ -1037,6 +1054,12 @@ namespace r2::draw
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
         opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer);
         
+        opengl::Create(g_depthMapFBO, 1024, 1024);
+        depthCubeMap = opengl::CreateDepthCubeMap(g_depthMapFBO.width, g_depthMapFBO.height);
+        opengl::AttachDepthCubeMapToFrameBuffer(g_depthMapFBO, depthCubeMap);
+        
+        
+
 //        opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
 //        textureColorBuffer = opengl::AttachMultisampleTextureToFrameBuffer(g_frameBuffer, 8);
 //        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
@@ -1064,59 +1087,99 @@ namespace r2::draw
     {
         
         //render the scene
+        opengl::Bind(g_boxVAO);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(5.0f));
+        SetupModelMat(shader, model);
+        glDisable(GL_CULL_FACE);
+        shader.SetUBool("reverseNormals", true);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        shader.SetUBool("reverseNormals", false);
+        glEnable(GL_CULL_FACE);
         
         //draw the floor
-        glm::mat4 model = glm::mat4(1.0f);
-        SetupModelMat(shader, model);
-        opengl::Bind(g_planeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+//        SetupModelMat(shader, model);
+//        opengl::Bind(g_planeVAO);
+//        glDrawArrays(GL_TRIANGLES, 0, 6);
         
         //draw the cubes
-        opengl::Bind(g_boxVAO);
-        model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(4.0f, -3.5, 0.0f));
         model = glm::scale(model, glm::vec3(0.5f));
         SetupModelMat(shader, model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(2.0f, 3.0f, 1.0f));
+        model = glm::scale(model, glm::vec3(0.75f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-3.0f, -1.0f, 0.0f));
         model = glm::scale(model, glm::vec3(0.5f));
         SetupModelMat(shader, model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-1.0f, 0.0f, 2.0f));
+        model = glm::translate(model, glm::vec3(-1.5f, 1.0f, 1.5f));
+        model = glm::scale(model, glm::vec3(0.5f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-1.5f, 2.0f, -3.0f));
         model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0)));
-        model = glm::scale(model, glm::vec3(0.25f));
+        model = glm::scale(model, glm::vec3(0.75f));
         SetupModelMat(shader, model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        
     }
     
     void DrawLearnOpenGLDemo()
     {
         //Pass 1
-        const float near_plane = 1.0f, far_plane = 7.5f;
+        float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+        lightPos.z = sin(timeVal * 0.5) * 3.0;
+        
+        float aspect = (float)g_depthMapFBO.width / (float)g_depthMapFBO.height;
+        float near = 1.0f;
+        float far = 25.0f;
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+        std::vector<glm::mat4> shadowTransforms;
+        
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
+        shadowTransforms.push_back(shadowProj *
+                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
         {
             
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            s_shaders[DEPTH_SHADER].UseShader();
-            glm::mat4 lightProjection, lightView;
             
-            lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-            lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
+            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
+            //glm::mat4 lightProjection, lightView;
             
-            glViewport(0, 0, g_depthBuffer.width, g_depthBuffer.height);
-            opengl::Bind(g_depthBuffer);
+            //lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+            //lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            //SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
+            
+            glViewport(0, 0, g_depthMapFBO.width, g_depthMapFBO.height);
+            opengl::Bind(g_depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
-            
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, woodTexture);
-            
-            DrawScene(s_shaders[DEPTH_SHADER]);
+            SetupArrayMats(s_shaders[DEPTH_CUBE_MAP_SHADER], "shadowMatrices", shadowTransforms);
+            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUVec3("lightPos", lightPos);
+            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUFloat("far_plane", far);
+            DrawScene(s_shaders[DEPTH_CUBE_MAP_SHADER]);
             
             //opengl::UnBind(g_depthBuffer);
             
@@ -1130,11 +1193,12 @@ namespace r2::draw
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, woodTexture);
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
-            s_shaders[LEARN_OPENGL_SHADER].SetUMat4("lightSpaceMatrix", lightProjection * lightView);
+            //s_shaders[LEARN_OPENGL_SHADER].SetUMat4("lightSpaceMatrix", lightProjection * lightView);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
+            s_shaders[LEARN_OPENGL_SHADER].SetUFloat("far_plane", far);
             DrawScene(s_shaders[LEARN_OPENGL_SHADER]);
             opengl::UnBind(g_frameBuffer);
             //draw the planet
@@ -1270,8 +1334,8 @@ namespace r2::draw
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near_plane);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far_plane);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
             opengl::Bind(g_quadVAO);
             //Use the texture that was drawn to in the previous pass
             
@@ -1289,7 +1353,8 @@ namespace r2::draw
             if (shaderAsset.manifest.vertexShaderPath == manifest.vertexShaderPath &&
                 shaderAsset.manifest.fragmentShaderPath == manifest.fragmentShaderPath)
             {
-                opengl::ReloadShaderProgramFromRawFiles(&shaderAsset.shaderProg, shaderAsset.manifest.vertexShaderPath.c_str(), shaderAsset.manifest.fragmentShaderPath.c_str());
+                opengl::ReloadShaderProgramFromRawFiles(&shaderAsset.shaderProg, shaderAsset.manifest.vertexShaderPath.c_str(), shaderAsset.manifest.fragmentShaderPath.c_str(),
+                    shaderAsset.manifest.geometryShaderPath.c_str());
             }
         }
     }
