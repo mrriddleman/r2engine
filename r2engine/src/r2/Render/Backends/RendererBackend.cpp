@@ -870,6 +870,7 @@ namespace r2::draw
 //        glEnable(GL_CULL_FACE);
         
         //  glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        shader.SetUBool("animated", false);
         opengl::Bind(g_planeVAO);
 //
 //        //bottom
@@ -901,7 +902,7 @@ namespace r2::draw
         //            glStencilFunc(GL_ALWAYS, 1, 0xFF);
         //            glStencilMask(0xFF);
         
-        
+        shader.SetUBool("animated", true);
         DrawSkinnedModel(shader, boneMats);
         
         

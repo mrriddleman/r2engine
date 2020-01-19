@@ -260,8 +260,6 @@ float CalcShadowDirLight(vec4 fragPosLightSpace)
         shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
     }
     shadow /= 9.0;
-
-    //float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
     
     if(projCoords.z > 1.0)
         shadow = 0.0;
@@ -307,7 +305,6 @@ float CalcShadowPointLight(vec3 fragPos, int index)
 
     shadow /= float(samples);
 
-//  float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow; //closestDepth / far_plane;
 }
