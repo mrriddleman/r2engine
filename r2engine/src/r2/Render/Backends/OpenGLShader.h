@@ -23,7 +23,7 @@ namespace r2::draw::opengl
         r2::asset::pln::ShaderManifest manifest;
 #endif
         
-        void UseShader();
+        void UseShader() const;
         //U stand for uniform
         void SetUBool(const char* name, bool value) const;
         void SetUInt(const char* name, s32 value) const;

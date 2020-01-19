@@ -17,7 +17,7 @@
 
 namespace r2::draw::opengl
 {
-    void Shader::UseShader()
+    void Shader::UseShader() const
     {
         glUseProgram(shaderProg);
     }

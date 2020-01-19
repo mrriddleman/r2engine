@@ -116,9 +116,10 @@ namespace
         21, 23, 22
     };
     
+    const u32 NUM_POINT_LIGHTS = 2;
     glm::vec3 pointLightPositions[] = {
-        glm::vec3( 0.7f,  0.9f,  4.0f),
-        glm::vec3( 2.3f, -3.3f, -4.0f),
+        glm::vec3( -1.5f,  1.f,  2.5f),
+        glm::vec3( 1.5f,  1.f,  2.f),
         glm::vec3(-4.0f,  2.0f, -12.0f),
         glm::vec3( 0.0f,  0.0f, -3.0f)
     };
@@ -128,6 +129,8 @@ namespace
     glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 g_CameraDir = glm::vec3(0);
     glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    glm::vec3 g_lightDir(-2.0f, -1.0f, 4.0f);
+    
     u32 g_width, g_height;
     struct DebugVertex
     {
@@ -247,6 +250,10 @@ namespace
     u32 woodTexture;
     u32 depthTexture;
     u32 depthCubeMap;
+    
+    r2::draw::opengl::FrameBuffer g_pointLightDepthMapFBO[NUM_POINT_LIGHTS];
+    u32 g_pointLightDepthCubeMaps[NUM_POINT_LIGHTS];
+    
     std::vector<glm::mat4> g_rockModelMatrices;
 
     
@@ -450,14 +457,14 @@ namespace r2::draw
         }
 #endif
 
-       // SetupSkinnedModelDemo();
-        SetupLearnOpenGLDemo();
+        SetupSkinnedModelDemo();
+       // SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-       // DrawSkinnedModelDemo();
-        DrawLearnOpenGLDemo();
+        DrawSkinnedModelDemo();
+        //DrawLearnOpenGLDemo();
     }
     
     void OpenGLShutdown()
@@ -566,18 +573,11 @@ namespace r2::draw
     
     void DrawSkinnedModel(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
     {
-        SetupLighting(shader);
-        
-        float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-        
-        shader.SetUFloat("time", timeVal);
-        shader.SetUVec3("viewPos", g_CameraPos);
-        
         glm::mat4 modelMat = glm::mat4(1.0f);
         modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         modelMat = glm::scale(modelMat, glm::vec3(0.01f));
         
-        SetupMVP(shader, modelMat, g_View, g_Proj);
+        SetupModelMat(shader, modelMat);
         
         SetupArrayMats(shader, "boneTransformations", boneMats);
         
@@ -629,24 +629,24 @@ namespace r2::draw
     {
         shader.SetUFloat("material.shininess", 64.0f);
         
-        glm::vec3 diffuseColor = glm::vec3(0.8f);
-        glm::vec3 ambientColor = glm::vec3(0.5f);
-        glm::vec3 specularColor = glm::vec3(1.0f);
+        glm::vec3 diffuseColor = glm::vec3(0.3f);
+        glm::vec3 ambientColor = glm::vec3(0.3f);
+        glm::vec3 specularColor = glm::vec3(0.3f);
         
         float attenConst = 1.0f;
         float attenLinear = 0.09f;
         float attenQuad = 0.032f;
         //directional light setup
         {
-            shader.SetUVec3("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-            shader.SetUVec3("dirLight.light.ambient", ambientColor);
-            shader.SetUVec3("dirLight.light.diffuse", glm::vec3(0.4f));
-            shader.SetUVec3("dirLight.light.specular", glm::vec3(0.5f));
+            shader.SetUVec3("dirLight.direction", g_lightDir);
+            shader.SetUVec3("dirLight.light.ambient", glm::vec3(0.2f));
+            shader.SetUVec3("dirLight.light.diffuse", glm::vec3(0.2f));
+            shader.SetUVec3("dirLight.light.specular", glm::vec3(0.2f));
         }
         
         //point light setup
         {
-            for (u32 i = 0; i < COUNT_OF(pointLightPositions); ++i)
+            for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
             {
                 char pointLightStr[512];
                 sprintf(pointLightStr, "pointLights[%i].position", i);
@@ -742,6 +742,27 @@ namespace r2::draw
             s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         }
         
+        opengl::Create(g_planeVAO);
+        opengl::VertexBuffer planeVBO;
+        opengl::Create(planeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_planeVAO, planeVBO);
+        
+        opengl::Create(g_boxVAO);
+        
+        opengl::VertexBuffer cubeVBO;
+        opengl::Create(cubeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_boxVAO, cubeVBO);
+        
         //lamp setup
         {
             opengl::Create(g_LampVAO);
@@ -776,6 +797,15 @@ namespace r2::draw
             opengl::UnBind(g_DebugVAO);
         }
         
+        opengl::Create(g_quadVAO);
+        opengl::VertexBuffer quadVBO;
+        opengl::Create(quadVBO, {
+            {ShaderDataType::Float2, "aPos"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, quadVertices, COUNT_OF(quadVertices), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_quadVAO, quadVBO);
+        
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
         glEnable(GL_DEPTH_TEST);
@@ -783,59 +813,203 @@ namespace r2::draw
         glEnable(GL_STENCIL_TEST);
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_CULL_FACE);
+        glFrontFace(GL_CCW);
         
+        opengl::Create(g_depthBuffer, 1024, 1024);
+        depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
         
+        for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
+        {
+            opengl::Create(g_pointLightDepthMapFBO[i], 1024, 1024);
+            g_pointLightDepthCubeMaps[i] = opengl::CreateDepthCubeMap(g_pointLightDepthMapFBO[i].width, g_pointLightDepthMapFBO[i].height);
+            opengl::AttachDepthCubeMapToFrameBuffer(g_pointLightDepthMapFBO[i], g_pointLightDepthCubeMaps[i]);
+        }
+
         u32 whiteColor = 0xffffffff;
         defaultTexture = opengl::CreateImageTexture(1, 1, &whiteColor);
+        
+        char path[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
+        woodTexture = opengl::LoadImageTexture(path);
+        
+        
+        
+        
+        s_shaders[LIGHTING_SHADER].UseShader();
+
+        s_shaders[LIGHTING_SHADER].SetUInt("material.texture_diffuse1", 0);
+        s_shaders[LIGHTING_SHADER].SetUInt("material.texture_specular1", 1);
+        s_shaders[LIGHTING_SHADER].SetUInt("material.texture_ambient1", 2);
+        s_shaders[LIGHTING_SHADER].SetUInt("material.emission", 3);
+        s_shaders[LIGHTING_SHADER].SetUInt("skybox", 4);
+        s_shaders[LIGHTING_SHADER].SetUInt("shadowMap", 5);
+        
+        for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
+        {
+            char name[r2::fs::FILE_PATH_LENGTH];
+            sprintf(name, "pointLightShadowMaps[%i]", i);
+            s_shaders[LIGHTING_SHADER].SetUInt(name, 6+i);
+        }
+    }
+    
+    
+    void DrawSkinnedMeshScene(const opengl::Shader& shader, const std::vector<glm::mat4>& boneMats)
+    {
+        
+        
+        
+//        opengl::Bind(g_boxVAO);
+//        glm::mat4 model = glm::mat4(1.0f);
+//        model = glm::scale(model, glm::vec3(5.0f));
+//        SetupModelMat(shader, model);
+//        glDisable(GL_CULL_FACE);
+//        shader.SetUBool("reverseNormals", true);
+//        glDrawArrays(GL_TRIANGLES, 0, 36);
+//        shader.SetUBool("reverseNormals", false);
+//        glEnable(GL_CULL_FACE);
+        
+        //  glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        opengl::Bind(g_planeVAO);
+//
+//        //bottom
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+//        //back
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0, 10, 0));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-10, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 0.0f, -1.0f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+//
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(10, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 0.0f, 1.0f));
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+        //            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        //            glStencilMask(0xFF);
+        
+        
+        DrawSkinnedModel(shader, boneMats);
+        
+        
+        
     }
     
     void DrawSkinnedModelDemo()
     {
-        glStencilMask(0xFF);
-        
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        
+       // glStencilMask(0xFF);
+        //render to depth map
         std::vector<glm::mat4> boneMats = r2::draw::PlayAnimationForSkinnedModel(CENG.GetTicks(),g_Model, g_ModelAnimation);
         
-        //Draw a cube
+        //do the directional light shadow pass
+        glm::mat4 lightProjection, lightView;
+        
         {
-            glStencilFunc(GL_ALWAYS, 0, 0xFF);
-            s_shaders[DEBUG_SHADER].UseShader();
-            opengl::Bind(g_LampVAO);
-            glm::mat4 model = glm::mat4(1.0f);
+            opengl::Bind(g_depthBuffer);
+            glViewport(0, 0, g_depthBuffer.width, g_depthBuffer.height);
+            glClear(GL_DEPTH_BUFFER_BIT );//| GL_STENCIL_BUFFER_BIT);
             
-            model = glm::translate(model, glm::vec3(0.f, -3.0f, 2.f));
-            model = glm::scale(model, glm::vec3(1.0f));
+            float near_plane = 1.0f, far_plane = 100.0f;
+            lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+            lightView = glm::lookAt(g_lightDir, glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             
-            SetupMVP(s_shaders[DEBUG_SHADER], model, g_View, g_Proj);
+            s_shaders[DEPTH_SHADER].UseShader();
             
-            s_shaders[DEBUG_SHADER].SetUVec4("debugColor", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+            SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
             
-            glDrawElements(GL_TRIANGLES, COUNT_OF(indices), GL_UNSIGNED_INT, 0);
+            DrawSkinnedMeshScene(s_shaders[DEPTH_SHADER], boneMats);
+            opengl::UnBind(g_depthBuffer);
         }
         
-        //Draw the model
+        float near = 1.0f;
+        float far = 25.0f;
         {
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilMask(0xFF);
+            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
             
-            s_shaders[LIGHTING_SHADER].UseShader();
+            float aspect = (float)g_pointLightDepthMapFBO[0].width / (float)g_pointLightDepthMapFBO[0].height;
             
-            DrawSkinnedModel(s_shaders[LIGHTING_SHADER], boneMats);
+            glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+            glActiveTexture(GL_TEXTURE0);
+            
+            for(u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
+            {
+                std::vector<glm::mat4> shadowTransforms;
+
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)));
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)));
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+                shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPositions[i], pointLightPositions[i] + glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+                
+                glViewport(0, 0, g_pointLightDepthMapFBO[i].width, g_pointLightDepthMapFBO[i].height);
+                opengl::Bind(g_pointLightDepthMapFBO[i]);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                SetupArrayMats(s_shaders[DEPTH_CUBE_MAP_SHADER], "shadowMatrices", shadowTransforms);
+                s_shaders[DEPTH_CUBE_MAP_SHADER].SetUVec3("lightPos", pointLightPositions[i]);
+                s_shaders[DEPTH_CUBE_MAP_SHADER].SetUFloat("far_plane", far);
+                DrawSkinnedMeshScene(s_shaders[DEPTH_CUBE_MAP_SHADER], boneMats);
+            }
+            
+            opengl::UnBind(g_pointLightDepthMapFBO[NUM_POINT_LIGHTS-1]);
+            
         }
+        
+        //Draw the scene for reals
+        {
+            s_shaders[LIGHTING_SHADER].UseShader();
+            glViewport(0, 0, g_width, g_height);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+            
+            
+ 
+            SetupVP(s_shaders[LIGHTING_SHADER], g_View, g_Proj);
+            SetupLighting(s_shaders[LIGHTING_SHADER]);
+            float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
+            
+            s_shaders[LIGHTING_SHADER].SetUFloat("time", timeVal);
+            s_shaders[LIGHTING_SHADER].SetUVec3("viewPos", g_CameraPos);
+            s_shaders[LIGHTING_SHADER].SetUMat4("lightDirSpaceMatrix", lightProjection * lightView);
+            s_shaders[LIGHTING_SHADER].SetUFloat("far_plane", far);
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            
+            for (u32 i =0; i < NUM_POINT_LIGHTS; ++i)
+            {
+                glActiveTexture(GL_TEXTURE6 + i);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, g_pointLightDepthCubeMaps[i]);
+            }
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, woodTexture);
+            DrawSkinnedMeshScene(s_shaders[LIGHTING_SHADER], boneMats);
+        }
+        
         
         //draw object if it's behind
         {
             
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
-            
-            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
-            
-            DrawSkinnedModelOutline(s_shaders[OUTLINE_SHADER], boneMats);
-            glEnable(GL_DEPTH_TEST);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+//            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+//            glStencilMask(0x00);
+//            glDisable(GL_DEPTH_TEST);
+//
+//            glUseProgram(s_shaders[OUTLINE_SHADER].shaderProg);
+//
+//            DrawSkinnedModelOutline(s_shaders[OUTLINE_SHADER], boneMats);
+//            glEnable(GL_DEPTH_TEST);
+//            glStencilFunc(GL_ALWAYS, 1, 0xFF);
         }
         
         //Draw lamp
@@ -848,7 +1022,7 @@ namespace r2::draw
             opengl::Bind(g_LampVAO);
             
             
-            for (u32 i = 0; i < 2; ++i)
+            for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
             {
                 glm::mat4 lightModel = glm::mat4(1.0f);
                 
@@ -876,6 +1050,21 @@ namespace r2::draw
             
             glDrawArrays(GL_LINES, 0, g_debugVerts.size());
         }
+//
+//        glDisable(GL_DEPTH_TEST);
+//        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+//        glClear(GL_COLOR_BUFFER_BIT);
+//
+//        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, depthTexture);
+//      //  s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
+//      //  s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
+//        opengl::Bind(g_quadVAO);
+//        //Use the texture that was drawn to in the previous pass
+//
+//        glDrawArrays(GL_TRIANGLES, 0, 6);
+//        glEnable(GL_DEPTH_TEST);
     }
     
     void GenerateRockMatrices(u32 amount, float radius, float offset)
