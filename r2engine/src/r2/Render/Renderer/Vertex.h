@@ -17,6 +17,7 @@ namespace r2::draw
         glm::vec3 position;
         glm::vec3 normal;
         glm::vec2 texCoords;
+        //glm::vec3 tangent;
     };
     
 #define MAX_BONE_WEIGHTS 4
@@ -27,20 +28,12 @@ namespace r2::draw
         glm::ivec4 boneIDs = glm::ivec4(0);
     };
     
-    struct SkinnedVertex
-    {
-        glm::vec3 position = glm::vec3(0.0f);
-        glm::vec3 normal = glm::vec3(0.0f);
-        glm::vec2 texCoords = glm::vec2(0.0f);
-        glm::vec4 boneWeights = glm::vec4(0.0f);
-        glm::ivec4 boneIDs = glm::ivec4(0);
-    };
-    
     enum TextureType
     {
         Diffuse = 0,
         Specular,
         Ambient,
+        Normal,
         NUM_TEXTURE_TYPES
     };
     

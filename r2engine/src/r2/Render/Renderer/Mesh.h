@@ -19,13 +19,6 @@ namespace r2::draw
         std::vector<Texture> textures = {};
     };
     
-    struct SkinnedMesh
-    {
-        std::vector<SkinnedVertex> vertices = {};
-        std::vector<u32> indices = {};
-        std::vector<Texture> textures = {};
-    };
-    
     void CreateMesh(Mesh& aMesh, const std::vector<Vertex>& vertices, const std::vector<u32>& indices, const std::vector<Texture>& textures);
     std::string TextureTypeToString(TextureType type);
 }

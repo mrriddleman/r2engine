@@ -81,6 +81,7 @@ namespace r2::draw
                                                //aiProcess_GenUVCoords |
                                                //aiProcess_TransformUVCoords |
                                               // aiProcess_FindInstances |
+                                               aiProcess_CalcTangentSpace |
                                                aiProcess_LimitBoneWeights |
                                                aiProcess_OptimizeMeshes |
                                                aiProcess_SplitByBoneCount
@@ -217,6 +218,15 @@ namespace
                 v.normal = normal;
             }
             
+            if(mesh->mTangents)
+            {
+                glm::vec3 tangent;
+                tangent.x = mesh->mTangents[i].x;
+                tangent.y = mesh->mTangents[i].y;
+                tangent.z = mesh->mTangents[i].z;
+                //v.tangent = tangent;
+            }
+            
             if (mesh->mTextureCoords[0])
             {
                 glm::vec2 tex;
@@ -255,6 +265,10 @@ namespace
                 
                 std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
                 r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
+                
+                //aiTextureType_NORMAL
+                std::vector<r2::draw::Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, r2::draw::TextureType::Normal, directory);
+                r2Mesh.textures.insert(r2Mesh.textures.end(), normalMaps.begin(), normalMaps.end());
             }
         }
         

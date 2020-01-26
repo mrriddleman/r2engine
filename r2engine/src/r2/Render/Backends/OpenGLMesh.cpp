@@ -19,7 +19,8 @@ namespace r2::draw::opengl
         Create(vertexBuffer, {
             {ShaderDataType::Float3, "aPos"},
             {ShaderDataType::Float3, "aNormal"},
-            {ShaderDataType::Float2, "aTexCoord"}
+            {ShaderDataType::Float2, "aTexCoord"},
+            //{ShaderDataType::Float3, "aTangent"},
         }, aMesh.vertices, GL_STATIC_DRAW);
         
         IndexBuffer indexBuffer;
@@ -56,7 +57,8 @@ namespace r2::draw::opengl
             Create(meshVBO, {
                 {ShaderDataType::Float3, "aPos"},
                 {ShaderDataType::Float3, "aNormal"},
-                {ShaderDataType::Float2, "aTexCoord"}
+                {ShaderDataType::Float2, "aTexCoord"},
+                //{ShaderDataType::Float3, "aTangent"},
             }, &model.mesh.vertices[entry.baseVertex], entry.numVertices, GL_STATIC_DRAW);
             
             AddBuffer(glMesh.vertexArray, meshVBO);
@@ -69,7 +71,6 @@ namespace r2::draw::opengl
             
             AddBuffer(glMesh.vertexArray, boneVBO);
             
-
             IndexBuffer meshIBO;
             Create(meshIBO, &model.mesh.indices[entry.baseIndex], entry.numIndices, GL_STATIC_DRAW);
             
