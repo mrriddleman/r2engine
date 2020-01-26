@@ -1179,7 +1179,7 @@ namespace r2::draw
         
         glm::vec3 tangent1, bitangent1, tangent2, bitangent2;
         
-        CalculateTangentAndBiTangent(tri1_edge1, tri1_edge2, tri1_deltaUV1, tri1_deltaUV2, tangent1, bitangent2);
+        CalculateTangentAndBiTangent(tri1_edge1, tri1_edge2, tri1_deltaUV1, tri1_deltaUV2, tangent1, bitangent1);
         CalculateTangentAndBiTangent(tri2_edge1, tri2_edge2, tri2_deltaUV1, tri2_deltaUV2, tangent2, bitangent2);
         
         float newQuadVerts[] = {
