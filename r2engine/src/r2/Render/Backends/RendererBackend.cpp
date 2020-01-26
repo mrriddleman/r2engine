@@ -26,7 +26,7 @@
 #include "r2/Render/Renderer/AnimationPlayer.h"
 
 #include "r2/Render/Backends/OpenGLShader.h"
-
+#include "r2/Core/Math/MathUtils.h"
 #include <map>
 
 namespace
@@ -128,7 +128,7 @@ namespace
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 g_CameraDir = glm::vec3(0);
-    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightPos(0.1f, 1.0f, 0.3f);
     glm::vec3 g_lightDir(-2.0f, -1.0f, 4.0f);
     
     u32 g_width, g_height;
@@ -232,8 +232,10 @@ namespace
         1.0f,  1.0f,  1.0f, 1.0f
     };
     
+
+    
     //Learn OpenGL
-    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO, g_skyboxVAO;
+    r2::draw::opengl::VertexArrayBuffer g_boxVAO, g_planeVAO, g_transparentVAO, g_quadVAO, g_skyboxVAO, g_normalMappedQuadVAO;
     u32 marbelTex, metalTex, windowTex, grassTex, skyboxTex;
     std::vector<glm::vec3> vegetation;
     r2::draw::Model g_planetModel;
@@ -250,6 +252,8 @@ namespace
     u32 woodTexture;
     u32 depthTexture;
     u32 depthCubeMap;
+    u32 bricksTexture;
+    u32 normalMappedBricksTexture;
     
     r2::draw::opengl::FrameBuffer g_pointLightDepthMapFBO[NUM_POINT_LIGHTS];
     u32 g_pointLightDepthCubeMaps[NUM_POINT_LIGHTS];
@@ -321,7 +325,7 @@ namespace
 namespace r2::draw
 {
 
-    
+    void CalculateTangentAndBiTangent(const glm::vec3& edge1, const glm::vec3& edge2, const glm::vec2& deltaUV1, const glm::vec2& deltaUV2, glm::vec3& tangent, glm::vec3& bitangent);
     void SetupLighting(const opengl::Shader& shader);
     void SetupMVP(const opengl::Shader& shader, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
     void SetupVP(const opengl::Shader& shader, const glm::mat4& view, const glm::mat4& proj);
@@ -457,14 +461,14 @@ namespace r2::draw
         }
 #endif
 
-        SetupSkinnedModelDemo();
-       // SetupLearnOpenGLDemo();
+        //SetupSkinnedModelDemo();
+        SetupLearnOpenGLDemo();
     }
     
     void OpenGLDraw(float alpha)
     {
-        DrawSkinnedModelDemo();
-        //DrawLearnOpenGLDemo();
+        //DrawSkinnedModelDemo();
+        DrawLearnOpenGLDemo();
     }
     
     void OpenGLShutdown()
@@ -1126,28 +1130,81 @@ namespace r2::draw
 //        LoadSkinnedModel(g_Model, modelPath);
 //        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         
-        opengl::Create(g_boxVAO);
-
-        opengl::VertexBuffer cubeVBO;
-        opengl::Create(cubeVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float3, "aNormal"},
-            {ShaderDataType::Float2, "aTexCoord"}
-        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
-
-        opengl::AddBuffer(g_boxVAO, cubeVBO);
-
-        opengl::Create(g_planeVAO);
-        opengl::VertexBuffer planeVBO;
-        opengl::Create(planeVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float3, "aNormal"},
-            {ShaderDataType::Float2, "aTexCoord"}
-        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
-
-        opengl::AddBuffer(g_planeVAO, planeVBO);
+//        opengl::Create(g_boxVAO);
+//
+//        opengl::VertexBuffer cubeVBO;
+//        opengl::Create(cubeVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float3, "aNormal"},
+//            {ShaderDataType::Float2, "aTexCoord"}
+//        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_boxVAO, cubeVBO);
+//
+//        opengl::Create(g_planeVAO);
+//        opengl::VertexBuffer planeVBO;
+//        opengl::Create(planeVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float3, "aNormal"},
+//            {ShaderDataType::Float2, "aTexCoord"}
+//        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_planeVAO, planeVBO);
 //
 //
+        
+        //calculate the tangent and bitanget
+        // positions
+        glm::vec3 pos1(-1.0,  1.0, 0.0);
+        glm::vec3 pos2(-1.0, -1.0, 0.0);
+        glm::vec3 pos3( 1.0, -1.0, 0.0);
+        glm::vec3 pos4( 1.0,  1.0, 0.0);
+        // texture coordinates
+        glm::vec2 uv1(0.0, 1.0);
+        glm::vec2 uv2(0.0, 0.0);
+        glm::vec2 uv3(1.0, 0.0);
+        glm::vec2 uv4(1.0, 1.0);
+        // normal vector
+        glm::vec3 nm(0.0, 0.0, 1.0);
+        
+        glm::vec3 tri1_edge1 = pos2 - pos1;
+        glm::vec3 tri1_edge2 = pos3 - pos1;
+        glm::vec2 tri1_deltaUV1 = uv2 - uv1;
+        glm::vec2 tri1_deltaUV2 = uv3 - uv1;
+        
+        glm::vec3 tri2_edge1 = pos3 - pos1;
+        glm::vec3 tri2_edge2 = pos4 - pos1;
+        glm::vec2 tri2_deltaUV1 = uv3 - uv1;
+        glm::vec2 tri2_deltaUV2 = uv4 - uv1;
+        
+        glm::vec3 tangent1, bitangent1, tangent2, bitangent2;
+        
+        CalculateTangentAndBiTangent(tri1_edge1, tri1_edge2, tri1_deltaUV1, tri1_deltaUV2, tangent1, bitangent2);
+        CalculateTangentAndBiTangent(tri2_edge1, tri2_edge2, tri2_deltaUV1, tri2_deltaUV2, tangent2, bitangent2);
+        
+        float newQuadVerts[] = {
+            // positions            // normal         // texcoords  // tangent                          // bitangent
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+            
+            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+        };
+        
+        opengl::Create(g_normalMappedQuadVAO);
+        opengl::VertexBuffer normalMappedQuadVBO;
+        opengl::Create(normalMappedQuadVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"},
+            {ShaderDataType::Float3, "aTangent"},
+            {ShaderDataType::Float3, "aBiTangent"}
+        }, newQuadVerts, COUNT_OF(newQuadVerts), GL_STATIC_DRAW);
+        
+        opengl::AddBuffer(g_normalMappedQuadVAO, normalMappedQuadVBO);
+        
 //        opengl::Create(g_transparentVAO);
 //
 //        opengl::VertexBuffer transparentVBO;
@@ -1201,10 +1258,14 @@ namespace r2::draw
 //        windowTex = opengl::LoadImageTexture(path);
 //
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
-        woodTexture = opengl::LoadImageTexture(path);
+        //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
+        //woodTexture = opengl::LoadImageTexture(path);
         
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "brickwall.jpg", path);
+        bricksTexture = opengl::LoadImageTexture(path);
         
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "brickwall_normal.jpg", path);
+        normalMappedBricksTexture = opengl::LoadImageTexture(path);
         
 //        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
 //
@@ -1227,16 +1288,16 @@ namespace r2::draw
 //
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        glFrontFace(GL_CCW);
+       // glEnable(GL_CULL_FACE);
+       // glFrontFace(GL_CCW);
         
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         
         //setup framebuffers
         
-        opengl::Create(g_depthBuffer, 1024, 1024);
-        depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
+       // opengl::Create(g_depthBuffer, 1024, 1024);
+       // depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
         
         opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
         textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
@@ -1244,9 +1305,9 @@ namespace r2::draw
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
         opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer);
         
-        opengl::Create(g_depthMapFBO, 1024, 1024);
-        depthCubeMap = opengl::CreateDepthCubeMap(g_depthMapFBO.width, g_depthMapFBO.height);
-        opengl::AttachDepthCubeMapToFrameBuffer(g_depthMapFBO, depthCubeMap);
+//        opengl::Create(g_depthMapFBO, 1024, 1024);
+//        depthCubeMap = opengl::CreateDepthCubeMap(g_depthMapFBO.width, g_depthMapFBO.height);
+//        opengl::AttachDepthCubeMapToFrameBuffer(g_depthMapFBO, depthCubeMap);
         
         
 
@@ -1265,12 +1326,14 @@ namespace r2::draw
         
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
-        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+        
         
         s_shaders[LEARN_OPENGL_SHADER].UseShader();
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
-        s_shaders[LEARN_OPENGL_SHADER].SetUInt("shadowMap", 1);
+        s_shaders[LEARN_OPENGL_SHADER].SetUInt("normalMap", 1);
+        
+        s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
     }
     
     void DrawScene(const r2::draw::opengl::Shader& shader)
@@ -1330,67 +1393,91 @@ namespace r2::draw
     {
         //Pass 1
         float timeVal = static_cast<float>(CENG.GetTicks()) / 1000.f;
-        lightPos.z = sin(timeVal * 0.5) * 3.0;
+      //  lightPos.z = sin(timeVal * 0.5) * 3.0;
         
-        float aspect = (float)g_depthMapFBO.width / (float)g_depthMapFBO.height;
+       // float aspect = (float)g_depthMapFBO.width / (float)g_depthMapFBO.height;
         float near = 1.0f;
         float far = 25.0f;
-        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
-        std::vector<glm::mat4> shadowTransforms;
-        
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
-        shadowTransforms.push_back(shadowProj *
-                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
+//        glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+//        std::vector<glm::mat4> shadowTransforms;
+//
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0,-1.0, 0.0)));
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0), glm::vec3(0.0, 0.0,-1.0)));
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0), glm::vec3(0.0,-1.0, 0.0)));
+//        shadowTransforms.push_back(shadowProj *
+//                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
         {
             
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            
-            
-            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
-            //glm::mat4 lightProjection, lightView;
-            
-            //lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-            //lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-            //SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
-            
-            glViewport(0, 0, g_depthMapFBO.width, g_depthMapFBO.height);
-            opengl::Bind(g_depthMapFBO);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            SetupArrayMats(s_shaders[DEPTH_CUBE_MAP_SHADER], "shadowMatrices", shadowTransforms);
-            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUVec3("lightPos", lightPos);
-            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUFloat("far_plane", far);
-            DrawScene(s_shaders[DEPTH_CUBE_MAP_SHADER]);
-            
-            //opengl::UnBind(g_depthBuffer);
-            
             opengl::Bind(g_frameBuffer);
-            
-            glViewport(0, 0, g_width, g_height);
+            glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+            //glViewport(0, 0, g_frameBuffer.width, g_frameBuffer.height);
             
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, woodTexture);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+//
+            s_shaders[LEARN_OPENGL_SHADER].UseShader();
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
-            //s_shaders[LEARN_OPENGL_SHADER].SetUMat4("lightSpaceMatrix", lightProjection * lightView);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
-            s_shaders[LEARN_OPENGL_SHADER].SetUFloat("far_plane", far);
-            DrawScene(s_shaders[LEARN_OPENGL_SHADER]);
+
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::rotate(model, glm::radians(timeVal * -10.f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+            SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, bricksTexture);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, normalMappedBricksTexture);
+
+            opengl::Bind(g_normalMappedQuadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+//
+//
             opengl::UnBind(g_frameBuffer);
+            
+//            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
+//            //glm::mat4 lightProjection, lightView;
+//
+//            //lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+//            //lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+//            //SetupVP(s_shaders[DEPTH_SHADER], lightView, lightProjection);
+//
+//            glViewport(0, 0, g_depthMapFBO.width, g_depthMapFBO.height);
+//            opengl::Bind(g_depthMapFBO);
+//            glClear(GL_DEPTH_BUFFER_BIT);
+//            SetupArrayMats(s_shaders[DEPTH_CUBE_MAP_SHADER], "shadowMatrices", shadowTransforms);
+//            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUVec3("lightPos", lightPos);
+//            s_shaders[DEPTH_CUBE_MAP_SHADER].SetUFloat("far_plane", far);
+//            DrawScene(s_shaders[DEPTH_CUBE_MAP_SHADER]);
+//
+//            //opengl::UnBind(g_depthBuffer);
+//
+//            opengl::Bind(g_frameBuffer);
+//
+//            glViewport(0, 0, g_width, g_height);
+//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, woodTexture);
+//            glActiveTexture(GL_TEXTURE1);
+//            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+//            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+//            //s_shaders[LEARN_OPENGL_SHADER].SetUMat4("lightSpaceMatrix", lightProjection * lightView);
+//            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
+//            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
+//            s_shaders[LEARN_OPENGL_SHADER].SetUFloat("far_plane", far);
+//            DrawScene(s_shaders[LEARN_OPENGL_SHADER]);
+//            opengl::UnBind(g_frameBuffer);
             //draw the planet
             
 //            glm::mat4 model = glm::mat4(1.0f);
@@ -1520,19 +1607,37 @@ namespace r2::draw
             glDisable(GL_DEPTH_TEST);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            
+
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
+           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
+           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
             opengl::Bind(g_quadVAO);
             //Use the texture that was drawn to in the previous pass
-            
+
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glEnable(GL_DEPTH_TEST);
         }
         
+    }
+    
+    void CalculateTangentAndBiTangent(const glm::vec3& edge1, const glm::vec3& edge2, const glm::vec2& deltaUV1, const glm::vec2& deltaUV2, glm::vec3& tangent, glm::vec3& bitangent)
+    {
+        float denom = deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y;
+        R2_CHECK(!r2::math::NearEq( denom, 0.0), "denominator is 0!");
+        
+        float f = 1.0f / denom;
+        
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent = glm::normalize(tangent);
+        
+        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent = glm::normalize(bitangent);
     }
     
 #ifdef R2_ASSET_PIPELINE

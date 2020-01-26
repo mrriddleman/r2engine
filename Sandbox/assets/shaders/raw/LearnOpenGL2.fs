@@ -28,9 +28,9 @@ float LinearizeDepth(float depth)
 void main()
 {
 	//Normal
-	float depthValue = texture(screenTexture, TexCoord).r;
+	//float depthValue = texture(screenTexture, TexCoord).r;
 	//FragColor = vec4(vec3(depthValue),1.0);
-	FragColor = vec4(vec3(depthValue), 1.0);
+	FragColor = vec4(texture(screenTexture, TexCoord).rgb, 1.0);
 
 	//FragColor = BoxBlurPostProc();
 }
