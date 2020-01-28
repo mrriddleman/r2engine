@@ -254,6 +254,7 @@ namespace
     u32 depthCubeMap;
     u32 bricksTexture;
     u32 normalMappedBricksTexture;
+    u32 bricksHeightMapTexture;
     
     r2::draw::opengl::FrameBuffer g_pointLightDepthMapFBO[NUM_POINT_LIGHTS];
     u32 g_pointLightDepthCubeMaps[NUM_POINT_LIGHTS];
@@ -1261,12 +1262,14 @@ namespace r2::draw
         //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
         //woodTexture = opengl::LoadImageTexture(path);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "brickwall.jpg", path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2.jpg", path);
         bricksTexture = opengl::LoadImageTexture(path);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "brickwall_normal.jpg", path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_normal.jpg", path);
         normalMappedBricksTexture = opengl::LoadImageTexture(path);
         
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_disp.jpg", path);
+        bricksHeightMapTexture = opengl::LoadImageTexture(path);
 //        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
 //
 //        s_shaders[LEARN_OPENGL_SHADER].UseShader();
@@ -1331,7 +1334,7 @@ namespace r2::draw
         s_shaders[LEARN_OPENGL_SHADER].UseShader();
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("normalMap", 1);
-        
+        s_shaders[LEARN_OPENGL_SHADER].SetUInt("depthMap", 2);
         s_shaders[LEARN_OPENGL_SHADER2].UseShader();
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
     }
@@ -1426,9 +1429,9 @@ namespace r2::draw
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
-
+            s_shaders[LEARN_OPENGL_SHADER].SetUFloat("heightScale", 0.1f);
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::rotate(model, glm::radians(timeVal * -10.f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+          //  model = glm::rotate(model, glm::radians(timeVal * -10.f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
             SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
 
             glActiveTexture(GL_TEXTURE0);
@@ -1437,6 +1440,9 @@ namespace r2::draw
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, normalMappedBricksTexture);
 
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, bricksHeightMapTexture);
+            
             opengl::Bind(g_normalMappedQuadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 //
