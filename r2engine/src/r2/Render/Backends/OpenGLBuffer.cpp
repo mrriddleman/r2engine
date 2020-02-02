@@ -280,6 +280,29 @@ namespace r2::draw::opengl
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
         buf.colorAttachments.push_back(texture);
+        UnBind(buf);
+        return texture;
+    }
+    
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf)
+    {
+        Bind(buf);
+        u32 texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, buf.width, buf.height, 0, GL_RGB, GL_FLOAT, NULL);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        //Attach the texture to the frame buffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)buf.colorAttachments.size(), GL_TEXTURE_2D, texture, 0);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        buf.colorAttachments.push_back(texture);
+        UnBind(buf);
+        
         return texture;
     }
     

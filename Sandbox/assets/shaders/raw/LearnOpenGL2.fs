@@ -5,6 +5,9 @@ out vec4 FragColor;
 in vec2 TexCoord;
 
 uniform sampler2D screenTexture;
+uniform sampler2D bloomBlur;
+uniform bool bloom;
+uniform float exposure;
 uniform float near_plane;
 uniform float far_plane;
 
@@ -17,6 +20,10 @@ vec4 BoxBlurPostProc();
 vec4 EdgeDetectionPostProc();
 vec4 OutlinePostProc();
 vec4 KernelPostProc(float offset, float[9] kernel);
+vec3 GammaCorrect(vec3 color);
+vec3 ToneMap(vec3 color);
+vec4 BloomPostProc();
+
 
 float LinearizeDepth(float depth)
 {
@@ -24,13 +31,12 @@ float LinearizeDepth(float depth)
     return (2.0 * near_plane * far_plane) / (far_plane + near_plane - z * (far_plane - near_plane));	
 }
 
-
 void main()
 {
 	//Normal
 	//float depthValue = texture(screenTexture, TexCoord).r;
 	//FragColor = vec4(vec3(depthValue),1.0);
-	FragColor = vec4(texture(screenTexture, TexCoord).rgb, 1.0);
+	FragColor = BloomPostProc();
 
 	//FragColor = BoxBlurPostProc();
 }
@@ -132,4 +138,25 @@ vec4 KernelPostProc(float offset, float[9] kernel)
 	}
 
 	return vec4(col, 1.0);
+}
+
+vec3 GammaCorrect(vec3 color)
+{
+    return pow(color, vec3(1.0/2.2));
+}
+
+vec3 ToneMap(vec3 color)
+{
+	return vec3(1.0) - exp(-color * exposure);
+}
+
+vec4 BloomPostProc()
+{
+	vec3 hdrColor = texture(screenTexture, TexCoord).rgb;
+	vec3 bloomColor = texture(bloomBlur, TexCoord).rgb;
+
+	if(bloom)
+		hdrColor += bloomColor;
+
+	return vec4(GammaCorrect(ToneMap(hdrColor)), 1.0); 
 }

@@ -89,6 +89,8 @@ namespace r2::draw::opengl
     void UnBind(const RenderBuffer& buf);
     
     u32 AttachTextureToFrameBuffer(FrameBuffer& buf);
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf);
+    
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
     void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
     u32 AttachDepthToFrameBuffer(FrameBuffer& buf);

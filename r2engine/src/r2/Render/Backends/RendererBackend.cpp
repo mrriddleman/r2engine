@@ -43,6 +43,8 @@ namespace
         SKYBOX_SHADER,
         DEPTH_SHADER,
         DEPTH_CUBE_MAP_SHADER,
+        LIGHTBOX_SHADER,
+        BLUR_SHADER,
         NUM_SHADERS
     };
     
@@ -247,7 +249,13 @@ namespace
     r2::draw::opengl::RenderBuffer g_renderBuffer;
     r2::draw::opengl::FrameBuffer g_depthBuffer;
     r2::draw::opengl::FrameBuffer g_depthMapFBO;
+    
+    r2::draw::opengl::FrameBuffer g_hdrFBO;
+    r2::draw::opengl::FrameBuffer g_pingPongFBO[2];
+    
     u32 textureColorBuffer;
+    u32 textureColorBuffer2;
+    u32 pingPongTexture[2];
     u32 screenTexture;
     u32 woodTexture;
     u32 depthTexture;
@@ -255,6 +263,7 @@ namespace
     u32 bricksTexture;
     u32 normalMappedBricksTexture;
     u32 bricksHeightMapTexture;
+    u32 containerTexture;
     
     r2::draw::opengl::FrameBuffer g_pointLightDepthMapFBO[NUM_POINT_LIGHTS];
     u32 g_pointLightDepthCubeMaps[NUM_POINT_LIGHTS];
@@ -265,6 +274,14 @@ namespace
     const u32 g_instanceAmount = 5000;
     const float g_radius = 75.0f;
     const float g_offset = 10.0f;
+    
+    // lighting info
+    // -------------
+    // positions
+    std::vector<glm::vec3> g_lightPositions;
+
+    // colors
+    std::vector<glm::vec3> g_lightColors;
     
     std::vector<std::string> g_cubeMapFaces
     {
@@ -459,6 +476,22 @@ namespace r2::draw
             s_shaders[DEPTH_CUBE_MAP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, geometryPath);
             s_shaders[DEPTH_CUBE_MAP_SHADER].manifest = shaderManifest;
             
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LightBox.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "LightBox.fs", fragmentPath);
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[LIGHTBOX_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[LIGHTBOX_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Blur.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Blur.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[BLUR_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[BLUR_SHADER].manifest = shaderManifest;
         }
 #endif
 
@@ -1131,80 +1164,80 @@ namespace r2::draw
 //        LoadSkinnedModel(g_Model, modelPath);
 //        s_openglMeshes = opengl::CreateOpenGLMeshesFromSkinnedModel(g_Model);
         
-//        opengl::Create(g_boxVAO);
+        opengl::Create(g_boxVAO);
+
+        opengl::VertexBuffer cubeVBO;
+        opengl::Create(cubeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
+
+        opengl::AddBuffer(g_boxVAO, cubeVBO);
 //
-//        opengl::VertexBuffer cubeVBO;
-//        opengl::Create(cubeVBO, {
-//            {ShaderDataType::Float3, "aPos"},
-//            {ShaderDataType::Float3, "aNormal"},
-//            {ShaderDataType::Float2, "aTexCoord"}
-//        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
-//
-//        opengl::AddBuffer(g_boxVAO, cubeVBO);
-//
-//        opengl::Create(g_planeVAO);
-//        opengl::VertexBuffer planeVBO;
-//        opengl::Create(planeVBO, {
-//            {ShaderDataType::Float3, "aPos"},
-//            {ShaderDataType::Float3, "aNormal"},
-//            {ShaderDataType::Float2, "aTexCoord"}
-//        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
-//
-//        opengl::AddBuffer(g_planeVAO, planeVBO);
+        opengl::Create(g_planeVAO);
+        opengl::VertexBuffer planeVBO;
+        opengl::Create(planeVBO, {
+            {ShaderDataType::Float3, "aPos"},
+            {ShaderDataType::Float3, "aNormal"},
+            {ShaderDataType::Float2, "aTexCoord"}
+        }, planeVertices, COUNT_OF(planeVertices), GL_STATIC_DRAW);
+
+        opengl::AddBuffer(g_planeVAO, planeVBO);
 //
 //
         
         //calculate the tangent and bitanget
         // positions
-        glm::vec3 pos1(-1.0,  1.0, 0.0);
-        glm::vec3 pos2(-1.0, -1.0, 0.0);
-        glm::vec3 pos3( 1.0, -1.0, 0.0);
-        glm::vec3 pos4( 1.0,  1.0, 0.0);
-        // texture coordinates
-        glm::vec2 uv1(0.0, 1.0);
-        glm::vec2 uv2(0.0, 0.0);
-        glm::vec2 uv3(1.0, 0.0);
-        glm::vec2 uv4(1.0, 1.0);
-        // normal vector
-        glm::vec3 nm(0.0, 0.0, 1.0);
-        
-        glm::vec3 tri1_edge1 = pos2 - pos1;
-        glm::vec3 tri1_edge2 = pos3 - pos1;
-        glm::vec2 tri1_deltaUV1 = uv2 - uv1;
-        glm::vec2 tri1_deltaUV2 = uv3 - uv1;
-        
-        glm::vec3 tri2_edge1 = pos3 - pos1;
-        glm::vec3 tri2_edge2 = pos4 - pos1;
-        glm::vec2 tri2_deltaUV1 = uv3 - uv1;
-        glm::vec2 tri2_deltaUV2 = uv4 - uv1;
-        
-        glm::vec3 tangent1, bitangent1, tangent2, bitangent2;
-        
-        CalculateTangentAndBiTangent(tri1_edge1, tri1_edge2, tri1_deltaUV1, tri1_deltaUV2, tangent1, bitangent1);
-        CalculateTangentAndBiTangent(tri2_edge1, tri2_edge2, tri2_deltaUV1, tri2_deltaUV2, tangent2, bitangent2);
-        
-        float newQuadVerts[] = {
-            // positions            // normal         // texcoords  // tangent                          // bitangent
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
-            
-            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
-            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
-        };
-        
-        opengl::Create(g_normalMappedQuadVAO);
-        opengl::VertexBuffer normalMappedQuadVBO;
-        opengl::Create(normalMappedQuadVBO, {
-            {ShaderDataType::Float3, "aPos"},
-            {ShaderDataType::Float3, "aNormal"},
-            {ShaderDataType::Float2, "aTexCoord"},
-            {ShaderDataType::Float3, "aTangent"},
-            {ShaderDataType::Float3, "aBiTangent"}
-        }, newQuadVerts, COUNT_OF(newQuadVerts), GL_STATIC_DRAW);
-        
-        opengl::AddBuffer(g_normalMappedQuadVAO, normalMappedQuadVBO);
+//        glm::vec3 pos1(-1.0,  1.0, 0.0);
+//        glm::vec3 pos2(-1.0, -1.0, 0.0);
+//        glm::vec3 pos3( 1.0, -1.0, 0.0);
+//        glm::vec3 pos4( 1.0,  1.0, 0.0);
+//        // texture coordinates
+//        glm::vec2 uv1(0.0, 1.0);
+//        glm::vec2 uv2(0.0, 0.0);
+//        glm::vec2 uv3(1.0, 0.0);
+//        glm::vec2 uv4(1.0, 1.0);
+//        // normal vector
+//        glm::vec3 nm(0.0, 0.0, 1.0);
+//
+//        glm::vec3 tri1_edge1 = pos2 - pos1;
+//        glm::vec3 tri1_edge2 = pos3 - pos1;
+//        glm::vec2 tri1_deltaUV1 = uv2 - uv1;
+//        glm::vec2 tri1_deltaUV2 = uv3 - uv1;
+//
+//        glm::vec3 tri2_edge1 = pos3 - pos1;
+//        glm::vec3 tri2_edge2 = pos4 - pos1;
+//        glm::vec2 tri2_deltaUV1 = uv3 - uv1;
+//        glm::vec2 tri2_deltaUV2 = uv4 - uv1;
+//
+//        glm::vec3 tangent1, bitangent1, tangent2, bitangent2;
+//
+//        CalculateTangentAndBiTangent(tri1_edge1, tri1_edge2, tri1_deltaUV1, tri1_deltaUV2, tangent1, bitangent1);
+//        CalculateTangentAndBiTangent(tri2_edge1, tri2_edge2, tri2_deltaUV1, tri2_deltaUV2, tangent2, bitangent2);
+//
+//        float newQuadVerts[] = {
+//            // positions            // normal         // texcoords  // tangent                          // bitangent
+//            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+//            pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+//            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+//
+//            pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+//            pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+//            pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+//        };
+//
+//        opengl::Create(g_normalMappedQuadVAO);
+//        opengl::VertexBuffer normalMappedQuadVBO;
+//        opengl::Create(normalMappedQuadVBO, {
+//            {ShaderDataType::Float3, "aPos"},
+//            {ShaderDataType::Float3, "aNormal"},
+//            {ShaderDataType::Float2, "aTexCoord"},
+//            {ShaderDataType::Float3, "aTangent"},
+//            {ShaderDataType::Float3, "aBiTangent"}
+//        }, newQuadVerts, COUNT_OF(newQuadVerts), GL_STATIC_DRAW);
+//
+//        opengl::AddBuffer(g_normalMappedQuadVAO, normalMappedQuadVBO);
         
 //        opengl::Create(g_transparentVAO);
 //
@@ -1244,6 +1277,11 @@ namespace r2::draw
 //        vegetation.push_back(glm::vec3( 0.5f,  0.0f, -0.6f));
 //
         char path[r2::fs::FILE_PATH_LENGTH];
+        
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "container2.png", path);
+        
+        containerTexture = opengl::LoadImageTexture(path);
+        
 //        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "marble.jpg", path);
 //
 //        marbelTex = opengl::LoadImageTexture(path);
@@ -1259,17 +1297,17 @@ namespace r2::draw
 //        windowTex = opengl::LoadImageTexture(path);
 //
         
-        //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
-        //woodTexture = opengl::LoadImageTexture(path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "wood.png", path);
+        woodTexture = opengl::LoadImageTexture(path);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2.jpg", path);
-        bricksTexture = opengl::LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_normal.jpg", path);
-        normalMappedBricksTexture = opengl::LoadImageTexture(path);
-        
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_disp.jpg", path);
-        bricksHeightMapTexture = opengl::LoadImageTexture(path);
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2.jpg", path);
+//        bricksTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_normal.jpg", path);
+//        normalMappedBricksTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "bricks2_disp.jpg", path);
+//        bricksHeightMapTexture = opengl::LoadImageTexture(path);
 //        skyboxTex = opengl::CreateCubeMap(g_cubeMapFaces);
 //
 //        s_shaders[LEARN_OPENGL_SHADER].UseShader();
@@ -1302,11 +1340,25 @@ namespace r2::draw
        // opengl::Create(g_depthBuffer, 1024, 1024);
        // depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
         
-        opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
+      //  opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        //textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
+        opengl::Create(g_hdrFBO, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        textureColorBuffer = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
+        textureColorBuffer2 = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
         
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_frameBuffer, g_renderBuffer);
+        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_hdrFBO, g_renderBuffer);
+        opengl::Bind(g_hdrFBO);
+        unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+        glDrawBuffers(2, attachments);
+        opengl::UnBind(g_hdrFBO);
+        
+        
+        opengl::Create(g_pingPongFBO[0], CENG.DisplaySize().width, CENG.DisplaySize().height);
+        pingPongTexture[0] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[0]);
+        
+        opengl::Create(g_pingPongFBO[1], CENG.DisplaySize().width, CENG.DisplaySize().height);
+        pingPongTexture[1] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[1]);
         
 //        opengl::Create(g_depthMapFBO, 1024, 1024);
 //        depthCubeMap = opengl::CreateDepthCubeMap(g_depthMapFBO.width, g_depthMapFBO.height);
@@ -1329,14 +1381,25 @@ namespace r2::draw
         
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
+        g_lightPositions.push_back(glm::vec3( 0.0f, 0.5f,  1.5f));
+        g_lightPositions.push_back(glm::vec3(-4.0f, 0.5f, -3.0f));
+        g_lightPositions.push_back(glm::vec3( 3.0f, 0.5f,  1.0f));
+        g_lightPositions.push_back(glm::vec3(-.8f,  2.4f, -1.0f));
         
+        g_lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
+        g_lightColors.push_back(glm::vec3(10.0f,  0.0f,  0.0f));
+        g_lightColors.push_back(glm::vec3(0.0f,   0.0f,  15.0f));
+        g_lightColors.push_back(glm::vec3(0.0f,   5.0f,  0.0f));
         
         s_shaders[LEARN_OPENGL_SHADER].UseShader();
         s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
-        s_shaders[LEARN_OPENGL_SHADER].SetUInt("normalMap", 1);
-        s_shaders[LEARN_OPENGL_SHADER].SetUInt("depthMap", 2);
+
+        s_shaders[BLUR_SHADER].UseShader();
+        s_shaders[BLUR_SHADER].SetUInt("image", 0);
+        
         s_shaders[LEARN_OPENGL_SHADER2].UseShader();
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloomBlur", 1);
     }
     
     void DrawScene(const r2::draw::opengl::Shader& shader)
@@ -1392,6 +1455,12 @@ namespace r2::draw
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
     
+    void DrawCube(const opengl::Shader& shader, const glm::mat4& model)
+    {
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    
     void DrawLearnOpenGLDemo()
     {
         //Pass 1
@@ -1417,9 +1486,9 @@ namespace r2::draw
 //        shadowTransforms.push_back(shadowProj *
 //                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
         {
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            opengl::Bind(g_hdrFBO);
             
-            opengl::Bind(g_frameBuffer);
-            glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
             //glViewport(0, 0, g_frameBuffer.width, g_frameBuffer.height);
@@ -1427,28 +1496,109 @@ namespace r2::draw
 //
             s_shaders[LEARN_OPENGL_SHADER].UseShader();
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
-            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("lightPos", lightPos);
             s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
-            s_shaders[LEARN_OPENGL_SHADER].SetUFloat("heightScale", 0.1f);
-            glm::mat4 model = glm::mat4(1.0f);
-          //  model = glm::rotate(model, glm::radians(timeVal * -10.f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
-            SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
-
+            
+            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+            {
+                char paramStr[512];
+                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Position")).c_str(), i);
+                
+                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightPositions[i]);
+                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Color")).c_str(), i);
+                
+                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightColors[i]);
+            }
+            
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, bricksTexture);
+            glBindTexture(GL_TEXTURE_2D, woodTexture);
+            opengl::Bind(g_boxVAO);
+            
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            glBindTexture(GL_TEXTURE_2D, containerTexture);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
+            model = glm::scale(model, glm::vec3(0.5f));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0f));
+            model = glm::scale(model, glm::vec3(0.5f));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0f));
+            model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0f));
+            model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+            model = glm::scale(model, glm::vec3(1.25));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0f));
+            model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0f, 0.0, 1.0f)));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(0.5f));
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            s_shaders[LIGHTBOX_SHADER].UseShader();
+            
+            SetupVP(s_shaders[LIGHTBOX_SHADER], g_View, g_Proj);
+            
+            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+            {
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(g_lightPositions[i]));
+                model = glm::scale(model, glm::vec3(0.25f));
+                SetupModelMat(s_shaders[LIGHTBOX_SHADER], model);
+                s_shaders[LIGHTBOX_SHADER].SetUVec3("lightColor", g_lightColors[i]);
+                DrawCube(s_shaders[LIGHTBOX_SHADER], model);
+            }
 
+            opengl::UnBind(g_hdrFBO);
+            
+            //blur bright fragments with two-pass guassian blur
+            bool horizontal = true, firstIteration = true;
+            
+            u32 amount = 10;
+            s_shaders[BLUR_SHADER].UseShader();
+            opengl::Bind(g_quadVAO);
+            for (u32 i = 0; i < amount; ++i)
+            {
+                opengl::Bind(g_pingPongFBO[horizontal]);
+                s_shaders[BLUR_SHADER].SetUInt("horizontal", horizontal);
+                glBindTexture(GL_TEXTURE_2D, firstIteration ? textureColorBuffer2 : pingPongTexture[!horizontal]);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                horizontal = !horizontal;
+                if (firstIteration)
+                {
+                    firstIteration = false;
+                }
+            }
+            opengl::UnBind(g_pingPongFBO[0]);
+            
+           // glDisable(GL_DEPTH_TEST);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+            
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, normalMappedBricksTexture);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, bricksHeightMapTexture);
-            
-            opengl::Bind(g_normalMappedQuadVAO);
+            glBindTexture(GL_TEXTURE_2D, pingPongTexture[!horizontal]);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloom", true);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("exposure", 0.5f);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-//
-//
-            opengl::UnBind(g_frameBuffer);
-            
+           // glEnable(GL_DEPTH_TEST);
 //            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
 //            //glm::mat4 lightProjection, lightView;
 //
@@ -1610,20 +1760,20 @@ namespace r2::draw
 //            glBlitFramebuffer(0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
             
             //Render to texture code
-            glDisable(GL_DEPTH_TEST);
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
-           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
-            opengl::Bind(g_quadVAO);
-            //Use the texture that was drawn to in the previous pass
-
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glEnable(GL_DEPTH_TEST);
+//            glDisable(GL_DEPTH_TEST);
+//            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+//            glClear(GL_COLOR_BUFFER_BIT);
+//
+//            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+//           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("near_plane", near);
+//           // s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("far_plane", far);
+//            opengl::Bind(g_quadVAO);
+//            //Use the texture that was drawn to in the previous pass
+//
+//            glDrawArrays(GL_TRIANGLES, 0, 6);
+//            glEnable(GL_DEPTH_TEST);
         }
         
     }

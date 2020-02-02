@@ -49,6 +49,12 @@
       binaryPath: ""
     },
     {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.fs",
       geometryPath: "",
@@ -57,6 +63,12 @@
     {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.fs",
       geometryPath: "",
       binaryPath: ""
     }
