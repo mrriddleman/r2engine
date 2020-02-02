@@ -1587,7 +1587,7 @@ namespace r2::draw
             }
             opengl::UnBind(g_pingPongFBO[0]);
             
-           // glDisable(GL_DEPTH_TEST);
+            glDisable(GL_DEPTH_TEST);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             s_shaders[LEARN_OPENGL_SHADER2].UseShader();
             
@@ -1598,7 +1598,7 @@ namespace r2::draw
             s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloom", true);
             s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("exposure", 0.5f);
             glDrawArrays(GL_TRIANGLES, 0, 6);
-           // glEnable(GL_DEPTH_TEST);
+            glEnable(GL_DEPTH_TEST);
 //            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
 //            //glm::mat4 lightProjection, lightView;
 //
