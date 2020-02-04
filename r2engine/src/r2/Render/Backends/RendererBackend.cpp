@@ -242,6 +242,7 @@ namespace
     std::vector<glm::vec3> vegetation;
     r2::draw::Model g_planetModel;
     r2::draw::Model g_rockModel;
+    r2::draw::Model g_nanosuitModel;
     std::vector<r2::draw::opengl::OpenGLMesh> s_planetMeshes;
     std::vector<r2::draw::opengl::OpenGLMesh> s_rockMeshes;
     r2::draw::opengl::FrameBuffer g_frameBuffer;
@@ -253,6 +254,16 @@ namespace
     r2::draw::opengl::FrameBuffer g_hdrFBO;
     r2::draw::opengl::FrameBuffer g_pingPongFBO[2];
     
+    enum GBufferBuffers
+    {
+        GBUFFER_POSITION = 0,
+        GBUFFER_NORMAL,
+        GBUFFER_ALBEDO_SPEC,
+        NUM_GBUFFER_BUFFERS
+    };
+    r2::draw::opengl::FrameBuffer g_gBuffer;
+    u32 g_gBufferTextures[NUM_GBUFFER_BUFFERS];
+    std::vector<glm::vec3> g_objectPositions;
     u32 textureColorBuffer;
     u32 textureColorBuffer2;
     u32 pingPongTexture[2];
@@ -1137,9 +1148,21 @@ namespace r2::draw
     
     void SetupLearnOpenGLDemo()
     {
+        char modelPath[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "nanosuit/nanosuit.obj", modelPath);
+        LoadModel(g_nanosuitModel, modelPath);
+        s_openglMeshes = opengl::CreateOpenGLMeshesFromModel(g_nanosuitModel);
         
-        //
-//        char modelPath[r2::fs::FILE_PATH_LENGTH];
+        g_objectPositions.push_back(glm::vec3(-3.0,  -3.0, -3.0));
+        g_objectPositions.push_back(glm::vec3( 0.0,  -3.0, -3.0));
+        g_objectPositions.push_back(glm::vec3( 3.0,  -3.0, -3.0));
+        g_objectPositions.push_back(glm::vec3(-3.0,  -3.0,  0.0));
+        g_objectPositions.push_back(glm::vec3( 0.0,  -3.0,  0.0));
+        g_objectPositions.push_back(glm::vec3( 3.0,  -3.0,  0.0));
+        g_objectPositions.push_back(glm::vec3(-3.0,  -3.0,  3.0));
+        g_objectPositions.push_back(glm::vec3( 0.0,  -3.0,  3.0));
+        g_objectPositions.push_back(glm::vec3( 3.0,  -3.0,  3.0));
+        
 //        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "planet/planet.obj", modelPath);
 //        LoadModel(g_planetModel, modelPath);
 //        s_planetMeshes = opengl::CreateOpenGLMeshesFromModel(g_planetModel);
@@ -1328,37 +1351,52 @@ namespace r2::draw
 //
 //
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
+      //  glEnable(GL_BLEND);
        // glEnable(GL_CULL_FACE);
        // glFrontFace(GL_CCW);
         
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         
         //setup framebuffers
+        
+        opengl::Create(g_gBuffer, CENG.DisplaySize());
+        g_gBufferTextures[GBUFFER_POSITION] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_NEAREST);
+        g_gBufferTextures[GBUFFER_NORMAL] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_NEAREST);
+        g_gBufferTextures[GBUFFER_ALBEDO_SPEC] = opengl::AttachTextureToFrameBuffer(g_gBuffer, true, GL_NEAREST);
+
+        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+        opengl::AttachDepthBufferForRenderBufferToFrameBuffer(g_gBuffer, g_renderBuffer);
+        
+        unsigned int attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+        opengl::Bind(g_gBuffer);
+        glDrawBuffers(3, attachments);
+        opengl::UnBind(g_gBuffer);
+        
+        
         
        // opengl::Create(g_depthBuffer, 1024, 1024);
        // depthTexture = opengl::AttachDepthToFrameBuffer(g_depthBuffer);
         
       //  opengl::Create(g_frameBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
         //textureColorBuffer = opengl::AttachTextureToFrameBuffer(g_frameBuffer);
-        opengl::Create(g_hdrFBO, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        textureColorBuffer = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
-        textureColorBuffer2 = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
-        
-        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
-        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_hdrFBO, g_renderBuffer);
-        opengl::Bind(g_hdrFBO);
-        unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-        glDrawBuffers(2, attachments);
-        opengl::UnBind(g_hdrFBO);
-        
-        
-        opengl::Create(g_pingPongFBO[0], CENG.DisplaySize().width, CENG.DisplaySize().height);
-        pingPongTexture[0] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[0]);
-        
-        opengl::Create(g_pingPongFBO[1], CENG.DisplaySize().width, CENG.DisplaySize().height);
-        pingPongTexture[1] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[1]);
+//        opengl::Create(g_hdrFBO, CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        textureColorBuffer = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
+//        textureColorBuffer2 = opengl::AttachHDRTextureToFrameBuffer(g_hdrFBO);
+//
+//        opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        opengl::AttachDepthAndStencilForRenderBufferToFrameBuffer(g_hdrFBO, g_renderBuffer);
+//        opengl::Bind(g_hdrFBO);
+//        unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+//        glDrawBuffers(2, attachments);
+//        opengl::UnBind(g_hdrFBO);
+//
+//
+//        opengl::Create(g_pingPongFBO[0], CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        pingPongTexture[0] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[0]);
+//
+//        opengl::Create(g_pingPongFBO[1], CENG.DisplaySize().width, CENG.DisplaySize().height);
+//        pingPongTexture[1] = opengl::AttachHDRTextureToFrameBuffer(g_pingPongFBO[1]);
         
 //        opengl::Create(g_depthMapFBO, 1024, 1024);
 //        depthCubeMap = opengl::CreateDepthCubeMap(g_depthMapFBO.width, g_depthMapFBO.height);
@@ -1381,25 +1419,31 @@ namespace r2::draw
         
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
-        g_lightPositions.push_back(glm::vec3( 0.0f, 0.5f,  1.5f));
-        g_lightPositions.push_back(glm::vec3(-4.0f, 0.5f, -3.0f));
-        g_lightPositions.push_back(glm::vec3( 3.0f, 0.5f,  1.0f));
-        g_lightPositions.push_back(glm::vec3(-.8f,  2.4f, -1.0f));
+        const u32 NUM_LIGHTS = 32;
+        srand(13);
+        for (u32 i = 0; i < NUM_LIGHTS; ++i)
+        {
+            float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+            float yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+            float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+            g_lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
+            
+            float rColor = ((rand() % 100) / 200.0f) + 0.5;
+            float gColor = ((rand() % 100) / 200.0f) + 0.5;
+            float bColor = ((rand() % 100) / 200.0f) + 0.5;
+            g_lightColors.push_back(glm::vec3(rColor, gColor, bColor));
+        }
         
-        g_lightColors.push_back(glm::vec3(5.0f,   5.0f,  5.0f));
-        g_lightColors.push_back(glm::vec3(10.0f,  0.0f,  0.0f));
-        g_lightColors.push_back(glm::vec3(0.0f,   0.0f,  15.0f));
-        g_lightColors.push_back(glm::vec3(0.0f,   5.0f,  0.0f));
-        
-        s_shaders[LEARN_OPENGL_SHADER].UseShader();
-        s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
-
-        s_shaders[BLUR_SHADER].UseShader();
-        s_shaders[BLUR_SHADER].SetUInt("image", 0);
+//        s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//        s_shaders[LEARN_OPENGL_SHADER].SetUInt("diffuseTexture", 0);
+//
+//        s_shaders[BLUR_SHADER].UseShader();
+//        s_shaders[BLUR_SHADER].SetUInt("image", 0);
         
         s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("screenTexture", 0);
-        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloomBlur", 1);
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gPosition", 0);
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gNormal", 1);
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gAlbedoSpec", 2);
     }
     
     void DrawScene(const r2::draw::opengl::Shader& shader)
@@ -1487,118 +1531,201 @@ namespace r2::draw
 //                                     glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0), glm::vec3(0.0,-1.0, 0.0)));
         {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            opengl::Bind(g_hdrFBO);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            opengl::Bind(g_gBuffer);
             
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            //glViewport(0, 0, g_frameBuffer.width, g_frameBuffer.height);
-            
-//
             s_shaders[LEARN_OPENGL_SHADER].UseShader();
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
-            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
-            
-            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+            glm::mat4 model = glm::mat4(1.0);
+            for (u32 i = 0; i < g_objectPositions.size(); ++i)
             {
-                char paramStr[512];
-                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Position")).c_str(), i);
-                
-                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightPositions[i]);
-                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Color")).c_str(), i);
-                
-                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightColors[i]);
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, g_objectPositions[i]);
+                model = glm::scale(model, glm::vec3(0.25f));
+                SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
+                DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_openglMeshes);
             }
             
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, woodTexture);
-            opengl::Bind(g_boxVAO);
+            opengl::UnBind(g_gBuffer);
             
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            //lighting pass for deferred shading
+           
+            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
-            glBindTexture(GL_TEXTURE_2D, containerTexture);
+            for (u32 i = 0; i < NUM_GBUFFER_BUFFERS; ++i)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, g_gBufferTextures[i]);
+            }
             
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
-            model = glm::scale(model, glm::vec3(0.5f));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            const float linear = 0.7;
+            const float quadratic = 1.8;
+            const float constant = 1.0f;
+            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+            {
+                float lightMax = std::fmaxf(std::fmaxf(g_lightColors[i].r, g_lightColors[i].g), g_lightColors[i].b);
+                float radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0/5.0) * lightMax))) / (2 * quadratic);
+                
+                char uniformName[r2::fs::FILE_PATH_LENGTH];
+                sprintf(uniformName, "lights[%i].Position", i);
+                
+                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightPositions[i]);
+                
+                sprintf(uniformName, "lights[%i].Color", i);
+                
+                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightColors[i]);
+                
+                sprintf(uniformName, "lights[%i].Linear", i);
+                
+                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, linear);
+                
+                sprintf(uniformName, "lights[%i].Quadtric", i);
+                
+                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, quadratic);
+                
+                sprintf(uniformName, "lights[%i].Radius", i);
+                
+                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, radius);
+                
+            }
+            s_shaders[LEARN_OPENGL_SHADER2].SetUVec3("viewPos", g_CameraPos);
             
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0f));
-            model = glm::scale(model, glm::vec3(0.5f));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            opengl::Bind(g_quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
             
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0f));
-            model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
             
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0f));
-            model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
-            model = glm::scale(model, glm::vec3(1.25));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
-            
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0f));
-            model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0f, 0.0, 1.0f)));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
-            
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(0.5f));
-            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, g_gBuffer.FBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+            glBlitFramebuffer(
+                              0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_DEPTH_BUFFER_BIT, GL_NEAREST
+                              );
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             
             s_shaders[LIGHTBOX_SHADER].UseShader();
-            
             SetupVP(s_shaders[LIGHTBOX_SHADER], g_View, g_Proj);
+            
+            opengl::Bind(g_boxVAO);
             
             for (u32 i = 0; i < g_lightPositions.size(); ++i)
             {
                 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(g_lightPositions[i]));
-                model = glm::scale(model, glm::vec3(0.25f));
-                SetupModelMat(s_shaders[LIGHTBOX_SHADER], model);
+                model = glm::translate(model, g_lightPositions[i]);
+                model = glm::scale(model, glm::vec3(0.25));
                 s_shaders[LIGHTBOX_SHADER].SetUVec3("lightColor", g_lightColors[i]);
                 DrawCube(s_shaders[LIGHTBOX_SHADER], model);
             }
-
-            opengl::UnBind(g_hdrFBO);
+            //glViewport(0, 0, g_frameBuffer.width, g_frameBuffer.height);
             
-            //blur bright fragments with two-pass guassian blur
-            bool horizontal = true, firstIteration = true;
-            
-            u32 amount = 10;
-            s_shaders[BLUR_SHADER].UseShader();
-            opengl::Bind(g_quadVAO);
-            for (u32 i = 0; i < amount; ++i)
-            {
-                opengl::Bind(g_pingPongFBO[horizontal]);
-                s_shaders[BLUR_SHADER].SetUInt("horizontal", horizontal);
-                glBindTexture(GL_TEXTURE_2D, firstIteration ? textureColorBuffer2 : pingPongTexture[!horizontal]);
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-                horizontal = !horizontal;
-                if (firstIteration)
-                {
-                    firstIteration = false;
-                }
-            }
-            opengl::UnBind(g_pingPongFBO[0]);
-            
-            glDisable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-            
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, pingPongTexture[!horizontal]);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloom", true);
-            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("exposure", 0.5f);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glEnable(GL_DEPTH_TEST);
+//
+//            s_shaders[LEARN_OPENGL_SHADER].UseShader();
+//            SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+//            s_shaders[LEARN_OPENGL_SHADER].SetUVec3("viewPos", g_CameraPos);
+//
+//            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+//            {
+//                char paramStr[512];
+//                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Position")).c_str(), i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightPositions[i]);
+//                sprintf(paramStr, (std::string("lights") + std::string("[%u]") + std::string(".Color")).c_str(), i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER].SetUVec3(paramStr, g_lightColors[i]);
+//            }
+//
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, woodTexture);
+//            opengl::Bind(g_boxVAO);
+//
+//            glm::mat4 model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+//            model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            glBindTexture(GL_TEXTURE_2D, containerTexture);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0));
+//            model = glm::scale(model, glm::vec3(0.5f));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(2.0f, 0.0f, 1.0f));
+//            model = glm::scale(model, glm::vec3(0.5f));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(-1.0f, -1.0f, 2.0f));
+//            model = glm::rotate(model, glm::radians(60.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(0.0f, 2.7f, 4.0f));
+//            model = glm::rotate(model, glm::radians(23.0f), glm::normalize(glm::vec3(1.0f, 0.0f, 1.0f)));
+//            model = glm::scale(model, glm::vec3(1.25));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(-2.0f, 1.0f, -3.0f));
+//            model = glm::rotate(model, glm::radians(124.0f), glm::normalize(glm::vec3(1.0f, 0.0, 1.0f)));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, glm::vec3(-3.0f, 0.0f, 0.0f));
+//            model = glm::scale(model, glm::vec3(0.5f));
+//            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+//
+//            s_shaders[LIGHTBOX_SHADER].UseShader();
+//
+//            SetupVP(s_shaders[LIGHTBOX_SHADER], g_View, g_Proj);
+//
+//            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+//            {
+//                model = glm::mat4(1.0f);
+//                model = glm::translate(model, glm::vec3(g_lightPositions[i]));
+//                model = glm::scale(model, glm::vec3(0.25f));
+//                SetupModelMat(s_shaders[LIGHTBOX_SHADER], model);
+//                s_shaders[LIGHTBOX_SHADER].SetUVec3("lightColor", g_lightColors[i]);
+//                DrawCube(s_shaders[LIGHTBOX_SHADER], model);
+//            }
+//
+//            opengl::UnBind(g_hdrFBO);
+//
+//            //blur bright fragments with two-pass guassian blur
+//            bool horizontal = true, firstIteration = true;
+//
+//            u32 amount = 10;
+//            s_shaders[BLUR_SHADER].UseShader();
+//            opengl::Bind(g_quadVAO);
+//            for (u32 i = 0; i < amount; ++i)
+//            {
+//                opengl::Bind(g_pingPongFBO[horizontal]);
+//                s_shaders[BLUR_SHADER].SetUInt("horizontal", horizontal);
+//                glBindTexture(GL_TEXTURE_2D, firstIteration ? textureColorBuffer2 : pingPongTexture[!horizontal]);
+//                glDrawArrays(GL_TRIANGLES, 0, 6);
+//                horizontal = !horizontal;
+//                if (firstIteration)
+//                {
+//                    firstIteration = false;
+//                }
+//            }
+//            opengl::UnBind(g_pingPongFBO[0]);
+//
+//            glDisable(GL_DEPTH_TEST);
+//            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+//
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
+//            glActiveTexture(GL_TEXTURE1);
+//            glBindTexture(GL_TEXTURE_2D, pingPongTexture[!horizontal]);
+//            s_shaders[LEARN_OPENGL_SHADER2].SetUInt("bloom", true);
+//            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("exposure", 0.5f);
+//            glDrawArrays(GL_TRIANGLES, 0, 6);
+//            glEnable(GL_DEPTH_TEST);
 //            s_shaders[DEPTH_CUBE_MAP_SHADER].UseShader();
 //            //glm::mat4 lightProjection, lightView;
 //

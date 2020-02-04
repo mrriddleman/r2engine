@@ -266,7 +266,7 @@ namespace
                 std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
                 r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
                 
-                //aiTextureType_NORMAL
+               // aiTextureType_NORMAL
                 std::vector<r2::draw::Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, r2::draw::TextureType::Normal, directory);
                 r2Mesh.textures.insert(r2Mesh.textures.end(), normalMaps.begin(), normalMaps.end());
             }

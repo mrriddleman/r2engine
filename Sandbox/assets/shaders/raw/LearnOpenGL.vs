@@ -21,6 +21,6 @@ void main()
 	vs_out.TexCoord = aTexCoord;
 
 	mat3 normalMatrix = transpose(inverse(mat3(model)));
-	vs_out.Normal = normalize(normalMatrix * aNormal);
+	vs_out.Normal = normalMatrix * aNormal;
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

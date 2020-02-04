@@ -11,6 +11,24 @@ uniform float exposure;
 uniform float near_plane;
 uniform float far_plane;
 
+struct Light
+{
+	vec3 Position;
+	vec3 Color;
+
+	float Linear;
+	float Quadratic;
+
+	float Radius;
+};
+
+const int NUM_LIGHTS = 32;
+uniform Light lights[NUM_LIGHTS];
+uniform vec3 viewPos;
+uniform sampler2D gPosition;
+uniform sampler2D gNormal;
+uniform sampler2D gAlbedoSpec;
+
 vec4 InversionPostProc();
 
 vec4 GrayscalePostProc();
@@ -36,9 +54,40 @@ void main()
 	//Normal
 	//float depthValue = texture(screenTexture, TexCoord).r;
 	//FragColor = vec4(vec3(depthValue),1.0);
-	FragColor = BloomPostProc();
-
+	//FragColor = BloomPostProc();
 	//FragColor = BoxBlurPostProc();
+
+
+	vec3 FragPos = texture(gPosition, TexCoord).rgb;
+	vec3 Normal = texture(gNormal, TexCoord).rgb;
+	vec3 Diffuse = texture(gAlbedoSpec, TexCoord).rgb;
+	float Specular = texture(gAlbedoSpec, TexCoord).a;
+
+	vec3 lighting = Diffuse * 0.1;
+	vec3 viewDir = normalize(viewPos - FragPos);
+	for(int i = 0; i < NUM_LIGHTS; ++i)
+	{
+		float distance = length(lights[i].Position - FragPos);
+		if(distance < lights[i].Radius)
+		{
+			//diffuse
+			vec3 lightDir = normalize(lights[i].Position - FragPos);
+			vec3 diffuse = max(dot(Normal, lightDir), 0.0) * Diffuse * lights[i].Color;
+
+			//specular
+			vec3 halfVec = normalize(lightDir + viewDir);
+			float spec = pow(max(dot(Normal, halfVec), 0.0), 16.0);
+			vec3 specular = lights[i].Color * spec * Specular;
+
+			float attenuation = 1.0 / (1.0 + lights[i].Linear * distance + lights[i].Quadratic * distance * distance);
+			diffuse *= attenuation;
+			specular *= attenuation;
+			lighting += diffuse + specular;
+		}
+	}
+
+	FragColor = vec4(lighting, 1.0);
+
 }
 
 vec4 InversionPostProc()

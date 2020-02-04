@@ -6,7 +6,7 @@
 //
 
 #include "OpenGLBuffer.h"
-#include "glad/glad.h"
+
 
 namespace r2::draw::opengl
 {
@@ -106,6 +106,13 @@ namespace r2::draw::opengl
         glGenFramebuffers(1, &buf.FBO);
         buf.width = width;
         buf.height = height;
+    }
+    
+    void Create(FrameBuffer& buf, const r2::util::Size& size)
+    {
+        glGenFramebuffers(1, &buf.FBO);
+        buf.width = size.width;
+        buf.height = size.height;
     }
     
     void Create(RenderBuffer& buf, u32 width, u32 height)
@@ -261,7 +268,7 @@ namespace r2::draw::opengl
         arrayBuf.indexBuffer = indexBuf;
     }
     
-    u32 AttachTextureToFrameBuffer(FrameBuffer& buf)
+    u32 AttachTextureToFrameBuffer(FrameBuffer& buf, bool alpha, GLenum filter)
     {
         Bind(buf);
         
@@ -269,10 +276,17 @@ namespace r2::draw::opengl
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, buf.width, buf.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        if(alpha)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, buf.width, buf.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        }
+        else
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, buf.width, buf.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        }
         
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -286,7 +300,7 @@ namespace r2::draw::opengl
         return texture;
     }
     
-    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf)
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum filter)
     {
         Bind(buf);
         u32 texture;
@@ -295,8 +309,8 @@ namespace r2::draw::opengl
         
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, buf.width, buf.height, 0, GL_RGB, GL_FLOAT, NULL);
         
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -370,6 +384,17 @@ namespace r2::draw::opengl
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, rBuf.width, rBuf.height);
         UnBind(rBuf);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBuf.RBO);
+        R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
+        UnBind(frameBuf);
+    }
+    
+    void AttachDepthBufferForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf)
+    {
+        Bind(frameBuf);
+        Bind(rBuf);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, rBuf.width, rBuf.width);
+        UnBind(rBuf);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rBuf.RBO);
         R2_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "Failed to attach texture to frame buffer!");
         UnBind(frameBuf);
     }

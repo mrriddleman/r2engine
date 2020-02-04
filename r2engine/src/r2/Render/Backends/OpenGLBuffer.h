@@ -10,6 +10,7 @@
 
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Vertex.h"
+#include "glad/glad.h"
 
 namespace r2::draw::opengl
 {
@@ -62,6 +63,7 @@ namespace r2::draw::opengl
     void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type);
     
     void Create(FrameBuffer& buf, u32 width, u32 height);
+    void Create(FrameBuffer& buf, const r2::util::Size& size);
     void Create(RenderBuffer& buf, u32 width, u32 height);
     
     void Destroy(VertexArrayBuffer& buf);
@@ -88,11 +90,12 @@ namespace r2::draw::opengl
     void Bind(const RenderBuffer& buf);
     void UnBind(const RenderBuffer& buf);
     
-    u32 AttachTextureToFrameBuffer(FrameBuffer& buf);
-    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf);
+    u32 AttachTextureToFrameBuffer(FrameBuffer& buf, bool alpha = false, GLenum filter = GL_LINEAR);
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum filter = GL_LINEAR);
     
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
     void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
+    void AttachDepthBufferForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
     u32 AttachDepthToFrameBuffer(FrameBuffer& buf);
     
     void AttachDepthCubeMapToFrameBuffer(FrameBuffer& buf, u32 depthCubeMap);
