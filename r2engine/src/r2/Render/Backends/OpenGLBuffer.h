@@ -91,7 +91,9 @@ namespace r2::draw::opengl
     void UnBind(const RenderBuffer& buf);
     
     u32 AttachTextureToFrameBuffer(FrameBuffer& buf, bool alpha = false, GLenum filter = GL_LINEAR);
-    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum filter = GL_LINEAR);
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum internalFormat, GLenum filter = GL_LINEAR, GLenum wrapMode = GL_REPEAT);
+    
+    
     
     u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
     void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);

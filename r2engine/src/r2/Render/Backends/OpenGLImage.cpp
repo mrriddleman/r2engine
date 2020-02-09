@@ -72,6 +72,20 @@ namespace r2::draw::opengl
         return newTex;
     }
     
+    u32 CreateImageTexture(u32 width, u32 height, int internalFormat, void* data)
+    {
+        u32 newTex;
+        glGenTextures(1, &newTex);
+        glBindTexture(GL_TEXTURE_2D, newTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGB, GL_FLOAT, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        
+        return newTex;
+    }
+    
     u32 CreateCubeMap(const std::vector<std::string>& faces)
     {
         stbi_set_flip_vertically_on_load(false);

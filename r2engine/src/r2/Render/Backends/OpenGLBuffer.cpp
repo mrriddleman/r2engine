@@ -300,19 +300,19 @@ namespace r2::draw::opengl
         return texture;
     }
     
-    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum filter)
+    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum internalFormat, GLenum filter, GLenum wrapMode)
     {
         Bind(buf);
         u32 texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
         
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, buf.width, buf.height, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, buf.width, buf.height, 0, GL_RGB, GL_FLOAT, NULL);
         
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
         glBindTexture(GL_TEXTURE_2D, 0);
         
         //Attach the texture to the frame buffer

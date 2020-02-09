@@ -28,6 +28,7 @@
 #include "r2/Render/Backends/OpenGLShader.h"
 #include "r2/Core/Math/MathUtils.h"
 #include <map>
+#include <random>
 
 namespace
 {
@@ -45,6 +46,7 @@ namespace
         DEPTH_CUBE_MAP_SHADER,
         LIGHTBOX_SHADER,
         BLUR_SHADER,
+        SSAO_SHADER,
         NUM_SHADERS
     };
     
@@ -130,7 +132,8 @@ namespace
     glm::mat4 g_Proj = glm::mat4(1.0f);
     glm::vec3 g_CameraPos = glm::vec3(0);
     glm::vec3 g_CameraDir = glm::vec3(0);
-    glm::vec3 lightPos(0.1f, 1.0f, 0.3f);
+    glm::vec3 lightPos(2.0, 4.0, -2.0);
+    glm::vec3 lightColor = glm::vec3(0.2, 0.2, 0.7);
     glm::vec3 g_lightDir(-2.0f, -1.0f, 4.0f);
     
     u32 g_width, g_height;
@@ -263,6 +266,14 @@ namespace
     };
     r2::draw::opengl::FrameBuffer g_gBuffer;
     u32 g_gBufferTextures[NUM_GBUFFER_BUFFERS];
+    
+    r2::draw::opengl::FrameBuffer g_ssaoFBO;
+    r2::draw::opengl::FrameBuffer g_ssaoBlurFBO;
+    u32 g_ssaoColorBuffer;
+    u32 g_ssaoBlurColorBuffer;
+    u32 g_ssaoNoiseTexture;
+    std::vector<glm::vec3> ssaoKernel;
+    
     std::vector<glm::vec3> g_objectPositions;
     u32 textureColorBuffer;
     u32 textureColorBuffer2;
@@ -503,6 +514,15 @@ namespace r2::draw
             
             s_shaders[BLUR_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[BLUR_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SSAO.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "SSAO.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[SSAO_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[SSAO_SHADER].manifest = shaderManifest;
         }
 #endif
 
@@ -1361,8 +1381,8 @@ namespace r2::draw
         //setup framebuffers
         
         opengl::Create(g_gBuffer, CENG.DisplaySize());
-        g_gBufferTextures[GBUFFER_POSITION] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_NEAREST);
-        g_gBufferTextures[GBUFFER_NORMAL] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_NEAREST);
+        g_gBufferTextures[GBUFFER_POSITION] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_RGB16F, GL_NEAREST, GL_CLAMP_TO_EDGE);
+        g_gBufferTextures[GBUFFER_NORMAL] = opengl::AttachHDRTextureToFrameBuffer(g_gBuffer, GL_RGB16F, GL_NEAREST);
         g_gBufferTextures[GBUFFER_ALBEDO_SPEC] = opengl::AttachTextureToFrameBuffer(g_gBuffer, true, GL_NEAREST);
 
         opengl::Create(g_renderBuffer, CENG.DisplaySize().width, CENG.DisplaySize().height);
@@ -1373,6 +1393,37 @@ namespace r2::draw
         glDrawBuffers(3, attachments);
         opengl::UnBind(g_gBuffer);
         
+        opengl::Create(g_ssaoFBO, CENG.DisplaySize());
+        g_ssaoColorBuffer = opengl::AttachHDRTextureToFrameBuffer(g_ssaoFBO, GL_RGB, GL_NEAREST);
+        
+        opengl::Create(g_ssaoBlurFBO, CENG.DisplaySize());
+        g_ssaoBlurColorBuffer = opengl::AttachHDRTextureToFrameBuffer(g_ssaoBlurFBO, GL_RGB, GL_NEAREST);
+        
+        std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0);
+        std::default_random_engine generator;
+        
+        for (u32 i = 0; i < 64; ++i)
+        {
+            glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0,
+                             randomFloats(generator) * 2.0 - 1.0,
+                             randomFloats(generator));
+            sample  = glm::normalize(sample);
+            sample *= randomFloats(generator);
+            float scale = (float)i / 64.0;
+            float t = scale * scale;
+            scale = (1.0f - t)*0.1 + 1.0 * t;
+            
+            ssaoKernel.push_back(sample);
+        }
+        
+        std::vector<glm::vec3> ssaoNoise;
+        for (u32 i = 0; i < 16; ++i)
+        {
+            glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);
+            ssaoNoise.push_back(noise);
+        }
+        
+        g_ssaoNoiseTexture = opengl::CreateImageTexture(4, 4, GL_RGB32F, &ssaoNoise[0]);
         
         
        // opengl::Create(g_depthBuffer, 1024, 1024);
@@ -1444,6 +1495,15 @@ namespace r2::draw
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gPosition", 0);
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gNormal", 1);
         s_shaders[LEARN_OPENGL_SHADER2].SetUInt("gAlbedoSpec", 2);
+        s_shaders[LEARN_OPENGL_SHADER2].SetUInt("ssao", 3);
+        
+        s_shaders[SSAO_SHADER].UseShader();
+        s_shaders[SSAO_SHADER].SetUInt("gPosition", 0);
+        s_shaders[SSAO_SHADER].SetUInt("gNormal", 1);
+        s_shaders[SSAO_SHADER].SetUInt("texNoise", 2);
+        
+        s_shaders[BLUR_SHADER].UseShader();
+        s_shaders[BLUR_SHADER].SetUInt("ssaoInput", 0);
     }
     
     void DrawScene(const r2::draw::opengl::Shader& shader)
@@ -1539,85 +1599,144 @@ namespace r2::draw
             
             s_shaders[LEARN_OPENGL_SHADER].UseShader();
             SetupVP(s_shaders[LEARN_OPENGL_SHADER], g_View, g_Proj);
+            
+            //room cube
             glm::mat4 model = glm::mat4(1.0);
-            for (u32 i = 0; i < g_objectPositions.size(); ++i)
-            {
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, g_objectPositions[i]);
-                model = glm::scale(model, glm::vec3(0.25f));
-                SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
-                DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_openglMeshes);
-            }
+            model = glm::translate(model, glm::vec3(0.0, 7.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(7.5f));
+            s_shaders[LEARN_OPENGL_SHADER].SetUBool("inverseNormals", true);
+            
+            SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+          //  glActiveTexture(GL_TEXTURE0);
+         //   glBindTexture(GL_TEXTURE_2D, woodTexture);
+            
+            opengl::Bind(g_boxVAO);
+            DrawCube(s_shaders[LEARN_OPENGL_SHADER], model);
+            
+            s_shaders[LEARN_OPENGL_SHADER].SetUBool("inverseNormals", false);
+            
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0f));
+            model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(0.5f));
+            SetupModelMat(s_shaders[LEARN_OPENGL_SHADER], model);
+            DrawOpenGLMeshes(s_shaders[LEARN_OPENGL_SHADER], s_openglMeshes);
+            
             
             opengl::UnBind(g_gBuffer);
             
-            //lighting pass for deferred shading
-           
-            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            //ssao texture
+            opengl::Bind(g_ssaoFBO);
+            glClear(GL_COLOR_BUFFER_BIT);
+            s_shaders[SSAO_SHADER].UseShader();
+            for (u32 i = 0; i < 64; ++i)
+            {
+                char uniformName[r2::fs::FILE_PATH_LENGTH];
+                sprintf(uniformName, "samples[%i]", i);
+                s_shaders[SSAO_SHADER].SetUVec3(uniformName, ssaoKernel[i]);
+            }
             
+            s_shaders[SSAO_SHADER].SetUMat4("projection", g_Proj);
+            
+            for (u32 i = 0; i <= GBUFFER_NORMAL; ++i)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, g_gBufferTextures[i]);
+            }
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, g_ssaoNoiseTexture);
+            opengl::Bind(g_quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            
+            opengl::UnBind(g_ssaoFBO);
+            
+            //ssao blur
+            opengl::Bind(g_ssaoBlurFBO);
+            glClear(GL_COLOR_BUFFER_BIT);
+            s_shaders[BLUR_SHADER].UseShader();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, g_ssaoColorBuffer);
+            opengl::Bind(g_quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            opengl::UnBind(g_ssaoBlurFBO);
+            
+            //lighting pass for deferred shading
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            s_shaders[LEARN_OPENGL_SHADER2].UseShader();
+            
+            const float linear = 0.09;
+            const float quadratic = 0.032;
+            const float constant = 1.0f;
+            
+            glm::vec3 lightPosView = glm::vec3(g_View * glm::vec4(lightPos, 1.0));
+            s_shaders[LEARN_OPENGL_SHADER2].SetUVec3("light.Position", lightPosView);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUVec3("light.Color", lightColor);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("light.Linear", linear);
+            s_shaders[LEARN_OPENGL_SHADER2].SetUFloat("light.Quadratic", quadratic);
             for (u32 i = 0; i < NUM_GBUFFER_BUFFERS; ++i)
             {
                 glActiveTexture(GL_TEXTURE0 + i);
                 glBindTexture(GL_TEXTURE_2D, g_gBufferTextures[i]);
             }
-            
-            const float linear = 0.7;
-            const float quadratic = 1.8;
-            const float constant = 1.0f;
-            for (u32 i = 0; i < g_lightPositions.size(); ++i)
-            {
-                float lightMax = std::fmaxf(std::fmaxf(g_lightColors[i].r, g_lightColors[i].g), g_lightColors[i].b);
-                float radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0/5.0) * lightMax))) / (2 * quadratic);
-                
-                char uniformName[r2::fs::FILE_PATH_LENGTH];
-                sprintf(uniformName, "lights[%i].Position", i);
-                
-                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightPositions[i]);
-                
-                sprintf(uniformName, "lights[%i].Color", i);
-                
-                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightColors[i]);
-                
-                sprintf(uniformName, "lights[%i].Linear", i);
-                
-                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, linear);
-                
-                sprintf(uniformName, "lights[%i].Quadtric", i);
-                
-                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, quadratic);
-                
-                sprintf(uniformName, "lights[%i].Radius", i);
-                
-                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, radius);
-                
-            }
-            s_shaders[LEARN_OPENGL_SHADER2].SetUVec3("viewPos", g_CameraPos);
-            
+            glActiveTexture(GL_TEXTURE0 + NUM_GBUFFER_BUFFERS);
+            glBindTexture(GL_TEXTURE_2D, g_ssaoColorBuffer);
             opengl::Bind(g_quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             
+//            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+//            {
+//                float lightMax = std::fmaxf(std::fmaxf(g_lightColors[i].r, g_lightColors[i].g), g_lightColors[i].b);
+//                float radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0/5.0) * lightMax))) / (2 * quadratic);
+//
+//                char uniformName[r2::fs::FILE_PATH_LENGTH];
+//                sprintf(uniformName, "lights[%i].Position", i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightPositions[i]);
+//
+//                sprintf(uniformName, "lights[%i].Color", i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER2].SetUVec3(uniformName, g_lightColors[i]);
+//
+//                sprintf(uniformName, "lights[%i].Linear", i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, linear);
+//
+//                sprintf(uniformName, "lights[%i].Quadtric", i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, quadratic);
+//
+//                sprintf(uniformName, "lights[%i].Radius", i);
+//
+//                s_shaders[LEARN_OPENGL_SHADER2].SetUFloat(uniformName, radius);
+//
+//            }
+//            s_shaders[LEARN_OPENGL_SHADER2].SetUVec3("viewPos", g_CameraPos);
+//
+//            opengl::Bind(g_quadVAO);
+//            glDrawArrays(GL_TRIANGLES, 0, 6);
             
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, g_gBuffer.FBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
-            glBlitFramebuffer(
-                              0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_DEPTH_BUFFER_BIT, GL_NEAREST
-                              );
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             
-            s_shaders[LIGHTBOX_SHADER].UseShader();
-            SetupVP(s_shaders[LIGHTBOX_SHADER], g_View, g_Proj);
-            
-            opengl::Bind(g_boxVAO);
-            
-            for (u32 i = 0; i < g_lightPositions.size(); ++i)
-            {
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, g_lightPositions[i]);
-                model = glm::scale(model, glm::vec3(0.25));
-                s_shaders[LIGHTBOX_SHADER].SetUVec3("lightColor", g_lightColors[i]);
-                DrawCube(s_shaders[LIGHTBOX_SHADER], model);
-            }
+//            glBindFramebuffer(GL_READ_FRAMEBUFFER, g_gBuffer.FBO);
+//            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+//            glBlitFramebuffer(
+//                              0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, 0, 0, CENG.DisplaySize().width, CENG.DisplaySize().height, GL_DEPTH_BUFFER_BIT, GL_NEAREST
+//                              );
+//            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//
+//            s_shaders[LIGHTBOX_SHADER].UseShader();
+//            SetupVP(s_shaders[LIGHTBOX_SHADER], g_View, g_Proj);
+//
+//            opengl::Bind(g_boxVAO);
+//
+//            for (u32 i = 0; i < g_lightPositions.size(); ++i)
+//            {
+//                model = glm::mat4(1.0f);
+//                model = glm::translate(model, g_lightPositions[i]);
+//                model = glm::scale(model, glm::vec3(0.25));
+//                s_shaders[LIGHTBOX_SHADER].SetUVec3("lightColor", g_lightColors[i]);
+//                DrawCube(s_shaders[LIGHTBOX_SHADER], model);
+//            }
             //glViewport(0, 0, g_frameBuffer.width, g_frameBuffer.height);
             
 //

@@ -1,34 +1,23 @@
 #version 410 core
 
-out vec4 FragColor;
+out float FragColor;
 
 in vec2 TexCoord;
 
-uniform sampler2D image;
-
-uniform bool horizontal;
-uniform float weight[5] = float[] (0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162);
+uniform sampler2D ssaoInput;
 
 void main()
 {
-	vec2 texOffset = 1.0 / textureSize(image, 0); //gets size of a singl texel
-	vec3 result = texture(image, TexCoord).rgb * weight[0];
-	if(horizontal)
+	vec2 texelSize = 1.0 / vec2(textureSize(ssaoInput, 0));
+	float result = 0.0;
+	for(int x = -2; x < 2; ++x)
 	{
-		for(int i = 1; i < 5; ++i)
+		for(int y = -2; y < 2; ++y)
 		{
-			result += texture(image, TexCoord + vec2(texOffset.x * i, 0.0)).rgb * weight[i];
-			result += texture(image, TexCoord - vec2(texOffset.x * i, 0.0)).rgb * weight[i];
-		}
-	}
-	else
-	{
-		for(int i = 1; i < 5; ++i)
-		{
-			result += texture(image, TexCoord + vec2(0.0, texOffset.y * i)).rgb * weight[i];
-			result += texture(image, TexCoord - vec2(0.0, texOffset.y * i)).rgb * weight[i];
+			vec2 offset = vec2(float(x), float(y)) * texelSize;
+			result += texture(ssaoInput, TexCoord + offset).r;
 		}
 	}
 
-	FragColor = vec4(result, 1.0);
+	FragColor = result / (4.0 * 4.0);
 }
