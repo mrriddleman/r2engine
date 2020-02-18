@@ -73,6 +73,12 @@
       binaryPath: ""
     },
     {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.fs",
       geometryPath: "",

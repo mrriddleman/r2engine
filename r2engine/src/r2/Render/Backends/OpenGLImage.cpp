@@ -28,20 +28,23 @@ namespace r2::draw::opengl
         
         GLenum format;
         GLenum internalFormat;
-        if (channels == 3)
+        if(channels == 1)
         {
-            internalFormat = GL_SRGB;
+            format = GL_RED;
+            internalFormat = GL_RED;
+        }
+        else if (channels == 3)
+        {
+            internalFormat = GL_RGB;
             format = GL_RGB;
         }
         else if(channels == 4)
         {
-            internalFormat = GL_SRGB_ALPHA;
+            internalFormat = GL_RGBA;
             format = GL_RGBA;
         }
         else
         {
-            format = GL_RGB;
-            internalFormat = GL_SRGB;
             R2_CHECK(false, "UNKNOWN image format");
         }
         
