@@ -7,16 +7,17 @@ in vec3 Normal;
 
 uniform vec3 camPos;
 
-uniform sampler2D albedoMap;
-uniform sampler2D normalMap;
-uniform sampler2D metallicMap;
-uniform sampler2D roughnessMap;
-uniform sampler2D aoMap;
+uniform vec3 albedo;
+uniform float metallic;
+uniform float roughness;
+uniform float ao;
+uniform samplerCube irradianceMap;
 
 uniform vec3 lightPositions[4];
 uniform vec3 lightColors[4];
 
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 Fo, float roughness);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -26,13 +27,14 @@ const float PI = 3.14159265359;
 
 void main()
 {
-	vec3 albedo = pow(texture(albedoMap, TexCoord).rgb, vec3(2.2));
-	float metallic = texture(metallicMap, TexCoord).r;
-	float roughness = texture(roughnessMap, TexCoord).r;
-	float ao = texture(aoMap, TexCoord).r;
+	// vec3 albedo = pow(texture(albedoMap, TexCoord).rgb, vec3(2.2));
+	// float metallic = texture(metallicMap, TexCoord).r;
+	// float roughness = texture(roughnessMap, TexCoord).r;
+	// float ao = texture(aoMap, TexCoord).r;
 
-	vec3 N = GetNormalFromMap();
+	vec3 N = normalize(Normal);
 	vec3 V = normalize(camPos - WorldPos);
+	vec3 R = reflect(-V, N);
 
 	vec3 Fo = vec3(0.04);
 	Fo = mix(Fo, albedo, metallic);
@@ -59,13 +61,18 @@ void main()
 		vec3 kS = F;
 		vec3 kD = vec3(1.0) - kS;
 
-		kD *= 1.0 - metallic;
+		kD *= (1.0 - metallic);
 
 		float NdotL = max(dot(N, L), 0.0);
 		Lo += (kD * albedo / PI + specular) * radiance * NdotL;
 	}
 
-	vec3 ambient = vec3(0.03) * albedo * ao;
+	vec3 kS = FresnelSchlickRoughness(max(dot(N, V), 0.0), Fo, roughness);
+	vec3 kD = 1.0 - kS;
+	vec3 irradiance = texture(irradianceMap, N).rgb;
+	vec3 diffuse = irradiance * albedo;
+	vec3 ambient = (kD * diffuse) * ao;
+
 	vec3 color = ambient + Lo;
 
 	color = color / (color + vec3(1.0));
@@ -78,6 +85,11 @@ void main()
 vec3 FresnelSchlick(float cosTheta, vec3 Fo)
 {
 	return Fo + (1.0 - Fo) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 Fo, float roughness)
+{
+	return Fo + (max(vec3(1.0 - roughness), Fo) - Fo) * pow(1.0 - cosTheta, 5.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -114,18 +126,19 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 vec3 GetNormalFromMap()
 {
-	vec3 tangentNormal = texture(normalMap, TexCoord).xyz * 2.0 - 1.0;
+	return vec3(0);
+	// vec3 tangentNormal = texture(normalMap, TexCoord).xyz * 2.0 - 1.0;
 
-	vec3 Q1 = dFdx(WorldPos);
-	vec3 Q2 = dFdy(WorldPos);
-	vec2 st1 = dFdx(TexCoord);
-	vec2 st2 = dFdy(TexCoord);
+	// vec3 Q1 = dFdx(WorldPos);
+	// vec3 Q2 = dFdy(WorldPos);
+	// vec2 st1 = dFdx(TexCoord);
+	// vec2 st2 = dFdy(TexCoord);
 
-	vec3 N = normalize(Normal);
-	vec3 T = normalize(Q1*st2.t - Q2*st1.t);
-	vec3 B = -normalize(cross(N, T));
-	mat3 TBN = mat3(T, B, N);
+	// vec3 N = normalize(Normal);
+	// vec3 T = normalize(Q1*st2.t - Q2*st1.t);
+	// vec3 B = -normalize(cross(N, T));
+	// mat3 TBN = mat3(T, B, N);
 
-	return normalize(TBN * tangentNormal);
+	// return normalize(TBN * tangentNormal);
 
 }

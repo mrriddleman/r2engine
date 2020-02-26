@@ -11,8 +11,10 @@
 namespace r2::draw::opengl
 {
     u32 LoadImageTexture(const char* path);
+    u32 LoadHDRImage(const char* path);
     u32 CreateImageTexture(u32 width, u32 height, void* data);
     u32 CreateCubeMap(const std::vector<std::string>& faces);
+    u32 CreateHDRCubeMap(u32 width, u32 height);
     u32 CreateDepthCubeMap(u32 width, u32 height);
     
     u32 CreateImageTexture(u32 width, u32 height, int internalFormat, void* data);

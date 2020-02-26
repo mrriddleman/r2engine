@@ -48,6 +48,9 @@ namespace
         BLUR_SHADER,
         SSAO_SHADER,
         PBR_SHADER,
+        CUBEMAP_SHADER,
+        BACKGROUND_SHADER,
+        CONVOLUTION_SHADER,
         NUM_SHADERS
     };
     
@@ -258,6 +261,9 @@ namespace
     r2::draw::opengl::FrameBuffer g_hdrFBO;
     r2::draw::opengl::FrameBuffer g_pingPongFBO[2];
     
+    r2::draw::opengl::FrameBuffer g_captureFBO;
+    r2::draw::opengl::RenderBuffer g_captureRBO;
+    
     enum GBufferBuffers
     {
         GBUFFER_POSITION = 0,
@@ -287,9 +293,10 @@ namespace
     u32 normalMappedBricksTexture;
     u32 bricksHeightMapTexture;
     u32 containerTexture;
-    
+    u32 hdrTexture;
+    u32 envCubemap;
     u32 albedoMapTexture, normalMapTexture, metallicMapTexture, roughnessMapTexture, aoMapTexture;
-    
+    u32 irradianceMapTexture;
     
     r2::draw::opengl::FrameBuffer g_pointLightDepthMapFBO[NUM_POINT_LIGHTS];
     u32 g_pointLightDepthCubeMaps[NUM_POINT_LIGHTS];
@@ -544,6 +551,33 @@ namespace r2::draw
             
             s_shaders[PBR_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
             s_shaders[PBR_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "CubeMap.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "CubeMap.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[CUBEMAP_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[CUBEMAP_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Background.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Background.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[BACKGROUND_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[BACKGROUND_SHADER].manifest = shaderManifest;
+            
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Convolution.vs", vertexPath);
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "Convolution.fs", fragmentPath);
+            
+            shaderManifest.vertexShaderPath = std::string(vertexPath);
+            shaderManifest.fragmentShaderPath = std::string(fragmentPath);
+            
+            s_shaders[CONVOLUTION_SHADER].shaderProg = opengl::CreateShaderProgramFromRawFiles(vertexPath, fragmentPath, "");
+            s_shaders[CONVOLUTION_SHADER].manifest = shaderManifest;
         }
 #endif
 
@@ -1187,6 +1221,12 @@ namespace r2::draw
         }
     }
     
+    void DrawCube(const opengl::Shader& shader, const glm::mat4& model)
+    {
+        SetupModelMat(shader, model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    
     void SetupLearnOpenGLDemo()
     {
 //        char modelPath[r2::fs::FILE_PATH_LENGTH];
@@ -1530,6 +1570,11 @@ namespace r2::draw
         
         MakeSphere(g_sphereVAO, 64);
         
+        glDepthFunc(GL_LEQUAL);
+        s_shaders[BACKGROUND_SHADER].UseShader();
+        s_shaders[BACKGROUND_SHADER].SetUInt("environmentMap", 0);
+        
+        
         g_lightPositions.clear();
         g_lightPositions.push_back(glm::vec3(-10.0f, 10.0f, 10.0f));
         g_lightPositions.push_back(glm::vec3(10.0f, 10.0f, 10.0f));
@@ -1542,28 +1587,108 @@ namespace r2::draw
         g_lightColors.push_back(glm::vec3(300.0f));
         g_lightColors.push_back(glm::vec3(300.0f));
         
+        
+        
         char path[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/albedo.png", path);
-        albedoMapTexture = opengl::LoadImageTexture(path);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "hdr/newport_loft.hdr", path);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/normal.png", path);
-        normalMapTexture = opengl::LoadImageTexture(path);
+        opengl::Create(g_captureFBO, 512, 512);
+        opengl::Create(g_captureRBO, 512, 512);
+        opengl::AttachDepthBufferForRenderBufferToFrameBuffer(g_captureFBO, g_captureRBO);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/metallic.png", path);
-        metallicMapTexture = opengl::LoadImageTexture(path);
+        hdrTexture = opengl::LoadHDRImage(path);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/roughness.png", path);
-        roughnessMapTexture = opengl::LoadImageTexture(path);
+        envCubemap = opengl::CreateHDRCubeMap(g_captureRBO.width, g_captureRBO.height);
         
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/ao.png", path);
-        aoMapTexture = opengl::LoadImageTexture(path);
+        
+        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+        glm::mat4 captureViews[] =
+        {
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+        };
+        
+        s_shaders[CUBEMAP_SHADER].UseShader();
+        s_shaders[CUBEMAP_SHADER].SetUInt("equirectangularMap", 0);
+        s_shaders[CUBEMAP_SHADER].SetUMat4("projection", captureProjection);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        
+        glViewport(0, 0, g_captureRBO.width, g_captureRBO.height);
+        opengl::Bind(g_captureFBO);
+        opengl::Bind(g_boxVAO);
+        for (u32 i = 0; i < 6; ++i)
+        {
+            s_shaders[CUBEMAP_SHADER].SetUMat4("view", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            DrawCube(s_shaders[CUBEMAP_SHADER], glm::mat4(1.0));
+        }
+        opengl::UnBind(g_boxVAO);
+        opengl::UnBind(g_captureFBO);
+        
+        irradianceMapTexture = opengl::CreateHDRCubeMap(32, 32);
+        
+        g_captureFBO.width = 32;
+        g_captureFBO.height = 32;
+        g_captureRBO.width = 32;
+        g_captureRBO.height = 32;
+
+        opengl::Bind(g_captureFBO);
+        opengl::Bind(g_captureRBO);
+        
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+        
+        s_shaders[CONVOLUTION_SHADER].UseShader();
+        s_shaders[CONVOLUTION_SHADER].SetUInt("environmentMap", 0);
+        s_shaders[CONVOLUTION_SHADER].SetUMat4("projection", captureProjection);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        
+        
+        glViewport(0, 0, 32, 32);
+        opengl::Bind(g_captureFBO);
+        
+        for (u32 i = 0; i < 6; ++i)
+        {
+            s_shaders[CONVOLUTION_SHADER].SetUMat4("view", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMapTexture, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            DrawCube(s_shaders[CONVOLUTION_SHADER], glm::mat4(1.0));
+        }
+        opengl::UnBind(g_captureFBO);
+        
+        glViewport(0, 0, g_width, g_height);
         
         s_shaders[PBR_SHADER].UseShader();
-        s_shaders[PBR_SHADER].SetUInt("albedoMap", 0);
-        s_shaders[PBR_SHADER].SetUInt("normalMap", 1);
-        s_shaders[PBR_SHADER].SetUInt("metallicMap", 2);
-        s_shaders[PBR_SHADER].SetUInt("roughnessMap", 3);
-        s_shaders[PBR_SHADER].SetUInt("aoMap", 4);
+        s_shaders[PBR_SHADER].SetUInt("irradianceMap", 0);
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/albedo.png", path);
+//        albedoMapTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/normal.png", path);
+//        normalMapTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/metallic.png", path);
+//        metallicMapTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/roughness.png", path);
+//        roughnessMapTexture = opengl::LoadImageTexture(path);
+//
+//        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::TEXTURES, "pbr/rusted_iron/ao.png", path);
+//        aoMapTexture = opengl::LoadImageTexture(path);
+        
+       // s_shaders[PBR_SHADER].UseShader();
+
+        
+//        s_shaders[PBR_SHADER].SetUInt("albedoMap", 0);
+//        s_shaders[PBR_SHADER].SetUInt("normalMap", 1);
+//        s_shaders[PBR_SHADER].SetUInt("metallicMap", 2);
+//        s_shaders[PBR_SHADER].SetUInt("roughnessMap", 3);
+//        s_shaders[PBR_SHADER].SetUInt("aoMap", 4);
     }
     
     void DrawScene(const r2::draw::opengl::Shader& shader)
@@ -1619,11 +1744,7 @@ namespace r2::draw
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
     
-    void DrawCube(const opengl::Shader& shader, const glm::mat4& model)
-    {
-        SetupModelMat(shader, model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+
     
     void DrawLearnOpenGLDemo()
     {
@@ -1644,27 +1765,31 @@ namespace r2::draw
             
             SetupVP(s_shaders[PBR_SHADER], g_View, g_Proj);
             s_shaders[PBR_SHADER].SetUVec3("camPos", g_CameraPos);
+            s_shaders[PBR_SHADER].SetUVec3("albedo", glm::vec3(0.5f, 0.0f, 0.0f ));
+            s_shaders[PBR_SHADER].SetUFloat("ao", 1.0f);
             
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, albedoMapTexture);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, normalMapTexture);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, metallicMapTexture);
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, roughnessMapTexture);
-            glActiveTexture(GL_TEXTURE4);
-            glBindTexture(GL_TEXTURE_2D, aoMapTexture);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMapTexture);
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, albedoMapTexture);
+//            glActiveTexture(GL_TEXTURE1);
+//            glBindTexture(GL_TEXTURE_2D, normalMapTexture);
+//            glActiveTexture(GL_TEXTURE2);
+//            glBindTexture(GL_TEXTURE_2D, metallicMapTexture);
+//            glActiveTexture(GL_TEXTURE3);
+//            glBindTexture(GL_TEXTURE_2D, roughnessMapTexture);
+//            glActiveTexture(GL_TEXTURE4);
+//            glBindTexture(GL_TEXTURE_2D, aoMapTexture);
             
             //render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
             glm::mat4 model = glm::mat4(1.0f);
 
             for (int row = 0; row < g_numRows; ++row)
             {
-                //s_shaders[PBR_SHADER].SetUFloat("metallic", (float)row/(float)g_numRows);
+                s_shaders[PBR_SHADER].SetUFloat("metallic", (float)row / (float)g_numRows);
                 for (int col = 0; col < g_numColumns; ++col)
                 {
-                  //  s_shaders[PBR_SHADER].SetUFloat("roughness", glm::clamp((float)col / (float)g_numColumns, 0.05f, 1.0f));
+                   s_shaders[PBR_SHADER].SetUFloat("roughness", glm::clamp((float)col / (float)g_numColumns, 0.1f, 1.0f));
 
                     model = glm::mat4(1.0f);
                     model = glm::translate(model, glm::vec3(
@@ -1692,6 +1817,14 @@ namespace r2::draw
 
                 RenderSphere(s_shaders[PBR_SHADER], model);
             }
+            
+            
+            s_shaders[BACKGROUND_SHADER].UseShader();
+            SetupVP(s_shaders[BACKGROUND_SHADER], g_View, g_Proj);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+            opengl::Bind(g_boxVAO);
+            DrawCube(s_shaders[BACKGROUND_SHADER], glm::mat4(1.0));
             
         }
         
@@ -2169,6 +2302,7 @@ namespace r2::draw
         SetupModelMat(shader, model);
         opengl::Bind(g_sphereVAO);
         glDrawElements(GL_TRIANGLE_STRIP, g_sphereVAO.indexBuffer.size, GL_UNSIGNED_INT, 0);
+        opengl::UnBind(g_sphereVAO);
     }
     
     void MakeSphere(opengl::VertexArrayBuffer& vao, u32 segments)

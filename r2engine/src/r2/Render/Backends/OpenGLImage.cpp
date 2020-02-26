@@ -59,6 +59,34 @@ namespace r2::draw::opengl
         return newTex;
     }
     
+    u32 LoadHDRImage(const char* path)
+    {
+        stbi_set_flip_vertically_on_load(true);
+        int width, height, nrComponents;
+        f32 * data = stbi_loadf(path, &width, &height, &nrComponents, 0);
+        u32 hdrTexture = 0;
+        if (data)
+        {
+            glGenTextures(1, &hdrTexture);
+            glBindTexture(GL_TEXTURE_2D, hdrTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+            
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            
+            stbi_image_free(data);
+            data = nullptr;
+        }
+        else
+        {
+            R2_CHECK(false, "Failed to load HDR image: %s", path);
+        }
+        
+        return hdrTexture;
+    }
+    
     u32 CreateImageTexture(u32 width, u32 height, void* data)
     {
         u32 newTex;
@@ -116,6 +144,26 @@ namespace r2::draw::opengl
         
         return textureID;
     }
+    
+    u32 CreateHDRCubeMap(u32 width, u32 height)
+    {
+        u32 envCubemap;
+        glGenTextures(1, &envCubemap);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+        for (u32 i = 0; i < 6; ++i)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+        }
+        
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        return envCubemap;
+    }
+    
     
     u32 CreateDepthCubeMap(u32 width, u32 height)
     {

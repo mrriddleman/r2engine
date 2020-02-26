@@ -37,6 +37,12 @@
       binaryPath: ""
     },
     {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.fs",
       geometryPath: "",
@@ -51,6 +57,18 @@
     {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.gs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Background.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Background.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.fs",
       geometryPath: "",
       binaryPath: ""
     },
