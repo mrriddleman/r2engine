@@ -145,7 +145,22 @@ namespace r2::draw::opengl
         return textureID;
     }
     
-    u32 CreateHDRCubeMap(u32 width, u32 height)
+    u32 CreateBRDFTexture(u32 width, u32 height)
+    {
+        u32 hdrTexture;
+        glGenTextures(1, &hdrTexture);
+        
+        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16, width, height, 0, GL_RG, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        return hdrTexture;
+    }
+    
+    u32 CreateHDRCubeMap(u32 width, u32 height, bool generateMipMap)
     {
         u32 envCubemap;
         glGenTextures(1, &envCubemap);
@@ -158,8 +173,13 @@ namespace r2::draw::opengl
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, generateMipMap? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        if (generateMipMap)
+        {
+            glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        }
         
         return envCubemap;
     }

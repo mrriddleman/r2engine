@@ -43,6 +43,12 @@
       binaryPath: ""
     },
     {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.fs",
       geometryPath: "",
@@ -91,6 +97,12 @@
       binaryPath: ""
     },
     {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/2D.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/2D.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.fs",
       geometryPath: "",
@@ -99,6 +111,12 @@
     {
       vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.vs",
       fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
+      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.vs",
+      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.fs",
       geometryPath: "",
       binaryPath: ""
     }
