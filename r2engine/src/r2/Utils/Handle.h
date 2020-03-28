@@ -36,7 +36,7 @@ namespace r2
         {
             if(mCount +1 < MAX_POLICIES)
             {
-                mPolicies[mCount++] = p;
+               // mPolicies[mCount++] = p;
                 return true;
             }
             
@@ -53,7 +53,7 @@ namespace r2
         
     private:
         static const u8 MAX_POLICIES = 256;
-        Policy mPolicies[MAX_POLICIES];
+      //  Policy mPolicies[MAX_POLICIES] = {};
         u8 mCount = 0;
     };
         

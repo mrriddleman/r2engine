@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-09-25.
 //
 
-
+#include "r2pch.h"
 #ifdef R2_ASSET_PIPELINE
 #include "SoundDefinitionUtils.h"
 #include "r2/Audio/SoundDefinition_generated.h"
@@ -234,7 +234,7 @@ namespace r2::asset::pln::audio
         
         bool generatedJSON = r2::asset::pln::flat::GenerateFlatbufferJSONFile(p.parent_path().string(), soundDefinitionSchemaPath, filePath);
         
-        bool generatedBinary = r2::asset::pln::flat::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, jsonPath);
+        bool generatedBinary = r2::asset::pln::flat::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, jsonPath.string());
         
         return generatedJSON && generatedBinary;
     }

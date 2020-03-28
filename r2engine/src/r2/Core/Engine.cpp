@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-08.
 //
 
+#include "r2pch.h"
 #include "Engine.h"
 #include "r2/Core/Events/Events.h"
 #include "r2/ImGui/ImGuiLayer.h"
@@ -18,7 +19,6 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Audio/AudioEngine.h"
-#include <unistd.h>
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/File/PathUtils.h"
 #ifdef R2_DEBUG
@@ -57,6 +57,37 @@ namespace r2
             }
             
             r2::asset::lib::Init(mAssetLibMemBoundary);
+
+#ifdef R2_ASSET_PIPELINE
+            r2::asset::pln::SoundDefinitionCommand soundCommand;
+
+            soundCommand.soundDefinitionFilePath = noptrApp->GetSoundDefinitionPath();
+            soundCommand.soundDirectories = noptrApp->GetSoundDirectoryWatchPaths();
+            soundCommand.buildFunc = [](std::vector<std::string> paths)
+            {
+                r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions(paths);
+            };
+
+            r2::asset::pln::AssetCommand assetCommand;
+
+            std::string flatcPath = R2_FLATC;
+            assetCommand.assetManifestsPath = noptrApp->GetAssetManifestPath();
+            assetCommand.assetTempPath = noptrApp->GetAssetCompilerTempPath();
+            assetCommand.pathsToWatch = noptrApp->GetAssetWatchPaths();
+            assetCommand.assetsBuldFunc = r2::asset::lib::PushFilesBuilt;
+
+            r2::asset::pln::ShaderManifestCommand shaderCommand;
+            char path[r2::fs::FILE_PATH_LENGTH];
+
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
+            shaderCommand.manifestDirectory = std::string(path);
+            shaderCommand.manifestFilePath = noptrApp->GetShaderManifestsPath();
+
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
+            shaderCommand.shaderWatchPath = std::string(path);
+
+            r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200), assetCommand, soundCommand, shaderCommand);
+#endif
             
             mDisplaySize = noptrApp->GetPreferredResolution();
             //@TODO(Serge): should check to see if the app initialized!
@@ -74,36 +105,7 @@ namespace r2
             DetectGameControllers();
 
             
-#ifdef R2_ASSET_PIPELINE
-            r2::asset::pln::SoundDefinitionCommand soundCommand;
-            
-            soundCommand.soundDefinitionFilePath = noptrApp->GetSoundDefinitionPath();
-            soundCommand.soundDirectories = noptrApp->GetSoundDirectoryWatchPaths();
-            soundCommand.buildFunc = [](std::vector<std::string> paths)
-            {
-                r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions(paths);
-            };
-            
-            r2::asset::pln::AssetCommand assetCommand;
-            
-            std::string flatcPath = R2_FLATC;
-            assetCommand.assetManifestsPath = noptrApp->GetAssetManifestPath();
-            assetCommand.assetTempPath = noptrApp->GetAssetCompilerTempPath();
-            assetCommand.pathsToWatch = noptrApp->GetAssetWatchPaths();
-            assetCommand.assetsBuldFunc = r2::asset::lib::PushFilesBuilt;
-            
-            r2::asset::pln::ShaderManifestCommand shaderCommand;
-            char path[r2::fs::FILE_PATH_LENGTH];
-            
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
-            shaderCommand.manifestDirectory = std::string(path);
-            shaderCommand.manifestFilePath = noptrApp->GetShaderManifestsPath();
-            
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
-            shaderCommand.shaderWatchPath = std::string(path);
-            
-            r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200), assetCommand, soundCommand, shaderCommand);
-#endif
+
             
             
             return true;

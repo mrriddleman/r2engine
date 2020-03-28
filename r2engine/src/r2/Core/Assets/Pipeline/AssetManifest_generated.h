@@ -9,10 +9,13 @@
 namespace r2 {
 
 struct AssetBuildCommand;
+struct AssetBuildCommandBuilder;
 
 struct AssetFileCommand;
+struct AssetFileCommandBuilder;
 
 struct AssetManifest;
+struct AssetManifestBuilder;
 
 enum AssetCompileCommand {
   AssetCompileCommand_NONE = 0,
@@ -30,7 +33,7 @@ inline const AssetCompileCommand (&EnumValuesAssetCompileCommand())[2] {
 }
 
 inline const char * const *EnumNamesAssetCompileCommand() {
-  static const char * const names[] = {
+  static const char * const names[3] = {
     "NONE",
     "FLAT_BUFFER_COMPILE",
     nullptr
@@ -39,7 +42,8 @@ inline const char * const *EnumNamesAssetCompileCommand() {
 }
 
 inline const char *EnumNameAssetCompileCommand(AssetCompileCommand e) {
-  const size_t index = static_cast<int>(e);
+  if (flatbuffers::IsOutRange(e, AssetCompileCommand_NONE, AssetCompileCommand_FLAT_BUFFER_COMPILE)) return "";
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesAssetCompileCommand()[index];
 }
 
@@ -59,7 +63,7 @@ inline const AssetType (&EnumValuesAssetType())[2] {
 }
 
 inline const char * const *EnumNamesAssetType() {
-  static const char * const names[] = {
+  static const char * const names[3] = {
     "RAW",
     "ZIP",
     nullptr
@@ -68,17 +72,19 @@ inline const char * const *EnumNamesAssetType() {
 }
 
 inline const char *EnumNameAssetType(AssetType e) {
-  const size_t index = static_cast<int>(e);
+  if (flatbuffers::IsOutRange(e, AssetType_RAW, AssetType_ZIP)) return "";
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesAssetType()[index];
 }
 
 struct AssetBuildCommand FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef AssetBuildCommandBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_COMPILECOMMAND = 4,
     VT_SCHEMAPATH = 6
   };
-  AssetCompileCommand compileCommand() const {
-    return static_cast<AssetCompileCommand>(GetField<int8_t>(VT_COMPILECOMMAND, 0));
+  r2::AssetCompileCommand compileCommand() const {
+    return static_cast<r2::AssetCompileCommand>(GetField<int8_t>(VT_COMPILECOMMAND, 0));
   }
   const flatbuffers::String *schemaPath() const {
     return GetPointer<const flatbuffers::String *>(VT_SCHEMAPATH);
@@ -93,9 +99,10 @@ struct AssetBuildCommand FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct AssetBuildCommandBuilder {
+  typedef AssetBuildCommand Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_compileCommand(AssetCompileCommand compileCommand) {
+  void add_compileCommand(r2::AssetCompileCommand compileCommand) {
     fbb_.AddElement<int8_t>(AssetBuildCommand::VT_COMPILECOMMAND, static_cast<int8_t>(compileCommand), 0);
   }
   void add_schemaPath(flatbuffers::Offset<flatbuffers::String> schemaPath) {
@@ -115,7 +122,7 @@ struct AssetBuildCommandBuilder {
 
 inline flatbuffers::Offset<AssetBuildCommand> CreateAssetBuildCommand(
     flatbuffers::FlatBufferBuilder &_fbb,
-    AssetCompileCommand compileCommand = AssetCompileCommand_NONE,
+    r2::AssetCompileCommand compileCommand = r2::AssetCompileCommand_NONE,
     flatbuffers::Offset<flatbuffers::String> schemaPath = 0) {
   AssetBuildCommandBuilder builder_(_fbb);
   builder_.add_schemaPath(schemaPath);
@@ -125,16 +132,18 @@ inline flatbuffers::Offset<AssetBuildCommand> CreateAssetBuildCommand(
 
 inline flatbuffers::Offset<AssetBuildCommand> CreateAssetBuildCommandDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    AssetCompileCommand compileCommand = AssetCompileCommand_NONE,
+    r2::AssetCompileCommand compileCommand = r2::AssetCompileCommand_NONE,
     const char *schemaPath = nullptr) {
+  auto schemaPath__ = schemaPath ? _fbb.CreateString(schemaPath) : 0;
   return r2::CreateAssetBuildCommand(
       _fbb,
       compileCommand,
-      schemaPath ? _fbb.CreateString(schemaPath) : 0);
+      schemaPath__);
 }
 
 struct AssetFileCommand FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef AssetFileCommandBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_INPUTFILE = 4,
     VT_OUTPUTFILE = 6,
     VT_BUILDCOMMAND = 8
@@ -145,8 +154,8 @@ struct AssetFileCommand FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *outputFile() const {
     return GetPointer<const flatbuffers::String *>(VT_OUTPUTFILE);
   }
-  const AssetBuildCommand *buildCommand() const {
-    return GetPointer<const AssetBuildCommand *>(VT_BUILDCOMMAND);
+  const r2::AssetBuildCommand *buildCommand() const {
+    return GetPointer<const r2::AssetBuildCommand *>(VT_BUILDCOMMAND);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -161,6 +170,7 @@ struct AssetFileCommand FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct AssetFileCommandBuilder {
+  typedef AssetFileCommand Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_inputFile(flatbuffers::Offset<flatbuffers::String> inputFile) {
@@ -169,7 +179,7 @@ struct AssetFileCommandBuilder {
   void add_outputFile(flatbuffers::Offset<flatbuffers::String> outputFile) {
     fbb_.AddOffset(AssetFileCommand::VT_OUTPUTFILE, outputFile);
   }
-  void add_buildCommand(flatbuffers::Offset<AssetBuildCommand> buildCommand) {
+  void add_buildCommand(flatbuffers::Offset<r2::AssetBuildCommand> buildCommand) {
     fbb_.AddOffset(AssetFileCommand::VT_BUILDCOMMAND, buildCommand);
   }
   explicit AssetFileCommandBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -188,7 +198,7 @@ inline flatbuffers::Offset<AssetFileCommand> CreateAssetFileCommand(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> inputFile = 0,
     flatbuffers::Offset<flatbuffers::String> outputFile = 0,
-    flatbuffers::Offset<AssetBuildCommand> buildCommand = 0) {
+    flatbuffers::Offset<r2::AssetBuildCommand> buildCommand = 0) {
   AssetFileCommandBuilder builder_(_fbb);
   builder_.add_buildCommand(buildCommand);
   builder_.add_outputFile(outputFile);
@@ -200,16 +210,19 @@ inline flatbuffers::Offset<AssetFileCommand> CreateAssetFileCommandDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *inputFile = nullptr,
     const char *outputFile = nullptr,
-    flatbuffers::Offset<AssetBuildCommand> buildCommand = 0) {
+    flatbuffers::Offset<r2::AssetBuildCommand> buildCommand = 0) {
+  auto inputFile__ = inputFile ? _fbb.CreateString(inputFile) : 0;
+  auto outputFile__ = outputFile ? _fbb.CreateString(outputFile) : 0;
   return r2::CreateAssetFileCommand(
       _fbb,
-      inputFile ? _fbb.CreateString(inputFile) : 0,
-      outputFile ? _fbb.CreateString(outputFile) : 0,
+      inputFile__,
+      outputFile__,
       buildCommand);
 }
 
 struct AssetManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef AssetManifestBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_OUTPUTPATH = 4,
     VT_INPUTFILES = 6,
     VT_OUTPUTTYPE = 8
@@ -217,11 +230,11 @@ struct AssetManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *outputPath() const {
     return GetPointer<const flatbuffers::String *>(VT_OUTPUTPATH);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<AssetFileCommand>> *inputFiles() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<AssetFileCommand>> *>(VT_INPUTFILES);
+  const flatbuffers::Vector<flatbuffers::Offset<r2::AssetFileCommand>> *inputFiles() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<r2::AssetFileCommand>> *>(VT_INPUTFILES);
   }
-  AssetType outputType() const {
-    return static_cast<AssetType>(GetField<int8_t>(VT_OUTPUTTYPE, 0));
+  r2::AssetType outputType() const {
+    return static_cast<r2::AssetType>(GetField<int8_t>(VT_OUTPUTTYPE, 0));
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -236,15 +249,16 @@ struct AssetManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct AssetManifestBuilder {
+  typedef AssetManifest Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_outputPath(flatbuffers::Offset<flatbuffers::String> outputPath) {
     fbb_.AddOffset(AssetManifest::VT_OUTPUTPATH, outputPath);
   }
-  void add_inputFiles(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AssetFileCommand>>> inputFiles) {
+  void add_inputFiles(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::AssetFileCommand>>> inputFiles) {
     fbb_.AddOffset(AssetManifest::VT_INPUTFILES, inputFiles);
   }
-  void add_outputType(AssetType outputType) {
+  void add_outputType(r2::AssetType outputType) {
     fbb_.AddElement<int8_t>(AssetManifest::VT_OUTPUTTYPE, static_cast<int8_t>(outputType), 0);
   }
   explicit AssetManifestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -262,8 +276,8 @@ struct AssetManifestBuilder {
 inline flatbuffers::Offset<AssetManifest> CreateAssetManifest(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> outputPath = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AssetFileCommand>>> inputFiles = 0,
-    AssetType outputType = AssetType_RAW) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::AssetFileCommand>>> inputFiles = 0,
+    r2::AssetType outputType = r2::AssetType_RAW) {
   AssetManifestBuilder builder_(_fbb);
   builder_.add_inputFiles(inputFiles);
   builder_.add_outputPath(outputPath);
@@ -274,12 +288,14 @@ inline flatbuffers::Offset<AssetManifest> CreateAssetManifest(
 inline flatbuffers::Offset<AssetManifest> CreateAssetManifestDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *outputPath = nullptr,
-    const std::vector<flatbuffers::Offset<AssetFileCommand>> *inputFiles = nullptr,
-    AssetType outputType = AssetType_RAW) {
+    const std::vector<flatbuffers::Offset<r2::AssetFileCommand>> *inputFiles = nullptr,
+    r2::AssetType outputType = r2::AssetType_RAW) {
+  auto outputPath__ = outputPath ? _fbb.CreateString(outputPath) : 0;
+  auto inputFiles__ = inputFiles ? _fbb.CreateVector<flatbuffers::Offset<r2::AssetFileCommand>>(*inputFiles) : 0;
   return r2::CreateAssetManifest(
       _fbb,
-      outputPath ? _fbb.CreateString(outputPath) : 0,
-      inputFiles ? _fbb.CreateVector<flatbuffers::Offset<AssetFileCommand>>(*inputFiles) : 0,
+      outputPath__,
+      inputFiles__,
       outputType);
 }
 

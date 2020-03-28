@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-03-16.
 //
-
+#include "r2pch.h"
 #include "PoolAllocator.h"
 
 namespace r2
@@ -36,6 +36,11 @@ namespace r2
             R2_CHECK(size <= mElementSize, "Size is greater than the element size");
             R2_CHECK(alignment <= mAlignment, "alignment is greater than the max alignment");
             
+            if (mNumAllocations + 1 > mFreeList.NumElements())
+            {
+                return nullptr;
+            }
+
             void* pointer = mFreeList.Obtain();
             
             if (pointer != nullptr)

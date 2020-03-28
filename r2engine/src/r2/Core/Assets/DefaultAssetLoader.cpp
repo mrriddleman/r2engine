@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-07-02.
 //
-
+#include "r2pch.h"
 #include "DefaultAssetLoader.h"
 
 namespace r2::asset

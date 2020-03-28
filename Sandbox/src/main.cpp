@@ -232,6 +232,10 @@ public:
         
         char filePath[r2::fs::FILE_PATH_LENGTH];
         
+        //Pre-build asset data
+
+
+
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
         r2::asset::ZipAssetFile* zipFile = r2::asset::lib::MakeZipAssetFile(filePath);

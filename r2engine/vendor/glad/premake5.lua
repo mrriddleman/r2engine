@@ -3,9 +3,9 @@ project "glad"
 	language "C"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
-	configuration "macosx"
+	filter "system:macosx"
 		files
 		{
 			"MacOSX/include/glad/glad.h",
@@ -17,3 +17,42 @@ project "glad"
 		{
 			"MacOSX/include"
 		}
+
+	filter "system:windows"
+		files
+		{
+			"Windows/include/glad/glad.h",
+			"Windows/include/KHR/khrplatform.h",
+			"Windows/src/glad.c"
+		}
+
+		includedirs
+		{
+			"Windows/include"
+		}
+
+	
+	configurations
+	{
+		"Debug",
+		"Release",
+		"Publish"
+	}
+
+	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "On"
+		optimize "Off"
+		staticruntime "off"
+
+	filter "configurations:Release"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"
+
+	filter "configurations:Publish"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"

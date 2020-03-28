@@ -8,6 +8,8 @@
 #ifndef MemoryBoundsChecking_h
 #define MemoryBoundsChecking_h
 #include <algorithm>
+#include "r2/Utils/Utils.h"
+#include "r2/Core/Logging/Log.h"
 
 namespace r2
 {

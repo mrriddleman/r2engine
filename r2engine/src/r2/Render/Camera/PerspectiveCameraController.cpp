@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-11-16.
 //
-
+#include "r2pch.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "r2/Platform/Platform.h"
 namespace r2::cam

@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-03-26.
 //
-
+#include "r2pch.h"
 #include "RingBufferAllocator.h"
 
 namespace r2

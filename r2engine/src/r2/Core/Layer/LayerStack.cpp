@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-12.
 //
 
+#include "r2pch.h"
 #include "LayerStack.h"
 
 namespace r2
@@ -163,7 +164,7 @@ namespace r2
         
         if(it != layers.end())
         {
-            theLayer = it->release();
+        //    theLayer = it->release();
             layers.erase(it);
         }
         
@@ -179,7 +180,7 @@ namespace r2
         if(it->get() == beforeLayer)
             return;
         
-        std::unique_ptr<Layer> movedLayer = std::move(*layerToMove);
+        std::shared_ptr<Layer> movedLayer = std::move(*layerToMove);
         
         layers.erase(layerToMove);
         
@@ -212,7 +213,7 @@ namespace r2
         if(it->get() == afterLayer)
             return;
 
-        std::unique_ptr<Layer> movedLayer = std::move(*layerToMove);
+        std::shared_ptr<Layer> movedLayer = std::move(*layerToMove);
 
         layers.erase(layerToMove);
 

@@ -20,7 +20,7 @@ namespace r2::io
     extern u32 MOUSE_DIRECTION_NORMAL;
     extern u32 MOUSE_DIRECTION_FLIPPED;
 
-    extern u32 SHIFT_PRESSED;
+    extern u32 SHIFT_PRESSED_BTN;
     extern u32 CTRL_PRESSED;
     extern u32 ALT_PRESSED;
     
@@ -179,9 +179,9 @@ namespace r2::io
     {
         enum
         {
-            SHIFT_PRESSED = 1 << 0,
+            SHIFT_PRESSED_KEY = 1 << 0,
             CONTROL_PRESSED = 1 << 1,
-            ALT_PRESSED = 1 << 2,
+            ALT_PRESSED = 1 << 2
         };
         
         s32 code = 0;
@@ -202,7 +202,7 @@ namespace r2::io
         {
             ControllerButton buttons[ControllerButtonName::CONTROLLER_BUTTON_MAX];
             
-            struct
+            struct buttons
             {
                 ControllerButton buttonA = {CONTROLLER_BUTTON_A, BUTTON_RELEASED};
                 ControllerButton buttonB = {CONTROLLER_BUTTON_B, BUTTON_RELEASED};
@@ -226,7 +226,7 @@ namespace r2::io
         {
             ControllerAxis axes[ControllerAxisName::CONTROLLER_AXIS_MAX];
             
-            struct
+            struct axis
             {
                 ControllerAxis axisLeftX = {CONTROLLER_AXIS_LEFTX, 0};
                 ControllerAxis axisLeftY = {CONTROLLER_AXIS_LEFTY, 0};

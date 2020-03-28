@@ -1,24 +1,50 @@
 
 # project files/dirs
-
+.vs/
 *.xcworkspace/
 *.aman
 *.bin
 *.sdef
 *.sman
+*.vcxproj
+*.sln
+*.vcxproj.filters
 
 /bin/
+/bin_int/
 
 # sandbox files/dirs
 
 Sandbox/*.xcodeproj/
 Sandbox/assets/asset_bin/
+Sanbox/assets/*
+Sandbox/*.vcxproj
+Sandbox/*.vcxproj.user
+
+Sandbox/assets/models/
+Sandbox/assets/sound/music/
+Sandbox/assets/sound/sound_fx/
+Sandbox/assets/textures/
+
 
 # r2engine files/dirs
 
 r2engine/*xcodeproj/
+r2engine/*.vcxproj
+r2engine/r2engine.vcxproj.user
 
+
+r2engine/vendor/glad/bin-int/
+r2engine/vendor/glad/glad.vcxproj.user
+r2engine/vendor/loguru/bin-int/
+r2engine/vendor/loguru/loguru.vcxproj.user
+r2engine/vendor/miniz/bin-int/
+r2engine/vendor/miniz/miniz.vcxproj.user
+
+#r2Tests
 r2Tests/*.xcodeproj/
+r2Tests/*.vcxproj
+r2Tests/*.vcxproj.user
 
 engine_assets/
 

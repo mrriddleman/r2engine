@@ -24,6 +24,7 @@ namespace r2::asset::pln::cmp
     void PushBuildRequest(const r2::asset::pln::AssetManifest& manifest);
     void Update();
     
+    bool CompileAsset(const r2::asset::pln::AssetManifest& manifest);
 }
 #endif
 #endif /* AssetCompiler_h */

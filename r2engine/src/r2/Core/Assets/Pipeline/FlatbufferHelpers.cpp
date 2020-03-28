@@ -4,9 +4,11 @@
 //
 //  Created by Serge Lansiquot on 2019-08-24.
 //
-
+#include "r2pch.h"
 #ifdef R2_ASSET_PIPELINE
+
 #include "FlatbufferHelpers.h"
+#include "r2/Core/File/PathUtils.h"
 #include <cstdlib>
 #include <cstdio>
 
@@ -27,12 +29,12 @@ namespace r2::asset::pln::flat
         char command[Kilobytes(2)];
         std::string flatc = R2_FLATC;
         
-#ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(command, sizeof(command), "\"%s\" -t -o \"%s\" \"%s\" -- \"%s\" --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
-#else
-        sprintf(command, "%s -t -o %s %s -- %s --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
-#endif
-        
+        char sanitizedSourcePath[r2::fs::FILE_PATH_LENGTH];
+
+        r2::fs::utils::SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
+
+        sprintf(command, "%s -t -o %s %s -- %s --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+
         return RunSystemCommand(command) == 0;
     }
     
@@ -41,11 +43,11 @@ namespace r2::asset::pln::flat
         char command[Kilobytes(2)];
         std::string flatc = R2_FLATC;
         
-#ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(command, sizeof(command), "\"%s\" -b -o \"%s\" \"%s\" -- \"%s\" --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
-#else
-        sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sourcePath.c_str());
-#endif
+        char sanitizedSourcePath[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
+
+        sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+
         return RunSystemCommand(command) == 0;
     }
     
@@ -54,11 +56,8 @@ namespace r2::asset::pln::flat
         char command[Kilobytes(2)];
         std::string flatc = R2_FLATC;
         
-#ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(command, sizeof(command), "\"%s\" -c -o \"%s\" \"%s\"", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
-#else
         sprintf(command, "%s -c -o %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
-#endif
+
         return RunSystemCommand(command) == 0;
     }
 }

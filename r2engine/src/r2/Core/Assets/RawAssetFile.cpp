@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-07-17.
 //
-
+#include "r2pch.h"
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/PathUtils.h"

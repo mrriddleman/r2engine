@@ -14,7 +14,7 @@
 
 namespace r2
 {
-    class RenderLayer: public Layer
+    class R2_API RenderLayer: public Layer
     {
     public:
         RenderLayer();

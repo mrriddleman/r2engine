@@ -20,7 +20,7 @@ srcPath = os.path.realpath(thisFilePath + "/../src")
 flatcPath = os.path.realpath(thisFilePath + "/..") + "/vendor/flatbuffers/bin/" + flatc
 dataPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
 
-fbsCodeOutputMap = {"AssetManifest.fbs": "/r2/Core/Assets/Pipeline/", "SoundDefinition.fbs": "/r2/Audio/", "ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/"}
+fbsCodeOutputMap = {"AssetManifest.fbs": "/r2/Core/Assets/Pipeline/", "SoundDefinition.fbs": "/r2/Audio/", "ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/", "Utils.fbs": "/r2/Utils/"}
 
 for filename in os.listdir(dataPath):
 	outputPath = srcPath + fbsCodeOutputMap[filename]

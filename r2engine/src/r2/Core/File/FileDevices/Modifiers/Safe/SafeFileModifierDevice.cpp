@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-04-22.
 //
-
+#include "r2pch.h"
 #include "SafeFileModifierDevice.h"
 #include "r2/Core/File/FileDevices/Modifiers/Safe/SafeFile.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"

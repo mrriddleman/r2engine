@@ -1,122 +1,122 @@
 {
   manifests: [
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthShader.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthShader.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/2D.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/2D.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Background.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Background.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL2.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL2.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL3.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL3.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SSAO.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SSAO.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Convolution.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/debug.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/debug.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/BRDF.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.gs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/DepthShader.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/DepthShader.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/lamp.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/DepthCubeMap.gs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Background.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Background.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL2.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL2.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/CubeMap.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL3.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LearnOpenGL3.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/Blur.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/lighting.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/debug.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/2D.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/2D.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SkeletonOutline.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/PBR.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/LightBox.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.fs",
       geometryPath: "",
       binaryPath: ""
     },
     {
-      vertexPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.vs",
-      fragmentPath: "/Users/serge/Documents/Projects/r2engine/Sandbox/assets/shaders/raw/SpecularConvolution.fs",
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SSAO.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/SSAO.fs",
       geometryPath: "",
       binaryPath: ""
     }

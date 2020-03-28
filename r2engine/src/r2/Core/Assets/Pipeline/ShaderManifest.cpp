@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-11-30.
 //
-
+#include "r2pch.h"
 #include "ShaderManifest.h"
 #include "r2/Core/Assets/Pipeline/ShaderManifest_generated.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
@@ -144,7 +144,7 @@ namespace r2::asset::pln
         std::filesystem::remove(jsonPath);
         bool generatedJSON = r2::asset::pln::flat::GenerateFlatbufferJSONFile(p.parent_path().string(), shaderManifestSchemaPath, manifestFilePath);
         
-        bool generatedBinary = r2::asset::pln::flat::GenerateFlatbufferBinaryFile(p.parent_path().string(), shaderManifestSchemaPath, jsonPath);
+        bool generatedBinary = r2::asset::pln::flat::GenerateFlatbufferBinaryFile(p.parent_path().string(), shaderManifestSchemaPath, jsonPath.string());
         
         return generatedJSON && generatedBinary;
     }

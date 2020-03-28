@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-05-21.
 //
 
+#include "r2pch.h"
 #include "SoundLayer.h"
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Platform/Platform.h"

@@ -716,7 +716,7 @@ TEST_CASE("Test Free List")
         
         const u64 allocSize = freeListAllocator.GetAllocationSize(firstAllocation);
         
-        REQUIRE(allocSize == Kilobytes(1) + overhead);
+        REQUIRE(allocSize == Kilobytes(1));
         
         
         pointers.reserve(max1KBAllocations-1);

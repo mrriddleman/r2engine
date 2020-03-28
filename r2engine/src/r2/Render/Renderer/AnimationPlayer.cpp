@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-12-14.
 //
-
+#include "r2pch.h"
 #include "AnimationPlayer.h"
 #include "r2/Render/Renderer/SkinnedModel.h"
 

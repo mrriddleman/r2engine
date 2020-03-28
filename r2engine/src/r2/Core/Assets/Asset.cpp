@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-06-20.
 //
-
+#include "r2pch.h"
 #include "Asset.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"

@@ -14,6 +14,6 @@ if platformSystem == "Darwin":
 	osCall = path + platformSystem + "/premake5 xcode4"
 
 if platformSystem == "Windows":
-	osCall = path + platformSystem + "/premake5.exe vs2017"
+	osCall = path + platformSystem + "/premake5.exe vs2019"
 
 os.system(osCall)

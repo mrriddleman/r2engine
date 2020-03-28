@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-04-05.
 //
 
-
+#include "r2pch.h"
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
@@ -204,12 +204,12 @@ namespace r2
             return SDL_RWsize((SDL_RWops*)mHandle);
         }
         
-        FILE* DiskFile::GetFP()
-        {
-            R2_CHECK(IsOpen(), "The file should be open");
-            SDL_RWops* ops = (SDL_RWops*)mHandle;
-            return ops->hidden.stdio.fp;
-        }
+        //FILE* DiskFile::GetFP()
+        //{
+        //    R2_CHECK(IsOpen(), "The file should be open");
+        //    SDL_RWops* ops = (SDL_RWops*)mHandle;
+        //    return ops->hidden.stdio.fp;
+        //}
         
         
     }

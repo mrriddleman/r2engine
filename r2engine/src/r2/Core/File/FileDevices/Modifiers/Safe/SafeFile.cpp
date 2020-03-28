@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-04-22.
 //
-
+#include "r2pch.h"
 #include "SafeFile.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/File/FileSystem.h"

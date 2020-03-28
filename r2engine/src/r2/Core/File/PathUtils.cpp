@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-04-16.
 //
-
+#include "r2pch.h"
 #include "PathUtils.h"
 #include "r2/Core/File/File.h"
 #include "r2/Platform/Platform.h"
@@ -216,16 +216,18 @@ namespace r2::fs::utils
     
     bool AppendSubPath(const char* path, char* resultPath, const char* subPath, const char delim)
     {
-        auto len = strlen(path);
-        strcpy(resultPath, path);
+        char sanitizedRootPath[r2::fs::FILE_PATH_LENGTH];
+        SanitizeSubPath(path, sanitizedRootPath);
+
+        auto len = strlen(sanitizedRootPath);
+        strcpy(resultPath, sanitizedRootPath);
         
         if (resultPath[len-1] != delim)
         {
             resultPath[len++] = delim;
             resultPath[len] = '\0';
         }
-        
-        
+
         char sanitizedSubPath[r2::fs::FILE_PATH_LENGTH];
         
         //@TODO(Serge): should do this in a loop so we can resolve /../../ etc
@@ -316,7 +318,7 @@ namespace r2::fs::utils
             }
         }
         
-        strlcpy(result, path, startingIndex+2);
+        strncpy(result, path, startingIndex + 2);
         return true;
     }
 }

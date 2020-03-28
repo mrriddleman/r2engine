@@ -23,37 +23,37 @@ struct Request
 
 #endif
 
-namespace r2::fs
-{
-    class R2_API DiskFileAsyncOperation
-    {
-    public:
-        
-        DiskFileAsyncOperation(FileHandle file);
-        DiskFileAsyncOperation(const DiskFileAsyncOperation& other);
-        DiskFileAsyncOperation& operator=(const DiskFileAsyncOperation& other);
-        ~DiskFileAsyncOperation(void);
-        
-        DiskFileAsyncOperation(DiskFileAsyncOperation && other) = delete;
-        DiskFileAsyncOperation& operator=(DiskFileAsyncOperation && other) = delete;
-        
-        /// Returns whether or not the asynchronous operation has finished
-        bool HasFinished(void) const;
-        
-        /// Waits until the asynchronous operation has finished. Returns the number of transferred bytes.
-        u64 WaitUntilFinished(u32 usleepAmount) const;
-        
-        /// Cancels the asynchronous operation
-        bool Cancel(void);
-        
-    private:
-        
-        friend class DiskFile;
-        
-        FileHandle mHandle;
-        std::shared_ptr<Request> mRequest;
-    };
-}
+//namespace r2::fs
+//{
+//    class R2_API DiskFileAsyncOperation
+//    {
+//    public:
+//        
+//        DiskFileAsyncOperation(FileHandle file);
+//        DiskFileAsyncOperation(const DiskFileAsyncOperation& other);
+//        DiskFileAsyncOperation& operator=(const DiskFileAsyncOperation& other);
+//        ~DiskFileAsyncOperation(void);
+//        
+//        DiskFileAsyncOperation(DiskFileAsyncOperation && other) = delete;
+//        DiskFileAsyncOperation& operator=(DiskFileAsyncOperation && other) = delete;
+//        
+//        /// Returns whether or not the asynchronous operation has finished
+//        bool HasFinished(void) const;
+//        
+//        /// Waits until the asynchronous operation has finished. Returns the number of transferred bytes.
+//        u64 WaitUntilFinished(u32 usleepAmount) const;
+//        
+//        /// Cancels the asynchronous operation
+//        bool Cancel(void);
+//        
+//    private:
+//        
+//        friend class DiskFile;
+//        
+//        FileHandle mHandle;
+//        std::shared_ptr<Request> mRequest;
+//    };
+//}
 
 #endif
  

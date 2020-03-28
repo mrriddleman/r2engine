@@ -1,0 +1,11 @@
+namespace r2;
+
+attribute "version_number";
+
+table Version
+{
+	version:uint;
+	fbsDefinition:string (version_number: 1);
+}
+
+root_type Version;

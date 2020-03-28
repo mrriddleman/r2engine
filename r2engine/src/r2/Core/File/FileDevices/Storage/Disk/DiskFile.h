@@ -9,7 +9,7 @@
 #define SDL2File_h
 
 #include "r2/Core/File/File.h"
-#include "r2/Core/File/FileDevices/Storage/Disk/DiskFileAsyncOperation.h"
+//#include "r2/Core/File/FileDevices/Storage/Disk/DiskFileAsyncOperation.h"
 
 namespace r2
 {
@@ -41,10 +41,10 @@ namespace r2
             virtual s64 Size() const override;
             
             //@TODO(Serge): re-enable when you figure out what's wrong here
-            DiskFileAsyncOperation ReadAsync(void* buffer, u64 length, u64 position);
-            DiskFileAsyncOperation WriteAsync(const void* buffer, u64 length, u64 position);
+            //DiskFileAsyncOperation ReadAsync(void* buffer, u64 length, u64 position);
+            //DiskFileAsyncOperation WriteAsync(const void* buffer, u64 length, u64 position);
            //  */
-            FILE* GetFP();
+          //  FILE* GetFP();
         private:
             FileHandle mHandle;
         };

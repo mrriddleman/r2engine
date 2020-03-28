@@ -17,9 +17,9 @@ namespace r2
     {
     public:
         
-        using LayerStackContainer = std::vector<std::unique_ptr<Layer > >;
-        using LayerIt = std::vector<std::unique_ptr<Layer > >::iterator;
-        using ConstLayerIt = std::vector<std::unique_ptr<Layer > >::const_iterator;
+        using LayerStackContainer = std::vector<std::shared_ptr<Layer>>;
+        using LayerIt = std::vector<std::shared_ptr<Layer>>::iterator;
+        using ConstLayerIt = std::vector<std::shared_ptr<Layer>>::const_iterator;
         
         LayerStack(u32 maxLength = 100);
         ~LayerStack();

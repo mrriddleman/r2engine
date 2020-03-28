@@ -61,8 +61,8 @@ namespace r2
         r2::fs::FileStorageArea* mRootStorage;
         r2::fs::FileStorageArea* mAppStorage;
         
-        char* mPrefPath;
-        char* mBasePath;
+        char mPrefPath[r2::fs::FILE_PATH_LENGTH];
+        char mBasePath[r2::fs::FILE_PATH_LENGTH];
         char mSoundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
         bool mRunning;
         

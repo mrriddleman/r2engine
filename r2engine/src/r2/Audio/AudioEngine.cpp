@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-05-20.
 //
 
+#include "r2pch.h"
 #include "AudioEngine.h"
 #include "fmod.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"

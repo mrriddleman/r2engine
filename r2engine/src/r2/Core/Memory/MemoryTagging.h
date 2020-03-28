@@ -8,6 +8,9 @@
 #ifndef MemoryTagging_h
 #define MemoryTagging_h
 
+#include "r2/Utils/Utils.h"
+#include "r2/Core/Logging/Log.h"
+
 namespace r2
 {
     namespace mem

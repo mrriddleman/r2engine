@@ -24,7 +24,7 @@ namespace r2::fs::utils
     };
     
 #ifdef R2_PLATFORM_WINDOWS
-    static const char PATH_SEPARATOR = '\\';
+    static const char PATH_SEPARATOR = '/';
 #else
     static const char PATH_SEPARATOR = '/';
 #endif

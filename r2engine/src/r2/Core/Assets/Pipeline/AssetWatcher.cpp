@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-08-08.
 //
-
+#include "r2pch.h"
 #ifdef R2_ASSET_PIPELINE
 #include "AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -19,6 +19,7 @@
 #include "r2/Utils/Hash.h"
 #include <string>
 #include <thread>
+#include <atomic>
 
 namespace r2::asset::pln
 {
@@ -96,18 +97,14 @@ namespace r2::asset::pln
         std::filesystem::path p = soundDefinitionCommand.soundDefinitionFilePath;
         s_soundDefinitionsDirectory = p.parent_path().string();
         ReloadManifests();
-        LoadSoundDefinitions();
+
         
+
+        LoadSoundDefinitions();
         
         //Shaders
         {
             ReloadShaderManifests();
-           // s_shaderManifestFileWatcher.Init(delay, s_shaderCommand.manifestDirectory);
-            
-//            s_shaderManifestFileWatcher.AddModifyListener(SetReloadShaderManifests);
-//            s_shaderManifestFileWatcher.AddCreatedListener(SetReloadShaderManifests);
-//            s_shaderManifestFileWatcher.AddRemovedListener(SetReloadShaderManifests);
-//
             s_shadersFileWatcher.Init(s_delay, s_shaderCommand.shaderWatchPath);
             s_shadersFileWatcher.AddModifyListener(ShaderChangedRequest);
             s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
@@ -137,6 +134,11 @@ namespace r2::asset::pln
         
         r2::asset::pln::cmp::Init(s_assetCommand.assetTempPath, s_assetCommand.assetsBuldFunc);
         
+        for (const auto& manifest : s_manifests)
+        {
+            r2::asset::pln::cmp::CompileAsset(manifest);
+        }
+
         AddWatchPaths(delay, s_assetCommand.pathsToWatch);
         s_end = false;
         
@@ -250,7 +252,7 @@ namespace r2::asset::pln
         r2::audio::AudioEngine::SoundDefinition soundDefinition;
         strcpy( soundDefinition.soundName, path.c_str() );
         
-        std::string fileName = std::filesystem::path(path).filename();
+        std::string fileName = std::filesystem::path(path).filename().string();
 
         soundDefinition.soundKey = STRING_ID(fileName.c_str());
         

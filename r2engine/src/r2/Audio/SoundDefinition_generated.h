@@ -9,11 +9,14 @@
 namespace r2 {
 
 struct SoundDefinition;
+struct SoundDefinitionBuilder;
 
 struct SoundDefinitions;
+struct SoundDefinitionsBuilder;
 
 struct SoundDefinition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef SoundDefinitionBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_SOUNDNAME = 4,
     VT_DEFAULTVOLUME = 6,
     VT_PITCH = 8,
@@ -68,6 +71,7 @@ struct SoundDefinition FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct SoundDefinitionBuilder {
+  typedef SoundDefinition Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_soundName(flatbuffers::Offset<flatbuffers::String> soundName) {
@@ -144,9 +148,10 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinitionDirect(
     bool loop = false,
     bool stream = false,
     bool loadOnRegister = false) {
+  auto soundName__ = soundName ? _fbb.CreateString(soundName) : 0;
   return r2::CreateSoundDefinition(
       _fbb,
-      soundName ? _fbb.CreateString(soundName) : 0,
+      soundName__,
       defaultVolume,
       pitch,
       minDistance,
@@ -158,11 +163,12 @@ inline flatbuffers::Offset<SoundDefinition> CreateSoundDefinitionDirect(
 }
 
 struct SoundDefinitions FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef SoundDefinitionsBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_DEFINITIONS = 4
   };
-  const flatbuffers::Vector<flatbuffers::Offset<SoundDefinition>> *definitions() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<SoundDefinition>> *>(VT_DEFINITIONS);
+  const flatbuffers::Vector<flatbuffers::Offset<r2::SoundDefinition>> *definitions() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<r2::SoundDefinition>> *>(VT_DEFINITIONS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -174,9 +180,10 @@ struct SoundDefinitions FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct SoundDefinitionsBuilder {
+  typedef SoundDefinitions Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_definitions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<SoundDefinition>>> definitions) {
+  void add_definitions(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::SoundDefinition>>> definitions) {
     fbb_.AddOffset(SoundDefinitions::VT_DEFINITIONS, definitions);
   }
   explicit SoundDefinitionsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -193,7 +200,7 @@ struct SoundDefinitionsBuilder {
 
 inline flatbuffers::Offset<SoundDefinitions> CreateSoundDefinitions(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<SoundDefinition>>> definitions = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::SoundDefinition>>> definitions = 0) {
   SoundDefinitionsBuilder builder_(_fbb);
   builder_.add_definitions(definitions);
   return builder_.Finish();
@@ -201,10 +208,11 @@ inline flatbuffers::Offset<SoundDefinitions> CreateSoundDefinitions(
 
 inline flatbuffers::Offset<SoundDefinitions> CreateSoundDefinitionsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<SoundDefinition>> *definitions = nullptr) {
+    const std::vector<flatbuffers::Offset<r2::SoundDefinition>> *definitions = nullptr) {
+  auto definitions__ = definitions ? _fbb.CreateVector<flatbuffers::Offset<r2::SoundDefinition>>(*definitions) : 0;
   return r2::CreateSoundDefinitions(
       _fbb,
-      definitions ? _fbb.CreateVector<flatbuffers::Offset<SoundDefinition>>(*definitions) : 0);
+      definitions__);
 }
 
 inline const r2::SoundDefinitions *GetSoundDefinitions(const void *buf) {

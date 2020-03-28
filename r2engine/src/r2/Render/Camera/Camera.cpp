@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-11-16.
 //
-
+#include "r2pch.h"
 #include "r2/Render/Camera/Camera.h"
 
 #include "glm/gtc/matrix_transform.hpp"

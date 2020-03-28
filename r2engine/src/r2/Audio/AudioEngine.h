@@ -14,7 +14,7 @@
 
 namespace r2::audio
 {
-    class AudioEngine
+    class R2_API AudioEngine
     {
     public:
         using SoundID = s64;
@@ -56,7 +56,7 @@ namespace r2::audio
         
         using SoundFlags = r2::Flags<_SoundFlags, u8>;
         
-        struct SoundDefinition
+        struct R2_API SoundDefinition
         {
             char soundName[fs::FILE_PATH_LENGTH];
             u64 soundKey = 0;

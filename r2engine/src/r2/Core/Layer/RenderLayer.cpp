@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-11-04.
 //
 
+#include "r2pch.h"
 #include "RenderLayer.h"
 #include "r2/Core/Events/Events.h"
 #include "r2/Platform/Platform.h"

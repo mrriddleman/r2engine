@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <array>
+#include "r2/Utils/Utils.h"
 
 #if defined(_MSC_VER)
 #define _ALLOW_KEYWORD_MACROS

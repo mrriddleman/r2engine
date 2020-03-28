@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-11-19.
 //
-
+#include "r2pch.h"
 #include "Ray.h"
 
 namespace r2::math

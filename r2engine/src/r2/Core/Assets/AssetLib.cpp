@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-09-16.
 //
-
+#include "r2pch.h"
 #include "AssetLib.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetFile.h"

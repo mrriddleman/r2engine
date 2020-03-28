@@ -4,7 +4,7 @@ project "loguru"
 	cppdialect "C++17"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("bin-int/" .. outputdir .. "/%{prj.name")
+	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
@@ -16,3 +16,28 @@ project "loguru"
 	{
 		"%{prj.name}/../fmt/include"
 	}
+
+	configurations
+	{
+		"Debug",
+		"Release",
+		"Publish"
+	}
+
+	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "On"
+		optimize "Off"
+		staticruntime "off"
+
+	filter "configurations:Release"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"
+
+	filter "configurations:Publish"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"

@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-09.
 //
 
+#include "r2pch.h"
 #include "SDL2Input.h"
 #include <SDL2/SDL.h>
 
@@ -22,7 +23,7 @@ namespace r2
         u32 MOUSE_DIRECTION_NORMAL = SDL_MOUSEWHEEL_NORMAL;
         u32 MOUSE_DIRECTION_FLIPPED = SDL_MOUSEWHEEL_FLIPPED;
         
-        u32 SHIFT_PRESSED = KMOD_SHIFT;
+        u32 SHIFT_PRESSED_BTN = KMOD_SHIFT;
         u32 CTRL_PRESSED = KMOD_CTRL;
         u32 ALT_PRESSED = KMOD_ALT;
         

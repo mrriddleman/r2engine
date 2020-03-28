@@ -4,7 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-08-25.
 //
-
+#include "r2pch.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -27,7 +27,7 @@ namespace r2::asset::pln::cmp
         
         if (std::filesystem::path(filename).has_filename())
         {
-            filename = std::filesystem::path(filename).filename();
+            filename = std::filesystem::path(filename).filename().string();
         }
         
         std::string outputPath = s_tempBuildPath + r2::fs::utils::PATH_SEPARATOR + filename;
@@ -43,7 +43,7 @@ namespace r2::asset::pln::cmp
     bool Output(const r2::asset::pln::AssetManifest& manifest, const std::vector<std::string>& files)
     {
         std::string tempOutputPath = BuildTempOutputPath(manifest.assetOutputPath);
-        std::string outputFileName = std::filesystem::path(manifest.assetOutputPath).filename();
+        std::string outputFileName = std::filesystem::path(manifest.assetOutputPath).filename().string();
         switch (manifest.outputType)
         {
             case r2::asset::pln::AssetType::Zip:
@@ -56,7 +56,7 @@ namespace r2::asset::pln::cmp
                 
                 for (const std::string& path: files)
                 {
-                    mz_bool result = mz_zip_writer_add_file(&archive, std::filesystem::path(path).filename().c_str(), path.c_str(), "", 0, MZ_DEFAULT_COMPRESSION);
+                    mz_bool result = mz_zip_writer_add_file(&archive, std::filesystem::path(path).filename().string().c_str(), path.c_str(), "", 0, MZ_DEFAULT_COMPRESSION);
                     
                     if (!result)
                     {
@@ -120,6 +120,62 @@ namespace r2::asset::pln::cmp
         
         s_manifestWorkQueue.push_back(manifest);
     }
+
+    bool CompileAsset(const r2::asset::pln::AssetManifest& manifest)
+    {
+        bool fail = false;
+
+        std::vector<std::string> inputFiles;
+
+        for (u32 i = 0; i < manifest.fileCommands.size() && !fail; ++i)
+        {
+            const auto& inputFile = manifest.fileCommands[i];
+
+            std::string outputPath = BuildTempOutputPath(inputFile.outputFileName);
+
+            inputFiles.push_back(outputPath);
+
+            switch (inputFile.command.compile) {
+            case r2::asset::pln::AssetCompileCommand::FlatBufferCompile:
+            {
+                if (!r2::asset::pln::flat::GenerateFlatbufferBinaryFile(s_tempBuildPath, inputFile.command.schemaPath, inputFile.inputPath))
+                {
+                    fail = true;
+                }
+            }
+            break;
+            case r2::asset::pln::AssetCompileCommand::None:
+            {
+                if (!std::filesystem::copy_file(inputFile.inputPath, outputPath))
+                {
+                    fail = true;
+                }
+            }
+            break;
+            default:
+                R2_CHECK(false, "Unknown asset compile command!");
+                break;
+            }
+        }
+
+        if (!fail)
+        {
+            if (!Output(manifest, inputFiles))
+            {
+                R2_LOGE("Failed to output asset: %s\n", manifest.assetOutputPath.c_str());
+            }
+            else
+            {
+                return true;
+            }
+        }
+        else
+        {
+            R2_LOGE("Failed to compile asset: %s\n", manifest.assetOutputPath.c_str());
+        }
+
+        return false;
+    }
     
     void Update()
     {
@@ -134,55 +190,9 @@ namespace r2::asset::pln::cmp
         {
             const r2::asset::pln::AssetManifest& nextAsset = s_manifestWorkQueue.front();
             
-            bool fail = false;
-            
-            std::vector<std::string> inputFiles;
-            
-            for (u32 i = 0; i < nextAsset.fileCommands.size() && !fail; ++i)
+            if (CompileAsset(nextAsset))
             {
-                const auto& inputFile = nextAsset.fileCommands[i];
-                
-                std::string outputPath = BuildTempOutputPath( inputFile.outputFileName );
-                
-                inputFiles.push_back(outputPath);
-                
-                switch (inputFile.command.compile) {
-                    case r2::asset::pln::AssetCompileCommand::FlatBufferCompile:
-                    {
-                        if(!r2::asset::pln::flat::GenerateFlatbufferBinaryFile(s_tempBuildPath, inputFile.command.schemaPath, inputFile.inputPath))
-                        {
-                            fail = true;
-                        }
-                    }
-                    break;
-                    case r2::asset::pln::AssetCompileCommand::None:
-                    {
-                        if (!std::filesystem::copy_file(inputFile.inputPath, outputPath))
-                        {
-                            fail = true;
-                        }
-                    }
-                    break;
-                    default:
-                        R2_CHECK(false, "Unknown asset compile command!");
-                        break;
-                }
-            }
-            
-            if (!fail)
-            {
-                if(!Output(nextAsset, inputFiles))
-                {
-                    R2_LOGE("Failed to output asset: %s\n", nextAsset.assetOutputPath.c_str());
-                }
-                else
-                {
-                    outputFiles.push_back(nextAsset.assetOutputPath);
-                }
-            }
-            else
-            {
-                R2_LOGE("Failed to compile asset: %s\n", nextAsset.assetOutputPath.c_str());
+                outputFiles.push_back(nextAsset.assetOutputPath);
             }
             
             s_manifestWorkQueue.pop_front();

@@ -8,7 +8,7 @@
 
 //Based on https://github.com/richgel999/miniz by Rich Geldreich
 //Mostly ripped but rejigged to fit this API better
-
+#include "r2pch.h"
 #include "ZipFile.h"
 #include "r2/Core/File/FileDevices/FileDevice.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
@@ -767,7 +767,7 @@ namespace r2::fs
         u32 bufU32[u32BufSize];
         u8* pBuf = (u8*)bufU32;
         
-        u32 zip64EOCDLSize = (R2_ZIP64_END_OF_CENTRAL_DIR_LOCATOR_SIZE + sizeof(u32) - 1) / sizeof(u32);
+        const u32 zip64EOCDLSize = (R2_ZIP64_END_OF_CENTRAL_DIR_LOCATOR_SIZE + sizeof(u32) - 1) / sizeof(u32);
         
         u32 zip64EndOfCentralDirLocator[zip64EOCDLSize];
         

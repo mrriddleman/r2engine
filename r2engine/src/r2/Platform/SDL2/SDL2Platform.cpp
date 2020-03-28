@@ -5,6 +5,8 @@
 //  Created by Serge Lansiquot on 2019-02-03.
 //
 
+
+#include "r2pch.h"
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 #include "SDL2Platform.h"
 #include "r2/Platform/IO.h"
@@ -102,7 +104,7 @@ namespace r2
         return *SDL2Platform::s_platform;
     }
 
-    SDL2Platform::SDL2Platform():moptrWindow(nullptr), mBasePath(nullptr), mPrefPath(nullptr), mRunning(false)
+    SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)
     {
         strcpy( mSoundDefinitionPath, "" );
     }
@@ -128,9 +130,12 @@ namespace r2
 
         //Initialize file system
         {
-            mBasePath = SDL_GetBasePath();
-            mPrefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
+            const char* basePath = SDL_GetBasePath();
+            const char* prefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
             
+            r2::fs::utils::SanitizeSubPath(basePath, mBasePath);
+            r2::fs::utils::SanitizeSubPath(prefPath, mPrefPath);
+
             strcpy(mSoundDefinitionPath, app->GetSoundDefinitionPath().c_str());
             
             mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *MEM_ENG_PERMANENT_PTR, mBasePath, MAX_NUM_FILES);
@@ -380,7 +385,7 @@ namespace r2
                         
                         if(e.key.keysym.mod & KMOD_SHIFT)
                         {
-                            keyData.modifiers |= io::Key::SHIFT_PRESSED;
+                            keyData.modifiers |= io::Key::SHIFT_PRESSED_KEY;
                         }
                         
                         if(e.key.keysym.mod & KMOD_CTRL)

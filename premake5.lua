@@ -31,21 +31,18 @@ include "r2engine/vendor/imgui"
 
 project "r2engine"
 	location "r2engine"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
-	--staticruntime "off"
+	
 
 	local output_dir_root	= "bin/" .. outputdir .. "/%{prj.name}"
 	local obj_dir_root = "bin_int/" .. outputdir .. "/%{prj.name}"
 
 	targetdir (output_dir_root)
 	objdir (obj_dir_root)
-
-	pchheader "src/r2pch.h"
-	pchsource "src/r2pch.cpp"
-
+	
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -81,9 +78,9 @@ project "r2engine"
 
 	defines 
 	{
-		'R2_ENGINE_ASSETS="'..os.realpath('.')..'/engine_assets/Flatbuffer_Data/"',
-		'R2_ENGINE_DATA_PATH="'..os.realpath('.')..'/r2engine/data"',
-		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.realpath('.')..'/r2engine/data/flatbuffer_schemas"'
+		'R2_ENGINE_ASSETS="'..os.getcwd()..'/engine_assets/Flatbuffer_Data/"',
+		'R2_ENGINE_DATA_PATH="'..os.getcwd()..'/r2engine/data"',
+		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.getcwd()..'/r2engine/data/flatbuffer_schemas"'
 	}
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
@@ -103,11 +100,12 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 	filter "system:macosx"
 		systemversion "latest"
 		xcodebuildsettings { ["CC"] = "/usr/local/Cellar/llvm/8.0.0_1/bin/clang", ["COMPILER_INDEX_STORE_ENABLE"] = "No"}
+		pchheader "src/r2pch.h"
 
 		defines
 		{
 			"R2_PLATFORM_MAC",
-			'R2_FLATC="'..os.realpath('.')..'/%{prj.name}/vendor/flatbuffers/bin/MacOSX/flatc"',
+			'R2_FLATC="'..os.getcwd()..'/%{prj.name}/vendor/flatbuffers/bin/MacOSX/flatc"',
 		}
 
 		buildoptions 
@@ -149,13 +147,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"c++fs"
 		}
 
-		filter "configurations:Debug"
+		filter {"configurations:Debug", "system:macosx"}
 			links
 			{
 				"fmodL",
 				"assimp"
 			}
-		filter "configurations:not Debug"
+		filter {"configurations:not Debug", "system:macosx"}
 			links
 			{
 				"fmod",
@@ -165,17 +163,76 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 	filter "system:windows"
 		systemversion "latest"
+    	pchheader "r2pch.h"
+    	pchsource "r2engine/src/r2pch.cpp"
+    	
+
 
 		defines
 		{
 			"R2_PLATFORM_WINDOWS",
-			"R2_BUILD_DLL"
+			"R2_BUILD_DLL",
+			'R2_FLATC="'..os.getcwd()..'/%{prj.name}/vendor/flatbuffers/bin/Windows/flatc.exe"',
+		}
+
+		includedirs
+		{
+			"%{prj.name}/vendor/SDL2/Windows/include",
+			"%{prj.name}/vendor/glad/Windows/include",
+			"%{prj.name}/vendor/FMOD/Windows/core/inc",
+		}
+
+		sysincludedirs
+		{
+			"%{prj.name}/vendor/assimp/Windows/include"
+		}
+
+		libdirs
+		{
+			"%{prj.name}/vendor/SDL2/Windows/lib/x64",
+			"%{prj.name}/vendor/FMOD/Windows/core/lib/x64",
+		}
+
+		links
+		{
+			"SDL2",
+			"SDL2main",
+			"glad",
+			"opengl32"
 		}
 
 		postbuildcommands
 		{
 			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
 		}
+
+		filter {"configurations:Debug", "system:windows"}
+			libdirs
+			{
+				"%{prj.name}/vendor/assimp/Windows/lib/Debug"
+			}
+
+			links
+			{
+				"fmodL_vc",
+				"assimp-vc142-mtd"
+			}
+		filter {"configurations:not Debug", "system:windows"}
+
+			libdirs
+			{
+				"%{prj.name}/vendor/assimp/Windows/lib/Release",
+			}
+
+			links
+			{
+				"fmod_vc",
+				"assimp-vc142-mt"
+			}
+
+	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
+		flags {"NoPCH"}
+
 
 	filter "system:linux"
 		systemversion "latest"
@@ -189,16 +246,22 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		defines  {"R2_DEBUG", "R2_ASSET_PIPELINE"}
 		runtime "Debug"
 		symbols "On"
+		optimize "Off"
+		staticruntime "off"
 
 	filter "configurations:Release"
 		defines "R2_RELEASE"
 		runtime "Release"
+		symbols "Off"
 		optimize "On"
+		staticruntime "off"
 
 	filter "configurations:Publish"
 		defines "R2_PUBLISH"
 		runtime "Release"
+		symbols "Off"
 		optimize "On"
+		staticruntime "off"
 
 		
 
@@ -238,6 +301,22 @@ project "r2Tests"
 			"R2_PLATFORM_WINDOWS"
 		}
 
+	filter {"configurations:Debug", "system:windows"}
+		postbuildcommands
+		{
+			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmodL.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}"
+		}
+
+	filter {"configurations:Release", "system:windows"}
+		postbuildcommands
+		{
+			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmod.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}"
+		}
+
 	filter "system:macosx"
 		systemversion "latest"
 
@@ -247,19 +326,37 @@ project "r2Tests"
 			"R2_PLATFORM_MAC"
 		}
 
-		filter "configurations:Debug"
-			postbuildcommands 
-			{
-				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}"
-			}
+	filter {"configurations:Debug", "system:macosx"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}"
+		}
 
-		filter "configurations:Release"
-			postbuildcommands 
-			{
-				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
-				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}"
-			}  
+	filter {"configurations:Release", "system:macosx"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}"
+		}
+
+	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "On"
+		optimize "Off"
+		staticruntime "off"
+
+	filter "configurations:Release"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"
+
+	filter "configurations:Publish"
+		runtime "Release"
+		symbols "Off"
+		optimize "On"
+		staticruntime "off"
 
 project "Sandbox"
 	location "Sandbox"
@@ -295,13 +392,13 @@ project "Sandbox"
 
 	defines 
 	{
-		'MANIFESTS_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_manifests"',
-		'ASSET_DIR="'..os.realpath('.')..'/%{prj.name}/assets"',
-		'ASSET_BIN_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_bin"',
-		'ASSET_RAW_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_raw"',
-		'ASSET_FBS_SCHEMA_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_fbs_schemas"',
-		'ASSET_TEMP_DIR="'..os.realpath('.')..'/%{prj.name}/assets/asset_temp"',
-		'APP_DIR="'..os.realpath('.')..'/%{prj.name}"',
+		'MANIFESTS_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_manifests"',
+		'ASSET_DIR="'..os.getcwd()..'/%{prj.name}/assets"',
+		'ASSET_BIN_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_bin"',
+		'ASSET_RAW_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_raw"',
+		'ASSET_FBS_SCHEMA_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_fbs_schemas"',
+		'ASSET_TEMP_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_temp"',
+		'APP_DIR="'..os.getcwd()..'/%{prj.name}"',
 	}
 
 	filter "system:windows"
@@ -312,6 +409,27 @@ project "Sandbox"
 			"R2_PLATFORM_WINDOWS"
 		}
 
+	filter {"configurations:Debug", "system:windows"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmodL.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{RMDIR} ../bin/Debug_windows_x86_64/%{prj.name}/sounds",
+			"{COPY} ../engine_assets/sounds/ ../bin/Debug_windows_x86_64/%{prj.name}"
+		}
+
+	filter {"configurations:Release", "system:windows"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmod.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{RMDIR} ../bin/Release_windows_x86_64/%{prj.name}/sounds",
+			"{COPY} ../engine_assets/sounds ./bin/Release_windows_x86_64/%{prj.name}/sounds"
+		} 
+
+
 	filter "system:macosx"
 		systemversion "latest"
 
@@ -321,23 +439,23 @@ project "Sandbox"
 			"R2_PLATFORM_MAC"
 		}
 
-		filter "configurations:Debug"
-			postbuildcommands 
-			{
-				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
-				"{RMDIR} ../bin/Debug_macosx_x86_64/%{prj.name}/sounds",
-				"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}"
-			}
+	filter {"configurations:Debug", "system:macosx"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmodL.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Debug_macosx_x86_64/%{prj.name}",
+			"{RMDIR} ../bin/Debug_macosx_x86_64/%{prj.name}/sounds",
+			"{COPY} ../engine_assets/sounds/ ../bin/Debug_macosx_x86_64/%{prj.name}"
+		}
 
-		filter "configurations:Release"
-			postbuildcommands 
-			{
-				"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
-				"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
-				"{RMDIR} ../bin/Release_macosx_x86_64/%{prj.name}/sounds",
-				"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
-			}    
+	filter {"configurations:Release", "system:macosx"}
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/FMOD/MacOSX/core/lib/libfmod.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/MacOSX/lib/libassimp.dylib ../bin/Release_macosx_x86_64/%{prj.name}",
+			"{RMDIR} ../bin/Release_macosx_x86_64/%{prj.name}/sounds",
+			"{COPY} ../engine_assets/sounds ./bin/Release_macosx_x86_64/%{prj.name}/sounds"
+		}    
 		
 	filter "system:linux"
 		systemversion "latest"
@@ -351,14 +469,16 @@ project "Sandbox"
 		defines {"R2_DEBUG", "R2_ASSET_PIPELINE"}
 		runtime "Debug"
 		symbols "On"
+		staticruntime "off"
 
 	filter "configurations:Release"
 		defines "R2_RELEASE"
 		runtime "Release"
 		optimize "On"
+		staticruntime "off"
 
 	filter "configurations:Publish"
 		defines "R2_PUBLISH"
 		runtime "Release"
 		optimize "On"
-
+		staticruntime "off"

@@ -9,11 +9,14 @@
 namespace r2 {
 
 struct ShaderManifest;
+struct ShaderManifestBuilder;
 
 struct ShaderManifests;
+struct ShaderManifestsBuilder;
 
 struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef ShaderManifestBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERTEXPATH = 4,
     VT_FRAGMENTPATH = 6,
     VT_GEOMETRYPATH = 8,
@@ -46,6 +49,7 @@ struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct ShaderManifestBuilder {
+  typedef ShaderManifest Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_vertexPath(flatbuffers::Offset<flatbuffers::String> vertexPath) {
@@ -92,20 +96,25 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifestDirect(
     const char *fragmentPath = nullptr,
     const char *geometryPath = nullptr,
     const char *binaryPath = nullptr) {
+  auto vertexPath__ = vertexPath ? _fbb.CreateString(vertexPath) : 0;
+  auto fragmentPath__ = fragmentPath ? _fbb.CreateString(fragmentPath) : 0;
+  auto geometryPath__ = geometryPath ? _fbb.CreateString(geometryPath) : 0;
+  auto binaryPath__ = binaryPath ? _fbb.CreateString(binaryPath) : 0;
   return r2::CreateShaderManifest(
       _fbb,
-      vertexPath ? _fbb.CreateString(vertexPath) : 0,
-      fragmentPath ? _fbb.CreateString(fragmentPath) : 0,
-      geometryPath ? _fbb.CreateString(geometryPath) : 0,
-      binaryPath ? _fbb.CreateString(binaryPath) : 0);
+      vertexPath__,
+      fragmentPath__,
+      geometryPath__,
+      binaryPath__);
 }
 
 struct ShaderManifests FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  enum {
+  typedef ShaderManifestsBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_MANIFESTS = 4
   };
-  const flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>> *manifests() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>> *>(VT_MANIFESTS);
+  const flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>> *manifests() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>> *>(VT_MANIFESTS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -117,9 +126,10 @@ struct ShaderManifests FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 };
 
 struct ShaderManifestsBuilder {
+  typedef ShaderManifests Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_manifests(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>>> manifests) {
+  void add_manifests(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>>> manifests) {
     fbb_.AddOffset(ShaderManifests::VT_MANIFESTS, manifests);
   }
   explicit ShaderManifestsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -136,7 +146,7 @@ struct ShaderManifestsBuilder {
 
 inline flatbuffers::Offset<ShaderManifests> CreateShaderManifests(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<ShaderManifest>>> manifests = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>>> manifests = 0) {
   ShaderManifestsBuilder builder_(_fbb);
   builder_.add_manifests(manifests);
   return builder_.Finish();
@@ -144,10 +154,11 @@ inline flatbuffers::Offset<ShaderManifests> CreateShaderManifests(
 
 inline flatbuffers::Offset<ShaderManifests> CreateShaderManifestsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<ShaderManifest>> *manifests = nullptr) {
+    const std::vector<flatbuffers::Offset<r2::ShaderManifest>> *manifests = nullptr) {
+  auto manifests__ = manifests ? _fbb.CreateVector<flatbuffers::Offset<r2::ShaderManifest>>(*manifests) : 0;
   return r2::CreateShaderManifests(
       _fbb,
-      manifests ? _fbb.CreateVector<flatbuffers::Offset<ShaderManifest>>(*manifests) : 0);
+      manifests__);
 }
 
 inline const r2::ShaderManifests *GetShaderManifests(const void *buf) {

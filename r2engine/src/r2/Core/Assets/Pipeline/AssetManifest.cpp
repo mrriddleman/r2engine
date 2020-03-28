@@ -4,6 +4,7 @@
 //
 //  Created by Serge Lansiquot on 2019-08-24.
 //
+#include "r2pch.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
@@ -65,6 +66,7 @@ namespace r2::asset::pln
         //generate json files
         if(!flat::GenerateFlatbufferJSONFile(manifestDir, assetManifestFbsPath, manifestPath))
         {
+            R2_CHECK(false, "Failed to generate json file for: %s", manifestDir.c_str());
             return false;
         }
         
@@ -151,7 +153,7 @@ namespace r2::asset::pln
             //generate json files
             if(!flat::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
             {
-                R2_LOGE("Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
+                R2_CHECK(false, "Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
                 return false;
             }
         }

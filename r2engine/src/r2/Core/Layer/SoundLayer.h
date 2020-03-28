@@ -12,7 +12,7 @@
 
 namespace r2
 {
-    class SoundLayer: public Layer
+    class R2_API SoundLayer: public Layer
     {
     public:
         SoundLayer();

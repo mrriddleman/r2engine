@@ -11,9 +11,9 @@
 
     #ifdef R2_PLATFORM_WINDOWS
         #ifdef R2_BUILD_DLL
-            #define R2_API __declspec(dllexport)
+            #define R2_API //__declspec(dllexport)
         #else
-            #define R2_API __declspec(dllimport)
+            #define R2_API //__declspec(dllimport)
         #endif
     #elif defined R2_PLATFORM_MAC
         #define R2_API

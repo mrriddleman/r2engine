@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-12.
 //
 
+#include "r2pch.h"
 #include "r2/Core/Layer/Layer.h"
 
 namespace r2
