@@ -51,8 +51,9 @@ namespace r2::asset::pln::audio
                 }
                 
                 r2::audio::AudioEngine::SoundDefinition def;
-                strcpy(def.soundName, file.path().string().c_str());
-                
+
+                r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), def.soundName);
+
                 char fileName[r2::fs::FILE_PATH_LENGTH];
                 r2::fs::utils::CopyFileNameWithExtension(def.soundName, fileName);
                 def.soundKey = STRING_ID(fileName);
@@ -144,6 +145,8 @@ namespace r2::asset::pln::audio
                 r2::audio::AudioEngine::SoundDefinition definition;
                 const auto& soundDef = soundDefinitionsBuf->definitions()->Get(i);
                 strcpy( definition.soundName, soundDef->soundName()->c_str() );
+
+
                 definition.defaultVolume = soundDef->defaultVolume();
                 definition.minDistance = soundDef->minDistance();
                 definition.maxDistance = soundDef->maxDistance();

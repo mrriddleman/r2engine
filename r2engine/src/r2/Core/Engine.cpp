@@ -117,7 +117,7 @@ namespace r2
             DetectGameControllers();
 
             
-          //  TestSound(CPLAT.RootPath());
+            TestSound(CPLAT.RootPath());
             
             
             return true;
