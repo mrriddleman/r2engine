@@ -30,6 +30,18 @@ namespace r2
 {
     const u32 Engine::NUM_PLATFORM_CONTROLLERS;
     
+
+    void TestSound(const std::string& appPath)
+    {
+        r2::audio::AudioEngine audio;
+
+        bool loaded = audio.LoadSound((r2::audio::AudioEngine::SoundID)1);
+        if (loaded)
+            audio.PlaySound((r2::audio::AudioEngine::SoundID)1, glm::vec3(0, 0, 0), 0.5, 1.0);
+        else
+            R2_CHECK(false, "");
+    }
+
     Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr), mMinimized(false)
     {
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
@@ -105,7 +117,7 @@ namespace r2
             DetectGameControllers();
 
             
-
+          //  TestSound(CPLAT.RootPath());
             
             
             return true;
