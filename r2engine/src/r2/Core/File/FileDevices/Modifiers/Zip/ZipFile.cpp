@@ -282,7 +282,7 @@ namespace r2::fs
         for (u64 i = 0; i < mArchive.totalFiles; ++i)
         {
             ZipFile::ZipFileInfo info;
-            bool gotInfo = GetFileInfo(i, info, nullptr);
+            bool gotInfo = GetFileInfo(static_cast<u32>(i), info, nullptr);
             
             R2_CHECK(gotInfo, "We somehow didn't get the file info for file index: %llu", i);
             
@@ -907,7 +907,7 @@ namespace r2::fs
         {
             u32 i, n;
             if (!AllocateZipArray<byte>(mAlloc, mArchive.state.centralDir, cDirSize, alignof(u64))
-                ||!AllocateZipArray<u32>(mAlloc, mArchive.state.centralDirOffsets, mArchive.totalFiles, alignof(size_t)))
+                ||!AllocateZipArray<u32>(mAlloc, mArchive.state.centralDirOffsets, static_cast<u32>(mArchive.totalFiles), alignof(size_t)))
             {
                 R2_CHECK(false, "Failed to allocate our zip arrays!");
             }

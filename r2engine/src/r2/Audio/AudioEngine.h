@@ -58,7 +58,7 @@ namespace r2::audio
         
         struct R2_API SoundDefinition
         {
-            char soundName[fs::FILE_PATH_LENGTH];
+            char soundName[fs::FILE_PATH_LENGTH] = {};
             u64 soundKey = 0;
             float defaultVolume = 1.0f;
             float defaultPitch = 1.0f;
@@ -101,7 +101,7 @@ namespace r2::audio
         SpeakerMode GetSpeakerMode() const;
         
         
-        u32 GetNumberOfDrivers() const;
+        s32 GetNumberOfDrivers() const;
         u32 GetCurrentDriver() const;
         void SetDriver(int driverId);
         void GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels);

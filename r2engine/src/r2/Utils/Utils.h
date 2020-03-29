@@ -70,6 +70,9 @@ namespace r2::util
     float MillisecondsToSeconds(u32 milliseconds);
     u32 SecondsToMilliseconds(float seconds);
     bool WildcardMatch(const char* pTameText, const char* pWildText, bool bCaseSensitive = false, char cAltTerminator ='\0');
+    void PathCpy(char* dest, const char* source, u64 destLength = r2::fs::FILE_PATH_LENGTH);
+    void PathCat(char* dest, const char* source, u64 destLength = r2::fs::FILE_PATH_LENGTH);
+    void PathNCpy(char* dest, const char* source, u64 num, u64 destLength = r2::fs::FILE_PATH_LENGTH);
 }
 
 #endif /* Utils_h */

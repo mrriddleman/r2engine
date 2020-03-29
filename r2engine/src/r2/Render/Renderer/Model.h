@@ -16,7 +16,7 @@ namespace r2::draw
     {
         std::vector<Mesh> meshes;
         glm::mat4 globalInverseTransform;
-        char directory[r2::fs::FILE_PATH_LENGTH];
+        char directory[r2::fs::FILE_PATH_LENGTH] = {'\0'};
     };
 }
 

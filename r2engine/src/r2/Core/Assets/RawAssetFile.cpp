@@ -14,7 +14,7 @@ namespace r2::asset
 {
     RawAssetFile::RawAssetFile(): mFile(nullptr)
     {
-        strcpy(mPath, "");
+        r2::util::PathCpy(mPath, "");
     }
     
     RawAssetFile::~RawAssetFile()
@@ -32,7 +32,7 @@ namespace r2::asset
             return false;
         }
         
-        strcpy(mPath, path);
+        r2::util::PathCpy(mPath, path);
         return strcmp(mPath, "") != 0;
     }
     

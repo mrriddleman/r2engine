@@ -35,7 +35,7 @@ project "r2engine"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
-	
+	disablewarnings {"26812"}
 
 	local output_dir_root	= "bin/" .. outputdir .. "/%{prj.name}"
 	local obj_dir_root = "bin_int/" .. outputdir .. "/%{prj.name}"
@@ -165,8 +165,11 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		systemversion "latest"
     	pchheader "r2pch.h"
     	pchsource "r2engine/src/r2pch.cpp"
-    	
-
+    		
+		libdirs
+		{
+			"%{prj.name}/vendor/SDL2/Windows/lib/x64",
+		}
 
 		defines
 		{
@@ -187,18 +190,11 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"%{prj.name}/vendor/assimp/Windows/include"
 		}
 
-		libdirs
-		{
-			"%{prj.name}/vendor/SDL2/Windows/lib/x64",
-			"%{prj.name}/vendor/FMOD/Windows/core/lib/x64",
-		}
-
 		links
 		{
 			"SDL2",
 			"SDL2main",
 			"glad",
-			"opengl32"
 		}
 
 		postbuildcommands
@@ -206,29 +202,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
 		}
 
-		filter {"configurations:Debug", "system:windows"}
-			libdirs
-			{
-				"%{prj.name}/vendor/assimp/Windows/lib/Debug"
-			}
 
-			links
-			{
-				"fmodL_vc",
-				"assimp-vc142-mtd"
-			}
-		filter {"configurations:not Debug", "system:windows"}
-
-			libdirs
-			{
-				"%{prj.name}/vendor/assimp/Windows/lib/Release",
-			}
-
-			links
-			{
-				"fmod_vc",
-				"assimp-vc142-mt"
-			}
 
 	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
 		flags {"NoPCH"}
@@ -301,7 +275,25 @@ project "r2Tests"
 			"R2_PLATFORM_WINDOWS"
 		}
 
+		libdirs
+		{
+			"r2engine/vendor/FMOD/Windows/core/lib/x64",
+		}
+
+
 	filter {"configurations:Debug", "system:windows"}
+
+		libdirs
+		{
+			"r2engine/vendor/assimp/Windows/lib/Debug"
+		}
+
+		links
+		{
+			"fmodL_vc",
+			"assimp-vc142-mtd"
+		}
+
 		postbuildcommands
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Debug_windows_x86_64/%{prj.name}",
@@ -310,6 +302,18 @@ project "r2Tests"
 		}
 
 	filter {"configurations:Release", "system:windows"}
+
+		libdirs
+		{
+			"r2engine/vendor/assimp/Windows/lib/Release",
+		}
+
+		links
+		{
+			"fmod_vc",
+			"assimp-vc142-mt"
+		}
+
 		postbuildcommands
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Release_windows_x86_64/%{prj.name}",
@@ -364,7 +368,7 @@ project "Sandbox"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
-
+	disablewarnings {"26812"}
 	--staticruntme "off"
 	
 	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"
@@ -403,6 +407,10 @@ project "Sandbox"
 
 	filter "system:windows"
 		systemversion "latest"
+		libdirs
+		{
+			"r2engine/vendor/FMOD/Windows/core/lib/x64",
+		}
 
 		defines
 		{
@@ -410,6 +418,17 @@ project "Sandbox"
 		}
 
 	filter {"configurations:Debug", "system:windows"}
+		libdirs
+		{
+			"r2engine/vendor/assimp/Windows/lib/Debug"
+		}
+
+		links
+		{
+			"fmodL_vc",
+			"assimp-vc142-mtd"
+		}
+
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Debug_windows_x86_64/%{prj.name}",
@@ -420,6 +439,17 @@ project "Sandbox"
 		}
 
 	filter {"configurations:Release", "system:windows"}
+
+		libdirs
+		{
+			"r2engine/vendor/assimp/Windows/lib/Release",
+		}
+
+		links
+		{
+			"fmod_vc",
+			"assimp-vc142-mt"
+		}
 		postbuildcommands 
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Release_windows_x86_64/%{prj.name}",

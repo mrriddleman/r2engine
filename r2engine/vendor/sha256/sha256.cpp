@@ -121,12 +121,20 @@ std::string sha256(std::string input)
  
     SHA256 ctx = SHA256();
     ctx.init();
-    ctx.update( (unsigned char*)input.c_str(), input.length());
+    ctx.update( (unsigned char*)input.c_str(), (unsigned int)input.length());
     ctx.final(digest);
  
-    char buf[2*SHA256::DIGEST_SIZE+1];
-    buf[2*SHA256::DIGEST_SIZE] = 0;
+    const unsigned int BUF_SIZE = 2 * SHA256::DIGEST_SIZE;
+    char buf[BUF_SIZE +1];
+    buf[BUF_SIZE] = 0;
     for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
-        sprintf(buf+i*2, "%02x", digest[i]);
+    {
+#ifdef R2_PLATFORM_WINDOWS
+        sprintf_s(buf + i * 2, BUF_SIZE+1, "%02x", digest[i]);
+#else
+        sprintf(buf + i * 2, "%02x", digest[i]);
+#endif
+    }
+        
     return std::string(buf);
 }

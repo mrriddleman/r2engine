@@ -250,7 +250,7 @@ namespace r2::asset::pln
     void AddNewSoundDefinitionFromFile(std::string path)
     {
         r2::audio::AudioEngine::SoundDefinition soundDefinition;
-        strcpy( soundDefinition.soundName, path.c_str() );
+        r2::util::PathCpy( soundDefinition.soundName, path.c_str() );
         
         std::string fileName = std::filesystem::path(path).filename().string();
 

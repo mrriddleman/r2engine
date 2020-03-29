@@ -304,7 +304,7 @@ public:
             
             printf("======================Levels==========================\n");
             
-            for (u32 i = 0; i < levels->Length(); ++i)
+            for (u32 i = 0; i < levels->size(); ++i)
             {
                 printf("Level: %s\n", levels->Get(i)->name()->c_str());
                 
@@ -312,7 +312,7 @@ public:
                 
                 const auto blocks = levels->Get(i)->blocks();
                 
-                for (u32 j = 0; j < blocks->Length(); ++j)
+                for (u32 j = 0; j < blocks->size(); ++j)
                 {
                     auto fillColor = blocks->Get(j)->fillColor();
                     printf("-------------------Block--------------------\n");
@@ -357,7 +357,7 @@ public:
             
             const auto powerups = powerupsfbb->powerups();
             
-            for (u32 i = 0; i < powerups->Length(); ++i)
+            for (u32 i = 0; i < powerups->size(); ++i)
             {
                 auto powerup = powerups->Get(i);
                 printf("----------------------Powerup-----------------\n");
@@ -386,7 +386,7 @@ public:
             
             printf("======================Scores==========================\n");
             
-            for (u32 i = 0; i < scores->Length(); ++i)
+            for (u32 i = 0; i < scores->size(); ++i)
             {
                 auto score = scores->Get(i);
                 
@@ -524,31 +524,31 @@ namespace
         switch (category)
         {
             case r2::fs::utils::ROOT:
-                strcpy(subpath, "");
+                r2::util::PathCpy(subpath, "");
                 break;
             case r2::fs::utils::SOUND_DEFINITIONS:
-                strcpy(subpath, "assets/sound/sound_definitions");
+                r2::util::PathCpy(subpath, "assets/sound/sound_definitions");
                 break;
             case r2::fs::utils::SOUND_FX:
-                strcpy(subpath, "assets/sound/sound_fx");
+                r2::util::PathCpy(subpath, "assets/sound/sound_fx");
                 break;
             case r2::fs::utils::MUSIC:
-                strcpy(subpath, "assets/sound/music");
+                r2::util::PathCpy(subpath, "assets/sound/music");
                 break;
             case r2::fs::utils::TEXTURES:
-                strcpy(subpath, "assets/textures");
+                r2::util::PathCpy(subpath, "assets/textures");
                 break;
             case r2::fs::utils::SHADERS_BIN:
-                strcpy(subpath, "assets/shaders/bin");
+                r2::util::PathCpy(subpath, "assets/shaders/bin");
                 break;
             case r2::fs::utils::SHADERS_RAW:
-                strcpy(subpath, "assets/shaders/raw");
+                r2::util::PathCpy(subpath, "assets/shaders/raw");
                 break;
             case r2::fs::utils::SHADERS_MANIFEST:
-                strcpy(subpath, "assets/shaders/manifests");
+                r2::util::PathCpy(subpath, "assets/shaders/manifests");
                 break;
             case r2::fs::utils::MODELS:
-                strcpy(subpath, "assets/models");
+                r2::util::PathCpy(subpath, "assets/models");
                 break;
             default:
                 result = false;

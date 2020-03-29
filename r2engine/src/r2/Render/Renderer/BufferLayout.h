@@ -65,7 +65,7 @@ namespace r2::draw
         
         std::vector<BufferElement> mElements;
         u32 mStride = 0;
-        VertexType mVertexType;
+        VertexType mVertexType = VertexType::Vertex;
     };
 }
 

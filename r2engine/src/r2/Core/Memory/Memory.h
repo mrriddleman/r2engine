@@ -75,7 +75,7 @@ namespace r2
             
             struct MemoryTag
             {
-                char fileName[r2::fs::FILE_PATH_LENGTH];
+                char fileName[r2::fs::FILE_PATH_LENGTH] = {'\0'};
                 u64 alignment = 0;
                 u64 size = 0;
                 u64 requestedSize = 0;
@@ -100,7 +100,7 @@ namespace r2
             inline const void* PointerSubtract(const void *p, u64 bytes);
             inline u64 PointerOffset(void* p1, void* p2);
             template<typename ARENA>
-            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u64 alignment, u32 elementSize = 0, u32 offset = 0, PlacementPolicy policy = FIND_FIRST);
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u32 alignment, u32 elementSize = 0, u32 offset = 0, PlacementPolicy policy = FIND_FIRST);
             
             template <class T>
             struct TypeAndCount
@@ -534,7 +534,7 @@ namespace r2
             }
             
             template<typename ARENA>
-            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u64 alignment, u32 elementSize, u32 offset, PlacementPolicy policy)
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u32 alignment, u32 elementSize, u32 offset, PlacementPolicy policy)
             {
                 MemBoundary boundary;
                 boundary.location = ALLOC_BYTESN(arena, size, alignment);

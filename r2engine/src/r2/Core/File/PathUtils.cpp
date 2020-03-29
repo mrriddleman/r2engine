@@ -18,9 +18,9 @@ namespace r2::fs::utils
             return nullptr;
         }
         
-        u32 maxPathLength = strlen(path);
+        size_t maxPathLength = strlen(path);
         char* tempPath = const_cast<char*>(path);
-        u32 i = 0;
+        size_t i = 0;
         
         //Ignore any/all start delims
         while (tempPath[i] != '\0' && tempPath[i] == delim)
@@ -28,7 +28,7 @@ namespace r2::fs::utils
             ++i;
         }
 
-        u32 lengthOfSubPath = 0;
+        size_t lengthOfSubPath = 0;
         
         for (; i < maxPathLength && tempPath[i] != '\0'; ++i)
         {
@@ -73,7 +73,7 @@ namespace r2::fs::utils
         
         result = GetLastSubPath(result, ext, FILE_EXTENSION_DELIM);
         
-        strcpy(ext, result);
+        r2::util::PathCpy(ext, result);
         
         return result && ext && strlen(ext) > 0;
     }
@@ -85,7 +85,7 @@ namespace r2::fs::utils
             return false;
         }
         
-        strcpy(path, "");
+        r2::util::PathCpy(path, "");
         
         char filenameWithExtension[r2::fs::FILE_PATH_LENGTH];
         
@@ -115,7 +115,7 @@ namespace r2::fs::utils
                 break;
             }
 
-            strcat(path, nexSubPath);
+            r2::util::PathCat(path, nexSubPath);
             auto len = strlen(path);
 
             R2_CHECK(len < r2::fs::FILE_PATH_LENGTH, "should be less than 1 kilobyte");
@@ -220,7 +220,7 @@ namespace r2::fs::utils
         SanitizeSubPath(path, sanitizedRootPath);
 
         auto len = strlen(sanitizedRootPath);
-        strcpy(resultPath, sanitizedRootPath);
+        r2::util::PathCpy(resultPath, sanitizedRootPath);
         
         if (resultPath[len-1] != delim)
         {
@@ -241,14 +241,14 @@ namespace r2::fs::utils
         
         SanitizeSubPath(subPath, sanitizedSubPath);
         
-        strcat(resultPath, sanitizedSubPath);
+        r2::util::PathCat(resultPath, sanitizedSubPath);
         
         return true;
     }
     
     bool AppendExt(char* path, const char* ext)
     {
-        strcat(path, ext);
+        r2::util::PathCat(path, ext);
         return true;
     }
     
@@ -318,7 +318,7 @@ namespace r2::fs::utils
             }
         }
         
-        strncpy(result, path, startingIndex + 2);
+        r2::util::PathNCpy(result, path, startingIndex + 2);
         return true;
     }
 }

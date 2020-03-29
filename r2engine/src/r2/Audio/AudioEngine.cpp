@@ -70,7 +70,7 @@ namespace r2::audio
     , maxDistance(soundDef.maxDistance)
     , flags(soundDef.flags)
     {
-        strcpy(soundName, soundDef.soundName);
+        r2::util::PathCpy(soundName, soundDef.soundName);
     }
     
     AudioEngine::SoundDefinition& AudioEngine::SoundDefinition::operator=(const AudioEngine::SoundDefinition& soundDef)
@@ -85,7 +85,7 @@ namespace r2::audio
         minDistance = soundDef.minDistance;
         maxDistance = soundDef.maxDistance;
         flags = soundDef.flags;
-        strcpy(soundName, soundDef.soundName);
+        r2::util::PathCpy(soundName, soundDef.soundName);
         
         return *this;
     }
@@ -149,7 +149,7 @@ namespace r2::audio
         void Shutdown(r2::mem::LinearArena& allocator);
         bool SoundIsLoaded(AudioEngine::SoundID soundID);
         static u64 TotalAllocatedSize(u32 headerSize, u32 boundsCheckingSize);
-        static u64 FMODMemorySize();
+        static int FMODMemorySize();
         
         using SoundList = r2::SArray<Sound>*;
         using ChannelList = r2::SArray<Channel*>*;
@@ -194,7 +194,7 @@ namespace r2::audio
         return totalAllocationSizeNeeded;
     }
     
-    u64 Implementation::FMODMemorySize()
+    int Implementation::FMODMemorySize()
     {
         return Megabytes(4);
     }
@@ -208,7 +208,7 @@ namespace r2::audio
         for (u64 i = 0 ; i < MAX_NUM_SOUNDS; ++i)
         {
             Sound& sound = r2::sarr::At(*mSounds, i);
-            strcpy(sound.mSoundDefinition.soundName, "");
+            r2::util::PathCpy(sound.mSoundDefinition.soundName, "");
             sound.fmodSound = nullptr;
         }
         
@@ -320,7 +320,7 @@ namespace r2::audio
         
         CheckFMODResult( mChannel.moptrChannel->addFadePoint(dspClock, startVolume));
         
-        CheckFMODResult( mChannel.moptrChannel->addFadePoint(dspClock + (rate * r2::util::MillisecondsToSeconds(durationInMilliseconds)), endVolume));
+        CheckFMODResult( mChannel.moptrChannel->addFadePoint(dspClock + (rate * static_cast<u64>(r2::util::MillisecondsToSeconds(durationInMilliseconds))), endVolume));
         
     }
     
@@ -712,14 +712,14 @@ namespace r2::audio
                 
                 auto soundDefinitions = r2::GetSoundDefinitions(fileBuf);
                 
-                const auto size = soundDefinitions->definitions()->Length();
+                const auto size = soundDefinitions->definitions()->size();
                 
                 for (u32 i = 0; i < size; ++i)
                 {
                     const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
                     
                     SoundDefinition soundDef;
-                    strcpy(soundDef.soundName, def->soundName()->c_str());
+                    r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
                     soundDef.minDistance = def->minDistance();
                     soundDef.maxDistance = def->maxDistance();
                     soundDef.defaultVolume = def->defaultVolume();
@@ -791,7 +791,7 @@ namespace r2::audio
         sound.mSoundDefinition.minDistance = soundDef.minDistance;
         sound.mSoundDefinition.defaultVolume = soundDef.defaultVolume;
         sound.mSoundDefinition.defaultPitch = soundDef.defaultPitch;
-        strcpy( sound.mSoundDefinition.soundName, soundDef.soundName );
+        r2::util::PathCpy( sound.mSoundDefinition.soundName, soundDef.soundName );
         
         if (soundDef.loadOnRegister)
         {
@@ -823,7 +823,7 @@ namespace r2::audio
             UnloadSound(soundID);
         }
         
-        strcpy(sound.mSoundDefinition.soundName, "");
+        r2::util::PathCpy(sound.mSoundDefinition.soundName, "");
         sound.mSoundDefinition.defaultVolume = 0.0f;
         sound.mSoundDefinition.defaultPitch = 0.0f;
         sound.mSoundDefinition.flags.Clear();
@@ -1146,9 +1146,9 @@ namespace r2::audio
         return static_cast<SpeakerMode>(speakerMode);
     }
     
-    u32 AudioEngine::GetNumberOfDrivers() const
+    s32 AudioEngine::GetNumberOfDrivers() const
     {
-        int numDrivers = 0;
+        s32 numDrivers = 0;
         CheckFMODResult(gImpl->mSystem->getNumDrivers(&numDrivers));
         return numDrivers;
     }
@@ -1162,7 +1162,7 @@ namespace r2::audio
     
     void AudioEngine::SetDriver(int driverId)
     {
-        u32 numDrivers = GetNumberOfDrivers();
+        s32 numDrivers = GetNumberOfDrivers();
         
         R2_CHECK(driverId >= 0 && driverId < numDrivers, "Passed in a driver id that isn't in range");
         
@@ -1171,7 +1171,7 @@ namespace r2::audio
     
     void AudioEngine::GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels)
     {
-        u32 numDrivers = GetNumberOfDrivers();
+        s32 numDrivers = GetNumberOfDrivers();
         
         R2_CHECK(driverId >= 0 && driverId < numDrivers, "Passed in a driver id that isn't in range");
         int rate, channels;

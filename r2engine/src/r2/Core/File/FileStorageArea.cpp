@@ -25,7 +25,7 @@ namespace r2::fs
         , mNumFilesActive(numFilesActive)
     {
         R2_CHECK(rootPath != nullptr, "We got a null root!");
-        strcpy(mRootPath, rootPath);
+        r2::util::PathCpy(mRootPath, rootPath);
     }
     
     FileStorageArea::~FileStorageArea()

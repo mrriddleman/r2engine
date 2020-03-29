@@ -30,7 +30,7 @@ namespace r2::fs::dir
                     R2_CHECK(file.path().string().length() < r2::fs::FILE_PATH_LENGTH, "We don't have enough space for this file path! We have: %u but need: %zu", r2::fs::FILE_PATH_LENGTH, file.path().string().length());
                     if (file.path().string().length() < r2::fs::FILE_PATH_LENGTH)
                     {
-                        strcpy(listFileName, file.path().string().c_str());
+                        r2::util::PathCpy(listFileName, file.path().string().c_str());
                         
                         ++fileList->mSize;
                     }

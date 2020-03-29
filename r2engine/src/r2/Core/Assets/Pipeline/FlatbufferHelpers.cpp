@@ -32,9 +32,11 @@ namespace r2::asset::pln::flat
         char sanitizedSourcePath[r2::fs::FILE_PATH_LENGTH];
 
         r2::fs::utils::SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
-
+#ifdef R2_PLATFORM_WINDOWS
+        sprintf_s(command, Kilobytes(2), "%s -t -o %s %s -- %s --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+#else
         sprintf(command, "%s -t -o %s %s -- %s --raw-binary", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
-
+#endif
         return RunSystemCommand(command) == 0;
     }
     
@@ -45,9 +47,11 @@ namespace r2::asset::pln::flat
         
         char sanitizedSourcePath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
-
+#ifdef R2_PLATFORM_WINDOWS
+        sprintf_s(command, Kilobytes(2), "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+#else
         sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
-
+#endif
         return RunSystemCommand(command) == 0;
     }
     
@@ -55,9 +59,11 @@ namespace r2::asset::pln::flat
     {
         char command[Kilobytes(2)];
         std::string flatc = R2_FLATC;
-        
+#ifdef R2_PLATFORM_WINDOWS
+        sprintf_s(command, Kilobytes(2), "%s -c -o %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
+#else
         sprintf(command, "%s -c -o %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str());
-
+#endif
         return RunSystemCommand(command) == 0;
     }
 }

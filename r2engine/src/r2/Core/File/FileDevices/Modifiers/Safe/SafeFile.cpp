@@ -28,7 +28,7 @@ namespace r2::fs
     
     SafeFile::SafeFile(DiskFileStorageDevice& storageDevice):mnoptrFile(nullptr), mStorageDevice(storageDevice), mVerifyFunc(DefaultVerifyFunction), mVerifyFailedFunc(DefaultVerifyFailedFunction)
     {
-        strcpy(mSha, "");
+        r2::util::PathCpy(mSha, "");
     }
     
     SafeFile::SafeFile(DiskFileStorageDevice& storageDevice, SafeFileVerifyFunc fun, SafeFileVerifyFailedFunc failedFunc)
@@ -37,7 +37,7 @@ namespace r2::fs
         , mVerifyFunc(fun)
         , mVerifyFailedFunc(failedFunc)
     {
-        strcpy(mSha, "");
+        r2::util::PathCpy(mSha, "");
     }
     
     SafeFile::~SafeFile()

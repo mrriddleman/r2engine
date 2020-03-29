@@ -106,7 +106,7 @@ namespace r2
 
     SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)
     {
-        strcpy( mSoundDefinitionPath, "" );
+        r2::util::PathCpy( mSoundDefinitionPath, "" );
     }
     
     bool SDL2Platform::Init(std::unique_ptr<r2::Application> app)
@@ -136,7 +136,7 @@ namespace r2
             r2::fs::utils::SanitizeSubPath(basePath, mBasePath);
             r2::fs::utils::SanitizeSubPath(prefPath, mPrefPath);
 
-            strcpy(mSoundDefinitionPath, app->GetSoundDefinitionPath().c_str());
+            r2::util::PathCpy(mSoundDefinitionPath, app->GetSoundDefinitionPath().c_str());
             
             mRootStorage = ALLOC_PARAMS(r2::fs::FileStorageArea, *MEM_ENG_PERMANENT_PTR, mBasePath, MAX_NUM_FILES);
             

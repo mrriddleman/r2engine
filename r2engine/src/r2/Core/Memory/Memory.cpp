@@ -106,7 +106,7 @@ namespace r2
                 memPtr = tag.memPtr;
                 alignment = tag.alignment;
                 size = tag.size;
-                strcpy(fileName, tag.fileName);
+                r2::util::PathCpy(fileName, tag.fileName);
                 requestedSize = tag.size;
             }
             
@@ -116,7 +116,7 @@ namespace r2
                 this->memPtr = memPtr;
                 this->alignment = alignment;
                 this->size = size;
-                strcpy(this->fileName, fileName);
+                r2::util::PathCpy(this->fileName, fileName);
             }
             
             MemoryTag& MemoryTag::operator=(const MemoryTag& tag)
@@ -130,7 +130,7 @@ namespace r2
                 memPtr = tag.memPtr;
                 alignment = tag.alignment;
                 size = tag.size;
-                strcpy(fileName, tag.fileName);
+                r2::util::PathCpy(fileName, tag.fileName);
                 requestedSize = tag.size;
                 
                 return *this;
@@ -148,7 +148,7 @@ namespace r2
         
         MemoryArea::MemoryArea(const char* debugName):mInitialized(false), mScratchAreaHandle(MemorySubArea::Invalid)
         {
-            strcpy(&mDebugName[0], debugName);
+            r2::util::PathCpy(&mDebugName[0], debugName);
         }
         
         bool MemoryArea::Init(u64 sizeInBytes, u64 scratchBufferSizeInBytes)

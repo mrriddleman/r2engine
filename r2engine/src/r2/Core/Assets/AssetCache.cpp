@@ -38,6 +38,7 @@ namespace r2::asset
         , mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
+        , mDefaultLoader(nullptr)
         , mSlot(slot)
     //    , mAssetFileMap(nullptr)
         , mAssetCacheArena(boundary)
@@ -596,7 +597,7 @@ namespace r2::asset
         //Then the next time we request that asset, we reload automatically - alternatively, we can have callbacks here
         //We should also close the files
         
-        R2_CHECK(fileHandle >= 0 && fileHandle < r2::sarr::Size(*mnoptrFiles), "File handle: %llu is not within the number of files we have", fileHandle);
+        R2_CHECK(fileHandle >= 0 && fileHandle < static_cast<s64>(r2::sarr::Size(*mnoptrFiles)), "File handle: %llu is not within the number of files we have", fileHandle);
         
         AssetFile* file = r2::sarr::At(*mnoptrFiles, fileHandle);
     

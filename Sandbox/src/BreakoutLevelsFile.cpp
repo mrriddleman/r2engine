@@ -12,7 +12,7 @@
 
 BreakoutLevelsFile::BreakoutLevelsFile(): mFile(nullptr)
 {
-    strcpy(mPath, "");
+    r2::util::PathCpy(mPath, "");
 }
 
 BreakoutLevelsFile::~BreakoutLevelsFile()
@@ -30,7 +30,7 @@ bool BreakoutLevelsFile::Init(const char* path)
         return false;
     }
 
-    strcpy(mPath, path);
+    r2::util::PathCpy(mPath, path);
     return strcmp(mPath, "") != 0;
 }
 

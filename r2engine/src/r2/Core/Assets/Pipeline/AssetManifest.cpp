@@ -117,7 +117,7 @@ namespace r2::asset::pln
             
             manifest.assetOutputPath = assetManifest->outputPath()->str();
             manifest.outputType = static_cast<AssetType>( assetManifest->outputType() );
-            for (u32 i = 0; i < assetManifest->inputFiles()->Length(); ++i)
+            for (u32 i = 0; i < assetManifest->inputFiles()->size(); ++i)
             {
                 AssetFileCommand fileCommand;
                 fileCommand.inputPath = assetManifest->inputFiles()->Get(i)->inputFile()->str();

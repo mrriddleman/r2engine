@@ -134,7 +134,7 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
         struct AssetRecord
         {
-            AssetHandle handle;
+            AssetHandle handle = 0;
             std::string name;
         };
         struct AssetsToFile

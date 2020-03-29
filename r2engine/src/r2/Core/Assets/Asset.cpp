@@ -15,14 +15,14 @@ namespace r2::asset
     Asset::Asset()
     : mHashedPathID(0)
     {
-        strcpy(mName, "");
+        r2::util::PathCpy(mName, "");
     }
     
     Asset::Asset(const char* name)
     {
         bool result = false;
 
-        strcpy(mName, name);
+        r2::util::PathCpy(mName, name);
         result = true;
         
         R2_CHECK(result, "Asset::Asset() - couldn't append path");
@@ -34,7 +34,7 @@ namespace r2::asset
     
     Asset::Asset(const Asset& asset)
     {
-        strcpy(mName, asset.mName);
+        r2::util::PathCpy(mName, asset.mName);
         mHashedPathID = asset.mHashedPathID;
     }
     
@@ -45,7 +45,7 @@ namespace r2::asset
             return *this;
         }
         
-        strcpy(mName, asset.mName);
+        r2::util::PathCpy(mName, asset.mName);
         mHashedPathID = asset.mHashedPathID;
         return *this;
     }

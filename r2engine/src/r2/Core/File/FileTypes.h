@@ -51,7 +51,7 @@ namespace r2::fs
 
         static const u8 DEVICE_MOD_COUNT = u8(DeviceModifier::Count);
         
-        DeviceConfig():mStorage(DeviceStorage::Disk), mModCount(0){}
+        DeviceConfig() :mStorage(DeviceStorage::Disk), mModCount(0) {}
         explicit DeviceConfig(DeviceStorage storage):mStorage(storage), mModCount(0){}
         inline bool HasModifiers() const {return mModCount > 0;}
         inline u8 NumModifiers() const {return mModCount;}
@@ -61,7 +61,7 @@ namespace r2::fs
         
         inline void AddModifier(DeviceModifier mod)
         {
-            R2_CHECK(mModCount + 1 < mModifiers.max_size(), "We can't add anymore modifiers!");
+            R2_CHECK(static_cast<u64>(mModCount) + 1 < mModifiers.max_size(), "We can't add anymore modifiers!");
             mModifiers[mModCount++] = mod;
         }
         

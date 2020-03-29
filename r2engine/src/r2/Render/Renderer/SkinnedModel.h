@@ -66,7 +66,7 @@ namespace r2::draw
     struct SkeletonPart
     {
         std::string name;
-        glm::mat4 transform;
+        glm::mat4 transform = glm::mat4(1.0f);
         SkeletonPart* parent = nullptr;
         std::vector<SkeletonPart> children;
     };
@@ -78,10 +78,10 @@ namespace r2::draw
         std::vector<BoneData> boneDataVec;
         std::vector<BoneInfo> boneInfos;
         std::vector<MeshEntry> meshEntries;
-        glm::mat4 globalInverseTransform;
+        glm::mat4 globalInverseTransform = glm::mat4(1.0f);
         std::vector<Animation> animations;
         SkeletonPart skeleton;
-        char directory[r2::fs::FILE_PATH_LENGTH];
+        char directory[r2::fs::FILE_PATH_LENGTH] = {'\0'};
     };
 }
 

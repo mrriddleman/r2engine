@@ -79,18 +79,18 @@ namespace r2
 
 namespace r2::mem::utils
 {
-    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
-    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
-    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
-    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u64 elementSize, const char* file, s32 line, const char* description);
+    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u32 elementSize, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils
 {
-    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description)
     {
         u64 poolSizeInBytes = capacity * elementSize;
         
@@ -114,7 +114,7 @@ namespace r2::mem::utils
         return pool;
     }
     
-    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description)
     {
         
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
@@ -142,7 +142,7 @@ namespace r2::mem::utils
         return pool;
     }
     
-    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u64 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description)
     {
         u64 poolSizeInBytes = capacity * elementSize;
         

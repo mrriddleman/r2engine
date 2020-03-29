@@ -15,7 +15,7 @@ namespace r2::asset
 {
     ZipAssetFile::ZipAssetFile():mZipFile(nullptr)
     {
-        strcpy(mPath, "");
+        r2::util::PathCpy(mPath, "");
     }
     
     ZipAssetFile::~ZipAssetFile()
@@ -33,7 +33,7 @@ namespace r2::asset
         R2_CHECK(assetPath != nullptr, "Cannot pass in nullptr for asset path!");
         R2_CHECK(assetPath != "", "Do not pass in empty path!");
         
-        strcpy(mPath, assetPath);
+        r2::util::PathCpy(mPath, assetPath);
         mAlloc = alloc;
         mFree = free;
         mZipFile = nullptr;
@@ -100,7 +100,7 @@ namespace r2::asset
     
     void ZipAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
     {
-        mZipFile->GetFilename(index, name, nameBuferSize);
+        mZipFile->GetFilename(static_cast<u32>( index), name, nameBuferSize);
     }
     
     u64 ZipAssetFile::GetAssetHandle(u64 index) const

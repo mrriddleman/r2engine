@@ -703,7 +703,7 @@ namespace r2::draw
 
         //draw mesh
         opengl::Bind(mesh.vertexArray);
-        glDrawElements(GL_TRIANGLES, mesh.numIndices, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.numIndices), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
     }
@@ -765,8 +765,9 @@ namespace r2::draw
         for (u32 i = 0; i < boneMats.size(); ++i)
         {
             char boneTransformsStr[512];
-            sprintf(boneTransformsStr, (uniformName + std::string("[%u]")).c_str(), i);
+            sprintf_s(boneTransformsStr, 512, (uniformName + std::string("[%u]")).c_str(), i);
             shader.SetUMat4(boneTransformsStr, boneMats[i]);
+            
         }
     }
     
@@ -811,32 +812,32 @@ namespace r2::draw
             for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
             {
                 char pointLightStr[512];
-                sprintf(pointLightStr, "pointLights[%i].position", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].position", i);
 
                 shader.SetUVec3(pointLightStr, pointLightPositions[i]);
                 
-                sprintf(pointLightStr, "pointLights[%i].attenuationState.constant", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].attenuationState.constant", i);
 
                 shader.SetUFloat(pointLightStr, attenConst);
                 
-                sprintf(pointLightStr, "pointLights[%i].attenuationState.linear", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].attenuationState.linear", i);
 
                 shader.SetUFloat(pointLightStr, attenLinear);
                 
                 
-                sprintf(pointLightStr, "pointLights[%i].attenuationState.quadratic", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].attenuationState.quadratic", i);
 
                 shader.SetUFloat(pointLightStr, attenQuad);
                 
-                sprintf(pointLightStr, "pointLights[%i].light.ambient", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].light.ambient", i);
 
                 shader.SetUVec3(pointLightStr, ambientColor);
                 
-                sprintf(pointLightStr, "pointLights[%i].light.diffuse", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].light.diffuse", i);
 
                 shader.SetUVec3(pointLightStr, diffuseColor);
                 
-                sprintf(pointLightStr, "pointLights[%i].light.specular", i);
+                sprintf_s(pointLightStr, 512, "pointLights[%i].light.specular", i);
 
                 shader.SetUVec3(pointLightStr, specularColor);
             }
@@ -872,7 +873,7 @@ namespace r2::draw
     void OpenGLNextAnimation()
     {
         size_t numAnimations = g_Model.animations.size();
-        g_ModelAnimation = (g_ModelAnimation + 1) % numAnimations;
+        g_ModelAnimation = size_t(g_ModelAnimation + 1) % numAnimations;
         
     }
     
@@ -1010,7 +1011,7 @@ namespace r2::draw
         for (u32 i = 0; i < NUM_POINT_LIGHTS; ++i)
         {
             char name[r2::fs::FILE_PATH_LENGTH];
-            sprintf(name, "pointLightShadowMaps[%i]", i);
+            sprintf_s(name, r2::fs::FILE_PATH_LENGTH, "pointLightShadowMaps[%i]", i);
             s_shaders[LIGHTING_SHADER].SetUInt(name, 6+i);
         }
     }
@@ -1211,7 +1212,7 @@ namespace r2::draw
             
             glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(DebugVertex)*g_debugVerts.size(), &g_debugVerts[0]);
             
-            glDrawArrays(GL_LINES, 0, g_debugVerts.size());
+            glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(g_debugVerts.size()));
         }
 //
 //        glDisable(GL_DEPTH_TEST);
@@ -1249,10 +1250,10 @@ namespace r2::draw
             float z = cos(angle) * radius + displacement;
             model = glm::translate(model, glm::vec3(x, y, z));
             
-            float scale = (rand() % 20 )/ 100.0f + 0.05;
+            float scale = float((rand() % 20 )/ 100.0f + 0.05);
             model = glm::scale(model, glm::vec3(scale));
             
-            float rotAngle = (rand() %360);
+            float rotAngle = float(rand() %360);
             model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
             
             g_rockModelMatrices.push_back(model);
@@ -1728,8 +1729,8 @@ namespace r2::draw
         u32 maxMipLevels = 5;
         for (u32 mip = 0; mip < maxMipLevels; ++mip)
         {
-            u32 mipWidth = prefilteredSize * pow(0.5, mip);
-            u32 mipHeight = prefilteredSize * pow(0.5, mip);
+            u32 mipWidth = static_cast<u32>(prefilteredSize * pow(0.5, mip));
+            u32 mipHeight = static_cast<u32>(prefilteredSize * pow(0.5, mip));
             
             opengl::Bind(g_prefilteredRBO);
             glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
@@ -1930,9 +1931,9 @@ namespace r2::draw
                 glm::vec3 newPos = g_lightPositions[i] + glm::vec3(sin(timeVal * 5.0) * 5.0, 0.0, 0.0);
                 newPos = g_lightPositions[i];
                 char uniformName[r2::fs::FILE_PATH_LENGTH];
-                sprintf(uniformName, "lightPositions[%u]", i);
+                sprintf_s(uniformName, r2::fs::FILE_PATH_LENGTH, "lightPositions[%u]", i);
                 s_shaders[PBR_SHADER].SetUVec3(uniformName, newPos);
-                sprintf(uniformName, "lightColors[%u]", i);
+                sprintf_s(uniformName, r2::fs::FILE_PATH_LENGTH, "lightColors[%u]", i);
                 s_shaders[PBR_SHADER].SetUVec3(uniformName, g_lightColors[i]);
 
                 model = glm::mat4(1.0f);
@@ -2424,7 +2425,7 @@ namespace r2::draw
     {
         SetupModelMat(shader, model);
         opengl::Bind(g_sphereVAO);
-        glDrawElements(GL_TRIANGLE_STRIP, g_sphereVAO.indexBuffer.size, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLE_STRIP, (GLsizei)g_sphereVAO.indexBuffer.size, GL_UNSIGNED_INT, 0);
         opengl::UnBind(g_sphereVAO);
     }
     
@@ -2438,7 +2439,7 @@ namespace r2::draw
         std::vector<glm::vec2> uv;
         std::vector<glm::vec3> normals;
         std::vector<u32> indices;
-        const float PI = 3.14159265359;
+        const float PI = 3.14159265359f;
         
         for (u32 y = 0; y <= segments; ++y)
         {
@@ -2457,11 +2458,11 @@ namespace r2::draw
         }
         
         bool oddRow = false;
-        for (int y = 0; y < segments; ++y)
+        for (u32 y = 0; y < segments; ++y)
         {
             if(!oddRow)
             {
-                for (int x = 0; x <= segments; ++x)
+                for (u32 x = 0; x <= segments; ++x)
                 {
                     indices.push_back(y * (segments + 1) + x);
                     indices.push_back((y + 1) * (segments + 1) + x);
@@ -2479,7 +2480,7 @@ namespace r2::draw
         }
 
         std::vector<float> data;
-        for (int i = 0; i < positions.size(); ++i)
+        for (u32 i = 0; i < positions.size(); ++i)
         {
             data.push_back(positions[i].x);
             data.push_back(positions[i].y);

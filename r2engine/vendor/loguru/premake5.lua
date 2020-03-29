@@ -24,6 +24,9 @@ project "loguru"
 		"Publish"
 	}
 
+	filter "system:windows"
+		disablewarnings { "4996", "4068" }
+
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "On"

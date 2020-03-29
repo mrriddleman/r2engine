@@ -59,7 +59,7 @@ namespace r2::mem
         const u64 headerAddress = (size_t)affectedNode + alignmentPadding;
         const u64 dataAddress = headerAddress + allocationHeaderSize;
         ((FreeListAllocator::AllocationHeader*)headerAddress)->blockSize = requiredSize;
-        ((FreeListAllocator::AllocationHeader*)headerAddress)->padding = alignmentPadding;
+        ((FreeListAllocator::AllocationHeader*)headerAddress)->padding = static_cast<s8>(alignmentPadding);
         
         mUsed += requiredSize;
         mPeak = std::max(mPeak, mUsed);
@@ -113,7 +113,7 @@ namespace r2::mem
         const size_t headerAddress = currentAddress - sizeof(FreeListAllocator::AllocationHeader);
         const FreeListAllocator::AllocationHeader* allocationHeader{ (FreeListAllocator::AllocationHeader*)headerAddress};
         
-        return allocationHeader->blockSize - HeaderSize() - allocationHeader->padding;
+        return (u32)allocationHeader->blockSize - HeaderSize() - (u32)allocationHeader->padding;
     }
     
     u64 FreeListAllocator::GetTotalBytesAllocated() const

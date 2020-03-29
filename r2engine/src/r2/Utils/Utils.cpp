@@ -189,4 +189,32 @@ namespace r2::util
         
         return bMatch;
     }
+
+    void PathCpy(char* dest, const char* source, u64 destLength)
+    {
+#ifdef R2_PLATFORM_WINDOWS
+        strcpy_s(dest, destLength, source);
+#else
+        strcpy(source, dest);
+#endif 
+
+    }
+
+    void PathCat(char* dest, const char* source, u64 destLength)
+    {
+#ifdef R2_PLATFORM_WINDOWS
+        strcat_s(dest, destLength, source);
+#else
+        strcat(source, dest);
+#endif 
+    }
+
+    void PathNCpy(char* dest, const char* source, u64 num, u64 destLength)
+    {
+#ifdef R2_PLATFORM_WINDOWS
+        strncpy_s(dest, destLength, source, num);
+#else
+        strncpy(source, dest, num);
+#endif 
+    }
 }

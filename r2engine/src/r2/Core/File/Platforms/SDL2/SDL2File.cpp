@@ -131,7 +131,7 @@ namespace r2
             R2_CHECK(buffer != nullptr, "The buffer is null?");
             R2_CHECK(length > 0, "You should want to read more than 0 bytes!");
             
-            if (IsOpen() && buffer != nullptr && length > 0 && (offset + length) <= Size())
+            if (IsOpen() && buffer != nullptr && length > 0 && static_cast<s64>(offset + length) <= Size())
             {
                 Seek(offset);
                 return Read(buffer, length);

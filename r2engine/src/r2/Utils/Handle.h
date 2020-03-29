@@ -52,7 +52,7 @@ namespace r2
         //@TODO(Serge): figure out a way to compare Policies
         
     private:
-        static const u8 MAX_POLICIES = 256;
+        static const u8 MAX_POLICIES = (u8)255;
       //  Policy mPolicies[MAX_POLICIES] = {};
         u8 mCount = 0;
     };

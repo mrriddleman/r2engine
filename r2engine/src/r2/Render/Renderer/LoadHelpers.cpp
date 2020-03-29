@@ -302,7 +302,7 @@ namespace
                 r2::fs::utils::AppendSubPath(directory, path, str.C_Str());
                 texture.texID = r2::draw::utils::LoadImageTexture(path);
                 texture.type = r2Type;
-                strcpy(texture.path, str.C_Str());
+                r2::util::PathCpy(texture.path, str.C_Str());
                 textures.push_back(texture);
                 s_loadedTextures.push_back(texture);
             }
@@ -320,7 +320,7 @@ namespace
             
             if (model.boneMapping.find(boneName) == model.boneMapping.end())
             {
-                boneIndex = model.boneInfos.size();
+                boneIndex = (u32)model.boneInfos.size();
                 r2::draw::BoneInfo info;
                 model.boneInfos.push_back(info);
                 
@@ -364,7 +364,7 @@ namespace
     {
         if(scene->HasAnimations())
         {
-            u32 oldSize = model.animations.size();
+            u32 oldSize = (u32)model.animations.size();
             u32 startingIndex = oldSize;
             u32 newSize = oldSize + scene->mNumAnimations;
             model.animations.resize(newSize);

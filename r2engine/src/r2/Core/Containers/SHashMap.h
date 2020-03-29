@@ -21,12 +21,12 @@ namespace r2
     {
         struct HashMapEntry
         {
-            u64 key;
-            u64 next;
+            u64 key = 0;
+            u64 next = 0;
             T value;
         };
         
-        SHashMap(): mHash(nullptr), mData(nullptr){}
+        SHashMap(): mCapacity(0), mHash(nullptr), mData(nullptr){}
         ~SHashMap();
         void Create(SArray<u64>* hashStart, u64* hashDataStart, SArray<HashMapEntry>* dataArrayStart, HashMapEntry* dataStart, u64 capacity);
         

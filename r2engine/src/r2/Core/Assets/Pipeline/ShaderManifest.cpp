@@ -177,9 +177,9 @@ namespace r2::asset::pln
             
             auto shaderManifestsBuf = r2::GetShaderManifests(buf);
             
-            size_t numManifests = shaderManifestsBuf->manifests()->Length();
+            flatbuffers::uoffset_t numManifests = shaderManifestsBuf->manifests()->size();
             
-            for (size_t i = 0; i < numManifests; ++i)
+            for (flatbuffers::uoffset_t i = 0; i < numManifests; ++i)
             {
                 ShaderManifest newManifest;
                 newManifest.vertexShaderPath = shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str();

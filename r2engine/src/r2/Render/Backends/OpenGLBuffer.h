@@ -19,14 +19,14 @@ namespace r2::draw::opengl
     struct VertexBuffer
     {
         u32 VBO = EMPTY_BUFFER;
+        u64 size = 0;
         BufferLayout layout;
-        u64 size;
     };
     
     struct IndexBuffer
     {
         u32 IBO = EMPTY_BUFFER;
-        u64 size;
+        u64 size = 0;
     };
     
     struct VertexArrayBuffer
@@ -42,8 +42,8 @@ namespace r2::draw::opengl
         u32 FBO = EMPTY_BUFFER;
         u32 width = 0, height = 0;
         std::vector<u32> colorAttachments;
-        u32 depthAttachment;
-        u32 stencilAttachment;
+        u32 depthAttachment = EMPTY_BUFFER;
+        u32 stencilAttachment = EMPTY_BUFFER;
     };
     
     struct RenderBuffer

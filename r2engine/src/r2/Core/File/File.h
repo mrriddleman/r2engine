@@ -34,11 +34,11 @@ namespace r2::fs
         
         virtual bool IsOpen() const = 0;
         virtual s64 Size() const = 0;
-        
+
         //Not to be used by anyone except the file system!
         void SetFileDevice(FileStorageDevice* fileDevice) {mDevice = fileDevice;}
         FileStorageDevice* GetFileDevice() {return mDevice;}
-        void SetFilePath(const char* filePath){strcpy(mFilename, filePath);}
+        void SetFilePath(const char* filePath){r2::util::PathCpy(mFilename, filePath);}
         const char* GetFilePath() const {return mFilename;}
         DeviceConfig GetDeviceConfig() const {return mDeviceConfig;}
         void SetStorageDeviceConfig(DeviceStorage storage) { mDeviceConfig.SetDeviceStorage(storage);}

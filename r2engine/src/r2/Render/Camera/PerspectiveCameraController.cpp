@@ -110,8 +110,8 @@ namespace r2::cam
               return true;
         });
 
-        static float lastX = CENG.DisplaySize().width/2;
-        static float lastY = CENG.DisplaySize().height/2;
+        static float lastX = (f32)CENG.DisplaySize().width/2.0f;
+        static float lastY = (f32)CENG.DisplaySize().height/2.0f;
         
         dispatcher.Dispatch<r2::evt::MouseMovedEvent>([this](const r2::evt::MouseMovedEvent& e){
             
@@ -120,8 +120,8 @@ namespace r2::cam
             float xOffset = e.X() - lastX;
             float yOffset = lastY - e.Y();
             
-            lastX = e.X();
-            lastY = e.Y();
+            lastX = (f32)e.X();
+            lastY = (f32)e.Y();
             
             float sensitivity = 0.5f;
             xOffset *= sensitivity;

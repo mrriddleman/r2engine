@@ -73,7 +73,7 @@ namespace r2
     void ImGuiLayer::End()
     {
         ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize = ImVec2(CENG.DisplaySize().width, CENG.DisplaySize().height);
+        io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
         
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

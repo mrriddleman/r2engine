@@ -138,13 +138,13 @@ namespace r2::asset::pln::audio
             
             auto soundDefinitionsBuf = r2::GetSoundDefinitions(buf);
             
-            size_t numDefinitions = soundDefinitionsBuf->definitions()->Length();
+            flatbuffers::uoffset_t numDefinitions = soundDefinitionsBuf->definitions()->size();
             
-            for (size_t i = 0; i < numDefinitions; ++i)
+            for (flatbuffers::uoffset_t i = 0; i < numDefinitions; ++i)
             {
                 r2::audio::AudioEngine::SoundDefinition definition;
                 const auto& soundDef = soundDefinitionsBuf->definitions()->Get(i);
-                strcpy( definition.soundName, soundDef->soundName()->c_str() );
+                r2::util::PathCpy( definition.soundName, soundDef->soundName()->c_str() );
 
 
                 definition.defaultVolume = soundDef->defaultVolume();
@@ -232,7 +232,7 @@ namespace r2::asset::pln::audio
         r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), soundDefinitionSchemaPath, SOUND_DEFINITION_NAME_FBS.c_str());
         
         std::filesystem::path p = filePath;
-        ;
+        
         std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
         
         bool generatedJSON = r2::asset::pln::flat::GenerateFlatbufferJSONFile(p.parent_path().string(), soundDefinitionSchemaPath, filePath);
