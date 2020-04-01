@@ -44,9 +44,6 @@ namespace r2
         virtual const std::string RootPath() const = 0;
         virtual const std::string AppPath() const = 0;
         virtual const std::string SoundDefinitionsPath() const = 0;
-        virtual void* GetNativeWindowPtr() const = 0;
-        virtual void* GetRenderingContext() const = 0;
-        virtual void MakeCurrent() = 0;
         
         inline r2::asset::PathResolver GetPathResolver() const {return mAssetPathResolver;}
         

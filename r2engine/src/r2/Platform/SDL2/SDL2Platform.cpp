@@ -24,6 +24,8 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 
+#include "r2/Render/Renderer/RendererImpl.h"
+
 namespace
 {
     const u32 MAX_NUM_FILES = 1024;
@@ -104,7 +106,7 @@ namespace r2
         return *SDL2Platform::s_platform;
     }
 
-    SDL2Platform::SDL2Platform():moptrWindow(nullptr), mRunning(false)
+    SDL2Platform::SDL2Platform(): mRunning(false)
     {
         r2::util::PathCpy( mSoundDefinitionPath, "" );
     }
@@ -168,27 +170,20 @@ namespace r2
             //TestFiles();
         }
         
-        //Init OpenGL
+        //Init Platform Renderer
         {
-            SDL_GL_LoadLibrary(nullptr);
-            
-            util::Size res = mEngine.GetInitialResolution();
-            
-            moptrWindow = SDL_CreateWindow("r2engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, res.width, res.height, SetupSDLOpenGL() | SDL_WINDOW_RESIZABLE);
-            
-            R2_CHECK(moptrWindow != nullptr, "We should have a window pointer!");
-            
-            mglContext = SDL_GL_CreateContext(moptrWindow);
-            
-            SDL_assert(mglContext != nullptr);
-            
-            gladLoadGLLoader(SDL_GL_GetProcAddress);
-            SDL_GL_SetSwapInterval(1);
-            
-            if(moptrWindow && mglContext)
+            r2::draw::rendererimpl::PlatformRendererSetupParams setupParams;
+            setupParams.flags |= r2::draw::rendererimpl::VSYNC;
+            setupParams.windowName = "r2Engine";
+            setupParams.resolution = mEngine.GetInitialResolution();
+            setupParams.platformFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+
+            if(r2::draw::rendererimpl::PlatformInit(setupParams))
             {
                 mRunning = true;
             }
+
+            R2_CHECK(mRunning, "Why aren't we running?");
         }
 
         //@NOTE: maybe it's a bad idea to get the initial resolution without initializing the engine first?
@@ -196,15 +191,15 @@ namespace r2
         //Setup engine - bad that it's being set before initialization?
         {
             mEngine.SetVSyncCallback([](bool vsync){
-                return SDL_GL_SetSwapInterval(static_cast<int>(vsync));
+                return r2::draw::rendererimpl::SetVSYNC(vsync);
             });
             
             mEngine.SetFullscreenCallback([this](u32 flags){
-                return SDL_SetWindowFullscreen(moptrWindow, flags);
+                return r2::draw::rendererimpl::SetFullscreen(flags);
             });
             
             mEngine.SetScreenSizeCallback([this](s32 width, s32 height){
-                SDL_SetWindowSize(moptrWindow, width, height);
+                r2::draw::rendererimpl::SetWindowSize(width, height);
             });
             
             mEngine.SetGetPerformanceFrequencyCallback([]{
@@ -282,7 +277,7 @@ namespace r2
             return false;
         }
 
-        return moptrWindow != nullptr && mglContext != nullptr;
+        return mRunning;
     }
     
     void SDL2Platform::Run()
@@ -455,7 +450,7 @@ namespace r2
             float alpha = static_cast<float>(accumulator) / static_cast<float>(dt);
             mEngine.Render(alpha);
             
-            SDL_GL_SwapWindow(moptrWindow);
+            r2::draw::rendererimpl::SwapScreens();
             
             r2::mem::GlobalMemory::EngineMemory().singleFrameArena->EnsureZeroAllocations();
             
@@ -474,12 +469,7 @@ namespace r2
         
         mClipboardTextData = nullptr;
         
-        SDL_GL_DeleteContext(mglContext);
-        
-        if (moptrWindow)
-        {
-            SDL_DestroyWindow(moptrWindow);
-        }
+        r2::draw::rendererimpl::Shutdown();
         
         r2::fs::FileSystem::Shutdown(*r2::mem::GlobalMemory::EngineMemory().permanentStorageArena);
         
@@ -503,12 +493,10 @@ namespace r2
         
         SDL_Quit();
     }
-    
 
-    
     const u32 SDL2Platform::TickRate() const
     {
-        return 1;
+        return 10;
     }
     
     const s32 SDL2Platform::NumLogicalCPUCores() const
@@ -544,29 +532,6 @@ namespace r2
     //--------------------------------------------------
     //                  Private
     //--------------------------------------------------
-    
-    int SDL2Platform::SetupSDLOpenGL()
-    {
-        //TODO(Serge): should be in the renderer or something, Also should be system dependent
-        
-        SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 3);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
-        
-        return SDL_WINDOW_OPENGL;
-    }
-    
-    void SDL2Platform::MakeCurrent()
-    {
-        SDL_GL_MakeCurrent(moptrWindow, mglContext);
-    }
-    
     void SDL2Platform::TestFiles()
     {
 //        char filePath[r2::fs::FILE_PATH_LENGTH];

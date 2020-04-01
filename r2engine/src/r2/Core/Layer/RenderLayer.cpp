@@ -10,7 +10,10 @@
 #include "r2/Core/Events/Events.h"
 #include "r2/Platform/Platform.h"
 //temp
+#include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Backends/RendererBackend.h"
+
+
 
 namespace r2
 {
@@ -24,7 +27,8 @@ namespace r2
         //@Temp
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         
-        r2::draw::OpenGLInit();
+        r2::mem::utils::MemBoundary memBoundary;
+        r2::draw::renderer::Init(memBoundary);
     }
     
     void RenderLayer::Update()
@@ -34,10 +38,12 @@ namespace r2
     
     void RenderLayer::Render(float alpha)
     {
+
+        r2::draw::renderer::Render(alpha);
         //@Temp
-        r2::draw::OpenGLSetCamera(mPersController.GetCamera());
+      //  r2::draw::OpenGLSetCamera(mPersController.GetCamera());
         
-        r2::draw::OpenGLDraw(alpha);
+      //  r2::draw::OpenGLDraw(alpha);
     }
     
     void RenderLayer::OnEvent(evt::Event& event)
@@ -48,7 +54,8 @@ namespace r2
         {
             mPersController.SetAspect(static_cast<float>(e.Width()) / static_cast<float>(e.Height()));
             
-            r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
+            r2::draw::renderer::WindowResized(e.Width(), e.Height());
+           // r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
             return true;
         });
         
@@ -58,7 +65,7 @@ namespace r2
             {
                 r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
                 
-                r2::draw::OpenGLDrawRay(ray);
+              //  r2::draw::OpenGLDrawRay(ray);
                 return true;
             }
             
@@ -68,12 +75,12 @@ namespace r2
         dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e){
             if (e.KeyCode() == r2::io::KEY_LEFT)
             {
-                r2::draw::OpenGLPrevAnimation();
+            //    r2::draw::OpenGLPrevAnimation();
                 return true;
             }
             else if(e.KeyCode() == r2::io::KEY_RIGHT)
             {
-                r2::draw::OpenGLNextAnimation();
+            //    r2::draw::OpenGLNextAnimation();
                 return true;
             }
             return false;
@@ -84,7 +91,8 @@ namespace r2
     
     void RenderLayer::Shutdown()
     {
+        r2::draw::renderer::Shutdown();
         //@Temp
-        r2::draw::OpenGLShutdown();
+        //r2::draw::OpenGLShutdown();
     }
 }

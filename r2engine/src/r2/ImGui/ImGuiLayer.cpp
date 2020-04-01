@@ -13,6 +13,7 @@
 #include "examples/imgui_impl_opengl3.h"
 #include "r2/Core/Engine.h"
 #include "glad/glad.h"
+#include "r2/Render/Renderer/RendererImpl.h"
 
 namespace r2
 {
@@ -52,7 +53,7 @@ namespace r2
         }
         
         // Setup Platform/Renderer bindings
-        ImGui_ImplSDL2_InitForOpenGL((SDL_Window*)MPLAT.GetNativeWindowPtr(), MPLAT.GetRenderingContext());
+        ImGui_ImplSDL2_InitForOpenGL((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle(), r2::draw::rendererimpl::GetRenderContext());
         ImGui_ImplOpenGL3_Init("#version 410");
     }
     
@@ -66,7 +67,7 @@ namespace r2
     void ImGuiLayer::Begin()
     {
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame((SDL_Window*)MPLAT.GetNativeWindowPtr());
+        ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
         ImGui::NewFrame();
     }
     
@@ -83,7 +84,7 @@ namespace r2
             
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            MPLAT.MakeCurrent();
+            r2::draw::rendererimpl::MakeCurrent();
         }
     }
     

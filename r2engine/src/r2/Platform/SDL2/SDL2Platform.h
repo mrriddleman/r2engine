@@ -43,20 +43,16 @@ namespace r2
         virtual const std::string AppPath() const override;
         virtual const std::string SoundDefinitionsPath() const override;
         
-        virtual void* GetNativeWindowPtr() const override {return moptrWindow;}
-        virtual void* GetRenderingContext() const override {return mglContext;}
-        virtual void MakeCurrent() override;
+
     private:
         friend Platform;
         SDL2Platform();
         
-        int SetupSDLOpenGL();
+       
         void TestFiles();
         
         static std::unique_ptr<Platform> CreatePlatform();
         static std::unique_ptr<Platform> s_platform;
-        SDL_Window * moptrWindow;
-        SDL_GLContext mglContext;
         
         r2::fs::FileStorageArea* mRootStorage;
         r2::fs::FileStorageArea* mAppStorage;
