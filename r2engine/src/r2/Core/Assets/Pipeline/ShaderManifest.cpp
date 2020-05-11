@@ -9,6 +9,7 @@
 #include "r2/Core/Assets/Pipeline/ShaderManifest_generated.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Utils/Hash.h"
 #include <filesystem>
 #include <fstream>
 
@@ -37,6 +38,7 @@ namespace r2::asset::pln
             }
             
             ShaderManifest newManifest;
+            newManifest.hashName = STRING_ID( file.path().stem().string().c_str() );
             newManifest.vertexShaderPath = file.path().string();
             newManifests.push_back(newManifest);
         }
@@ -102,7 +104,7 @@ namespace r2::asset::pln
         for (const auto& manifest : manifests)
         {
             flatShaderManifests.push_back(r2::CreateShaderManifest
-                                    (builder, builder.CreateString(manifest.vertexShaderPath),
+                                    (builder,manifest.hashName, builder.CreateString(manifest.vertexShaderPath),
                                         builder.CreateString(manifest.fragmentShaderPath),
                                         builder.CreateString(manifest.geometryShaderPath),
                                         builder.CreateString(manifest.binaryPath)));
@@ -182,6 +184,7 @@ namespace r2::asset::pln
             for (flatbuffers::uoffset_t i = 0; i < numManifests; ++i)
             {
                 ShaderManifest newManifest;
+                newManifest.hashName = shaderManifestsBuf->manifests()->Get(i)->shaderName();
                 newManifest.vertexShaderPath = shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str();
                 newManifest.fragmentShaderPath = shaderManifestsBuf->manifests()->Get(i)->fragmentPath()->str();
                 newManifest.geometryShaderPath = shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str();

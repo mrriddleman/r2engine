@@ -5,10 +5,12 @@ file_extension "sman";
 
 table ShaderManifest
 {
+	shaderName:ulong (hash:"fnv1a_64");
 	vertexPath:string;
 	fragmentPath:string;
 	geometryPath:string;
 	binaryPath:string;
+
 }
 
 table ShaderManifests

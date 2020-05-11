@@ -1,23 +1,356 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "r2/Render/Renderer/BufferLayout.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Renderer/Commands.h"
+#include "r2/Render/Renderer/CommandBucket.h"
+#include "r2/Render/Renderer/RenderKey.h"
+#include "r2/Render/Model/Material.h"
+#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Model.h"
+#include "r2/Render/Model/ModelLoader.h"
+#include <filesystem>
+
+namespace r2::draw
+{
+
+	enum DefaultModels
+	{
+		QUAD = 0,
+		NUM_DEFAULT_MODELS
+	};
+
+	struct ModelSystem
+	{
+		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
+		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
+		r2::mem::LinearArena* mSubAreaArena = nullptr;
+		r2::SArray<Model*>* mDefaultModels = nullptr;
+	};
+
+	struct Renderer
+	{
+		//memory
+		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
+		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
+		r2::mem::LinearArena* mSubAreaArena = nullptr;
+
+		r2::draw::BufferHandles mBufferHandles;
+		ModelSystem mModelSystem;
+
+		//Each bucket needs the bucket and an arena for that bucket
+		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
+		r2::mem::StackArena* mCommandArena = nullptr;
+	};
+
+	namespace modelsystem
+	{
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle);
+		void Shutdown();
+		u64 MemorySize();
+		bool LoadEngineModels(const char* modelDirectory);
+	}
+}
+
+namespace
+{
+	r2::draw::Renderer* s_optrRenderer = nullptr;
+
+	const u64 COMMAND_CAPACITY = 2048;
+	const u64 ALIGNMENT = 64;
+	const u32 MAX_BUFFER_LAYOUTS = 32;
+	const u64 MAX_NUM_MATERIALS = 2048;
+	const u64 MAX_NUM_SHADERS = 1000;
+	const u64 MAX_DEFAULT_MODELS = 16;
+
+	const std::string MODL_EXT = ".modl";
+}
+
 namespace r2::draw::renderer
 {
-	//basic stuff
+	
 
-	bool Init(const r2::mem::utils::MemBoundary& memoryBoundary)
+	//basic stuff
+	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath)
 	{
-		return r2::draw::rendererimpl::Init(memoryBoundary);
+		R2_CHECK(s_optrRenderer == nullptr, "We've already create the s_optrRenderer - are you trying to initialize more than once?");
+		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
+
+		if (memoryAreaHandle == r2::mem::MemoryArea::Invalid ||
+			s_optrRenderer != nullptr)
+		{
+			return false;
+		}
+
+		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
+
+		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
+
+		u64 subAreaSize = MemorySize();
+		if (memoryArea->UnAllocatedSpace() < subAreaSize)
+		{
+			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
+			return false;
+		}
+
+		r2::mem::MemoryArea::SubArea::Handle subAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
+
+		if ((subAreaHandle = memoryArea->AddSubArea(subAreaSize, "Renderer")) == r2::mem::MemoryArea::SubArea::Invalid)
+		{
+			R2_CHECK(false, "We couldn't create a sub area for the renderer");
+			return false;
+		}
+
+		//emplace the linear arena
+		r2::mem::LinearArena* rendererArena = EMPLACE_LINEAR_ARENA(*memoryArea->GetSubArea(subAreaHandle));
+
+		R2_CHECK(rendererArena != nullptr, "We couldn't emplace the linear arena - no way to recover!");
+
+		s_optrRenderer = ALLOC(r2::draw::Renderer, *rendererArena);
+
+		R2_CHECK(s_optrRenderer != nullptr, "We couldn't allocate s_optrRenderer!");
+
+		s_optrRenderer->mMemoryAreaHandle = memoryAreaHandle;
+		s_optrRenderer->mSubAreaHandle = subAreaHandle;
+		s_optrRenderer->mSubAreaArena = rendererArena;
+
+		s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, rendererimpl::UpdateCamera, COMMAND_CAPACITY);
+		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
+
+		s_optrRenderer->mBufferHandles.bufferLayoutHandles = MAKE_SARRAY(*rendererArena, r2::draw::BufferLayoutHandle, MAX_BUFFER_LAYOUTS);
+		
+		R2_CHECK(s_optrRenderer->mBufferHandles.bufferLayoutHandles != nullptr, "We couldn't create the buffer layout handles!");
+		
+		s_optrRenderer->mBufferHandles.vertexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::VertexBufferHandle, MAX_BUFFER_LAYOUTS);
+		
+		R2_CHECK(s_optrRenderer->mBufferHandles.vertexBufferHandles != nullptr, "We couldn't create the vertex buffer layout handles!");
+		
+		s_optrRenderer->mBufferHandles.indexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::IndexBufferHandle, MAX_BUFFER_LAYOUTS);
+
+		R2_CHECK(s_optrRenderer->mBufferHandles.indexBufferHandles != nullptr, "We couldn't create the index buffer layout handles!");
+
+		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand());
+
+		R2_CHECK(s_optrRenderer->mCommandArena != nullptr, "We couldn't create the stack arena for commands");
+
+		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath);
+		if (!shaderSystemIntialized)
+		{
+			R2_CHECK(false, "We couldn't initialize the shader system");
+			return false;
+		}
+
+		bool materialSystemInitialized = r2::draw::mat::Init(memoryAreaHandle, MAX_NUM_MATERIALS);
+
+		if (!materialSystemInitialized)
+		{
+			R2_CHECK(false, "We couldn't initialize the material system");
+			return false;
+		}
+
+		if (!modelsystem::Init(memoryAreaHandle))
+		{
+			R2_CHECK(false, "We couldn't init the default engine models");
+			return false;
+		}
+
+		bool loadedModels = modelsystem::LoadEngineModels(R2_ENGINE_INTERNAL_MODELS_BIN);
+
+		R2_CHECK(loadedModels, "We didn't load the models for the engine!");
+
+		return loadedModels;
+	}
+
+	void Update()
+	{
+		r2::draw::shadersystem::Update();
 	}
 
 	void Render(float alpha)
 	{
-		r2::draw::rendererimpl::Render(alpha);
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		cmdbkt::Sort(*s_optrRenderer->mCommandBucket, r2::draw::key::CompareKey);
+		cmdbkt::Submit(*s_optrRenderer->mCommandBucket);
+
+		cmdbkt::ClearAll(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket);
 	}
 
 	void Shutdown()
 	{
-		r2::draw::rendererimpl::Shutdown();
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+
+		modelsystem::Shutdown();
+		r2::draw::mat::Shutdown();
+		r2::draw::shadersystem::Shutdown();
+
+		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
+		s_optrRenderer->mSubAreaArena = nullptr;
+		//delete the buffer handles
+		FREE(s_optrRenderer->mBufferHandles.bufferLayoutHandles, *arena);
+		FREE(s_optrRenderer->mBufferHandles.vertexBufferHandles, *arena);
+		FREE(s_optrRenderer->mBufferHandles.indexBufferHandles, *arena);
+
+		FREE(s_optrRenderer->mCommandBucket, *arena);
+		FREE(s_optrRenderer->mCommandArena, *arena);
+
+
+		FREE(s_optrRenderer, *arena);
+
+		
+		s_optrRenderer = nullptr;
+
+		FREE_EMPLACED_ARENA(arena);
+	}
+
+	//Setup code
+	void SetClearColor(const glm::vec4& color)
+	{
+		r2::draw::rendererimpl::SetClearColor(color);
+	}
+
+	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		if (r2::sarr::Size(*s_optrRenderer->mBufferHandles.bufferLayoutHandles) > 0)
+		{
+			R2_CHECK(false, "We have already generated the buffer layouts!");
+			return false;
+		}
+
+		R2_CHECK(layouts != nullptr, "layouts cannot be null");
+
+		if (layouts == nullptr)
+		{
+			return false;
+		}
+
+		if (r2::sarr::Size(*layouts) > MAX_BUFFER_LAYOUTS)
+		{
+			R2_CHECK(false, "Trying to configure more buffer layouts than we have allocated");
+			return false;
+		}
+
+		const auto numLayouts = r2::sarr::Size(*layouts);
+
+		//VAOs
+		rendererimpl::GenerateBufferLayouts((u32)numLayouts, s_optrRenderer->mBufferHandles.bufferLayoutHandles->mData);
+		s_optrRenderer->mBufferHandles.bufferLayoutHandles->mSize = numLayouts;
+		
+		//VBOs
+		rendererimpl::GenerateVertexBuffers((u32)numLayouts, s_optrRenderer->mBufferHandles.vertexBufferHandles->mData);
+		s_optrRenderer->mBufferHandles.vertexBufferHandles->mSize = numLayouts;
+
+		//IBOs
+		u32 numIBOs = 0;
+		for (u64 i = 0; i < numLayouts; ++i)
+		{
+			if (r2::sarr::At(*layouts, i).indexBufferConfig.bufferSize != EMPTY_BUFFER)
+			{
+				++numIBOs;
+			}
+		}
+
+		r2::SArray<IndexBufferHandle>* tempIBOs = nullptr;
+		if (numIBOs > 0)
+		{
+			tempIBOs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, IndexBufferHandle, numIBOs);
+			rendererimpl::GenerateIndexBuffers(numIBOs, tempIBOs->mData);
+			tempIBOs->mSize = numIBOs;
+
+			R2_CHECK(tempIBOs != nullptr, "We should have memory for tempIBOs");
+		}
+
+		u32 nextIndexBuffer = 0;
+		//do the actual setup
+		for (size_t i = 0; i < numLayouts; ++i)
+		{
+			const BufferLayoutConfiguration& config = r2::sarr::At(*layouts, i);
+			
+			if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER && tempIBOs)
+			{
+				r2::sarr::Push(*s_optrRenderer->mBufferHandles.indexBufferHandles, r2::sarr::At(*tempIBOs, nextIndexBuffer++));
+			}
+			else
+			{
+				r2::sarr::Push(*s_optrRenderer->mBufferHandles.indexBufferHandles, EMPTY_BUFFER);
+			}
+
+			rendererimpl::SetupBufferLayoutConfiguration(config,
+				r2::sarr::At(*s_optrRenderer->mBufferHandles.bufferLayoutHandles, i),
+				r2::sarr::At(*s_optrRenderer->mBufferHandles.vertexBufferHandles, i),
+				r2::sarr::At(*s_optrRenderer->mBufferHandles.indexBufferHandles, i));
+		}
+
+		FREE(tempIBOs, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	u64 MemorySize()
+	{
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+
+		u64 memorySize =
+			sizeof(r2::mem::LinearArena) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::BufferLayoutHandle), headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::VertexBufferHandle), headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::VertexBufferHandle), headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackAllocator) + cmd::LargestCommand() * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking);
+
+		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
+	}
+
+	BufferHandles& GetBufferHandles()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+		}
+
+		return s_optrRenderer->mBufferHandles;
+	}
+
+	r2::draw::CommandBucket<r2::draw::key::Basic>& GetCommandBucket()
+	{
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+		return *s_optrRenderer->mCommandBucket;
+	}
+
+	template<class CMD>
+	CMD* AddCommand(r2::draw::key::Basic key)
+	{
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, CMD>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+	}
+
+	void SetCameraPtrOnBucket(r2::Camera* cameraPtr)
+	{
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+		r2::draw::cmdbkt::SetCamera(*s_optrRenderer->mCommandBucket, cameraPtr);
 	}
 
 	//events
@@ -44,5 +377,109 @@ namespace r2::draw::renderer
 	void SetWindowSize(u32 width, u32 height)
 	{
 		r2::draw::rendererimpl::SetWindowSize(width, height);
+	}
+}
+
+namespace r2::draw::modelsystem
+{
+	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
+
+		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
+
+		u64 subAreaSize = modelsystem::MemorySize();
+		if (memoryArea->UnAllocatedSpace() < subAreaSize)
+		{
+			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
+			return false;
+		}
+
+		r2::mem::MemoryArea::SubArea::Handle subAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
+
+		if ((subAreaHandle = memoryArea->AddSubArea(subAreaSize, "Engine Model Area")) == r2::mem::MemoryArea::SubArea::Invalid)
+		{
+			R2_CHECK(false, "We couldn't create a sub area for the engine model area");
+			return false;
+		}
+
+		//emplace the linear arena
+		r2::mem::LinearArena* modelArena = EMPLACE_LINEAR_ARENA(*memoryArea->GetSubArea(subAreaHandle));
+
+		R2_CHECK(modelArena != nullptr, "We couldn't emplace the linear arena - no way to recover!");
+
+		s_optrRenderer->mModelSystem.mMemoryAreaHandle = memoryAreaHandle;
+		s_optrRenderer->mModelSystem.mSubAreaHandle = subAreaHandle;
+		s_optrRenderer->mModelSystem.mSubAreaArena = modelArena;
+		s_optrRenderer->mModelSystem.mDefaultModels = MAKE_SARRAY(*modelArena, Model*, MAX_DEFAULT_MODELS);
+
+		return modelArena != nullptr && s_optrRenderer->mModelSystem.mDefaultModels != nullptr;
+	}
+
+	void Shutdown()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		r2::mem::LinearArena* arena = s_optrRenderer->mModelSystem.mSubAreaArena;
+
+		u64 numDefaultModels = r2::sarr::Size(*s_optrRenderer->mModelSystem.mDefaultModels);
+		for (u64 i = 0; i < numDefaultModels; ++i)
+		{
+			FREE_MODEL(*arena, r2::sarr::At(*s_optrRenderer->mModelSystem.mDefaultModels, i));
+		}
+
+		FREE(s_optrRenderer->mModelSystem.mDefaultModels, *arena);
+
+		FREE_EMPLACED_ARENA(arena);
+	}
+
+	u64 MemorySize()
+	{
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+
+		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), 64, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(Model::MemorySize(1, 4, 6, 0), 64, headerSize, boundsChecking); //For quad
+
+	}
+
+	bool LoadEngineModels(const char* modelDirectory)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		for (const auto& file : std::filesystem::recursive_directory_iterator(modelDirectory))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != MODL_EXT))
+			{
+				continue;
+			}
+
+			Model* nextModel = LoadModel<r2::mem::LinearArena>(*s_optrRenderer->mModelSystem.mSubAreaArena, file.path().string().c_str());
+			if (!nextModel)
+			{
+				R2_CHECK(false, "Failed to load the model: %s", file.path().string().c_str());
+				return false;
+			}
+			r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, nextModel);
+		}
+
+		return true;
 	}
 }

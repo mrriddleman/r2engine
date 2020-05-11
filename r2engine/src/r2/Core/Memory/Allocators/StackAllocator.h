@@ -20,7 +20,7 @@
 
 #define MAKE_STACKA(arena, capacity) r2::mem::utils::CreateStackAllocator(arena, capacity, __FILE__, __LINE__, "")
 
-#define MAKE_STACK_ARENA(arena, capacity) r2::mem::utils::CreateStackArena(arena, capacity, __FILE__, __LINE_, "")
+#define MAKE_STACK_ARENA(arena, capacity) r2::mem::utils::CreateStackArena(arena, capacity, __FILE__, __LINE__, "")
 
 #define EMPLACE_STACK_ARENA(subarea) r2::mem::utils::EmplaceStackArena(subarea, __FILE__, __LINE__, "")
 
@@ -69,7 +69,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::StackArena* CreateStackArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     
-    StackArena* EmplaceStackArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description);
+    StackArena* EmplaceStackArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils

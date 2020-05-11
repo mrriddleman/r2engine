@@ -80,7 +80,10 @@ project "r2engine"
 	{
 		'R2_ENGINE_ASSETS="'..os.getcwd()..'/engine_assets/Flatbuffer_Data/"',
 		'R2_ENGINE_DATA_PATH="'..os.getcwd()..'/r2engine/data"',
-		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.getcwd()..'/r2engine/data/flatbuffer_schemas"'
+		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.getcwd()..'/r2engine/data/flatbuffer_schemas"',
+		'R2_ENGINE_ASSET_PATH="'..os.getcwd()..'/r2engine/assets"',
+		'R2_ENGINE_INTERNAL_MODELS_RAW="'..os.getcwd()..'/r2engine/assets/models/raw"',
+		'R2_ENGINE_INTERNAL_MODELS_BIN="'..os.getcwd()..'/r2engine/assets/models/bin"'
 	}
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory
@@ -368,7 +371,7 @@ project "Sandbox"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
-	disablewarnings {"26812"}
+
 	--staticruntme "off"
 	
 	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"

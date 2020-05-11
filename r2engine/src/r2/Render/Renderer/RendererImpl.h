@@ -2,6 +2,19 @@
 #define __RENDERER_IMPL_H__
 
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Render/Renderer/RendererTypes.h"
+
+namespace r2
+{
+	struct Camera;
+}
+
+namespace r2::draw
+{
+	struct BufferLayoutConfiguration;
+
+
+}
 
 namespace r2::draw::rendererimpl
 {
@@ -23,15 +36,30 @@ namespace r2::draw::rendererimpl
 
 	//platform
 	bool PlatformInit(const PlatformRendererSetupParams& params);
+	void Shutdown();
 	void SwapScreens();
 	void* GetRenderContext();
 	void* GetWindowHandle();
 
+	//Setup code
+	void SetClearColor(const glm::vec4& color);
+	void GenerateBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
+	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
+	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
+	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId);
 
-	//basic stuff
-	bool Init(const r2::mem::utils::MemBoundary& memoryBoundary);
-	void Render(float alpha);
-	void Shutdown();
+	//
+	void UpdateCamera(const r2::Camera& camera);
+	void SetViewport(u32 viewport);
+	void SetViewportLayer(u32 viewportLayer);
+	void SetMaterialID(u32 materialID);
+
+
+	//draw functions
+	void Clear(u32 flags);
+	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
+	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
+	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
 
 	//events
 	void WindowResized(u32 width, u32 height);

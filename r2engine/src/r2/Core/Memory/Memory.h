@@ -21,12 +21,14 @@
 #endif
 
 #define ALLOC(T, ARENA) r2::mem::utils::Alloc<T>(ARENA, __FILE__, __LINE__, "")
+#define ALLOC_VERBOSE(T, ARENA, file, line, desc) r2::mem::utils::Alloc<T>(ARENA, file, line, desc)
 #define ALLOC_BYTES(ARENA, n, alignment, file, line, description) r2::mem::utils::AllocBytes(ARENA, n, alignment, file, line, description)
 
 #define ALLOC_BYTESN(ARENA, n, alignment) r2::mem::utils::AllocBytes(ARENA, n, alignment, __FILE__, __LINE__, "")
 
 #define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::AllocParams<type>(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
 #define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
+#define FREE_VERBOSE(objPtr, ARENA, file, line, desc) r2::mem::utils::Dealloc(objPtr, ARENA, file, line, desc)
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 
@@ -159,46 +161,55 @@ namespace r2
             static const Handle Invalid = -1;
             static const u64 DefaultScratchBufferSize = Megabytes(4);
             
-            struct R2_API MemorySubArea
+            struct R2_API SubArea
             {
                 using Handle = s64;
                 static const Handle Invalid = -1;
+
+                MemoryArea::Handle mMemoryAreaHandle = MemoryArea::Invalid;
+                Handle mSubAreaHandle = Invalid;
+
                 utils::MemBoundary mBoundary;
-               // MemoryArenaBase* mnoptrArena = nullptr;
-            
-                std::string mSubArenaName;
+                std::string mSubArenaName = "";
+
+                // MemoryArenaBase* mnoptrArena = nullptr;
             };
             
-            MemoryArea(const char* debugName);
+            MemoryArea(Handle memoryAreaHandle, const char* debugName);
             ~MemoryArea();
             //Add in scratch buffer here?
             bool Init(u64 sizeInBytes, u64 scratchBufferSize = DefaultScratchBufferSize);
-            MemorySubArea::Handle AddSubArea(u64 sizeInBytes, const std::string& subAreaName = "");
-            utils::MemBoundary SubAreaBoundary(MemorySubArea::Handle) const;
-            utils::MemBoundary* SubAreaBoundaryPtr(MemorySubArea::Handle);
+            SubArea::Handle AddSubArea(u64 sizeInBytes, const std::string& subAreaName = "");
+            utils::MemBoundary SubAreaBoundary(SubArea::Handle) const;
+            utils::MemBoundary* SubAreaBoundaryPtr(SubArea::Handle);
             
             utils::MemBoundary ScratchBoundary() const;
             utils::MemBoundary* ScratchBoundaryPtr();
-            MemorySubArea::Handle ScratchSubAreaHandle() const {return mScratchAreaHandle;}
+            SubArea::Handle ScratchSubAreaHandle() const {return mScratchAreaHandle;}
             
-            MemorySubArea* GetSubArea(MemorySubArea::Handle);
+            SubArea* GetSubArea(SubArea::Handle);
             void Shutdown();
             
+            u64 UnAllocatedSpace() const;
 
             inline std::string Name() const {return &mDebugName[0];}
             inline const utils::MemBoundary& AreaBoundary() const {return mBoundary;}
-            inline const std::vector<MemorySubArea>& SubAreas() const {return mSubAreas;}
+            inline const std::vector<SubArea>& SubAreas() const {return mSubAreas;}
         private:
-            //The entire boundary of this region
+            
+            Handle mMemoryAreaHandle = Invalid;
+            //The entire boundary of this Area
             utils::MemBoundary mBoundary;
             //@Temporary - should be static?
-            std::vector<MemorySubArea> mSubAreas;
+            std::vector<SubArea> mSubAreas;
             
+            
+
             std::array<char, r2::fs::FILE_PATH_LENGTH> mDebugName;
 
             void* mCurrentNext = nullptr;
             
-            MemorySubArea::Handle mScratchAreaHandle;
+            SubArea::Handle mScratchAreaHandle;
             
             
             //#endif
@@ -210,12 +221,12 @@ namespace r2
         class R2_API MemoryArena//: public MemoryArenaBase
         {
         public:
-            explicit MemoryArena(MemoryArea::MemorySubArea& subArea):mAllocator(subArea.mBoundary)
+            explicit MemoryArena(MemoryArea::SubArea& subArea):mAllocator(subArea.mBoundary)
             {
             //    subArea.mnoptrArena = this;
             }
             
-            MemoryArena(MemoryArea::MemorySubArea& subArea, const utils::MemBoundary& boundary):mAllocator(boundary)
+            MemoryArena(MemoryArea::SubArea& subArea, const utils::MemBoundary& boundary):mAllocator(boundary)
             {
              //   subArea.mnoptrArena = this;
                 mMemoryTracker.SetName(subArea.mSubArenaName);

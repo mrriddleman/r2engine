@@ -11,6 +11,7 @@
 #include "r2/Core/Memory/Memory.h"
 
 #define MAKE_SARRAY(arena, T, capacity) r2::sarr::CreateSArray<T>(arena, capacity, __FILE__, __LINE__, "")
+#define MAKE_SARRAY_VERBOSE(arena, T, capacity, file, line, desc) r2::sarr::CreateSArray<T>(arena, capacity, file, line, desc)
 
 namespace r2
 {

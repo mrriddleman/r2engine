@@ -17,7 +17,7 @@ namespace r2
     class R2_API RenderLayer: public Layer
     {
     public:
-        RenderLayer();
+        explicit RenderLayer(const char* shaderManifestPath);
         
         virtual void Init() override;
         virtual void Render(float alpha) override;
@@ -26,6 +26,9 @@ namespace r2
         virtual void Update() override;
     private:
         cam::PerspectiveController mPersController;
+        //ensure that is always valid
+        const char* mShaderManifestPath;
+
     };
 }
 

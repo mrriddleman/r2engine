@@ -66,7 +66,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::LinearArena* CreateLinearArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     
-    LinearArena* EmplaceLinearArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description);
+    LinearArena* EmplaceLinearArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils

@@ -85,7 +85,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
-    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u32 elementSize, const char* file, s32 line, const char* description);
+    PoolArena* EmplacePoolArena(MemoryArea::SubArea& subArea, u32 elementSize, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils

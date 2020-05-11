@@ -13,6 +13,7 @@ namespace r2::asset::pln
 {
     struct ShaderManifest
     {
+        u64 hashName = 0;
         std::string vertexShaderPath = "";
         std::string fragmentShaderPath = "";
         std::string geometryShaderPath = "";

@@ -12,8 +12,7 @@
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/SoundDefinitionUtils.h"
 #include "r2/Audio/AudioEngine.h"
-//@Temp
-#include "r2/Render/Backends/RendererBackend.h"
+#include "r2/Render/Renderer/ShaderSystem.h"
 
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
@@ -331,6 +330,10 @@ namespace r2::asset::pln
         {
             R2_LOGE("Failed to build shader manifests");
         }
+        else
+        {
+            r2::draw::shadersystem::ReloadManifestFile(s_shaderCommand.manifestFilePath);
+        }
     }
 
     void ShaderChangedRequest(std::string changedPath)
@@ -348,8 +351,7 @@ namespace r2::asset::pln
             if (changedPath == shaderManifest.vertexShaderPath ||
                 changedPath == shaderManifest.fragmentShaderPath)
             {
-                //@TODO(Serge): Change this to something in the renderer instead of the backend
-                r2::draw::ReloadShader(shaderManifest);
+                r2::draw::shadersystem::ReloadShader(shaderManifest);
             }
         }
     }

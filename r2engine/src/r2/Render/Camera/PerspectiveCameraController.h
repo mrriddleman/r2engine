@@ -25,6 +25,7 @@ namespace r2::cam
         void SetFOV(float fov);
         
         const Camera& GetCamera() const {return mCamera;}
+        Camera* GetCameraPtr() { return &mCamera; }
     private:
 
         Camera mCamera;

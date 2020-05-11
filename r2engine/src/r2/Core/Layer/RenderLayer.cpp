@@ -8,16 +8,21 @@
 #include "r2pch.h"
 #include "RenderLayer.h"
 #include "r2/Core/Events/Events.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Platform/Platform.h"
 //temp
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Render/Backends/RendererBackend.h"
+#include "r2/Render/Renderer/CommandBucket.h"
+#include "r2/Render/Renderer/RenderKey.h"
+//#include "r2/Render/Backends/RendererBackend.h"
 
 
 
 namespace r2
 {
-    RenderLayer::RenderLayer(): Layer("Render Layer", true)
+    RenderLayer::RenderLayer(const char* shaderManifestPath)
+        : Layer("Render Layer", true)
+        , mShaderManifestPath(shaderManifestPath)
     {
         
     }
@@ -26,14 +31,17 @@ namespace r2
     {
         //@Temp
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width)/ static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
-        
-        r2::mem::utils::MemBoundary memBoundary;
-        r2::draw::renderer::Init(memBoundary);
+        r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
+        r2::draw::renderer::Init(engineMem.internalEngineMemoryHandle, mShaderManifestPath);
+
+        //@TODO(Serge): kinda clunky - maybe we should create buckets and add them to the renderer
+        r2::draw::renderer::SetCameraPtrOnBucket(mPersController.GetCameraPtr());
     }
     
     void RenderLayer::Update()
     {
         mPersController.Update();
+        r2::draw::renderer::Update();
     }
     
     void RenderLayer::Render(float alpha)

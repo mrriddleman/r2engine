@@ -107,7 +107,7 @@ namespace r2::audio
         void GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels);
         
     private:
-        static r2::mem::MemoryArea::MemorySubArea::Handle mSoundMemoryAreaHandle;
+        static r2::mem::MemoryArea::SubArea::Handle mSoundMemoryAreaHandle;
         static r2::mem::LinearArena* mSoundAllocator;
         
         SoundID NextAvailableSoundID();

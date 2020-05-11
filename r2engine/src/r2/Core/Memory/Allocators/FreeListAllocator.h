@@ -90,7 +90,7 @@ namespace r2::mem::utils
     
     template<class ARENA> r2::mem::FreeListArena* CreateFreeListArena(ARENA& arena, u64 capacity, PlacementPolicy policy, const char* file, s32 line, const char* description);
     
-    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description);
+    FreeListArena* EmplaceFreeListArena(MemoryArea::SubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils

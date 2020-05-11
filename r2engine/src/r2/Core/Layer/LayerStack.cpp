@@ -23,67 +23,68 @@ namespace r2
     
     void LayerStack::ShutdownAll()
     {
-        for(auto& layer : mLayers)
+        for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
         {
-            layer->Shutdown();
+            layer->get()->Shutdown();
         }
         
-        for(auto& overlay : mOverlays)
+        for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
-            overlay->Shutdown();
+            layer->get()->Shutdown();
         }
     }
     
     void LayerStack::Update()
     {
-        for(auto& layer : mOverlays)
+        for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
-            if(!layer->IsDisabled())
-                layer->Update();
+            if(!layer->get()->IsDisabled())
+                layer->get()->Update();
         }
         
-        for(auto& layer : mLayers)
+        for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
         {
-            if(!layer->IsDisabled())
-                layer->Update();
+            if(!layer->get()->IsDisabled())
+                layer->get()->Update();
         }
     }
     
     void LayerStack::Render(float alpha)
     {
-        for(auto& layer : mLayers)
+        for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
         {
-            if(!layer->IsDisabled() && layer->Renderable())
-                layer->Render(alpha);
+            if(!layer->get()->IsDisabled() && layer->get()->Renderable())
+                layer->get()->Render(alpha);
         }
         
-        for(auto& layer : mOverlays)
+        for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
-            if(!layer->IsDisabled() && layer->Renderable())
-                layer->Render(alpha);
+            if(!layer->get()->IsDisabled() && layer->get()->Renderable())
+                layer->get()->Render(alpha);
         }
     }
     
     void LayerStack::ImGuiRender()
     {
-        for(auto& layer : mLayers)
+        //@TODO(Serge): we may want to re-order these OR iterate backwards in the layer stack
+//              essentially we want to make sure that the render layer is called last!
+        for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
         {
-            if(!layer->IsDisabled())
-                layer->ImGuiRender();
+            if(!layer->get()->IsDisabled())
+                layer->get()->ImGuiRender();
         }
         
-        for(auto& layer : mOverlays)
+        for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
-            if(!layer->IsDisabled())
-                layer->ImGuiRender();
+            if(!layer->get()->IsDisabled())
+                layer->get()->ImGuiRender();
         }
     }
     
     void LayerStack::OnEvent(evt::Event& e)
     {
-        for(auto layer = mOverlays.end(); layer != mOverlays.begin(); )
+        for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
-            --layer;
             if(!layer->get()->IsDisabled())
             {
                 layer->get()->OnEvent(e);
@@ -95,9 +96,8 @@ namespace r2
         
         if(!e.handled)
         {
-            for(auto layer = mLayers.end(); layer != mLayers.begin(); )
+            for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
             {
-                --layer;
                 if(!layer->get()->IsDisabled())
                 {
                     layer->get()->OnEvent(e);

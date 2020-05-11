@@ -11,31 +11,11 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Vertex.h"
 #include "glad/glad.h"
+#include "r2/Render/Renderer/RendererTypes.h"
 
 namespace r2::draw::opengl
 {
-    const u32 EMPTY_BUFFER = 0;
     
-    struct VertexBuffer
-    {
-        u32 VBO = EMPTY_BUFFER;
-        u64 size = 0;
-        BufferLayout layout;
-    };
-    
-    struct IndexBuffer
-    {
-        u32 IBO = EMPTY_BUFFER;
-        u64 size = 0;
-    };
-    
-    struct VertexArrayBuffer
-    {
-        u32 VAO = EMPTY_BUFFER;
-        std::vector<VertexBuffer> vertexBuffers;
-        IndexBuffer indexBuffer;
-        u32 vertexBufferIndex = 0;
-    };
     
     struct FrameBuffer
     {
@@ -53,12 +33,12 @@ namespace r2::draw::opengl
     };
     
     void Create(VertexArrayBuffer& buf);
-    void Create(VertexBuffer& buf, const BufferLayout& layout, float * vertices, u64 size, u32 type);
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const std::vector<Vertex>& vertices, u32 type);
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const Vertex* vertices, u64 size, u32 type);
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const BoneData* boneData, u64 size, u32 type);
+    void Create(VertexBuffer& buf, float * vertices, u64 size, u32 type);
+    void Create(VertexBuffer& buf, const std::vector<Vertex>& vertices, u32 type);
+    void Create(VertexBuffer& buf, const Vertex* vertices, u64 size, u32 type);
+    void Create(VertexBuffer& buf, const BoneData* boneData, u64 size, u32 type);
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, void* data, u64 size, u32 type);
+    void Create(VertexBuffer& buf, void* data, u64 size, u32 type);
     
     void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type);
     
@@ -72,7 +52,7 @@ namespace r2::draw::opengl
     void Destroy(FrameBuffer& buf);
     void Destroy(RenderBuffer& buf);
     
-    void AddBuffer(VertexArrayBuffer& arrayBuf, const VertexBuffer& buf);
+    BufferLayoutHandle CreateBufferLayoutIndexed(const BufferLayout& bufferLayout, const VertexBuffer& vBuffer, const IndexBuffer& iBuffer);
     void SetIndexBuffer(VertexArrayBuffer& arrayBuf, const IndexBuffer& buf);
     
     void Bind(const VertexArrayBuffer& buf);

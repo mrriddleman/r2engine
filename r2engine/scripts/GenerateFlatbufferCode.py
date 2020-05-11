@@ -19,11 +19,17 @@ thisFilePath = os.path.dirname(os.path.abspath(__file__))
 srcPath = os.path.realpath(thisFilePath + "/../src")
 flatcPath = os.path.realpath(thisFilePath + "/..") + "/vendor/flatbuffers/bin/" + flatc
 dataPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
-
-fbsCodeOutputMap = {"AssetManifest.fbs": "/r2/Core/Assets/Pipeline/", "SoundDefinition.fbs": "/r2/Audio/", "ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/", "Utils.fbs": "/r2/Utils/"}
+fbsCodeOutputMap = {
+"AssetManifest.fbs": "/r2/Core/Assets/Pipeline/",
+"SoundDefinition.fbs": "/r2/Audio/",
+"ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/",
+"Utils.fbs": "/r2/Utils/",
+"Material.fbs": "/r2/Render/Model/",
+"Model.fbs": "/r2/Render/Model/"
+}
 
 for filename in os.listdir(dataPath):
-	outputPath = srcPath + fbsCodeOutputMap[filename]
-	if os.path.exists(outputPath):
-		GeneratedCode(flatcPath, outputPath, dataPath, filename)
-
+	if(filename in fbsCodeOutputMap):
+		outputPath = srcPath + fbsCodeOutputMap[filename]
+		if os.path.exists(outputPath):
+			GeneratedCode(flatcPath, outputPath, dataPath, filename)

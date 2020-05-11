@@ -102,16 +102,18 @@ namespace r2
 #endif
             
             mDisplaySize = noptrApp->GetPreferredResolution();
-            //@TODO(Serge): should check to see if the app initialized!
+           
 
             //@TODO(Serge): don't use make unique!
-            PushLayer(std::make_unique<RenderLayer>());
+            PushLayer(std::make_unique<RenderLayer>(noptrApp->GetShaderManifestsPath().c_str()));
             PushLayer(std::make_unique<SoundLayer>());
             
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
             mImGuiLayer = imguiLayer.get();
             PushOverlay(std::move(imguiLayer));
-            //Should be last
+
+            //Should be last/ first in the stack
+            //@TODO(Serge): should check to see if the app initialized!
             PushLayer(std::make_unique<AppLayer>(std::move(app)));
 
             DetectGameControllers();

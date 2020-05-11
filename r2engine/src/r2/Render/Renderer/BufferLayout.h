@@ -8,8 +8,15 @@
 #ifndef BufferLayout_h
 #define BufferLayout_h
 
+#include "r2/Render/Renderer/RendererTypes.h"
+
 namespace r2::draw
 {
+
+    extern u32 VertexDrawTypeStatic;
+    extern u32 VertexDrawTypeStream;
+    extern u32 VertexDrawTypeDynamic;
+
     enum class ShaderDataType
     {
         None = 0,
@@ -66,6 +73,19 @@ namespace r2::draw
         std::vector<BufferElement> mElements;
         u32 mStride = 0;
         VertexType mVertexType = VertexType::Vertex;
+    };
+
+    struct BufferConfig
+    {
+        u32 bufferSize = EMPTY_BUFFER; //are we going to have more than 4 gigs for this? if so change
+        u32 drawType;
+    };
+
+    struct BufferLayoutConfiguration
+    {
+        BufferLayout layout;
+        BufferConfig vertexBufferConfig;
+        BufferConfig indexBufferConfig;
     };
 }
 

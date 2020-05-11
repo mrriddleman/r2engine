@@ -42,7 +42,7 @@ namespace r2::fs
 
 namespace r2::mem::utils
 {
-    u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment);
+    u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment, u32 headerSize = 0, u32 boundsChecking = 0);
 }
 
 namespace r2::asset

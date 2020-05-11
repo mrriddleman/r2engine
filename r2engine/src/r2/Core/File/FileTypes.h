@@ -51,8 +51,8 @@ namespace r2::fs
 
         static const u8 DEVICE_MOD_COUNT = u8(DeviceModifier::Count);
         
-        DeviceConfig() :mStorage(DeviceStorage::Disk), mModCount(0) {}
-        explicit DeviceConfig(DeviceStorage storage):mStorage(storage), mModCount(0){}
+        DeviceConfig() :mStorage(DeviceStorage::Disk), mModifiers({}), mModCount(0) {}
+        explicit DeviceConfig(DeviceStorage storage):mStorage(storage), mModifiers({}),  mModCount(0){}
         inline bool HasModifiers() const {return mModCount > 0;}
         inline u8 NumModifiers() const {return mModCount;}
         inline const std::array<DeviceModifier, DEVICE_MOD_COUNT>& GetDeviceModifiers() const {return mModifiers;}

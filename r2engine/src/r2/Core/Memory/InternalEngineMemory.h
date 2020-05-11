@@ -16,7 +16,7 @@ namespace r2::mem
     {
         //@TODO(Serge): move the handles out of here
         r2::mem::MemoryArea::Handle internalEngineMemoryHandle = MemoryArea::Invalid;
-        r2::mem::MemoryArea::MemorySubArea::Handle permanentStorageHandle = MemoryArea::MemorySubArea::Invalid;
+        r2::mem::MemoryArea::SubArea::Handle permanentStorageHandle = MemoryArea::SubArea::Invalid;
         LinearArena* permanentStorageArena = nullptr;
         StackArena* singleFrameArena = nullptr;
     };

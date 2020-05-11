@@ -28,21 +28,6 @@ namespace r2::draw
         glm::ivec4 boneIDs = glm::ivec4(0);
     };
     
-    enum TextureType
-    {
-        Diffuse = 0,
-        Specular,
-        Ambient,
-        Normal,
-        NUM_TEXTURE_TYPES
-    };
-    
-    struct Texture
-    {
-        u32 texID;
-        TextureType type;
-        char path[r2::fs::FILE_PATH_LENGTH];
-    };
 }
 
 #endif /* Vertex_h */

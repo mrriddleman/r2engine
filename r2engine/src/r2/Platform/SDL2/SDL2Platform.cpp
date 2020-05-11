@@ -49,7 +49,7 @@ namespace r2
     //@NOTE: Increase as needed this is for dev
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
-    //@NOTE: Increase as needed this is for dev
+    //@NOTE: Increase as needed dev
     const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(28);
     
     //@NOTE: Should never exceed the above memory
@@ -106,7 +106,10 @@ namespace r2
         return *SDL2Platform::s_platform;
     }
 
-    SDL2Platform::SDL2Platform(): mRunning(false)
+    SDL2Platform::SDL2Platform()
+        : mRootStorage(nullptr)
+        , mAppStorage(nullptr)
+        , mRunning(false)
     {
         r2::util::PathCpy( mSoundDefinitionPath, "" );
     }

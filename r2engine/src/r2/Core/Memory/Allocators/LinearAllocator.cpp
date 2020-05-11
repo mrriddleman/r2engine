@@ -80,7 +80,7 @@ namespace r2::mem
 
 namespace r2::mem::utils
 {
-    LinearArena* EmplaceLinearArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description)
+    LinearArena* EmplaceLinearArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description)
     {
         //we need to figure out how much space we have and calculate a memory boundary for the Allocator
         R2_CHECK(subArea.mBoundary.size > sizeof(LinearArena), "subArea size(%llu) must be greater than sizeof(LinearArena)(%lu)!", subArea.mBoundary.size, sizeof(LinearArena));

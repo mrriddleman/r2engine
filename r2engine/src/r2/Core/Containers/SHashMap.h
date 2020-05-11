@@ -23,7 +23,7 @@ namespace r2
         {
             u64 key = 0;
             u64 next = 0;
-            T value;
+            T value{};
         };
         
         SHashMap(): mCapacity(0), mHash(nullptr), mData(nullptr){}

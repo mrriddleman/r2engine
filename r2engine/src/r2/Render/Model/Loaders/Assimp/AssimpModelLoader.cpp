@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-12-13.
 //
 #include "r2pch.h"
-#include "LoadHelpers.h"
+#include "r2/Render/Model/Loaders/Assimp/AssimpModelLoader.h"
 
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/File/FileSystem.h"
@@ -14,11 +14,11 @@
 #include "r2/Core/Math/MathUtils.h"
 
 #include "r2/Render/Renderer/Vertex.h"
-#include "r2/Render/Renderer/Model.h"
+#include "r2/Render/Model/Model.h"
+#include "r2/Render/Model/Mesh.h"
 #include "r2/Render/Renderer/SkinnedModel.h"
 #include "r2/Render/Renderer/RendererUtils.h"
-#include "r2/Render/Renderer/Model.h"
-
+#include "r2/Render/Renderer/RendererTypes.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -33,7 +33,7 @@ namespace
 {
     std::vector<r2::draw::Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, r2::draw::TextureType r2Type, const char* directory);
     
-    void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene);
+    void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, const char* directory);
     void ProcessNode(r2::draw::SkinnedModel& model, aiNode* node, r2::draw::SkeletonPart& parentSkeletonPart, const aiScene* scene, u32& numVertices, u32& numIndices);
     
     r2::draw::Mesh ProcessMesh(const aiMesh* mesh, const aiScene* scene, const char* directory);
@@ -45,7 +45,7 @@ namespace
     glm::quat AssimpQuatToGLMQuat(const aiQuaternion& quat);
 }
 
-namespace r2::draw
+namespace r2::draw::asmp
 {
     void LoadModel(Model& model, const char* filePath)
     {
@@ -58,9 +58,10 @@ namespace r2::draw
             return;
         }
         
-        r2::fs::utils::CopyDirectoryOfFile(filePath, model.directory);
+        char directory[r2::fs::FILE_PATH_LENGTH];
+       r2::fs::utils::CopyDirectoryOfFile(filePath, directory);
         model.globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
-        ProcessNode(model, scene->mRootNode, scene);
+        ProcessNode(model, scene->mRootNode, scene, directory);
         
         import.FreeScene();
     }
@@ -135,18 +136,21 @@ namespace r2::draw
 namespace
 {
 
-    void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene)
+    void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, const char* directory)
     {
         //process all of the node's meshes
         for (u32 i = 0; i < node->mNumMeshes; ++i)
         {
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            model.meshes.push_back(ProcessMesh(mesh, scene, model.directory));
+
+            r2::sarr::Push(*model.optrMeshes, ProcessMesh(mesh, scene, directory));
+
+            //model.meshes.push_back(ProcessMesh(mesh, scene, directory));
         }
         //then do the same for each of its children
         for(u32 i = 0; i < node->mNumChildren; ++i)
         {
-            ProcessNode(model, node->mChildren[i], scene);
+            ProcessNode(model, node->mChildren[i], scene, directory);
         }
     }
     
@@ -171,12 +175,15 @@ namespace
             r2::draw::Mesh r2Mesh = ProcessMesh(mesh, scene, model.directory);
             
             //add all the vertices to the end of the vector
-            model.mesh.vertices.insert(model.mesh.vertices.end(), r2Mesh.vertices.begin(), r2Mesh.vertices.end());
-            model.mesh.indices.insert(model.mesh.indices.end(), r2Mesh.indices.begin(), r2Mesh.indices.end());
+
             
-            entry.textures.insert(model.mesh.textures.end(), r2Mesh.textures.begin(), r2Mesh.textures.end());
+
+            //model.mesh.vertices.insert(model.mesh.vertices.end(), r2Mesh.vertices.begin(), r2Mesh.vertices.end());
+            //model.mesh.indices.insert(model.mesh.indices.end(), r2Mesh.indices.begin(), r2Mesh.indices.end());
             
-            model.boneDataVec.resize(model.mesh.vertices.size(), r2::draw::BoneData());
+            //entry.textures.insert(model.mesh.textures.end(), r2Mesh.textures.begin(), r2Mesh.textures.end());
+            
+            //model.boneDataVec.resize(model.mesh.vertices.size(), r2::draw::BoneData());
             
             ProcessBones(model, mesh, scene);
         }
@@ -197,8 +204,8 @@ namespace
     r2::draw::Mesh ProcessMesh(const aiMesh* mesh, const aiScene* scene, const char* directory)
     {
         r2::draw::Mesh r2Mesh;
-        r2Mesh.vertices.reserve(mesh->mNumVertices);
-        r2Mesh.indices.reserve(mesh->mNumFaces * 3);
+       // r2Mesh.vertices.reserve(mesh->mNumVertices);
+       // r2Mesh.indices.reserve(mesh->mNumFaces * 3);
         
         for (u32 i = 0; i < mesh->mNumVertices; ++i)
         {
@@ -239,7 +246,7 @@ namespace
                 v.texCoords = glm::vec2(0);
             }
             
-            r2Mesh.vertices.push_back(v);
+        //    r2Mesh.vertices.push_back(v);
         }
         
         for (u32 i = 0; i < mesh->mNumFaces; ++i)
@@ -247,7 +254,7 @@ namespace
             aiFace face = mesh->mFaces[i];
             for (u32 j = 0; j < face.mNumIndices; ++j)
             {
-                r2Mesh.indices.push_back(face.mIndices[j]);
+        //        r2Mesh.indices.push_back(face.mIndices[j]);
             }
         }
 
@@ -258,17 +265,17 @@ namespace
             if (material)
             {
                 std::vector<r2::draw::Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, r2::draw::TextureType::Diffuse, directory);
-                r2Mesh.textures.insert(r2Mesh.textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+         //       r2Mesh.textures.insert(r2Mesh.textures.end(), diffuseMaps.begin(), diffuseMaps.end());
                 
                 std::vector<r2::draw::Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, r2::draw::TextureType::Specular, directory);
-                r2Mesh.textures.insert(r2Mesh.textures.end(), specularMaps.begin(), specularMaps.end());
+        //        r2Mesh.textures.insert(r2Mesh.textures.end(), specularMaps.begin(), specularMaps.end());
                 
                 std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
-                r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
+         //       r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
                 
                // aiTextureType_NORMAL
                 std::vector<r2::draw::Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, r2::draw::TextureType::Normal, directory);
-                r2Mesh.textures.insert(r2Mesh.textures.end(), normalMaps.begin(), normalMaps.end());
+        //        r2Mesh.textures.insert(r2Mesh.textures.end(), normalMaps.begin(), normalMaps.end());
             }
         }
         
@@ -287,7 +294,7 @@ namespace
             bool skip = false;
             for (u32 j = 0; j < s_loadedTextures.size(); ++j)
             {
-                if(std::strcmp(s_loadedTextures[j].path, str.C_Str()) == 0)
+             //   if(std::strcmp(s_loadedTextures[j].path, str.C_Str()) == 0)
                 {
                     textures.push_back(s_loadedTextures[j]);
                     skip = true;
@@ -302,7 +309,7 @@ namespace
                 r2::fs::utils::AppendSubPath(directory, path, str.C_Str());
                 texture.texID = r2::draw::utils::LoadImageTexture(path);
                 texture.type = r2Type;
-                r2::util::PathCpy(texture.path, str.C_Str());
+               // r2::util::PathCpy(texture.path, str.C_Str());
                 textures.push_back(texture);
                 s_loadedTextures.push_back(texture);
             }

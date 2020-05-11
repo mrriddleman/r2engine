@@ -31,19 +31,19 @@ namespace r2::asset::pln
 namespace r2::draw
 {
     //Temp
-    void OpenGLInit();
-    void OpenGLDraw(float alpha);
-    void OpenGLShutdown();
-    void OpenGLResizeWindow(u32 width, u32 height);
-    void OpenGLSetCamera(const r2::Camera& cam);
-    void OpenGLDrawRay(const r2::math::Ray& ray);
+    //void OpenGLInit();
+    //void OpenGLDraw(float alpha);
+    //void OpenGLShutdown();
+    //void OpenGLResizeWindow(u32 width, u32 height);
+    //void OpenGLSetCamera(const r2::Camera& cam);
+    //void OpenGLDrawRay(const r2::math::Ray& ray);
 
-    
-    void OpenGLNextAnimation();
-    void OpenGLPrevAnimation();
-#ifdef R2_ASSET_PIPELINE
-    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);
-#endif
+    //
+    //void OpenGLNextAnimation();
+    //void OpenGLPrevAnimation();
+//#ifdef R2_ASSET_PIPELINE
+//    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);
+//#endif
 }
 
 #endif /* RendererBackend_h */

@@ -1,0 +1,98 @@
+{
+	meshes: [
+		{
+			numVertices: 4,
+			numFaces: 2,
+			positions:[
+				{
+					x: -1.0,
+					y: -1.0,
+					z: 0.0
+				},
+				{
+					x: -1.0,
+					y: 1.0,
+					z: 0.0,
+				},
+				{
+					x: 1.0,
+					y: -1.0,
+					z: 0.0
+				},
+				{
+					x: 1.0,
+					y: 1.0,
+					z: 0.0
+				}
+			],
+			normals:[
+				{
+					x: 0.0,
+					y: 0.0,
+					z: 1.0
+				},
+				{
+					x: 0.0,
+					y: 0.0,
+					z: 1.0
+				},
+				{
+					x: 0.0,
+					y: 0.0,
+					z: 1.0
+				},
+				{
+					x: 0.0,
+					y: 0.0,
+					z: 1.0
+				}
+			],
+			textureCoords:[
+				{
+					x: 0.0,
+					y: 0.0
+				},
+				{
+					x: 0.0,
+					y: 1.0
+				},
+				{
+					x: 1.0,
+					y: 0.0
+				},
+				{
+					x: 1.0,
+					y: 1.0
+				}
+			],
+			faces:[
+				{
+					numIndices: 3,
+					indices: [
+						0,
+						2,
+						1
+					]
+				},
+				{
+					numIndices: 3,
+					indices:[
+						1,
+						2,
+						3
+					]
+				}
+			]
+		}
+	],
+	material: {
+		name:"Sandbox",
+		shader:"Sandbox",
+		color:{
+			r: 0.0,
+			g: 0.0,
+			b: 1.0,
+			a: 1.0
+		}
+	}
+}

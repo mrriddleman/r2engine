@@ -152,7 +152,7 @@ namespace r2
 
 namespace r2::mem::utils
 {
-    StackArena* EmplaceStackArena(MemoryArea::MemorySubArea& subArea, const char* file, s32 line, const char* description)
+    StackArena* EmplaceStackArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description)
     {
         //we need to figure out how much space we have and calculate a memory boundary for the Allocator
         R2_CHECK(subArea.mBoundary.size > sizeof(StackArena), "subArea size(%llu) must be greater than sizeof(StackArena)(%lu)!", subArea.mBoundary.size, sizeof(StackArena));

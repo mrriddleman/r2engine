@@ -8,7 +8,7 @@
 #ifndef OpenGLMesh_h
 #define OpenGLMesh_h
 
-#include "r2/Render/Renderer/Mesh.h"
+
 #include "r2/Render/Backends/OpenGLBuffer.h"
 
 namespace r2::draw

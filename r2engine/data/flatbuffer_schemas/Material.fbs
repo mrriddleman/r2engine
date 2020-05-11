@@ -1,0 +1,21 @@
+namespace r2;
+
+file_identifier "mmat";
+file_extension "mmat";
+
+struct Color
+{
+	r:float;
+	g:float;
+	b:float;
+	a:float;
+}
+
+table Material
+{
+	name:ulong (hash:"fnv1a_64");
+	shader:ulong (hash: "fnv1a_64", cpp_type:"unsigned int");
+	color:Color;
+}
+
+root_type Material;

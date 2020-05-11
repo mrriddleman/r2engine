@@ -1,0 +1,45 @@
+include "Material.fbs";
+
+namespace r2;
+
+file_identifier "modl";
+file_extension "modl";
+
+
+
+struct Vertex3
+{
+	x:float;
+	y:float;
+	z:float;
+}
+
+struct Vertex2
+{
+	x:float;
+	y:float;
+}
+
+table Face
+{
+	numIndices:ulong;
+	indices:[uint];
+}
+
+table Mesh
+{
+	numVertices:ulong;
+	numFaces:ulong;
+	positions:[Vertex3];
+	normals:[Vertex3];
+	textureCoords:[Vertex2];
+	faces:[Face];
+}
+
+table Model
+{
+	meshes:[Mesh];
+	material:Material;
+}
+
+root_type Model;

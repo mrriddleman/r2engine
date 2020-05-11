@@ -57,7 +57,7 @@ namespace
 
 namespace r2::audio
 {
-    r2::mem::MemoryArea::MemorySubArea::Handle AudioEngine::mSoundMemoryAreaHandle = r2::mem::MemoryArea::MemorySubArea::Invalid;
+    r2::mem::MemoryArea::SubArea::Handle AudioEngine::mSoundMemoryAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
     r2::mem::LinearArena* AudioEngine::mSoundAllocator = nullptr;
     
     const AudioEngine::SoundID AudioEngine::InvalidSoundID;
@@ -171,23 +171,23 @@ namespace r2::audio
 
         totalAllocationSizeNeeded += sizeForSystem;
         
-        u64 sizeForSounds = r2::mem::utils::GetMaxMemoryForAllocation(SArray<Sound>::MemorySize(MAX_NUM_SOUNDS) + headerSize + boundsCheckingSize + sizeof(SoundList), SOUND_ALIGNMENT); //for mSounds
+        u64 sizeForSounds = r2::mem::utils::GetMaxMemoryForAllocation(SArray<Sound>::MemorySize(MAX_NUM_SOUNDS) + sizeof(SoundList), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mSounds
 
         totalAllocationSizeNeeded += sizeForSounds;
         
-        u64 sizeForDefinitions = r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AudioEngine::SoundID>::MemorySize(MAX_NUM_DEFINITIONS) + sizeof(DefinitionMap) + headerSize + boundsCheckingSize, SOUND_ALIGNMENT); //for mDefinitions
+        u64 sizeForDefinitions = r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AudioEngine::SoundID>::MemorySize(MAX_NUM_DEFINITIONS) + sizeof(DefinitionMap), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mDefinitions
 
         totalAllocationSizeNeeded += sizeForDefinitions;
         
-        u64 sizeForChannelList = r2::mem::utils::GetMaxMemoryForAllocation( SArray<Channel*>::MemorySize(MAX_NUM_CHANNELS) + boundsCheckingSize + headerSize + sizeof(ChannelList), SOUND_ALIGNMENT); //for mChannels
+        u64 sizeForChannelList = r2::mem::utils::GetMaxMemoryForAllocation( SArray<Channel*>::MemorySize(MAX_NUM_CHANNELS) + sizeof(ChannelList), SOUND_ALIGNMENT, boundsCheckingSize + headerSize); //for mChannels
 
         totalAllocationSizeNeeded += sizeForChannelList;
         
-        u64 sizeForChannelPool = r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * (sizeof(Channel) + boundsCheckingSize) + headerSize + boundsCheckingSize + sizeof(r2::mem::PoolArena), SOUND_ALIGNMENT); //for mChannelPool
+        u64 sizeForChannelPool = r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * (sizeof(Channel) + boundsCheckingSize) + sizeof(r2::mem::PoolArena), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mChannelPool
 
         totalAllocationSizeNeeded += sizeForChannelPool;
         
-        u64 sizeForFMODMemory = r2::mem::utils::GetMaxMemoryForAllocation(FMODMemorySize() + sizeof(byte*) + headerSize + boundsCheckingSize, SOUND_ALIGNMENT); //for mFMODMemory
+        u64 sizeForFMODMemory = r2::mem::utils::GetMaxMemoryForAllocation(FMODMemorySize() + sizeof(byte*), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mFMODMemory
 
         totalAllocationSizeNeeded += sizeForFMODMemory;
         
@@ -596,7 +596,7 @@ namespace r2::audio
             
             AudioEngine::mSoundMemoryAreaHandle = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->AddSubArea(soundAreaSize);
             
-            R2_CHECK(AudioEngine::mSoundMemoryAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid, "We have an invalid sound memory area!");
+            R2_CHECK(AudioEngine::mSoundMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "We have an invalid sound memory area!");
             
             AudioEngine::mSoundAllocator = EMPLACE_LINEAR_ARENA(*r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->GetSubArea(AudioEngine::mSoundMemoryAreaHandle));
             

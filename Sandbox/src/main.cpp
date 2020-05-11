@@ -221,7 +221,7 @@ public:
         R2_CHECK(result == true, "Failed to initialize memory area");
         
         subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1));
-        R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::MemorySubArea::Invalid, "sub area handle is invalid!");
+        R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
         
         auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
         
@@ -506,7 +506,7 @@ public:
     
 private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
-    r2::mem::MemoryArea::MemorySubArea::Handle subMemoryAreaHandle;
+    r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
     
     r2::asset::AssetCache* assetCache;
     bool reload;

@@ -37,57 +37,52 @@ namespace r2::draw::opengl
         glGenVertexArrays(1, &buf.VAO);
     }
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, float * vertices, u64 size, u32 type)
+    void Create(VertexBuffer& buf, float * vertices, u64 size, u32 type)
     {
         glGenBuffers(1, &buf.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
         glBufferData(GL_ARRAY_BUFFER, size * sizeof(float), vertices, (GLenum)type);
-        
-        buf.layout = layout;
+
         UnBind(buf);
         buf.size = size;
     }
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const std::vector<Vertex>& vertices, u32 type)
+    void Create(VertexBuffer& buf, const std::vector<Vertex>& vertices, u32 type)
     {
         glGenBuffers(1, &buf.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], (GLenum)type);
         
-        buf.layout = layout;
         UnBind(buf);
         buf.size = vertices.size();
     }
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const Vertex* vertices, u64 size, u32 type)
+    void Create(VertexBuffer& buf, const Vertex* vertices, u64 size, u32 type)
     {
         glGenBuffers(1, &buf.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
         glBufferData(GL_ARRAY_BUFFER, size * sizeof(Vertex), &vertices[0], (GLenum)type);
         
-        buf.layout = layout;
         UnBind(buf);
         buf.size = size;
     }
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, const BoneData* boneData, u64 size, u32 type)
+    void Create(VertexBuffer& buf, const BoneData* boneData, u64 size, u32 type)
     {
         glGenBuffers(1, &buf.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
         glBufferData(GL_ARRAY_BUFFER, size * sizeof(BoneData), &boneData[0], (GLenum)type);
         
-        buf.layout = layout;
         UnBind(buf);
         buf.size = size;
     }
     
-    void Create(VertexBuffer& buf, const BufferLayout& layout, void* data, u64 size, u32 type)
+    void Create(VertexBuffer& buf, void* data, u64 size, u32 type)
     {
         glGenBuffers(1, &buf.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, buf.VBO);
         glBufferData(GL_ARRAY_BUFFER, size, data, (GLenum)type);
         
-        buf.layout = layout;
         UnBind(buf);
         buf.size = size;
     }
@@ -221,11 +216,13 @@ namespace r2::draw::opengl
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
     
-    void AddBuffer(VertexArrayBuffer& arrayBuf, const VertexBuffer& vertexBuf)
+    BufferLayoutHandle CreateBufferLayoutIndexed(const BufferLayout& bufferLayout, const VertexBuffer& vBuffer, const IndexBuffer& iBuffer)
     {
-        glBindVertexArray(arrayBuf.VAO);
-        Bind(vertexBuf);
-        const auto& layout = vertexBuf.layout;
+        
+        return 0;
+       // glBindVertexArray(arrayBuf.VAO);
+       /* Bind(vBuffer);
+        const auto& layout = bufferLayout;
         for(const auto& element : layout)
         {
             glEnableVertexAttribArray(arrayBuf.vertexBufferIndex);
@@ -258,7 +255,7 @@ namespace r2::draw::opengl
         UnBind(vertexBuf);
 
         
-        arrayBuf.vertexBuffers.push_back(vertexBuf);
+        arrayBuf.vertexBuffers.push_back(vertexBuf);*/
     }
     
     void SetIndexBuffer(VertexArrayBuffer& arrayBuf, const IndexBuffer& indexBuf)

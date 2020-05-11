@@ -8,7 +8,8 @@
 #ifndef SkinnedModel_h
 #define SkinnedModel_h
 
-#include "r2/Render/Renderer/Mesh.h"
+#include "r2/Render/Model/Mesh.h"
+#include "r2/Render/Renderer/Vertex.h"
 #include "glm/gtc/quaternion.hpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

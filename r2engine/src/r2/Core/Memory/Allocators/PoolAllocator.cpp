@@ -122,7 +122,7 @@ namespace r2
 
 namespace r2::mem::utils
 {
-    PoolArena* EmplacePoolArena(MemoryArea::MemorySubArea& subArea, u32 elementSize, const char* file, s32 line, const char* description)
+    PoolArena* EmplacePoolArena(MemoryArea::SubArea& subArea, u32 elementSize, const char* file, s32 line, const char* description)
     {
         //we need to figure out how much space we have and calculate a memory boundary for the Allocator
         R2_CHECK(subArea.mBoundary.size > sizeof(PoolArena), "subArea size(%llu) must be greater than sizeof(PoolArena)(%lu)!", subArea.mBoundary.size, sizeof(PoolArena));

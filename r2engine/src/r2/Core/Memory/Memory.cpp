@@ -81,7 +81,7 @@ namespace r2
 
             if(mMemoryAreas.size() + 1 <= mMemoryAreas.capacity())
             {
-                mMemoryAreas.emplace_back(debugName);
+                mMemoryAreas.emplace_back(static_cast<MemoryArea::Handle>(mMemoryAreas.size()), debugName);
                 return static_cast<MemoryArea::Handle>(mMemoryAreas.size() - 1);
             }
             
@@ -138,7 +138,7 @@ namespace r2
         }
         
         const MemoryArea::Handle MemoryArea::Invalid;
-        const MemoryArea::MemorySubArea::Handle MemoryArea::MemorySubArea::Invalid;
+        const MemoryArea::SubArea::Handle MemoryArea::SubArea::Invalid;
         const u64 MemoryArea::DefaultScratchBufferSize;
         
         MemoryArea::~MemoryArea()
@@ -146,7 +146,10 @@ namespace r2
             Shutdown();
         }
         
-        MemoryArea::MemoryArea(const char* debugName):mInitialized(false), mScratchAreaHandle(MemorySubArea::Invalid)
+        MemoryArea::MemoryArea(Handle memoryAreaHandle, const char* debugName)
+            : mMemoryAreaHandle(memoryAreaHandle)
+            , mInitialized(false)
+            , mScratchAreaHandle(SubArea::Invalid)
         {
             r2::util::PathCpy(&mDebugName[0], debugName);
         }
@@ -183,24 +186,26 @@ namespace r2
             return mInitialized;
         }
         
-        MemoryArea::MemorySubArea::Handle MemoryArea::AddSubArea(u64 sizeInBytes, const std::string& subAreaName)
+        MemoryArea::SubArea::Handle MemoryArea::AddSubArea(u64 sizeInBytes, const std::string& subAreaName)
         {
             R2_CHECK(sizeInBytes > sizeof(uptr), "We should have more than 0 bytes");
             if(!mInitialized)
             {
-                return MemoryArea::MemorySubArea::Invalid;
+                return MemoryArea::SubArea::Invalid;
             }
             //first check to see if we have enough space left in the MemoryArea
-            u64 bytesLeftInArea = utils::PointerOffset(mCurrentNext, utils::PointerAdd(mBoundary.location, mBoundary.size));
+            u64 bytesLeftInArea = UnAllocatedSpace();
             
             //R2_CHECK(sizeInBytes <= bytesLeftInArea, "Requested too many bytes for this MemoryArea to hold!");
             
             if(sizeInBytes <= bytesLeftInArea)
             {
-                MemorySubArea subArea;
+                SubArea subArea;
                 subArea.mBoundary.location = mCurrentNext;
                 subArea.mBoundary.size = sizeInBytes;
-                
+                subArea.mMemoryAreaHandle = mMemoryAreaHandle;
+                subArea.mSubAreaHandle = static_cast<SubArea::Handle>(mSubAreas.size());
+
                 std::stringstream ss;
                 if (subAreaName.size() > 0)
                 {
@@ -216,23 +221,23 @@ namespace r2
                 
                 mSubAreas.push_back(subArea);
                 
-                return static_cast<MemorySubArea::Handle>( mSubAreas.size() - 1 );
+                return subArea.mSubAreaHandle;
             }
             
-            return MemorySubArea::Invalid;
+            return SubArea::Invalid;
         }
         
-        utils::MemBoundary MemoryArea::SubAreaBoundary(MemoryArea::MemorySubArea::Handle subAreaHandle) const
+        utils::MemBoundary MemoryArea::SubAreaBoundary(MemoryArea::SubArea::Handle subAreaHandle) const
         {
-            if(!mInitialized || subAreaHandle == MemoryArea::MemorySubArea::Invalid)
+            if(!mInitialized || subAreaHandle == MemoryArea::SubArea::Invalid)
             {
                 return utils::MemBoundary();
             }
         
             utils::MemBoundary boundary;
-            R2_CHECK(subAreaHandle <  static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()), "We didn't get a proper MemorySubArea Handle!");
+            R2_CHECK(subAreaHandle <  static_cast<MemoryArea::SubArea::Handle>(mSubAreas.size()), "We didn't get a proper SubArea Handle!");
             
-            if(subAreaHandle < static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()))
+            if(subAreaHandle < static_cast<MemoryArea::SubArea::Handle>(mSubAreas.size()))
             {
                 boundary = mSubAreas[static_cast<size_t>(subAreaHandle)].mBoundary;
             }
@@ -240,16 +245,16 @@ namespace r2
             return boundary;
         }
         
-        utils::MemBoundary* MemoryArea::SubAreaBoundaryPtr(MemorySubArea::Handle subAreaHandle)
+        utils::MemBoundary* MemoryArea::SubAreaBoundaryPtr(SubArea::Handle subAreaHandle)
         {
-            if(!mInitialized || subAreaHandle == MemoryArea::MemorySubArea::Invalid)
+            if(!mInitialized || subAreaHandle == MemoryArea::SubArea::Invalid)
             {
                 return nullptr;
             }
             
-            R2_CHECK(subAreaHandle <  static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::MemorySubArea::Invalid, "We didn't get a proper MemorySubArea Handle!");
+            R2_CHECK(subAreaHandle <  static_cast<MemoryArea::SubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::SubArea::Invalid, "We didn't get a proper SubArea Handle!");
             
-            if(subAreaHandle < static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::MemorySubArea::Invalid)
+            if(subAreaHandle < static_cast<MemoryArea::SubArea::Handle>(mSubAreas.size()) && subAreaHandle != MemoryArea::SubArea::Invalid)
             {
                 return &mSubAreas[static_cast<size_t>(subAreaHandle)].mBoundary;
             }
@@ -267,15 +272,15 @@ namespace r2
             return SubAreaBoundaryPtr(mScratchAreaHandle);
         }
         
-        MemoryArea::MemorySubArea* MemoryArea::GetSubArea(MemoryArea::MemorySubArea::Handle subAreaHandle)
+        MemoryArea::SubArea* MemoryArea::GetSubArea(MemoryArea::SubArea::Handle subAreaHandle)
         {
-            if(!mInitialized || subAreaHandle == MemoryArea::MemorySubArea::Invalid)
+            if(!mInitialized || subAreaHandle == MemoryArea::SubArea::Invalid)
             {
                 return nullptr;
             }
             
-            MemoryArea::MemorySubArea* subArea = nullptr;
-            if(subAreaHandle < static_cast<MemoryArea::MemorySubArea::Handle>(mSubAreas.size()))
+            MemoryArea::SubArea* subArea = nullptr;
+            if(subAreaHandle < static_cast<MemoryArea::SubArea::Handle>(mSubAreas.size()))
             {
                 subArea = &mSubAreas[static_cast<size_t>(subAreaHandle)];
             }
@@ -298,8 +303,13 @@ namespace r2
                 mBoundary.size = 0;
                 mCurrentNext = nullptr;
                 mInitialized = false;
-                mScratchAreaHandle = MemorySubArea::Invalid;
+                mScratchAreaHandle = SubArea::Invalid;
             }
+        }
+
+        u64 MemoryArea::UnAllocatedSpace() const
+        {
+            return utils::PointerOffset(mCurrentNext, utils::PointerAdd(mBoundary.location, mBoundary.size));
         }
     }
 }

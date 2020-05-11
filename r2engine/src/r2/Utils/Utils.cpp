@@ -11,9 +11,9 @@
 
 namespace r2::mem::utils
 {
-    u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment)
+    u64 GetMaxMemoryForAllocation(u64 allocationSize, u64 alignment, u32 headerSize, u32 boundsChecking)
     {
-        return r2::util::RoundUp(allocationSize, alignment);
+        return r2::util::RoundUp(allocationSize + headerSize + boundsChecking, alignment);
     }
 }
 

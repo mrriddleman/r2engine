@@ -227,7 +227,7 @@ namespace r2::mem
 
 namespace r2::mem::utils
 {
-    FreeListArena* EmplaceFreeListArena(MemoryArea::MemorySubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description)
+    FreeListArena* EmplaceFreeListArena(MemoryArea::SubArea& subArea, PlacementPolicy policy, const char* file, s32 line, const char* description)
     {
         //we need to figure out how much space we have and calculate a memory boundary for the Allocator
         R2_CHECK(subArea.mBoundary.size > sizeof(FreeListArena), "subArea size(%llu) must be greater than sizeof(LinearArena)(%lu)!", subArea.mBoundary.size, sizeof(FreeListArena));

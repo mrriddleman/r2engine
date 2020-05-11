@@ -5,7 +5,11 @@
 //  Created by Serge Lansiquot on 2019-12-26.
 //
 #include "r2pch.h"
-#include "OpenGLShader.h"
+
+#if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
+
+#include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Renderer/ShaderSystem.h"
 #include "glad/glad.h"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -14,70 +18,86 @@
 #include "r2/Core/File/File.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Containers/SArray.h"
 
-namespace r2::draw::opengl
+namespace r2::draw::shader
 {
-    void Shader::UseShader() const
+    const ShaderHandle InvalidShader = 0;
+
+    void Use(const Shader& shader)
     {
-        glUseProgram(shaderProg);
+        glUseProgram(shader.shaderProg);
     }
     
     //U stand for uniform
-    void Shader::SetUBool(const char* name, bool value) const
+    void SetBool(const Shader& shader, const char* name, bool value)
     {
-        glUniform1i(glGetUniformLocation(shaderProg, name), (s32)value);
+        glUniform1i(glGetUniformLocation(shader.shaderProg, name), (s32)value);
     }
     
-    void Shader::SetUInt(const char* name, s32 value) const
+    void SetInt(const Shader& shader, const char* name, s32 value)
     {
-        glUniform1i(glGetUniformLocation(shaderProg, name), (s32)value);
+        glUniform1i(glGetUniformLocation(shader.shaderProg, name), (s32)value);
     }
     
-    void Shader::SetUFloat(const char* name, f32 value) const
+    void SetFloat(const Shader& shader, const char* name, f32 value)
     {
-        glUniform1f(glGetUniformLocation(shaderProg, name), value);
+        glUniform1f(glGetUniformLocation(shader.shaderProg, name), value);
     }
     
-    void Shader::SetUVec2(const char* name, const glm::vec2& value) const
+    void SetVec2(const Shader& shader, const char* name, const glm::vec2& value)
     {
-        glUniform2fv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform2fv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
-    void Shader::SetUVec3(const char* name, const glm::vec3& value) const
+    void SetVec3(const Shader& shader, const char* name, const glm::vec3& value)
     {
-        glUniform3fv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform3fv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
-    void Shader::SetUVec4(const char* name, const glm::vec4& value) const
+    void SetVec4(const Shader& shader, const char* name, const glm::vec4& value)
     {
-        glUniform4fv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform4fv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
-    void Shader::SetUMat3(const char* name, const glm::mat3& value) const
+    void SetMat3(const Shader& shader, const char* name, const glm::mat3& value)
     {
-        glUniformMatrix3fv(glGetUniformLocation(shaderProg, name), 1, GL_FALSE, glm::value_ptr(value));
+        glUniformMatrix3fv(glGetUniformLocation(shader.shaderProg, name), 1, GL_FALSE, glm::value_ptr(value));
     }
     
-    void Shader::SetUMat4(const char* name, const glm::mat4& value) const
+    void SetMat4(const Shader& shader, const char* name, const glm::mat4& value)
     {
-        glUniformMatrix4fv(glGetUniformLocation(shaderProg, name), 1, GL_FALSE, glm::value_ptr(value));
+        glUniformMatrix4fv(glGetUniformLocation(shader.shaderProg, name), 1, GL_FALSE, glm::value_ptr(value));
     }
     
-    void Shader::SetUIVec2(const char* name, const glm::ivec2& value) const
+    void SetIVec2(const Shader& shader, const char* name, const glm::ivec2& value)
     {
-        glUniform2iv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform2iv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
-    void Shader::SetUIVec3(const char* name, const glm::ivec3& value) const
+    void SetIVec3(const Shader& shader, const char* name, const glm::ivec3& value)
     {
-        glUniform3iv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform3iv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
-    void Shader::SetUIVec4(const char* name, const glm::ivec4& value) const
+    void SetIVec4(const Shader& shader, const char* name, const glm::ivec4& value)
     {
-        glUniform4iv(glGetUniformLocation(shaderProg, name), 1, glm::value_ptr(value));
+        glUniform4iv(glGetUniformLocation(shader.shaderProg, name), 1, glm::value_ptr(value));
     }
     
+    void Delete(Shader& shader)
+    {
+        if (IsValid(shader))
+        {
+            glDeleteShader(shader.shaderProg);
+            shader.shaderProg = InvalidShader;
+        }
+    }
+
+    bool IsValid(const Shader& shader)
+    {
+        return shader.shaderProg != InvalidShader;
+    }
     
     u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr)
     {
@@ -215,8 +235,9 @@ namespace r2::draw::opengl
         return shaderProgram;
     }
     
-    u32 CreateShaderProgramFromRawFiles(const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
+    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
     {
+        Shader newShader;
         R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
         R2_CHECK(fragmentShaderFilePath != nullptr, "Fragment shader is null");
         
@@ -231,7 +252,7 @@ namespace r2::draw::opengl
             if(!vertexFile)
             {
                 R2_LOGE("Failed to open file: %s\n", vertexShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             u64 fileSize = vertexFile->Size();
@@ -241,7 +262,7 @@ namespace r2::draw::opengl
             if(!vertexFileData)
             {
                 R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return 0;
+                return newShader;
             }
             
             bool success = vertexFile->ReadAll(vertexFileData);
@@ -250,7 +271,7 @@ namespace r2::draw::opengl
             {
                 FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
                 R2_LOGE("Failed to read file: %s", vertexShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             vertexFileData[fileSize] = '\0';
@@ -264,7 +285,7 @@ namespace r2::draw::opengl
             if(!fragmentFile)
             {
                 R2_LOGE("Failed to open file: %s\n", fragmentShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             u64 fileSize = fragmentFile->Size();
@@ -274,7 +295,7 @@ namespace r2::draw::opengl
             if(!fragmentFileData)
             {
                 R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return 0;
+                return newShader;
             }
             
             bool success = fragmentFile->ReadAll(fragmentFileData);
@@ -283,7 +304,7 @@ namespace r2::draw::opengl
             {
                 FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
                 R2_LOGE("Failed to read file: %s", fragmentShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             fragmentFileData[fileSize] = '\0';
@@ -298,7 +319,7 @@ namespace r2::draw::opengl
             if(!geometryFile)
             {
                 R2_LOGE("Failed to open file: %s\n", geometryShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             u64 fileSize = geometryFile->Size();
@@ -308,7 +329,7 @@ namespace r2::draw::opengl
             if(!geometryFileData)
             {
                 R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return 0;
+                return newShader;
             }
             
             bool success = geometryFile->ReadAll(geometryFileData);
@@ -317,7 +338,7 @@ namespace r2::draw::opengl
             {
                 FREE(geometryFileData, *MEM_ENG_SCRATCH_PTR);
                 R2_LOGE("Failed to read file: %s", geometryShaderFilePath);
-                return 0;
+                return newShader;
             }
             
             geometryFileData[fileSize] = '\0';
@@ -339,29 +360,43 @@ namespace r2::draw::opengl
             R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
             
             R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
-            return 0;
+            return newShader;
         }
         
-        return shaderProg;
+        newShader.shaderProg = shaderProg;
+        newShader.shaderID = hashName;
+#ifdef R2_ASSET_PIPELINE
+        newShader.manifest.hashName = hashName;
+        newShader.manifest.vertexShaderPath = vertexShaderFilePath;
+        newShader.manifest.fragmentShaderPath = fragmentShaderFilePath;
+        newShader.manifest.geometryShaderPath = geometryShaderFilePath;
+#endif
+
+        return newShader;
     }
     
-    void ReloadShaderProgramFromRawFiles(u32* program, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
+    void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
     {
         R2_CHECK(program != nullptr, "Shader Program is nullptr");
         R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
         R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
         
-        u32 reloadedShaderProgram = CreateShaderProgramFromRawFiles(vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath);
+        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath);
         
-        if (reloadedShaderProgram)
+        if (reloadedShaderProgram.shaderProg)
         {
             if(*program != 0)
             {
                 glDeleteProgram(*program);
             }
             
-            *program = reloadedShaderProgram;
+            *program = reloadedShaderProgram.shaderProg;
         }
     }
 
+   
 }
+
+
+
+#endif
