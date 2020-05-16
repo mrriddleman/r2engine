@@ -179,12 +179,12 @@ namespace r2::draw::renderer
 		//}
 
 		//printf("================================================\n");
-		//cmdbkt::Sort(*s_optrRenderer->mCommandBucket, r2::draw::key::CompareKey);
+		cmdbkt::Sort(*s_optrRenderer->mCommandBucket, r2::draw::key::CompareKey);
 
 		//for (u64 i = 0; i < numEntries; ++i)
 		//{
-		//	const r2::draw::CommandBucket<r2::draw::key::Basic>::Entry& entry = r2::sarr::At(*s_optrRenderer->mCommandBucket->entries, i);
-		//	printf("entry - key: %llu, data: %p, func: %p\n", entry.aKey.keyValue, entry.data, entry.func);
+		//	const r2::draw::CommandBucket<r2::draw::key::Basic>::Entry* entry = r2::sarr::At(*s_optrRenderer->mCommandBucket->sortedEntries, i);
+		//	printf("sorted - key: %llu, data: %p, func: %p\n", entry->aKey.keyValue, entry->data, entry->func);
 		//}
 
 

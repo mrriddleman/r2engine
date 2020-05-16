@@ -468,10 +468,6 @@ public:
     virtual void Render(float alpha) override
     {
         //add my commands here
-        r2::draw::key::Basic clearKey;
-
-        r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
-        clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER;
 
         r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
         r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, quadModel->materialHandle);
@@ -484,6 +480,14 @@ public:
         drawIndexedCMD->bufferLayoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
         drawIndexedCMD->vertexBufferHandle = r2::sarr::At(*handles.vertexBufferHandles, 0);
         drawIndexedCMD->indexBufferHandle = r2::sarr::At(*handles.indexBufferHandles, 0);
+
+
+        r2::draw::key::Basic clearKey;
+
+        r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
+        clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER;
+
+        
 
     }
     

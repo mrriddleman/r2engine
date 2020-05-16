@@ -35,11 +35,13 @@ namespace r2::draw
 
 		static u64 MemorySize(u64 capacity);
 
+		r2::SArray<Entry>* entries = nullptr;
+		r2::SArray<Entry*>* sortedEntries = nullptr;
 		r2::Camera* camera = nullptr;
 		RenderTarget renderTarget;
-		r2::SArray<Entry>* entries = nullptr;
 		KeyDecoderFunc KeyDecoder = nullptr;
 		CameraUpdateFunc CamUpdate = nullptr;
+		
 	};
 
 	namespace cmdbkt
@@ -96,7 +98,9 @@ namespace r2::draw
 				FREE(r2::sarr::At(*bkt.entries, i).data, arena);
 			}
 
+			r2::sarr::Clear(*bkt.sortedEntries);
 			r2::sarr::Clear(*bkt.entries);
+			
 		}
 
 		template<typename T> void Submit(CommandBucket<T>& bkt)
@@ -112,17 +116,17 @@ namespace r2::draw
 
 			for (u64 i = 0; i < numEntries; ++i)
 			{
-				void* cmd = r2::sarr::At(*bkt.entries, i).data;
+				void* cmd = r2::sarr::At(*bkt.sortedEntries, i)->data;
 
 				R2_CHECK(cmd != nullptr, "We don't have a valid command!");
 
-				T theKey = r2::sarr::At(*bkt.entries, i).aKey;
+				T theKey = r2::sarr::At(*bkt.sortedEntries, i)->aKey;
 				
 				R2_CHECK(bkt.KeyDecoder != nullptr, "We don't have a key decoder!");
 
 				bkt.KeyDecoder(theKey);
 
-				r2::draw::dispatch::BackendDispatchFunction DispatchFunc = r2::sarr::At(*bkt.entries, i).func;
+				r2::draw::dispatch::BackendDispatchFunction DispatchFunc = r2::sarr::At(*bkt.sortedEntries, i)->func;
 
 				DispatchFunc(cmd);
 			}
@@ -153,9 +157,17 @@ namespace r2::draw
 		template<typename T> inline void Sort(CommandBucket<T>& bkt, CompareFunction<T> cmp)
 		{
 			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			std::sort(r2::sarr::Begin(*bkt.entries), r2::sarr::End(*bkt.entries), [cmp](const CommandBucket<T>::Entry& a, const CommandBucket<T>::Entry& b)
+
+			const u64 numEntries = r2::sarr::Size(*bkt.entries);
+
+			for (u64 i = 0; i < numEntries; ++i)
+			{
+				r2::sarr::Push(*bkt.sortedEntries, & r2::sarr::At(*bkt.entries, i));
+			}
+
+			std::sort(r2::sarr::Begin(*bkt.sortedEntries), r2::sarr::End(*bkt.sortedEntries), [cmp](const CommandBucket<T>::Entry* a, const CommandBucket<T>::Entry* b)
 				{
-					return cmp(a.aKey, b.aKey);
+					return cmp(a->aKey, b->aKey);
 				});
 		}
 
@@ -167,8 +179,18 @@ namespace r2::draw
 
 			CommandBucket<T>::Entry* dataStart = (CommandBucket<T>::Entry*)r2::mem::utils::PointerAdd(startOfArray, sizeof(r2::SArray<CommandBucket<T>::Entry>));
 			
+			r2::SArray<CommandBucket<T>::Entry*>* startOfSortedArray = new (r2::mem::utils::PointerAdd(dataStart, sizeof(CommandBucket<T>::Entry) * capacity)) r2::SArray<CommandBucket<T>::Entry*>();
+
+			CommandBucket<T>::Entry** startOfSortedData = (typename CommandBucket<T>::Entry**)r2::mem::utils::PointerAdd(startOfSortedArray, sizeof(r2::SArray<CommandBucket<T>::Entry*>));
+
+
 			cmdBkt->entries = startOfArray;
 			cmdBkt->entries->Create(dataStart, capacity);
+
+			cmdBkt->sortedEntries = startOfSortedArray;
+			cmdBkt->sortedEntries->Create(startOfSortedData, capacity);
+
+
 			cmdBkt->KeyDecoder = decoderFunc;
 			cmdBkt->CamUpdate = camUpdateFunc;
 			return cmdBkt;
@@ -178,7 +200,9 @@ namespace r2::draw
 	template<typename T>
 	u64 CommandBucket<T>::MemorySize(u64 capacity)
 	{
-		return sizeof(CommandBucket<T>) + r2::SArray<CommandBucket<T>::Entry>::MemorySize(capacity);
+		return sizeof(CommandBucket<T>) +
+			r2::SArray<CommandBucket<T>::Entry>::MemorySize(capacity) +
+			r2::SArray<CommandBucket<T>::Entry*>::MemorySize(capacity);
 	}
 
 }
