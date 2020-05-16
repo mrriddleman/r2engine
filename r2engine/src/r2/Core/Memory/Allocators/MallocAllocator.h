@@ -30,7 +30,7 @@ namespace r2::mem
         
         inline u64 GetTotalBytesAllocated() const {return mAllocatedMemory;}
         inline u64 GetTotalMemory() const {return std::numeric_limits<u32>::max();}
-        inline const void* StartPtr() const {return nullptr;}
+        inline const void* StartPtr() const {return mBoundary.location;}
         static u32 HeaderSize() {return sizeof(utils::Header);}
         inline u64 UnallocatedBytes() const {return GetTotalMemory() - GetTotalBytesAllocated();}
     private:

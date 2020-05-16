@@ -38,6 +38,7 @@ table Mesh
 
 table Model
 {
+	name:ulong (hash:"fnv1a_64");
 	meshes:[Mesh];
 	material:Material;
 }

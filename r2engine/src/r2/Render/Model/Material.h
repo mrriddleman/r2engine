@@ -15,7 +15,7 @@ namespace r2::draw
 		glm::vec4 color = glm::vec4(1.0f);
 	};
 
-	using MaterialHandle = s32;
+	using MaterialHandle = u32;
 
 }
 

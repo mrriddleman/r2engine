@@ -29,11 +29,14 @@ namespace r2::mem
        //this should point to before the offset and header
         byte* pointer = (byte*)utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset + sizeof(utils::Header)), alignment), offset + sizeof(utils::Header));
         
-        if(static_cast<byte*>(utils::PointerAdd(pointer, size + sizeof(utils::Header))) >= static_cast<byte*>(mEnd))
+        byte* newCurrent = static_cast<byte*>(utils::PointerAdd(pointer, size + sizeof(utils::Header)));
+        byte* theEnd = static_cast<byte*>(mEnd);
+        if(newCurrent >= theEnd)
         {
-            u64 bytesLeft = utils::PointerOffset(mCurrent, mEnd);
-            u64 bytesRequested = size + sizeof(utils::Header);
-            R2_CHECK(false, "We can't fit that size! We have: %llu and requesting: %llu, difference of: %llu", bytesLeft, bytesRequested, bytesRequested - bytesLeft);
+            s64 bytesLeft = utils::PointerOffset(mCurrent, mEnd);
+            s64 bytesRequested = size + sizeof(utils::Header);
+
+            R2_CHECK(false, "We can't fit that size! We have: %lli and requesting: %lli, difference of: %lli", bytesLeft, bytesRequested, bytesRequested - bytesLeft);
             return nullptr;
         }
         

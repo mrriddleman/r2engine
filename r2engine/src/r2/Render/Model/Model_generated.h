@@ -258,9 +258,13 @@ inline flatbuffers::Offset<Mesh> CreateMeshDirect(
 struct Model FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ModelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MESHES = 4,
-    VT_MATERIAL = 6
+    VT_NAME = 4,
+    VT_MESHES = 6,
+    VT_MATERIAL = 8
   };
+  uint64_t name() const {
+    return GetField<uint64_t>(VT_NAME, 0);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<r2::Mesh>> *meshes() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<r2::Mesh>> *>(VT_MESHES);
   }
@@ -269,6 +273,7 @@ struct Model FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_NAME) &&
            VerifyOffset(verifier, VT_MESHES) &&
            verifier.VerifyVector(meshes()) &&
            verifier.VerifyVectorOfTables(meshes()) &&
@@ -282,6 +287,9 @@ struct ModelBuilder {
   typedef Model Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_name(uint64_t name) {
+    fbb_.AddElement<uint64_t>(Model::VT_NAME, name, 0);
+  }
   void add_meshes(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::Mesh>>> meshes) {
     fbb_.AddOffset(Model::VT_MESHES, meshes);
   }
@@ -302,9 +310,11 @@ struct ModelBuilder {
 
 inline flatbuffers::Offset<Model> CreateModel(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t name = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::Mesh>>> meshes = 0,
     flatbuffers::Offset<r2::Material> material = 0) {
   ModelBuilder builder_(_fbb);
+  builder_.add_name(name);
   builder_.add_material(material);
   builder_.add_meshes(meshes);
   return builder_.Finish();
@@ -312,11 +322,13 @@ inline flatbuffers::Offset<Model> CreateModel(
 
 inline flatbuffers::Offset<Model> CreateModelDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t name = 0,
     const std::vector<flatbuffers::Offset<r2::Mesh>> *meshes = nullptr,
     flatbuffers::Offset<r2::Material> material = 0) {
   auto meshes__ = meshes ? _fbb.CreateVector<flatbuffers::Offset<r2::Mesh>>(*meshes) : 0;
   return r2::CreateModel(
       _fbb,
+      name,
       meshes__,
       material);
 }

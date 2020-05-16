@@ -9,6 +9,7 @@
 *.vcxproj
 *.sln
 *.vcxproj.filters
+*.modl
 
 /bin/
 /bin_int/
@@ -34,7 +35,7 @@ r2engine/*xcodeproj/
 r2engine/*.vcxproj
 r2engine/r2engine.vcxproj.user
 
-
+r2engine/assets/models/bin/
 r2engine/vendor/glad/bin-int/
 r2engine/vendor/glad/glad.vcxproj.user
 r2engine/vendor/loguru/bin-int/

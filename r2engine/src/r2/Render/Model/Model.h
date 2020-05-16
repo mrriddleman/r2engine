@@ -18,6 +18,7 @@ namespace r2::draw
 {
     struct Model
     {
+        u64 hash = 0;
         r2::SArray<Mesh>* optrMeshes = nullptr;
         MaterialHandle materialHandle = mat::InvalidMaterial;
         glm::mat4 globalInverseTransform = glm::mat4(1.0f);
@@ -44,7 +45,7 @@ namespace r2::draw
             return nullptr;
         }
             
-        newModel->optrMeshes = MAKE_SARRAY_VERBOSE(arena, Mesh, numMeshes, file, line, description);
+        newModel->optrMeshes = MAKE_SARRAY(arena, Mesh, numMeshes);
 
         if (!newModel->optrMeshes)
         {

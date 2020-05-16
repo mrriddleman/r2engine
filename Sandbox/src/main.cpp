@@ -25,6 +25,11 @@
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
+#include "r2/Render/Renderer/Renderer.h"
+#include "r2/Render/Renderer/BufferLayout.h"
+#include "r2/Render/Renderer/Commands.h"
+#include "r2/Render/Renderer/RenderKey.h"
+#include "r2/Render/Model/Model.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -242,8 +247,8 @@ public:
         r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
         r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
-        r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
-        assetCache = r2::asset::lib::CreateAssetCache(boundary, files);
+        assetCacheBoundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
+        assetCache = r2::asset::lib::CreateAssetCache(assetCacheBoundary, files);
 
         assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
         
@@ -274,7 +279,39 @@ public:
             });
         }
 #endif
-        
+        //make the buffer layouts
+        layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
+
+        r2::draw::BufferLayoutConfiguration layoutConfig{
+            {
+                {{r2::draw::ShaderDataType::Float3, "aPos"},
+                 {r2::draw::ShaderDataType::Float3, "aNormal"},
+                 {r2::draw::ShaderDataType::Float2, "aTexCoord"}}
+            },
+            {
+                Megabytes(1),
+                r2::draw::VertexDrawTypeStatic
+            },
+            {
+                Megabytes(1),
+                r2::draw::VertexDrawTypeStatic
+            }
+        };
+
+        r2::sarr::Push(*layouts, layoutConfig);
+
+        bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
+        R2_CHECK(success, "We couldn't create the buffer layouts!");
+
+        r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+
+        //fill the buffers with data
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
+
+        r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
+        r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
+        r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
+
         return assetCache != nullptr;
     }
     
@@ -427,9 +464,33 @@ public:
         
         
     }
+
+    virtual void Render(float alpha) override
+    {
+        //add my commands here
+        r2::draw::key::Basic clearKey;
+
+        r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
+        clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER;
+
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
+        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, quadModel->materialHandle);
+
+        r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+
+        r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
+        drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
+        drawIndexedCMD->startIndex = 0;
+        drawIndexedCMD->bufferLayoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
+        drawIndexedCMD->vertexBufferHandle = r2::sarr::At(*handles.vertexBufferHandles, 0);
+        drawIndexedCMD->indexBufferHandle = r2::sarr::At(*handles.indexBufferHandles, 0);
+
+    }
     
     virtual void Shutdown() override
     {
+        FREE(layouts, *linearArenaPtr);
+
         u64 size = r2::sarr::Size(*assetsBuffers);
         
         for (u64 i = 0; i < size; ++i)
@@ -439,8 +500,11 @@ public:
             assetCache->ReturnAssetBuffer(record);
         }
         
+        FREE(assetCacheBoundary.location, *linearArenaPtr);
         FREE(assetsBuffers, *linearArenaPtr);
         r2::asset::lib::DestroyCache(assetCache);
+
+        FREE_EMPLACED_ARENA(linearArenaPtr);
     }
     
     virtual std::string GetSoundDefinitionPath() const override
@@ -510,9 +574,10 @@ private:
     
     r2::asset::AssetCache* assetCache;
     bool reload;
-    
+    r2::mem::utils::MemBoundary assetCacheBoundary;
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
+    r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
 };
 
 namespace

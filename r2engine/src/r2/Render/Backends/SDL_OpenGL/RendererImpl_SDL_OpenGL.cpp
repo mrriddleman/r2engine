@@ -9,6 +9,7 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Renderer/Commands.h"
 #include <SDL2/SDL.h>
 #include "glad/glad.h"
 
@@ -55,6 +56,11 @@ namespace r2::draw
 	u32 VertexDrawTypeStatic = GL_STATIC_DRAW;
 	u32 VertexDrawTypeStream = GL_STREAM_DRAW;
 	u32 VertexDrawTypeDynamic = GL_DYNAMIC_DRAW;
+}
+
+namespace r2::draw::cmd
+{
+	u32 CLEAR_COLOR_BUFFER = GL_COLOR_BUFFER_BIT;
 }
 
 namespace r2::draw::rendererimpl
@@ -209,7 +215,7 @@ namespace r2::draw::rendererimpl
 		//@TODO(Serge): implement
 	}
 
-	void SetMaterialID(u32 materialID)
+	void SetMaterialID(r2::draw::MaterialHandle materialID)
 	{
 		const Material* material = mat::GetMaterial(materialID);
 
@@ -219,6 +225,7 @@ namespace r2::draw::rendererimpl
 
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
+			r2::draw::shader::SetMat4(*shader, "model", glm::mat4(1.0f));
 			r2::draw::shader::SetMat4(*shader, "projection", s_currentOpenGLState.projMat);
 			r2::draw::shader::SetMat4(*shader, "view", s_currentOpenGLState.viewMat);
 			r2::draw::shader::SetVec4(*shader, "color", material->color);

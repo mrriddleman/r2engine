@@ -38,34 +38,39 @@ namespace r2::draw::flat
 			return nullptr;
 		}
 
+		theModel->hash = flatModel->name();
+
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; i++)
 		{
 			const u64 numVertices = flatModel->meshes()->Get(i)->numVertices();
 			const u64 numIndices = flatModel->meshes()->Get(i)->numFaces() * 3; //* 3 for indices
 
 			r2::draw::Mesh nextMesh;
-			nextMesh = MAKE_MESH(arena, numVertices, numIndices, 0); //@TODO(Serge): fix
+			nextMesh = MAKE_MESH(arena, numVertices, numIndices, 0); //@TODO(Serge): fix 0
 
-			//load the positions
-			const auto numPositions = flatModel->meshes()->Get(i)->positions()->size();
-			for (flatbuffers::uoffset_t p = 0; p < numPositions; ++p)
+			for (flatbuffers::uoffset_t v = 0; v < numVertices; ++v)
 			{
-				auto* pos = flatModel->meshes()->Get(i)->positions()->Get(p);
-				r2::sarr::Push(*nextMesh.optrPositions, glm::vec3(pos->x(), pos->y(), pos->z()));
-			}
+				r2::draw::Vertex nextVertex;
 
-			const auto numNormals = flatModel->meshes()->Get(i)->normals()->size();
-			for (flatbuffers::uoffset_t n = 0; n < numNormals; ++n)
-			{
-				auto* normal = flatModel->meshes()->Get(i)->normals()->Get(n);
-				r2::sarr::Push(*nextMesh.optrNormals, glm::vec3(normal->x(), normal->y(), normal->z()));
-			}
+				const auto* positions = flatModel->meshes()->Get(i)->positions();
+				const auto* normals = flatModel->meshes()->Get(i)->normals();
+				const auto* texCoords = flatModel->meshes()->Get(i)->textureCoords();
 
-			const auto numTexCoords = flatModel->meshes()->Get(i)->textureCoords()->size();
-			for (flatbuffers::uoffset_t t = 0; t < numTexCoords; ++t)
-			{
-				auto* texCoord = flatModel->meshes()->Get(i)->textureCoords()->Get(t);
-				r2::sarr::Push(*nextMesh.optrTexCoords, glm::vec2(texCoord->x(), texCoord->y()));
+				R2_CHECK(positions != nullptr, "We should have positions always!");
+
+				nextVertex.position = glm::vec3(positions->Get(v)->x(), positions->Get(v)->y(), positions->Get(v)->z());
+
+				if (normals)
+				{
+					nextVertex.normal = glm::vec3(normals->Get(v)->x(), normals->Get(v)->y(), normals->Get(v)->z());
+				}
+				
+				if (texCoords)
+				{
+					nextVertex.texCoords = glm::vec2(texCoords->Get(v)->x(), texCoords->Get(v)->y());
+				}
+
+				r2::sarr::Push(*nextMesh.optrVertices, nextVertex);
 			}
 
 			const auto numFaces = flatModel->meshes()->Get(i)->numFaces();

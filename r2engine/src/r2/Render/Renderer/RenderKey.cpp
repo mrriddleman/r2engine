@@ -20,11 +20,11 @@ namespace r2::draw::key
 	const u8 Basic::TR_ADDITIVE = 2;
 	const u8 Basic::TR_SUBTRACTIVE = 3;
 
-
-	bool CompareKey(const Basic& k1, const Basic& k2)
+	bool CompareKey(const Basic& a, const Basic& b)
 	{
-		return k1.keyValue < k2.keyValue;
+		return a.keyValue < b.keyValue;
 	}
+	
 
 	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, u8 viewportLayer, u8 translucency, u32 depth, u32 materialID)
 	{
@@ -42,6 +42,13 @@ namespace r2::draw::key
 
 	void DecodeBasicKey(const Basic& key)
 	{
+		//kind of a huge hack right now
+		//we need some way of saying don't do anything for things like Fill*Buffer
+		if (key.keyValue == 0)
+		{
+			return;
+		}
+
 		u32 fullScreenLayer = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_FULL_SCREEN_LAYER, Basic::KEY_FULL_SCREEN_LAYER_OFFSET);
 		u32 viewport = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_VIEWPORT, Basic::KEY_VIEWPORT_OFFSET);
 		u32 viewportLayer = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_VIEWPORT_LAYER, Basic::KEY_VIEWPORT_LAYER_OFFSET);

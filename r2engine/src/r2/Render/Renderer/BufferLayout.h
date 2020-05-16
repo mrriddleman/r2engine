@@ -59,6 +59,8 @@ namespace r2::draw
         BufferLayout();
         BufferLayout(const std::initializer_list<BufferElement>& elements, VertexType vertexType = VertexType::Vertex);
         
+
+
         inline u32 GetStride() const {return mStride;}
         inline const std::vector<BufferElement>& GetElements() const {return mElements;}
         inline VertexType GetVertexType() const {return mVertexType;}

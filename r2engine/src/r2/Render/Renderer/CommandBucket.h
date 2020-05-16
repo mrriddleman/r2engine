@@ -64,11 +64,6 @@ namespace r2::draw
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt);
 		template<typename T> inline u64 Capacity(const CommandBucket<T>& bkt);
 
-		template<typename T> inline T* Begin(CommandBucket<T>& arr);
-		template<typename T> inline const T* Begin(const CommandBucket<T>& arr);
-		template<typename T> inline T* End(CommandBucket<T>& arr);
-		template<typename T> inline const T* End(const CommandBucket<T>& arr);
-
 		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, typename CommandBucket<T>::CameraUpdateFunc camFunc, const char* file, s32 line, const char* description);
 	}
 
@@ -96,7 +91,7 @@ namespace r2::draw
 
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
-			for (u64 i = numEntries-1; i >= 0; --i)
+			for (s64 i = static_cast<s64>(numEntries) -1; i >= 0; --i)
 			{
 				FREE(r2::sarr::At(*bkt.entries, i).data, arena);
 			}
@@ -155,34 +150,13 @@ namespace r2::draw
 			return r2::sarr::Capacity(*bkt.entries);
 		}
 
-		template<typename T> inline T* Begin(CommandBucket<T>& bkt)
-		{
-			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			return &r2::sarr::Begin(*bkt.entries)->aKey;
-		}
-
-		template<typename T> inline const T* Begin(const CommandBucket<T>& bkt)
-		{
-			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			return &r2::sarr::Begin(*bkt.entries)->aKey;
-		}
-
-		template<typename T> inline T* End(CommandBucket<T>& bkt)
-		{
-			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			return &r2::sarr::End(*bkt.entries)->aKey;
-		}
-
-		template<typename T> inline const T* End(const CommandBucket<T>& bkt)
-		{
-			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			return &r2::sarr::End(*bkt.entries)->aKey;
-		}
-
 		template<typename T> inline void Sort(CommandBucket<T>& bkt, CompareFunction<T> cmp)
 		{
 			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
-			std::sort(Begin(bkt), End(bkt), cmp);
+			std::sort(r2::sarr::Begin(*bkt.entries), r2::sarr::End(*bkt.entries), [cmp](const CommandBucket<T>::Entry& a, const CommandBucket<T>::Entry& b)
+				{
+					return cmp(a.aKey, b.aKey);
+				});
 		}
 
 		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, typename CommandBucket<T>::CameraUpdateFunc camUpdateFunc, const char* file, s32 line, const char* description)

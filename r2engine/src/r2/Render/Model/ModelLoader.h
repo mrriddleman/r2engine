@@ -21,9 +21,9 @@ namespace r2::draw
     Model* LoadModel(ARENA& arena, const char* filePath)
     {
         char extension[r2::fs::FILE_PATH_LENGTH];
-        bool success = r2::fs::utils::CopyFileExtension(filePath, extension);
+        bool success = r2::fs::utils::CopyFileExtensionWithoutTheDot(filePath, extension);
 
-        if (success)
+        if (!success)
         {
             R2_CHECK(false, "Failed to get the extension for the filepath: %s", filePath);
             return nullptr;
@@ -32,7 +32,7 @@ namespace r2::draw
         if (strcmp(extension, r2::ModelExtension()) == 0)
         {
             //use the flat version
-            Model* model = r2::draw::flat::LoadModel(arena, filePath);
+            Model* model = r2::draw::flat::LoadModel<ARENA>(arena, filePath);
             R2_CHECK(model != nullptr, "Failed to load the model at filepath: %s", filePath);
             return model;
         }

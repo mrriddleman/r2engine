@@ -29,12 +29,30 @@ namespace r2::draw
 		struct Basic;
 	}
 
-	template <typename T = r2::draw::key::Basic>
-	struct CommandBucket;
+	//template <typename T = r2::draw::key::Basic>
+	//struct CommandBucket;
+
+	enum DefaultModel
+	{
+		QUAD = 0,
+		NUM_DEFAULT_MODELS
+	};
+
+	struct Model;
+}
+
+namespace r2::draw::cmd
+{
+	struct Clear;
+	struct DrawIndexed;
+	struct FillIndexBuffer;
+	struct FillVertexBuffer;
 }
 
 namespace r2::draw::renderer
 {
+	
+
 	//basic stuff
 	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath);
 	void Update();
@@ -48,10 +66,15 @@ namespace r2::draw::renderer
 
 	//Regular methods
 	BufferHandles& GetBufferHandles();
+	Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
 
-	//@TODO(Serge): rethink this function
-	template<class CMD>
-	CMD* AddCommand(r2::draw::key::Basic key);
+
+	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
+	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);
+	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
+	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);
+	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key);
+	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key);
 
 	//@TODO(Serge): rethink this function
 	void SetCameraPtrOnBucket(r2::Camera* cameraPtr);

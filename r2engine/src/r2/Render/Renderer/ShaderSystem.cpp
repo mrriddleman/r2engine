@@ -25,6 +25,12 @@ namespace r2::draw
 namespace
 {
     r2::draw::ShaderSystem* s_optrShaderSystem = nullptr;
+
+    const u64 ALIGNMENT = 16;
+
+    const u64 SHADER_LOADING_SIZE = Kilobytes(512);
+
+    const u64 NUM_MANIFESTS_TO_LOAD = 1;
 }
 
 namespace r2::draw::shadersystem
@@ -32,6 +38,8 @@ namespace r2::draw::shadersystem
 
     bool LoadShadersFromManifestFile();
     void DeleteLoadedShaders();
+    ShaderHandle MakeShaderHandleFromIndex(u64 index);
+    u64 GetIndexFromShaderHandle(ShaderHandle handle);
 
     bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath)
     {
@@ -98,7 +106,7 @@ namespace r2::draw::shadersystem
         s_optrShaderSystem->mShaders = MAKE_SARRAY(*shaderLinearArena, r2::draw::Shader, capacity);
         s_optrShaderSystem->mShadersToReload = MAKE_SARRAY(*shaderLinearArena, ShaderHandle, capacity);
         r2::util::PathCpy(s_optrShaderSystem->mShaderManifestPath, shaderManifestPath);
-        s_optrShaderSystem->mShaderLoadingArena = MAKE_STACK_ARENA(*shaderLinearArena, Kilobytes(512));
+        s_optrShaderSystem->mShaderLoadingArena = MAKE_STACK_ARENA(*shaderLinearArena, SHADER_LOADING_SIZE * NUM_MANIFESTS_TO_LOAD);
 
         R2_CHECK(s_optrShaderSystem->mShaderLoadingArena != nullptr, "We couldn't make the loading arena");
         R2_CHECK(s_optrShaderSystem->mShaders != nullptr, "we couldn't allocate the array for materials?");
@@ -165,12 +173,12 @@ namespace r2::draw::shadersystem
             const Shader& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
             if (nextShader.shaderProg == shader.shaderProg)
             {
-                return static_cast<ShaderHandle>(i);
+                return MakeShaderHandleFromIndex(i);
             }
         }
 
         r2::sarr::Push(*s_optrShaderSystem->mShaders, shader);
-        return static_cast<ShaderHandle>(numShaders);
+        return MakeShaderHandleFromIndex(numShaders);
     }
 
     ShaderHandle FindShaderHandle(const Shader& shader)
@@ -188,7 +196,7 @@ namespace r2::draw::shadersystem
             const Shader& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
             if (nextShader.shaderProg == shader.shaderProg)
             {
-                return static_cast<ShaderHandle>(i);
+                return MakeShaderHandleFromIndex(i);
             }
         }
 
@@ -210,7 +218,7 @@ namespace r2::draw::shadersystem
             const Shader& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
             if (nextShader.shaderID == shaderName)
             {
-                return static_cast<ShaderHandle>(i);
+                return MakeShaderHandleFromIndex(i);
             }
         }
 
@@ -225,12 +233,14 @@ namespace r2::draw::shadersystem
             return nullptr;
         }
 
-        if (handle >= r2::sarr::Size(*s_optrShaderSystem->mShaders))
+        u64 index = GetIndexFromShaderHandle(handle);
+
+        if (index >= r2::sarr::Size(*s_optrShaderSystem->mShaders))
         {
             return nullptr;
         }
 
-        return &r2::sarr::At(*s_optrShaderSystem->mShaders, handle);
+        return &r2::sarr::At(*s_optrShaderSystem->mShaders, index);
     }
 
     void Shutdown()
@@ -244,6 +254,9 @@ namespace r2::draw::shadersystem
         DeleteLoadedShaders();
 
         r2::mem::LinearArena* shaderArena = s_optrShaderSystem->mLinearArena;
+
+        FREE(s_optrShaderSystem->mShaderLoadingArena, *shaderArena);
+        FREE(s_optrShaderSystem->mShadersToReload, *shaderArena);
 
         FREE(s_optrShaderSystem->mShaders, *shaderArena);
 
@@ -261,15 +274,17 @@ namespace r2::draw::shadersystem
 #endif
         u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
-        u64 memorySize =
-            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), 64, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), 64, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(Kilobytes(512), 64, headerSize, boundsChecking) + //for the shader manifest loading
-            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::ShaderSystem), 64, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), alignof(r2::draw::Shader), headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numShaders), alignof(r2::draw::ShaderHandle), headerSize, boundsChecking);
+        u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
 
-        return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, 64);
+        u64 memorySize =
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(SHADER_LOADING_SIZE, ALIGNMENT, stackHeaderSize, boundsChecking) * NUM_MANIFESTS_TO_LOAD + //for the shader manifest loading
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::ShaderSystem), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking);
+
+        return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
     }
 
     void DeleteLoadedShaders()
@@ -333,9 +348,10 @@ namespace r2::draw::shadersystem
 
     void ReloadManifestFile(const std::string& manifestFilePath)
     {
+
         if (s_optrShaderSystem == nullptr)
         {
-            R2_CHECK(false, "We haven't initialized the shader system yet!");
+        //    R2_CHECK(false, "We haven't initialized the shader system yet!");
             return;
         }
 
@@ -363,5 +379,32 @@ namespace r2::draw::shadersystem
     }
 #endif // R2_ASSET_PIPELINE
 
+    ShaderHandle MakeShaderHandleFromIndex(u64 index)
+    {
+        if (s_optrShaderSystem == nullptr)
+        {
+            R2_CHECK(false, "shader system hasn't been initialized yet!");
+            return InvalidShader;
+        }
 
+        const u64 numShaders = r2::sarr::Size(*s_optrShaderSystem->mShaders);
+        if (index >= numShaders)
+        {
+            R2_CHECK(false, "the index is greater than the number of shaders we have!");
+            return InvalidShader;
+        }
+
+        return static_cast<ShaderHandle>(index + 1);
+    }
+    
+    u64 GetIndexFromShaderHandle(ShaderHandle handle)
+    {
+        if (handle == InvalidShader)
+        {
+            R2_CHECK(false, "You passed in an invalid shader handle!");
+            return 0;
+        }
+
+        return static_cast<u64>(handle - 1);
+    }
 }

@@ -77,6 +77,16 @@ namespace r2::fs::utils
         
         return result && ext && strlen(ext) > 0;
     }
+
+    bool CopyFileExtensionWithoutTheDot(const char* path, char* ext)
+    {
+        char* tempPath = const_cast<char*>(path);
+        char* result = GetLastSubPath(tempPath, ext, PATH_SEPARATOR);
+
+        result = GetLastSubPath(result, ext, FILE_EXTENSION_DELIM);
+
+        return result && ext && strlen(ext) > 0;
+    }
     
     bool CopyDirectoryOfFile(const char* filePath, char* path)
     {

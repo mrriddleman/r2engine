@@ -11,17 +11,11 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelLoader.h"
+#include "r2/Utils/Hash.h"
 #include <filesystem>
 
 namespace r2::draw
 {
-
-	enum DefaultModels
-	{
-		QUAD = 0,
-		NUM_DEFAULT_MODELS
-	};
-
 	struct ModelSystem
 	{
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
@@ -59,7 +53,7 @@ namespace
 	r2::draw::Renderer* s_optrRenderer = nullptr;
 
 	const u64 COMMAND_CAPACITY = 2048;
-	const u64 ALIGNMENT = 64;
+	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
 	const u64 MAX_NUM_MATERIALS = 2048;
 	const u64 MAX_NUM_SHADERS = 1000;
@@ -176,7 +170,24 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		cmdbkt::Sort(*s_optrRenderer->mCommandBucket, r2::draw::key::CompareKey);
+		//const u64 numEntries = r2::sarr::Size(*s_optrRenderer->mCommandBucket->entries);
+
+		//for (u64 i = 0; i < numEntries; ++i)
+		//{
+		//	const r2::draw::CommandBucket<r2::draw::key::Basic>::Entry& entry = r2::sarr::At(*s_optrRenderer->mCommandBucket->entries, i);
+		//	printf("entry - key: %llu, data: %p, func: %p\n", entry.aKey.keyValue, entry.data, entry.func);
+		//}
+
+		//printf("================================================\n");
+		//cmdbkt::Sort(*s_optrRenderer->mCommandBucket, r2::draw::key::CompareKey);
+
+		//for (u64 i = 0; i < numEntries; ++i)
+		//{
+		//	const r2::draw::CommandBucket<r2::draw::key::Basic>::Entry& entry = r2::sarr::At(*s_optrRenderer->mCommandBucket->entries, i);
+		//	printf("entry - key: %llu, data: %p, func: %p\n", entry.aKey.keyValue, entry.data, entry.func);
+		//}
+
+
 		cmdbkt::Submit(*s_optrRenderer->mCommandBucket);
 
 		cmdbkt::ClearAll(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket);
@@ -311,14 +322,16 @@ namespace r2::draw::renderer
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
+		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+
 		u64 memorySize =
-			sizeof(r2::mem::LinearArena) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::BufferLayoutHandle), headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::VertexBufferHandle), headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), alignof(r2::draw::VertexBufferHandle), headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackAllocator) + cmd::LargestCommand() * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking);
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
 	}
@@ -335,6 +348,11 @@ namespace r2::draw::renderer
 
 	r2::draw::CommandBucket<r2::draw::key::Basic>& GetCommandBucket()
 	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+		}
+
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 		return *s_optrRenderer->mCommandBucket;
 	}
@@ -342,13 +360,150 @@ namespace r2::draw::renderer
 	template<class CMD>
 	CMD* AddCommand(r2::draw::key::Basic key)
 	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 
 		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, CMD>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
 	}
 
+	r2::draw::Model* GetDefaultModel(r2::draw::DefaultModel defaultModel)
+	{
+		if (s_optrRenderer == nullptr ||
+			s_optrRenderer->mModelSystem.mDefaultModels == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		return r2::sarr::At(*s_optrRenderer->mModelSystem.mDefaultModels, defaultModel);
+	}
+
+	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return 0;
+		}
+
+		if (model == nullptr)
+		{
+			R2_CHECK(false, "We don't have a proper model!");
+			return 0;
+		}
+
+		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+
+		u64 currentOffset = offset;
+		for (u64 i = 0; i < numMeshes; ++i)
+		{
+			r2::draw::key::Basic fillKey;
+			//@TODO(Serge): I dunno if this is right
+			fillKey.keyValue = currentOffset;
+
+			r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey);
+			currentOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
+		}
+
+		return currentOffset;
+	}
+
+	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return 0;
+		}
+
+		if (model == nullptr)
+		{
+			R2_CHECK(false, "We don't have a proper model!");
+			return 0;
+		}
+
+		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+
+		u64 currentOffset = offset;
+		for (u64 i = 0; i < numMeshes; ++i)
+		{
+			r2::draw::key::Basic fillKey;
+			//@TODO(Serge): I dunno if this is right
+			fillKey.keyValue = currentOffset;
+
+			r2::draw::cmd::FillIndexBuffer* fillIndexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(fillKey);
+			currentOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
+		}
+
+		return currentOffset;
+	}
+
+	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, r2::draw::cmd::Clear>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+	}
+
+	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, r2::draw::cmd::DrawIndexed>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+	}
+
+	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, r2::draw::cmd::FillIndexBuffer>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+	}
+
+	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, r2::draw::cmd::FillVertexBuffer>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+	}
+
+
 	void SetCameraPtrOnBucket(r2::Camera* cameraPtr)
 	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 		r2::draw::cmdbkt::SetCamera(*s_optrRenderer->mCommandBucket, cameraPtr);
 	}
@@ -451,8 +606,13 @@ namespace r2::draw::modelsystem
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), 64, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(Model::MemorySize(1, 4, 6, 0), 64, headerSize, boundsChecking); //For quad
+
+		u64 quadModelSize = Model::MemorySize(1, 4, 6, 0);
+
+		return
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking); //For quad
 
 	}
 
@@ -470,14 +630,22 @@ namespace r2::draw::modelsystem
 			{
 				continue;
 			}
+			char filePath[r2::fs::FILE_PATH_LENGTH];
 
-			Model* nextModel = LoadModel<r2::mem::LinearArena>(*s_optrRenderer->mModelSystem.mSubAreaArena, file.path().string().c_str());
+			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), filePath);
+
+			Model* nextModel = LoadModel<r2::mem::LinearArena>(*s_optrRenderer->mModelSystem.mSubAreaArena, filePath);
 			if (!nextModel)
 			{
 				R2_CHECK(false, "Failed to load the model: %s", file.path().string().c_str());
 				return false;
 			}
-			r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, nextModel);
+
+			if (nextModel->hash == STRING_ID("Quad"))
+			{
+				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::QUAD] = nextModel;
+				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
+			}
 		}
 
 		return true;

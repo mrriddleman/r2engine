@@ -1,0 +1,11 @@
+{
+  manifests: [
+    {
+      shaderName: 3292306756035476612,
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.fs",
+      geometryPath: "",
+      binaryPath: ""
+    }
+  ]
+}

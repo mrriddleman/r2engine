@@ -39,6 +39,8 @@ namespace r2::fs::utils
     
     bool CopyFileExtension(const char* path, char* ext);
     
+    bool CopyFileExtensionWithoutTheDot(const char* path, char* ext);
+
     bool CopyDirectoryOfFile(const char* filePath, char* path);
     
     char* GetLastSubPath(const char* path, char* subPath, const char delim = PATH_SEPARATOR);

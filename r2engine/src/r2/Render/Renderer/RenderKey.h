@@ -4,7 +4,7 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 
 #define MAX_BIT_VAL(x) static_cast<u64>((2 << (static_cast<u64>(x)-1))-1)
-#define ENCODE_KEY_VALUE(value, num_bits, offset) ((MAX_BIT_VAL(num_bits) | static_cast<u64>(value)) << static_cast<u64>(offset))
+#define ENCODE_KEY_VALUE(value, num_bits, offset) ((MAX_BIT_VAL(num_bits) & static_cast<u64>(value)) << static_cast<u64>(offset))
 #define DECODE_KEY_VALUE(key, num_bits, offset) ( ((MAX_BIT_VAL(num_bits) << static_cast<u64>(offset)) & static_cast<u64>(key)) >> static_cast<u64>(offset))
 
 namespace r2::draw::key
@@ -57,7 +57,8 @@ namespace r2::draw::key
 
 	};
 
-	bool CompareKey(const Basic& k1, const Basic& k2);
+	bool CompareKey(const Basic& a, const Basic& b);
+
 	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, u8 viewportLayer, u8 translucency, u32 depth, u32 materialID);
 	
 	void DecodeBasicKey(const Basic& key);

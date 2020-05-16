@@ -17,11 +17,12 @@ namespace r2::draw
 namespace
 {
 	r2::draw::MaterialSystem* s_optrMaterialSystem = nullptr;
+	const u64 ALIGNMENT = 64;
 }
 
 namespace r2::draw::mat
 {
-	const MaterialHandle InvalidMaterialHandle = -1;
+	const MaterialHandle InvalidMaterialHandle = 0;
 
 	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity)
 	{
@@ -103,16 +104,14 @@ namespace r2::draw::mat
 		for (u64 i = 0; i < numMaterials; ++i)
 		{
 			const Material& nextMaterial = r2::sarr::At(*s_optrMaterialSystem->mMaterials, i);
-			if (mat.shaderId == nextMaterial.shaderId &&
-				mat.textureId == nextMaterial.textureId &&
-				mat.color == nextMaterial.color)
+			if (mat.materialID == nextMaterial.materialID)
 			{
-				return static_cast<MaterialHandle>(i);
+				return static_cast<MaterialHandle>(i+1);
 			}
 		}
 
 		r2::sarr::Push(*s_optrMaterialSystem->mMaterials, mat);
-		return static_cast<MaterialHandle>(numMaterials);
+		return static_cast<MaterialHandle>(numMaterials + 1);
 	}
 
 	const Material* GetMaterial(MaterialHandle matID)
@@ -123,12 +122,18 @@ namespace r2::draw::mat
 			return nullptr;
 		}
 
-		if (matID >= r2::sarr::Size(*s_optrMaterialSystem->mMaterials))
+		if (matID == InvalidMaterialHandle)
+		{
+			R2_CHECK(false, "You passed in an invalid material handle");
+			return nullptr;
+		}
+
+		if ((matID-1) >= r2::sarr::Size(*s_optrMaterialSystem->mMaterials))
 		{
 			return nullptr;
 		}
 
-		return &r2::sarr::At(*s_optrMaterialSystem->mMaterials, matID);
+		return &r2::sarr::At(*s_optrMaterialSystem->mMaterials, matID-1);
 	}
 
 	void Shutdown()
@@ -159,9 +164,9 @@ namespace r2::draw::mat
 
 		u64 memorySize =
 			sizeof(r2::mem::LinearArena) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::MaterialSystem), 64, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Material>::MemorySize(numMaterials), alignof(r2::draw::Material), headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::MaterialSystem), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Material>::MemorySize(numMaterials), ALIGNMENT, headerSize, boundsChecking);
 
-		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, 64);
+		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
 	}
 }

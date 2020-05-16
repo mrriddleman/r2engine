@@ -52,13 +52,17 @@ namespace r2
             
             void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(mCurrent, offset), alignment), offset);
             
-            if(utils::PointerAdd(pointer, size) > mEnd)
+            byte* newCurrent = static_cast<byte*>(utils::PointerAdd(pointer, size));
+            if(newCurrent > static_cast<byte*>(mEnd))
             {
-                R2_CHECK(false, "We can't fit that size!");
+                s64 bytesOver = r2::mem::utils::PointerOffset(mEnd, newCurrent);
+                u64 bytesLeftInAllocator = r2::mem::utils::PointerOffset(mCurrent, mEnd);
+
+                R2_CHECK(false, "We can't fit that size! We're over by: %lli. We have %lli bytes left in the allocator before this allocation and we're requesting: %lli", bytesOver, bytesLeftInAllocator, size);
                 return nullptr;
             }
             
-            mCurrent = (byte*)utils::PointerAdd(pointer, size);
+            mCurrent = newCurrent;
             
             union
             {

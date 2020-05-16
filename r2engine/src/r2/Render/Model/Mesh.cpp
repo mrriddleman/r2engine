@@ -30,8 +30,7 @@ namespace r2::draw
     u64 Mesh::MemorySize(u64 numVertices, u64 numIndices, u64 numTextures)
     {
         return
-            r2::SArray<glm::vec3>::MemorySize(numVertices) * 2 + //positions + normals
-            r2::SArray<glm::vec2>::MemorySize(numVertices) + //texcoords
+            r2::SArray<r2::draw::Vertex>::MemorySize(numVertices)+
             r2::SArray<u32>::MemorySize(numIndices) +
             r2::SArray<Texture>::MemorySize(numTextures);
     }

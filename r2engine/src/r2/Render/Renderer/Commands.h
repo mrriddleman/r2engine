@@ -4,13 +4,21 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/BackendDispatch.h"
 
+
+namespace r2::draw
+{
+	struct Mesh;
+}
+
 namespace r2::draw::cmd
 {
+
+	extern u32 CLEAR_COLOR_BUFFER;
+
 	struct Clear
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
 		u32 flags;
-		
 	};
 	static_assert(std::is_pod<Clear>::value == true, "Clear must be a POD.");
 
@@ -63,7 +71,8 @@ namespace r2::draw::cmd
 	};
 
 	u64 LargestCommand();
-
+	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset = 0);
+	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset = 0);
 }
 
 #endif

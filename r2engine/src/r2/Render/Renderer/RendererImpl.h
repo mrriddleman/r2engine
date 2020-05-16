@@ -3,6 +3,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/RendererTypes.h"
+#include "r2/Render/Model/Material.h"
 
 namespace r2
 {
@@ -52,7 +53,7 @@ namespace r2::draw::rendererimpl
 	void UpdateCamera(const r2::Camera& camera);
 	void SetViewport(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
-	void SetMaterialID(u32 materialID);
+	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
 
 
 	//draw functions
