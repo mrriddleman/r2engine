@@ -6,63 +6,17 @@
 //
 
 #include "r2pch.h"
-#if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
+#if defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
 #include <SDL2/SDL.h>
-
+#include "r2/Core/File/PathUtils.h"
+#include "r2/Core/File/FileDevices/Storage/Disk/DiskFileUtils.h"
+#include <stdio.h>
 namespace r2
 {
     namespace fs
     {
-        void GetStringFileMode(char buf[4], FileMode mode)
-        {
-            u8 size = 0;
-            
-            if (mode.IsSet(Mode::Read) &&
-                !mode.IsSet(Mode::Append) &&
-                !mode.IsSet(Mode::Write) &&
-                !mode.IsSet(Recreate))
-            {
-                buf[size++] = 'r';
-            }
-            else if ((mode.IsSet(Mode::Read) && mode.IsSet(Mode::Write)) && !mode.IsSet(Mode::Recreate) && !mode.IsSet(Mode::Append))
-            {
-                buf[size++] = 'r';
-                buf[size++] = '+';
-            }
-            else if (mode.IsSet(Mode::Write) && !mode.IsSet(Mode::Read) && !mode.IsSet(Mode::Append))
-            {
-                buf[size++] = 'w';
-            }
-            else if (mode.IsSet(Mode::Write) && mode.IsSet(Mode::Read) && !mode.IsSet(Mode::Append))
-            {
-                buf[size++] = 'w';
-                buf[size++] = '+';
-            }
-            else if (mode.IsSet(Mode::Append) && !mode.IsSet(Mode::Read))
-            {
-                buf[size++] = 'a';
-            }
-            else if (mode.IsSet(Mode::Append) && mode.IsSet(Mode::Read))
-            {
-                buf[size++] = 'a';
-                buf[size++] = '+';
-            }
-            else
-            {
-                R2_CHECK(false, "Unknown FileMode combination!");
-            }
-            
-            //Always add at the end
-            if (mode.IsSet(Mode::Binary))
-            {
-                buf[size++] = 'b';
-            }
-            
-            buf[size] = '\0';
-        }
-
         DiskFile::DiskFile():mHandle(nullptr)
         {
         }
@@ -87,16 +41,16 @@ namespace r2
             }
             
             char strFileMode[4];
-            GetStringFileMode(strFileMode, mode);
+            utils::GetStringFileMode(strFileMode, mode);
 
             mHandle = SDL_RWFromFile(path, strFileMode);
-            //R2_CHECK(mHandle != nullptr, "Handle should not be nullptr!");
+
             if (mHandle)
             {
                 SetFilePath(path);
                 SetFileMode(mode);
             }
-            
+
             return mHandle != nullptr;
         }
         
@@ -104,7 +58,7 @@ namespace r2
         {
             R2_CHECK(IsOpen(), "Trying to close a closed file?");
             SDL_RWclose((SDL_RWops*)mHandle);
-            
+           
             mHandle = nullptr;
             SetFileDevice(nullptr);
             
