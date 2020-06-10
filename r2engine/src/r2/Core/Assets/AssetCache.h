@@ -12,6 +12,8 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#include "r2/Core/Assets/AssetTypes.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
@@ -29,16 +31,12 @@ namespace r2::asset
     class Asset;
     class DefaultAssetLoader;
     
-    using FileList = r2::SArray<AssetFile*>*;
-    using AssetHandle = u64;
-    using FileHandle = s64;
-    using AssetLoadProgressCallback = std::function<void (int, bool&)>;
-    
-    const u64 INVALID_ASSET_HANDLE = 0;
+    using AssetLoadProgressCallback = std::function<void(int, bool&)>;
+
     
     struct AssetCacheRecord
     {
-        r2::asset::AssetHandle handle = INVALID_ASSET_HANDLE;
+        r2::asset::AssetHandle handle;
         r2::asset::AssetBuffer* buffer = nullptr;
     };
     
@@ -70,9 +68,6 @@ namespace r2::asset
         void FlushAll();
         
         int Preload(const char* pattern, AssetLoadProgressCallback callback);
-        
-        
-
 
         //To be used for files and loaders
         template<class T>
@@ -88,8 +83,8 @@ namespace r2::asset
         void AddReloadFunction(AssetReloadedFunc func);
 #endif
         
-        static u64 TotalMemoryNeeded(u64 assetCapacity, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
-        
+        static u64 TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        static u64 CalculateTextureCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
     private:
         
         struct AssetBufferRef
@@ -102,6 +97,7 @@ namespace r2::asset
         using AssetMap = r2::SHashMap<AssetBufferRef>*;
         //using AssetFileMap = r2::SHashMap<FileHandle>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
+        using AssetNameMap = r2::SHashMap<Asset>*;
        
         AssetBuffer* Load(const Asset& asset, bool startCountAtOne = false);
         void UpdateLRU(AssetHandle handle);
@@ -114,27 +110,33 @@ namespace r2::asset
         s64 GetLRUIndex(AssetHandle handle);
         void RemoveFromLRU(AssetHandle handle);
 
+        u64 MemoryHighWaterMark();
+	
+
         FileList mnoptrFiles;
         AssetList mAssetLRU;
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
+        AssetNameMap mAssetNameMap;
+
         DefaultAssetLoader* mDefaultLoader;
-        u64 mSlot;
+        s64 mSlot;
+        u64 mMemoryHighWaterMark;
         
         r2::mem::PoolArena* mAssetBufferPoolPtr;
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
 #ifdef R2_ASSET_PIPELINE
+        //This is for debug only
         r2::mem::MallocArena mAssetCacheArena;
 #else
-        //This is for debug only
+        
         r2::mem::FreeListArena mAssetCacheArena;
 #endif
         
-        //@TODO(Serge): put in R2_DEBUG
 #ifdef R2_ASSET_PIPELINE
         struct AssetRecord
         {
-            AssetHandle handle = 0;
+            AssetHandle handle;
             std::string name;
         };
         struct AssetsToFile

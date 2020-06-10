@@ -26,6 +26,11 @@ table Face
 	indices:[uint];
 }
 
+table MaterialID
+{
+	name:ulong (hash:"fnv1a_64");
+}
+
 table Mesh
 {
 	numVertices:ulong;
@@ -34,13 +39,13 @@ table Mesh
 	normals:[Vertex3];
 	textureCoords:[Vertex2];
 	faces:[Face];
+	materials:[MaterialID];
 }
 
 table Model
 {
 	name:ulong (hash:"fnv1a_64");
 	meshes:[Mesh];
-	material:Material;
 }
 
 root_type Model;

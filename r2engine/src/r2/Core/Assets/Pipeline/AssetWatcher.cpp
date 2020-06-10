@@ -11,6 +11,8 @@
 #include "r2/Core/Assets/Pipeline/ShaderManifest.h"
 #include "r2/Core/Assets/Pipeline/AssetCompiler.h"
 #include "r2/Core/Assets/Pipeline/SoundDefinitionUtils.h"
+#include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
+#include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 
@@ -51,6 +53,9 @@ namespace r2::asset::pln
     FileWatcher s_shadersFileWatcher;
     //bool s_reloadShaderManifests = false;
     
+    TexturePackManifestCommand s_texturePackCommand;
+    MaterialPackManifestCommand s_materialPackCommand;
+
     std::thread s_assetWatcherThread;
     std::atomic_bool s_end;
     
@@ -74,16 +79,26 @@ namespace r2::asset::pln
     
     void LoadSoundDefinitions();
 
+
     //Shaders
     void ReloadShaderManifests();
   //  void SetReloadShaderManifests(std::string changedPath);
     void ShaderChangedRequest(std::string changedPath);
     
+
+    //Textures
+    void GenerateTexturePackManifestsIfNeeded();
+
+
+    void GenerateMaterialPackManifestsIfNeeded();
+
     void Init(  const std::string& flatbufferCompilerLocation,
               Milliseconds delay,
               const AssetCommand& assetCommand,
               const SoundDefinitionCommand& soundDefinitionCommand,
-              const ShaderManifestCommand& shaderCommand)
+              const ShaderManifestCommand& shaderCommand,
+              const TexturePackManifestCommand& texturePackCommand,
+              const MaterialPackManifestCommand& materialPackCommand)
     {
         
         s_flatBufferCompilerPath = flatbufferCompilerLocation;
@@ -92,7 +107,9 @@ namespace r2::asset::pln
         s_assetCommand = assetCommand;
         s_soundDefinitionCommand = soundDefinitionCommand;
         s_shaderCommand = shaderCommand;
-        
+        s_texturePackCommand = texturePackCommand;
+        s_materialPackCommand = materialPackCommand;
+
         std::filesystem::path p = soundDefinitionCommand.soundDefinitionFilePath;
         s_soundDefinitionsDirectory = p.parent_path().string();
         ReloadManifests();
@@ -109,7 +126,9 @@ namespace r2::asset::pln
             s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
         }
         
-        
+        GenerateTexturePackManifestsIfNeeded();
+        GenerateMaterialPackManifestsIfNeeded();
+
         s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), s_assetCommand.assetManifestsPath);
         //@TODO(Serge): modify these to be their own functions
         s_manifestFileWatcher.AddCreatedListener(SetReloadManifests);
@@ -313,8 +332,7 @@ namespace r2::asset::pln
             soundDefinitionFile = s_soundDefinitionCommand.soundDefinitionFilePath;
             s_callRebuiltSoundDefinitions = true;
         }
-        
-        if (!soundDefinitionFile.empty())
+        else
         {
             s_soundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(soundDefinitionFile);
             
@@ -355,7 +373,86 @@ namespace r2::asset::pln
             }
         }
     }
+
+	//Textures
+    void GenerateTexturePackManifestsIfNeeded()
+    {
+        R2_CHECK(s_texturePackCommand.manifestFilePaths.size() == s_texturePackCommand.texturePacksWatchDirectories.size(),
+            "these should be the same size!");
+
+        for (size_t i = 0; i < s_texturePackCommand.manifestFilePaths.size(); ++i)
+        {
+            std::string manifestPath = s_texturePackCommand.manifestFilePaths[i];
+            std::string texturePackDir = s_texturePackCommand.texturePacksWatchDirectories[i];
+
+            std::filesystem::path p = manifestPath;
+            std::string manifestDir = p.parent_path().string();
+
+            std::string texturePackManifestFile;
+			r2::asset::pln::tex::FindTexturePacksManifestFile(manifestDir, p.stem().string(), texturePackManifestFile, true);
+
+			if (texturePackManifestFile.empty())
+			{
+				if (r2::asset::pln::tex::FindTexturePacksManifestFile(manifestDir, p.stem().string(), texturePackManifestFile, false))
+				{
+					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromJson(texturePackManifestFile))
+					{
+						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
+						return;
+					}
+				}
+				else
+				{
+					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(manifestPath, texturePackDir))
+					{
+						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
+						return;
+					}
+				}
+			}
+        }
+    }
     
+    //materials
+    void GenerateMaterialPackManifestsIfNeeded()
+    {
+		R2_CHECK(s_materialPackCommand.manifestFilePaths.size() == s_materialPackCommand.materialPacksWatchDirectories.size(),
+			"these should be the same size!");
+
+		for (size_t i = 0; i < s_materialPackCommand.manifestFilePaths.size(); ++i)
+		{
+			std::string manifestPath = s_materialPackCommand.manifestFilePaths[i];
+			std::string materialPackDir = s_materialPackCommand.materialPacksWatchDirectories[i];
+
+			std::filesystem::path p = manifestPath;
+			std::string manifestDir = p.parent_path().string();
+
+			std::string materialPackManifestFile;
+			r2::asset::pln::FindMaterialPackManifestFile(manifestDir, p.stem().string(), materialPackManifestFile, true);
+
+			if (materialPackManifestFile.empty())
+			{
+				if (r2::asset::pln::FindMaterialPackManifestFile(manifestDir, p.stem().string(), materialPackManifestFile, false))
+				{
+					if (!r2::asset::pln::GenerateMaterialPackManifestFromJson(materialPackManifestFile))
+					{
+						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
+						return;
+					}
+				}
+				else
+				{
+					if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(manifestPath, materialPackDir))
+					{
+						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
+						return;
+					}
+				}
+			}
+		}
+    }
+
+
     void BuildManifests()
     {
         BuildAssetManifestsFromJson(s_assetCommand.assetManifestsPath);

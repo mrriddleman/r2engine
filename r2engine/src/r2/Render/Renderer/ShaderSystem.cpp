@@ -329,6 +329,7 @@ namespace r2::draw::shadersystem
 
             if (shaderHandle == InvalidShader)
             {
+                //@NOTE: this assumes that we can just compile all the shader programs at startup
                 r2::draw::Shader nextShader = r2::draw::shader::CreateShaderProgramFromRawFiles(
                     shaderManifestsBuf->manifests()->Get(i)->shaderName(),
                     shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str().c_str(),

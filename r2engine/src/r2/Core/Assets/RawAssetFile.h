@@ -17,7 +17,7 @@ namespace r2::asset
     public:
         RawAssetFile();
         ~RawAssetFile();
-        bool Init(const char* path);
+        bool Init(const char* path, u32 numDirectoriesToIncludeInAssetHandle = 0);
         virtual bool Open() override;
         virtual bool Close() override;
         virtual bool IsOpen() override;
@@ -30,6 +30,7 @@ namespace r2::asset
     private:
         char mPath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::File* mFile;
+        u32 mNumDirectoriesToIncludeInAssetHandle;
     };
 }
 

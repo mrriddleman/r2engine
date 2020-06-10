@@ -1,0 +1,14 @@
+include "Material.fbs";
+
+namespace flat;
+
+file_identifier "mpak";
+file_extension "mpak";
+
+table MaterialPack
+{
+	name:ulong (hash:"fnv1a_64");
+	materials:[Material];
+}
+
+root_type MaterialPack;

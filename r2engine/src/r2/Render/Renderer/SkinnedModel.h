@@ -11,6 +11,7 @@
 #include "r2/Render/Model/Mesh.h"
 #include "r2/Render/Renderer/Vertex.h"
 #include "glm/gtc/quaternion.hpp"
+#include "r2/Render/Model/Textures/Texture.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -29,7 +30,7 @@ namespace r2::draw
         u32 numVertices = 0;
         u32 baseVertex = 0;
         u32 baseIndex = 0;
-        std::vector<Texture> textures;
+        std::vector<r2::draw::tex::Texture> textures;
     };
     
     struct VectorKey

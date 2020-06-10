@@ -98,7 +98,62 @@ namespace r2
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
             shaderCommand.shaderWatchPath = std::string(path);
 
-            r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200), assetCommand, soundCommand, shaderCommand);
+            r2::asset::pln::TexturePackManifestCommand texturePackCommand;
+
+            //Texture pack command
+            
+            //for the engine
+            std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
+            std::string engineTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.tman");
+            
+            texturePackCommand.manifestFilePaths.push_back(engineTexturePackManifestPath);
+            texturePackCommand.texturePacksWatchDirectories.push_back(engineTexturePackDir);
+
+            //for the app
+            for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsPaths())
+            {
+                texturePackCommand.manifestFilePaths.push_back(nextManifestPath);
+            }
+
+			for (const std::string& nextPath : noptrApp->GetTexturePacksWatchPaths())
+			{
+				texturePackCommand.texturePacksWatchDirectories.push_back(nextPath);
+			}
+
+            texturePackCommand.buildFunc = [](std::vector<std::string> paths)
+            {
+                //@TODO(Serge): implement
+            };
+
+
+			//Material pack command
+            r2::asset::pln::MaterialPackManifestCommand materialPackCommand;
+
+            //for the engine
+			std::string engineMaterialPackDir = R2_ENGINE_INTERNAL_MATERIALS_DIR;
+			std::string engineMaterialPackManifestPath = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.mpak");
+
+            materialPackCommand.manifestFilePaths.push_back(engineMaterialPackManifestPath);
+            materialPackCommand.materialPacksWatchDirectories.push_back(engineMaterialPackDir);
+
+			//for the app
+            for (const std::string& nextPath: noptrApp->GetMaterialPackManifestsPaths())
+            {
+                materialPackCommand.manifestFilePaths.push_back(nextPath);
+            }
+
+            for (const std::string& nextPath: noptrApp->GetMaterialPacksWatchPaths())
+            {
+                materialPackCommand.materialPacksWatchDirectories.push_back(nextPath);
+            }
+
+            materialPackCommand.buildFunc = [](std::vector<std::string> paths)
+			{
+				//@TODO(Serge): implement
+			};
+
+            r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200),
+                assetCommand, soundCommand, shaderCommand, texturePackCommand, materialPackCommand);
 #endif
             
             mDisplaySize = noptrApp->GetPreferredResolution();

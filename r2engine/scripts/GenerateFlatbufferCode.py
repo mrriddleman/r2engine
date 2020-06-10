@@ -25,7 +25,9 @@ fbsCodeOutputMap = {
 "ShaderManifest.fbs": "/r2/Core/Assets/Pipeline/",
 "Utils.fbs": "/r2/Utils/",
 "Material.fbs": "/r2/Render/Model/",
-"Model.fbs": "/r2/Render/Model/"
+"MaterialPack.fbs": "/r2/Render/Model/",
+"Model.fbs": "/r2/Render/Model/",
+"TexturePackManifest.fbs": "/r2/Render/Model/Textures/"
 }
 
 for filename in os.listdir(dataPath):

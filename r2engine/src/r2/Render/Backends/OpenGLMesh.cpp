@@ -84,8 +84,8 @@ namespace r2::draw::opengl
             glMesh.numTextures = entry.textures.size();
             for (u32 i = 0; i < glMesh.numTextures; ++i)
             {
-                glMesh.types.push_back(entry.textures[i].type);
-                glMesh.texIDs.push_back(entry.textures[i].texID);
+              //  glMesh.types.push_back(entry.textures[i].type);
+             //   glMesh.texIDs.push_back(entry.textures[i].texID);
             }
             meshes.push_back(glMesh);
         }

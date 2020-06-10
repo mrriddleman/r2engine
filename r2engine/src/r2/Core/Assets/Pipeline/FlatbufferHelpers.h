@@ -11,7 +11,7 @@
 #ifdef R2_ASSET_PIPELINE
 #include <string>
 
-namespace r2::asset::pln::flat
+namespace r2::asset::pln::flathelp
 {
     bool GenerateFlatbufferJSONFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath);
     bool GenerateFlatbufferBinaryFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath);

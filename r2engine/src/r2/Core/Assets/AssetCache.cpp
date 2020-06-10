@@ -20,7 +20,7 @@
 #include "r2/Core/Assets/AssetLib.h"
 #endif
 
-#define NOT_INITIALIZED !mnoptrFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders
+#define NOT_INITIALIZED !mnoptrFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders || !mAssetNameMap
 
 namespace
 {
@@ -38,11 +38,13 @@ namespace r2::asset
         , mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
+        , mAssetNameMap(nullptr)
         , mDefaultLoader(nullptr)
         , mSlot(slot)
     //    , mAssetFileMap(nullptr)
         , mAssetCacheArena(boundary)
         , mAssetBufferPoolPtr(nullptr)
+        , mMemoryHighWaterMark(0)
     {
         
     }
@@ -59,6 +61,7 @@ namespace r2::asset
         {
             mAssetLRU = MAKE_SQUEUE(mAssetCacheArena, AssetHandle, lruCapacity);
             mAssetMap = MAKE_SHASHMAP(mAssetCacheArena, AssetBufferRef, mapCapacity);
+            mAssetNameMap = MAKE_SHASHMAP(mAssetCacheArena, Asset, mapCapacity);
           //  mAssetFileMap = MAKE_SHASHMAP(mMallocArena, FileHandle, MAP_CAPACITY);
             mDefaultLoader = ALLOC(DefaultAssetLoader, mAssetCacheArena);
             
@@ -107,7 +110,7 @@ namespace r2::asset
         
         PrintLRU();
         PrintAssetMap();
-        
+        R2_LOGI("Asset Cache: %llu - memory high water mark: %llu", mSlot, mMemoryHighWaterMark);
 #endif
         
         FlushAll();
@@ -132,11 +135,13 @@ namespace r2::asset
         FREE(mDefaultLoader, mAssetCacheArena);
         FREE(mAssetLRU, mAssetCacheArena);
         FREE(mAssetMap, mAssetCacheArena);
+        FREE(mAssetNameMap, mAssetCacheArena);
         FREE(mAssetLoaders, mAssetCacheArena);
         FREE(mAssetBufferPoolPtr, mAssetCacheArena);
         
         mAssetLRU = nullptr;
         mAssetMap = nullptr;
+        mAssetNameMap = nullptr;
         mAssetLoaders = nullptr;
         mnoptrFiles = nullptr;
         mDefaultLoader = nullptr;
@@ -147,12 +152,14 @@ namespace r2::asset
     AssetHandle AssetCache::LoadAsset(const Asset& asset)
     {
         R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
+        AssetHandle invalidHandle;
+
         if (NOT_INITIALIZED)
         {
-            return INVALID_ASSET_HANDLE;
+            return invalidHandle;
         }
         
-        AssetHandle handle = asset.HashID();
+        AssetHandle handle = { asset.HashID(), mSlot };
         AssetBufferRef theDefault;
         AssetBufferRef& bufferRef = Find(handle, theDefault);
         
@@ -163,7 +170,7 @@ namespace r2::asset
             if (!buffer)
             {
                 R2_CHECK(false, "Failed to Load Asset: %s", asset.Name());
-                return INVALID_ASSET_HANDLE;
+                return invalidHandle;
             }
         }
         
@@ -182,15 +189,30 @@ namespace r2::asset
         AssetBufferRef theDefault;
         AssetBufferRef& bufferRef = Find(handle, theDefault);
         
+        AssetCacheRecord record;
+
         if (bufferRef.mAssetBuffer != nullptr)
         {
             ++bufferRef.mRefCount;
             UpdateLRU(handle);
+
+			record.handle = handle;
+			record.buffer = bufferRef.mAssetBuffer;
         }
-        
-        AssetCacheRecord record;
-        record.handle = handle;
-        record.buffer = bufferRef.mAssetBuffer;
+        else
+        {
+            Asset defaultAsset;
+            const Asset& asset = r2::shashmap::Get(*mAssetNameMap, handle.handle, defaultAsset);
+            AssetBuffer* buffer = Load(asset);
+            
+            if (!buffer)
+            {
+                R2_CHECK(false, "We couldn't reload the asset: %s", asset.Name()); 
+            }
+
+            record.handle = handle;
+            record.buffer = buffer;
+        }
         
         return record;
     }
@@ -198,13 +220,13 @@ namespace r2::asset
     bool AssetCache::ReturnAssetBuffer(const AssetCacheRecord& buffer)
     {
         AssetBufferRef theDefault;
-        AssetBufferRef& bufferRef = Find(buffer.buffer->GetAsset().HashID(), theDefault);
+        AssetBufferRef& bufferRef = Find(buffer.handle, theDefault);
         
         bool found = bufferRef.mAssetBuffer != nullptr;
         
         if (found)
         {
-            Free(buffer.buffer->GetAsset().HashID(), false);
+            Free(buffer.handle, false);
         }
         
         return found;
@@ -286,7 +308,7 @@ namespace r2::asset
         }
         
         
-        AssetHandle handle = asset.HashID();
+        AssetHandle handle = { asset.HashID(), mSlot};
         u64 rawAssetSize = theAssetFile->RawAssetSize(asset);
         
         bool result = MakeRoom(rawAssetSize);
@@ -297,6 +319,8 @@ namespace r2::asset
         
         R2_CHECK(rawAssetBuffer != nullptr, "failed to allocate asset handle: %lli of size: %llu", handle, rawAssetSize);
         
+        mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
+
         theAssetFile->GetRawAsset(asset, rawAssetBuffer, (u32)rawAssetSize);
         
         if (rawAssetBuffer == nullptr)
@@ -318,7 +342,7 @@ namespace r2::asset
         
         if (!loader->ShouldProcess())
         {
-            assetBuffer->Load(asset, rawAssetBuffer, rawAssetSize);
+            assetBuffer->Load(asset,mSlot, rawAssetBuffer, rawAssetSize);
         }
         else
         {
@@ -332,7 +356,9 @@ namespace r2::asset
                 return nullptr;
             }
             
-            assetBuffer->Load(asset, buffer, size);
+            mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
+
+            assetBuffer->Load(asset, mSlot, buffer, size);
             
             bool success = loader->LoadAsset(rawAssetBuffer, rawAssetSize, *assetBuffer);
             
@@ -358,14 +384,15 @@ namespace r2::asset
         
         bufferRef.mAssetBuffer = assetBuffer;
 
-        r2::shashmap::Set(*mAssetMap, handle, bufferRef);
+        r2::shashmap::Set(*mAssetMap, handle.handle, bufferRef);
+        r2::shashmap::Set(*mAssetNameMap, handle.handle, asset);
         UpdateLRU(handle);
         
-        AssetRecord record;
-        record.handle = handle;
-        record.name = asset.Name();
-        
 #ifdef R2_ASSET_PIPELINE
+		AssetRecord record;
+		record.handle = handle;
+		record.name = asset.Name();
+
         AddAssetToAssetsForFileList(fileIndex, record);
 #endif
         
@@ -404,7 +431,7 @@ namespace r2::asset
     
     FileHandle AssetCache::FindInFiles(const Asset& asset)
     {
-        const AssetHandle handle = asset.HashID();
+        const AssetHandle handle = { asset.HashID(), mSlot };
         
         const u64 numnoptrFiles = r2::sarr::Size(*mnoptrFiles);
         
@@ -416,7 +443,7 @@ namespace r2::asset
             
             for (u64 j = 0; j < numAssets; ++j)
             {
-                if (file->GetAssetHandle(j) == handle)
+                if (file->GetAssetHandle(j) == handle.handle)
                 {
                     return i;
                 }
@@ -428,7 +455,7 @@ namespace r2::asset
     
     AssetCache::AssetBufferRef& AssetCache::Find(AssetHandle handle, AssetCache::AssetBufferRef& theDefault)
     {
-        return r2::shashmap::Get(*mAssetMap, handle, theDefault);
+        return r2::shashmap::Get(*mAssetMap, handle.handle, theDefault);
     }
     
     void AssetCache::Free(AssetHandle handle, bool forceFree)
@@ -443,7 +470,10 @@ namespace r2::asset
             
             if (forceFree && assetBufferRef.mRefCount > 0)
             {
-                R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", assetBufferRef.mAssetBuffer->GetAsset().Name(),  assetBufferRef.mRefCount);
+                Asset theDefault;
+                const Asset& theAsset = r2::shashmap::Get(*mAssetNameMap, handle.handle, theDefault);
+
+                R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", theAsset.Name(),  assetBufferRef.mRefCount);
             }
             
             if (assetBufferRef.mRefCount < 0)
@@ -452,7 +482,7 @@ namespace r2::asset
                 
                 FREE(assetBufferRef.mAssetBuffer, *mAssetBufferPoolPtr);
             
-                r2::shashmap::Remove(*mAssetMap, handle);
+                r2::shashmap::Remove(*mAssetMap, handle.handle);
                 
                 RemoveFromLRU(handle);
 #ifdef R2_ASSET_PIPELINE
@@ -503,7 +533,7 @@ namespace r2::asset
         
         for (u64 i = 0; i < queueSize; ++i)
         {
-            if ((*mAssetLRU)[i] == handle)
+            if ((*mAssetLRU)[i].handle == handle.handle)
             {
                 return i;
             }
@@ -523,7 +553,12 @@ namespace r2::asset
         }
     }
     
-    u64 AssetCache::TotalMemoryNeeded(u64 assetCapacity, u32 lruCapacity, u32 mapCapacity)
+    u64 AssetCache::MemoryHighWaterMark()
+    {
+        return mMemoryHighWaterMark;
+    }
+
+    u64 AssetCache::TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity, u32 mapCapacity)
     {
         u64 elementSize = sizeof(AssetBuffer);
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
@@ -531,9 +566,45 @@ namespace r2::asset
 #endif
         u64 poolSizeInBytes = LRU_CAPACITY * elementSize;
         
-        return r2::SQueue<AssetHandle>::MemorySize(lruCapacity) + SHashMap<AssetBufferRef>::MemorySize(mapCapacity) + sizeof(DefaultAssetLoader) + r2::SArray<AssetLoader*>::MemorySize(lruCapacity) + sizeof(r2::mem::PoolArena) + poolSizeInBytes + assetCapacity;
+        alignment = std::max({
+            alignment,
+            alignof(r2::SQueue<AssetHandle>),
+            alignof(AssetHandle),
+            alignof(DefaultAssetLoader),
+            alignof(r2::SArray<AssetLoader*>),
+            alignof(AssetLoader*),
+            alignof(Asset),
+            alignof(r2::SHashMap<Asset>),
+            alignof(r2::mem::PoolArena)
+            });
+
+        return 
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<AssetHandle>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking)  +
+            r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AssetBufferRef>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(DefaultAssetLoader), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetLoader*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Asset>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +
+            CalculateTextureCacheSizeNeeded(assetCapacity, numAssets, alignment);
     }
     
+    u64 AssetCache::CalculateTextureCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment)
+    {
+        u32 headerSize = 0;
+        u32 boundsChecking = 0;
+#ifdef R2_ASSET_PIPELINE
+        headerSize = r2::mem::MallocAllocator::HeaderSize();
+#else
+        headerSize = r2::mem::FreeListAllocator::HeaderSize();
+#endif
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+        return initialAssetCapcity + (numAssets * (static_cast<u64>(headerSize) + static_cast<u64>(boundsChecking) + alignment));
+    }
+
 #ifdef R2_ASSET_PIPELINE
     void AssetCache::AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord)
     {
@@ -548,7 +619,7 @@ namespace r2::asset
                 bool foundAssetHandle = false;
                 for (const auto& handle : mAssetsForFiles[i].assets)
                 {
-                    if (assetRecord.handle == handle.handle)
+                    if (assetRecord.handle.handle == handle.handle.handle)
                     {
                         foundAssetHandle = true;
                         break;
@@ -579,7 +650,7 @@ namespace r2::asset
         for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
         {
             auto iter = std::remove_if(mAssetsForFiles[i].assets.begin(), mAssetsForFiles[i].assets.end(), [assetHandle](const AssetRecord& record){
-                return record.handle == assetHandle;
+                return record.handle.handle == assetHandle.handle;
             });
             
             if (iter != mAssetsForFiles[i].assets.end())
@@ -665,13 +736,16 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i], defaultRef);
+            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
             
             if (bufRef.mAssetBuffer != nullptr)
             {
-                const Asset& asset = bufRef.mAssetBuffer->GetAsset();
+                Asset theDefault;
+                const Asset& asset = r2::shashmap::Get(*mAssetNameMap, bufRef.mAssetBuffer->GetHandle().handle, theDefault);
                 
-                PrintAsset(asset.Name(), asset.HashID(), bufRef.mRefCount);
+
+                AssetHandle handle = { asset.HashID(), mSlot };
+                PrintAsset(asset.Name(), handle, bufRef.mRefCount);
             }
         }
         
@@ -689,13 +763,15 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i], defaultRef);
+            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
             
             if (bufRef.mAssetBuffer != nullptr)
             {
-                const Asset& asset = bufRef.mAssetBuffer->GetAsset();
-                
-                PrintAsset(asset.Name(), asset.HashID(), bufRef.mRefCount);
+				Asset theDefault;
+				const Asset& asset = r2::shashmap::Get(*mAssetNameMap, bufRef.mAssetBuffer->GetHandle().handle, theDefault);
+
+                AssetHandle handle = { asset.HashID(), mSlot };
+                PrintAsset(asset.Name(), handle, bufRef.mRefCount);
             }
         }
         
@@ -751,7 +827,7 @@ namespace r2::asset
         {
             file->GetAssetName(i, nameBuf, r2::fs::FILE_PATH_LENGTH);
             
-            AssetHandle handle = file->GetAssetHandle(i);
+            AssetHandle handle = { file->GetAssetHandle(i), mSlot };
             
             PrintAsset(nameBuf, handle, 0);
         }
@@ -763,11 +839,11 @@ namespace r2::asset
     {
         if (refcount == 0)
         {
-            printf("Asset name: %s handle: %llu\n", asset, assetHandle);
+            printf("Asset name: %s handle: %llu\n", asset, assetHandle.handle);
         }
         else
         {
-            printf("Asset name: %s handle: %llu #references: %u\n", asset, assetHandle, refcount);
+            printf("Asset name: %s handle: %llu #references: %u\n", asset, assetHandle.handle, refcount);
         }
     }
 #endif

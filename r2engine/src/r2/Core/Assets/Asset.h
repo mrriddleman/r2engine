@@ -24,7 +24,8 @@ namespace r2::asset
         inline u64 HashID() const {return mHashedPathID;}
         
     private:
-        char mName[r2::fs::FILE_PATH_LENGTH];
+        char mName[r2::fs::FILE_PATH_LENGTH]; //@TODO(Serge): figure out how to get rid of this here
+                                                //Seems only needed for Zip and debug output
         u64 mHashedPathID;
     };
 }

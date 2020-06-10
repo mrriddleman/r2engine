@@ -11,6 +11,7 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelLoader.h"
+#include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Utils/Hash.h"
 #include <filesystem>
 
@@ -37,6 +38,8 @@ namespace r2::draw
 		//Each bucket needs the bucket and an arena for that bucket
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
 		r2::mem::StackArena* mCommandArena = nullptr;
+
+		//@TODO(Serge): hold pointers to the material system, and model system
 	};
 
 	namespace modelsystem
@@ -58,6 +61,7 @@ namespace
 	const u64 MAX_NUM_MATERIALS = 2048;
 	const u64 MAX_NUM_SHADERS = 1000;
 	const u64 MAX_DEFAULT_MODELS = 16;
+	const u64 MAX_NUM_TEXTURES = 2048;
 
 	const std::string MODL_EXT = ".modl";
 }
@@ -136,7 +140,21 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		bool materialSystemInitialized = r2::draw::mat::Init(memoryAreaHandle, MAX_NUM_MATERIALS);
+		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, "Texture System");
+		if (!textureSystemInitialized)
+		{
+			R2_CHECK(false, "We couldn't initialize the texture system");
+			return false;
+		}
+
+		//@Temporary
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS, materialsPath, "engine_material_pack.mpak");
+
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS, texturePackPath, "engine_texture_pack.tman");
+
+		bool materialSystemInitialized = r2::draw::mat::Init(memoryAreaHandle, materialsPath, texturePackPath);
 
 		if (!materialSystemInitialized)
 		{
@@ -204,6 +222,7 @@ namespace r2::draw::renderer
 
 		modelsystem::Shutdown();
 		r2::draw::mat::Shutdown();
+		r2::draw::texsys::Shutdown();
 		r2::draw::shadersystem::Shutdown();
 
 		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
@@ -606,14 +625,12 @@ namespace r2::draw::modelsystem
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
-
-		u64 quadModelSize = Model::MemorySize(1, 4, 6, 0);
+		u64 quadModelSize = Model::MemorySize(1, 4, 6, 1, headerSize, boundsChecking, ALIGNMENT);
 
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking); //For quad
-
 	}
 
 	bool LoadEngineModels(const char* modelDirectory)

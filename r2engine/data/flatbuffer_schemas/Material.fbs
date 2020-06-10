@@ -1,4 +1,4 @@
-namespace r2;
+namespace flat;
 
 file_identifier "mmat";
 file_extension "mmat";
@@ -14,8 +14,9 @@ struct Color
 table Material
 {
 	name:ulong (hash:"fnv1a_64");
-	shader:ulong (hash: "fnv1a_64", cpp_type:"unsigned int");
+	shader:ulong (hash: "fnv1a_64");
 	color:Color;
+	texturePackName:ulong (hash:"fnv1a_64");
 }
 
 root_type Material;

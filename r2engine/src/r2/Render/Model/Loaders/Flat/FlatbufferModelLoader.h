@@ -17,6 +17,7 @@ namespace r2::draw::flat
 
 namespace r2::draw::flat
 {
+	//@TODO(Serge): pass in the material system used for the model
 	template<class ARENA>
 	Model* LoadModel(ARENA& arena, const char* filePath)
 	{
@@ -44,9 +45,10 @@ namespace r2::draw::flat
 		{
 			const u64 numVertices = flatModel->meshes()->Get(i)->numVertices();
 			const u64 numIndices = flatModel->meshes()->Get(i)->numFaces() * 3; //* 3 for indices
+			const u64 numMaterials = flatModel->meshes()->Get(i)->materials()->size();
 
 			r2::draw::Mesh nextMesh;
-			nextMesh = MAKE_MESH(arena, numVertices, numIndices, 0); //@TODO(Serge): fix 0
+			nextMesh = MAKE_MESH(arena, numVertices, numIndices, numMaterials); //@TODO(Serge): fix 0
 
 			for (flatbuffers::uoffset_t v = 0; v < numVertices; ++v)
 			{
@@ -83,27 +85,15 @@ namespace r2::draw::flat
 				}
 			}
 
+			for (flatbuffers::uoffset_t m = 0; m < numMaterials; ++m)
+			{
+				//@NOTE: this assumes that the materials are already loaded so that needs to happen first
+				u64 materialName = flatModel->meshes()->Get(i)->materials()->Get(m)->name();
+				r2::sarr::Push(*nextMesh.optrMaterials, r2::draw::mat::GetMaterialHandleFromMaterialName(materialName));
+			}
+
 			r2::sarr::Push(*theModel->optrMeshes, nextMesh);
 		}
-
-		//@TODO(Serge) - For now we're just going to evaluate the material and add a new one to the material system
-		//We get back a material handle and we set that on the model
-		//a better way would probably be to already have these defined somehow in the material system.
-		//Then we'd just set the material id
-
-		r2::draw::Material modelMaterial;
-		modelMaterial.materialID = flatModel->material()->name();
-		//find the shader to use
-		modelMaterial.shaderId = r2::draw::shadersystem::FindShaderHandle(flatModel->material()->shader());
-
-		R2_CHECK(modelMaterial.shaderId != InvalidShader, "We couldn't find the shader!");
-		modelMaterial.color =
-			glm::vec4(flatModel->material()->color()->r(),
-				flatModel->material()->color()->g(),
-				flatModel->material()->color()->b(),
-				flatModel->material()->color()->a());
-
-		theModel->materialHandle = r2::draw::mat::AddMaterial(modelMaterial);
 
 		FREE(modelBuffer, *MEM_ENG_SCRATCH_PTR);
 

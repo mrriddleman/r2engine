@@ -9,6 +9,7 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Render/Renderer/Commands.h"
 #include <SDL2/SDL.h>
 #include "glad/glad.h"
@@ -229,6 +230,31 @@ namespace r2::draw::rendererimpl
 			r2::draw::shader::SetMat4(*shader, "projection", s_currentOpenGLState.projMat);
 			r2::draw::shader::SetMat4(*shader, "view", s_currentOpenGLState.viewMat);
 			r2::draw::shader::SetVec4(*shader, "color", material->color);
+
+			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(materialID);
+			if (textures)
+			{
+				u64 numTextures = r2::sarr::Size(*textures);
+
+				const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
+				u32 textureNum[numTextureTypes];
+				for (u32 i = 0; i < numTextureTypes; ++i)
+				{
+					textureNum[i] = 1;
+				}
+
+				for (u64 i = 0; i < numTextures; ++i)
+				{
+					const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, i);
+
+					glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(i));
+					std::string number;
+					std::string name = TextureTypeToString(texture.type);
+					number = std::to_string(textureNum[texture.type]++);
+					r2::draw::shader::SetInt(*shader, ("material." + name + number).c_str(), static_cast<s32>(i));
+					glBindTexture(GL_TEXTURE_2D, r2::draw::texsys::GetGPUHandle(texture.textureAssetHandle));
+				}
+			}
 		}
 	}
 

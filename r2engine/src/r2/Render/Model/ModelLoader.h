@@ -17,6 +17,7 @@ namespace r2::draw
     struct Model;
     struct SkinnedModel;
     
+    //@TODO(Serge): pass in the asset cache we want to store the textures in
     template<class ARENA>
     Model* LoadModel(ARENA& arena, const char* filePath)
     {

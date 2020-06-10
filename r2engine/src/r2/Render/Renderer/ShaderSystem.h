@@ -12,7 +12,7 @@ namespace r2::asset::pln
 }
 #endif // R2_As
 
-
+//@TODO(Serge): make this not a singleton?
 namespace r2::draw::shadersystem
 {
     

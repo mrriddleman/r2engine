@@ -12,7 +12,7 @@
 #include <cstdlib>
 #include <cstdio>
 
-namespace r2::asset::pln::flat
+namespace r2::asset::pln::flathelp
 {
     int RunSystemCommand(const char* command)
     {
@@ -47,8 +47,12 @@ namespace r2::asset::pln::flat
         
         char sanitizedSourcePath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::SanitizeSubPath(sourcePath.c_str(), sanitizedSourcePath);
+
+		char sanitizedOutputPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(outputDir.c_str(), sanitizedOutputPath);
+
 #ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(command, Kilobytes(2), "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
+        sprintf_s(command, Kilobytes(2), "%s -b -o %s %s %s", flatc.c_str(), sanitizedOutputPath, fbsPath.c_str(), sanitizedSourcePath);
 #else
         sprintf(command, "%s -b -o %s %s %s", flatc.c_str(), outputDir.c_str(), fbsPath.c_str(), sanitizedSourcePath);
 #endif

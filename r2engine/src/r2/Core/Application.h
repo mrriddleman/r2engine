@@ -48,11 +48,15 @@ namespace r2
         virtual r2::asset::PathResolver GetPathResolver() const;
         virtual std::string GetSoundDefinitionPath() const;
         virtual std::string GetShaderManifestsPath() const;
+        virtual std::vector<std::string> GetTexturePackManifestsPaths() const;
+        virtual std::vector<std::string> GetMaterialPackManifestsPaths() const;
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;
         virtual std::string GetAssetCompilerTempPath() const = 0;
         virtual std::vector<std::string> GetSoundDirectoryWatchPaths() const = 0;
+        virtual std::vector<std::string> GetTexturePacksWatchPaths() const = 0;
+        virtual std::vector<std::string> GetMaterialPacksWatchPaths() const = 0;
 #endif
     };
     

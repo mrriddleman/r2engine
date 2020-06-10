@@ -64,7 +64,7 @@ namespace r2::asset::pln
         std::string assetManifestFbsPath = flatBufferPath + "AssetManifest.fbs";
         
         //generate json files
-        if(!flat::GenerateFlatbufferJSONFile(manifestDir, assetManifestFbsPath, manifestPath))
+        if(!flathelp::GenerateFlatbufferJSONFile(manifestDir, assetManifestFbsPath, manifestPath))
         {
             R2_CHECK(false, "Failed to generate json file for: %s", manifestDir.c_str());
             return false;
@@ -151,7 +151,7 @@ namespace r2::asset::pln
             }
             
             //generate json files
-            if(!flat::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
+            if(!flathelp::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
             {
                 R2_CHECK(false, "Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
                 return false;

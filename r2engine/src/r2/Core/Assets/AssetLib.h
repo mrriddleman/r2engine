@@ -20,6 +20,9 @@ namespace r2::asset
     class ZipAssetFile;
 }
 
+//@TODO(Serge): this is bad for multithreading. We should consider a different way of doing this if we're going
+//                 to multithread things
+
 namespace r2::asset::lib
 {
     bool Init(const r2::mem::utils::MemBoundary& boundary);
@@ -33,14 +36,19 @@ namespace r2::asset::lib
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);
 #endif
     
-    RawAssetFile* MakeRawAssetFile(const char* path);
+    RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     ZipAssetFile* MakeZipAssetFile(const char* path);  
     FileList MakeFileList(u64 capacity);
     
+    //@TODO(Serge): implement helpers to create file lists easier
+    //For example with a manifest or a directory 
+
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files);
     void DestroyCache(r2::asset::AssetCache* cache);
-    
-    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u32 maxFilesInList);
+    r2::asset::AssetCache* GetAssetCache(s64 slot);
+
+
+    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u64 maxFilesInList);
 }
 
 #endif /* AssetLib_h */

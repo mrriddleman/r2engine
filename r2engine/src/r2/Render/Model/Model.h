@@ -20,10 +20,9 @@ namespace r2::draw
     {
         u64 hash = 0;
         r2::SArray<Mesh>* optrMeshes = nullptr;
-        MaterialHandle materialHandle = mat::InvalidMaterial;
         glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 
-        static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 numTextures);
+        static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 numTextures, u64 headerSize, u64 boundsChecking, u64 alignment);
     };
 
     template<class ARENA>

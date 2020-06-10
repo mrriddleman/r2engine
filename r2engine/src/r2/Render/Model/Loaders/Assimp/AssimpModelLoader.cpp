@@ -19,19 +19,19 @@
 #include "r2/Render/Renderer/SkinnedModel.h"
 #include "r2/Render/Renderer/RendererUtils.h"
 #include "r2/Render/Renderer/RendererTypes.h"
-
+#include "r2/Render/Model/Textures/Texture.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 namespace
 {
-    std::vector<r2::draw::Texture> s_loadedTextures;
+    std::vector<r2::draw::tex::Texture> s_loadedTextures;
 }
 
 namespace
 {
-    std::vector<r2::draw::Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, r2::draw::TextureType r2Type, const char* directory);
+    std::vector<r2::draw::tex::Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, r2::draw::tex::TextureType r2Type, const char* directory);
     
     void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, const char* directory);
     void ProcessNode(r2::draw::SkinnedModel& model, aiNode* node, r2::draw::SkeletonPart& parentSkeletonPart, const aiScene* scene, u32& numVertices, u32& numIndices);
@@ -264,17 +264,17 @@ namespace
             R2_CHECK(material != nullptr, "Material is null!");
             if (material)
             {
-                std::vector<r2::draw::Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, r2::draw::TextureType::Diffuse, directory);
+              //  std::vector<r2::draw::Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, r2::draw::TextureType::Diffuse, directory);
          //       r2Mesh.textures.insert(r2Mesh.textures.end(), diffuseMaps.begin(), diffuseMaps.end());
                 
-                std::vector<r2::draw::Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, r2::draw::TextureType::Specular, directory);
+          //      std::vector<r2::draw::Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, r2::draw::TextureType::Specular, directory);
         //        r2Mesh.textures.insert(r2Mesh.textures.end(), specularMaps.begin(), specularMaps.end());
                 
-                std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
+         //       std::vector<r2::draw::Texture> ambientMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, r2::draw::TextureType::Ambient, directory);
          //       r2Mesh.textures.insert(r2Mesh.textures.end(), ambientMaps.begin(), ambientMaps.end());
                 
                // aiTextureType_NORMAL
-                std::vector<r2::draw::Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, r2::draw::TextureType::Normal, directory);
+         //       std::vector<r2::draw::Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, r2::draw::TextureType::Normal, directory);
         //        r2Mesh.textures.insert(r2Mesh.textures.end(), normalMaps.begin(), normalMaps.end());
             }
         }
@@ -282,9 +282,9 @@ namespace
         return r2Mesh;
     }
     
-    std::vector<r2::draw::Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, r2::draw::TextureType r2Type, const char* directory)
+    std::vector<r2::draw::tex::Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, r2::draw::tex::TextureType r2Type, const char* directory)
     {
-        std::vector<r2::draw::Texture> textures = {};
+        std::vector<r2::draw::tex::Texture> textures = {};
         const u32 numTextures = aiGetMaterialTextureCount(mat, type);
         for (u32 i = 0; i < numTextures; ++i)
         {
@@ -304,14 +304,14 @@ namespace
             
             if (!skip)
             {
-                r2::draw::Texture texture;
-                char path[r2::fs::FILE_PATH_LENGTH];
-                r2::fs::utils::AppendSubPath(directory, path, str.C_Str());
-                texture.texID = r2::draw::utils::LoadImageTexture(path);
-                texture.type = r2Type;
-               // r2::util::PathCpy(texture.path, str.C_Str());
-                textures.push_back(texture);
-                s_loadedTextures.push_back(texture);
+               // r2::draw::Texture texture;
+               // char path[r2::fs::FILE_PATH_LENGTH];
+               // r2::fs::utils::AppendSubPath(directory, path, str.C_Str());
+               // texture.texID = r2::draw::utils::LoadImageTexture(path);
+               // texture.type = r2Type;
+               //// r2::util::PathCpy(texture.path, str.C_Str());
+               // textures.push_back(texture);
+               // s_loadedTextures.push_back(texture);
             }
         }
         

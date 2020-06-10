@@ -10,6 +10,7 @@
 
 
 #include "r2/Render/Backends/OpenGLBuffer.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 namespace r2::draw
 {
@@ -25,7 +26,7 @@ namespace r2::draw::opengl
         
         size_t numTextures;
         size_t numIndices;
-        std::vector<TextureType> types;
+        std::vector<r2::draw::tex::TextureType> types;
         std::vector<u32> texIDs;
         
     };

@@ -16,9 +16,9 @@ namespace r2::asset
         
     }
     
-    void AssetBuffer::Load(const Asset& asset, byte* data, u64 dataSize)
+    void AssetBuffer::Load(const Asset& asset, s64 slot, byte* data, u64 dataSize)
     {
-        mAsset = asset;
+        mHandle = { asset.HashID(), slot };
         moptrData = data;
         mDataSize = dataSize;
     }

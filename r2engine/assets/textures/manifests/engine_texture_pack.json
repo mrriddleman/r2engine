@@ -1,0 +1,37 @@
+{
+  texturePacks: [
+    {
+      packName: 7455725871122533885,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/albedo/awesomeface.png",
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/albedo/container2.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/specular/container2_specular.png"
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 654421,
+      totalNumberOfTextures: 3
+    }
+  ],
+  totalNumberOfTextures: 3,
+  totalTextureSize: 654421,
+  maxTexturesInAPack: 3
+}

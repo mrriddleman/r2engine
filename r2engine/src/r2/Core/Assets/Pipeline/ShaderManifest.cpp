@@ -144,9 +144,9 @@ namespace r2::asset::pln
         ;
         std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
         std::filesystem::remove(jsonPath);
-        bool generatedJSON = r2::asset::pln::flat::GenerateFlatbufferJSONFile(p.parent_path().string(), shaderManifestSchemaPath, manifestFilePath);
+        bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(p.parent_path().string(), shaderManifestSchemaPath, manifestFilePath);
         
-        bool generatedBinary = r2::asset::pln::flat::GenerateFlatbufferBinaryFile(p.parent_path().string(), shaderManifestSchemaPath, jsonPath.string());
+        bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), shaderManifestSchemaPath, jsonPath.string());
         
         return generatedJSON && generatedBinary;
     }
@@ -216,7 +216,7 @@ namespace r2::asset::pln
             }
             
             //generate json files
-            if(!flat::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
+            if(!flathelp::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
             {
                 R2_LOGE("Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
                 return false;

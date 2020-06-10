@@ -136,6 +136,55 @@ namespace r2::fs::utils
         
         return true;
     }
+
+    bool CopyFileNameWithParentDirectories(const char* filePath, char* fileNameWithDirectories, u32 numParents)
+    {
+		if (!filePath || !fileNameWithDirectories)
+		{
+			return false;
+		}
+
+		r2::util::PathCpy(fileNameWithDirectories, "");
+
+        const u32 subPathEndCounter = numParents + 1;
+        size_t len = strlen(filePath);
+        if (len == 0)
+            return false;
+
+        u32 subPathCounter = 0;
+        size_t startIndex = len - 1;
+
+
+        bool finishedCorrectly = false;
+        for (s32 i = static_cast<s32>(startIndex); i >= 0; --i)
+        {
+            if (filePath[i] == PATH_SEPARATOR)
+            {
+                subPathCounter++;
+
+                if (subPathCounter == subPathEndCounter)
+                {
+                    finishedCorrectly = true;
+                    startIndex = static_cast<size_t>(i) +1;
+                    break;
+                }
+            }
+        }
+
+        if (!finishedCorrectly)
+            return false;
+
+        size_t resultLen = len - startIndex;
+
+        for (u32 i = 0; i < resultLen; ++i)
+        {
+            fileNameWithDirectories[i] = filePath[startIndex + i];
+        }
+
+        fileNameWithDirectories[resultLen] = '\0';
+
+        return true;
+    }
     
     char* GetLastSubPath(const char* path, char* subPath, const char delim)
     {

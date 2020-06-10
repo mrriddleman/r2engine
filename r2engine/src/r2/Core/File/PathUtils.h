@@ -43,6 +43,8 @@ namespace r2::fs::utils
 
     bool CopyDirectoryOfFile(const char* filePath, char* path);
     
+    bool CopyFileNameWithParentDirectories(const char* filePath, char* fileNameWithDirectories, u32 numParents);
+
     char* GetLastSubPath(const char* path, char* subPath, const char delim = PATH_SEPARATOR);
     
     u32 NumMatchingSubPaths(const char* path1, const char* path2, const char delim = PATH_SEPARATOR);

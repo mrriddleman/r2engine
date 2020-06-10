@@ -12,23 +12,6 @@ namespace r2::draw
 
     static const u32 EMPTY_BUFFER = 0;
 
-    //@TODO(Serge): move these to a different file
-    enum TextureType
-    {
-        Diffuse = 0,
-        Specular,
-        Ambient,
-        Normal,
-        NUM_TEXTURE_TYPES
-    };
-
-    struct Texture
-    {
-        u32 texID;
-        TextureType type;
-        //char path[r2::fs::FILE_PATH_LENGTH];
-    };
-
     struct VertexBuffer
     {
         u32 VBO = EMPTY_BUFFER;

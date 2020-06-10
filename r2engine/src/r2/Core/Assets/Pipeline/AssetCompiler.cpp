@@ -138,7 +138,7 @@ namespace r2::asset::pln::cmp
             switch (inputFile.command.compile) {
             case r2::asset::pln::AssetCompileCommand::FlatBufferCompile:
             {
-                if (!r2::asset::pln::flat::GenerateFlatbufferBinaryFile(s_tempBuildPath, inputFile.command.schemaPath, inputFile.inputPath))
+                if (!r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(s_tempBuildPath, inputFile.command.schemaPath, inputFile.inputPath))
                 {
                     fail = true;
                 }

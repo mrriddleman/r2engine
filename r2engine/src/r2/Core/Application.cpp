@@ -82,6 +82,16 @@ namespace r2
         std::string shaderManifestsPath = "";
         return shaderManifestsPath;
     }
+
+    std::vector<std::string> Application::GetTexturePackManifestsPaths() const
+    {
+        return {};
+    }
+
+    std::vector<std::string> Application::GetMaterialPackManifestsPaths() const
+    {
+        return {};
+    }
     
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
@@ -104,6 +114,16 @@ namespace r2
     {
         std::vector<std::string> paths;
         return paths;
+    }
+
+    std::vector<std::string> Application::GetTexturePacksWatchPaths() const
+    {
+        return {};
+    }
+
+    std::vector<std::string> Application::GetMaterialPacksWatchPaths() const
+    {
+        return {};
     }
 #endif
 }

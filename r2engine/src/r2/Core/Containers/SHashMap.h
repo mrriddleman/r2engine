@@ -14,6 +14,11 @@
 
 #define MAKE_SHASHMAP(arena, T, capacity) r2::shashmap::CreateSHashMap<T>(arena, capacity, __FILE__, __LINE__, "")
 
+namespace
+{
+    const f64 MAX_LOAD_FACTOR = 0.75;
+}
+
 namespace r2
 {
     template<typename T>
@@ -37,7 +42,8 @@ namespace r2
         SHashMap& operator=(SHashMap && other) = delete;
         
         static u64 MemorySize(u64 capacity);
-        
+        static u64 FullAtCapacity(u64 capcity);
+
         u64 mCapacity;
         SArray<u64>* mHash;
         SArray<HashMapEntry>* mData;
@@ -249,7 +255,7 @@ namespace r2
         
         template<typename T> bool IsFull(const SHashMap<T>& h)
         {
-            const float maxLoadFactor = 0.75f;
+            const float maxLoadFactor = MAX_LOAD_FACTOR;
             
             return r2::sarr::Size(*h.mData) >= h.mCapacity * maxLoadFactor;
         }
@@ -413,6 +419,12 @@ namespace r2
         mHash = nullptr;
         mData->~SArray();
         mData = nullptr;
+    }
+
+    template <typename T>
+    u64 SHashMap<T>::FullAtCapacity(u64 capacity)
+    {
+        return static_cast<u64>(round(static_cast<f64>(capacity) * MAX_LOAD_FACTOR));
     }
     
     template <typename T>

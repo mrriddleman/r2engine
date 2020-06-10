@@ -269,7 +269,7 @@ public:
                     {
                         auto record = r2::sarr::At(*assetsBuffers, i);
                         
-                        if(record.handle == handle)
+                        if(record.handle.handle == handle.handle)
                         {
                             assetCache->ReturnAssetBuffer(record);
                         }
@@ -470,7 +470,10 @@ public:
         //add my commands here
 
         r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
-        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, quadModel->materialHandle);
+        const r2::draw::Mesh& mesh = r2::sarr::At(*quadModel->optrMeshes, 0);
+        r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
+
+        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, materialHandle);
 
         r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
 
@@ -564,6 +567,16 @@ public:
         };
         
         return soundPaths;
+    }
+
+    virtual std::vector<std::string> GetTexturePacksWatchPaths() const override
+    {
+        return {};
+    }
+
+    virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
+    {
+        return {};
     }
 #endif
     

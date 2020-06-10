@@ -1,0 +1,29 @@
+namespace flat;
+
+file_identifier "tman";
+file_extension "tman";
+
+table TexturePack
+{
+	packName:ulong (hash:"fnv1a_64");
+	albedo:[string];
+	normal:[string];
+	specular:[string];
+	emissive:[string];
+	metalic:[string];
+	occlusion:[string];
+	micro:[string];	
+	height:[string];
+	packSize:ulong;
+	totalNumberOfTextures:ulong;
+}
+
+table TexturePacksManifest
+{
+	texturePacks:[TexturePack];
+	totalNumberOfTextures:ulong;
+	totalTextureSize:ulong;	
+	maxTexturesInAPack:ulong;
+}
+
+root_type TexturePacksManifest;

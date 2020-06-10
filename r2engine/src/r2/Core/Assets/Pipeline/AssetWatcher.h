@@ -37,6 +37,22 @@ namespace r2::asset::pln
         AssetsBuiltFunc buildFunc;
     };
     
+    struct TexturePackManifestCommand
+    {
+        std::vector<std::string> manifestFilePaths;
+        std::vector<std::string> texturePacksWatchDirectories;
+
+        AssetsBuiltFunc buildFunc;
+    };
+
+    struct MaterialPackManifestCommand
+    {
+		std::vector<std::string> manifestFilePaths;
+		std::vector<std::string> materialPacksWatchDirectories;
+
+		AssetsBuiltFunc buildFunc;
+    };
+
     struct AssetCommand
     {
         std::string assetManifestsPath;
@@ -49,7 +65,9 @@ namespace r2::asset::pln
                 Milliseconds delay,
                 const AssetCommand& assetCommand,
                 const SoundDefinitionCommand& soundDefinitionCommand,
-                const ShaderManifestCommand& shaderCommand);
+                const ShaderManifestCommand& shaderCommand,
+                const TexturePackManifestCommand& texturePackCommand,
+                const MaterialPackManifestCommand& materialPackCommand);
     
     void Update();
     

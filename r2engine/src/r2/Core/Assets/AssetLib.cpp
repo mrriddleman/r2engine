@@ -35,16 +35,14 @@ namespace r2::asset::lib
     std::vector<AssetFilesBuiltListener> s_listeners;
 #endif
     
-    //@TODO(Serge): Change to something real
-    
 #ifdef R2_ASSET_PIPELINE
     r2::mem::MallocArena* s_arenaPtr = nullptr;
 #else
     r2::mem::FreeListArena* s_arenaPtr = nullptr;
 #endif
     
-    const u32 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
-    const u32 MAX_ASSET_CACHES = 1000;
+    const u64 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
+    const u64 MAX_ASSET_CACHES = 1000;
     
     bool Init(const r2::mem::utils::MemBoundary& boundary)
     {
@@ -164,11 +162,11 @@ namespace r2::asset::lib
         return MAKE_SARRAY(*s_arenaPtr, AssetFile*, capacity);
     }
     
-    RawAssetFile* MakeRawAssetFile(const char* path)
+    RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude)
     {
         RawAssetFile* rawAssetFile = ALLOC(RawAssetFile, *s_arenaPtr);
         
-        bool result = rawAssetFile->Init(path);
+        bool result = rawAssetFile->Init(path, numParentDirectoriesToInclude);
         R2_CHECK(result, "Failed to initialize raw asset file");
         return rawAssetFile;
     }
@@ -232,12 +230,26 @@ namespace r2::asset::lib
         return nullptr;
     }
     
+    r2::asset::AssetCache* GetAssetCache(s64 slot)
+    {
+        if (s_assetCaches && (slot >= 0 && slot < static_cast<s64>(s_numCaches)))
+        {
+            //R2_CHECK(s_assetCaches[slot] != nullptr, "We don't have the proper cache for this slot!");
+            return s_assetCaches[slot];
+        }
+
+        R2_CHECK(s_assetCaches != nullptr, "We haven't initialized the asset caches yet!");
+        R2_CHECK(slot >= 0 && slot < static_cast<s64>(s_numCaches), "Passed in an invalid asset cache slot: %lli", slot);
+        return nullptr;
+    }
+
+
     void DestroyCache(r2::asset::AssetCache* cache)
     {
         if (s_assetCaches)
         {
-            u64 slot = cache->GetSlot();
-            
+            s64 slot = cache->GetSlot();
+            R2_CHECK(slot >= 0, "We don't have a proper asset cache slot!");
             R2_CHECK(s_assetCaches[slot] == cache, "We don't have the proper cache for this slot!");
             
             cache->Shutdown();
@@ -266,7 +278,7 @@ namespace r2::asset::lib
         }
     }
     
-    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u32 maxFilesInList)
+    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u64 maxFilesInList)
     {
         u64 assetMemUsage = r2::SHashMap<u64>::MemorySize(MAX_FILES_TO_ASSET_CACHE_CAPACITY) + r2::SArray<AssetCache*>::MemorySize(MAX_ASSET_CACHES) +
             sizeof(AssetCache) * MAX_ASSET_CACHES;

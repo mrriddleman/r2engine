@@ -12,7 +12,7 @@
 
 namespace r2::asset
 {
-    RawAssetFile::RawAssetFile(): mFile(nullptr)
+    RawAssetFile::RawAssetFile(): mFile(nullptr), mNumDirectoriesToIncludeInAssetHandle(0)
     {
         r2::util::PathCpy(mPath, "");
     }
@@ -25,13 +25,13 @@ namespace r2::asset
         }
     }
     
-    bool RawAssetFile::Init(const char* path)
+    bool RawAssetFile::Init(const char* path, u32 numDirectoriesToIncludeInAssetHandle)
     {
         if (!path)
         {
             return false;
         }
-        
+        mNumDirectoriesToIncludeInAssetHandle = numDirectoriesToIncludeInAssetHandle;
         r2::util::PathCpy(mPath, path);
         return strcmp(mPath, "") != 0;
     }
@@ -77,14 +77,14 @@ namespace r2::asset
     
     void RawAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
     {
-        r2::fs::utils::CopyFileNameWithExtension(mPath, name);
+        r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
     }
     
     u64 RawAssetFile::GetAssetHandle(u64 index) const
     {
         char fileName[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::CopyFileNameWithExtension(mPath, fileName);
-        auto hash = r2::utils::Hash<const char*>{}(fileName);
+        r2::fs::utils::CopyFileNameWithParentDirectories(mPath, fileName, mNumDirectoriesToIncludeInAssetHandle);
+        auto hash = STRING_ID(fileName);
         return hash;
     }
 }
