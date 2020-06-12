@@ -34,6 +34,9 @@ namespace r2::asset
         R2_CHECK(assetPath != "", "Do not pass in empty path!");
         
         r2::util::PathCpy(mPath, assetPath);
+
+        
+
         mAlloc = alloc;
         mFree = free;
         mZipFile = nullptr;
@@ -107,6 +110,9 @@ namespace r2::asset
     {
         char fileName[r2::fs::FILE_PATH_LENGTH];
         GetAssetName(index, fileName, r2::fs::FILE_PATH_LENGTH);
-        return r2::utils::Hash<const char*>{}(fileName);
+
+        std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
+
+        return STRING_ID(fileName);
     }
 }

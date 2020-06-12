@@ -30,6 +30,7 @@
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Utils/Hash.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -311,6 +312,10 @@ public:
         r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
+
+        r2::draw::renderer::LoadEngineTexturesFromDisk();
+        r2::draw::renderer::UploadMaterialTexturesToGPUFromMaterialName(STRING_ID("Basic"));
+
 
         return assetCache != nullptr;
     }

@@ -229,7 +229,7 @@ namespace r2::draw::rendererimpl
 			r2::draw::shader::SetMat4(*shader, "model", glm::mat4(1.0f));
 			r2::draw::shader::SetMat4(*shader, "projection", s_currentOpenGLState.projMat);
 			r2::draw::shader::SetMat4(*shader, "view", s_currentOpenGLState.viewMat);
-			r2::draw::shader::SetVec4(*shader, "color", material->color);
+			r2::draw::shader::SetVec4(*shader, "material.color", material->color);
 
 			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(materialID);
 			if (textures)

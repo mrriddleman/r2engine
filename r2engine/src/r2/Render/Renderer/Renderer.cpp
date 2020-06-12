@@ -402,6 +402,28 @@ namespace r2::draw::renderer
 		return r2::sarr::At(*s_optrRenderer->mModelSystem.mDefaultModels, defaultModel);
 	}
 
+	void LoadEngineTexturesFromDisk()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		r2::draw::mat::LoadAllMaterialTexturesFromDisk();
+	}
+
+	void UploadMaterialTexturesToGPUFromMaterialName(u64 materialName)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(materialName);
+	}
+
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset)
 	{
 		if (s_optrRenderer == nullptr)

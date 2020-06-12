@@ -3,7 +3,6 @@
     {
       packName: 7455725871122533885,
       albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/albedo/awesomeface.png",
         "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/albedo/container2.png"
       ],
       normal: [
@@ -27,11 +26,11 @@
       height: [
 
       ],
-      packSize: 654421,
-      totalNumberOfTextures: 3
+      packSize: 611974,
+      totalNumberOfTextures: 2
     }
   ],
-  totalNumberOfTextures: 3,
-  totalTextureSize: 654421,
-  maxTexturesInAPack: 3
+  totalNumberOfTextures: 2,
+  totalTextureSize: 611974,
+  maxTexturesInAPack: 2
 }

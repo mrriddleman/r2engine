@@ -222,6 +222,8 @@ namespace r2::asset::lib
                 
                 s_assetCaches[slot] = cache;
                 s_filesForCaches[slot] = files;
+
+                s_numCaches++;
             }
             
             return cache;
