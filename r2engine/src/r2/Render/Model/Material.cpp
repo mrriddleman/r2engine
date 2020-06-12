@@ -466,7 +466,9 @@ namespace r2::draw::mat
 		{
 			R2_CHECK(false, "We haven't initialized the material system yet!");
 			return;
-		}
+		}  
+
+		UnloadAllMaterialTexturesFromGPU();         
 
 		r2::mem::LinearArena* materialArena = s_optrMaterialSystem->mLinearArena;
 
