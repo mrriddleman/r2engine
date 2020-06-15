@@ -20,13 +20,15 @@ namespace r2::draw::key
 	const u8 Basic::TR_ADDITIVE = 2;
 	const u8 Basic::TR_SUBTRACTIVE = 3;
 
+	const u8 NUM_MATERIAL_SYSTEM_BITS = 4;
+
 	bool CompareKey(const Basic& a, const Basic& b)
 	{
 		return a.keyValue < b.keyValue;
 	}
 	
 
-	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, u8 viewportLayer, u8 translucency, u32 depth, u32 materialID)
+	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, u8 viewportLayer, u8 translucency, u32 depth, r2::draw::MaterialHandle materialHandle)
 	{
 		Basic key;
 
@@ -35,6 +37,14 @@ namespace r2::draw::key
 		key.keyValue |= ENCODE_KEY_VALUE((u64)viewportLayer, Basic::KEY_BITS_VIEWPORT_LAYER, Basic::KEY_VIEWPORT_LAYER_OFFSET);
 		key.keyValue |= ENCODE_KEY_VALUE((u64)translucency, Basic::KEY_BITS_TRANSLUCENCY, Basic::KEY_TRANSLUCENCY_OFFSET);
 		key.keyValue |= ENCODE_KEY_VALUE((u64)depth, Basic::KEY_BITS_DEPTH, Basic::KEY_DEPTH_OFFSET);
+		
+		u32 materialID = 0;
+
+		u32 materialSystemOffset = Basic::KEY_BITS_MATERIAL_ID - NUM_MATERIAL_SYSTEM_BITS;
+
+		materialID |= ENCODE_KEY_VALUE((u64)materialHandle.slot, NUM_MATERIAL_SYSTEM_BITS, materialSystemOffset);
+		materialID |= ENCODE_KEY_VALUE((u64)materialHandle.handle, materialSystemOffset, 0);
+
 		key.keyValue |= ENCODE_KEY_VALUE((u64)materialID, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
 
 		return key;
@@ -56,9 +66,16 @@ namespace r2::draw::key
 		u32 depth = static_cast<u32>(DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_DEPTH, Basic::KEY_DEPTH_OFFSET));
 		u32 materialID = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
 
+		MaterialHandle materialHandle;
+
+		u32 materialSystemOffset = Basic::KEY_BITS_MATERIAL_ID - NUM_MATERIAL_SYSTEM_BITS;
+
+		materialHandle.slot = DECODE_KEY_VALUE(materialID, NUM_MATERIAL_SYSTEM_BITS, materialSystemOffset);
+		materialHandle.handle = DECODE_KEY_VALUE(materialID, materialSystemOffset, 0);
+
 		//@TODO(Serge): hmm not sure if this should be here or be in this form
 		r2::draw::rendererimpl::SetViewport(viewport);
 		r2::draw::rendererimpl::SetViewportLayer(viewportLayer);
-		r2::draw::rendererimpl::SetMaterialID(materialID);
+		r2::draw::rendererimpl::SetMaterialID(materialHandle);
 	}
 }

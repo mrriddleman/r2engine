@@ -126,6 +126,13 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
+	s32 MaxNumberOfTextureUnits()
+	{
+		s32 texture_units;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
+		return texture_units;
+	}
+
 	//Setup code
 	void SetClearColor(const glm::vec4& color)
 	{
@@ -218,7 +225,15 @@ namespace r2::draw::rendererimpl
 
 	void SetMaterialID(r2::draw::MaterialHandle materialID)
 	{
-		const Material* material = mat::GetMaterial(materialID);
+		if (materialID.handle == r2::draw::mat::InvalidMaterial.handle)
+		{
+			R2_CHECK(false, "Passed in invalid material handle!");
+		}
+
+		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialID.slot);
+		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+		const Material* material = mat::GetMaterial(*matSystem, materialID);
 
 		if (material)
 		{			
@@ -231,7 +246,7 @@ namespace r2::draw::rendererimpl
 			r2::draw::shader::SetMat4(*shader, "view", s_currentOpenGLState.viewMat);
 			r2::draw::shader::SetVec4(*shader, "material.color", material->color);
 
-			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(materialID);
+			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
 			if (textures)
 			{
 				u64 numTextures = r2::sarr::Size(*textures);

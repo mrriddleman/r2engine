@@ -8,18 +8,19 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 
-namespace r2::draw::flat
+
+namespace r2::draw::flatload
 {
 	template<class ARENA>
-	Model* LoadModel(ARENA& arena, const char* filePath);
+	Model* LoadModel(ARENA& arena, const r2::draw::MaterialSystem& system, const char* filePath);
 }
 
 
-namespace r2::draw::flat
+namespace r2::draw::flatload
 {
 	//@TODO(Serge): pass in the material system used for the model
 	template<class ARENA>
-	Model* LoadModel(ARENA& arena, const char* filePath)
+	Model* LoadModel(ARENA& arena, const r2::draw::MaterialSystem& materialSystem, const char* filePath)
 	{
 		//@NOTE: hopefully the file is less than 4 mb
 		void* modelBuffer = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, filePath);
@@ -89,7 +90,7 @@ namespace r2::draw::flat
 			{
 				//@NOTE: this assumes that the materials are already loaded so that needs to happen first
 				u64 materialName = flatModel->meshes()->Get(i)->materials()->Get(m)->name();
-				r2::sarr::Push(*nextMesh.optrMaterials, r2::draw::mat::GetMaterialHandleFromMaterialName(materialName));
+				r2::sarr::Push(*nextMesh.optrMaterials, r2::draw::mat::GetMaterialHandleFromMaterialName(materialSystem, materialName));
 			}
 
 			r2::sarr::Push(*theModel->optrMeshes, nextMesh);

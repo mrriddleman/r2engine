@@ -173,4 +173,22 @@ namespace r2::mem::utils
         
         return stackArena;
     }
+
+    StackArena* EmplaceStackArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description)
+    {
+		//we need to figure out how much space we have and calculate a memory boundary for the Allocator
+		R2_CHECK(boundary.size > sizeof(StackArena), "subArea size(%llu) must be greater than sizeof(StackArena)(%lu)!", boundary.size, sizeof(StackArena));
+		if (boundary.size <= sizeof(StackArena))
+		{
+			return nullptr;
+		}
+
+		MemBoundary stackAllocatorBoundary;
+        stackAllocatorBoundary.location = PointerAdd(boundary.location, sizeof(StackArena));
+        stackAllocatorBoundary.size = boundary.size - sizeof(StackArena);
+
+        StackArena* stackArena = new (boundary.location) StackArena(stackAllocatorBoundary);
+
+		return stackArena;
+    }
 }

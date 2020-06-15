@@ -58,7 +58,7 @@ namespace r2::draw::renderer
 	void Update();
 	void Render(float alpha);
 	void Shutdown();
-	u64 MemorySize();
+	u64 MemorySize(u64 materialSystemMemorySize);
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);

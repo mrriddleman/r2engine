@@ -150,4 +150,32 @@ namespace r2::mem::utils
         
         return stackArena;
     }
+
+    PoolArena* EmplacePoolArenaInMemoryBoundary(const MemBoundary& boundary, u32 elementSize, const char* file, s32 line, const char* description)
+    {
+		R2_CHECK(boundary.size > sizeof(PoolArena), "subArea size(%llu) must be greater than sizeof(PoolArena)(%lu)!", boundary.size, sizeof(PoolArena));
+		if (boundary.size <= sizeof(PoolArena))
+		{
+			return nullptr;
+		}
+
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
+		elementSize = elementSize + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
+#endif
+		u64 leftOverSize = boundary.size - sizeof(PoolArena);
+		u64 modResult = leftOverSize % elementSize;
+		void* poolAllocatorStartPtr = PointerAdd(boundary.location, sizeof(PoolArena) + modResult);
+		leftOverSize -= modResult;
+
+		MemBoundary poolAllocatorBoundary;
+		poolAllocatorBoundary.location = poolAllocatorStartPtr;
+		poolAllocatorBoundary.size = leftOverSize;
+		poolAllocatorBoundary.elementSize = elementSize;
+		poolAllocatorBoundary.alignment = elementSize;
+		poolAllocatorBoundary.offset = 0; //?
+
+		PoolArena* stackArena = new (boundary.location) PoolArena(poolAllocatorBoundary);
+
+		return stackArena;
+    }
 }

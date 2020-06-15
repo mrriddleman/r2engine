@@ -15,6 +15,11 @@
 #include "r2/Utils/Hash.h"
 #include <filesystem>
 
+
+#include "r2/Render/Model/Material_generated.h"
+#include "r2/Render/Model/MaterialPack_generated.h"
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+
 namespace r2::draw
 {
 	struct ModelSystem
@@ -34,6 +39,7 @@ namespace r2::draw
 
 		r2::draw::BufferHandles mBufferHandles;
 		ModelSystem mModelSystem;
+		MaterialSystem* mMaterialSystem = nullptr;
 
 		//Each bucket needs the bucket and an arena for that bucket
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
@@ -62,13 +68,14 @@ namespace
 	const u64 MAX_NUM_SHADERS = 1000;
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
+	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
 
 	const std::string MODL_EXT = ".modl";
 }
 
 namespace r2::draw::renderer
 {
-	
+	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
 
 	//basic stuff
 	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath)
@@ -86,7 +93,43 @@ namespace r2::draw::renderer
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize();
+		//@Temporary
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS, materialsPath, "engine_material_pack.mpak");
+
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS, texturePackPath, "engine_texture_pack.tman");
+
+		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
+		if (!materialPackData)
+		{
+			R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
+			return false;
+		}
+
+		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+
+		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+
+		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
+		if (!texturePacksData)
+		{
+			R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackPath);
+			return false;
+		}
+
+		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
+
+		R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
+
+		u64 materialMemorySystemSize = MaterialSystemMemorySize(materialPack->materials()->size(),
+			texturePacksManifest->totalTextureSize(),
+			texturePacksManifest->totalNumberOfTextures(),
+			texturePacksManifest->texturePacks()->size(),
+			texturePacksManifest->maxTexturesInAPack());
+
+		u64 subAreaSize = MemorySize(materialMemorySystemSize);
+
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
@@ -147,20 +190,27 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		//@Temporary
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS, materialsPath, "engine_material_pack.mpak");
 
-		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS, texturePackPath, "engine_texture_pack.tman");
-
-		bool materialSystemInitialized = r2::draw::mat::Init(memoryAreaHandle, materialsPath, texturePackPath);
-
+		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, "Material Systems Area");
 		if (!materialSystemInitialized)
+		{
+			R2_CHECK(false, "We couldn't initialize the material systems");
+			return false;
+		}
+
+
+		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*s_optrRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
+		
+		s_optrRenderer->mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
+
+		if (!s_optrRenderer->mMaterialSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
 		}
+
+		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
+		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 		if (!modelsystem::Init(memoryAreaHandle))
 		{
@@ -219,14 +269,21 @@ namespace r2::draw::renderer
 			return;
 		}
 
+		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
 
 		modelsystem::Shutdown();
-		r2::draw::mat::Shutdown();
+
+		r2::mem::utils::MemBoundary materialSystemBoundary = s_optrRenderer->mMaterialSystem->mMaterialMemBoundary;
+		
+		r2::draw::matsys::FreeMaterialSystem(s_optrRenderer->mMaterialSystem);
+		r2::draw::matsys::ShutdownMaterialSystems();
 		r2::draw::texsys::Shutdown();
 		r2::draw::shadersystem::Shutdown();
 
-		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
 		s_optrRenderer->mSubAreaArena = nullptr;
+
+		FREE(materialSystemBoundary.location, *arena);
+
 		//delete the buffer handles
 		FREE(s_optrRenderer->mBufferHandles.bufferLayoutHandles, *arena);
 		FREE(s_optrRenderer->mBufferHandles.vertexBufferHandles, *arena);
@@ -234,7 +291,6 @@ namespace r2::draw::renderer
 
 		FREE(s_optrRenderer->mCommandBucket, *arena);
 		FREE(s_optrRenderer->mCommandArena, *arena);
-
 
 		FREE(s_optrRenderer, *arena);
 
@@ -333,7 +389,20 @@ namespace r2::draw::renderer
 		return true;
 	}
 
-	u64 MemorySize()
+	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack)
+	{
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+
+		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+
+		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
+	}
+
+	u64 MemorySize(u64 materialSystemMemorySize)
 	{
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -350,7 +419,8 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking) +
+			materialSystemMemorySize;
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
 	}
@@ -410,7 +480,7 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk();
+		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*s_optrRenderer->mMaterialSystem);
 	}
 
 	void UploadMaterialTexturesToGPUFromMaterialName(u64 materialName)
@@ -421,7 +491,7 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(materialName);
+		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(*s_optrRenderer->mMaterialSystem, materialName);
 	}
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset)
@@ -673,7 +743,7 @@ namespace r2::draw::modelsystem
 
 			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), filePath);
 
-			Model* nextModel = LoadModel<r2::mem::LinearArena>(*s_optrRenderer->mModelSystem.mSubAreaArena, filePath);
+			Model* nextModel = LoadModel<r2::mem::LinearArena>(*s_optrRenderer->mModelSystem.mSubAreaArena, *s_optrRenderer->mMaterialSystem, filePath);
 			if (!nextModel)
 			{
 				R2_CHECK(false, "Failed to load the model: %s", file.path().string().c_str());

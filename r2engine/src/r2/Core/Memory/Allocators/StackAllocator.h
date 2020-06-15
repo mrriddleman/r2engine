@@ -24,6 +24,9 @@
 
 #define EMPLACE_STACK_ARENA(subarea) r2::mem::utils::EmplaceStackArena(subarea, __FILE__, __LINE__, "")
 
+#define EMPLACE_STACK_ARENA_IN_BOUNDARY(boundary) r2::mem::utils::EmplaceStackArenaInMemoryBoundary(boundary, __FILE__, __LINE__, "")
+
+
 namespace r2
 {
     namespace mem
@@ -70,6 +73,8 @@ namespace r2::mem::utils
     template<class ARENA> r2::mem::StackArena* CreateStackArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     
     StackArena* EmplaceStackArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description);
+
+    StackArena* EmplaceStackArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description);
 }
 
 namespace r2::mem::utils

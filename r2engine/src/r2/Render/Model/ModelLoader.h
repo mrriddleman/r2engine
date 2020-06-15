@@ -16,10 +16,10 @@ namespace r2::draw
 {
     struct Model;
     struct SkinnedModel;
-    
+    struct MaterialSystem;
     //@TODO(Serge): pass in the asset cache we want to store the textures in
     template<class ARENA>
-    Model* LoadModel(ARENA& arena, const char* filePath)
+    Model* LoadModel(ARENA& arena, const MaterialSystem& materialSystem,  const char* filePath)
     {
         char extension[r2::fs::FILE_PATH_LENGTH];
         bool success = r2::fs::utils::CopyFileExtensionWithoutTheDot(filePath, extension);
@@ -33,7 +33,7 @@ namespace r2::draw
         if (strcmp(extension, r2::ModelExtension()) == 0)
         {
             //use the flat version
-            Model* model = r2::draw::flat::LoadModel<ARENA>(arena, filePath);
+            Model* model = r2::draw::flatload::LoadModel<ARENA>(arena, materialSystem, filePath);
             R2_CHECK(model != nullptr, "Failed to load the model at filepath: %s", filePath);
             return model;
         }

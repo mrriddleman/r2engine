@@ -100,4 +100,22 @@ namespace r2::mem::utils
         
         return lineaArena;
     }
+
+    LinearArena* EmplaceLinearArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description)
+    {
+		//we need to figure out how much space we have and calculate a memory boundary for the Allocator
+		R2_CHECK(boundary.size > sizeof(LinearArena), "subArea size(%llu) must be greater than sizeof(LinearArena)(%lu)!", boundary.size, sizeof(LinearArena));
+		if (boundary.size <= sizeof(LinearArena))
+		{
+			return nullptr;
+		}
+
+		MemBoundary linearAllocatorBoundary;
+		linearAllocatorBoundary.location = PointerAdd(boundary.location, sizeof(LinearArena));
+		linearAllocatorBoundary.size = boundary.size - sizeof(LinearArena);
+
+		LinearArena* lineaArena = new (boundary.location) LinearArena(linearAllocatorBoundary);
+
+		return lineaArena;
+    }
 }

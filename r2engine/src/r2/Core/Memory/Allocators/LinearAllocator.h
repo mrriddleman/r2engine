@@ -22,6 +22,8 @@
 
 #define EMPLACE_LINEAR_ARENA(subarea) r2::mem::utils::EmplaceLinearArena(subarea, __FILE__, __LINE__, "")
 
+#define EMPLACE_LINEAR_ARENA_IN_BOUNDARY(boundary) r2::mem::utils::EmplaceLinearArenaInMemoryBoundary(boundary, __FILE__, __LINE__, "")
+
 namespace r2
 {
     namespace mem
@@ -67,6 +69,9 @@ namespace r2::mem::utils
     template<class ARENA> r2::mem::LinearArena* CreateLinearArena(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
     
     LinearArena* EmplaceLinearArena(MemoryArea::SubArea& subArea, const char* file, s32 line, const char* description);
+
+    LinearArena* EmplaceLinearArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description);
+
 }
 
 namespace r2::mem::utils

@@ -41,6 +41,8 @@ namespace r2::draw::rendererimpl
 	void SwapScreens();
 	void* GetRenderContext();
 	void* GetWindowHandle();
+	//@TODO(Serge): add more limits of the GPU
+	s32 MaxNumberOfTextureUnits();
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
