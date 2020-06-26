@@ -228,6 +228,7 @@ namespace r2::draw::renderer
 	void Update()
 	{
 		r2::draw::shadersystem::Update();
+		r2::draw::matsys::Update();
 	}
 
 	void Render(float alpha)

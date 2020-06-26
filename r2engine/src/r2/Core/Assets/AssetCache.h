@@ -59,7 +59,10 @@ namespace r2::asset
         
         //The handle should remain valid across the run of the game
         AssetHandle LoadAsset(const Asset& asset);
-        
+        bool HasAsset(const Asset& asset);
+
+        AssetHandle ReloadAsset(const Asset& asset);
+
         //Should not keep this pointer around for longer than necessary to use it as it can change in debug
         AssetCacheRecord GetAssetBuffer(AssetHandle handle);
 

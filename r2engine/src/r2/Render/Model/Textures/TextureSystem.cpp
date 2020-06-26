@@ -105,6 +105,20 @@ namespace r2::draw::texsys
 
 	}
 
+	void ReloadTexture(const r2::asset::AssetHandle& texture)
+	{
+		r2::draw::tex::GPUHandle theDefault = 0;
+
+		r2::draw::tex::GPUHandle gpuHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
+
+		if (gpuHandle != theDefault)
+		{
+			UnloadFromGPU(texture);
+		}
+
+		UploadToGPU(texture);
+	}
+
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture)
 	{
 		if (s_optrTextureSystem == nullptr)

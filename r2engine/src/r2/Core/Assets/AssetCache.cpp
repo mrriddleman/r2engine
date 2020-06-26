@@ -176,7 +176,33 @@ namespace r2::asset
         
         return handle;
     }
+
+    bool AssetCache::HasAsset(const Asset& asset)
+    {
+		AssetHandle handle = { asset.HashID(), mSlot };
+		AssetBufferRef theDefault;
+		AssetBufferRef& bufferRef = Find(handle, theDefault);
+
+        return bufferRef.mAssetBuffer != nullptr;
+    }
     
+    AssetHandle AssetCache::ReloadAsset(const Asset& asset)
+    {
+        AssetHandle handle = { asset.HashID(), mSlot };
+
+		AssetBufferRef theDefault;
+		AssetBufferRef& bufferRef = Find(handle, theDefault);
+
+		bool found = bufferRef.mAssetBuffer != nullptr;
+
+		if (found)
+		{
+			Free(handle, true);
+		}
+
+        return LoadAsset(asset);
+    }
+
     AssetCacheRecord AssetCache::GetAssetBuffer(AssetHandle handle)
     {
         R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");

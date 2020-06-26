@@ -53,29 +53,28 @@ namespace r2::draw
 		u32 handle = 0;
 		s32 slot = -1;
 	};
-
-
-	//template<class ARENA>
-	//Material MakeMaterial(ARENA& arena, u64 numTextures, const char* file, s32 line, const char* description);
-
-	//template<class ARENA>
-	//void FreeMaterial(ARENA& arena, Material& material, const char* file, s32 line, const char* description);
 }
 
 namespace r2::draw::matsys
 {
+	//for the matsys
 	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numMaterialSystems, const char* systemName);
-	
-	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const flat::MaterialPack* materialPack, const flat::TexturePacksManifest* texturePackManifest);
-	void FreeMaterialSystem(MaterialSystem* system);
+	void Update();
+	void ShutdownMaterialSystems();
+	u64 MemorySize(u64 numSystems, u64 alignment);
 	r2::draw::MaterialSystem* GetMaterialSystem(s32 slot);
 
-	u64 MemorySize(u64 numSystems, u64 alignment);
+#ifdef R2_ASSET_PIPELINE
+	void TextureChanged(std::string texturePath);
+#endif // R2_ASSET_PIPELINE
 
-	void ShutdownMaterialSystems();
+
+
+	//creating/freeing a new material system
+	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const flat::MaterialPack* materialPack, const flat::TexturePacksManifest* texturePackManifest);
+	void FreeMaterialSystem(MaterialSystem* system);
 }
 
-//@TODO(Serge): make this not a singleton
 namespace r2::draw::mat
 {
 	static const MaterialHandle InvalidMaterial;
@@ -93,28 +92,7 @@ namespace r2::draw::mat
 	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat);
 	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
-	
-
 	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack);
 }
-
-//namespace r2::draw
-//{
-//	template<class ARENA>
-//	Material MakeMaterial(ARENA& arena, u64 numTextures, const char* file, s32 line, const char* description)
-//	{
-//		Material newMaterial;
-//
-//		newMaterial = MAKE_SARRAY_VERBOSE(arena, r2::draw::tex::Texture, numTextures, file, line, description);
-//
-//		return newMaterial
-//	}
-//
-//	template<class ARENA>
-//	void FreeMaterial(ARENA& arena, Material& material, const char* file, s32 line, const char* description)
-//	{
-//		FREE_VERBOSE(material.textures, arena, file, line, description);
-//	}
-//}
 
 #endif // !__MATERIAL_H__

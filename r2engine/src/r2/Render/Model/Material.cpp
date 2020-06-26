@@ -11,9 +11,14 @@
 #include "r2/Render/Model/Textures/TexturePack.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 
 namespace r2::draw::mat
 {
+#ifdef R2_ASSET_PIPELINE
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_texturesChangedQueue;
+#endif // R2_ASSET_PIPELINE
+
 	struct MaterialSystems
 	{
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
@@ -21,6 +26,8 @@ namespace r2::draw::mat
 
 		r2::mem::LinearArena* mSystemsArena;
 		r2::SArray<r2::draw::MaterialSystem*>* mMaterialSystems = nullptr;
+
+
 	};
 }
 
@@ -759,6 +766,50 @@ namespace r2::draw::matsys
 		return nullptr;
 	}
 
+	void Update()
+	{
+#ifdef R2_ASSET_PIPELINE
+		
+		std::string path;
+		while (s_optrMaterialSystems && mat::s_texturesChangedQueue.TryPop(path))
+		{
+			//find which texture pack the path belongs to
+
+			char fileName[r2::fs::FILE_PATH_LENGTH];
+			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::SanitizeSubPath(path.c_str(), sanitizedPath);
+			r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, fileName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+
+			std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
+
+			r2::asset::Asset asset(fileName);
+
+			MaterialSystem* foundSystem = nullptr;
+			const u64 numMaterialSystems = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+			for (u64 i = 0; i < numMaterialSystems; ++i)
+			{
+				MaterialSystem* system = r2::sarr::At(*s_optrMaterialSystems->mMaterialSystems, i);
+
+				if (system && system->mAssetCache->HasAsset(asset))
+				{
+					foundSystem = system;
+					break;
+				}
+			}
+
+			//reload the path
+			if (foundSystem != nullptr)
+			{
+				r2::asset::AssetHandle assetHandle = foundSystem->mAssetCache->ReloadAsset(asset);
+				r2::draw::texsys::ReloadTexture(assetHandle);
+
+				//@NOTE: since we have the same asset handle we don't need to do anything to the mMaterialTextures array
+				//		 if that changes we'll have to add something here
+			}
+		}
+#endif // R2_ASSET_PIPELINE
+	}
+
 	u64 MemorySize(u64 numSystems,u64 alignment)
 	{
 		u32 boundsChecking = 0;
@@ -792,4 +843,11 @@ namespace r2::draw::matsys
 
 		FREE_EMPLACED_ARENA(arena);
 	}
+
+#ifdef R2_ASSET_PIPELINE
+	void TextureChanged(std::string texturePath)
+	{
+		mat::s_texturesChangedQueue.Push(texturePath);
+	}
+#endif // R2_ASSET_PIPELINE
 }

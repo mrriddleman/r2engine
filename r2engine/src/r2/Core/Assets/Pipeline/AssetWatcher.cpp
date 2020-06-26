@@ -15,6 +15,7 @@
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Material.h"
 
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
@@ -54,7 +55,10 @@ namespace r2::asset::pln
     //bool s_reloadShaderManifests = false;
     
     TexturePackManifestCommand s_texturePackCommand;
+    std::vector<FileWatcher> s_texturesFileWatchers;
+
     MaterialPackManifestCommand s_materialPackCommand;
+    FileWatcher s_materialsFileWatcher;
 
     std::thread s_assetWatcherThread;
     std::atomic_bool s_end;
@@ -88,7 +92,9 @@ namespace r2::asset::pln
 
     //Textures
     void GenerateTexturePackManifestsIfNeeded();
-
+    void TextureChangedRequest(std::string chagedPath);
+    void TextureAddedRequest(std::string newPath);
+    void ReloadTexturePackManifests();
 
     void GenerateMaterialPackManifestsIfNeeded();
 
@@ -126,7 +132,22 @@ namespace r2::asset::pln
             s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
         }
         
+        //Textures
         GenerateTexturePackManifestsIfNeeded();
+
+        {
+            
+            for (const auto& path : texturePackCommand.texturePacksWatchDirectories)
+            {
+                FileWatcher fw;
+                fw.Init(s_delay, path);
+                fw.AddModifyListener(TextureChangedRequest);
+                fw.AddCreatedListener(TextureAddedRequest);
+                s_texturesFileWatchers.push_back(fw);
+            }
+        }
+
+
         GenerateMaterialPackManifestsIfNeeded();
 
         s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), s_assetCommand.assetManifestsPath);
@@ -150,6 +171,9 @@ namespace r2::asset::pln
         fw.AddModifyListener(SoundDefinitionsChanged);
         s_soundDefinitionFileWatchers.push_back(fw);
         
+
+
+
         r2::asset::pln::cmp::Init(s_assetCommand.assetTempPath, s_assetCommand.assetsBuldFunc);
         
         for (const auto& manifest : s_manifests)
@@ -209,6 +233,11 @@ namespace r2::asset::pln
                 s_soundDefinitionCommand.buildFunc({s_soundDefinitionCommand.soundDefinitionFilePath});
                 s_callRebuiltSoundDefinitions = false;
             }
+
+			for (auto& fw : s_texturesFileWatchers)
+			{
+				fw.Run();
+			}
         }
     }
     
@@ -412,7 +441,17 @@ namespace r2::asset::pln
 			}
         }
     }
-    
+
+    void TextureChangedRequest(std::string chagedPath)
+    {
+        r2::draw::matsys::TextureChanged(chagedPath);
+    }
+
+    void TextureAddedRequest(std::string newPath)
+    {
+
+    }
+
     //materials
     void GenerateMaterialPackManifestsIfNeeded()
     {
