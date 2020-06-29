@@ -35,6 +35,7 @@ namespace r2::draw
 	enum DefaultModel
 	{
 		QUAD = 0,
+		CUBE,
 		NUM_DEFAULT_MODELS
 	};
 

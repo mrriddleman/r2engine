@@ -9,6 +9,8 @@
 
 #include "FlatbufferHelpers.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
+#include <filesystem>
 #include <cstdlib>
 #include <cstdio>
 
@@ -70,6 +72,24 @@ namespace r2::asset::pln::flathelp
 #endif
         return RunSystemCommand(command) == 0;
     }
+
+    bool GenerateJSONAndBinary(byte* buffer, u32 size, const std::string& schemaPath, const std::string& binaryPath, const std::string& jsonFilePath)
+    {
+		bool wroteFile = utils::WriteFile(binaryPath, (char*)buffer, size);
+
+        R2_CHECK(wroteFile, "Failed to write file: %s", binaryPath.c_str());
+
+		std::filesystem::path p = binaryPath;
+
+        std::filesystem::path jsonPath = jsonFilePath;
+
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), schemaPath, binaryPath);
+
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), schemaPath, jsonFilePath);
+
+		return generatedJSON && generatedBinary;
+    }
+
 }
 
 #endif

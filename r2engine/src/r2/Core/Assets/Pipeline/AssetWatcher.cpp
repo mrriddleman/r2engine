@@ -13,6 +13,7 @@
 #include "r2/Core/Assets/Pipeline/SoundDefinitionUtils.h"
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
+#include "r2/Core/Assets/Pipeline/MakeEngineModels.h"
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Material.h"
@@ -120,7 +121,11 @@ namespace r2::asset::pln
         s_soundDefinitionsDirectory = p.parent_path().string();
         ReloadManifests();
 
-        
+        auto makeModels = ShouldMakeEngineModels();
+        if (makeModels.size()>0)
+        {
+            MakeEngineModels(makeModels);
+        }
 
         LoadSoundDefinitions();
         

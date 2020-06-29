@@ -62,6 +62,7 @@ namespace r2::draw
 namespace r2::draw::cmd
 {
 	u32 CLEAR_COLOR_BUFFER = GL_COLOR_BUFFER_BIT;
+	u32 CLEAR_DEPTH_BUFFER = GL_DEPTH_BUFFER_BIT;
 }
 
 namespace r2::draw::rendererimpl
@@ -156,6 +157,10 @@ namespace r2::draw::rendererimpl
 
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId, IndexBufferHandle indexBufferId)
 	{
+		//@TODO(Serge): move this to somewhere that makes sense
+		glEnable(GL_DEPTH_TEST);
+	
+
 		glBindVertexArray(layoutId);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
 		glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, config.vertexBufferConfig.drawType);
@@ -250,6 +255,7 @@ namespace r2::draw::rendererimpl
 			if (textures)
 			{
 				u64 numTextures = r2::sarr::Size(*textures);
+				
 
 				const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
 				u32 textureNum[numTextureTypes];

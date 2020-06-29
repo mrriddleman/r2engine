@@ -138,7 +138,7 @@ namespace r2::cam
             
            // R2_LOGI("pitch: %f, yaw: %f", pitch, yaw);
             
-       //     SetFacingDir(mCamera, pitch, yaw);
+            SetFacingDir(mCamera, pitch, yaw);
             
             return true;
         });

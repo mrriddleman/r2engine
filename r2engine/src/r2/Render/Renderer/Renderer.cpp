@@ -713,17 +713,19 @@ namespace r2::draw::modelsystem
 	u64 MemorySize()
 	{
 		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#ifdef R2_DEBUG::
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
 		u64 quadModelSize = Model::MemorySize(1, 4, 6, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 cubeModelSize = Model::MemorySize(1, 24, 36, 1, headerSize, boundsChecking, ALIGNMENT);
 
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking); //For quad
+			r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking) + //For quad
+			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking); //For Cube
 	}
 
 	bool LoadEngineModels(const char* modelDirectory)
@@ -754,6 +756,11 @@ namespace r2::draw::modelsystem
 			if (nextModel->hash == STRING_ID("Quad"))
 			{
 				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::QUAD] = nextModel;
+				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
+			}
+			else if (nextModel->hash == STRING_ID("Cube"))
+			{
+				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::CUBE] = nextModel;
 				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
 			}
 		}

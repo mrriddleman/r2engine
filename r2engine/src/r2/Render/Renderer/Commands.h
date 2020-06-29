@@ -14,6 +14,7 @@ namespace r2::draw::cmd
 {
 
 	extern u32 CLEAR_COLOR_BUFFER;
+	extern u32 CLEAR_DEPTH_BUFFER;
 
 	struct Clear
 	{
