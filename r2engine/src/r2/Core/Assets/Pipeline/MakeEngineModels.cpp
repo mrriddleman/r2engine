@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <map>
 #include <algorithm>
+#include <glm/gtc/constants.hpp>
 
 namespace r2::asset::pln
 {
@@ -17,11 +18,13 @@ namespace r2::asset::pln
 
 	void MakeQuad(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCube(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeSphere(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 
 	std::map<std::string, MakeModlFunc> s_makeModelsMap
 	{
 		{"Quad.modl", MakeQuad},
-		{"Cube.modl", MakeCube}
+		{"Cube.modl", MakeCube},
+		{"Sphere.modl", MakeSphere}
 	};
 
 	std::vector<MakeModlFunc> ShouldMakeEngineModels()
@@ -29,7 +32,8 @@ namespace r2::asset::pln
 		std::vector<MakeModlFunc> makeModelFuncs
 		{ 
 			MakeQuad,
-			MakeCube 
+			MakeCube,
+			MakeSphere
 		};
 
 		for (const auto& modelFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -350,6 +354,92 @@ namespace r2::asset::pln
 		auto model = r2::CreateModel(fbb, STRING_ID("Cube"), fbb.CreateVector(meshes));
 		fbb.Finish(model);
 		const std::string name = "/Cube";
+
+		byte* buf = fbb.GetBufferPointer();
+		u32 size = fbb.GetSize();
+
+		r2::asset::pln::flathelp::GenerateJSONAndBinary(
+			buf, size,
+			schemaPath, binaryParentDir + name + MODL_EXT,
+			jsonParentDir + name + JSON_EXT);
+	}
+
+	void MakeSphere(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		constexpr float PI =  glm::pi<float>();
+		constexpr u32 segments = 32;
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<r2::Mesh>> meshes;
+
+		std::vector<r2::Vertex3> positions;
+		std::vector<r2::Vertex3> normals;
+		std::vector<r2::Vertex2> texCoords;
+
+		std::vector<flatbuffers::Offset<r2::Face>> faces;
+
+		std::vector<uint32_t> indices;
+
+		for (u32 y = 0; y <= segments; ++y)
+		{
+			for (u32 x = 0; x <= segments; ++x)
+			{
+				float xSegment = (float)x / (float)segments;
+				float ySegment = (float)y / (float)segments;
+				float xPos = cos(xSegment * 2.0f * PI) * sin(ySegment * PI);
+				float yPos = cos(ySegment * PI);
+				float zPos = sin(xSegment * 2.0f * PI) * sin(ySegment * PI);
+
+				positions.push_back(r2::Vertex3(xPos, yPos, zPos));
+				normals.push_back(r2::Vertex3(xPos, yPos, zPos));
+				texCoords.push_back(r2::Vertex2(xSegment, ySegment));
+			}
+		}
+
+		// generate CCW index list of sphere triangles
+		int k1, k2;
+		for (int i = 0; i < segments; ++i)
+		{
+			k1 = i * (segments + 1);     // beginning of current stack
+			k2 = k1 + segments + 1;      // beginning of next stack
+
+			for (int j = 0; j < segments; ++j, ++k1, ++k2)
+			{
+				// 2 triangles per sector excluding first and last stacks
+				// k1 => k2 => k1+1
+				if (i != 0)
+				{
+					indices.push_back(k1);
+					indices.push_back(k2);
+					indices.push_back(k1 + 1);
+
+					faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+					indices.clear();
+				}
+
+				// k1+1 => k2 => k2+1
+				if (i != (segments - 1))
+				{
+					indices.push_back(k1 + 1);
+					indices.push_back(k2);
+					indices.push_back(k2 + 1);
+
+					faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+					indices.clear();
+				}
+			}
+		}
+
+		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Basic"))); //@temporary
+
+		flatbuffers::Offset<r2::Mesh> mesh = r2::CreateMeshDirect(fbb, positions.size(), faces.size(),
+			&positions, &normals, &texCoords, &faces, &materials);
+
+		meshes.push_back(mesh);
+
+		auto model = r2::CreateModel(fbb, STRING_ID("Sphere"), fbb.CreateVector(meshes));
+		fbb.Finish(model);
+		const std::string name = "/Sphere";
 
 		byte* buf = fbb.GetBufferPointer();
 		u32 size = fbb.GetSize();

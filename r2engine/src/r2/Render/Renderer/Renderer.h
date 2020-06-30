@@ -36,6 +36,7 @@ namespace r2::draw
 	{
 		QUAD = 0,
 		CUBE,
+		SPHERE,
 		NUM_DEFAULT_MODELS
 	};
 
@@ -64,6 +65,7 @@ namespace r2::draw::renderer
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts);
+	void SetDepthTest(bool shouldDepthTest);
 
 	//Regular methods
 	BufferHandles& GetBufferHandles();

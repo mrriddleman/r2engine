@@ -50,6 +50,7 @@ namespace r2::draw::rendererimpl
 	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
 	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId);
+	void SetDepthTest(bool shouldDepthTest);
 
 	//
 	void UpdateCamera(const r2::Camera& camera);

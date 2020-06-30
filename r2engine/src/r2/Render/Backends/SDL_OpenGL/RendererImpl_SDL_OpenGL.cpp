@@ -155,12 +155,17 @@ namespace r2::draw::rendererimpl
 		glGenBuffers(numIndexBuffers, indexIds);
 	}
 
+	void SetDepthTest(bool shouldDepthTest)
+	{
+		if (shouldDepthTest)
+			glEnable(GL_DEPTH_TEST);
+		else
+			glDisable(GL_DEPTH_TEST);
+	}
+
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId, IndexBufferHandle indexBufferId)
 	{
 		//@TODO(Serge): move this to somewhere that makes sense
-		glEnable(GL_DEPTH_TEST);
-	
-
 		glBindVertexArray(layoutId);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
 		glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, config.vertexBufferConfig.drawType);

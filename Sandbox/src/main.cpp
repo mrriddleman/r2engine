@@ -301,13 +301,14 @@ public:
 
         r2::sarr::Push(*layouts, layoutConfig);
 
+        r2::draw::renderer::SetDepthTest(true);
         bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
         R2_CHECK(success, "We couldn't create the buffer layouts!");
 
         r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
 
         //fill the buffers with data
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
 
         r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
@@ -474,7 +475,7 @@ public:
     {
         //add my commands here
 
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
         const r2::draw::Mesh& mesh = r2::sarr::At(*quadModel->optrMeshes, 0);
         r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
 
