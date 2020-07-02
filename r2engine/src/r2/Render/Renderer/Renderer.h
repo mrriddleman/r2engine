@@ -37,6 +37,8 @@ namespace r2::draw
 		QUAD = 0,
 		CUBE,
 		SPHERE,
+		CONE,
+		CYLINDER,
 		NUM_DEFAULT_MODELS
 	};
 

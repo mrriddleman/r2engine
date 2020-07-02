@@ -19,12 +19,19 @@ namespace r2::asset::pln
 	void MakeQuad(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCube(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeSphere(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeCone(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, float baseRadius = 1.0f, float topRadius = 1.0f, float height = 1.0f,
+		int sectorCount = 36, int stackCount = 1, bool smooth = true);
+
 
 	std::map<std::string, MakeModlFunc> s_makeModelsMap
 	{
 		{"Quad.modl", MakeQuad},
 		{"Cube.modl", MakeCube},
-		{"Sphere.modl", MakeSphere}
+		{"Sphere.modl", MakeSphere},
+		{"Cone.modl", MakeCone},
+		{"Cylinder.modl", MakeCylinder}
 	};
 
 	std::vector<MakeModlFunc> ShouldMakeEngineModels()
@@ -33,7 +40,9 @@ namespace r2::asset::pln
 		{ 
 			MakeQuad,
 			MakeCube,
-			MakeSphere
+			MakeSphere,
+			MakeCone,
+			MakeCylinder
 		};
 
 		for (const auto& modelFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -448,6 +457,236 @@ namespace r2::asset::pln
 			buf, size,
 			schemaPath, binaryParentDir + name + MODL_EXT,
 			jsonParentDir + name + JSON_EXT);
+	}
+
+	void MakeCone(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		MakeCylinderInternal("Cone", schemaPath, binaryParentDir, jsonParentDir, 1.0f, 0.0f);
+	}
+
+	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		MakeCylinderInternal("Cylinder", schemaPath, binaryParentDir, jsonParentDir);
+	}
+
+	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, float baseRadius, float topRadius, float height,
+		int sectorCount, int stackCount, bool smooth)
+	{
+		//Copied from: https://www.songho.ca/opengl/gl_cylinder.html#example_pipe
+		constexpr float PI = glm::pi<float>();
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<r2::Mesh>> meshes;
+
+		std::vector<r2::Vertex3> positions;
+		std::vector<r2::Vertex3> normals;
+		std::vector<r2::Vertex2> texCoords;
+
+		std::vector<flatbuffers::Offset<r2::Face>> faces;
+
+		std::vector<uint32_t> indices;
+		
+		float sectorStep = 2 * PI / sectorCount;
+		float sectorAngle;  // radian
+
+		std::vector<float> unitCircleVertices;
+
+		{
+			std::vector<float>().swap(unitCircleVertices);
+			for (int i = 0; i <= sectorCount; ++i)
+			{
+				sectorAngle = i * sectorStep;
+				unitCircleVertices.push_back(cos(sectorAngle)); // x
+				unitCircleVertices.push_back(sin(sectorAngle)); // y
+				unitCircleVertices.push_back(0);                // z
+			}
+		}
+		
+		// compute the normal vector at 0 degree first
+		float zAngle = atan2(baseRadius - topRadius, height);
+		float x0 = cos(zAngle);     // nx
+		float y0 = 0;               // ny
+		float z0 = sin(zAngle);     // nz
+
+		// rotate (x0,y0,z0) per sector angle
+		std::vector<float> fnormals;
+		for (int i = 0; i <= sectorCount; ++i)
+		{
+			sectorAngle = i * sectorStep;
+			fnormals.push_back(cos(sectorAngle) * x0 - sin(sectorAngle) * y0);
+			fnormals.push_back(sin(sectorAngle) * x0 + cos(sectorAngle) * y0);
+			fnormals.push_back(z0);
+		}
+
+		float x, y, z;
+		float radius;
+		// put vertices of side cylinder to array by scaling unit circle
+		for (int i = 0; i <= stackCount; ++i)
+		{
+			z = -(height * 0.5f) + (float)i / stackCount * height;      // vertex position z
+			radius = baseRadius + (float)i / stackCount * (topRadius - baseRadius);     // lerp
+			float t = 1.0f - (float)i / stackCount;   // top-to-bottom
+
+			for (int j = 0, k = 0; j <= sectorCount; ++j, k += 3)
+			{
+				x = unitCircleVertices[k];
+				y = unitCircleVertices[k + 1];
+
+				positions.push_back(r2::Vertex3(x * radius, y * radius, z));
+				normals.push_back(Vertex3(fnormals[k], fnormals[k+1], fnormals[k+2]));
+				texCoords.push_back(r2::Vertex2((float)j / sectorCount, t));
+			}
+		}
+
+		// remember where the base.top vertices start
+		unsigned int baseVertexIndex = (unsigned int)positions.size();
+
+		// put vertices of base of cylinder
+		z = -height * 0.5f;
+		positions.push_back(r2::Vertex3(0.0f, 0.0f, z));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+		texCoords.push_back(r2::Vertex2( 0.5f, 0.5f));
+		for (int i = 0, j = 0; i < sectorCount; ++i, j += 3)
+		{
+			x = unitCircleVertices[j];
+			y = unitCircleVertices[j + 1];
+			positions.push_back(r2::Vertex3(x * baseRadius, y * baseRadius, z));
+			normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+			texCoords.push_back(r2::Vertex2(-x * 0.5f + 0.5f, -y * 0.5f + 0.5f));
+		}
+
+		// remember where the base vertices start
+		unsigned int topVertexIndex = (unsigned int)positions.size();
+
+		// put vertices of top of cylinder
+		z = height * 0.5f;
+		positions.push_back(r2::Vertex3(0.0f, 0.0f, z));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1));
+		texCoords.push_back(r2::Vertex2(0.5f, 0.5f));
+		for (int i = 0, j = 0; i < sectorCount; ++i, j += 3)
+		{
+			x = unitCircleVertices[j];
+			y = unitCircleVertices[j + 1];
+			positions.push_back(r2::Vertex3(x * topRadius, y * topRadius, z));
+			normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
+			texCoords.push_back(r2::Vertex2(x * 0.5f + 0.5f, -y * 0.5f + 0.5f));
+		}
+
+
+		// put indices for sides
+		unsigned int k1, k2;
+		for (int i = 0; i < stackCount; ++i)
+		{
+			k1 = i * (sectorCount + 1);     // bebinning of current stack
+			k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+			for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+			{
+				// 2 trianles per sector
+				indices.push_back(k1);
+				indices.push_back(k1 + 1);
+				indices.push_back(k2);
+				
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+
+				indices.push_back(k2);
+				indices.push_back(k1 + 1);
+				indices.push_back(k2 + 1);
+
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+
+				/*
+				// vertical lines for all stacks
+				lineIndices.push_back(k1);
+				lineIndices.push_back(k2);
+				// horizontal lines
+				lineIndices.push_back(k2);
+				lineIndices.push_back(k2 + 1);
+				if (i == 0)
+				{
+					lineIndices.push_back(k1);
+					lineIndices.push_back(k1 + 1);
+				}
+				*/
+			}
+		}
+
+		// remember where the base indices start
+		//baseIndex = (unsigned int)indices.size();
+
+		// put indices for base
+		for (int i = 0, k = baseVertexIndex + 1; i < sectorCount; ++i, ++k)
+		{
+			if (i < (sectorCount - 1))
+			{
+				indices.push_back(baseVertexIndex);
+				indices.push_back(k + 1);
+				indices.push_back(k);
+
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+			}
+				
+			else    // last triangle
+			{
+				indices.push_back(baseVertexIndex);
+				indices.push_back(baseVertexIndex + 1);
+				indices.push_back(k);
+
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+			}
+		}
+
+		// remember where the base indices start
+		//topIndex = (unsigned int)indices.size();
+
+		for (int i = 0, k = topVertexIndex + 1; i < sectorCount; ++i, ++k)
+		{
+			if (i < (sectorCount - 1))
+			{
+				//addIndices(topVertexIndex, k, k + 1);
+
+				indices.push_back(topVertexIndex);
+				indices.push_back(k);
+				indices.push_back(k + 1);
+
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+			}
+			else
+			{
+				indices.push_back(topVertexIndex);
+				indices.push_back(k);
+				indices.push_back(topVertexIndex + 1);
+
+				faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+				indices.clear();
+			}	
+		}
+
+
+		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Basic"))); //@temporary
+
+		flatbuffers::Offset<r2::Mesh> mesh = r2::CreateMeshDirect(fbb, positions.size(), faces.size(),
+			&positions, &normals, &texCoords, &faces, &materials);
+
+		meshes.push_back(mesh);
+
+		auto model = r2::CreateModel(fbb, STRING_ID(name), fbb.CreateVector(meshes));
+		fbb.Finish(model);
+		const std::string fileName = std::string("/") + name;
+
+		byte* buf = fbb.GetBufferPointer();
+		u32 size = fbb.GetSize();
+
+		r2::asset::pln::flathelp::GenerateJSONAndBinary(
+			buf, size,
+			schemaPath, binaryParentDir + fileName + MODL_EXT,
+			jsonParentDir + fileName + JSON_EXT);
+
 	}
 }
 #endif

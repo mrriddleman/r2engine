@@ -726,13 +726,17 @@ namespace r2::draw::modelsystem
 		u64 quadModelSize = Model::MemorySize(1, 4, 6, 1, headerSize, boundsChecking, ALIGNMENT);
 		u64 cubeModelSize = Model::MemorySize(1, 24, 36, 1, headerSize, boundsChecking, ALIGNMENT);
 		u64 sphereModelSize = Model::MemorySize(1, 1089, 5952, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 coneModelSize = Model::MemorySize(1, 148, 144*3, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 cylinderModelSize = Model::MemorySize(1, 148, 144*3, 1, headerSize, boundsChecking, ALIGNMENT);
 
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Model*>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking) + //For quad
 			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking) + //For Cube
-			r2::mem::utils::GetMaxMemoryForAllocation(sphereModelSize, ALIGNMENT, headerSize, boundsChecking); //For Sphere
+			r2::mem::utils::GetMaxMemoryForAllocation(sphereModelSize, ALIGNMENT, headerSize, boundsChecking) + //For Sphere
+			r2::mem::utils::GetMaxMemoryForAllocation(coneModelSize, ALIGNMENT, headerSize, boundsChecking) + // For Cone
+			r2::mem::utils::GetMaxMemoryForAllocation(cylinderModelSize, ALIGNMENT, headerSize, boundsChecking);
 	}
 
 	bool LoadEngineModels(const char* modelDirectory)
@@ -773,6 +777,16 @@ namespace r2::draw::modelsystem
 			else if (nextModel->hash == STRING_ID("Sphere"))
 			{
 				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::SPHERE] = nextModel;
+				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
+			}
+			else if (nextModel->hash == STRING_ID("Cone"))
+			{
+				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::CONE] = nextModel;
+				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
+			}
+			else if (nextModel->hash == STRING_ID("Cylinder"))
+			{
+				(*s_optrRenderer->mModelSystem.mDefaultModels)[r2::draw::CYLINDER] = nextModel;
 				s_optrRenderer->mModelSystem.mDefaultModels->mSize++;
 			}
 		}
