@@ -21,8 +21,6 @@
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
 
-#define ASSET_CACHE_DEBUG 1
-
 namespace r2::asset
 {
     class AssetFile;
@@ -157,7 +155,7 @@ namespace r2::asset
         std::vector<AssetsToFile> mAssetsForFiles;
 #endif
         //Debug stuff
-#if ASSET_CACHE_DEBUG 
+#if R2_ASSET_CACHE_DEBUG 
         void PrintLRU();
         void PrintAssetMap();
         void PrintAllAssetsInFiles();

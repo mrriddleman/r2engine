@@ -20,7 +20,7 @@ public:
     bool Init(const char* path);
     virtual bool Open() override;
     virtual bool Close() override;
-    virtual bool IsOpen() override;
+    virtual bool IsOpen() const override;
     virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;
     
     virtual u64 GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;

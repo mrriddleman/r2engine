@@ -26,7 +26,7 @@ namespace r2::asset
         bool Init(const char* assetPath, r2::mem::AllocateFunc alloc, r2::mem::FreeFunc free);
         virtual bool Open() override;
         virtual bool Close() override;
-        virtual bool IsOpen() override;
+        virtual bool IsOpen() const override;
         virtual u64 RawAssetSize(const Asset& asset) override;
         virtual u64 GetRawAsset(const Asset& asset, byte* data, u32 dataBufSize) override;
         virtual u64 NumAssets() const override;

@@ -66,7 +66,7 @@ namespace r2::asset
         return true;
     }
     
-    bool ZipAssetFile::IsOpen()
+    bool ZipAssetFile::IsOpen() const
     {
         return mZipFile && mZipFile->IsOpen();
     }
@@ -74,7 +74,7 @@ namespace r2::asset
     u64 ZipAssetFile::RawAssetSize(const Asset& asset)
     {
         u32 fileIndex = 0;
-        bool found = mZipFile->FindFile(asset.Name(), fileIndex);
+        bool found = mZipFile->FindFile(asset.HashID(), fileIndex);
         
         if (found)
         {
@@ -93,16 +93,31 @@ namespace r2::asset
     
     u64 ZipAssetFile::GetRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
     {
-        return mZipFile->ReadUncompressedFileData(data, dataBufSize, asset.Name());
+		if (!(mZipFile && mZipFile->IsOpen()))
+		{
+			return 0;
+		}
+
+        return mZipFile->ReadUncompressedFileDataByHash(data, dataBufSize, asset.HashID());
     }
     
     u64 ZipAssetFile::NumAssets() const
     {
+        if (!(mZipFile && mZipFile->IsOpen()))
+        {
+            return 0;
+        }
         return mZipFile->GetNumberOfFiles();
     }
     
     void ZipAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
     {
+		if (!(mZipFile && mZipFile->IsOpen()))
+		{
+            name = "";
+            return;
+		}
+
         mZipFile->GetFilename(static_cast<u32>( index), name, nameBuferSize);
     }
     

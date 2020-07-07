@@ -13,7 +13,7 @@
 #include <limits>
 
 #define MAKE_SHASHMAP(arena, T, capacity) r2::shashmap::CreateSHashMap<T>(arena, capacity, __FILE__, __LINE__, "")
-
+#define MAKE_SHASHMAP_IN_PLACE(T, placement, capacity) r2::shashmap::CreateHashMapInPlace<T>(placement, capacity)
 namespace
 {
     const f64 MAX_LOAD_FACTOR = 0.75;
@@ -43,6 +43,10 @@ namespace r2
         
         static u64 MemorySize(u64 capacity);
         static u64 FullAtCapacity(u64 capcity);
+        static f64 LoadFactor()
+        {
+            return MAX_LOAD_FACTOR;
+        }
 
         u64 mCapacity;
         SArray<u64>* mHash;
@@ -68,6 +72,9 @@ namespace r2
         template<typename T> const typename SHashMap<T>::HashMapEntry* End(const SHashMap<T>& h);
         
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description);
+    
+        template<typename T> SHashMap<T>* CreateHashMapInPlace(void* hashMapPlacement, u64 capacity);
+    
     }
     
     namespace smultihash
@@ -318,19 +325,26 @@ namespace r2
         
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description)
         {
-            SHashMap<T>* h = new (ALLOC_BYTES(a, SHashMap<T>::MemorySize(capacity), alignof(u64), file, line, description)) SHashMap<T>();
-            
-            SArray<u64>* startOfHashArray = new(r2::mem::utils::PointerAdd(h, sizeof(SHashMap<T>))) SArray<u64>();
-            
-            u64* hashArrayDataStart = (u64*)r2::mem::utils::PointerAdd(startOfHashArray, sizeof(SArray<u64>));
-            
-            SArray<typename SHashMap<T>::HashMapEntry>* startOfDataArray = new(r2::mem::utils::PointerAdd(hashArrayDataStart, sizeof(u64)*capacity)) SArray<typename SHashMap<T>::HashMapEntry>();
-            
-            typename SHashMap<T>::HashMapEntry* dataStart = (typename SHashMap<T>::HashMapEntry*)r2::mem::utils::PointerAdd(startOfDataArray, sizeof(SArray<typename SHashMap<T>::HashMapEntry>));
-            
-            h->Create(startOfHashArray, hashArrayDataStart, startOfDataArray, dataStart, capacity);
-            
-            return h;
+            void* hashMapPlacement = ALLOC_BYTES(a, SHashMap<T>::MemorySize(capacity), alignof(u64), file, line, description);
+
+            return CreateHashMapInPlace<T>(hashMapPlacement, capacity);
+        }
+
+        template<typename T> SHashMap<T>* CreateHashMapInPlace(void* hashMapPlacement, u64 capacity)
+        {
+            SHashMap<T>* h = new (hashMapPlacement) SHashMap<T>();
+
+			SArray<u64>* startOfHashArray = new(r2::mem::utils::PointerAdd(h, sizeof(SHashMap<T>))) SArray<u64>();
+
+			u64* hashArrayDataStart = (u64*)r2::mem::utils::PointerAdd(startOfHashArray, sizeof(SArray<u64>));
+
+			SArray<typename SHashMap<T>::HashMapEntry>* startOfDataArray = new(r2::mem::utils::PointerAdd(hashArrayDataStart, sizeof(u64) * capacity)) SArray<typename SHashMap<T>::HashMapEntry>();
+
+			typename SHashMap<T>::HashMapEntry* dataStart = (typename SHashMap<T>::HashMapEntry*)r2::mem::utils::PointerAdd(startOfDataArray, sizeof(SArray<typename SHashMap<T>::HashMapEntry>));
+
+			h->Create(startOfHashArray, hashArrayDataStart, startOfDataArray, dataStart, capacity);
+
+			return h;
         }
     }
     

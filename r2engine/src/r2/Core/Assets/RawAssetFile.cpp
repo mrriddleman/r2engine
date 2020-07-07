@@ -56,7 +56,7 @@ namespace r2::asset
         return true;
     }
     
-    bool RawAssetFile::IsOpen()
+    bool RawAssetFile::IsOpen() const
     {
         return mFile != nullptr;
     }

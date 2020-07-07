@@ -10,6 +10,7 @@
 
 #include "r2/Core/File/File.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Containers/SHashMap.h"
 #include <functional>
 
 namespace r2::fs
@@ -108,10 +109,12 @@ namespace r2::fs
         bool IsFileADirectory(u32 fileIndex) const;
         bool FindFile(const char* filename, u32& fileIndex, bool ignorePath = false);
         bool GetFileInfo(u32 fileIndex, ZipFileInfo& info, bool* foundExtraData) const;
+        bool FindFile(u64 hash, u32& fileIndex);
 
         bool ReadUncompressedFileData(void* buffer, u64 bufferSize, u32 fileIndex);
         bool ReadUncompressedFileData(void* buffer, u64 bufferSize, const char* filename);
-    
+        bool ReadUncompressedFileDataByHash(void* buffer, u64 bufferSize, u64 hash);
+
     private:
         
         bool InitReadArchive();
@@ -142,7 +145,7 @@ namespace r2::fs
         ZipArchive mArchive;
         r2::mem::AllocateFunc mAlloc;
         r2::mem::FreeFunc mFree;
-        
+        r2::SHashMap<u32>* mFileIndexLookup;
     };
 }
 

@@ -15,26 +15,30 @@ namespace r2::asset
     Asset::Asset()
     : mHashedPathID(0)
     {
+#ifdef R2_ASSET_CACHE_DEBUG
         r2::util::PathCpy(mName, "");
+#endif
     }
     
     Asset::Asset(const char* name)
     {
-        bool result = false;
 
+#ifdef R2_ASSET_CACHE_DEBUG
         r2::util::PathCpy(mName, name);
-        result = true;
+#endif
+        char path[r2::fs::FILE_PATH_LENGTH];
+        r2::util::PathCpy(path, name);
+
+        std::transform(std::begin(path), std::end(path), std::begin(path), (int(*)(int))std::tolower);
         
-        R2_CHECK(result, "Asset::Asset() - couldn't append path");
-        
-        std::transform(std::begin(mName), std::end(mName), std::begin(mName), (int(*)(int))std::tolower);
-        
-        mHashedPathID = r2::utils::Hash<const char*>{}(mName);
+        mHashedPathID = r2::utils::Hash<const char*>{}(path);
     }
     
     Asset::Asset(const Asset& asset)
     {
+#ifdef R2_ASSET_CACHE_DEBUG
         r2::util::PathCpy(mName, asset.mName);
+#endif
         mHashedPathID = asset.mHashedPathID;
     }
     
@@ -44,8 +48,9 @@ namespace r2::asset
         {
             return *this;
         }
-        
+#ifdef R2_ASSET_CACHE_DEBUG
         r2::util::PathCpy(mName, asset.mName);
+#endif
         mHashedPathID = asset.mHashedPathID;
         return *this;
     }

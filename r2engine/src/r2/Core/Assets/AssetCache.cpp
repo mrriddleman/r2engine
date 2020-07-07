@@ -169,7 +169,9 @@ namespace r2::asset
             
             if (!buffer)
             {
+#ifdef R2_ASSET_CACHE_DEBUG
                 R2_CHECK(false, "Failed to Load Asset: %s", asset.Name());
+#endif
                 return invalidHandle;
             }
         }
@@ -233,7 +235,9 @@ namespace r2::asset
             
             if (!buffer)
             {
+#ifdef R2_ASSET_CACHE_DEBUG
                 R2_CHECK(false, "We couldn't reload the asset: %s", asset.Name()); 
+#endif
             }
 
             record.handle = handle;
@@ -301,15 +305,15 @@ namespace r2::asset
     {
         u64 numAssetLoaders = r2::sarr::Size(*mAssetLoaders);
         AssetLoader* loader = nullptr;
-        for (u64 i = 0; i < numAssetLoaders; ++i)
-        {
-            AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
-            if (r2::util::WildcardMatch(nextLoader->GetPattern(), asset.Name()))
-            {
-                loader = nextLoader;
-                break;
-            }
-        }
+        //for (u64 i = 0; i < numAssetLoaders; ++i)
+        //{
+        //    AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
+        //    if (r2::util::WildcardMatch(nextLoader->GetPattern(), asset.Name()))
+        //    {
+        //        loader = nextLoader;
+        //        break;
+        //    }
+        //}
         
         if (loader == nullptr)
         {
@@ -351,16 +355,18 @@ namespace r2::asset
         
         if (rawAssetBuffer == nullptr)
         {
+#ifdef R2_ASSET_CACHE_DEBUG
             R2_CHECK(false, "Failed to get the raw data from the asset: %s\n", asset.Name());
+#endif
             return nullptr;
         }
 
         AssetBuffer* assetBuffer = nullptr;
         
         assetBuffer = ALLOC(AssetBuffer, *mAssetBufferPoolPtr);
-        
+#ifdef R2_ASSET_CACHE_DEBUG
         R2_CHECK(assetBuffer != nullptr, "Failed to allocate a new asset buffer for asset: %s\n", asset.Name());
-        
+#endif
         if (assetBuffer == nullptr)
         {
             return nullptr;
@@ -417,8 +423,9 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
 		AssetRecord record;
 		record.handle = handle;
+#ifdef R2_ASSET_CACHE_DEBUG
 		record.name = asset.Name();
-
+#endif
         AddAssetToAssetsForFileList(fileIndex, record);
 #endif
         
@@ -463,8 +470,13 @@ namespace r2::asset
         
         for (u64 i = 0; i < numnoptrFiles; ++i)
         {
-            const AssetFile* file = r2::sarr::At(*mnoptrFiles, i);
+            AssetFile* file = r2::sarr::At(*mnoptrFiles, i);
             
+            if (!file->IsOpen())
+            {
+                file->Open();
+            }
+
             const u64 numAssets = file->NumAssets();
             
             for (u64 j = 0; j < numAssets; ++j)
@@ -498,8 +510,9 @@ namespace r2::asset
             {
                 Asset theDefault;
                 const Asset& theAsset = r2::shashmap::Get(*mAssetNameMap, handle.handle, theDefault);
-
+#ifdef R2_ASSET_CACHE_DEBUG
                 R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", theAsset.Name(),  assetBufferRef.mRefCount);
+#endif
             }
             
             if (assetBufferRef.mRefCount < 0)
@@ -750,7 +763,7 @@ namespace r2::asset
     }
 #endif
     
-#if ASSET_CACHE_DEBUG
+#if R2_ASSET_CACHE_DEBUG
     //Debug stuff
     void AssetCache::PrintLRU()
     {

@@ -13,6 +13,7 @@
 #include "r2/Core/File/FileDevices/FileDevice.h"
 #include "r2/Core/File/FileDevices/Storage/Disk/DiskFile.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Utils/Hash.h"
 #include "miniz.h"
 
 
@@ -265,6 +266,31 @@ namespace r2::fs
             R2_CHECK(false, "Couldn't read cental directory");
             return false;
         }
+
+        //Here do the lookup stuff
+        u64 capacity =(u64) std::round( (f64)mArchive.totalFiles * 2 );
+        byte* addr = mAlloc(r2::SHashMap<u32>::MemorySize(capacity), alignof(u64));
+        mFileIndexLookup = MAKE_SHASHMAP_IN_PLACE(u32, addr, capacity);
+
+		for (u32 tempFileIndex = 0; tempFileIndex < mArchive.totalFiles; ++tempFileIndex)
+		{
+			const u8* header = &mArchive.state.centralDir.data[mArchive.state.centralDirOffsets.data[tempFileIndex]];
+
+			u32 filenameLength = MZ_READ_LE16(header + R2_ZIP_CDH_FILENAME_LEN_OFS);
+			const char* zipFileName = (const char*)header + R2_ZIP_CENTRAL_DIR_HEADER_SIZE;
+			
+            char zipFileToLower[r2::fs::FILE_PATH_LENGTH];
+            r2::util::PathCpy(zipFileToLower, zipFileName);
+            zipFileToLower[filenameLength] = '\0';
+
+            std::transform(std::begin(zipFileToLower), std::end(zipFileToLower), std::begin(zipFileToLower), (int(*)(int))std::tolower);
+
+            u64 hash = STRING_ID(zipFileToLower);
+
+            r2::shashmap::Set(*mFileIndexLookup, hash, tempFileIndex);
+        }
+
+
         
         return true;
     }
@@ -305,12 +331,6 @@ namespace r2::fs
     
     u64 ZipFile::GetNumberOfFiles() const
     {
-        R2_CHECK(ZIP_FILE_INITIALIZED, "Zip File must be initialized through InitArchive()");
-        if (!ZIP_FILE_INITIALIZED)
-        {
-            return 0;
-        }
-        
         return mArchive.totalFiles;
     }
     
@@ -377,6 +397,26 @@ namespace r2::fs
         }
         
         return false;
+    }
+
+    bool ZipFile::FindFile(u64 hash, u32& fileIndex)
+    {
+		R2_CHECK(ZIP_FILE_INITIALIZED, "Zip File must be initialized through InitArchive()");
+		if (!ZIP_FILE_INITIALIZED)
+		{
+			return false;
+		}
+
+		u32 theDefault = UINT_MAX;
+
+		fileIndex = r2::shashmap::Get(*mFileIndexLookup, hash, theDefault);
+
+		if (fileIndex == theDefault)
+		{
+			return false;
+		}
+
+        return true;
     }
     
     bool ZipFile::FindFile(const char* filename, u32& fileIndex, bool ignorePath)
@@ -714,6 +754,26 @@ namespace r2::fs
         mFree((byte*)readBuf);
         
         return status == TINFL_STATUS_DONE;
+    }
+
+    bool ZipFile::ReadUncompressedFileDataByHash(void* buffer, u64 bufferSize, u64 hash)
+    {
+		R2_CHECK(ZIP_FILE_INITIALIZED, "Zip File must be initialized through InitArchive()");
+		if (!ZIP_FILE_INITIALIZED)
+		{
+			return false;
+		}
+
+        u32 theDefault = UINT_MAX;
+
+        u32 fileIndex = r2::shashmap::Get(*mFileIndexLookup, hash, theDefault);
+
+        if (fileIndex == theDefault)
+        {
+            return false;
+        }
+
+        return ReadUncompressedFileData(buffer, bufferSize, fileIndex);
     }
     
     bool ZipFile::ReadUncompressedFileData(void* buffer, u64 bufferSize, const char* filename)
@@ -1143,5 +1203,8 @@ namespace r2::fs
         
         FreeZipArray<u8>(mFree, mArchive.state.centralDir);
         FreeZipArray<u32>(mFree, mArchive.state.centralDirOffsets);
+        
+        mFileIndexLookup->~SHashMap();
+        mFree((byte*)mFileIndexLookup);
     }
 }

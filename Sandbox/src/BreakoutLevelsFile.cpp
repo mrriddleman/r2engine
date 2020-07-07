@@ -53,7 +53,7 @@ bool BreakoutLevelsFile::Close()
     return true;
 }
 
-bool BreakoutLevelsFile::IsOpen()
+bool BreakoutLevelsFile::IsOpen() const
 {
     return mFile != nullptr;
 }
