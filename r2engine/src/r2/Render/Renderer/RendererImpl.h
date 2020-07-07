@@ -44,6 +44,10 @@ namespace r2::draw::rendererimpl
 	void* GetWindowHandle();
 	//@TODO(Serge): add more limits of the GPU
 	s32 MaxNumberOfTextureUnits();
+	u32 MaxConstantBufferSize();
+	u32 MaxConstantBufferPerShaderType();
+	u32 MaxConstantBindings();
+
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
@@ -54,6 +58,7 @@ namespace r2::draw::rendererimpl
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId);
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>*configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
+	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 
 	//
 	void SetViewport(u32 viewport);
@@ -66,7 +71,7 @@ namespace r2::draw::rendererimpl
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
-	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, u64 offset, void* data, u64 size);
+	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, u64 offset, void* data, u64 size);
 
 	//events
 	void WindowResized(u32 width, u32 height);

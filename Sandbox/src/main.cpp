@@ -286,7 +286,6 @@ public:
         layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
         constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
-		r2::draw::renderer::SetCameraPtrOnBucket(mPersController.GetCameraPtr());
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -332,7 +331,7 @@ public:
 
         r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
-        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
+        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
         
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
@@ -566,6 +565,7 @@ public:
         const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
         r2::draw::renderer::AddFillConstantBufferCommandForData(
             r2::sarr::At(*constantBufferHandles, 0),
+            constantLayout.layout.GetType(),
             glm::value_ptr(mPersController.GetCameraPtr()->view),
             constantLayout.layout.GetElements().at(1).size,
             constantLayout.layout.GetElements().at(1).offset);

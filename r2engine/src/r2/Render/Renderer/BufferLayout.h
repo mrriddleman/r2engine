@@ -31,6 +31,7 @@ namespace r2::draw
         Int3,
         Int4,
         Bool,
+        Struct
     };
     
     enum class VertexType
@@ -95,18 +96,29 @@ namespace r2::draw
     public:
 		std::string name;
 		ShaderDataType type;
-		u32 size;
+        u32 elementSize;
+        u32 size;
 		size_t offset;
         size_t typeCount;
 
         ConstantBufferElement() = default;
         ConstantBufferElement(ShaderDataType _type, const std::string& _name, size_t _typeCount = 1);
+        //for structs only!
+        ConstantBufferElement(const std::initializer_list<BufferElement>& elements, const std::string& name, size_t _typeCount = 1);
 		u32 GetComponentCount() const;
+    private:
+        void InitializeConstantStruct(const std::vector<BufferElement>& elements);
     };
     
     class ConstantBufferLayout
     {
     public:
+        enum Type
+        {
+            Small = 0, //ubo
+            Big //ssbo
+        };
+
         ConstantBufferLayout();
         ConstantBufferLayout(const std::initializer_list<BufferElement>& elements);
 
@@ -116,10 +128,12 @@ namespace r2::draw
 		std::vector<BufferElement>::const_iterator begin() const { return mElements.begin(); }
 		std::vector<BufferElement>::const_iterator end() const { return mElements.end(); }
         size_t GetSize() const { return mSize; }
+        Type GetType() const { return mType; }
     private:
         void CalculateOffsetAndSize();
         std::vector<BufferElement> mElements;
         size_t mSize;
+        Type mType;
     };
 
 	struct ConstantBufferLayoutConfiguration

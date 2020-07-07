@@ -124,6 +124,32 @@ namespace r2::draw::rendererimpl
 		return texture_units;
 	}
 
+	u32 MaxConstantBufferSize()
+	{
+		GLint cBufferSize;
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &cBufferSize);
+		return cBufferSize;
+	}
+
+	u32 MaxConstantBufferPerShaderType()
+	{
+		GLint numVertexConstantBuffers;
+		GLint numFragmentConstantBuffers;
+		glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &numVertexConstantBuffers);
+		glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &numFragmentConstantBuffers);
+
+		R2_CHECK(numVertexConstantBuffers == numFragmentConstantBuffers, "These aren't the same?");
+
+		return numFragmentConstantBuffers > numVertexConstantBuffers? numVertexConstantBuffers : numFragmentConstantBuffers;
+	}
+
+	u32 MaxConstantBindings()
+	{
+		GLint numBindings;
+		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &numBindings);
+		return numBindings;
+	}
+
 	//Setup code
 	void SetClearColor(const glm::vec4& color)
 	{
@@ -150,6 +176,11 @@ namespace r2::draw::rendererimpl
 		glGenBuffers(numConstantBuffers, contantBufferIds);
 	}
 
+	void DeleteBuffers(u32 numBuffers, u32* bufferIds)
+	{
+		glDeleteBuffers(numBuffers, bufferIds);
+	}
+
 	void SetDepthTest(bool shouldDepthTest)
 	{
 		if (shouldDepthTest)
@@ -160,7 +191,6 @@ namespace r2::draw::rendererimpl
 
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId, IndexBufferHandle indexBufferId)
 	{
-		//@TODO(Serge): move this to somewhere that makes sense
 		glBindVertexArray(layoutId);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
 		glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, config.vertexBufferConfig.drawType);
@@ -228,20 +258,39 @@ namespace r2::draw::rendererimpl
 		}
 		
 		const u64 numConfigs = r2::sarr::Size(*configs);
+		//@TODO(Serge): this is wrong since now we can have multiple types of constant buffers - re-think
+		auto maxBindings = r2::draw::rendererimpl::MaxConstantBindings();
 
-		GLint index = 0;
+		if (maxBindings < numConfigs)
+		{
+			R2_CHECK(false, "You're trying to create more constant buffers than we have bindings!");
+			return;
+		}
+
+		GLint uboIndex = 0;
+		GLint ssboIndex = 0;
 		for (u64 i = 0; i < numConfigs; i++)
 		{
 			const r2::draw::ConstantBufferLayoutConfiguration& config = r2::sarr::At(*configs, i);
 			 
-			glBindBuffer(GL_UNIFORM_BUFFER, handles[i]);
-			//MAYBE USE PERSISTENT MAPPED BUFFER FOR THIS INSTEAD
-			glBufferData(GL_UNIFORM_BUFFER, config.layout.GetSize(), NULL, config.drawType);
+			if (config.layout.GetType() == ConstantBufferLayout::Type::Small)
+			{
+				glBindBuffer(GL_UNIFORM_BUFFER, handles[i]);
+				//MAYBE USE PERSISTENT MAPPED BUFFER FOR THIS INSTEAD
+				glBufferData(GL_UNIFORM_BUFFER, config.layout.GetSize(), nullptr, config.drawType);
 
-			glBindBufferBase(GL_UNIFORM_BUFFER, index++, handles[i]);
+				glBindBufferBase(GL_UNIFORM_BUFFER, uboIndex++, handles[i]);
+			}
+			else if (config.layout.GetType() == ConstantBufferLayout::Type::Big)
+			{
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, handles[i]);
+				glBufferData(GL_SHADER_STORAGE_BUFFER, config.layout.GetSize(), nullptr, config.drawType);
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssboIndex++, handles[i]);
+			}
 		}
 
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
 	void SetViewport(u32 viewport)
@@ -333,10 +382,18 @@ namespace r2::draw::rendererimpl
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
 	}
 
-	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, u64 offset, void* data, u64 size)
+	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, u64 offset, void* data, u64 size)
 	{
-		glBindBuffer(GL_UNIFORM_BUFFER, cBufferHandle);
-		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
+		if (type == ConstantBufferLayout::Small)
+		{
+			glBindBuffer(GL_UNIFORM_BUFFER, cBufferHandle);
+			glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
+		}
+		else
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, cBufferHandle);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
+		}
 	}
 
 	//events

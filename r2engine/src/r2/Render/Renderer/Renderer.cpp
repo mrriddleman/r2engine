@@ -292,6 +292,22 @@ namespace r2::draw::renderer
 		FREE(materialSystemBoundary.location, *arena);
 
 		//delete the buffer handles
+		r2::draw::rendererimpl::DeleteBuffers(
+			r2::sarr::Size(*s_optrRenderer->mBufferHandles.bufferLayoutHandles),
+			s_optrRenderer->mBufferHandles.bufferLayoutHandles->mData);
+
+		r2::draw::rendererimpl::DeleteBuffers(
+			r2::sarr::Size(*s_optrRenderer->mBufferHandles.vertexBufferHandles),
+			s_optrRenderer->mBufferHandles.vertexBufferHandles->mData);
+
+		r2::draw::rendererimpl::DeleteBuffers(
+			r2::sarr::Size(*s_optrRenderer->mBufferHandles.indexBufferHandles),
+			s_optrRenderer->mBufferHandles.indexBufferHandles->mData);
+
+		r2::draw::rendererimpl::DeleteBuffers(
+			r2::sarr::Size(*s_optrRenderer->mContantBufferHandles),
+			s_optrRenderer->mContantBufferHandles->mData);
+		
 		FREE(s_optrRenderer->mBufferHandles.bufferLayoutHandles, *arena);
 		FREE(s_optrRenderer->mBufferHandles.vertexBufferHandles, *arena);
 		FREE(s_optrRenderer->mBufferHandles.indexBufferHandles, *arena);
@@ -616,7 +632,7 @@ namespace r2::draw::renderer
 		return currentOffset;
 	}
 
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, void* data, u64 size, u64 offset)
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -629,7 +645,7 @@ namespace r2::draw::renderer
 		fillKey.keyValue = 0;
 
 		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = r2::draw::renderer::AddFillConstantBufferCommand(fillKey);
-		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, data, size, offset);
+		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, type, data, size, offset);
 	}
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key)
@@ -696,17 +712,6 @@ namespace r2::draw::renderer
 	}
 
 
-	void SetCameraPtrOnBucket(r2::Camera* cameraPtr)
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
-		r2::draw::cmdbkt::SetCamera(*s_optrRenderer->mCommandBucket, cameraPtr);
-	}
 
 	//events
 	void WindowResized(u32 width, u32 height)

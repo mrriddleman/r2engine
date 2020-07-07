@@ -3,7 +3,7 @@
 
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/BackendDispatch.h"
-
+#include "r2/Render/Renderer/BufferLayout.h"
 
 namespace r2::draw
 {
@@ -68,6 +68,7 @@ namespace r2::draw::cmd
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
 
 		r2::draw::ConstantBufferHandle constantBufferHandle;
+		r2::draw::ConstantBufferLayout::Type type;
 		u64 offset;
 		u64 dataSize;
 		void* data;
@@ -83,7 +84,7 @@ namespace r2::draw::cmd
 	u64 LargestCommand();
 	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset = 0);
 	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset = 0);
-	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, void* data, u64 size, u64 offset = 0);
+	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset = 0);
 }
 
 #endif

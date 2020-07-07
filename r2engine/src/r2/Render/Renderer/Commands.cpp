@@ -57,7 +57,7 @@ namespace r2::draw::cmd
 		return cmd->dataSize + offset;
 	}
 
-	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, void* data, u64 size, u64 offset)
+	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset)
 	{
 		if (cmd == nullptr)
 		{
@@ -69,7 +69,7 @@ namespace r2::draw::cmd
 		cmd->data = data;
 		cmd->dataSize = size;
 		cmd->offset = offset;
-
+		cmd->type = type;
 		return cmd->dataSize + offset;
 	}
 }

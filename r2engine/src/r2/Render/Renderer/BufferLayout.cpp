@@ -6,6 +6,8 @@
 //
 #include "r2pch.h"
 #include "BufferLayout.h"
+#include "r2/Utils/Utils.h"
+#include "r2/Render/Renderer/RendererImpl.h"
 
 namespace r2::draw
 {
@@ -48,6 +50,7 @@ namespace r2::draw
 		case ShaderDataType::Int3:    return 3;
 		case ShaderDataType::Int4:    return 4;
 		case ShaderDataType::Bool:    return 1;
+        case ShaderDataType::Struct:  return 1;
 		case ShaderDataType::None:      break;
 		}
 
@@ -110,6 +113,7 @@ namespace r2::draw
 		case ShaderDataType::Int3:     return 4 * 4;
 		case ShaderDataType::Int4:     return 4 * 4;
 		case ShaderDataType::Bool:     return 4;
+        case ShaderDataType::Struct:   return 4 * 4;
 		case ShaderDataType::None:
 			break;
 		}
@@ -121,11 +125,20 @@ namespace r2::draw
     ConstantBufferElement::ConstantBufferElement(ShaderDataType _type, const std::string& _name, size_t _typeCount)
 		: name(_name)
         , type(_type)
-        , size(GetBaseAlignmentSize(_type) * static_cast<u32>(_typeCount))
+        , elementSize(GetBaseAlignmentSize(_type))
+        , size(elementSize * static_cast<u32>(_typeCount))
 	    , offset(0)
         , typeCount(_typeCount)
     {
 
+    }
+
+    ConstantBufferElement::ConstantBufferElement(const std::initializer_list<BufferElement>& elements, const std::string& _name, size_t _typeCount)
+        : name(_name)
+        , type(ShaderDataType::Struct)
+        , typeCount(_typeCount)
+    {
+        InitializeConstantStruct(elements);
     }
 
     u32 ConstantBufferElement::GetComponentCount() const
@@ -133,15 +146,28 @@ namespace r2::draw
         return ComponentCount(type);
     }
 
+	void ConstantBufferElement::InitializeConstantStruct(const std::vector<BufferElement>& elements)
+	{
+        for (auto& element: elements)
+        {
+            elementSize += element.size;
+        }
+
+        elementSize = static_cast<u32>( r2::util::RoundUp(elementSize, GetBaseAlignmentSize(type)) );
+        size = elementSize * static_cast<u32>(typeCount);
+	}
+
     ConstantBufferLayout::ConstantBufferLayout()
         : mElements({})
         , mSize(0)
+        , mType(Type::Small)
     {
     }
 
     ConstantBufferLayout::ConstantBufferLayout(const std::initializer_list<BufferElement>& elements)
         : mElements(elements)
         , mSize(0)
+        , mType(Type::Small)
     {
         CalculateOffsetAndSize();
     }
@@ -155,5 +181,18 @@ namespace r2::draw
 			offset += element.size;
             mSize += element.size;
 		}
+
+		auto maxConstantBufferSize = r2::draw::rendererimpl::MaxConstantBufferSize();
+
+        if (mSize > maxConstantBufferSize)
+        {
+            mType = Type::Big;
+        }
+        else
+        {
+            mType = Type::Small;
+        }
     }
+
+    
 }

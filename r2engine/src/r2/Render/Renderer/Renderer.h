@@ -84,7 +84,7 @@ namespace r2::draw::renderer
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
 	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, void* data, u64 size, u64 offset = 0);
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset = 0);
 
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
@@ -93,8 +93,7 @@ namespace r2::draw::renderer
 	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key);
 
-	//@TODO(Serge): rethink this function
-	void SetCameraPtrOnBucket(r2::Camera* cameraPtr);
+
 
 	//events
 	void WindowResized(u32 width, u32 height);

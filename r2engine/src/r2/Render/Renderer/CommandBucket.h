@@ -11,11 +11,6 @@
 
 #define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
 
-namespace r2
-{
-	struct Camera;
-}
-
 namespace r2::draw
 {
 	template <typename T>
@@ -24,7 +19,6 @@ namespace r2::draw
 	public:
 		typedef T Key;
 		using KeyDecoderFunc = void (*)(const T&);
-	//	using CameraUpdateFunc = void(*)(const r2::Camera & cam);
 
 		struct Entry
 		{
@@ -37,11 +31,9 @@ namespace r2::draw
 
 		r2::SArray<Entry>* entries = nullptr;
 		r2::SArray<Entry*>* sortedEntries = nullptr;
-		r2::Camera* camera = nullptr;
+
 		RenderTarget renderTarget;
 		KeyDecoderFunc KeyDecoder = nullptr;
-		//CameraUpdateFunc CamUpdate = nullptr;
-		
 	};
 
 	namespace cmdbkt
@@ -57,9 +49,6 @@ namespace r2::draw
 		template<typename T> inline void Sort(CommandBucket<T>& bkt, CompareFunction<T> cmp);
 
 		template<typename T> void Submit(CommandBucket<T>& bkt);
-
-		template<typename T> void SetCamera(CommandBucket<T>& bkt, Camera* camera);
-		template<typename T> Camera* GetCamera(CommandBucket<T>& bkt);
 
 		//@TODO(Serge): implement methods for setting Render Targets
 
@@ -107,11 +96,6 @@ namespace r2::draw
 		{
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
-		//	R2_CHECK(bkt.CamUpdate != nullptr, "We don't have a function to update the camera!");
-			R2_CHECK(bkt.camera != nullptr, "We don't have a camera set!");
-
-		//	bkt.CamUpdate(*bkt.camera);
-
 			//@TODO(Serge): implement the render target
 
 			for (u64 i = 0; i < numEntries; ++i)
@@ -130,16 +114,6 @@ namespace r2::draw
 
 				DispatchFunc(cmd);
 			}
-		}
-
-		template<typename T> void SetCamera(CommandBucket<T>& bkt, Camera* camera)
-		{
-			bkt.camera = camera;
-		}
-
-		template<typename T> Camera* GetCamera(CommandBucket<T>& bkt)
-		{
-			return bkt.camera;
 		}
 
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt)
