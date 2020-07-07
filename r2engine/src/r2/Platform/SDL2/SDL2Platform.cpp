@@ -435,7 +435,8 @@ namespace r2
             u32 newTime = SDL_GetTicks();
             u32 delta = newTime - currentTime;
             currentTime = newTime;
-            
+       //     printf("delta: %u\n", delta);
+
             if (delta > 300)
             {
                 delta = 300;

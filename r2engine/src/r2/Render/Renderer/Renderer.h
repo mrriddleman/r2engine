@@ -3,8 +3,10 @@
 #define __RENDERER_H__
 
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/Shader.h"
+#include "r2/Render/Renderer/BufferLayout.h"
 
 namespace r2
 {
@@ -51,6 +53,7 @@ namespace r2::draw::cmd
 	struct DrawIndexed;
 	struct FillIndexBuffer;
 	struct FillVertexBuffer;
+	struct FillConstantBuffer;
 }
 
 namespace r2::draw::renderer
@@ -67,10 +70,12 @@ namespace r2::draw::renderer
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts);
+	bool GenerateConstantBuffers(const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
 	void SetDepthTest(bool shouldDepthTest);
 
 	//Regular methods
 	BufferHandles& GetBufferHandles();
+	const r2::SArray<r2::draw::ConstantBufferHandle>* GetConstantBufferHandles();
 	Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
 	//@Temporary
 	void LoadEngineTexturesFromDisk();
@@ -79,10 +84,14 @@ namespace r2::draw::renderer
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
 	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, void* data, u64 size, u64 offset = 0);
+
+
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key);
+	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key);
 
 	//@TODO(Serge): rethink this function
 	void SetCameraPtrOnBucket(r2::Camera* cameraPtr);

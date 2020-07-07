@@ -8,6 +8,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction DrawIndexed::DispatchFunc = &r2::draw::dispatch::DrawIndexed;
 	const r2::draw::dispatch::BackendDispatchFunction FillVertexBuffer::DispatchFunc = &r2::draw::dispatch::FillVertexBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction FillIndexBuffer::DispatchFunc = &r2::draw::dispatch::FillIndexBuffer;
+	const r2::draw::dispatch::BackendDispatchFunction FillConstantBuffer::DispatchFunc = &r2::draw::dispatch::FillConstantBuffer;
 
 	u64 LargestCommand()
 	{
@@ -15,7 +16,8 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::Clear),
 			sizeof(r2::draw::cmd::DrawIndexed),
 			sizeof(r2::draw::cmd::FillVertexBuffer),
-			sizeof(r2::draw::cmd::FillIndexBuffer)
+			sizeof(r2::draw::cmd::FillIndexBuffer),
+			sizeof(r2::draw::cmd::FillConstantBuffer)
 			});
 	}
 
@@ -51,6 +53,22 @@ namespace r2::draw::cmd
 		cmd->offset = offset;
 		cmd->dataSize = sizeof( r2::sarr::At(*mesh.optrIndices, 0) ) * numIndices;
 		cmd->data = r2::sarr::Begin(*mesh.optrIndices);
+
+		return cmd->dataSize + offset;
+	}
+
+	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, void* data, u64 size, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return  0;
+		}
+
+		cmd->constantBufferHandle = handle;
+		cmd->data = data;
+		cmd->dataSize = size;
+		cmd->offset = offset;
 
 		return cmd->dataSize + offset;
 	}

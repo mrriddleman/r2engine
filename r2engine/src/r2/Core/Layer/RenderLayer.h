@@ -25,7 +25,7 @@ namespace r2
         virtual void Shutdown() override;
         virtual void Update() override;
     private:
-        cam::PerspectiveController mPersController;
+        
         //ensure that is always valid
         const char* mShaderManifestPath;
 

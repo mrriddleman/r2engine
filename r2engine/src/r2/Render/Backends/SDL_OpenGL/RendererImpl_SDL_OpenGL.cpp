@@ -40,16 +40,6 @@ namespace
 		R2_CHECK(false, "Unknown ShaderDataType");
 		return 0;
 	}
-
-	struct CurrentOpenGLState
-	{
-		glm::mat4 projMat = glm::mat4(1.0f);
-		glm::mat4 viewMat = glm::mat4(1.0f);
-
-		bool vpUpdateNeeded = false;
-	};
-
-	CurrentOpenGLState s_currentOpenGLState;
 }
 
 namespace r2::draw
@@ -72,7 +62,7 @@ namespace r2::draw::rendererimpl
 	{
 		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -155,6 +145,11 @@ namespace r2::draw::rendererimpl
 		glGenBuffers(numIndexBuffers, indexIds);
 	}
 
+	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds)
+	{
+		glGenBuffers(numConstantBuffers, contantBufferIds);
+	}
+
 	void SetDepthTest(bool shouldDepthTest)
 	{
 		if (shouldDepthTest)
@@ -169,11 +164,12 @@ namespace r2::draw::rendererimpl
 		glBindVertexArray(layoutId);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
 		glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, config.vertexBufferConfig.drawType);
-
+		//glBufferStorage(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, )
 		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, config.indexBufferConfig.bufferSize, nullptr, config.indexBufferConfig.drawType);
+		
 		}
 		
 		u32 vertexAttribId = 0;
@@ -217,10 +213,35 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
-	void UpdateCamera(const r2::Camera& camera)
+	void SetupConstantBufferConfigs(const r2::SArray<ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles)
 	{
-		s_currentOpenGLState.projMat = camera.proj;
-		s_currentOpenGLState.viewMat = camera.view;	
+		if (configs == nullptr)
+		{
+			R2_CHECK(configs != nullptr, "configs is nullptr!");
+			return;
+		}
+
+		if (handles == nullptr)
+		{
+			R2_CHECK(handles != nullptr, "handles is nullptr!");
+			return;
+		}
+		
+		const u64 numConfigs = r2::sarr::Size(*configs);
+
+		GLint index = 0;
+		for (u64 i = 0; i < numConfigs; i++)
+		{
+			const r2::draw::ConstantBufferLayoutConfiguration& config = r2::sarr::At(*configs, i);
+			 
+			glBindBuffer(GL_UNIFORM_BUFFER, handles[i]);
+			//MAYBE USE PERSISTENT MAPPED BUFFER FOR THIS INSTEAD
+			glBufferData(GL_UNIFORM_BUFFER, config.layout.GetSize(), NULL, config.drawType);
+
+			glBindBufferBase(GL_UNIFORM_BUFFER, index++, handles[i]);
+		}
+
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 	
 	void SetViewport(u32 viewport)
@@ -252,15 +273,12 @@ namespace r2::draw::rendererimpl
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
 			r2::draw::shader::SetMat4(*shader, "model", glm::mat4(1.0f));
-			r2::draw::shader::SetMat4(*shader, "projection", s_currentOpenGLState.projMat);
-			r2::draw::shader::SetMat4(*shader, "view", s_currentOpenGLState.viewMat);
 			r2::draw::shader::SetVec4(*shader, "material.color", material->color);
 
 			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
 			if (textures)
 			{
 				u64 numTextures = r2::sarr::Size(*textures);
-				
 
 				const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
 				u32 textureNum[numTextureTypes];
@@ -313,6 +331,12 @@ namespace r2::draw::rendererimpl
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
+	}
+
+	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, u64 offset, void* data, u64 size)
+	{
+		glBindBuffer(GL_UNIFORM_BUFFER, cBufferHandle);
+		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 	}
 
 	//events

@@ -12,6 +12,7 @@ namespace r2::draw::dispatch
 	void DrawIndexed(const void* data);
 	void FillVertexBuffer(const void* data);
 	void FillIndexBuffer(const void* data);
+	void FillConstantBuffer(const void* data);
 }
 
 

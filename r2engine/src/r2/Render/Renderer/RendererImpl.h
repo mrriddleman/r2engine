@@ -4,6 +4,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Model/Material.h"
+#include "r2/Render/Renderer/BufferLayout.h"
 
 namespace r2
 {
@@ -49,11 +50,12 @@ namespace r2::draw::rendererimpl
 	void GenerateBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
 	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
 	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
+	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds);
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId);
+	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>*configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
 
 	//
-	void UpdateCamera(const r2::Camera& camera);
 	void SetViewport(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
 	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
@@ -64,6 +66,7 @@ namespace r2::draw::rendererimpl
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
+	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, u64 offset, void* data, u64 size);
 
 	//events
 	void WindowResized(u32 width, u32 height);

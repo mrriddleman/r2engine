@@ -10,7 +10,7 @@
 
 #include "r2/Core/Events/Event.h"
 #include "r2/Platform/IO.h"
-
+#include <sstream>
 namespace r2
 {
     namespace evt

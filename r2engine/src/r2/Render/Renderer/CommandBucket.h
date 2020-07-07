@@ -9,7 +9,7 @@
 #include "r2/Render/Renderer/RenderTarget.h"
 #include <algorithm>
 
-#define MAKE_CMD_BUCKET(arena, key, keydecoder, cameraupdate, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, cameraupdate, __FILE__, __LINE__, "")
+#define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
 
 namespace r2
 {
@@ -24,7 +24,7 @@ namespace r2::draw
 	public:
 		typedef T Key;
 		using KeyDecoderFunc = void (*)(const T&);
-		using CameraUpdateFunc = void(*)(const r2::Camera & cam);
+	//	using CameraUpdateFunc = void(*)(const r2::Camera & cam);
 
 		struct Entry
 		{
@@ -40,7 +40,7 @@ namespace r2::draw
 		r2::Camera* camera = nullptr;
 		RenderTarget renderTarget;
 		KeyDecoderFunc KeyDecoder = nullptr;
-		CameraUpdateFunc CamUpdate = nullptr;
+		//CameraUpdateFunc CamUpdate = nullptr;
 		
 	};
 
@@ -66,7 +66,7 @@ namespace r2::draw
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt);
 		template<typename T> inline u64 Capacity(const CommandBucket<T>& bkt);
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, typename CommandBucket<T>::CameraUpdateFunc camFunc, const char* file, s32 line, const char* description);
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const char* file, s32 line, const char* description);
 	}
 
 	namespace cmdbkt
@@ -107,10 +107,10 @@ namespace r2::draw
 		{
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
-			R2_CHECK(bkt.CamUpdate != nullptr, "We don't have a function to update the camera!");
+		//	R2_CHECK(bkt.CamUpdate != nullptr, "We don't have a function to update the camera!");
 			R2_CHECK(bkt.camera != nullptr, "We don't have a camera set!");
 
-			bkt.CamUpdate(*bkt.camera);
+		//	bkt.CamUpdate(*bkt.camera);
 
 			//@TODO(Serge): implement the render target
 
@@ -171,7 +171,7 @@ namespace r2::draw
 				});
 		}
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, typename CommandBucket<T>::CameraUpdateFunc camUpdateFunc, const char* file, s32 line, const char* description)
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const char* file, s32 line, const char* description)
 		{
 			CommandBucket<T>* cmdBkt = new (ALLOC_BYTES(arena, CommandBucket<T>::MemorySize(capacity), alignof(u64), file, line, description)) CommandBucket<T>;
 
@@ -192,7 +192,6 @@ namespace r2::draw
 
 
 			cmdBkt->KeyDecoder = decoderFunc;
-			cmdBkt->CamUpdate = camUpdateFunc;
 			return cmdBkt;
 		}
 	}

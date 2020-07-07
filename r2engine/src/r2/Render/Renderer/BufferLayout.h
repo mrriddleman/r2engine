@@ -30,7 +30,7 @@ namespace r2::draw
         Int2,
         Int3,
         Int4,
-        Bool
+        Bool,
     };
     
     enum class VertexType
@@ -60,7 +60,7 @@ namespace r2::draw
         BufferLayout(const std::initializer_list<BufferElement>& elements, VertexType vertexType = VertexType::Vertex);
         
 
-
+        //@TODO(Serge): make these not vectors
         inline u32 GetStride() const {return mStride;}
         inline const std::vector<BufferElement>& GetElements() const {return mElements;}
         inline VertexType GetVertexType() const {return mVertexType;}
@@ -71,7 +71,7 @@ namespace r2::draw
         
     private:
         void CalculateOffsetAndStride();
-        
+        //@TODO(Serge): make this not a vector
         std::vector<BufferElement> mElements;
         u32 mStride = 0;
         VertexType mVertexType = VertexType::Vertex;
@@ -89,6 +89,44 @@ namespace r2::draw
         BufferConfig vertexBufferConfig;
         BufferConfig indexBufferConfig;
     };
+
+    class ConstantBufferElement
+    {
+    public:
+		std::string name;
+		ShaderDataType type;
+		u32 size;
+		size_t offset;
+        size_t typeCount;
+
+        ConstantBufferElement() = default;
+        ConstantBufferElement(ShaderDataType _type, const std::string& _name, size_t _typeCount = 1);
+		u32 GetComponentCount() const;
+    };
+    
+    class ConstantBufferLayout
+    {
+    public:
+        ConstantBufferLayout();
+        ConstantBufferLayout(const std::initializer_list<BufferElement>& elements);
+
+        inline const std::vector<BufferElement>& GetElements() const { return mElements; }
+		std::vector<BufferElement>::iterator begin() { return mElements.begin(); }
+		std::vector<BufferElement>::iterator end() { return mElements.end(); }
+		std::vector<BufferElement>::const_iterator begin() const { return mElements.begin(); }
+		std::vector<BufferElement>::const_iterator end() const { return mElements.end(); }
+        size_t GetSize() const { return mSize; }
+    private:
+        void CalculateOffsetAndSize();
+        std::vector<BufferElement> mElements;
+        size_t mSize;
+    };
+
+	struct ConstantBufferLayoutConfiguration
+	{
+        ConstantBufferLayout layout;
+        u32 drawType;
+	};
 }
 
 #endif /* BufferLayout_h */

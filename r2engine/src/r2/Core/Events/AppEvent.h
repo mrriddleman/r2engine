@@ -9,6 +9,7 @@
 #define AppEvent_h
 
 #include "r2/Core/Events/Event.h"
+#include <sstream>
 
 namespace r2
 {

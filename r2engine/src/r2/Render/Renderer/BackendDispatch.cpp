@@ -34,4 +34,12 @@ namespace r2::draw::dispatch
 
 		rendererimpl::UpdateIndexBuffer(realData->indexBufferHandle, realData->offset, realData->data, realData->dataSize);
 	}
+
+	void FillConstantBuffer(const void* data)
+	{
+		const r2::draw::cmd::FillConstantBuffer* realData = static_cast<const r2::draw::cmd::FillConstantBuffer*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+
+		rendererimpl::UpdateConstantBuffer(realData->constantBufferHandle, realData->offset, realData->data, realData->dataSize);
+	}
 }

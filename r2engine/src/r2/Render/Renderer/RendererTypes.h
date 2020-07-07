@@ -9,6 +9,7 @@ namespace r2::draw
 	using BufferLayoutHandle = u32;
     using VertexBufferHandle = u32;
     using IndexBufferHandle = u32;
+    using ConstantBufferHandle = u32;
 
     static const u32 EMPTY_BUFFER = 0;
 

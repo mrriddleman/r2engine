@@ -31,6 +31,8 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Render/Camera/PerspectiveCameraController.h"
+#include "glm/gtc/type_ptr.hpp"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -282,6 +284,9 @@ public:
 #endif
         //make the buffer layouts
         layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
+        constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
+        mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+		r2::draw::renderer::SetCameraPtrOnBucket(mPersController.GetCameraPtr());
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -299,19 +304,36 @@ public:
             }
         };
 
+        r2::draw::ConstantBufferLayoutConfiguration constantLayout{
+            {
+                {
+                    {r2::draw::ShaderDataType::Mat4, "projection"},
+                    {r2::draw::ShaderDataType::Mat4, "view"}
+                }
+            },
+            r2::draw::VertexDrawTypeDynamic
+        };
+
         r2::sarr::Push(*layouts, layoutConfig);
+        r2::sarr::Push(*constantLayouts, constantLayout);
 
         r2::draw::renderer::SetDepthTest(true);
         bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
         R2_CHECK(success, "We couldn't create the buffer layouts!");
 
+        success = r2::draw::renderer::GenerateConstantBuffers(constantLayouts);
+        R2_CHECK(success, "We couldn't create the constant buffers");
+
         r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+        const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
         //fill the buffers with data
         r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
 
         r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
+        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
+        
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
@@ -319,6 +341,49 @@ public:
 
 
         return assetCache != nullptr;
+    }
+
+    virtual void OnEvent(r2::evt::Event& e) override
+    {
+		r2::evt::EventDispatcher dispatcher(e);
+
+		dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
+			{
+				mPersController.SetAspect(static_cast<float>(e.Width()) / static_cast<float>(e.Height()));
+
+				r2::draw::renderer::WindowResized(e.Width(), e.Height());
+				// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
+				return true;
+			});
+
+		dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
+			{
+				if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
+				{
+					r2::math::Ray ray = r2::cam::CalculateRayFromMousePosition(mPersController.GetCamera(), e.XPos(), e.YPos());
+
+					//  r2::draw::OpenGLDrawRay(ray);
+					return true;
+				}
+
+				return false;
+			});
+
+		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
+			if (e.KeyCode() == r2::io::KEY_LEFT)
+			{
+				//    r2::draw::OpenGLPrevAnimation();
+				return true;
+			}
+			else if (e.KeyCode() == r2::io::KEY_RIGHT)
+			{
+				//    r2::draw::OpenGLNextAnimation();
+				return true;
+			}
+			return false;
+			});
+
+		mPersController.OnEvent(e);
     }
     
     virtual void Update() override
@@ -468,7 +533,7 @@ public:
             r2::sarr::Push(*assetsBuffers, oneMoreScoreRef);
         }
         
-        
+        mPersController.Update();
     }
 
     virtual void Render(float alpha) override
@@ -496,13 +561,20 @@ public:
         r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
         clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
 
-        
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
+        const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
+        r2::draw::renderer::AddFillConstantBufferCommandForData(
+            r2::sarr::At(*constantBufferHandles, 0),
+            glm::value_ptr(mPersController.GetCameraPtr()->view),
+            constantLayout.layout.GetElements().at(1).size,
+            constantLayout.layout.GetElements().at(1).offset);
     }
     
     virtual void Shutdown() override
     {
         FREE(layouts, *linearArenaPtr);
+        FREE(constantLayouts, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -594,13 +666,14 @@ public:
 private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
     r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
-    
+    r2::cam::PerspectiveController mPersController;
     r2::asset::AssetCache* assetCache;
     bool reload;
     r2::mem::utils::MemBoundary assetCacheBoundary;
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
     r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
+    r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantLayouts;
 };
 
 namespace
