@@ -82,17 +82,22 @@ project "r2engine"
 		'R2_ENGINE_DATA_PATH="'..os.getcwd()..'/r2engine/data"',
 		'R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH="'..os.getcwd()..'/r2engine/data/flatbuffer_schemas"',
 		'R2_ENGINE_ASSET_PATH="'..os.getcwd()..'/r2engine/assets"',
+		'R2_ENGINE_ASSET_BIN_PATH="'..os.getcwd()..'/r2engine/assets_bin"',
 		
 		
+		'R2_ENGINE_INTERNAL_MATERIALS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials"',
 		'R2_ENGINE_INTERNAL_MATERIALS_DIR="'..os.getcwd()..'/r2engine/assets/materials/packs"',
+		'R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/packs"',
 		'R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS="'..os.getcwd()..'/r2engine/assets/materials/manifests"',
-
+		'R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/manifests"',
 		
 		'R2_ENGINE_INTERNAL_TEXTURES_DIR="'..os.getcwd()..'/r2engine/assets/textures/packs"',
 		'R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS="'..os.getcwd()..'/r2engine/assets/textures/manifests"',
+		'R2_ENGINE_INTERNAL_TEXTURES_BIN="'..os.getcwd()..'/r2engine/assets_bin/textures"',
+		'R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/r2engine/assets_bin/textures/manifests"',
 
 		'R2_ENGINE_INTERNAL_MODELS_RAW="'..os.getcwd()..'/r2engine/assets/models/raw"',
-		'R2_ENGINE_INTERNAL_MODELS_BIN="'..os.getcwd()..'/r2engine/assets/models/bin"'
+		'R2_ENGINE_INTERNAL_MODELS_BIN="'..os.getcwd()..'/r2engine/assets_bin/models/"'
 	}
 --[[
 local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working directory

@@ -46,6 +46,7 @@ r2engine/vendor/loguru/bin-int/
 r2engine/vendor/loguru/loguru.vcxproj.user
 r2engine/vendor/miniz/bin-int/
 r2engine/vendor/miniz/miniz.vcxproj.user
+r2engine/assets_bin/
 
 #r2Tests
 r2Tests/*.xcodeproj/

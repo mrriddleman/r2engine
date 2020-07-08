@@ -6,8 +6,8 @@
 
 namespace r2::asset::pln
 {
-	bool GenerateMaterialPackManifestFromJson(const std::string& materialPackManifestFilePath);
-	bool GenerateMaterialPackManifestFromDirectories(const std::string& filePath, const std::string& directory);
+	bool GenerateMaterialPackManifestFromJson(const std::string& jsonMaterialPackManifestFilePath, const std::string& outputDir);
+	bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool FindMaterialPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
 }
 

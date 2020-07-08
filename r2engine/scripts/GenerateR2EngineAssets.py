@@ -19,7 +19,7 @@ elif platformSystem == "Darwin":
 thisFilePath = os.path.dirname(os.path.abspath(__file__))
 flatcPath = os.path.realpath(thisFilePath + "/..") + "/vendor/flatbuffers/bin/" + flatc
 srcPath = os.path.realpath(thisFilePath + "/..") + "/assets/models/raw/"
-binPath = os.path.realpath(thisFilePath + "/..") + "/assets/models/bin/"
+binPath = os.path.realpath(thisFilePath + "/..") + "/assets_bin/models/"
 schemaPath = os.path.realpath(thisFilePath + "/..") + "/data/flatbuffer_schemas/"
 
 for filename in os.listdir(srcPath):

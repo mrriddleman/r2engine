@@ -99,6 +99,8 @@ namespace r2::asset::pln
 
     void GenerateMaterialPackManifestsIfNeeded();
 
+    void MakeEngineBinaryAssetFolders();
+
     void Init(  const std::string& flatbufferCompilerLocation,
               Milliseconds delay,
               const AssetCommand& assetCommand,
@@ -120,6 +122,9 @@ namespace r2::asset::pln
         std::filesystem::path p = soundDefinitionCommand.soundDefinitionFilePath;
         s_soundDefinitionsDirectory = p.parent_path().string();
         ReloadManifests();
+
+
+        MakeEngineBinaryAssetFolders();
 
         auto makeModels = ShouldMakeEngineModels();
         if (makeModels.size()>0)
@@ -411,25 +416,29 @@ namespace r2::asset::pln
 	//Textures
     void GenerateTexturePackManifestsIfNeeded()
     {
-        R2_CHECK(s_texturePackCommand.manifestFilePaths.size() == s_texturePackCommand.texturePacksWatchDirectories.size(),
+        R2_CHECK(s_texturePackCommand.manifestBinaryFilePaths.size() == s_texturePackCommand.manifestRawFilePaths.size(),
             "these should be the same size!");
 
-        for (size_t i = 0; i < s_texturePackCommand.manifestFilePaths.size(); ++i)
+        for (size_t i = 0; i < s_texturePackCommand.manifestBinaryFilePaths.size(); ++i)
         {
-            std::string manifestPath = s_texturePackCommand.manifestFilePaths[i];
+            std::string manifestBinaryPath = s_texturePackCommand.manifestBinaryFilePaths[i];
+            std::string manifestRawPath = s_texturePackCommand.manifestRawFilePaths[i];
             std::string texturePackDir = s_texturePackCommand.texturePacksWatchDirectories[i];
 
-            std::filesystem::path p = manifestPath;
-            std::string manifestDir = p.parent_path().string();
+            std::filesystem::path binaryPath = manifestBinaryPath;
+            std::string manifestBinaryDir = binaryPath.parent_path().string();
+
+            std::filesystem::path rawPath = manifestRawPath;
+            std::string manifestRawDir = rawPath.parent_path().string();
 
             std::string texturePackManifestFile;
-			r2::asset::pln::tex::FindTexturePacksManifestFile(manifestDir, p.stem().string(), texturePackManifestFile, true);
+			r2::asset::pln::tex::FindTexturePacksManifestFile(manifestBinaryDir, binaryPath.stem().string(), texturePackManifestFile, true);
 
 			if (texturePackManifestFile.empty())
 			{
-				if (r2::asset::pln::tex::FindTexturePacksManifestFile(manifestDir, p.stem().string(), texturePackManifestFile, false))
+				if (r2::asset::pln::tex::FindTexturePacksManifestFile(manifestRawDir, rawPath.stem().string(), texturePackManifestFile, false))
 				{
-					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromJson(texturePackManifestFile))
+					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromJson(texturePackManifestFile, manifestBinaryDir))
 					{
 						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
 						return;
@@ -437,7 +446,7 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(manifestPath, texturePackDir))
+					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(binaryPath.string(), rawPath.string(), texturePackDir))
 					{
 						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
 						return;
@@ -460,25 +469,30 @@ namespace r2::asset::pln
     //materials
     void GenerateMaterialPackManifestsIfNeeded()
     {
-		R2_CHECK(s_materialPackCommand.manifestFilePaths.size() == s_materialPackCommand.materialPacksWatchDirectories.size(),
+		R2_CHECK(s_materialPackCommand.manifestBinaryFilePaths.size() == s_materialPackCommand.manifestRawFilePaths.size(),
 			"these should be the same size!");
 
-		for (size_t i = 0; i < s_materialPackCommand.manifestFilePaths.size(); ++i)
+		for (size_t i = 0; i < s_materialPackCommand.manifestBinaryFilePaths.size(); ++i)
 		{
-			std::string manifestPath = s_materialPackCommand.manifestFilePaths[i];
-			std::string materialPackDir = s_materialPackCommand.materialPacksWatchDirectories[i];
+			std::string manifestPathBin = s_materialPackCommand.manifestBinaryFilePaths[i];
+            std::string manifestPathRaw = s_materialPackCommand.manifestRawFilePaths[i];
+			std::string materialPackDirRaw = s_materialPackCommand.materialPacksWatchDirectoriesRaw[i];
+            std::string materialPackDirBin = s_materialPackCommand.materialPacksWatchDirectoriesBin[i];
 
-			std::filesystem::path p = manifestPath;
-			std::string manifestDir = p.parent_path().string();
+			std::filesystem::path binaryPath = manifestPathBin;
+			std::string binManifestDir = binaryPath.parent_path().string();
+
+            std::filesystem::path rawPath = manifestPathRaw;
+            std::string rawManifestDir = rawPath.parent_path().string();
 
 			std::string materialPackManifestFile;
-			r2::asset::pln::FindMaterialPackManifestFile(manifestDir, p.stem().string(), materialPackManifestFile, true);
+			r2::asset::pln::FindMaterialPackManifestFile(binManifestDir, binaryPath.stem().string(), materialPackManifestFile, true);
 
 			if (materialPackManifestFile.empty())
 			{
-				if (r2::asset::pln::FindMaterialPackManifestFile(manifestDir, p.stem().string(), materialPackManifestFile, false))
+				if (r2::asset::pln::FindMaterialPackManifestFile(rawManifestDir, rawPath.stem().string(), materialPackManifestFile, false))
 				{
-					if (!r2::asset::pln::GenerateMaterialPackManifestFromJson(materialPackManifestFile))
+					if (!r2::asset::pln::GenerateMaterialPackManifestFromJson(materialPackManifestFile, binManifestDir))
 					{
 						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
 						return;
@@ -486,7 +500,7 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(manifestPath, materialPackDir))
+					if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(binaryPath.string(), rawPath.string(), materialPackDirBin, materialPackDirRaw))
 					{
 						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
 						return;
@@ -515,6 +529,52 @@ namespace r2::asset::pln
                 }
             }
         }
+    }
+
+    void MakeEngineBinaryAssetFolders()
+    {
+        std::filesystem::path assetBinPath = R2_ENGINE_ASSET_BIN_PATH;
+        if (!std::filesystem::exists(assetBinPath))
+        {
+            std::filesystem::create_directory(assetBinPath);
+        }
+
+        std::filesystem::path modelsBinPath = R2_ENGINE_INTERNAL_MODELS_BIN;
+        if (!std::filesystem::exists(modelsBinPath))
+        {
+            std::filesystem::create_directory(modelsBinPath);
+        }
+
+		std::filesystem::path texturesBinPath = R2_ENGINE_INTERNAL_TEXTURES_BIN;
+		if (!std::filesystem::exists(texturesBinPath))
+		{
+			std::filesystem::create_directory(texturesBinPath);
+		}
+
+		std::filesystem::path texturesManifestsBinPath = R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN;
+		if (!std::filesystem::exists(texturesManifestsBinPath))
+		{
+			std::filesystem::create_directory(texturesManifestsBinPath);
+		}
+
+		std::filesystem::path materialsBinPath = R2_ENGINE_INTERNAL_MATERIALS_DIR_BIN;
+		if (!std::filesystem::exists(materialsBinPath))
+		{
+			std::filesystem::create_directory(materialsBinPath);
+		}
+
+		std::filesystem::path materialsManifestsBinPath = R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN;
+		if (!std::filesystem::exists(materialsManifestsBinPath))
+		{
+			std::filesystem::create_directory(materialsManifestsBinPath);
+		}
+
+		std::filesystem::path materialsPacksBinPath = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
+		if (!std::filesystem::exists(materialsPacksBinPath))
+		{
+			std::filesystem::create_directory(materialsPacksBinPath);
+		}
+        
     }
 }
 

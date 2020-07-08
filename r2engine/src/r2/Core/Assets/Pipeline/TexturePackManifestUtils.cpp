@@ -16,7 +16,7 @@ namespace r2::asset::pln::tex
 	const std::string JSON_EXT = ".json";
 	const std::string TMAN_EXT = ".tman";
 
-	bool GenerateTexturePacksManifestFromJson(const std::string& texturePacksManifestFilePath)
+	bool GenerateTexturePacksManifestFromJson(const std::string& jsonManifestFilePath, const std::string& outputDir)
 	{
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
@@ -24,13 +24,10 @@ namespace r2::asset::pln::tex
 
 		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), texturePackManifestSchemaPath, TEXTURE_PACK_MANIFEST_NAME_FBS.c_str());
 
-		std::filesystem::path p = texturePacksManifestFilePath;
-
-		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), texturePackManifestSchemaPath, texturePacksManifestFilePath);
-
+		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, texturePackManifestSchemaPath, jsonManifestFilePath);
 	}
 
-	bool GenerateTexturePacksManifestFromDirectories(const std::string& filePath, const std::string& parentDirectory)
+	bool GenerateTexturePacksManifestFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& directory)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		u64 manifestTotalTextureSize = 0;
@@ -38,7 +35,7 @@ namespace r2::asset::pln::tex
 		u64 maxNumTexturesInAPack = 0;
 		std::vector < flatbuffers::Offset< flat::TexturePack >> texturePacks;
 
-		for (const auto& texturePackDir : std::filesystem::directory_iterator(parentDirectory)) //this will be the texture pack level
+		for (const auto& texturePackDir : std::filesystem::directory_iterator(directory)) //this will be the texture pack level
 		{
 			//UGH MAC - ignore .DS_Store
 			if (texturePackDir.path().filename() == ".DS_Store")
@@ -130,7 +127,7 @@ namespace r2::asset::pln::tex
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
 
-		utils::WriteFile(filePath, (char*)buf, size);
+		utils::WriteFile(binFilePath, (char*)buf, size);
 
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
@@ -138,13 +135,13 @@ namespace r2::asset::pln::tex
 
 		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), texturePacksManifestSchemaPath, TEXTURE_PACK_MANIFEST_NAME_FBS.c_str());
 
-		std::filesystem::path p = filePath;
+		std::filesystem::path binaryPath = binFilePath;
 
-		std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
+		std::filesystem::path jsonPath = jsonFilePath;
 
-		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(p.parent_path().string(), texturePacksManifestSchemaPath, filePath);
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), texturePacksManifestSchemaPath, binFilePath);
 
-		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), texturePacksManifestSchemaPath, jsonPath.string());
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binaryPath.parent_path().string(), texturePacksManifestSchemaPath, jsonPath.string());
 
 		return generatedJSON && generatedBinary;
 

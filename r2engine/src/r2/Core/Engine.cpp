@@ -104,16 +104,23 @@ namespace r2
             
             //for the engine
             std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
-            std::string engineTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.tman");
+            std::string engineRawManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.json");
+            std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
             
-            texturePackCommand.manifestFilePaths.push_back(engineTexturePackManifestPath);
+            texturePackCommand.manifestRawFilePaths.push_back(engineRawManifestPath);
+            texturePackCommand.manifestBinaryFilePaths.push_back(engineBinaryTexturePackManifestPath);
             texturePackCommand.texturePacksWatchDirectories.push_back(engineTexturePackDir);
 
             //for the app
-            for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsPaths())
+            for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsBinaryPaths())
             {
-                texturePackCommand.manifestFilePaths.push_back(nextManifestPath);
+                texturePackCommand.manifestBinaryFilePaths.push_back(nextManifestPath);
             }
+
+			for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsRawPaths())
+			{
+				texturePackCommand.manifestRawFilePaths.push_back(nextManifestPath);
+			}
 
 			for (const std::string& nextPath : noptrApp->GetTexturePacksWatchPaths())
 			{
@@ -130,21 +137,30 @@ namespace r2
             r2::asset::pln::MaterialPackManifestCommand materialPackCommand;
 
             //for the engine
-			std::string engineMaterialPackDir = R2_ENGINE_INTERNAL_MATERIALS_DIR;
-			std::string engineMaterialPackManifestPath = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.mpak");
+			std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
+            std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
+			std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
+			std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
 
-            materialPackCommand.manifestFilePaths.push_back(engineMaterialPackManifestPath);
-            materialPackCommand.materialPacksWatchDirectories.push_back(engineMaterialPackDir);
+            materialPackCommand.manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
+            materialPackCommand.manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
+            materialPackCommand.materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
+            materialPackCommand.materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
 
 			//for the app
-            for (const std::string& nextPath: noptrApp->GetMaterialPackManifestsPaths())
+            for (const std::string& nextPath: noptrApp->GetMaterialPackManifestsBinaryPaths())
             {
-                materialPackCommand.manifestFilePaths.push_back(nextPath);
+                materialPackCommand.manifestBinaryFilePaths.push_back(nextPath);
             }
+
+			for (const std::string& nextPath : noptrApp->GetMaterialPackManifestsRawPaths())
+			{
+				materialPackCommand.manifestRawFilePaths.push_back(nextPath);
+			}
 
             for (const std::string& nextPath: noptrApp->GetMaterialPacksWatchPaths())
             {
-                materialPackCommand.materialPacksWatchDirectories.push_back(nextPath);
+                materialPackCommand.materialPacksWatchDirectoriesRaw.push_back(nextPath);
             }
 
             materialPackCommand.buildFunc = [](std::vector<std::string> paths)

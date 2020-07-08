@@ -33,7 +33,7 @@ namespace r2::asset::pln
 	}
 
 
-	bool GenerateMaterialPackManifestFromJson(const std::string& materialPackManifestFilePath)
+	bool GenerateMaterialPackManifestFromJson(const std::string& jsonMaterialPackManifestFilePath, const std::string& outputDir)
 	{
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
@@ -41,17 +41,15 @@ namespace r2::asset::pln
 
 		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), texturePackManifestSchemaPath, MATERIAL_PACK_MANIFEST_NAME_FBS.c_str());
 
-		std::filesystem::path p = materialPackManifestFilePath;
-
-		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), texturePackManifestSchemaPath, materialPackManifestFilePath);
+		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, texturePackManifestSchemaPath, jsonMaterialPackManifestFilePath);
 	}
 
-	bool GenerateMaterialPackManifestFromDirectories(const std::string& filePath, const std::string& directory)
+	bool GenerateMaterialPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
 	{
 		//the directory we get passed in is the top level directory for all of the materials in the pack
 		
 		//first generate all of the materials from JSON if they need to be generated
-		for (const auto& materialPackDir : std::filesystem::directory_iterator(directory))
+		for (const auto& materialPackDir : std::filesystem::directory_iterator(rawDir))
 		{
 			if (materialPackDir.path().filename() == ".DS_Store")
 			{
@@ -60,7 +58,19 @@ namespace r2::asset::pln
 
 			//look for a json file in the raw dir
 			std::filesystem::path jsonDir = materialPackDir / MATERIAL_JSON_DIR;
-			std::filesystem::path binDir = materialPackDir / MATERIAL_BIN_DIR;
+
+			std::filesystem::path tempDir = std::filesystem::path(binaryDir) / materialPackDir.path().stem();
+			std::filesystem::path binDir = std::filesystem::path(binaryDir) / materialPackDir.path().stem() / MATERIAL_BIN_DIR;
+
+			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::SanitizeSubPath(tempDir.string().c_str(), sanitizedPath);
+
+			//make the directory if we need it
+			std::filesystem::create_directory(sanitizedPath);
+
+			r2::fs::utils::SanitizeSubPath(binDir.string().c_str(), sanitizedPath);
+
+			std::filesystem::create_directory(sanitizedPath);
 
 			for (const auto& jsonfile : std::filesystem::directory_iterator(jsonDir))
 			{
@@ -73,7 +83,7 @@ namespace r2::asset::pln
 
 				//check to see if we have the corresponding .mmat file
 				bool found = false;
-				for (const auto& binFile : std::filesystem::directory_iterator(binDir))
+				for (const auto& binFile : std::filesystem::directory_iterator(sanitizedPath))
 				{
 					if (std::filesystem::file_size(binFile.path()) > 0 &&
 						binFile.path().stem() == jsonfile.path().stem() &&
@@ -88,7 +98,7 @@ namespace r2::asset::pln
 					continue;
 
 				//we didn't find it so generate it
-				bool generated = GenerateMaterialFromJSON(binDir.string(), jsonfile.path().string());
+				bool generated = GenerateMaterialFromJSON(std::string(sanitizedPath), jsonfile.path().string());
 				R2_CHECK(generated, "Failed to generate the material: %s", jsonfile.path().string().c_str());
 			}
 		}
@@ -99,7 +109,7 @@ namespace r2::asset::pln
 		//okay now we know that we have all of the material generated properly
 		//so now we need to make the manifests by reading in all of the material.mmat files in the binary directory
 		//we do that for each pack
-		for (const auto& materialPackDir : std::filesystem::directory_iterator(directory))
+		for (const auto& materialPackDir : std::filesystem::directory_iterator(binaryDir))
 		{
 			if (materialPackDir.path().filename() == ".DS_Store")
 			{
@@ -133,10 +143,10 @@ namespace r2::asset::pln
 			delete[] materialData;
 		}
 
-		std::filesystem::path p = filePath;
+		std::filesystem::path binPath = binFilePath;
 
 		//add the texture packs to the manifest
-		auto manifest = flat::CreateMaterialPack(builder, STRING_ID(p.stem().string().c_str()), builder.CreateVector(flatMaterials));
+		auto manifest = flat::CreateMaterialPack(builder, STRING_ID(binPath.stem().string().c_str()), builder.CreateVector(flatMaterials));
 
 		//generate the manifest
 		builder.Finish(manifest);
@@ -144,7 +154,7 @@ namespace r2::asset::pln
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
 
-		utils::WriteFile(filePath, (char*)buf, size);
+		utils::WriteFile(binPath.string(), (char*)buf, size);
 
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
@@ -152,11 +162,11 @@ namespace r2::asset::pln
 
 		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialPackManifestSchemaPath, MATERIAL_PACK_MANIFEST_NAME_FBS.c_str());
 
-		std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
+		std::filesystem::path jsonPath = rawFilePath;
 
-		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(p.parent_path().string(), materialPackManifestSchemaPath, filePath);
+		bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), materialPackManifestSchemaPath, binPath.string());
 
-		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), materialPackManifestSchemaPath, jsonPath.string());
+		bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(binPath.parent_path().string(), materialPackManifestSchemaPath, jsonPath.string());
 
 		return generatedJSON && generatedBinary;
 	}

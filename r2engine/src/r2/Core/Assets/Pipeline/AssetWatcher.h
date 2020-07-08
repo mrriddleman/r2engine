@@ -39,7 +39,8 @@ namespace r2::asset::pln
     
     struct TexturePackManifestCommand
     {
-        std::vector<std::string> manifestFilePaths;
+        std::vector<std::string> manifestRawFilePaths;
+        std::vector<std::string> manifestBinaryFilePaths;
         std::vector<std::string> texturePacksWatchDirectories;
 
         AssetsBuiltFunc buildFunc;
@@ -47,8 +48,10 @@ namespace r2::asset::pln
 
     struct MaterialPackManifestCommand
     {
-		std::vector<std::string> manifestFilePaths;
-		std::vector<std::string> materialPacksWatchDirectories;
+		std::vector<std::string> manifestRawFilePaths;
+        std::vector<std::string> manifestBinaryFilePaths;
+		std::vector<std::string> materialPacksWatchDirectoriesRaw;
+        std::vector<std::string> materialPacksWatchDirectoriesBin;
 
 		AssetsBuiltFunc buildFunc;
     };
