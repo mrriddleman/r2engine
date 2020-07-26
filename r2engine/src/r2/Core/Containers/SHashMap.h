@@ -70,7 +70,11 @@ namespace r2
         template<typename T> const typename SHashMap<T>::HashMapEntry* Begin(const SHashMap<T>& h);
         
         template<typename T> const typename SHashMap<T>::HashMapEntry* End(const SHashMap<T>& h);
-        
+
+		template<typename T> typename SHashMap<T>::HashMapEntry* Begin(SHashMap<T>& h);
+
+		template<typename T> typename SHashMap<T>::HashMapEntry* End(SHashMap<T>& h);
+
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description);
     
         template<typename T> SHashMap<T>* CreateHashMapInPlace(void* hashMapPlacement, u64 capacity);
@@ -322,7 +326,17 @@ namespace r2
         {
             return r2::sarr::End(*h.mData);
         }
-        
+
+		template<typename T> typename SHashMap<T>::HashMapEntry* Begin(SHashMap<T>& h)
+		{
+			return r2::sarr::Begin(*h.mData);
+		}
+
+		template<typename T> typename SHashMap<T>::HashMapEntry* End(SHashMap<T>& h)
+		{
+			return r2::sarr::End(*h.mData);
+		}
+
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description)
         {
             void* hashMapPlacement = ALLOC_BYTES(a, SHashMap<T>::MemorySize(capacity), alignof(u64), file, line, description);

@@ -1,11 +1,13 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "r2/Render/Renderer/CommandPacket.h"
+#include "r2/Render/Renderer/CommandBucket.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Render/Renderer/Commands.h"
-#include "r2/Render/Renderer/CommandBucket.h"
+
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
@@ -14,11 +16,72 @@
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Utils/Hash.h"
 #include <filesystem>
-
+//#include "r2/Render/Renderer/CommandPacket.h"
 
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+#include "glm/gtc/type_ptr.hpp"
+
+
+namespace r2::draw::cmd
+{
+	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return 0;
+		}
+
+		const u64 numVertices = r2::sarr::Size(*mesh.optrVertices);
+
+		cmd->vertexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::sarr::At(*mesh.optrVertices, 0)) * numVertices;
+		cmd->data = r2::sarr::Begin(*mesh.optrVertices);
+
+		return cmd->dataSize + offset;
+	}
+
+	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return  0;
+		}
+
+		const u64 numIndices = r2::sarr::Size(*mesh.optrIndices);
+
+		cmd->indexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::sarr::At(*mesh.optrIndices, 0)) * numIndices;
+		cmd->data = r2::sarr::Begin(*mesh.optrIndices);
+
+		return cmd->dataSize + offset;
+	}
+
+	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return  0;
+		}
+
+		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<FillConstantBuffer>(cmd);
+		memcpy(auxMemory, data, size);
+
+		cmd->constantBufferHandle = handle;
+		cmd->data = auxMemory;
+		cmd->dataSize = size;
+		cmd->offset = offset;
+		cmd->type = type;
+		cmd->isPersistent = isPersistent;
+		return cmd->dataSize + offset;
+	}
+}
 
 namespace r2::draw
 {
@@ -30,6 +93,13 @@ namespace r2::draw
 		r2::SArray<Model*>* mDefaultModels = nullptr;
 	};
 
+	struct ConstantBufferData
+	{
+		r2::draw::ConstantBufferHandle handle;
+		r2::draw::ConstantBufferLayout::Type type;
+		b32 isPersistent;
+	};
+
 	struct Renderer
 	{
 		//memory
@@ -39,6 +109,7 @@ namespace r2::draw
 
 		r2::draw::BufferHandles mBufferHandles;
 		r2::SArray<r2::draw::ConstantBufferHandle>* mContantBufferHandles;
+		r2::SArray<ConstantBufferData>* mConstantBufferData;
 
 		ModelSystem mModelSystem;
 		MaterialSystem* mMaterialSystem = nullptr;
@@ -64,6 +135,7 @@ namespace
 	r2::draw::Renderer* s_optrRenderer = nullptr;
 
 	const u64 COMMAND_CAPACITY = 2048;
+	const u64 COMMAND_AUX_MEMORY = Megabytes(1); //I dunno lol
 	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
 	const u64 MAX_NUM_MATERIALS = 2048;
@@ -71,6 +143,10 @@ namespace
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
+
+
+	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
+	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 3; //?
 
 	const std::string MODL_EXT = ".modl";
 }
@@ -174,13 +250,28 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer->mBufferHandles.indexBufferHandles != nullptr, "We couldn't create the index buffer layout handles!");
 
+		s_optrRenderer->mBufferHandles.drawIDHandles = MAKE_SARRAY(*rendererArena, r2::draw::DrawIDHandle, MAX_BUFFER_LAYOUTS);
+
+		R2_CHECK(s_optrRenderer->mBufferHandles.drawIDHandles != nullptr, "We couldn't create the draw id handles");
+		
 		s_optrRenderer->mContantBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::ConstantBufferHandle, MAX_BUFFER_LAYOUTS);
 		
 		R2_CHECK(s_optrRenderer->mContantBufferHandles != nullptr, "We couldn't create the constant buffer handles");
 
-		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand());
+		s_optrRenderer->mConstantBufferData = MAKE_SARRAY(*rendererArena, ConstantBufferData, MAX_BUFFER_LAYOUTS);
+
+		R2_CHECK(s_optrRenderer->mConstantBufferData != nullptr, "We couldn't create the constant buffer data!");
+
+		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY);
 
 		R2_CHECK(s_optrRenderer->mCommandArena != nullptr, "We couldn't create the stack arena for commands");
+
+		bool rendererImpl = r2::draw::rendererimpl::RendererImplInit(memoryAreaHandle, MAX_NUM_CONSTANT_BUFFERS, MAX_NUM_CONSTANT_BUFFER_LOCKS, "RendererImpl");
+		if (!rendererImpl)
+		{
+			R2_CHECK(false, "We couldn't initialize the renderer implementation");
+			return false;
+		}
 
 		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath);
 		if (!shaderSystemIntialized)
@@ -265,7 +356,10 @@ namespace r2::draw::renderer
 
 		cmdbkt::Submit(*s_optrRenderer->mCommandBucket);
 
-		cmdbkt::ClearAll(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket);
+		cmdbkt::ClearAll(*s_optrRenderer->mCommandBucket);
+
+		//This is kinda bad but... 
+		RESET_ARENA(*s_optrRenderer->mCommandArena);
 	}
 
 	void Shutdown()
@@ -305,13 +399,19 @@ namespace r2::draw::renderer
 			s_optrRenderer->mBufferHandles.indexBufferHandles->mData);
 
 		r2::draw::rendererimpl::DeleteBuffers(
+			r2::sarr::Size(*s_optrRenderer->mBufferHandles.drawIDHandles),
+			s_optrRenderer->mBufferHandles.drawIDHandles->mData);
+
+		r2::draw::rendererimpl::DeleteBuffers(
 			r2::sarr::Size(*s_optrRenderer->mContantBufferHandles),
 			s_optrRenderer->mContantBufferHandles->mData);
 		
 		FREE(s_optrRenderer->mBufferHandles.bufferLayoutHandles, *arena);
 		FREE(s_optrRenderer->mBufferHandles.vertexBufferHandles, *arena);
 		FREE(s_optrRenderer->mBufferHandles.indexBufferHandles, *arena);
+		FREE(s_optrRenderer->mBufferHandles.drawIDHandles, *arena);
 		FREE(s_optrRenderer->mContantBufferHandles, *arena);
+		FREE(s_optrRenderer->mConstantBufferData, *arena);
 
 		FREE(s_optrRenderer->mCommandBucket, *arena);
 		FREE(s_optrRenderer->mCommandArena, *arena);
@@ -374,11 +474,16 @@ namespace r2::draw::renderer
 
 		//IBOs
 		u32 numIBOs = 0;
+		u32 numDrawIDs = 0;
 		for (u64 i = 0; i < numLayouts; ++i)
 		{
 			if (r2::sarr::At(*layouts, i).indexBufferConfig.bufferSize != EMPTY_BUFFER)
 			{
 				++numIBOs;
+			}
+			if (r2::sarr::At(*layouts, i).useDrawIDs)
+			{
+				++numDrawIDs;
 			}
 		}
 
@@ -392,7 +497,18 @@ namespace r2::draw::renderer
 			R2_CHECK(tempIBOs != nullptr, "We should have memory for tempIBOs");
 		}
 
+		r2::SArray<DrawIDHandle>* tempDrawIDs = nullptr;
+		if (numDrawIDs > 0)
+		{
+			tempDrawIDs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DrawIDHandle, numDrawIDs);
+			rendererimpl::GenerateVertexBuffers(numDrawIDs, tempDrawIDs->mData);
+			tempDrawIDs->mSize = numDrawIDs;
+
+			R2_CHECK(tempDrawIDs != nullptr, "We should have memory for tempIBOs");
+		}
+
 		u32 nextIndexBuffer = 0;
+		u32 nextDrawIDBuffer = 0;
 		//do the actual setup
 		for (size_t i = 0; i < numLayouts; ++i)
 		{
@@ -407,12 +523,23 @@ namespace r2::draw::renderer
 				r2::sarr::Push(*s_optrRenderer->mBufferHandles.indexBufferHandles, EMPTY_BUFFER);
 			}
 
+			if (config.useDrawIDs)
+			{
+				r2::sarr::Push(*s_optrRenderer->mBufferHandles.drawIDHandles, r2::sarr::At(*tempDrawIDs, nextDrawIDBuffer++));
+			}
+			else
+			{
+				r2::sarr::Push(*s_optrRenderer->mBufferHandles.drawIDHandles, EMPTY_BUFFER);
+			}
+
 			rendererimpl::SetupBufferLayoutConfiguration(config,
 				r2::sarr::At(*s_optrRenderer->mBufferHandles.bufferLayoutHandles, i),
 				r2::sarr::At(*s_optrRenderer->mBufferHandles.vertexBufferHandles, i),
-				r2::sarr::At(*s_optrRenderer->mBufferHandles.indexBufferHandles, i));
+				r2::sarr::At(*s_optrRenderer->mBufferHandles.indexBufferHandles, i),
+				r2::sarr::At(*s_optrRenderer->mBufferHandles.drawIDHandles, i));
 		}
 
+		FREE(tempDrawIDs, *MEM_ENG_SCRATCH_PTR);
 		FREE(tempIBOs, *MEM_ENG_SCRATCH_PTR);
 
 		return true;
@@ -429,6 +556,12 @@ namespace r2::draw::renderer
 		if (r2::sarr::Size(*s_optrRenderer->mContantBufferHandles) > 0)
 		{
 			R2_CHECK(false, "We have already generated the constant buffer handles!");
+			return false;
+		}
+
+		if (r2::sarr::Size(*s_optrRenderer->mConstantBufferData) > 0)
+		{
+			R2_CHECK(false, "We have already generated the constant buffer data!");
 			return false;
 		}
 
@@ -449,6 +582,19 @@ namespace r2::draw::renderer
 
 		r2::draw::rendererimpl::GenerateContantBuffers(static_cast<u32>(numContantBuffers), s_optrRenderer->mContantBufferHandles->mData);
 		s_optrRenderer->mContantBufferHandles->mSize = numContantBuffers;
+
+		for (u64 i = 0; i < numContantBuffers; ++i)
+		{
+			ConstantBufferData constData;
+			const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*constantBufferConfigs, i);
+			auto handle = r2::sarr::At(*s_optrRenderer->mContantBufferHandles, i);
+
+			constData.handle = handle;
+			constData.type = config.layout.GetType();
+			constData.isPersistent = config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT);
+
+			r2::sarr::Push(*s_optrRenderer->mConstantBufferData, constData);
+		}
 
 		r2::draw::rendererimpl::SetupConstantBufferConfigs(constantBufferConfigs, s_optrRenderer->mContantBufferHandles->mData);
 
@@ -485,8 +631,10 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::DrawIDHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) + 
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY + COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking) +
 			materialSystemMemorySize;
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
@@ -525,7 +673,7 @@ namespace r2::draw::renderer
 	}
 
 	template<class CMD>
-	CMD* AddCommand(r2::draw::key::Basic key)
+	CMD* AddCommand(r2::draw::key::Basic key, u64 auxMemory)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -533,9 +681,23 @@ namespace r2::draw::renderer
 			return nullptr;
 		}
 
-		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
+		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "Command Bucket is nullptr!");
 
-		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, CMD>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, 0);
+		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, CMD>(*s_optrRenderer->mCommandArena, *s_optrRenderer->mCommandBucket, key, auxMemory);
+	}
+
+	template<class CMDTOAPPENDTO, class CMD>
+	CMD* AppendCommand(CMDTOAPPENDTO* cmdToAppendTo, u64 auxMemory)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return nullptr;
+		}
+
+		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "Command Bucket is nullptr!");
+
+		return r2::draw::cmdbkt::AppendCommand<CMDTOAPPENDTO, CMD, r2::mem::StackArena>(*s_optrRenderer->mCommandArena, cmdToAppendTo, auxMemory);
 	}
 
 	r2::draw::Model* GetDefaultModel(r2::draw::DefaultModel defaultModel)
@@ -595,7 +757,7 @@ namespace r2::draw::renderer
 			//@TODO(Serge): fix this or pass it in
 			fillKey.keyValue = currentOffset;
 
-			r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey);
+			r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey, 0);
 			currentOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
 		}
 
@@ -625,14 +787,14 @@ namespace r2::draw::renderer
 			//@TODO(Serge): fix this or pass it in
 			fillKey.keyValue = currentOffset;
 
-			r2::draw::cmd::FillIndexBuffer* fillIndexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(fillKey);
+			r2::draw::cmd::FillIndexBuffer* fillIndexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(fillKey, 0);
 			currentOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
 		}
 
 		return currentOffset;
 	}
 
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset)
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -644,8 +806,53 @@ namespace r2::draw::renderer
 		//@TODO(Serge): fix this or pass it in
 		fillKey.keyValue = 0;
 
-		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = r2::draw::renderer::AddFillConstantBufferCommand(fillKey);
-		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, type, data, size, offset);
+		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = r2::draw::renderer::AddFillConstantBufferCommand(fillKey, size);
+		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, type, isPersistent, data, size, offset);
+	}
+
+	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<Model*>& models)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		const u64 numModels = r2::sarr::Size(models);
+
+		u64 numVertices = 0;
+		u64 numIndices = 0;
+
+		for (u64 i = 0; i < numModels; ++i)
+		{
+			r2::draw::cmd::DrawBatchSubCommand subCommand;
+
+			//@NOTE: this is assuming that each model's index count starts at 0 (and not each mesh starts its index at 0)
+
+			subCommand.baseInstance = i;
+			subCommand.baseVertex = numVertices;
+			subCommand.firstIndex = numIndices;
+			subCommand.instanceCount = 1;
+
+			Model* model = r2::sarr::At(models, i);
+
+			const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+
+			u64 count = 0;
+			for (u64 m = 0; m < numMeshes; ++m)
+			{
+				const Mesh& mesh = r2::sarr::At(*model->optrMeshes, m);
+
+				count += r2::sarr::Size(*mesh.optrIndices);
+				numVertices += r2::sarr::Size(*mesh.optrVertices);
+			}
+			numIndices += count;
+
+			subCommand.count = count;
+
+			r2::sarr::Push(subCommands, subCommand);
+		}
+
 	}
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key)
@@ -671,7 +878,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 
-		return r2::draw::renderer::AddCommand<r2::draw::cmd::DrawIndexed>(key);
+		return r2::draw::renderer::AddCommand<r2::draw::cmd::DrawIndexed>(key, 0);
 	}
 
 	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key)
@@ -684,7 +891,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 
-		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(key);
+		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(key, 0);
 	}
 
 	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key)
@@ -697,10 +904,10 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer != nullptr, "We haven't initialized the renderer yet!");
 
-		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(key);
+		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(key, 0);
 	}
 
-	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key)
+	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key, u64 auxMemory)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -708,10 +915,68 @@ namespace r2::draw::renderer
 			return nullptr;
 		}
 
-		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(key);
+		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(key, auxMemory);
 	}
 
+	void AddDrawBatch(const BatchConfig& batch)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;                                  
+		}
 
+		if (r2::sarr::Size(*s_optrRenderer->mConstantBufferData) == 0)
+		{
+			R2_CHECK(false, "We haven't generated any constant buffers!");
+			return;
+		}
+
+		u64 modelsSize = batch.models->mSize * sizeof(glm::mat4);
+		r2::draw::cmd::FillConstantBuffer* constCMD = r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(batch.key, modelsSize);
+		
+		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(constCMD);
+		memcpy(auxMemory, glm::value_ptr(*batch.models->mData), modelsSize);
+		
+		//fill out constCMD
+		{
+			constCMD->data = auxMemory;
+			constCMD->dataSize = modelsSize;
+			constCMD->offset = 0;
+			constCMD->constantBufferHandle = batch.modelsHandle;
+
+			//find the constant buffer data
+			bool found = false;
+			const u64 numConstantBuffers = r2::sarr::Size(*s_optrRenderer->mConstantBufferData);
+			for (u64 i = 0; i < numConstantBuffers; ++i)
+			{
+				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
+				if (constBufData.handle == batch.modelsHandle)
+				{
+					constCMD->isPersistent = constBufData.isPersistent;
+					constCMD->type = constBufData.type;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", batch.modelsHandle);
+			}
+		}
+
+		u64 subCommandsSize = batch.subcommands->mSize * sizeof(cmd::DrawBatchSubCommand);
+		r2::draw::cmd::DrawBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawBatch>(constCMD, subCommandsSize);
+
+		cmd::DrawBatchSubCommand* subCommandsMem = (cmd::DrawBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawBatch>(batchCMD);
+		memcpy(subCommandsMem, batch.subcommands->mData, subCommandsSize);
+
+		batchCMD->bufferLayoutHandle = batch.layoutHandle;
+		batchCMD->batchHandle = batch.subCommandsHandle;
+		batchCMD->numSubCommands = batch.subcommands->mSize;
+		batchCMD->subCommands = subCommandsMem;
+	}
 
 	//events
 	void WindowResized(u32 width, u32 height)

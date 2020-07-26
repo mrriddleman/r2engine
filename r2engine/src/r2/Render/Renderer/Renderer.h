@@ -7,6 +7,7 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/BufferLayout.h"
+#include "r2/Render/Renderer/RenderKey.h"
 
 namespace r2
 {
@@ -24,12 +25,8 @@ namespace r2::draw
 		r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
 		r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
 		r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
+		r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
 	};
-
-	namespace key
-	{
-		struct Basic;
-	}
 
 	//template <typename T = r2::draw::key::Basic>
 	//struct CommandBucket;
@@ -54,6 +51,20 @@ namespace r2::draw::cmd
 	struct FillIndexBuffer;
 	struct FillVertexBuffer;
 	struct FillConstantBuffer;
+	struct DrawBatchSubCommand;
+}
+
+namespace r2::draw
+{
+	struct BatchConfig
+	{
+		r2::draw::key::Basic key;
+		BufferLayoutHandle layoutHandle;
+		ConstantBufferHandle subCommandsHandle;
+		ConstantBufferHandle modelsHandle;
+		const r2::SArray<glm::mat4>* models = nullptr;
+		const r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
+	};
 }
 
 namespace r2::draw::renderer
@@ -84,15 +95,16 @@ namespace r2::draw::renderer
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
 	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset = 0);
-
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset = 0);
+	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<Model*>& models);
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key);
-	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key);
-
+	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key, u64 auxMemory);
+	
+	void AddDrawBatch(const BatchConfig& batch);
 
 
 	//events

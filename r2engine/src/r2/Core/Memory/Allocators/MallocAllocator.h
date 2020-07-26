@@ -25,7 +25,7 @@ namespace r2::mem
         
         void* Allocate(u64 size, u64 alignment, u64 offset);
         void Free(void* ptr);
-        
+        void Reset() {};
         u32 GetAllocationSize(void* memoryPtr) const;
         
         inline u64 GetTotalBytesAllocated() const {return mAllocatedMemory;}

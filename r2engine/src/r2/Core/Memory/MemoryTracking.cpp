@@ -81,5 +81,10 @@ namespace r2
                 return noptrMemory == tag.memPtr;
             }));
         }
+
+        void BasicMemoryTracking::Reset()
+        {
+            mTags.clear();
+        }
     }
 }

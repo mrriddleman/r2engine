@@ -9,6 +9,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction FillVertexBuffer::DispatchFunc = &r2::draw::dispatch::FillVertexBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction FillIndexBuffer::DispatchFunc = &r2::draw::dispatch::FillIndexBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction FillConstantBuffer::DispatchFunc = &r2::draw::dispatch::FillConstantBuffer;
+	const r2::draw::dispatch::BackendDispatchFunction DrawBatch::DispatchFunc = &r2::draw::dispatch::DrawBatch;
 
 	u64 LargestCommand()
 	{
@@ -17,59 +18,10 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::DrawIndexed),
 			sizeof(r2::draw::cmd::FillVertexBuffer),
 			sizeof(r2::draw::cmd::FillIndexBuffer),
-			sizeof(r2::draw::cmd::FillConstantBuffer)
+			sizeof(r2::draw::cmd::FillConstantBuffer),
+			sizeof(r2::draw::cmd::DrawBatch)
 			});
 	}
 
-	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
-	{
-		if (cmd == nullptr )
-		{
-			R2_CHECK(false, "cmd or model is null");
-			return 0;
-		}
 
-		const u64 numVertices = r2::sarr::Size(*mesh.optrVertices);
-
-		cmd->vertexBufferHandle = handle;
-		cmd->offset = offset;
-		cmd->dataSize = sizeof(r2::sarr::At(*mesh.optrVertices, 0)) * numVertices;
-		cmd->data = r2::sarr::Begin(*mesh.optrVertices);
-
-		return cmd->dataSize + offset;
-	}
-
-	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset)
-	{
-		if (cmd == nullptr)
-		{
-			R2_CHECK(false, "cmd or model is null");
-			return  0;
-		}
-
-		const u64 numIndices = r2::sarr::Size(*mesh.optrIndices);
-
-		cmd->indexBufferHandle = handle;
-		cmd->offset = offset;
-		cmd->dataSize = sizeof( r2::sarr::At(*mesh.optrIndices, 0) ) * numIndices;
-		cmd->data = r2::sarr::Begin(*mesh.optrIndices);
-
-		return cmd->dataSize + offset;
-	}
-
-	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, void* data, u64 size, u64 offset)
-	{
-		if (cmd == nullptr)
-		{
-			R2_CHECK(false, "cmd or model is null");
-			return  0;
-		}
-
-		cmd->constantBufferHandle = handle;
-		cmd->data = data;
-		cmd->dataSize = size;
-		cmd->offset = offset;
-		cmd->type = type;
-		return cmd->dataSize + offset;
-	}
 }

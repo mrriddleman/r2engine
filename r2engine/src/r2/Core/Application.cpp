@@ -47,7 +47,7 @@ namespace r2
 
     }
     
-    std::string Application::GetApplicationName() const
+    char* Application::GetApplicationName() const
     {
         return "Test_App";
     }

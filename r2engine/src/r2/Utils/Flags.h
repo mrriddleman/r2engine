@@ -24,6 +24,23 @@ namespace r2
            
         }
         
+        inline Flags(const Flags& flags) : mFlags(flags.mFlags)
+        {
+
+        }
+
+        Flags& operator=(const Flags& flags)
+        {
+            if (this == &flags)
+            {
+                return *this;
+            }
+
+            mFlags = flags.mFlags;
+
+            return *this;
+        }
+
         inline void Set(T flag)
         {
             mFlags |= flag;
@@ -42,6 +59,11 @@ namespace r2
         inline bool IsSet(T flag) const
         {
             return ((mFlags & flag) != 0);
+        }
+
+        inline T GetRawValue() const
+        {
+            return mFlags;
         }
         
         inline Flags operator|(Flags other) const

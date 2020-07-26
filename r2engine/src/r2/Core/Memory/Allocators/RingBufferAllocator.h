@@ -26,7 +26,7 @@ namespace r2
             
             void* Allocate(u32 size, u32 alignment, u32 offset);
             void Free(void* ptr);
-            
+            void Reset() {}
             bool InUse(void* noptrP) const;
             
             u32 GetAllocationSize(void* memoryPtr) const;

@@ -1,8 +1,11 @@
 #version 450 core
 
+#extension GL_ARB_shader_draw_parameters : enable
+
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
+layout (location = 3) in uint DrawID;
 
 out vec3 Normal;
 out vec2 TexCoord;
@@ -13,18 +16,15 @@ layout (std140, binding = 0) uniform Matrices
     mat4 view;
 };
 
-//const int NUM_MODELS = 1000;
-
-//layout (std140, binding = 1) uniform Models
-//{
-//	mat4 models[NUM_MODELS];
-//};
-
-uniform mat4 model;
+layout (std140, binding = 0) buffer Models
+{
+	mat4 models[];
+};
 
 void main()
 {
 	TexCoord = aTexCoord;
 	Normal = aNormal;
-	gl_Position = projection * view * model * vec4(aPos, 1.0);
+	mat4 model = mat4(1.0);
+	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
 }

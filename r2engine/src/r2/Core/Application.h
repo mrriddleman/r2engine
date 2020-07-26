@@ -42,7 +42,7 @@ namespace r2
         virtual void Shutdown();
         virtual void Render(float alpha);
         virtual void OnEvent(evt::Event& e);
-        virtual std::string GetApplicationName() const;
+        virtual char* GetApplicationName() const;
         virtual util::Size GetPreferredResolution() const;
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;

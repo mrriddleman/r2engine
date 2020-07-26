@@ -36,7 +36,7 @@ namespace r2
             
             void* Allocate(u64 size, u64 alignment, u64 offset);
             void Free(void* ptr);
-            
+            void Reset() {/*@TODO(Serge): implement*/}
             u32 GetAllocationSize(void* memoryPtr) const;
             u64 TotalElements() const {return mFreeList.NumElements();}
             u64 NumElementsAllocated() const {return mNumAllocations;}

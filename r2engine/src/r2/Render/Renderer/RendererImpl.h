@@ -38,6 +38,12 @@ namespace r2::draw::rendererimpl
 
 	//platform
 	bool PlatformInit(const PlatformRendererSetupParams& params);
+	void SetWindowName(const char* windowName);
+	//should be called by the renderer
+	bool RendererImplInit(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numRingBuffers, u64 maxRingLocks, const char* systemName);
+
+	u64 MemorySize(u64 numRingBuffers, u64 maxNumRingLocks);
+
 	void Shutdown();
 	void SwapScreens();
 	void* GetRenderContext();
@@ -55,7 +61,7 @@ namespace r2::draw::rendererimpl
 	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
 	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
 	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds);
-	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId);
+	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId, DrawIDHandle drawId);
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>*configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
@@ -69,9 +75,10 @@ namespace r2::draw::rendererimpl
 	//draw functions
 	void Clear(u32 flags);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
+	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
-	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, u64 offset, void* data, u64 size);
+	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
 
 	//events
 	void WindowResized(u32 width, u32 height);

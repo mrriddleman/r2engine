@@ -37,7 +37,7 @@ namespace r2
         virtual void Run() = 0;
         virtual void Shutdown() = 0;
         
-        virtual const u32 TickRate() const = 0;
+        virtual const f64 TickRate() const = 0;
         virtual const s32 NumLogicalCPUCores() const = 0;
         virtual const s32 SystemRAM() const = 0;
         virtual const s32 CPUCacheLineSize() const = 0;

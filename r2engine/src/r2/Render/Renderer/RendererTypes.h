@@ -6,10 +6,13 @@
 
 namespace r2::draw
 {
-	using BufferLayoutHandle = u32;
-    using VertexBufferHandle = u32;
-    using IndexBufferHandle = u32;
-    using ConstantBufferHandle = u32;
+	using BufferLayoutHandle = u32; //VBA
+    using VertexBufferHandle = u32; //VBO
+    using IndexBufferHandle = u32; //IBO
+    using DrawIDHandle = u32;
+    using ConstantBufferHandle = u32; //GL_SHADER_STORAGE_BUFFER or GL_UNIFORM_BUFFER
+    using BatchBufferHandle = u32; //GL_DRAW_INDIRECT_BUFFER
+
 
     static const u32 EMPTY_BUFFER = 0;
 

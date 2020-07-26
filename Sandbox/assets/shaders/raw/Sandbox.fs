@@ -20,6 +20,7 @@ out vec4 FragColor;
 in vec3 Normal;
 in vec2 TexCoord;
 
+
 void main()
 {
 	FragColor = vec4(texture(material.texture_diffuse1, TexCoord).rgb, 1.0);

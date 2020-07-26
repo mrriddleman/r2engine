@@ -34,7 +34,7 @@ namespace r2
         virtual void Run() override;
         virtual void Shutdown() override;
         
-        virtual const u32 TickRate() const override;
+        virtual const f64 TickRate() const override;
         virtual const s32 NumLogicalCPUCores() const override;
         virtual const s32 SystemRAM() const override;
         virtual const s32 CPUCacheLineSize() const override;
@@ -48,7 +48,8 @@ namespace r2
         friend Platform;
         SDL2Platform();
         
-       
+        void SetWindowTitle(const char* title);
+        void ProcessEvents();
         void TestFiles();
         
         static std::unique_ptr<Platform> CreatePlatform();
@@ -60,6 +61,8 @@ namespace r2
         char mPrefPath[r2::fs::FILE_PATH_LENGTH];
         char mBasePath[r2::fs::FILE_PATH_LENGTH];
         char mSoundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
+        char mApplicationName[r2::fs::FILE_PATH_LENGTH];
+
         bool mRunning;
         
         

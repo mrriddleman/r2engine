@@ -13,6 +13,7 @@ namespace r2::draw::dispatch
 	void FillVertexBuffer(const void* data);
 	void FillIndexBuffer(const void* data);
 	void FillConstantBuffer(const void* data);
+	void DrawBatch(const void* data);
 }
 
 

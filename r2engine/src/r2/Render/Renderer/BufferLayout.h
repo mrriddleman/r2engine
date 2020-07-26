@@ -84,17 +84,20 @@ namespace r2::draw
         u32 drawType;
     };
 
+    
+
     struct BufferLayoutConfiguration
     {
         BufferLayout layout;
         BufferConfig vertexBufferConfig;
         BufferConfig indexBufferConfig;
+        b32 useDrawIDs = false;
+        u32 maxDrawCount = 0;
     };
 
     class ConstantBufferElement
     {
     public:
-		std::string name;
 		ShaderDataType type;
         u32 elementSize;
         u32 size;
@@ -104,36 +107,52 @@ namespace r2::draw
         ConstantBufferElement() = default;
         ConstantBufferElement(ShaderDataType _type, const std::string& _name, size_t _typeCount = 1);
         //for structs only!
-        ConstantBufferElement(const std::initializer_list<BufferElement>& elements, const std::string& name, size_t _typeCount = 1);
+        ConstantBufferElement(const std::initializer_list<ConstantBufferElement>& elements, const std::string& name, size_t _typeCount = 1);
 		u32 GetComponentCount() const;
     private:
-        void InitializeConstantStruct(const std::vector<BufferElement>& elements);
+        void InitializeConstantStruct(const std::vector<ConstantBufferElement>& elements);
     };
     
+    extern u32 CB_FLAG_MAP_PERSISTENT;
+    extern u32 CB_FLAG_MAP_COHERENT;
+    extern u32 CB_FLAG_WRITE;
+    extern u32 CB_FLAG_READ;
+    extern u32 CB_CREATE_FLAG_DYNAMIC_STORAGE;
+    using ConstantBufferFlags = r2::Flags<u32, u32>;
+    using CreateConstantBufferFlags = r2::Flags<u32, u32>;
+
     class ConstantBufferLayout
     {
     public:
         enum Type
         {
             Small = 0, //ubo
-            Big //ssbo
+            Big, //ssbo
+            SubCommand, //GL_DRAW_INDIRECT_BUFFER
         };
 
         ConstantBufferLayout();
-        ConstantBufferLayout(const std::initializer_list<BufferElement>& elements);
+        ConstantBufferLayout(Type type, ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, const std::initializer_list<ConstantBufferElement>& elements);
 
-        inline const std::vector<BufferElement>& GetElements() const { return mElements; }
-		std::vector<BufferElement>::iterator begin() { return mElements.begin(); }
-		std::vector<BufferElement>::iterator end() { return mElements.end(); }
-		std::vector<BufferElement>::const_iterator begin() const { return mElements.begin(); }
-		std::vector<BufferElement>::const_iterator end() const { return mElements.end(); }
+        //Only For SubCommands!
+        ConstantBufferLayout(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 numSubCommands);
+
+        inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
+		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }
+		std::vector<ConstantBufferElement>::iterator end() { return mElements.end(); }
+		std::vector<ConstantBufferElement>::const_iterator begin() const { return mElements.begin(); }
+		std::vector<ConstantBufferElement>::const_iterator end() const { return mElements.end(); }
         size_t GetSize() const { return mSize; }
         Type GetType() const { return mType; }
+        ConstantBufferFlags GetFlags() const { return mFlags; }
+        CreateConstantBufferFlags GetCreateFlags() const { return mCreateFlags; }
     private:
         void CalculateOffsetAndSize();
-        std::vector<BufferElement> mElements;
+        std::vector<ConstantBufferElement> mElements;
         size_t mSize;
         Type mType;
+        ConstantBufferFlags mFlags;
+        CreateConstantBufferFlags mCreateFlags;
     };
 
 	struct ConstantBufferLayoutConfiguration

@@ -13,6 +13,7 @@
 #include "r2/Core/Engine.h"
 
 #include "glad/glad.h"
+#include "r2/Core/Math/MathUtils.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/FileSystem.h"
@@ -136,7 +137,7 @@ namespace r2
         //Initialize file system
         {
             const char* basePath = SDL_GetBasePath();
-            const char* prefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName().c_str());
+            const char* prefPath = SDL_GetPrefPath(mEngine.OrganizationName().c_str(), app->GetApplicationName());
             
             r2::fs::utils::SanitizeSubPath(basePath, mBasePath);
             r2::fs::utils::SanitizeSubPath(prefPath, mPrefPath);
@@ -177,7 +178,10 @@ namespace r2
         {
             r2::draw::rendererimpl::PlatformRendererSetupParams setupParams;
             setupParams.flags |= r2::draw::rendererimpl::VSYNC;
-            setupParams.windowName = "r2Engine";
+
+            r2::util::PathCpy(mApplicationName, app->GetApplicationName());
+
+            setupParams.windowName = mApplicationName;
             setupParams.resolution = mEngine.GetInitialResolution();
             setupParams.platformFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
@@ -285,180 +289,149 @@ namespace r2
     
     void SDL2Platform::Run()
     {
-        u32 currentTime = SDL_GetTicks();
-        u32 accumulator = 0;
+        char newTitle[r2::fs::FILE_PATH_LENGTH];
+
+        u64 currentTime = SDL_GetPerformanceCounter();
+        s64 accumulator = 0;
         
-        u32 t = 0;
-        const u32 dt = TickRate();
+		const f64 k_millisecondsToSeconds = 1000.;
+        const u64 k_millisecondsForFPSUpdate = 250;
+        const u64 k_framesForFPSUpdate = 10;
+
+        u64 dtUpper = SDL_GetPerformanceFrequency() / 62; //(1.0 / 61.0) * k_millisecondsToSeconds;
+        u64 dtLower = SDL_GetPerformanceFrequency() / 60;//(1.0 / 59.0) * k_millisecondsToSeconds;
+
+        u64 frames = 0;
+        u64 startTime = currentTime;
+        u64 endTime = startTime;
+
+        u64 t = 0;
+        u64 k_desiredUpdateRate = 60;
+        const u64 dt = SDL_GetPerformanceFrequency() / k_desiredUpdateRate;
+        bool resync = false;
+
+		const u64 k_timeHistoryCount = 4;
+		u64 timeAverager[k_timeHistoryCount] = { dt, dt, dt, dt };
+
+        const u64 k_dtUpperToleranceMult = 8;
+
+
+		const s64 snap_frequencies[] = { dt,        //60fps
+                              dt * 2,      //30fps
+                              dt * 3,      //20fps
+                              dt * 4,      //15fps
+							  (dt + 1) / 2,  //120fps //120hz, 240hz, or higher need to round up, so that adding 120hz twice guaranteed is at least the same as adding time_60hz once
+						   // (time_60hz+2)/3,  //180fps //that's where the +1 and +2 come from in those equations
+						   // (time_60hz+3)/4,  //240fps //I do not want to snap to anything higher than 120 in my engine, but I left the math in here anyway
+		};
+
         
+        const s64 vsync_maxerror = SDL_GetPerformanceFrequency() * .0002;
+        const u32 k_ignoreFrames = 60;
+
         while (mRunning)
         {
-            SDL_Event e;
-           
-            while (SDL_PollEvent(&e))
-            {
-                switch (e.type)
-                {
-                    case SDL_QUIT:
-                        mRunning = false;
-                        mEngine.QuitTriggered();
-                        break;
-                    case SDL_WINDOWEVENT:
-                        switch (e.window.event)
-                        {
-                            case SDL_WINDOWEVENT_RESIZED:
-                                mEngine.WindowResizedEvent(e.window.data1, e.window.data2);
-                                break;
-                            case SDL_WINDOWEVENT_SIZE_CHANGED:
-                                mEngine.WindowSizeChangedEvent(e.window.data1, e.window.data2);
-                                break;
-                            case SDL_WINDOWEVENT_MINIMIZED:
-                                mEngine.WindowMinimizedEvent();
-                                break;
-                            case SDL_WINDOWEVENT_EXPOSED:
-                                mEngine.WindowUnMinimizedEvent();
-                                break;
-                            case SDL_WINDOWEVENT_MAXIMIZED:
-                                
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
-                    case SDL_MOUSEBUTTONUP:
-                    case SDL_MOUSEBUTTONDOWN:
-                    {
-                        r2::io::MouseData mouseData;
-                        
-                        mouseData.state = e.button.state;
-                        mouseData.numClicks = e.button.clicks;
-                        mouseData.button = e.button.button;
-                        mouseData.x = e.button.x;
-                        mouseData.y = e.button.y;
-                        
-                        mEngine.MouseButtonEvent(mouseData);
-                    }
-                        break;
-                        
-                    case SDL_MOUSEMOTION:
-                    {
-                        r2::io::MouseData mouseData;
-                        
-                        mouseData.x = e.motion.x;
-                        mouseData.y = e.motion.y;
-                        mouseData.xrel = e.motion.xrel;
-                        mouseData.yrel = e.motion.yrel;
-                        mouseData.state = e.motion.state;
-                        
-                        mEngine.MouseMovedEvent(mouseData);
-                    }
-                        break;
-                        
-                    case SDL_MOUSEWHEEL:
-                    {
-                        r2::io::MouseData mouseData;
-                        
-                        mouseData.direction = e.wheel.direction;
-                        mouseData.x = e.wheel.x;
-                        mouseData.y = e.wheel.y;
-                        
-                        mEngine.MouseWheelEvent(mouseData);
-                    }
-                        break;
-                        
-                    case SDL_KEYDOWN:
-                    case SDL_KEYUP:
-                    {
-                        r2::io::Key keyData;
-                        
-                        keyData.state = e.key.state;
-                        keyData.repeated = e.key.repeat;
-                        keyData.code = e.key.keysym.scancode;
-                        
-                        //@NOTE: Right now we make no distinction between left or right versions of these keys
-                        if(e.key.keysym.mod & KMOD_ALT)
-                        {
-                            keyData.modifiers |= io::Key::ALT_PRESSED;
-                        }
-                        
-                        if(e.key.keysym.mod & KMOD_SHIFT)
-                        {
-                            keyData.modifiers |= io::Key::SHIFT_PRESSED_KEY;
-                        }
-                        
-                        if(e.key.keysym.mod & KMOD_CTRL)
-                        {
-                            keyData.modifiers |= io::Key::CONTROL_PRESSED;
-                        }
-                        
-                        mEngine.KeyEvent(keyData);
-                    }
-                        break;
-                        
-                    case SDL_TEXTINPUT:
-                    {
-                        mEngine.TextEvent(e.text.text);
-                    }
-                    break;
-                        
-                    case SDL_CONTROLLERDEVICEADDED:
-                    {
-                        mEngine.ControllerDetectedEvent(e.cdevice.which);
-                    }
-                    break;
-                    case SDL_CONTROLLERDEVICEREMOVED:
-                    {
-                        mEngine.ControllerDisonnectedEvent(e.cdevice.which);
-                    }
-                    break;
-                    case SDL_CONTROLLERDEVICEREMAPPED:
-                    {
-                        mEngine.ControllerRemappedEvent(e.cdevice.which);
-                    }
-                    break;
-                    case SDL_CONTROLLERBUTTONUP:
-                    case SDL_CONTROLLERBUTTONDOWN:
-                    {
-                        mEngine.ControllerButtonEvent(e.cbutton.which, (r2::io::ControllerButtonName)e.cbutton.button, u8(e.cbutton.state == SDL_PRESSED));
-                    }
-                    break;
-                    case SDL_CONTROLLERAXISMOTION:
-                    {
-                        mEngine.ControllerAxisEvent(e.caxis.which, (r2::io::ControllerAxisName)e.caxis.axis, e.caxis.value);
-                    }
-                    break;
-                    default:
-                        break;
-                }
-            }
-            
-            u32 newTime = SDL_GetTicks();
-            u32 delta = newTime - currentTime;
-            currentTime = newTime;
-       //     printf("delta: %u\n", delta);
+			u64 newTime = SDL_GetPerformanceCounter();
+			s64 delta = newTime - currentTime;
+			currentTime = newTime;
 
-            if (delta > 300)
+			if (delta > dt * k_dtUpperToleranceMult)
+			{
+				delta = dt;
+			}
+
+			if (delta < 0) {
+                delta = 0;
+			}
+
+			for (s64 snap : snap_frequencies) 
             {
-                delta = 300;
+				if (std::abs(delta - snap) <= vsync_maxerror) 
+                {
+                    delta = snap;
+					break;
+				}
+			}
+
+            //first k_ignoreFrames frames are a wash
+            //just assume they're fine so we don't mess up the timing
+            if (frames < k_ignoreFrames) 
+            {
+                delta = dt;
             }
-            
-            accumulator += delta;
-            
-            while (accumulator >= dt)
+
+			//delta time averaging
+			for (u32 i = 0; i < k_timeHistoryCount - 1; i++) 
+            {
+				timeAverager[i] = timeAverager[i + 1];
+			}
+			
+            timeAverager[k_timeHistoryCount - 1] = delta;
+			delta = 0;
+			
+            for (u32 i = 0; i < k_timeHistoryCount; i++)
+            {
+				delta += timeAverager[i];
+			}
+			delta /= k_timeHistoryCount;
+
+			accumulator += delta;
+
+			if (accumulator > dt* k_dtUpperToleranceMult) {
+				resync = true;
+			}
+
+			//timer resync if requested
+			if (resync) {
+				accumulator = 0;
+				delta = dt;
+				resync = false;
+			}
+
+            ProcessEvents();
+
+            u32 numGameUpdates = 0;
+
+            while (accumulator >= (s64)dt)
             {
                 mEngine.Update();
-                t+= dt;
-                accumulator -= dt;
+				accumulator -= dt;
+
+                //t+= dt;
+                numGameUpdates++;
             }
-            
-            float alpha = static_cast<float>(accumulator) / static_cast<float>(dt);
+
+     //       printf("numGameUpdates: %d\n", numGameUpdates);
+
+            float alpha = static_cast<f64>(accumulator) / static_cast<f64>(dt);
             mEngine.Render(alpha);
             
             r2::draw::rendererimpl::SwapScreens();
-            
+
             r2::mem::GlobalMemory::EngineMemory().singleFrameArena->EnsureZeroAllocations();
             
             r2::mem::GlobalMemory::EngineMemory().singleFrameArena->GetPolicyRef().Reset();
+
+#if defined( R2_DEBUG ) || defined(R2_RELEASE)
+            frames++;
+			//Calculate ms per frame
+			{
+				endTime = SDL_GetPerformanceCounter();
+                f64 msDiff = (f64(endTime - startTime) * k_millisecondsToSeconds) / (f64)SDL_GetPerformanceFrequency();
+
+				if (msDiff >= k_millisecondsForFPSUpdate &&
+					frames >= k_framesForFPSUpdate)
+				{
+					sprintf(newTitle, "%s - ms per frame: %f", mApplicationName, msDiff / (f64)frames);
+					SetWindowTitle(newTitle);
+
+					frames = 0;
+					startTime = endTime;
+				}
+			}
+
+
+#endif // R2_DEBUG ) || defined(R2_RELEASE)
         }
     }
 
@@ -498,9 +471,9 @@ namespace r2
         SDL_Quit();
     }
 
-    const u32 SDL2Platform::TickRate() const
+    const f64 SDL2Platform::TickRate() const
     {
-        return 10;
+        return 1000.0 / 60.0;
     }
     
     const s32 SDL2Platform::NumLogicalCPUCores() const
@@ -536,6 +509,154 @@ namespace r2
     //--------------------------------------------------
     //                  Private
     //--------------------------------------------------
+    void SDL2Platform::ProcessEvents()
+    {
+		SDL_Event e;
+
+		while (SDL_PollEvent(&e))
+		{
+			switch (e.type)
+			{
+			case SDL_QUIT:
+				mRunning = false;
+				mEngine.QuitTriggered();
+				break;
+			case SDL_WINDOWEVENT:
+				switch (e.window.event)
+				{
+				case SDL_WINDOWEVENT_RESIZED:
+					mEngine.WindowResizedEvent(e.window.data1, e.window.data2);
+					break;
+				case SDL_WINDOWEVENT_SIZE_CHANGED:
+					mEngine.WindowSizeChangedEvent(e.window.data1, e.window.data2);
+					break;
+				case SDL_WINDOWEVENT_MINIMIZED:
+					mEngine.WindowMinimizedEvent();
+					break;
+				case SDL_WINDOWEVENT_EXPOSED:
+					mEngine.WindowUnMinimizedEvent();
+					break;
+				case SDL_WINDOWEVENT_MAXIMIZED:
+
+					break;
+				default:
+					break;
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+			case SDL_MOUSEBUTTONDOWN:
+			{
+				r2::io::MouseData mouseData;
+
+				mouseData.state = e.button.state;
+				mouseData.numClicks = e.button.clicks;
+				mouseData.button = e.button.button;
+				mouseData.x = e.button.x;
+				mouseData.y = e.button.y;
+
+				mEngine.MouseButtonEvent(mouseData);
+			}
+			break;
+
+			case SDL_MOUSEMOTION:
+			{
+				r2::io::MouseData mouseData;
+
+				mouseData.x = e.motion.x;
+				mouseData.y = e.motion.y;
+				mouseData.xrel = e.motion.xrel;
+				mouseData.yrel = e.motion.yrel;
+				mouseData.state = e.motion.state;
+
+				mEngine.MouseMovedEvent(mouseData);
+			}
+			break;
+
+			case SDL_MOUSEWHEEL:
+			{
+				r2::io::MouseData mouseData;
+
+				mouseData.direction = e.wheel.direction;
+				mouseData.x = e.wheel.x;
+				mouseData.y = e.wheel.y;
+
+				mEngine.MouseWheelEvent(mouseData);
+			}
+			break;
+
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+			{
+				r2::io::Key keyData;
+
+				keyData.state = e.key.state;
+				keyData.repeated = e.key.repeat;
+				keyData.code = e.key.keysym.scancode;
+
+				//@NOTE: Right now we make no distinction between left or right versions of these keys
+				if (e.key.keysym.mod & KMOD_ALT)
+				{
+					keyData.modifiers |= io::Key::ALT_PRESSED;
+				}
+
+				if (e.key.keysym.mod & KMOD_SHIFT)
+				{
+					keyData.modifiers |= io::Key::SHIFT_PRESSED_KEY;
+				}
+
+				if (e.key.keysym.mod & KMOD_CTRL)
+				{
+					keyData.modifiers |= io::Key::CONTROL_PRESSED;
+				}
+
+				mEngine.KeyEvent(keyData);
+			}
+			break;
+
+			case SDL_TEXTINPUT:
+			{
+				mEngine.TextEvent(e.text.text);
+			}
+			break;
+
+			case SDL_CONTROLLERDEVICEADDED:
+			{
+				mEngine.ControllerDetectedEvent(e.cdevice.which);
+			}
+			break;
+			case SDL_CONTROLLERDEVICEREMOVED:
+			{
+				mEngine.ControllerDisonnectedEvent(e.cdevice.which);
+			}
+			break;
+			case SDL_CONTROLLERDEVICEREMAPPED:
+			{
+				mEngine.ControllerRemappedEvent(e.cdevice.which);
+			}
+			break;
+			case SDL_CONTROLLERBUTTONUP:
+			case SDL_CONTROLLERBUTTONDOWN:
+			{
+				mEngine.ControllerButtonEvent(e.cbutton.which, (r2::io::ControllerButtonName)e.cbutton.button, u8(e.cbutton.state == SDL_PRESSED));
+			}
+			break;
+			case SDL_CONTROLLERAXISMOTION:
+			{
+				mEngine.ControllerAxisEvent(e.caxis.which, (r2::io::ControllerAxisName)e.caxis.axis, e.caxis.value);
+			}
+			break;
+			default:
+				break;
+			}
+		}
+    }
+
+
+	void SDL2Platform::SetWindowTitle(const char* title)
+	{
+        r2::draw::rendererimpl::SetWindowName(title);
+	}
+
     void SDL2Platform::TestFiles()
     {
 //        char filePath[r2::fs::FILE_PATH_LENGTH];

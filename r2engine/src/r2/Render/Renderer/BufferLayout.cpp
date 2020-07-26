@@ -7,6 +7,7 @@
 #include "r2pch.h"
 #include "BufferLayout.h"
 #include "r2/Utils/Utils.h"
+#include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RendererImpl.h"
 
 namespace r2::draw
@@ -123,8 +124,7 @@ namespace r2::draw
     }
 
     ConstantBufferElement::ConstantBufferElement(ShaderDataType _type, const std::string& _name, size_t _typeCount)
-		: name(_name)
-        , type(_type)
+		: type(_type)
         , elementSize(GetBaseAlignmentSize(_type))
         , size(elementSize * static_cast<u32>(_typeCount))
 	    , offset(0)
@@ -133,9 +133,9 @@ namespace r2::draw
 
     }
 
-    ConstantBufferElement::ConstantBufferElement(const std::initializer_list<BufferElement>& elements, const std::string& _name, size_t _typeCount)
-        : name(_name)
-        , type(ShaderDataType::Struct)
+    ConstantBufferElement::ConstantBufferElement(const std::initializer_list<ConstantBufferElement>& elements, const std::string& _name, size_t _typeCount)
+        : type(ShaderDataType::Struct)
+        , elementSize(0)
         , typeCount(_typeCount)
     {
         InitializeConstantStruct(elements);
@@ -146,7 +146,7 @@ namespace r2::draw
         return ComponentCount(type);
     }
 
-	void ConstantBufferElement::InitializeConstantStruct(const std::vector<BufferElement>& elements)
+	void ConstantBufferElement::InitializeConstantStruct(const std::vector<ConstantBufferElement>& elements)
 	{
         for (auto& element: elements)
         {
@@ -161,15 +161,47 @@ namespace r2::draw
         : mElements({})
         , mSize(0)
         , mType(Type::Small)
+        , mFlags(0)
+        , mCreateFlags(0)
     {
     }
 
-    ConstantBufferLayout::ConstantBufferLayout(const std::initializer_list<BufferElement>& elements)
+    ConstantBufferLayout::ConstantBufferLayout(Type type, ConstantBufferFlags bufferFlags, CreateConstantBufferFlags createFlags, const std::initializer_list<ConstantBufferElement>& elements)
         : mElements(elements)
         , mSize(0)
-        , mType(Type::Small)
+        , mType(type)
+        , mFlags(bufferFlags)
+        , mCreateFlags(createFlags)
     {
         CalculateOffsetAndSize();
+    }
+
+    ConstantBufferLayout::ConstantBufferLayout(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 numSubCommands)
+        : mElements({
+            {
+                {
+                    {ShaderDataType::Int, "count"},
+                    {ShaderDataType::Int, "instanceCount"},
+                    {ShaderDataType::Int, "firstIndex"},
+                    {ShaderDataType::Int, "baseVertex"},
+                    {ShaderDataType::Int, "baseInstance"}
+                },
+                "DrawBatchSubCommand",
+                numSubCommands
+            }})
+		, mSize(sizeof(r2::draw::cmd::DrawBatchSubCommand) * numSubCommands)
+		, mType(SubCommand)
+		, mFlags(flags)
+		, mCreateFlags(createFlags)
+    {
+        size_t offset = 0;
+		for (auto& element : mElements)
+		{
+			element.offset = 0;
+			offset += element.size;
+            element.elementSize = sizeof(r2::draw::cmd::DrawBatchSubCommand);
+            element.size = sizeof(r2::draw::cmd::DrawBatchSubCommand) * numSubCommands;
+		}
     }
 
     void ConstantBufferLayout::CalculateOffsetAndSize()
@@ -181,17 +213,6 @@ namespace r2::draw
 			offset += element.size;
             mSize += element.size;
 		}
-
-		auto maxConstantBufferSize = r2::draw::rendererimpl::MaxConstantBufferSize();
-
-        if (mSize > maxConstantBufferSize)
-        {
-            mType = Type::Big;
-        }
-        else
-        {
-            mType = Type::Small;
-        }
     }
 
     

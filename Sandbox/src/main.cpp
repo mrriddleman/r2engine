@@ -33,6 +33,7 @@
 #include "r2/Utils/Hash.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -213,7 +214,12 @@ class Sandbox: public r2::Application
 {
 public:
     
-    
+    enum ConstantHandles
+    {
+        VP_MATRICES = 0,
+        MODEL_MATRICES,
+        SUB_COMMANDS
+    };
     
     
     virtual bool Init() override
@@ -286,6 +292,9 @@ public:
         layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
         constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+        modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, 10);
+        r2::sarr::Push(*modelMats, glm::mat4(1.0));
+        subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, 10);
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -300,11 +309,14 @@ public:
             {
                 Megabytes(1),
                 r2::draw::VertexDrawTypeStatic
-            }
+            },
+            true, 10 //use draw ids
         };
 
+        //For Matrices
         r2::draw::ConstantBufferLayoutConfiguration constantLayout{
             {
+                r2::draw::ConstantBufferLayout::Small, 0,0,//create flags
                 {
                     {r2::draw::ShaderDataType::Mat4, "projection"},
                     {r2::draw::ShaderDataType::Mat4, "view"}
@@ -313,8 +325,38 @@ public:
             r2::draw::VertexDrawTypeDynamic
         };
 
+        //for Models
+        r2::draw::ConstantBufferLayoutConfiguration constantLayout2
+        {
+            //layout
+            {
+                r2::draw::ConstantBufferLayout::Big,
+                r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
+                r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
+                {
+                    {r2::draw::ShaderDataType::Mat4, "models", 10}
+                }
+            },
+            //drawType
+            r2::draw::VertexDrawTypeDynamic
+        };
+
+        //for Sub Commands
+        r2::draw::ConstantBufferLayoutConfiguration subCommands
+        {
+            //layout
+            {
+				r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
+				r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
+                10
+            },
+            r2::draw::VertexDrawTypeDynamic
+        };
+
         r2::sarr::Push(*layouts, layoutConfig);
         r2::sarr::Push(*constantLayouts, constantLayout);
+        r2::sarr::Push(*constantLayouts, constantLayout2);
+        r2::sarr::Push(*constantLayouts, subCommands);
 
         r2::draw::renderer::SetDepthTest(true);
         bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
@@ -331,8 +373,14 @@ public:
 
         r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
-        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
+        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
         
+        r2::SArray<r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::Model*, 10);
+        r2::sarr::Push(*modelsToDraw, quadModel);
+        r2::draw::renderer::FillSubCommandsFromModels(*subCommandsToDraw, *modelsToDraw);
+        
+        FREE(modelsToDraw, *MEM_ENG_SCRATCH_PTR);
+
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
@@ -546,26 +594,38 @@ public:
         r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, materialHandle);
 
         r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+       // 
+        //r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
+        //drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
+        //drawIndexedCMD->startIndex = 0;
+        //drawIndexedCMD->bufferLayoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
+        //drawIndexedCMD->vertexBufferHandle = r2::sarr::At(*handles.vertexBufferHandles, 0);
+        //drawIndexedCMD->indexBufferHandle = r2::sarr::At(*handles.indexBufferHandles, 0);
 
-        r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
-        drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
-        drawIndexedCMD->startIndex = 0;
-        drawIndexedCMD->bufferLayoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
-        drawIndexedCMD->vertexBufferHandle = r2::sarr::At(*handles.vertexBufferHandles, 0);
-        drawIndexedCMD->indexBufferHandle = r2::sarr::At(*handles.indexBufferHandles, 0);
+        const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 
+        //@TODO(Serge): draw batch here
+		r2::draw::BatchConfig batch;
+		batch.key = drawElemKey;
+		batch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
+		batch.subcommands = subCommandsToDraw;
+		batch.models = modelMats;
+		batch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
+		batch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
+
+		r2::draw::renderer::AddDrawBatch(batch);
 
         r2::draw::key::Basic clearKey;
 
         r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
         clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
 
-		const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
-
+		//update the camera
         const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
         r2::draw::renderer::AddFillConstantBufferCommandForData(
-            r2::sarr::At(*constantBufferHandles, 0),
+            r2::sarr::At(*constHandles, 0),
             constantLayout.layout.GetType(),
+            constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT),
             glm::value_ptr(mPersController.GetCameraPtr()->view),
             constantLayout.layout.GetElements().at(1).size,
             constantLayout.layout.GetElements().at(1).offset);
@@ -575,6 +635,8 @@ public:
     {
         FREE(layouts, *linearArenaPtr);
         FREE(constantLayouts, *linearArenaPtr);
+        FREE(modelMats, *linearArenaPtr);
+        FREE(subCommandsToDraw, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -658,6 +720,11 @@ public:
     }
 #endif
     
+    char* GetApplicationName() const
+    {
+        return "Sandbox";
+    }
+
     r2::asset::PathResolver GetPathResolver() const override
     {
         return ResolveCategoryPath;
@@ -674,6 +741,8 @@ private:
     r2::mem::LinearArena* linearArenaPtr;
     r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
     r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantLayouts;
+    r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
+    r2::SArray<glm::mat4>* modelMats;
 };
 
 namespace

@@ -28,7 +28,7 @@ namespace r2
             void SetName(const std::string& name){}
             
             void Verify(){}
-            
+            void Reset() {}
         };
         
         class R2_API BasicMemoryTracking
@@ -40,7 +40,7 @@ namespace r2
             void OnAllocation(const utils::MemoryTag& tag);
             void OnDeallocation(void* noptrMemory, const char* file, s32 line, const char* description);
             void Verify();
-            
+            void Reset();
             void SetName(const std::string& name);
             
             const std::string Name() {return mName;}

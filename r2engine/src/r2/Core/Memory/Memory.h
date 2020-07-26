@@ -31,8 +31,10 @@
 #define FREE_VERBOSE(objPtr, ARENA, file, line, desc) r2::mem::utils::Dealloc(objPtr, ARENA, file, line, desc)
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
+#define RESET_ARENA(ARENA) r2::mem::utils::ResetArena(ARENA);
 
 #define FREE_EMPLACED_ARENA(ptr) r2::mem::utils::FreeEmplacedArena(ptr)
+
 
 #define MEM_ENG_PERMANENT_PTR r2::mem::GlobalMemory::EngineMemory().permanentStorageArena
 #define MEM_ENG_SCRATCH_PTR r2::mem::GlobalMemory::EngineMemory().singleFrameArena
@@ -278,6 +280,16 @@ namespace r2
                 
                 mAllocator.Free(originalMemory);
                 
+                mThreadGuard.Leave();
+            }
+
+            void Reset()
+            {
+                mThreadGuard.Enter();
+
+                mAllocator.Reset();
+                mMemoryTracker.Reset();
+
                 mThreadGuard.Leave();
             }
             
@@ -534,6 +546,12 @@ namespace r2
                 {
                     emplacedArenaPtr->~ARENA();
                 }
+            }
+
+            template <class ARENA>
+            void ResetArena(ARENA& arena)
+            {
+                arena.Reset();
             }
             
             inline MemBoundary GetBoundary(void* p, u64 count)

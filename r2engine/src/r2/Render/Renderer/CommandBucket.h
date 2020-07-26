@@ -7,6 +7,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/RenderTarget.h"
+//
 #include <algorithm>
 
 #define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
@@ -24,7 +25,6 @@ namespace r2::draw
 		{
 			Key aKey;
 			void* data = nullptr;
-			r2::draw::dispatch::BackendDispatchFunction func = nullptr;
 		};
 
 		static u64 MemorySize(u64 capacity);
@@ -43,7 +43,9 @@ namespace r2::draw
 			//1) we store a pointer to the arena for each Entry
 			//2) we circumvent the tracking of the allocation somehow
 		template<typename T, class ARENA, class CMD> CMD* AddCommand(ARENA& arena, CommandBucket<T>& bkt, T key, u64 auxMem);
-		template<typename T, class ARENA> void ClearAll(ARENA& arena, CommandBucket<T>& bkt);
+		template<class OLDCMD, class NEWCMD, class ARENA> NEWCMD* AppendCommand(ARENA& arena, OLDCMD* appendTo, u64 auxMem);
+
+		template<typename T> void ClearAll(CommandBucket<T>& bkt);
 
 		template<typename T> using CompareFunction = bool (*)(const T & a, const T & b);
 		template<typename T> inline void Sort(CommandBucket<T>& bkt, CompareFunction<T> cmp);
@@ -63,33 +65,53 @@ namespace r2::draw
 
 		template<typename T, class ARENA, class CMD> CMD* AddCommand(ARENA& arena, CommandBucket<T>& bkt, T key, u64 auxMem)
 		{
-			CMD* newCmd = (CMD*)ALLOC(CMD, arena);
+			CommandPacket packet = cmdpkt::Create<CMD, ARENA>(arena, auxMem);
 
 			CommandBucket<T>::Entry newEntry;
+			
+			{
+				newEntry.aKey = key;
+				newEntry.data = packet;
 
-			newEntry.aKey = key;
-			newEntry.data = newCmd;
-			newEntry.func = CMD::DispatchFunc;
+				//this is where we would do any locking/atomics etc
+				r2::sarr::Push(*bkt.entries, newEntry);
+			}
+			
+			cmdpkt::StoreNextCommandPacket(packet, nullptr);
+			cmdpkt::StoreBackendDispatchFunction(packet, CMD::DispatchFunc);
 
-			r2::sarr::Push(*bkt.entries, newEntry);
-
-			return newCmd;
+			return cmdpkt::GetCommand<CMD>(packet);
 		}
 
-		template<typename T, class ARENA> inline void ClearAll(ARENA& arena, CommandBucket<T>& bkt)
+		template<class OLDCMD, class NEWCMD, class ARENA> 
+		NEWCMD* AppendCommand(ARENA& arena, OLDCMD* appendTo, u64 auxMem)
+		{
+			CommandPacket packet = cmdpkt::Create<NEWCMD, ARENA>(arena, auxMem);
+
+			// append this command to the given one
+			cmdpkt::StoreNextCommandPacket<OLDCMD>(appendTo, packet);
+
+			cmdpkt::StoreNextCommandPacket(packet, nullptr);
+			cmdpkt::StoreBackendDispatchFunction(packet, NEWCMD::DispatchFunc);
+
+			return cmdpkt::GetCommand<NEWCMD>(packet);
+		}
+
+		template<typename T> inline void ClearAll(CommandBucket<T>& bkt)
 		{
 			R2_CHECK(bkt.entries != nullptr, "entries is nullptr!");
 
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
-			for (s64 i = static_cast<s64>(numEntries) -1; i >= 0; --i)
-			{
-				FREE(r2::sarr::At(*bkt.entries, i).data, arena);
-			}
-
 			r2::sarr::Clear(*bkt.sortedEntries);
 			r2::sarr::Clear(*bkt.entries);
-			
+		}
+
+		void SubmitPacket(CommandPacket packet)
+		{
+			const dispatch::BackendDispatchFunction function = cmdpkt::LoadBackendDispatchFunction(packet);
+			const void* command = cmdpkt::LoadCommand(packet);
+			function(command);
 		}
 
 		template<typename T> void Submit(CommandBucket<T>& bkt)
@@ -100,9 +122,9 @@ namespace r2::draw
 
 			for (u64 i = 0; i < numEntries; ++i)
 			{
-				void* cmd = r2::sarr::At(*bkt.sortedEntries, i)->data;
+				CommandPacket packet = r2::sarr::At(*bkt.sortedEntries, i)->data;
 
-				R2_CHECK(cmd != nullptr, "We don't have a valid command!");
+				R2_CHECK(packet != nullptr, "We don't have a valid command!");
 
 				T theKey = r2::sarr::At(*bkt.sortedEntries, i)->aKey;
 				
@@ -110,9 +132,11 @@ namespace r2::draw
 
 				bkt.KeyDecoder(theKey);
 
-				r2::draw::dispatch::BackendDispatchFunction DispatchFunc = r2::sarr::At(*bkt.sortedEntries, i)->func;
-
-				DispatchFunc(cmd);
+				do 
+				{
+					SubmitPacket(packet);
+					packet = cmdpkt::LoadNextCommandPacket(packet);
+				} while (packet != nullptr);
 			}
 		}
 
