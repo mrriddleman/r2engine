@@ -345,13 +345,11 @@ public:
         r2::draw::ConstantBufferLayoutConfiguration subCommands
         {
             //layout
-            {
-				r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
-				r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
-                10
-            },
+            {},
             r2::draw::VertexDrawTypeDynamic
         };
+
+        subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, 10);
 
         r2::sarr::Push(*layouts, layoutConfig);
         r2::sarr::Push(*constantLayouts, constantLayout);

@@ -176,32 +176,20 @@ namespace r2::draw
         CalculateOffsetAndSize();
     }
 
-    ConstantBufferLayout::ConstantBufferLayout(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 numSubCommands)
-        : mElements({
-            {
-                {
-                    {ShaderDataType::Int, "count"},
-                    {ShaderDataType::Int, "instanceCount"},
-                    {ShaderDataType::Int, "firstIndex"},
-                    {ShaderDataType::Int, "baseVertex"},
-                    {ShaderDataType::Int, "baseInstance"}
-                },
-                "DrawBatchSubCommand",
-                numSubCommands
-            }})
-		, mSize(sizeof(r2::draw::cmd::DrawBatchSubCommand) * numSubCommands)
-		, mType(SubCommand)
-		, mFlags(flags)
-		, mCreateFlags(createFlags)
+    void ConstantBufferLayout::InitForSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands)
     {
-        size_t offset = 0;
-		for (auto& element : mElements)
-		{
-			element.offset = 0;
-			offset += element.size;
-            element.elementSize = sizeof(r2::draw::cmd::DrawBatchSubCommand);
-            element.size = sizeof(r2::draw::cmd::DrawBatchSubCommand) * numSubCommands;
-		}
+        mElements.clear();
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[0].offset = 0;
+        mElements[0].typeCount = numCommands;
+        mElements[0].elementSize = sizeof(r2::draw::cmd::DrawBatchSubCommand);
+        mElements[0].size = numCommands * mElements[0].elementSize;
+        mElements[0].type = ShaderDataType::Struct;
+
+        mSize = mElements[0].size;
+        mType = SubCommand;
+        mFlags = flags;
+        mCreateFlags = createFlags;
     }
 
     void ConstantBufferLayout::CalculateOffsetAndSize()
