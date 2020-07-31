@@ -43,6 +43,15 @@ namespace r2::draw::dispatch
 		rendererimpl::UpdateConstantBuffer(realData->constantBufferHandle, realData->type, realData->isPersistent, realData->offset, realData->data, realData->dataSize);
 	}
 
+	void CompleteConstantBuffer(const void* data)
+	{
+		const r2::draw::cmd::CompleteConstantBuffer* realData = static_cast<const r2::draw::cmd::CompleteConstantBuffer*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+	
+		rendererimpl::CompleteConstantBuffer(realData->constantBufferHandle, realData->count);
+	
+	}
+
 	void DrawBatch(const void* data)
 	{
 		const r2::draw::cmd::DrawBatch* realData = static_cast<const r2::draw::cmd::DrawBatch*>(data);

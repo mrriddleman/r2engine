@@ -55,7 +55,13 @@ namespace r2::draw::rendererimpl
 			}
 		}
 
-		r2::sarr::Copy(locks, *swapLocks);
+		r2::sarr::Clear(locks);
+		u64 swapLocksSize = r2::sarr::Size(*swapLocks);
+		for (u64 i = 0; i < swapLocksSize; ++i)
+		{
+			const auto& lock = r2::sarr::At(*swapLocks, i);
+			r2::sarr::Push(locks, lock);
+		}
 
 		FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 	}
@@ -72,23 +78,29 @@ namespace r2::draw::rendererimpl
 
 	namespace ringbuf
 	{
+		static bool temp = false;
+
 		void* Reserve(RingBuffer& ringBuffer, u64 count)
 		{
 			GLsizeiptr lockStart = ringBuffer.head;
 
 			if (lockStart + count > ringBuffer.count) {
 				// Need to wrap here.
-				lockStart = 0;
+				ringBuffer.head = (ringBuffer.head + count) % ringBuffer.count;
+				lockStart = ringBuffer.head;
 			}
 
 			WaitForLockedRange(*ringBuffer.locks, lockStart, count);
-			return &((char*)ringBuffer.dataPtr)[lockStart * ringBuffer.typeSize];
+			char* ringData = (char*)ringBuffer.dataPtr;
+
+			return &ringData[lockStart * ringBuffer.typeSize];
 		}
 
-		void Complete(RingBuffer& ringBuffer, u64 count)
+		void Complete(RingBuffer& ringBuffer, u64 size)
 		{
-			LockRange(*ringBuffer.locks, ringBuffer.head, count);
-			ringBuffer.head = (ringBuffer.head + count) % ringBuffer.count;
+			LockRange(*ringBuffer.locks, ringBuffer.head, size);
+
+			ringBuffer.head = (ringBuffer.head + size) % ringBuffer.count;
 		}
 
 		GLsizeiptr GetHead(RingBuffer& ringBuffer)

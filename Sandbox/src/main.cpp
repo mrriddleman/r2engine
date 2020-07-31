@@ -221,6 +221,7 @@ public:
         SUB_COMMANDS
     };
     
+    const u64 NUM_DRAWS = 5;
     
     virtual bool Init() override
     {
@@ -292,9 +293,36 @@ public:
         layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
         constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
-        modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, 10);
-        r2::sarr::Push(*modelMats, glm::mat4(1.0));
-        subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, 10);
+        modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        
+        
+        glm::mat4 quadMat = glm::mat4(1.0f);
+        
+        quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        quadMat = glm::scale(quadMat, glm::vec3(10.0f));
+        r2::sarr::Push(*modelMats, quadMat);
+
+        glm::mat4 sphereMat = glm::mat4(1.0f);
+        sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
+        r2::sarr::Push(*modelMats, sphereMat);
+
+        glm::mat4 cubeMat = glm::mat4(1.0f);
+        cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0.6, 0));
+        r2::sarr::Push(*modelMats, cubeMat);
+
+        glm::mat4 cylinderMat = glm::mat4(1.0f);
+        
+        cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.6, 0));
+        cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+        r2::sarr::Push(*modelMats, cylinderMat);
+
+        glm::mat4 coneMat = glm::mat4(1.0f);
+        coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
+        coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		r2::sarr::Push(*modelMats, coneMat);
+
+
+        subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -310,7 +338,7 @@ public:
                 Megabytes(1),
                 r2::draw::VertexDrawTypeStatic
             },
-            true, 10 //use draw ids
+            true, NUM_DRAWS //use draw ids
         };
 
         //For Matrices
@@ -334,7 +362,7 @@ public:
                 r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
                 r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
                 {
-                    {r2::draw::ShaderDataType::Mat4, "models", 10}
+                    {r2::draw::ShaderDataType::Mat4, "models", NUM_DRAWS}
                 }
             },
             //drawType
@@ -349,7 +377,7 @@ public:
             r2::draw::VertexDrawTypeDynamic
         };
 
-        subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, 10);
+        subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, NUM_DRAWS);
 
         r2::sarr::Push(*layouts, layoutConfig);
         r2::sarr::Push(*constantLayouts, constantLayout);
@@ -367,14 +395,38 @@ public:
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
         //fill the buffers with data
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
+        r2::draw::Model* sphereModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
+        r2::draw::Model* cubeModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
+        r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
+        r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
-        r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
-        r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
+        u64 vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
+        u64 indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
+        
+        vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(sphereModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+        indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(sphereModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+
+		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cubeModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cubeModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+
+		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cylinderModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cylinderModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+
+		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(coneModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(coneModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+
+
         r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
         
-        r2::SArray<r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::Model*, 10);
+        //@NOTE: these need to be in the order that we submit the fill commands
+        r2::SArray<r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::Model*, NUM_DRAWS);
         r2::sarr::Push(*modelsToDraw, quadModel);
+        r2::sarr::Push(*modelsToDraw, sphereModel);
+        r2::sarr::Push(*modelsToDraw, cubeModel);
+        r2::sarr::Push(*modelsToDraw, cylinderModel);
+        r2::sarr::Push(*modelsToDraw, coneModel);
+
         r2::draw::renderer::FillSubCommandsFromModels(*subCommandsToDraw, *modelsToDraw);
         
         FREE(modelsToDraw, *MEM_ENG_SCRATCH_PTR);
@@ -585,7 +637,7 @@ public:
     {
         //add my commands here
 
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
+        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
         const r2::draw::Mesh& mesh = r2::sarr::At(*quadModel->optrMeshes, 0);
         r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
 
@@ -613,10 +665,10 @@ public:
 
 		r2::draw::renderer::AddDrawBatch(batch);
 
-        r2::draw::key::Basic clearKey;
+       // r2::draw::key::Basic clearKey;
 
-        r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
-        clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
+       // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
+       // clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
 
 		//update the camera
         const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);

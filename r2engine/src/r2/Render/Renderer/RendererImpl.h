@@ -79,6 +79,7 @@ namespace r2::draw::rendererimpl
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
+	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 
 	//events
 	void WindowResized(u32 width, u32 height);

@@ -146,7 +146,7 @@ namespace
 
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
-	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 3; //?
+	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 30; //?
 
 	const std::string MODL_EXT = ".modl";
 }
@@ -751,12 +751,12 @@ namespace r2::draw::renderer
 		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
 
 		u64 currentOffset = offset;
+		r2::draw::key::Basic fillKey;
+		//@TODO(Serge): fix this or pass it in
+		fillKey.keyValue = 0;
+
 		for (u64 i = 0; i < numMeshes; ++i)
 		{
-			r2::draw::key::Basic fillKey;
-			//@TODO(Serge): fix this or pass it in
-			fillKey.keyValue = currentOffset;
-
 			r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey, 0);
 			currentOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
 		}
@@ -781,12 +781,11 @@ namespace r2::draw::renderer
 		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
 
 		u64 currentOffset = offset;
+		//@TODO(Serge): fix this or pass it in
+		r2::draw::key::Basic fillKey;
+		fillKey.keyValue = 0;
 		for (u64 i = 0; i < numMeshes; ++i)
 		{
-			r2::draw::key::Basic fillKey;
-			//@TODO(Serge): fix this or pass it in
-			fillKey.keyValue = currentOffset;
-
 			r2::draw::cmd::FillIndexBuffer* fillIndexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(fillKey, 0);
 			currentOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
 		}
@@ -932,11 +931,19 @@ namespace r2::draw::renderer
 			return;
 		}
 
+		// r2::draw::key::Basic clearKey;
+
+	   // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
+	   // clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
+
+		r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(batch.key);
+		clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
+
 		u64 modelsSize = batch.models->mSize * sizeof(glm::mat4);
-		r2::draw::cmd::FillConstantBuffer* constCMD = r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(batch.key, modelsSize);
+		r2::draw::cmd::FillConstantBuffer* constCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::Clear, r2::draw::cmd::FillConstantBuffer>(clearCMD, modelsSize);
 		
 		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(constCMD);
-		memcpy(auxMemory, glm::value_ptr(*batch.models->mData), modelsSize);
+		memcpy(auxMemory, batch.models->mData, modelsSize);
 		
 		//fill out constCMD
 		{
@@ -976,6 +983,12 @@ namespace r2::draw::renderer
 		batchCMD->batchHandle = batch.subCommandsHandle;
 		batchCMD->numSubCommands = batch.subcommands->mSize;
 		batchCMD->subCommands = subCommandsMem;
+
+		r2::draw::cmd::CompleteConstantBuffer* completeConstCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
+
+		completeConstCMD->constantBufferHandle = batch.modelsHandle;
+		completeConstCMD->count = batch.models->mSize;
+
 	}
 
 	//events

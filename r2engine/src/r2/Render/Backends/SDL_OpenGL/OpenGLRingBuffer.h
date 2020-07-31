@@ -80,6 +80,16 @@ namespace r2::draw::rendererimpl
 			glBindBuffer(ringBuffer.bufferType, ringBuffer.bufferName);
 			glUnmapBuffer(ringBuffer.bufferType);
 
+			const u64 numLocks = r2::sarr::Size(*ringBuffer.locks);
+
+			for (u64 i = 0; i < numLocks; ++i)
+			{
+				auto& lock = r2::sarr::At(*ringBuffer.locks, i);
+				glDeleteSync(lock.syncObject);
+			}
+
+			r2::sarr::Clear(*ringBuffer.locks);
+
 			FREE(ringBuffer.locks, arena);
 			ringBuffer.dataPtr = nullptr;
 			ringBuffer.count = 0;
