@@ -931,6 +931,14 @@ namespace r2::draw::renderer
 			return;
 		}
 
+		if (r2::sarr::Size(*batch.models) != r2::sarr::Size(*batch.subcommands) ||
+			r2::sarr::Size(*batch.materials) != r2::sarr::Size(*batch.subcommands))
+		{
+			R2_CHECK(false, "Mismatched number of elements in batch arrays");
+			return;
+		}
+
+
 		// r2::draw::key::Basic clearKey;
 
 	   // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
@@ -973,8 +981,72 @@ namespace r2::draw::renderer
 			}
 		}
 
+		//Set the texture addresses for all of the materials used in this batch
+
+		const u64 numMaterialsInBatch = r2::sarr::Size(*batch.materials);
+
+		r2::SArray<r2::draw::ModelMaterial>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelMaterial, numMaterialsInBatch);
+
+		for (u64 i = 0; i < numMaterialsInBatch; ++i)
+		{
+			const r2::draw::MaterialHandle& matHandle = r2::sarr::At(*batch.materials, i);
+
+			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(matHandle.slot);
+			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, matHandle);
+
+			r2::draw::ModelMaterial modelMaterial;
+
+			const u64 numTextures = r2::sarr::Size(*textures);
+			for (u64 t = 0; t < numTextures; ++t)
+			{
+				const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
+				const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture.textureAssetHandle);
+				//@NOTE: this assumes that we only have 1 of each type - otherwise we'd override the type with the next one of that type
+				modelMaterial.textures[texture.type] = addr;
+			}
+
+			r2::sarr::Push(*modelMaterials, modelMaterial);
+
+		}
+
+		//fill out material data
+		u64 materialDataSize = sizeof(r2::draw::ModelMaterial) * numMaterialsInBatch;
+		r2::draw::cmd::FillConstantBuffer* materialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::FillConstantBuffer>(constCMD, materialDataSize);
+		
+		char* materialsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(materialsCMD);
+		memcpy(materialsAuxMemory, modelMaterials->mData, materialDataSize);
+
+		materialsCMD->data = materialsAuxMemory;
+		materialsCMD->dataSize = materialDataSize;
+		materialsCMD->offset = 0;
+		materialsCMD->constantBufferHandle = batch.materialsHandle;
+		{
+			bool found = false;
+			const u64 numConstantBuffers = r2::sarr::Size(*s_optrRenderer->mConstantBufferData);
+			for (u64 i = 0; i < numConstantBuffers; ++i)
+			{
+				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
+				if (constBufData.handle == batch.materialsHandle)
+				{
+					materialsCMD->isPersistent = constBufData.isPersistent;
+					materialsCMD->type = constBufData.type;
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", batch.materialsHandle);
+			}
+		}
+
+		FREE(modelMaterials, *MEM_ENG_SCRATCH_PTR);
+
 		u64 subCommandsSize = batch.subcommands->mSize * sizeof(cmd::DrawBatchSubCommand);
-		r2::draw::cmd::DrawBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawBatch>(constCMD, subCommandsSize);
+		r2::draw::cmd::DrawBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawBatch>(materialsCMD, subCommandsSize);
 
 		cmd::DrawBatchSubCommand* subCommandsMem = (cmd::DrawBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawBatch>(batchCMD);
 		memcpy(subCommandsMem, batch.subcommands->mData, subCommandsSize);

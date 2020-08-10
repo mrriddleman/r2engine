@@ -5,8 +5,6 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 layout (location = 3) in uint DrawID;
 
-out vec3 Normal;
-out vec2 TexCoord;
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -19,10 +17,18 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];
 };
 
+
+out VS_OUT
+{
+	vec3 normal;
+	vec2 texCoords;
+	flat uint drawID;
+} vs_out;
+
 void main()
 {
-	TexCoord = aTexCoord;
-	Normal = aNormal;
-
 	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
+	vs_out.normal = aNormal;
+	vs_out.texCoords = aTexCoord;
+	vs_out.drawID = DrawID;
 }

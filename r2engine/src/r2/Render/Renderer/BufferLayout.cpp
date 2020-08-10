@@ -9,6 +9,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 namespace r2::draw
 {
@@ -190,6 +191,22 @@ namespace r2::draw
         mType = SubCommand;
         mFlags = flags;
         mCreateFlags = createFlags;
+    }
+
+    void ConstantBufferLayout::InitForMaterials(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numMaterials)
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+        mElements[0].offset = 0;
+        mElements[0].typeCount = 8;
+        mElements[0].elementSize = sizeof(r2::draw::tex::TextureAddress);
+        mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+        mElements[0].type = ShaderDataType::Struct;
+
+        mSize = mElements[0].size * numMaterials;
+        mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
     }
 
     void ConstantBufferLayout::CalculateOffsetAndSize()

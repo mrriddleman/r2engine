@@ -22,7 +22,7 @@ namespace r2::draw::texsys
 	void UploadToGPU(const r2::asset::AssetHandle& texture);
 	void ReloadTexture(const r2::asset::AssetHandle& texture);
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);
-	r2::draw::tex::GPUHandle GetGPUHandle(const r2::asset::AssetHandle& texture);
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::asset::AssetHandle& texture);
 	u64 MemorySize(u64 maxNumTextures);
 }
 

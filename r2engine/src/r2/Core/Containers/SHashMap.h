@@ -17,6 +17,7 @@
 namespace
 {
     const f64 MAX_LOAD_FACTOR = 0.75;
+    const f64 LOAD_FACTOR_MULT = 1.5;
 }
 
 namespace r2

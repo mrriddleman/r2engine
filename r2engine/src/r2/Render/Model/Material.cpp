@@ -4,7 +4,7 @@
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/File/FileSystem.h"
-#include "r2/Core/Memory/InternalEngineMemory.h"
+
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
@@ -123,6 +123,16 @@ namespace r2::draw::mat
 				r2::sarr::Push(*materialTextures, texture);
 			}
 
+			const auto numSpeculars = r2::sarr::Size(*result->speculars);
+			for (flatbuffers::uoffset_t t = 0; t < numSpeculars; ++t)
+			{
+				r2::draw::tex::Texture texture;
+				texture.type = tex::TextureType::Specular;
+				texture.textureAssetHandle =
+					system.mAssetCache->LoadAsset(r2::sarr::At(*result->speculars, t));
+				r2::sarr::Push(*materialTextures, texture);
+			}
+
 			const auto numEmissives = r2::sarr::Size(*result->emissives);
 			for (u64 t = 0; t < numEmissives; ++t)
 			{
@@ -130,36 +140,6 @@ namespace r2::draw::mat
 				texture.type = tex::TextureType::Emissive;
 				texture.textureAssetHandle =
 					system.mAssetCache->LoadAsset(r2::sarr::At(*result->emissives, t));
-				r2::sarr::Push(*materialTextures, texture);
-			}
-
-			const auto numHeights = r2::sarr::Size(*result->heights);
-			for (u64 t = 0; t < numHeights; ++t)
-			{
-				r2::draw::tex::Texture texture;
-				texture.type = tex::TextureType::Height;
-				texture.textureAssetHandle =
-					system.mAssetCache->LoadAsset(r2::sarr::At(*result->heights, t));
-				r2::sarr::Push(*materialTextures, texture);
-			}
-
-			const auto numMetalics = r2::sarr::Size(*result->metalics);
-			for (u64 t = 0; t < numMetalics; ++t)
-			{
-				r2::draw::tex::Texture texture;
-				texture.type = tex::TextureType::Metallic;
-				texture.textureAssetHandle =
-					system.mAssetCache->LoadAsset(r2::sarr::At(*result->metalics, t));
-				r2::sarr::Push(*materialTextures, texture);
-			}
-
-			const auto numMicros = r2::sarr::Size(*result->micros);
-			for (u64 t = 0; t < numMicros; ++t)
-			{
-				r2::draw::tex::Texture texture;
-				texture.type = tex::TextureType::MicroFacet;
-				texture.textureAssetHandle =
-					system.mAssetCache->LoadAsset(r2::sarr::At(*result->micros, t));
 				r2::sarr::Push(*materialTextures, texture);
 			}
 
@@ -173,6 +153,36 @@ namespace r2::draw::mat
 				r2::sarr::Push(*materialTextures, texture);
 			}
 
+			const auto numMetalics = r2::sarr::Size(*result->metalics);
+			for (u64 t = 0; t < numMetalics; ++t)
+			{
+				r2::draw::tex::Texture texture;
+				texture.type = tex::TextureType::Metallic;
+				texture.textureAssetHandle =
+					system.mAssetCache->LoadAsset(r2::sarr::At(*result->metalics, t));
+				r2::sarr::Push(*materialTextures, texture);
+			}
+
+			const auto numHeights = r2::sarr::Size(*result->heights);
+			for (u64 t = 0; t < numHeights; ++t)
+			{
+				r2::draw::tex::Texture texture;
+				texture.type = tex::TextureType::Height;
+				texture.textureAssetHandle =
+					system.mAssetCache->LoadAsset(r2::sarr::At(*result->heights, t));
+				r2::sarr::Push(*materialTextures, texture);
+			}
+
+			const auto numMicros = r2::sarr::Size(*result->micros);
+			for (u64 t = 0; t < numMicros; ++t)
+			{
+				r2::draw::tex::Texture texture;
+				texture.type = tex::TextureType::MicroFacet;
+				texture.textureAssetHandle =
+					system.mAssetCache->LoadAsset(r2::sarr::At(*result->micros, t));
+				r2::sarr::Push(*materialTextures, texture);
+			}
+
 			const auto numOcclusions = r2::sarr::Size(*result->occlusions);
 			for (flatbuffers::uoffset_t t = 0; t < numOcclusions; ++t)
 			{
@@ -180,16 +190,6 @@ namespace r2::draw::mat
 				texture.type = tex::TextureType::Occlusion;
 				texture.textureAssetHandle =
 					system.mAssetCache->LoadAsset(r2::sarr::At(*result->occlusions, t));
-				r2::sarr::Push(*materialTextures, texture);
-			}
-
-			const auto numSpeculars = r2::sarr::Size(*result->speculars);
-			for (flatbuffers::uoffset_t t = 0; t < numSpeculars; ++t)
-			{
-				r2::draw::tex::Texture texture;
-				texture.type = tex::TextureType::Specular;
-				texture.textureAssetHandle =
-					system.mAssetCache->LoadAsset(r2::sarr::At(*result->speculars, t));
 				r2::sarr::Push(*materialTextures, texture);
 			}
 

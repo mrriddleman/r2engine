@@ -37,8 +37,6 @@ namespace
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
 		r2::SHashMap<r2::draw::rendererimpl::RingBuffer>* mRingBufferMap = nullptr;
-		//@TODO(Serge): remove this
-		r2::SArray<ConstantBufferPostRenderUpdate>* mConstantBuffersToUpdatePostRender = nullptr;
 	};
 
 	RendererImplState* s_optrRendererImpl = nullptr;
@@ -58,6 +56,7 @@ namespace
 		case r2::draw::ShaderDataType::Int3:     return GL_INT;
 		case r2::draw::ShaderDataType::Int4:     return GL_INT;
 		case r2::draw::ShaderDataType::Bool:     return GL_BOOL;
+		case r2::draw::ShaderDataType::UInt64:	 return GL_UNSIGNED_INT64_ARB;
 		case r2::draw::ShaderDataType::None:     break;
 		}
 
@@ -175,13 +174,7 @@ namespace r2::draw::rendererimpl
 		s_optrRendererImpl->mSubAreaHandle = subAreaHandle;
 		s_optrRendererImpl->mSubAreaArena = linearArena;
 		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numRingBuffers* HASH_MULT);
-		s_optrRendererImpl->mConstantBuffersToUpdatePostRender = MAKE_SARRAY(*linearArena, ConstantBufferPostRenderUpdate, numRingBuffers);
-
-		for (u64 i = 0; i < numRingBuffers; ++i)
-		{
-			ConstantBufferPostRenderUpdate update = { 0, 0 };
-			r2::sarr::Push(*s_optrRendererImpl->mConstantBuffersToUpdatePostRender, update);
-		}
+		
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr;
 	}
@@ -230,7 +223,6 @@ namespace r2::draw::rendererimpl
 		}
 
 		FREE(s_optrRendererImpl->mRingBufferMap, *arena);
-		FREE(s_optrRendererImpl->mConstantBuffersToUpdatePostRender, *arena);
 
 		FREE(s_optrRendererImpl, *arena);
 
@@ -506,9 +498,9 @@ namespace r2::draw::rendererimpl
 
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
-			r2::draw::shader::SetVec4(*shader, "material.color", material->color);
+			//r2::draw::shader::SetVec4(*shader, "material.color", material->color);
 
-			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
+			/*const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
 			if (textures)
 			{
 				u64 numTextures = r2::sarr::Size(*textures);
@@ -531,7 +523,7 @@ namespace r2::draw::rendererimpl
 					r2::draw::shader::SetInt(*shader, ("material." + name + number).c_str(), static_cast<s32>(i));
 					glBindTexture(GL_TEXTURE_2D, r2::draw::texsys::GetGPUHandle(texture.textureAssetHandle));
 				}
-			}
+			}*/
 		}
 	}
 
@@ -644,9 +636,10 @@ namespace r2::draw::rendererimpl
 	{
 		RingBuffer theDefault;
 		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, cBufferHandle, theDefault);
-		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
-
-		ringbuf::Complete(ringBuffer, count);
+		if (ringBuffer.dataPtr != theDefault.dataPtr)
+		{
+			ringbuf::Complete(ringBuffer, count);
+		}
 	}
 
 	//events

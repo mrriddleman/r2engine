@@ -5,14 +5,13 @@ namespace r2::draw::tex
 {
 	const char* TextureTypeToString(TextureType type)
 	{
+		//@TODO(Serge): fix this somehow or remove it
 		switch (type)
 		{
 		case TextureType::Diffuse:
 			return "texture_diffuse";
 		case TextureType::Specular:
 			return "texture_specular";
-		case TextureType::Ambient:
-			return "texture_ambient";
 		case TextureType::Normal:
 			return "texture_normal";
 		case TextureType::Emissive:
@@ -29,5 +28,10 @@ namespace r2::draw::tex
 			R2_CHECK(false, "Unsupported texture type!");
 			return "";
 		}
+	}
+
+	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2)
+	{
+		return h1.container == h2.container && h2.sliceIndex == h2.sliceIndex;
 	}
 }

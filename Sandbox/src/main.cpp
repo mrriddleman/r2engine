@@ -218,10 +218,11 @@ public:
     {
         VP_MATRICES = 0,
         MODEL_MATRICES,
-        SUB_COMMANDS
+        SUB_COMMANDS,
+        MODEL_MATERIALS,
     };
     
-    const u64 NUM_DRAWS = 5;
+    const u64 NUM_DRAWS = 7;
     
     virtual bool Init() override
     {
@@ -323,6 +324,7 @@ public:
 
 
         subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
+        modelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -369,6 +371,8 @@ public:
             r2::draw::VertexDrawTypeDynamic
         };
 
+
+
         //for Sub Commands
         r2::draw::ConstantBufferLayoutConfiguration subCommands
         {
@@ -379,10 +383,25 @@ public:
 
         subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, NUM_DRAWS);
 
+
+		r2::draw::ConstantBufferLayoutConfiguration materials
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		materials.layout.InitForMaterials(0, 0, NUM_DRAWS);
+
         r2::sarr::Push(*layouts, layoutConfig);
         r2::sarr::Push(*constantLayouts, constantLayout);
         r2::sarr::Push(*constantLayouts, constantLayout2);
         r2::sarr::Push(*constantLayouts, subCommands);
+        r2::sarr::Push(*constantLayouts, materials);
+
 
         r2::draw::renderer::SetDepthTest(true);
         bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
@@ -429,6 +448,16 @@ public:
 
         r2::draw::renderer::FillSubCommandsFromModels(*subCommandsToDraw, *modelsToDraw);
         
+        const u64 numModels = r2::sarr::Size(*modelsToDraw);
+        for (u64 i = 0; i < numModels; ++i)
+        {
+            r2::draw::Model* model = r2::sarr::At(*modelsToDraw, i);
+			const r2::draw::Mesh& mesh = r2::sarr::At(*model->optrMeshes, 0);
+			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
+            r2::sarr::Push(*modelMaterials, materialHandle);
+        }
+
+
         FREE(modelsToDraw, *MEM_ENG_SCRATCH_PTR);
 
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
@@ -660,8 +689,10 @@ public:
 		batch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
 		batch.subcommands = subCommandsToDraw;
 		batch.models = modelMats;
+        batch.materials = modelMaterials;
 		batch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
 		batch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
+        batch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
 
 		r2::draw::renderer::AddDrawBatch(batch);
 
@@ -687,6 +718,7 @@ public:
         FREE(constantLayouts, *linearArenaPtr);
         FREE(modelMats, *linearArenaPtr);
         FREE(subCommandsToDraw, *linearArenaPtr);
+        FREE(modelMaterials, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -792,6 +824,7 @@ private:
     r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
     r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantLayouts;
     r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
+    r2::SArray<r2::draw::MaterialHandle>* modelMaterials;
     r2::SArray<glm::mat4>* modelMats;
 };
 

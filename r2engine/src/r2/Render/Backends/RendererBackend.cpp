@@ -1329,7 +1329,7 @@
 //            {ShaderDataType::Float2, "aTexCoord"}
 //        }, cubeVertices, COUNT_OF(cubeVertices), GL_STATIC_DRAW);
 //
-//        opengl::AddBuffer(g_boxVAO, cubeVBO);
+//        opengl::w(g_boxVAO, cubeVBO);
 //////
 ////        opengl::Create(g_planeVAO);
 ////        opengl::VertexBuffer planeVBO;

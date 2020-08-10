@@ -62,8 +62,13 @@ namespace r2::draw
 		BufferLayoutHandle layoutHandle;
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
+		ConstantBufferHandle materialsHandle;
+
+		//@NOTE: the size of these arrays should always be the same
 		const r2::SArray<glm::mat4>* models = nullptr;
 		const r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
+		//this assumes that the materials have already been uploaded
+		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr;
 	};
 }
 
