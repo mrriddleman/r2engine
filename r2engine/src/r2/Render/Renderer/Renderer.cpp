@@ -723,7 +723,7 @@ namespace r2::draw::renderer
 		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*s_optrRenderer->mMaterialSystem);
 	}
 
-	void UploadMaterialTexturesToGPUFromMaterialName(u64 materialName)
+	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -732,6 +732,11 @@ namespace r2::draw::renderer
 		}
 
 		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(*s_optrRenderer->mMaterialSystem, materialName);
+	}
+
+	void UploadEngineMaterialTexturesToGPU()
+	{
+		r2::draw::mat::UploadAllMaterialTexturesToGPU(*s_optrRenderer->mMaterialSystem);
 	}
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset)

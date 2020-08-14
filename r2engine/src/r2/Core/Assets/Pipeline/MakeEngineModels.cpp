@@ -21,7 +21,7 @@ namespace r2::asset::pln
 	void MakeSphere(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCone(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
-	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, float baseRadius = 1.0f, float topRadius = 1.0f, float height = 1.0f,
+	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, const std::string& materialName, float baseRadius = 1.0f, float topRadius = 1.0f, float height = 1.0f,
 		int sectorCount = 36, int stackCount = 1, bool smooth = true);
 
 
@@ -127,7 +127,7 @@ namespace r2::asset::pln
 		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
-		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Basic"))); //@temporary
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Default"))); //@temporary
 
 		flatbuffers::Offset<r2::Mesh> mesh= r2::CreateMeshDirect(fbb, positions.size(), faces.size(), 
 			&positions, &normals, &texCoords, &faces, &materials);
@@ -439,7 +439,7 @@ namespace r2::asset::pln
 		}
 
 		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
-		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Basic"))); //@temporary
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Face"))); //@temporary
 
 		flatbuffers::Offset<r2::Mesh> mesh = r2::CreateMeshDirect(fbb, positions.size(), faces.size(),
 			&positions, &normals, &texCoords, &faces, &materials);
@@ -461,15 +461,16 @@ namespace r2::asset::pln
 
 	void MakeCone(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeCylinderInternal("Cone", schemaPath, binaryParentDir, jsonParentDir, 1.0f, 0.0f);
+		MakeCylinderInternal("Cone", schemaPath, binaryParentDir, jsonParentDir, "Bricks", 1.0f, 0.0f);
+
 	}
 
 	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeCylinderInternal("Cylinder", schemaPath, binaryParentDir, jsonParentDir);
+		MakeCylinderInternal("Cylinder", schemaPath, binaryParentDir, jsonParentDir, "Mandelbrot");
 	}
 
-	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, float baseRadius, float topRadius, float height,
+	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, const std::string& materialName, float baseRadius, float topRadius, float height,
 		int sectorCount, int stackCount, bool smooth)
 	{
 		//Copied from: https://www.songho.ca/opengl/gl_cylinder.html#example_pipe
@@ -668,7 +669,7 @@ namespace r2::asset::pln
 
 
 		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
-		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Basic"))); //@temporary
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID(materialName.c_str()))); //@temporary
 
 		flatbuffers::Offset<r2::Mesh> mesh = r2::CreateMeshDirect(fbb, positions.size(), faces.size(),
 			&positions, &normals, &texCoords, &faces, &materials);

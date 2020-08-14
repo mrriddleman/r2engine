@@ -114,6 +114,7 @@ namespace r2::draw::mat
 	void UploadAllMaterialTexturesToGPU(const MaterialSystem& system);
 	void UploadMaterialTexturesToGPUFromMaterialName(const MaterialSystem& system, u64 materialName);
 	void UploadMaterialTexturesToGPU(const MaterialSystem& system, MaterialHandle matID);
+
 	void UnloadAllMaterialTexturesFromGPU(const MaterialSystem& system);
 
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);

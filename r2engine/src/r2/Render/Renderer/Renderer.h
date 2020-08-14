@@ -95,8 +95,8 @@ namespace r2::draw::renderer
 	Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
 	//@Temporary
 	void LoadEngineTexturesFromDisk();
-	void UploadMaterialTexturesToGPUFromMaterialName(u64 materialName);
-
+	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
+	void UploadEngineMaterialTexturesToGPU();
 
 	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
 	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);

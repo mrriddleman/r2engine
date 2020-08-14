@@ -26,11 +26,127 @@
       height: [
 
       ],
-      packSize: 567559,
+      packSize: 581156,
       totalNumberOfTextures: 2
+    },
+    {
+      packName: 8133868392780950315,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Bricks/albedo/bricks2.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 540405,
+      totalNumberOfTextures: 1
+    },
+    {
+      packName: 9578052887469947454,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Default/albedo/image.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 10750,
+      totalNumberOfTextures: 1
+    },
+    {
+      packName: 3713060012401881788,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Face/albedo/awesomeface.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 42447,
+      totalNumberOfTextures: 1
+    },
+    {
+      packName: 7674942759422362775,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Mandelbrot/albedo/Mandelbrot.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 601176,
+      totalNumberOfTextures: 1
     }
   ],
-  totalNumberOfTextures: 2,
-  totalTextureSize: 567559,
+  totalNumberOfTextures: 6,
+  totalTextureSize: 1775934,
   maxTexturesInAPack: 2
 }

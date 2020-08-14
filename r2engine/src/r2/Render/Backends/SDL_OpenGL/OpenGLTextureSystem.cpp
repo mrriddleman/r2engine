@@ -104,6 +104,14 @@ namespace r2::draw::gl
 			if (sparse)
 			{
 				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
+
+				//@TODO(Serge): pull from format?
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
 				// TODO: This could be done once per internal format. For now, just do it every time.
 				GLint indexCount = 0,
 					xSize = 0,
@@ -164,6 +172,8 @@ namespace r2::draw::gl
 				container.handle = glGetTextureHandleARB(container.texId);
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
 				glMakeTextureHandleResidentARB(container.handle);
+
+
 			}
 
 			return true;
@@ -220,9 +230,9 @@ namespace r2::draw::gl
 		{
 			glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId);
 			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
-		
-			auto error = glGetError();
-			if (error != 0)
+
+			auto err = glGetError();
+			if (err != 0)
 			{
 				R2_CHECK(false, "Failed to sub texture ");
 			}
@@ -241,12 +251,6 @@ namespace r2::draw::gl
 
 			GLsizei levelWidth = container.format.width,
 				levelHeight = container.format.height;
-			auto error = glGetError();
-			if (error != 0)
-			{
-				R2_CHECK(false, "Failed to commit page");
-				return;
-			}
 
 			for (int level = 0; level < container.format.mipLevels; ++level) {
 				glTexPageCommitmentARB(GL_TEXTURE_2D_ARRAY, level, 0, 0, slice, levelWidth, levelHeight, 1, commit);

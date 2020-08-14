@@ -463,7 +463,7 @@ public:
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
-        r2::draw::renderer::UploadMaterialTexturesToGPUFromMaterialName(STRING_ID("Basic"));
+        r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
 
 
         return assetCache != nullptr;
