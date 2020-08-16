@@ -171,7 +171,7 @@ namespace r2
             
             while (fr.data_i != END_OF_LIST)
             {
-                if (((*h.mData)[fr.data_i]) == e)
+                if (&((*h.mData)[fr.data_i]) == e)
                 {
                     return fr;
                 }
