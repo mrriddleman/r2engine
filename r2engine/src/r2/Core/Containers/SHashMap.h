@@ -131,8 +131,7 @@ namespace r2
             
             if (r2::sarr::Size(*h.mHash) == 0)
             {
-                R2_CHECK(false, "No Entries");
-                return fr;
+                R2_CHECK(false, "");
             }
             
             fr.hash_i = key % r2::sarr::Size(*h.mHash);
@@ -162,8 +161,7 @@ namespace r2
             
             if (r2::sarr::Size(*h.mHash) == 0)
             {
-                R2_CHECK(false, "No entries!");
-                return fr;
+                R2_CHECK(false, "");
             }
             
             fr.hash_i = e->key % r2::sarr::Size(*h.mHash);
@@ -192,15 +190,16 @@ namespace r2
             else
                 ((*h.mData)[fr.data_prev]).next = ((*h.mData)[fr.data_i]).next;
             
-			if (fr.data_i == r2::sarr::Size(*h.mData) - 1)
-            {
-                r2::sarr::Pop(*h.mData);
-				return;
-			}
-
-            (*h.mData)[fr.data_i] = (*h.mData)[r2::sarr::Size(*h.mData)-1];
+            r2::sarr::Pop(*h.mData);
             
-            FindResult last = Find(h, &((*h.mData)[fr.data_i]));
+            if (fr.data_i == r2::sarr::Size(*h.mData))
+            {
+                return;
+            }
+            
+            (*h.mData)[fr.data_i] = (*h.mData)[r2::sarr::Size(*h.mData)];
+            
+            FindResult last = Find(h, &((*h.mData)[r2::sarr::Size(*h.mData)]));
             
             if (last.data_prev != END_OF_LIST)
             {
