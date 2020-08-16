@@ -1129,7 +1129,7 @@ TEST_CASE("Test SHashMap")
         REQUIRE(val == valInHashMap);
         
         r2::shashmap::Remove(*hashMap, key);
-        
+
         REQUIRE(!r2::shashmap::Has(*hashMap, key));
         
         r2::shashmap::Set(*hashMap, key, valInHashMap);
@@ -1160,6 +1160,12 @@ TEST_CASE("Test SHashMap")
                 const char& val = r2::shashmap::Get(*hashMap, i, defaultChar);
                 
                 REQUIRE(val == (char)i);
+            }
+            else
+            {
+                const char& val = r2::shashmap::Get(*hashMap, i, defaultChar);
+
+                REQUIRE(val == defaultChar);
             }
         }
         
