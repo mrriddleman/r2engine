@@ -88,6 +88,9 @@ namespace r2::draw::matsys
 	u64 MemorySize(u64 numSystems, u64 alignment);
 	r2::draw::MaterialSystem* GetMaterialSystem(s32 slot);
 
+	MaterialSystem* FindMaterialSystem(u64 materialName);
+	MaterialHandle FindMaterialHandle(u64 materialName);
+
 #ifdef R2_ASSET_PIPELINE
 	void TextureChanged(std::string texturePath);
 #endif // R2_ASSET_PIPELINE
@@ -106,6 +109,8 @@ namespace r2::draw::matsys
 namespace r2::draw::mat
 {
 	static const MaterialHandle InvalidMaterial;
+
+	bool IsInvalidHandle(const MaterialHandle& materialHandle);
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);

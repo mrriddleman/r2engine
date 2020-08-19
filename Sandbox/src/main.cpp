@@ -414,11 +414,11 @@ public:
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
         //fill the buffers with data
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
-        r2::draw::Model* sphereModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
-        r2::draw::Model* cubeModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
-        r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
-        r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
+        const r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
+        const r2::draw::Model* sphereModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
+        const r2::draw::Model* cubeModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
+        const r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
+        const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
         u64 vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
         u64 indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
@@ -439,7 +439,7 @@ public:
         r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
         
         //@NOTE: these need to be in the order that we submit the fill commands
-        r2::SArray<r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::Model*, NUM_DRAWS);
+        r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
         r2::sarr::Push(*modelsToDraw, quadModel);
         r2::sarr::Push(*modelsToDraw, sphereModel);
         r2::sarr::Push(*modelsToDraw, cubeModel);
@@ -451,7 +451,7 @@ public:
         const u64 numModels = r2::sarr::Size(*modelsToDraw);
         for (u64 i = 0; i < numModels; ++i)
         {
-            r2::draw::Model* model = r2::sarr::At(*modelsToDraw, i);
+            const r2::draw::Model* model = r2::sarr::At(*modelsToDraw, i);
 			const r2::draw::Mesh& mesh = r2::sarr::At(*model->optrMeshes, 0);
 			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
             r2::sarr::Push(*modelMaterials, materialHandle);
@@ -520,7 +520,7 @@ public:
             
             r2::sarr::Clear(*assetsBuffers);
             
-            r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level");
+            r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level", r2::asset::DEFAULT);
             
             auto levelAssetHandle = assetCache->LoadAsset(levelsAsset);
             
@@ -576,7 +576,7 @@ public:
             
             printf("======================Powerups==========================\n");
             
-            r2::asset::Asset powerupsAsset("breakout_powerups.powerup");
+            r2::asset::Asset powerupsAsset("breakout_powerups.powerup", r2::asset::DEFAULT);
             
             auto powerupsAssetHandle = assetCache->LoadAsset(powerupsAsset);
             auto powerupAssetBuffer = assetCache->GetAssetBuffer(powerupsAssetHandle);
@@ -607,7 +607,7 @@ public:
             
             printf("========================================================\n");
             
-            r2::asset::Asset highScoresAsset("breakout_high_scores.scores");
+            r2::asset::Asset highScoresAsset("breakout_high_scores.scores", r2::asset::DEFAULT);
             
             auto highScoreAssetHandle = assetCache->LoadAsset(highScoresAsset);
             auto highScoreAssetBuffer = assetCache->GetAssetBuffer(highScoreAssetHandle);
@@ -629,7 +629,7 @@ public:
             
             printf("======================================================\n");
             
-            r2::asset::Asset playerSettingsAsset("breakout_player_save.player");
+            r2::asset::Asset playerSettingsAsset("breakout_player_save.player", r2::asset::DEFAULT);
             
             auto playerSettingsAssetHandle = assetCache->LoadAsset(playerSettingsAsset);
             auto settingsAssetBuffer = assetCache->GetAssetBuffer(playerSettingsAssetHandle);
@@ -666,7 +666,7 @@ public:
     {
         //add my commands here
 
-        r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
+        const r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
         const r2::draw::Mesh& mesh = r2::sarr::At(*quadModel->optrMeshes, 0);
         r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
 

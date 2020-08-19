@@ -8,6 +8,8 @@
 #ifndef Asset_h
 #define Asset_h
 
+#include "r2/Core/Assets/AssetTypes.h"
+
 namespace r2::asset
 {
     class R2_API Asset
@@ -15,7 +17,7 @@ namespace r2::asset
     public:
         
         Asset();
-        Asset(const char* name);
+        Asset(const char* name, r2::asset::AssetType type);
         Asset(const Asset& asset);
         Asset& operator=(const Asset& asset);
         
@@ -26,14 +28,14 @@ namespace r2::asset
         inline const char* Name() const {return mName;}
 #endif
         inline u64 HashID() const {return mHashedPathID;}
-        
+        inline AssetType GetType() const { return mType; }
     private:
         #ifdef R2_ASSET_CACHE_DEBUG
-        char mName[r2::fs::FILE_PATH_LENGTH]; //@TODO(Serge): figure out how to get rid of this here
-                                                //Seems only needed for Zip and debug output
+        char mName[r2::fs::FILE_PATH_LENGTH]; 
         #endif
 
         u64 mHashedPathID;
+        AssetType mType;
     };
 }
 

@@ -12,6 +12,8 @@
 
 #define MAKE_SARRAY(arena, T, capacity) r2::sarr::CreateSArray<T>(arena, capacity, __FILE__, __LINE__, "")
 #define MAKE_SARRAY_VERBOSE(arena, T, capacity, file, line, desc) r2::sarr::CreateSArray<T>(arena, capacity, file, line, desc)
+#define EMPLACE_SARRAY(ptr, T, capacity) r2::sarr::EmplaceSArray<T>(ptr, capacity);
+
 
 namespace r2
 {
@@ -74,6 +76,8 @@ namespace r2
         template<typename T> inline void Copy(SArray<T>& dst, const SArray<T>& src);
 
         template<typename T, class ARENA> r2::SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
+        template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity);
+    
     }
     
     namespace sarr
@@ -180,7 +184,15 @@ namespace r2
             
             return array;
         }
-        
+
+        template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity)
+        {
+			SArray<T>* array = new (dataPtr) SArray<T>();
+
+			array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
+
+			return array;
+        }
         
     }
 

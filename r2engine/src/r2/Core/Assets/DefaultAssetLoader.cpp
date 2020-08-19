@@ -13,13 +13,18 @@ namespace r2::asset
     {
         return "*";
     }
+
+    AssetType DefaultAssetLoader::GetType() const
+    {
+        return DEFAULT;
+    }
     
     bool DefaultAssetLoader::ShouldProcess()
     {
         return false;
     }
     
-    u64 DefaultAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size)
+    u64 DefaultAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
     {
         return size;
     }

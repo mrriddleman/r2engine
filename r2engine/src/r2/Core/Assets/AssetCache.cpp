@@ -305,15 +305,15 @@ namespace r2::asset
     {
         u64 numAssetLoaders = r2::sarr::Size(*mAssetLoaders);
         AssetLoader* loader = nullptr;
-        //for (u64 i = 0; i < numAssetLoaders; ++i)
-        //{
-        //    AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
-        //    if (r2::util::WildcardMatch(nextLoader->GetPattern(), asset.Name()))
-        //    {
-        //        loader = nextLoader;
-        //        break;
-        //    }
-        //}
+		for (u64 i = 0; i < numAssetLoaders; ++i)
+		{
+			AssetLoader* nextLoader = r2::sarr::At(*mAssetLoaders, i);
+			if (nextLoader->GetType() == asset.GetType())
+			{
+				loader = nextLoader;
+				break;
+			}
+		}
         
         if (loader == nullptr)
         {
@@ -378,7 +378,20 @@ namespace r2::asset
         }
         else
         {
-            u64 size = loader->GetLoadedAssetSize(rawAssetBuffer, rawAssetSize);
+			u32 headerSize = 0;
+			u32 boundsChecking = 0;
+#ifdef R2_ASSET_PIPELINE
+			headerSize = r2::mem::MallocAllocator::HeaderSize();
+#else
+			headerSize = r2::mem::FreeListAllocator::HeaderSize();
+#endif
+#ifdef R2_DEBUG
+			boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+            const u64 ALIGNMENT = 16;
+
+            u64 size = loader->GetLoadedAssetSize(rawAssetBuffer, rawAssetSize, ALIGNMENT, headerSize, boundsChecking);
             byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, alignof(size_t));
             
             R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
@@ -423,6 +436,7 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
 		AssetRecord record;
 		record.handle = handle;
+        record.type = asset.GetType();
 #ifdef R2_ASSET_CACHE_DEBUG
 		record.name = asset.Name();
 #endif
@@ -625,10 +639,10 @@ namespace r2::asset
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Asset>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +
-            CalculateTextureCacheSizeNeeded(assetCapacity, numAssets, alignment);
+            CalculateCacheSizeNeeded(assetCapacity, numAssets, alignment);
     }
     
-    u64 AssetCache::CalculateTextureCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment)
+    u64 AssetCache::CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment)
     {
         u32 headerSize = 0;
         u32 boundsChecking = 0;
@@ -749,7 +763,7 @@ namespace r2::asset
         {
             for (const auto& assetRecord : assetsToReload)
             {
-                AssetBuffer* buffer = Load(Asset(assetRecord.name.c_str()));
+                AssetBuffer* buffer = Load(Asset(assetRecord.name.c_str(), assetRecord.type));
                 
                 R2_CHECK(buffer != nullptr, "buffer could not be loaded for asset: %s", assetRecord.name.c_str());
             }

@@ -7,17 +7,24 @@
 
 #include "BreakoutLevelLoader.h"
 
+
+
 const char* BreakoutLevelLoader::GetPattern()
 {
     return "*";
 }
 
-bool BreakoutLevelLoader::ShouldProcess()
+r2::asset::AssetType BreakoutLevelLoader::GetType() const
 {
-    return true;
+    return BREAKOUT_SCORE;
 }
 
-u64 BreakoutLevelLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size)
+bool BreakoutLevelLoader::ShouldProcess()
+{
+    return false;
+}
+
+u64 BreakoutLevelLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 {
     return 0;
 }

@@ -92,16 +92,16 @@ namespace r2::draw::renderer
 	//Regular methods
 	BufferHandles& GetBufferHandles();
 	const r2::SArray<r2::draw::ConstantBufferHandle>* GetConstantBufferHandles();
-	Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
+	const Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
 	//@Temporary
 	void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
 
-	u64 AddFillVertexCommandsForModel(Model* model, VertexBufferHandle handle, u64 offset = 0);
-	u64 AddFillIndexCommandsForModel(Model* model, IndexBufferHandle handle, u64 offset = 0);
+	u64 AddFillVertexCommandsForModel(const Model* model, VertexBufferHandle handle, u64 offset = 0);
+	u64 AddFillIndexCommandsForModel(const Model* model, IndexBufferHandle handle, u64 offset = 0);
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset = 0);
-	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<Model*>& models);
+	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);

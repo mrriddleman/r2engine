@@ -81,6 +81,11 @@ namespace r2::draw::mat
 		return static_cast<u64>(handle.handle - 1);
 	}
 
+	bool IsInvalidHandle(const MaterialHandle& materialHandle)
+	{
+		return materialHandle.handle == mat::InvalidMaterialHandle.handle && materialHandle.slot == mat::InvalidMaterialHandle.slot;
+	}
+
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system)
 	{
 		if (!system.mMaterialTextures ||
@@ -437,7 +442,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->albedos, textureAsset);
 			}
 
@@ -453,7 +458,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->emissives, textureAsset);
 			}
 
@@ -468,7 +473,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->heights, textureAsset);
 			}
 
@@ -483,7 +488,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->metalics, textureAsset);
 			}
 
@@ -498,7 +503,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->micros, textureAsset);
 			}
 
@@ -513,7 +518,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->normals, textureAsset);
 			}
 
@@ -528,7 +533,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->occlusions, textureAsset);
 			}
 
@@ -543,7 +548,7 @@ namespace r2::draw::mat
 
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-				r2::asset::Asset textureAsset(assetName);
+				r2::asset::Asset textureAsset(assetName, r2::asset::TEXTURE);
 				r2::sarr::Push(*texturePack->speculars, textureAsset);
 			}
 
@@ -766,6 +771,46 @@ namespace r2::draw::matsys
 		return nullptr;
 	}
 
+	MaterialSystem* FindMaterialSystem(u64 materialName)
+	{
+		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		for (u64 i = 0; i < capacity; ++i)
+		{
+			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+			if (system != nullptr)
+			{
+				auto handle = mat::GetMaterialHandleFromMaterialName(*system, materialName);
+				if (!mat::IsInvalidHandle(handle))
+				{
+					return system;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	MaterialHandle FindMaterialHandle(u64 materialName)
+	{
+		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		for (u64 i = 0; i < capacity; ++i)
+		{
+			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+			if (system != nullptr)
+			{
+				auto handle = mat::GetMaterialHandleFromMaterialName(*system, materialName);
+				if (!mat::IsInvalidHandle(handle))
+				{
+					return handle;
+				}
+			}
+		}
+
+		return mat::InvalidMaterialHandle;
+	}
+
 	void Update()
 	{
 #ifdef R2_ASSET_PIPELINE
@@ -782,7 +827,7 @@ namespace r2::draw::matsys
 
 			std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
 
-			r2::asset::Asset asset(fileName);
+			r2::asset::Asset asset(fileName, r2::asset::TEXTURE);
 
 			MaterialSystem* foundSystem = nullptr;
 			const u64 numMaterialSystems = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);

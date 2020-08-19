@@ -19,6 +19,16 @@ namespace r2::asset
 	};
 
 	using FileHandle = s64;
+
+	using AssetType = u32;
+
+	enum EngineAssetType : u32
+	{
+		DEFAULT = 0,
+		TEXTURE,
+		MODEL,
+		NUM_ENGINE_ASSET_TYPES
+	};
 }
 
 #endif // 
