@@ -163,6 +163,11 @@ namespace r2
                 materialPackCommand.materialPacksWatchDirectoriesRaw.push_back(nextPath);
             }
 
+            for (const std::string& nextPath : noptrApp->GetMaterialPacksBinaryPaths())
+            {
+                materialPackCommand.materialPacksWatchDirectoriesBin.push_back(nextPath);
+            }
+
             materialPackCommand.buildFunc = [](std::vector<std::string> paths)
 			{
 				//@TODO(Serge): implement

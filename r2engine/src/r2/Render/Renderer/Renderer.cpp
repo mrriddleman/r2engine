@@ -1,5 +1,6 @@
 #include "r2pch.h"
 
+#include "r2/Core/File/FileSystem.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetBuffer.h"
@@ -17,7 +18,8 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Model/ModelLoader.h"
+#include "r2/Render/Model/ModelSystem.h"
+
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Utils/Hash.h"
 #include <filesystem>
@@ -90,18 +92,6 @@ namespace r2::draw::cmd
 
 namespace r2::draw
 {
-	struct ModelSystem
-	{
-		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
-		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
-		r2::mem::LinearArena* mSubAreaArena = nullptr;
-		
-		r2::asset::AssetCache* modelCache = nullptr;
-
-		r2::SArray<r2::asset::AssetCacheRecord>* mDefaultModels = nullptr;
-		r2::mem::utils::MemBoundary mAssetBoundary;
-	};
-
 	struct ConstantBufferData
 	{
 		r2::draw::ConstantBufferHandle handle;
@@ -120,7 +110,8 @@ namespace r2::draw
 		r2::SArray<r2::draw::ConstantBufferHandle>* mContantBufferHandles;
 		r2::SArray<ConstantBufferData>* mConstantBufferData;
 
-		ModelSystem mModelSystem;
+		ModelSystem* mModelSystem = nullptr;
+		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
 
 		MaterialSystem* mMaterialSystem = nullptr;
 
@@ -131,15 +122,15 @@ namespace r2::draw
 
 	};
 
-	namespace modelsystem
-	{
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle);
-		void Shutdown();
-		u64 MemorySize();
-		u64 ModelsMemorySize();
-		bool LoadEngineModels(const char* modelDirectory);
-		const Model* GetEngineModel(r2::draw::DefaultModel modelType);
-	}
+	//namespace modelsystem
+	//{
+	//	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle);
+	//	void Shutdown();
+	//	u64 MemorySize();
+	//	u64 ModelsMemorySize();
+	//	bool LoadEngineModels(const char* modelDirectory);
+	//	const Model* GetEngineModel(r2::draw::DefaultModel modelType);
+	//}
 }
 
 namespace
@@ -161,6 +152,57 @@ namespace
 	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 32; //?
 
 	const std::string MODL_EXT = ".modl";
+
+	u64 DefaultModelsMemorySize()
+	{
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+
+		u64 quadModelSize = r2::draw::Model::MemorySize(1, 4, 6, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 cubeModelSize = r2::draw::Model::MemorySize(1, 24, 36, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 sphereModelSize = r2::draw::Model::MemorySize(1, 1089, 5952, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 coneModelSize = r2::draw::Model::MemorySize(1, 148, 144 * 3, 1, headerSize, boundsChecking, ALIGNMENT);
+		u64 cylinderModelSize = r2::draw::Model::MemorySize(1, 148, 144 * 3, 1, headerSize, boundsChecking, ALIGNMENT);
+
+		return r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sphereModelSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(coneModelSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(cylinderModelSize, ALIGNMENT, headerSize, boundsChecking);
+	}
+
+	bool LoadEngineModels()
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mModelSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+		/*
+		QUAD = 0,
+		CUBE,
+		SPHERE,
+		CONE,
+		CYLINDER,
+		*/
+
+		r2::SArray<r2::asset::Asset>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, MAX_DEFAULT_MODELS); 
+
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Quad.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cube.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cone.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
+
+		r2::draw::modlsys::LoadModels(s_optrRenderer->mModelSystem, *defaultModels, *s_optrRenderer->mDefaultModelHandles);
+
+		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
 }
 
 namespace r2::draw::renderer
@@ -274,9 +316,16 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer->mConstantBufferData != nullptr, "We couldn't create the constant buffer data!");
 
+		s_optrRenderer->mDefaultModelHandles = MAKE_SARRAY(*rendererArena, ModelHandle, MAX_DEFAULT_MODELS);
+
+		R2_CHECK(s_optrRenderer->mDefaultModelHandles != nullptr, "We couldn't create the default model handles");
+
+
 		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY);
 
 		R2_CHECK(s_optrRenderer->mCommandArena != nullptr, "We couldn't create the stack arena for commands");
+
+		
 
 		bool rendererImpl = r2::draw::rendererimpl::RendererImplInit(memoryAreaHandle, MAX_NUM_CONSTANT_BUFFERS, MAX_NUM_CONSTANT_BUFFER_LOCKS, "RendererImpl");
 		if (!rendererImpl)
@@ -321,13 +370,30 @@ namespace r2::draw::renderer
 		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
 		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
-		if (!modelsystem::Init(memoryAreaHandle))
+
+		r2::asset::FileList files = r2::asset::lib::MakeFileList(MAX_DEFAULT_MODELS);
+
+		for (const auto& file : std::filesystem::recursive_directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != MODL_EXT))
+			{
+				continue;
+			}
+			char filePath[r2::fs::FILE_PATH_LENGTH];
+
+			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), filePath);
+
+			r2::sarr::Push(*files, (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(filePath));
+		}
+
+		s_optrRenderer->mModelSystem = modlsys::Init(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
+		if (!s_optrRenderer->mModelSystem)
 		{
 			R2_CHECK(false, "We couldn't init the default engine models");
 			return false;
 		}
 
-		bool loadedModels = modelsystem::LoadEngineModels(R2_ENGINE_INTERNAL_MODELS_BIN);
+		bool loadedModels = LoadEngineModels();
 
 		R2_CHECK(loadedModels, "We didn't load the models for the engine!");
 
@@ -384,7 +450,8 @@ namespace r2::draw::renderer
 
 		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
 
-		modelsystem::Shutdown();
+		modlsys::Shutdown(s_optrRenderer->mModelSystem);
+		FREE(s_optrRenderer->mDefaultModelHandles, *arena);
 
 		r2::mem::utils::MemBoundary materialSystemBoundary = s_optrRenderer->mMaterialSystem->mMaterialMemBoundary;
 		
@@ -647,6 +714,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) + 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking ) * COMMAND_CAPACITY + COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			materialSystemMemorySize;
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
@@ -715,13 +783,14 @@ namespace r2::draw::renderer
 	const r2::draw::Model* GetDefaultModel(r2::draw::DefaultModel defaultModel)
 	{
 		if (s_optrRenderer == nullptr ||
-			s_optrRenderer->mModelSystem.mDefaultModels == nullptr)
+			s_optrRenderer->mModelSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return nullptr;
 		}
 
-		return modelsystem::GetEngineModel(defaultModel);
+		auto modelHandle = r2::sarr::At(*s_optrRenderer->mDefaultModelHandles, defaultModel);
+		return modlsys::GetModel(s_optrRenderer->mModelSystem, modelHandle);
 	}
 
 	void LoadEngineTexturesFromDisk()
@@ -801,7 +870,7 @@ namespace r2::draw::renderer
 		//@TODO(Serge): fix this or pass it in
 		r2::draw::key::Basic fillKey;
 		fillKey.keyValue = 0;
-		for (u64 i = 0; i < numMeshes; ++i)
+	 	for (u64 i = 0; i < numMeshes; ++i)
 		{
 			r2::draw::cmd::FillIndexBuffer* fillIndexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillIndexBuffer>(fillKey, 0);
 			currentOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, r2::sarr::At(*model->optrMeshes, i), handle, currentOffset);
@@ -1104,181 +1173,5 @@ namespace r2::draw::renderer
 	void SetWindowSize(u32 width, u32 height)
 	{
 		r2::draw::rendererimpl::SetWindowSize(width, height);
-	}
-}
-
-namespace r2::draw::modelsystem
-{
-	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle)
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return false;
-		}
-
-		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
-
-		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
-
-		u64 subAreaSize = modelsystem::MemorySize();
-		if (memoryArea->UnAllocatedSpace() < subAreaSize)
-		{
-			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
-			return false;
-		}
-
-		r2::mem::MemoryArea::SubArea::Handle subAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
-
-		if ((subAreaHandle = memoryArea->AddSubArea(subAreaSize, "Engine Model Area")) == r2::mem::MemoryArea::SubArea::Invalid)
-		{
-			R2_CHECK(false, "We couldn't create a sub area for the engine model area");
-			return false;
-		}
-
-		//emplace the linear arena
-		r2::mem::LinearArena* modelArena = EMPLACE_LINEAR_ARENA(*memoryArea->GetSubArea(subAreaHandle));
-
-		R2_CHECK(modelArena != nullptr, "We couldn't emplace the linear arena - no way to recover!");
-
-		s_optrRenderer->mModelSystem.mMemoryAreaHandle = memoryAreaHandle;
-		s_optrRenderer->mModelSystem.mSubAreaHandle = subAreaHandle;
-		s_optrRenderer->mModelSystem.mSubAreaArena = modelArena;
-		s_optrRenderer->mModelSystem.mDefaultModels = MAKE_SARRAY(*modelArena, r2::asset::AssetCacheRecord, MAX_DEFAULT_MODELS);
-
-		r2::asset::FileList files = r2::asset::lib::MakeFileList(MAX_DEFAULT_MODELS);
-
-		for (const auto& file : std::filesystem::recursive_directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
-		{
-			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != MODL_EXT))
-			{
-				continue;
-			}
-			char filePath[r2::fs::FILE_PATH_LENGTH];
-
-			r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), filePath);
-			
-			r2::sarr::Push(*files, (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(filePath));
-		}
-		
-		s_optrRenderer->mModelSystem.mAssetBoundary = MAKE_BOUNDARY(*modelArena, ModelsMemorySize(), ALIGNMENT);
-
-		s_optrRenderer->mModelSystem.modelCache = r2::asset::lib::CreateAssetCache(s_optrRenderer->mModelSystem.mAssetBoundary, files);
-
-		r2::asset::ModelAssetLoader* modelLoader = (r2::asset::ModelAssetLoader*)s_optrRenderer->mModelSystem.modelCache->MakeAssetLoader<r2::asset::ModelAssetLoader>();
-
-		s_optrRenderer->mModelSystem.modelCache->RegisterAssetLoader(modelLoader);
-
-		return modelArena != nullptr && s_optrRenderer->mModelSystem.mDefaultModels != nullptr && s_optrRenderer->mModelSystem.modelCache != nullptr;
-	}
-
-	void Shutdown()
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-		r2::mem::LinearArena* arena = s_optrRenderer->mModelSystem.mSubAreaArena;
-
-		//return all of the models back to the cache
-		const u64 numDefaultModels = r2::sarr::Size(*s_optrRenderer->mModelSystem.mDefaultModels);
-
-		for (u64 i = 0; i < numDefaultModels; ++i)
-		{
-			s_optrRenderer->mModelSystem.modelCache->ReturnAssetBuffer(r2::sarr::At(*s_optrRenderer->mModelSystem.mDefaultModels, i));
-		}
-
-		r2::asset::lib::DestroyCache(s_optrRenderer->mModelSystem.modelCache);
-		FREE(s_optrRenderer->mModelSystem.mAssetBoundary.location, *arena);
-
-		FREE(s_optrRenderer->mModelSystem.mDefaultModels, *arena);
-
-		FREE_EMPLACED_ARENA(arena);
-	}
-
-	u64 MemorySize()
-	{
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
-
-		return
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetCacheRecord>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, 5, ModelsMemorySize(), ALIGNMENT), ALIGNMENT, headerSize, boundsChecking);
-	}
-
-	u64 ModelsMemorySize()
-	{
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
-
-		u64 quadModelSize = Model::MemorySize(1, 4, 6, 1, headerSize, boundsChecking, ALIGNMENT);
-		u64 cubeModelSize = Model::MemorySize(1, 24, 36, 1, headerSize, boundsChecking, ALIGNMENT);
-		u64 sphereModelSize = Model::MemorySize(1, 1089, 5952, 1, headerSize, boundsChecking, ALIGNMENT);
-		u64 coneModelSize = Model::MemorySize(1, 148, 144 * 3, 1, headerSize, boundsChecking, ALIGNMENT);
-		u64 cylinderModelSize = Model::MemorySize(1, 148, 144 * 3, 1, headerSize, boundsChecking, ALIGNMENT);
-
-		return r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sphereModelSize, ALIGNMENT, headerSize, boundsChecking) + 
-			r2::mem::utils::GetMaxMemoryForAllocation(coneModelSize, ALIGNMENT, headerSize, boundsChecking) + 
-			r2::mem::utils::GetMaxMemoryForAllocation(cylinderModelSize, ALIGNMENT, headerSize, boundsChecking);
-	}
-
-	const r2::draw::Model* GetEngineModel(r2::draw::DefaultModel modelType)
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return nullptr;
-		}
-
-		return (const r2::draw::Model*)r2::sarr::At(*s_optrRenderer->mModelSystem.mDefaultModels, modelType).buffer->Data();
-	}
-
-	bool LoadEngineModels(const char* modelDirectory)
-	{
-		if (s_optrRenderer == nullptr || s_optrRenderer->mModelSystem.modelCache == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return false;
-		}
-		/*
-		QUAD = 0,
-		CUBE,
-		SPHERE,
-		CONE,
-		CYLINDER,
-		*/
-
-		auto quadHandle = s_optrRenderer->mModelSystem.modelCache->LoadAsset(r2::asset::Asset("Quad.modl", r2::asset::MODEL));
-
-		r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, s_optrRenderer->mModelSystem.modelCache->GetAssetBuffer(quadHandle));
-
-		auto cubeHandle = s_optrRenderer->mModelSystem.modelCache->LoadAsset(r2::asset::Asset("Cube.modl", r2::asset::MODEL));
-
-		r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, s_optrRenderer->mModelSystem.modelCache->GetAssetBuffer(cubeHandle));
-
-		auto sphereHandle = s_optrRenderer->mModelSystem.modelCache->LoadAsset(r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
-
-		r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, s_optrRenderer->mModelSystem.modelCache->GetAssetBuffer(sphereHandle));
-
-		auto coneHandle = s_optrRenderer->mModelSystem.modelCache->LoadAsset(r2::asset::Asset("Cone.modl", r2::asset::MODEL));
-
-		r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, s_optrRenderer->mModelSystem.modelCache->GetAssetBuffer(coneHandle));
-
-		auto cylinderHandle = s_optrRenderer->mModelSystem.modelCache->LoadAsset(r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
-
-		r2::sarr::Push(*s_optrRenderer->mModelSystem.mDefaultModels, s_optrRenderer->mModelSystem.modelCache->GetAssetBuffer(cylinderHandle));
-
-		return true;
 	}
 }

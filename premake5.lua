@@ -420,6 +420,17 @@ project "Sandbox"
 		'ASSET_FBS_SCHEMA_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_fbs_schemas"',
 		'ASSET_TEMP_DIR="'..os.getcwd()..'/%{prj.name}/assets/asset_temp"',
 		'APP_DIR="'..os.getcwd()..'/%{prj.name}"',
+
+		'SANDBOX_MATERIALS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials"',
+		'SANDBOX_MATERIALS_DIR="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Materials/packs"',
+		'SANDBOX_MATERIALS_PACKS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials/packs"',
+		'SANDBOX_MATERIALS_MANIFESTS="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Materials/manifests"',
+		'SANDBOX_MATERIALS_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Materials/manifests"',
+		
+		'SANDBOX_TEXTURES_DIR="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Textures/packs"',
+		'SANDBOX_TEXTURES_MANIFESTS="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Textures/manifests"',
+		'SANDBOX_TEXTURES_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures"',
+		'SANDBOX_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/manifests"',
 	}
 
 	filter "system:windows"

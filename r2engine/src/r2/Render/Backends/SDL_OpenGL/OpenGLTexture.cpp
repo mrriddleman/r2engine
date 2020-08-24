@@ -15,7 +15,7 @@ namespace r2::draw::tex
 	
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap)
 	{
-	//	stbi_set_flip_vertically_on_load(true);
+		stbi_set_flip_vertically_on_load(true);
 
 		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(texture.assetCache);
 

@@ -35,6 +35,12 @@ namespace r2::asset
         mHashedPathID = r2::utils::Hash<const char*>{}(path);
         mType = type;
     }
+
+    Asset::Asset(u64 hash, r2::asset::AssetType type)
+        : mHashedPathID(hash)
+        , mType(type)
+    {
+    }
     
     Asset::Asset(const Asset& asset)
     {

@@ -18,6 +18,7 @@ namespace r2::asset
         
         Asset();
         Asset(const char* name, r2::asset::AssetType type);
+        Asset(u64 hash, r2::asset::AssetType type);
         Asset(const Asset& asset);
         Asset& operator=(const Asset& asset);
         

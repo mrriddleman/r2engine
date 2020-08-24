@@ -617,7 +617,7 @@ namespace r2::asset
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
         elementSize = elementSize + r2::mem::BasicBoundsChecking::SIZE_BACK + r2::mem::BasicBoundsChecking::SIZE_FRONT;
 #endif
-        u64 poolSizeInBytes = LRU_CAPACITY * elementSize;
+        u64 poolSizeInBytes = lruCapacity * elementSize;
         
         alignment = std::max({
             alignment,
@@ -641,7 +641,7 @@ namespace r2::asset
             r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +
             CalculateCacheSizeNeeded(assetCapacity, numAssets, alignment);
     }
-    
+
     u64 AssetCache::CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment)
     {
         u32 headerSize = 0;

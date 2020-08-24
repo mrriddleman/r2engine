@@ -30,10 +30,16 @@
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/Material.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+
+#include "r2/Render/Model/Material_generated.h"
+#include "r2/Render/Model/MaterialPack_generated.h"
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -222,7 +228,7 @@ public:
         MODEL_MATERIALS,
     };
     
-    const u64 NUM_DRAWS = 7;
+    const u64 NUM_DRAWS = 10;
     
     virtual bool Init() override
     {
@@ -233,10 +239,48 @@ public:
         r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
         R2_CHECK(sandBoxMemoryArea != nullptr, "Feailed to get the memory area!");
         
-        auto result = sandBoxMemoryArea->Init(Megabytes(1), 0);
+        u64 materialMemorySystemSize = 0;
+
+		
+			char materialsPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
+
+			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
+
+			void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
+			if (!materialPackData)
+			{
+				R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
+				return false;
+			}
+
+			const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+
+			R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+
+			void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
+			if (!texturePacksData)
+			{
+				R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackPath);
+				return false;
+			}
+
+			const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
+
+			R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
+
+            materialMemorySystemSize = r2::draw::mat::MemorySize(64, materialPack->materials()->size(), 
+				texturePacksManifest->totalTextureSize(),
+				texturePacksManifest->totalNumberOfTextures(),
+				texturePacksManifest->texturePacks()->size(),
+				texturePacksManifest->maxTexturesInAPack());
+		
+
+        auto result = sandBoxMemoryArea->Init(Megabytes(3) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
-        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1));
+        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1) + materialMemorySystemSize);
         R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
         
         auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
@@ -301,30 +345,70 @@ public:
         
         quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadMat = glm::scale(quadMat, glm::vec3(10.0f));
-        r2::sarr::Push(*modelMats, quadMat);
+    //    r2::sarr::Push(*modelMats, quadMat);
 
         glm::mat4 sphereMat = glm::mat4(1.0f);
         sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
-        r2::sarr::Push(*modelMats, sphereMat);
+   //     r2::sarr::Push(*modelMats, sphereMat);
 
         glm::mat4 cubeMat = glm::mat4(1.0f);
         cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0.6, 0));
-        r2::sarr::Push(*modelMats, cubeMat);
+    //    r2::sarr::Push(*modelMats, cubeMat);
 
         glm::mat4 cylinderMat = glm::mat4(1.0f);
         
         cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.6, 0));
         cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-        r2::sarr::Push(*modelMats, cylinderMat);
+    //    r2::sarr::Push(*modelMats, cylinderMat);
 
         glm::mat4 coneMat = glm::mat4(1.0f);
         coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
         coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-		r2::sarr::Push(*modelMats, coneMat);
+	//	r2::sarr::Push(*modelMats, coneMat);
 
+        glm::mat4 microbatMat = glm::mat4(1.0f);
+        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, -3));
+        microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
+        r2::sarr::Push(*modelMats, microbatMat);
 
         subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
         modelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+
+
+		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
+
+		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
+
+		if (!mMaterialSystem)
+		{
+			R2_CHECK(false, "We couldn't initialize the material system");
+			return false;
+		}
+
+        FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
+        FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
+
+		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
+		r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
+
+        r2::asset::FileList modelFiles = r2::asset::lib::MakeFileList(10);
+
+		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
+
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* modelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)modelFile);
+
+        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Kilobytes(750), false, modelFiles, "Sandbox Model System");
+
+        if (!mModelSystem)
+        {
+            R2_CHECK(false, "Failed to create the model system!");
+            return false;
+        }
+
 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
@@ -333,11 +417,11 @@ public:
                  {r2::draw::ShaderDataType::Float2, "aTexCoord"}}
             },
             {
-                Megabytes(1),
+                Megabytes(4),
                 r2::draw::VertexDrawTypeStatic
             },
             {
-                Megabytes(1),
+                Megabytes(4),
                 r2::draw::VertexDrawTypeStatic
             },
             true, NUM_DRAWS //use draw ids
@@ -420,31 +504,41 @@ public:
         const r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
         const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
-        u64 vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
-        u64 indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
+        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP));
+        mMicroBatModel = r2::draw::modlsys::GetModel(mModelSystem, microbatHandle);
+
+        glm::mat4& microBatMatRef = r2::sarr::Last(*modelMats);
+        microBatMatRef = microBatMatRef * mMicroBatModel->globalInverseTransform;
+
+        u64 vertexOffset = 0;//r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
+        u64 indexOffset = 0;//r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
         
-        vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(sphereModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-        indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(sphereModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+//        vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(sphereModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+//        indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(sphereModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
 
-		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cubeModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cubeModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cubeModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cubeModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
 
-		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cylinderModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cylinderModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cylinderModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cylinderModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
 
-		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(coneModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(coneModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(coneModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(coneModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+
+		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(mMicroBatModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
+		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(mMicroBatModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
 
 
         r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
         
         //@NOTE: these need to be in the order that we submit the fill commands
         r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
-        r2::sarr::Push(*modelsToDraw, quadModel);
-        r2::sarr::Push(*modelsToDraw, sphereModel);
-        r2::sarr::Push(*modelsToDraw, cubeModel);
-        r2::sarr::Push(*modelsToDraw, cylinderModel);
-        r2::sarr::Push(*modelsToDraw, coneModel);
+   //     r2::sarr::Push(*modelsToDraw, quadModel);
+   //     r2::sarr::Push(*modelsToDraw, sphereModel);
+  //      r2::sarr::Push(*modelsToDraw, cubeModel);
+    //    r2::sarr::Push(*modelsToDraw, cylinderModel);
+   //     r2::sarr::Push(*modelsToDraw, coneModel);
+        r2::sarr::Push(*modelsToDraw, mMicroBatModel);
 
         r2::draw::renderer::FillSubCommandsFromModels(*subCommandsToDraw, *modelsToDraw);
         
@@ -464,6 +558,7 @@ public:
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
+
 
 
         return assetCache != nullptr;
@@ -714,6 +809,15 @@ public:
     
     virtual void Shutdown() override
     {
+
+        r2::draw::modlsys::ReturnModel(mModelSystem, mMicroBatModel);
+
+        r2::draw::modlsys::Shutdown(mModelSystem);
+        
+        void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
+        r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
+        FREE(materialBoundary, *linearArenaPtr);
+
         FREE(layouts, *linearArenaPtr);
         FREE(constantLayouts, *linearArenaPtr);
         FREE(modelMats, *linearArenaPtr);
@@ -755,6 +859,42 @@ public:
         
         return result;
     }
+
+    virtual std::vector<std::string> GetTexturePackManifestsBinaryPaths() const override
+    {
+        std::vector<std::string> manifestBinaryPaths
+        {
+            SANDBOX_TEXTURES_MANIFESTS_BIN + std::string("/SandboxTexturePack.tman")
+        };
+        return manifestBinaryPaths;
+    }
+
+    virtual std::vector<std::string> GetTexturePackManifestsRawPaths() const override
+    {
+		std::vector<std::string> manifestRawPaths
+		{
+			SANDBOX_TEXTURES_MANIFESTS + std::string("/SandboxTexturePack.json")
+		};
+		return manifestRawPaths;
+    }
+
+    virtual std::vector<std::string> GetMaterialPackManifestsBinaryPaths() const override
+    {
+		std::vector<std::string> manifestBinPaths
+		{
+			SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak")
+		};
+		return manifestBinPaths;
+    }
+
+    virtual std::vector<std::string> GetMaterialPackManifestsRawPaths() const override
+    {
+		std::vector<std::string> manifestRawPaths
+		{
+			SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json")
+		};
+		return manifestRawPaths;
+    }
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
@@ -793,13 +933,18 @@ public:
 
     virtual std::vector<std::string> GetTexturePacksWatchPaths() const override
     {
-        return {};
+        return {SANDBOX_TEXTURES_DIR};
     }
 
     virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
     {
-        return {};
+        return {SANDBOX_MATERIALS_DIR};
     }
+
+	std::vector<std::string> Application::GetMaterialPacksBinaryPaths() const
+	{
+		return {SANDBOX_MATERIALS_PACKS_DIR_BIN};
+	}
 #endif
     
     char* GetApplicationName() const
@@ -826,6 +971,9 @@ private:
     r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
     r2::SArray<r2::draw::MaterialHandle>* modelMaterials;
     r2::SArray<glm::mat4>* modelMats;
+    r2::draw::ModelSystem* mModelSystem = nullptr;
+    r2::draw::MaterialSystem* mMaterialSystem = nullptr;
+    const r2::draw::Model* mMicroBatModel = nullptr;
 };
 
 namespace
@@ -849,7 +997,7 @@ namespace
                 r2::util::PathCpy(subpath, "assets/sound/music");
                 break;
             case r2::fs::utils::TEXTURES:
-                r2::util::PathCpy(subpath, "assets/textures");
+                r2::util::PathCpy(subpath, "assets/Sandbox_Textures/packs");
                 break;
             case r2::fs::utils::SHADERS_BIN:
                 r2::util::PathCpy(subpath, "assets/shaders/bin");
@@ -861,7 +1009,7 @@ namespace
                 r2::util::PathCpy(subpath, "assets/shaders/manifests");
                 break;
             case r2::fs::utils::MODELS:
-                r2::util::PathCpy(subpath, "assets/models");
+                r2::util::PathCpy(subpath, "assets/Sandbox_Models");
                 break;
             default:
                 result = false;

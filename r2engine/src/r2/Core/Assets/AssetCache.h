@@ -84,8 +84,13 @@ namespace r2::asset
         void AddReloadFunction(AssetReloadedFunc func);
 #endif
         
+        const FileList GetFileList() const { return mnoptrFiles; }
+
+
         static u64 TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
+
+
     private:
         
         struct AssetBufferRef

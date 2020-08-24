@@ -1,0 +1,36 @@
+{
+  texturePacks: [
+    {
+      packName: 17351122780281340654,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/MicroBat/albedo/micro_bat_col.tga"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 16777260,
+      totalNumberOfTextures: 1
+    }
+  ],
+  totalNumberOfTextures: 1,
+  totalTextureSize: 16777260,
+  maxTexturesInAPack: 1
+}

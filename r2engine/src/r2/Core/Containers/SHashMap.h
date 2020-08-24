@@ -48,6 +48,11 @@ namespace r2
         {
             return MAX_LOAD_FACTOR;
         }
+        static f64 LoadFactorMultiplier()
+        {
+            return LOAD_FACTOR_MULT;
+        }
+
 
         u64 mCapacity;
         SArray<u64>* mHash;

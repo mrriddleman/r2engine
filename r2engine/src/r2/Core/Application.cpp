@@ -135,5 +135,11 @@ namespace r2
     {
         return {};
     }
+
+    std::vector<std::string> Application::GetMaterialPacksBinaryPaths() const
+    {
+        return {};
+    }
+
 #endif
 }

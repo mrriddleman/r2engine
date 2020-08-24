@@ -90,6 +90,7 @@ namespace r2::draw::matsys
 
 	MaterialSystem* FindMaterialSystem(u64 materialName);
 	MaterialHandle FindMaterialHandle(u64 materialName);
+	MaterialHandle FindMaterialFromTextureName(const char* textureName);
 
 #ifdef R2_ASSET_PIPELINE
 	void TextureChanged(std::string texturePath);

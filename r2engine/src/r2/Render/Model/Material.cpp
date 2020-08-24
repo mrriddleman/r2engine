@@ -3,6 +3,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetLib.h"
+#include "r2/Core/Assets/AssetFile.h"
 #include "r2/Core/File/FileSystem.h"
 
 #include "r2/Render/Model/Material_generated.h"
@@ -804,6 +805,71 @@ namespace r2::draw::matsys
 				if (!mat::IsInvalidHandle(handle))
 				{
 					return handle;
+				}
+			}
+		}
+
+		return mat::InvalidMaterialHandle;
+	}
+
+	MaterialHandle FindMaterialFromTextureName(const char* textureName)
+	{
+		//@TODO(Serge): implement something better than this... this is the worst possible case for our system
+		// we're trying to find the material from a texture name which is buried under a lot of stuff
+		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		for (u64 i = 0; i < capacity; ++i)
+		{
+			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+			if (system != nullptr)
+			{
+				r2::asset::FileList fileList = system->mAssetCache->GetFileList();
+
+				u64 numFiles = r2::sarr::Size(*fileList);
+
+				for (u64 j = 0; j < numFiles; ++j)
+				{
+					r2::asset::AssetFile* assetFile = r2::sarr::At(*fileList, j);
+
+					char assetName[r2::fs::FILE_PATH_LENGTH];
+					char fileName[r2::fs::FILE_PATH_LENGTH];
+
+					assetFile->GetAssetName(0, assetName, 0);
+
+					r2::fs::utils::CopyFileNameWithExtension(assetName, fileName);
+					
+					if (strcmp(fileName, textureName) != 0)
+					{
+						continue;
+					}
+
+					//we have the texture now
+					auto textureHandle = assetFile->GetAssetHandle(0);
+
+					r2::asset::AssetHandle textureAssetHandle{ textureHandle, system->mAssetCache->GetSlot() };
+
+					//now we need to find the material handle from the texture in the material system
+
+					u64 numMaterialTextures = r2::sarr::Capacity(*system->mMaterialTextures);
+
+					for (u64 k = 0; k < numMaterialTextures; ++k)
+					{
+						auto textures = r2::sarr::At(*system->mMaterialTextures, k);
+						if(!textures)
+							continue;
+
+						u64 numTextures = r2::sarr::Size(*textures);
+
+						for (u64 t = 0; t < numTextures; ++t)
+						{
+							auto texture = r2::sarr::At(*textures, t);
+							if (texture.textureAssetHandle.handle == textureHandle &&
+								texture.textureAssetHandle.assetCache == textureAssetHandle.assetCache)
+							{
+								return mat::MakeMaterialHandleFromIndex(*system, k);
+							}
+						}
+					}
 				}
 			}
 		}
