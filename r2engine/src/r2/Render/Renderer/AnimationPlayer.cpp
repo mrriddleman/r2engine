@@ -6,7 +6,7 @@
 //
 #include "r2pch.h"
 #include "AnimationPlayer.h"
-#include "r2/Render/Renderer/SkinnedModel.h"
+#include "r2/Render/Model/Model.h"
 
 #include "r2/Core/Math/MathUtils.h"
 
@@ -17,9 +17,9 @@
 
 namespace
 {
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, r2::draw::SkinnedModel& model, const r2::draw::SkeletonPart& skeletonPart, const glm::mat4& parentTransform);
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform);
     
-    const r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, const std::string& name);
+    const r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
     glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel);
     
@@ -34,15 +34,13 @@ namespace
 
 namespace r2::draw
 {
-    std::vector<glm::mat4> PlayAnimationForSkinnedModel(u32 timeInMilliseconds,  SkinnedModel& model, u32 animationId)
+    void PlayAnimationForSkinnedModel(u32 timeInMilliseconds, AnimModel& model, u32 animationId, r2::SArray<glm::mat4>& outBoneTransforms)
     {
-        R2_CHECK(animationId < model.animations.size(), "Invalid animation id given: %u but only have %zu animations", animationId, model.animations.size());
+        R2_CHECK(animationId < r2::sarr::Size(*model.animations), "Invalid animation id given: %u but only have %zu animations", animationId, r2::sarr::Size(*model.animations));
         
-        std::vector<glm::mat4> boneTransforms{};
+        const Animation& anim = r2::sarr::At(*model.animations, animationId);
 
-        const Animation& anim = model.animations[animationId];
-
-        double ticksPerSecond = anim.ticksPerSeconds != 0 ? anim.ticksPerSeconds : 25.0;
+        double ticksPerSecond = 30.0;//anim.ticksPerSeconds != 0 ? anim.ticksPerSeconds : 25.0;
         double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
         double animationTime = fmod(timeInTicks, anim.duration);
 
@@ -50,23 +48,47 @@ namespace r2::draw
         
         CalculateBoneTransforms(animationTime, anim, model, model.skeleton, glm::mat4(1.0f));
 
-        boneTransforms.resize(model.boneInfos.size(), glm::mat4(1.0f));
-        for (u32 i = 0; i < model.boneInfos.size(); ++i)
-        {
-            boneTransforms[i] = model.boneInfos[i].finalTransform;
+        outBoneTransforms.mSize = model.boneInfo->mSize;
+        for (u32 i = 0; i < model.boneInfo->mSize; ++i)
+        { 
+            r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
+            r2::sarr::At(outBoneTransforms, i) = r2::sarr::At(*model.boneInfo, i).finalTransform;
         }
-        
-        return boneTransforms;
+    }
+
+    u32 PlayAnimationForAnimModel(u32 timeInMilliseconds, AnimModel& model, u32 animationId, r2::SArray<glm::mat4>& outBoneTransforms, u64 offset)
+    {
+		R2_CHECK(animationId < r2::sarr::Size(*model.animations), "Invalid animation id given: %u but only have %zu animations", animationId, r2::sarr::Size(*model.animations));
+
+		const Animation& anim = r2::sarr::At(*model.animations, animationId);
+
+        double ticksPerSecond = anim.ticksPerSeconds != 0 ? anim.ticksPerSeconds : 25.0;
+		double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
+        double animationTime = fmod(timeInTicks, anim.duration);
+
+		R2_CHECK(animationTime < anim.duration, "Hmmm");
+
+		CalculateBoneTransforms(animationTime, anim, model, model.skeleton, glm::mat4(1.0f));
+
+
+		outBoneTransforms.mSize += model.boneInfo->mSize;
+		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
+		{
+            r2::sarr::At(outBoneTransforms, i + offset) = glm::mat4(1.0f);
+			r2::sarr::At(outBoneTransforms, i + offset) = r2::sarr::At(*model.boneInfo, i).finalTransform;
+		}
+
+        return outBoneTransforms.mSize;
     }
 }
 
 namespace
 {
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation,  r2::draw::SkinnedModel& model, const r2::draw::SkeletonPart& skeletonPart, const glm::mat4& parentTransform)
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation,  r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform)
     {
         glm::mat4 transform = skeletonPart.transform;
 
-        const r2::draw::AnimationChannel* channel = FindChannel(animation, skeletonPart.name);
+        const r2::draw::AnimationChannel* channel = FindChannel(animation, skeletonPart.hashName);
         
         if (channel)
         {
@@ -83,28 +105,36 @@ namespace
         }
         
         glm::mat4 globalTransform =  parentTransform * transform ;
-        
-        auto boneMapResult = model.boneMapping.find(skeletonPart.name);
-        if (boneMapResult != model.boneMapping.end())
+      
+        s32 theDefault = -1;
+        s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, skeletonPart.hashName, theDefault);
+
+        if (boneMapResult != theDefault)
         {
-            u32 boneIndex = boneMapResult->second;
-            
-            model.boneInfos[boneIndex].finalTransform = model.globalInverseTransform* globalTransform * model.boneInfos[boneIndex].offsetTransform;
+            u32 boneIndex = boneMapResult;
+            r2::sarr::At(*model.boneInfo, boneIndex).finalTransform = model.globalInverseTransform * globalTransform * r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
         }
-        
-        for (u32 i = 0; i < skeletonPart.children.size(); ++i)
+
+        u32 numChildren = 0;
+        if (skeletonPart.children != nullptr)
         {
-            CalculateBoneTransforms(animationTime, animation, model, skeletonPart.children[i], globalTransform);
+            numChildren = r2::sarr::Size(*skeletonPart.children);
+        }
+
+        for (u32 i = 0; i < numChildren; ++i)
+        {
+            CalculateBoneTransforms(animationTime, animation, model, r2::sarr::At(*skeletonPart.children, i), globalTransform);
         }
     }
     
-    const r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, const std::string& name)
+    const r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName)
     {
-        for (u32 i = 0; i < animation.channels.size(); ++i)
+        u32 numChannels = r2::sarr::Size(*animation.channels);
+        for (u32 i = 0; i < numChannels; ++i)
         {
-            if (animation.channels[i].name == name)
+            if (r2::sarr::At(*animation.channels, i).hashName == hashName)
             {
-                return &animation.channels[i];
+                return &r2::sarr::At(*animation.channels, i);
             }
         }
         
@@ -113,89 +143,106 @@ namespace
     
     glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        if (channel.numScalingKeys == 1)
+        u64 numScalingKeys = r2::sarr::Size(*channel.scaleKeys);
+        if (numScalingKeys == 1)
         {
-            return channel.scaleKeys[0].value;
+            return r2::sarr::At(*channel.scaleKeys, 0).value;//channel.scaleKeys[0].value;
         }
         
         u32 curScalingIndex = FindScalingIndex(animationTime, totalTime, channel);
-        u32 nextScalingIndex = (curScalingIndex + 1) % channel.numScalingKeys;
+        u32 nextScalingIndex = (curScalingIndex + 1) % numScalingKeys;
         
-        R2_CHECK(nextScalingIndex < channel.numScalingKeys, "nextScalingIndex: %u is larger or equal to the number of scaling keys: %u", nextScalingIndex, channel.numScalingKeys);
+        R2_CHECK(nextScalingIndex < numScalingKeys, "nextScalingIndex: %u is larger or equal to the number of scaling keys: %u", nextScalingIndex, numScalingKeys);
         
-        double dt = fabs(channel.scaleKeys[nextScalingIndex].time - channel.scaleKeys[curScalingIndex].time);
+
+        double nextScaleTime = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).time;
+        double curScaleTime = r2::sarr::At(*channel.scaleKeys, curScalingIndex).time;
+
+        double dt = fabs(nextScaleTime - curScaleTime);
         
         if (nextScalingIndex < curScalingIndex)
         {
-            dt = totalTime - channel.scaleKeys[curScalingIndex].time;
+            dt = totalTime - curScaleTime;
         }
         
-        float factor = (float)glm::clamp(animationTime - channel.scaleKeys[curScalingIndex].time / dt, 0.0, 1.0) ;
+        float factor = (float)glm::clamp(animationTime - curScaleTime / dt, 0.0, 1.0) ;
 
-        glm::vec3 start = channel.scaleKeys[curScalingIndex].value;
-        glm::vec3 end = channel.scaleKeys[nextScalingIndex].value;
+        glm::vec3 start = r2::sarr::At(*channel.scaleKeys, curScalingIndex).value;
+        glm::vec3 end = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).value;
         
         return r2::math::Lerp(start, end, factor);
     }
     
     glm::quat CalculateRotation(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        if (channel.numRotationKeys == 1)
+        u64 numRotationKeys = r2::sarr::Size(*channel.rotationKeys);
+        if (numRotationKeys == 1)
         {
-            return channel.rotationKeys[0].quat;
+            return r2::sarr::At(*channel.rotationKeys, 0).quat;
         }
         
         u32 curRotIndex = FindRotationIndex(animationTime, totalTime,  channel);
-        u32 nextRotIndex = (curRotIndex + 1) % channel.numRotationKeys;
+        u32 nextRotIndex = (curRotIndex + 1) % numRotationKeys;
         
-        R2_CHECK(nextRotIndex < channel.numRotationKeys, "curRotIndex: %u is larger or equal to the number of rotation keys: %u", curRotIndex, channel.numRotationKeys);
+        R2_CHECK(nextRotIndex < numRotationKeys, "curRotIndex: %u is larger or equal to the number of rotation keys: %u", curRotIndex, numRotationKeys);
         
-        double dt = fabs(channel.rotationKeys[nextRotIndex].time - channel.rotationKeys[curRotIndex].time);
+		double nextRotationTime = r2::sarr::At(*channel.rotationKeys, nextRotIndex).time;
+		double curRotationTime = r2::sarr::At(*channel.rotationKeys, curRotIndex).time;
+
+        double dt = fabs(nextRotationTime - curRotationTime);
         
         if (nextRotIndex < curRotIndex)
         {
-            dt = totalTime - channel.rotationKeys[curRotIndex].time;
+            dt = totalTime - curRotationTime;
         }
         
-        float factor = (float)glm::clamp(animationTime - channel.rotationKeys[curRotIndex].time / dt, 0.0, 1.0) ;
+        float factor = (float)glm::clamp(animationTime - curRotationTime / dt, 0.0, 1.0) ;
         
-        return r2::math::Slerp(channel.rotationKeys[curRotIndex].quat, channel.rotationKeys[nextRotIndex].quat, factor);
+		glm::quat start = r2::sarr::At(*channel.rotationKeys, curRotIndex).quat;
+		glm::quat end = r2::sarr::At(*channel.rotationKeys, nextRotIndex).quat;
+
+        return r2::math::Slerp(start, end, factor);
     }
     
     glm::vec3 CalculateTranslation(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        if (channel.numPositionKeys == 1)
+        u32 numPositionKeys = r2::sarr::Size(*channel.positionKeys);
+        if (numPositionKeys == 1)
         {
-            return channel.positionKeys[0].value;
+            return r2::sarr::At(*channel.positionKeys, 0).value;
         }
         
         u32 curPositionIndex = FindPositionIndex(animationTime, totalTime, channel);
-        u32 nextPositionIndex = (curPositionIndex + 1) % channel.numPositionKeys;
+        u32 nextPositionIndex = (curPositionIndex + 1) % numPositionKeys;
         
-        R2_CHECK(nextPositionIndex < channel.numPositionKeys, "nextPositionIndex: %u is larger or equal to the number of position keys: %u", nextPositionIndex, channel.numPositionKeys);
+        R2_CHECK(nextPositionIndex < numPositionKeys, "nextPositionIndex: %u is larger or equal to the number of position keys: %u", nextPositionIndex, numPositionKeys);
         
-        double dt = fabs(channel.positionKeys[nextPositionIndex].time - channel.positionKeys[curPositionIndex].time);
+        double nextPosTime = r2::sarr::At(*channel.positionKeys, nextPositionIndex).time;
+        double curPosTime = r2::sarr::At(*channel.positionKeys, curPositionIndex).time;
+
+        double dt = fabs(nextPosTime - curPosTime);
         
         if (nextPositionIndex < curPositionIndex)
         {
-            dt = totalTime - channel.positionKeys[curPositionIndex].time;
+            dt = totalTime - curPosTime;
         }
         
-        float factor = (float)glm::clamp(animationTime - channel.positionKeys[curPositionIndex].time / dt, 0.0, 1.0) ;
-        
-        glm::vec3 start = channel.positionKeys[curPositionIndex].value;
-        glm::vec3 end = channel.positionKeys[nextPositionIndex].value;
+        float factor = (float)glm::clamp((animationTime - curPosTime )/ dt, 0.0, 1.0) ;
+      //  R2_LOGI("factor: %f", factor);
+        glm::vec3 start = r2::sarr::At(*channel.positionKeys, curPositionIndex).value;
+        glm::vec3 end = r2::sarr::At(*channel.positionKeys, nextPositionIndex).value;
 
         return r2::math::Lerp(start, end, factor);
     }
     
     u32 FindScalingIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        R2_CHECK(channel.numScalingKeys > 0, "We don't have any scaling keys");
+        u32 numScalingKeys = r2::sarr::Size(*channel.scaleKeys);
+        R2_CHECK(numScalingKeys > 0, "We don't have any scaling keys");
         
-        for (u32 i = 0; i < channel.numScalingKeys-1; ++i)
+        for (u32 i = 0; i < numScalingKeys -1; ++i)
         {
-            if (animationTime < (float)channel.scaleKeys[i+1].time)
+            if (animationTime < r2::sarr::At(*channel.scaleKeys, i+1).time)
             {
                 return i;
             }
@@ -203,7 +250,7 @@ namespace
         
         if (animationTime < totalTime)
         {
-            return channel.numScalingKeys - 1;
+            return numScalingKeys - 1;
         }
         
         R2_CHECK(false, "Failed to find a proper scaling key for time: %f", animationTime);
@@ -213,11 +260,12 @@ namespace
     
     u32 FindRotationIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        R2_CHECK(channel.numRotationKeys > 0, "We don't have any rotation keys");
+        u32 numRotationKeys = r2::sarr::Size(*channel.rotationKeys);
+        R2_CHECK(numRotationKeys > 0, "We don't have any rotation keys");
         
-        for (u32 i = 0; i < channel.numRotationKeys-1; ++i)
+        for (u32 i = 0; i < numRotationKeys -1; ++i)
         {
-            if (animationTime < (float)channel.rotationKeys[i+1].time)
+            if (animationTime < r2::sarr::At(*channel.rotationKeys, i+1).time)
             {
                 return i;
             }
@@ -225,7 +273,7 @@ namespace
         
         if (animationTime < totalTime)
         {
-            return channel.numRotationKeys - 1;
+            return numRotationKeys - 1;
         }
         
         R2_CHECK(false, "Failed to find a proper scaling key for time: %f", animationTime);
@@ -235,11 +283,12 @@ namespace
     
     u32 FindPositionIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel)
     {
-        R2_CHECK(channel.numPositionKeys > 0, "We don't have any position keys");
+        u32 numPositionKeys = r2::sarr::Size(*channel.positionKeys);
+        R2_CHECK(numPositionKeys > 0, "We don't have any position keys");
         
-        for (u32 i = 0; i < channel.numPositionKeys-1; ++i)
+        for (u32 i = 0; i < numPositionKeys-1; ++i)
         {
-            if (animationTime < (float)channel.positionKeys[i+1].time)
+            if (animationTime < r2::sarr::At(*channel.positionKeys, i+1).time)
             {
                 return i;
             }
@@ -247,7 +296,7 @@ namespace
         
         if (animationTime < totalTime)
         {
-            return channel.numPositionKeys - 1;
+            return numPositionKeys - 1;
         }
         
         R2_CHECK(false, "Failed to find a proper position key for time: %f", animationTime);

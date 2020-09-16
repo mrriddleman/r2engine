@@ -60,11 +60,12 @@ namespace r2::draw
 		return 0;
 	}
     
-    BufferElement::BufferElement(ShaderDataType _type, const std::string& _name, bool _normalized)
+    BufferElement::BufferElement(ShaderDataType _type, const std::string& _name, u32 _bufferIndex, bool _normalized)
     : name(_name)
     , type(_type)
     , size(ShaderDataTypeSize(_type))
     , offset(0)
+    , bufferIndex(_bufferIndex)
     , normalized(_normalized)
     {
         
@@ -87,16 +88,40 @@ namespace r2::draw
     {
         CalculateOffsetAndStride();
     }
+
+    u32 BufferLayout::GetStride(u32 bufferIndex) const
+    {
+        if (bufferIndex >= mStrides.size())
+        {
+            R2_CHECK(false, "Passed in a buffer index that's out of range! Index is: %u and we only have %zu buffers", bufferIndex, mStrides.size());
+            return 0;
+        }
+
+        return mStrides[bufferIndex];
+    }
     
     void BufferLayout::CalculateOffsetAndStride()
     {
-        size_t offset = 0;
-        mStride = 0;
+        //find the max buffer index
+        u32 maxIndex = 0;
+        for (const auto& element : mElements)
+        {
+            if (maxIndex < element.bufferIndex)
+            {
+                maxIndex = element.bufferIndex;
+            }
+        }
+
+        mStrides.resize(maxIndex + 1, 0);
+
+        std::vector<size_t> offsets;
+        offsets.resize(mStrides.size(), 0);
+
         for (auto& element : mElements)
         {
-            element.offset = offset;
-            offset += element.size;
-            mStride += element.size;
+            element.offset = offsets[element.bufferIndex];
+            offsets[element.bufferIndex] += element.size;
+            mStrides[element.bufferIndex] += element.size;
         }
     }
 

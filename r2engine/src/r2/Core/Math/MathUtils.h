@@ -17,6 +17,7 @@ namespace r2::math
     glm::quat Lerp(const glm::quat& q1, const glm::quat& q2, float t);
     glm::quat Slerp(const glm::quat& q1, const glm::quat& q2, float t);
     bool NearEq(float v1, float v2);
+    bool NearZero(float v1);
     bool GreaterThanOrEq(float v1, float v2);
     bool LessThanOrEq(float v1, float v2);
 }

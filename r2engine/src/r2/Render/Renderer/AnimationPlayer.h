@@ -12,8 +12,9 @@
 
 namespace r2::draw
 {
-    struct SkinnedModel;
-    std::vector<glm::mat4> PlayAnimationForSkinnedModel(u32 timeInMilliseconds, SkinnedModel& model, u32 animationId);
+    struct AnimModel;
+    void PlayAnimationForSkinnedModel(u32 timeInMilliseconds, AnimModel& model, u32 animationId, r2::SArray<glm::mat4>& outBoneTransforms);
+    u32 PlayAnimationForAnimModel(u32 timeInMilliseconds, AnimModel& model, u32 animationId, r2::SArray<glm::mat4>& outBoneTransforms, u64 offset);
 }
 
 #endif /* AnimationPlayer_hpp */

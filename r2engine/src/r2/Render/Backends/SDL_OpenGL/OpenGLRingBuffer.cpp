@@ -3,6 +3,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLUtils.h"
 
 namespace r2::draw::rendererimpl
 {
@@ -18,7 +19,19 @@ namespace r2::draw::rendererimpl
 		GLbitfield waitFlags = 0;
 		GLuint64 waitDuration = 0;
 		while (true) {
+
+			if (auto err = glGetError())
+			{
+				int k = 0;
+			}
+
 			GLenum waitRet = glClientWaitSync(*syncObj, waitFlags, waitDuration);
+
+			if (auto err = glGetError())
+			{
+				int k = 0;
+			}
+
 			if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED) {
 				return;
 			}
@@ -47,7 +60,7 @@ namespace r2::draw::rendererimpl
 			if (BufferRangeOverlaps(nextLock.range, testRange))
 			{
 				Wait(&nextLock.syncObject);
-				glDeleteSync(nextLock.syncObject);
+				GLCall(glDeleteSync(nextLock.syncObject));
 			}
 			else 
 			{
@@ -69,7 +82,16 @@ namespace r2::draw::rendererimpl
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
 	{
 		BufferRange newRange = { lockBeginBytes, lockLength };
+		if (auto err = glGetError())
+		{
+			int k = 0;
+		}
 		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+		if (auto err = glGetError())
+		{
+			int k = 0;
+		}
 
 		BufferLock lock = { {newRange}, syncName };
 
@@ -120,7 +142,7 @@ namespace r2::draw::rendererimpl
 
 		void BindBufferRange(const RingBuffer& ringBuffer, u32 handle, GLsizeiptr count)
 		{
-			glBindBufferRange(ringBuffer.bufferType, ringBuffer.index, handle, ringBuffer.head * ringBuffer.typeSize, count * ringBuffer.typeSize);
+			GLCall(glBindBufferRange(ringBuffer.bufferType, ringBuffer.index, handle, ringBuffer.head * ringBuffer.typeSize, count * ringBuffer.typeSize));
 		}
 
 		u64 MemorySize(u64 headerSize, u64 boundsChecking, u64 alignment, u64 capacity)

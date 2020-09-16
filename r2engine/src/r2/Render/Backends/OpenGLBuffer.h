@@ -1,90 +1,90 @@
+////
+////  openglbuffer.h
+////  r2engine
+////
+////  created by serge lansiquot on 2019-12-26.
+////
 //
-//  OpenGLBuffer.h
-//  r2engine
+//#ifndef openglbuffer_h
+//#define openglbuffer_h
 //
-//  Created by Serge Lansiquot on 2019-12-26.
+//#include "r2/render/renderer/bufferlayout.h"
+//#include "r2/render/renderer/vertex.h"
+//#include "glad/glad.h"
+//#include "r2/render/renderer/renderertypes.h"
 //
-
-#ifndef OpenGLBuffer_h
-#define OpenGLBuffer_h
-
-#include "r2/Render/Renderer/BufferLayout.h"
-#include "r2/Render/Renderer/Vertex.h"
-#include "glad/glad.h"
-#include "r2/Render/Renderer/RendererTypes.h"
-
-namespace r2::draw::opengl
-{
-    
-    
-    struct FrameBuffer
-    {
-        u32 FBO = EMPTY_BUFFER;
-        u32 width = 0, height = 0;
-        std::vector<u32> colorAttachments;
-        u32 depthAttachment = EMPTY_BUFFER;
-        u32 stencilAttachment = EMPTY_BUFFER;
-    };
-    
-    struct RenderBuffer
-    {
-        u32 RBO = EMPTY_BUFFER;
-        u32 width = 0, height = 0;
-    };
-    
-    void Create(VertexArrayBuffer& buf);
-    void Create(VertexBuffer& buf, float * vertices, u64 size, u32 type);
-    void Create(VertexBuffer& buf, const std::vector<Vertex>& vertices, u32 type);
-    void Create(VertexBuffer& buf, const Vertex* vertices, u64 size, u32 type);
-    void Create(VertexBuffer& buf, const BoneData* boneData, u64 size, u32 type);
-    
-    void Create(VertexBuffer& buf, void* data, u64 size, u32 type);
-    
-    void Create(IndexBuffer& buf, const u32* indices, u64 size, u32 type);
-    
-    void Create(FrameBuffer& buf, u32 width, u32 height);
-    void Create(FrameBuffer& buf, const r2::util::Size& size);
-    void Create(RenderBuffer& buf, u32 width, u32 height);
-    
-    void Destroy(VertexArrayBuffer& buf);
-    void Destroy(VertexBuffer& buf);
-    void Destroy(IndexBuffer& buf);
-    void Destroy(FrameBuffer& buf);
-    void Destroy(RenderBuffer& buf);
-    
-    BufferLayoutHandle CreateBufferLayoutIndexed(const BufferLayout& bufferLayout, const VertexBuffer& vBuffer, const IndexBuffer& iBuffer);
-    void SetIndexBuffer(VertexArrayBuffer& arrayBuf, const IndexBuffer& buf);
-    
-    void Bind(const VertexArrayBuffer& buf);
-    void UnBind(const VertexArrayBuffer& buf);
-    
-    void Bind(const VertexBuffer& buf);
-    void UnBind(const VertexBuffer& buf);
-    
-    void Bind(const IndexBuffer& buf);
-    void UnBind(const IndexBuffer& buf);
-    
-    void Bind(const FrameBuffer& buf);
-    void UnBind(const FrameBuffer& buf);
-    
-    void Bind(const RenderBuffer& buf);
-    void UnBind(const RenderBuffer& buf);
-    
-    u32 AttachTextureToFrameBuffer(FrameBuffer& buf, bool alpha = false, GLenum filter = GL_LINEAR);
-    u32 AttachHDRTextureToFrameBuffer(FrameBuffer& buf, GLenum internalFormat, GLenum filter = GL_LINEAR, GLenum wrapMode = GL_REPEAT);
-    
-    
-    
-    u32 AttachDepthAndStencilForFrameBuffer(FrameBuffer& buf);
-    void AttachDepthAndStencilForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
-    void AttachDepthBufferForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf);
-    u32 AttachDepthToFrameBuffer(FrameBuffer& buf);
-    
-    void AttachDepthCubeMapToFrameBuffer(FrameBuffer& buf, u32 depthCubeMap);
-    
-    u32 AttachMultisampleTextureToFrameBuffer(FrameBuffer& buf, u32 samples);
-    void AttachDepthAndStencilMultisampleForRenderBufferToFrameBuffer(const FrameBuffer& frameBuf, const RenderBuffer& rBuf, u32 samples);
-    
-}
-
-#endif /* OpenGLBuffer_h */
+//namespace r2::draw::opengl
+//{
+//    
+//    
+//    struct framebuffer
+//    {
+//        u32 fbo = empty_buffer;
+//        u32 width = 0, height = 0;
+//        std::vector<u32> colorattachments;
+//        u32 depthattachment = empty_buffer;
+//        u32 stencilattachment = empty_buffer;
+//    };
+//    
+//    struct renderbuffer
+//    {
+//        u32 rbo = empty_buffer;
+//        u32 width = 0, height = 0;
+//    };
+//    
+//    void create(vertexarraybuffer& buf);
+//    void create(vertexbuffer& buf, float * vertices, u64 size, u32 type);
+//    void create(vertexbuffer& buf, const std::vector<vertex>& vertices, u32 type);
+//    void create(vertexbuffer& buf, const vertex* vertices, u64 size, u32 type);
+//    void create(vertexbuffer& buf, const bonedata* bonedata, u64 size, u32 type);
+//    
+//    void create(vertexbuffer& buf, void* data, u64 size, u32 type);
+//    
+//    void create(indexbuffer& buf, const u32* indices, u64 size, u32 type);
+//    
+//    void create(framebuffer& buf, u32 width, u32 height);
+//    void create(framebuffer& buf, const r2::util::size& size);
+//    void create(renderbuffer& buf, u32 width, u32 height);
+//    
+//    void destroy(vertexarraybuffer& buf);
+//    void destroy(vertexbuffer& buf);
+//    void destroy(indexbuffer& buf);
+//    void destroy(framebuffer& buf);
+//    void destroy(renderbuffer& buf);
+//    
+//    bufferlayouthandle createbufferlayoutindexed(const bufferlayout& bufferlayout, const vertexbuffer& vbuffer, const indexbuffer& ibuffer);
+//    void setindexbuffer(vertexarraybuffer& arraybuf, const indexbuffer& buf);
+//    
+//    void bind(const vertexarraybuffer& buf);
+//    void unbind(const vertexarraybuffer& buf);
+//    
+//    void bind(const vertexbuffer& buf);
+//    void unbind(const vertexbuffer& buf);
+//    
+//    void bind(const indexbuffer& buf);
+//    void unbind(const indexbuffer& buf);
+//    
+//    void bind(const framebuffer& buf);
+//    void unbind(const framebuffer& buf);
+//    
+//    void bind(const renderbuffer& buf);
+//    void unbind(const renderbuffer& buf);
+//    
+//    u32 attachtexturetoframebuffer(framebuffer& buf, bool alpha = false, glenum filter = gl_linear);
+//    u32 attachhdrtexturetoframebuffer(framebuffer& buf, glenum internalformat, glenum filter = gl_linear, glenum wrapmode = gl_repeat);
+//    
+//    
+//    
+//    u32 attachdepthandstencilforframebuffer(framebuffer& buf);
+//    void attachdepthandstencilforrenderbuffertoframebuffer(const framebuffer& framebuf, const renderbuffer& rbuf);
+//    void attachdepthbufferforrenderbuffertoframebuffer(const framebuffer& framebuf, const renderbuffer& rbuf);
+//    u32 attachdepthtoframebuffer(framebuffer& buf);
+//    
+//    void attachdepthcubemaptoframebuffer(framebuffer& buf, u32 depthcubemap);
+//    
+//    u32 attachmultisampletexturetoframebuffer(framebuffer& buf, u32 samples);
+//    void attachdepthandstencilmultisampleforrenderbuffertoframebuffer(const framebuffer& framebuf, const renderbuffer& rbuf, u32 samples);
+//    
+//}
+//
+//#endif /* openglbuffer_h */

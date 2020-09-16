@@ -308,12 +308,16 @@ namespace r2::draw::rendererimpl
 			glDisable(GL_DEPTH_TEST);
 	}
 
-	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
+	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
 		glBindVertexArray(layoutId);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-		glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfig.bufferSize, nullptr, config.vertexBufferConfig.drawType);
 
+		for (u32 i = 0; i < numVertexBufferHandles; ++i)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId[i]);
+			glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfigs[i].bufferSize, nullptr, config.vertexBufferConfigs[i].drawType);
+		}
+		
 		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
@@ -328,23 +332,32 @@ namespace r2::draw::rendererimpl
 
 			if (element.type >= ShaderDataType::Float && element.type <= ShaderDataType::Mat4)
 			{
-				glVertexAttribPointer(
-					vertexAttribId, 
-					element.GetComponentCount(), 
-					ShaderDataTypeToOpenGLBaseType(element.type), 
-					element.normalized ? GL_TRUE : GL_FALSE, 
-					config.layout.GetStride(), 
-					(const void*)element.offset);
+				//glVertexAttribPointer(
+				//	vertexAttribId, 
+				//	element.GetComponentCount(), 
+				//	ShaderDataTypeToOpenGLBaseType(element.type), 
+				//	element.normalized ? GL_TRUE : GL_FALSE, 
+				//	config.layout.GetStride(), 
+				//	(const void*)element.offset);
+				
+				glVertexAttribFormat(vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.normalized ? GL_TRUE : GL_FALSE, element.offset);
+				
 			}
 			else if (element.type >= ShaderDataType::Int && element.type <= ShaderDataType::Int4)
 			{
-				glVertexAttribIPointer(
-					vertexAttribId,
-					element.GetComponentCount(),
-					ShaderDataTypeToOpenGLBaseType(element.type),
-					config.layout.GetStride(),
-					(const void*)element.offset);
+				glVertexAttribIFormat(vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.offset);
+
+				//glVertexAttribIPointer(
+				//	vertexAttribId,
+				//	element.GetComponentCount(),
+				//	ShaderDataTypeToOpenGLBaseType(element.type),
+				//	config.layout.GetStride(),
+				//	(const void*)element.offset);
 			}
+
+			glVertexAttribBinding(vertexAttribId, element.bufferIndex);
+			glBindVertexBuffer(element.bufferIndex, vertexBufferId[element.bufferIndex], 0, config.layout.GetStride(element.bufferIndex));
+
 
 			if (config.layout.GetVertexType() == VertexType::Instanced)
 			{

@@ -166,7 +166,81 @@ namespace r2::draw::modlsys
 		return model;
 	}
 
+	const AnimModel* GetAnimModel(ModelSystem* system, const ModelHandle& handle)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return nullptr;
+		}
+
+		if (handle.assetCache != system->mModelCache->GetSlot())
+		{
+			R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
+			return nullptr;
+		}
+
+		r2::asset::AssetCacheRecord record;
+		if (system->mCacheModelReferences)
+		{
+			if (!r2::shashmap::Has(*system->mModels, handle.handle))
+			{
+				record = system->mModelCache->GetAssetBuffer(handle);
+				r2::shashmap::Set(*system->mModels, handle.handle, record);
+			}
+			else
+			{
+				r2::asset::AssetCacheRecord defaultRecord;
+				record = r2::shashmap::Get(*system->mModels, handle.handle, defaultRecord);
+
+				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+			}
+		}
+		else
+		{
+			record = system->mModelCache->GetAssetBuffer(handle);
+
+			if (!r2::shashmap::Has(*system->mModels, handle.handle))
+			{
+				r2::shashmap::Set(*system->mModels, handle.handle, record);
+			}
+		}
+
+		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.buffer->MutableData();
+
+		model->hash = handle.handle;
+
+		return model;
+	}
+
 	void ReturnModel(ModelSystem* system, const Model* model)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return;
+		}
+
+		if (!model)
+		{
+			R2_CHECK(false, "Passed in a null model");
+			return;
+		}
+
+		r2::asset::AssetCacheRecord defaultRecord;
+
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->hash, defaultRecord);
+
+		if (theRecord.buffer == defaultRecord.buffer)
+		{
+			R2_CHECK(false, "Failed to get the asset cache record!");
+			return;
+		}
+
+		system->mModelCache->ReturnAssetBuffer(theRecord);
+	}
+
+	void ReturnAnimModel(ModelSystem* system, const AnimModel* model)
 	{
 		if (!system)
 		{

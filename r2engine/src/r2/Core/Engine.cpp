@@ -279,7 +279,7 @@ namespace r2
         return 0;
     }
     
-    u32 Engine::GetTicks() const
+    f64 Engine::GetTicks() const
     {
         if(mGetTicksFunc)
             return mGetTicksFunc();

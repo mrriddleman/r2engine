@@ -47,10 +47,11 @@ namespace r2::draw
         ShaderDataType type;
         u32 size;
         size_t offset;
+        u32 bufferIndex = 0;
         bool normalized;
         
         BufferElement() = default;
-        BufferElement(ShaderDataType type, const std::string& name, bool normalized = false);
+        BufferElement(ShaderDataType type, const std::string& name, u32 _bufferIndex = 0, bool normalized = false);
         u32 GetComponentCount() const;
         
     };
@@ -63,7 +64,8 @@ namespace r2::draw
         
 
         //@TODO(Serge): make these not vectors
-        inline u32 GetStride() const {return mStride;}
+        u32 GetStride(u32 bufferIndex) const;
+        inline u32 NumBuffers() const { return static_cast<u32>(mStrides.size()); }
         inline const std::vector<BufferElement>& GetElements() const {return mElements;}
         inline VertexType GetVertexType() const {return mVertexType;}
         std::vector<BufferElement>::iterator begin() {return mElements.begin();}
@@ -75,7 +77,7 @@ namespace r2::draw
         void CalculateOffsetAndStride();
         //@TODO(Serge): make this not a vector
         std::vector<BufferElement> mElements;
-        u32 mStride = 0;
+        std::vector<u32> mStrides;
         VertexType mVertexType = VertexType::Vertex;
     };
 
@@ -89,11 +91,14 @@ namespace r2::draw
 
     struct BufferLayoutConfiguration
     {
+        static const size_t MAX_VERTEX_BUFFER_CONFIGS = 4;
+
         BufferLayout layout;
-        BufferConfig vertexBufferConfig;
+        BufferConfig vertexBufferConfigs[MAX_VERTEX_BUFFER_CONFIGS];
         BufferConfig indexBufferConfig;
         b32 useDrawIDs = false;
         u32 maxDrawCount = 0;
+        u32 numVertexConfigs = 1;
     };
 
     class ConstantBufferElement

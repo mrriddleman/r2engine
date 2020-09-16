@@ -62,7 +62,7 @@ namespace r2
         char mBasePath[r2::fs::FILE_PATH_LENGTH];
         char mSoundDefinitionPath[r2::fs::FILE_PATH_LENGTH];
         char mApplicationName[r2::fs::FILE_PATH_LENGTH];
-
+        u64 mStartTime;
         bool mRunning;
         
         

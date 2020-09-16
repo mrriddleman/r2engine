@@ -1,6 +1,6 @@
 {
 	name:"MicroBat",
-	shader:"Sandbox",
+	shader:"AnimModel",
 	color:{
 		r: 1.0,
 		g: 0.0,

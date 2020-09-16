@@ -36,6 +36,7 @@
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Renderer/AnimationPlayer.h"
 
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
@@ -226,9 +227,12 @@ public:
         MODEL_MATRICES,
         SUB_COMMANDS,
         MODEL_MATERIALS,
+        BONE_TRANSFORMS,
+        BONE_TRANSFORM_OFFSETS
     };
     
     const u64 NUM_DRAWS = 10;
+    const u64 NUM_BONES = 1000;
     
     virtual bool Init() override
     {
@@ -242,39 +246,39 @@ public:
         u64 materialMemorySystemSize = 0;
 
 		
-			char materialsPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
 
-			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
-			void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
-			if (!materialPackData)
-			{
-				R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
-				return false;
-			}
+		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
+		if (!materialPackData)
+		{
+			R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
+			return false;
+		}
 
-			const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
 
-			R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
 
-			void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
-			if (!texturePacksData)
-			{
-				R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackPath);
-				return false;
-			}
+		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
+		if (!texturePacksData)
+		{
+			R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackPath);
+			return false;
+		}
 
-			const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
+		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
 
-			R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
+		R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
 
-            materialMemorySystemSize = r2::draw::mat::MemorySize(64, materialPack->materials()->size(), 
-				texturePacksManifest->totalTextureSize(),
-				texturePacksManifest->totalNumberOfTextures(),
-				texturePacksManifest->texturePacks()->size(),
-				texturePacksManifest->maxTexturesInAPack());
+		materialMemorySystemSize = r2::draw::mat::MemorySize(64, materialPack->materials()->size(),
+			texturePacksManifest->totalTextureSize(),
+			texturePacksManifest->totalNumberOfTextures(),
+			texturePacksManifest->texturePacks()->size(),
+			texturePacksManifest->maxTexturesInAPack());
 		
 
         auto result = sandBoxMemoryArea->Init(Megabytes(3) + materialMemorySystemSize, 0);
@@ -339,40 +343,44 @@ public:
         constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-        
-        
+        animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        mBoneTransformOffsets = MAKE_SARRAY(*linearArenaPtr, glm::ivec4, NUM_DRAWS);
+        mBoneTransforms = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_BONES);
+
         glm::mat4 quadMat = glm::mat4(1.0f);
         
         quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadMat = glm::scale(quadMat, glm::vec3(10.0f));
-    //    r2::sarr::Push(*modelMats, quadMat);
+        r2::sarr::Push(*modelMats, quadMat);
 
         glm::mat4 sphereMat = glm::mat4(1.0f);
         sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
-   //     r2::sarr::Push(*modelMats, sphereMat);
+        r2::sarr::Push(*modelMats, sphereMat);
 
         glm::mat4 cubeMat = glm::mat4(1.0f);
         cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0.6, 0));
-    //    r2::sarr::Push(*modelMats, cubeMat);
+        r2::sarr::Push(*modelMats, cubeMat);
 
         glm::mat4 cylinderMat = glm::mat4(1.0f);
         
         cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.6, 0));
         cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-    //    r2::sarr::Push(*modelMats, cylinderMat);
+        r2::sarr::Push(*modelMats, cylinderMat);
 
         glm::mat4 coneMat = glm::mat4(1.0f);
         coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
         coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-	//	r2::sarr::Push(*modelMats, coneMat);
+		r2::sarr::Push(*modelMats, coneMat);
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
         microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, -3));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
-        r2::sarr::Push(*modelMats, microbatMat);
+        r2::sarr::Push(*animModelMats, microbatMat);
 
         subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
+        animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
         modelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+        animModelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
 
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
@@ -409,7 +417,7 @@ public:
             return false;
         }
 
-
+        //@TODO(Serge): Put this in a helper function 
         r2::draw::BufferLayoutConfiguration layoutConfig{
             {
                 {{r2::draw::ShaderDataType::Float3, "aPos"},
@@ -417,14 +425,46 @@ public:
                  {r2::draw::ShaderDataType::Float2, "aTexCoord"}}
             },
             {
-                Megabytes(4),
-                r2::draw::VertexDrawTypeStatic
+				{
+				    Megabytes(4),
+				    r2::draw::VertexDrawTypeStatic
+			    }
             },
+            
             {
                 Megabytes(4),
                 r2::draw::VertexDrawTypeStatic
             },
-            true, NUM_DRAWS //use draw ids
+            true, NUM_DRAWS, //use draw ids
+            1 // num vertex buffers
+        };
+
+        r2::draw::BufferLayoutConfiguration animatedModelLayout{
+            {
+                {
+                    {r2::draw::ShaderDataType::Float3, "aPos", 0},
+                    {r2::draw::ShaderDataType::Float3, "aNormal", 0},
+                    {r2::draw::ShaderDataType::Float2, "aTexCoord", 0},
+                    {r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
+                    {r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
+                }
+            },
+            {
+                {
+                    Megabytes(4),
+                    r2::draw::VertexDrawTypeStatic
+                },
+                {
+                    Megabytes(4),
+                    r2::draw::VertexDrawTypeStatic
+                }
+            },
+            {
+				Megabytes(4),
+				r2::draw::VertexDrawTypeStatic
+            },
+            true, NUM_DRAWS,
+            2
         };
 
         //For Matrices
@@ -480,11 +520,41 @@ public:
 
 		materials.layout.InitForMaterials(0, 0, NUM_DRAWS);
 
+
+        r2::draw::ConstantBufferLayoutConfiguration boneTransforms
+        {
+            {
+				r2::draw::ConstantBufferLayout::Big,
+				r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
+				r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
+				{
+					{r2::draw::ShaderDataType::Mat4, "boneTransforms", NUM_BONES}
+				}
+            },
+            r2::draw::VertexDrawTypeDynamic
+        };
+
+        r2::draw::ConstantBufferLayoutConfiguration boneTransformOffsets
+        {
+            {
+                r2::draw::ConstantBufferLayout::Big,
+                r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
+                r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
+                {
+                    {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
+                }
+            },
+            r2::draw::VertexDrawTypeDynamic
+        };
+
         r2::sarr::Push(*layouts, layoutConfig);
+        r2::sarr::Push(*layouts, animatedModelLayout);
         r2::sarr::Push(*constantLayouts, constantLayout);
         r2::sarr::Push(*constantLayouts, constantLayout2);
         r2::sarr::Push(*constantLayouts, subCommands);
         r2::sarr::Push(*constantLayouts, materials);
+        r2::sarr::Push(*constantLayouts, boneTransforms);
+        r2::sarr::Push(*constantLayouts, boneTransformOffsets);
 
 
         r2::draw::renderer::SetDepthTest(true);
@@ -505,44 +575,29 @@ public:
         const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP));
-        mMicroBatModel = r2::draw::modlsys::GetModel(mModelSystem, microbatHandle);
+        mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
-        glm::mat4& microBatMatRef = r2::sarr::Last(*modelMats);
+        mSelectedAnimModel = mMicroBatModel;
+
+        glm::mat4& microBatMatRef = r2::sarr::Last(*animModelMats);
         microBatMatRef = microBatMatRef * mMicroBatModel->globalInverseTransform;
 
-        u64 vertexOffset = 0;//r2::draw::renderer::AddFillVertexCommandsForModel(quadModel, r2::sarr::At(*handles.vertexBufferHandles, 0));
-        u64 indexOffset = 0;//r2::draw::renderer::AddFillIndexCommandsForModel(quadModel, r2::sarr::At(*handles.indexBufferHandles, 0));
-        
-//        vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(sphereModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-//        indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(sphereModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
 
-//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cubeModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cubeModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+		r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
+		r2::sarr::Push(*modelsToDraw, quadModel);
+		r2::sarr::Push(*modelsToDraw, sphereModel);
+		r2::sarr::Push(*modelsToDraw, cubeModel);
+		r2::sarr::Push(*modelsToDraw, cylinderModel);
+		r2::sarr::Push(*modelsToDraw, coneModel);
+	//	r2::sarr::Push(*modelsToDraw, mMicroBatModel);
 
-//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(cylinderModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(cylinderModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+        r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
+        r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
+        r2::draw::renderer::FillBuffersForModels(*modelsToDraw, r2::sarr::At(*handles.vertexBufferHandles, 0), r2::sarr::At(*handles.indexBufferHandles, 0), *modelRefs);
 
-//		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(coneModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-//		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(coneModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
+        r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *modelRefs);
 
-		vertexOffset = r2::draw::renderer::AddFillVertexCommandsForModel(mMicroBatModel, r2::sarr::At(*handles.vertexBufferHandles, 0), vertexOffset);
-		indexOffset = r2::draw::renderer::AddFillIndexCommandsForModel(mMicroBatModel, r2::sarr::At(*handles.indexBufferHandles, 0), indexOffset);
-
-
-        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
-        
-        //@NOTE: these need to be in the order that we submit the fill commands
-        r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
-   //     r2::sarr::Push(*modelsToDraw, quadModel);
-   //     r2::sarr::Push(*modelsToDraw, sphereModel);
-  //      r2::sarr::Push(*modelsToDraw, cubeModel);
-    //    r2::sarr::Push(*modelsToDraw, cylinderModel);
-   //     r2::sarr::Push(*modelsToDraw, coneModel);
-        r2::sarr::Push(*modelsToDraw, mMicroBatModel);
-
-        r2::draw::renderer::FillSubCommandsFromModels(*subCommandsToDraw, *modelsToDraw);
-        
-        const u64 numModels = r2::sarr::Size(*modelsToDraw);
+        u64 numModels = r2::sarr::Size(*modelsToDraw);
         for (u64 i = 0; i < numModels; ++i)
         {
             const r2::draw::Model* model = r2::sarr::At(*modelsToDraw, i);
@@ -551,15 +606,41 @@ public:
             r2::sarr::Push(*modelMaterials, materialHandle);
         }
 
+        r2::sarr::Clear(*modelRefs);
+        
+        r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
 
+        r2::draw::VertexBufferHandle vHandles[2];
+        vHandles[0] = r2::sarr::At(*handles.vertexBufferHandles, 1);
+        vHandles[1] = r2::sarr::At(*handles.vertexBufferHandles, 2);
+        r2::draw::renderer::FillBuffersForAnimModels(*animModelsToDraw, vHandles, 2, r2::sarr::At(*handles.indexBufferHandles, 1), *modelRefs);
+
+        r2::draw::renderer::FillSubCommandsFromModelRefs(*animModelsSubCommandsToDraw, *modelRefs);
+
+        numModels = r2::sarr::Size(*animModelsToDraw);
+        u32 boneOffset = 0;
+		for (u64 i = 0; i < numModels; ++i)
+		{
+			const r2::draw::AnimModel* model = r2::sarr::At(*animModelsToDraw, i);
+			const r2::draw::Mesh& mesh = r2::sarr::At(*model->meshes, 0);
+			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
+			r2::sarr::Push(*animModelMaterials, materialHandle);
+
+            r2::sarr::Push(*mBoneTransformOffsets, glm::ivec4(boneOffset, 0, 0, 0));
+
+            boneOffset += model->boneInfo->mSize;
+		}
+
+        FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
+        FREE(modelRefs, *MEM_ENG_SCRATCH_PTR);
         FREE(modelsToDraw, *MEM_ENG_SCRATCH_PTR);
+
+		r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
 
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
-
-
 
         return assetCache != nullptr;
     }
@@ -593,12 +674,29 @@ public:
 		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
 			if (e.KeyCode() == r2::io::KEY_LEFT)
 			{
-				//    r2::draw::OpenGLPrevAnimation();
+                if (mSelectedAnimModel)
+                {
+					s64 numAnimations = mSelectedAnimModel->animations->mSize;
+					if (mSelectedAnimationID - 1 < 0)
+					{
+						mSelectedAnimationID = (s32)numAnimations - 1;
+					}
+					else
+					{
+						--mSelectedAnimationID;
+					}
+                }
+                
 				return true;
 			}
 			else if (e.KeyCode() == r2::io::KEY_RIGHT)
 			{
-				//    r2::draw::OpenGLNextAnimation();
+                if (mSelectedAnimModel)
+                {
+                    u64 numAnimations = mSelectedAnimModel->animations->mSize;
+                    mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
+                }
+                
 				return true;
 			}
 			return false;
@@ -755,6 +853,12 @@ public:
         }
         
         mPersController.Update();
+
+		r2::sarr::Clear(*mBoneTransforms);
+		r2::draw::AnimModel* microBat = const_cast<r2::draw::AnimModel*>(mMicroBatModel);
+
+		r2::draw::PlayAnimationForAnimModel(CENG.GetTicks(), *microBat, 0, *mBoneTransforms, 0);
+        
     }
 
     virtual void Render(float alpha) override
@@ -766,6 +870,11 @@ public:
         r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
 
         r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, materialHandle);
+        
+
+        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*r2::sarr::At(*mMicroBatModel->meshes, 0).optrMaterials, 0);
+
+        r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, animModelMaterialHandle);
 
         r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
        // 
@@ -778,7 +887,7 @@ public:
 
         const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 
-        //@TODO(Serge): draw batch here
+        
 		r2::draw::BatchConfig batch;
 		batch.key = drawElemKey;
 		batch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
@@ -788,8 +897,26 @@ public:
 		batch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
 		batch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
         batch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
+        batch.clear = true;
 
 		r2::draw::renderer::AddDrawBatch(batch);
+
+        r2::draw::BatchConfig animModelBatch;
+        animModelBatch.key = animBatchKey;
+        animModelBatch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 1);
+        animModelBatch.subcommands = animModelsSubCommandsToDraw;
+        animModelBatch.models = animModelMats;
+        animModelBatch.materials = animModelMaterials;
+        animModelBatch.boneTransforms = mBoneTransforms;
+        animModelBatch.boneTransformOffsets = mBoneTransformOffsets;
+        
+        animModelBatch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
+        animModelBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
+        animModelBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
+        animModelBatch.boneTransformOffsetsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORM_OFFSETS);
+        animModelBatch.boneTransformsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORMS);
+
+        r2::draw::renderer::AddDrawBatch(animModelBatch);
 
        // r2::draw::key::Basic clearKey;
 
@@ -810,7 +937,7 @@ public:
     virtual void Shutdown() override
     {
 
-        r2::draw::modlsys::ReturnModel(mModelSystem, mMicroBatModel);
+        //r2::draw::modlsys::ReturnModel(mModelSystem, mMicroBatModel);
 
         r2::draw::modlsys::Shutdown(mModelSystem);
         
@@ -823,6 +950,12 @@ public:
         FREE(modelMats, *linearArenaPtr);
         FREE(subCommandsToDraw, *linearArenaPtr);
         FREE(modelMaterials, *linearArenaPtr);
+
+        FREE(animModelMats, *linearArenaPtr);
+        FREE(animModelMaterials, *linearArenaPtr);
+        FREE(animModelsSubCommandsToDraw, *linearArenaPtr);
+        FREE(mBoneTransformOffsets, *linearArenaPtr);
+        FREE(mBoneTransforms, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -968,12 +1101,23 @@ private:
     r2::mem::LinearArena* linearArenaPtr;
     r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
     r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantLayouts;
+    //We may not need the extra arrays since we copy the data
     r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
+    r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* animModelsSubCommandsToDraw;
     r2::SArray<r2::draw::MaterialHandle>* modelMaterials;
+    r2::SArray<r2::draw::MaterialHandle>* animModelMaterials;
     r2::SArray<glm::mat4>* modelMats;
+    r2::SArray<glm::mat4>* animModelMats;
+
+    r2::SArray<glm::ivec4>* mBoneTransformOffsets;
+    r2::SArray<glm::mat4>* mBoneTransforms;
+
     r2::draw::ModelSystem* mModelSystem = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
-    const r2::draw::Model* mMicroBatModel = nullptr;
+    const r2::draw::AnimModel* mMicroBatModel = nullptr;
+    const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
+
+    s32 mSelectedAnimationID = 0;
 };
 
 namespace

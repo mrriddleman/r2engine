@@ -49,7 +49,12 @@ namespace r2::math
     
     bool NearEq(float v1, float v2)
     {
-        return abs(v1 - v2) < EPSILON;
+        return fabsf(v1 - v2) < EPSILON;
+    }
+
+    bool NearZero(float v1)
+    {
+        return fabsf(v1) < EPSILON;
     }
     
     bool GreaterThanOrEq(float v1, float v2)

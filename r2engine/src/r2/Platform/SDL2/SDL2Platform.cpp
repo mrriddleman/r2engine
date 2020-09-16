@@ -31,7 +31,7 @@ namespace
 {
     const u32 MAX_NUM_FILES = 1024;
     const u32 MAX_NUM_STORAGE_AREAS = 8;
-    
+    const f64 k_millisecondsToSeconds = 1000.;
     r2::mem::MallocArena zipArena{r2::mem::utils::MemBoundary()};
     
     void* AllocZip(u64 size, u64 align)
@@ -218,8 +218,8 @@ namespace r2
                 return SDL_GetPerformanceCounter();
             });
             
-            mEngine.SetGetTicksCallback([]{
-                return SDL_GetTicks();
+            mEngine.SetGetTicksCallback([this]{
+                return  (f64(SDL_GetPerformanceCounter() - mStartTime) * k_millisecondsToSeconds) / (f64)SDL_GetPerformanceFrequency();
             });
            
             mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
@@ -291,15 +291,16 @@ namespace r2
     {
         char newTitle[r2::fs::FILE_PATH_LENGTH];
 
-        u64 currentTime = SDL_GetPerformanceCounter();
+        mStartTime = SDL_GetPerformanceCounter();
+        u64 currentTime = mStartTime;
         s64 accumulator = 0;
         
-		const f64 k_millisecondsToSeconds = 1000.;
+		
         const u64 k_millisecondsForFPSUpdate = 250;
         const u64 k_framesForFPSUpdate = 10;
-
-        u64 dtUpper = SDL_GetPerformanceFrequency() / 62; //(1.0 / 61.0) * k_millisecondsToSeconds;
-        u64 dtLower = SDL_GetPerformanceFrequency() / 60;//(1.0 / 59.0) * k_millisecondsToSeconds;
+        const u64 k_frequency = SDL_GetPerformanceFrequency();
+        u64 dtUpper = k_frequency / 62; //(1.0 / 61.0) * k_millisecondsToSeconds;
+        u64 dtLower = k_frequency / 60;//(1.0 / 59.0) * k_millisecondsToSeconds;
 
         u64 frames = 0;
         u64 startTime = currentTime;
@@ -307,7 +308,7 @@ namespace r2
 
         u64 t = 0;
         u64 k_desiredUpdateRate = 60;
-        const u64 dt = SDL_GetPerformanceFrequency() / k_desiredUpdateRate;
+        const u64 dt = k_frequency / k_desiredUpdateRate;
         bool resync = false;
 
 		const u64 k_timeHistoryCount = 4;
@@ -326,7 +327,7 @@ namespace r2
 		};
 
         
-        const s64 vsync_maxerror = SDL_GetPerformanceFrequency() * .0002;
+        const s64 vsync_maxerror = k_frequency * .0002;
         const u32 k_ignoreFrames = 60;
 
         while (mRunning)
@@ -417,7 +418,7 @@ namespace r2
 			//Calculate ms per frame
 			{
 				endTime = SDL_GetPerformanceCounter();
-                f64 msDiff = (f64(endTime - startTime) * k_millisecondsToSeconds) / (f64)SDL_GetPerformanceFrequency();
+                f64 msDiff = (f64(endTime - startTime) * k_millisecondsToSeconds) / (f64)k_frequency;
 
 				if (msDiff >= k_millisecondsForFPSUpdate &&
 					frames >= k_framesForFPSUpdate)

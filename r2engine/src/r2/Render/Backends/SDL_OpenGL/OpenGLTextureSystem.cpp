@@ -3,6 +3,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Render/Renderer/RenderKey.h"
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLUtils.h"
 
 
 namespace
@@ -66,7 +67,7 @@ namespace r2::draw::gl
 		void Free(r2::draw::tex::TextureHandle& textureHandle)
 		{
 			texcontainer::Free(*textureHandle.container, &textureHandle);
-		}
+ 		}
 
 		void CompressedTexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data)
 		{
@@ -98,18 +99,18 @@ namespace r2::draw::gl
 			container.numSlices = slices;
 			container.isSparse = sparse;
 
-			glGenTextures(1, &container.texId);
-			glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId);
+			GLCall( glGenTextures(1, &container.texId) );
+			GLCall( glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId) );
 
 			if (sparse)
 			{
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
 
 				//@TODO(Serge): pull from format?
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT));
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT));
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
 
 				// TODO: This could be done once per internal format. For now, just do it every time.
@@ -122,13 +123,13 @@ namespace r2::draw::gl
 					bestXSize = 0,
 					bestYSize = 0;
 
-				glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount);
+				GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
 				
 				for (GLint i = 0; i < indexCount; ++i) {
-					glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i);
-					glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize);
-					glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize);
-					glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize);
+					GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
+					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
+					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
+					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
 
 					// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
 					if (zSize == 1) {
@@ -145,21 +146,21 @@ namespace r2::draw::gl
 				R2_CHECK(bestIndex != -1, "Implementation has no valid sizes for us!");
 				if (bestIndex == -1)
 				{
-					glDeleteTextures(1, &container.texId);
+					GLCall(glDeleteTextures(1, &container.texId));
 					return false;
 				}
 					
 				container.xTileSize = bestXSize;
 				container.yTileSize = bestYSize;
 
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, bestIndex);
+				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, bestIndex));
 			}
 
-			glTexStorage3D(GL_TEXTURE_2D_ARRAY, format.mipLevels, format.internalformat, format.width, format.height, slices);
+			GLCall(glTexStorage3D(GL_TEXTURE_2D_ARRAY, format.mipLevels, format.internalformat, format.width, format.height, slices));
 
 			if (!container.freeSpace ||  r2::squeue::Space(*container.freeSpace) < slices)
 			{
-				glDeleteTextures(1, &container.texId);
+				GLCall(glDeleteTextures(1, &container.texId));
 				return false;
 			}
 			
@@ -170,8 +171,12 @@ namespace r2::draw::gl
 
 			if (sparse) {
 				container.handle = glGetTextureHandleARB(container.texId);
+				if (GLenum err = glGetError())
+				{
+					R2_CHECK(false, "");
+				}
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
-				glMakeTextureHandleResidentARB(container.handle);
+				GLCall(glMakeTextureHandleResidentARB(container.handle));
 
 
 			}
@@ -222,14 +227,14 @@ namespace r2::draw::gl
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
 		{
-			glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId);
-			glCompressedTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data);
+			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId));
+			GLCall(glCompressedTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data));
 		}
 
 		void TexSubImage3D(r2::draw::tex::TextureContainer& constainer, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
 		{
-			glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId);
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
+			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId));
+			GLCall(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data));
 
 			auto err = glGetError();
 			if (err != 0)
@@ -247,20 +252,14 @@ namespace r2::draw::gl
 		//Don't use publically 
 		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLboolean commit)
 		{
-			glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId);
+			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId));
 
 			GLsizei levelWidth = container.format.width,
 				levelHeight = container.format.height;
 
 			for (int level = 0; level < container.format.mipLevels; ++level) {
-				glTexPageCommitmentARB(GL_TEXTURE_2D_ARRAY, level, 0, 0, slice, levelWidth, levelHeight, 1, commit);
+				GLCall(glTexPageCommitmentARB(GL_TEXTURE_2D_ARRAY, level, 0, 0, slice, levelWidth, levelHeight, 1, commit));
 				
-				auto error = glGetError();
-				if (error != 0)
-				{
-					R2_CHECK(false, "Failed to commit page");
-					return;
-				}
 				levelWidth = std::max(levelWidth / 2, 1);
 				levelHeight = std::max(levelHeight / 2, 1);
 			}
@@ -454,10 +453,10 @@ namespace r2::draw::tex::impl
 	{
 		GLint maxTextureArrayLevels = 0;
 		if (sparse) {
-			glGetIntegerv(GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB, &maxTextureArrayLevels);
+			GLCall(glGetIntegerv(GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB, &maxTextureArrayLevels));
 		}
 		else {
-			glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels);
+			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
 		}
 		return maxTextureArrayLevels;
 	}

@@ -61,8 +61,8 @@ namespace r2::draw::rendererimpl
 	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
 	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
 	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds);
-	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle bufferId, IndexBufferHandle indexId, DrawIDHandle drawId);
-	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>*configs, ConstantBufferHandle* handles);
+	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
+	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 

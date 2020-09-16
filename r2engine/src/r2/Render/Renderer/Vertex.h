@@ -20,13 +20,7 @@ namespace r2::draw
         //glm::vec3 tangent;
     };
     
-#define MAX_BONE_WEIGHTS 4
-    
-    struct BoneData
-    {
-        glm::vec4 boneWeights = glm::vec4(0.0f);
-        glm::ivec4 boneIDs = glm::ivec4(0);
-    };
+
     
 }
 

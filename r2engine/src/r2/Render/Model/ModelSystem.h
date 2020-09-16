@@ -31,7 +31,10 @@ namespace r2::draw
 
 		ModelHandle LoadModel(ModelSystem* system, const r2::asset::Asset& model);
 		const Model* GetModel(ModelSystem* system, const ModelHandle& handle);
+		const AnimModel* GetAnimModel(ModelSystem* system, const ModelHandle& handle);
+
 		void ReturnModel(ModelSystem* system, const Model* model);
+		void ReturnAnimModel(ModelSystem* system, const AnimModel* model);
 
 		void LoadModels(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles);
 		void FlushAll(ModelSystem* system);

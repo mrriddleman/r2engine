@@ -43,6 +43,8 @@ void main()
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
 	FragColor = vec4(sampledColor.rgb, 1.0);
+	if(sampledColor.a < 0.01)
+		discard;
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec2 uv)

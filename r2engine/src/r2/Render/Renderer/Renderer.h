@@ -8,6 +8,7 @@
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
+#include "r2/Render/Model/Model.h"
 
 namespace r2
 {
@@ -63,12 +64,21 @@ namespace r2::draw
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
 		ConstantBufferHandle materialsHandle;
+		ConstantBufferHandle boneTransformOffsetsHandle;
+		ConstantBufferHandle boneTransformsHandle;
+		b32 clear = false;
 
 		//@NOTE: the size of these arrays should always be the same
 		const r2::SArray<glm::mat4>* models = nullptr;
 		const r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
-		//this assumes that the materials have already been uploaded
+		//@NOTE: this assumes that the materials have already been uploaded
 		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr;
+
+		//The boneTransforms can be of any size
+		const r2::SArray<glm::mat4>* boneTransforms = nullptr;
+		//boneTransformOffsets' size should be exactly the same as the number of subcommands
+		const r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
+
 	};
 }
 
@@ -98,10 +108,20 @@ namespace r2::draw::renderer
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
 
+
+
+	ModelRef FillBuffersForModel(const Model* model, VertexBufferHandle vHandle, IndexBufferHandle iHandle, const ModelRef& afterModel);
+	void FillBuffersForModels(const r2::SArray<const Model*>& models, VertexBufferHandle vHandle, IndexBufferHandle iHandle, r2::SArray<ModelRef>& modelRefs);
+	ModelRef FillBuffersForAnimModel(const AnimModel* model, VertexBufferHandle vHandles[], u32 numVHandles, IndexBufferHandle iHandle, const ModelRef& afterModel);
+	void FillBuffersForAnimModels(const r2::SArray<const AnimModel*>& models, VertexBufferHandle vHandles[], u32 numVHandles, IndexBufferHandle iHandle, r2::SArray<ModelRef>& modelRefs);
+
+	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
+	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
+
 	u64 AddFillVertexCommandsForModel(const Model* model, VertexBufferHandle handle, u64 offset = 0);
 	u64 AddFillIndexCommandsForModel(const Model* model, IndexBufferHandle handle, u64 offset = 0);
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset = 0);
-	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
+
 
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);

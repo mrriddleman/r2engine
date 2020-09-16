@@ -38,7 +38,7 @@ namespace r2
         
         u64 GetPerformanceFrequency() const;
         u64 GetPerformanceCounter() const;
-        u32 GetTicks() const;
+        f64 GetTicks() const;
         
         //Game Controllers functions
         r2::io::ControllerID OpenGameController(r2::io::ControllerID controllerID);
@@ -69,7 +69,7 @@ namespace r2
         typedef void (*SetClipboardTextFunc)(void* user_data, const char* text);
         using GetPerformanceFrequencyFunc = std::function<u64 (void)>;
         using GetPerformanceCounterFunc = std::function<u64 (void)>;
-        using GetTicksFunc = std::function<u32 (void)>;
+        using GetTicksFunc = std::function<f64 (void)>;
         
         //Game Controller callbacks from the platform
         using OpenGameControllerFunc = std::function<void* (r2::io::ControllerID controllerID)>;
