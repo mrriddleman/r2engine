@@ -20,7 +20,8 @@ namespace r2::fs::utils
         SHADERS_RAW,
         SHADERS_BIN,
         SHADERS_MANIFEST,
-        MODELS
+        MODELS,
+        ANIMATIONS
     };
     
 #ifdef R2_PLATFORM_WINDOWS

@@ -33,6 +33,10 @@ using uptr = uintptr_t;
 #define Megabytes(x) (Kilobytes(x)*1024LL)
 #define Gigabytes(x) (Megabytes(x)*1024LL)
 #define Terabytes(x) (Gigabytes(x)*1024LL)
+#define BytesToKilobytes(x) (f64(x) / 1024.0)
+#define BytesToMegabytes(x) (f64(x) / f64(1024.0 * 1024.0))
+#define BytesToGigabytes(x) (f64(x) / f64(1024.0 * 1024.0 * 1024.0))
+
 #define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 namespace r2::fs

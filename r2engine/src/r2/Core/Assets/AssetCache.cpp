@@ -106,11 +106,12 @@ namespace r2::asset
             return;
         }
         
-#if ASSET_CACHE_DEBUG
+#if R2_ASSET_CACHE_DEBUG
         
+        PrintHighWaterMark();
         PrintLRU();
         PrintAssetMap();
-        R2_LOGI("Asset Cache: %llu - memory high water mark: %llu", mSlot, mMemoryHighWaterMark);
+        
 #endif
         
         FlushAll();
@@ -203,6 +204,11 @@ namespace r2::asset
 		}
 
         return LoadAsset(asset);
+    }
+
+    void AssetCache::FreeAsset(const AssetHandle& handle)
+    {
+        Free(handle, false);
     }
 
     AssetCacheRecord AssetCache::GetAssetBuffer(AssetHandle handle)
@@ -471,7 +477,7 @@ namespace r2::asset
             r2::squeue::MoveToFront(*mAssetLRU, lruIndex);
         }
         
-#if ASSET_CACHE_DEBUG
+#if R2_ASSET_CACHE_DEBUG
         PrintLRU();
 #endif
     }
@@ -848,6 +854,13 @@ namespace r2::asset
 //        }
         
         printf("=================================================================\n");
+    }
+
+    void AssetCache::PrintHighWaterMark()
+    {
+		printf("===============================================PrintHighWaterMark====================================================\n");
+		printf("Asset Cache: %llu - memory high water mark: %llu bytes, %f Kilobytes, %f Megabytes\n", mSlot, mMemoryHighWaterMark, BytesToKilobytes(mMemoryHighWaterMark), BytesToMegabytes(mMemoryHighWaterMark));
+		printf("=====================================================================================================================\n");
     }
     
     void AssetCache::PrintAllAssetsInFiles()

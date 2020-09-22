@@ -27,7 +27,8 @@ namespace r2::asset
 		DEFAULT = 0,
 		TEXTURE,
 		MODEL,
-		ASSIMP,
+		ASSIMP_MODEL,
+		ASSIMP_ANIMATION,
 		NUM_ENGINE_ASSET_TYPES
 	};
 }

@@ -16,26 +16,16 @@ namespace r2::draw
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Skeleton), alignment, headerSize, boundsChecking);
 	}
 	
-	u64 AnimationChannel::MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, u64 alignment, u32 headerSize, u32 boundsChecking)
-	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VectorKey>::MemorySize(numPositionKeys), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VectorKey>::MemorySize(numScaleKeys), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RotationKey>::MemorySize(numRotationKeys), alignment, headerSize, boundsChecking);
-	}
 
-	u64 Animation::MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking)
-	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AnimationChannel>::MemorySize(numChannels), alignment, headerSize, boundsChecking);
-	}
 
-	u64 AnimModel::MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numAnimations, u64 alignment, u32 headerSize, u32 boundsChecking)
+	u64 AnimModel::MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<u32>::MemorySize(boneMapping), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Mesh>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Animation>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Mesh>::MemorySize(numMeshes), alignment, headerSize, boundsChecking);
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Animation>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
 	}
 
     u64 Model::MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 numTextures, u64 headerSize, u64 boundsChecking, u64 alignment)

@@ -7,35 +7,10 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
+#include "r2/Core/Assets/AssimpHelpers.h"
 
 namespace
 {
-	glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)
-	{
-		//result[col][row]
-		//mat[row][col] a, b, c, d - rows
-		//              1, 2, 3, 4 - cols
-		glm::mat4 result = glm::mat4();
-
-		result[0][0] = mat.a1; result[1][0] = mat.a2; result[2][0] = mat.a3; result[3][0] = mat.a4;
-		result[0][1] = mat.b1; result[1][1] = mat.b2; result[2][1] = mat.b3; result[3][1] = mat.b4;
-		result[0][2] = mat.c1; result[1][2] = mat.c2; result[2][2] = mat.c3; result[3][2] = mat.c4;
-		result[0][3] = mat.d1; result[1][3] = mat.d2; result[2][3] = mat.d3; result[3][3] = mat.d4;
-
-		return result;
-	}
-
-	glm::vec3 AssimpVec3ToGLMVec3(const aiVector3D& vec3D)
-	{
-		return glm::vec3(vec3D.x, vec3D.y, vec3D.z);
-	}
-
-	glm::quat AssimpQuatToGLMQuat(const aiQuaternion& quat)
-	{
-		return glm::quat(quat.w, quat.x, quat.y, quat.z);
-	}
-
 	u64 GetTotalMeshBytes(aiNode* node, const aiScene* scene, u64& numMeshes, u64& numBones, u64& numVertices, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		u64 bytes = 0;
@@ -73,24 +48,7 @@ namespace
 	}
 
 
-	u64 GetTotalAnimationBytes(aiNode* node, const aiScene* scene, u64 alignment, u32 header, u32 boundsChecking)
-	{
-		u64 bytes = 0;
 
-		for (u32 i = 0; i < scene->mNumAnimations; ++i)
-		{
-			aiAnimation* anim = scene->mAnimations[i];
-			bytes += r2::draw::Animation::MemorySizeNoData(anim->mNumChannels, alignment, header, boundsChecking);
-				
-			for (u32 j = 0; j < anim->mNumChannels; ++j)
-			{
-				aiNodeAnim* animChannel = anim->mChannels[j];
-				bytes += r2::draw::AnimationChannel::MemorySizeNoData(animChannel->mNumPositionKeys, animChannel->mNumScalingKeys, animChannel->mNumRotationKeys, alignment, header, boundsChecking);
-			}
-		}
-
-		return bytes;
-	}
 
 	void ProcessMesh(r2::SArray<r2::draw::Mesh>* meshes,  aiMesh* mesh, const aiScene* scene, void** dataPtr, const char* directory)
 	{
@@ -182,7 +140,8 @@ namespace
 		for (u32 i = 0; i < mesh->mNumBones; ++i)
 		{
 			s32 boneIndex = 0;
-
+			std::string boneNameStr = std::string(mesh->mBones[i]->mName.data);
+			printf("boneNameStr name: %s\n", boneNameStr.c_str());
 			u64 boneName = STRING_ID(mesh->mBones[i]->mName.C_Str());
 
 			s32 theDefault = -1;
@@ -286,74 +245,7 @@ namespace
 		}
 	}
 
-	void ProcessAnimations(r2::draw::AnimModel& model, void** dataPtr,  const aiNode* node, const aiScene* scene)
-	{
-		if (scene->HasAnimations())
-		{
-			u32 oldSize = (u32)r2::sarr::Size(*model.animations);
-			u32 startingIndex = oldSize;
-			u32 newSize = oldSize + scene->mNumAnimations;
-
-			for (u32 i = startingIndex; i < newSize; ++i)
-			{
-				aiAnimation* anim = scene->mAnimations[i - oldSize];
-				r2::draw::Animation r2Anim;
-				r2Anim.duration = anim->mDuration;
-				r2Anim.ticksPerSeconds = anim->mTicksPerSecond;
-				r2Anim.hashName = STRING_ID(anim->mName.C_Str());
-
-				if (anim->mNumChannels > 0)
-				{
-					r2Anim.channels = EMPLACE_SARRAY(*dataPtr, r2::draw::AnimationChannel, anim->mNumChannels);
-					*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::AnimationChannel>::MemorySize(anim->mNumChannels));
-				}
-
-				for (u32 j = 0; j < anim->mNumChannels; ++j)
-				{
-					aiNodeAnim* animChannel = anim->mChannels[j];
-					r2::draw::AnimationChannel channel;
-					channel.hashName = STRING_ID(animChannel->mNodeName.C_Str());
-
-					if (animChannel->mNumPositionKeys > 0)
-					{
-						channel.positionKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::VectorKey, animChannel->mNumPositionKeys);
-						*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(animChannel->mNumPositionKeys));
-					}
-
-					for (u32 pKey = 0; pKey < animChannel->mNumPositionKeys; ++pKey)
-					{
-						r2::sarr::Push(*channel.positionKeys, { animChannel->mPositionKeys[pKey].mTime, AssimpVec3ToGLMVec3(animChannel->mPositionKeys[pKey].mValue) });
-					}
-
-					if (animChannel->mNumScalingKeys > 0)
-					{
-						channel.scaleKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::VectorKey, animChannel->mNumScalingKeys);
-						*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(animChannel->mNumScalingKeys));
-					}
-
-					for (u32 sKey = 0; sKey < animChannel->mNumScalingKeys; ++sKey)
-					{
-						r2::sarr::Push(*channel.scaleKeys, { animChannel->mScalingKeys[sKey].mTime, AssimpVec3ToGLMVec3(animChannel->mScalingKeys[sKey].mValue) });
-					}
-
-					if (animChannel->mNumRotationKeys > 0)
-					{
-						channel.rotationKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::RotationKey, animChannel->mNumRotationKeys);
-						*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(animChannel->mNumRotationKeys));
-					}
-
-					for (u32 rKey = 0; rKey < animChannel->mNumRotationKeys; ++rKey)
-					{
-						r2::sarr::Push(*channel.rotationKeys, {animChannel->mRotationKeys[rKey].mTime, AssimpQuatToGLMQuat(animChannel->mRotationKeys[rKey].mValue.Normalize())});
-					}
-
-					r2::sarr::Push(*r2Anim.channels, channel);
-				}
-
-				r2::sarr::Push(*model.animations, r2Anim);
-			}
-		}
-	}
+	
 }
 
 namespace r2::asset
@@ -365,7 +257,7 @@ namespace r2::asset
 
 	AssetType AssimpAssetLoader::GetType() const
 	{
-		return ASSIMP;
+		return ASSIMP_MODEL;
 	}
 
 	bool AssimpAssetLoader::ShouldProcess()
@@ -376,7 +268,7 @@ namespace r2::asset
 	u64 AssimpAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		Assimp::Importer import;
-
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -401,20 +293,15 @@ namespace r2::asset
 		mNumMeshes = 0;
 		mNumBones = 0;
 		mNumVertices = 0;
-		mNumAnimations = 0;
+
 		u64 totalSizeInBytes = GetTotalMeshBytes(scene->mRootNode, scene, mNumMeshes, mNumBones, mNumVertices, alignment, header, boundsChecking);
+
+
+		import.FreeScene();
 
 		if (scene->HasAnimations())
 		{
-			//figure out how many animations
-			mNumAnimations = scene->mNumAnimations;
-			totalSizeInBytes += GetTotalAnimationBytes(scene->mRootNode, scene, alignment, header, boundsChecking);
-		}
-		import.FreeScene();
-
-		if (mNumAnimations > 0)
-		{
-			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, mNumAnimations, alignment, header, boundsChecking);
+			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, alignment, header, boundsChecking);
 		}
 
 		return totalSizeInBytes + r2::draw::Model::ModelMemorySize(mNumMeshes, alignment, header, boundsChecking);
@@ -423,7 +310,7 @@ namespace r2::asset
 	bool AssimpAssetLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		Assimp::Importer import;
-
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -468,10 +355,6 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneInfo>::MemorySize(mNumBones));
 
-			model->animations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation, mNumAnimations);
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation>::MemorySize(mNumAnimations));
-
 			u64 hashCapacity = static_cast<u64>(std::round( mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier() ) );
 
 			model->boneMapping = MAKE_SHASHMAP_IN_PLACE(s32, startOfArrayPtr, hashCapacity);
@@ -487,8 +370,7 @@ namespace r2::asset
 			model->skeleton.parent = nullptr;
 
 			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, &startOfArrayPtr, numVertices, "");
-			//Process the animations
-			ProcessAnimations(*model, &startOfArrayPtr, scene->mRootNode, scene);
+
 		}
 		else
 		{

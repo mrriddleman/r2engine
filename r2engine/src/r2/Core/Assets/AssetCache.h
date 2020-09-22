@@ -60,6 +60,7 @@ namespace r2::asset
         bool HasAsset(const Asset& asset);
 
         AssetHandle ReloadAsset(const Asset& asset);
+        void FreeAsset(const AssetHandle& handle);
 
         //Should not keep this pointer around for longer than necessary to use it as it can change in debug
         AssetCacheRecord GetAssetBuffer(AssetHandle handle);
@@ -164,6 +165,7 @@ namespace r2::asset
 #if R2_ASSET_CACHE_DEBUG 
         void PrintLRU();
         void PrintAssetMap();
+        void PrintHighWaterMark();
         void PrintAllAssetsInFiles();
         void PrintAssetsInFile(AssetFile* file);
         void PrintAsset(const char* asset, AssetHandle assetHandle, u32 refcount);

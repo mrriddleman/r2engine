@@ -18,7 +18,6 @@ namespace r2::asset
 		//for now store the data from GetLoadedAssetSize() to use in LoadAsset
 		u64 mNumMeshes = 0;
 		u64 mNumBones = 0;
-		u64 mNumAnimations = 0;
 		u64 mNumVertices = 0;
 	};
 }

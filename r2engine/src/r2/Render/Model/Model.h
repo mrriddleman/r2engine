@@ -28,20 +28,10 @@ namespace r2::draw
 	struct BoneInfo
 	{
 		glm::mat4 offsetTransform = glm::mat4(1.0f);
-		glm::mat4 finalTransform = glm::mat4(1.0f);
+		//glm::mat4 finalTransform = glm::mat4(1.0f);
 	};
 
-	struct VectorKey
-	{
-		double time;
-		glm::vec3 value;
-	};
 
-	struct RotationKey
-	{
-		double time;
-		glm::quat quat;
-	};
 
     struct Skeleton;
     struct Skeleton
@@ -55,30 +45,7 @@ namespace r2::draw
         static u64 MemorySizeNoData(u64 numChildren, u64 alignment, u32 headerSize, u32 boundsChecking);
     };
 
-	struct AnimationChannel
-	{
-		//std::string name;
-        u64 hashName;
-		//u32 numPositionKeys = 0;
-		//u32 numRotationKeys = 0;
-		//u32 numScalingKeys = 0;
-		r2::SArray<VectorKey>* positionKeys = nullptr;
-		r2::SArray<VectorKey>* scaleKeys = nullptr;
-		r2::SArray<RotationKey>* rotationKeys = nullptr;
 
-        static u64 MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, u64 alignment, u32 headerSize, u32 boundsChecking);
-	};
-
-	struct Animation
-	{
-		//std::string name;
-        u64 hashName;
-		double duration = 0; //in ticks
-		double ticksPerSeconds = 0;
-        r2::SArray<AnimationChannel>* channels;
-
-        static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
-	};
 
 	struct AnimModel
 	{
@@ -87,15 +54,15 @@ namespace r2::draw
 		r2::SArray<BoneData>* boneData = nullptr;
 		r2::SArray<BoneInfo>* boneInfo = nullptr;
 
-		r2::SArray<Animation>* animations = nullptr;
-        r2::SArray<Animation>* noptrAddedAnimations = nullptr;
+		//r2::SArray<Animation>* animations = nullptr;
+ //       r2::SArray<Animation>* noptrAddedAnimations = nullptr;
 		r2::SHashMap<s32>* boneMapping = nullptr;
 		
         Skeleton skeleton;
         glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 
         //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
-        static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numAnimations, u64 alignment, u32 headerSize, u32 boundsChecking);
+        static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
 		//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
 	};
 

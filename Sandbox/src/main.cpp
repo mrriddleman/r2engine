@@ -25,6 +25,7 @@
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
+#include "r2/Render/Animation/AnimationCache.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Commands.h"
@@ -36,7 +37,7 @@
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-#include "r2/Render/Renderer/AnimationPlayer.h"
+#include "r2/Render/Animation/AnimationPlayer.h"
 
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
@@ -281,7 +282,7 @@ public:
 			texturePacksManifest->maxTexturesInAPack());
 		
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(3) + materialMemorySystemSize, 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(5) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
         subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1) + materialMemorySystemSize);
@@ -381,7 +382,7 @@ public:
         animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
         modelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
         animModelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-
+        mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::AnimationHandle, 20);
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
@@ -414,6 +415,30 @@ public:
         if (!mModelSystem)
         {
             R2_CHECK(false, "Failed to create the model system!");
+            return false;
+        }
+        r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(100);
+
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.fbx", modelFilePath);
+        r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)idleAnimFile);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.fbx", modelFilePath);
+		r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)invertIdleAnimFile);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.fbx", modelFilePath);
+		r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)attackAnimFile);
+
+        mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(1), animationFiles, "Sandbox Animation Cache");
+
+        if (!mAnimationCache)
+        {
+            R2_CHECK(false, "Failed to create the animation cache");
             return false;
         }
 
@@ -574,7 +599,7 @@ public:
         const r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
         const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
-        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP));
+        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
         mSelectedAnimModel = mMicroBatModel;
@@ -642,6 +667,16 @@ public:
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
 
+        r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
+
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.fbx", r2::asset::ASSIMP_ANIMATION));
+
+        r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
+
+        FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
+
         return assetCache != nullptr;
     }
 
@@ -676,7 +711,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-					s64 numAnimations = mSelectedAnimModel->animations->mSize;
+                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles);
 					if (mSelectedAnimationID - 1 < 0)
 					{
 						mSelectedAnimationID = (s32)numAnimations - 1;
@@ -693,7 +728,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    u64 numAnimations = mSelectedAnimModel->animations->mSize;
+                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles);
                     mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
                 }
                 
@@ -857,7 +892,7 @@ public:
 		r2::sarr::Clear(*mBoneTransforms);
 		r2::draw::AnimModel* microBat = const_cast<r2::draw::AnimModel*>(mMicroBatModel);
 
-		r2::draw::PlayAnimationForAnimModel(CENG.GetTicks(), *microBat, 0, *mBoneTransforms, 0);
+        r2::draw::PlayAnimationForAnimModel(CENG.GetTicks(), *microBat, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, 0);
         
     }
 
@@ -937,8 +972,7 @@ public:
     virtual void Shutdown() override
     {
 
-        //r2::draw::modlsys::ReturnModel(mModelSystem, mMicroBatModel);
-
+        r2::draw::animcache::Shutdown(*mAnimationCache);
         r2::draw::modlsys::Shutdown(mModelSystem);
         
         void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
@@ -951,6 +985,7 @@ public:
         FREE(subCommandsToDraw, *linearArenaPtr);
         FREE(modelMaterials, *linearArenaPtr);
 
+        FREE(mAnimationsHandles, *linearArenaPtr);
         FREE(animModelMats, *linearArenaPtr);
         FREE(animModelMaterials, *linearArenaPtr);
         FREE(animModelsSubCommandsToDraw, *linearArenaPtr);
@@ -1111,8 +1146,10 @@ private:
 
     r2::SArray<glm::ivec4>* mBoneTransformOffsets;
     r2::SArray<glm::mat4>* mBoneTransforms;
+    r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
 
     r2::draw::ModelSystem* mModelSystem = nullptr;
+    r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
@@ -1154,6 +1191,9 @@ namespace
                 break;
             case r2::fs::utils::MODELS:
                 r2::util::PathCpy(subpath, "assets/Sandbox_Models");
+                break;
+            case r2::fs::utils::ANIMATIONS:
+                r2::util::PathCpy(subpath, "assets/Sandbox_Animations");
                 break;
             default:
                 result = false;
