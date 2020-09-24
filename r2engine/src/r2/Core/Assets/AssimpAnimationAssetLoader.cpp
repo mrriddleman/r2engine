@@ -3,6 +3,7 @@
 #include "r2/Core/Assets/AssimpAnimationAssetLoader.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssimpHelpers.h"
+#include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
 
 #include "r2/Utils/Hash.h"
@@ -55,8 +56,6 @@ namespace
 				r2::draw::AnimationChannel channel;
 				r2::draw::AnimationChannel* channelToUse = &channel;
 				std::string channelName = std::string(animChannel->mNodeName.data);
-
-				printf("channelName: %s\n", channelName.c_str());
 				
 				channel.hashName = STRING_ID(channelName.c_str());
 		
@@ -128,7 +127,7 @@ namespace r2::asset
 	{
 		Assimp::Importer import;
 
-	//	import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		//import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, 0);
 
 		if (!scene || !scene->mRootNode)
@@ -166,6 +165,7 @@ namespace r2::asset
 		void* dataPtr = assetBuffer.MutableData();
 
 		void* startOfArrayPtr = nullptr;
+
 
 		if (scene->HasAnimations())
 		{

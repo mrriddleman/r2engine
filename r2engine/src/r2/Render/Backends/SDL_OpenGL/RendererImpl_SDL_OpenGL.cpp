@@ -174,7 +174,7 @@ namespace r2::draw::rendererimpl
 		s_optrRendererImpl->mSubAreaHandle = subAreaHandle;
 		s_optrRendererImpl->mSubAreaArena = linearArena;
 		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numRingBuffers* HASH_MULT);
-		
+	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr;
 	}

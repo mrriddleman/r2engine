@@ -376,7 +376,13 @@ public:
         glm::mat4 microbatMat = glm::mat4(1.0f);
         microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, -3));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
-        r2::sarr::Push(*animModelMats, microbatMat);
+     //   r2::sarr::Push(*animModelMats, microbatMat);
+
+
+        glm::mat4 skeletonModel = glm::mat4(1.0f);
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 1, -3));
+        skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
+        r2::sarr::Push(*animModelMats, skeletonModel);
 
         subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
         animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
@@ -410,6 +416,13 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)modelFile);
 
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer.fbx", modelFilePath);
+
+        r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
+
+
         mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Kilobytes(750), false, modelFiles, "Sandbox Model System");
 
         if (!mModelSystem)
@@ -419,20 +432,43 @@ public:
         }
         r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(100);
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.fbx", modelFilePath);
-        r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+  //      r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.fbx", modelFilePath);
+  //      r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)idleAnimFile);
+  //      r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)idleAnimFile);
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.fbx", modelFilePath);
-		r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.fbx", modelFilePath);
+		//r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)invertIdleAnimFile);
+  //      r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)invertIdleAnimFile);
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.fbx", modelFilePath);
-		r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		//r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.fbx", modelFilePath);
+		//r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)attackAnimFile);
+		//r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)attackAnimFile);
+
+
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.fbx", modelFilePath);
+
+        r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonIdleAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonWalkAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonWalkAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/run.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonRoarAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonRoarAnimFile);
+
+
 
         mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(1), animationFiles, "Sandbox Animation Cache");
 
@@ -599,14 +635,22 @@ public:
         const r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
         const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
-        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
-        mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
+        //auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
+        //mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
-        mSelectedAnimModel = mMicroBatModel;
+        //
 
-        glm::mat4& microBatMatRef = r2::sarr::Last(*animModelMats);
-        microBatMatRef = microBatMatRef * mMicroBatModel->globalInverseTransform;
+        //glm::mat4& microBatMatRef = r2::sarr::First(*animModelMats);
+        //microBatMatRef = microBatMatRef * mMicroBatModel->globalInverseTransform;
 
+
+        auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer.fbx", r2::asset::ASSIMP_MODEL));
+        mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
+
+     //   glm::mat4& skeletonMatRef = r2::sarr::Last(*animModelMats);
+      //  skeletonMatRef = skeletonMatRef * mSkeletonModel->globalInverseTransform;
+
+        mSelectedAnimModel = mSkeletonModel;
 
 		r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
 		r2::sarr::Push(*modelsToDraw, quadModel);
@@ -614,7 +658,7 @@ public:
 		r2::sarr::Push(*modelsToDraw, cubeModel);
 		r2::sarr::Push(*modelsToDraw, cylinderModel);
 		r2::sarr::Push(*modelsToDraw, coneModel);
-	//	r2::sarr::Push(*modelsToDraw, mMicroBatModel);
+
 
         r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
         r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
@@ -633,7 +677,8 @@ public:
 
         r2::sarr::Clear(*modelRefs);
         
-        r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
+     //   r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
+        r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
 
         r2::draw::VertexBufferHandle vHandles[2];
         vHandles[0] = r2::sarr::At(*handles.vertexBufferHandles, 1);
@@ -669,9 +714,13 @@ public:
 
         r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
 
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.fbx", r2::asset::ASSIMP_ANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.fbx", r2::asset::ASSIMP_ANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.fbx", r2::asset::ASSIMP_ANIMATION));
+      //  r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.fbx", r2::asset::ASSIMP_ANIMATION));
+      //  r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.fbx", r2::asset::ASSIMP_ANIMATION));
+      //  r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.fbx", r2::asset::ASSIMP_ANIMATION));
+
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("run.fbx", r2::asset::ASSIMP_ANIMATION));
 
         r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
 
@@ -890,10 +939,12 @@ public:
         mPersController.Update();
 
 		r2::sarr::Clear(*mBoneTransforms);
-		r2::draw::AnimModel* microBat = const_cast<r2::draw::AnimModel*>(mMicroBatModel);
 
-        r2::draw::PlayAnimationForAnimModel(CENG.GetTicks(), *microBat, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, 0);
-        
+        auto time = CENG.GetTicks();
+
+
+   //     r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, r2::sarr::At(*mBoneTransformOffsets, 0).x);;
+        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID ), *mAnimationCache, *mBoneTransforms, r2::sarr::At(*mBoneTransformOffsets, 0).x);
     }
 
     virtual void Render(float alpha) override
@@ -907,7 +958,7 @@ public:
         r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, materialHandle);
         
 
-        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*r2::sarr::At(*mMicroBatModel->meshes, 0).optrMaterials, 0);
+        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*r2::sarr::At(*mSelectedAnimModel->meshes, 0).optrMaterials, 0);
 
         r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, animModelMaterialHandle);
 
@@ -1152,6 +1203,7 @@ private:
     r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
+    const r2::draw::AnimModel* mSkeletonModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
 
     s32 mSelectedAnimationID = 0;

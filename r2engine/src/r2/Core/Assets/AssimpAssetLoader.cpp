@@ -8,6 +8,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "r2/Core/Assets/AssimpHelpers.h"
+#include "glm/gtx/string_cast.hpp"
 
 namespace
 {
@@ -50,17 +51,18 @@ namespace
 
 
 
-	void ProcessMesh(r2::SArray<r2::draw::Mesh>* meshes,  aiMesh* mesh, const aiScene* scene, void** dataPtr, const char* directory)
+	void ProcessMesh(r2::SArray<r2::draw::Mesh>* meshes, aiMesh* mesh, const aiNode* node, const aiScene* scene, u32& indexOffset, void** dataPtr, const char* directory)
 	{
 		r2::draw::Mesh nextMesh;
 
-		u32 indexOffset = 0;
-
-		u64 numMeshes = r2::sarr::Size(*meshes);
-
-		for (u64 i = 0; i < numMeshes; ++i)
+		printf("Mesh: %s\n", mesh->mName.C_Str());
+		
+		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
+		const aiNode* nextNode = node->mParent;
+		while (nextNode)
 		{
-			indexOffset += r2::sarr::Size(*r2::sarr::At(*meshes, i).optrIndices);
+			localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
+			nextNode = nextNode->mParent;
 		}
 
 		nextMesh.optrVertices = EMPLACE_SARRAY(*dataPtr, r2::draw::Vertex, mesh->mNumVertices);
@@ -84,11 +86,11 @@ namespace
 		{
 			r2::draw::Vertex nextVertex;
 
-			nextVertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+			nextVertex.position = localTransform * glm::vec4(glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z), 1.0);
 
 			if (mesh->mNormals)
 			{
-				nextVertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+				nextVertex.normal = glm::mat3(glm::inverse(glm::transpose(localTransform))) * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 			}
 
 			if (mesh->mTextureCoords)
@@ -99,14 +101,25 @@ namespace
 			r2::sarr::Push(*nextMesh.optrVertices, nextVertex);
 		}
 
+		u32 indexOffsetToUse = indexOffset;
 		for (u32 i = 0; i < mesh->mNumFaces; ++i)
 		{
 			aiFace face = mesh->mFaces[i];
 			for (u32 j = 0; j < face.mNumIndices; ++j)
 			{
-				r2::sarr::Push(*nextMesh.optrIndices, face.mIndices[j] + indexOffset);
+				u32 nextIndex = face.mIndices[j] + indexOffsetToUse;
+			//	printf("face.mIndices[j] + indexOffsetToUse: %zu\n", nextIndex);
+				r2::sarr::Push(*nextMesh.optrIndices, nextIndex);
+				
+				if (nextIndex > indexOffset)
+				{
+					indexOffset = nextIndex;
+				}
 			}
+			
 		}
+
+		indexOffset++;
 
 		if (mesh->mMaterialIndex >= 0)
 		{
@@ -135,14 +148,23 @@ namespace
 		r2::sarr::Push(*meshes, nextMesh);
 	}
 
-	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiScene* scene)
+	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
 	{
-		for (u32 i = 0; i < mesh->mNumBones; ++i)
+		const aiMesh* meshToUse = mesh;
+
+		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
 			s32 boneIndex = 0;
-			std::string boneNameStr = std::string(mesh->mBones[i]->mName.data);
+			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
 			printf("boneNameStr name: %s\n", boneNameStr.c_str());
-			u64 boneName = STRING_ID(mesh->mBones[i]->mName.C_Str());
+
+			if (std::string(boneNameStr.c_str()) == "cloak_right_01")
+			{
+				int k = 0;
+			}
+
+
+			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
 			s32 theDefault = -1;
 			s32 result = r2::shashmap::Get(*model.boneMapping, boneName, theDefault); 
@@ -151,7 +173,7 @@ namespace
 			{
 				boneIndex = (u32)r2::sarr::Size(*model.boneInfo);
 				r2::draw::BoneInfo info;
-				info.offsetTransform = AssimpMat4ToGLMMat4(mesh->mBones[i]->mOffsetMatrix);
+				info.offsetTransform = AssimpMat4ToGLMMat4(meshToUse->mBones[i]->mOffsetMatrix);
 				r2::sarr::Push(*model.boneInfo, info);
 
 				r2::shashmap::Set(*model.boneMapping, boneName, boneIndex);
@@ -161,12 +183,20 @@ namespace
 				boneIndex = result;
 			}
 
-			size_t numWeights = mesh->mBones[i]->mNumWeights;
+			printf("boneIndex: %i\n", boneIndex);
+
+			size_t numWeights = meshToUse->mBones[i]->mNumWeights;
 
 			for (u32 j = 0; j < numWeights; ++j)
 			{
-				u32 vertexID = baseVertex + mesh->mBones[i]->mWeights[j].mVertexId;
 
+
+				u32 vertexID = baseVertex + meshToUse->mBones[i]->mWeights[j].mVertexId;
+				printf("bones - vertexid: %zu\n",  vertexID);
+				if (vertexID == 4584)
+				{
+					int k = 0;
+				}
 				bool found = false;
 
 				float currentWeightTotal = 0.0f;
@@ -174,10 +204,15 @@ namespace
 				{
 					currentWeightTotal += r2::sarr::At(*model.boneData, vertexID).boneWeights[k];
 
+					if (currentWeightTotal > 0.0f)
+					{
+						int k = 0;
+					}
+
 					if (!r2::math::NearEq(currentWeightTotal, 1.0f) && r2::math::NearEq(r2::sarr::At(*model.boneData, vertexID).boneWeights[k], 0.0f))
 					{
 						r2::sarr::At(*model.boneData, vertexID).boneIDs[k] = boneIndex;
-						r2::sarr::At(*model.boneData, vertexID).boneWeights[k] = mesh->mBones[i]->mWeights[j].mWeight;
+						r2::sarr::At(*model.boneData, vertexID).boneWeights[k] = meshToUse->mBones[i]->mWeights[j].mWeight;
 
 						found = true;
 						break;
@@ -185,44 +220,91 @@ namespace
 				}
 			}
 		}
+
+		if (meshToUse->mNumBones == 0)
+		{
+			//manually find the bone that goes with this guy
+			const aiNode* nodeToUse = node->mParent;
+
+			while (nodeToUse)
+			{
+				u64 boneName = STRING_ID(nodeToUse->mName.C_Str());
+				s32 theDefault = -1;
+				s32 boneIndex = r2::shashmap::Get(*model.boneMapping, boneName, theDefault);
+				if (boneIndex != theDefault)
+				{
+					for (u64 i = 0; i < meshToUse->mNumVertices; ++i)
+					{
+						u32 vertexID = baseVertex + i;
+
+						r2::sarr::At(*model.boneData, vertexID).boneIDs[0] = boneIndex;
+						r2::sarr::At(*model.boneData, vertexID).boneWeights[0] = 1.0;
+					}
+
+					break;
+				}
+				else
+				{
+					nodeToUse = nodeToUse->mParent;
+				}
+			}
+		}
 	}
 
-	void ProcessMeshForModel(r2::draw::Model& model, aiMesh* mesh, const aiScene* scene, void** dataPtr, const char* directory)
+	void ProcessMeshForModel(r2::draw::Model& model, aiMesh* mesh,const aiNode* node, const aiScene* scene, u32& indexOffset, void** dataPtr, const char* directory)
 	{
-		ProcessMesh(model.optrMeshes, mesh, scene, dataPtr, directory);
+		ProcessMesh(model.optrMeshes, mesh, node, scene, indexOffset, dataPtr, directory);
 	}
 
-	void ProcessMeshForAnimModel(r2::draw::AnimModel& model, aiMesh* mesh, const aiScene* scene, void** dataPtr, const char* directory)
+	void ProcessMeshForAnimModel(r2::draw::AnimModel& model, aiMesh* mesh, const aiNode* node, const aiScene* scene, u32& indexOffset, void** dataPtr, const char* directory)
 	{
-		ProcessMesh(model.meshes, mesh, scene, dataPtr, directory);
+		ProcessMesh(model.meshes, mesh, node, scene, indexOffset, dataPtr, directory);
 	}
 
-	void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, void** dataPtr, const char* directory)
+	void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, u32& indexOffset, void** dataPtr, const char* directory)
 	{
 		//process all of the node's meshes
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-			ProcessMeshForModel(model, mesh, scene, dataPtr, directory);
+			ProcessMeshForModel(model, mesh, node, scene, indexOffset, dataPtr, directory);
 		}
 
 		//then do the same for each of its children
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{
-			ProcessNode(model, node->mChildren[i], scene, dataPtr, directory);
+			ProcessNode(model, node->mChildren[i], scene, indexOffset, dataPtr, directory);
 		}
 	}
 
-	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, r2::draw::Skeleton& skeleton, void** dataPtr, u32& numVertices, const char* directory)
+	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, u32& indexOffset, r2::draw::Skeleton& skeleton, void** dataPtr, u32& numVertices, const char* directory)
 	{
+		if (node->mMetaData)
+		{
+			printf("Node: %s's metadata\n", node->mName.C_Str());
+			for (u32 i = 0; i < node->mMetaData->mNumProperties; ++i)
+			{
+				printf("Property: %s\n", node->mMetaData->mKeys[i].C_Str());
+			}
+
+		}
+		
+
+		if (std::string(node->mName.C_Str()) == "crossbow")
+		{
+			int k = 0;
+		}
+
+		//printf("node: %s, transform: %s\n", node->mName.C_Str(), glm::to_string(AssimpMat4ToGLMMat4(node->mTransformation)).c_str());
+
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-			ProcessMeshForAnimModel(model, mesh, scene, dataPtr, directory);
+			ProcessMeshForAnimModel(model, mesh, node, scene, indexOffset, dataPtr, directory);
 
-			ProcessBones(model, numVertices, mesh, scene);
+			ProcessBones(model, numVertices, mesh, node, scene);
 
 			numVertices += mesh->mNumVertices;
 		}
@@ -237,11 +319,12 @@ namespace
 		{
 			r2::draw::Skeleton child;
 			child.hashName = STRING_ID(node->mChildren[i]->mName.C_Str());
-			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation);
+			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation) ;
+
 			child.parent = &skeleton;
 			r2::sarr::Push(*skeleton.children, child);
 
-			ProcessAnimNode(model, node->mChildren[i], scene, r2::sarr::Last(*skeleton.children), dataPtr, numVertices, directory);
+			ProcessAnimNode(model, node->mChildren[i], scene, indexOffset, r2::sarr::Last(*skeleton.children), dataPtr, numVertices, directory);
 		}
 	}
 
@@ -268,7 +351,7 @@ namespace r2::asset
 	u64 AssimpAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		Assimp::Importer import;
-		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+	//	import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -299,7 +382,7 @@ namespace r2::asset
 
 		import.FreeScene();
 
-		if (scene->HasAnimations())
+		if (mNumBones > 0)
 		{
 			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, alignment, header, boundsChecking);
 		}
@@ -310,7 +393,7 @@ namespace r2::asset
 	bool AssimpAssetLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		Assimp::Importer import;
-		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		//import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -335,7 +418,9 @@ namespace r2::asset
 		
 		void* startOfArrayPtr = nullptr;
 
-		if (scene->HasAnimations())
+		bool isAnimated = mNumBones > 0;
+		u32 indexOffset = 0;
+		if (isAnimated) 
 		{
 			r2::draw::AnimModel* model = new (dataPtr) r2::draw::AnimModel();
 
@@ -368,8 +453,8 @@ namespace r2::asset
 			model->skeleton.hashName = STRING_ID(scene->mRootNode->mName.C_Str());
 			model->skeleton.transform = AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
 			model->skeleton.parent = nullptr;
-
-			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, &startOfArrayPtr, numVertices, "");
+			
+			ProcessAnimNode(*model, scene->mRootNode, scene, indexOffset, model->skeleton, &startOfArrayPtr, numVertices, "");
 
 		}
 		else
@@ -384,7 +469,7 @@ namespace r2::asset
 
 			model->globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
-			ProcessNode(*model, scene->mRootNode, scene, &startOfArrayPtr, "");
+			ProcessNode(*model, scene->mRootNode, scene, indexOffset, &startOfArrayPtr, "");
 		}
 		
 		import.FreeScene();

@@ -59,9 +59,17 @@ namespace r2::draw::cmd
 			return 0;
 		}
 
+		const u64 numBoneData = r2::sarr::Size(boneData);
+		for (u64 i = 0; i < numBoneData; ++i)
+		{
+			const r2::draw::BoneData& d = r2::sarr::At(boneData, i);
+
+			printf("vertex: %llu - weights: %f, %f, %f, %f, boneIds: %d, %d, %d, %d\n", i, d.boneWeights.x, d.boneWeights.y, d.boneWeights.z, d.boneWeights.w, d.boneIDs.x, d.boneIDs.y, d.boneIDs.z, d.boneIDs.w);
+		}
+
 		cmd->vertexBufferHandle = handle;
 		cmd->offset = offset;
-		cmd->dataSize = sizeof(r2::draw::BoneData) * r2::sarr::Size(boneData);
+		cmd->dataSize = sizeof(r2::draw::BoneData) * numBoneData;
 		cmd->data = r2::sarr::Begin(boneData);
 
 		return cmd->dataSize + offset;
@@ -983,7 +991,7 @@ namespace r2::draw::renderer
 			return modelRef;
 		}
 
-		const u64 numMeshes = r2::sarr::Size(*model->meshes);
+		u64 numMeshes = r2::sarr::Size(*model->meshes);
 		r2::draw::key::Basic fillKey;
 		//@TODO(Serge): fix this or pass it in
 		fillKey.keyValue = 0;
@@ -1009,6 +1017,7 @@ namespace r2::draw::renderer
 
 		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
 		modelRef.numVertices = r2::sarr::Size(*model->meshes->mData[0].optrVertices);
+
 
 		for (u64 i = 1; i < numMeshes; ++i)
 		{

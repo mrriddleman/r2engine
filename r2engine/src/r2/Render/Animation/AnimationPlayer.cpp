@@ -114,7 +114,9 @@ namespace r2::draw
 
 		double ticksPerSecond = anim->ticksPerSeconds != 0 ? anim->ticksPerSeconds : 25.0;
 		double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
-		double animationTime = fmod(timeInTicks, anim->duration);
+        double duration = anim->duration;
+
+		double animationTime = fmod(timeInTicks, duration);
 
 		R2_CHECK(animationTime < anim->duration, "Hmmm");
 
@@ -214,8 +216,8 @@ namespace
             dt = totalTime - curScaleTime;
         }
         
-        float factor = (float)glm::clamp(animationTime - curScaleTime / dt, 0.0, 1.0) ;
-
+        float factor = (float)glm::clamp((animationTime - curScaleTime )/ dt, 0.0, 1.0) ;
+     //   printf("Scale Factor: %f\n", factor);
         glm::vec3 start = r2::sarr::At(*channel.scaleKeys, curScalingIndex).value;
         glm::vec3 end = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).value;
         
@@ -245,8 +247,8 @@ namespace
             dt = totalTime - curRotationTime;
         }
         
-        float factor = (float)glm::clamp(animationTime - curRotationTime / dt, 0.0, 1.0) ;
-        
+        float factor = (float)glm::clamp((animationTime - curRotationTime )/ dt, 0.0, 1.0) ;
+    //    printf("Rotation Factor: %f\n", factor);
 		glm::quat start = r2::sarr::At(*channel.rotationKeys, curRotIndex).quat;
 		glm::quat end = r2::sarr::At(*channel.rotationKeys, nextRotIndex).quat;
 
@@ -277,7 +279,7 @@ namespace
         }
         
         float factor = (float)glm::clamp((animationTime - curPosTime )/ dt, 0.0, 1.0) ;
-      //  R2_LOGI("factor: %f", factor);
+     //   printf("Translation Factor: %f\n", factor);
         glm::vec3 start = r2::sarr::At(*channel.positionKeys, curPositionIndex).value;
         glm::vec3 end = r2::sarr::At(*channel.positionKeys, nextPositionIndex).value;
 

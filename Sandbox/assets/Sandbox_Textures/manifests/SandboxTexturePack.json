@@ -28,9 +28,38 @@
       ],
       packSize: 16777260,
       totalNumberOfTextures: 1
+    },
+    {
+      packName: 5241291254806722222,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.tga"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 16777260,
+      totalNumberOfTextures: 1
     }
   ],
-  totalNumberOfTextures: 1,
-  totalTextureSize: 16777260,
+  totalNumberOfTextures: 2,
+  totalTextureSize: 33554520,
   maxTexturesInAPack: 1
 }
