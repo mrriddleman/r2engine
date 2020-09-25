@@ -60,12 +60,12 @@ namespace r2::draw::cmd
 		}
 
 		const u64 numBoneData = r2::sarr::Size(boneData);
-		for (u64 i = 0; i < numBoneData; ++i)
-		{
-			const r2::draw::BoneData& d = r2::sarr::At(boneData, i);
+		//for (u64 i = 0; i < numBoneData; ++i)
+		//{
+		//	const r2::draw::BoneData& d = r2::sarr::At(boneData, i);
 
-			printf("vertex: %llu - weights: %f, %f, %f, %f, boneIds: %d, %d, %d, %d\n", i, d.boneWeights.x, d.boneWeights.y, d.boneWeights.z, d.boneWeights.w, d.boneIDs.x, d.boneIDs.y, d.boneIDs.z, d.boneIDs.w);
-		}
+		//	printf("vertex: %llu - weights: %f, %f, %f, %f, boneIds: %d, %d, %d, %d\n", i, d.boneWeights.x, d.boneWeights.y, d.boneWeights.z, d.boneWeights.w, d.boneIDs.x, d.boneIDs.y, d.boneIDs.z, d.boneIDs.w);
+		//}
 
 		cmd->vertexBufferHandle = handle;
 		cmd->offset = offset;

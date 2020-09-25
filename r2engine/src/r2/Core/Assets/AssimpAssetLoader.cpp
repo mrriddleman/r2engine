@@ -55,7 +55,7 @@ namespace
 	{
 		r2::draw::Mesh nextMesh;
 
-		printf("Mesh: %s\n", mesh->mName.C_Str());
+	//	printf("Mesh: %s\n", mesh->mName.C_Str());
 		
 		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
 		const aiNode* nextNode = node->mParent;
@@ -154,15 +154,9 @@ namespace
 
 		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
-			s32 boneIndex = 0;
-			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-			printf("boneNameStr name: %s\n", boneNameStr.c_str());
-
-			if (std::string(boneNameStr.c_str()) == "cloak_right_01")
-			{
-				int k = 0;
-			}
-
+			s32 boneIndex = -1;
+		//	std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
+		//	printf("boneNameStr name: %s\n", boneNameStr.c_str());
 
 			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
@@ -183,38 +177,23 @@ namespace
 				boneIndex = result;
 			}
 
-			printf("boneIndex: %i\n", boneIndex);
+		//	printf("boneIndex: %i\n", boneIndex);
 
 			size_t numWeights = meshToUse->mBones[i]->mNumWeights;
 
 			for (u32 j = 0; j < numWeights; ++j)
 			{
-
-
 				u32 vertexID = baseVertex + meshToUse->mBones[i]->mWeights[j].mVertexId;
-				printf("bones - vertexid: %zu\n",  vertexID);
-				if (vertexID == 4584)
-				{
-					int k = 0;
-				}
-				bool found = false;
 
 				float currentWeightTotal = 0.0f;
 				for (u32 k = 0; k < MAX_BONE_WEIGHTS; ++k)
 				{
 					currentWeightTotal += r2::sarr::At(*model.boneData, vertexID).boneWeights[k];
 
-					if (currentWeightTotal > 0.0f)
-					{
-						int k = 0;
-					}
-
 					if (!r2::math::NearEq(currentWeightTotal, 1.0f) && r2::math::NearEq(r2::sarr::At(*model.boneData, vertexID).boneWeights[k], 0.0f))
 					{
 						r2::sarr::At(*model.boneData, vertexID).boneIDs[k] = boneIndex;
 						r2::sarr::At(*model.boneData, vertexID).boneWeights[k] = meshToUse->mBones[i]->mWeights[j].mWeight;
-
-						found = true;
 						break;
 					}
 				}
@@ -289,12 +268,6 @@ namespace
 			}
 
 		}
-		
-
-		if (std::string(node->mName.C_Str()) == "crossbow")
-		{
-			int k = 0;
-		}
 
 		//printf("node: %s, transform: %s\n", node->mName.C_Str(), glm::to_string(AssimpMat4ToGLMMat4(node->mTransformation)).c_str());
 
@@ -318,7 +291,10 @@ namespace
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{
 			r2::draw::Skeleton child;
-			child.hashName = STRING_ID(node->mChildren[i]->mName.C_Str());
+
+			child.boneName = node->mChildren[i]->mName.C_Str();
+
+			child.hashName = STRING_ID(child.boneName.c_str());
 			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation) ;
 
 			child.parent = &skeleton;
@@ -451,6 +427,7 @@ namespace r2::asset
 			//Process the Nodes
 			u32 numVertices = 0;
 			model->skeleton.hashName = STRING_ID(scene->mRootNode->mName.C_Str());
+			model->skeleton.boneName = scene->mRootNode->mName.C_Str();
 			model->skeleton.transform = AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
 			model->skeleton.parent = nullptr;
 			

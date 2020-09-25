@@ -56,6 +56,8 @@ namespace
 				r2::draw::AnimationChannel channel;
 				r2::draw::AnimationChannel* channelToUse = &channel;
 				std::string channelName = std::string(animChannel->mNodeName.data);
+
+				printf("channel name: %s\n", channelName.c_str());
 				
 				channel.hashName = STRING_ID(channelName.c_str());
 		

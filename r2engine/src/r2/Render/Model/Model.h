@@ -36,7 +36,7 @@ namespace r2::draw
     struct Skeleton;
     struct Skeleton
     {
-        //std::string name;
+        std::string boneName;
         u64 hashName;
 		glm::mat4 transform = glm::mat4(1.0f);
         Skeleton* parent = nullptr;

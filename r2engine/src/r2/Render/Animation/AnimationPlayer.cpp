@@ -9,7 +9,7 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
 #include "r2/Core/Math/MathUtils.h"
-
+#include "r2/Utils/Hash.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -153,6 +153,29 @@ namespace
             glm::mat4 transMat = glm::translate(glm::mat4(1.0f), translate);
             
             transform = transMat * glm::mat4_cast(rotQ) * scaleMat;
+        }
+        else
+        {
+            //For FBX animations, there might be some messed up pivot point nonsense to take care of
+            //we probably want to attempt to find the <boneName>_$AssimpFbx$_Rotation and <boneName>_$AssimpFbx$_Scaling
+            //animation channels
+
+            u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
+            u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
+
+            const r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
+            const r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
+
+            if (rotationChannel && scalingChannel)
+            {
+				glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *scalingChannel);
+				glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
+
+                glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
+                transform = glm::mat4_cast(rotQ) * scaleMat;
+            }
+
+            
         }
         
         glm::mat4 globalTransform =  parentTransform * transform ;
