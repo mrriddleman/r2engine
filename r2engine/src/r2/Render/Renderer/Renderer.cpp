@@ -118,9 +118,9 @@ namespace r2::draw
 {
 	struct ConstantBufferData
 	{
-		r2::draw::ConstantBufferHandle handle;
-		r2::draw::ConstantBufferLayout::Type type;
-		b32 isPersistent;
+		r2::draw::ConstantBufferHandle handle = EMPTY_BUFFER;
+		r2::draw::ConstantBufferLayout::Type type = r2::draw::ConstantBufferLayout::Type::Small;
+		b32 isPersistent = false;
 	};
 
 	struct Renderer
@@ -132,7 +132,7 @@ namespace r2::draw
 
 		r2::draw::BufferHandles mBufferHandles;
 		r2::SArray<r2::draw::ConstantBufferHandle>* mContantBufferHandles;
-		r2::SArray<ConstantBufferData>* mConstantBufferData;
+		r2::SHashMap<ConstantBufferData>* mConstantBufferData;
 
 		ModelSystem* mModelSystem = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
@@ -336,7 +336,7 @@ namespace r2::draw::renderer
 		
 		R2_CHECK(s_optrRenderer->mContantBufferHandles != nullptr, "We couldn't create the constant buffer handles");
 
-		s_optrRenderer->mConstantBufferData = MAKE_SARRAY(*rendererArena, ConstantBufferData, MAX_BUFFER_LAYOUTS);
+		s_optrRenderer->mConstantBufferData = MAKE_SHASHMAP(*rendererArena, ConstantBufferData, MAX_BUFFER_LAYOUTS* r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier());
 
 		R2_CHECK(s_optrRenderer->mConstantBufferData != nullptr, "We couldn't create the constant buffer data!");
 
@@ -680,7 +680,7 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		if (r2::sarr::Size(*s_optrRenderer->mConstantBufferData) > 0)
+		if (!s_optrRenderer->mConstantBufferData)
 		{
 			R2_CHECK(false, "We have already generated the constant buffer data!");
 			return false;
@@ -714,7 +714,7 @@ namespace r2::draw::renderer
 			constData.type = config.layout.GetType();
 			constData.isPersistent = config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT);
 
-			r2::sarr::Push(*s_optrRenderer->mConstantBufferData, constData);
+			r2::shashmap::Set(*s_optrRenderer->mConstantBufferData, handle, constData);
 		}
 
 		r2::draw::rendererimpl::SetupConstantBufferConfigs(constantBufferConfigs, s_optrRenderer->mContantBufferHandles->mData);
@@ -1285,6 +1285,21 @@ namespace r2::draw::renderer
 		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(key, auxMemory);
 	}
 
+
+	const ConstantBufferData& GetConstData(ConstantBufferHandle handle)
+	{
+		ConstantBufferData defaultConstBufferData;
+		const ConstantBufferData& constData = r2::shashmap::Get(*s_optrRenderer->mConstantBufferData, handle, defaultConstBufferData);
+
+		if (constData.handle == EMPTY_BUFFER)
+		{
+			R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", handle);
+			return defaultConstBufferData;
+		}
+
+		return constData;
+	}
+
 	void AddDrawBatch(const BatchConfig& batch)
 	{
 		if (s_optrRenderer == nullptr)
@@ -1293,7 +1308,7 @@ namespace r2::draw::renderer
 			return;                                  
 		}
 
-		if (r2::sarr::Size(*s_optrRenderer->mConstantBufferData) == 0)
+		if (!s_optrRenderer->mConstantBufferData)
 		{
 			R2_CHECK(false, "We haven't generated any constant buffers!");
 			return;
@@ -1342,25 +1357,10 @@ namespace r2::draw::renderer
 			constCMD->offset = 0;
 			constCMD->constantBufferHandle = batch.modelsHandle;
 
-			//find the constant buffer data
-			bool found = false;
-			const u64 numConstantBuffers = r2::sarr::Size(*s_optrRenderer->mConstantBufferData);
-			for (u64 i = 0; i < numConstantBuffers; ++i)
-			{
-				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
-				if (constBufData.handle == batch.modelsHandle)
-				{
-					constCMD->isPersistent = constBufData.isPersistent;
-					constCMD->type = constBufData.type;
-					found = true;
-					break;
-				}
-			}
+			const ConstantBufferData& modelConstData = GetConstData(batch.modelsHandle);
 
-			if (!found)
-			{
-				R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", batch.modelsHandle);
-			}
+			constCMD->isPersistent = modelConstData.isPersistent;
+			constCMD->type = modelConstData.type;
 		}
 
 		//Set the texture addresses for all of the materials used in this batch
@@ -1405,24 +1405,11 @@ namespace r2::draw::renderer
 		materialsCMD->offset = 0;
 		materialsCMD->constantBufferHandle = batch.materialsHandle;
 		{
-			bool found = false;
-			const u64 numConstantBuffers = r2::sarr::Size(*s_optrRenderer->mConstantBufferData);
-			for (u64 i = 0; i < numConstantBuffers; ++i)
-			{
-				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
-				if (constBufData.handle == batch.materialsHandle)
-				{
-					materialsCMD->isPersistent = constBufData.isPersistent;
-					materialsCMD->type = constBufData.type;
-					found = true;
-					break;
-				}
-			}
+			const ConstantBufferData& materialConstData = GetConstData(batch.materialsHandle);
 
-			if (!found)
-			{
-				R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", batch.materialsHandle);
-			}
+			materialsCMD->isPersistent = materialConstData.isPersistent;
+			materialsCMD->type = materialConstData.type;
+
 		}
 
 		FREE(modelMaterials, *MEM_ENG_SCRATCH_PTR);
@@ -1443,22 +1430,11 @@ namespace r2::draw::renderer
 			boneTransformsCMD->offset = 0;
 			boneTransformsCMD->constantBufferHandle = batch.boneTransformsHandle;
 
+			const ConstantBufferData& boneXFormConstData = GetConstData(batch.boneTransformsHandle);
 
-			bool found = false;
-			const u64 numConstantBuffers = r2::sarr::Size(*s_optrRenderer->mConstantBufferData);
-			for (u64 i = 0; i < numConstantBuffers; ++i)
-			{
-				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
-				if (constBufData.handle == batch.boneTransformsHandle)
-				{
-					boneTransformsCMD->isPersistent = constBufData.isPersistent;
-					boneTransformsCMD->type = constBufData.type;
-					found = true;
-					break;
-				}
-			}
+			boneTransformsCMD->isPersistent = boneXFormConstData.isPersistent;
+			boneTransformsCMD->type = boneXFormConstData.type;
 
-			R2_CHECK(found, "");
 
 			u64 boneTransformOffsetsDataSize = batch.boneTransformOffsets->mSize * sizeof(glm::ivec4);
 			r2::draw::cmd::FillConstantBuffer* boneTransformOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(boneTransformsCMD, boneTransformOffsetsDataSize);
@@ -1471,20 +1447,10 @@ namespace r2::draw::renderer
 			boneTransformOffsetsCMD->offset = 0;
 			boneTransformOffsetsCMD->constantBufferHandle = batch.boneTransformOffsetsHandle;
 
-			found = false;
-			for (u64 i = 0; i < numConstantBuffers; ++i)
-			{
-				const ConstantBufferData& constBufData = r2::sarr::At(*s_optrRenderer->mConstantBufferData, i);
-				if (constBufData.handle == batch.boneTransformOffsetsHandle)
-				{
-					boneTransformOffsetsCMD->isPersistent = constBufData.isPersistent;
-					boneTransformOffsetsCMD->type = constBufData.type;
-					found = true;
-					break;
-				}
-			}
+			const ConstantBufferData& boneXFormOffsetsConstData = GetConstData(batch.boneTransformOffsetsHandle);
 
-			R2_CHECK(found, "");
+			boneTransformOffsetsCMD->isPersistent = boneXFormOffsetsConstData.isPersistent;
+			boneTransformOffsetsCMD->type = boneXFormOffsetsConstData.type;
 
 			prevFillCMD = boneTransformOffsetsCMD;
 		}
