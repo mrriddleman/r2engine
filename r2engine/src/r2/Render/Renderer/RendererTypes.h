@@ -12,7 +12,11 @@ namespace r2::draw
     using DrawIDHandle = u32;
     using ConstantBufferHandle = u32; //GL_SHADER_STORAGE_BUFFER or GL_UNIFORM_BUFFER
     using BatchBufferHandle = u32; //GL_DRAW_INDIRECT_BUFFER
+	using VertexConfigHandle = s32;
+	using ConstantConfigHandle = s32;
 
+    const VertexConfigHandle InvalidVertexConfigHandle = -1;
+    const ConstantConfigHandle InvalidConstantConfigHandle = -1;
 
     static const u32 EMPTY_BUFFER = 0;
 

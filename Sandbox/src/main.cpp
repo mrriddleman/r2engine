@@ -222,14 +222,22 @@ class Sandbox: public r2::Application
 {
 public:
     
-    enum ConstantHandles
+    enum ConstantConfigHandles
     {
         VP_MATRICES = 0,
         MODEL_MATRICES,
         SUB_COMMANDS,
         MODEL_MATERIALS,
         BONE_TRANSFORMS,
-        BONE_TRANSFORM_OFFSETS
+        BONE_TRANSFORM_OFFSETS,
+        NUM_CONSTANT_CONFIGS
+    };
+
+    enum VertexConfigHandles
+    {
+        STATIC_MODELS_CONFIG = 0,
+        ANIM_MODELS_CONFIG,
+        NUM_VERTEX_CONFIGS
     };
     
     const u64 NUM_DRAWS = 10;
@@ -340,8 +348,8 @@ public:
         }
 #endif
         //make the buffer layouts
-        layouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::BufferLayoutConfiguration, 10);
-        constantLayouts = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantBufferLayoutConfiguration, 10);
+        mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
+        mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -479,233 +487,75 @@ public:
         }
 
         //@TODO(Serge): Put this in a helper function 
-        r2::draw::BufferLayoutConfiguration layoutConfig{
-            {
-                {{r2::draw::ShaderDataType::Float3, "aPos"},
-                 {r2::draw::ShaderDataType::Float3, "aNormal"},
-                 {r2::draw::ShaderDataType::Float2, "aTexCoord"}}
-            },
-            {
-				{
-				    Megabytes(4),
-				    r2::draw::VertexDrawTypeStatic
-			    }
-            },
-            
-            {
-                Megabytes(4),
-                r2::draw::VertexDrawTypeStatic
-            },
-            true, NUM_DRAWS, //use draw ids
-            1 // num vertex buffers
-        };
 
-        r2::draw::BufferLayoutConfiguration animatedModelLayout{
-            {
-                {
-                    {r2::draw::ShaderDataType::Float3, "aPos", 0},
-                    {r2::draw::ShaderDataType::Float3, "aNormal", 0},
-                    {r2::draw::ShaderDataType::Float2, "aTexCoord", 0},
-                    {r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
-                    {r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
-                }
-            },
-            {
-                {
-                    Megabytes(4),
-                    r2::draw::VertexDrawTypeStatic
-                },
-                {
-                    Megabytes(4),
-                    r2::draw::VertexDrawTypeStatic
-                }
-            },
-            {
-				Megabytes(4),
-				r2::draw::VertexDrawTypeStatic
-            },
-            true, NUM_DRAWS,
-            2
-        };
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(4), Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
+        
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+            {r2::draw::ShaderDataType::Mat4, "projection"},
+            {r2::draw::ShaderDataType::Mat4, "view"}
+        }));
 
-        //For Matrices
-        r2::draw::ConstantBufferLayoutConfiguration constantLayout{
-            {
-                r2::draw::ConstantBufferLayout::Small, 0,0,//create flags
-                {
-                    {r2::draw::ShaderDataType::Mat4, "projection"},
-                    {r2::draw::ShaderDataType::Mat4, "view"}
-                }
-            },
-            r2::draw::VertexDrawTypeDynamic
-        };
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
+            {r2::draw::ShaderDataType::Mat4, "models", NUM_DRAWS}
+        }) );
 
-        //for Models
-        r2::draw::ConstantBufferLayoutConfiguration constantLayout2
-        {
-            //layout
-            {
-                r2::draw::ConstantBufferLayout::Big,
-                r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
-                r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
-                {
-                    {r2::draw::ShaderDataType::Mat4, "models", NUM_DRAWS}
-                }
-            },
-            //drawType
-            r2::draw::VertexDrawTypeDynamic
-        };
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout(NUM_DRAWS) );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout(NUM_DRAWS) );
 
+        //Maybe these should automatically be added by the animated models layout
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
+            {r2::draw::ShaderDataType::Mat4, "boneTransforms", NUM_BONES}
+        }) );
 
-
-        //for Sub Commands
-        r2::draw::ConstantBufferLayoutConfiguration subCommands
-        {
-            //layout
-            {},
-            r2::draw::VertexDrawTypeDynamic
-        };
-
-        subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, NUM_DRAWS);
-
-
-		r2::draw::ConstantBufferLayoutConfiguration materials
-		{
-			//layout
-			{
-
-			},
-			//drawType
-			r2::draw::VertexDrawTypeDynamic
-		};
-
-		materials.layout.InitForMaterials(0, 0, NUM_DRAWS);
-
-
-        r2::draw::ConstantBufferLayoutConfiguration boneTransforms
-        {
-            {
-				r2::draw::ConstantBufferLayout::Big,
-				r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
-				r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
-				{
-					{r2::draw::ShaderDataType::Mat4, "boneTransforms", NUM_BONES}
-				}
-            },
-            r2::draw::VertexDrawTypeDynamic
-        };
-
-        r2::draw::ConstantBufferLayoutConfiguration boneTransformOffsets
-        {
-            {
-                r2::draw::ConstantBufferLayout::Big,
-                r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT,
-                r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE,
-                {
-                    {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
-                }
-            },
-            r2::draw::VertexDrawTypeDynamic
-        };
-
-        r2::sarr::Push(*layouts, layoutConfig);
-        r2::sarr::Push(*layouts, animatedModelLayout);
-        r2::sarr::Push(*constantLayouts, constantLayout);
-        r2::sarr::Push(*constantLayouts, constantLayout2);
-        r2::sarr::Push(*constantLayouts, subCommands);
-        r2::sarr::Push(*constantLayouts, materials);
-        r2::sarr::Push(*constantLayouts, boneTransforms);
-        r2::sarr::Push(*constantLayouts, boneTransformOffsets);
-
-
+		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
+            {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
+		}));
+        
         r2::draw::renderer::SetDepthTest(true);
-        bool success = r2::draw::renderer::GenerateBufferLayouts(layouts);
+
+        bool success = r2::draw::renderer::GenerateLayouts();
         R2_CHECK(success, "We couldn't create the buffer layouts!");
 
-        success = r2::draw::renderer::GenerateConstantBuffers(constantLayouts);
-        R2_CHECK(success, "We couldn't create the constant buffers");
-
-        r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+//        r2::draw::BufferHandles& handles = r2::draw::renderer::GetVertexBufferHandles();
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
-
-        //fill the buffers with data
-        const r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
-        const r2::draw::Model* sphereModel = r2::draw::renderer::GetDefaultModel(r2::draw::SPHERE);
-        const r2::draw::Model* cubeModel = r2::draw::renderer::GetDefaultModel(r2::draw::CUBE);
-        const r2::draw::Model* cylinderModel = r2::draw::renderer::GetDefaultModel(r2::draw::CYLINDER);
-        const r2::draw::Model* coneModel = r2::draw::renderer::GetDefaultModel(r2::draw::CONE);
 
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
-        
-
-       // glm::mat4& microBatMatRef = r2::sarr::First(*animModelMats);
-       // microBatMatRef = microBatMatRef * mMicroBatModel->globalInverseTransform;
-
-
         auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer.fbx", r2::asset::ASSIMP_MODEL));
         mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
 
-     //   glm::mat4& skeletonMatRef = r2::sarr::Last(*animModelMats);
-      //  skeletonMatRef = skeletonMatRef * mSkeletonModel->globalInverseTransform;
 
         mSelectedAnimModel = mSkeletonModel;
-
-		r2::SArray<const r2::draw::Model*>* modelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DRAWS);
-		r2::sarr::Push(*modelsToDraw, quadModel);
-		r2::sarr::Push(*modelsToDraw, sphereModel);
-		r2::sarr::Push(*modelsToDraw, cubeModel);
-		r2::sarr::Push(*modelsToDraw, cylinderModel);
-		r2::sarr::Push(*modelsToDraw, coneModel);
 
 
         r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
         r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
-        r2::draw::renderer::FillBuffersForModels(*modelsToDraw, r2::sarr::At(*handles.vertexBufferHandles, 0), r2::sarr::At(*handles.indexBufferHandles, 0), *modelRefs);
 
-        r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *modelRefs);
-
-        u64 numModels = r2::sarr::Size(*modelsToDraw);
-        for (u64 i = 0; i < numModels; ++i)
-        {
-            const r2::draw::Model* model = r2::sarr::At(*modelsToDraw, i);
-			const r2::draw::Mesh& mesh = r2::sarr::At(*model->optrMeshes, 0);
-			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
-            r2::sarr::Push(*modelMaterials, materialHandle);
-        }
+        r2::draw::renderer::UploadEngineModels(r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
+        r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *r2::draw::renderer::GetDefaultModelRefs());
+        r2::draw::renderer::GetDefaultModelMaterials(*modelMaterials);
 
         r2::sarr::Clear(*modelRefs);
         
         r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
         r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
 
-        r2::draw::VertexBufferHandle vHandles[2];
-        vHandles[0] = r2::sarr::At(*handles.vertexBufferHandles, 1);
-        vHandles[1] = r2::sarr::At(*handles.vertexBufferHandles, 2);
-        r2::draw::renderer::FillBuffersForAnimModels(*animModelsToDraw, vHandles, 2, r2::sarr::At(*handles.indexBufferHandles, 1), *modelRefs);
 
+        r2::draw::renderer::UploadAnimModels(*animModelsToDraw, r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG), *modelRefs);
         r2::draw::renderer::FillSubCommandsFromModelRefs(*animModelsSubCommandsToDraw, *modelRefs);
 
-        numModels = r2::sarr::Size(*animModelsToDraw);
-        u32 boneOffset = 0;
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			const r2::draw::AnimModel* model = r2::sarr::At(*animModelsToDraw, i);
-			const r2::draw::Mesh& mesh = r2::sarr::At(*model->meshes, 0);
-			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
-			r2::sarr::Push(*animModelMaterials, materialHandle);
-
-            r2::sarr::Push(*mBoneTransformOffsets, glm::ivec4(boneOffset, 0, 0, 0));
-
-            boneOffset += model->boneInfo->mSize;
-		}
+        r2::draw::renderer::GetMaterialsAndBoneOffsetsForAnimModels(*animModelsToDraw, *animModelMaterials, *mBoneTransformOffsets);
 
         FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
         FREE(modelRefs, *MEM_ENG_SCRATCH_PTR);
-        FREE(modelsToDraw, *MEM_ENG_SCRATCH_PTR);
+       
 
-		r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, 0), constantLayout.layout.GetType(), constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT), glm::value_ptr(mPersController.GetCameraPtr()->proj), constantLayout.layout.GetElements().at(0).size, constantLayout.layout.GetElements().at(0).offset);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(
+            r2::sarr::At(*constantBufferHandles, VP_MATRICES),
+            0,
+            glm::value_ptr(mPersController.GetCameraPtr()->proj));
 
         r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
 
@@ -962,7 +812,7 @@ public:
 
         r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, animModelMaterialHandle);
 
-        r2::draw::BufferHandles& handles = r2::draw::renderer::GetBufferHandles();
+        r2::draw::BufferHandles& handles = r2::draw::renderer::GetVertexBufferHandles();
        // 
         //r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
         //drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
@@ -1010,14 +860,11 @@ public:
        // clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
 
 		//update the camera
-        const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
+      //  const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
         r2::draw::renderer::AddFillConstantBufferCommandForData(
-            r2::sarr::At(*constHandles, 0),
-            constantLayout.layout.GetType(),
-            constantLayout.layout.GetFlags().IsSet(r2::draw::CB_FLAG_MAP_PERSISTENT),
-            glm::value_ptr(mPersController.GetCameraPtr()->view),
-            constantLayout.layout.GetElements().at(1).size,
-            constantLayout.layout.GetElements().at(1).offset);
+            r2::sarr::At(*constHandles, VP_MATRICES),
+            1,
+            glm::value_ptr(mPersController.GetCameraPtr()->view));
     }
     
     virtual void Shutdown() override
@@ -1030,8 +877,10 @@ public:
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
         FREE(materialBoundary, *linearArenaPtr);
 
-        FREE(layouts, *linearArenaPtr);
-        FREE(constantLayouts, *linearArenaPtr);
+        FREE(mVertexConfigHandles, *linearArenaPtr);
+        FREE(mConstantConfigHandles, *linearArenaPtr);
+   //     FREE(layouts, *linearArenaPtr);
+    //    FREE(constantLayouts, *linearArenaPtr);
         FREE(modelMats, *linearArenaPtr);
         FREE(subCommandsToDraw, *linearArenaPtr);
         FREE(modelMaterials, *linearArenaPtr);
@@ -1185,8 +1034,10 @@ private:
     r2::mem::utils::MemBoundary assetCacheBoundary;
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
-    r2::SArray<r2::draw::BufferLayoutConfiguration>* layouts;
-    r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantLayouts;
+
+    r2::SArray<r2::draw::VertexConfigHandle>* mVertexConfigHandles;
+    r2::SArray<r2::draw::ConstantConfigHandle>* mConstantConfigHandles;
+
     //We may not need the extra arrays since we copy the data
     r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
     r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* animModelsSubCommandsToDraw;

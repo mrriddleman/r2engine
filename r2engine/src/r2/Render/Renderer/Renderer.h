@@ -80,6 +80,8 @@ namespace r2::draw
 		const r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
 
 	};
+
+
 }
 
 namespace r2::draw::renderer
@@ -95,40 +97,48 @@ namespace r2::draw::renderer
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
-	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts);
-	bool GenerateConstantBuffers(const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
+	bool GenerateLayouts();
+
+	
 	void SetDepthTest(bool shouldDepthTest);
 
+	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
+	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
+	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
+	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
+	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
+
+
 	//Regular methods
-	BufferHandles& GetBufferHandles();
+	BufferHandles& GetVertexBufferHandles();
 	const r2::SArray<r2::draw::ConstantBufferHandle>* GetConstantBufferHandles();
+
 	const Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
-	//@Temporary
+	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs();
+	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
+
+	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets);
+
+	void UploadEngineModels(VertexConfigHandle vertexLayoutConfig);
 	void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
 
+	ModelRef UploadModel(const Model* model, VertexConfigHandle vHandle);
+	void UploadModels(const r2::SArray<const Model*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs);
+	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vHandle);
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs);
 
-
-	ModelRef FillBuffersForModel(const Model* model, VertexBufferHandle vHandle, IndexBufferHandle iHandle, const ModelRef& afterModel);
-	void FillBuffersForModels(const r2::SArray<const Model*>& models, VertexBufferHandle vHandle, IndexBufferHandle iHandle, r2::SArray<ModelRef>& modelRefs);
-	ModelRef FillBuffersForAnimModel(const AnimModel* model, VertexBufferHandle vHandles[], u32 numVHandles, IndexBufferHandle iHandle, const ModelRef& afterModel);
-	void FillBuffersForAnimModels(const r2::SArray<const AnimModel*>& models, VertexBufferHandle vHandles[], u32 numVHandles, IndexBufferHandle iHandle, r2::SArray<ModelRef>& modelRefs);
+	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle);
+	void ClearAllVertexLayoutOffsets();
 
 	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
 
-	u64 AddFillVertexCommandsForModel(const Model* model, VertexBufferHandle handle, u64 offset = 0);
-	u64 AddFillIndexCommandsForModel(const Model* model, IndexBufferHandle handle, u64 offset = 0);
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset = 0);
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 
-
-	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
-	r2::draw::cmd::DrawIndexed* AddDrawIndexedCommand(r2::draw::key::Basic key);
-	r2::draw::cmd::FillIndexBuffer* AddFillIndexBufferCommand(r2::draw::key::Basic key);
-	r2::draw::cmd::FillVertexBuffer* AddFillVertexBufferCommand(r2::draw::key::Basic key);
-	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key, u64 auxMemory);
 	
+
 	void AddDrawBatch(const BatchConfig& batch);
 
 
