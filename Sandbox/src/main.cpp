@@ -517,7 +517,7 @@ public:
         bool success = r2::draw::renderer::GenerateLayouts();
         R2_CHECK(success, "We couldn't create the buffer layouts!");
 
-//        r2::draw::BufferHandles& handles = r2::draw::renderer::GetVertexBufferHandles();
+
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
