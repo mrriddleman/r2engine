@@ -1786,6 +1786,9 @@ namespace r2::draw::renderer
 			return;
 		}
 
+
+		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, batch.vertexLayoutConfigHandle);
+
 		// r2::draw::key::Basic clearKey;
 
 	   // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
@@ -1920,7 +1923,7 @@ namespace r2::draw::renderer
 		cmd::DrawBatchSubCommand* subCommandsMem = (cmd::DrawBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawBatch>(batchCMD);
 		memcpy(subCommandsMem, batch.subcommands->mData, subCommandsSize);
 
-		batchCMD->bufferLayoutHandle = batch.layoutHandle;
+		batchCMD->bufferLayoutHandle = vertexLayoutHandles.mBufferLayoutHandle;
 		batchCMD->batchHandle = batch.subCommandsHandle;
 		batchCMD->numSubCommands = batch.subcommands->mSize;
 		batchCMD->subCommands = subCommandsMem;

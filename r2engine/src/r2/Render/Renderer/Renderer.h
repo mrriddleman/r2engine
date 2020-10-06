@@ -60,7 +60,7 @@ namespace r2::draw
 	struct BatchConfig
 	{
 		r2::draw::key::Basic key;
-		BufferLayoutHandle layoutHandle;
+		VertexConfigHandle vertexLayoutConfigHandle;
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
 		ConstantBufferHandle materialsHandle;
@@ -120,6 +120,7 @@ namespace r2::draw::renderer
 	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets);
 
 	void UploadEngineModels(VertexConfigHandle vertexLayoutConfig);
+
 	void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
@@ -136,8 +137,6 @@ namespace r2::draw::renderer
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
 
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
-
-	
 
 	void AddDrawBatch(const BatchConfig& batch);
 

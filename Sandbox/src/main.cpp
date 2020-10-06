@@ -530,12 +530,14 @@ public:
         mSelectedAnimModel = mSkeletonModel;
 
 
-        r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
-        r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
 
         r2::draw::renderer::UploadEngineModels(r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
         r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *r2::draw::renderer::GetDefaultModelRefs());
         r2::draw::renderer::GetDefaultModelMaterials(*modelMaterials);
+
+
+        r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
+        r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
 
         r2::sarr::Clear(*modelRefs);
         
@@ -812,7 +814,6 @@ public:
 
         r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, 0, 0, 0, animModelMaterialHandle);
 
-        r2::draw::BufferHandles& handles = r2::draw::renderer::GetVertexBufferHandles();
        // 
         //r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
         //drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
@@ -826,7 +827,7 @@ public:
         
 		r2::draw::BatchConfig batch;
 		batch.key = drawElemKey;
-		batch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
+		batch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
 		batch.subcommands = subCommandsToDraw;
 		batch.models = modelMats;
         batch.materials = modelMaterials;
@@ -839,7 +840,7 @@ public:
 
         r2::draw::BatchConfig animModelBatch;
         animModelBatch.key = animBatchKey;
-        animModelBatch.layoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 1);
+        animModelBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG);
         animModelBatch.subcommands = animModelsSubCommandsToDraw;
         animModelBatch.models = animModelMats;
         animModelBatch.materials = animModelMaterials;
