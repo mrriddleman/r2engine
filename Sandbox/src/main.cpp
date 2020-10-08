@@ -242,6 +242,8 @@ public:
     
     const u64 NUM_DRAWS = 10;
     const u64 NUM_BONES = 1000;
+
+
     
     virtual bool Init() override
     {
@@ -261,34 +263,11 @@ public:
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
-		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
-		if (!materialPackData)
-		{
-			R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
-			return false;
-		}
-
-		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
-
-		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
-
-		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
-		if (!texturePacksData)
-		{
-			R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackPath);
-			return false;
-		}
-
-		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
-
-		R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
-
-		materialMemorySystemSize = r2::draw::mat::MemorySize(64, materialPack->materials()->size(),
-			texturePacksManifest->totalTextureSize(),
-			texturePacksManifest->totalNumberOfTextures(),
-			texturePacksManifest->texturePacks()->size(),
-			texturePacksManifest->maxTexturesInAPack());
+        void* materialPackData = nullptr;
+        void* texturePackManifestData = nullptr;
+        materialMemorySystemSize = r2::draw::mat::LoadMaterialAndTextureManifests(materialsPath, texturePackPath, &materialPackData, &texturePackManifestData);
 		
+        R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
 
         auto result = sandBoxMemoryArea->Init(Megabytes(5) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
@@ -400,7 +379,15 @@ public:
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
-		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
+		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+
+		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+
+		const flat::TexturePacksManifest* texturePacks = flat::GetTexturePacksManifest(texturePackManifestData);
+
+		R2_CHECK(texturePacks != nullptr, "Failed to get the material pack from the data!");
+
+		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacks);
 
 		if (!mMaterialSystem)
 		{
@@ -408,7 +395,7 @@ public:
 			return false;
 		}
 
-        FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
+        FREE(texturePackManifestData, *MEM_ENG_SCRATCH_PTR);
         FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);

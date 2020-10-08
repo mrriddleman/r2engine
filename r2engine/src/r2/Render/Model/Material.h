@@ -128,6 +128,9 @@ namespace r2::draw::mat
 	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
 	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack);
+
+	u64 LoadMaterialAndTextureManifests(const char* materialManifestPath, const char* textureManifestPath, void** materialPack, void** texturePacks);
+
 }
 
 namespace r2::draw::matsys
