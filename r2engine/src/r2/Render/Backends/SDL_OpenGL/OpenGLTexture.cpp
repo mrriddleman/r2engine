@@ -9,6 +9,7 @@
 #include "r2/Render/Backends/SDL_OpenGL/OpenGLTextureSystem.h"
 #include "stb_image.h"
 #include "glad/glad.h"
+#include "SDL_image.h"
 
 namespace r2::draw::tex
 {
@@ -32,14 +33,34 @@ namespace r2::draw::tex
 		u8* imageData = stbi_load_from_memory(
 			assetCacheRecord.buffer->Data(),
 			static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+		bool usedSTBI = true;
+
+		SDL_Surface* imageSurface = nullptr;
 
 		if (!imageData)
 		{
-			R2_CHECK(false, "We failed to load the image from memory");
-			assetCache->ReturnAssetBuffer(assetCacheRecord);
-			return r2::draw::tex::GPUHandle{};
-		}
+			usedSTBI = false;
+			SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), assetCacheRecord.buffer->Size());
+			
+			R2_CHECK(ops != nullptr, "We should be able to get the RWOps from memory");
+			
+			imageSurface = IMG_Load_RW(ops, 0);
 
+			if (imageSurface == nullptr)
+			{
+				R2_CHECK(false, "We failed to load the image from memory");
+				assetCache->ReturnAssetBuffer(assetCacheRecord);
+				return r2::draw::tex::GPUHandle{};
+			}
+
+			imageData = (u8*)imageSurface->pixels;
+
+			texWidth = imageSurface->w;
+			texHeight = imageSurface->h;
+
+			channels = imageSurface->format->BytesPerPixel;
+		}
+		
 		GLenum format;
 		GLenum internalFormat;
 		if (channels == 1)
@@ -74,7 +95,14 @@ namespace r2::draw::tex
 
 		r2::draw::gl::tex::TexSubImage2D(newHandle, 0, 0, 0, texWidth, texHeight, format, GL_UNSIGNED_BYTE, imageData);
 
-		stbi_image_free(imageData);
+		if (usedSTBI)
+		{
+			stbi_image_free(imageData);
+		}
+		else
+		{
+			SDL_FreeSurface(imageSurface);
+		}
 
 		assetCache->ReturnAssetBuffer(assetCacheRecord);
 

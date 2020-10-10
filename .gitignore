@@ -16,6 +16,7 @@
 *.tman
 *.tga
 *.fbx
+*.tif
 
 /bin/
 /bin_int/

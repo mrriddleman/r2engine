@@ -186,6 +186,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		libdirs
 		{
 			"%{prj.name}/vendor/SDL2/Windows/lib/x64",
+			"%{prj.name}/vendor/SDL2Image/Windows/lib/x64"
 		}
 
 		defines
@@ -200,6 +201,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"%{prj.name}/vendor/SDL2/Windows/include",
 			"%{prj.name}/vendor/glad/Windows/include",
 			"%{prj.name}/vendor/FMOD/Windows/core/inc",
+			"%{prj.name}/vendor/SDL2Image/Windows/include"
 		}
 
 		sysincludedirs
@@ -212,6 +214,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"SDL2",
 			"SDL2main",
 			"glad",
+			"SDL2_image"
 		}
 
 		postbuildcommands
@@ -315,7 +318,11 @@ project "r2Tests"
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmodL.dll ../bin/Debug_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}"
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libjpeg-9.dll ../bin/Debug_windows_x86_64/%{prj.name}"
 		}
 
 	filter {"configurations:Release", "system:windows"}
@@ -335,7 +342,11 @@ project "r2Tests"
 		{
 			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmod.dll ../bin/Release_windows_x86_64/%{prj.name}",
-			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}"
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libjpeg-9.dll ../bin/Release_windows_x86_64/%{prj.name}"
 		}
 
 	filter "system:macosx"
@@ -463,7 +474,12 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmodL.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ../bin/Debug_windows_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Debug_windows_x86_64/%{prj.name}/sounds",
-			"{COPY} ../engine_assets/sounds/ ../bin/Debug_windows_x86_64/%{prj.name}"
+			"{COPY} ../engine_assets/sounds/ ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libjpeg-9.dll ../bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/zlib1.dll ../bin/Debug_windows_x86_64/%{prj.name}"
 		}
 
 	filter {"configurations:Release", "system:windows"}
@@ -484,7 +500,12 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmod.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Release_windows_x86_64/%{prj.name}",
 			"{RMDIR} ../bin/Release_windows_x86_64/%{prj.name}/sounds",
-			"{COPY} ../engine_assets/sounds ./bin/Release_windows_x86_64/%{prj.name}/sounds"
+			"{COPY} ../engine_assets/sounds ./bin/Release_windows_x86_64/%{prj.name}/sounds",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libjpeg-9.dll ../bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/zlib1.dll ../bin/Release_windows_x86_64/%{prj.name}"
 		} 
 
 

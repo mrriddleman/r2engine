@@ -441,19 +441,17 @@ namespace r2::asset::pln
 			{
 				if (r2::asset::pln::tex::FindTexturePacksManifestFile(manifestRawDir, rawPath.stem().string(), texturePackManifestFile, false))
 				{
-					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromJson(texturePackManifestFile, manifestBinaryDir))
+					if (!std::filesystem::remove(texturePackManifestFile))
 					{
-						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
+						R2_CHECK(false, "Failed to delete texture pack manifest file from json!");
 						return;
 					}
 				}
-				else
+
+				if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(binaryPath.string(), rawPath.string(), texturePackDir))
 				{
-					if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(binaryPath.string(), rawPath.string(), texturePackDir))
-					{
-						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
-						return;
-					}
+					R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
+					return;
 				}
 			}
         }
@@ -495,20 +493,19 @@ namespace r2::asset::pln
 			{
 				if (r2::asset::pln::FindMaterialPackManifestFile(rawManifestDir, rawPath.stem().string(), materialPackManifestFile, false))
 				{
-					if (!r2::asset::pln::GenerateMaterialPackManifestFromJson(materialPackManifestFile, binManifestDir))
+					if (!std::filesystem::remove(materialPackManifestFile))
 					{
 						R2_CHECK(false, "Failed to generate texture pack manifest file from json!");
 						return;
 					}
 				}
-				else
+
+				if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(binaryPath.string(), rawPath.string(), materialPackDirBin, materialPackDirRaw))
 				{
-					if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(binaryPath.string(), rawPath.string(), materialPackDirBin, materialPackDirRaw))
-					{
-						R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
-						return;
-					}
+					R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
+					return;
 				}
+				
 			}
 		}
     }

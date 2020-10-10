@@ -1,6 +1,35 @@
 {
   texturePacks: [
     {
+      packName: 18199531748715869547,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.tif"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 9978088,
+      totalNumberOfTextures: 1
+    },
+    {
       packName: 17351122780281340654,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/MicroBat/albedo/micro_bat_col.tga"
@@ -59,7 +88,7 @@
       totalNumberOfTextures: 1
     }
   ],
-  totalNumberOfTextures: 2,
-  totalTextureSize: 33554520,
+  totalNumberOfTextures: 3,
+  totalTextureSize: 43532608,
   maxTexturesInAPack: 1
 }

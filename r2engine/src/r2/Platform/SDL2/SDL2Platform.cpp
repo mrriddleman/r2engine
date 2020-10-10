@@ -26,6 +26,7 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "SDL_image.h"
 
 namespace
 {
@@ -123,9 +124,17 @@ namespace r2
             R2_LOGE("Failed to initialize SDL!");
             return false;
         }
-        
         SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
         
+		int flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF;
+		int initted = IMG_Init(flags);
+        if ((initted & flags) != flags) {
+        
+            printf("IMG_Init: %s\n", IMG_GetError());
+            R2_LOGE("Failed to initialize SDL_image!");
+            return false;
+        }
+
         //Global memory setup for the engine
         {
             r2::mem::GlobalMemory::Init(MAX_NUM_MEMORY_AREAS,
@@ -469,6 +478,7 @@ namespace r2
         
         r2::mem::GlobalMemory::Shutdown();
         
+        IMG_Quit();
         SDL_Quit();
     }
 
