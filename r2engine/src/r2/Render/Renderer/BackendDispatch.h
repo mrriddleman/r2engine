@@ -15,6 +15,7 @@ namespace r2::draw::dispatch
 	void FillConstantBuffer(const void* data);
 	void CompleteConstantBuffer(const void* data);
 	void DrawBatch(const void* data);
+	void DrawDebugBatch(const void* data);
 }
 
 

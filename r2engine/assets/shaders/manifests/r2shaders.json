@@ -1,0 +1,11 @@
+{
+  manifests: [
+    {
+      shaderName: 849706416261927096,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.fs",
+      geometryPath: "",
+      binaryPath: ""
+    }
+  ]
+}

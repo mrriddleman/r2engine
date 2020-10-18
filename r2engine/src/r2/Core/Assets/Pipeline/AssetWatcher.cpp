@@ -38,7 +38,7 @@ namespace r2::asset::pln
     static FileWatcher s_manifestFileWatcher;
     static std::vector<FileWatcher> s_soundDefinitionFileWatchers;
     static std::vector<r2::audio::AudioEngine::SoundDefinition> s_soundDefinitions;
-    static std::vector<ShaderManifest> s_shaderManifests;
+    static std::vector<std::vector<ShaderManifest>> s_shaderManifests;
     
     static std::string s_flatBufferCompilerPath;
     
@@ -53,7 +53,7 @@ namespace r2::asset::pln
     //Shader data
     ShaderManifestCommand s_shaderCommand;
     //FileWatcher s_shaderManifestFileWatcher;
-    FileWatcher s_shadersFileWatcher;
+    std::vector<FileWatcher> s_shadersFileWatchers;
     //bool s_reloadShaderManifests = false;
     
     TexturePackManifestCommand s_texturePackCommand;
@@ -140,9 +140,20 @@ namespace r2::asset::pln
         //Shaders
         {
             ReloadShaderManifests();
-            s_shadersFileWatcher.Init(s_delay, s_shaderCommand.shaderWatchPath);
-            s_shadersFileWatcher.AddModifyListener(ShaderChangedRequest);
-            s_shadersFileWatcher.AddCreatedListener(ShaderChangedRequest);
+
+            for (const auto& path : s_shaderCommand.shaderWatchPaths)
+            {
+                FileWatcher fw;
+
+
+                fw.Init(s_delay, path);
+                fw.AddModifyListener(ShaderChangedRequest);
+                fw.AddCreatedListener(ShaderChangedRequest);
+
+                s_shadersFileWatchers.push_back(fw);
+            }
+
+            
         }
         
         //Textures
@@ -210,7 +221,10 @@ namespace r2::asset::pln
         if (dt >= s_delay)
         {
             //@NOTE(Serge): shaders need to run on the main thread because of OpenGL context
-            s_shadersFileWatcher.Run();
+            for (auto& shaderFileWatcher : s_shadersFileWatchers)
+            {
+                shaderFileWatcher.Run();
+            }
         }
     }
     
@@ -383,35 +397,52 @@ namespace r2::asset::pln
     
     void ReloadShaderManifests()
     {
-        s_shaderManifests = LoadAllShaderManifests(s_shaderCommand.manifestFilePath);
-        bool success = BuildShaderManifestsIfNeeded(s_shaderManifests, s_shaderCommand.manifestFilePath, s_shaderCommand.shaderWatchPath);
-        
-        if (!success)
+        s_shaderManifests.clear();
+
+        size_t numManifestFilePaths = s_shaderCommand.manifestFilePaths.size();
+        for (size_t i = 0; i < numManifestFilePaths; ++i)
         {
-            R2_LOGE("Failed to build shader manifests");
+            const auto& manifestFilePath = s_shaderCommand.manifestFilePaths.at(i);
+			std::vector<ShaderManifest> shaderManifests = LoadAllShaderManifests(manifestFilePath);
+			bool success = BuildShaderManifestsIfNeeded(shaderManifests, manifestFilePath, s_shaderCommand.shaderWatchPaths.at(i));
+
+			if (!success)
+			{
+				R2_LOGE("Failed to build shader manifests");
+			}
+			else
+			{
+				r2::draw::shadersystem::ReloadManifestFile(manifestFilePath);
+			}
+
+            s_shaderManifests.push_back(shaderManifests);
         }
-        else
-        {
-            r2::draw::shadersystem::ReloadManifestFile(s_shaderCommand.manifestFilePath);
-        }
+
     }
 
     void ShaderChangedRequest(std::string changedPath)
     {
-        bool success = BuildShaderManifestsIfNeeded(s_shaderManifests, s_shaderCommand.manifestFilePath, s_shaderCommand.shaderWatchPath);
-        
-        if (!success)
-        {
-            R2_LOGE("Failed to build shader manifests");
-        }
-        
         //look through the manifests and find which need to be re-compiled and linked
-        for (const auto& shaderManifest : s_shaderManifests)
+        size_t numShaderManifests = s_shaderManifests.size();
+
+        for (size_t i = 0; i < numShaderManifests; ++i)
         {
-            if (changedPath == shaderManifest.vertexShaderPath ||
-                changedPath == shaderManifest.fragmentShaderPath)
+            auto& shaderManifests = s_shaderManifests.at(i);
+            for (const auto& shaderManifest : shaderManifests)
             {
-                r2::draw::shadersystem::ReloadShader(shaderManifest);
+				if (changedPath == shaderManifest.vertexShaderPath ||
+					changedPath == shaderManifest.fragmentShaderPath)
+				{
+					bool success = BuildShaderManifestsIfNeeded(shaderManifests, s_shaderCommand.manifestFilePaths[i], s_shaderCommand.shaderWatchPaths[i]);
+
+					if (!success)
+					{
+						R2_LOGE("Failed to build shader manifests");
+					}
+
+					r2::draw::shadersystem::ReloadShader(shaderManifest);
+					break;
+				}
             }
         }
     }

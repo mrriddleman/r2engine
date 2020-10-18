@@ -17,7 +17,9 @@
 
 namespace
 {
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, r2::SArray<glm::mat4>& outTransforms, u64 offset);
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastParentBoneTransform, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastBoneParentTransform, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
     
     const r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
@@ -39,7 +41,8 @@ namespace r2::draw
 		const AnimModel& model,
 		const AnimationHandle& animationHandle,
 		AnimationCache& animationCache,
-		r2::SArray<glm::mat4>& outBoneTransforms)
+		r2::SArray<glm::mat4>& outBoneTransforms,
+        r2::SArray<DebugBone>& outDebugBones)
     {
 
         if (r2::sarr::Capacity(outBoneTransforms) < r2::sarr::Size(*model.boneInfo))
@@ -53,16 +56,18 @@ namespace r2::draw
 
 		if (anim == nullptr)
 		{
-			outBoneTransforms.mSize += model.boneInfo->mSize;
+			outBoneTransforms.mSize = model.boneInfo->mSize;
 			for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 			{
 				r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
 			}
 
+            outDebugBones.mSize = model.boneData->mSize;
+            CalculateStaticDebugBones(model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outDebugBones, 0);
+
 			return;
 		}
 
- 
         double ticksPerSecond = anim->ticksPerSeconds != 0 ? anim->ticksPerSeconds : 25.0;
         double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
         double animationTime = fmod(timeInTicks, anim->duration);
@@ -70,12 +75,13 @@ namespace r2::draw
         R2_CHECK(animationTime < anim->duration, "Hmmm");
         
         outBoneTransforms.mSize = model.boneInfo->mSize;
+        outDebugBones.mSize = model.boneInfo->mSize;
 		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 		{
 			r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
 		}
 
-        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), outBoneTransforms, 0);
+        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outBoneTransforms, outDebugBones, 0);
     }
 
 	u32 PlayAnimationForAnimModel(
@@ -84,6 +90,7 @@ namespace r2::draw
 		const AnimationHandle& animationHandle,
 		AnimationCache& animationCache,
 		r2::SArray<glm::mat4>& outBoneTransforms,
+        r2::SArray<DebugBone>& outDebugBones,
 		u64 offset) 
     {
 
@@ -109,6 +116,10 @@ namespace r2::draw
                 r2::sarr::At(outBoneTransforms, i + offset) = glm::mat4(1.0f);
             }
 
+            outDebugBones.mSize += model.boneInfo->mSize;
+
+            CalculateStaticDebugBones(model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outDebugBones, offset);
+
             return outBoneTransforms.mSize;
         }
 
@@ -121,13 +132,14 @@ namespace r2::draw
 		R2_CHECK(animationTime < anim->duration, "Hmmm");
 
         outBoneTransforms.mSize += model.boneInfo->mSize;
+        outDebugBones.mSize += model.boneInfo->mSize;
 
 		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 		{
 			r2::sarr::At(outBoneTransforms, i + offset) = glm::mat4(1.0f);
 		}
 
-        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), outBoneTransforms, offset);
+        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outBoneTransforms, outDebugBones, offset);
 
 		return outBoneTransforms.mSize;
     }
@@ -135,12 +147,47 @@ namespace r2::draw
 
 namespace
 {
-	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, r2::SArray<glm::mat4>& outTransforms, u64 offset)
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastParentBoneTransform, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+    {
+        glm::mat4 transform = skeletonPart.transform;
+
+		glm::mat4 globalTransform = parentTransform * transform;
+
+		s32 theDefault = -1;
+		s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, skeletonPart.hashName, theDefault);
+
+        if (boneMapResult != theDefault)
+        {
+            u32 boneIndex = boneMapResult;
+
+			if (skeletonPart.parent)
+			{
+				r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+				debugBone.p0 = lastParentBoneTransform[3];
+				debugBone.p1 = globalTransform[3];
+
+                lastParentBoneTransform = globalTransform;
+			}
+        }
+
+		u32 numChildren = 0;
+		if (skeletonPart.children != nullptr)
+		{
+			numChildren = r2::sarr::Size(*skeletonPart.children);
+		}
+
+        for (u32 i = 0; i < numChildren; ++i)
+        {
+            CalculateStaticDebugBones(model, r2::sarr::At(*skeletonPart.children, i), globalTransform, lastParentBoneTransform, outDebugBones, offset);
+        }
+    }
+
+	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastBoneParentTransform, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
 	{
         glm::mat4 transform = skeletonPart.transform;
 
         const r2::draw::AnimationChannel* channel = FindChannel(animation, skeletonPart.hashName);
-        
+
         if (channel)
         {
             //interpolate using the channel
@@ -159,23 +206,23 @@ namespace
             //For FBX animations, there might be some messed up pivot point nonsense to take care of
             //we probably want to attempt to find the <boneName>_$AssimpFbx$_Rotation and <boneName>_$AssimpFbx$_Scaling
             //animation channels
+    //        printf("skeletonPart.boneName: %s\n", skeletonPart.boneName.c_str());
 
-            u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
-            u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
+    //        u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
+    //        u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
 
-            const r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
-            const r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
+    //        const r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
+    //        const r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
 
-            if (rotationChannel && scalingChannel)
-            {
-				glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *scalingChannel);
-				glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
+    //        if (rotationChannel && scalingChannel)
+    //        {
+				//glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *scalingChannel);
+				//glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-                glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
-                transform = glm::mat4_cast(rotQ) * scaleMat;
-            }
+    //            glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
+    //            transform =  glm::mat4_cast(rotQ) * scaleMat;
+    //        }
 
-            
         }
         
         glm::mat4 globalTransform =  parentTransform * transform ;
@@ -187,6 +234,16 @@ namespace
         {
             u32 boneIndex = boneMapResult;
             r2::sarr::At(outTransforms, boneIndex + offset) = model.globalInverseTransform * globalTransform * r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
+        
+            if (skeletonPart.parent)
+            {
+				r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+
+				debugBone.p0 = lastBoneParentTransform[3];
+				debugBone.p1 = globalTransform[3];
+
+				lastBoneParentTransform = globalTransform;
+            }
         }
 
         u32 numChildren = 0;
@@ -197,7 +254,7 @@ namespace
 
         for (u32 i = 0; i < numChildren; ++i)
         {
-            CalculateBoneTransforms(animationTime, animation, model, r2::sarr::At(*skeletonPart.children, i), globalTransform, outTransforms, offset);
+            CalculateBoneTransforms(animationTime, animation, model, r2::sarr::At(*skeletonPart.children, i), globalTransform, lastBoneParentTransform, outTransforms, outDebugBones, offset);
         }
     }
     
@@ -220,7 +277,7 @@ namespace
         u64 numScalingKeys = r2::sarr::Size(*channel.scaleKeys);
         if (numScalingKeys == 1)
         {
-            return r2::sarr::At(*channel.scaleKeys, 0).value;//channel.scaleKeys[0].value;
+            return r2::sarr::At(*channel.scaleKeys, 0).value;
         }
         
         u32 curScalingIndex = FindScalingIndex(animationTime, totalTime, channel);
@@ -240,7 +297,7 @@ namespace
         }
         
         float factor = (float)glm::clamp((animationTime - curScaleTime )/ dt, 0.0, 1.0) ;
-     //   printf("Scale Factor: %f\n", factor);
+
         glm::vec3 start = r2::sarr::At(*channel.scaleKeys, curScalingIndex).value;
         glm::vec3 end = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).value;
         
@@ -302,7 +359,7 @@ namespace
         }
         
         float factor = (float)glm::clamp((animationTime - curPosTime )/ dt, 0.0, 1.0) ;
-     //   printf("Translation Factor: %f\n", factor);
+
         glm::vec3 start = r2::sarr::At(*channel.positionKeys, curPositionIndex).value;
         glm::vec3 end = r2::sarr::At(*channel.positionKeys, nextPositionIndex).value;
 

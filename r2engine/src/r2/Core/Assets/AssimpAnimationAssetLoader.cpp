@@ -44,6 +44,9 @@ namespace
 			animation->ticksPerSeconds = anim->mTicksPerSecond;
 			animation->hashName = STRING_ID(anim->mName.C_Str());
 
+
+			printf("Channel name: %s\n", anim->mName.C_Str());
+
 			if (anim->mNumChannels > 0)
 			{
 				animation->channels = EMPLACE_SARRAY(*dataPtr, r2::draw::AnimationChannel, anim->mNumChannels);
@@ -57,7 +60,7 @@ namespace
 				r2::draw::AnimationChannel* channelToUse = &channel;
 				std::string channelName = std::string(animChannel->mNodeName.data);
 
-				//printf("channel name: %s\n", channelName.c_str());
+				printf("channel name: %s\n", channelName.c_str());
 				
 				channel.hashName = STRING_ID(channelName.c_str());
 		

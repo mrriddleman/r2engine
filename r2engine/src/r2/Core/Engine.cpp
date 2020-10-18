@@ -70,6 +70,10 @@ namespace r2
             
             r2::asset::lib::Init(mAssetLibMemBoundary);
 
+
+            char internalShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR, internalShaderManifestPath, "r2shaders.sman");
+
 #ifdef R2_ASSET_PIPELINE
             r2::asset::pln::SoundDefinitionCommand soundCommand;
 
@@ -92,11 +96,19 @@ namespace r2
             char path[r2::fs::FILE_PATH_LENGTH];
 
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
-            shaderCommand.manifestDirectory = std::string(path);
-            shaderCommand.manifestFilePath = noptrApp->GetShaderManifestsPath();
+
+            shaderCommand.manifestDirectories.push_back(std::string(path));
+            shaderCommand.manifestFilePaths.push_back(noptrApp->GetShaderManifestsPath());
+
 
             r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
-            shaderCommand.shaderWatchPath = std::string(path);
+            shaderCommand.shaderWatchPaths.push_back(std::string(path));
+
+
+            shaderCommand.manifestDirectories.push_back(std::string( R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR) );
+            shaderCommand.manifestFilePaths.push_back(std::string(internalShaderManifestPath));
+            shaderCommand.shaderWatchPaths.push_back(std::string(R2_ENGINE_INTERNAL_SHADERS_RAW_DIR));
+
 
             r2::asset::pln::TexturePackManifestCommand texturePackCommand;
 
@@ -181,7 +193,7 @@ namespace r2
            
 
             //@TODO(Serge): don't use make unique!
-            PushLayer(std::make_unique<RenderLayer>(noptrApp->GetShaderManifestsPath().c_str()));
+            PushLayer(std::make_unique<RenderLayer>(noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath));
             PushLayer(std::make_unique<SoundLayer>());
             
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();

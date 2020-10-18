@@ -17,7 +17,7 @@ namespace r2
     class R2_API RenderLayer: public Layer
     {
     public:
-        explicit RenderLayer(const char* shaderManifestPath);
+        explicit RenderLayer(const char* shaderManifestPath, const char* internalShaderManifestPath);
         
         virtual void Init() override;
         virtual void Render(float alpha) override;
@@ -27,8 +27,8 @@ namespace r2
     private:
         
         //ensure that is always valid
-        const char* mShaderManifestPath;
-
+        char mShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
+        char mInternalShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
     };
 }
 

@@ -31,9 +31,9 @@ namespace r2::asset::pln
     
     struct ShaderManifestCommand
     {
-        std::string manifestDirectory;
-        std::string shaderWatchPath;
-        std::string manifestFilePath;
+        std::vector<std::string> manifestDirectories;
+        std::vector<std::string> shaderWatchPaths;
+        std::vector<std::string> manifestFilePaths;
         AssetsBuiltFunc buildFunc;
     };
     

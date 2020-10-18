@@ -14,6 +14,8 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 
+#include "r2/Utils/Hash.h"
+
 namespace r2::draw::mat
 {
 #ifdef R2_ASSET_PIPELINE
@@ -109,7 +111,13 @@ namespace r2::draw::mat
 			r2::draw::tex::TexturePack* defaultTexturePack = nullptr;
 			r2::draw::tex::TexturePack* result = r2::shashmap::Get(*system.mTexturePacks, material.texturePackHandle, defaultTexturePack);
 
-			if (result == defaultTexturePack)
+			if (material.texturePackHandle == STRING_ID(""))
+			{
+				//we don't have one!
+				continue;
+			}
+
+			if (result == defaultTexturePack )
 			{
 				R2_CHECK(false, "We couldn't get the texture pack!");
 				return;

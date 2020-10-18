@@ -59,4 +59,12 @@ namespace r2::draw::dispatch
 		//@TODO(Serge): apply drawstate
 		rendererimpl::DrawIndexedCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands);
 	}
+
+	void DrawDebugBatch(const void* data)
+	{
+		const r2::draw::cmd::DrawDebugBatch* realData = static_cast<const r2::draw::cmd::DrawDebugBatch*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+
+		rendererimpl::DrawDebugCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands);
+	}
 }

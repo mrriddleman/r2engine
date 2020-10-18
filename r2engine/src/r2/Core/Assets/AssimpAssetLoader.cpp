@@ -2,6 +2,7 @@
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssimpAssetLoader.h"
 #include "r2/Core/Math/MathUtils.h"
+#include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Utils/Hash.h"
 #include <assimp/Importer.hpp>
@@ -59,6 +60,7 @@ namespace
 		
 		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
 		const aiNode* nextNode = node->mParent;
+
 		while (nextNode)
 		{
 			localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
@@ -136,11 +138,24 @@ namespace
 					aiString str;
 					material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
 
-					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(str.C_Str());
+					char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+					char textureName[r2::fs::FILE_PATH_LENGTH];
+					r2::fs::utils::SanitizeSubPath(str.C_Str(), sanitizedPath);
 
-					R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We have an invalid handle!");
+					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
 
-					r2::sarr::Push(*nextMesh.optrMaterials, materialHandle);
+					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName);
+
+					if (!r2::draw::mat::IsInvalidHandle(materialHandle))
+					{
+						r2::sarr::Push(*nextMesh.optrMaterials, materialHandle);
+					}
+					else
+					{
+						R2_LOGW("Failed to load the material texture: %s\n", str.C_Str());
+					}
+					//R2_CHECK(!, "We have an invalid handle!");
+
 				}
 			}
 		}
@@ -151,12 +166,13 @@ namespace
 	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
 	{
 		const aiMesh* meshToUse = mesh;
+		printf("Num bones: %zu\n", meshToUse->mNumBones);
 
 		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
 			s32 boneIndex = -1;
-		//	std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-		//	printf("boneNameStr name: %s\n", boneNameStr.c_str());
+			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
+			printf("boneNameStr name: %s\n", boneNameStr.c_str());
 
 			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
@@ -259,15 +275,15 @@ namespace
 
 	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, u32& indexOffset, r2::draw::Skeleton& skeleton, void** dataPtr, u32& numVertices, const char* directory)
 	{
-		if (node->mMetaData)
-		{
-			printf("Node: %s's metadata\n", node->mName.C_Str());
-			for (u32 i = 0; i < node->mMetaData->mNumProperties; ++i)
-			{
-				printf("Property: %s\n", node->mMetaData->mKeys[i].C_Str());
-			}
+		//if (node->mMetaData)
+		//{
+		//	printf("Node: %s's metadata\n", node->mName.C_Str());
+		//	for (u32 i = 0; i < node->mMetaData->mNumProperties; ++i)
+		//	{
+		//		printf("Property: %s\n", node->mMetaData->mKeys[i].C_Str());
+		//	}
 
-		}
+		//}
 
 		//printf("node: %s, transform: %s\n", node->mName.C_Str(), glm::to_string(AssimpMat4ToGLMMat4(node->mTransformation)).c_str());
 
@@ -294,6 +310,7 @@ namespace
 
 			child.boneName = node->mChildren[i]->mName.C_Str();
 
+			printf("skeleton part name: %s\n", child.boneName.c_str());
 			child.hashName = STRING_ID(child.boneName.c_str());
 			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation) ;
 

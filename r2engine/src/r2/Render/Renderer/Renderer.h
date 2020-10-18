@@ -53,6 +53,7 @@ namespace r2::draw::cmd
 	struct FillVertexBuffer;
 	struct FillConstantBuffer;
 	struct DrawBatchSubCommand;
+	struct DrawDebugBatchSubCommand;
 }
 
 namespace r2::draw
@@ -89,7 +90,7 @@ namespace r2::draw::renderer
 	
 
 	//basic stuff
-	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath);
+	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath);
 	void Update();
 	void Render(float alpha);
 	void Shutdown();
@@ -104,6 +105,7 @@ namespace r2::draw::renderer
 
 	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
+	VertexConfigHandle AddDebugDrawLayout(u64 maxDraws);
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
 	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
 	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
@@ -135,11 +137,20 @@ namespace r2::draw::renderer
 
 	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
+	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
+
 
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 
 	void AddDrawBatch(const BatchConfig& batch);
 
+	//@NOTE: maybe these handles should be set by the renderer?
+	void AddDebugBatch(
+		const r2::SArray<DebugBone>& bones,
+		const r2::SArray<u64>& numBonesPerModel,
+		const r2::SArray<glm::mat4>& numModelMats,
+		r2::draw::ConstantBufferHandle modelMatsHandle,
+		r2::draw::ConstantBufferHandle subCommandsHandle);
 
 	//events
 	void WindowResized(u32 width, u32 height);

@@ -110,7 +110,7 @@ namespace r2::draw
 		{
 			if (handle.assetCache != system.mAnimationCache->GetSlot())
 			{
-				R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
+				//R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
 				return nullptr;
 			}
 

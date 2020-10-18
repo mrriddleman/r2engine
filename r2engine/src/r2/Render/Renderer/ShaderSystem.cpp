@@ -13,12 +13,12 @@ namespace r2::draw
         r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
         r2::mem::LinearArena* mLinearArena = nullptr;
         r2::SArray<r2::draw::Shader>* mShaders = nullptr;
-        r2::SArray<ShaderHandle>* mShadersToReload = nullptr;
         r2::mem::StackArena* mShaderLoadingArena = nullptr;
 
-
-        char mShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
-        b32 mReloadShaderManifest = false;
+#ifdef R2_ASSET_PIPELINE
+        r2::SArray<ShaderHandle>* mShadersToReload = nullptr;
+        r2::SArray<std::string>* mReloadShaderManifests = nullptr;
+#endif
     };
 }
 
@@ -36,12 +36,12 @@ namespace
 namespace r2::draw::shadersystem
 {
 
-    bool LoadShadersFromManifestFile();
+    bool LoadShadersFromManifestFile(const char* manifestFilePath);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
 
-    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath)
+    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath)
     {
         R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Memory Area handle is invalid");
         R2_CHECK(s_optrShaderSystem == nullptr, "Are you trying to initialize this system more than once?");
@@ -104,16 +104,22 @@ namespace r2::draw::shadersystem
         s_optrShaderSystem->mSubAreaHandle = subAreaHandle;
         s_optrShaderSystem->mLinearArena = shaderLinearArena;
         s_optrShaderSystem->mShaders = MAKE_SARRAY(*shaderLinearArena, r2::draw::Shader, capacity);
+        
+#ifdef R2_ASSET_CACHE_DEBUG
         s_optrShaderSystem->mShadersToReload = MAKE_SARRAY(*shaderLinearArena, ShaderHandle, capacity);
-        r2::util::PathCpy(s_optrShaderSystem->mShaderManifestPath, shaderManifestPath);
+        s_optrShaderSystem->mReloadShaderManifests = MAKE_SARRAY(*shaderLinearArena, std::string, capacity);
+#endif
+        //r2::util::PathCpy(s_optrShaderSystem->mShaderManifestPath, shaderManifestPath);
+
         s_optrShaderSystem->mShaderLoadingArena = MAKE_STACK_ARENA(*shaderLinearArena, SHADER_LOADING_SIZE * NUM_MANIFESTS_TO_LOAD);
 
         R2_CHECK(s_optrShaderSystem->mShaderLoadingArena != nullptr, "We couldn't make the loading arena");
         R2_CHECK(s_optrShaderSystem->mShaders != nullptr, "we couldn't allocate the array for materials?");
 
-        bool loadedShaders = LoadShadersFromManifestFile();
+        bool loadedShaders = LoadShadersFromManifestFile(shaderManifestPath);
+        bool loadedInternalShaders = LoadShadersFromManifestFile(internalShaderManifestPath);
 
-        return loadedShaders;
+        return loadedShaders && loadedInternalShaders;
     }
 
     void Update()
@@ -126,14 +132,19 @@ namespace r2::draw::shadersystem
             return;
         }
 
-
-        if (s_optrShaderSystem->mReloadShaderManifest)
+        u64 numShaderManifests = r2::sarr::Size(*s_optrShaderSystem->mReloadShaderManifests);
+        if (numShaderManifests > 0)
         {
-            bool loaded = LoadShadersFromManifestFile();
+            for (u64 i = 0; i < numShaderManifests; ++i)
+            {
+                const std::string& manifestFile = r2::sarr::At(*s_optrShaderSystem->mReloadShaderManifests, i);
+				bool loaded = LoadShadersFromManifestFile(manifestFile.c_str());
 
-            R2_CHECK(loaded, "We couldn't load the shaders from the file: %s\n", s_optrShaderSystem->mShaderManifestPath);
+				R2_CHECK(loaded, "We couldn't load the shaders from the file: %s\n", manifestFile.c_str());
 
-            s_optrShaderSystem->mReloadShaderManifest = false;
+            }
+
+            r2::sarr::Clear(*s_optrShaderSystem->mReloadShaderManifests);
         }
 
         const u64 numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
@@ -256,7 +267,11 @@ namespace r2::draw::shadersystem
         r2::mem::LinearArena* shaderArena = s_optrShaderSystem->mLinearArena;
 
         FREE(s_optrShaderSystem->mShaderLoadingArena, *shaderArena);
+
+#ifdef R2_ASSET_PIPELINE
         FREE(s_optrShaderSystem->mShadersToReload, *shaderArena);
+        FREE(s_optrShaderSystem->mReloadShaderManifests, *shaderArena);
+#endif
 
         FREE(s_optrShaderSystem->mShaders, *shaderArena);
 
@@ -281,8 +296,13 @@ namespace r2::draw::shadersystem
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(SHADER_LOADING_SIZE, ALIGNMENT, stackHeaderSize, boundsChecking) * NUM_MANIFESTS_TO_LOAD + //for the shader manifest loading
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::ShaderSystem), ALIGNMENT, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking);
+
+#ifdef R2_ASSET_PIPELINE
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<std::string>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
+#endif
+
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking);
 
         return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
     }
@@ -307,7 +327,7 @@ namespace r2::draw::shadersystem
 
     }
 
-    bool LoadShadersFromManifestFile()
+    bool LoadShadersFromManifestFile(const char* shaderManifestPath)
     {
         if (s_optrShaderSystem == nullptr)
         {
@@ -315,7 +335,7 @@ namespace r2::draw::shadersystem
             return false;
         }
 
-        void* shaderManifestBuffer = r2::fs::ReadFile<r2::mem::StackArena>(*s_optrShaderSystem->mShaderLoadingArena, s_optrShaderSystem->mShaderManifestPath);
+        void* shaderManifestBuffer = r2::fs::ReadFile<r2::mem::StackArena>(*s_optrShaderSystem->mShaderLoadingArena, shaderManifestPath);
 
         R2_CHECK(shaderManifestBuffer != nullptr, "Shader manifest should not be null!");
 
@@ -356,7 +376,7 @@ namespace r2::draw::shadersystem
             return;
         }
 
-        s_optrShaderSystem->mReloadShaderManifest = true;
+        r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
     }
 
     void ReloadShader(const r2::asset::pln::ShaderManifest& manifest)

@@ -9,11 +9,12 @@ namespace r2::draw::key
 	const u8 Basic::FSL_HUD = 2;
 
 	const u8 Basic::VP_DEFAULT = 0;
-
+	
 	const u8 Basic::VPL_WORLD = 0;
 	const u8 Basic::VPL_EFFECT = 1;
 	const u8 Basic::VPL_SKYBOX = 2;
 	const u8 Basic::VPL_HUD = 3;
+	const u8 Basic::VPL_DEBUG = MAX_BIT_VAL(4);
 
 	const u8 Basic::TR_OPAQUE = 0;
 	const u8 Basic::TR_NORMAL = 1;

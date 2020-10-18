@@ -66,6 +66,12 @@ namespace r2::draw
 		//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
 	};
 
+	struct DebugBone
+	{
+		glm::vec3 p0;
+		glm::vec3 p1;
+	};
+
     struct Model
     {
         u64 hash = 0;

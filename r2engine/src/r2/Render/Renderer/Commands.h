@@ -18,6 +18,7 @@ namespace r2::draw::cmd
 
 	struct DrawState 
 	{
+
 	};
 
 	extern u32 CLEAR_COLOR_BUFFER;
@@ -112,6 +113,25 @@ namespace r2::draw::cmd
 		DrawBatchSubCommand* subCommands;
 	};
 	static_assert(std::is_pod<DrawBatch>::value == true, "DrawBatch must be a POD.");
+
+	struct DrawDebugBatchSubCommand
+	{
+		u32  count;
+		u32  instanceCount;
+		u32  firstVertex;
+		u32  baseInstance;
+	};
+
+	struct DrawDebugBatch
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		DrawState state;
+		r2::draw::BufferLayoutHandle bufferLayoutHandle;
+		r2::draw::ConstantBufferHandle batchHandle;
+		u64 numSubCommands;
+		DrawDebugBatchSubCommand* subCommands;
+	};
+	static_assert(std::is_pod<DrawDebugBatch>::value == true, "DrawDebugBatch must be a POD.");
 
 	u64 LargestCommand();
 }

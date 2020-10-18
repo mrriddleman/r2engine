@@ -237,6 +237,9 @@ public:
     {
         STATIC_MODELS_CONFIG = 0,
         ANIM_MODELS_CONFIG,
+
+
+        DEBUG_CONFIG, //@NOTE: should be next to last always
         NUM_VERTEX_CONFIGS
     };
     
@@ -332,8 +335,10 @@ public:
         mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);
         mBoneTransformOffsets = MAKE_SARRAY(*linearArenaPtr, glm::ivec4, NUM_DRAWS);
         mBoneTransforms = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_BONES);
+        mDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
         glm::mat4 quadMat = glm::mat4(1.0f);
         
@@ -361,15 +366,21 @@ public:
 		r2::sarr::Push(*modelMats, coneMat);
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, -3));
+        microbatMat = glm::translate(microbatMat, glm::vec3(5, 0, -5));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);
 
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 1, -3));
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-5, 0, -5));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
+
+
+        glm::mat4 ellenModel = glm::mat4(1.0f);
+        ellenModel = glm::translate(ellenModel, glm::vec3(0, 0, -5));
+        ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
+        r2::sarr::Push(*animModelMats, ellenModel);
 
         subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
         animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
@@ -411,11 +422,19 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)modelFile);
 
+
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer.fbx", modelFilePath);
 
         r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
+
+
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/Ellen.fbx", modelFilePath);
+
+        r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
 
 
         mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Kilobytes(750), false, modelFiles, "Sandbox Model System");
@@ -477,7 +496,9 @@ public:
 
         r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
         r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(4), Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
-        
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddDebugDrawLayout(NUM_DRAWS));
+
+
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
             {r2::draw::ShaderDataType::Mat4, "projection"},
             {r2::draw::ShaderDataType::Mat4, "view"}
@@ -498,8 +519,6 @@ public:
 		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
             {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
 		}));
-        
-        r2::draw::renderer::SetDepthTest(true);
 
         bool success = r2::draw::renderer::GenerateLayouts();
         R2_CHECK(success, "We couldn't create the buffer layouts!");
@@ -513,6 +532,8 @@ public:
         auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer.fbx", r2::asset::ASSIMP_MODEL));
         mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
 
+        auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Ellen.fbx", r2::asset::ASSIMP_MODEL));
+        mEllenModel = r2::draw::modlsys::GetAnimModel(mModelSystem, ellenHandle);
 
         mSelectedAnimModel = mSkeletonModel;
 
@@ -530,7 +551,11 @@ public:
         
         r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
         r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
+        r2::sarr::Push(*animModelsToDraw, mEllenModel);
 
+        r2::sarr::Push(*mNumBonesPerModel, mMicroBatModel->boneInfo->mSize);
+        r2::sarr::Push(*mNumBonesPerModel, mSkeletonModel->boneInfo->mSize);
+        r2::sarr::Push(*mNumBonesPerModel, mEllenModel->boneInfo->mSize);
 
         r2::draw::renderer::UploadAnimModels(*animModelsToDraw, r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG), *modelRefs);
         r2::draw::renderer::FillSubCommandsFromModelRefs(*animModelsSubCommandsToDraw, *modelRefs);
@@ -622,6 +647,11 @@ public:
                 
 				return true;
 			}
+            else if (e.KeyCode() == r2::io::KEY_F1)
+            {
+                mDrawDebugBones = !mDrawDebugBones;
+                return true;
+            }
 			return false;
 			});
 
@@ -778,12 +808,13 @@ public:
         mPersController.Update();
 
 		r2::sarr::Clear(*mBoneTransforms);
+        r2::sarr::Clear(*mDebugBones);
 
         auto time = CENG.GetTicks();
 
-
-        r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, r2::sarr::At(*mBoneTransformOffsets, 0).x);;
-        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), *mAnimationCache, *mBoneTransforms, r2::sarr::At(*mBoneTransformOffsets, 1).x);
+        r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 0).x);
+        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x );
+        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::asset::AssetHandle{}, * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
     }
 
     virtual void Render(float alpha) override
@@ -842,11 +873,17 @@ public:
 
         r2::draw::renderer::AddDrawBatch(animModelBatch);
 
-       // r2::draw::key::Basic clearKey;
+        if (mDrawDebugBones)
+        {
+			r2::draw::renderer::AddDebugBatch(
+				*mDebugBones,
+				*mNumBonesPerModel,
+				*animModelMats,
+				r2::sarr::At(*constHandles, MODEL_MATRICES),
+				r2::sarr::At(*constHandles, SUB_COMMANDS));
+        }
 
-       // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
-       // clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
-
+       
 		//update the camera
       //  const r2::draw::ConstantBufferLayoutConfiguration& constantLayout = r2::sarr::At(*constantLayouts, 0);
         r2::draw::renderer::AddFillConstantBufferCommandForData(
@@ -879,6 +916,8 @@ public:
         FREE(animModelsSubCommandsToDraw, *linearArenaPtr);
         FREE(mBoneTransformOffsets, *linearArenaPtr);
         FREE(mBoneTransforms, *linearArenaPtr);
+        FREE(mDebugBones, *linearArenaPtr);
+        FREE(mNumBonesPerModel, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -1033,9 +1072,11 @@ private:
     r2::SArray<r2::draw::MaterialHandle>* animModelMaterials;
     r2::SArray<glm::mat4>* modelMats;
     r2::SArray<glm::mat4>* animModelMats;
+    r2::SArray<u64>* mNumBonesPerModel;
 
     r2::SArray<glm::ivec4>* mBoneTransformOffsets;
     r2::SArray<glm::mat4>* mBoneTransforms;
+    r2::SArray<r2::draw::DebugBone>* mDebugBones;
     r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
 
     r2::draw::ModelSystem* mModelSystem = nullptr;
@@ -1043,9 +1084,11 @@ private:
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
     const r2::draw::AnimModel* mSkeletonModel = nullptr;
+    const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
 
     s32 mSelectedAnimationID = 0;
+    bool mDrawDebugBones = false;
 };
 
 namespace

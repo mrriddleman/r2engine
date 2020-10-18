@@ -6,6 +6,7 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/BufferLayout.h"
+#include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Camera/Camera.h"
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/Shader.h"
@@ -490,7 +491,14 @@ namespace r2::draw::rendererimpl
 
 	void SetViewportLayer(u32 viewportLayer)
 	{
-		//@TODO(Serge): implement
+		if (viewportLayer == r2::draw::key::Basic::VPL_DEBUG)
+		{
+			SetDepthTest(false);
+		}
+		else
+		{
+			SetDepthTest(true);
+		}
 	}
 
 	void SetMaterialID(r2::draw::MaterialHandle materialID)
@@ -589,6 +597,29 @@ namespace r2::draw::rendererimpl
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, ringbuf::GetHeadOffset(ringBuffer), count, stride);
 		ringbuf::Complete(ringBuffer, count);
 	}
+
+	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride)
+	{
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
+
+		RingBuffer theDefault;
+		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, batchHandle, theDefault);
+		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
+
+		size_t totalSize = count * ringBuffer.typeSize;
+		void* ptr = ringbuf::Reserve(ringBuffer, count);
+		memcpy(ptr, cmds, totalSize);
+
+		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
+		{
+			glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+		}
+
+		BindVertexArray(layoutId);
+		glMultiDrawArraysIndirect(GL_LINES, ringbuf::GetHeadOffset(ringBuffer), count, stride);
+		ringbuf::Complete(ringBuffer, count);
+	}
+
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)
 	{
