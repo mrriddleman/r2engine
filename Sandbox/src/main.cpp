@@ -811,10 +811,25 @@ public:
         r2::sarr::Clear(*mDebugBones);
 
         auto time = CENG.GetTicks();
+  //      auto curTime = time;
 
         r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 0).x);
+       // auto nextTime = CENG.GetTicks();
+        printf("MicroBat END\n");
+   //     printf("time for microbat: %f\n", nextTime - curTime);
+      //  curTime = nextTime;
         r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x );
+		//nextTime = CENG.GetTicks();
+        printf("Skeleton END\n");
+	//	printf("time for skeleton: %f\n", nextTime - curTime);
+		//curTime = nextTime;
+        
+        
         r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::asset::AssetHandle{}, * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
+		//nextTime = CENG.GetTicks();
+        printf("Ellen END\n");
+		//printf("time for ellen: %f\n", CENG.GetTicks() - time);
+        
     }
 
     virtual void Render(float alpha) override

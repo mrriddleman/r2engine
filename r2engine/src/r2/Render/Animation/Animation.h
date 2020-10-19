@@ -20,13 +20,22 @@ namespace r2::draw
 		glm::quat quat;
 	};
 
+	struct ChannelState
+	{
+		f64 mCurScaleTime = 0.0;
+		f64 mCurRotationTime = 0.0;
+		f64 mCurTranslationTime = 0.0;
+
+		u32 mCurScaleIndex = 0;
+		u32 mCurRotationIndex = 0;
+		u32 mCurTranslationIndex = 0;
+	};
+
 	struct AnimationChannel
 	{
-		//std::string name;
 		u64 hashName;
-		//u32 numPositionKeys = 0;
-		//u32 numRotationKeys = 0;
-		//u32 numScalingKeys = 0;
+		ChannelState state;
+
 		r2::SArray<VectorKey>* positionKeys = nullptr;
 		r2::SArray<VectorKey>* scaleKeys = nullptr;
 		r2::SArray<RotationKey>* rotationKeys = nullptr;
@@ -45,6 +54,8 @@ namespace r2::draw
 
 		static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
+
+	
 }
 
 

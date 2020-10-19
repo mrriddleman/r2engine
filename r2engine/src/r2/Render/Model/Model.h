@@ -47,6 +47,7 @@ namespace r2::draw
 
 
 
+
 	struct AnimModel
 	{
         u64 hash = 0;

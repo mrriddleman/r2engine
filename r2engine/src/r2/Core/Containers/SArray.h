@@ -9,6 +9,7 @@
 #define Array_h
 
 #include "r2/Core/Memory/Memory.h"
+#include <cassert>
 
 #define MAKE_SARRAY(arena, T, capacity) r2::sarr::CreateSArray<T>(arena, capacity, __FILE__, __LINE__, "")
 #define MAKE_SARRAY_VERBOSE(arena, T, capacity, file, line, desc) r2::sarr::CreateSArray<T>(arena, capacity, file, line, desc)
@@ -277,14 +278,16 @@ namespace r2
     template <typename T>
     T& SArray<T>::operator[](u64 i)
     {
-        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
+   //     assert(i >= 0 && i < mCapacity);
+        //R2_CHECK(, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     
     template <typename T>
     const T& SArray<T>::operator[](u64 i) const
     {
-        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
+    //    assert(i >= 0 && i < mCapacity);
+        //R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     

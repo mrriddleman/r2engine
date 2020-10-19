@@ -186,7 +186,7 @@ namespace r2
         //Init Platform Renderer
         {
             r2::draw::rendererimpl::PlatformRendererSetupParams setupParams;
-            setupParams.flags |= r2::draw::rendererimpl::VSYNC;
+          //  setupParams.flags |= r2::draw::rendererimpl::VSYNC;
 
             r2::util::PathCpy(mApplicationName, app->GetApplicationName());
 
