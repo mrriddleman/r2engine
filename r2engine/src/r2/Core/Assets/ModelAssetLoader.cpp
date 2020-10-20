@@ -126,7 +126,7 @@ namespace r2::asset
 
 				if (texCoords)
 				{
-					nextVertex.texCoords = glm::vec2(texCoords->Get(v)->x(), texCoords->Get(v)->y());
+					nextVertex.texCoords = glm::vec3(texCoords->Get(v)->x(), texCoords->Get(v)->y(), 0);
 				}
 
 				r2::sarr::Push(*nextMesh.optrVertices, nextVertex);

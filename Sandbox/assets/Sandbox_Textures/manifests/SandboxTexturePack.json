@@ -3,7 +3,10 @@
     {
       packName: 18199531748715869547,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Hair_AlbedoTransparency.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.tif"
       ],
       normal: [
 
@@ -26,8 +29,8 @@
       height: [
 
       ],
-      packSize: 9978088,
-      totalNumberOfTextures: 1
+      packSize: 14861742,
+      totalNumberOfTextures: 4
     },
     {
       packName: 17351122780281340654,
@@ -88,7 +91,7 @@
       totalNumberOfTextures: 1
     }
   ],
-  totalNumberOfTextures: 3,
-  totalTextureSize: 43532608,
-  maxTexturesInAPack: 1
+  totalNumberOfTextures: 6,
+  totalTextureSize: 48416262,
+  maxTexturesInAPack: 4
 }

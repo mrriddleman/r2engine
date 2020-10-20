@@ -78,11 +78,66 @@ namespace
 			*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<u32>::MemorySize(mesh->mNumFaces * 3));
 		}
 
+		s32 textureIndex = 0;
 		if (mesh->mMaterialIndex >= 0)
 		{
 			nextMesh.optrMaterials = EMPLACE_SARRAY(*dataPtr, r2::draw::MaterialHandle, 1);
 			*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::MaterialHandle>::MemorySize(1));
+		
+			//@TODO(Serge): hmm we somehow need to map the assimp textures to our own material handle
+			//we'd have to find the texture in the material system and return the handle from that...
+
+			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			R2_CHECK(material != nullptr, "Material is null!");
+			if (material)
+			{
+				const u32 numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
+				if (numTextures > 0)
+				{
+					aiString str;
+					material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+
+					char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+					char textureName[r2::fs::FILE_PATH_LENGTH];
+					r2::fs::utils::SanitizeSubPath(str.C_Str(), sanitizedPath);
+
+					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
+
+					r2::draw::tex::Texture tex;
+					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
+
+					if (!r2::draw::mat::IsInvalidHandle(materialHandle))
+					{
+						r2::sarr::Push(*nextMesh.optrMaterials, materialHandle);
+
+						r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+						R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+						const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialHandle);
+
+						u64 numTextures = r2::sarr::Size(*textures);
+						for (u64 i = 0; i < numTextures; ++i)
+						{
+							const r2::draw::tex::Texture& nextTexture = r2::sarr::At(*textures, i);
+
+							if (nextTexture.textureAssetHandle.handle == tex.textureAssetHandle.handle &&
+								nextTexture.textureAssetHandle.assetCache == tex.textureAssetHandle.assetCache)
+							{
+								textureIndex = i;
+								break;
+							}
+						}
+					}
+					else
+					{
+						R2_LOGW("Failed to load the material texture: %s\n", str.C_Str());
+					}
+					//R2_CHECK(!, "We have an invalid handle!");
+
+				}
+			}
 		}
+
 
 		for (u32 i = 0; i < mesh->mNumVertices; ++i)
 		{
@@ -97,7 +152,7 @@ namespace
 
 			if (mesh->mTextureCoords)
 			{
-				nextVertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, textureIndex);
 			}
 
 			r2::sarr::Push(*nextMesh.optrVertices, nextVertex);
@@ -123,42 +178,7 @@ namespace
 
 		indexOffset++;
 
-		if (mesh->mMaterialIndex >= 0)
-		{
-			//@TODO(Serge): hmm we somehow need to map the assimp textures to our own material handle
-			//we'd have to find the texture in the material system and return the handle from that...
-
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			R2_CHECK(material != nullptr, "Material is null!");
-			if (material)
-			{
-				const u32 numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
-				if (numTextures > 0)
-				{
-					aiString str;
-					material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
-
-					char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-					char textureName[r2::fs::FILE_PATH_LENGTH];
-					r2::fs::utils::SanitizeSubPath(str.C_Str(), sanitizedPath);
-
-					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
-
-					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName);
-
-					if (!r2::draw::mat::IsInvalidHandle(materialHandle))
-					{
-						r2::sarr::Push(*nextMesh.optrMaterials, materialHandle);
-					}
-					else
-					{
-						R2_LOGW("Failed to load the material texture: %s\n", str.C_Str());
-					}
-					//R2_CHECK(!, "We have an invalid handle!");
-
-				}
-			}
-		}
+		
 
 		r2::sarr::Push(*meshes, nextMesh);
 	}
@@ -166,13 +186,13 @@ namespace
 	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
 	{
 		const aiMesh* meshToUse = mesh;
-		printf("Num bones: %zu\n", meshToUse->mNumBones);
+		//printf("Num bones: %zu\n", meshToUse->mNumBones);
 
 		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
 			s32 boneIndex = -1;
 			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-			printf("boneNameStr name: %s\n", boneNameStr.c_str());
+			//printf("boneNameStr name: %s\n", boneNameStr.c_str());
 
 			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
@@ -310,7 +330,7 @@ namespace
 
 			child.boneName = node->mChildren[i]->mName.C_Str();
 
-			printf("skeleton part name: %s\n", child.boneName.c_str());
+		//	printf("skeleton part name: %s\n", child.boneName.c_str());
 			child.hashName = STRING_ID(child.boneName.c_str());
 			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation) ;
 

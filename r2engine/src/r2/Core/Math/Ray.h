@@ -8,6 +8,9 @@
 #ifndef Ray_h
 #define Ray_h
 
+
+
+
 #include "glm/glm.hpp"
 
 namespace r2::math

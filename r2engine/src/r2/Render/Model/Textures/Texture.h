@@ -24,6 +24,7 @@ namespace r2::draw::tex
 	{
 		r2::asset::AssetHandle textureAssetHandle;
 		TextureType type = TextureType::Diffuse;
+
 	};
 
 	struct TextureHandle

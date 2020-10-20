@@ -278,16 +278,14 @@ namespace r2
     template <typename T>
     T& SArray<T>::operator[](u64 i)
     {
-   //     assert(i >= 0 && i < mCapacity);
-        //R2_CHECK(, "i: %llu is out of bounds in this array", i);
+        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     
     template <typename T>
     const T& SArray<T>::operator[](u64 i) const
     {
-    //    assert(i >= 0 && i < mCapacity);
-        //R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
+        R2_CHECK(i >= 0 && i < mCapacity, "i: %llu is out of bounds in this array", i);
         return mData[i];
     }
     

@@ -34,6 +34,15 @@ namespace r2::asset
         mNumDirectoriesToIncludeInAssetHandle = numDirectoriesToIncludeInAssetHandle;
         r2::util::PathCpy(mPath, path);
 
+
+		char fileName[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, fileName, mNumDirectoriesToIncludeInAssetHandle);
+
+		std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
+
+		mAssetHandle = STRING_ID(fileName);
+
+
         return strcmp(mPath, "") != 0;
     }
     
@@ -83,12 +92,6 @@ namespace r2::asset
     
     u64 RawAssetFile::GetAssetHandle(u64 index) const
     {
-        char fileName[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::CopyFileNameWithParentDirectories(mPath, fileName, mNumDirectoriesToIncludeInAssetHandle);
-       
-        std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
-
-        auto hash = STRING_ID(fileName);
-        return hash;
+        return mAssetHandle;
     }
 }

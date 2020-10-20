@@ -55,28 +55,6 @@ namespace r2::draw
 		u32 handle = 0;
 		s32 slot = -1;
 	};
-
-	
-
-	struct ModelMaterial
-	{
-		union
-		{
-			tex::TextureAddress textures[8];
-
-			struct
-			{
-				tex::TextureAddress diffuse1;
-				tex::TextureAddress specular1;
-				tex::TextureAddress emissive1;
-				tex::TextureAddress normal1;
-				tex::TextureAddress metallic1;
-				tex::TextureAddress height1;
-				tex::TextureAddress microfacet1;
-				tex::TextureAddress occlusion1;
-			};
-		};
-	};
 }
 
 namespace r2::draw::matsys
@@ -90,7 +68,7 @@ namespace r2::draw::matsys
 
 	MaterialSystem* FindMaterialSystem(u64 materialName);
 	MaterialHandle FindMaterialHandle(u64 materialName);
-	MaterialHandle FindMaterialFromTextureName(const char* textureName);
+	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture);
 
 #ifdef R2_ASSET_PIPELINE
 	void TextureChanged(std::string texturePath);

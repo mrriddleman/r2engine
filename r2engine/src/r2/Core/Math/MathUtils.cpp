@@ -12,14 +12,19 @@ namespace r2::math
 {
     const float EPSILON = 0.0001f;
     
+	template <typename T>
+
+	inline T lerp(T v0, T v1, T t) {
+		return fma(t, v1, fma(-t, v0, v0));
+	}
+
     glm::vec3 Lerp(const glm::vec3& v1, const glm::vec3& v2, float t)
     {
-        float oneMinusT = (1.0f - t);
-        return glm::vec3(
-            oneMinusT * v1.x + t * v2.x,
-            oneMinusT * v1.y + t * v2.y,
-            oneMinusT * v1.z + t * v2.z
-        );
+		return glm::vec3(
+			lerp(v1.x, v2.x, t),
+			lerp(v1.y, v2.y, t),
+			lerp(v1.z, v2.z, t)
+		);
     }
     
     glm::vec4 Lerp(const glm::vec4& v1, const glm::vec4& v2, float t)

@@ -272,7 +272,7 @@ public:
 		
         R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(5) + materialMemorySystemSize, 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(8) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
         subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1) + materialMemorySystemSize);
@@ -332,7 +332,7 @@ public:
         //make the buffer layouts
         mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
         mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
-        mPersController.Init(2.5f, 45.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);
@@ -494,8 +494,8 @@ public:
 
         //@TODO(Serge): Put this in a helper function 
 
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(4), Megabytes(4) }, Megabytes(4), NUM_DRAWS) );
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8), NUM_DRAWS) );
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8), NUM_DRAWS) );
         r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddDebugDrawLayout(NUM_DRAWS));
 
 
@@ -815,19 +815,19 @@ public:
 
         r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 0).x);
        // auto nextTime = CENG.GetTicks();
-        printf("MicroBat END\n");
+      //  printf("MicroBat END\n");
    //     printf("time for microbat: %f\n", nextTime - curTime);
       //  curTime = nextTime;
         r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x );
 		//nextTime = CENG.GetTicks();
-        printf("Skeleton END\n");
+     //   printf("Skeleton END\n");
 	//	printf("time for skeleton: %f\n", nextTime - curTime);
 		//curTime = nextTime;
         
         
         r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::asset::AssetHandle{}, * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
 		//nextTime = CENG.GetTicks();
-        printf("Ellen END\n");
+     //   printf("Ellen END\n");
 		//printf("time for ellen: %f\n", CENG.GetTicks() - time);
         
     }

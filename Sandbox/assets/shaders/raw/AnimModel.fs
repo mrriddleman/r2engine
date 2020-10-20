@@ -4,39 +4,28 @@
 
 layout (location = 0) out vec4 FragColor;
 
+const uint NUM_TEXTURES_PER_DRAWID = 8;
+
 struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
 };
 
-struct ObjectMaterial
-{
-	Tex2DAddress textureDiffuse1;
-	Tex2DAddress textureSpecular1;
-	Tex2DAddress textureEmissive1;
-	Tex2DAddress textureNormal1;
-	Tex2DAddress textureMetallic1;
-	Tex2DAddress textureHeight1;
-	Tex2DAddress textureMicrofacet1;
-	Tex2DAddress textureOcclusion1;
-};
-
 layout (std430, binding = 1) buffer Materials
 {
-	ObjectMaterial materials[];
+	Tex2DAddress materials[];
 };
-
 
 in VS_OUT
 {
 	vec3 normal;
-	vec2 texCoords;
+	vec3 texCoords;
 	flat uint drawID;
 } fs_in;
 
 
-vec4 SampleMaterialDiffuse(uint drawID, vec2 uv);
+vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 
 void main()
 {
@@ -47,8 +36,9 @@ void main()
 		discard;
 }
 
-vec4 SampleMaterialDiffuse(uint drawID, vec2 uv)
+vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	Tex2DAddress addr = materials[drawID].textureDiffuse1;
-	return texture(sampler2DArray(addr.container), vec3(uv,addr.page));
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex];
+	return texture(sampler2DArray(addr.container), vec3(uv.rg,addr.page));
 }

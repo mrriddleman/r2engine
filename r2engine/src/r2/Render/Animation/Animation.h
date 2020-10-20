@@ -2,6 +2,7 @@
 #define __ANIMATION_H__
 
 #include "r2/Core/Containers/SArray.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 

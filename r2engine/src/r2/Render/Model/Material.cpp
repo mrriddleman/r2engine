@@ -869,7 +869,7 @@ namespace r2::draw::matsys
 		return mat::InvalidMaterialHandle;
 	}
 
-	MaterialHandle FindMaterialFromTextureName(const char* textureName)
+	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture)
 	{
 		//@TODO(Serge): implement something better than this... this is the worst possible case for our system
 		// we're trying to find the material from a texture name which is buried under a lot of stuff
@@ -923,6 +923,8 @@ namespace r2::draw::matsys
 							if (texture.textureAssetHandle.handle == textureHandle &&
 								texture.textureAssetHandle.assetCache == textureAssetHandle.assetCache)
 							{
+
+								outTexture = texture;
 								return mat::MakeMaterialHandleFromIndex(*system, k);
 							}
 						}

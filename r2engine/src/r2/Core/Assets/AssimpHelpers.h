@@ -2,6 +2,7 @@
 #define __ASSIMP_HELPERS_H__
 
 #include <assimp/scene.h>
+
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 

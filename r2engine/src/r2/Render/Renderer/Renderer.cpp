@@ -215,7 +215,7 @@ namespace
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
-
+	const u64 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8;
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
 	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 2048; //?
@@ -844,7 +844,7 @@ namespace r2::draw::renderer
 			{
 				{{r2::draw::ShaderDataType::Float3, "aPos"},
 				{r2::draw::ShaderDataType::Float3, "aNormal"},
-				{r2::draw::ShaderDataType::Float2, "aTexCoord"}}
+				{r2::draw::ShaderDataType::Float3, "aTexCoord"}}
 			}
 		);
 
@@ -897,7 +897,7 @@ namespace r2::draw::renderer
 			{
 				{r2::draw::ShaderDataType::Float3, "aPos", 0},
 				{r2::draw::ShaderDataType::Float3, "aNormal", 0},
-				{r2::draw::ShaderDataType::Float2, "aTexCoord", 0},
+				{r2::draw::ShaderDataType::Float3, "aTexCoord", 0},
 				{r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
 				{r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
 			}
@@ -960,7 +960,7 @@ namespace r2::draw::renderer
 
 		layoutConfig.vertexBufferConfigs[0] =
 		{
-			(u32)Megabytes(4),
+			(u32)Megabytes(8),
 			r2::draw::VertexDrawTypeStatic
 		};
 
@@ -1956,7 +1956,7 @@ namespace r2::draw::renderer
 
 		const u64 numMaterialsInBatch = r2::sarr::Size(*batch.materials);
 
-		r2::SArray<r2::draw::ModelMaterial>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelMaterial, numMaterialsInBatch);
+		r2::SArray<r2::draw::tex::TextureAddress>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::TextureAddress, MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.models->mSize);
 
 		for (u64 i = 0; i < numMaterialsInBatch; ++i)
 		{
@@ -1967,7 +1967,6 @@ namespace r2::draw::renderer
 
 			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, matHandle);
 
-			r2::draw::ModelMaterial modelMaterial;
 
 			const u64 numTextures = r2::sarr::Size(*textures);
 			for (u64 t = 0; t < numTextures; ++t)
@@ -1975,15 +1974,20 @@ namespace r2::draw::renderer
 				const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
 				const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture.textureAssetHandle);
 				//@NOTE: this assumes that we only have 1 of each type - otherwise we'd override the type with the next one of that type
-				modelMaterial.textures[texture.type] = addr;
+				r2::sarr::Push(*modelMaterials, addr);
 			}
 
-			r2::sarr::Push(*modelMaterials, modelMaterial);
+			for (u64 i = numTextures; i < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++i)
+			{
+				r2::sarr::Push(*modelMaterials, { 0, 0.0 });
+			}
+
+			
 
 		}
 
 		//fill out material data
-		u64 materialDataSize = sizeof(r2::draw::ModelMaterial) * numMaterialsInBatch;
+		u64 materialDataSize = sizeof(r2::draw::tex::TextureAddress) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.models->mSize;
 		r2::draw::cmd::FillConstantBuffer* materialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::FillConstantBuffer>(constCMD, materialDataSize);
 		
 		char* materialsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(materialsCMD);

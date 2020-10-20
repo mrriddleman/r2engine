@@ -134,12 +134,13 @@ namespace r2
             fr.data_prev = END_OF_LIST;
             fr.data_i = END_OF_LIST;
             
-            if (r2::sarr::Size(*h.mHash) == 0)
+            u64 size = h.mHash->mSize;
+            if (size == 0)
             {
                 R2_CHECK(false, "");
             }
             
-            fr.hash_i = key % r2::sarr::Size(*h.mHash);
+            fr.hash_i = key % size;
             fr.data_i = (*h.mHash)[fr.hash_i];
             
             while (fr.data_i != END_OF_LIST)
@@ -163,13 +164,14 @@ namespace r2
             fr.hash_i = END_OF_LIST;
             fr.data_prev = END_OF_LIST;
             fr.data_i = END_OF_LIST;
-            
-            if (r2::sarr::Size(*h.mHash) == 0)
+
+            u64 size = h.mHash->mSize;
+            if (size == 0)
             {
                 R2_CHECK(false, "");
             }
             
-            fr.hash_i = e->key % r2::sarr::Size(*h.mHash);
+            fr.hash_i = e->key % size;
             fr.data_i = (*h.mHash)[fr.hash_i];
             
             while (fr.data_i != END_OF_LIST)
@@ -197,14 +199,15 @@ namespace r2
             
             r2::sarr::Pop(*h.mData);
             
-            if (fr.data_i == r2::sarr::Size(*h.mData))
+            u64 size = h.mData->mSize;
+            if (fr.data_i == size)
             {
                 return;
             }
             
-            (*h.mData)[fr.data_i] = (*h.mData)[r2::sarr::Size(*h.mData)];
+            (*h.mData)[fr.data_i] = (*h.mData)[size];
             
-            FindResult last = Find(h, &((*h.mData)[r2::sarr::Size(*h.mData)]));
+            FindResult last = Find(h, &((*h.mData)[size]));
             
             if (last.data_prev != END_OF_LIST)
             {

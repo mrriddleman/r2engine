@@ -2,6 +2,7 @@
 #define __RENDERER_TYPES_H__
 
 #include "r2/Utils/Utils.h"
+
 #include "glm/glm.hpp"
 
 namespace r2::draw

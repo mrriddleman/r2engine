@@ -31,6 +31,7 @@ namespace r2::asset
         char mPath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::File* mFile;
         u32 mNumDirectoriesToIncludeInAssetHandle;
+        u64 mAssetHandle;
     };
 }
 

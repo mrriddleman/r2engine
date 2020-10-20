@@ -19,18 +19,7 @@ namespace r2::draw::rendererimpl
 		GLbitfield waitFlags = 0;
 		GLuint64 waitDuration = 0;
 		while (true) {
-
-			if (auto err = glGetError())
-			{
-				int k = 0;
-			}
-
 			GLenum waitRet = glClientWaitSync(*syncObj, waitFlags, waitDuration);
-
-			if (auto err = glGetError())
-			{
-				int k = 0;
-			}
 
 			if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED) {
 				return;
@@ -82,16 +71,8 @@ namespace r2::draw::rendererimpl
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
 	{
 		BufferRange newRange = { lockBeginBytes, lockLength };
-		if (auto err = glGetError())
-		{
-			int k = 0;
-		}
-		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-		if (auto err = glGetError())
-		{
-			int k = 0;
-		}
+		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 		BufferLock lock = { {newRange}, syncName };
 
