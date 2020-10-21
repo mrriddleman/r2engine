@@ -1973,7 +1973,6 @@ namespace r2::draw::renderer
 			{
 				const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
 				const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture.textureAssetHandle);
-				//@NOTE: this assumes that we only have 1 of each type - otherwise we'd override the type with the next one of that type
 				r2::sarr::Push(*modelMaterials, addr);
 			}
 

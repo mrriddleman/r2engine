@@ -484,6 +484,27 @@ public:
 
 
 
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenIdleAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenRunForward.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenRunForwardAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenRunForwardAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenSpawn.fbx", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenSpawnAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);
+
+
         mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(1), animationFiles, "Sandbox Animation Cache");
 
         if (!mAnimationCache)
@@ -586,6 +607,10 @@ public:
         r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.fbx", r2::asset::ASSIMP_ANIMATION));
         r2::sarr::Push(*animationAssets, r2::asset::Asset("run.fbx", r2::asset::ASSIMP_ANIMATION));
 
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenIdle.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.fbx", r2::asset::ASSIMP_ANIMATION));
+
         r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
 
         FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
@@ -624,7 +649,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
+                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
 					if (mSelectedAnimationID - 1 < 0)
 					{
 						mSelectedAnimationID = (s32)numAnimations - 1;
@@ -641,7 +666,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
+                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
                     mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
                 }
                 
@@ -825,7 +850,7 @@ public:
 		//curTime = nextTime;
         
         
-        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::asset::AssetHandle{}, * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
+        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6), * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
 		//nextTime = CENG.GetTicks();
      //   printf("Ellen END\n");
 		//printf("time for ellen: %f\n", CENG.GetTicks() - time);

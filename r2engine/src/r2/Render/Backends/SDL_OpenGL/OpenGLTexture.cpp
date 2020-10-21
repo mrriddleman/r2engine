@@ -74,7 +74,7 @@ namespace r2::draw::tex
 			
 			R2_CHECK(ops != nullptr, "We should be able to get the RWOps from memory");
 			
-			imageSurface = IMG_Load_RW(ops, 0);
+			imageSurface = IMG_LoadTIF_RW(ops);
 
 			if (imageSurface == nullptr)
 			{
