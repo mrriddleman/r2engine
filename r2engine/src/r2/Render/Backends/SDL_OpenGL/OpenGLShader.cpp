@@ -235,7 +235,7 @@ namespace r2::draw::shader
         return shaderProgram;
     }
     
-    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
+    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, bool assertOnFailure)
     {
         Shader newShader;
         R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
@@ -357,8 +357,11 @@ namespace r2::draw::shader
         
         if (!shaderProg)
         {
-            R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
-            
+            if (assertOnFailure)
+            {
+				R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+            }
+           
             R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
             return newShader;
         }
@@ -381,7 +384,7 @@ namespace r2::draw::shader
         R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
         R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
         
-        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath);
+        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath, false);
         
         if (reloadedShaderProgram.shaderProg)
         {

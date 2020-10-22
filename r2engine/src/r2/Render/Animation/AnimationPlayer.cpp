@@ -219,20 +219,20 @@ namespace
             //animation channels
     //        printf("skeletonPart.boneName: %s\n", skeletonPart.boneName.c_str());
 
-            u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
-            u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
+			u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
+			u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
 
-             r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
-             r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
+			r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
+			r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
 
-            if (rotationChannel && scalingChannel)
-            {
+			if (rotationChannel && scalingChannel)
+			{
 				glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *scalingChannel);
 				glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-                glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
-                transform =  glm::mat4_cast(rotQ) * scaleMat;
-            }
+				glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
+				transform = glm::mat4_cast(rotQ) * scaleMat;
+			}
 
         }
         

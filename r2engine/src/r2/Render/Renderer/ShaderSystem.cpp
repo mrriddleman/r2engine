@@ -36,7 +36,7 @@ namespace
 namespace r2::draw::shadersystem
 {
 
-    bool LoadShadersFromManifestFile(const char* manifestFilePath);
+    bool LoadShadersFromManifestFile(const char* manifestFilePath, bool assertOnFailure);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
@@ -116,8 +116,10 @@ namespace r2::draw::shadersystem
         R2_CHECK(s_optrShaderSystem->mShaderLoadingArena != nullptr, "We couldn't make the loading arena");
         R2_CHECK(s_optrShaderSystem->mShaders != nullptr, "we couldn't allocate the array for materials?");
 
-        bool loadedShaders = LoadShadersFromManifestFile(shaderManifestPath);
-        bool loadedInternalShaders = LoadShadersFromManifestFile(internalShaderManifestPath);
+        constexpr bool assertOnFailure = true;
+
+        bool loadedShaders = LoadShadersFromManifestFile(shaderManifestPath, assertOnFailure);
+        bool loadedInternalShaders = LoadShadersFromManifestFile(internalShaderManifestPath, assertOnFailure);
 
         return loadedShaders && loadedInternalShaders;
     }
@@ -138,7 +140,7 @@ namespace r2::draw::shadersystem
             for (u64 i = 0; i < numShaderManifests; ++i)
             {
                 const std::string& manifestFile = r2::sarr::At(*s_optrShaderSystem->mReloadShaderManifests, i);
-				bool loaded = LoadShadersFromManifestFile(manifestFile.c_str());
+				bool loaded = LoadShadersFromManifestFile(manifestFile.c_str(), false);
 
 				R2_CHECK(loaded, "We couldn't load the shaders from the file: %s\n", manifestFile.c_str());
 
@@ -327,7 +329,7 @@ namespace r2::draw::shadersystem
 
     }
 
-    bool LoadShadersFromManifestFile(const char* shaderManifestPath)
+    bool LoadShadersFromManifestFile(const char* shaderManifestPath, bool assertOnFailure)
     {
         if (s_optrShaderSystem == nullptr)
         {
@@ -354,7 +356,7 @@ namespace r2::draw::shadersystem
                     shaderManifestsBuf->manifests()->Get(i)->shaderName(),
                     shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str().c_str(),
                     shaderManifestsBuf->manifests()->Get(i)->fragmentPath()->str().c_str(),
-                    shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str().c_str());
+                    shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str().c_str(), assertOnFailure);
 
                 r2::sarr::Push(*s_optrShaderSystem->mShaders, nextShader);
             }
