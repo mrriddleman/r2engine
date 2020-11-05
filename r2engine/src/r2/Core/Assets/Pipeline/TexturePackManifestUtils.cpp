@@ -3,6 +3,7 @@
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 #include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
+#include "r2/Render/Model/Textures/TexturePackMetaData_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Flags.h"
@@ -13,8 +14,22 @@
 namespace r2::asset::pln::tex
 {
 	const std::string TEXTURE_PACK_MANIFEST_NAME_FBS = "TexturePackManifest.fbs";
+	const std::string TEXTURE_PACK_META_DATA_NAME_FBS = "TexturePackMetaData.fbs";
 	const std::string JSON_EXT = ".json";
 	const std::string TMAN_EXT = ".tman";
+	const std::string PACKS_DIR = "packs";
+	
+
+	bool GenerateTexturePackMetaDataFromJSON(const std::string& jsonFile, const std::string& outputDir)
+	{
+		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+		char texturePackManifestSchemaPath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), texturePackManifestSchemaPath, TEXTURE_PACK_META_DATA_NAME_FBS.c_str());
+
+		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, texturePackManifestSchemaPath, jsonFile);
+	}
 
 	bool GenerateTexturePacksManifestFromJson(const std::string& jsonManifestFilePath, const std::string& outputDir)
 	{
@@ -27,13 +42,17 @@ namespace r2::asset::pln::tex
 		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, texturePackManifestSchemaPath, jsonManifestFilePath);
 	}
 
-	bool GenerateTexturePacksManifestFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& directory)
+	bool GenerateTexturePacksManifestFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& directory, const std::string& binDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
 		u64 manifestTotalTextureSize = 0;
 		u64 totalNumberOfTextures = 0;
 		u64 maxNumTexturesInAPack = 0;
 		std::vector < flatbuffers::Offset< flat::TexturePack >> texturePacks;
+
+		std::filesystem::path binPacksPath = std::filesystem::path(binDir) / PACKS_DIR;
+
+		std::filesystem::create_directory(binPacksPath);
 
 		for (const auto& texturePackDir : std::filesystem::directory_iterator(directory)) //this will be the texture pack level
 		{
@@ -42,6 +61,38 @@ namespace r2::asset::pln::tex
 			{
 				continue;
 			}
+
+
+			std::filesystem::path texturePackBinPath = binPacksPath / texturePackDir.path().stem();
+			std::filesystem::path metaFilePath = texturePackBinPath / "meta.tmet";
+
+			//create the corresponding folder in the bin dir
+			if (texturePackDir.is_directory())
+			{
+				std::filesystem::create_directory(texturePackBinPath);
+
+				//we need to do something similar to what we do with the materials
+				//-> generate the corresponding tmet file if it does not exist based on the json file
+
+				if (!std::filesystem::exists(metaFilePath))
+				{
+					//make sure we have the .json file
+					std::filesystem::path metaJsonFilePath = texturePackDir.path() / "meta.json";
+
+					if (!std::filesystem::exists(metaJsonFilePath))
+					{
+						R2_CHECK(false, "We require all texture packs to have a meta data file, we don't have one for: %s\n", texturePackDir.path().c_str());
+						return false;
+					}
+
+					bool generated = GenerateTexturePackMetaDataFromJSON(metaJsonFilePath.string(), texturePackBinPath.string());
+
+					R2_CHECK(generated, "We couldn't generate the .tmet file for: %s\n", metaJsonFilePath.string().c_str());
+				}
+
+			}
+
+			
 
 			u64 numTexturesInPack = 0;
 			u64 packSize = 0;
@@ -53,6 +104,7 @@ namespace r2::asset::pln::tex
 			std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> micros;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
+			std::vector<std::string> cubemapTexturePaths;
 
 			u64 packName = STRING_ID(texturePackDir.path().stem().string().c_str());
 
@@ -61,7 +113,7 @@ namespace r2::asset::pln::tex
 				if(file.is_directory())
 					continue;
 
-				++numTexturesInPack;
+				
 				packSize += file.file_size();
 
 				char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
@@ -70,35 +122,88 @@ namespace r2::asset::pln::tex
 				if (file.path().parent_path().stem().string() == "albedo")
 				{
 					albedos.push_back( builder.CreateString(sanitizedPath) );
+					cubemapTexturePaths.push_back(sanitizedPath);
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "normal")
 				{
 					normals.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "specular")
 				{
 					speculars.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "emissive")
 				{
 					emissives.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "metalic")
 				{
 					metalics.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "occlusion")
 				{
 					occlusions.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "micro")
 				{
 					micros.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
 				else if (file.path().parent_path().stem().string() == "height")
 				{
 					heights.push_back(builder.CreateString(sanitizedPath));
+
+					++numTexturesInPack;
 				}
+			}
+
+			char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
+
+			const auto packMetaData = flat::GetTexturePackMetaData(texturePackMetaData);
+
+			auto textureType = packMetaData->type();
+
+			flatbuffers::Offset<flat::CubemapMetaData> cubemapMetaData = 0;
+
+			if (packMetaData->cubemapMetaData())
+			{
+				flatbuffers::uoffset_t numSides = packMetaData->cubemapMetaData()->sides()->size();
+
+				
+				std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sides;
+
+				for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
+				{
+					std::string path;
+					for (const auto& cubemapSide : cubemapTexturePaths)
+					{
+						std::filesystem::path cubemapSidePath = cubemapSide;
+						auto sideImageName = packMetaData->cubemapMetaData()->sides()->Get(i)->textureName()->str();
+						auto stemName = cubemapSidePath.filename().string();
+						if (stemName == sideImageName)
+						{
+							path = cubemapSidePath.string();
+							break;
+						}
+					}
+
+					sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(path), packMetaData->cubemapMetaData()->sides()->Get(i)->side()));
+				}
+
+				cubemapMetaData = flat::CreateCubemapMetaData(builder, builder.CreateVector(sides));
 			}
 
 			//make the texture pack and add it to the vector
@@ -110,13 +215,16 @@ namespace r2::asset::pln::tex
 				builder.CreateVector(metalics),
 				builder.CreateVector(occlusions),
 				builder.CreateVector(micros),
-				builder.CreateVector(heights), packSize, numTexturesInPack);
+				builder.CreateVector(heights), packSize, numTexturesInPack,
+				CreateTexturePackMetaData(builder, textureType, cubemapMetaData));
 
 			texturePacks.push_back(texturePack);
 
 			manifestTotalTextureSize += packSize;
 			totalNumberOfTextures += numTexturesInPack;
 			maxNumTexturesInAPack = std::max(maxNumTexturesInAPack, numTexturesInPack);
+
+			delete[] texturePackMetaData;
 		}
 		//add the texture packs to the manifest
  		auto manifest = flat::CreateTexturePacksManifest(builder, builder.CreateVector(texturePacks), totalNumberOfTextures, manifestTotalTextureSize, maxNumTexturesInAPack);

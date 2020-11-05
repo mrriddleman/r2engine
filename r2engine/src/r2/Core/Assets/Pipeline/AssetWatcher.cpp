@@ -461,6 +461,7 @@ namespace r2::asset::pln
 
             std::filesystem::path binaryPath = manifestBinaryPath;
             std::string manifestBinaryDir = binaryPath.parent_path().string();
+            std::string binaryTextureDir = binaryPath.parent_path().parent_path().string();
 
             std::filesystem::path rawPath = manifestRawPath;
             std::string manifestRawDir = rawPath.parent_path().string();
@@ -479,7 +480,7 @@ namespace r2::asset::pln
 					}
 				}
 
-				if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(binaryPath.string(), rawPath.string(), texturePackDir))
+				if (!r2::asset::pln::tex::GenerateTexturePacksManifestFromDirectories(binaryPath.string(), rawPath.string(), texturePackDir, binaryTextureDir))
 				{
 					R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
 					return;

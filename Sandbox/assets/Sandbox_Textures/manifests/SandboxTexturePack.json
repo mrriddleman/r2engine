@@ -29,8 +29,10 @@
       height: [
 
       ],
-      packSize: 14861742,
-      totalNumberOfTextures: 4
+      packSize: 24936500,
+      totalNumberOfTextures: 4,
+      metaData: {
+      }
     },
     {
       packName: 17351122780281340654,
@@ -58,8 +60,10 @@
       height: [
 
       ],
-      packSize: 16777260,
-      totalNumberOfTextures: 1
+      packSize: 16777282,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
     },
     {
       packName: 5241291254806722222,
@@ -87,11 +91,77 @@
       height: [
 
       ],
-      packSize: 16777260,
-      totalNumberOfTextures: 1
+      packSize: 16777282,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
+    },
+    {
+      packName: 6031424017685759555,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/back.jpg",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/bottom.jpg",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/front.jpg",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/left.jpg",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/right.jpg",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/top.jpg"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 2980490,
+      totalNumberOfTextures: 6,
+      metaData: {
+        type: "CUBEMAP",
+        cubemapMetaData: {
+          sides: [
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/left.jpg",
+              side: "LEFT"
+            },
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/right.jpg"
+            },
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/top.jpg",
+              side: "TOP"
+            },
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/bottom.jpg",
+              side: "BOTTOM"
+            },
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/front.jpg",
+              side: "FRONT"
+            },
+            {
+              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skybox/albedo/back.jpg",
+              side: "BACK"
+            }
+          ]
+        }
+      }
     }
   ],
-  totalNumberOfTextures: 6,
-  totalTextureSize: 48416262,
-  maxTexturesInAPack: 4
+  totalNumberOfTextures: 12,
+  totalTextureSize: 61471554,
+  maxTexturesInAPack: 6
 }

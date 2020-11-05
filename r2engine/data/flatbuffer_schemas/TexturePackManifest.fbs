@@ -1,7 +1,11 @@
+
+include "TexturePackMetaData.fbs";
+
 namespace flat;
 
 file_identifier "tman";
 file_extension "tman";
+
 
 table TexturePack
 {
@@ -16,6 +20,7 @@ table TexturePack
 	height:[string];
 	packSize:ulong;
 	totalNumberOfTextures:ulong;
+	metaData:TexturePackMetaData;
 }
 
 table TexturePacksManifest

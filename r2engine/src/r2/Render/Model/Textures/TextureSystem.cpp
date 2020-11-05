@@ -132,6 +132,27 @@ namespace r2::draw::texsys
 
 	}
 
+	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap)
+	{
+		if (s_optrTextureSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the texture system yet!");
+			return;
+		}
+
+		r2::draw::tex::GPUHandle theDefault;
+
+		//I guess we'll just take the first asset handle for our mapping? Dunno if that will be a problem down the road?
+		r2::draw::tex::GPUHandle gpuHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemap.sides[0].textureAssetHandle.handle, theDefault);
+
+		if (!TextureHandlesEqual(gpuHandle, theDefault))
+			return;
+
+		gpuHandle = r2::draw::tex::UploadToGPU(cubemap);
+
+		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemap.sides[0].textureAssetHandle.handle, gpuHandle);
+	}
+
 	void ReloadTexture(const r2::asset::AssetHandle& texture)
 	{
 		r2::draw::tex::GPUHandle theDefault;

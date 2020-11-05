@@ -6,6 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "TexturePackMetaData_generated.h"
+
 namespace flat {
 
 struct TexturePack;
@@ -27,7 +29,8 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_MICRO = 18,
     VT_HEIGHT = 20,
     VT_PACKSIZE = 22,
-    VT_TOTALNUMBEROFTEXTURES = 24
+    VT_TOTALNUMBEROFTEXTURES = 24,
+    VT_METADATA = 26
   };
   uint64_t packName() const {
     return GetField<uint64_t>(VT_PACKNAME, 0);
@@ -62,6 +65,9 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t totalNumberOfTextures() const {
     return GetField<uint64_t>(VT_TOTALNUMBEROFTEXTURES, 0);
   }
+  const flat::TexturePackMetaData *metaData() const {
+    return GetPointer<const flat::TexturePackMetaData *>(VT_METADATA);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_PACKNAME) &&
@@ -91,6 +97,8 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVectorOfStrings(height()) &&
            VerifyField<uint64_t>(verifier, VT_PACKSIZE) &&
            VerifyField<uint64_t>(verifier, VT_TOTALNUMBEROFTEXTURES) &&
+           VerifyOffset(verifier, VT_METADATA) &&
+           verifier.VerifyTable(metaData()) &&
            verifier.EndTable();
   }
 };
@@ -132,6 +140,9 @@ struct TexturePackBuilder {
   void add_totalNumberOfTextures(uint64_t totalNumberOfTextures) {
     fbb_.AddElement<uint64_t>(TexturePack::VT_TOTALNUMBEROFTEXTURES, totalNumberOfTextures, 0);
   }
+  void add_metaData(flatbuffers::Offset<flat::TexturePackMetaData> metaData) {
+    fbb_.AddOffset(TexturePack::VT_METADATA, metaData);
+  }
   explicit TexturePackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -156,11 +167,13 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> micro = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height = 0,
     uint64_t packSize = 0,
-    uint64_t totalNumberOfTextures = 0) {
+    uint64_t totalNumberOfTextures = 0,
+    flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
   TexturePackBuilder builder_(_fbb);
   builder_.add_totalNumberOfTextures(totalNumberOfTextures);
   builder_.add_packSize(packSize);
   builder_.add_packName(packName);
+  builder_.add_metaData(metaData);
   builder_.add_height(height);
   builder_.add_micro(micro);
   builder_.add_occlusion(occlusion);
@@ -184,7 +197,8 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *micro = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *height = nullptr,
     uint64_t packSize = 0,
-    uint64_t totalNumberOfTextures = 0) {
+    uint64_t totalNumberOfTextures = 0,
+    flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
   auto albedo__ = albedo ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*albedo) : 0;
   auto normal__ = normal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*normal) : 0;
   auto specular__ = specular ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*specular) : 0;
@@ -205,7 +219,8 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
       micro__,
       height__,
       packSize,
-      totalNumberOfTextures);
+      totalNumberOfTextures,
+      metaData);
 }
 
 struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

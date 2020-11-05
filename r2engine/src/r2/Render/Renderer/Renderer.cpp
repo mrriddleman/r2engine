@@ -1285,7 +1285,7 @@ namespace r2::draw::renderer
 
 		const VertexLayoutConfigHandle& handles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, vertexLayoutConfig);
 
-		//@TODO(Serge): implement
+		
 		const r2::draw::Model* quadModel = GetDefaultModel(r2::draw::QUAD);
 		const r2::draw::Model* sphereModel = GetDefaultModel(r2::draw::SPHERE);
 		const r2::draw::Model* cubeModel = GetDefaultModel(r2::draw::CUBE);

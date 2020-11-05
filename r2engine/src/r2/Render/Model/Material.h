@@ -38,13 +38,23 @@ namespace r2::draw
 		glm::vec4 color = glm::vec4(1.0f);
 	};
 
+	struct MaterialTextureEntry
+	{
+		r2::asset::AssetType mType = r2::asset::TEXTURE; //TEXTURE OR CUBEMAP
+		s64 mIndex = -1; //index into either mMaterialTextures or mCubemapTextures based on mType
+	};
+
 	struct MaterialSystem
 	{
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
 		r2::mem::LinearArena* mLinearArena = nullptr;
-		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr; //maybe not even needed? - I think if we can get rid of the asset path we can get rid of this?
+		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
 		r2::SArray<r2::draw::Material>* mMaterials = nullptr;
+
+		r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
+		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
+
 		r2::asset::AssetCache* mAssetCache = nullptr;
 		r2::mem::utils::MemBoundary mCacheBoundary = {};
 		s32 mSlot = -1;
@@ -220,6 +230,20 @@ namespace r2::draw::matsys
 		r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*system);
 
 		r2::mem::LinearArena* materialArena = system->mLinearArena;
+
+		FREE(system->mMaterialTextureEntries, *materialArena);
+
+		const s64 numCubemapTextures = static_cast<s64>(r2::sarr::Size(*system->mMaterialCubemapTextures));
+		for (s64 i = numCubemapTextures - 1; i >= 0; --i)
+		{
+			r2::SArray<r2::draw::tex::CubemapTexture>* cubemapTextures = r2::sarr::At(*system->mMaterialCubemapTextures, i);
+			if(cubemapTextures)
+			{
+				FREE(cubemapTextures, *materialArena);
+			}
+		}
+
+		FREE(system->mMaterialCubemapTextures, *materialArena);
 
 		const s64 numMaterialTextures = static_cast<s64>(r2::sarr::Capacity(*system->mMaterialTextures));
 		for (s64 i = numMaterialTextures - 1; i >= 0; --i)

@@ -2,16 +2,36 @@
 #define __TEXTURE_PACK_H__
 
 #include "r2/Core/Assets/Asset.h"
+#include "r2/Render/Model/Textures/Texture.h"
 
 #define MAKE_TEXTURE_PACK(arena, capcity) r2::draw::tex::MakeTexturePack(arena, capcity, __FILE__, __LINE__, "")
 #define FREE_TEXTURE_PACK(arena, texturePackPtr) r2::draw::tex::FreeTexturePack(arena, texturePackPtr, __FILE__, __LINE__, "")
 
 namespace r2::draw::tex
 {
+
+	struct CubemapSideEntry
+	{
+		r2::asset::Asset asset;
+		CubemapSide side;
+	};
+
+	struct CubemapMetaData
+	{
+		CubemapSideEntry sides[NUM_SIDES];
+	};
+
+	struct TexturePackMetaData
+	{
+		CubemapMetaData cubemapMetaData;
+		r2::asset::AssetType assetType;
+	};
+
 	struct TexturePack
 	{
 		u64 packName = 0;
 		u64 totalNumTextures = 0;
+		TexturePackMetaData metaData;
 		r2::SArray<r2::asset::Asset>* albedos = nullptr;
 		r2::SArray<r2::asset::Asset>* normals = nullptr;
 		r2::SArray<r2::asset::Asset>* speculars = nullptr;

@@ -1,0 +1,40 @@
+namespace flat;
+
+file_identifier "tmet";
+file_extension "tmet";
+
+enum TextureType: byte
+{
+	TEXTURE = 0,
+	CUBEMAP
+}
+
+enum CubemapSide: byte
+{
+	RIGHT = 0,
+	LEFT,
+	TOP,
+	BOTTOM,
+	FRONT,
+	BACK,
+	NUM_SIDES
+}
+
+table CubemapSideEntry
+{
+	textureName:string;
+	side:CubemapSide;
+}
+
+table CubemapMetaData
+{
+	sides:[CubemapSideEntry];
+}
+
+table TexturePackMetaData
+{
+	type:TextureType;
+	cubemapMetaData:CubemapMetaData;
+}
+
+root_type TexturePackMetaData;

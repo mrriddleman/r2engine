@@ -56,6 +56,8 @@ namespace r2::draw::tex
 		}
 
 		r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(texture);
+		//@TODO(Serge): we have the asset type now from the record
+
 
 		int texWidth;
 		int texHeight;
@@ -141,6 +143,14 @@ namespace r2::draw::tex
 		assetCache->ReturnAssetBuffer(assetCacheRecord);
 
 		return newHandle;
+	}
+
+	TextureHandle UploadToGPU(const CubemapTexture& cubemap)
+	{
+
+
+
+		return r2::draw::tex::GPUHandle{};
 	}
 
 	void UnloadFromGPU(TextureHandle& texture)

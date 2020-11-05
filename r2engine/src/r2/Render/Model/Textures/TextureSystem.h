@@ -20,6 +20,7 @@ namespace r2::draw::texsys
 	//the client to have a handle to the texture since it can change due to the asset system
 	//So we'll need to keep a mapping of that handle with the Texture we pass back from LoadTexture
 	void UploadToGPU(const r2::asset::AssetHandle& texture);
+	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap);
 	void ReloadTexture(const r2::asset::AssetHandle& texture);
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::asset::AssetHandle& texture);

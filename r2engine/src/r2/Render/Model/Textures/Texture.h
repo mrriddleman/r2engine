@@ -20,11 +20,27 @@ namespace r2::draw::tex
 		NUM_TEXTURE_TYPES
 	};
 
+	enum CubemapSide
+	{
+		RIGHT = 0,
+		LEFT,
+		TOP,
+		BOTTOM,
+		FRONT,
+		BACK,
+		NUM_SIDES
+	};
+
 	struct Texture
 	{
 		r2::asset::AssetHandle textureAssetHandle;
 		TextureType type = TextureType::Diffuse;
 
+	};
+
+	struct CubemapTexture
+	{
+		Texture sides[NUM_SIDES];
 	};
 
 	struct TextureHandle
@@ -50,6 +66,9 @@ namespace r2::draw::tex
 	};
 
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap);
+	TextureHandle UploadToGPU(const CubemapTexture& cubemap);
+
+
 	void UnloadFromGPU(TextureHandle& texture);
 	TextureAddress GetTextureAddress(const TextureHandle& handle);
 	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2);

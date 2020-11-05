@@ -26,8 +26,10 @@
       height: [
 
       ],
-      packSize: 581156,
-      totalNumberOfTextures: 2
+      packSize: 581178,
+      totalNumberOfTextures: 2,
+      metaData: {
+      }
     },
     {
       packName: 8133868392780950315,
@@ -55,8 +57,10 @@
       height: [
 
       ],
-      packSize: 540405,
-      totalNumberOfTextures: 1
+      packSize: 479657,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
     },
     {
       packName: 9578052887469947454,
@@ -84,8 +88,10 @@
       height: [
 
       ],
-      packSize: 10750,
-      totalNumberOfTextures: 1
+      packSize: 10772,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
     },
     {
       packName: 3713060012401881788,
@@ -113,8 +119,10 @@
       height: [
 
       ],
-      packSize: 42447,
-      totalNumberOfTextures: 1
+      packSize: 43355,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
     },
     {
       packName: 7674942759422362775,
@@ -142,11 +150,13 @@
       height: [
 
       ],
-      packSize: 601176,
-      totalNumberOfTextures: 1
+      packSize: 601198,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
     }
   ],
   totalNumberOfTextures: 6,
-  totalTextureSize: 1775934,
+  totalTextureSize: 1716160,
   maxTexturesInAPack: 2
 }

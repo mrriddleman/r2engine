@@ -35,6 +35,7 @@ namespace r2::asset
     struct AssetCacheRecord
     {
         r2::asset::AssetHandle handle;
+        r2::asset::AssetType type;
         r2::asset::AssetBuffer* buffer = nullptr;
     };
     

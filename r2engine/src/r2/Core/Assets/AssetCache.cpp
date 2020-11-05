@@ -225,6 +225,14 @@ namespace r2::asset
         
         AssetCacheRecord record;
 
+
+		Asset defaultAsset;
+		const Asset& asset = r2::shashmap::Get(*mAssetNameMap, handle.handle, defaultAsset);
+
+        R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset!");
+
+        record.type = asset.GetType();
+
         if (bufferRef.mAssetBuffer != nullptr)
         {
             ++bufferRef.mRefCount;
@@ -235,8 +243,7 @@ namespace r2::asset
         }
         else
         {
-            Asset defaultAsset;
-            const Asset& asset = r2::shashmap::Get(*mAssetNameMap, handle.handle, defaultAsset);
+            
             AssetBuffer* buffer = Load(asset);
             
             if (!buffer)
@@ -375,6 +382,7 @@ namespace r2::asset
 #endif
         if (assetBuffer == nullptr)
         {
+            theAssetFile->Close();
             return nullptr;
         }
         
@@ -404,6 +412,7 @@ namespace r2::asset
             
             if (!buffer)
             {
+                theAssetFile->Close();
                 return nullptr;
             }
             
@@ -419,6 +428,7 @@ namespace r2::asset
             
             if (!success)
             {
+                theAssetFile->Close();
                 return nullptr;
             }
         }
@@ -452,7 +462,8 @@ namespace r2::asset
 #if ASSET_CACHE_DEBUG
         PrintAssetMap();
 #endif
-        
+        theAssetFile->Close();
+
         return assetBuffer;
     }
     

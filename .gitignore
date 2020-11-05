@@ -17,6 +17,7 @@
 *.tga
 *.fbx
 *.tif
+*.jpg
 
 /bin/
 /bin_int/
@@ -24,6 +25,7 @@
 # sandbox files/dirs
 
 Sandbox/*.xcodeproj/
+Sandbox/assets_bin/
 Sandbox/assets/asset_bin/
 Sanbox/assets/*
 Sandbox/*.vcxproj
