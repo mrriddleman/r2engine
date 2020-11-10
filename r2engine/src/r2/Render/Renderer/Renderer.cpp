@@ -237,7 +237,7 @@ namespace
 		u64 cylinderModelSize = r2::draw::Model::MemorySize(1, 148, 144 * 3, 1, headerSize, boundsChecking, ALIGNMENT);
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(quadModelSize, ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(cubeModelSize, ALIGNMENT, headerSize, boundsChecking) * 2 + //@temporary
 			r2::mem::utils::GetMaxMemoryForAllocation(sphereModelSize, ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(coneModelSize, ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cylinderModelSize, ALIGNMENT, headerSize, boundsChecking);
@@ -265,6 +265,7 @@ namespace
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cone.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
 
 		r2::draw::modlsys::LoadModels(s_optrRenderer->mModelSystem, *defaultModels, *s_optrRenderer->mDefaultModelHandles);
 
@@ -1209,6 +1210,18 @@ namespace r2::draw::renderer
 		return s_optrRenderer->mEngineModelRefs;
 	}
 
+	r2::draw::ModelRef GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
+	{
+		if (s_optrRenderer == nullptr ||
+			s_optrRenderer->mEngineModelRefs == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return r2::draw::ModelRef{};
+		}
+
+		return r2::sarr::At(*s_optrRenderer->mEngineModelRefs, defaultModel);
+	}
+
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
 	{
 		const r2::draw::Model* quadModel = GetDefaultModel(r2::draw::QUAD);
@@ -1216,6 +1229,7 @@ namespace r2::draw::renderer
 		const r2::draw::Model* cubeModel = GetDefaultModel(r2::draw::CUBE);
 		const r2::draw::Model* cylinderModel = GetDefaultModel(r2::draw::CYLINDER);
 		const r2::draw::Model* coneModel = GetDefaultModel(r2::draw::CONE);
+		const r2::draw::Model* skyboxModel = GetDefaultModel(r2::draw::SKYBOX);
 
 		r2::SArray<const r2::draw::Model*>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DEFAULT_MODELS);
 		r2::sarr::Push(*defaultModels, quadModel);
@@ -1223,7 +1237,7 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*defaultModels, sphereModel);
 		r2::sarr::Push(*defaultModels, coneModel);
 		r2::sarr::Push(*defaultModels, cylinderModel);
-
+		r2::sarr::Push(*defaultModels, skyboxModel);
 
 		u64 numModels = r2::sarr::Size(*defaultModels);
 		for (u64 i = 0; i < numModels; ++i)
@@ -1235,6 +1249,23 @@ namespace r2::draw::renderer
 		}
 
 		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
+	}
+
+	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel)
+	{
+		if (s_optrRenderer == nullptr ||
+			s_optrRenderer->mModelSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return r2::draw::MaterialHandle{};
+		}
+
+		const r2::draw::Model* model = GetDefaultModel(defaultModel);
+
+		const r2::draw::Mesh& mesh = r2::sarr::At(*model->optrMeshes, 0);
+		r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
+
+		return materialHandle;
 	}
 
 	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets)
@@ -1291,6 +1322,7 @@ namespace r2::draw::renderer
 		const r2::draw::Model* cubeModel = GetDefaultModel(r2::draw::CUBE);
 		const r2::draw::Model* cylinderModel = GetDefaultModel(r2::draw::CYLINDER);
 		const r2::draw::Model* coneModel = GetDefaultModel(r2::draw::CONE);
+		const r2::draw::Model* skyboxModel = GetDefaultModel(r2::draw::SKYBOX);
 
 		r2::SArray<const r2::draw::Model*>* modelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DEFAULT_MODELS);
 		r2::sarr::Push(*modelsToUpload, quadModel);
@@ -1298,6 +1330,7 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*modelsToUpload, sphereModel);
 		r2::sarr::Push(*modelsToUpload, coneModel);
 		r2::sarr::Push(*modelsToUpload, cylinderModel);
+		r2::sarr::Push(*modelsToUpload, skyboxModel);
 
 		UploadModels(*modelsToUpload, vertexLayoutConfig, *s_optrRenderer->mEngineModelRefs);
 
@@ -1900,7 +1933,7 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		if (r2::sarr::Size(*batch.models) != r2::sarr::Size(*batch.subcommands) ||
+		if ((batch.models && r2::sarr::Size(*batch.models) != r2::sarr::Size(*batch.subcommands)) ||
 			r2::sarr::Size(*batch.materials) != r2::sarr::Size(*batch.subcommands))
 		{
 			R2_CHECK(false, "Mismatched number of elements in batch arrays");
@@ -1920,43 +1953,55 @@ namespace r2::draw::renderer
 
 	   // r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(clearKey);
 	   // clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
-		u64 modelsSize = batch.models->mSize * sizeof(glm::mat4);
-		r2::draw::cmd::FillConstantBuffer* constCMD = nullptr;
+
+		r2::draw::cmd::Clear* clearCMD = nullptr;
 
 		if (batch.clear)
 		{
-			r2::draw::cmd::Clear* clearCMD = r2::draw::renderer::AddClearCommand(batch.key);
+			clearCMD = r2::draw::renderer::AddClearCommand(batch.key);
 			clearCMD->flags = r2::draw::cmd::CLEAR_COLOR_BUFFER | r2::draw::cmd::CLEAR_DEPTH_BUFFER;
-
-			constCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::Clear, r2::draw::cmd::FillConstantBuffer>(clearCMD, modelsSize);
-
 		}
-		else
+
+		r2::draw::cmd::FillConstantBuffer* constCMD = nullptr;
+		
+		if (batch.models)
 		{
-			constCMD = r2::draw::renderer::AddFillConstantBufferCommand(batch.key, modelsSize);
+			u64 modelsSize = batch.models->mSize * sizeof(glm::mat4);
+			
+
+			if (clearCMD)
+			{
+				constCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::Clear, r2::draw::cmd::FillConstantBuffer>(clearCMD, modelsSize);
+			}
+			else
+			{
+				constCMD = r2::draw::renderer::AddFillConstantBufferCommand(batch.key, modelsSize);
+			}
+
+			char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(constCMD);
+			memcpy(auxMemory, batch.models->mData, modelsSize);
+
+			//fill out constCMD
+			{
+				constCMD->data = auxMemory;
+				constCMD->dataSize = modelsSize;
+				constCMD->offset = 0;
+				constCMD->constantBufferHandle = batch.modelsHandle;
+
+				const ConstantBufferData modelConstData = GetConstData(batch.modelsHandle);
+
+				constCMD->isPersistent = modelConstData.isPersistent;
+				constCMD->type = modelConstData.type;
+			}
 		}
 		
-		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(constCMD);
-		memcpy(auxMemory, batch.models->mData, modelsSize);
 		
-		//fill out constCMD
-		{
-			constCMD->data = auxMemory;
-			constCMD->dataSize = modelsSize;
-			constCMD->offset = 0;
-			constCMD->constantBufferHandle = batch.modelsHandle;
-
-			const ConstantBufferData modelConstData = GetConstData(batch.modelsHandle);
-
-			constCMD->isPersistent = modelConstData.isPersistent;
-			constCMD->type = modelConstData.type;
-		}
 
 		//Set the texture addresses for all of the materials used in this batch
 
 		const u64 numMaterialsInBatch = r2::sarr::Size(*batch.materials);
 
-		r2::SArray<r2::draw::tex::TextureAddress>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::TextureAddress, MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.models->mSize);
+		r2::SArray<r2::draw::tex::TextureAddress>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::TextureAddress, MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.subcommands->mSize);
 
 		for (u64 i = 0; i < numMaterialsInBatch; ++i)
 		{
@@ -1968,26 +2013,59 @@ namespace r2::draw::renderer
 			const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, matHandle);
 
 
-			const u64 numTextures = r2::sarr::Size(*textures);
-			for (u64 t = 0; t < numTextures; ++t)
+			u64 totalNumTextures = 0;
+			if (textures)
 			{
-				const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
-				const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture.textureAssetHandle);
-				r2::sarr::Push(*modelMaterials, addr);
+				const auto numTextures = r2::sarr::Size(*textures);
+				totalNumTextures += numTextures;
+
+				for (u64 t = 0; t < numTextures; ++t)
+				{
+					const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
+					const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture);
+					r2::sarr::Push(*modelMaterials, addr);
+				}
 			}
 
-			for (u64 i = numTextures; i < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++i)
-			{
-				r2::sarr::Push(*modelMaterials, { 0, 0.0 });
-			}
-
+			//do this for the cubemaps
+			const r2::SArray<r2::draw::tex::CubemapTexture>* cubemapTextures = r2::draw::mat::GetCubemapTextures(*matSystem);
 			
+			if (cubemapTextures)
+			{
+				const auto numCubemaps = r2::sarr::Size(*cubemapTextures);
 
+				totalNumTextures += numCubemaps;
+
+				for (u64 t = 0; t < numCubemaps; ++t)
+				{
+					const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*cubemapTextures, t);
+					r2::sarr::Push(*modelMaterials, r2::draw::texsys::GetTextureAddress(cubemap));
+				}
+			}
+
+			for (u64 i = totalNumTextures; i < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++i)
+			{
+				r2::sarr::Push(*modelMaterials, { 1, 1.0 });
+			}
 		}
 
+
 		//fill out material data
-		u64 materialDataSize = sizeof(r2::draw::tex::TextureAddress) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.models->mSize;
-		r2::draw::cmd::FillConstantBuffer* materialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::FillConstantBuffer>(constCMD, materialDataSize);
+		u64 materialDataSize = sizeof(r2::draw::tex::TextureAddress) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.subcommands->mSize;
+		
+		r2::draw::cmd::FillConstantBuffer* materialsCMD = nullptr;
+		if (constCMD)
+		{
+			materialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::FillConstantBuffer>(constCMD, materialDataSize);
+		}
+		else if (clearCMD)
+		{
+			materialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::Clear, r2::draw::cmd::FillConstantBuffer>(clearCMD, materialDataSize);
+		}
+		else
+		{
+			materialsCMD = r2::draw::renderer::AddFillConstantBufferCommand(batch.key, materialDataSize);
+		}
 		
 		char* materialsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(materialsCMD);
 		memcpy(materialsAuxMemory, modelMaterials->mData, materialDataSize);
@@ -2058,19 +2136,35 @@ namespace r2::draw::renderer
 		batchCMD->numSubCommands = batch.subcommands->mSize;
 		batchCMD->subCommands = subCommandsMem;
 
-		r2::draw::cmd::CompleteConstantBuffer* completeConstCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
-		completeConstCMD->constantBufferHandle = batch.modelsHandle;
-		completeConstCMD->count = batch.models->mSize;
 
-		r2::draw::cmd::CompleteConstantBuffer* completeMaterialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeConstCMD, 0);
+
+		r2::draw::cmd::CompleteConstantBuffer* completeMaterialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
 		completeMaterialsCMD->constantBufferHandle = batch.materialsHandle;
 		completeMaterialsCMD->count = batch.materials->mSize;
 
+		r2::draw::cmd::CompleteConstantBuffer* completeConstCMD = nullptr;
+		if (batch.models)
+		{
+			completeConstCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeMaterialsCMD, 0);
+
+			completeConstCMD->constantBufferHandle = batch.modelsHandle;
+			completeConstCMD->count = batch.models->mSize;
+		}
+		
+
 		if (batch.boneTransforms && batch.boneTransformOffsets)
 		{
-			r2::draw::cmd::CompleteConstantBuffer* completeBoneTransformCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeMaterialsCMD, 0);
+			r2::draw::cmd::CompleteConstantBuffer* completeBoneTransformCMD = nullptr;
+			if (completeConstCMD)
+			{
+				completeBoneTransformCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeConstCMD, 0);
+			}
+			else
+			{
+				completeBoneTransformCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeMaterialsCMD, 0);
+			}
 
 			completeBoneTransformCMD->constantBufferHandle = batch.boneTransformsHandle;
 			completeBoneTransformCMD->count = batch.boneTransforms->mSize;

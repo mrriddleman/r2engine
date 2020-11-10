@@ -19,6 +19,7 @@ project "glad"
 		}
 
 	filter "system:windows"
+		flags {"MultiProcessorCompile"}
 		files
 		{
 			"Windows/include/glad/glad.h",

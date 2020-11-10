@@ -325,6 +325,19 @@ namespace r2::draw::mat
 				r2::draw::texsys::UnloadFromGPU(r2::sarr::At(*textures, t).textureAssetHandle);
 			}
 		}
+
+		if (system.mMaterialCubemapTextures)
+		{
+			const u64 numCubemapTextures = r2::sarr::Size(*system.mMaterialCubemapTextures);
+			for (u64 t = 0; t < numCubemapTextures; ++t)
+			{
+				for (size_t s = 0; s < r2::draw::tex::NUM_SIDES; ++s)
+				{
+					r2::draw::texsys::UnloadFromGPU(r2::sarr::At(*system.mMaterialCubemapTextures, t).sides[s].textureAssetHandle);
+				}
+			}
+		}
+
 	}
 
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID)
@@ -335,7 +348,6 @@ namespace r2::draw::mat
 			return nullptr;
 		}
 
-
 		u64 materialIndex = GetIndexFromMaterialHandle(matID);
 
 		const MaterialTextureEntry& entry = r2::sarr::At(*system.mMaterialTextureEntries, materialIndex);
@@ -345,10 +357,13 @@ namespace r2::draw::mat
 			return r2::sarr::At(*system.mMaterialTextures, entry.mIndex);
 		}
 		
-		R2_CHECK(false, "You're trying to get cubemap textures instead of normal textures!");
-		
 		return nullptr;
 		
+	}
+
+	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system)
+	{
+		return system.mMaterialCubemapTextures;
 	}
 
 	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat)

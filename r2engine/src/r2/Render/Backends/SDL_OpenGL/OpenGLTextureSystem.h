@@ -33,8 +33,6 @@ namespace r2::draw::tex
 
 namespace r2::draw::gl
 {
-	
-
 	namespace tex
 	{
 		void Commit(r2::draw::tex::TextureHandle& textureHandle);
@@ -42,6 +40,8 @@ namespace r2::draw::gl
 
 		void CompressedTexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data);
 		void TexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, GLint level, GLint xOffset, GLint yOffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* data);
+		void TexSubCubemapImage2D(const r2::draw::tex::TextureHandle& textureHandle, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* data);
+
 
 		r2::draw::tex::TextureAddress GetAddress(const r2::draw::tex::TextureHandle& textureHandle);
 
@@ -96,6 +96,7 @@ namespace r2::draw::gl
 		}
 
 		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices, bool sparse = true);
+
 		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container);
 		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container);
 		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice);
@@ -106,8 +107,8 @@ namespace r2::draw::gl
 
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data);
-		void TexSubImage3D(r2::draw::tex::TextureContainer& constainer, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data);
-
+		void TexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data);
+		void TexSubCubemapImage3D(r2::draw::tex::TextureContainer& container, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data);
 			
 		u64 MemorySize(u64 slices, u64 alignment, u32 headerSize, u32 boundsChecking);
 
@@ -122,6 +123,7 @@ namespace r2::draw::gl
 
 		//private
 		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format);
+		
 	}
 }
 

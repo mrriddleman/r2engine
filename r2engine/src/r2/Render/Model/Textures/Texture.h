@@ -59,10 +59,11 @@ namespace r2::draw::tex
 
 	struct TextureFormat
 	{
-		s32 mipLevels;
-		u32 internalformat;
-		s32 width;
-		s32 height;
+		s32 mipLevels = 0;
+		u32 internalformat = 0;
+		s32 width = 0;
+		s32 height = 0;
+		b32 isCubemap = false;
 	};
 
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap);

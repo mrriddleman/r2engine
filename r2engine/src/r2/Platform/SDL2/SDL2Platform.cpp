@@ -397,7 +397,7 @@ namespace r2
 				delta = dt;
 				resync = false;
 			}
-
+           
             ProcessEvents();
 
             u32 numGameUpdates = 0;

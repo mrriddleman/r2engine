@@ -39,6 +39,7 @@ namespace r2::draw
 		SPHERE,
 		CONE,
 		CYLINDER,
+		SKYBOX,
 		NUM_DEFAULT_MODELS
 	};
 
@@ -117,7 +118,10 @@ namespace r2::draw::renderer
 
 	const Model* GetDefaultModel(r2::draw::DefaultModel defaultModel);
 	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs();
+	r2::draw::ModelRef GetDefaultModelRef(r2::draw::DefaultModel defaultModel);
+
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
+	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
 	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets);
 

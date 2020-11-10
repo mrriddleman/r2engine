@@ -21,22 +21,24 @@ namespace
 	static GLTextureSystem* s_glTextureSystem = nullptr;
 
 	/* FORMAT KEY
-		32 bits          14       14       4
-	+-----------------+-------+--------+------+
-	| Internal Format | Width | Height | Mips |
-	+-----------------+-------+--------+------+
+		1 bit		    32 bits          13       13       5
+	+--------------+-----------------+-------+--------+------+
+	| Texture Type | Internal Format | Width | Height | Mips |
+	+--------------+-----------------+-------+--------+------+
 	*/
 
 	enum : u64
 	{
 		FORMAT_BITS_TOTAL = 0x40ull,
 
+		BITS_TEXTURE_TYPE = 0x1ull,
 		BITS_INTERNAL_FORMAT = 0x20ull,
-		BITS_WIDTH = 0xEull,
-		BITS_HEIGHT = 0xEull,
-		BITS_MIPS = 0x4ull,
+		BITS_WIDTH = 0xDull,
+		BITS_HEIGHT = 0xDull,
+		BITS_MIPS = 0x5ull,
 
-		KEY_INTERNAL_FORMAT_OFFSET = FORMAT_BITS_TOTAL - BITS_INTERNAL_FORMAT,
+		KEY_TEXTURE_TYPE_OFFSET = FORMAT_BITS_TOTAL - BITS_TEXTURE_TYPE,
+		KEY_INTERNAL_FORMAT_OFFSET = KEY_TEXTURE_TYPE_OFFSET - BITS_INTERNAL_FORMAT,
 		KEY_WIDTH_OFFSET = KEY_INTERNAL_FORMAT_OFFSET - BITS_WIDTH,
 		KEY_HEIGHT_OFFSET = KEY_WIDTH_OFFSET - BITS_HEIGHT,
 		KEY_MIPS_OFFSET = KEY_HEIGHT_OFFSET - BITS_MIPS,
@@ -45,6 +47,7 @@ namespace
 	u64 ConvertFormat(const r2::draw::tex::TextureFormat& format)
 	{
 		u64 key = 0;
+		key |= ENCODE_KEY_VALUE((u64)format.isCubemap ? 1 : 0, BITS_TEXTURE_TYPE, KEY_TEXTURE_TYPE_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.internalformat, BITS_INTERNAL_FORMAT, KEY_INTERNAL_FORMAT_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.width, BITS_WIDTH, KEY_WIDTH_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.height, BITS_HEIGHT, KEY_HEIGHT_OFFSET);
@@ -79,6 +82,11 @@ namespace r2::draw::gl
 			texcontainer::TexSubImage3D(*textureHandle.container, level, xOffset, yOffset, (GLint)textureHandle.sliceIndex, width, height, 1, format, type, data);
 		}
 
+		void TexSubCubemapImage2D(const r2::draw::tex::TextureHandle& textureHandle, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* data)
+		{
+			texcontainer::TexSubCubemapImage3D(*textureHandle.container, side, level, xOffset, yOffset, (GLint)textureHandle.sliceIndex, width, height, 1, format, type, data);
+		}
+
 		r2::draw::tex::TextureAddress GetAddress(const r2::draw::tex::TextureHandle& textureHandle)
 		{
 			r2::draw::tex::TextureAddress addr{textureHandle.container->handle, textureHandle.sliceIndex};
@@ -99,18 +107,34 @@ namespace r2::draw::gl
 			container.numSlices = slices;
 			container.isSparse = sparse;
 
-			GLCall( glGenTextures(1, &container.texId) );
-			GLCall( glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId) );
+			GLenum target = GL_TEXTURE_2D_ARRAY;
+			if (format.isCubemap)
+			{
+				target = GL_TEXTURE_CUBE_MAP_ARRAY;
+			}
+			
+			GLCall(glGenTextures(1, &container.texId));
+			GLCall(glBindTexture(target, container.texId));
 
 			if (sparse)
 			{
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
+				GLCall(glTexParameteri(target, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
 
 				//@TODO(Serge): pull from format?
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT));
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT));
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+				if (format.isCubemap)
+				{
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+				}
+				else
+				{
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT));
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT));
+				}
+
+				GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+				GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
 
 				// TODO: This could be done once per internal format. For now, just do it every time.
@@ -123,13 +147,13 @@ namespace r2::draw::gl
 					bestXSize = 0,
 					bestYSize = 0;
 
-				GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
-				
+				GLCall(glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
+
 				for (GLint i = 0; i < indexCount; ++i) {
-					GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
-					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
-					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
-					GLCall(glGetInternalformativ(GL_TEXTURE_2D_ARRAY, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
+					GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
+					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
+					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
+					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
 
 					// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
 					if (zSize == 1) {
@@ -149,27 +173,28 @@ namespace r2::draw::gl
 					GLCall(glDeleteTextures(1, &container.texId));
 					return false;
 				}
-					
+
 				container.xTileSize = bestXSize;
 				container.yTileSize = bestYSize;
 
-				GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, bestIndex));
+				GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, bestIndex));
 			}
 
-			GLCall(glTexStorage3D(GL_TEXTURE_2D_ARRAY, format.mipLevels, format.internalformat, format.width, format.height, slices));
+			GLCall(glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices));
 
-			if (!container.freeSpace ||  r2::squeue::Space(*container.freeSpace) < slices)
+			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
 			{
 				GLCall(glDeleteTextures(1, &container.texId));
 				return false;
 			}
-			
-			for (GLsizei i = 0; i < slices; ++i) 
+
+			for (GLsizei i = 0; i < slices; ++i)
 			{
 				r2::squeue::PushBack(*container.freeSpace, i);
 			}
 
-			if (sparse) {
+			if (sparse) 
+			{
 				container.handle = glGetTextureHandleARB(container.texId);
 				if (GLenum err = glGetError())
 				{
@@ -177,8 +202,6 @@ namespace r2::draw::gl
 				}
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
 				GLCall(glMakeTextureHandleResidentARB(container.handle));
-
-
 			}
 
 			return true;
@@ -235,12 +258,12 @@ namespace r2::draw::gl
 		{
 			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId));
 			GLCall(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data));
+		}
 
-			auto err = glGetError();
-			if (err != 0)
-			{
-				R2_CHECK(false, "Failed to sub texture ");
-			}
+		void TexSubCubemapImage3D(r2::draw::tex::TextureContainer& container, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
+		{
+			GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, container.texId));
+			GLCall(glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, level, xOffset, yOffset, zOffset * r2::draw::tex::CubemapSide::NUM_SIDES + static_cast<GLint>(side), width, height, depth, format, type, data));
 		}
 
 		u64 MemorySize(u64 slices, u64 alignment, u32 headerSize, u32 boundsChecking)
@@ -252,14 +275,37 @@ namespace r2::draw::gl
 		//Don't use publically 
 		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLboolean commit)
 		{
-			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId));
+
+			if (!container.isSparse)
+				return;
+
+			GLenum target = GL_TEXTURE_2D_ARRAY;
+
+			if (container.format.isCubemap)
+			{
+				target = GL_TEXTURE_CUBE_MAP_ARRAY;
+			}
+			
+			GLCall(glBindTexture(target, container.texId));
 
 			GLsizei levelWidth = container.format.width,
 				levelHeight = container.format.height;
 
-			for (int level = 0; level < container.format.mipLevels; ++level) {
-				GLCall(glTexPageCommitmentARB(GL_TEXTURE_2D_ARRAY, level, 0, 0, slice, levelWidth, levelHeight, 1, commit));
-				
+			for (int level = 0; level < container.format.mipLevels; ++level) 
+			{
+				if (container.format.isCubemap)
+				{
+					//@NOTE: YOU HAVE TO COMMIT ALL OF THE PAGES FOR THE CUBE MAP!!!!!!!!
+					for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+					{
+						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice* r2::draw::tex::NUM_SIDES + i, levelWidth, levelHeight, 1, commit));
+					}
+				}
+				else
+				{
+					GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice, levelWidth, levelHeight, 1, commit));
+				}
+
 				levelWidth = std::max(levelWidth / 2, 1);
 				levelHeight = std::max(levelHeight / 2, 1);
 			}
@@ -351,6 +397,13 @@ namespace r2::draw::tex::impl
 		{
 			return true;
 		}
+
+
+		GLboolean fullArrayCubeMipMaps;
+		GLCall(glGetBooleanv(GL_SPARSE_TEXTURE_FULL_ARRAY_CUBE_MIPMAPS_ARB, &fullArrayCubeMipMaps));
+
+		R2_CHECK(fullArrayCubeMipMaps == GL_TRUE, "Dunno what to do if this is false yet - https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_sparse_texture.txt");
+
 
 		u64 numTextureContainerLayers = 0;
 
@@ -452,10 +505,12 @@ namespace r2::draw::tex::impl
 	u64 GetMaxTextureLayers(bool sparse)
 	{
 		GLint maxTextureArrayLevels = 0;
-		if (sparse) {
+		if (sparse) 
+		{
 			GLCall(glGetIntegerv(GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB, &maxTextureArrayLevels));
 		}
-		else {
+		else 
+		{
 			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
 		}
 		return maxTextureArrayLevels;

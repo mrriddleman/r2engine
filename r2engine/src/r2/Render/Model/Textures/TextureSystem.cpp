@@ -28,6 +28,10 @@ namespace
 
 namespace r2::draw::texsys
 {
+	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture);
+
+
+
 	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const char* systemName)
 	{
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
@@ -185,7 +189,18 @@ namespace r2::draw::texsys
 		}
 	}
 
-	r2::draw::tex::TextureAddress GetTextureAddress(const r2::asset::AssetHandle& texture)
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::Texture& texture)
+	{
+		return GetTextureAddressInternal(texture.textureAssetHandle);
+	}
+
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap)
+	{
+		return GetTextureAddressInternal(cubemap.sides[0].textureAssetHandle);
+	}
+
+
+	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture)
 	{
 		if (s_optrTextureSystem == nullptr)
 		{

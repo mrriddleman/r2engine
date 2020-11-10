@@ -26,6 +26,7 @@ project "loguru"
 
 	filter "system:windows"
 		disablewarnings { "4996", "4068" }
+		flags {"MultiProcessorCompile"}
 
 	filter "configurations:Debug"
 		runtime "Debug"

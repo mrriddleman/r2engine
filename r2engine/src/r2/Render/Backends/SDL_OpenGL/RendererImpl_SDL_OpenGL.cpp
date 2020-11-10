@@ -497,6 +497,13 @@ namespace r2::draw::rendererimpl
 		}
 		else
 		{
+			//@TODO(Serge): should be part of the draw command?
+			glDepthFunc(GL_LESS);
+			if (viewportLayer == r2::draw::key::Basic::VPL_SKYBOX)
+			{
+				glDepthFunc(GL_LEQUAL);
+			}
+
 			SetDepthTest(true);
 		}
 	}
@@ -521,30 +528,30 @@ namespace r2::draw::rendererimpl
 			r2::draw::shader::Use(*shader);
 			//r2::draw::shader::SetVec4(*shader, "material.color", material->color);
 
-			/*const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
-			if (textures)
-			{
-				u64 numTextures = r2::sarr::Size(*textures);
+			//const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
+			//if (textures)
+			//{
+			//	u64 numTextures = r2::sarr::Size(*textures);
 
-				const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
-				u32 textureNum[numTextureTypes];
-				for (u32 i = 0; i < numTextureTypes; ++i)
-				{
-					textureNum[i] = 1;
-				}
+			//	const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
+			//	u32 textureNum[numTextureTypes];
+			//	for (u32 i = 0; i < numTextureTypes; ++i)
+			//	{
+			//		textureNum[i] = 1;
+			//	}
 
-				for (u64 i = 0; i < numTextures; ++i)
-				{
-					const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, i);
+			//	for (u64 i = 0; i < numTextures; ++i)
+			//	{
+			//		const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, i);
 
-					glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(i));
-					std::string number;
-					std::string name = TextureTypeToString(texture.type);
-					number = std::to_string(textureNum[texture.type]++);
-					r2::draw::shader::SetInt(*shader, ("material." + name + number).c_str(), static_cast<s32>(i));
-					glBindTexture(GL_TEXTURE_2D, r2::draw::texsys::GetGPUHandle(texture.textureAssetHandle));
-				}
-			}*/
+			//		glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(i));
+			//		std::string number;
+			//		std::string name = TextureTypeToString(texture.type);
+			//		number = std::to_string(textureNum[texture.type]++);
+			//		r2::draw::shader::SetInt(*shader, ("material." + name + number).c_str(), static_cast<s32>(i));
+			//		glBindTexture(GL_TEXTURE_2D, r2::draw::texsys::GetGPUHandle(texture.textureAssetHandle));
+			//	}
+			//}
 		}
 	}
 

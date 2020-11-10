@@ -13,6 +13,13 @@
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.fs",
       geometryPath: "",
       binaryPath: ""
+    },
+    {
+      shaderName: 6031424017685759555,
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.fs",
+      geometryPath: "",
+      binaryPath: ""
     }
   ]
 }

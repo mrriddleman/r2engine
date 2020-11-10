@@ -147,10 +147,73 @@ namespace r2::draw::tex
 
 	TextureHandle UploadToGPU(const CubemapTexture& cubemap)
 	{
+		stbi_set_flip_vertically_on_load(false);
+
+		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(cubemap.sides[0].textureAssetHandle.assetCache);
+
+		if (!assetCache)
+		{
+			return r2::draw::tex::GPUHandle{};
+		}
+
+		r2::draw::tex::GPUHandle newHandle;
+		r2::draw::tex::TextureFormat textureFormat;
+		GLenum format;
+		GLenum internalFormat;
+
+		for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+		{
+			r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.sides[CubemapSide::RIGHT + i].textureAssetHandle);
+		
+			R2_CHECK(assetCacheRecord.type == r2::asset::CUBEMAP_TEXTURE, "This better be a cubemap!");
+
+			int texWidth;
+			int texHeight;
+			int channels;
+			u8* imageData = stbi_load_from_memory(
+				assetCacheRecord.buffer->Data(),
+				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+
+			if (i == 0)
+			{
+				if (channels == 1)
+				{
+					format = GL_RED;
+					internalFormat = GL_R8;
+				}
+				else if (channels == 3)
+				{
+					internalFormat = GL_RGB8;
+					format = GL_RGB;
+				}
+				else if (channels == 4)
+				{
+					internalFormat = GL_RGBA8;
+					format = GL_RGBA;
+				}
+				else
+				{
+					R2_CHECK(false, "UNKNOWN image format");
+				}
+
+				textureFormat.internalformat = internalFormat;
+				textureFormat.width = texWidth;
+				textureFormat.height = texHeight;
+				textureFormat.mipLevels = 1;
+				textureFormat.isCubemap = true;
+
+				r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
+			}
+			
+			r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), 0, 0, 0, texWidth, texHeight, format, GL_UNSIGNED_BYTE, imageData);
 
 
+			stbi_image_free(imageData);
+			assetCache->ReturnAssetBuffer(assetCacheRecord);
+		}
 
-		return r2::draw::tex::GPUHandle{};
+
+		return newHandle;
 	}
 
 	void UnloadFromGPU(TextureHandle& texture)

@@ -185,7 +185,9 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		systemversion "latest"
     	pchheader "r2pch.h"
     	pchsource "r2engine/src/r2pch.cpp"
-    		
+    	flags {"MultiProcessorCompile"}
+
+
 		libdirs
 		{
 			"%{prj.name}/vendor/SDL2/Windows/lib/x64",
@@ -257,7 +259,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		defines "R2_PUBLISH"
 		runtime "Release"
 		symbols "Off"
-		optimize "On"
+		optimize "Full"
 		staticruntime "off"
 
 		
@@ -292,7 +294,8 @@ project "r2Tests"
 
 	filter "system:windows"
 		systemversion "latest"
-
+		flags {"MultiProcessorCompile"}
+		
 		defines
 		{
 			"R2_PLATFORM_WINDOWS"
@@ -449,6 +452,8 @@ project "Sandbox"
 
 	filter "system:windows"
 		systemversion "latest"
+		flags {"MultiProcessorCompile"}
+
 		libdirs
 		{
 			"r2engine/vendor/FMOD/Windows/core/lib/x64",

@@ -23,6 +23,9 @@ project "miniz"
 		"Publish"
 	}
 
+	filter "system:windows"
+		flags {"MultiProcessorCompile"}
+
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "On"

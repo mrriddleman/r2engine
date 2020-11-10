@@ -11,7 +11,7 @@ bool GLLogCall(const char* function)
 {
 	while (GLenum err = glGetError() )
 	{
-		R2_LOGE("%s failed with error: %i", err);
+		printf("OpenGL ERROR - %s failed with error: %i\n",function, err);
 		return false;
 	} 
 	return true;

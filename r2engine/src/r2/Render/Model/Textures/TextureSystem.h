@@ -23,7 +23,13 @@ namespace r2::draw::texsys
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap);
 	void ReloadTexture(const r2::asset::AssetHandle& texture);
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);
-	r2::draw::tex::TextureAddress GetTextureAddress(const r2::asset::AssetHandle& texture);
+
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::Texture& texture);
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap);
+
+	
+	
+	
 	u64 MemorySize(u64 maxNumTextures);
 }
 

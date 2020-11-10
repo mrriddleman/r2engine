@@ -23,7 +23,7 @@ namespace r2::asset::pln
 	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, const std::string& materialName, float baseRadius = 1.0f, float topRadius = 1.0f, float height = 1.0f,
 		int sectorCount = 36, int stackCount = 1, bool smooth = true);
-
+	void MakeSkybox(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 
 	std::map<std::string, MakeModlFunc> s_makeModelsMap
 	{
@@ -31,7 +31,8 @@ namespace r2::asset::pln
 		{"Cube.modl", MakeCube},
 		{"Sphere.modl", MakeSphere},
 		{"Cone.modl", MakeCone},
-		{"Cylinder.modl", MakeCylinder}
+		{"Cylinder.modl", MakeCylinder},
+		{"Skybox.modl", MakeSkybox}
 	};
 
 	std::vector<MakeModlFunc> ShouldMakeEngineModels()
@@ -42,7 +43,8 @@ namespace r2::asset::pln
 			MakeCube,
 			MakeSphere,
 			MakeCone,
-			MakeCylinder
+			MakeCylinder,
+			MakeSkybox
 		};
 
 		for (const auto& modelFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -157,10 +159,10 @@ namespace r2::asset::pln
 		std::vector<r2::Vertex2> texCoords;
 
 		//Front face
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, 0.5f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
 
 		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
 		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
@@ -173,10 +175,10 @@ namespace r2::asset::pln
 		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
 
 		//Right Face
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, -0.5f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
 
 		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
 		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
@@ -189,10 +191,10 @@ namespace r2::asset::pln
 		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
 
 		//Left Face
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, 0.5f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
 
 		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
 		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
@@ -205,10 +207,10 @@ namespace r2::asset::pln
 		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
 
 		//Back Face
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, -0.5f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
 
 		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
 		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
@@ -221,10 +223,10 @@ namespace r2::asset::pln
 		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
 
 		//Top Face
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, 0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(0.5f, 0.5f, -0.5f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
 
 		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
 		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
@@ -237,10 +239,10 @@ namespace r2::asset::pln
 		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
 
 		//Bottom Face
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(-0.5f, -0.5f, 0.5f));
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, -0.5f));
-		positions.push_back(r2::Vertex3(0.5f, -0.5f, 0.5f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
 
 		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
 		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
@@ -363,6 +365,232 @@ namespace r2::asset::pln
 		auto model = r2::CreateModel(fbb, STRING_ID("Cube"), fbb.CreateVector(meshes));
 		fbb.Finish(model);
 		const std::string name = "/Cube";
+
+		byte* buf = fbb.GetBufferPointer();
+		u32 size = fbb.GetSize();
+
+		r2::asset::pln::flathelp::GenerateJSONAndBinary(
+			buf, size,
+			schemaPath, binaryParentDir + name + MODL_EXT,
+			jsonParentDir + name + JSON_EXT);
+	}
+
+	void MakeSkybox(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		flatbuffers::FlatBufferBuilder fbb;
+		std::vector<flatbuffers::Offset<r2::Mesh>> meshes;
+
+		std::vector<r2::Vertex3> positions;
+		std::vector<r2::Vertex3> normals;
+		std::vector<r2::Vertex2> texCoords;
+
+		//Front face
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
+
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, 1.0f));
+
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+
+		//Right Face
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
+
+		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(1.0f, 0.0f, 0.0f));
+
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+
+		//Left Face
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
+
+		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
+		normals.push_back(r2::Vertex3(-1.0f, 0.0f, 0.0f));
+
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+
+		//Back Face
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
+
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(r2::Vertex3(0.0f, 0.0f, -1.0f));
+
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+
+		//Top Face
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, 1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, 1.0f, -1.0f));
+
+		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0, 1.0f, 0.0f));
+
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+
+		//Bottom Face
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(-1.0f, -1.0f, 1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, -1.0f));
+		positions.push_back(r2::Vertex3(1.0f, -1.0f, 1.0f));
+
+		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(r2::Vertex3(0.0f, -1.0f, 0.0f));
+
+		texCoords.push_back(r2::Vertex2(0.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(r2::Vertex2(1.0f, 1.0f));
+
+		std::vector<flatbuffers::Offset<r2::Face>> faces;
+
+		std::vector<uint32_t> indices;
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(3);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(1);
+		indices.push_back(2);
+		indices.push_back(3);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(4);
+		indices.push_back(6);
+		indices.push_back(5);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(6);
+		indices.push_back(4);
+		indices.push_back(7);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(8);
+		indices.push_back(9);
+		indices.push_back(10);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(9);
+		indices.push_back(11);
+		indices.push_back(10);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(12);
+		indices.push_back(13);
+		indices.push_back(14);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(13);
+		indices.push_back(15);
+		indices.push_back(14);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(16);
+		indices.push_back(17);
+		indices.push_back(18);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(17);
+		indices.push_back(19);
+		indices.push_back(18);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(20);
+		indices.push_back(21);
+		indices.push_back(22);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		indices.push_back(21);
+		indices.push_back(23);
+		indices.push_back(22);
+
+		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		indices.clear();
+
+		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Skybox"))); //@temporary
+
+		flatbuffers::Offset<r2::Mesh> mesh = r2::CreateMeshDirect(fbb, positions.size(), faces.size(),
+			&positions, &normals, &texCoords, &faces, &materials);
+
+		meshes.push_back(mesh);
+
+		auto model = r2::CreateModel(fbb, STRING_ID("Skybox"), fbb.CreateVector(meshes));
+		fbb.Finish(model);
+		const std::string name = "/Skybox";
 
 		byte* buf = fbb.GetBufferPointer();
 		u32 size = fbb.GetSize();
