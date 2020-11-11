@@ -64,6 +64,7 @@ namespace r2::draw::tex
 		s32 width = 0;
 		s32 height = 0;
 		b32 isCubemap = false;
+		b32 compressed = false;
 	};
 
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap);

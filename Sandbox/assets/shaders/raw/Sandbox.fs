@@ -32,12 +32,17 @@ void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
-	FragColor = vec4(sampledColor.rgb, 1.0);
+	FragColor = sampledColor;
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	Tex2DAddress addr = materials[texIndex];
-	return texture(sampler2DArray(addr.container), vec3(uv.rg,addr.page));
+
+	vec3 coord = vec3(uv.rg,addr.page);
+
+	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
+
+	return textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }

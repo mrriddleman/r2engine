@@ -129,7 +129,7 @@ namespace r2::asset::pln
 		faces.push_back(r2::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		std::vector<flatbuffers::Offset<r2::MaterialID>> materials;
-		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("Default"))); //@temporary
+		materials.push_back(r2::CreateMaterialID(fbb, STRING_ID("DebugMipMap"))); //@temporary
 
 		flatbuffers::Offset<r2::Mesh> mesh= r2::CreateMeshDirect(fbb, positions.size(), faces.size(), 
 			&positions, &normals, &texCoords, &faces, &materials);

@@ -63,6 +63,37 @@
       }
     },
     {
+      packName: 16075504797566260416,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/DebugMipMap/albedo/DebugMipMap.dds"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 699214,
+      totalNumberOfTextures: 1,
+      metaData: {
+      }
+    },
+    {
       packName: 9578052887469947454,
       albedo: [
         "D:/Projects/r2engine/r2engine/assets/textures/packs/Default/albedo/image.png"
@@ -220,7 +251,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 12,
-  totalTextureSize: 4696650,
+  totalNumberOfTextures: 13,
+  totalTextureSize: 5395864,
   maxTexturesInAPack: 6
 }

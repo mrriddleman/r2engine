@@ -133,9 +133,16 @@ namespace r2::draw::gl
 					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT));
 				}
 
-				GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-				GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
+				if (format.mipLevels > 1)
+				{
+					glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+					glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				}
+				else
+				{
+					GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+					GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+				}
 
 				// TODO: This could be done once per internal format. For now, just do it every time.
 				GLint indexCount = 0,
@@ -149,11 +156,13 @@ namespace r2::draw::gl
 
 				GLCall(glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
 
-				for (GLint i = 0; i < indexCount; ++i) {
+				for (GLint i = 0; i < indexCount; ++i) 
+				{
 					GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
 					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
 					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
 					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
+
 
 					// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
 					if (zSize == 1) {
@@ -164,7 +173,6 @@ namespace r2::draw::gl
 						}
 					}
 				}
-
 				// This would mean the implementation has no valid sizes for us, or that this format doesn't actually support sparse
 				// texture allocation. Need to implement the fallback. TODO: Implement that.
 				R2_CHECK(bestIndex != -1, "Implementation has no valid sizes for us!");
