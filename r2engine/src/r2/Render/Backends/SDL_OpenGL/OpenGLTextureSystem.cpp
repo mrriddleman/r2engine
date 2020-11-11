@@ -377,7 +377,13 @@ namespace r2::draw::gl
 
 			if (containerToUse == nullptr)
 			{
-				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, s_glTextureSystem->maxNumTextureContainerLayers, format, s_glTextureSystem->sparse);
+				u64 numSlices = s_glTextureSystem->maxNumTextureContainerLayers;
+				if (format.isCubemap)
+				{
+					numSlices = numSlices / r2::draw::tex::NUM_SIDES;
+				}
+
+				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format, s_glTextureSystem->sparse);
 				r2::sarr::Push(*arrayToUse, containerToUse);
 			}
 
