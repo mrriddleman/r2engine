@@ -12,6 +12,11 @@ struct Tex2DAddress
 	float page;
 };
 
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+};
+
 layout (std430, binding = 1) buffer Materials
 {
 	Tex2DAddress materials[];

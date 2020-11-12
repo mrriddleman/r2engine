@@ -12,6 +12,11 @@ struct Tex2DAddress
 	float page;
 };
 
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+};
+
 layout (std430, binding = 1) buffer Materials
 {
 	Tex2DAddress materials[];
@@ -25,14 +30,14 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-
+const float PI = 3.14159;
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 
 void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
-	FragColor = sampledColor;
+	FragColor = sampledColor * (0.4 * sin(cameraPosTimeW.w+PI*1.5) + 0.6);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)

@@ -225,6 +225,7 @@ public:
     enum ConstantConfigHandles
     {
         VP_MATRICES = 0,
+        VECTOR_CONSTANTS,
         MODEL_MATRICES,
         SUB_COMMANDS,
         MODEL_MATERIALS,
@@ -527,6 +528,11 @@ public:
             {r2::draw::ShaderDataType::Mat4, "projection"},
             {r2::draw::ShaderDataType::Mat4, "view"},
             {r2::draw::ShaderDataType::Mat4, "skyboxView"}
+        }));
+
+
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+            {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"}
         }));
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
@@ -967,6 +973,7 @@ public:
         
         glm::mat4 skyboxViewMat = glm::mat4(glm::mat3(mPersController.GetCameraPtr()->view));
        
+        glm::vec4 cameraPosTimeW = glm::vec4(mPersController.GetCameraPtr()->position, CENG.GetTicks() / 1000.0f);
 		//update the camera
         r2::draw::renderer::AddFillConstantBufferCommandForData(
             r2::sarr::At(*constHandles, VP_MATRICES),
@@ -977,6 +984,11 @@ public:
             r2::sarr::At(*constHandles, VP_MATRICES),
             2,
             glm::value_ptr(skyboxViewMat));
+
+
+        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
+            0, glm::value_ptr(cameraPosTimeW));
+
     }
     
     virtual void Shutdown() override
