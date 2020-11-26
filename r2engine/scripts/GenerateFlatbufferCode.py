@@ -26,6 +26,7 @@ fbsCodeOutputMap = {
 "Utils.fbs": "/r2/Utils/",
 "Material.fbs": "/r2/Render/Model/",
 "MaterialPack.fbs": "/r2/Render/Model/",
+"Mesh.fbs" : "/r2/Render/Model/",
 "Model.fbs": "/r2/Render/Model/",
 "TexturePackManifest.fbs": "/r2/Render/Model/Textures/",
 "TexturePackMetaData.fbs": "/r2/Render/Model/Textures/"

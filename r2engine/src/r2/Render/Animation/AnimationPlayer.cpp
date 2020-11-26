@@ -246,7 +246,7 @@ namespace
         if (boneMapResult != theDefault)
         {
             u32 boneIndex = boneMapResult;
-            r2::sarr::At(outTransforms, boneIndex + offset) = model.globalInverseTransform * globalTransform * r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
+            r2::sarr::At(outTransforms, boneIndex + offset) = model.model.globalInverseTransform * globalTransform * r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
         
             if (skeletonPart.parent)
             {

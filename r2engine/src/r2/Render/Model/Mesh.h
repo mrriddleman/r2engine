@@ -20,11 +20,12 @@ namespace r2::draw
 {
     struct Mesh
     {
+        u64 hashName = 0;
         r2::SArray<r2::draw::Vertex>* optrVertices = nullptr;
         r2::SArray<u32>* optrIndices = nullptr;
-        r2::SArray<r2::draw::MaterialHandle>* optrMaterials = nullptr;
+        //r2::SArray<r2::draw::MaterialHandle>* optrMaterials = nullptr;
 
-        static u64 MemorySize(u64 numVertices, u64 numIndices, u64 numMaterials, u64 alignment, u64 headerSize, u64 boundsChecking);
+        static u64 MemorySize(u64 numVertices, u64 numIndices, u64 alignment, u64 headerSize, u64 boundsChecking);
     };
     
     template<class ARENA>

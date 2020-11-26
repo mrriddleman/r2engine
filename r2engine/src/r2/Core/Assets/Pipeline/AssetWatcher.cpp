@@ -129,8 +129,15 @@ namespace r2::asset::pln
         MakeEngineBinaryAssetFolders();
         MakeGameBinaryAssetFolders();
 
+
+        auto makeMeshes = ShouldMakeEngineMeshes();
+        if (makeMeshes.size() > 0)
+        {
+            MakeEngineMeshes(makeMeshes);
+        }
+
         auto makeModels = ShouldMakeEngineModels();
-        if (makeModels.size()>0)
+        if (makeModels.size() > 0)
         {
             MakeEngineModels(makeModels);
         }

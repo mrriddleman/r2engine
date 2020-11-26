@@ -1,51 +1,18 @@
-include "Material.fbs";
-
-namespace r2;
+namespace flat;
 
 file_identifier "modl";
 file_extension "modl";
 
-
-
-struct Vertex3
-{
-	x:float;
-	y:float;
-	z:float;
-}
-
-struct Vertex2
-{
-	x:float;
-	y:float;
-}
-
-table Face
-{
-	numIndices:ulong;
-	indices:[uint];
-}
-
-table MaterialID
+table MaterialName
 {
 	name:ulong (hash:"fnv1a_64");
-}
-
-table Mesh
-{
-	numVertices:ulong;
-	numFaces:ulong;
-	positions:[Vertex3];
-	normals:[Vertex3];
-	textureCoords:[Vertex2];
-	faces:[Face];
-	materials:[MaterialID];
 }
 
 table Model
 {
 	name:ulong (hash:"fnv1a_64");
-	meshes:[Mesh];
+	meshNames:[string];
+	materials:[MaterialName];
 }
 
 root_type Model;

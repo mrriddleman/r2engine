@@ -245,6 +245,7 @@ public:
     };
     
     const u64 NUM_DRAWS = 10;
+    const u64 NUM_DRAW_COMMANDS = 30;
     const u64 NUM_BONES = 1000;
 
 
@@ -383,9 +384,9 @@ public:
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);
 
-        subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
-        animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
-        skyboxCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAWS);
+        subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
+        animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
+        skyboxCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
 
         modelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
         animModelMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
@@ -539,7 +540,7 @@ public:
             {r2::draw::ShaderDataType::Mat4, "models", NUM_DRAWS}
         }) );
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout(NUM_DRAWS) );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout(NUM_DRAW_COMMANDS) );
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout(NUM_DRAWS) );
 
         //Maybe these should automatically be added by the animated models layout
@@ -894,13 +895,13 @@ public:
         //add my commands here
 
         const r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
-        const r2::draw::Mesh& mesh = r2::sarr::At(*quadModel->optrMeshes, 0);
-        r2::draw::MaterialHandle materialHandle = r2::sarr::At(*mesh.optrMaterials, 0);
+
+        r2::draw::MaterialHandle materialHandle = r2::sarr::At(*quadModel->optrMaterialHandles, 0);
 
         r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_WORLD, 0, 0, materialHandle);
         
-
-        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*r2::sarr::At(*mSelectedAnimModel->meshes, 0).optrMaterials, 0);
+        
+        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*mSelectedAnimModel->model.optrMaterialHandles, 0);
 
         r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_WORLD, 0, 0, animModelMaterialHandle);
 
@@ -924,6 +925,7 @@ public:
 		batch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
 		batch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
         batch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
+        batch.numDraws = r2::sarr::Size(*modelMats);
         batch.clear = true;
 
 		r2::draw::renderer::AddDrawBatch(batch);
@@ -933,6 +935,7 @@ public:
         animModelBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG);
         animModelBatch.subcommands = animModelsSubCommandsToDraw;
         animModelBatch.models = animModelMats;
+        animModelBatch.numDraws = r2::sarr::Size(*animModelMats);
         animModelBatch.materials = animModelMaterials;
         animModelBatch.boneTransforms = mBoneTransforms;
         animModelBatch.boneTransformOffsets = mBoneTransformOffsets;
@@ -955,6 +958,7 @@ public:
         skyboxBatch.materials = skyboxMaterials;
         skyboxBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
         skyboxBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
+        skyboxBatch.numDraws = 1;
 
         r2::draw::renderer::AddDrawBatch(skyboxBatch);
 

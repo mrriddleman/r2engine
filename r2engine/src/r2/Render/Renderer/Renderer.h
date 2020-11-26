@@ -69,12 +69,13 @@ namespace r2::draw
 		ConstantBufferHandle boneTransformOffsetsHandle;
 		ConstantBufferHandle boneTransformsHandle;
 		b32 clear = false;
+		u32 numDraws = 0;
 
-		//@NOTE: the size of these arrays should always be the same
 		const r2::SArray<glm::mat4>* models = nullptr;
+
+		
 		const r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
-		//@NOTE: this assumes that the materials have already been uploaded
-		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr;
+		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr; //@NOTE: this assumes that the materials have already been uploaded
 
 		//The boneTransforms can be of any size
 		const r2::SArray<glm::mat4>* boneTransforms = nullptr;
@@ -139,7 +140,6 @@ namespace r2::draw::renderer
 	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle);
 	void ClearAllVertexLayoutOffsets();
 
-	void FillSubCommandsFromModels(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<const Model*>& models);
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
 	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
 

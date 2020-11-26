@@ -4,6 +4,7 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/ModelAssetLoader.h"
+#include "r2/Core/Assets/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssimpAssetLoader.h"
 
 namespace r2::draw::modlsys
@@ -49,12 +50,19 @@ namespace r2::draw::modlsys
 		newModelSystem->mSubAreaHandle = subAreaHandle;
 		newModelSystem->mSubAreaArena = modelArena;
 		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Size(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Size(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mCacheModelReferences = cacheModelReferences;
 		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, modelCacheSize, ALIGNMENT);
 
 		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, files);
 
+
+		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
+		newModelSystem->mModelCache->RegisterAssetLoader(meshLoader);
+
 		r2::asset::ModelAssetLoader* modelLoader = (r2::asset::ModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::ModelAssetLoader>();
+		modelLoader->SetModelSystem(newModelSystem);
+
 		newModelSystem->mModelCache->RegisterAssetLoader(modelLoader);
 
 		r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
@@ -74,6 +82,14 @@ namespace r2::draw::modlsys
 		r2::mem::LinearArena* arena = system->mSubAreaArena;
 
 		//return all of the models back to the cache
+		auto beginMeshHash = r2::shashmap::Begin(*system->mMeshes);
+
+		auto meshIter = beginMeshHash;
+
+		for (; meshIter != r2::shashmap::End(*system->mMeshes); ++meshIter)
+		{
+			system->mModelCache->ReturnAssetBuffer(meshIter->value);
+		}
 
 		auto beginHash = r2::shashmap::Begin(*system->mModels);
 
@@ -83,10 +99,9 @@ namespace r2::draw::modlsys
 			system->mModelCache->ReturnAssetBuffer(iter->value);
 		}
 
-		
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
-
+		FREE(system->mMeshes, *arena);
 		FREE(system->mModels, *arena);
 
 		FREE(system, *arena);
@@ -105,7 +120,120 @@ namespace r2::draw::modlsys
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ModelSystem), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacityInBytes, ALIGNMENT);
+	}
+
+	bool HasMesh(ModelSystem* system, const r2::asset::Asset& mesh)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return false;
+		}
+
+		if (!system->mModelCache || !system->mMeshes)
+		{
+			R2_CHECK(false, "We haven't initialized the system!");
+			return false;
+		}
+
+		return  r2::shashmap::Has(*system->mMeshes, mesh.HashID());
+	}
+
+	MeshHandle GetMeshHandle(ModelSystem* system, const r2::asset::Asset& mesh)
+	{
+		if (HasMesh(system, mesh))
+		{
+			return { mesh.HashID(), static_cast<s64>(system->mModelCache->GetSlot()) };
+		}
+
+		return MeshHandle{};
+	}
+
+	MeshHandle LoadMesh(ModelSystem* system, const r2::asset::Asset& mesh)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return {};
+		}
+
+		return system->mModelCache->LoadAsset(mesh);
+	}
+
+	const Mesh* GetMesh(ModelSystem* system, const MeshHandle& handle)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return nullptr;
+		}
+
+		if (handle.assetCache != system->mModelCache->GetSlot())
+		{
+			R2_CHECK(false, "Trying to get a model that doesn't exist in this model system");
+			return nullptr;
+		}
+
+		r2::asset::AssetCacheRecord record;
+		if (system->mCacheModelReferences)
+		{
+			if (!r2::shashmap::Has(*system->mMeshes, handle.handle))
+			{
+				record = system->mModelCache->GetAssetBuffer(handle);
+				r2::shashmap::Set(*system->mMeshes, handle.handle, record);
+			}
+			else
+			{
+				r2::asset::AssetCacheRecord defaultRecord;
+				record = r2::shashmap::Get(*system->mMeshes, handle.handle, defaultRecord);
+
+				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+			}
+		}
+		else
+		{
+			record = system->mModelCache->GetAssetBuffer(handle);
+
+			if (!r2::shashmap::Has(*system->mMeshes, handle.handle))
+			{
+				r2::shashmap::Set(*system->mMeshes, handle.handle, record);
+			}
+		}
+
+		r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.buffer->MutableData();
+
+		mesh->hashName = handle.handle;
+
+		return mesh;
+	}
+
+	void ReturnMesh(ModelSystem* system, const Mesh* mesh)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return;
+		}
+
+		if (!mesh)
+		{
+			R2_CHECK(false, "Passed in a null mesh");
+			return;
+		}
+
+		r2::asset::AssetCacheRecord defaultRecord;
+
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mMeshes, mesh->hashName, defaultRecord);
+
+		if (theRecord.buffer == defaultRecord.buffer)
+		{
+			R2_CHECK(false, "Failed to get the asset cache record!");
+			return;
+		}
+
+		system->mModelCache->ReturnAssetBuffer(theRecord);
 	}
 
 	ModelHandle LoadModel(ModelSystem* system, const r2::asset::Asset& model)
@@ -208,7 +336,7 @@ namespace r2::draw::modlsys
 
 		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.buffer->MutableData();
 
-		model->hash = handle.handle;
+		model->model.hash = handle.handle;
 
 		return model;
 	}
@@ -256,7 +384,7 @@ namespace r2::draw::modlsys
 
 		r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->hash, defaultRecord);
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.hash, defaultRecord);
 
 		if (theRecord.buffer == defaultRecord.buffer)
 		{
@@ -268,6 +396,23 @@ namespace r2::draw::modlsys
 	}
 
 	void LoadModels(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles)
+	{
+		if (!system)
+		{
+			R2_CHECK(false, "Passed in a null model system");
+			return;
+		}
+
+		u64 numAssetsToLoad = r2::sarr::Size(assets);
+
+		for (u64 i = 0; i < numAssetsToLoad; ++i)
+		{
+			auto modelHandle = system->mModelCache->LoadAsset(r2::sarr::At(assets, i));
+			r2::sarr::Push(handles, modelHandle);
+		}
+	}
+
+	void LoadMeshes(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles)
 	{
 		if (!system)
 		{

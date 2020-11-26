@@ -45,13 +45,23 @@ namespace r2::draw
         static u64 MemorySizeNoData(u64 numChildren, u64 alignment, u32 headerSize, u32 boundsChecking);
     };
 
+	struct Model
+	{
+		u64 hash = 0;
+        r2::SArray<MaterialHandle>* optrMaterialHandles = nullptr;
+		r2::SArray<const Mesh*>* optrMeshes = nullptr;
+		glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 
+		static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment);
+		static u64 ModelMemorySize(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
+
+
+	};
 
 
 	struct AnimModel
 	{
-        u64 hash = 0;
-        r2::SArray<Mesh>* meshes = nullptr;
+        Model model;
 		r2::SArray<BoneData>* boneData = nullptr;
 		r2::SArray<BoneInfo>* boneInfo = nullptr;
 
@@ -60,7 +70,6 @@ namespace r2::draw
 		r2::SHashMap<s32>* boneMapping = nullptr;
 		
         Skeleton skeleton;
-        glm::mat4 globalInverseTransform = glm::mat4(1.0f);
 
         //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
         static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
@@ -73,27 +82,32 @@ namespace r2::draw
 		glm::vec3 p1;
 	};
 
-    struct Model
-    {
-        u64 hash = 0;
-        r2::SArray<Mesh>* optrMeshes = nullptr;
-        glm::mat4 globalInverseTransform = glm::mat4(1.0f);
+	struct MeshRef
+	{
+		//Where the data lives
 
-        static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 numTextures, u64 headerSize, u64 boundsChecking, u64 alignment);
-        static u64 ModelMemorySize(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
-    };
 
+		u64 baseVertex = 0;
+		u64 baseIndex = 0;
+		u64 numIndices = 0;
+		u64 numVertices = 0;
+	};
+
+    const u32 MAX_NUM_MESHES = 32;
+
+    //@TODO(Serge): how do we size this?
     struct ModelRef
     {
-        ConstantBufferHandle vertexHandle = EMPTY_BUFFER;
-        ConstantBufferHandle indexHandle = EMPTY_BUFFER;
+        u64 hash;
+        //I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
+		VertexBufferHandle vertexBufferHandle;
+		IndexBufferHandle indexBufferHandle;
 
-        u64 hash        = 0; //could remove this
-        u64 baseVertex  = 0;
-        u64 baseIndex   = 0;
-        u64 numIndices  = 0;
-        u64 numVertices = 0;
+        MeshRef mMeshRefs[MAX_NUM_MESHES];
+        u32 mNumMeshRefs;
     };
+
+   
 
     template<class ARENA>
     Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description);

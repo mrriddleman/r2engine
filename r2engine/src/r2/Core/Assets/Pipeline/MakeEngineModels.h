@@ -7,8 +7,12 @@
 namespace r2::asset::pln
 {
 	typedef void (*MakeModlFunc)(const std::string&, const std::string&, const std::string&);
+
 	std::vector<MakeModlFunc> ShouldMakeEngineModels();
+	std::vector<MakeModlFunc> ShouldMakeEngineMeshes();
+
 	void MakeEngineModels(const std::vector<MakeModlFunc>& makeModels);
+	void MakeEngineMeshes(const std::vector<MakeModlFunc>& makeMeshes);
 }
 
 #endif

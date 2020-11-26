@@ -27,6 +27,7 @@ namespace r2::asset
 		DEFAULT = 0,
 		TEXTURE,
 		MODEL,
+		MESH,
 		ASSIMP_MODEL,
 		ASSIMP_ANIMATION,
 		CUBEMAP_TEXTURE,
