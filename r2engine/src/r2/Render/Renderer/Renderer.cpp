@@ -282,6 +282,9 @@ namespace r2::draw::renderer
 	bool GenerateConstantBuffers(const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
 	r2::draw::cmd::Clear* AddClearCommand(r2::draw::key::Basic key);
 	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(r2::draw::key::Basic key, u64 auxMemory);
+	ModelRef UploadModelInternal(const Model* model, r2::SArray<BoneData>* boneData, VertexConfigHandle vHandle);
+
+
 
 	//basic stuff
 	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath)
@@ -1359,6 +1362,49 @@ namespace r2::draw::renderer
 
 	ModelRef UploadModel(const Model* model, VertexConfigHandle vertexConfigHandle)
 	{
+		return UploadModelInternal(model, nullptr, vertexConfigHandle);
+	}
+
+	void UploadModels(const r2::SArray<const Model*>& models, VertexConfigHandle vertexConfigHandle, r2::SArray<ModelRef>& modelRefs)
+	{
+		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
+		{
+			R2_CHECK(false, "We don't have enough space to put the model refs");
+			return;
+		}
+
+		const u64 numModels = r2::sarr::Size(models);
+
+		for (u64 i = 0; i < numModels; ++i)
+		{
+			r2::sarr::Push(modelRefs, UploadModel(r2::sarr::At(models, i), vertexConfigHandle));
+		}
+	}
+
+	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vertexConfigHandle)
+	{
+		return UploadModelInternal(&model->model, model->boneData, vertexConfigHandle);
+	}
+
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs)
+	{
+		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
+		{
+			R2_CHECK(false, "We don't have enough space to put the model refs");
+			return;
+		}
+
+		const u64 numModels = r2::sarr::Size(models);
+
+		for (u64 i = 0; i < numModels; ++i)
+		{
+			r2::sarr::Push(modelRefs, UploadAnimModel(r2::sarr::At(models, i), vHandle));
+		}
+	}
+
+
+	ModelRef UploadModelInternal(const Model* model, r2::SArray<BoneData>* boneData, VertexConfigHandle vertexConfigHandle)
+	{
 		ModelRef modelRef;
 
 		if (s_optrRenderer == nullptr)
@@ -1375,11 +1421,11 @@ namespace r2::draw::renderer
 
 		if (vertexConfigHandle == InvalidVertexConfigHandle)
 		{
-			R2_CHECK(false, "We're trying to add a model after another model that aren't in the same VBO");
+			R2_CHECK(false, "We only should have 2 vHandles, 0 - mesh data, 1 - bone data");
 			return modelRef;
 		}
 
-		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+		u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
 		r2::draw::key::Basic fillKey;
 		//@TODO(Serge): fix this or pass it in
 		fillKey.keyValue = 0;
@@ -1404,14 +1450,14 @@ namespace r2::draw::renderer
 		u64 vOffset = sizeof(r2::draw::Vertex) * (modelRef.mMeshRefs[0].baseVertex);
 		u64 iOffset = sizeof(u32) * (modelRef.mMeshRefs[0].baseIndex);
 
+		
+
 		u64 totalNumVertices = 0;
 		u64 totalNumIndices = 0;
 
 		modelRef.mMeshRefs[0].numVertices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrVertices);
 		totalNumVertices = modelRef.mMeshRefs[0].numVertices;
 
-
-		R2_CHECK(layoutConfig.numVertexConfigs == 1, "");
 		u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * modelRef.mMeshRefs[0].numVertices);
 
 		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
@@ -1420,21 +1466,20 @@ namespace r2::draw::renderer
 			return {};
 		}
 
-
 		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey, 0);
-		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->optrMeshes, 0), modelRef.vertexBufferHandle, vOffset);
+		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mVertexBufferHandles[0], vOffset);
 
 		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
-		
 
 		for (u64 i = 1; i < numMeshes; ++i)
 		{
 			u64 numMeshVertices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrVertices);
 			modelRef.mMeshRefs[i].numVertices = numMeshVertices;
-			modelRef.mMeshRefs[i].baseVertex = totalNumVertices + modelRef.mMeshRefs[0].baseVertex;
-			totalNumVertices += numMeshVertices;
+			modelRef.mMeshRefs[i].baseVertex = modelRef.mMeshRefs[i - 1].numVertices + modelRef.mMeshRefs[i - 1].baseVertex;
 
+			totalNumVertices += numMeshVertices;
 			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
+
 			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
 			{
 				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
@@ -1442,9 +1487,27 @@ namespace r2::draw::renderer
 			}
 
 			nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer>(nextVertexCmd, 0);
-			vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->optrMeshes, i), modelRef.vertexBufferHandle, vOffset);
+			vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mVertexBufferHandles[0], vOffset);
 		}
 
+		if (boneData)
+		{
+			u64 bOffset = sizeof(r2::draw::BoneData) * (modelRef.mMeshRefs[0].baseVertex);
+
+			resultingMemorySize = (bOffset + sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData));
+
+			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[1].bufferSize)
+			{
+				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[1].bufferSize);
+				return {};
+			}
+
+			r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer>(nextVertexCmd, 0);
+			r2::draw::cmd::FillBonesBufferCommand(fillBoneDataCommand, *boneData, vHandle.mVertexBufferHandles[1], bOffset);
+
+			nextVertexCmd = fillBoneDataCommand;
+		}
+		
 		modelRef.mMeshRefs[0].numIndices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrIndices);
 		totalNumIndices = modelRef.mMeshRefs[0].numIndices;
 
@@ -1455,173 +1518,14 @@ namespace r2::draw::renderer
 			return {};
 		}
 
-
 		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer>(nextVertexCmd, 0);
-		iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->optrMeshes, 0), modelRef.indexBufferHandle, iOffset);
+		iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mIndexBufferHandle, iOffset);
 
 		cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
-		
 
 		for (u64 i = 1; i < numMeshes; ++i)
 		{
-			auto numIndices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrIndices);
-			modelRef.mMeshRefs[i].numIndices = numIndices;
-			modelRef.mMeshRefs[i].baseIndex = totalNumIndices + modelRef.mMeshRefs[0].baseIndex;
-			totalNumIndices += numIndices;
-
-			resultingMemorySize = (iOffset + sizeof(u32) * numIndices);
-			if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
-			{
-				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-				return {};
-			}
-
-			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer>(nextIndexCmd, 0);
-			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), modelRef.indexBufferHandle, iOffset);
-		}
-
-		vOffsets.mVertexBufferOffset.baseVertex = modelRef.mMeshRefs[0].baseVertex;
-		vOffsets.mVertexBufferOffset.numVertices = totalNumVertices;
-
-		vOffsets.mIndexBufferOffset.baseIndex = modelRef.mMeshRefs[0].baseIndex;
-		vOffsets.mIndexBufferOffset.numIndices = totalNumIndices;
-
-		return modelRef;
-	}
-
-	void UploadModels(const r2::SArray<const Model*>& models, VertexConfigHandle vertexConfigHandle, r2::SArray<ModelRef>& modelRefs)
-	{
-		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
-		{
-			R2_CHECK(false, "We don't have enough space to put the model refs");
-			return;
-		}
-
-		const u64 numModels = r2::sarr::Size(models);
-
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			r2::sarr::Push(modelRefs, UploadModel(r2::sarr::At(models, i), vertexConfigHandle));
-		}
-	}
-
-	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vertexConfigHandle)
-	{
-		ModelRef modelRef;
-
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return modelRef;
-		}
-
-		if (model == nullptr)
-		{
-			R2_CHECK(false, "We don't have a proper model!");
-			return modelRef;
-		}
-
-		if (vertexConfigHandle == InvalidVertexConfigHandle)
-		{
-			R2_CHECK(false, "We only should have 2 vHandles, 0 - mesh data, 1 - bone data");
-			return modelRef;
-		}
-
-		u64 numMeshes = r2::sarr::Size(*model->model.optrMeshes);
-		r2::draw::key::Basic fillKey;
-		//@TODO(Serge): fix this or pass it in
-		fillKey.keyValue = 0;
-
-		if (numMeshes == 0)
-		{
-			R2_CHECK(false, "We don't have any meshes in the model!");
-			return modelRef;
-		}
-
-		const VertexLayoutConfigHandle& vHandle = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, vertexConfigHandle);
-		VertexLayoutUploadOffset& vOffsets = r2::sarr::At(*s_optrRenderer->mVertexLayoutUploadOffsets, vertexConfigHandle);
-		const BufferLayoutConfiguration& layoutConfig = r2::sarr::At(*s_optrRenderer->mVertexLayouts, vertexConfigHandle);
-
-		modelRef.hash = model->model.hash;
-		modelRef.indexBufferHandle = vHandle.mIndexBufferHandle;
-		modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
-		modelRef.mMeshRefs[0].baseIndex = vOffsets.mIndexBufferOffset.baseIndex + vOffsets.mIndexBufferOffset.numIndices;
-		modelRef.mMeshRefs[0].baseVertex = vOffsets.mVertexBufferOffset.baseVertex + vOffsets.mVertexBufferOffset.numVertices;
-		modelRef.mNumMeshRefs = numMeshes;
-
-		u64 vOffset = sizeof(r2::draw::Vertex) * (modelRef.mMeshRefs[0].baseVertex);
-		u64 iOffset = sizeof(u32) * (modelRef.mMeshRefs[0].baseIndex);
-		u64 bOffset = sizeof(r2::draw::BoneData) * (modelRef.mMeshRefs[0].baseVertex);
-
-		u64 totalNumVertices = 0;
-		u64 totalNumIndices = 0;
-
-		modelRef.mMeshRefs[0].numVertices = r2::sarr::Size(*model->model.optrMeshes->mData[0]->optrVertices);
-		totalNumVertices = modelRef.mMeshRefs[0].numVertices;
-
-		u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * modelRef.mMeshRefs[0].numVertices);
-
-		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
-		{
-			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-			return {};
-		}
-
-		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(fillKey, 0);
-		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->model.optrMeshes, 0), vHandle.mVertexBufferHandles[0], vOffset);
-
-		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
-		
-		for (u64 i = 1; i < numMeshes; ++i)
-		{
-			u64 numMeshVertices = r2::sarr::Size(*model->model.optrMeshes->mData[i]->optrVertices);
-			modelRef.mMeshRefs[i].numVertices = numMeshVertices;
-			modelRef.mMeshRefs[i].baseVertex = modelRef.mMeshRefs[i-1].numVertices + modelRef.mMeshRefs[i-1].baseVertex;
-
-			totalNumVertices += numMeshVertices;
-			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
-
-			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
-			{
-				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-				return {};
-			}
-
-			nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer>(nextVertexCmd, 0);
-			vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->model.optrMeshes, i), vHandle.mVertexBufferHandles[0], vOffset);
-		}
-
-		resultingMemorySize = (bOffset + sizeof(r2::draw::BoneData) * r2::sarr::Size(*model->boneData));
-
-		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[1].bufferSize)
-		{
-			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[1].bufferSize);
-			return {};
-		}
-
-		//@TODO(Serge): Make only 1 upload function with an option to upload the bone data
-		r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer>(nextVertexCmd, 0);
-		r2::draw::cmd::FillBonesBufferCommand(fillBoneDataCommand, *model->boneData, vHandle.mVertexBufferHandles[1], bOffset);
-
-
-		modelRef.mMeshRefs[0].numIndices = r2::sarr::Size(*model->model.optrMeshes->mData[0]->optrIndices);
-		totalNumIndices = modelRef.mMeshRefs[0].numIndices;
-
-		resultingMemorySize = (iOffset + sizeof(u32) * modelRef.mMeshRefs[0].numIndices);
-		if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
-		{
-			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-			return {};
-		}
-
-		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer>(fillBoneDataCommand, 0);
-		iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->model.optrMeshes, 0), vHandle.mIndexBufferHandle, iOffset);
-
-		cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
-		
-		for (u64 i = 1; i < numMeshes; ++i)
-		{
-			u64 numMeshIndices = r2::sarr::Size(*model->model.optrMeshes->mData[i]->optrIndices);
+			u64 numMeshIndices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrIndices);
 			modelRef.mMeshRefs[i].numIndices = numMeshIndices;
 			modelRef.mMeshRefs[i].baseIndex = modelRef.mMeshRefs[i - 1].baseIndex + modelRef.mMeshRefs[i - 1].numIndices;
 
@@ -1635,7 +1539,7 @@ namespace r2::draw::renderer
 			}
 
 			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer>(nextIndexCmd, 0);
-			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->model.optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
+			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
 		}
 
 		vOffsets.mVertexBufferOffset.baseVertex = modelRef.mMeshRefs[0].baseVertex;
@@ -1645,22 +1549,6 @@ namespace r2::draw::renderer
 		vOffsets.mIndexBufferOffset.numIndices = totalNumIndices;
 
 		return modelRef;
-	}
-
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs)
-	{
-		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
-		{
-			R2_CHECK(false, "We don't have enough space to put the model refs");
-			return;
-		}
-
-		const u64 numModels = r2::sarr::Size(models);
-
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			r2::sarr::Push(modelRefs, UploadAnimModel(r2::sarr::At(models, i), vHandle));
-		}
 	}
 
 	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle)
