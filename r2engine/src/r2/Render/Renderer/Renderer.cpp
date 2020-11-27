@@ -215,6 +215,7 @@ namespace
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
+	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 32;
 	const u64 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8;
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
@@ -445,7 +446,7 @@ namespace r2::draw::renderer
 		}
 
 
-		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, "Material Systems Area");
+		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
 		if (!materialSystemInitialized)
 		{
 			R2_CHECK(false, "We couldn't initialize the material systems");

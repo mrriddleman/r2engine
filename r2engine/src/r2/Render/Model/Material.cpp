@@ -13,7 +13,7 @@
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
-
+#include "r2/Core/Containers/SHashMap.h"
 #include "r2/Utils/Hash.h"
 
 #ifdef R2_ASSET_PIPELINE
@@ -27,6 +27,13 @@ namespace r2::draw::mat
 	r2::asset::pln::AssetThreadSafeQueue<std::string> s_texturesChangedQueue;
 #endif // R2_ASSET_PIPELINE
 
+
+	struct TextureLookUpEntry
+	{
+		MaterialHandle materialHandle;
+		tex::Texture texture;
+	};
+
 	struct MaterialSystems
 	{
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
@@ -35,7 +42,8 @@ namespace r2::draw::mat
 		r2::mem::LinearArena* mSystemsArena;
 		r2::SArray<r2::draw::MaterialSystem*>* mMaterialSystems = nullptr;
 
-
+		r2::SHashMap<MaterialHandle>* mMaterialNamesToMaterialHandles = nullptr;
+		r2::SHashMap<TextureLookUpEntry>* mTextureNamesToMaterialHandles = nullptr;
 	};
 }
 
@@ -45,12 +53,13 @@ namespace
 	r2::draw::mat::MaterialSystems* s_optrMaterialSystems = nullptr;
 	
 	const u64 ALIGNMENT = 16;
-	const u32 MAX_TEXTURES_PER_MATERIAL = 32;
+	const u32 MAX_TEXTURES_PER_MATERIAL = 8;
 	const u64 MAX_TEXTURE_PACKS = 1024;
 	const u64 TEXTURE_PACK_CAPCITY = 1024;
 	const f64 HASH_MAP_BUFFER_MULTIPLIER = 1.5f;
 	const u32 NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME = 2;
 	const u64 MIN_TEXTURE_CAPACITY = 8;
+
 }
 
 
@@ -62,6 +71,155 @@ namespace r2::draw::mat
 	r2::asset::FileList LoadTexturePacks(const MaterialSystem& system, const flat::TexturePacksManifest* texturePacksManifest, u32&, u32&);
 	void LoadAllMaterialsFromMaterialPack(const MaterialSystem& system, const flat::MaterialPack* materialPack, u32, u32);
 	void UploadMaterialTexturesToGPUInternal(const MaterialSystem& system, u64 index);
+
+	MaterialHandle MakeMaterialHandleFromIndex(const MaterialSystem& system, u64 index);
+	u64 GetIndexFromMaterialHandle(MaterialHandle handle);
+
+	r2::asset::AssetFile* FindAssetFile(const r2::asset::FileList& list, const r2::asset::Asset& asset)
+	{
+		const u64 size = r2::sarr::Size(*list);
+
+		for (u64 i = 0; i < size; ++i)
+		{
+			if (r2::sarr::At(*list, i)->GetAssetHandle(0) == asset.HashID())
+			{
+				return r2::sarr::At(*list, i);
+			}
+		}
+
+		return nullptr;
+	}
+
+	void AddTextureNameToMap(const MaterialSystem& system, u64 index, const r2::asset::AssetFile* file, tex::TextureType type)
+	{
+		if (file)
+		{
+			char assetName[r2::fs::FILE_PATH_LENGTH];
+
+			file->GetAssetName(0, assetName, r2::fs::FILE_PATH_LENGTH);
+
+			char filename[r2::fs::FILE_PATH_LENGTH];
+
+			r2::fs::utils::CopyFileNameWithExtension(assetName, filename);
+
+			auto filenameID = STRING_ID(filename);
+
+			if (r2::shashmap::Has(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, filenameID))
+			{
+				R2_CHECK(false, "We Shouldnt already have the asset: %s in out map!", assetName);
+				return;
+			}
+
+			TextureLookUpEntry entry;
+			entry.materialHandle = r2::draw::mat::MakeMaterialHandleFromIndex(system, index);
+			entry.texture.type = type;
+			//@NOTE: this only works because we magically know the format of the asset handle. If it changes, this will have to change as well
+			entry.texture.textureAssetHandle = { file->GetAssetHandle(0), static_cast<s64>(system.mAssetCache->GetSlot()) };
+
+			r2::shashmap::Set(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, filenameID, entry);
+		}
+	}
+
+	void CreateTextureNameToMaterialHandleLookupTable(const MaterialSystem& system, const r2::asset::FileList& list)
+	{
+		if (s_optrMaterialSystems == nullptr || s_optrMaterialSystems->mTextureNamesToMaterialHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the material systems struct!");
+			return;
+		}
+
+		const u64 numMaterials = r2::sarr::Size(*system.mMaterials);
+		for (u64 i = 0; i < numMaterials; ++i)
+		{
+			const Material& material = r2::sarr::At(*system.mMaterials, i);
+			//We may want to move this to the load from disk as that's what this is basically for...
+			r2::draw::tex::TexturePack* defaultTexturePack = nullptr;
+			r2::draw::tex::TexturePack* result = r2::shashmap::Get(*system.mTexturePacks, material.texturePackHandle, defaultTexturePack);
+
+			if (material.texturePackHandle == STRING_ID(""))
+			{
+				//we don't have one!
+				continue;
+			}
+
+			if (result == defaultTexturePack)
+			{
+				R2_CHECK(false, "We couldn't get the texture pack!");
+				return;
+			}
+
+
+			//we need to somehow match the material to a subset of files in the file list
+			if (result->metaData.assetType == r2::asset::TEXTURE)
+			{
+				const auto numAlbedos = r2::sarr::Size(*result->albedos);
+				for (u64 t = 0; t < numAlbedos; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->albedos, t));
+
+					AddTextureNameToMap(system, i, file, tex::Diffuse);
+				}
+
+				const auto numSpeculars = r2::sarr::Size(*result->speculars);
+				for (flatbuffers::uoffset_t t = 0; t < numSpeculars; ++t)
+				{
+
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->speculars, t));
+
+					AddTextureNameToMap(system, i, file, tex::Specular);
+				}
+
+				const auto numEmissives = r2::sarr::Size(*result->emissives);
+				for (u64 t = 0; t < numEmissives; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->emissives, t));
+
+					AddTextureNameToMap(system, i, file, tex::Emissive);
+				}
+
+				const auto numNormals = r2::sarr::Size(*result->normals);
+				for (flatbuffers::uoffset_t t = 0; t < numNormals; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->normals, t));
+
+					AddTextureNameToMap(system, i, file, tex::Normal);
+				}
+
+				const auto numMetalics = r2::sarr::Size(*result->metalics);
+				for (u64 t = 0; t < numMetalics; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->metalics, t));
+
+					AddTextureNameToMap(system, i, file, tex::Metallic);
+				}
+
+				const auto numHeights = r2::sarr::Size(*result->heights);
+				for (u64 t = 0; t < numHeights; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->heights, t));
+
+					AddTextureNameToMap(system, i, file, tex::Height);
+				}
+
+				const auto numMicros = r2::sarr::Size(*result->micros);
+				for (u64 t = 0; t < numMicros; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->micros, t));
+
+					AddTextureNameToMap(system, i, file, tex::MicroFacet);
+				}
+
+				const auto numOcclusions = r2::sarr::Size(*result->occlusions);
+				for (flatbuffers::uoffset_t t = 0; t < numOcclusions; ++t)
+				{
+					r2::asset::AssetFile* file = FindAssetFile(list, r2::sarr::At(*result->occlusions, t));
+
+					AddTextureNameToMap(system, i, file, tex::Occlusion);
+				}
+			}
+		}
+	}
+
 
 	MaterialHandle MakeMaterialHandleFromIndex(const MaterialSystem& system, u64 index)
 	{
@@ -548,6 +706,15 @@ namespace r2::draw::mat
 
 			MaterialHandle handle = AddMaterial(system, newMaterial);
 			R2_CHECK(handle.handle != InvalidMaterialHandle.handle, "We couldn't add the new material?");
+
+			r2::draw::MaterialHandle defaultHandle;
+
+			MaterialHandle temp = r2::shashmap::Get(*s_optrMaterialSystems->mMaterialNamesToMaterialHandles, newMaterial.materialID, defaultHandle);
+
+
+			R2_CHECK(temp.handle == defaultHandle.handle && temp.slot == defaultHandle.slot, "We shouldn't already have an entry for this material!");
+
+			r2::shashmap::Set(*s_optrMaterialSystems->mMaterialNamesToMaterialHandles, newMaterial.materialID, handle);
 		}
 	}
 
@@ -790,13 +957,13 @@ namespace r2::draw::matsys
 		}
 	}
 
-	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numMaterialSystems, const char* systemName)
+	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numMaterialSystems, u64 maxMaterialsPerSystem, const char* systemName)
 	{
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize(numMaterialSystems, ALIGNMENT);
+		u64 subAreaSize = MemorySize(numMaterialSystems, maxMaterialsPerSystem, ALIGNMENT);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
@@ -838,6 +1005,11 @@ namespace r2::draw::matsys
 		{
 			s_optrMaterialSystems->mMaterialSystems->mData[i] = nullptr;
 		}
+
+		s_optrMaterialSystems->mMaterialNamesToMaterialHandles = MAKE_SHASHMAP(*materialSystemsArena, r2::draw::MaterialHandle, numMaterialSystems * maxMaterialsPerSystem * r2::SHashMap<r2::draw::MaterialHandle>::LoadFactorMultiplier());
+		s_optrMaterialSystems->mTextureNamesToMaterialHandles = MAKE_SHASHMAP(*materialSystemsArena, r2::draw::mat::TextureLookUpEntry, numMaterialSystems * maxMaterialsPerSystem * MAX_TEXTURES_PER_MATERIAL * r2::SHashMap<r2::draw::MaterialHandle>::LoadFactorMultiplier());
+
+
 
 		return s_optrMaterialSystems->mMaterialSystems != nullptr;
 	}
@@ -898,10 +1070,12 @@ namespace r2::draw::matsys
 
 		system->mAssetCache = r2::asset::lib::CreateAssetCache(system->mCacheBoundary, fileList);
 
+		AddMaterialSystem(system);
+
 		r2::draw::mat::LoadAllMaterialsFromMaterialPack(*system, materialPack, numNormalTexturePacks, numCubemapTexturePacks);
 
-		s32 slot = AddMaterialSystem(system);
-		system->mSlot = slot;
+		mat::CreateTextureNameToMaterialHandleLookupTable(*system, fileList);
+
 
 		return system;
 	}
@@ -993,89 +1167,111 @@ namespace r2::draw::matsys
 
 	MaterialHandle FindMaterialHandle(u64 materialName)
 	{
-		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
-
-		for (u64 i = 0; i < capacity; ++i)
+		if (!s_optrMaterialSystems || !s_optrMaterialSystems->mMaterialNamesToMaterialHandles)
 		{
-			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
-			if (system != nullptr)
-			{
-				auto handle = mat::GetMaterialHandleFromMaterialName(*system, materialName);
-				if (!mat::IsInvalidHandle(handle))
-				{
-					return handle;
-				}
-			}
+
+			R2_CHECK(false, "We haven't initialized the Materials Systems!");
+			return mat::InvalidMaterialHandle;
 		}
 
-		return mat::InvalidMaterialHandle;
+		MaterialHandle defaultHandle = {};
+		MaterialHandle result = r2::shashmap::Get(*s_optrMaterialSystems->mMaterialNamesToMaterialHandles, materialName, defaultHandle);
+
+		if (result.handle == defaultHandle.handle || result.slot == defaultHandle.slot)
+		{
+			R2_CHECK(false, "We don't have the material handle for that material name!");
+		}
+
+		return result;
 	}
 
 	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture)
 	{
-		//@TODO(Serge): implement something better than this... this is the worst possible case for our system
-		// we're trying to find the material from a texture name which is buried under a lot of stuff
-		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
-
-		for (u64 i = 0; i < capacity; ++i)
+		if (!textureName && strcmp(textureName, "") == 0)
 		{
-			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
-			if (system != nullptr)
-			{
-				r2::asset::FileList fileList = system->mAssetCache->GetFileList();
-
-				u64 numFiles = r2::sarr::Size(*fileList);
-
-				for (u64 j = 0; j < numFiles; ++j)
-				{
-					r2::asset::AssetFile* assetFile = r2::sarr::At(*fileList, j);
-
-					char assetName[r2::fs::FILE_PATH_LENGTH];
-					char fileName[r2::fs::FILE_PATH_LENGTH];
-
-					assetFile->GetAssetName(0, assetName, 0);
-
-					r2::fs::utils::CopyFileNameWithExtension(assetName, fileName);
-					
-					if (strcmp(fileName, textureName) != 0)
-					{
-						continue;
-					}
-
-					//we have the texture now
-					auto textureHandle = assetFile->GetAssetHandle(0);
-
-					r2::asset::AssetHandle textureAssetHandle{ textureHandle, system->mAssetCache->GetSlot() };
-
-					//now we need to find the material handle from the texture in the material system
-
-					u64 numMaterialTextures = r2::sarr::Capacity(*system->mMaterialTextures);
-
-					for (u64 k = 0; k < numMaterialTextures; ++k)
-					{
-						auto textures = r2::sarr::At(*system->mMaterialTextures, k);
-						if(!textures)
-							continue;
-
-						u64 numTextures = r2::sarr::Size(*textures);
-
-						for (u64 t = 0; t < numTextures; ++t)
-						{
-							auto texture = r2::sarr::At(*textures, t);
-							if (texture.textureAssetHandle.handle == textureHandle &&
-								texture.textureAssetHandle.assetCache == textureAssetHandle.assetCache)
-							{
-
-								outTexture = texture;
-								return mat::MakeMaterialHandleFromIndex(*system, k);
-							}
-						}
-					}
-				}
-			}
+			R2_CHECK(false, "You passed in an invalid texture name!");
+			return mat::InvalidMaterialHandle;
 		}
 
-		return mat::InvalidMaterialHandle;
+		if (!s_optrMaterialSystems || !s_optrMaterialSystems->mTextureNamesToMaterialHandles)
+		{
+			R2_CHECK(false, "We haven't initialized the materials systems yet!");
+			return mat::InvalidMaterialHandle;
+		}
+
+		r2::draw::mat::TextureLookUpEntry defaultEntry;
+
+		r2::draw::mat::TextureLookUpEntry result = r2::shashmap::Get(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, STRING_ID(textureName), defaultEntry);
+
+		if (result.materialHandle.handle == defaultEntry.materialHandle.handle || result.materialHandle.slot == defaultEntry.materialHandle.slot)
+		{
+			return mat::InvalidMaterialHandle;
+		}
+
+		outTexture = result.texture;
+		////@TODO(Serge): implement something better than this... this is the worst possible case for our system
+		//// we're trying to find the material from a texture name which is buried under a lot of stuff
+		//u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		//for (u64 i = 0; i < capacity; ++i)
+		//{
+		//	MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+		//	if (system != nullptr)
+		//	{
+		//		r2::asset::FileList fileList = system->mAssetCache->GetFileList();
+
+		//		u64 numFiles = r2::sarr::Size(*fileList);
+
+		//		for (u64 j = 0; j < numFiles; ++j)
+		//		{
+		//			r2::asset::AssetFile* assetFile = r2::sarr::At(*fileList, j);
+
+		//			char assetName[r2::fs::FILE_PATH_LENGTH];
+		//			char fileName[r2::fs::FILE_PATH_LENGTH];
+
+		//			assetFile->GetAssetName(0, assetName, 0);
+
+		//			r2::fs::utils::CopyFileNameWithExtension(assetName, fileName);
+		//			
+		//			if (strcmp(fileName, textureName) != 0)
+		//			{
+		//				continue;
+		//			}
+
+		//			//we have the texture now
+		//			auto textureHandle = assetFile->GetAssetHandle(0);
+
+		//			r2::asset::AssetHandle textureAssetHandle{ textureHandle, system->mAssetCache->GetSlot() };
+
+		//			//now we need to find the material handle from the texture in the material system
+
+		//			u64 numMaterialTextures = r2::sarr::Capacity(*system->mMaterialTextures);
+
+		//			for (u64 k = 0; k < numMaterialTextures; ++k)
+		//			{
+		//				auto textures = r2::sarr::At(*system->mMaterialTextures, k);
+		//				if(!textures)
+		//					continue;
+
+		//				u64 numTextures = r2::sarr::Size(*textures);
+
+		//				for (u64 t = 0; t < numTextures; ++t)
+		//				{
+		//					auto texture = r2::sarr::At(*textures, t);
+		//					if (texture.textureAssetHandle.handle == textureHandle &&
+		//						texture.textureAssetHandle.assetCache == textureAssetHandle.assetCache)
+		//					{
+
+		//						outTexture = texture;
+		//						return mat::MakeMaterialHandleFromIndex(*system, k);
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+
+		return result.materialHandle;
 	}
 
 	void Update()
@@ -1139,7 +1335,7 @@ namespace r2::draw::matsys
 #endif // R2_ASSET_PIPELINE
 	}
 
-	u64 MemorySize(u64 numSystems,u64 alignment)
+	u64 MemorySize(u64 numSystems, u64 maxMaterialsPerSystem, u64 alignment)
 	{
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -1150,7 +1346,9 @@ namespace r2::draw::matsys
 		return 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::mat::MaterialSystems), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), alignment, headerSize, boundsChecking) + 
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialSystem*>::MemorySize(numSystems), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialSystem*>::MemorySize(numSystems), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::draw::MaterialHandle>::MemorySize(numSystems * maxMaterialsPerSystem * r2::SHashMap<r2::draw::MaterialHandle>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::draw::mat::TextureLookUpEntry>::MemorySize(numSystems * maxMaterialsPerSystem * MAX_TEXTURES_PER_MATERIAL * r2::SHashMap<r2::draw::MaterialHandle>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking);
 	}
 
 	void ShutdownMaterialSystems()
@@ -1165,7 +1363,8 @@ namespace r2::draw::matsys
 				R2_CHECK(false, "Material system at slot: %llu has not been freed!", i);
 			}
 		}
-
+		FREE(s_optrMaterialSystems->mMaterialNamesToMaterialHandles, *arena);
+		FREE(s_optrMaterialSystems->mTextureNamesToMaterialHandles, *arena);
 		FREE(s_optrMaterialSystems->mMaterialSystems, *arena);
 
 		FREE(s_optrMaterialSystems, *arena);

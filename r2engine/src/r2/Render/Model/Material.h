@@ -70,10 +70,10 @@ namespace r2::draw
 namespace r2::draw::matsys
 {
 	//for the matsys
-	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numMaterialSystems, const char* systemName);
+	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numMaterialSystems, u64 maxNumMaterialsPerSystem, const char* systemName);
 	void Update();
 	void ShutdownMaterialSystems();
-	u64 MemorySize(u64 numSystems, u64 alignment);
+	u64 MemorySize(u64 numSystems, u64 maxNumMaterialsPerSystem, u64 alignment);
 	r2::draw::MaterialSystem* GetMaterialSystem(s32 slot);
 
 	MaterialSystem* FindMaterialSystem(u64 materialName);
@@ -88,11 +88,11 @@ namespace r2::draw::matsys
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const flat::MaterialPack* materialPack, const flat::TexturePacksManifest* texturePackManifest);
 	void FreeMaterialSystem(MaterialSystem* system);
 
-	template<class ARENA>
-	MaterialSystem* CreateMaterialSystem(ARENA& arena, const char* materialPackPath, const char* texturePackManifestPath);
+	//template<class ARENA>
+	//MaterialSystem* CreateMaterialSystem(ARENA& arena, const char* materialPackPath, const char* texturePackManifestPath);
 
-	template<class ARENA>
-	void FreeMaterialSystem(ARENA& arena, MaterialSystem* system);
+	//template<class ARENA>
+	//void FreeMaterialSystem(ARENA& arena, MaterialSystem* system);
 }
 
 namespace r2::draw::mat
@@ -126,165 +126,165 @@ namespace r2::draw::mat
 
 namespace r2::draw::matsys
 {
-	template<class ARENA>
-	MaterialSystem* CreateMaterialSystem(ARENA& arena, const char* materialPackPath, const char* texturePackManifestPath)
-	{
-		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialPackPath);
-		if (!materialPackData)
-		{
-			R2_CHECK(false, "Failed to read the material pack file: %s", materialPackPath);
-			return false;
-		}
-
-		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
-
-		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
-
-		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackManifestPath);
-		if (!texturePacksData)
-		{
-			R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackManifestPath);
-			return false;
-		}
-
-		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
-
-		R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
-
-		u64 materialMemorySystemSize = MaterialSystemMemorySize(materialPack->materials()->size(),
-			texturePacksManifest->totalTextureSize(),
-			texturePacksManifest->totalNumberOfTextures(),
-			texturePacksManifest->texturePacks()->size(),
-			texturePacksManifest->maxTexturesInAPack());
-
-		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(arena, materialMemorySystemSize, 16);
-
-
-		//Here we should be loading the material pack
-		u64 unallocatedSpace = boundary.size;
-		u64 memoryNeeded = r2::draw::mat::MemorySize(boundary.alignment, materialPack->materials()->size(),
-			texturePacksManifest->totalTextureSize(),
-			texturePacksManifest->totalNumberOfTextures(),
-			texturePacksManifest->texturePacks()->size(),
-			texturePacksManifest->maxTexturesInAPack());
-
-		if (memoryNeeded > unallocatedSpace)
-		{
-			R2_CHECK(false, "We don't have enough space to allocate a new sub area for this system");
-			return nullptr;
-		}
-
-		//Emplace the linear arena in the subarea
-		r2::mem::LinearArena* materialLinearArena = EMPLACE_LINEAR_ARENA_IN_BOUNDARY(boundary);
-
-		if (!materialLinearArena)
-		{
-			R2_CHECK(materialLinearArena != nullptr, "linearArena is null");
-			return nullptr;
-		}
-
-		//allocate the MemorySystem
-		MaterialSystem* system = ALLOC(r2::draw::MaterialSystem, *materialLinearArena);
-
-		R2_CHECK(system != nullptr, "We couldn't allocate the material system!");
-
-		system->mLinearArena = materialLinearArena;
-		system->mMaterials = MAKE_SARRAY(*materialLinearArena, r2::draw::Material, materialPack->materials()->size());
-		R2_CHECK(system->mMaterials != nullptr, "we couldn't allocate the array for materials?");
-		system->mTexturePacks = MAKE_SHASHMAP(*materialLinearArena, r2::draw::tex::TexturePack*, static_cast<u64>(static_cast<f64>(texturePacksManifest->texturePacks()->size() * HASH_MAP_BUFFER_MULTIPLIER)));
-		R2_CHECK(system->mTexturePacks != nullptr, "we couldn't allocate the array for mTexturePacks?");
-		system->mMaterialMemBoundary = boundary;
-
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
-
-		u64 assetCacheBoundarySize =
-			r2::mem::utils::GetMaxMemoryForAllocation(
-				r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking,
-					texturePacksManifest->totalNumberOfTextures(), texturePacksManifest->totalTextureSize(), boundary.alignment),
-				boundary.alignment, headerSize, boundsChecking);
-		system->mCacheBoundary = MAKE_BOUNDARY(*materialLinearArena, assetCacheBoundarySize, boundary.alignment);
-
-		r2::asset::FileList fileList = r2::draw::mat::LoadTexturePacks(*system, texturePacksManifest);
-
-		system->mAssetCache = r2::asset::lib::CreateAssetCache(system->mCacheBoundary, fileList);
-
-		r2::draw::mat::LoadAllMaterialsFromMaterialPack(*system, materialPack);
-
-		s32 slot = AddMaterialSystem(system);
-		system->mSlot = slot;
-
-		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
-		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
-
-		return system;
-	}
-
-	template<class ARENA>
-	void FreeMaterialSystem(ARENA& arena, MaterialSystem* system)
-	{
-		void* boundaryLocation = system->mMaterialMemBoundary.location;
-
-		RemoveMaterialSystem(system);
-
-		r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*system);
-
-		r2::mem::LinearArena* materialArena = system->mLinearArena;
-
-		FREE(system->mMaterialTextureEntries, *materialArena);
-
-		const s64 numCubemapTextures = static_cast<s64>(r2::sarr::Size(*system->mMaterialCubemapTextures));
-		for (s64 i = numCubemapTextures - 1; i >= 0; --i)
-		{
-			r2::SArray<r2::draw::tex::CubemapTexture>* cubemapTextures = r2::sarr::At(*system->mMaterialCubemapTextures, i);
-			if(cubemapTextures)
-			{
-				FREE(cubemapTextures, *materialArena);
-			}
-		}
-
-		FREE(system->mMaterialCubemapTextures, *materialArena);
-
-		const s64 numMaterialTextures = static_cast<s64>(r2::sarr::Capacity(*system->mMaterialTextures));
-		for (s64 i = numMaterialTextures - 1; i >= 0; --i)
-		{
-			r2::SArray<r2::draw::tex::Texture>* materialTextures = r2::sarr::At(*system->mMaterialTextures, i);
-			if (materialTextures)
-			{
-				FREE(materialTextures, *materialArena);
-			}
-		}
-
-		FREE(system->mMaterialTextures, *materialArena);
-
-		r2::asset::lib::DestroyCache(system->mAssetCache);
-
-		FREE(system->mCacheBoundary.location, *materialArena);
-
-		//delete all the texture packs
-		const s64 numTexturePacks = static_cast<s64>(r2::sarr::Capacity(*system->mTexturePacks->mData));
-		for (s64 i = numTexturePacks - 1; i >= 0; --i)
-		{
-			r2::SHashMap<r2::draw::tex::TexturePack*>::HashMapEntry& entry = r2::sarr::At(*system->mTexturePacks->mData, i);
-			if (entry.value != nullptr)
-			{
-				FREE_TEXTURE_PACK(*materialArena, entry.value);
-			}
-		}
-
-		FREE(system->mTexturePacks, *materialArena);
-
-		FREE(system->mMaterials, *materialArena);
-
-		FREE(system, *materialArena);
-
-		FREE_EMPLACED_ARENA(materialArena);
-
-		FREE(boundaryLocation, arena);
-	}
+//	template<class ARENA>
+//	MaterialSystem* CreateMaterialSystem(ARENA& arena, const char* materialPackPath, const char* texturePackManifestPath)
+//	{
+//		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialPackPath);
+//		if (!materialPackData)
+//		{
+//			R2_CHECK(false, "Failed to read the material pack file: %s", materialPackPath);
+//			return false;
+//		}
+//
+//		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+//
+//		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+//
+//		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackManifestPath);
+//		if (!texturePacksData)
+//		{
+//			R2_CHECK(false, "Failed to read the texture packs file: %s", texturePackManifestPath);
+//			return false;
+//		}
+//
+//		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(texturePacksData);
+//
+//		R2_CHECK(texturePacksManifest != nullptr, "Failed to get the material pack from the data!");
+//
+//		u64 materialMemorySystemSize = MaterialSystemMemorySize(materialPack->materials()->size(),
+//			texturePacksManifest->totalTextureSize(),
+//			texturePacksManifest->totalNumberOfTextures(),
+//			texturePacksManifest->texturePacks()->size(),
+//			texturePacksManifest->maxTexturesInAPack());
+//
+//		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(arena, materialMemorySystemSize, 16);
+//
+//
+//		//Here we should be loading the material pack
+//		u64 unallocatedSpace = boundary.size;
+//		u64 memoryNeeded = r2::draw::mat::MemorySize(boundary.alignment, materialPack->materials()->size(),
+//			texturePacksManifest->totalTextureSize(),
+//			texturePacksManifest->totalNumberOfTextures(),
+//			texturePacksManifest->texturePacks()->size(),
+//			texturePacksManifest->maxTexturesInAPack());
+//
+//		if (memoryNeeded > unallocatedSpace)
+//		{
+//			R2_CHECK(false, "We don't have enough space to allocate a new sub area for this system");
+//			return nullptr;
+//		}
+//
+//		//Emplace the linear arena in the subarea
+//		r2::mem::LinearArena* materialLinearArena = EMPLACE_LINEAR_ARENA_IN_BOUNDARY(boundary);
+//
+//		if (!materialLinearArena)
+//		{
+//			R2_CHECK(materialLinearArena != nullptr, "linearArena is null");
+//			return nullptr;
+//		}
+//
+//		//allocate the MemorySystem
+//		MaterialSystem* system = ALLOC(r2::draw::MaterialSystem, *materialLinearArena);
+//
+//		R2_CHECK(system != nullptr, "We couldn't allocate the material system!");
+//
+//		system->mLinearArena = materialLinearArena;
+//		system->mMaterials = MAKE_SARRAY(*materialLinearArena, r2::draw::Material, materialPack->materials()->size());
+//		R2_CHECK(system->mMaterials != nullptr, "we couldn't allocate the array for materials?");
+//		system->mTexturePacks = MAKE_SHASHMAP(*materialLinearArena, r2::draw::tex::TexturePack*, static_cast<u64>(static_cast<f64>(texturePacksManifest->texturePacks()->size() * HASH_MAP_BUFFER_MULTIPLIER)));
+//		R2_CHECK(system->mTexturePacks != nullptr, "we couldn't allocate the array for mTexturePacks?");
+//		system->mMaterialMemBoundary = boundary;
+//
+//		u32 boundsChecking = 0;
+//#ifdef R2_DEBUG
+//		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+//#endif
+//		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+//
+//		u64 assetCacheBoundarySize =
+//			r2::mem::utils::GetMaxMemoryForAllocation(
+//				r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking,
+//					texturePacksManifest->totalNumberOfTextures(), texturePacksManifest->totalTextureSize(), boundary.alignment),
+//				boundary.alignment, headerSize, boundsChecking);
+//		system->mCacheBoundary = MAKE_BOUNDARY(*materialLinearArena, assetCacheBoundarySize, boundary.alignment);
+//
+//		r2::asset::FileList fileList = r2::draw::mat::LoadTexturePacks(*system, texturePacksManifest);
+//
+//		system->mAssetCache = r2::asset::lib::CreateAssetCache(system->mCacheBoundary, fileList);
+//
+//		r2::draw::mat::LoadAllMaterialsFromMaterialPack(*system, materialPack);
+//
+//		s32 slot = AddMaterialSystem(system);
+//		system->mSlot = slot;
+//
+//		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
+//		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
+//
+//		return system;
+//	}
+//
+//	template<class ARENA>
+//	void FreeMaterialSystem(ARENA& arena, MaterialSystem* system)
+//	{
+//		void* boundaryLocation = system->mMaterialMemBoundary.location;
+//
+//		RemoveMaterialSystem(system);
+//
+//		r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*system);
+//
+//		r2::mem::LinearArena* materialArena = system->mLinearArena;
+//
+//		FREE(system->mMaterialTextureEntries, *materialArena);
+//
+//		const s64 numCubemapTextures = static_cast<s64>(r2::sarr::Size(*system->mMaterialCubemapTextures));
+//		for (s64 i = numCubemapTextures - 1; i >= 0; --i)
+//		{
+//			r2::SArray<r2::draw::tex::CubemapTexture>* cubemapTextures = r2::sarr::At(*system->mMaterialCubemapTextures, i);
+//			if(cubemapTextures)
+//			{
+//				FREE(cubemapTextures, *materialArena);
+//			}
+//		}
+//
+//		FREE(system->mMaterialCubemapTextures, *materialArena);
+//
+//		const s64 numMaterialTextures = static_cast<s64>(r2::sarr::Capacity(*system->mMaterialTextures));
+//		for (s64 i = numMaterialTextures - 1; i >= 0; --i)
+//		{
+//			r2::SArray<r2::draw::tex::Texture>* materialTextures = r2::sarr::At(*system->mMaterialTextures, i);
+//			if (materialTextures)
+//			{
+//				FREE(materialTextures, *materialArena);
+//			}
+//		}
+//
+//		FREE(system->mMaterialTextures, *materialArena);
+//
+//		r2::asset::lib::DestroyCache(system->mAssetCache);
+//
+//		FREE(system->mCacheBoundary.location, *materialArena);
+//
+//		//delete all the texture packs
+//		const s64 numTexturePacks = static_cast<s64>(r2::sarr::Capacity(*system->mTexturePacks->mData));
+//		for (s64 i = numTexturePacks - 1; i >= 0; --i)
+//		{
+//			r2::SHashMap<r2::draw::tex::TexturePack*>::HashMapEntry& entry = r2::sarr::At(*system->mTexturePacks->mData, i);
+//			if (entry.value != nullptr)
+//			{
+//				FREE_TEXTURE_PACK(*materialArena, entry.value);
+//			}
+//		}
+//
+//		FREE(system->mTexturePacks, *materialArena);
+//
+//		FREE(system->mMaterials, *materialArena);
+//
+//		FREE(system, *materialArena);
+//
+//		FREE_EMPLACED_ARENA(materialArena);
+//
+//		FREE(boundaryLocation, arena);
+//	}
 }
 
 
