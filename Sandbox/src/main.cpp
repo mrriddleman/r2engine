@@ -339,7 +339,7 @@ public:
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);
         mBoneTransformOffsets = MAKE_SARRAY(*linearArenaPtr, glm::ivec4, NUM_DRAWS);
-        mBoneTransforms = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_BONES);
+        mBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
         glm::mat4 quadMat = glm::mat4(1.0f);
@@ -544,9 +544,7 @@ public:
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout(NUM_DRAWS) );
 
         //Maybe these should automatically be added by the animated models layout
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
-            {r2::draw::ShaderDataType::Mat4, "boneTransforms", NUM_BONES}
-        }) );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout(NUM_BONES));
 
 		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
             {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
@@ -871,19 +869,19 @@ public:
         auto time = CENG.GetTicks();
   //      auto curTime = time;
 
-        r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 0).x);
+        r2::draw::PlayAnimationForAnimModel(time, *mMicroBatModel, r2::asset::AssetHandle{}/*  r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID) */, * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 0).x);
        // auto nextTime = CENG.GetTicks();
       //  printf("MicroBat END\n");
    //     printf("time for microbat: %f\n", nextTime - curTime);
       //  curTime = nextTime;
-        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x);
+        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::asset::AssetHandle{}/*r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3) */, * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x);
 		//nextTime = CENG.GetTicks();
      //   printf("Skeleton END\n");
 	//	printf("time for skeleton: %f\n", nextTime - curTime);
 		//curTime = nextTime;
         
         
-        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6), * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x);
+        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::asset::AssetHandle{}/*r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6)*/, * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x);
 		//nextTime = CENG.GetTicks();
      //   printf("Ellen END\n");
 		//printf("time for ellen: %f\n", CENG.GetTicks() - time);
@@ -1184,7 +1182,7 @@ private:
     r2::SArray<u64>* mNumBonesPerModel;
 
     r2::SArray<glm::ivec4>* mBoneTransformOffsets;
-    r2::SArray<glm::mat4>* mBoneTransforms;
+    r2::SArray<r2::draw::ShaderBoneTransform>* mBoneTransforms;
     r2::SArray<r2::draw::DebugBone>* mDebugBones;
     r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
 

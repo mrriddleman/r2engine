@@ -10,6 +10,7 @@
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Model/Textures/Texture.h"
+#include "r2/Render/Model/Model.h"
 
 namespace r2::draw
 {
@@ -234,6 +235,22 @@ namespace r2::draw
 		mCreateFlags = createFlags;
     }
 
+    void ConstantBufferLayout::InitForBoneTransforms(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransforms)
+    {
+        mElements.clear();
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[0].offset = 0;
+        mElements[0].typeCount = numBoneTransforms;
+        mElements[0].elementSize = sizeof(glm::mat4) * 3;
+        mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+        mElements[0].type = ShaderDataType::Struct;
+
+        mSize = mElements[0].size;
+        mType = Big;
+        mFlags = flags;
+        mCreateFlags = createFlags;
+    }
+
     void ConstantBufferLayout::CalculateOffsetAndSize()
     {
         size_t offset = 0;
@@ -244,6 +261,4 @@ namespace r2::draw
             mSize += element.size;
 		}
     }
-
-    
 }

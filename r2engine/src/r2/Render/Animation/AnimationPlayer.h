@@ -15,14 +15,15 @@ namespace r2::draw
 {
     struct AnimModel;
     struct DebugBone;
-    
+    struct ShaderBoneTransform;
+
 
     void PlayAnimationForSkinnedModel(
         u32 timeInMilliseconds,
         const AnimModel& model,
         const AnimationHandle& animationHandle,
         AnimationCache& animationCache,
-        r2::SArray<glm::mat4>& outBoneTransforms,
+        r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>& outDebugBones);
 
     u32 PlayAnimationForAnimModel(
@@ -30,7 +31,7 @@ namespace r2::draw
         const AnimModel& model,
 		const AnimationHandle& animationHandle,
 		AnimationCache& animationCache,
-        r2::SArray<glm::mat4>& outBoneTransforms,
+        r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>& outDebugBones,
         u64 offset);
 }

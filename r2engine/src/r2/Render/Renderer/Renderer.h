@@ -78,7 +78,7 @@ namespace r2::draw
 		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr; //@NOTE: this assumes that the materials have already been uploaded
 
 		//The boneTransforms can be of any size
-		const r2::SArray<glm::mat4>* boneTransforms = nullptr;
+		const r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
 		//boneTransformOffsets' size should be exactly the same as the number of subcommands
 		const r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
 
@@ -111,7 +111,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
 	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
 	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
-
+	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws);
 
 	//Regular methods
 	BufferHandles& GetVertexBufferHandles();

@@ -143,7 +143,7 @@ namespace r2::draw
         //Only For SubCommands!
         void InitForSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands);
         void InitForMaterials(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numMaterials);
-
+        void InitForBoneTransforms(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransforms);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }

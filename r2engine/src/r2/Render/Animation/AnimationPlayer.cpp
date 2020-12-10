@@ -22,7 +22,7 @@ namespace
 
     void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
 
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
     
     r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
@@ -44,7 +44,7 @@ namespace r2::draw
 		const AnimModel& model,
 		const AnimationHandle& animationHandle,
 		AnimationCache& animationCache,
-		r2::SArray<glm::mat4>& outBoneTransforms,
+		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>& outDebugBones)
     {
 
@@ -62,7 +62,9 @@ namespace r2::draw
 			outBoneTransforms.mSize = model.boneInfo->mSize;
 			for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 			{
-				r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
+				r2::sarr::At(outBoneTransforms, i).globalInv = glm::mat4(1.0f);
+                r2::sarr::At(outBoneTransforms, i).transform = glm::mat4(1.0f);
+                r2::sarr::At(outBoneTransforms, i).invBindPose = glm::mat4(1.0f);
 			}
 
             outDebugBones.mSize = model.boneData->mSize;
@@ -81,7 +83,9 @@ namespace r2::draw
         outDebugBones.mSize = model.boneInfo->mSize;
 		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 		{
-			r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
+			r2::sarr::At(outBoneTransforms, i).globalInv = glm::mat4(1.0f);
+            r2::sarr::At(outBoneTransforms, i).transform = glm::mat4(1.0f);
+            r2::sarr::At(outBoneTransforms, i).invBindPose = glm::mat4(1.0f);
 		}
 
         CalculateBoneTransforms(animationTime, *anim, model, outBoneTransforms, outDebugBones, 0);
@@ -92,7 +96,7 @@ namespace r2::draw
 		const AnimModel& model,
 		const AnimationHandle& animationHandle,
 		AnimationCache& animationCache,
-		r2::SArray<glm::mat4>& outBoneTransforms,
+		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>& outDebugBones,
 		u64 offset) 
     {
@@ -117,7 +121,9 @@ namespace r2::draw
 			outBoneTransforms.mSize += model.boneInfo->mSize;
             for (u32 i = 0; i < model.boneInfo->mSize; ++i)
             {
-                r2::sarr::At(outBoneTransforms, i + offset) = glm::mat4(1.0f);
+                r2::sarr::At(outBoneTransforms, i + offset).globalInv = glm::mat4(1.0f);
+                r2::sarr::At(outBoneTransforms, i + offset).transform = glm::mat4(1.0f);
+                r2::sarr::At(outBoneTransforms, i + offset).invBindPose = glm::mat4(1.0f);
             }
 
             outDebugBones.mSize += model.boneInfo->mSize;
@@ -141,7 +147,9 @@ namespace r2::draw
 
 		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 		{
-			r2::sarr::At(outBoneTransforms, i + offset) = glm::mat4(1.0f);
+			r2::sarr::At(outBoneTransforms, i + offset).globalInv = glm::mat4(1.0f);
+            r2::sarr::At(outBoneTransforms, i + offset).transform = glm::mat4(1.0f);
+            r2::sarr::At(outBoneTransforms, i + offset).invBindPose = glm::mat4(1.0f);
 		}
 
       //  PROFILE_SCOPE("CalculateBoneTransforms")
@@ -197,7 +205,7 @@ namespace
         FREE(tempGlobalTransforms, *MEM_ENG_SCRATCH_PTR);
     }
 
-	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
 	{
         const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
         r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -209,8 +217,7 @@ namespace
             u64 hashName = r2::sarr::At(*model.skeleton.mJointNames, j);
 
             //@Optimization
-            //@TODO(Serge): We should instead just have the channels follow the bones in order. Then we'll just pass j into the FindChannel call (or do it directly)
-            //              We'll have to set that up in AssimpAnimationAssetLoader.cpp
+            //@TODO(Serge): Dunno how to optimize this yet, tried to make the channels follow the joints directly but didn't work with the models we're using at the moment. Could try this again in the future. For now leaving it as is.
             r2::draw::AnimationChannel* channel = FindChannel(animation, hashName);
 
             r2::math::Transform transform = r2::sarr::At(*model.skeleton.mLocalTransforms, j);
@@ -255,7 +262,9 @@ namespace
                 //              Then have 2 different outTransforms - one for the offsetTransform(s) and the other for the globalTransform
                 //              That way we only pay for a ToMatrix here and the glm::mat4 copy to the outOffsetTransforms
                 //              Then we'll have 2 different matrix buffers in the shader and we'll do the multiply there
-                r2::sarr::At(outTransforms, boneIndex + offset) = r2::math::ToMatrix(r2::math::Combine(model.model.globalInverseTransform, r2::math::Combine(globalTransform, r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform)));
+                r2::sarr::At(outTransforms, boneIndex + offset).globalInv = model.model.globalInverseTransform; //r2::math::ToMatrix(r2::math::Combine(model.model.globalInverseTransform, r2::math::Combine(globalTransform, r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform)));
+                r2::sarr::At(outTransforms, boneIndex + offset).transform = r2::math::ToMatrix(globalTransform);
+                r2::sarr::At(outTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
 
                 s32 realParentJointIndex = r2::sarr::At(*model.skeleton.mRealParentBones, j);
 

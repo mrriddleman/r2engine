@@ -1084,6 +1084,37 @@ namespace r2::draw::renderer
 		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
 	}
 
+	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		if (s_optrRenderer->mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration boneTransforms
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		boneTransforms.layout.InitForBoneTransforms(0, 0, maxDraws);
+
+		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, boneTransforms);
+
+		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
+	}
+
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack)
 	{
 		u32 boundsChecking = 0;
@@ -1913,7 +1944,7 @@ namespace r2::draw::renderer
 		//fill out the bone data if we have it
 		if (batch.boneTransforms && batch.boneTransformOffsets)
 		{
-			u64 boneTransformSize = batch.boneTransforms->mSize * sizeof(glm::mat4);
+			u64 boneTransformSize = batch.boneTransforms->mSize * sizeof(ShaderBoneTransform);
 			r2::draw::cmd::FillConstantBuffer* boneTransformsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(materialsCMD, boneTransformSize);
 			
 			char* boneTransformsAuxMem = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(boneTransformsCMD);

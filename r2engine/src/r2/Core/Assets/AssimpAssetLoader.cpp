@@ -212,13 +212,13 @@ namespace
 	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
 	{
 		const aiMesh* meshToUse = mesh;
-		printf("Num bones: %zu\n", meshToUse->mNumBones);
+		//printf("Num bones: %zu\n", meshToUse->mNumBones);
 
 		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
 			s32 boneIndex = -1;
 			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-			printf("boneNameStr name: %s\n", boneNameStr.c_str());
+	//		printf("boneNameStr name: %s\n", boneNameStr.c_str());
 
 			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
@@ -229,7 +229,7 @@ namespace
 			{
 				boneIndex = (u32)r2::sarr::Size(*model.boneInfo);
 				r2::draw::BoneInfo info;
-				info.offsetTransform = AssimpMat4ToTransform(meshToUse->mBones[i]->mOffsetMatrix);
+				info.offsetTransform = AssimpMat4ToGLMMat4(meshToUse->mBones[i]->mOffsetMatrix);
 				r2::sarr::Push(*model.boneInfo, info);
 
 				r2::shashmap::Set(*model.boneMapping, boneName, boneIndex);
@@ -525,7 +525,7 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<u32>::MemorySize(hashCapacity));
 
-			model->model.globalInverseTransform = r2::math::Inverse( AssimpMat4ToTransform(scene->mRootNode->mTransformation) );//glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
+			model->model.globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
 			//Process the Nodes
 			u32 numVertices = 0;
@@ -573,7 +573,7 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(mNumMeshes));
 
-			model->globalInverseTransform = r2::math::Inverse(AssimpMat4ToTransform(scene->mRootNode->mTransformation)); //glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
+			model->globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
 			ProcessNode(*model, scene->mRootNode, scene, &startOfArrayPtr);
 		}
