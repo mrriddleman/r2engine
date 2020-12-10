@@ -10,7 +10,7 @@
 
 #include "r2/Render/Model/Mesh.h"
 #include "r2/Render/Model/Material.h"
-#include "glm/gtc/quaternion.hpp"
+#include "r2/Core/Math/Transform.h"
 
 #define MAKE_MODEL(arena, numMeshes) r2::draw::MakeModel(arena, numMeshes, __FILE__, __LINE__, "")
 #define FREE_MODEL(arena, modelPtr) r2::draw::FreeModel(arena, modelPtr, __FILE__, __LINE__, "")
@@ -27,22 +27,26 @@ namespace r2::draw
 
 	struct BoneInfo
 	{
-		glm::mat4 offsetTransform = glm::mat4(1.0f);
+        r2::math::Transform offsetTransform;
+		//glm::mat4 offsetTransform = glm::mat4(1.0f);
 		//glm::mat4 finalTransform = glm::mat4(1.0f);
 	};
 
 
 
-    struct Skeleton;
+
     struct Skeleton
     {
-        std::string boneName;
-        u64 hashName;
-		glm::mat4 transform = glm::mat4(1.0f);
-        Skeleton* parent = nullptr;
-		r2::SArray<Skeleton>* children = nullptr;
+        r2::SArray<u64>* mJointNames = nullptr;
+        r2::SArray<s32>* mParents = nullptr;
+        r2::SArray<r2::math::Transform>* mLocalTransforms = nullptr; //local joints of the rest pose (not bind pose)
+        r2::SArray<s32>* mRealParentBones = nullptr; //for debug
 
-        static u64 MemorySizeNoData(u64 numChildren, u64 alignment, u32 headerSize, u32 boundsChecking);
+#ifdef R2_DEBUG
+        std::vector<std::string> mDebugBoneNames;
+#endif // R2_DEBUG
+
+        static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
     };
 
 	struct Model
@@ -50,7 +54,7 @@ namespace r2::draw
 		u64 hash = 0;
         r2::SArray<MaterialHandle>* optrMaterialHandles = nullptr;
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
-		glm::mat4 globalInverseTransform = glm::mat4(1.0f);
+        r2::math::Transform globalInverseTransform;
 
 		static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment);
 		static u64 ModelMemorySize(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
@@ -74,6 +78,7 @@ namespace r2::draw
         //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
         static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
 		//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
+        static u64 MemorySizeNoData(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
 	struct DebugBone

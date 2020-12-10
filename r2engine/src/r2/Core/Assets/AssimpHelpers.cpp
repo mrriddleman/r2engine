@@ -26,3 +26,8 @@ glm::quat AssimpQuatToGLMQuat(const aiQuaternion& quat)
 {
 	return glm::quat(quat.w, quat.x, quat.y, quat.z);
 }
+
+r2::math::Transform AssimpMat4ToTransform(const aiMatrix4x4& mat)
+{
+	return r2::math::ToTransform(AssimpMat4ToGLMMat4(mat));
+}

@@ -23,6 +23,7 @@ includeDirs["imgui"] = "r2engine/vendor/imgui"
 includeDirs["catch2"] = "r2engine/vendor/Catch2"
 includeDirs["sha256"] = "r2engine/vendor/sha256"
 includeDirs["stb"] = "r2engine/vendor/stb"
+includeDirs["cgltf"] = "r2engine/vendor/cgltf"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -36,6 +37,7 @@ project "r2engine"
 	cppdialect "C++17"
 	exceptionhandling "Off"
 	disablewarnings {"26812"}
+    linkoptions { "-IGNORE:4006" }
 
 	local output_dir_root	= "bin/" .. outputdir .. "/%{prj.name}"
 	local obj_dir_root = "bin_int/" .. outputdir .. "/%{prj.name}"
@@ -53,7 +55,9 @@ project "r2engine"
 		"%{prj.name}/vendor/sha256/*.h",
 		"%{prj.name}/vendor/sha256/*.cpp",
 		"%{prj.name}/vendor/stb/*.h",
-		"%{prj.name}/vendor/stb/*.cpp"
+		"%{prj.name}/vendor/stb/*.cpp",
+		"%{prj.name}/vendor/cgltf/*.h",
+		"%{prj.name}/vendor/cgltf/*.cpp"
 	}
 
 	includedirs
@@ -66,7 +70,8 @@ project "r2engine"
 		"%{includeDirs.imgui}",
 		"%{includeDirs.catch2}",
 		"%{includeDirs.sha256}",
-		"%{includeDirs.stb}"
+		"%{includeDirs.stb}",
+		"%{includeDirs.cgltf}"
 	}
 
 	links
@@ -230,6 +235,9 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 
 	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
+		flags {"NoPCH"}
+
+	filter "files:r2engine/vendor/cgltf/cgltf.cpp or files:r2engine/vendor/cgltf/cgltf_write.cpp"
 		flags {"NoPCH"}
 
 

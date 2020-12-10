@@ -428,14 +428,14 @@ public:
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)modelFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.fbx", modelFilePath);
 
         r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/Ellen.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.fbx", modelFilePath);
 
         r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
@@ -561,10 +561,10 @@ public:
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
-        auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer.fbx", r2::asset::ASSIMP_MODEL));
+        auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.fbx", r2::asset::ASSIMP_MODEL));
         mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
 
-        auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Ellen.fbx", r2::asset::ASSIMP_MODEL));
+        auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.fbx", r2::asset::ASSIMP_MODEL));
         mEllenModel = r2::draw::modlsys::GetAnimModel(mModelSystem, ellenHandle);
 
         mSelectedAnimModel = mSkeletonModel;
@@ -876,14 +876,14 @@ public:
       //  printf("MicroBat END\n");
    //     printf("time for microbat: %f\n", nextTime - curTime);
       //  curTime = nextTime;
-        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), *mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x );
+        r2::draw::PlayAnimationForAnimModel(time, *mSkeletonModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3), * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 1).x);
 		//nextTime = CENG.GetTicks();
      //   printf("Skeleton END\n");
 	//	printf("time for skeleton: %f\n", nextTime - curTime);
 		//curTime = nextTime;
         
         
-        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6), * mAnimationCache, *mBoneTransforms, *mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x );
+        r2::draw::PlayAnimationForAnimModel(time, *mEllenModel, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6), * mAnimationCache, * mBoneTransforms, * mDebugBones, r2::sarr::At(*mBoneTransformOffsets, 2).x);
 		//nextTime = CENG.GetTicks();
      //   printf("Ellen END\n");
 		//printf("time for ellen: %f\n", CENG.GetTicks() - time);

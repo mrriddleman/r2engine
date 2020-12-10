@@ -25,7 +25,7 @@ namespace
 			for (u32 j = 0; j < anim->mNumChannels; ++j)
 			{
 				aiNodeAnim* animChannel = anim->mChannels[j];
-				bytes += r2::draw::AnimationChannel::MemorySizeNoData(animChannel->mNumPositionKeys, animChannel->mNumScalingKeys, animChannel->mNumRotationKeys, alignment, header, boundsChecking);
+				bytes += r2::draw::AnimationChannel::MemorySizeNoData(animChannel->mNumPositionKeys, animChannel->mNumScalingKeys, animChannel->mNumRotationKeys, anim->mDuration, alignment, header, boundsChecking);
 			}
 		}
 
@@ -44,13 +44,10 @@ namespace
 			animation->ticksPerSeconds = anim->mTicksPerSecond;
 			animation->hashName = STRING_ID(anim->mName.C_Str());
 
-
-		//	printf("Channel name: %s\n", anim->mName.C_Str());
-
 			if (anim->mNumChannels > 0)
 			{
-				animation->channels = EMPLACE_SARRAY(*dataPtr, r2::draw::AnimationChannel, anim->mNumChannels);
-				*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::AnimationChannel>::MemorySize(anim->mNumChannels));
+				animation->channels = MAKE_SHASHMAP_IN_PLACE(r2::draw::AnimationChannel, *dataPtr, anim->mNumChannels * r2::SHashMap<r2::draw::AnimationChannel>::LoadFactorMultiplier());
+				*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SHashMap<r2::draw::AnimationChannel>::MemorySize(anim->mNumChannels * r2::SHashMap<r2::draw::AnimationChannel>::LoadFactorMultiplier()));
 			}
 
 			for (u32 j = 0; j < anim->mNumChannels; ++j)
@@ -60,14 +57,22 @@ namespace
 				r2::draw::AnimationChannel* channelToUse = &channel;
 				std::string channelName = std::string(animChannel->mNodeName.data);
 
-		//		printf("channel name: %s\n", channelName.c_str());
+				printf("channel name: %s\n", channelName.c_str());
 				
 				channel.hashName = STRING_ID(channelName.c_str());
 		
 				if (animChannel->mNumPositionKeys > 0 )
 				{
 					channelToUse->positionKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::VectorKey, animChannel->mNumPositionKeys);
+					
 					*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(animChannel->mNumPositionKeys));
+				
+					//u64 samples = (u32)anim->mDuration * r2::draw::chnl::NUM_SAMPLES;
+					//channelToUse->positionKeyFrameSamples = EMPLACE_SARRAY(*dataPtr, s32, samples);
+
+					//*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<s32>::MemorySize(samples));
+
+				
 				}
 
 				for (u32 pKey = 0; pKey < animChannel->mNumPositionKeys; ++pKey)
@@ -79,6 +84,11 @@ namespace
 				{
 					channelToUse->scaleKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::VectorKey, animChannel->mNumScalingKeys );
 					*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(animChannel->mNumScalingKeys ));
+				
+					//u64 samples = (u32)anim->mDuration * r2::draw::chnl::NUM_SAMPLES;
+					//channelToUse->scaleKeyFrameSamples = EMPLACE_SARRAY(*dataPtr, s32, samples);
+
+					//*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<s32>::MemorySize(samples));
 				}
 
 
@@ -92,6 +102,12 @@ namespace
 				{
 					channelToUse->rotationKeys = EMPLACE_SARRAY(*dataPtr, r2::draw::RotationKey, animChannel->mNumRotationKeys);
 					*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(animChannel->mNumRotationKeys));
+				
+					//u64 samples = (u32)anim->mDuration * r2::draw::chnl::NUM_SAMPLES;
+					//channelToUse->rotationkeyFrameSamples = EMPLACE_SARRAY(*dataPtr, s32, samples);
+
+					//*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<s32>::MemorySize(samples));
+				
 				}
 
 				for (u32 rKey = 0; rKey < animChannel->mNumRotationKeys; ++rKey)
@@ -102,7 +118,8 @@ namespace
 
 				if (channelToUse == &channel)
 				{
-					r2::sarr::Push(*animation->channels, channel);
+				//	r2::draw::chnl::UpdateFrameIndexSamples(channel);
+					r2::shashmap::Set(*animation->channels, channel.hashName, channel);
 				}
 				
 			}
@@ -132,8 +149,13 @@ namespace r2::asset
 	{
 		Assimp::Importer import;
 
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_READ_ANIMATIONS, true);
+
 		//import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
-		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, 0);
+		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, 
+			aiProcess_ImproveCacheLocality |
+			aiProcess_FindDegenerates);
 
 		if (!scene || !scene->mRootNode)
 		{
@@ -158,8 +180,12 @@ namespace r2::asset
 		Assimp::Importer import;
 		
 		//import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_READ_ANIMATIONS, true);
 
-		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, 0);
+		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, 
+			aiProcess_ImproveCacheLocality |
+			aiProcess_FindDegenerates  );
 
 		if (!scene || !scene->mRootNode)
 		{

@@ -6,19 +6,26 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Utils/Hash.h"
 #include <assimp/Importer.hpp>
-#include <assimp/scene.h>
+
 #include <assimp/postprocess.h>
 #include "r2/Core/Assets/AssimpHelpers.h"
 #include "glm/gtx/string_cast.hpp"
 
+
 namespace
 {
+
+	std::unordered_map<std::string, b32> mBoneNecessityMap;
+	std::vector<r2::asset::AssimpAssetLoader::Joint> mJoints;
+	std::unordered_map<std::string, r2::asset::AssimpAssetLoader::Bone> mBoneMap;
+
+
 	u64 GetTotalMeshBytes(aiNode* node, const aiScene* scene, u64& numMeshes, u64& numBones, u64& numVertices, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		u64 bytes = 0;
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{
-			bytes += r2::draw::Skeleton::MemorySizeNoData(node->mNumChildren, alignment, header, boundsChecking);
+			//bytes += r2::draw::Skeleton::MemorySizeNoData(node->mNumChildren, alignment, header, boundsChecking);
 			bytes += GetTotalMeshBytes(node->mChildren[i], scene, numMeshes, numBones, numVertices, alignment, header, boundsChecking);
 		}
 
@@ -49,28 +56,50 @@ namespace
 		return bytes;
 	}
 
-
-
-
 	void ProcessMesh(r2::draw::Model& model, aiMesh* mesh, const aiNode* node, const aiScene* scene, void** dataPtr)
 	{
-		//r2::draw::Mesh nextMesh;
-
 
 		r2::draw::Mesh* nextMeshPtr = new (*dataPtr) r2::draw::Mesh();
 
 		*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, sizeof(r2::draw::Mesh));
 
-	//	printf("Mesh: %s\n", mesh->mName.C_Str());
-		
-		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
-		const aiNode* nextNode = node->mParent;
 
-		while (nextNode)
+		//@NOTE: I think this is still wrong - we're not weighting the mesh vertices based on the bone influences (if that matters)
+
+		//@NOTE: What this is doing, for the mesh we're looking at we take the local transform up to the first bone we find, then we multiply that transforms by the bind pose of the bone
+		//		 Not sure. I think the mTransformation matrices for the meshes remain the same (as the bind pose) up until they encounter the bone which is why this works
+		glm::mat4 localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
 		{
-			localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
-			nextNode = nextNode->mParent;
+			const aiNode* nextNode = node->mParent;
+
+			glm::mat4 bindMat = glm::mat4(1.0f);
+
+			aiNode* foundNode = nullptr;
+			while (nextNode)
+			{
+				auto iter = mBoneMap.find(nextNode->mName.C_Str());
+
+				glm::mat4 temp;
+
+				if (iter != mBoneMap.end())
+				{
+					glm::mat4 temp = iter->second.invBindPoseMat;
+
+					bindMat = glm::inverse(temp);
+
+					break;
+				}
+				else
+				{
+					localTransform = AssimpMat4ToGLMMat4(nextNode->mTransformation) * localTransform;
+				}
+
+				nextNode = nextNode->mParent;
+			}
+
+			localTransform =  bindMat * localTransform * AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
 		}
+		
 
 		nextMeshPtr->optrVertices = EMPLACE_SARRAY(*dataPtr, r2::draw::Vertex, mesh->mNumVertices);
 
@@ -86,12 +115,6 @@ namespace
 		s32 textureIndex = 0;
 		if (mesh->mMaterialIndex >= 0)
 		{
-			//nextMeshPtr->optrMaterials = EMPLACE_SARRAY(*dataPtr, r2::draw::MaterialHandle, 1);
-			//*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::MaterialHandle>::MemorySize(1));
-		
-			//@TODO(Serge): hmm we somehow need to map the assimp textures to our own material handle
-			//we'd have to find the texture in the material system and return the handle from that...
-
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 			R2_CHECK(material != nullptr, "Material is null!");
 			if (material)
@@ -152,7 +175,7 @@ namespace
 
 			if (mesh->mNormals)
 			{
-				nextVertex.normal = glm::mat3(glm::inverse(glm::transpose(localTransform))) * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+				nextVertex.normal = glm::mat3(glm::transpose(glm::inverse(localTransform))) * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 			}
 
 			if (mesh->mTextureCoords)
@@ -189,13 +212,13 @@ namespace
 	void ProcessBones(r2::draw::AnimModel& model, u32 baseVertex, const aiMesh* mesh, const aiNode* node, const aiScene* scene)
 	{
 		const aiMesh* meshToUse = mesh;
-		//printf("Num bones: %zu\n", meshToUse->mNumBones);
+		printf("Num bones: %zu\n", meshToUse->mNumBones);
 
 		for (u32 i = 0; i < meshToUse->mNumBones; ++i)
 		{
 			s32 boneIndex = -1;
 			std::string boneNameStr = std::string(meshToUse->mBones[i]->mName.data);
-			//printf("boneNameStr name: %s\n", boneNameStr.c_str());
+			printf("boneNameStr name: %s\n", boneNameStr.c_str());
 
 			u64 boneName = STRING_ID(meshToUse->mBones[i]->mName.C_Str());
 
@@ -206,7 +229,7 @@ namespace
 			{
 				boneIndex = (u32)r2::sarr::Size(*model.boneInfo);
 				r2::draw::BoneInfo info;
-				info.offsetTransform = AssimpMat4ToGLMMat4(meshToUse->mBones[i]->mOffsetMatrix);
+				info.offsetTransform = AssimpMat4ToTransform(meshToUse->mBones[i]->mOffsetMatrix);
 				r2::sarr::Push(*model.boneInfo, info);
 
 				r2::shashmap::Set(*model.boneMapping, boneName, boneIndex);
@@ -296,8 +319,11 @@ namespace
 		}
 	}
 
-	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, r2::draw::Skeleton& skeleton, void** dataPtr, u32& numVertices)
+	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, r2::draw::Skeleton& skeleton, s32 parentDebugBone, void** dataPtr, u32& numVertices)
 	{
+
+
+
 		//if (node->mMetaData)
 		//{
 		//	printf("Node: %s's metadata\n", node->mName.C_Str());
@@ -308,7 +334,7 @@ namespace
 
 		//}
 
-		//printf("node: %s, transform: %s\n", node->mName.C_Str(), glm::to_string(AssimpMat4ToGLMMat4(node->mTransformation)).c_str());
+	//	printf("node: %s\n", node->mName.C_Str());
 
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
@@ -321,30 +347,37 @@ namespace
 			numVertices += mesh->mNumVertices;
 		}
 
-		if (node->mNumChildren > 0)
+
+		auto iter = mBoneNecessityMap.find(node->mName.C_Str());
+		if (iter != mBoneNecessityMap.end())
 		{
-			skeleton.children = EMPLACE_SARRAY(*dataPtr, r2::draw::Skeleton, node->mNumChildren);
-			*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<r2::draw::Skeleton>::MemorySize(node->mNumChildren));
+			r2::sarr::Push(*skeleton.mJointNames, STRING_ID(node->mName.C_Str()));
+			r2::sarr::Push(*skeleton.mLocalTransforms, AssimpMat4ToTransform(node->mTransformation));//AssimpMat4ToGLMMat4(node->mTransformation));
+
+			s32 jointIndex = (s32)r2::sarr::Size(*skeleton.mJointNames) - 1;
+
+			const r2::asset::AssimpAssetLoader::Joint& joint = mJoints[jointIndex];
+
+			r2::sarr::Push(*skeleton.mParents, joint.parentIndex);
+
+#ifdef R2_DEBUG
+			skeleton.mDebugBoneNames.push_back(node->mName.C_Str());
+#endif // R2_DEBUG
+
+			auto realBoneIter = mBoneMap.find(node->mName.C_Str());
+			if (realBoneIter != mBoneMap.end())
+			{
+				r2::sarr::At(*skeleton.mRealParentBones, jointIndex) = parentDebugBone;
+
+				parentDebugBone = jointIndex;
+			}
 		}
 
 		for (u32 i = 0; i < node->mNumChildren; ++i)
-		{
-			r2::draw::Skeleton child;
-
-			child.boneName = node->mChildren[i]->mName.C_Str();
-
-		//	printf("skeleton part name: %s\n", child.boneName.c_str());
-			child.hashName = STRING_ID(child.boneName.c_str());
-			child.transform = AssimpMat4ToGLMMat4(node->mChildren[i]->mTransformation) ;
-
-			child.parent = &skeleton;
-			r2::sarr::Push(*skeleton.children, child);
-
-			ProcessAnimNode(model, node->mChildren[i], scene, r2::sarr::Last(*skeleton.children), dataPtr, numVertices);
+		{	
+			ProcessAnimNode(model, node->mChildren[i], scene, model.skeleton, parentDebugBone, dataPtr, numVertices);
 		}
 	}
-
-	
 }
 
 namespace r2::asset
@@ -361,13 +394,17 @@ namespace r2::asset
 
 	bool AssimpAssetLoader::ShouldProcess()
 	{
+		mJoints.clear();
+		mBoneNecessityMap.clear();
 		return true;
 	}
 
 	u64 AssimpAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		Assimp::Importer import;
-	//	import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
+	//	import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+		
+
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -388,18 +425,39 @@ namespace r2::asset
 			return 0;
 		}
 
+		MarkBones(scene->mRootNode, scene);
+
+
+		for (auto iter = mBoneNecessityMap.begin(); iter != mBoneNecessityMap.end(); iter++)
+		{
+			printf("Bone: %s\n", iter->first.c_str());
+		}
+
+		CreateBonesVector(scene, scene->mRootNode, -1);
+
+
+		for (size_t i = 0; i < mJoints.size(); ++i)
+		{
+			printf("Bone: %s, jointIndex: %d parent: %d\n", mJoints[i].name.c_str(), mJoints[i].jointIndex, mJoints[i].parentIndex);
+		}
+
+
+
+
 		aiNode* node = scene->mRootNode;
 		mNumMeshes = 0;
 		mNumBones = 0;
 		mNumVertices = 0;
 
 		u64 totalSizeInBytes = GetTotalMeshBytes(scene->mRootNode, scene, mNumMeshes, mNumBones, mNumVertices, alignment, header, boundsChecking);
-
+	
 
 		import.FreeScene();
 
 		if (mNumBones > 0)
 		{
+			totalSizeInBytes += r2::draw::Skeleton::MemorySizeNoData(mJoints.size(), alignment, header, boundsChecking);
+
 			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, alignment, header, boundsChecking);
 		}
 
@@ -409,7 +467,8 @@ namespace r2::asset
 	bool AssimpAssetLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		Assimp::Importer import;
-		//import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, true);
+
+
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
@@ -448,7 +507,7 @@ namespace r2::asset
 
 			model->model.optrMeshes = EMPLACE_SARRAY(startOfArrayPtr,const r2::draw::Mesh*, mNumMeshes);
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(mNumMeshes));
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(mNumMeshes));
 
 			model->boneData = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneData, mNumVertices);
 
@@ -466,17 +525,37 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<u32>::MemorySize(hashCapacity));
 
-			model->model.globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
+			model->model.globalInverseTransform = r2::math::Inverse( AssimpMat4ToTransform(scene->mRootNode->mTransformation) );//glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
 			//Process the Nodes
 			u32 numVertices = 0;
-			model->skeleton.hashName = STRING_ID(scene->mRootNode->mName.C_Str());
-			model->skeleton.boneName = scene->mRootNode->mName.C_Str();
-			model->skeleton.transform = AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
-			model->skeleton.parent = nullptr;
-			
-			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, &startOfArrayPtr, numVertices);
 
+			const u64 numJoints = mJoints.size();
+			model->skeleton.mJointNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numJoints);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numJoints));
+
+			model->skeleton.mParents = EMPLACE_SARRAY(startOfArrayPtr, s32, numJoints);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numJoints));
+
+			model->skeleton.mLocalTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numJoints);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::math::Transform>::MemorySize(numJoints));
+			
+			model->skeleton.mRealParentBones = EMPLACE_SARRAY(startOfArrayPtr, s32, numJoints);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numJoints));
+
+			model->skeleton.mRealParentBones->mSize = numJoints;
+			memset(model->skeleton.mRealParentBones->mData, 0, sizeof(s32) * numJoints);
+
+		//	r2::sarr::Push(*model->skeleton.mJointNames, STRING_ID(scene->mRootNode->mName.C_Str()));
+		//	r2::sarr::Push(*model->skeleton.mParents, -1);
+		//	r2::sarr::Push(*model->skeleton.mLocalTransforms, AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
+			
+
+#ifdef R2_DEBUG
+			//model->skeleton.mDebugBoneNames.push_back(scene->mRootNode->mName.C_Str());
+#endif
+
+			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, 0, &startOfArrayPtr, numVertices);
 		}
 		else
 		{
@@ -494,7 +573,7 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(mNumMeshes));
 
-			model->globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
+			model->globalInverseTransform = r2::math::Inverse(AssimpMat4ToTransform(scene->mRootNode->mTransformation)); //glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
 			ProcessNode(*model, scene->mRootNode, scene, &startOfArrayPtr);
 		}
@@ -502,6 +581,95 @@ namespace r2::asset
 		import.FreeScene();
 
 		return true;
+	}
+
+	aiNode* AssimpAssetLoader::FindNodeInHeirarchy(const aiScene* scene, aiNode* node, const std::string& strName)
+	{
+		if (strName == std::string(node->mName.data))
+		{
+			return node;
+		}
+
+		auto numChildren = node->mNumChildren;
+
+		for (u64 i = 0; i < numChildren; ++i)
+		{
+			aiNode* child = node->mChildren[i];
+			aiNode* result = FindNodeInHeirarchy(scene, child, strName);
+
+			if (result != nullptr)
+			{
+				return result;
+			}
+		}
+
+		return nullptr;
+	}
+
+	void AssimpAssetLoader::MarkBonesInMesh(aiNode* node, const aiScene* scene, aiMesh* mesh)
+	{
+		for (u32 i = 0; i < mesh->mNumBones; ++i)
+		{
+			std::string boneNameStr = std::string(mesh->mBones[i]->mName.data);
+
+			mBoneMap[boneNameStr] = Bone();
+			mBoneMap[boneNameStr].invBindPoseMat = AssimpMat4ToGLMMat4(mesh->mBones[i]->mOffsetMatrix);
+			mBoneMap[boneNameStr].name = boneNameStr;
+
+
+			aiNode* boneNode = FindNodeInHeirarchy(scene, scene->mRootNode, boneNameStr);
+
+			R2_CHECK(boneNode != nullptr, "HMMM");
+
+			mBoneNecessityMap[boneNameStr] = true;
+
+			aiNode* nextNode = boneNode->mParent;
+			while (nextNode != nullptr && nextNode != node && nextNode != node->mParent)
+			{
+				std::string nextNodeName = std::string(nextNode->mName.data);
+
+				mBoneNecessityMap[nextNodeName] = true;
+
+				nextNode = nextNode->mParent;
+			}
+		}
+	}
+
+	void AssimpAssetLoader::MarkBones(aiNode* node, const aiScene* scene)
+	{
+		for (u32 i = 0; i < node->mNumMeshes; ++i)
+		{
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			MarkBonesInMesh(node, scene, mesh);
+		}
+
+		for (u32 i = 0; i < node->mNumChildren; ++i)
+		{
+			MarkBones(node->mChildren[i], scene);
+		}
+	}
+
+	void AssimpAssetLoader::CreateBonesVector(const aiScene* scene, aiNode* node, s32 parentIndex)
+	{
+		std::string nodeName = std::string(node->mName.data);
+
+		auto iter = mBoneNecessityMap.find(nodeName);
+		if (iter != mBoneNecessityMap.end() && iter->second == true)
+		{
+			mJoints.push_back(Joint());
+
+			mJoints.back().parentIndex = parentIndex;
+			mJoints.back().jointIndex = mJoints.size() - 1;
+			mJoints.back().localTransform = AssimpMat4ToGLMMat4(node->mTransformation);
+			mJoints.back().name = nodeName;
+
+			parentIndex = mJoints.size() - 1;
+		}
+
+		for (u64 i = 0; i < node->mNumChildren; ++i)
+		{
+			CreateBonesVector(scene, node->mChildren[i], parentIndex);
+		}
 	}
 }
 

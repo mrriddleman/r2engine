@@ -7,6 +7,7 @@
 #include "r2/Core/Assets/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssimpAssetLoader.h"
 
+
 namespace r2::draw::modlsys
 {
 	const u64 ALIGNMENT = 64;
@@ -67,6 +68,10 @@ namespace r2::draw::modlsys
 
 		r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(assimpModelLoader);
+
+
+	//	r2::asset::GLTFAssetLoader* gltfModelLoader = (r2::asset::GLTFAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader< r2::asset::GLTFAssetLoader > ();
+	//	newModelSystem->mModelCache->RegisterAssetLoader(gltfModelLoader);
 
 		return newModelSystem;
 	}

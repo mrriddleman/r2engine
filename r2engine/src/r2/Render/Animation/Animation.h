@@ -2,7 +2,7 @@
 #define __ANIMATION_H__
 
 #include "r2/Core/Containers/SArray.h"
-
+#include "r2/Core/Containers/SHashMap.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 
@@ -34,15 +34,26 @@ namespace r2::draw
 
 	struct AnimationChannel
 	{
-		u64 hashName;
+		u64 hashName = 0;
 		ChannelState state;
 
 		r2::SArray<VectorKey>* positionKeys = nullptr;
 		r2::SArray<VectorKey>* scaleKeys = nullptr;
 		r2::SArray<RotationKey>* rotationKeys = nullptr;
 
-		static u64 MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, u64 alignment, u32 headerSize, u32 boundsChecking);
+		
+
+		static u64 MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, float duration, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
+
+	namespace chnl
+	{
+		//const u32 NUM_SAMPLES = 10;
+		//void UpdateFrameIndexSamples(AnimationChannel& channel);
+		//s32  FindPositionFrameIndex(const AnimationChannel& channel, float time, bool loop);
+		//s32  FindScaleFrameIndex(const AnimationChannel& channel, float time, bool loop);
+		//s32  FindRotationFrameIndex(const AnimationChannel& channel, float time, bool loop);
+	}
 
 	struct Animation
 	{
@@ -51,7 +62,7 @@ namespace r2::draw
 		
 		double duration = 0; //in ticks
 		double ticksPerSeconds = 0;
-		r2::SArray<AnimationChannel>* channels;
+		r2::SHashMap<AnimationChannel>* channels;
 
 		static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};

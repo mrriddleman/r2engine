@@ -49,7 +49,7 @@ namespace r2::draw::rendererimpl
 			if (BufferRangeOverlaps(nextLock.range, testRange))
 			{
 				Wait(&nextLock.syncObject);
-				GLCall(glDeleteSync(nextLock.syncObject));
+				glDeleteSync(nextLock.syncObject);
 			}
 			else 
 			{
@@ -123,7 +123,7 @@ namespace r2::draw::rendererimpl
 
 		void BindBufferRange(const RingBuffer& ringBuffer, u32 handle, GLsizeiptr count)
 		{
-			GLCall(glBindBufferRange(ringBuffer.bufferType, ringBuffer.index, handle, ringBuffer.head * ringBuffer.typeSize, count * ringBuffer.typeSize));
+			glBindBufferRange(ringBuffer.bufferType, ringBuffer.index, handle, ringBuffer.head * ringBuffer.typeSize, count * ringBuffer.typeSize);
 		}
 
 		u64 MemorySize(u64 headerSize, u64 boundsChecking, u64 alignment, u64 capacity)

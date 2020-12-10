@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-12-14.
 //
 #include "r2pch.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "AnimationPlayer.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
@@ -19,17 +20,17 @@ namespace
 {
     std::vector<f64> s_CalcBoneRuns;
 
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastParentBoneTransform, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
 
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastBoneParentTransform, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
     
     r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
-    glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel);
+    glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::vec3& refScale);
     
-    glm::quat CalculateRotation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel);
+    glm::quat CalculateRotation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::quat& refRotation);
     
-    glm::vec3 CalculateTranslation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel);
+    glm::vec3 CalculateTranslation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::vec3& refPosition);
     
     u32 FindPositionIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel, u32 startingIndex);
     u32 FindScalingIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel, u32 startingIndex);
@@ -65,7 +66,7 @@ namespace r2::draw
 			}
 
             outDebugBones.mSize = model.boneData->mSize;
-            CalculateStaticDebugBones(model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outDebugBones, 0);
+            CalculateStaticDebugBones(model, outDebugBones, 0);
 
 			return;
 		}
@@ -82,8 +83,8 @@ namespace r2::draw
 		{
 			r2::sarr::At(outBoneTransforms, i) = glm::mat4(1.0f);
 		}
-       // PROFILE_SCOPE("CalculateBoneTransforms")
-        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outBoneTransforms, outDebugBones, 0);
+
+        CalculateBoneTransforms(animationTime, *anim, model, outBoneTransforms, outDebugBones, 0);
     }
 
 	u32 PlayAnimationForAnimModel(
@@ -122,7 +123,7 @@ namespace r2::draw
             outDebugBones.mSize += model.boneInfo->mSize;
 
         //    PROFILE_SCOPE("CalculateStaticDebugBones")
-            CalculateStaticDebugBones(model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outDebugBones, offset);
+            CalculateStaticDebugBones(model, outDebugBones, offset);
 
             return outBoneTransforms.mSize;
         }
@@ -145,7 +146,7 @@ namespace r2::draw
 
       //  PROFILE_SCOPE("CalculateBoneTransforms")
         s_CalcBoneRuns.clear();
-        CalculateBoneTransforms(animationTime, *anim, model, model.skeleton, glm::mat4(1.0f), glm::mat4(1.0f), outBoneTransforms, outDebugBones, offset);
+        CalculateBoneTransforms(animationTime, *anim, model, outBoneTransforms, outDebugBones, offset);
 
 		return outBoneTransforms.mSize;
     }
@@ -153,149 +154,147 @@ namespace r2::draw
 
 namespace
 {
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastParentBoneTransform, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
     {
-        
-        glm::mat4 transform = skeletonPart.transform;
+		const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
+		r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
+		tempGlobalTransforms->mSize = numJoints;
+        r2::sarr::At(*tempGlobalTransforms, 0) = r2::math::Transform{};
 
-		glm::mat4 globalTransform = parentTransform * transform;
-
-		s32 theDefault = -1;
-		s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, skeletonPart.hashName, theDefault);
-
-        if (boneMapResult != theDefault)
+        for (u64 j = 0; j < numJoints; ++j)
         {
-            u32 boneIndex = boneMapResult;
+            u64 hashName = r2::sarr::At(*model.skeleton.mJointNames, j);
+            r2::math::Transform transform = r2::sarr::At(*model.skeleton.mLocalTransforms, j);
 
-			if (skeletonPart.parent)
+			s32 parent = r2::sarr::At(*model.skeleton.mParents, j);
+
+			r2::sarr::At(*tempGlobalTransforms, j) = transform;
+			if (parent >= 0)
 			{
-				r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
-				debugBone.p0 = lastParentBoneTransform[3];
-				debugBone.p1 = globalTransform[3];
-
-                lastParentBoneTransform = globalTransform;
+                r2::sarr::At(*tempGlobalTransforms, j) = r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform);
 			}
-        }
 
-		u32 numChildren = 0;
-		if (skeletonPart.children != nullptr)
-		{
-			numChildren = r2::sarr::Size(*skeletonPart.children);
-		}
+			s32 theDefault = -1;
+			s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, hashName, theDefault);
 
-        for (u32 i = 0; i < numChildren; ++i)
-        {
-            CalculateStaticDebugBones(model, r2::sarr::At(*skeletonPart.children, i), globalTransform, lastParentBoneTransform, outDebugBones, offset);
+            if (boneMapResult != theDefault)
+            {
+                u32 boneIndex = boneMapResult;
+                s32 realBoneParentIndex = r2::sarr::At(*model.skeleton.mRealParentBones, j);
+
+                if (realBoneParentIndex >= 0)
+                {
+                    const r2::math::Transform& globalTransform = r2::sarr::At(*tempGlobalTransforms, j);
+                    const r2::math::Transform& parentTransform = r2::sarr::At(*tempGlobalTransforms, realBoneParentIndex);
+
+					r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+					debugBone.p0 = parentTransform.position;
+					debugBone.p1 = globalTransform.position;
+                }
+            }
         }
+        
+        FREE(tempGlobalTransforms, *MEM_ENG_SCRATCH_PTR);
     }
 
-	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, const r2::draw::Skeleton& skeletonPart, const glm::mat4& parentTransform, glm::mat4 lastBoneParentTransform, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<glm::mat4>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
 	{
-     //   r2::util::Timer calcBonesTimer("CalculateBoneTransforms", false);
-        //PROFILE_SCOPE_FN   
-        glm::mat4 transform = skeletonPart.transform;
+        const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
+        r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
+        tempGlobalTransforms->mSize = numJoints;
+        r2::sarr::At(*tempGlobalTransforms, 0) = r2::math::Transform{};
         
-        r2::draw::AnimationChannel* channel = FindChannel(animation, skeletonPart.hashName);
-        
-
-        if (channel)
+        for (u64 j = 0; j < numJoints; ++j)
         {
+            u64 hashName = r2::sarr::At(*model.skeleton.mJointNames, j);
 
-            //interpolate using the channel
-            glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *channel);
-            glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
- 
-            glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *channel);
+            //@Optimization
+            //@TODO(Serge): We should instead just have the channels follow the bones in order. Then we'll just pass j into the FindChannel call (or do it directly)
+            //              We'll have to set that up in AssimpAnimationAssetLoader.cpp
+            r2::draw::AnimationChannel* channel = FindChannel(animation, hashName);
 
-            glm::vec3 translate = CalculateTranslation(animationTime, animation.duration, *channel);
-            glm::mat4 transMat = glm::translate(glm::mat4(1.0f), translate);
-
-            transform = transMat * glm::mat4_cast(rotQ) * scaleMat;
-        }
-        else
-        {
-            //For FBX animations, there might be some messed up pivot point nonsense to take care of
-            //we probably want to attempt to find the <boneName>_$AssimpFbx$_Rotation and <boneName>_$AssimpFbx$_Scaling
-            //animation channels
-    //        printf("skeletonPart.boneName: %s\n", skeletonPart.boneName.c_str());
-
-			u64 rotationChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Rotation").c_str());
-			u64 scalingChannelName = STRING_ID(std::string(skeletonPart.boneName + "_$AssimpFbx$_Scaling").c_str());
-
-			r2::draw::AnimationChannel* rotationChannel = FindChannel(animation, rotationChannelName);
-			r2::draw::AnimationChannel* scalingChannel = FindChannel(animation, scalingChannelName);
-
-			if (rotationChannel && scalingChannel)
-			{
-				glm::vec3 scale = CalculateScaling(animationTime, animation.duration, *scalingChannel);
-				glm::mat4 scaleMat = glm::scale(glm::mat4(1.0f), scale);
-
-				glm::quat rotQ = CalculateRotation(animationTime, animation.duration, *rotationChannel);
-				transform = glm::mat4_cast(rotQ) * scaleMat;
-			}
-
-        }
-        
-        glm::mat4 globalTransform = parentTransform * transform;
-      
-        s32 theDefault = -1;
-       // auto time = CENG.GetTicks();
-        s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, skeletonPart.hashName, theDefault);
-      //  printf("Calc time: %f\n", CENG.GetTicks() - time);
-
-        if (boneMapResult != theDefault)
-        {
-            u32 boneIndex = boneMapResult;
-            r2::sarr::At(outTransforms, boneIndex + offset) = model.model.globalInverseTransform * globalTransform * r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
-        
-            if (skeletonPart.parent)
+            r2::math::Transform transform = r2::sarr::At(*model.skeleton.mLocalTransforms, j);
+            if (channel)
             {
-				r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+				//interpolate using the channel
+                //@Optimization
+                //@TODO(Serge): I dunno how to optimize these yet but they could use an additional pass
+                transform.scale = CalculateScaling(animationTime, animation.duration, *channel, transform.scale);
+                transform.rotation = CalculateRotation(animationTime, animation.duration, *channel, transform.rotation);
+                transform.position = CalculateTranslation(animationTime, animation.duration, *channel, transform.position);
+            }
 
-				debugBone.p0 = lastBoneParentTransform[3];
-				debugBone.p1 = globalTransform[3];
+            s32 parent = r2::sarr::At(*model.skeleton.mParents, j);
 
-				lastBoneParentTransform = globalTransform;
+            if (parent > (s32)j)
+            {
+                R2_CHECK(false, "uh oh - our parent index is greater than our index - we rely on the fact that child bone come after parent bones");
+            }
+
+            r2::sarr::At(*tempGlobalTransforms, j) = transform;
+
+            if (parent >= 0)
+            {
+                //get the parent's global transform and combine with yours
+                r2::sarr::At(*tempGlobalTransforms, j) = r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform);
+            }
+
+			s32 theDefault = -1;
+
+			s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, hashName, theDefault);
+
+            if (boneMapResult != theDefault)
+            {
+                u32 boneIndex = boneMapResult;
+
+                const r2::math::Transform& globalTransform = r2::sarr::At(*tempGlobalTransforms, j);
+
+                //We could just punt these to the shader without much hassle
+                //@Optimization
+                //@TODO(Serge): have the offset transform be a glm::mat4, same with the offsetTransform
+                //              Then have 2 different outTransforms - one for the offsetTransform(s) and the other for the globalTransform
+                //              That way we only pay for a ToMatrix here and the glm::mat4 copy to the outOffsetTransforms
+                //              Then we'll have 2 different matrix buffers in the shader and we'll do the multiply there
+                r2::sarr::At(outTransforms, boneIndex + offset) = r2::math::ToMatrix(r2::math::Combine(model.model.globalInverseTransform, r2::math::Combine(globalTransform, r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform)));
+
+                s32 realParentJointIndex = r2::sarr::At(*model.skeleton.mRealParentBones, j);
+
+                if (realParentJointIndex >= 0)
+                {
+                    const r2::math::Transform& parentBoneGlobalTransform = r2::sarr::At(*tempGlobalTransforms, realParentJointIndex);
+
+					r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+
+                    debugBone.p0 = parentBoneGlobalTransform.position;
+                    debugBone.p1 = globalTransform.position;
+                }
             }
         }
 
-        u32 numChildren = 0;
-        if (skeletonPart.children != nullptr)
-        {
-            numChildren = r2::sarr::Size(*skeletonPart.children);
-        }
-        
-     //   
-        for (u32 i = 0; i < numChildren; ++i)
-        {
-            CalculateBoneTransforms(animationTime, animation, model, r2::sarr::At(*skeletonPart.children, i), globalTransform, lastBoneParentTransform, outTransforms, outDebugBones, offset);
-        }
 
-      //  s_CalcBoneRuns.push_back(calcBonesTimer.Stop());
+        FREE(tempGlobalTransforms, *MEM_ENG_SCRATCH_PTR);
     }
     
     r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName)
     {
-     //   PROFILE_SCOPE_FN
-        u32 numChannels = r2::sarr::Size(*animation.channels);
-        for (u32 i = 0; i < numChannels; ++i)
+        r2::draw::AnimationChannel defaultChannel;
+
+        r2::draw::AnimationChannel& result = r2::shashmap::Get(*animation.channels, hashName, defaultChannel);
+
+        if (result.positionKeys != nullptr)
         {
-            if (r2::sarr::At(*animation.channels, i).hashName == hashName)
-            {
-                return &r2::sarr::At(*animation.channels, i);
-            }
+            return &result;
         }
-        
+
         return nullptr;
     }
     
-    glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel)
+    glm::vec3 CalculateScaling(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::vec3& refScale)
     {
-     //   PROFILE_SCOPE_FN
         u64 numScalingKeys = r2::sarr::Size(*channel.scaleKeys);
         if (numScalingKeys == 1)
         {
-            return r2::sarr::At(*channel.scaleKeys, 0).value;
+            return refScale;
         }
         
 		if (channel.state.mCurScaleTime > animationTime)
@@ -315,8 +314,7 @@ namespace
         }
 
         double nextScaleTime = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).time;
-      //  double curScaleTime = r2::sarr::At(*channel.scaleKeys, channel.state.mCurScaleIndex).time;
-        
+
         double dt = fabs(nextScaleTime - channel.state.mCurScaleTime);
         
         if (nextScalingIndex < channel.state.mCurScaleIndex)
@@ -326,19 +324,18 @@ namespace
         
         float factor = (float)glm::clamp((animationTime - channel.state.mCurScaleTime)/ dt, 0.0, 1.0) ;
 
-        glm::vec3 start = r2::sarr::At(*channel.scaleKeys, channel.state.mCurScaleIndex).value;
-        glm::vec3 end = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).value;
+        const glm::vec3& start = r2::sarr::At(*channel.scaleKeys, channel.state.mCurScaleIndex).value;
+        const glm::vec3& end = r2::sarr::At(*channel.scaleKeys, nextScalingIndex).value;
         
-        return r2::math::Lerp(start, end, factor);
+        return r2::math::Interpolate(start, end, factor);
     }
     
-    glm::quat CalculateRotation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel)
+    glm::quat CalculateRotation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::quat& refRotation)
     {
-    //    PROFILE_SCOPE_FN
         u64 numRotationKeys = r2::sarr::Size(*channel.rotationKeys);
         if (numRotationKeys == 1)
         {
-            return r2::sarr::At(*channel.rotationKeys, 0).quat;
+            return refRotation;
         }
 
 		if (channel.state.mCurRotationTime > animationTime)
@@ -358,7 +355,6 @@ namespace
 		}
 
         double nextRotationTime = r2::sarr::At(*channel.rotationKeys, nextRotationIndex).time;
-      //  double curRotationTime = r2::sarr::At(*channel.rotationKeys, channel.state.mCurRotationIndex).time;
 
         double dt = fabs(nextRotationTime - channel.state.mCurRotationTime);
         
@@ -368,20 +364,18 @@ namespace
         }
         
         float factor = (float)glm::clamp((animationTime - channel.state.mCurRotationTime)/ dt, 0.0, 1.0) ;
-    //    printf("Rotation Factor: %f\n", factor);
-		glm::quat start = r2::sarr::At(*channel.rotationKeys, channel.state.mCurRotationIndex).quat;
-		glm::quat end = r2::sarr::At(*channel.rotationKeys, nextRotationIndex).quat;
+		const glm::quat& start = r2::sarr::At(*channel.rotationKeys, channel.state.mCurRotationIndex).quat;
+		const glm::quat& end = r2::sarr::At(*channel.rotationKeys, nextRotationIndex).quat;
 
-        return r2::math::Slerp(start, end, factor);
+        return r2::math::Interpolate(start, end, factor);
     }
     
-    glm::vec3 CalculateTranslation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel)
+    glm::vec3 CalculateTranslation(f64 animationTime, f64 totalTime, r2::draw::AnimationChannel& channel, const glm::vec3& refPosition)
     {
-     //   PROFILE_SCOPE_FN
         u32 numPositionKeys = r2::sarr::Size(*channel.positionKeys);
         if (numPositionKeys == 1)
         {
-            return r2::sarr::At(*channel.positionKeys, 0).value;
+            return refPosition;
         }
 
         if (channel.state.mCurTranslationTime > animationTime)
@@ -394,11 +388,9 @@ namespace
         u32 nextTranslationIndex = 0;
         
         {
-            
             nextTranslationIndex = (channel.state.mCurTranslationIndex + 1) % numPositionKeys;
         }
-        
-        
+
         channel.state.mCurTranslationTime = r2::sarr::At(*channel.positionKeys, channel.state.mCurTranslationIndex).time;
         
 		if (nextTranslationIndex >= numPositionKeys)
@@ -418,12 +410,10 @@ namespace
         
         float factor = (float)glm::clamp((animationTime - channel.state.mCurTranslationTime)/ dt, 0.0, 1.0) ;
 
-        glm::vec3 start = r2::sarr::At(*channel.positionKeys, channel.state.mCurTranslationIndex).value;
-        glm::vec3 end = r2::sarr::At(*channel.positionKeys, nextTranslationIndex).value;
+        const glm::vec3& start = r2::sarr::At(*channel.positionKeys, channel.state.mCurTranslationIndex).value;
+        const glm::vec3& end = r2::sarr::At(*channel.positionKeys, nextTranslationIndex).value;
 
-        
-       // r2::util::Timer timer("", false);
-        glm::vec3 r = r2::math::Lerp(start, end, factor);
+        glm::vec3 r = r2::math::Interpolate(start, end, factor);
 
 
         return r;
@@ -431,7 +421,6 @@ namespace
     
     u32 FindScalingIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel, u32 startingIndex)
     {
-   //     PROFILE_SCOPE_FN
         u32 numScalingKeys = r2::sarr::Size(*channel.scaleKeys);
         R2_CHECK(numScalingKeys > 0, "We don't have any scaling keys");
         
@@ -455,7 +444,6 @@ namespace
     
     u32 FindRotationIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel, u32 startingIndex)
     {
-     //   PROFILE_SCOPE_FN
         u32 numRotationKeys = r2::sarr::Size(*channel.rotationKeys);
         R2_CHECK(numRotationKeys > 0, "We don't have any rotation keys");
         
@@ -479,7 +467,6 @@ namespace
     
     u32 FindPositionIndex(f64 animationTime, f64 totalTime, const r2::draw::AnimationChannel& channel, u32 startingIndex)
     {
-     //   PROFILE_SCOPE_FN
         u32 numPositionKeys = r2::sarr::Size(*channel.positionKeys);
         R2_CHECK(numPositionKeys > 0, "We don't have any position keys");
         
