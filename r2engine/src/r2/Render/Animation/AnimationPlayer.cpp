@@ -93,9 +93,10 @@ namespace r2::draw
 
 	u32 PlayAnimationForAnimModel(
 		u32 timeInMilliseconds,
+		u32 startTime,
+		bool loop,
 		const AnimModel& model,
-		const AnimationHandle& animationHandle,
-		AnimationCache& animationCache,
+		const Animation* animation,
 		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>& outDebugBones,
 		u64 offset) 
@@ -112,9 +113,7 @@ namespace r2::draw
             return 0;
         }
 
-		const Animation* anim = animcache::GetAnimation(animationCache, animationHandle);
-
-        if (anim == nullptr)
+        if (animation == nullptr)
         {
             const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
             r2::SArray<r2::math::Transform>* tempTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -144,25 +143,50 @@ namespace r2::draw
             return outBoneTransforms.mSize;
         }
 
-		double ticksPerSecond = anim->ticksPerSeconds != 0 ? anim->ticksPerSeconds : 25.0;
+		double ticksPerSecond = animation->ticksPerSeconds != 0 ? animation->ticksPerSeconds : 30.0;
 		double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
-        double duration = anim->duration;
+        double realStartTime = r2::util::MillisecondsToSeconds(startTime);
+        double duration = animation->duration;
 
-		double animationTime = fmod(timeInTicks, duration);
+        double animationTime = 0.0;
 
-		R2_CHECK(animationTime < anim->duration, "Hmmm");
+        animationTime = timeInTicks - realStartTime;
+
+        if (animationTime < 0.0)
+        {
+            animationTime = 0.0;
+        }
+
+        if (loop)
+        {
+            animationTime = fmod(animationTime, duration);
+        }
+        else
+        {
+            if (animationTime > duration)
+            {
+                animationTime = duration;
+            }
+
+            if (animationTime < 0.0)
+            {
+                animationTime = 0.0;
+            }
+        }
+
+//		R2_CHECK(animationTime <= animation->duration, "Hmmm");
 
         outBoneTransforms.mSize += model.boneInfo->mSize;
         outDebugBones.mSize += model.boneInfo->mSize;
 
-		for (u32 i = 0; i < model.boneInfo->mSize; ++i)
-		{
-			r2::sarr::At(outBoneTransforms, i + offset).globalInv = glm::mat4(1.0f);
-            r2::sarr::At(outBoneTransforms, i + offset).transform = glm::mat4(1.0f);
-            r2::sarr::At(outBoneTransforms, i + offset).invBindPose = glm::mat4(1.0f);
-		}
+		//for (u32 i = 0; i < model.boneInfo->mSize; ++i)
+		//{
+		//	r2::sarr::At(outBoneTransforms, i + offset).globalInv = glm::mat4(1.0f);
+  //          r2::sarr::At(outBoneTransforms, i + offset).transform = glm::mat4(1.0f);
+  //          r2::sarr::At(outBoneTransforms, i + offset).invBindPose = glm::mat4(1.0f);
+		//}
 
-        CalculateBoneTransforms(animationTime, *anim, model, outBoneTransforms, outDebugBones, offset);
+        CalculateBoneTransforms(animationTime, *animation, model, outBoneTransforms, outDebugBones, offset);
 
 		return outBoneTransforms.mSize;
     }
@@ -445,10 +469,10 @@ namespace
             }
         }
 
-		if (animationTime < totalTime)
-		{
-			return numScalingKeys - 1;
-		}
+        if (animationTime >= totalTime)
+        {
+            return numScalingKeys - 2;
+        }
         
         R2_CHECK(false, "Failed to find a proper scaling key for time: %f", animationTime);
         
@@ -468,11 +492,12 @@ namespace
             }
         }
 
-		if (animationTime < totalTime)
+		if (animationTime >= totalTime)
 		{
-			return numRotationKeys - 1;
+			return numRotationKeys - 2;
 		}
-        
+
+
         R2_CHECK(false, "Failed to find a proper scaling key for time: %f", animationTime);
         
         return 0;
@@ -492,10 +517,11 @@ namespace
 			}
         }
 
-		if (animationTime < totalTime)
+		if (animationTime >= totalTime)
 		{
-			return numPositionKeys - 1;
+			return numPositionKeys - 2;
 		}
+
 
         R2_CHECK(false, "Failed to find a proper position key for time: %f", animationTime);
         

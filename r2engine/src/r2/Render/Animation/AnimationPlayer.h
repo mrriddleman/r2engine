@@ -16,24 +16,18 @@ namespace r2::draw
     struct AnimModel;
     struct DebugBone;
     struct ShaderBoneTransform;
+    struct Animation;
 
 
-    //void PlayAnimationForSkinnedModel(
-    //    u32 timeInMilliseconds,
-    //    const AnimModel& model,
-    //    const AnimationHandle& animationHandle,
-    //    AnimationCache& animationCache,
-    //    r2::SArray<ShaderBoneTransform>& outBoneTransforms,
-    //    r2::SArray<DebugBone>& outDebugBones);
-
-    u32 PlayAnimationForAnimModel(
-        u32 timeInMilliseconds,
-        const AnimModel& model,
-		const AnimationHandle& animationHandle,
-		AnimationCache& animationCache,
-        r2::SArray<ShaderBoneTransform>& outBoneTransforms,
-        r2::SArray<DebugBone>& outDebugBones,
-        u64 offset);
+	u32 PlayAnimationForAnimModel(
+		u32 timeInMilliseconds,
+		u32 startTime,
+		bool loop,
+		const AnimModel& model,
+		const Animation* animation,
+		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
+		r2::SArray<DebugBone>& outDebugBones,
+		u64 offset);
 }
 
 #endif /* AnimationPlayer_hpp */
