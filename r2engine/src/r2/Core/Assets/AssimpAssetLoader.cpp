@@ -352,7 +352,7 @@ namespace
 		if (iter != mBoneNecessityMap.end())
 		{
 			r2::sarr::Push(*skeleton.mJointNames, STRING_ID(node->mName.C_Str()));
-			r2::sarr::Push(*skeleton.mLocalTransforms, AssimpMat4ToTransform(node->mTransformation));//AssimpMat4ToGLMMat4(node->mTransformation));
+			r2::sarr::Push(*skeleton.mRestPoseTransforms, AssimpMat4ToTransform(node->mTransformation));//AssimpMat4ToGLMMat4(node->mTransformation));
 
 			s32 jointIndex = (s32)r2::sarr::Size(*skeleton.mJointNames) - 1;
 
@@ -396,6 +396,7 @@ namespace r2::asset
 	{
 		mJoints.clear();
 		mBoneNecessityMap.clear();
+		mBoneMap.clear();
 		return true;
 	}
 
@@ -426,22 +427,13 @@ namespace r2::asset
 		}
 
 		MarkBones(scene->mRootNode, scene);
-
-
-		for (auto iter = mBoneNecessityMap.begin(); iter != mBoneNecessityMap.end(); iter++)
-		{
-			printf("Bone: %s\n", iter->first.c_str());
-		}
-
 		CreateBonesVector(scene, scene->mRootNode, -1);
 
 
-		for (size_t i = 0; i < mJoints.size(); ++i)
+		for (u32 i = 0; i < mJoints.size(); ++i)
 		{
-			printf("Bone: %s, jointIndex: %d parent: %d\n", mJoints[i].name.c_str(), mJoints[i].jointIndex, mJoints[i].parentIndex);
+			printf("Joint: %s, joint index: %d, parent index: %d\n", mJoints[i].name.c_str(), mJoints[i].jointIndex, mJoints[i].parentIndex);
 		}
-
-
 
 
 		aiNode* node = scene->mRootNode;
@@ -537,25 +529,23 @@ namespace r2::asset
 			model->skeleton.mParents = EMPLACE_SARRAY(startOfArrayPtr, s32, numJoints);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numJoints));
 
-			model->skeleton.mLocalTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numJoints);
+			model->skeleton.mRestPoseTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numJoints);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::math::Transform>::MemorySize(numJoints));
 			
+			model->skeleton.mBindPoseTransforms = EMPLACE_SARRAY(startOfArrayPtr, r2::math::Transform, numJoints);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::math::Transform>::MemorySize(numJoints));
+
 			model->skeleton.mRealParentBones = EMPLACE_SARRAY(startOfArrayPtr, s32, numJoints);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numJoints));
 
 			model->skeleton.mRealParentBones->mSize = numJoints;
 			memset(model->skeleton.mRealParentBones->mData, 0, sizeof(s32) * numJoints);
 
-		//	r2::sarr::Push(*model->skeleton.mJointNames, STRING_ID(scene->mRootNode->mName.C_Str()));
-		//	r2::sarr::Push(*model->skeleton.mParents, -1);
-		//	r2::sarr::Push(*model->skeleton.mLocalTransforms, AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
-			
-
-#ifdef R2_DEBUG
-			//model->skeleton.mDebugBoneNames.push_back(scene->mRootNode->mName.C_Str());
-#endif
-
 			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, 0, &startOfArrayPtr, numVertices);
+
+
+			LoadBindPose(*model, model->skeleton);
+
 		}
 		else
 		{
@@ -669,6 +659,73 @@ namespace r2::asset
 		for (u64 i = 0; i < node->mNumChildren; ++i)
 		{
 			CreateBonesVector(scene, node->mChildren[i], parentIndex);
+		}
+	}
+
+	glm::mat4 GetGlobalTransform(u32 i)
+	{
+		glm::mat4 result = mJoints[i].localTransform;
+
+		for (s32 p = mJoints[i].parentIndex; p >= 0; p = mJoints[p].parentIndex)
+		{
+			result = mJoints[p].localTransform * result;
+		}
+
+		return result;
+	}
+
+	s32 FindJointIndex(const std::string& jointName)
+	{
+		for (u32 i = 0; i < mJoints.size(); ++i)
+		{
+			if (mJoints[i].name == jointName)
+			{
+				return (s32)i;
+			}
+		}
+
+		return -1;
+	}
+
+	void AssimpAssetLoader::LoadBindPose(r2::draw::AnimModel& model, r2::draw::Skeleton& skeleton)
+	{
+
+		//@TODO(Serge): Right now I don't think this is correct. It SEEMS correct since we can put the model into bind pose no problem BUT when it comes to animating the model, this messes up if we first put the model into bind pose which doesn't seems correct.
+		//				This might be a weird artifact of ASSIMP since the rest pose is frame 1 of the animation. It might be that we can't load an animation as our "base model" as we're doing for the Skeleton Archer and Ellen. Interestingly, this works for the Micro Bat
+		//				Could also be that our math is messed up somewhere but currently I don't see where....
+		std::vector<glm::mat4> worldBindPos(mJoints.size());
+
+		for (u32 i = 0; i < mJoints.size(); ++i)
+		{
+			worldBindPos[i] = GetGlobalTransform(i);
+		}
+
+		for (auto iter = mBoneMap.begin(); iter != mBoneMap.end(); iter++)
+		{
+			s32 jointIndex = FindJointIndex(iter->first);
+			
+			if (jointIndex >= 0)
+			{
+				worldBindPos[jointIndex] = glm::inverse(iter->second.invBindPoseMat );
+			}
+			else
+			{
+				R2_CHECK(jointIndex != -1, "Fail....");
+			}
+		}
+
+		for (u32 i = 0; i < mJoints.size(); ++i)
+		{
+			glm::mat4 current = worldBindPos[i];
+
+			s32 p = mJoints[i].parentIndex;
+			if (p >= 0)
+			{
+				glm::mat4 parent = worldBindPos[p];
+				current = glm::inverse(parent) * current;
+			}
+
+			r2::sarr::At(*skeleton.mBindPoseTransforms, i) = r2::math::ToTransform(current);
 		}
 	}
 }

@@ -18,13 +18,13 @@ namespace r2::draw
     struct ShaderBoneTransform;
 
 
-    void PlayAnimationForSkinnedModel(
-        u32 timeInMilliseconds,
-        const AnimModel& model,
-        const AnimationHandle& animationHandle,
-        AnimationCache& animationCache,
-        r2::SArray<ShaderBoneTransform>& outBoneTransforms,
-        r2::SArray<DebugBone>& outDebugBones);
+    //void PlayAnimationForSkinnedModel(
+    //    u32 timeInMilliseconds,
+    //    const AnimModel& model,
+    //    const AnimationHandle& animationHandle,
+    //    AnimationCache& animationCache,
+    //    r2::SArray<ShaderBoneTransform>& outBoneTransforms,
+    //    r2::SArray<DebugBone>& outDebugBones);
 
     u32 PlayAnimationForAnimModel(
         u32 timeInMilliseconds,

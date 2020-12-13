@@ -8,9 +8,7 @@
 #ifndef Ray_h
 #define Ray_h
 
-
-
-
+#define GLM_FORCE_INLINE 
 #include "glm/glm.hpp"
 
 namespace r2::math

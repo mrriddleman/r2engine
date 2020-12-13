@@ -44,7 +44,8 @@ namespace r2::draw
     {
         r2::SArray<u64>* mJointNames = nullptr;
         r2::SArray<s32>* mParents = nullptr;
-        r2::SArray<r2::math::Transform>* mLocalTransforms = nullptr; //local joints of the rest pose (not bind pose)
+        r2::SArray<r2::math::Transform>* mRestPoseTransforms = nullptr; 
+        r2::SArray<r2::math::Transform>* mBindPoseTransforms = nullptr;
         r2::SArray<s32>* mRealParentBones = nullptr; //for debug
 
 #ifdef R2_DEBUG

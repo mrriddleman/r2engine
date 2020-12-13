@@ -13,7 +13,7 @@ namespace r2::draw
 	u64 Skeleton::MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) * 2 + //*2 for mRealParents
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) * 2 + //*2 for bind pose + rest pose
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numJoints), alignment, headerSize, boundsChecking);
 	}
 	

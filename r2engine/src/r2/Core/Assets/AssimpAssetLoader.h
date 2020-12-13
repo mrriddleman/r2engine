@@ -11,9 +11,10 @@ struct aiNode;
 struct aiScene;
 struct aiMesh;
 
-namespace r2::anim
+namespace r2::draw
 {
-	struct Pose;
+	struct Skeleton;
+	struct AnimModel;
 }
 
 namespace r2::asset
@@ -58,8 +59,10 @@ namespace r2::asset
 		void MarkBonesInMesh(aiNode* node, const aiScene* scene, aiMesh* mesh);
 		void MarkBones(aiNode* node, const aiScene* scene);
 		void CreateBonesVector(const aiScene* scene, aiNode* node, s32 parentIndex);
-		void LoadRestPose(r2::anim::Pose& pose, const std::vector<Joint>& joints);
-		void LoadBindPose(r2::anim::Pose& bindPose, const const r2::anim::Pose& restPose);
+
+		void LoadBindPose(r2::draw::AnimModel& model, r2::draw::Skeleton& skeleton);
+		//void LoadRestPose(r2::anim::Pose& pose, const std::vector<Joint>& joints);
+		//void LoadBindPose(r2::anim::Pose& bindPose, const const r2::anim::Pose& restPose);
 
 	};
 }

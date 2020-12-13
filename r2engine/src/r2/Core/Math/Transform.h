@@ -1,6 +1,7 @@
 #ifndef __TRANSFORM_H__
 #define __TRANSFORM_H__
 
+#define GLM_FORCE_INLINE 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
