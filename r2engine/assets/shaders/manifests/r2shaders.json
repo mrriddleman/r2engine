@@ -6,6 +6,13 @@
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.fs",
       geometryPath: "",
       binaryPath: ""
+    },
+    {
+      shaderName: 8713270253709140657,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Screen.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Screen.fs",
+      geometryPath: "",
+      binaryPath: ""
     }
   ]
 }

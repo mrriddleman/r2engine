@@ -194,6 +194,11 @@ namespace r2::draw::texsys
 		return GetTextureAddressInternal(texture.textureAssetHandle);
 	}
 
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::TextureHandle& textureHandle)
+	{
+		return r2::draw::tex::GetTextureAddress(textureHandle);
+	}
+
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap)
 	{
 		return GetTextureAddressInternal(cubemap.sides[0].textureAssetHandle);

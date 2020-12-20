@@ -10,7 +10,8 @@
 //
 #include <algorithm>
 
-#define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
+#define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity, rt) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, rt, __FILE__, __LINE__, "")
+#define FREE_CMD_BUCKET(arena, key, bkt) r2::draw::cmdbkt::DestroyCommandBucket<key>(arena, bkt, __FILE__, __LINE__, "")
 
 namespace r2::draw
 {
@@ -57,7 +58,8 @@ namespace r2::draw
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt);
 		template<typename T> inline u64 Capacity(const CommandBucket<T>& bkt);
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const char* file, s32 line, const char* description);
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const RenderTarget& rt, const char* file, s32 line, const char* description);
+		template<typename T, class ARENA> void DestroyCommandBucket(ARENA& arena, CommandBucket<T>* cmdBkt, const char* file, s32 line, const char* description);
 	}
 
 	namespace cmdbkt
@@ -116,9 +118,11 @@ namespace r2::draw
 
 		template<typename T> void Submit(CommandBucket<T>& bkt)
 		{
-			const u64 numEntries = r2::sarr::Size(*bkt.entries);
+			rt::SetRenderTarget(bkt.renderTarget);
 
-			//@TODO(Serge): implement the render target
+
+
+			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
 			for (u64 i = 0; i < numEntries; ++i)
 			{
@@ -169,7 +173,7 @@ namespace r2::draw
 				});
 		}
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const char* file, s32 line, const char* description)
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const RenderTarget& rt, const char* file, s32 line, const char* description)
 		{
 			CommandBucket<T>* cmdBkt = new (ALLOC_BYTES(arena, CommandBucket<T>::MemorySize(capacity), alignof(u64), file, line, description)) CommandBucket<T>;
 
@@ -190,8 +194,20 @@ namespace r2::draw
 
 
 			cmdBkt->KeyDecoder = decoderFunc;
+
+			cmdBkt->renderTarget = rt;
 			return cmdBkt;
 		}
+
+		template<typename T, class ARENA> void DestroyCommandBucket(ARENA& arena, CommandBucket<T>* cmdBkt, const char* file, s32 line, const char* description)
+		{
+			if (cmdBkt)
+			{
+				rt::DestroyRenderTarget<ARENA>(arena, cmdBkt->renderTarget);
+				FREE(cmdBkt, arena);
+			}
+		}
+
 	}
 
 	template<typename T>

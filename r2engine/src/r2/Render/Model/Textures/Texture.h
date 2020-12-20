@@ -5,6 +5,14 @@
 
 namespace r2::draw::tex
 {
+
+	extern s32 WRAP_MODE_CLAMP;
+	extern s32 WRAP_MODE_REPEAT;
+	extern s32 FILTER_LINEAR;
+	extern s32 FILTER_NEAREST;
+	extern s32 FILTER_NEAREST_MIP_MAP_LINEAR;
+	extern u32 FORMAT_DEPTH;
+
 	struct TextureContainer;
 
 	enum TextureType
@@ -65,6 +73,10 @@ namespace r2::draw::tex
 		s32 height = 0;
 		b32 isCubemap = false;
 		b32 compressed = false;
+
+		s32 minFilter = FILTER_LINEAR;
+		s32 magFilter = FILTER_LINEAR;
+		s32 wrapMode = WRAP_MODE_REPEAT;
 	};
 
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap);
@@ -76,6 +88,8 @@ namespace r2::draw::tex
 	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2);
 
 	const char* TextureTypeToString(TextureType type);
+
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format);
 
 	namespace impl
 	{

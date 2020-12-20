@@ -119,29 +119,24 @@ namespace r2::draw::gl
 			if (sparse)
 			{
 				GLCall(glTexParameteri(target, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
+				
+				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode));
+				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode));
 
-				//@TODO(Serge): pull from format?
 				if (format.isCubemap)
 				{
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode));
 				}
-				else
-				{
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT));
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT));
-				}
+				
+				GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter));
 
 				if (format.mipLevels > 1)
 				{
 					glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-					glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				}
 				else
 				{
-					GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-					GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+					GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter));
 				}
 
 				// TODO: This could be done once per internal format. For now, just do it every time.

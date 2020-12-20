@@ -491,20 +491,27 @@ namespace r2::draw::rendererimpl
 
 	void SetViewportLayer(u32 viewportLayer)
 	{
-		if (viewportLayer == r2::draw::key::Basic::VPL_DEBUG)
+
+		SetDepthTest(true);
+		glDepthFunc(GL_LESS);
+
+		if (viewportLayer == r2::draw::key::Basic::VPL_DEBUG )
 		{
+			SetDepthTest(false);
+		}
+		else if (viewportLayer == r2::draw::key::Basic::VPL_SCREEN)
+		{
+		//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			SetDepthTest(false);
 		}
 		else
 		{
 			//@TODO(Serge): should be part of the draw command?
-			glDepthFunc(GL_LESS);
+			
 			if (viewportLayer == r2::draw::key::Basic::VPL_SKYBOX)
 			{
 				glDepthFunc(GL_LEQUAL);
 			}
-
-			SetDepthTest(true);
 		}
 	}
 

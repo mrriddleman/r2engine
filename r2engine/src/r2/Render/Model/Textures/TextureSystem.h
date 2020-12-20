@@ -25,6 +25,7 @@ namespace r2::draw::texsys
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);
 
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::Texture& texture);
+	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::TextureHandle& textureHandle);
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap);
 
 	

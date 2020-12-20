@@ -334,7 +334,7 @@ public:
         //make the buffer layouts
         mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
         mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
-        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);
@@ -536,9 +536,7 @@ public:
             {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"}
         }));
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
-            {r2::draw::ShaderDataType::Mat4, "models", NUM_DRAWS}
-        }) );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big, NUM_DRAWS));
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout(NUM_DRAW_COMMANDS) );
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout(NUM_DRAWS) );
@@ -623,7 +621,7 @@ public:
             0,
             glm::value_ptr(mPersController.GetCameraPtr()->proj));
 
-        r2::draw::renderer::SetClearColor(glm::vec4(0.5, 0.5, 0.5, 1.0));
+        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
@@ -951,18 +949,18 @@ public:
         r2::draw::renderer::AddDrawBatch(animModelBatch);
 
 
-        r2::draw::BatchConfig skyboxBatch;
+		r2::draw::BatchConfig skyboxBatch;
 
-        skyboxBatch.key = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_SKYBOX, 0, 0, r2::sarr::At(*skyboxMaterials, 0));
-        skyboxBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
-        skyboxBatch.subcommands = skyboxCommandsToDraw;
-        skyboxBatch.models = nullptr;
-        skyboxBatch.materials = skyboxMaterials;
-        skyboxBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
-        skyboxBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
-        skyboxBatch.numDraws = 1;
+		skyboxBatch.key = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_SKYBOX, 0, 0, r2::sarr::At(*skyboxMaterials, 0));
+		skyboxBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
+		skyboxBatch.subcommands = skyboxCommandsToDraw;
+		skyboxBatch.models = nullptr;
+		skyboxBatch.materials = skyboxMaterials;
+		skyboxBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
+		skyboxBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
+		skyboxBatch.numDraws = 1;
 
-        r2::draw::renderer::AddDrawBatch(skyboxBatch);
+		r2::draw::renderer::AddDrawBatch(skyboxBatch);
 
 
 

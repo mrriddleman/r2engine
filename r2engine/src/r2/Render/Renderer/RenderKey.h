@@ -48,6 +48,7 @@ namespace r2::draw::key
 		static const u8 VPL_EFFECT;
 		static const u8 VPL_HUD;
 		static const u8 VPL_SKYBOX;
+		static const u8 VPL_SCREEN;
 		static const u8 VPL_DEBUG;
 
 		static const u8 TR_OPAQUE;

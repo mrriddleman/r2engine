@@ -62,25 +62,30 @@ namespace r2::draw
 	struct BatchConfig
 	{
 		r2::draw::key::Basic key;
-		VertexConfigHandle vertexLayoutConfigHandle;
+		VertexConfigHandle vertexLayoutConfigHandle = InvalidVertexConfigHandle;
+
+		//@TODO(Serge): make these into ConstantConfigHandles and look up the ConstantBufferHandle in the 
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
 		ConstantBufferHandle materialsHandle;
 		ConstantBufferHandle boneTransformOffsetsHandle;
 		ConstantBufferHandle boneTransformsHandle;
 		b32 clear = false;
+		b32 clearDepth = true;
 		u32 numDraws = 0;
 
-		const r2::SArray<glm::mat4>* models = nullptr;
+		r2::SArray<glm::mat4>* models = nullptr;
 
 		
-		const r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
-		const r2::SArray<r2::draw::MaterialHandle>* materials = nullptr; //@NOTE: this assumes that the materials have already been uploaded
+		r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
+		r2::SArray<r2::draw::MaterialHandle>* materials = nullptr; //@NOTE: this assumes that the materials have already been uploaded
 
 		//The boneTransforms can be of any size
-		const r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
-		//boneTransformOffsets' size should be exactly the same as the number of subcommands
-		const r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
+		r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
+		r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
+
+
+		static u64 MemorySize(u64 numModels, u64 numSubcommands, u64 numMaterials, u64 numBoneTransforms, u64 numBoneOffsets, u64 alignment, u32 headerSize, u32 boundsChecking);
 
 	};
 
@@ -109,6 +114,7 @@ namespace r2::draw::renderer
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
 	VertexConfigHandle AddDebugDrawLayout(u64 maxDraws);
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
+	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type, u64 maxDraws);
 	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
 	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
 	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws);
@@ -142,7 +148,6 @@ namespace r2::draw::renderer
 
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
 	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
-
 
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 

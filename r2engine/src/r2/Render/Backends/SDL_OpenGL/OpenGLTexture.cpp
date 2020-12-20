@@ -287,6 +287,13 @@ namespace
 
 namespace r2::draw::tex
 {
+
+	s32 WRAP_MODE_CLAMP = GL_CLAMP_TO_EDGE;
+	s32 WRAP_MODE_REPEAT = GL_REPEAT;
+	s32 FILTER_LINEAR = GL_LINEAR;
+	s32 FILTER_NEAREST = GL_NEAREST;
+	s32 FILTER_NEAREST_MIP_MAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR;
+	u32 FORMAT_DEPTH = GL_DEPTH_COMPONENT;
 	
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap)
 	{
@@ -398,6 +405,9 @@ namespace r2::draw::tex
 		textureFormat.height = texHeight;
 		textureFormat.mipLevels = mipLevels;
 		textureFormat.compressed = compressed;
+		textureFormat.wrapMode = WRAP_MODE_REPEAT;
+		textureFormat.minFilter = FILTER_LINEAR;
+		textureFormat.magFilter = FILTER_LINEAR;
 
 		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
 
@@ -492,7 +502,9 @@ namespace r2::draw::tex
 				textureFormat.height = texHeight;
 				textureFormat.mipLevels = 1;
 				textureFormat.isCubemap = true;
-
+				textureFormat.wrapMode = WRAP_MODE_CLAMP;
+				textureFormat.magFilter = FILTER_LINEAR;
+				textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
 				r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
 			}
 			
@@ -515,6 +527,13 @@ namespace r2::draw::tex
 	TextureAddress GetTextureAddress(const TextureHandle& handle)
 	{
 		return r2::draw::gl::tex::GetAddress(handle);
+	}
+
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format)
+	{
+		r2::draw::tex::GPUHandle newHandle;
+		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format);
+		return newHandle;
 	}
 }
 

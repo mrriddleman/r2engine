@@ -30,6 +30,7 @@
 #define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
 #define FREE_VERBOSE(objPtr, ARENA, file, line, desc) r2::mem::utils::Dealloc(objPtr, ARENA, file, line, desc)
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
+#define ALLOC_ARRAYN(type, n, ARENA) r2::mem::utils::AllocArray<type>(ARENA, n, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<type>::Value>())
 #define FREE_ARRAY(objPtr, ARENA) r2::mem::utils::DeallocArray(objPtr, ARENA, __FILE__, __LINE__, "")
 #define RESET_ARENA(ARENA) r2::mem::utils::ResetArena(ARENA);
 
