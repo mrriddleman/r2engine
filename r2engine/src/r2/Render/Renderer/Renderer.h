@@ -108,7 +108,7 @@ namespace r2::draw::renderer
 	bool GenerateLayouts();
 
 	
-	void SetDepthTest(bool shouldDepthTest);
+
 
 	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);

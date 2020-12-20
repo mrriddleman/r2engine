@@ -250,8 +250,6 @@ namespace r2
     
     void Engine::Render(float alpha)
     {
-        
-        
         if (!mMinimized)
         {
             mLayerStack.Render(alpha);
@@ -265,8 +263,8 @@ namespace r2
     util::Size Engine::GetInitialResolution() const
     {
         util::Size res;
-        res.width = 1024;
-        res.height = 720;
+        res.width = r2::INITIAL_SCREEN_WIDTH;
+        res.height = r2::INITIAL_SCREEN_HEIGHT;
         
         return res;
     }

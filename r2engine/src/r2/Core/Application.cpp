@@ -55,8 +55,8 @@ namespace r2
     util::Size Application::GetPreferredResolution() const
     {
         util::Size res;
-        res.width = 1024;
-        res.height = 720;
+        res.width = r2::INITIAL_SCREEN_WIDTH;
+        res.height = r2::INITIAL_SCREEN_HEIGHT;
         
         return res;
     }

@@ -711,11 +711,6 @@ namespace r2::draw::renderer
 		r2::draw::rendererimpl::SetClearColor(color);
 	}
 
-	void SetDepthTest(bool shouldDepthTest)
-	{
-		r2::draw::rendererimpl::SetDepthTest(shouldDepthTest);
-	}
-
 	bool GenerateLayouts()
 	{
 		if (s_optrRenderer == nullptr)
@@ -2322,6 +2317,7 @@ namespace r2::draw::renderer
 	//events
 	void WindowResized(u32 width, u32 height)
 	{
+		//@TODO(Serge): we need to change the final composite FBO size
 		r2::draw::rendererimpl::WindowResized(width, height);
 	}
 

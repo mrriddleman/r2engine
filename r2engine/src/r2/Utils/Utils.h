@@ -54,6 +54,12 @@ namespace r2::asset
     using PathResolver = std::function<bool (u32 category, char* path)>;
 }
 
+namespace r2
+{
+    const u32 INITIAL_SCREEN_WIDTH = 1280;
+    const u32 INITIAL_SCREEN_HEIGHT = 768;
+}
+
 namespace r2::util
 {
     struct Size
