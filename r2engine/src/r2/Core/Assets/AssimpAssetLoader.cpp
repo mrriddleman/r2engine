@@ -14,6 +14,7 @@
 
 namespace
 {
+	
 
 	std::unordered_map<std::string, b32> mBoneNecessityMap;
 	std::vector<r2::asset::AssimpAssetLoader::Joint> mJoints;
@@ -56,7 +57,7 @@ namespace
 		return bytes;
 	}
 
-	void ProcessMesh(r2::draw::Model& model, aiMesh* mesh, const aiNode* node, const aiScene* scene, void** dataPtr)
+	void ProcessMesh(r2::draw::Model& model, aiMesh* mesh, u32 meshIndex, const aiNode* node, const aiScene* scene, void** dataPtr)
 	{
 
 		r2::draw::Mesh* nextMeshPtr = new (*dataPtr) r2::draw::Mesh();
@@ -112,7 +113,7 @@ namespace
 			*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<u32>::MemorySize(mesh->mNumFaces * 3));
 		}
 
-		s32 textureIndex = 0;
+	//	s32 textureIndex = 0;
 		if (mesh->mMaterialIndex >= 0)
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -122,12 +123,16 @@ namespace
 				const u32 numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
 				if (numTextures > 0)
 				{
-					aiString str;
-					material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+					R2_CHECK(numTextures == 1, "I don't think we can handle more than 1");
+
+
+					//@TODO(Serge): check other texture types if we don't find this one
+					aiString diffuseStr;
+					material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseStr);
 
 					char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
 					char textureName[r2::fs::FILE_PATH_LENGTH];
-					r2::fs::utils::SanitizeSubPath(str.C_Str(), sanitizedPath);
+					r2::fs::utils::SanitizeSubPath(diffuseStr.C_Str(), sanitizedPath);
 
 					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
 
@@ -136,29 +141,34 @@ namespace
 
 					if (!r2::draw::mat::IsInvalidHandle(materialHandle))
 					{
+
+//						R2_CHECK(r2::sarr::Size(*model.optrMaterialHandles) == meshIndex, "These should always be the same!");
+
 						r2::sarr::Push(*model.optrMaterialHandles, materialHandle);
 
-						r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
-						R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+						//r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+						//R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-						const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialHandle);
+						////const r2::draw::Material* material =  r2::draw::mat::GetMaterial(*matSystem, materialHandle);
 
-						u64 numTextures = r2::sarr::Size(*textures);
-						for (u64 i = 0; i < numTextures; ++i)
-						{
-							const r2::draw::tex::Texture& nextTexture = r2::sarr::At(*textures, i);
+						//const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialHandle);
 
-							if (nextTexture.textureAssetHandle.handle == tex.textureAssetHandle.handle &&
-								nextTexture.textureAssetHandle.assetCache == tex.textureAssetHandle.assetCache)
-							{
-								textureIndex = i;
-								break;
-							}
-						}
+						//u64 numTextures = r2::sarr::Size(*textures);
+						//for (u64 i = 0; i < numTextures; ++i)
+						//{
+						//	const r2::draw::tex::Texture& nextTexture = r2::sarr::At(*textures, i);
+
+						//	if (nextTexture.textureAssetHandle.handle == tex.textureAssetHandle.handle &&
+						//		nextTexture.textureAssetHandle.assetCache == tex.textureAssetHandle.assetCache)
+						//	{
+						//		textureIndex = i;
+						//		break;
+						//	}
+						//}
 					}
 					else
 					{
-						R2_LOGW("Failed to load the material texture: %s\n", str.C_Str());
+						R2_LOGW("Failed to load the material texture: %s\n", diffuseStr.C_Str());
 					}
 					//R2_CHECK(!, "We have an invalid handle!");
 
@@ -166,6 +176,7 @@ namespace
 			}
 		}
 
+	//	R2_CHECK(textureIndex == meshIndex, "HMMM");
 
 		for (u32 i = 0; i < mesh->mNumVertices; ++i)
 		{
@@ -180,7 +191,7 @@ namespace
 
 			if (mesh->mTextureCoords)
 			{
-				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, textureIndex);
+				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, meshIndex);
 			}
 
 			r2::sarr::Push(*nextMeshPtr->optrVertices, nextVertex);
@@ -292,59 +303,48 @@ namespace
 		}
 	}
 
-	void ProcessMeshForModel(r2::draw::Model& model, aiMesh* mesh,const aiNode* node, const aiScene* scene, void** dataPtr)
+	void ProcessMeshForModel(r2::draw::Model& model, aiMesh* mesh, u32 meshIndex, const aiNode* node, const aiScene* scene, void** dataPtr)
 	{
-		ProcessMesh(model, mesh, node, scene, dataPtr);
+		ProcessMesh(model, mesh, meshIndex, node, scene, dataPtr);
 	}
 
-	void ProcessMeshForAnimModel(r2::draw::AnimModel& model, aiMesh* mesh, const aiNode* node, const aiScene* scene, void** dataPtr)
+	void ProcessMeshForAnimModel(r2::draw::AnimModel& model, aiMesh* mesh, u32 meshIndex, const aiNode* node, const aiScene* scene, void** dataPtr)
 	{
-		ProcessMesh(model.model, mesh, node, scene, dataPtr);
+		ProcessMesh(model.model, mesh, meshIndex, node, scene, dataPtr);
 	}
 
-	void ProcessNode(r2::draw::Model& model, aiNode* node, const aiScene* scene, void** dataPtr)
+	void ProcessNode(r2::draw::Model& model, aiNode* node, u32& meshIndex, const aiScene* scene, void** dataPtr)
 	{
 		//process all of the node's meshes
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-			ProcessMeshForModel(model, mesh, node, scene, dataPtr);
+			ProcessMeshForModel(model, mesh, meshIndex, node, scene, dataPtr);
+
+			++meshIndex;
 		}
 
 		//then do the same for each of its children
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{
-			ProcessNode(model, node->mChildren[i], scene, dataPtr);
+			ProcessNode(model, node->mChildren[i], meshIndex, scene, dataPtr);
 		}
 	}
 
-	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, const aiScene* scene, r2::draw::Skeleton& skeleton, s32 parentDebugBone, void** dataPtr, u32& numVertices)
+	void ProcessAnimNode(r2::draw::AnimModel& model, aiNode* node, u32& meshIndex, const aiScene* scene, r2::draw::Skeleton& skeleton, s32 parentDebugBone, void** dataPtr, u32& numVertices)
 	{
-
-
-
-		//if (node->mMetaData)
-		//{
-		//	printf("Node: %s's metadata\n", node->mName.C_Str());
-		//	for (u32 i = 0; i < node->mMetaData->mNumProperties; ++i)
-		//	{
-		//		printf("Property: %s\n", node->mMetaData->mKeys[i].C_Str());
-		//	}
-
-		//}
-
-	//	printf("node: %s\n", node->mName.C_Str());
-
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-			ProcessMeshForAnimModel(model, mesh, node, scene, dataPtr);
+			ProcessMeshForAnimModel(model, mesh, meshIndex, node, scene, dataPtr);
 
 			ProcessBones(model, numVertices, mesh, node, scene);
 
 			numVertices += mesh->mNumVertices;
+
+			++meshIndex;
 		}
 
 
@@ -352,7 +352,7 @@ namespace
 		if (iter != mBoneNecessityMap.end())
 		{
 			r2::sarr::Push(*skeleton.mJointNames, STRING_ID(node->mName.C_Str()));
-			r2::sarr::Push(*skeleton.mRestPoseTransforms, AssimpMat4ToTransform(node->mTransformation));//AssimpMat4ToGLMMat4(node->mTransformation));
+			r2::sarr::Push(*skeleton.mRestPoseTransforms, AssimpMat4ToTransform(node->mTransformation));
 
 			s32 jointIndex = (s32)r2::sarr::Size(*skeleton.mJointNames) - 1;
 
@@ -375,7 +375,7 @@ namespace
 
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{	
-			ProcessAnimNode(model, node->mChildren[i], scene, model.skeleton, parentDebugBone, dataPtr, numVertices);
+			ProcessAnimNode(model, node->mChildren[i], meshIndex, scene, model.skeleton, parentDebugBone, dataPtr, numVertices);
 		}
 	}
 }
@@ -487,6 +487,7 @@ namespace r2::asset
 
 		bool isAnimated = mNumBones > 0;
 		u32 indexOffset = 0;
+		u32 meshIndex = 0;
 		if (isAnimated) 
 		{
 			r2::draw::AnimModel* model = new (dataPtr) r2::draw::AnimModel();
@@ -541,7 +542,7 @@ namespace r2::asset
 			model->skeleton.mRealParentBones->mSize = numJoints;
 			memset(model->skeleton.mRealParentBones->mData, 0, sizeof(s32) * numJoints);
 
-			ProcessAnimNode(*model, scene->mRootNode, scene, model->skeleton, 0, &startOfArrayPtr, numVertices);
+			ProcessAnimNode(*model, scene->mRootNode, meshIndex, scene, model->skeleton, 0, &startOfArrayPtr, numVertices);
 
 
 			LoadBindPose(*model, model->skeleton);
@@ -565,7 +566,7 @@ namespace r2::asset
 
 			model->globalInverseTransform = glm::inverse(AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation));
 
-			ProcessNode(*model, scene->mRootNode, scene, &startOfArrayPtr);
+			ProcessNode(*model, scene->mRootNode, meshIndex, scene, &startOfArrayPtr);
 		}
 		
 		import.FreeScene();

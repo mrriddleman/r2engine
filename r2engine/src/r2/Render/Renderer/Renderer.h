@@ -59,6 +59,19 @@ namespace r2::draw::cmd
 
 namespace r2::draw
 {
+
+	struct MaterialBatch
+	{
+		struct Info
+		{
+			s32 start = -1;
+			s32 numMaterials = 0;
+		};
+
+		r2::SArray<Info>* infos = nullptr;
+		r2::SArray<MaterialHandle>* materialHandles = nullptr;
+	};
+
 	struct BatchConfig
 	{
 		r2::draw::key::Basic key;
@@ -78,14 +91,14 @@ namespace r2::draw
 
 		
 		r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subcommands = nullptr;
-		r2::SArray<r2::draw::MaterialHandle>* materials = nullptr; //@NOTE: this assumes that the materials have already been uploaded
+		MaterialBatch materials; //@NOTE: this assumes that the materials have already been uploaded
 
 		//The boneTransforms can be of any size
 		r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
 		r2::SArray<glm::ivec4>* boneTransformOffsets = nullptr;
 
 
-		static u64 MemorySize(u64 numModels, u64 numSubcommands, u64 numMaterials, u64 numBoneTransforms, u64 numBoneOffsets, u64 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u64 numModels, u64 numSubcommands, u64 numInfos, u64 numMaterials, u64 numBoneTransforms, u64 numBoneOffsets, u64 alignment, u32 headerSize, u32 boundsChecking);
 
 	};
 
@@ -130,7 +143,7 @@ namespace r2::draw::renderer
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
-	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets);
+	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, MaterialBatch& materialBatch, r2::SArray<glm::ivec4>& boneOffsets);
 
 	void UploadEngineModels(VertexConfigHandle vertexLayoutConfig);
 

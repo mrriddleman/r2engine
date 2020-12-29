@@ -134,10 +134,9 @@ namespace r2::asset::pln
 			
 			const auto material = flat::GetMaterial(materialData);
 
-			flat::Color theColor{ material->color()->r(), material->color()->g(), material->color()->b(), material->color()->a() };
+			flat::Color theColor{ material->baseColor()->r(), material->baseColor()->g(), material->baseColor()->b(), material->baseColor()->a() };
 
-			auto packMaterial = flat::CreateMaterial(builder, material->name(), material->shader(), &theColor, material->texturePackName());
-
+			auto packMaterial = flat::CreateMaterial(builder, material->name(), material->shader(), material->texturePackName(), material->diffuseTexture(), material->specularTexture(), material->normalMapTexture(), material->emissionTexture(), &theColor, material->specular(), material->roughness(), material->metallic());
 			flatMaterials.push_back(packMaterial);
 
 			delete[] materialData;

@@ -12,6 +12,19 @@ struct Tex2DAddress
 	float page;	
 };
 
+struct Material
+{
+	Tex2DAddress diffuseTexture1;
+	Tex2DAddress specularTexture1;
+	Tex2DAddress normalMapTexture1;
+	Tex2DAddress emissionTexture1;
+
+	vec4 baseColor;
+	float specular;
+	float roughness;
+	float metallic;
+};
+
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
@@ -19,7 +32,7 @@ layout (std140, binding = 1) uniform Vectors
 
 layout (std430, binding = 1) buffer Materials
 {
-	Tex2DAddress materials[];
+	Material materials[];
 };
 
 in VS_OUT
@@ -33,12 +46,14 @@ vec4 SampleCubemapDiffuse(uint drawID, vec3 uv);
 void main()
 {
 	vec4 sampledCubeColor = SampleCubemapDiffuse(fs_in.drawID, fs_in.texCoords);
+	
+
 	FragColor = vec4(sampledCubeColor.rgb, 1.0);
 }
 
 vec4 SampleCubemapDiffuse(uint drawID, vec3 uv) 
 {
-	highp uint texIndex = drawID * NUM_TEXTURES_PER_DRAWID;
-	Tex2DAddress addr = materials[texIndex];
+	highp uint texIndex =  drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 	return texture(samplerCubeArray(addr.container), vec4(uv.rgb, addr.page));
 } 

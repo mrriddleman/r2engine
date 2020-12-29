@@ -1,11 +1,21 @@
 {
 	name:"DebugMipMap",
 	shader:"Sandbox",
-	color:{
+	texturePackName:"DebugMipMap",
+
+	diffuseTexture:"debugmipmap/albedo/debugmipmap.dds",
+	specularTexture:"",
+	normalMapTexture:"",
+	emissionTexture:"",
+
+	baseColor:{
 		r: 1.0,
 		g: 0.0,
 		b: 0.0,
 		a: 1.0
 	},
-	texturePackName:"DebugMipMap"
+	specular:0.0,
+	roughness:0.0,
+	metallic:0.0
+	
 }

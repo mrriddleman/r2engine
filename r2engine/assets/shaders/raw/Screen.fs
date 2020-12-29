@@ -12,9 +12,22 @@ struct Tex2DAddress
 	float page;
 };
 
+struct Material
+{
+	Tex2DAddress diffuseTexture1;
+	Tex2DAddress specularTexture1;
+	Tex2DAddress normalMapTexture1;
+	Tex2DAddress emissionTexture1;
+
+	vec4 baseColor;
+	float specular;
+	float roughness;
+	float metallic;
+};
+
 layout (std430, binding = 1) buffer Materials
 {
-	Tex2DAddress materials[];
+	Material materials[];
 };
 
 in VS_OUT
@@ -36,7 +49,7 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
-	Tex2DAddress addr = materials[texIndex];
+	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 
 	vec3 coord = vec3(uv.rg,addr.page);
 

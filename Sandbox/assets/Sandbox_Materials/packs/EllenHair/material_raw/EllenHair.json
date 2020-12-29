@@ -1,10 +1,10 @@
 {
-	name:"Skybox",
-	shader:"Skybox",
+	name:"EllenHair",
+	shader:"AnimModel",
 	
-	texturePackName:"Skybox",
+	texturePackName:"Ellen",
 
-	diffuseTexture:"skybox/albedo/right.jpg",
+	diffuseTexture:"ellen/albedo/ellen_hair_albedotransparency.tif",
 	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",

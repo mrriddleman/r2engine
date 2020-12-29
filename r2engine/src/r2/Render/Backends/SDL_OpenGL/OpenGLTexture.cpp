@@ -450,7 +450,7 @@ namespace r2::draw::tex
 	{
 		stbi_set_flip_vertically_on_load(false);
 
-		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(cubemap.sides[0].textureAssetHandle.assetCache);
+		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(cubemap.sides[CubemapSide::RIGHT].textureAssetHandle.assetCache);
 
 		if (!assetCache)
 		{

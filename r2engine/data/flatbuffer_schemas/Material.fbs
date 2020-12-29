@@ -15,8 +15,17 @@ table Material
 {
 	name:ulong (hash:"fnv1a_64");
 	shader:ulong (hash: "fnv1a_64");
-	color:Color;
 	texturePackName:ulong (hash:"fnv1a_64");
+
+	diffuseTexture:ulong (hash:"fnv1a_64");
+	specularTexture:ulong (hash:"fnv1a_64");
+	normalMapTexture:ulong (hash:"fnv1a_64");
+	emissionTexture:ulong (hash:"fnv1a_64");
+
+	baseColor:Color;
+	specular:float;
+	roughness:float;
+	metallic:float;
 }
 
 root_type Material;

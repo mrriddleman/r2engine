@@ -1,10 +1,10 @@
 {
-	name:"Skybox",
-	shader:"Skybox",
-	
-	texturePackName:"Skybox",
+	name:"Default",
+	shader:"Sandbox",
+	texturePackName:"Default",
 
-	diffuseTexture:"skybox/albedo/right.jpg",
+
+	diffuseTexture:"default/albedo/image.png",
 	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",
@@ -12,7 +12,7 @@
 	baseColor:{
 		r: 1.0,
 		g: 0.0,
-		b: 0.0,
+		b: 1.0,
 		a: 1.0
 	},
 	specular:0.0,

@@ -147,14 +147,14 @@ namespace r2::draw::texsys
 		r2::draw::tex::GPUHandle theDefault;
 
 		//I guess we'll just take the first asset handle for our mapping? Dunno if that will be a problem down the road?
-		r2::draw::tex::GPUHandle gpuHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemap.sides[0].textureAssetHandle.handle, theDefault);
+		r2::draw::tex::GPUHandle gpuHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemap.sides[tex::RIGHT].textureAssetHandle.handle, theDefault);
 
 		if (!TextureHandlesEqual(gpuHandle, theDefault))
 			return;
 
 		gpuHandle = r2::draw::tex::UploadToGPU(cubemap);
 
-		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemap.sides[0].textureAssetHandle.handle, gpuHandle);
+		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemap.sides[tex::RIGHT].textureAssetHandle.handle, gpuHandle);
 	}
 
 	void ReloadTexture(const r2::asset::AssetHandle& texture)
@@ -201,7 +201,7 @@ namespace r2::draw::texsys
 
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap)
 	{
-		return GetTextureAddressInternal(cubemap.sides[0].textureAssetHandle);
+		return GetTextureAddressInternal(cubemap.sides[tex::RIGHT].textureAssetHandle);
 	}
 
 
@@ -218,7 +218,7 @@ namespace r2::draw::texsys
 
 		if (TextureHandlesEqual(gpuHandle, defaultGPUHandle))
 		{
-			R2_CHECK(false, "Couldn't find the TextureAddress for texture: %llu", texture.handle);
+		//	R2_CHECK(false, "Couldn't find the TextureAddress for texture: %llu", texture.handle);
 			return tex::TextureAddress{};
 		}
 

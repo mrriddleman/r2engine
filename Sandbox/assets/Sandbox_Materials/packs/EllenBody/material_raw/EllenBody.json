@@ -1,10 +1,10 @@
 {
-	name:"Skybox",
-	shader:"Skybox",
+	name:"EllenBody",
+	shader:"AnimModel",
 	
-	texturePackName:"Skybox",
+	texturePackName:"Ellen",
 
-	diffuseTexture:"skybox/albedo/right.jpg",
+	diffuseTexture:"ellen/albedo/ellen_body_albedo.tif",
 	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",

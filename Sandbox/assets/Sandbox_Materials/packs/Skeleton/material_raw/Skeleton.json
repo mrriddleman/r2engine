@@ -1,11 +1,20 @@
 {
 	name:"Skeleton",
 	shader:"AnimModel",
-	color:{
+	texturePackName:"Skeleton",
+
+	diffuseTexture:"skeleton/albedo/skel_archer_col.tga",
+	specularTexture:"",
+	normalMapTexture:"",
+	emissionTexture:"",
+
+	baseColor:{
 		r: 1.0,
 		g: 0.0,
 		b: 0.0,
 		a: 1.0
 	},
-	texturePackName:"Skeleton"
+	specular:0.0,
+	roughness:0.0,
+	metallic:0.0
 }

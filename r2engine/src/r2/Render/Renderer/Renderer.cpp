@@ -211,10 +211,11 @@ namespace r2::draw
 
 namespace r2::draw
 {
-	u64 BatchConfig::MemorySize(u64 numModels, u64 numSubcommands, u64 numMaterials, u64 numBoneTransforms, u64 numBoneOffsets, u64 alignment, u32 headerSize, u32 boundsChecking)
+	u64 BatchConfig::MemorySize(u64 numModels, u64 numSubcommands, u64 numInfos, u64 numMaterials, u64 numBoneTransforms, u64 numBoneOffsets, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 totalBytes =
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(numSubcommands), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numInfos), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
 
 		if (numModels > 0)
@@ -408,8 +409,13 @@ namespace r2::draw::renderer
 		s_optrRenderer->finalBatch.subcommands = MAKE_SARRAY(*rendererArena, cmd::DrawBatchSubCommand, 1);
 		R2_CHECK(s_optrRenderer->finalBatch.subcommands != nullptr, "We couldn't create the subcommands for the final batch!");
 
-		s_optrRenderer->finalBatch.materials = MAKE_SARRAY(*rendererArena, MaterialHandle, 1);
-		R2_CHECK(s_optrRenderer->finalBatch.materials != nullptr, "We couldn't create the materials for the final batch!");
+		s_optrRenderer->finalBatch.materials.infos = MAKE_SARRAY(*rendererArena, MaterialBatch::Info, 1);
+		R2_CHECK(s_optrRenderer->finalBatch.materials.infos != nullptr, "We couldn't create the materials for the final batch!");
+
+		s_optrRenderer->finalBatch.materials.materialHandles = MAKE_SARRAY(*rendererArena, MaterialHandle, 1);
+		R2_CHECK(s_optrRenderer->finalBatch.materials.materialHandles != nullptr, "We couldn't create the materials for the final batch!");
+
+
 
 		s_optrRenderer->finalBatch.models = MAKE_SARRAY(*rendererArena, glm::mat4, 1);
 		R2_CHECK(s_optrRenderer->finalBatch.models != nullptr, "We couldn't create the models for the final batch!");
@@ -639,7 +645,8 @@ namespace r2::draw::renderer
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, s_optrRenderer->mCommandBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, s_optrRenderer->mFinalBucket);
 		FREE(s_optrRenderer->finalBatch.models, *arena);
-		FREE(s_optrRenderer->finalBatch.materials, *arena);
+		FREE(s_optrRenderer->finalBatch.materials.materialHandles, *arena);
+		FREE(s_optrRenderer->finalBatch.materials.infos, *arena);
 		FREE(s_optrRenderer->finalBatch.subcommands, *arena);
 
 
@@ -1276,7 +1283,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutUploadOffset>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
-			BatchConfig::MemorySize(1, 1, 1, 0, 0, ALIGNMENT, headerSize, boundsChecking) + //for the finalBatch
+			BatchConfig::MemorySize(1, 1, 1, 1, 0, 0, ALIGNMENT, headerSize, boundsChecking) + //for the finalBatch
 			materialSystemMemorySize;
 
 
@@ -1413,30 +1420,35 @@ namespace r2::draw::renderer
 		return materialHandle;
 	}
 
-	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, r2::SArray<r2::draw::MaterialHandle>& materialHandles, r2::SArray<glm::ivec4>& boneOffsets)
+	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, MaterialBatch& materialBatch, r2::SArray<glm::ivec4>& boneOffsets)
 	{
 		auto numModels = r2::sarr::Size(models);
 		u32 boneOffset = 0;
+		s32 start = 0;
+		
+
 		for (u64 i = 0; i < numModels; ++i)
 		{
 			const r2::draw::AnimModel* model = r2::sarr::At(models, i);
 
-			bool found = false;
-
 			const u64 numMaterials = r2::sarr::Size(*model->model.optrMaterialHandles);
 
-			for (u64 k = 0; k < numMaterials && !found; ++k)
+			for (u64 k = 0; k < numMaterials; ++k)
 			{
 				r2::draw::MaterialHandle materialHandle = r2::sarr::At(*model->model.optrMaterialHandles, k);
 
-				if (!r2::draw::mat::IsInvalidHandle(materialHandle))
-				{
-					r2::sarr::Push(materialHandles, materialHandle);
-					found = true;
-				}
+				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "The material handle should never be invalid!");
+				
+				r2::sarr::Push(*materialBatch.materialHandles, materialHandle);
 			}
 
-			R2_CHECK(found, "We couldn't find a valid material handle!");
+			MaterialBatch::Info info;
+			info.start = start;
+			info.numMaterials = numMaterials;
+
+			r2::sarr::Push(*materialBatch.infos, info);
+
+			start += static_cast<s32>(numMaterials);
 
 			r2::sarr::Push(boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 
@@ -1904,10 +1916,10 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		if (batch.models && (r2::sarr::Size(*batch.materials) != r2::sarr::Size(*batch.models)))
+	//	if (batch.models && (r2::sarr::Size(*batch.materials) != r2::sarr::Size(*batch.models)))
 		{
-			R2_CHECK(false, "Mismatched number of elements in batch arrays");
-			return;
+	//		R2_CHECK(false, "Mismatched number of elements in batch arrays");
+	//		return;
 		}
 
 		if (batch.boneTransformOffsets && r2::sarr::Size(*batch.boneTransformOffsets) == 0)
@@ -1975,68 +1987,69 @@ namespace r2::draw::renderer
 
 		//Set the texture addresses for all of the materials used in this batch
 
-		const u64 numMaterialsInBatch = r2::sarr::Size(*batch.materials);
+		const u64 numMaterialInfos = r2::sarr::Size(*batch.materials.infos);
 
-		r2::SArray<r2::draw::tex::TextureAddress>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::TextureAddress, MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.numDraws);
+		r2::SArray<r2::draw::RenderMaterial>* modelMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterial, numMaterialInfos * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT);
 
-		for (u64 i = 0; i < numMaterialsInBatch; ++i)
+
+		for (u64 i = 0; i < numMaterialInfos; ++i)
 		{
-			const r2::draw::MaterialHandle& matHandle = r2::sarr::At(*batch.materials, i);
+			const MaterialBatch::Info& materialInfo =  r2::sarr::At(*batch.materials.infos, i);
 
-			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(matHandle.slot);
-			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+			R2_CHECK(materialInfo.numMaterials <= MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT, "We can only have %d number of materials for a given model. Given: %d", MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT, materialInfo.numMaterials);
 
-			u64 totalNumTextures = 0;
-
-			if (!addr)
+			for (u64 k = 0; k < materialInfo.numMaterials; ++k)
 			{
-				const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, matHandle);
-				if (textures)
-				{
-					const auto numTextures = r2::sarr::Size(*textures);
-					totalNumTextures += numTextures;
+				u64 index = k + materialInfo.start;
 
-					for (u64 t = 0; t < numTextures; ++t)
+				const r2::draw::MaterialHandle& matHandle = r2::sarr::At(*batch.materials.materialHandles, index);
+
+				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(matHandle.slot);
+				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+				u64 totalNumTextures = 1;
+
+				RenderMaterial renderMaterial;
+
+				if (!addr)
+				{
+					const Material* material = mat::GetMaterial(*matSystem, matHandle);
+
+					if (material)
 					{
-						const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, t);
-						const r2::draw::tex::TextureAddress& addr = r2::draw::texsys::GetTextureAddress(texture);
-						r2::sarr::Push(*modelMaterials, addr);
+						renderMaterial.baseColor = material->baseColor;
+						renderMaterial.metallic = material->metallic;
+						renderMaterial.roughness = material->roughness;
+						renderMaterial.specular = material->specular;
+
+						renderMaterial.diffuseTexture = texsys::GetTextureAddress(material->diffuseTexture);
+						renderMaterial.specularTexture = texsys::GetTextureAddress(material->specularTexture);
+						renderMaterial.normalMapTexture = texsys::GetTextureAddress(material->normalMapTexture);
+						renderMaterial.emissionTexture = texsys::GetTextureAddress(material->emissionTexture);
 					}
 				}
-
-				//do this for the cubemaps
-				const r2::SArray<r2::draw::tex::CubemapTexture>* cubemapTextures = r2::draw::mat::GetCubemapTextures(*matSystem);
-
-				if (cubemapTextures)
+				else
 				{
-					const auto numCubemaps = r2::sarr::Size(*cubemapTextures);
 
-					totalNumTextures += numCubemaps;
-
-					for (u64 t = 0; t < numCubemaps; ++t)
-					{
-						const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*cubemapTextures, t);
-						r2::sarr::Push(*modelMaterials, r2::draw::texsys::GetTextureAddress(cubemap));
-					}
+					renderMaterial.diffuseTexture = *addr;
 				}
+
+				r2::sarr::Push(*modelMaterials, renderMaterial);
+
+
 			}
-			else
+
+			for (u64 k = materialInfo.numMaterials; k < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++k)
 			{
-
-				r2::sarr::Push(*modelMaterials, *addr);
-				totalNumTextures = 1;
-
+				RenderMaterial renderMaterial = {};
+				r2::sarr::Push(*modelMaterials, renderMaterial);
 			}
 
-			for (u64 i = totalNumTextures; i < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++i)
-			{
-				r2::sarr::Push(*modelMaterials, { 1, 1.0 });
-			}
 		}
 
 
 		//fill out material data
-		u64 materialDataSize = sizeof(r2::draw::tex::TextureAddress) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT * batch.numDraws;
+		u64 materialDataSize = sizeof(r2::draw::RenderMaterial) * numMaterialInfos * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT;
 		
 		r2::draw::cmd::FillConstantBuffer* materialsCMD = nullptr;
 		if (constCMD)
@@ -2127,7 +2140,7 @@ namespace r2::draw::renderer
 		r2::draw::cmd::CompleteConstantBuffer* completeMaterialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
 		completeMaterialsCMD->constantBufferHandle = batch.materialsHandle;
-		completeMaterialsCMD->count = batch.materials->mSize;
+		completeMaterialsCMD->count = numMaterialInfos * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT;
 
 		r2::draw::cmd::CompleteConstantBuffer* completeConstCMD = nullptr;
 		if (batch.models)
@@ -2311,7 +2324,13 @@ namespace r2::draw::renderer
 		FillSubCommandsFromModelRefs(*s_optrRenderer->finalBatch.subcommands, *quadModelRef);
 		FREE(quadModelRef, *MEM_ENG_SCRATCH_PTR);
 
-		r2::sarr::Push(*s_optrRenderer->finalBatch.materials, s_optrRenderer->mFinalCompositeMaterialHandle);
+
+		MaterialBatch::Info info;
+		info.start = 0;
+		info.numMaterials = 1;
+
+		r2::sarr::Push(*s_optrRenderer->finalBatch.materials.infos, info);
+		r2::sarr::Push(*s_optrRenderer->finalBatch.materials.materialHandles, s_optrRenderer->mFinalCompositeMaterialHandle);
 	}
 
 	//events

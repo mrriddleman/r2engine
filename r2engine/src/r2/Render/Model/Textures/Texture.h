@@ -61,8 +61,8 @@ namespace r2::draw::tex
 
 	struct TextureAddress
 	{
-		u64 containerHandle;
-		f32 texPage;
+		u64 containerHandle = 0;
+		f32 texPage = -1.0f;
 	};
 
 	struct TextureFormat
