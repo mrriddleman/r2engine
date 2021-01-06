@@ -10,6 +10,7 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
 
+
 namespace r2
 {
 	struct Camera;
@@ -18,7 +19,7 @@ namespace r2
 namespace r2::draw
 {
 	class BufferLayout;
-
+	struct LightSystem;
 	struct BufferLayoutConfiguration;
 
 	struct BufferHandles
@@ -131,6 +132,8 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
 	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
 	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws);
+	ConstantConfigHandle AddLightingLayout();
+	
 
 	//Regular methods
 	BufferHandles& GetVertexBufferHandles();
@@ -163,6 +166,8 @@ namespace r2::draw::renderer
 	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
 
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
+	
+	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem);
 
 	void AddDrawBatch(const BatchConfig& batch);
 

@@ -20,6 +20,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLUtils.h"
 
 namespace
 {
@@ -443,7 +444,7 @@ namespace r2::draw::rendererimpl
 				nextIndex = &drawCMDIndex;
 			}
 
-			glBindBuffer(bufferType, handles[i]);
+			GLCall(glBindBuffer(bufferType, handles[i]));
 			
 			
 			if (config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT))
@@ -474,8 +475,8 @@ namespace r2::draw::rendererimpl
 			}
 			else
 			{
-				glBufferData(bufferType, config.layout.GetSize(), nullptr, config.drawType);
-				glBindBufferBase(bufferType, (*nextIndex)++, handles[i]);
+				GLCall( glBufferData(bufferType, config.layout.GetSize(), nullptr, config.drawType));
+				GLCall( glBindBufferBase(bufferType, (*nextIndex)++, handles[i]));
 			}
 		}
 

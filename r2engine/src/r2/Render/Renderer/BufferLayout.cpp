@@ -11,6 +11,7 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Render/Model/Light.h"
 
 namespace r2::draw
 {
@@ -249,6 +250,22 @@ namespace r2::draw
         mType = Big;
         mFlags = flags;
         mCreateFlags = createFlags;
+    }
+
+    void ConstantBufferLayout::InitForLighting()
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = 1;
+        mElements[0].elementSize = light::MAX_NUM_LIGHTS * sizeof(PointLight) + sizeof(DirectionLight) * light::MAX_NUM_LIGHTS + sizeof(SpotLight) * light::MAX_NUM_LIGHTS + sizeof(int)*4;
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = 0;
+		mCreateFlags = 0;
     }
 
     void ConstantBufferLayout::CalculateOffsetAndSize()

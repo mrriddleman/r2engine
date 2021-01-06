@@ -38,6 +38,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Render/Animation/AnimationPlayer.h"
+#include "r2/Render/Model/Light.h"
 
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
@@ -231,6 +232,7 @@ public:
         MODEL_MATERIALS,
         BONE_TRANSFORMS,
         BONE_TRANSFORM_OFFSETS,
+        LIGHTING,
         NUM_CONSTANT_CONFIGS
     };
 
@@ -274,10 +276,10 @@ public:
 		
         R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(8) + materialMemorySystemSize, 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(16) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
-        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(1) + materialMemorySystemSize);
+        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4) + materialMemorySystemSize);
         R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
         
         auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
@@ -341,6 +343,8 @@ public:
         mBoneTransformOffsets = MAKE_SARRAY(*linearArenaPtr, glm::ivec4, NUM_DRAWS);
         mBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
+        mLightSystem = r2::draw::lightsys::CreateLightSystem(*linearArenaPtr);
+
 
         glm::mat4 quadMat = glm::mat4(1.0f);
         
@@ -555,6 +559,8 @@ public:
             {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
 		}));
 
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
+
         bool success = r2::draw::renderer::GenerateLayouts();
         R2_CHECK(success, "We couldn't create the buffer layouts!");
 
@@ -662,6 +668,107 @@ public:
         r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
 
         FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
+
+        //setup the lights
+        {
+            //r2::draw::DirectionLight dirLight;
+            //dirLight.lightProperties.color = glm::vec4(1.0f);
+            //dirLight.lightProperties.attenuation.x = 1.0f;
+            //dirLight.lightProperties.attenuation.y = 0.09f;
+            //dirLight.lightProperties.attenuation.z = 0.032f;
+            //dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 10.0f, 0.0f, 0.0f));
+
+            //r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+
+            r2::draw::SpotLight spotLight;
+            spotLight.lightProperties.color = glm::vec4(1.0f);
+            spotLight.lightProperties.attenuation.x = 1.0f;
+            spotLight.lightProperties.attenuation.y = 0.09f;
+            spotLight.lightProperties.attenuation.z = 0.032f;
+
+            spotLight.position = glm::vec4(0.0f, 5.0f, 3.0f, glm::cos(glm::radians(12.5f)));
+            spotLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
+            spotLight.direction.w = glm::cos(glm::radians(15.f));
+
+
+            r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
+   //         r2::draw::PointLight pointLight;
+
+   //         pointLight.position = glm::vec4(0, 5, 0, 1.0);
+   //         pointLight.lightProperties.color = glm::vec4(1.0f, 1.0f, 0, 1.0f);
+   //         //pointLight.lightProperties.color = glm::vec3(1.0f);
+   //         //
+   //         pointLight.lightProperties.strength = 0;
+   //         pointLight.lightProperties.specular = 0;
+
+   //         //pointLight.lightProperties.lightModifiers.ambient = glm::vec3(1.0f);
+   //         //pointLight.lightProperties.lightModifiers.diffuse = glm::vec3(1.0f);
+   //         //pointLight.lightProperties.lightModifiers.specular = glm::vec3(1.0f);
+   //         //pointLight.lightProperties.lightModifiers.emission = glm::vec3(1.0f);
+
+   //         pointLight.lightProperties.attenuation.x = 1.0f;
+   //         pointLight.lightProperties.attenuation.y = 0.09f;
+   //         pointLight.lightProperties.attenuation.z = 0.032f;
+
+
+   //         r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
+
+			//r2::draw::PointLight pointLight2;
+
+   //         pointLight2.position = glm::vec4(0, 2, -5, 1.0);
+   //         pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+   //         pointLight2.lightProperties.strength = 0;
+   //         pointLight2.lightProperties.specular = 0;
+
+
+
+   //         pointLight2.lightProperties.attenuation.x = 1.0f;
+   //         pointLight2.lightProperties.attenuation.y = 0.09f;
+   //         pointLight2.lightProperties.attenuation.z = 0.032f;
+
+
+   //         r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
+
+			//r2::draw::PointLight pointLight3;
+
+   //         pointLight3.position = glm::vec4(-7, 3, 0, 1.0);
+   //         pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+   //         pointLight3.lightProperties.strength = 0;
+   //         pointLight3.lightProperties.specular = 0;
+
+
+
+   //         pointLight3.lightProperties.attenuation.x = 1.0f;
+   //         pointLight3.lightProperties.attenuation.y = 0.09f;
+   //         pointLight3.lightProperties.attenuation.z = 0.032f;
+
+
+			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
+
+
+			//r2::draw::PointLight pointLight4;
+
+			//pointLight4.position = glm::vec4(7, 3, 0, 1.0);
+			//pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+			//pointLight4.lightProperties.strength = 0;
+			//pointLight4.lightProperties.specular = 0;
+
+
+
+			//pointLight4.lightProperties.attenuation.x = 1.0f;
+			//pointLight4.lightProperties.attenuation.y = 0.09f;
+			//pointLight4.lightProperties.attenuation.z = 0.032f;
+
+
+			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
+
+        }
+
+        r2::draw::renderer::UpdateSceneLighting(*mLightSystem);
+
 
         return assetCache != nullptr;
     }
@@ -1048,6 +1155,7 @@ public:
 
         FREE(skyboxMaterials.materialHandles, *linearArenaPtr);
         FREE(skyboxMaterials.infos, *linearArenaPtr);
+        r2::draw::lightsys::DestroyLightSystem(*linearArenaPtr, mLightSystem);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -1223,9 +1331,13 @@ private:
     const r2::draw::AnimModel* mSkeletonModel = nullptr;
     const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
+    r2::draw::LightSystem* mLightSystem = nullptr;
 
     s32 mSelectedAnimationID = 0;
     bool mDrawDebugBones = false;
+
+
+
 };
 
 namespace

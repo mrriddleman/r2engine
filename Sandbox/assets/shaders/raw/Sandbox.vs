@@ -23,11 +23,14 @@ out VS_OUT
 {
 	vec3 normal;
 	vec3 texCoords;
+	vec3 fragPos;
 	flat uint drawID;
 } vs_out;
 
 void main()
 {
+	vec4 temp = models[DrawID] * vec4(aPos, 1.0);
+	vs_out.fragPos = temp.xyz;
 	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
 	vs_out.normal = aNormal;
 	vs_out.texCoords = aTexCoord;

@@ -40,6 +40,7 @@ out VS_OUT
 {
 	vec3 normal;
 	vec3 texCoords;
+	vec3 fragPos;
 	flat uint drawID;
 } vs_out;
 
@@ -57,6 +58,7 @@ void main()
 	vs_out.normal = mat3(transpose(inverse(vertexTransform))) * aNormal;
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
+	vs_out.fragPos = modelPos.xyz;
 	gl_Position = projection * view * modelPos;
 
 }

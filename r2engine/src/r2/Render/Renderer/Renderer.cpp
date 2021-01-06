@@ -19,7 +19,7 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelSystem.h"
-
+#include "r2/Render/Model/Light.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Utils/Hash.h"
 #include <filesystem>
@@ -112,7 +112,7 @@ namespace r2::draw::cmd
 		return cmd->dataSize + offset;
 	}
 
-	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, void* data, u64 size, u64 offset)
+	u64 FillConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, const void* data, u64 size, u64 offset)
 	{
 		if (cmd == nullptr)
 		{
@@ -168,6 +168,8 @@ namespace r2::draw
 		VertexLayoutIndexOffset mIndexBufferOffset;
 	};
 
+
+
 	struct Renderer
 	{
 		//memory
@@ -199,6 +201,7 @@ namespace r2::draw
 		ConstantConfigHandle mModelConfigHandle;
 		ConstantConfigHandle mMaterialConfigHandle;
 		ConstantConfigHandle mSubcommandsConfigHandle;
+		ConstantConfigHandle mLightingConfigHandle;
 
 		//Each bucket needs the bucket and an arena for that bucket
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
@@ -1241,6 +1244,39 @@ namespace r2::draw::renderer
 		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
 	}
 
+	ConstantConfigHandle AddLightingLayout()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		if (s_optrRenderer->mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration lighting
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		lighting.layout.InitForLighting();
+
+		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, lighting);
+
+		s_optrRenderer->mLightingConfigHandle = r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
+
+		return s_optrRenderer->mLightingConfigHandle;
+	}
+
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack)
 	{
 		u32 boundsChecking = 0;
@@ -1786,6 +1822,20 @@ namespace r2::draw::renderer
 		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData.type, constBufferData.isPersistent, data, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
 	}
 
+	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem)
+	{
+		key::Basic lightKey;
+		lightKey.keyValue = 0;
+
+		cmd::FillConstantBuffer* fillLightsCMD = AddFillConstantBufferCommand(*s_optrRenderer->mCommandBucket, lightKey, sizeof(r2::draw::SceneLighting));
+
+		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*s_optrRenderer->mContantBufferHandles, s_optrRenderer->mLightingConfigHandle);
+
+		const ConstantBufferData constBufferData = GetConstData(lightBufferHandle);
+
+		r2::draw::cmd::FillConstantBufferCommand(fillLightsCMD, lightBufferHandle, constBufferData.type, constBufferData.isPersistent, &lightSystem.mSceneLighting.mPointLights[0], sizeof(r2::draw::SceneLighting), 0);
+	}
+
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs)
 	{
 		if (s_optrRenderer == nullptr)
@@ -2107,18 +2157,9 @@ namespace r2::draw::renderer
 			u64 boneTransformOffsetsDataSize = batch.boneTransformOffsets->mSize * sizeof(glm::ivec4);
 			r2::draw::cmd::FillConstantBuffer* boneTransformOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(boneTransformsCMD, boneTransformOffsetsDataSize);
 
-			char* boneTransformsOffsetsAuxMem = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(boneTransformOffsetsCMD);
-			memcpy(boneTransformsOffsetsAuxMem, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize);
-
-			boneTransformOffsetsCMD->data = boneTransformsOffsetsAuxMem;
-			boneTransformOffsetsCMD->dataSize = boneTransformOffsetsDataSize;
-			boneTransformOffsetsCMD->offset = 0;
-			boneTransformOffsetsCMD->constantBufferHandle = batch.boneTransformOffsetsHandle;
-
 			const ConstantBufferData boneXFormOffsetsConstData = GetConstData(batch.boneTransformOffsetsHandle);
+			FillConstantBufferCommand(boneTransformOffsetsCMD, batch.boneTransformOffsetsHandle, boneXFormOffsetsConstData.type, boneXFormOffsetsConstData.isPersistent, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize, 0);
 
-			boneTransformOffsetsCMD->isPersistent = boneXFormOffsetsConstData.isPersistent;
-			boneTransformOffsetsCMD->type = boneXFormOffsetsConstData.type;
 
 			prevFillCMD = boneTransformOffsetsCMD;
 		}

@@ -3,7 +3,7 @@
 #extension GL_NV_gpu_shader5 : enable
 
 const uint NUM_TEXTURES_PER_DRAWID = 8;
-const uint MAX_NUM_LIGHTS = 1000;
+const uint MAX_NUM_LIGHTS = 100;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -30,32 +30,33 @@ struct Light
 
 struct LightProperties
 {
-	Light lightModifiers;
-	vec3 color;
+	vec4 color;
+	vec4 attenuation;
 	float specular;
 	float strength;
-	AttenuationState attenuation;
+	int64_t lightID;
 };
 
 struct PointLight
 {
 	LightProperties lightProperties;
-	vec3 position;
+	vec4 position;
+
 };
 
 struct DirLight
 {
 	LightProperties lightProperties;
-	vec3 direction;
+	vec4 direction;
 };
 
 struct SpotLight
 {
 	LightProperties lightProperties;
-	vec3 position;
-	vec3 direction;
-	float radius;
-	float cutoff;
+	vec4 position;//w is radius
+	vec4 direction;//w is cutoff
+	//float radius;
+	//float cutoff;
 };
 
 struct Material
@@ -83,14 +84,14 @@ layout (std430, binding = 1) buffer Materials
 
 layout (std430, binding = 4) buffer Lighting
 {
-
 	PointLight pointLights[MAX_NUM_LIGHTS];
 	DirLight dirLights[MAX_NUM_LIGHTS];
 	SpotLight spotLights[MAX_NUM_LIGHTS];
 
-	uint numPointLights;
-	uint numDirectionLights;
-	uint numSpotLights;
+	int numPointLights;
+	int numDirectionLights;
+	int numSpotLights;
+	int temp;
 };
 
 
@@ -98,6 +99,7 @@ in VS_OUT
 {
 	vec3 normal;
 	vec3 texCoords;
+	vec3 fragPos;
 	flat uint drawID;
 } fs_in;
 
@@ -114,18 +116,44 @@ float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
 float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
 float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
 
-Light CalcLightForMaterial(Light light, float diffuse, float specular, float modifier);
+Light CalcLightForMaterial(float diffuse, float specular, float modifier);
 
 vec3 GammaCorrect(vec3 color)
 {
     return pow(color, vec3(1.0/2.2));
 }
 
+float GetTextureModifier(Tex2DAddress addr)
+{
+	return float( min(max(addr.container, 0), 1) );
+}
+
 void main()
 {
-	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
+	vec3 norm = normalize(fs_in.normal);
+	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
-	FragColor = vec4(sampledColor.rgb, 1.0);// * (0.4 * sin(cameraPosTimeW.w+PI*1.5) + 0.6);
+	vec3 lightingResult = vec3(0,0,0);
+
+	for(int i = 0; i < numDirectionLights; i++)
+	{
+		lightingResult += CalcDirLight(i, norm, viewDir);
+	}
+
+	for(int i = 0; i < numPointLights; ++i)
+	{
+		lightingResult += CalcPointLight(i, norm, fs_in.fragPos, viewDir);
+	}
+
+	for(int i = 0; i < numSpotLights; ++i)
+	{
+		lightingResult += CalcSpotLight(i, norm, fs_in.fragPos, viewDir);
+	}
+
+	FragColor = vec4(lightingResult, 1.0);
+	//vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
+
+	//FragColor = vec4(sampledColor.rgb, 1.0);// * (0.4 * sin(cameraPosTimeW.w+PI*1.5) + 0.6);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -137,7 +165,9 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
 
-	return textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * materials[texIndex].baseColor + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
 
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
@@ -149,7 +179,9 @@ vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
 
 	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
 
-	return textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * vec4(vec3(materials[texIndex].specular), 1.0) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
 
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)
@@ -161,14 +193,16 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 
 	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
 
-	return textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * vec4(0.0) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
 
 
-float CalcAttenuation(AttenuationState state, vec3 lightPos, vec3 fragPos)
+float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
 {
     float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / (state.constant + state.linear * distance + state.quadratic * (distance * distance));
+    float attenuation = 1.0 / (state.x + state.y * distance + state.z * (distance * distance));
     return attenuation;
 }
 
@@ -176,70 +210,72 @@ vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDi
 {
 	PointLight pointLight = pointLights[pointLightIndex];
 
-	vec3 lightDir = normalize(pointLight.position - fragPos);
+	vec3 lightDir = normalize(pointLight.position.xyz - fragPos);
 
 	float diffuse = max(dot(normal, lightDir), 0.0);
-
+ 
 	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
 
-	float attenuation = CalcAttenuation(pointLight.lightProperties.attenuation, pointLight.position, fragPos);
+	float attenuation = CalcAttenuation(pointLight.lightProperties.attenuation.xyz, pointLight.position.xyz, fragPos);
 
-	Light result = CalcLightForMaterial(pointLight.lightProperties.lightModifiers, diffuse, specular, attenuation);
+	Light result = CalcLightForMaterial(diffuse, specular, attenuation);
 
-	return (result.ambient + result.diffuse + result.specular) * pointLight.lightProperties.color;
+	return (result.ambient + result.diffuse + result.specular + result.emission) * pointLight.lightProperties.color.rgb * pointLight.lightProperties.strength;
 }
 
 vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir)
 {
+	
 	DirLight dirLight = dirLights[dirLightIndex];
 
-	vec3 lightDir = normalize(-dirLight.direction);
+	vec3 lightDir = normalize(-dirLight.direction.xyz);
 
 	float diffuse = max(dot(normal, lightDir), 0.0);
 
 	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
 
-	Light result = CalcLightForMaterial(dirLight.lightProperties.lightModifiers, diffuse, specular, 1.0);
+	Light result = CalcLightForMaterial(diffuse, specular, 1.0);
 
-	return (result.ambient + result.diffuse + result.specular) * dirLight.lightProperties.color;
+	return (result.ambient + result.diffuse + result.specular + result.emission) * dirLight.lightProperties.color.rgb * dirLight.lightProperties.strength;
 }
 
 vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
 	SpotLight spotLight = spotLights[spotLightIndex];
 
-
-	vec3 lightDir = normalize(spotLight.position - fragPos);
+	vec3 lightDir = normalize(spotLight.position.xyz - fragPos);
 
 	float diffuse = max(dot(normal, lightDir), 0.0);
 
 	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
 
-	float theta = dot(lightDir, normalize(spotLight.direction));
+	float theta = dot(lightDir, normalize(-spotLight.direction.xyz));
 
-	float epsilon = spotLight.radius - spotLight.cutoff;
-	float intensity = clamp((theta - spotLight.cutoff) / epsilon, 0.0, 1.0);
+	float epsilon = spotLight.position.w - spotLight.direction.w;
+	float intensity = clamp((theta - spotLight.direction.w) / epsilon, 0.0, 1.0);
 
-	float attenuation = CalcAttenuation(spotLight.lightProperties.attenuation, spotLight.position, fragPos);
+	float attenuation = CalcAttenuation(spotLight.lightProperties.attenuation.xyz, spotLight.position.xyz, fragPos);
 
-	Light result = CalcLightForMaterial(spotLight.lightProperties.lightModifiers, diffuse, specular, attenuation * intensity);
+	Light result = CalcLightForMaterial(diffuse, specular, attenuation * intensity);
 
-	return (result.ambient + result.diffuse + result.specular) * spotLight.lightProperties.color;
+	return (result.ambient + result.diffuse + result.specular + result.emission) * spotLight.lightProperties.color.rgb * spotLight.lightProperties.strength;
 }
 
-Light CalcLightForMaterial(Light light, float diffuse, float specular, float modifier)
+Light CalcLightForMaterial(float diffuse, float specular, float modifier)
 {
 	Light result;
 
 	vec3 diffuseMat = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords).rgb;
-	result.ambient = light.ambient * diffuseMat;
+	result.ambient =  diffuseMat;
 
-	result.diffuse = light.diffuse * diffuse * diffuseMat;
-	result.specular = light.specular * specular * SampleMaterialSpecular(fs_in.drawID, fs_in.texCoords).rgb;
+	result.diffuse =  diffuse * diffuseMat;
+	result.specular =  specular * SampleMaterialSpecular(fs_in.drawID, fs_in.texCoords).rgb;
+	result.emission =  SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
 	result.ambient *= modifier;
 	result.diffuse *= modifier;
 	result.specular *= modifier;
+	result.emission *= modifier;
 
 	return result;
 }
