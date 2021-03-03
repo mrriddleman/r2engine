@@ -51,13 +51,13 @@ namespace r2
     //@NOTE: Increase as needed this is for dev
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
-    //@NOTE: Increase as needed dev
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(28);
+    //@NOTE: Increase as needed for dev
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(58);
     
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);
     
-    const u64 SDL2Platform::TOTAL_SCRATCH_MEMORY = Megabytes(4);
+    const u64 SDL2Platform::TOTAL_SCRATCH_MEMORY = Megabytes(8);
     
     static char * mClipboardTextData = nullptr;
     

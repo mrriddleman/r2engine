@@ -352,13 +352,15 @@ public:
         quadMat = glm::scale(quadMat, glm::vec3(10.0f));
         r2::sarr::Push(*modelMats, quadMat);
 
+		glm::mat4 cubeMat = glm::mat4(1.0f);
+		cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 2, 0));
+		r2::sarr::Push(*modelMats, cubeMat);
+
         glm::mat4 sphereMat = glm::mat4(1.0f);
         sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
         r2::sarr::Push(*modelMats, sphereMat);
 
-        glm::mat4 cubeMat = glm::mat4(1.0f);
-        cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0.6, 0));
-        r2::sarr::Push(*modelMats, cubeMat);
+
 
         glm::mat4 cylinderMat = glm::mat4(1.0f);
         
@@ -531,9 +533,9 @@ public:
 
         //@TODO(Serge): Put this in a helper function 
 
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8), NUM_DRAWS) );
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8), NUM_DRAWS) );
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddDebugDrawLayout(NUM_DRAWS));
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8)) );
+        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8)) );
+       
 
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
@@ -547,23 +549,28 @@ public:
             {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"}
         }));
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big, NUM_DRAWS));
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big));
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout(NUM_DRAW_COMMANDS) );
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout(NUM_DRAWS) );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout() );
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout() );
 
         //Maybe these should automatically be added by the animated models layout
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout(NUM_BONES));
+        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout());
 
 		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
-            {r2::draw::ShaderDataType::Int4, "boneTransformOffsets", NUM_DRAWS}
+            {r2::draw::ShaderDataType::Int4, "boneTransformOffsets"}
 		}));
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
 
-        bool success = r2::draw::renderer::GenerateLayouts();
-        R2_CHECK(success, "We couldn't create the buffer layouts!");
 
+#ifdef R2_DEBUG
+		bool success = r2::draw::renderer::GenerateLayoutsWithDebug();
+		R2_CHECK(success, "We couldn't create the buffer layouts!");
+#else
+		bool success = r2::draw::renderer::GenerateLayouts();
+		R2_CHECK(success, "We couldn't create the buffer layouts!");
+#endif
 
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
@@ -646,7 +653,7 @@ public:
             0,
             glm::value_ptr(mPersController.GetCameraPtr()->proj));
 
-        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 1.f, 1.f, 1.f));
+        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
@@ -671,27 +678,27 @@ public:
 
         //setup the lights
         {
-            //r2::draw::DirectionLight dirLight;
-            //dirLight.lightProperties.color = glm::vec4(1.0f);
-            //dirLight.lightProperties.attenuation.x = 1.0f;
-            //dirLight.lightProperties.attenuation.y = 0.09f;
-            //dirLight.lightProperties.attenuation.z = 0.032f;
-            //dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 10.0f, 0.0f, 0.0f));
+			r2::draw::DirectionLight dirLight;
+			dirLight.lightProperties.color = glm::vec4(1.0f);
+			dirLight.lightProperties.attenuation.x = 1.0f;
+			dirLight.lightProperties.attenuation.y = 0.09f;
+			dirLight.lightProperties.attenuation.z = 0.032f;
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(-3.0f, 10.0f, 0.0f, 0.0f));
 
-            //r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
-            r2::draw::SpotLight spotLight;
-            spotLight.lightProperties.color = glm::vec4(1.0f);
-            spotLight.lightProperties.attenuation.x = 1.0f;
-            spotLight.lightProperties.attenuation.y = 0.09f;
-            spotLight.lightProperties.attenuation.z = 0.032f;
+            //r2::draw::SpotLight spotLight;
+            //spotLight.lightProperties.color = glm::vec4(1.0f);
+            //spotLight.lightProperties.attenuation.x = 1.0f;
+            //spotLight.lightProperties.attenuation.y = 0.09f;
+            //spotLight.lightProperties.attenuation.z = 0.032f;
 
-            spotLight.position = glm::vec4(0.0f, 5.0f, 3.0f, glm::cos(glm::radians(12.5f)));
-            spotLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
-            spotLight.direction.w = glm::cos(glm::radians(15.f));
+            //spotLight.position = glm::vec4(0.0f, 5.0f, 3.0f, glm::cos(glm::radians(12.5f)));
+            //spotLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
+            //spotLight.direction.w = glm::cos(glm::radians(15.f));
 
 
-            r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
+            //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
    //         r2::draw::PointLight pointLight;
 
    //         pointLight.position = glm::vec4(0, 5, 0, 1.0);
@@ -1088,16 +1095,35 @@ public:
 
 		r2::draw::renderer::AddDrawBatch(skyboxBatch);
 
+        r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(0, 5,  5), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(5, 5,  0), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 0), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(5, 5, -5), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, -5), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
+        r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
+
+
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(0, 1, 0, 1), true);
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(0, 1, 0, 1), true);
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 0, 1), true);
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(0, 1, 0, 1), true);
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
+        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(0, 1, 0, 1), true);
+		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 1, 0, 1), true);
+		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0, 1, 0, 1), true);
 
 
         if (mDrawDebugBones)
         {
-			r2::draw::renderer::AddDebugBatch(
+			r2::draw::renderer::DrawDebugBones(
 				*mDebugBones,
 				*mNumBonesPerModel,
 				*animModelMats,
-				r2::sarr::At(*constHandles, MODEL_MATRICES),
-				r2::sarr::At(*constHandles, SUB_COMMANDS));
+				glm::vec4(1,1,0,1));
+
+          
         }
 
         

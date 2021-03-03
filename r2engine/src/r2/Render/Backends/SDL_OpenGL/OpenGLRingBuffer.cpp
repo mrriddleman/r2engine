@@ -7,7 +7,7 @@
 
 namespace r2::draw::rendererimpl
 {
-	GLuint64 kOneSecondInNanoSeconds = 1000000000;
+	GLuint64 kOneSecondInNanoSeconds = 500000;
 
 	bool BufferRangeOverlaps(const BufferRange& _lhs, const BufferRange& _rhs) {
 		return _lhs.startOffset < (_rhs.startOffset + _rhs.length)
@@ -58,12 +58,8 @@ namespace r2::draw::rendererimpl
 		}
 
 		r2::sarr::Clear(locks);
-		u64 swapLocksSize = r2::sarr::Size(*swapLocks);
-		for (u64 i = 0; i < swapLocksSize; ++i)
-		{
-			const auto& lock = r2::sarr::At(*swapLocks, i);
-			r2::sarr::Push(locks, lock);
-		}
+
+		r2::sarr::Copy(locks, *swapLocks);
 
 		FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 	}
@@ -104,6 +100,39 @@ namespace r2::draw::rendererimpl
 			LockRange(*ringBuffer.locks, ringBuffer.head, size);
 
 			ringBuffer.head = (ringBuffer.head + size) % ringBuffer.count;
+		}
+
+		void Clear(RingBuffer& ringBuffer)
+		{
+			r2::SArray<BufferLock>& locks = *ringBuffer.locks;
+			const u64 numLocks = r2::sarr::Size(locks);
+
+			r2::SArray<BufferLock>* swapLocks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
+
+			for (u64 i = 0; i < numLocks; ++i)
+			{
+				BufferLock& nextLock = r2::sarr::At(locks, i);
+
+				GLbitfield waitFlags = 0;
+				GLuint64 waitDuration = 0;
+	
+				GLenum waitRet = glClientWaitSync(*&nextLock.syncObject, waitFlags, waitDuration);
+
+				if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED) {
+
+					glDeleteSync(nextLock.syncObject);
+				}
+				else
+				{
+					r2::sarr::Push(*swapLocks, nextLock);
+				}
+			}
+
+			r2::sarr::Clear(locks);
+
+			r2::sarr::Copy(locks, *swapLocks);
+
+			FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		GLsizeiptr GetHead(RingBuffer& ringBuffer)

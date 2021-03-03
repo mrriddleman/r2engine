@@ -15,7 +15,13 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];
 };
 
+out VS_OUT
+{
+	flat uint drawID;
+} vs_out;
+
 void main()
 {
+	vs_out.drawID = DrawID;
 	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
 }

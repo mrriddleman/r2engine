@@ -9,8 +9,161 @@
 #include "r2/Core/File/PathUtils.h"
 #include <filesystem>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
 #include <glm/gtc/constants.hpp>
+#include "r2/Core/Math/MathUtils.h"
+
+namespace
+{
+
+	struct Vertex3LookupEntry
+	{
+		flat::Vertex3 key;
+		std::vector<flat::Vertex3> vals;
+	};
+
+	bool Vertex3IsEqual(const flat::Vertex3& v1, const flat::Vertex3& v2)
+	{
+		return r2::math::NearEq(v1.x(), v2.x()) && r2::math::NearEq(v1.y(), v2.y()) && r2::math::NearEq(v1.z(), v2.z());
+	}
+
+	flat::Vertex3 Normalize(const flat::Vertex3& v)
+	{
+		float len = std::sqrtf(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
+		
+		if (len == 0)
+		{
+			return flat::Vertex3(0, 0, 0);
+		}
+
+	//	R2_CHECK(!r2::math::NearZero(len), "Len cannot be zero!");
+
+		return flat::Vertex3(v.x() / len, v.y() / len, v.z() / len);
+	}
+
+	flat::Vertex3 Subtract(const flat::Vertex3& v1, const flat::Vertex3& v2)
+	{
+		return flat::Vertex3(v1.x() - v2.x(), v1.y() - v2.y(), v1.z() - v2.z());
+	}
+
+	flat::Vertex2 Subtract(const flat::Vertex2& v1, const flat::Vertex2& v2)
+	{
+		return flat::Vertex2(v1.x() - v2.x(), v1.y() - v2.y());
+	}
+
+
+	flat::Vertex3 Add(const flat::Vertex3& v1, const flat::Vertex3& v2)
+	{
+		return flat::Vertex3(v1.x() + v2.x(), v1.y() + v2.y(), v1.z() + v2.z());
+	}
+
+
+	flat::Vertex3 Divide(const flat::Vertex3& v, float divisor)
+	{
+		if (r2::math::NearZero(divisor))
+		{
+			R2_CHECK(false, "Divisor is 0!");
+			return flat::Vertex3(0, 0, 0);
+		}
+
+		return flat::Vertex3(v.x() / divisor, v.y() / divisor, v.z() / divisor);
+	}
+
+	flat::Vertex3 Average(const std::vector<flat::Vertex3>& vertices)
+	{
+		flat::Vertex3 result(0, 0, 0);
+		for (size_t i = 0; i < vertices.size(); ++i)
+		{
+			result = Add(result, vertices[i]);
+		}
+		if (vertices.size() > 0)
+		{
+			return Divide(result, vertices.size());
+		}
+		return result;
+	}
+
+	void CalculateTangentAndBiTangent(const flat::Vertex3& edge1, const flat::Vertex3& edge2, const flat::Vertex2& deltaUV1, const flat::Vertex2& deltaUV2, flat::Vertex3& tangent, flat::Vertex3& bitangent)
+    {
+        float denom = deltaUV1.x() * deltaUV2.y() - deltaUV2.x() * deltaUV1.y();
+        R2_CHECK(!r2::math::NearEq( denom, 0.0), "denominator is 0!");
+        
+        float f = 1.0f / denom;
+
+		tangent = flat::Vertex3(
+			f * (deltaUV2.y() * edge1.x() - deltaUV1.y() * edge2.x()),
+			f * (deltaUV2.y() * edge1.y() - deltaUV1.y() * edge2.y()),
+			f * (deltaUV2.y() * edge1.z() - deltaUV1.y() * edge2.z())
+		);
+
+		tangent = Normalize(tangent);
+        
+
+		bitangent = flat::Vertex3(
+			f * (-deltaUV2.x() * edge1.x() + deltaUV1.x() * edge2.x()),
+			f * (-deltaUV2.x() * edge1.y() + deltaUV1.x() * edge2.y()),
+			f * (-deltaUV2.x() * edge1.z() + deltaUV1.x() * edge2.z())
+		);
+
+		bitangent = Normalize(bitangent);
+
+		//        float denom = deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y;
+//        R2_CHECK(!r2::math::NearEq( denom, 0.0), "denominator is 0!");
+//        
+//        float f = 1.0f / denom;
+//        
+//        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+//        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+//        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+//        tangent = glm::normalize(tangent);
+//        
+//        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+//        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+//        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+//        bitangent = glm::normalize(bitangent);
+    }
+
+	void AddVertex3ToMap(std::vector<Vertex3LookupEntry>& entries, const flat::Vertex3& key, const flat::Vertex3& val)
+	{
+		bool found = false;
+
+		for (size_t i = 0; i < entries.size(); ++i)
+		{
+			if (Vertex3IsEqual(key, entries[i].key))
+			{
+				found = true;
+
+				entries[i].vals.push_back(val);
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			entries.push_back({ key, {val} });
+		}
+	}
+
+	std::vector<flat::Vertex3>* FindVertex3(std::vector<Vertex3LookupEntry>& entries, const flat::Vertex3& key)
+	{
+		for (size_t i = 0; i < entries.size(); ++i)
+		{
+			if (Vertex3IsEqual(key, entries[i].key))
+			{
+				
+
+				return &entries[i].vals;
+			}
+		}
+
+		R2_CHECK(false, "We couldn't find the entry for the key");
+
+		return nullptr;
+	}
+
+
+}
 
 namespace r2::asset::pln
 {
@@ -87,8 +240,9 @@ namespace r2::asset::pln
 			MakeQuad,
 			MakeCube,
 			MakeSphere,
-			MakeCone,
 			MakeCylinder,
+			MakeCone,
+			
 		};
 
 		for (const auto& meshFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -135,6 +289,9 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> positions;
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
+		std::vector<flat::Vertex3> tangents;
+		std::vector<flat::Vertex3> bitangents;
+
 
 		flat::Vertex3 p1 = flat::Vertex3(-0.5f, -0.5f, 0.0f);
 		flat::Vertex3 p2 = flat::Vertex3(-0.5f, 0.5f, 0.0f);
@@ -166,6 +323,49 @@ namespace r2::asset::pln
 		texCoords.push_back(t3);
 		texCoords.push_back(t4);
 
+
+		flat::Vertex3 tangent1;
+		flat::Vertex3 bitangent1;
+
+		flat::Vertex3 tangent2;
+		flat::Vertex3 bitangent2;
+
+		flat::Vertex3 tri1Edge1 = Subtract(positions[0], positions[1]);
+		flat::Vertex3 tri1Edge2 = Subtract(positions[2], positions[1]);
+		flat::Vertex2 deltaUV1 = Subtract(t1, t2);
+		flat::Vertex2 deltaUV2 = Subtract(t3, t2);
+
+		CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+		flat::Vertex3 tri2Edge1 = Subtract(positions[2], positions[1]);
+		flat::Vertex3 tri2Edge2 = Subtract(positions[3], positions[1]);
+		deltaUV1 = Subtract(t3, t2);
+		deltaUV2 = Subtract(t4, t2);
+
+		CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+
+		std::vector<flat::Vertex3> temp{tangent1, tangent2};
+		
+		flat::Vertex3 averagedTangent = Average(temp);
+
+		temp.clear();
+		temp.push_back(bitangent1);
+		temp.push_back(bitangent2);
+
+		flat::Vertex3 averagedBiTangent = Average(temp);
+
+		tangents.push_back(tangent1);
+		tangents.push_back(averagedTangent);
+		tangents.push_back(averagedTangent);
+		tangents.push_back(tangent2);
+
+
+		bitangents.push_back(bitangent1);
+		bitangents.push_back(averagedBiTangent);
+		bitangents.push_back(averagedBiTangent);
+		bitangents.push_back(bitangent2);
+
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
 		std::vector<uint32_t> indices;
@@ -184,7 +384,7 @@ namespace r2::asset::pln
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
-		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("QuadMesh"), positions.size(), faces.size(), &positions, &normals, &texCoords, &faces);
+		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("QuadMesh"), positions.size(), faces.size(), &positions, &normals, &tangents, &bitangents, &texCoords, &faces);
 		fbb.Finish(mesh);
 		const std::string name = "QuadMesh";
 
@@ -204,22 +404,80 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> positions;
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
+		std::vector<flat::Vertex3> tangents;
+		std::vector<flat::Vertex3> bitangents;
 
 		//Front face
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
 		positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
 		positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
+		positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
+		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
+		
+		
+		
 
 		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
 		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
 		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
 		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
 
-		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
-		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
+
 		texCoords.push_back(flat::Vertex2(0.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
+		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
+		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
+		
+		flat::Vertex3 tangent1;
+		flat::Vertex3 bitangent1;
+
+		flat::Vertex3 tangent2;
+		flat::Vertex3 bitangent2;
+
+		flat::Vertex3 tri1Edge1;
+		flat::Vertex3 tri1Edge2;
+
+		flat::Vertex2 deltaUV1;
+		flat::Vertex2 deltaUV2;
+
+		flat::Vertex3 tri2Edge1;
+		flat::Vertex3 tri2Edge2;
+
+		tri1Edge1 = Subtract(positions[0], positions[1]);
+		tri1Edge2 = Subtract(positions[2], positions[1]);
+
+		deltaUV1 = Subtract(texCoords[0], texCoords[1]);
+		deltaUV2 = Subtract(texCoords[2], texCoords[1]);
+
+		CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+		tri2Edge1 = Subtract(positions[2], positions[1]);
+		tri2Edge2 = Subtract(positions[3], positions[1]);
+
+		deltaUV1 = Subtract(texCoords[2], texCoords[1]);
+		deltaUV2 = Subtract(texCoords[3], texCoords[1]);
+
+		CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+		std::vector<flat::Vertex3> temp{ tangent1, tangent2 };
+
+		flat::Vertex3 averagedTangent = Average(temp);
+
+		temp.clear();
+		temp.push_back(bitangent1);
+		temp.push_back(bitangent2);
+
+		flat::Vertex3 averagedBiTangent = Average(temp);
+
+		tangents.push_back(tangent1);
+		tangents.push_back(averagedTangent);
+		tangents.push_back(averagedTangent);
+		tangents.push_back(tangent2);
+
+		bitangents.push_back(bitangent1);
+		bitangents.push_back(averagedBiTangent);
+		bitangents.push_back(averagedBiTangent);
+		bitangents.push_back(bitangent2);
+
 
 		//Right Face
 		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
@@ -237,6 +495,49 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
 
+		//tangent stuff
+		{
+			tri1Edge1 = Subtract(positions[5], positions[4]);
+			tri1Edge2 = Subtract(positions[6], positions[4]);
+
+			deltaUV1 = Subtract(texCoords[5], texCoords[4]);
+			deltaUV2 = Subtract(texCoords[6], texCoords[4]);
+
+			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+			tri2Edge1 = Subtract(positions[5], positions[4]);
+			tri2Edge2 = Subtract(positions[7], positions[4]);
+
+			deltaUV1 = Subtract(texCoords[5], texCoords[4]);
+			deltaUV2 = Subtract(texCoords[7], texCoords[4]);
+
+			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+			temp.clear();
+			temp.push_back(tangent1);
+			temp.push_back(tangent2);
+
+			averagedTangent = Average(temp);
+
+			temp.clear();
+			temp.push_back(bitangent1);
+			temp.push_back(bitangent2);
+
+			averagedBiTangent = Average(temp);
+
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent1);
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent2);
+
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent1);
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent2);
+		}
+		
+
+
 		//Left Face
 		positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
 		positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
@@ -252,6 +553,49 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
+
+		{
+			tri1Edge1 = Subtract(positions[8], positions[9]);
+			tri1Edge2 = Subtract(positions[10], positions[9]);
+
+			deltaUV1 = Subtract(texCoords[8], texCoords[9]);
+			deltaUV2 = Subtract(texCoords[10], texCoords[9]);
+
+			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+			tri2Edge1 = Subtract(positions[10], positions[9]);
+			tri2Edge2 = Subtract(positions[11], positions[9]);
+
+			deltaUV1 = Subtract(texCoords[10], texCoords[9]);
+			deltaUV2 = Subtract(texCoords[11], texCoords[9]);
+
+			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+			temp.clear();
+			temp.push_back(tangent1);
+			temp.push_back(tangent2);
+
+			averagedTangent = Average(temp);
+
+			temp.clear();
+			temp.push_back(bitangent1);
+			temp.push_back(bitangent2);
+
+			averagedBiTangent = Average(temp);
+
+			tangents.push_back(tangent1);
+			tangents.push_back(averagedTangent);
+
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent2);
+
+			bitangents.push_back(bitangent1);
+			bitangents.push_back(averagedBiTangent);
+
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent2);
+		}
+		
 
 		//Back Face
 		positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
@@ -269,6 +613,50 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
 
+
+		//tangent stuff
+		{
+			tri1Edge1 = Subtract(positions[12], positions[13]);
+			tri1Edge2 = Subtract(positions[14], positions[13]);
+
+			deltaUV1 = Subtract(texCoords[12], texCoords[13]);
+			deltaUV2 = Subtract(texCoords[14], texCoords[13]);
+
+			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+			tri2Edge1 = Subtract(positions[14], positions[13]);
+			tri2Edge2 = Subtract(positions[15], positions[13]);
+
+			deltaUV1 = Subtract(texCoords[14], texCoords[13]);
+			deltaUV2 = Subtract(texCoords[15], texCoords[13]);
+
+			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+			temp.clear();
+			temp.push_back(tangent1);
+			temp.push_back(tangent2);
+
+			averagedTangent = Average(temp);
+
+			temp.clear();
+			temp.push_back(bitangent1);
+			temp.push_back(bitangent2);
+
+			averagedBiTangent = Average(temp);
+
+			tangents.push_back(tangent1);
+			tangents.push_back(averagedTangent);
+
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent2);
+
+			bitangents.push_back(bitangent1);
+			bitangents.push_back(averagedBiTangent);
+
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent2);
+		}
+
 		//Top Face
 		positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
 		positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
@@ -285,6 +673,50 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
 
+
+		//tangent stuff
+		{
+			tri1Edge1 = Subtract(positions[16], positions[17]);
+			tri1Edge2 = Subtract(positions[18], positions[17]);
+
+			deltaUV1 = Subtract(texCoords[16], texCoords[17]);
+			deltaUV2 = Subtract(texCoords[18], texCoords[17]);
+
+			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+			tri2Edge1 = Subtract(positions[18], positions[17]);
+			tri2Edge2 = Subtract(positions[19], positions[17]);
+
+			deltaUV1 = Subtract(texCoords[18], texCoords[17]);
+			deltaUV2 = Subtract(texCoords[19], texCoords[17]);
+
+			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+			temp.clear();
+			temp.push_back(tangent1);
+			temp.push_back(tangent2);
+
+			averagedTangent = Average(temp);
+
+			temp.clear();
+			temp.push_back(bitangent1);
+			temp.push_back(bitangent2);
+
+			averagedBiTangent = Average(temp);
+
+			tangents.push_back(tangent1);
+			tangents.push_back(averagedTangent);
+
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent2);
+
+			bitangents.push_back(bitangent1);
+			bitangents.push_back(averagedBiTangent);
+
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent2);
+		}
+
 		//Bottom Face
 		positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
 		positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
@@ -300,14 +732,57 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
+
+		//tangent stuff
+		{
+			tri1Edge1 = Subtract(positions[20], positions[21]);
+			tri1Edge2 = Subtract(positions[22], positions[21]);
+
+			deltaUV1 = Subtract(texCoords[20], texCoords[21]);
+			deltaUV2 = Subtract(texCoords[22], texCoords[21]);
+
+			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+			tri2Edge1 = Subtract(positions[22], positions[21]);
+			tri2Edge2 = Subtract(positions[23], positions[21]);
+
+			deltaUV1 = Subtract(texCoords[22], texCoords[21]);
+			deltaUV2 = Subtract(texCoords[23], texCoords[21]);
+
+			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+
+			temp.clear();
+			temp.push_back(tangent1);
+			temp.push_back(tangent2);
+
+			averagedTangent = Average(temp);
+
+			temp.clear();
+			temp.push_back(bitangent1);
+			temp.push_back(bitangent2);
+
+			averagedBiTangent = Average(temp);
+
+			tangents.push_back(tangent1);
+			tangents.push_back(averagedTangent);
+
+			tangents.push_back(averagedTangent);
+			tangents.push_back(tangent2);
+
+			bitangents.push_back(bitangent1);
+			bitangents.push_back(averagedBiTangent);
+
+			bitangents.push_back(averagedBiTangent);
+			bitangents.push_back(bitangent2);
+		}
 		
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
 		std::vector<uint32_t> indices;
 
 		indices.push_back(0);
+		indices.push_back(2);
 		indices.push_back(1);
-		indices.push_back(3);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
@@ -322,87 +797,87 @@ namespace r2::asset::pln
 		indices.clear();
 
 		indices.push_back(4);
-		indices.push_back(6);
 		indices.push_back(5);
+		indices.push_back(6);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(6);
-		indices.push_back(4);
 		indices.push_back(7);
+		indices.push_back(4);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(8);
-		indices.push_back(9);
 		indices.push_back(10);
+		indices.push_back(9);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(9);
-		indices.push_back(11);
 		indices.push_back(10);
+		indices.push_back(11);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(12);
-		indices.push_back(13);
 		indices.push_back(14);
+		indices.push_back(13);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(13);
-		indices.push_back(15);
 		indices.push_back(14);
+		indices.push_back(15);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(16);
-		indices.push_back(17);
 		indices.push_back(18);
+		indices.push_back(17);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(17);
-		indices.push_back(19);
 		indices.push_back(18);
+		indices.push_back(19);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(20);
-		indices.push_back(21);
 		indices.push_back(22);
+		indices.push_back(21);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		indices.push_back(21);
-		indices.push_back(23);
 		indices.push_back(22);
+		indices.push_back(23);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
 		indices.clear();
 
 		auto mesh= flat::CreateMeshDirect(fbb, STRING_ID("CubeMesh"), positions.size(), faces.size(),
-			&positions, &normals, &texCoords, &faces);
+			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string name = "CubeMesh";
@@ -426,6 +901,11 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> positions;
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
+		std::vector<flat::Vertex3> tangents;
+		std::vector<flat::Vertex3> bitangents;
+
+		std::vector<Vertex3LookupEntry> positionTangentMap;
+		std::vector<Vertex3LookupEntry> positionBiTangentMap;
 
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
@@ -447,6 +927,9 @@ namespace r2::asset::pln
 			}
 		}
 
+
+
+
 		// generate CCW index list of sphere triangles
 		int k1, k2;
 		for (int i = 0; i < segments; ++i)
@@ -461,8 +944,27 @@ namespace r2::asset::pln
 				if (i != 0)
 				{
 					indices.push_back(k1);
-					indices.push_back(k2);
 					indices.push_back(k1 + 1);
+					indices.push_back(k2);
+
+
+					flat::Vertex3 tangent1;
+					flat::Vertex3 bitangent1;
+
+					flat::Vertex3 tri1Edge1 = Subtract(positions[k1], positions[k1 + 1]);
+					flat::Vertex3 tri1Edge2 = Subtract(positions[k2], positions[k1 + 1]);
+					flat::Vertex2 deltaUV1 = Subtract(texCoords[k1], texCoords[k1 + 1]);
+					flat::Vertex2 deltaUV2 = Subtract(texCoords[k2], texCoords[k1 + 1]);
+
+					CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+					AddVertex3ToMap(positionTangentMap, positions[k1], tangent1);
+					AddVertex3ToMap(positionTangentMap, positions[k1 + 1], tangent1);
+					AddVertex3ToMap(positionTangentMap, positions[k2], tangent1);
+
+					AddVertex3ToMap(positionBiTangentMap, positions[k1], bitangent1);
+					AddVertex3ToMap(positionBiTangentMap, positions[k1 + 1], bitangent1);
+					AddVertex3ToMap(positionBiTangentMap, positions[k2], bitangent1);
 
 					faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 					indices.clear();
@@ -472,8 +974,29 @@ namespace r2::asset::pln
 				if (i != (segments - 1))
 				{
 					indices.push_back(k1 + 1);
-					indices.push_back(k2);
 					indices.push_back(k2 + 1);
+					indices.push_back(k2);
+
+					flat::Vertex3 tangent1;
+					flat::Vertex3 bitangent1;
+
+					flat::Vertex3 tri1Edge1 = Subtract(positions[k1 + 1], positions[k2 + 1]);
+					flat::Vertex3 tri1Edge2 = Subtract(positions[k2], positions[k2 + 1]);
+					flat::Vertex2 deltaUV1 = Subtract(texCoords[k1 + 1], texCoords[k2 + 1]);
+					flat::Vertex2 deltaUV2 = Subtract(texCoords[k2], texCoords[k2 + 1]);
+
+					CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+
+					AddVertex3ToMap(positionTangentMap, positions[k1 + 1], tangent1);
+					AddVertex3ToMap(positionTangentMap, positions[k2 + 1], tangent1);
+					AddVertex3ToMap(positionTangentMap, positions[k2], tangent1);
+
+
+					AddVertex3ToMap(positionBiTangentMap, positions[k1 + 1], bitangent1);
+					AddVertex3ToMap(positionBiTangentMap, positions[k2 + 1], bitangent1);
+					AddVertex3ToMap(positionBiTangentMap, positions[k2], bitangent1);
+
 
 					faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 					indices.clear();
@@ -481,8 +1004,22 @@ namespace r2::asset::pln
 			}
 		}
 
+
+
+		for (size_t i = 0; i < positions.size(); ++i)
+		{
+			std::vector<flat::Vertex3>* tangentsForPosition = FindVertex3(positionTangentMap, positions[i]);//positionTangentMap[positions[i]];
+			std::vector<flat::Vertex3>* bitangentsForPosition = FindVertex3(positionBiTangentMap, positions[i]);//positionBiTangentMap[positions[i]];
+
+			tangents.push_back(Average(*tangentsForPosition));
+			bitangents.push_back(Average(*bitangentsForPosition));
+		}
+
+
+
+
 		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("SphereMesh"), positions.size(), faces.size(),
-			&positions, &normals, &texCoords, &faces);
+			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string name = "SphereMesh";
@@ -518,6 +1055,14 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> positions;
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
+		std::vector<flat::Vertex3> tangents;
+		std::vector<flat::Vertex3> bitangents;
+
+		std::vector<Vertex3LookupEntry> positionTangentMap;
+		std::vector<Vertex3LookupEntry> positionBiTangentMap;
+
+		/*std::unordered_map<flat::Vertex3, std::vector<flat::Vertex3>> positionTangentMap;
+		std::unordered_map<flat::Vertex3, std::vector<flat::Vertex3>> positionBiTangentMap;*/
 
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
@@ -614,15 +1159,35 @@ namespace r2::asset::pln
 		unsigned int k1, k2;
 		for (int i = 0; i < stackCount; ++i)
 		{
-			k1 = i * (sectorCount + 1);     // bebinning of current stack
+			k1 = i * (sectorCount + 1);     // beginning of current stack
 			k2 = k1 + sectorCount + 1;      // beginning of next stack
 
 			for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
 			{
-				// 2 trianles per sector
+				// 2 triangles per sector
 				indices.push_back(k1);
 				indices.push_back(k1 + 1);
 				indices.push_back(k2);
+
+
+				flat::Vertex3 tangent1;
+				flat::Vertex3 bitangent1;
+
+				flat::Vertex3 tri1Edge1 = Subtract(positions[k1], positions[k1 + 1]);
+				flat::Vertex3 tri1Edge2 = Subtract(positions[k2], positions[k1 + 1]);
+				flat::Vertex2 deltaUV1 = Subtract(texCoords[k1], texCoords[k1 + 1]);
+				flat::Vertex2 deltaUV2 = Subtract(texCoords[k2], texCoords[k1 + 1]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[k1], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k1 + 1], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k2], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[k1], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k1 + 1], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k2], bitangent1);
+
 				
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
@@ -630,6 +1195,22 @@ namespace r2::asset::pln
 				indices.push_back(k2);
 				indices.push_back(k1 + 1);
 				indices.push_back(k2 + 1);
+
+
+				tri1Edge1 = Subtract(positions[k2], positions[k1 + 1]);
+				tri1Edge2 = Subtract(positions[k2+1], positions[k1 + 1]);
+				deltaUV1 = Subtract(texCoords[k2], texCoords[k1 + 1]);
+				deltaUV2 = Subtract(texCoords[k2+1], texCoords[k1 + 1]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[k2], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k1 + 1], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k2+1], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[k2], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k1 + 1], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k2+1], bitangent1);
 
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
@@ -662,6 +1243,26 @@ namespace r2::asset::pln
 				indices.push_back(k + 1);
 				indices.push_back(k);
 
+
+				flat::Vertex3 tangent1;
+				flat::Vertex3 bitangent1;
+
+				flat::Vertex3 tri1Edge1 = Subtract(positions[baseVertexIndex], positions[k1 + 1]);
+				flat::Vertex3 tri1Edge2 = Subtract(positions[k], positions[k1 + 1]);
+				flat::Vertex2 deltaUV1 = Subtract(texCoords[baseVertexIndex], texCoords[k1 + 1]);
+				flat::Vertex2 deltaUV2 = Subtract(texCoords[k], texCoords[k1 + 1]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[baseVertexIndex], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k + 1], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[baseVertexIndex], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k+1], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k], bitangent1);
+
+
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
 			}
@@ -671,6 +1272,26 @@ namespace r2::asset::pln
 				indices.push_back(baseVertexIndex);
 				indices.push_back(baseVertexIndex + 1);
 				indices.push_back(k);
+
+
+				flat::Vertex3 tangent1;
+				flat::Vertex3 bitangent1;
+
+				flat::Vertex3 tri1Edge1 = Subtract(positions[baseVertexIndex], positions[baseVertexIndex + 1]);
+				flat::Vertex3 tri1Edge2 = Subtract(positions[k], positions[baseVertexIndex + 1]);
+
+				flat::Vertex2 deltaUV1 = Subtract(texCoords[baseVertexIndex], texCoords[baseVertexIndex + 1]);
+				flat::Vertex2 deltaUV2 = Subtract(texCoords[k], texCoords[baseVertexIndex + 1]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[baseVertexIndex], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[baseVertexIndex + 1], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[baseVertexIndex], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[baseVertexIndex + 1], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k], bitangent1);
 
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
@@ -690,6 +1311,28 @@ namespace r2::asset::pln
 				indices.push_back(k);
 				indices.push_back(k + 1);
 
+
+
+				flat::Vertex3 tangent1;
+				flat::Vertex3 bitangent1;
+
+				flat::Vertex3 tri1Edge1 = Subtract(positions[topVertexIndex], positions[k]);
+				flat::Vertex3 tri1Edge2 = Subtract(positions[k+1], positions[k]);
+
+				flat::Vertex2 deltaUV1 = Subtract(texCoords[topVertexIndex], texCoords[k]);
+				flat::Vertex2 deltaUV2 = Subtract(texCoords[k+1], texCoords[k]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[topVertexIndex], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k+1], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[topVertexIndex], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k+1], bitangent1);
+
+
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
 			}
@@ -699,13 +1342,45 @@ namespace r2::asset::pln
 				indices.push_back(k);
 				indices.push_back(topVertexIndex + 1);
 
+
+				flat::Vertex3 tangent1;
+				flat::Vertex3 bitangent1;
+
+				flat::Vertex3 tri1Edge1 = Subtract(positions[topVertexIndex], positions[k]);
+				flat::Vertex3 tri1Edge2 = Subtract(positions[topVertexIndex + 1], positions[k]);
+
+				flat::Vertex2 deltaUV1 = Subtract(texCoords[topVertexIndex], texCoords[k]);
+				flat::Vertex2 deltaUV2 = Subtract(texCoords[topVertexIndex + 1], texCoords[k]);
+
+				CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+
+				AddVertex3ToMap(positionTangentMap, positions[topVertexIndex], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[k], tangent1);
+				AddVertex3ToMap(positionTangentMap, positions[topVertexIndex + 1], tangent1);
+
+				AddVertex3ToMap(positionBiTangentMap, positions[topVertexIndex], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[k], bitangent1);
+				AddVertex3ToMap(positionBiTangentMap, positions[topVertexIndex + 1], bitangent1);
+
+
 				faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 				indices.clear();
 			}	
 		}
 
+		for (size_t i = 0; i < positions.size(); ++i)
+		{
+			std::vector<flat::Vertex3>* tangentsForPosition = FindVertex3(positionTangentMap, positions[i]);
+			std::vector<flat::Vertex3>* bitangentsForPosition = FindVertex3(positionBiTangentMap, positions[i]);
+
+			tangents.push_back(Average(*tangentsForPosition));
+			bitangents.push_back(Average(*bitangentsForPosition));
+		}
+
+
+
 		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID(name), positions.size(), faces.size(),
-			&positions, &normals, &texCoords, &faces);
+			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string fileName = name;
@@ -727,7 +1402,7 @@ namespace r2::asset::pln
 
 	void MakeCubeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cube", "CubeMesh", "Basic", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Cube", "CubeMesh", "Face", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeSphereModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)

@@ -80,8 +80,6 @@ namespace
 			{
 				auto iter = mBoneMap.find(nextNode->mName.C_Str());
 
-				glm::mat4 temp;
-
 				if (iter != mBoneMap.end())
 				{
 					glm::mat4 temp = iter->second.invBindPoseMat;
@@ -192,6 +190,17 @@ namespace
 			if (mesh->mTextureCoords)
 			{
 				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, meshIndex);
+			}
+
+			if (mesh->mTangents)
+			{
+				nextVertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+		//		printf("nextVertex.tangent - x: %f, y: %f, z: %f\n", nextVertex.tangent.x, nextVertex.tangent.y, nextVertex.tangent.y);
+			}
+
+			if (mesh->mBitangents)
+			{
+				nextVertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 			}
 
 			r2::sarr::Push(*nextMeshPtr->optrVertices, nextVertex);
@@ -360,9 +369,9 @@ namespace
 
 			r2::sarr::Push(*skeleton.mParents, joint.parentIndex);
 
-#ifdef R2_DEBUG
-			skeleton.mDebugBoneNames.push_back(node->mName.C_Str());
-#endif // R2_DEBUG
+//#ifdef R2_DEBUG
+//			skeleton.mDebugBoneNames.push_back(node->mName.C_Str());
+//#endif // R2_DEBUG
 
 			auto realBoneIter = mBoneMap.find(node->mName.C_Str());
 			if (realBoneIter != mBoneMap.end())
@@ -409,6 +418,7 @@ namespace r2::asset
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
+			aiProcess_CalcTangentSpace |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_RemoveRedundantMaterials |
 			 aiProcess_FindDegenerates |
@@ -464,6 +474,7 @@ namespace r2::asset
 		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
+			aiProcess_CalcTangentSpace |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_RemoveRedundantMaterials |
 			 aiProcess_FindDegenerates |
@@ -645,7 +656,7 @@ namespace r2::asset
 		std::string nodeName = std::string(node->mName.data);
 
 		auto iter = mBoneNecessityMap.find(nodeName);
-		if (iter != mBoneNecessityMap.end() && iter->second == true)
+		if (iter != mBoneNecessityMap.end() && (bool)iter->second == true)
 		{
 			mJoints.push_back(Joint());
 

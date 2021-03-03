@@ -89,6 +89,8 @@ namespace r2::asset
 			const auto* positions = flatMesh->positions();
 			const auto* normals = flatMesh->normals();
 			const auto* texCoords = flatMesh->textureCoords();
+			const auto* tangents = flatMesh->tangents();
+			const auto* bitangents = flatMesh->bitangents();
 
 			R2_CHECK(positions != nullptr, "We should always have positions!");
 
@@ -104,6 +106,17 @@ namespace r2::asset
 				nextVertex.texCoords = glm::vec3(texCoords->Get(v)->x(), texCoords->Get(v)->y(), 0);
 			}
 
+			if (tangents)
+			{
+				
+				nextVertex.tangent = glm::vec3(tangents->Get(v)->x(), tangents->Get(v)->y(), tangents->Get(v)->z());
+			}
+
+			if (bitangents)
+			{
+				nextVertex.bitangent = glm::vec3(bitangents->Get(v)->x(), bitangents->Get(v)->y(), bitangents->Get(v)->z());
+			}
+
 			r2::sarr::Push(*mesh->optrVertices, nextVertex);
 		}
 
@@ -116,7 +129,6 @@ namespace r2::asset
 				r2::sarr::Push(*mesh->optrIndices, flatMesh->faces()->Get(f)->indices()->Get(j));
 			}
 		}
-
 
 		return mesh != nullptr;
 	}

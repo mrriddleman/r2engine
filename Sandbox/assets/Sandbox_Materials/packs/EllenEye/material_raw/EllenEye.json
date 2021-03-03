@@ -6,7 +6,7 @@
 
 	diffuseTexture:"ellen/albedo/ellen_eye_albedo.tif",
 	specularTexture:"",
-	normalMapTexture:"",
+	normalMapTexture:"ellen/normal/ellen_eye_normal.tif",
 	emissionTexture:"",
 
 	baseColor:{

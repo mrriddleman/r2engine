@@ -5,6 +5,7 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/BufferLayout.h"
+#include "r2/Render/Renderer/Commands.h"
 
 namespace r2
 {
@@ -14,8 +15,6 @@ namespace r2
 namespace r2::draw
 {
 	struct BufferLayoutConfiguration;
-
-
 }
 
 namespace r2::draw::rendererimpl
@@ -75,12 +74,13 @@ namespace r2::draw::rendererimpl
 	//draw functions
 	void Clear(u32 flags);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
-	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0);
+	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0, cmd::PrimitiveType primitivetype = cmd::PrimitiveType::TRIANGLES);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0);
+	void ApplyDrawState(const cmd::DrawState& state);
 
 	//events
 	void WindowResized(u32 width, u32 height);

@@ -51,6 +51,23 @@ namespace r2::draw::cmd
 		return cmd->dataSize + offset;
 	}
 
+	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const r2::SArray<r2::draw::DebugVertex>& vertices, VertexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd is null!");
+			return 0;
+		}
+
+		const u64 numVertices = r2::sarr::Size(vertices);
+
+		cmd->vertexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::sarr::At(vertices, 0)) * numVertices;
+		cmd->data = vertices.mData;
+
+		return cmd->dataSize + offset;
+	}
 
 	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
 	{
@@ -64,7 +81,7 @@ namespace r2::draw::cmd
 
 		cmd->vertexBufferHandle = handle;
 		cmd->offset = offset;
-		cmd->dataSize = sizeof(r2::sarr::At(*mesh.optrVertices, 0)) * numVertices;
+		cmd->dataSize = sizeof(r2::draw::Vertex) * numVertices;
 		cmd->data = r2::sarr::Begin(*mesh.optrVertices);
 
 		return cmd->dataSize + offset;
@@ -168,7 +185,23 @@ namespace r2::draw
 		VertexLayoutIndexOffset mIndexBufferOffset;
 	};
 
+	struct InternalDebugRenderCommand
+	{
+		glm::vec3 pos = glm::vec3(0.0f);
+		glm::vec3 scale = glm::vec3(1.0f);
+		glm::vec4 color = glm::vec4(1.0f);
 
+		u64 linePointsOffset = 0;
+		DebugModelType modelType = DEBUG_LINE;
+		b32 filled = false;
+		b32 disableDepth = false;
+	};
+
+	struct LineVerticesSubCommandsData
+	{
+		u32 numLineVerticesForSubCommands = 0;
+		u32 lineInstanceForSubCommands = 0;
+	};
 
 	struct Renderer
 	{
@@ -194,7 +227,7 @@ namespace r2::draw
 		ModelSystem* mModelSystem = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
 		MaterialSystem* mMaterialSystem = nullptr;
-		r2::draw::MaterialHandle mDebugMaterialHandle;
+		
 		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
 
 		BatchConfig finalBatch;
@@ -208,7 +241,23 @@ namespace r2::draw
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mFinalBucket = nullptr;
 		r2::mem::StackArena* mCommandArena = nullptr;
 
-		VertexConfigHandle mDebugVertexConfigHandle = InvalidVertexConfigHandle;
+		
+#ifdef R2_DEBUG
+		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
+		r2::draw::MaterialHandle mDebugModelMaterialHandle;
+		VertexConfigHandle mDebugLinesVertexConfigHandle = InvalidVertexConfigHandle;
+		VertexConfigHandle mDebugModelVertexConfigHandle = InvalidVertexConfigHandle;
+	//	r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>* mDebugLineSubCommands = nullptr;
+	//	r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* mDebugModelSubCommands = nullptr;
+		r2::SArray<r2::draw::DebugVertex>* mDebugLineVerticesToDraw = nullptr;
+		r2::SArray<InternalDebugRenderCommand>* mDebugLineCmdsToDraw = nullptr;
+		r2::SArray<InternalDebugRenderCommand>* mDebugModelCmdsToDraw = nullptr;
+		ConstantConfigHandle mDebugLinesSubCommandsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mColorsConstantConfigHandle = InvalidConstantConfigHandle;
+
+		LineVerticesSubCommandsData mLineVerticesSubCommandsData;
+#endif
+
 	};
 }
 
@@ -255,9 +304,18 @@ namespace
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
 	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 32;
 	const u64 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8;
+	const u32 MAX_NUM_DRAWS = 2 << 13;
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
-	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = 2048; //?
+	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS; 
+
+	const u64 MAX_NUM_BONES = MAX_NUM_DRAWS;
+
+#ifdef R2_DEBUG
+	const u32 MAX_NUM_DEBUG_DRAW_COMMANDS = MAX_NUM_DRAWS;//Megabytes(4) / sizeof(InternalDebugRenderCommand);
+	const u32 MAX_NUM_DEBUG_LINES = MAX_NUM_DRAWS;// Megabytes(8) / (2 * sizeof(DebugVertex));
+	const u32 MAX_NUM_DEBUG_MODELS = 5;
+#endif
 
 	const std::string MODL_EXT = ".modl";
 	const std::string MESH_EXT = ".mesh";
@@ -325,6 +383,24 @@ namespace r2::draw::renderer
 	void AddDrawBatchInternal(CommandBucket<key::Basic>& bucket, const BatchConfig& batch, tex::TextureAddress* addr);
 	void AddFinalBatchInternal();
 	void SetupFinalBatchInternal();
+
+#ifdef R2_DEBUG
+	void CreateDebugBatchSubCommands();
+	void CreateDebugModelSubCommands();
+	void CreateDebugLineSubCommands();
+	void ClearDebugRenderSubCommandsData();
+
+	VertexConfigHandle AddDebugDrawLayout();
+	ConstantConfigHandle AddDebugLineSubCommandsLayout();
+	ConstantConfigHandle AddDebugColorsLayout();
+
+
+
+	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
+	void FillSubCommandsForDebugLines(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, bool depthEnabled);
+
+#endif
+
 
 	//basic stuff
 	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath)
@@ -474,11 +550,22 @@ namespace r2::draw::renderer
 
 		R2_CHECK(s_optrRenderer->mEngineModelRefs != nullptr, "We couldn't create the engine model refs");
 
+#ifdef R2_DEBUG
 
+		s_optrRenderer->mDebugLineVerticesToDraw = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DEBUG_LINES);
 
-		
+		R2_CHECK(s_optrRenderer->mDebugLineVerticesToDraw != nullptr, "We couldn't create the debug lines");
 
-		bool rendererImpl = r2::draw::rendererimpl::RendererImplInit(memoryAreaHandle, MAX_NUM_CONSTANT_BUFFERS, MAX_NUM_CONSTANT_BUFFER_LOCKS, "RendererImpl");
+		s_optrRenderer->mDebugLineCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
+
+		R2_CHECK(s_optrRenderer->mDebugLineCmdsToDraw != nullptr, "We couldn't create the debug commands");
+
+		s_optrRenderer->mDebugModelCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
+
+		R2_CHECK(s_optrRenderer->mDebugModelCmdsToDraw != nullptr, "We couldn't create the debug commands");
+#endif
+
+		bool rendererImpl = r2::draw::rendererimpl::RendererImplInit(memoryAreaHandle, MAX_NUM_CONSTANT_BUFFERS, MAX_NUM_DRAWS, "RendererImpl");
 		if (!rendererImpl)
 		{
 			R2_CHECK(false, "We couldn't initialize the renderer implementation");
@@ -522,7 +609,10 @@ namespace r2::draw::renderer
 		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 
-		s_optrRenderer->mDebugMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*s_optrRenderer->mMaterialSystem, STRING_ID("Debug"));
+#ifdef R2_DEBUG
+		s_optrRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*s_optrRenderer->mMaterialSystem, STRING_ID("DebugLines"));
+		s_optrRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*s_optrRenderer->mMaterialSystem, STRING_ID("DebugModels"));
+#endif
 		s_optrRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*s_optrRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
 
 
@@ -595,6 +685,10 @@ namespace r2::draw::renderer
 			return;
 		}
 
+#ifdef R2_DEBUG
+		CreateDebugBatchSubCommands();
+#endif
+
 		if (r2::sarr::Size(*s_optrRenderer->finalBatch.subcommands) == 0)
 		{
 			//@NOTE: this is here because we need to wait till the user of the code makes all of the handles
@@ -628,6 +722,11 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*s_optrRenderer->mCommandBucket);
 		cmdbkt::ClearAll(*s_optrRenderer->mFinalBucket);
 		//This is kinda bad but... 
+
+#ifdef R2_DEBUG
+		ClearDebugRenderSubCommandsData();
+#endif
+
 		RESET_ARENA(*s_optrRenderer->mCommandArena);
 	}
 
@@ -643,6 +742,12 @@ namespace r2::draw::renderer
 
 		r2::mem::LinearArena* arena = s_optrRenderer->mSubAreaArena;
 
+
+#ifdef R2_DEBUG
+		FREE(s_optrRenderer->mDebugModelCmdsToDraw, *arena);
+		FREE(s_optrRenderer->mDebugLineCmdsToDraw, *arena);
+		FREE(s_optrRenderer->mDebugLineVerticesToDraw, *arena);
+#endif
 
 		FREE(s_optrRenderer->mCommandArena, *arena);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, s_optrRenderer->mCommandBucket);
@@ -732,6 +837,25 @@ namespace r2::draw::renderer
 		return GenerateBufferLayouts(s_optrRenderer->mVertexLayouts) &&
 		GenerateConstantBuffers(s_optrRenderer->mConstantLayouts);
 	}
+
+#ifdef R2_DEBUG
+	bool GenerateLayoutsWithDebug()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		//add the debug stuff here
+		AddDebugDrawLayout();
+		AddDebugColorsLayout();
+		AddDebugLineSubCommandsLayout();
+		
+
+		return GenerateLayouts();
+	}
+#endif
 
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts)
 	{
@@ -930,7 +1054,7 @@ namespace r2::draw::renderer
 		return true;
 	}
 
-	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs)
+	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -949,9 +1073,13 @@ namespace r2::draw::renderer
 
 		layoutConfig.layout = BufferLayout(
 			{
-				{{r2::draw::ShaderDataType::Float3, "aPos"},
+				{
+				{r2::draw::ShaderDataType::Float3, "aPos"},
 				{r2::draw::ShaderDataType::Float3, "aNormal"},
-				{r2::draw::ShaderDataType::Float3, "aTexCoord"}}
+				{r2::draw::ShaderDataType::Float3, "aTexCoord"},
+				{r2::draw::ShaderDataType::Float3, "aTangent"},
+				{r2::draw::ShaderDataType::Float3, "aBiTangent"}
+				}
 			}
 		);
 
@@ -972,18 +1100,20 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeStatic
 		};
 
-		layoutConfig.useDrawIDs = generateDrawIDs;
-		layoutConfig.maxDrawCount = numDraws;
+		layoutConfig.useDrawIDs = true;
+		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = numVertexLayouts;
 
 		r2::sarr::Push(*s_optrRenderer->mVertexLayouts, layoutConfig);
 
 		s_optrRenderer->finalBatch.vertexLayoutConfigHandle = r2::sarr::Size(*s_optrRenderer->mVertexLayouts) - 1;
 
+		s_optrRenderer->mDebugModelVertexConfigHandle = s_optrRenderer->finalBatch.vertexLayoutConfigHandle;
+
 		return s_optrRenderer->finalBatch.vertexLayoutConfigHandle;
 	}
 
-	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs)
+	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1007,6 +1137,8 @@ namespace r2::draw::renderer
 				{r2::draw::ShaderDataType::Float3, "aPos", 0},
 				{r2::draw::ShaderDataType::Float3, "aNormal", 0},
 				{r2::draw::ShaderDataType::Float3, "aTexCoord", 0},
+				{r2::draw::ShaderDataType::Float3, "aTangent", 0},
+				{r2::draw::ShaderDataType::Float3, "aBiTangent", 0},
 				{r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
 				{r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
 			}
@@ -1029,16 +1161,16 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeStatic
 		};
 
-		layoutConfig.useDrawIDs = generateDrawIDs;
-		layoutConfig.maxDrawCount = numDraws;
+		layoutConfig.useDrawIDs = true;
+		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = numVertexLayouts;
 
 		r2::sarr::Push(*s_optrRenderer->mVertexLayouts, layoutConfig);
 
 		return r2::sarr::Size(*s_optrRenderer->mVertexLayouts) - 1;
 	}
-
-	VertexConfigHandle AddDebugDrawLayout(u64 maxDraws)
+#ifdef R2_DEBUG
+	VertexConfigHandle AddDebugDrawLayout()
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1052,12 +1184,11 @@ namespace r2::draw::renderer
 			return InvalidVertexConfigHandle;
 		}
 
-		if (s_optrRenderer->mDebugVertexConfigHandle != InvalidVertexConfigHandle)
+		if (s_optrRenderer->mDebugLinesVertexConfigHandle != InvalidVertexConfigHandle)
 		{
 			R2_CHECK(false, "We have already added the debug vertex layout!");
-			return s_optrRenderer->mDebugVertexConfigHandle;
+			return s_optrRenderer->mDebugLinesVertexConfigHandle;
 		}
-
 
 		r2::draw::BufferLayoutConfiguration layoutConfig;
 
@@ -1080,15 +1211,16 @@ namespace r2::draw::renderer
 		};
 
 		layoutConfig.useDrawIDs = true;
-		layoutConfig.maxDrawCount = maxDraws;
+		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = 1;
 
 		r2::sarr::Push(*s_optrRenderer->mVertexLayouts, layoutConfig);
 
-		s_optrRenderer->mDebugVertexConfigHandle = r2::sarr::Size(*s_optrRenderer->mVertexLayouts) - 1;
+		s_optrRenderer->mDebugLinesVertexConfigHandle = r2::sarr::Size(*s_optrRenderer->mVertexLayouts) - 1;
 
-		return s_optrRenderer->mDebugVertexConfigHandle;
+		return s_optrRenderer->mDebugLinesVertexConfigHandle;
 	}
+#endif
 
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements)
 	{
@@ -1128,7 +1260,7 @@ namespace r2::draw::renderer
 		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
 	}
 
-	ConstantConfigHandle AddMaterialLayout(u64 maxDraws)
+	ConstantConfigHandle AddMaterialLayout()
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1152,7 +1284,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		materials.layout.InitForMaterials(0, 0, maxDraws);
+		materials.layout.InitForMaterials(0, 0, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, materials);
 
@@ -1161,7 +1293,7 @@ namespace r2::draw::renderer
 		return s_optrRenderer->mMaterialConfigHandle;
 	}
 
-	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type, u64 maxDraws)
+	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1177,13 +1309,13 @@ namespace r2::draw::renderer
 
 		s_optrRenderer->mModelConfigHandle = AddConstantBufferLayout(type, {
 			{
-				r2::draw::ShaderDataType::Mat4, "models", maxDraws}
+				r2::draw::ShaderDataType::Mat4, "models", MAX_NUM_DRAWS}
 			});
 
 		return s_optrRenderer->mModelConfigHandle;
 	}
 
-	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws)
+	ConstantConfigHandle AddSubCommandsLayout()
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1204,7 +1336,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, maxDraws);
+		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, subCommands);
 
@@ -1213,7 +1345,79 @@ namespace r2::draw::renderer
 		return s_optrRenderer->mSubcommandsConfigHandle;
 	}
 
-	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws)
+#ifdef R2_DEBUG
+	ConstantConfigHandle AddDebugLineSubCommandsLayout()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		if (s_optrRenderer->mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration subCommands
+		{
+			//layout
+			{},
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		subCommands.layout.InitForDebugSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
+
+		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, subCommands);
+
+		s_optrRenderer->mDebugLinesSubCommandsConfigHandle = r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
+
+		return s_optrRenderer->mDebugLinesSubCommandsConfigHandle;
+	}
+
+	ConstantConfigHandle AddDebugColorsLayout()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		if (s_optrRenderer->mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		ConstantBufferFlags flags = r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT;
+		CreateConstantBufferFlags createFlags = r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE;
+		auto type = ConstantBufferLayout::Type::Big;
+
+		r2::draw::ConstantBufferLayoutConfiguration colorsLayout
+		{
+			//layout
+			{
+				type,
+				flags,
+				createFlags,
+				{
+					{r2::draw::ShaderDataType::Mat4, "Colors"}
+				}
+			},
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, colorsLayout);
+
+		s_optrRenderer->mColorsConstantConfigHandle = r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
+
+		return s_optrRenderer->mColorsConstantConfigHandle;
+	}
+
+#endif
+
+	ConstantConfigHandle AddBoneTransformsLayout()
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -1237,7 +1441,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		boneTransforms.layout.InitForBoneTransforms(0, 0, maxDraws);
+		boneTransforms.layout.InitForBoneTransforms(0, 0, MAX_NUM_BONES);
 
 		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, boneTransforms);
 
@@ -1305,7 +1509,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 1, ALIGNMENT, headerSize, boundsChecking ) +
+			r2::draw::RenderTarget::MemorySize(1, 1, ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -1314,14 +1518,25 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS * r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena) + r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY + COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking) +
+			
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutUploadOffset>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			BatchConfig::MemorySize(1, 1, 1, 1, 0, 0, ALIGNMENT, headerSize, boundsChecking) + //for the finalBatch
-			materialSystemMemorySize;
-
+			materialSystemMemorySize
+#ifdef R2_DEBUG
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(MAX_NUM_DEBUG_MODELS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawDebugBatchSubCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking)
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugVertex>::MemorySize(MAX_NUM_DEBUG_LINES), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<InternalDebugRenderCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking) * 2
+#endif
+			; //end of sizes
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
 	}
@@ -1499,9 +1714,6 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
-
-		const VertexLayoutConfigHandle& handles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, vertexLayoutConfig);
-
 		
 		const r2::draw::Model* quadModel = GetDefaultModel(r2::draw::QUAD);
 		const r2::draw::Model* sphereModel = GetDefaultModel(r2::draw::SPHERE);
@@ -1867,34 +2079,6 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<u64>& numBonesPerModel)
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-		const u64 numModels = r2::sarr::Size(numBonesPerModel);
-
-		u64 numVertices = 0;
-
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			u64 numBonesForModeli = r2::sarr::At(numBonesPerModel, i);
-			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
-
-			subCommand.baseInstance = i;
-			subCommand.firstVertex = numVertices;
-			subCommand.instanceCount = 1;
-			
-			u64 verts = 2 * numBonesForModeli;
-			numVertices += verts; 
-			subCommand.count = verts;
-
-			r2::sarr::Push(subCommands, subCommand);
-		}
-	}
 
 	r2::draw::cmd::Clear* AddClearCommand(CommandBucket<key::Basic>& bucket, r2::draw::key::Basic key)
 	{
@@ -2174,9 +2358,8 @@ namespace r2::draw::renderer
 		batchCMD->batchHandle = batch.subCommandsHandle;
 		batchCMD->numSubCommands = batch.subcommands->mSize;
 		batchCMD->subCommands = subCommandsMem;
-
-
-
+		batchCMD->primitiveType = batch.primitiveType;
+		batchCMD->state.depthEnabled = batch.depthTest;
 
 		r2::draw::cmd::CompleteConstantBuffer* completeMaterialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
@@ -2215,12 +2398,554 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void AddDebugBatch(
+#ifdef R2_DEBUG
+	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<u64>& numBonesPerModel)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		const u64 numModels = r2::sarr::Size(numBonesPerModel);
+
+		u32 numVerts = 0;
+
+		for (u64 i = 0; i < numModels; ++i)
+		{
+			u64 numBonesForModeli = r2::sarr::At(numBonesPerModel, i);
+			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
+
+			subCommand.baseInstance = i;
+			subCommand.firstVertex = numVerts;//s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands;
+			subCommand.instanceCount = 1;
+
+			u64 verts = 2 * numBonesForModeli;
+			numVerts += verts;
+			subCommand.count = verts;
+
+			r2::sarr::Push(subCommands, subCommand);
+		}
+	}
+
+	void FillSubCommandsForDebugLines(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, bool disableDepth)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mDebugLineVerticesToDraw == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+		//@TODO(Serge): fix...
+
+		const u64 numVertices = r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
+		const u64 numLineCommands = r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
+
+
+		auto lineVerticesForSubCommands = s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands;
+		auto lineInstanceForSubCommands = s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands;
+
+		for (u64 i = 0; i < numLineCommands; ++i)
+		{
+			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
+			subCommand.baseInstance = lineInstanceForSubCommands++;
+			subCommand.instanceCount = 1;
+			subCommand.count = 2;
+
+			const auto& lineCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
+
+			if (lineCMD.disableDepth == disableDepth)
+			{
+				subCommand.firstVertex = lineVerticesForSubCommands;
+				r2::sarr::Push(subCommands, subCommand);
+			}
+
+			lineVerticesForSubCommands += 2;
+		}
+	}
+
+	void AddModelDebugBatch(r2::SArray<cmd::DrawBatchSubCommand>* subCommands, r2::SArray<glm::mat4>* models, r2::SArray<glm::vec4>* colors, bool filled)
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		if (subCommands == nullptr || models == nullptr || colors == nullptr)
+		{
+			R2_CHECK(false, "One of the inputs is null!");
+			return;
+		}
+
+		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, s_optrRenderer->mDebugModelVertexConfigHandle);
+
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
+
+		r2::draw::key::Basic batchKey = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_DEBUG, 0, 0, s_optrRenderer->mDebugModelMaterialHandle);
+
+		u64 modelsMemSize = r2::sarr::Size(*models) * sizeof(glm::mat4);
+
+		cmd::FillConstantBuffer* fillModelsCommand = AddFillConstantBufferCommand(*s_optrRenderer->mCommandBucket, batchKey, modelsMemSize);
+
+		char* modelsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillModelsCommand);
+		memcpy(modelsAuxMemory, models->mData, modelsMemSize);
+
+		//fill out fillModelsCommand
+		{
+			fillModelsCommand->data = modelsAuxMemory;
+			fillModelsCommand->dataSize = modelsMemSize;
+			fillModelsCommand->offset = 0;
+			fillModelsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+
+			const ConstantBufferData modelConstData = GetConstData(fillModelsCommand->constantBufferHandle);
+
+			fillModelsCommand->isPersistent = modelConstData.isPersistent;
+			fillModelsCommand->type = modelConstData.type;
+		}
+
+		u32 numColorsInArray = r2::sarr::Size(*colors);
+		u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
+		constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
+		u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
+		u32 numColors = numMat4ForColors * numVec4InMat4;
+
+		u64 colorsMemSize = numColors * sizeof(glm::vec4);
+
+		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelsCommand, colorsMemSize);
+
+		char* colorsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillColorsCommand);
+
+		memset(colorsAuxMemory, 0, colorsMemSize);
+		memcpy(colorsAuxMemory, colors->mData, realColorSize);
+
+		//fill out fillColorsCommand
+		{
+			fillColorsCommand->data = colorsAuxMemory;
+			fillColorsCommand->dataSize = colorsMemSize;
+			fillColorsCommand->offset = 0;
+			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+			
+			const ConstantBufferData colorConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+
+			fillColorsCommand->isPersistent = colorConstData.isPersistent;
+			fillColorsCommand->type = colorConstData.type;
+		}
+
+		u64 subCommandsSize = subCommands->mSize * sizeof(cmd::DrawBatchSubCommand);
+		r2::draw::cmd::DrawBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawBatch>(fillColorsCommand, subCommandsSize);
+
+		cmd::DrawBatchSubCommand* subCommandsMem = (cmd::DrawBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawBatch>(batchCMD);
+		memcpy(subCommandsMem, subCommands->mData, subCommandsSize);
+
+		batchCMD->bufferLayoutHandle = vertexLayoutHandles.mBufferLayoutHandle;
+		batchCMD->batchHandle = r2::sarr::At(*constHandles, s_optrRenderer->mSubcommandsConfigHandle);//batch.subCommandsHandle;
+		batchCMD->numSubCommands = subCommands->mSize;
+		batchCMD->subCommands = subCommandsMem;
+		batchCMD->state.depthEnabled = true;
+
+		if (filled)
+		{
+			batchCMD->primitiveType = cmd::PrimitiveType::TRIANGLES;
+		}
+		else
+		{
+			batchCMD->primitiveType = cmd::PrimitiveType::LINES;
+		}
+
+		cmd::CompleteConstantBuffer* completeModelsCMD = r2::draw::renderer::AppendCommand<cmd::DrawBatch, cmd::CompleteConstantBuffer>(batchCMD, 0);
+		
+		completeModelsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+		completeModelsCMD->count = models->mSize;
+		
+
+		cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<cmd::CompleteConstantBuffer, cmd::CompleteConstantBuffer>(completeModelsCMD, 0);
+
+		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+		completeColorsCMD->count = numMat4ForColors;
+
+	}
+
+	void AddLinesDebugBatch(r2::SArray<cmd::DrawDebugBatchSubCommand>* subCommands, r2::SArray<glm::mat4>* models, r2::SArray<glm::vec4>* colors, bool depthDisabled)
+	{
+		//@TODO(Serge): implement
+
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		if (!s_optrRenderer->mConstantBufferData)
+		{
+			R2_CHECK(false, "We haven't generated any constant buffers!");
+			return;
+		}
+
+		if (s_optrRenderer->mDebugLinesVertexConfigHandle == InvalidVertexConfigHandle)
+		{
+			R2_CHECK(false, "We haven't setup a debug vertex configuration!");
+			return;
+		}
+
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
+		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, s_optrRenderer->mDebugLinesVertexConfigHandle);
+
+		u64 vOffset = 0;
+
+		r2::draw::key::Basic fillKey = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_DEBUG, 0, 0, s_optrRenderer->mDebugLinesMaterialHandle);
+
+		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(*s_optrRenderer->mCommandBucket, fillKey, 0);
+		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *s_optrRenderer->mDebugLineVerticesToDraw, vertexLayoutHandles.mVertexBufferHandles[0], vOffset);
+
+		u64 modelsMemSize = r2::sarr::Size(*models) * sizeof(glm::mat4);
+
+		cmd::FillConstantBuffer* fillModelsCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillConstantBuffer>(fillVertexCommand, modelsMemSize); //AddFillConstantBufferCommand(*s_optrRenderer->mCommandBucket, batchKey, modelsMemSize);
+
+		char* modelsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillModelsCommand);
+		memcpy(modelsAuxMemory, models->mData, modelsMemSize);
+
+		//fill out fillModelsCommand
+		{
+			fillModelsCommand->data = modelsAuxMemory;
+			fillModelsCommand->dataSize = modelsMemSize;
+			fillModelsCommand->offset = 0;
+			fillModelsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+
+			const ConstantBufferData modelConstData = GetConstData(fillModelsCommand->constantBufferHandle);
+
+			fillModelsCommand->isPersistent = modelConstData.isPersistent;
+			fillModelsCommand->type = modelConstData.type;
+		}
+
+
+
+		u32 numColorsInArray = r2::sarr::Size(*colors);
+		u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
+		constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
+		u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
+		u32 numColors = numMat4ForColors * numVec4InMat4;
+
+		u64 colorsMemSize = numColors * sizeof(glm::vec4);
+
+		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelsCommand, colorsMemSize);
+
+		char* colorsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillColorsCommand);
+		memset(colorsAuxMemory, 0, colorsMemSize);
+
+		memcpy(colorsAuxMemory, colors->mData, realColorSize);
+
+		//fill out fillColorsCommand
+		{
+			fillColorsCommand->data = colorsAuxMemory;
+			fillColorsCommand->dataSize = colorsMemSize;
+			fillColorsCommand->offset = 0;
+			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+
+			const ConstantBufferData colorConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+
+			fillColorsCommand->isPersistent = colorConstData.isPersistent;
+			fillColorsCommand->type = colorConstData.type;
+		}
+
+		u64 subCommandsSize = subCommands->mSize * sizeof(cmd::DrawDebugBatchSubCommand);
+		r2::draw::cmd::DrawDebugBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawDebugBatch>(fillColorsCommand, subCommandsSize);
+
+		cmd::DrawDebugBatchSubCommand* subCommandsMem = (cmd::DrawDebugBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawDebugBatch>(batchCMD);
+		memcpy(subCommandsMem, subCommands->mData, subCommandsSize);
+
+		batchCMD->bufferLayoutHandle = vertexLayoutHandles.mBufferLayoutHandle;
+		batchCMD->batchHandle = r2::sarr::At(*constHandles, s_optrRenderer->mSubcommandsConfigHandle);
+		batchCMD->numSubCommands = subCommands->mSize;
+		batchCMD->subCommands = subCommandsMem;
+		batchCMD->state.depthEnabled = !depthDisabled;
+
+		cmd::CompleteConstantBuffer* completeModelsCMD = r2::draw::renderer::AppendCommand<cmd::DrawDebugBatch, cmd::CompleteConstantBuffer>(batchCMD, 0);
+
+		completeModelsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+		completeModelsCMD->count = models->mSize;
+
+
+		cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<cmd::CompleteConstantBuffer, cmd::CompleteConstantBuffer>(completeModelsCMD, 0);
+
+		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+		completeColorsCMD->count = numMat4ForColors;
+
+
+	}
+
+	void CreateDebugBatchSubCommands()
+	{
+		CreateDebugModelSubCommands();
+		CreateDebugLineSubCommands();
+	}
+
+	void CreateDebugModelSubCommands()
+	{		
+		//@NOTE: this isn't at all thread safe! 
+		if (s_optrRenderer == nullptr || s_optrRenderer->mDebugModelCmdsToDraw == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		const u64 numDebugCommands = r2::sarr::Size(*s_optrRenderer->mDebugModelCmdsToDraw);
+
+		if (numDebugCommands == 0)
+		{
+			return;
+		}
+		
+		u32 numFilledCommands = 0;
+		u32 numEmptyCommands = 0;
+
+		for (u64 i = 0; i < numDebugCommands; ++i)
+		{
+			const auto& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugModelCmdsToDraw, i);
+
+			if (debugCMD.modelType == DEBUG_LINE)
+			{
+				R2_CHECK(false, "Why do we have a DEBUG_LINE type in here?");
+				continue;
+			}
+
+			if (debugCMD.filled)
+			{
+				++numFilledCommands;
+			}
+			else
+			{
+				++numEmptyCommands;
+			}
+		}
+
+		//@TODO(Serge): add depth enable/disable support
+
+		r2::SArray<ModelRef>* filledModelRefs = nullptr;
+		r2::SArray<cmd::DrawBatchSubCommand>* filledSubCommands = nullptr;
+		r2::SArray<glm::mat4>* filledModels = nullptr;
+		r2::SArray<glm::vec4>* filledColors = nullptr;
+
+		if (numFilledCommands > 0)
+		{
+			filledModelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numFilledCommands);
+			filledSubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawBatchSubCommand, numFilledCommands);
+			filledModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numFilledCommands);
+			filledColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numFilledCommands);
+		}
+		
+		r2::SArray<ModelRef>* emptyModelRefs = nullptr;
+		r2::SArray<cmd::DrawBatchSubCommand>* emptySubCommands = nullptr;
+		r2::SArray<glm::mat4>* emptyModels = nullptr;
+		r2::SArray<glm::vec4>* emptyColors = nullptr;
+
+		if (numEmptyCommands > 0)
+		{
+			emptyModelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numEmptyCommands);
+			emptySubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawBatchSubCommand, numEmptyCommands);
+			emptyModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numEmptyCommands);
+			emptyColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numEmptyCommands);
+		}
+
+		for (u64 i = 0; i < numDebugCommands; ++i)
+		{
+			const auto& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugModelCmdsToDraw, i);
+
+			if (debugCMD.modelType == DEBUG_LINE)
+			{
+				R2_CHECK(false, "Why do we have a DEBUG_LINE type in here?");
+				continue;
+			}
+
+			r2::draw::ModelRef modelRef = GetDefaultModelRef(static_cast<DefaultModel>(debugCMD.modelType));
+			
+			math::Transform transform;
+			transform.scale = debugCMD.scale;
+			transform.position = debugCMD.pos;
+			glm::mat4 modelMatrix = math::ToMatrix(transform);
+
+			if (debugCMD.filled)
+			{
+				r2::sarr::Push(*filledModelRefs, modelRef);
+				r2::sarr::Push(*filledModels, modelMatrix);
+				r2::sarr::Push(*filledColors, debugCMD.color);
+			}
+			else
+			{
+				r2::sarr::Push(*emptyModelRefs, modelRef);
+				r2::sarr::Push(*emptyModels, modelMatrix);
+				r2::sarr::Push(*emptyColors, debugCMD.color);
+			}
+		}
+
+		if (filledSubCommands && filledModelRefs)
+		{
+			FillSubCommandsFromModelRefs(*filledSubCommands, *filledModelRefs);
+			AddModelDebugBatch(filledSubCommands, filledModels, filledColors, true);
+		}
+
+		if (emptySubCommands && emptyModelRefs)
+		{
+			FillSubCommandsFromModelRefs(*emptySubCommands, *emptyModelRefs);
+			AddModelDebugBatch(emptySubCommands, emptyModels, emptyColors, false);
+		}
+
+
+		if (numEmptyCommands > 0)
+		{
+			FREE(emptyColors, *MEM_ENG_SCRATCH_PTR);
+			FREE(emptyModels, *MEM_ENG_SCRATCH_PTR);
+			FREE(emptySubCommands, *MEM_ENG_SCRATCH_PTR);
+			FREE(emptyModelRefs, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		if (numFilledCommands > 0)
+		{
+			FREE(filledColors, *MEM_ENG_SCRATCH_PTR);
+			FREE(filledModels, *MEM_ENG_SCRATCH_PTR);
+			FREE(filledSubCommands, *MEM_ENG_SCRATCH_PTR);
+			FREE(filledModelRefs, *MEM_ENG_SCRATCH_PTR);
+		}
+	}
+
+	void CreateDebugLineSubCommands()
+	{
+		//@NOTE: this isn't at all thread safe! 
+		if (s_optrRenderer == nullptr || s_optrRenderer->mDebugLineCmdsToDraw == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		const u64 numDebugCommands = r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
+
+		if (numDebugCommands == 0)
+		{
+			return;
+		}
+
+		u32 numDepthDisabledCommands = 0;
+		u32 numDepthEnabledCommands = 0;
+
+		for (u64 i = 0; i < numDebugCommands; ++i)
+		{
+			const InternalDebugRenderCommand& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
+
+			if (debugCMD.modelType != DEBUG_LINE)
+			{
+				R2_CHECK(false, "Why do we not have a DEBUG_LINE type in here?");
+				continue;
+			}
+
+			if (debugCMD.disableDepth)
+			{
+				++numDepthDisabledCommands;
+			}
+			else
+			{
+				++numDepthEnabledCommands;
+			}
+
+		}
+
+		//@TODO(Serge): we don't technically need this, we could instead just build the sub commands directly
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* depthDisabledSubCommands = nullptr;
+		r2::SArray<glm::mat4>* depthDisabledModels = nullptr;
+		r2::SArray<glm::vec4>* depthDisabledColors = nullptr;
+
+		if (numDepthDisabledCommands > 0)
+		{
+			depthDisabledSubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDepthDisabledCommands);
+			depthDisabledModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numDepthDisabledCommands);
+			depthDisabledColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numDepthDisabledCommands);
+		}
+
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* depthEnabledSubCommands = nullptr;
+		r2::SArray<glm::mat4>* depthEnabledModels = nullptr;
+		r2::SArray<glm::vec4>* depthEnabledColors = nullptr;
+
+		if (numDepthEnabledCommands > 0)
+		{
+			depthEnabledSubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDepthEnabledCommands);
+			depthEnabledModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numDepthEnabledCommands);
+			depthEnabledColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numDepthEnabledCommands);
+		}
+
+	
+		for (u64 i = 0; i < numDebugCommands; ++i)
+		{
+			const InternalDebugRenderCommand& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
+
+			if (debugCMD.modelType != DEBUG_LINE)
+			{
+				R2_CHECK(false, "Why do we not have a DEBUG_LINE type in here?");
+				continue;
+			}
+
+			if (debugCMD.disableDepth)
+			{
+				r2::sarr::Push(*depthDisabledColors, debugCMD.color);
+				r2::sarr::Push(*depthDisabledModels, glm::mat4(1.0f));// I dunno yet
+			}
+			else
+			{
+				r2::sarr::Push(*depthEnabledColors, debugCMD.color);
+				r2::sarr::Push(*depthEnabledModels, glm::mat4(1.0f));// I dunno yet
+			}
+		}
+
+		if (depthDisabledSubCommands)
+		{
+			FillSubCommandsForDebugLines(*depthDisabledSubCommands, true);
+			AddLinesDebugBatch(depthDisabledSubCommands, depthDisabledModels, depthDisabledColors, true);
+		}
+
+		if (depthEnabledSubCommands)
+		{
+			FillSubCommandsForDebugLines(*depthEnabledSubCommands, false);
+			AddLinesDebugBatch(depthEnabledSubCommands, depthEnabledModels, depthEnabledColors, false);
+		}
+
+		s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands += r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
+		s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands += r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
+
+		if (numDepthDisabledCommands > 0)
+		{
+			FREE(depthDisabledColors, *MEM_ENG_SCRATCH_PTR);
+			FREE(depthDisabledModels, *MEM_ENG_SCRATCH_PTR);
+			FREE(depthDisabledSubCommands, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		if (numDepthEnabledCommands > 0)
+		{
+			FREE(depthEnabledColors, *MEM_ENG_SCRATCH_PTR);
+			FREE(depthEnabledModels, *MEM_ENG_SCRATCH_PTR);
+			FREE(depthEnabledSubCommands, *MEM_ENG_SCRATCH_PTR);
+		}
+	}
+
+	void ClearDebugRenderSubCommandsData()
+	{
+		if (s_optrRenderer == nullptr )
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands = 0;
+		s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands = 0;
+
+		r2::sarr::Clear(*s_optrRenderer->mDebugLineVerticesToDraw);
+
+		r2::sarr::Clear(*s_optrRenderer->mDebugLineCmdsToDraw);
+		r2::sarr::Clear(*s_optrRenderer->mDebugModelCmdsToDraw);
+	}
+
+	
+	void DrawDebugBones(
 		const r2::SArray<DebugBone>& bones,
 		const r2::SArray<u64>& numBonesPerModel,
-		const r2::SArray<glm::mat4>& modelMats, 
-		r2::draw::ConstantBufferHandle modelMatsHandle,
-		r2::draw::ConstantBufferHandle subCommandsHandle)
+		const r2::SArray<glm::mat4>& modelMats,
+		const glm::vec4& color)
 	{
 		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
 		{
@@ -2234,14 +2959,15 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		if (s_optrRenderer->mDebugVertexConfigHandle == InvalidVertexConfigHandle)
+		if (s_optrRenderer->mDebugLinesVertexConfigHandle == InvalidVertexConfigHandle)
 		{
 			R2_CHECK(false, "We haven't setup a debug vertex configuration!");
 			return;
 		}
 
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 
-		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, s_optrRenderer->mDebugVertexConfigHandle);
+		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, s_optrRenderer->mDebugLinesVertexConfigHandle);
 
 
 		r2::SArray<cmd::DrawDebugBatchSubCommand>* subCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, r2::sarr::Size(numBonesPerModel));
@@ -2249,7 +2975,7 @@ namespace r2::draw::renderer
 
 		u64 vOffset = 0;
 
-		r2::draw::key::Basic fillKey = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_DEBUG, 0, 0, s_optrRenderer->mDebugMaterialHandle);
+		r2::draw::key::Basic fillKey = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_DEBUG, 0, 0, s_optrRenderer->mDebugLinesMaterialHandle);
 
 		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(*s_optrRenderer->mCommandBucket, fillKey, 0);
 		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, bones, vertexLayoutHandles.mVertexBufferHandles[0], vOffset);
@@ -2258,27 +2984,64 @@ namespace r2::draw::renderer
 
 		cmd::FillConstantBuffer* fillModelMatsCommand = r2::draw::renderer::AppendCommand<cmd::FillVertexBuffer, cmd::FillConstantBuffer>(fillVertexCommand, modelsSize);
 
-		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillModelMatsCommand);
-		memcpy(auxMemory, modelMats.mData, modelsSize);
+		char* modelsAuxMem = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillModelMatsCommand);
+		memcpy(modelsAuxMem, modelMats.mData, modelsSize);
 
 		//fill out constCMD
 		{
-			fillModelMatsCommand->data = auxMemory;
+			fillModelMatsCommand->data = modelsAuxMem;
 			fillModelMatsCommand->dataSize = modelsSize;
 			fillModelMatsCommand->offset = 0;
-			fillModelMatsCommand->constantBufferHandle = modelMatsHandle;
+			fillModelMatsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
 
-			const ConstantBufferData modelConstData = GetConstData(modelMatsHandle);
+			const ConstantBufferData modelConstData = GetConstData(fillModelMatsCommand->constantBufferHandle);
 
 			fillModelMatsCommand->isPersistent = modelConstData.isPersistent;
 			fillModelMatsCommand->type = modelConstData.type;
 		}
 
 
+		//UGHHHHH.... sizing for ssbo's requires us to upload in multiples of sizeof(glm::mat4) 
+		u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
+		u32 numMat4ForColors = std::ceil(static_cast<float>(modelMats.mSize) / static_cast<float>(numVec4InMat4));
+		u32 numColors = numMat4ForColors * numVec4InMat4;
+
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numColors);
+
+		for (u64 i = 0; i < numColors; ++i)
+		{
+			r2::sarr::Push(*colors, color);
+		}
+
+		u64 colorMemSize = numColors * sizeof(glm::vec4);
+
+		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelMatsCommand, colorMemSize);
+
+		char* colorsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillColorsCommand);
+		memset(colorsAuxMemory, 0, colorMemSize);
+		memcpy(colorsAuxMemory, colors->mData, colorMemSize);
+
+		//fill out constCMD
+		{
+			fillColorsCommand->data = colorsAuxMemory;
+			fillColorsCommand->dataSize = colorMemSize;
+			fillColorsCommand->offset = 0;
+			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+
+			const ConstantBufferData modelConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+
+			fillColorsCommand->isPersistent = modelConstData.isPersistent;
+			fillColorsCommand->type = modelConstData.type;
+		}
+
+
+		FREE(colors, *MEM_ENG_SCRATCH_PTR);
+
+
 		u64 numSubCommands = r2::sarr::Size(*subCommands);
 
 		u64 subCommandsSize = numSubCommands * sizeof(cmd::DrawDebugBatchSubCommand);
-		r2::draw::cmd::DrawDebugBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawDebugBatch>(fillModelMatsCommand, subCommandsSize);
+		r2::draw::cmd::DrawDebugBatch* batchCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::DrawDebugBatch>(fillColorsCommand, subCommandsSize);
 
 		cmd::DrawDebugBatchSubCommand* subCommandsMem = (cmd::DrawDebugBatchSubCommand*)r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::DrawDebugBatch>(batchCMD);
 		memcpy(subCommandsMem, subCommands->mData, subCommandsSize);
@@ -2286,17 +3049,85 @@ namespace r2::draw::renderer
 		FREE(subCommands, *MEM_ENG_SCRATCH_PTR);
 
 		batchCMD->bufferLayoutHandle = vertexLayoutHandles.mBufferLayoutHandle;
-		batchCMD->batchHandle = subCommandsHandle;
+		batchCMD->batchHandle = r2::sarr::At(*constHandles, s_optrRenderer->mDebugLinesSubCommandsConfigHandle);
 		batchCMD->numSubCommands = numSubCommands;
 		batchCMD->subCommands = subCommandsMem;
-		
+		batchCMD->state.depthEnabled = false;
 
 		r2::draw::cmd::CompleteConstantBuffer* completeConstCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawDebugBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
-		completeConstCMD->constantBufferHandle = modelMatsHandle;
+		completeConstCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
 		completeConstCMD->count = modelMats.mSize;
+
+
+		r2::draw::cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeConstCMD, 0);
+
+		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+		completeColorsCMD->count = numMat4ForColors;
 	}
 
+
+	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		InternalDebugRenderCommand sphereCmd;
+		sphereCmd.filled = filled;
+		sphereCmd.modelType = DEBUG_SPHERE;
+		sphereCmd.pos = center;
+		sphereCmd.scale = glm::vec3(radius);
+		sphereCmd.color = color;
+
+		r2::sarr::Push(*s_optrRenderer->mDebugModelCmdsToDraw, sphereCmd);
+	}
+
+	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		InternalDebugRenderCommand cubeCmd;
+		cubeCmd.filled = filled;
+		cubeCmd.modelType = DEBUG_CUBE;
+		cubeCmd.pos = center;
+		cubeCmd.scale = glm::vec3(scale);
+		cubeCmd.color = color;
+
+		r2::sarr::Push(*s_optrRenderer->mDebugModelCmdsToDraw, cubeCmd);
+	}
+
+	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool disableDepth)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		InternalDebugRenderCommand lineCmd;
+		lineCmd.modelType = DEBUG_LINE;
+		lineCmd.pos = glm::vec3(0.0f);
+		lineCmd.linePointsOffset = r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
+		lineCmd.disableDepth = disableDepth;
+		lineCmd.color = color;
+
+		r2::sarr::Push(*s_optrRenderer->mDebugLineCmdsToDraw, lineCmd);
+
+		r2::draw::DebugVertex v1{ p0 };
+		r2::draw::DebugVertex v2{ p1 };
+
+		r2::sarr::Push(*s_optrRenderer->mDebugLineVerticesToDraw, v1);
+		r2::sarr::Push(*s_optrRenderer->mDebugLineVerticesToDraw, v2);
+	}
+
+#endif //  R2_DEBUG
 
 	void AddFinalBatchInternal()
 	{
@@ -2353,6 +3184,7 @@ namespace r2::draw::renderer
 		s_optrRenderer->finalBatch.subCommandsHandle = r2::sarr::At(*constantBufferHandles, s_optrRenderer->mSubcommandsConfigHandle);
 		s_optrRenderer->finalBatch.numDraws = 1;
 		s_optrRenderer->finalBatch.key = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_SCREEN, 0, 0, s_optrRenderer->mFinalCompositeMaterialHandle);
+		s_optrRenderer->finalBatch.depthTest = false;
 
 		//We need to scale because our quad is -0.5 to 0.5 and it needs to be -1.0 to 1.0
 		glm::mat4 scale = glm::mat4(1.0f);

@@ -54,6 +54,8 @@ namespace r2::draw::rendererimpl
 		GLsizeiptr GetSize(const RingBuffer& ringBuffer);
 		void BindBufferRange(const RingBuffer& ringBuffer, u32 handle, GLsizeiptr count);
 	
+		void Clear(RingBuffer& ringBuffer);
+
 		u64 MemorySize(u64 headerSize, u64 boundsChecking, u64 alignment, u64 capacity);
 	}
 	

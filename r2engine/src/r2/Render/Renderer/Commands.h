@@ -15,14 +15,25 @@ namespace r2::draw
 
 namespace r2::draw::cmd
 {
-
-	struct DrawState 
-	{
-
-	};
-
 	extern u32 CLEAR_COLOR_BUFFER;
 	extern u32 CLEAR_DEPTH_BUFFER;
+
+	enum class PrimitiveType : u32
+	{
+		POINTS,
+		LINES,
+		LINE_LOOP,
+		LINE_STRIP,
+		TRIANGLES,
+		TRIANGLE_STRIP,
+		TRIANGLE_FAN
+	};
+
+	struct DrawState
+	{
+		
+		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
+	};
 
 	struct Clear
 	{
@@ -106,6 +117,7 @@ namespace r2::draw::cmd
 	struct DrawBatch
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		PrimitiveType primitiveType;
 		DrawState state;
 		r2::draw::BufferLayoutHandle bufferLayoutHandle;
 		r2::draw::ConstantBufferHandle batchHandle;
@@ -125,6 +137,7 @@ namespace r2::draw::cmd
 	struct DrawDebugBatch
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		PrimitiveType primitiveType;
 		DrawState state;
 		r2::draw::BufferLayoutHandle bufferLayoutHandle;
 		r2::draw::ConstantBufferHandle batchHandle;

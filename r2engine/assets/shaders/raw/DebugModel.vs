@@ -7,8 +7,7 @@ layout (location = 3) in vec3 aTangent;
 layout (location = 4) in vec3 aBiTangent; 
 layout (location = 5) in uint DrawID;
 
-
-layout (std140, binding = 0) uniform Matrices 
+layout (std140, binding = 0) uniform Matrices
 {
     mat4 projection;
     mat4 view;
@@ -20,23 +19,13 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];
 };
 
-
 out VS_OUT
 {
-	vec3 normal;
-	vec3 texCoords; 
-	vec3 fragPos;
-	vec3 temp;
 	flat uint drawID;
 } vs_out;
 
 void main()
 {
-	vec4 temp = models[DrawID] * vec4(aPos, 1.0);
-	vs_out.fragPos = temp.xyz;
-	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
-	vs_out.normal = aNormal;
-	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
-	vs_out.temp = vec3(aTangent.x, 0.0, 1.0);
+	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
 }

@@ -48,9 +48,9 @@ namespace r2::draw
         r2::SArray<r2::math::Transform>* mBindPoseTransforms = nullptr;
         r2::SArray<s32>* mRealParentBones = nullptr; //for debug
 
-#ifdef R2_DEBUG
-        std::vector<std::string> mDebugBoneNames;
-#endif // R2_DEBUG
+//#ifdef R2_DEBUG
+//        std::vector<std::string> mDebugBoneNames;
+//#endif // R2_DEBUG
 
         static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
     };

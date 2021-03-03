@@ -9,7 +9,7 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
-
+#include "r2/Render/Renderer/Commands.h"
 
 namespace r2
 {
@@ -42,6 +42,20 @@ namespace r2::draw
 		CYLINDER,
 		SKYBOX,
 		NUM_DEFAULT_MODELS
+	};
+
+	enum DebugModelType : u32
+	{
+		DEBUG_QUAD =0,
+		DEBUG_CUBE,
+		DEBUG_SPHERE,
+		DEBUG_CONE,
+		DEBUG_CYLINDER,
+
+		DEBUG_ARROW,
+		DEBUG_LINE,
+
+		NUM_DEBUG_MODELS
 	};
 
 	struct Model;
@@ -87,6 +101,8 @@ namespace r2::draw
 		b32 clear = false;
 		b32 clearDepth = true;
 		u32 numDraws = 0;
+		cmd::PrimitiveType primitiveType = cmd::PrimitiveType::TRIANGLES;
+		b32 depthTest = true;
 
 		r2::SArray<glm::mat4>* models = nullptr;
 
@@ -108,8 +124,6 @@ namespace r2::draw
 
 namespace r2::draw::renderer
 {
-	
-
 	//basic stuff
 	bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath);
 	void Update();
@@ -121,19 +135,19 @@ namespace r2::draw::renderer
 	void SetClearColor(const glm::vec4& color);
 	bool GenerateLayouts();
 
+#ifdef R2_DEBUG
+	bool GenerateLayoutsWithDebug();
+#endif
 	
+	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
+	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 
-
-	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
-	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize, u64 numDraws, bool generateDrawIDs = true);
-	VertexConfigHandle AddDebugDrawLayout(u64 maxDraws);
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
-	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type, u64 maxDraws);
-	ConstantConfigHandle AddMaterialLayout(u64 maxDraws);
-	ConstantConfigHandle AddSubCommandsLayout(u64 maxDraws);
-	ConstantConfigHandle AddBoneTransformsLayout(u64 maxDraws);
+	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type);
+	ConstantConfigHandle AddMaterialLayout();
+	ConstantConfigHandle AddSubCommandsLayout(); //we can use this for the debug 
+	ConstantConfigHandle AddBoneTransformsLayout();
 	ConstantConfigHandle AddLightingLayout();
-	
 
 	//Regular methods
 	BufferHandles& GetVertexBufferHandles();
@@ -163,7 +177,6 @@ namespace r2::draw::renderer
 	void ClearAllVertexLayoutOffsets();
 
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
-	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
 
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 	
@@ -171,13 +184,19 @@ namespace r2::draw::renderer
 
 	void AddDrawBatch(const BatchConfig& batch);
 
-	//@NOTE: maybe these handles should be set by the renderer?
-	void AddDebugBatch(
+	
+#ifdef R2_DEBUG
+	void DrawDebugBones(
 		const r2::SArray<DebugBone>& bones,
 		const r2::SArray<u64>& numBonesPerModel,
 		const r2::SArray<glm::mat4>& numModelMats,
-		r2::draw::ConstantBufferHandle modelMatsHandle,
-		r2::draw::ConstantBufferHandle subCommandsHandle);
+		const glm::vec4& color);
+
+
+	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled);
+	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled);
+	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool disableDepth);
+#endif
 
 	//events
 	void WindowResized(u32 width, u32 height);

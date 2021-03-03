@@ -142,7 +142,7 @@ namespace r2::draw::rendererimpl
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize(numRingBuffers * HASH_MULT, maxRingLocks);
+		u64 subAreaSize = MemorySize(numRingBuffers * HASH_MULT, maxRingLocks * RING_BUFFER_MULT);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
@@ -211,6 +211,15 @@ namespace r2::draw::rendererimpl
 	void SwapScreens()
 	{
 		SDL_GL_SwapWindow(s_optrWindow);
+
+
+		auto hashMapEntryItr = r2::shashmap::Begin(*s_optrRendererImpl->mRingBufferMap);
+		auto hashMapEnd = r2::shashmap::End(*s_optrRendererImpl->mRingBufferMap);
+		for (; hashMapEntryItr != hashMapEnd; hashMapEntryItr++)
+		{
+			ringbuf::Clear(hashMapEntryItr->value);
+		}
+
 	}
 
 	void Shutdown()
@@ -312,19 +321,13 @@ namespace r2::draw::rendererimpl
 
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
+		
 		glBindVertexArray(layoutId);
 
 		for (u32 i = 0; i < numVertexBufferHandles; ++i)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId[i]);
 			glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfigs[i].bufferSize, nullptr, config.vertexBufferConfigs[i].drawType);
-		}
-		
-		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
-		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, config.indexBufferConfig.bufferSize, nullptr, config.indexBufferConfig.drawType);
-		
 		}
 		
 		u32 vertexAttribId = 0;
@@ -358,13 +361,14 @@ namespace r2::draw::rendererimpl
 			}
 
 			glVertexAttribBinding(vertexAttribId, element.bufferIndex);
-			glBindVertexBuffer(element.bufferIndex, vertexBufferId[element.bufferIndex], 0, config.layout.GetStride(element.bufferIndex));
-
 
 			if (config.layout.GetVertexType() == VertexType::Instanced)
 			{
 				glVertexAttribDivisor(vertexAttribId, 1);
 			}
+
+			//@TODO(Serge): this should be out of the loop?
+			glBindVertexBuffer(element.bufferIndex, vertexBufferId[element.bufferIndex], 0, config.layout.GetStride(element.bufferIndex));
 
 			++vertexAttribId;
 		}
@@ -379,15 +383,27 @@ namespace r2::draw::rendererimpl
 
 			glBindBuffer(GL_ARRAY_BUFFER, drawId);
 			glBufferData(GL_ARRAY_BUFFER, config.maxDrawCount * sizeof(u32), drawIdData->mData, GL_STATIC_DRAW);
+
+
+			glEnableVertexAttribArray(vertexAttribId);
 			glVertexAttribIPointer(vertexAttribId, 1, GL_UNSIGNED_INT, sizeof(u32), 0);
 			glVertexAttribDivisor(vertexAttribId, 1);
-			glEnableVertexAttribArray(vertexAttribId);
+			
 
 			FREE(drawIdData, *MEM_ENG_SCRATCH_PTR);
 		}
 
-		glBindVertexArray(0);
+
+		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
+		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, config.indexBufferConfig.bufferSize, nullptr, config.indexBufferConfig.drawType);
+
+		}
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		
 		if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -492,28 +508,17 @@ namespace r2::draw::rendererimpl
 
 	void SetViewportLayer(u32 viewportLayer)
 	{
+	//	glEnable(GL_CULL_FACE);
+	//	glFrontFace(GL_CCW);
+	//	glCullFace(GL_BACK);
 
-		SetDepthTest(true);
 		glDepthFunc(GL_LESS);
 
-		if (viewportLayer == r2::draw::key::Basic::VPL_DEBUG )
+		if (viewportLayer == r2::draw::key::Basic::VPL_SKYBOX)
 		{
-			SetDepthTest(false);
-		}
-		else if (viewportLayer == r2::draw::key::Basic::VPL_SCREEN)
-		{
-		//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			SetDepthTest(false);
-		}
-		else
-		{
-			//@TODO(Serge): should be part of the draw command?
-			
-			if (viewportLayer == r2::draw::key::Basic::VPL_SKYBOX)
-			{
-				glDepthFunc(GL_LEQUAL);
-			}
-		}
+			//glDisable(GL_CULL_FACE);
+			glDepthFunc(GL_LEQUAL); //@TODO(Serge): put this in the state
+		}		
 	}
 
 	void SetMaterialID(r2::draw::MaterialHandle materialID)
@@ -534,32 +539,6 @@ namespace r2::draw::rendererimpl
 
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
-			//r2::draw::shader::SetVec4(*shader, "material.color", material->color);
-
-			//const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialID);
-			//if (textures)
-			//{
-			//	u64 numTextures = r2::sarr::Size(*textures);
-
-			//	const u32 numTextureTypes = r2::draw::tex::TextureType::NUM_TEXTURE_TYPES;
-			//	u32 textureNum[numTextureTypes];
-			//	for (u32 i = 0; i < numTextureTypes; ++i)
-			//	{
-			//		textureNum[i] = 1;
-			//	}
-
-			//	for (u64 i = 0; i < numTextures; ++i)
-			//	{
-			//		const r2::draw::tex::Texture& texture = r2::sarr::At(*textures, i);
-
-			//		glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(i));
-			//		std::string number;
-			//		std::string name = TextureTypeToString(texture.type);
-			//		number = std::to_string(textureNum[texture.type]++);
-			//		r2::draw::shader::SetInt(*shader, ("material." + name + number).c_str(), static_cast<s32>(i));
-			//		glBindTexture(GL_TEXTURE_2D, r2::draw::texsys::GetGPUHandle(texture.textureAssetHandle));
-			//	}
-			//}
 		}
 	}
 
@@ -588,7 +567,7 @@ namespace r2::draw::rendererimpl
 		glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (const void*)(startingIndex * sizeof(u32)));
 	}
 
-	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride)
+	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride, cmd::PrimitiveType primitivetype)
 	{
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
 
@@ -609,7 +588,23 @@ namespace r2::draw::rendererimpl
 		}
 
 		BindVertexArray(layoutId);
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, ringbuf::GetHeadOffset(ringBuffer), count, stride);
+
+		GLenum primitiveMode;
+
+		if (primitivetype == cmd::PrimitiveType::LINES)
+		{
+			primitiveMode = GL_LINES;
+		}
+		else if (primitivetype == cmd::PrimitiveType::TRIANGLES)
+		{
+			primitiveMode = GL_TRIANGLES;
+		}
+		else
+		{
+			R2_CHECK(false, "We don't support any other types yet!");
+		}
+
+		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, ringbuf::GetHeadOffset(ringBuffer), count, stride);
 		ringbuf::Complete(ringBuffer, count);
 	}
 
@@ -635,6 +630,11 @@ namespace r2::draw::rendererimpl
 		ringbuf::Complete(ringBuffer, count);
 	}
 
+	void ApplyDrawState(const cmd::DrawState& state)
+	{
+		//glDepthMask(state.depthEnabled);
+		SetDepthTest(state.depthEnabled);
+	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)
 	{

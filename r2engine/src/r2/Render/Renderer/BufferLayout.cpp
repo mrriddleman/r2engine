@@ -220,6 +220,22 @@ namespace r2::draw
         mCreateFlags = createFlags;
     }
 
+    void ConstantBufferLayout::InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands)
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = numCommands;
+		mElements[0].elementSize = sizeof(r2::draw::cmd::DrawDebugBatchSubCommand);
+		mElements[0].size = numCommands * mElements[0].elementSize;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = SubCommand;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+    }
+
     void ConstantBufferLayout::InitForMaterials(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numMaterials)
     {
 		mElements.clear();

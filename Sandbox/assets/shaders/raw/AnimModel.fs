@@ -98,6 +98,7 @@ in VS_OUT
 	vec3 normal;
 	vec3 texCoords;
 	vec3 fragPos;
+
 	flat uint drawID;
 
 } fs_in;

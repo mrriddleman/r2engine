@@ -1,6 +1,6 @@
 {
-	name:"Debug",
-	shader:"Debug",	
+	name:"DebugModels",
+	shader:"DebugModel",	
 	texturePackName:"",
 
 	diffuseTexture:"",
