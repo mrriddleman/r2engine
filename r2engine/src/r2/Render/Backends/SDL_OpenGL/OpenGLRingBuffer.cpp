@@ -7,7 +7,7 @@
 
 namespace r2::draw::rendererimpl
 {
-	GLuint64 kOneSecondInNanoSeconds = 500000;
+	GLuint64 kOneSecondInNanoSeconds = 100000000;
 
 	bool BufferRangeOverlaps(const BufferRange& _lhs, const BufferRange& _rhs) {
 		return _lhs.startOffset < (_rhs.startOffset + _rhs.length)

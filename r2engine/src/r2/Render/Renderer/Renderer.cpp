@@ -157,7 +157,23 @@ namespace r2::draw
 		r2::draw::ConstantBufferHandle handle = EMPTY_BUFFER;
 		r2::draw::ConstantBufferLayout::Type type = r2::draw::ConstantBufferLayout::Type::Small;
 		b32 isPersistent = false;
+		u64 bufferSize = 0;
+		u64 currentOffset = 0;
+
+		void AddDataSize(u64 size);
 	};
+
+	void ConstantBufferData::AddDataSize(u64 size)
+	{
+		R2_CHECK(size <= bufferSize, "We're adding too much to this buffer. We're trying to add: %llu bytes to a %llu sized buffer", size, bufferSize);
+
+		if (currentOffset + size > bufferSize)
+		{
+			currentOffset = (currentOffset + size) % bufferSize;
+		}
+
+		currentOffset += size;
+	}
 
 	struct VertexLayoutConfigHandle
 	{
@@ -373,7 +389,7 @@ namespace
 
 namespace r2::draw::renderer
 {
-	const ConstantBufferData GetConstData(ConstantBufferHandle handle);
+	ConstantBufferData* GetConstData(ConstantBufferHandle handle);
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts);
 	bool GenerateConstantBuffers(const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
@@ -1045,6 +1061,7 @@ namespace r2::draw::renderer
 			constData.handle = handle;
 			constData.type = config.layout.GetType();
 			constData.isPersistent = config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT);
+			constData.bufferSize = config.layout.GetSize();
 
 			r2::shashmap::Set(*s_optrRenderer->mConstantBufferData, handle, constData);
 		}
@@ -1402,7 +1419,7 @@ namespace r2::draw::renderer
 				flags,
 				createFlags,
 				{
-					{r2::draw::ShaderDataType::Mat4, "Colors"}
+					{r2::draw::ShaderDataType::Float4, "Colors", MAX_NUM_DRAWS}
 				}
 			},
 			r2::draw::VertexDrawTypeDynamic
@@ -2008,7 +2025,9 @@ namespace r2::draw::renderer
 		//@TODO(Serge): fix this or pass it in
 		fillKey.keyValue = 0;
 
-		const ConstantBufferData constBufferData = GetConstData(handle);
+		ConstantBufferData* constBufferData = GetConstData(handle);
+
+		R2_CHECK(constBufferData != nullptr, "We couldn't find the constant buffer handle!");
 
 		u64 numConstantBufferHandles = r2::sarr::Size(*s_optrRenderer->mContantBufferHandles);
 		u64 constBufferIndex = 0;
@@ -2031,7 +2050,7 @@ namespace r2::draw::renderer
 		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*s_optrRenderer->mConstantLayouts, constBufferIndex);
 
 		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = r2::draw::renderer::AddFillConstantBufferCommand(*s_optrRenderer->mCommandBucket, fillKey, config.layout.GetSize());
-		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData.type, constBufferData.isPersistent, data, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
+		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData->type, constBufferData->isPersistent, data, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
 	}
 
 	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem)
@@ -2043,9 +2062,9 @@ namespace r2::draw::renderer
 
 		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*s_optrRenderer->mContantBufferHandles, s_optrRenderer->mLightingConfigHandle);
 
-		const ConstantBufferData constBufferData = GetConstData(lightBufferHandle);
+		ConstantBufferData* constBufferData = GetConstData(lightBufferHandle);
 
-		r2::draw::cmd::FillConstantBufferCommand(fillLightsCMD, lightBufferHandle, constBufferData.type, constBufferData.isPersistent, &lightSystem.mSceneLighting.mPointLights[0], sizeof(r2::draw::SceneLighting), 0);
+		r2::draw::cmd::FillConstantBufferCommand(fillLightsCMD, lightBufferHandle, constBufferData->type, constBufferData->isPersistent, &lightSystem.mSceneLighting.mPointLights[0], sizeof(r2::draw::SceneLighting), 0);
 	}
 
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs)
@@ -2104,19 +2123,19 @@ namespace r2::draw::renderer
 		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer>(bucket, key, auxMemory);
 	}
 
-	const ConstantBufferData GetConstData(ConstantBufferHandle handle)
+	ConstantBufferData* GetConstData(ConstantBufferHandle handle)
 	{
 		ConstantBufferData defaultConstBufferData;
-		const ConstantBufferData& constData = r2::shashmap::Get(*s_optrRenderer->mConstantBufferData, handle, defaultConstBufferData);
+		ConstantBufferData& constData = r2::shashmap::Get(*s_optrRenderer->mConstantBufferData, handle, defaultConstBufferData);
 
 		if (constData.handle == EMPTY_BUFFER)
 		{
 			R2_CHECK(false, "We didn't find the constant buffer data associated with this handle: %u", handle);
 			
-			return defaultConstBufferData;
+			return nullptr;
 		}
 
-		return constData;
+		return &constData;
 	}
 
 	void AddDrawBatch(const BatchConfig& batch)
@@ -2205,15 +2224,17 @@ namespace r2::draw::renderer
 
 			//fill out constCMD
 			{
+				ConstantBufferData* modelConstData = GetConstData(batch.modelsHandle);
+
 				constCMD->data = auxMemory;
 				constCMD->dataSize = modelsSize;
-				constCMD->offset = 0;
+				constCMD->offset = modelConstData->currentOffset;
 				constCMD->constantBufferHandle = batch.modelsHandle;
 
-				const ConstantBufferData modelConstData = GetConstData(batch.modelsHandle);
+				constCMD->isPersistent = modelConstData->isPersistent;
+				constCMD->type = modelConstData->type;
 
-				constCMD->isPersistent = modelConstData.isPersistent;
-				constCMD->type = modelConstData.type;
+				modelConstData->AddDataSize(modelsSize);
 			}
 		}
 		
@@ -2302,15 +2323,17 @@ namespace r2::draw::renderer
 		char* materialsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(materialsCMD);
 		memcpy(materialsAuxMemory, modelMaterials->mData, materialDataSize);
 
-		materialsCMD->data = materialsAuxMemory;
-		materialsCMD->dataSize = materialDataSize;
-		materialsCMD->offset = 0;
-		materialsCMD->constantBufferHandle = batch.materialsHandle;
+		
 		{
-			const ConstantBufferData materialConstData = GetConstData(batch.materialsHandle);
+			ConstantBufferData* materialConstData = GetConstData(batch.materialsHandle);
 
-			materialsCMD->isPersistent = materialConstData.isPersistent;
-			materialsCMD->type = materialConstData.type;
+			materialsCMD->data = materialsAuxMemory;
+			materialsCMD->dataSize = materialDataSize;
+			materialsCMD->offset = 0;
+			materialsCMD->constantBufferHandle = batch.materialsHandle;
+
+			materialsCMD->isPersistent = materialConstData->isPersistent;
+			materialsCMD->type = materialConstData->type;
 
 		}
 
@@ -2332,17 +2355,17 @@ namespace r2::draw::renderer
 			boneTransformsCMD->offset = 0;
 			boneTransformsCMD->constantBufferHandle = batch.boneTransformsHandle;
 
-			const ConstantBufferData boneXFormConstData = GetConstData(batch.boneTransformsHandle);
+			ConstantBufferData* boneXFormConstData = GetConstData(batch.boneTransformsHandle);
 
-			boneTransformsCMD->isPersistent = boneXFormConstData.isPersistent;
-			boneTransformsCMD->type = boneXFormConstData.type;
+			boneTransformsCMD->isPersistent = boneXFormConstData->isPersistent;
+			boneTransformsCMD->type = boneXFormConstData->type;
 
 
 			u64 boneTransformOffsetsDataSize = batch.boneTransformOffsets->mSize * sizeof(glm::ivec4);
 			r2::draw::cmd::FillConstantBuffer* boneTransformOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(boneTransformsCMD, boneTransformOffsetsDataSize);
 
-			const ConstantBufferData boneXFormOffsetsConstData = GetConstData(batch.boneTransformOffsetsHandle);
-			FillConstantBufferCommand(boneTransformOffsetsCMD, batch.boneTransformOffsetsHandle, boneXFormOffsetsConstData.type, boneXFormOffsetsConstData.isPersistent, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize, 0);
+			ConstantBufferData* boneXFormOffsetsConstData = GetConstData(batch.boneTransformOffsetsHandle);
+			FillConstantBufferCommand(boneTransformOffsetsCMD, batch.boneTransformOffsetsHandle, boneXFormOffsetsConstData->type, boneXFormOffsetsConstData->isPersistent, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize, 0);
 
 
 			prevFillCMD = boneTransformOffsetsCMD;
@@ -2492,43 +2515,53 @@ namespace r2::draw::renderer
 
 		//fill out fillModelsCommand
 		{
+			auto modelHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			ConstantBufferData* modelConstData = GetConstData(modelHandle);
+
+			R2_CHECK(modelConstData != nullptr, "modelConstData == null!");
+
 			fillModelsCommand->data = modelsAuxMemory;
 			fillModelsCommand->dataSize = modelsMemSize;
-			fillModelsCommand->offset = 0;
-			fillModelsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			fillModelsCommand->offset = modelConstData->currentOffset;
+			fillModelsCommand->constantBufferHandle = modelHandle;
 
-			const ConstantBufferData modelConstData = GetConstData(fillModelsCommand->constantBufferHandle);
+			fillModelsCommand->isPersistent = modelConstData->isPersistent;
+			fillModelsCommand->type = modelConstData->type;
 
-			fillModelsCommand->isPersistent = modelConstData.isPersistent;
-			fillModelsCommand->type = modelConstData.type;
+			modelConstData->AddDataSize(modelsMemSize);
 		}
 
 		u32 numColorsInArray = r2::sarr::Size(*colors);
-		u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
+		/*u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
 		constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
 		u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
-		u32 numColors = numMat4ForColors * numVec4InMat4;
+		u32 numColors = numMat4ForColors * numVec4InMat4;*/
 
-		u64 colorsMemSize = numColors * sizeof(glm::vec4);
+		u64 colorsMemSize = numColorsInArray * sizeof(glm::vec4);
 
 		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelsCommand, colorsMemSize);
 
 		char* colorsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillColorsCommand);
 
 		memset(colorsAuxMemory, 0, colorsMemSize);
-		memcpy(colorsAuxMemory, colors->mData, realColorSize);
+		memcpy(colorsAuxMemory, colors->mData, colorsMemSize);
 
 		//fill out fillColorsCommand
 		{
+			auto colorHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+			ConstantBufferData* colorConstData = GetConstData(colorHandle);
+
+			R2_CHECK(colorConstData != nullptr, "colorConstData is null!");
+
 			fillColorsCommand->data = colorsAuxMemory;
 			fillColorsCommand->dataSize = colorsMemSize;
-			fillColorsCommand->offset = 0;
-			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
-			
-			const ConstantBufferData colorConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+			fillColorsCommand->offset = colorConstData->currentOffset;
+			fillColorsCommand->constantBufferHandle = colorHandle;
+		
+			fillColorsCommand->isPersistent = colorConstData->isPersistent;
+			fillColorsCommand->type = colorConstData->type;
 
-			fillColorsCommand->isPersistent = colorConstData.isPersistent;
-			fillColorsCommand->type = colorConstData.type;
+			colorConstData->AddDataSize(colorsMemSize);
 		}
 
 		u64 subCommandsSize = subCommands->mSize * sizeof(cmd::DrawBatchSubCommand);
@@ -2561,7 +2594,7 @@ namespace r2::draw::renderer
 		cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<cmd::CompleteConstantBuffer, cmd::CompleteConstantBuffer>(completeModelsCMD, 0);
 
 		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
-		completeColorsCMD->count = numMat4ForColors;
+		completeColorsCMD->count = numColorsInArray;
 
 	}
 
@@ -2606,45 +2639,57 @@ namespace r2::draw::renderer
 
 		//fill out fillModelsCommand
 		{
+
+			auto modelHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			ConstantBufferData* modelConstData = GetConstData(modelHandle);
+			R2_CHECK(modelConstData != nullptr, "we don't have the const data!");
+
 			fillModelsCommand->data = modelsAuxMemory;
 			fillModelsCommand->dataSize = modelsMemSize;
-			fillModelsCommand->offset = 0;
-			fillModelsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			fillModelsCommand->offset = modelConstData->currentOffset;
+			fillModelsCommand->constantBufferHandle = modelHandle;
 
-			const ConstantBufferData modelConstData = GetConstData(fillModelsCommand->constantBufferHandle);
+			fillModelsCommand->isPersistent = modelConstData->isPersistent;
+			fillModelsCommand->type = modelConstData->type;
 
-			fillModelsCommand->isPersistent = modelConstData.isPersistent;
-			fillModelsCommand->type = modelConstData.type;
+			modelConstData->AddDataSize(modelsMemSize);
 		}
 
 
 
 		u32 numColorsInArray = r2::sarr::Size(*colors);
-		u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
-		constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
-		u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
-		u32 numColors = numMat4ForColors * numVec4InMat4;
+		//u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
+		//constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
+		//u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
+		//u32 numColors = numMat4ForColors * numVec4InMat4;
 
-		u64 colorsMemSize = numColors * sizeof(glm::vec4);
+		u64 colorsMemSize = numColorsInArray * sizeof(glm::vec4);
 
 		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelsCommand, colorsMemSize);
 
 		char* colorsAuxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(fillColorsCommand);
 		memset(colorsAuxMemory, 0, colorsMemSize);
 
-		memcpy(colorsAuxMemory, colors->mData, realColorSize);
+		memcpy(colorsAuxMemory, colors->mData, colorsMemSize);
 
 		//fill out fillColorsCommand
 		{
+
+			auto fillColorHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+
+			ConstantBufferData* colorConstData = GetConstData(fillColorHandle);
+
+			R2_CHECK(colorConstData != nullptr, "colorConstData is null!");
+
 			fillColorsCommand->data = colorsAuxMemory;
 			fillColorsCommand->dataSize = colorsMemSize;
-			fillColorsCommand->offset = 0;
-			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+			fillColorsCommand->offset = colorConstData->currentOffset;
+			fillColorsCommand->constantBufferHandle = fillColorHandle;
 
-			const ConstantBufferData colorConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+			fillColorsCommand->isPersistent = colorConstData->isPersistent;
+			fillColorsCommand->type = colorConstData->type;
 
-			fillColorsCommand->isPersistent = colorConstData.isPersistent;
-			fillColorsCommand->type = colorConstData.type;
+			colorConstData->AddDataSize(colorsMemSize);
 		}
 
 		u64 subCommandsSize = subCommands->mSize * sizeof(cmd::DrawDebugBatchSubCommand);
@@ -2668,7 +2713,7 @@ namespace r2::draw::renderer
 		cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<cmd::CompleteConstantBuffer, cmd::CompleteConstantBuffer>(completeModelsCMD, 0);
 
 		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
-		completeColorsCMD->count = numMat4ForColors;
+		completeColorsCMD->count = numColorsInArray;
 
 
 	}
@@ -2989,31 +3034,36 @@ namespace r2::draw::renderer
 
 		//fill out constCMD
 		{
+			auto modelHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			ConstantBufferData* modelConstData = GetConstData(modelHandle);
+
+			R2_CHECK(modelConstData != nullptr, "modelConstData is null");
+
 			fillModelMatsCommand->data = modelsAuxMem;
 			fillModelMatsCommand->dataSize = modelsSize;
-			fillModelMatsCommand->offset = 0;
-			fillModelMatsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mModelConfigHandle);
+			fillModelMatsCommand->offset = modelConstData->currentOffset;
+			fillModelMatsCommand->constantBufferHandle = modelHandle;
 
-			const ConstantBufferData modelConstData = GetConstData(fillModelMatsCommand->constantBufferHandle);
+			fillModelMatsCommand->isPersistent = modelConstData->isPersistent;
+			fillModelMatsCommand->type = modelConstData->type;
 
-			fillModelMatsCommand->isPersistent = modelConstData.isPersistent;
-			fillModelMatsCommand->type = modelConstData.type;
+			modelConstData->AddDataSize(modelsSize);
 		}
 
 
 		//UGHHHHH.... sizing for ssbo's requires us to upload in multiples of sizeof(glm::mat4) 
-		u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
-		u32 numMat4ForColors = std::ceil(static_cast<float>(modelMats.mSize) / static_cast<float>(numVec4InMat4));
-		u32 numColors = numMat4ForColors * numVec4InMat4;
+		//u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
+		//u32 numMat4ForColors = std::ceil(static_cast<float>(modelMats.mSize) / static_cast<float>(numVec4InMat4));
+		//u32 numColors = numMat4ForColors * numVec4InMat4;
 
-		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numColors);
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, modelMats.mSize);
 
-		for (u64 i = 0; i < numColors; ++i)
+		for (u64 i = 0; i < modelMats.mSize; ++i)
 		{
 			r2::sarr::Push(*colors, color);
 		}
 
-		u64 colorMemSize = numColors * sizeof(glm::vec4);
+		u64 colorMemSize = modelMats.mSize * sizeof(glm::vec4);
 
 		cmd::FillConstantBuffer* fillColorsCommand = r2::draw::renderer::AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(fillModelMatsCommand, colorMemSize);
 
@@ -3023,15 +3073,20 @@ namespace r2::draw::renderer
 
 		//fill out constCMD
 		{
+			auto colorHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+			ConstantBufferData* colorConstData = GetConstData(colorHandle);
+
+			R2_CHECK(colorConstData != nullptr, "colorConstData is null");
+
 			fillColorsCommand->data = colorsAuxMemory;
 			fillColorsCommand->dataSize = colorMemSize;
-			fillColorsCommand->offset = 0;
-			fillColorsCommand->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
+			fillColorsCommand->offset = colorConstData->currentOffset;
+			fillColorsCommand->constantBufferHandle = colorHandle;
 
-			const ConstantBufferData modelConstData = GetConstData(fillColorsCommand->constantBufferHandle);
+			fillColorsCommand->isPersistent = colorConstData->isPersistent;
+			fillColorsCommand->type = colorConstData->type;
 
-			fillColorsCommand->isPersistent = modelConstData.isPersistent;
-			fillColorsCommand->type = modelConstData.type;
+			colorConstData->AddDataSize(colorMemSize);
 		}
 
 
@@ -3063,7 +3118,7 @@ namespace r2::draw::renderer
 		r2::draw::cmd::CompleteConstantBuffer* completeColorsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::CompleteConstantBuffer, r2::draw::cmd::CompleteConstantBuffer>(completeConstCMD, 0);
 
 		completeColorsCMD->constantBufferHandle = r2::sarr::At(*constHandles, s_optrRenderer->mColorsConstantConfigHandle);
-		completeColorsCMD->count = numMat4ForColors;
+		completeColorsCMD->count = modelMats.mSize;
 	}
 
 

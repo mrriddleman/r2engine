@@ -50,7 +50,7 @@ namespace r2::draw::dispatch
 	
 		rendererimpl::CompleteConstantBuffer(realData->constantBufferHandle, realData->count);
 	
-	}
+	} 
 
 	void DrawBatch(const void* data)
 	{

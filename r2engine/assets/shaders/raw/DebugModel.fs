@@ -15,5 +15,5 @@ in VS_OUT
 
 void main()
 {
-	FragColor = colors[0];
+	FragColor = colors[fs_in.drawID];
 }
