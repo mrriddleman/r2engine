@@ -207,16 +207,9 @@ namespace r2::draw
 		glm::vec3 scale = glm::vec3(1.0f);
 		glm::vec4 color = glm::vec4(1.0f);
 
-		u64 linePointsOffset = 0;
 		DebugModelType modelType = DEBUG_LINE;
 		b32 filled = false;
 		b32 disableDepth = false;
-	};
-
-	struct LineVerticesSubCommandsData
-	{
-		u32 numLineVerticesForSubCommands = 0;
-		u32 lineInstanceForSubCommands = 0;
 	};
 
 	struct Renderer
@@ -265,13 +258,17 @@ namespace r2::draw
 		VertexConfigHandle mDebugModelVertexConfigHandle = InvalidVertexConfigHandle;
 	//	r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>* mDebugLineSubCommands = nullptr;
 	//	r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* mDebugModelSubCommands = nullptr;
-		r2::SArray<r2::draw::DebugVertex>* mDebugLineVerticesToDraw = nullptr;
-		r2::SArray<InternalDebugRenderCommand>* mDebugLineCmdsToDraw = nullptr;
+		r2::SArray<r2::draw::DebugVertex>* mDepthEnabledDebugLineVerticesToDraw = nullptr;
+		r2::SArray<InternalDebugRenderCommand>* mDepthEnabledDebugLineCmdsToDraw = nullptr;
+
+		r2::SArray<r2::draw::DebugVertex>* mDepthDisabledDebugLineVerticesToDraw = nullptr;
+		r2::SArray<InternalDebugRenderCommand>* mDepthDisabledDebugLineCmdsToDraw = nullptr;
+
+
 		r2::SArray<InternalDebugRenderCommand>* mDebugModelCmdsToDraw = nullptr;
 		ConstantConfigHandle mDebugLinesSubCommandsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mColorsConstantConfigHandle = InvalidConstantConfigHandle;
 
-		LineVerticesSubCommandsData mLineVerticesSubCommandsData;
 #endif
 
 	};
@@ -403,7 +400,7 @@ namespace r2::draw::renderer
 #ifdef R2_DEBUG
 	void CreateDebugBatchSubCommands();
 	void CreateDebugModelSubCommands();
-	void CreateDebugLineSubCommands();
+	void CreateDebugLineSubCommands(r2::SArray<InternalDebugRenderCommand>& debugLineCmds, r2::SArray<DebugVertex>& vertices, bool disableDepth);
 	void ClearDebugRenderSubCommandsData();
 
 	VertexConfigHandle AddDebugDrawLayout();
@@ -413,7 +410,7 @@ namespace r2::draw::renderer
 
 
 	void FillSubCommandsForDebugBones(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, const r2::SArray<const DebugBone>& debugBones);
-	void FillSubCommandsForDebugLines(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, bool depthEnabled);
+	void FillSubCommandsForDebugLines(r2::SArray<InternalDebugRenderCommand>& debugCMDS, r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands);
 
 #endif
 
@@ -568,13 +565,23 @@ namespace r2::draw::renderer
 
 #ifdef R2_DEBUG
 
-		s_optrRenderer->mDebugLineVerticesToDraw = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DEBUG_LINES);
+		s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DEBUG_LINES * 2);
 
-		R2_CHECK(s_optrRenderer->mDebugLineVerticesToDraw != nullptr, "We couldn't create the debug lines");
+		R2_CHECK(s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw != nullptr, "We couldn't create the debug lines");
 
-		s_optrRenderer->mDebugLineCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
+		s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
 
-		R2_CHECK(s_optrRenderer->mDebugLineCmdsToDraw != nullptr, "We couldn't create the debug commands");
+		R2_CHECK(s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw != nullptr, "We couldn't create the debug commands");
+
+
+		s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw = MAKE_SARRAY(*rendererArena, DebugVertex, MAX_NUM_DEBUG_LINES * 2);
+
+		R2_CHECK(s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw != nullptr, "We couldn't create the debug lines");
+
+		s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
+
+		R2_CHECK(s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw != nullptr, "We couldn't create the debug commands");
+
 
 		s_optrRenderer->mDebugModelCmdsToDraw = MAKE_SARRAY(*rendererArena, InternalDebugRenderCommand, MAX_NUM_DEBUG_DRAW_COMMANDS);
 
@@ -761,8 +768,10 @@ namespace r2::draw::renderer
 
 #ifdef R2_DEBUG
 		FREE(s_optrRenderer->mDebugModelCmdsToDraw, *arena);
-		FREE(s_optrRenderer->mDebugLineCmdsToDraw, *arena);
-		FREE(s_optrRenderer->mDebugLineVerticesToDraw, *arena);
+		FREE(s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw, *arena);
+		FREE(s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw, *arena);
+		FREE(s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw, *arena);
+		FREE(s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw, *arena);
 #endif
 
 		FREE(s_optrRenderer->mCommandArena, *arena);
@@ -1550,8 +1559,8 @@ namespace r2::draw::renderer
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(MAX_NUM_DEBUG_MODELS), ALIGNMENT, headerSize, boundsChecking)
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawDebugBatchSubCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking)
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawBatchSubCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking)
-			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugVertex>::MemorySize(MAX_NUM_DEBUG_LINES), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<InternalDebugRenderCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking) * 2
+			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugVertex>::MemorySize(MAX_NUM_DEBUG_LINES*2), ALIGNMENT, headerSize, boundsChecking) * 2 +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<InternalDebugRenderCommand>::MemorySize(MAX_NUM_DEBUG_DRAW_COMMANDS), ALIGNMENT, headerSize, boundsChecking) * 3
 #endif
 			; //end of sizes
 
@@ -2440,7 +2449,7 @@ namespace r2::draw::renderer
 			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
 
 			subCommand.baseInstance = i;
-			subCommand.firstVertex = numVerts;//s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands;
+			subCommand.firstVertex = numVerts;
 			subCommand.instanceCount = 1;
 
 			u64 verts = 2 * numBonesForModeli;
@@ -2451,38 +2460,29 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void FillSubCommandsForDebugLines(r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands, bool disableDepth)
+	void FillSubCommandsForDebugLines(r2::SArray<InternalDebugRenderCommand>& debugLineCmdsToDraw, r2::SArray<r2::draw::cmd::DrawDebugBatchSubCommand>& subCommands)
 	{
-		if (s_optrRenderer == nullptr || s_optrRenderer->mDebugLineVerticesToDraw == nullptr)
+		if (s_optrRenderer == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
-		//@TODO(Serge): fix...
 
-		const u64 numVertices = r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
-		const u64 numLineCommands = r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
+		const u64 numLineCommands = r2::sarr::Size(debugLineCmdsToDraw);
 
-
-		auto lineVerticesForSubCommands = s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands;
-		auto lineInstanceForSubCommands = s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands;
+		u64 vertices = 0;
 
 		for (u64 i = 0; i < numLineCommands; ++i)
 		{
 			r2::draw::cmd::DrawDebugBatchSubCommand subCommand;
-			subCommand.baseInstance = lineInstanceForSubCommands++;
+			subCommand.baseInstance = i;
 			subCommand.instanceCount = 1;
 			subCommand.count = 2;
 
-			const auto& lineCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
-
-			if (lineCMD.disableDepth == disableDepth)
-			{
-				subCommand.firstVertex = lineVerticesForSubCommands;
-				r2::sarr::Push(subCommands, subCommand);
-			}
-
-			lineVerticesForSubCommands += 2;
+			subCommand.firstVertex = vertices;
+			r2::sarr::Push(subCommands, subCommand);
+			
+			vertices += 2;
 		}
 	}
 
@@ -2532,10 +2532,6 @@ namespace r2::draw::renderer
 		}
 
 		u32 numColorsInArray = r2::sarr::Size(*colors);
-		/*u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
-		constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
-		u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
-		u32 numColors = numMat4ForColors * numVec4InMat4;*/
 
 		u64 colorsMemSize = numColorsInArray * sizeof(glm::vec4);
 
@@ -2598,7 +2594,7 @@ namespace r2::draw::renderer
 
 	}
 
-	void AddLinesDebugBatch(r2::SArray<cmd::DrawDebugBatchSubCommand>* subCommands, r2::SArray<glm::mat4>* models, r2::SArray<glm::vec4>* colors, bool depthDisabled)
+	void AddLinesDebugBatch(r2::SArray<DebugVertex>& vertices, r2::SArray<cmd::DrawDebugBatchSubCommand>* subCommands, r2::SArray<glm::mat4>* models, r2::SArray<glm::vec4>* colors, bool depthDisabled)
 	{
 		//@TODO(Serge): implement
 
@@ -2628,7 +2624,7 @@ namespace r2::draw::renderer
 		r2::draw::key::Basic fillKey = r2::draw::key::GenerateKey(0, 0, key::Basic::VPL_DEBUG, 0, 0, s_optrRenderer->mDebugLinesMaterialHandle);
 
 		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer>(*s_optrRenderer->mCommandBucket, fillKey, 0);
-		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *s_optrRenderer->mDebugLineVerticesToDraw, vertexLayoutHandles.mVertexBufferHandles[0], vOffset);
+		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, vertices, vertexLayoutHandles.mVertexBufferHandles[0], vOffset);
 
 		u64 modelsMemSize = r2::sarr::Size(*models) * sizeof(glm::mat4);
 
@@ -2655,13 +2651,7 @@ namespace r2::draw::renderer
 			modelConstData->AddDataSize(modelsMemSize);
 		}
 
-
-
 		u32 numColorsInArray = r2::sarr::Size(*colors);
-		//u32 realColorSize = numColorsInArray * sizeof(glm::vec4);
-		//constexpr u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
-		//u32 numMat4ForColors = std::ceil(static_cast<float>(numColorsInArray) / static_cast<float>(numVec4InMat4));
-		//u32 numColors = numMat4ForColors * numVec4InMat4;
 
 		u64 colorsMemSize = numColorsInArray * sizeof(glm::vec4);
 
@@ -2699,7 +2689,7 @@ namespace r2::draw::renderer
 		memcpy(subCommandsMem, subCommands->mData, subCommandsSize);
 
 		batchCMD->bufferLayoutHandle = vertexLayoutHandles.mBufferLayoutHandle;
-		batchCMD->batchHandle = r2::sarr::At(*constHandles, s_optrRenderer->mSubcommandsConfigHandle);
+		batchCMD->batchHandle = r2::sarr::At(*constHandles, s_optrRenderer->mDebugLinesSubCommandsConfigHandle);
 		batchCMD->numSubCommands = subCommands->mSize;
 		batchCMD->subCommands = subCommandsMem;
 		batchCMD->state.depthEnabled = !depthDisabled;
@@ -2721,7 +2711,8 @@ namespace r2::draw::renderer
 	void CreateDebugBatchSubCommands()
 	{
 		CreateDebugModelSubCommands();
-		CreateDebugLineSubCommands();
+		CreateDebugLineSubCommands(*s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw, *s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw, false);
+		CreateDebugLineSubCommands(*s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw, *s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw, true);
 	}
 
 	void CreateDebugModelSubCommands()
@@ -2852,28 +2843,29 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void CreateDebugLineSubCommands()
+	void CreateDebugLineSubCommands(r2::SArray<InternalDebugRenderCommand>& debugLineCmds, r2::SArray<DebugVertex>& vertices, bool disableDepth)
 	{
 		//@NOTE: this isn't at all thread safe! 
-		if (s_optrRenderer == nullptr || s_optrRenderer->mDebugLineCmdsToDraw == nullptr)
+		if (s_optrRenderer == nullptr )
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
 
-		const u64 numDebugCommands = r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
-
+		const u64 numDebugCommands = r2::sarr::Size(debugLineCmds);
+		
 		if (numDebugCommands == 0)
 		{
 			return;
 		}
 
-		u32 numDepthDisabledCommands = 0;
-		u32 numDepthEnabledCommands = 0;
+		r2::SArray<cmd::DrawDebugBatchSubCommand>* subCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDebugCommands);
+		r2::SArray<glm::mat4>* models = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numDebugCommands);
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numDebugCommands);
 
 		for (u64 i = 0; i < numDebugCommands; ++i)
 		{
-			const InternalDebugRenderCommand& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
+			const InternalDebugRenderCommand& debugCMD = r2::sarr::At(debugLineCmds, i);
 
 			if (debugCMD.modelType != DEBUG_LINE)
 			{
@@ -2881,91 +2873,20 @@ namespace r2::draw::renderer
 				continue;
 			}
 
-			if (debugCMD.disableDepth)
-			{
-				++numDepthDisabledCommands;
-			}
-			else
-			{
-				++numDepthEnabledCommands;
-			}
-
+			r2::sarr::Push(*colors, debugCMD.color);
+			r2::sarr::Push(*models, glm::mat4(1.0f));// I dunno yet
 		}
 
-		//@TODO(Serge): we don't technically need this, we could instead just build the sub commands directly
-		r2::SArray<cmd::DrawDebugBatchSubCommand>* depthDisabledSubCommands = nullptr;
-		r2::SArray<glm::mat4>* depthDisabledModels = nullptr;
-		r2::SArray<glm::vec4>* depthDisabledColors = nullptr;
 
-		if (numDepthDisabledCommands > 0)
-		{
-			depthDisabledSubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDepthDisabledCommands);
-			depthDisabledModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numDepthDisabledCommands);
-			depthDisabledColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numDepthDisabledCommands);
-		}
+		FillSubCommandsForDebugLines(debugLineCmds, *subCommands);
+		AddLinesDebugBatch(vertices, subCommands, models, colors, disableDepth);
+		
 
-		r2::SArray<cmd::DrawDebugBatchSubCommand>* depthEnabledSubCommands = nullptr;
-		r2::SArray<glm::mat4>* depthEnabledModels = nullptr;
-		r2::SArray<glm::vec4>* depthEnabledColors = nullptr;
+		FREE(colors, *MEM_ENG_SCRATCH_PTR);
+		FREE(models, *MEM_ENG_SCRATCH_PTR);
+		FREE(subCommands, *MEM_ENG_SCRATCH_PTR);
+		
 
-		if (numDepthEnabledCommands > 0)
-		{
-			depthEnabledSubCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDepthEnabledCommands);
-			depthEnabledModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, numDepthEnabledCommands);
-			depthEnabledColors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numDepthEnabledCommands);
-		}
-
-	
-		for (u64 i = 0; i < numDebugCommands; ++i)
-		{
-			const InternalDebugRenderCommand& debugCMD = r2::sarr::At(*s_optrRenderer->mDebugLineCmdsToDraw, i);
-
-			if (debugCMD.modelType != DEBUG_LINE)
-			{
-				R2_CHECK(false, "Why do we not have a DEBUG_LINE type in here?");
-				continue;
-			}
-
-			if (debugCMD.disableDepth)
-			{
-				r2::sarr::Push(*depthDisabledColors, debugCMD.color);
-				r2::sarr::Push(*depthDisabledModels, glm::mat4(1.0f));// I dunno yet
-			}
-			else
-			{
-				r2::sarr::Push(*depthEnabledColors, debugCMD.color);
-				r2::sarr::Push(*depthEnabledModels, glm::mat4(1.0f));// I dunno yet
-			}
-		}
-
-		if (depthDisabledSubCommands)
-		{
-			FillSubCommandsForDebugLines(*depthDisabledSubCommands, true);
-			AddLinesDebugBatch(depthDisabledSubCommands, depthDisabledModels, depthDisabledColors, true);
-		}
-
-		if (depthEnabledSubCommands)
-		{
-			FillSubCommandsForDebugLines(*depthEnabledSubCommands, false);
-			AddLinesDebugBatch(depthEnabledSubCommands, depthEnabledModels, depthEnabledColors, false);
-		}
-
-		s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands += r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
-		s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands += r2::sarr::Size(*s_optrRenderer->mDebugLineCmdsToDraw);
-
-		if (numDepthDisabledCommands > 0)
-		{
-			FREE(depthDisabledColors, *MEM_ENG_SCRATCH_PTR);
-			FREE(depthDisabledModels, *MEM_ENG_SCRATCH_PTR);
-			FREE(depthDisabledSubCommands, *MEM_ENG_SCRATCH_PTR);
-		}
-
-		if (numDepthEnabledCommands > 0)
-		{
-			FREE(depthEnabledColors, *MEM_ENG_SCRATCH_PTR);
-			FREE(depthEnabledModels, *MEM_ENG_SCRATCH_PTR);
-			FREE(depthEnabledSubCommands, *MEM_ENG_SCRATCH_PTR);
-		}
 	}
 
 	void ClearDebugRenderSubCommandsData()
@@ -2976,12 +2897,10 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		s_optrRenderer->mLineVerticesSubCommandsData.lineInstanceForSubCommands = 0;
-		s_optrRenderer->mLineVerticesSubCommandsData.numLineVerticesForSubCommands = 0;
-
-		r2::sarr::Clear(*s_optrRenderer->mDebugLineVerticesToDraw);
-
-		r2::sarr::Clear(*s_optrRenderer->mDebugLineCmdsToDraw);
+		r2::sarr::Clear(*s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw);
+		r2::sarr::Clear(*s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw);
+		r2::sarr::Clear(*s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw);
+		r2::sarr::Clear(*s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw);
 		r2::sarr::Clear(*s_optrRenderer->mDebugModelCmdsToDraw);
 	}
 
@@ -3049,12 +2968,6 @@ namespace r2::draw::renderer
 
 			modelConstData->AddDataSize(modelsSize);
 		}
-
-
-		//UGHHHHH.... sizing for ssbo's requires us to upload in multiples of sizeof(glm::mat4) 
-		//u32 numVec4InMat4 = sizeof(glm::mat4) / sizeof(glm::vec4);
-		//u32 numMat4ForColors = std::ceil(static_cast<float>(modelMats.mSize) / static_cast<float>(numVec4InMat4));
-		//u32 numColors = numMat4ForColors * numVec4InMat4;
 
 		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, modelMats.mSize);
 
@@ -3169,17 +3082,60 @@ namespace r2::draw::renderer
 		InternalDebugRenderCommand lineCmd;
 		lineCmd.modelType = DEBUG_LINE;
 		lineCmd.pos = glm::vec3(0.0f);
-		lineCmd.linePointsOffset = r2::sarr::Size(*s_optrRenderer->mDebugLineVerticesToDraw);
 		lineCmd.disableDepth = disableDepth;
 		lineCmd.color = color;
-
-		r2::sarr::Push(*s_optrRenderer->mDebugLineCmdsToDraw, lineCmd);
 
 		r2::draw::DebugVertex v1{ p0 };
 		r2::draw::DebugVertex v2{ p1 };
 
-		r2::sarr::Push(*s_optrRenderer->mDebugLineVerticesToDraw, v1);
-		r2::sarr::Push(*s_optrRenderer->mDebugLineVerticesToDraw, v2);
+		if (disableDepth)
+		{
+			r2::sarr::Push(*s_optrRenderer->mDepthDisabledDebugLineCmdsToDraw, lineCmd);
+
+			r2::sarr::Push(*s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw, v1);
+			r2::sarr::Push(*s_optrRenderer->mDepthDisabledDebugLineVerticesToDraw, v2);
+		}
+		else
+		{
+			r2::sarr::Push(*s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw, lineCmd);
+
+			r2::sarr::Push(*s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw, v1);
+			r2::sarr::Push(*s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw, v2);
+		}
+
+	}
+
+	void DrawTangentVectors(DefaultModel defaultModel, const glm::mat4& transform)
+	{
+		const Model* model = GetDefaultModel(defaultModel);
+
+		const u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+
+		for (u64 i = 0; i < numMeshes; ++i)
+		{
+			const Mesh* mesh = r2::sarr::At(*model->optrMeshes, i);
+
+			const u64 numVertices = r2::sarr::Size(*mesh->optrVertices);
+
+			for (u64 v = 0; v < numVertices; ++v)
+			{
+				const draw::Vertex& vertex = r2::sarr::At(*mesh->optrVertices, v);
+
+				glm::vec3 initialPosition = glm::vec3(transform * glm::vec4(vertex.position, 1));
+
+				glm::vec3 normal = glm::normalize(glm::vec3(transform * glm::vec4(vertex.normal, 0)));
+				glm::vec3 tangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.tangent, 0)));
+				glm::vec3 bitangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.bitangent, 0)));
+
+				glm::vec3 offset = (normal * 0.01f);
+				initialPosition += offset;
+
+				DrawLine(initialPosition, initialPosition + normal * 0.1f, glm::vec4(0, 0, 1, 1), false);
+				DrawLine(initialPosition, initialPosition + tangent * 0.1f, glm::vec4(1, 0, 0, 1), false);
+				DrawLine(initialPosition, initialPosition + bitangent * 0.1f, glm::vec4(0, 1, 0, 1), false);
+			}
+
+		}
 	}
 
 #endif //  R2_DEBUG

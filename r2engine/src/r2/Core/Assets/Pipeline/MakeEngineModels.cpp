@@ -894,9 +894,8 @@ namespace r2::asset::pln
 	void MakeSphere(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
 		constexpr float PI =  glm::pi<float>();
-		constexpr u32 segments = 32;
+		constexpr u32 segments = 24;
 		flatbuffers::FlatBufferBuilder fbb;
-	//	std::vector<flatbuffers::Offset<r2::Mesh>> meshes;
 
 		std::vector<flat::Vertex3> positions;
 		std::vector<flat::Vertex3> normals;

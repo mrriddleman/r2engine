@@ -196,6 +196,7 @@ namespace r2::draw::renderer
 	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled);
 	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled);
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool disableDepth);
+	void DrawTangentVectors(DefaultModel model, const glm::mat4& transform);
 #endif
 
 	//events
