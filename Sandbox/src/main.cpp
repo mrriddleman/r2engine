@@ -360,7 +360,10 @@ public:
         sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
         r2::sarr::Push(*modelMats, sphereMat);
 
-
+		glm::mat4 coneMat = glm::mat4(1.0f);
+		coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
+		coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		r2::sarr::Push(*modelMats, coneMat);
 
         glm::mat4 cylinderMat = glm::mat4(1.0f);
         
@@ -368,10 +371,7 @@ public:
         cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
         r2::sarr::Push(*modelMats, cylinderMat);
 
-        glm::mat4 coneMat = glm::mat4(1.0f);
-        coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
-        coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-		r2::sarr::Push(*modelMats, coneMat);
+
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
         microbatMat = glm::translate(microbatMat, glm::vec3(5, 0, -5));
@@ -678,14 +678,14 @@ public:
 
         //setup the lights
         {
-			r2::draw::DirectionLight dirLight;
-			dirLight.lightProperties.color = glm::vec4(1.0f);
-			dirLight.lightProperties.attenuation.x = 1.0f;
-			dirLight.lightProperties.attenuation.y = 0.09f;
-			dirLight.lightProperties.attenuation.z = 0.032f;
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(-3.0f, 10.0f, 0.0f, 0.0f));
+			//r2::draw::DirectionLight dirLight;
+			//dirLight.lightProperties.color = glm::vec4(1.0f);
+			//dirLight.lightProperties.attenuation.x = 1.0f;
+			//dirLight.lightProperties.attenuation.y = 0.09f;
+			//dirLight.lightProperties.attenuation.z = 0.032f;
+			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
 
-			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
             //r2::draw::SpotLight spotLight;
             //spotLight.lightProperties.color = glm::vec4(1.0f);
@@ -699,26 +699,20 @@ public:
 
 
             //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
-   //         r2::draw::PointLight pointLight;
 
-   //         pointLight.position = glm::vec4(0, 5, 0, 1.0);
-   //         pointLight.lightProperties.color = glm::vec4(1.0f, 1.0f, 0, 1.0f);
-   //         //pointLight.lightProperties.color = glm::vec3(1.0f);
-   //         //
-   //         pointLight.lightProperties.strength = 0;
-   //         pointLight.lightProperties.specular = 0;
+            r2::draw::PointLight pointLight;
 
-   //         //pointLight.lightProperties.lightModifiers.ambient = glm::vec3(1.0f);
-   //         //pointLight.lightProperties.lightModifiers.diffuse = glm::vec3(1.0f);
-   //         //pointLight.lightProperties.lightModifiers.specular = glm::vec3(1.0f);
-   //         //pointLight.lightProperties.lightModifiers.emission = glm::vec3(1.0f);
+            pointLight.position = glm::vec4(0, 5, 0, 1.0);
+            pointLight.lightProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-   //         pointLight.lightProperties.attenuation.x = 1.0f;
-   //         pointLight.lightProperties.attenuation.y = 0.09f;
-   //         pointLight.lightProperties.attenuation.z = 0.032f;
+            pointLight.lightProperties.strength = 1;
+            pointLight.lightProperties.specular = 0;
 
+            pointLight.lightProperties.attenuation.x = 1.0f;
+            pointLight.lightProperties.attenuation.y = 0.09f;
+            pointLight.lightProperties.attenuation.z = 0.032f;
 
-   //         r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
+            r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
 
 			//r2::draw::PointLight pointLight2;
 
@@ -1104,18 +1098,19 @@ public:
 		//r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
 		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 5), 0.5, glm::vec4(1, 1, 1, 1), false);
 
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(1, 1, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(1, 1, 0, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(1, 0, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(1, 1, 1, 1), true);
-		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 0, 0, 1), true);
-		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0.5, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(1, 1, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(1, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(1, 0, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(1, 1, 1, 1), true);
+		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 0, 0, 1), true);
+		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0.5, 1, 0, 1), true);
 
-
-        r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats,r2::draw::QUAD));
-
+       // glm::mat4 mat = r2::draw::renderer::DrawCylinder(glm::vec3(0, 5, -5), glm::vec3(0, 1, 0), 1, 5, glm::vec4(1, 1, 1, 1), false);
+         
+       // r2::draw::renderer::DrawTangentVectors(r2::draw::CYLINDER, mat);//r2::sarr::At(*modelMats,r2::draw::CYLINDER));
+       // r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
         if (mDrawDebugBones)
         {
 			r2::draw::renderer::DrawDebugBones(

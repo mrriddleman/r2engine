@@ -23,20 +23,29 @@ layout (std140, binding = 0) buffer Models
 
 out VS_OUT
 {
-	vec3 normal;
 	vec3 texCoords; 
 	vec3 fragPos;
-	vec3 temp;
+	vec3 normal;
+	mat3 TBN;
+
 	flat uint drawID;
 } vs_out;
 
 void main()
 {
-	vec4 temp = models[DrawID] * vec4(aPos, 1.0);
-	vs_out.fragPos = temp.xyz;
-	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
-	vs_out.normal = aNormal;
+	vec4 modelPos = models[DrawID] * vec4(aPos, 1.0);
+	vs_out.fragPos = modelPos.xyz;
+	gl_Position = projection * view * modelPos;
+
+	mat3 normalMatrix = transpose(inverse(mat3(models[DrawID])));
+
+	vs_out.normal = normalize(normalMatrix * aNormal);
+	vec3 T = normalize(normalMatrix * aTangent);
+	vec3 B = normalize(normalMatrix * aBiTangent);
+
+	vs_out.TBN = mat3(T, B, vs_out.normal);
+
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
-	vs_out.temp = vec3(aTangent.x, 0.0, 1.0);
+	
 }

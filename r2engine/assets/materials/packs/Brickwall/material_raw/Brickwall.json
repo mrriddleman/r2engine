@@ -1,8 +1,7 @@
 {
-	name:"BrickWall",
+	name:"Brickwall",
 	shader:"Sandbox",
-	
-	texturePackName:"BrickWall",
+	texturePackName:"Brickwall",
 
 	diffuseTexture:"brickwall/albedo/brickwall.jpg",
 	specularTexture:"",
@@ -10,9 +9,9 @@
 	emissionTexture:"",
 
 	baseColor:{
-		r: 1.0,
+		r: 0.0,
 		g: 0.0,
-		b: 0.0,
+		b: 1.0,
 		a: 1.0
 	},
 	specular:0.0,

@@ -32,6 +32,21 @@
       }
     },
     {
+      name: 7983052081214385298,
+      shader: 3292306756035476612,
+      texturePackName: 7983052081214385298,
+      diffuseTexture: 2530190519569371481,
+      specularTexture: 14695981039346656837,
+      normalMapTexture: 16071258200335816493,
+      emissionTexture: 14695981039346656837,
+      baseColor: {
+        r: 0.0,
+        g: 0.0,
+        b: 1.0,
+        a: 1.0
+      }
+    },
+    {
       name: 16908702471843575683,
       shader: 849706416261927096,
       texturePackName: 14695981039346656837,

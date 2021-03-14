@@ -63,6 +63,37 @@
       }
     },
     {
+      packName: 7983052081214385298,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Brickwall/albedo/brickwall.jpg"
+      ],
+      normal: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/Brickwall/normal/brickwall_normal.jpg"
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metalic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 771209,
+      totalNumberOfTextures: 2,
+      metaData: {
+      }
+    },
+    {
       packName: 16075504797566260416,
       albedo: [
         "D:/Projects/r2engine/r2engine/assets/textures/packs/DebugMipMap/albedo/DebugMipMap.dds"
@@ -251,7 +282,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 13,
-  totalTextureSize: 5395864,
+  totalNumberOfTextures: 15,
+  totalTextureSize: 6167073,
   maxTexturesInAPack: 6
 }

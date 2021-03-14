@@ -99,6 +99,8 @@ in VS_OUT
 	vec3 texCoords;
 	vec3 fragPos;
 
+	mat3 TBN;
+
 	flat uint drawID;
 
 } fs_in;
@@ -106,6 +108,7 @@ in VS_OUT
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv);
+vec4 SampleMaterialNormal(uint drawID, vec3 uv);
 vec4 SampleMaterialEmission(uint drawID, vec3 uv);
 
 vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir);
@@ -135,7 +138,8 @@ void main()
 	if(sampledColor.a < 0.01)
 		discard;
 
-	vec3 norm = normalize(fs_in.normal);
+	vec3 norm = normalize(SampleMaterialNormal(fs_in.drawID, fs_in.texCoords).rgb);
+
 	vec3 viewDir = normalize(cameraPosTimeW.rgb - fs_in.fragPos);
 
 	vec3 lightingResult = vec3(0,0,0);
@@ -165,7 +169,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return  texture(sampler2DArray(addr.container), vec3(uv.rg,addr.page));
+	return texture(sampler2DArray(addr.container), vec3(uv.rg,addr.page));
 }
 
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
@@ -177,6 +181,27 @@ vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
 
 	return (1.0 - modifier) * vec4(vec3(materials[texIndex].specular), 1.0) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg,addr.page));
 }
+
+
+vec4 SampleMaterialNormal(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+ 
+	Tex2DAddress addr = materials[texIndex].normalMapTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	vec3 coord = vec3(uv.rg, addr.page);
+
+	vec3 normalMapNormal = texture(sampler2DArray(addr.container), coord).rgb;
+
+	normalMapNormal = normalMapNormal * 2.0 - 1.0;
+
+	normalMapNormal = normalize(fs_in.TBN * normalMapNormal);
+
+	return (1.0 - modifier) * vec4(fs_in.normal, 1) + modifier * vec4(normalMapNormal, 1);
+}
+
 
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 {

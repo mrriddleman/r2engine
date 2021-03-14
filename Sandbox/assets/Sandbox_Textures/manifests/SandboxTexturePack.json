@@ -9,10 +9,13 @@
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.tif"
       ],
       normal: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Body_Normal.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Eye_Normal.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.tif"
       ],
       specular: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/specular/Ellen_head_SpecularSmoothness.tif"
       ],
       emissive: [
 
@@ -29,8 +32,8 @@
       height: [
 
       ],
-      packSize: 24936500,
-      totalNumberOfTextures: 4,
+      packSize: 46781036,
+      totalNumberOfTextures: 9,
       metaData: {
       }
     },
@@ -97,7 +100,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 6,
-  totalTextureSize: 58491064,
-  maxTexturesInAPack: 4
+  totalNumberOfTextures: 11,
+  totalTextureSize: 80335600,
+  maxTexturesInAPack: 9
 }

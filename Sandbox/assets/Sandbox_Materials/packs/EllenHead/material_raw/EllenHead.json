@@ -5,7 +5,7 @@
 	texturePackName:"Ellen",
 
 	diffuseTexture:"ellen/albedo/ellen_head_albedo.tif",
-	specularTexture:"",
+	specularTexture:"ellen/specular/ellen_head_specularsmoothness.tif",
 	normalMapTexture:"ellen/normal/ellen_head_normal.tif",
 	emissionTexture:"",
 

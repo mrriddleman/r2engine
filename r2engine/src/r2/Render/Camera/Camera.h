@@ -12,6 +12,7 @@
 #include "glm/glm.hpp"
 #include "r2/Utils/Flags.h"
 #include "r2/Core/Math/Ray.h"
+#include "r2/Core/Math/MathUtils.h"
 
 namespace r2
 {
@@ -23,7 +24,7 @@ namespace r2
         
         glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 facing = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 up = math::GLOBAL_UP;
     };
 }
 

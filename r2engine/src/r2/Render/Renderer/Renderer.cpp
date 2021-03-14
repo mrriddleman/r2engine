@@ -203,8 +203,8 @@ namespace r2::draw
 
 	struct InternalDebugRenderCommand
 	{
-		glm::vec3 pos = glm::vec3(0.0f);
-		glm::vec3 scale = glm::vec3(1.0f);
+		math::Transform transform;
+
 		glm::vec4 color = glm::vec4(1.0f);
 
 		DebugModelType modelType = DEBUG_LINE;
@@ -2794,10 +2794,7 @@ namespace r2::draw::renderer
 
 			r2::draw::ModelRef modelRef = GetDefaultModelRef(static_cast<DefaultModel>(debugCMD.modelType));
 			
-			math::Transform transform;
-			transform.scale = debugCMD.scale;
-			transform.position = debugCMD.pos;
-			glm::mat4 modelMatrix = math::ToMatrix(transform);
+			glm::mat4 modelMatrix = math::ToMatrix(debugCMD.transform);
 
 			if (debugCMD.filled)
 			{
@@ -3046,8 +3043,10 @@ namespace r2::draw::renderer
 		InternalDebugRenderCommand sphereCmd;
 		sphereCmd.filled = filled;
 		sphereCmd.modelType = DEBUG_SPHERE;
-		sphereCmd.pos = center;
-		sphereCmd.scale = glm::vec3(radius);
+
+		sphereCmd.transform.position = center;
+		sphereCmd.transform.scale = glm::vec3(radius);
+
 		sphereCmd.color = color;
 
 		r2::sarr::Push(*s_optrRenderer->mDebugModelCmdsToDraw, sphereCmd);
@@ -3064,11 +3063,58 @@ namespace r2::draw::renderer
 		InternalDebugRenderCommand cubeCmd;
 		cubeCmd.filled = filled;
 		cubeCmd.modelType = DEBUG_CUBE;
-		cubeCmd.pos = center;
-		cubeCmd.scale = glm::vec3(scale);
+
+		cubeCmd.transform.position = center;
+		cubeCmd.transform.scale = glm::vec3(scale);
+
 		cubeCmd.color = color;
 
 		r2::sarr::Push(*s_optrRenderer->mDebugModelCmdsToDraw, cubeCmd);
+	}
+
+	glm::mat4 DrawCylinder(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return glm::mat4(1.0f);
+		}
+
+		InternalDebugRenderCommand cylinderCmd;
+		cylinderCmd.filled = filled;
+		cylinderCmd.modelType = DEBUG_CYLINDER;
+
+		math::Transform t;
+
+		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+		t.position = initialFacing * 0.5f * height;
+
+		
+		glm::vec3 ndir = glm::normalize(dir);
+
+		float angle = glm::acos(glm::dot(ndir, initialFacing));
+
+		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+
+		math::Transform r;
+		r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
+
+		math::Transform s;
+
+		s.scale = glm::vec3(radius, radius, height);
+
+		math::Transform t2;
+		t2.position = -t.position;
+
+		cylinderCmd.transform = math::Combine(math::Combine(r, t), s);
+		cylinderCmd.transform.position += basePosition;
+
+		cylinderCmd.color = color;
+
+		r2::sarr::Push(*s_optrRenderer->mDebugModelCmdsToDraw, cylinderCmd);
+
+		return math::ToMatrix(cylinderCmd.transform);
 	}
 
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool disableDepth)
@@ -3081,7 +3127,7 @@ namespace r2::draw::renderer
 
 		InternalDebugRenderCommand lineCmd;
 		lineCmd.modelType = DEBUG_LINE;
-		lineCmd.pos = glm::vec3(0.0f);
+	//	lineCmd.pos = glm::vec3(0.0f);
 		lineCmd.disableDepth = disableDepth;
 		lineCmd.color = color;
 
@@ -3121,13 +3167,14 @@ namespace r2::draw::renderer
 			{
 				const draw::Vertex& vertex = r2::sarr::At(*mesh->optrVertices, v);
 
+				//@TODO(Serge): all this matrix multiply is slow....
 				glm::vec3 initialPosition = glm::vec3(transform * glm::vec4(vertex.position, 1));
 
 				glm::vec3 normal = glm::normalize(glm::vec3(transform * glm::vec4(vertex.normal, 0)));
 				glm::vec3 tangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.tangent, 0)));
 				glm::vec3 bitangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.bitangent, 0)));
 
-				glm::vec3 offset = (normal * 0.01f);
+				glm::vec3 offset = (normal * 0.015f);
 				initialPosition += offset;
 
 				DrawLine(initialPosition, initialPosition + normal * 0.1f, glm::vec4(0, 0, 1, 1), false);
