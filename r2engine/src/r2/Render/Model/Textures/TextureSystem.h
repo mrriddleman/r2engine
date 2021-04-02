@@ -19,7 +19,7 @@ namespace r2::draw::texsys
 	//@NOTE: we don't want to return a new opengl texture id for example because we don't want
 	//the client to have a handle to the texture since it can change due to the asset system
 	//So we'll need to keep a mapping of that handle with the Texture we pass back from LoadTexture
-	void UploadToGPU(const r2::asset::AssetHandle& texture);
+	void UploadToGPU(const r2::asset::AssetHandle& texture, tex::TextureType type);
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap);
 	void ReloadTexture(const r2::asset::AssetHandle& texture);
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);

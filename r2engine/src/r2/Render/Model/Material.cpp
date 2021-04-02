@@ -351,7 +351,8 @@ namespace r2::draw::mat
 
 			for (u64 i = 0; i < numTextures; ++i)
 			{
-				r2::draw::texsys::UploadToGPU(r2::sarr::At(*textures, i).textureAssetHandle);
+				const auto& texture = r2::sarr::At(*textures, i);
+				r2::draw::texsys::UploadToGPU(texture.textureAssetHandle, texture.type);
 			}
 		}
 		else

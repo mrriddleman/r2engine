@@ -13,17 +13,17 @@ namespace r2::draw::utils
     u32 LoadImageTexture(const char* path)
     {
         //@TODO(Serge): make it so we don't call this directly
-        return opengl::LoadImageTexture(path);
+        return 0;//opengl::LoadImageTexture(path);
     }
     
     u32 CreateImageTexture(u32 width, u32 height, void* data)
     {
         //@TODO(Serge): make it so we don't call this directly
-        return opengl::CreateImageTexture(width, height, data);
+        return 0;//opengl::CreateImageTexture(width, height, data);
     }
     
     u32 CreateCubeMap(const std::vector<std::string>& faces)
     {
-        return opengl::CreateCubeMap(faces);
+        return 0;// opengl::CreateCubeMap(faces);
     }
 }

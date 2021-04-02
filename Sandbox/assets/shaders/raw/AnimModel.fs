@@ -159,7 +159,10 @@ void main()
 		lightingResult += CalcSpotLight(i, norm, fs_in.fragPos, viewDir);
 	}
 
-	FragColor = vec4(lightingResult, 1.0);
+
+	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
+
+	FragColor = vec4(GammaCorrect(lightingResult + emission), 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -216,7 +219,7 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
 {
     float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / (state.x + state.y * distance + state.z * (distance * distance));
+    float attenuation = 1.0 / distance;//(state.x + state.y * distance + state.z * (distance * distance));
     return attenuation;
 }
 
@@ -234,7 +237,7 @@ vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDi
 
 	Light result = CalcLightForMaterial(diffuse, specular, attenuation);
 
-	return (result.ambient + result.diffuse + result.specular + result.emission) * pointLight.lightProperties.color.rgb * pointLight.lightProperties.strength;
+	return (result.ambient + result.diffuse + result.specular) * pointLight.lightProperties.color.rgb * pointLight.lightProperties.strength;
 }
 
 vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir)
@@ -250,7 +253,7 @@ vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir)
 
 	Light result = CalcLightForMaterial(diffuse, specular, 1.0);
 
-	return (result.ambient + result.diffuse + result.specular + result.emission) * dirLight.lightProperties.color.rgb * dirLight.lightProperties.strength;
+	return (result.ambient + result.diffuse + result.specular) * dirLight.lightProperties.color.rgb * dirLight.lightProperties.strength;
 }
 
 vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir)
@@ -272,7 +275,7 @@ vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 	Light result = CalcLightForMaterial(diffuse, specular, attenuation * intensity);
 
-	return (result.ambient + result.diffuse + result.specular + result.emission) * spotLight.lightProperties.color.rgb * spotLight.lightProperties.strength;
+	return (result.ambient + result.diffuse + result.specular) * spotLight.lightProperties.color.rgb * spotLight.lightProperties.strength;
 }
 
 Light CalcLightForMaterial(float diffuse, float specular, float modifier)
@@ -284,21 +287,14 @@ Light CalcLightForMaterial(float diffuse, float specular, float modifier)
 
 	result.diffuse =  diffuse * diffuseMat;
 	result.specular = specular * SampleMaterialSpecular(fs_in.drawID, fs_in.texCoords).rgb;
-	result.emission =  SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
 	result.ambient *= modifier;
 	result.diffuse *= modifier;
 	result.specular *= modifier;
-	result.emission *= modifier;
-//
+
 	return result;
 }
 
-vec3 CalcEmissionForMaterial(Light light)
-{
-	vec3 emission = light.emission * SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
-	return emission;
-}
 
 vec3 HalfVector(vec3 lightDir, vec3 viewDir)
 {

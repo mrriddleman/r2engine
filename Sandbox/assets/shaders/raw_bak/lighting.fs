@@ -187,11 +187,11 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float spec = BlinnPhongShading(lightDirFromFrag, viewDir, normal, material.shininess);//pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     //spotlight soft edges
-    float theta = dot(lightDirFromFrag, normalize(-light.direction.xyz));
+    float theta = dot(lightDirFromFrag, normalize(-light.direction));
     float epsilon = (light.cutoff - light.outerCutoff);
     float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
 
-    float attenuation = CalcAttenuation(light.attenuationState, light.position.xyz, fragPos);
+    float attenuation = CalcAttenuation(light.attenuationState, light.position, fragPos);
 
     //combine results
     Light result = CalcLightForMaterial(light.light, diff, spec, attenuation * intensity);

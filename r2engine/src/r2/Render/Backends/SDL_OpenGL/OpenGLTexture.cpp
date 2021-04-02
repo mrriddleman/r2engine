@@ -295,7 +295,7 @@ namespace r2::draw::tex
 	s32 FILTER_NEAREST_MIP_MAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR;
 	u32 FORMAT_DEPTH = GL_DEPTH_COMPONENT;
 	
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap)
+	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap)
 	{
 		stbi_set_flip_vertically_on_load(true);
 
@@ -379,12 +379,28 @@ namespace r2::draw::tex
 		}
 		else if (channels == 3)
 		{
-			internalFormat = GL_RGB8;
+			if (type == Diffuse)
+			{
+				internalFormat = GL_SRGB8;
+			}
+			else
+			{
+				internalFormat = GL_RGB8;
+			}
+
 			format = GL_RGB;
 		}
 		else if (channels == 4)
 		{
-			internalFormat = GL_RGBA8;
+			if (type == Diffuse)
+			{
+				internalFormat = GL_SRGB8_ALPHA8;
+			}
+			else
+			{
+				internalFormat = GL_RGBA8;
+			}
+			
 			format = GL_RGBA;
 		}
 		else if(channels == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)

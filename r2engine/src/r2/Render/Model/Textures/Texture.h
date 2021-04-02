@@ -25,6 +25,7 @@ namespace r2::draw::tex
 		Height,
 		MicroFacet,
 		Occlusion,
+		Cubemap,
 		NUM_TEXTURE_TYPES
 	};
 
@@ -79,7 +80,7 @@ namespace r2::draw::tex
 		s32 wrapMode = WRAP_MODE_REPEAT;
 	};
 
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, bool generateMipMap);
+	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap);
 	TextureHandle UploadToGPU(const CubemapTexture& cubemap);
 
 

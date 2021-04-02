@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-12-26.
 //
 #include "r2pch.h"
+/*
 #include "OpenGLImage.h"
 #include "glad/glad.h"
 #include "stb_image.h"
@@ -206,3 +207,4 @@ namespace r2::draw::opengl
         return depthCubeMap;
     }
 }
+*/

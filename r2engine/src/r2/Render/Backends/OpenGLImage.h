@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-12-26.
 //
 
+/*
 #ifndef OpenGLImage_h
 #define OpenGLImage_h
 
@@ -22,4 +23,4 @@ namespace r2::draw::opengl
     u32 CreateImageTexture(u32 width, u32 height, int internalFormat, void* data);
 }
 
-#endif /* OpenGLImage_h */
+#endif OpenGLImage_h */

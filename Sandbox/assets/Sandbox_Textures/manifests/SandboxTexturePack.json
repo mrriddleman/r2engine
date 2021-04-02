@@ -18,7 +18,7 @@
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/specular/Ellen_head_SpecularSmoothness.tif"
       ],
       emissive: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.tif"
       ],
       metalic: [
 
@@ -32,8 +32,8 @@
       height: [
 
       ],
-      packSize: 46781036,
-      totalNumberOfTextures: 9,
+      packSize: 46986272,
+      totalNumberOfTextures: 10,
       metaData: {
       }
     },
@@ -100,7 +100,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 11,
-  totalTextureSize: 80335600,
-  maxTexturesInAPack: 9
+  totalNumberOfTextures: 12,
+  totalTextureSize: 80540836,
+  maxTexturesInAPack: 10
 }
