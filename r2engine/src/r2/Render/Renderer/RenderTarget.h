@@ -48,7 +48,7 @@ namespace r2::draw
 		template <class ARENA>
 		void DestroyRenderTarget(ARENA& arena, RenderTarget& rt);
 
-		void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha);
+		void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR);
 		void AddDepthAndStencilAttachment(RenderTarget& rt);
 
 		void SetRenderTarget(const RenderTarget& rt);
@@ -59,7 +59,7 @@ namespace r2::draw
 		{
 			void Bind(const RenderTarget& rt);
 			void Unbind(const RenderTarget& rt);
-			void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha);
+			void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR);
 			void AddDepthAndStencilAttachment(RenderTarget& rt);
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);

@@ -74,6 +74,7 @@ struct Material
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
+    vec4 exposure;
 };
 
 layout (std430, binding = 1) buffer Materials
@@ -162,7 +163,7 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
-	FragColor = vec4(GammaCorrect(lightingResult + emission), 1.0);
+	FragColor = vec4(lightingResult + emission, 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -219,7 +220,7 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
 {
     float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / distance;//(state.x + state.y * distance + state.z * (distance * distance));
+    float attenuation = 1.0 / (distance*distance);//(state.x + state.y * distance + state.z * (distance * distance));
     return attenuation;
 }
 

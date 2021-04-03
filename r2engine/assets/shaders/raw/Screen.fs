@@ -30,6 +30,13 @@ layout (std430, binding = 1) buffer Materials
 	Material materials[];
 };
 
+
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+    vec4 exposure;
+};
+
 in VS_OUT
 {
 	vec3 normal;
@@ -37,13 +44,23 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
+vec3 GammaCorrect(vec3 color)
+{
+    return pow(color, vec3(1.0/2.2));
+}
+
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
+
+vec3 ReinhardToneMapping(vec3 hdrColor);
+vec3 ExposureToneMapping(vec3 hdrColor);
 
 void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
-	FragColor = vec4(sampledColor.r, sampledColor.g, sampledColor.b, 1.0);
+	vec3 toneMapping = ExposureToneMapping(sampledColor.rgb);
+
+	FragColor = vec4(GammaCorrect(toneMapping), 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -53,7 +70,15 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	vec3 coord = vec3(uv.rg,addr.page);
 
-	//float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
-
 	return texture(sampler2DArray(addr.container), coord);
+}
+
+vec3 ReinhardToneMapping(vec3 hdrColor)
+{
+	return hdrColor / (hdrColor + vec3(1.0));
+}
+
+vec3 ExposureToneMapping(vec3 hdrColor)
+{
+	return vec3(1.0) - exp(-hdrColor * exposure.x  );
 }

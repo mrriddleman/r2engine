@@ -26,6 +26,7 @@ namespace r2::draw::tex
 		MicroFacet,
 		Occlusion,
 		Cubemap,
+		HDR,
 		NUM_TEXTURE_TYPES
 	};
 

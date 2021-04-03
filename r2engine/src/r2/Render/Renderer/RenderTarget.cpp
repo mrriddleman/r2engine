@@ -13,9 +13,9 @@ namespace r2::draw
 
 	namespace rt
 	{
-		void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha)
+		void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR)
 		{
-			impl::AddTextureAttachment(rt, filter, wrapMode, mipLevels, alpha);
+			impl::AddTextureAttachment(rt, filter, wrapMode, mipLevels, alpha, isHDR);
 		}
 
 		void AddDepthAndStencilAttachment(RenderTarget& rt)

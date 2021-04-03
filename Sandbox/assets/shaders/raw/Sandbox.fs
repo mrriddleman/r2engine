@@ -75,6 +75,7 @@ struct Material
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
+    vec4 exposure;
 };
 
 layout (std430, binding = 1) buffer Materials
@@ -121,11 +122,6 @@ float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shinin
 
 Light CalcLightForMaterial(float diffuse, float specular, float modifier);
 
-vec3 GammaCorrect(vec3 color)
-{
-    return pow(color, vec3(1.0/2.2));
-}
-
 float GetTextureModifier(Tex2DAddress addr)
 {
 	return float( min(max(addr.container, 0), 1) );
@@ -155,7 +151,7 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
-	FragColor = vec4(GammaCorrect(lightingResult + emission), 1.0);
+	FragColor = vec4(lightingResult + emission, 1.0);
 	//vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
 	//FragColor = vec4(sampledColor.rgb, 1.0);// * (0.4 * sin(cameraPosTimeW.w+PI*1.5) + 0.6);
@@ -228,7 +224,7 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
 {
     float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / distance;//(state.x + state.y * distance + state.z * (distance * distance));
+    float attenuation = 1.0 / (distance*distance);//(state.x + state.y * distance + state.z * (distance * distance));
     return attenuation;
 }
 

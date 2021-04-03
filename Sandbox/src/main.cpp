@@ -546,7 +546,8 @@ public:
 
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
-            {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"}
+            {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
+            {r2::draw::ShaderDataType::Float4, "Exposure"}
         }));
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big));
@@ -702,8 +703,8 @@ public:
 
             r2::draw::PointLight pointLight;
 
-            pointLight.position = glm::vec4(0, 5, 0, 1.0);
-            pointLight.lightProperties.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            pointLight.position = glm::vec4(0, 8, 0, 1.0);
+            pointLight.lightProperties.color = glm::vec4(100.0f, 100.0f, 20.0f, 1.0f);
 
             pointLight.lightProperties.strength = 1;
             pointLight.lightProperties.specular = 0;
@@ -714,57 +715,57 @@ public:
 
             r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
 
-			//r2::draw::PointLight pointLight2;
+			r2::draw::PointLight pointLight2;
 
-   //         pointLight2.position = glm::vec4(0, 2, -5, 1.0);
-   //         pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+			pointLight2.position = glm::vec4(0, 2, -1, 1.0);
+			pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-   //         pointLight2.lightProperties.strength = 0;
-   //         pointLight2.lightProperties.specular = 0;
-
-
-
-   //         pointLight2.lightProperties.attenuation.x = 1.0f;
-   //         pointLight2.lightProperties.attenuation.y = 0.09f;
-   //         pointLight2.lightProperties.attenuation.z = 0.032f;
-
-
-   //         r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
-
-			//r2::draw::PointLight pointLight3;
-
-   //         pointLight3.position = glm::vec4(-7, 3, 0, 1.0);
-   //         pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-   //         pointLight3.lightProperties.strength = 0;
-   //         pointLight3.lightProperties.specular = 0;
+			pointLight2.lightProperties.strength = 1;
+			pointLight2.lightProperties.specular = 0;
 
 
 
-   //         pointLight3.lightProperties.attenuation.x = 1.0f;
-   //         pointLight3.lightProperties.attenuation.y = 0.09f;
-   //         pointLight3.lightProperties.attenuation.z = 0.032f;
+			pointLight2.lightProperties.attenuation.x = 1.0f;
+			pointLight2.lightProperties.attenuation.y = 0.09f;
+			pointLight2.lightProperties.attenuation.z = 0.032f;
 
 
-			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
+			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
+
+			r2::draw::PointLight pointLight3;
+
+            pointLight3.position = glm::vec4(-1, 2, 0, 1.0);
+            pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+            pointLight3.lightProperties.strength = 1;
+            pointLight3.lightProperties.specular = 0;
 
 
-			//r2::draw::PointLight pointLight4;
 
-			//pointLight4.position = glm::vec4(7, 3, 0, 1.0);
-			//pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
-			//pointLight4.lightProperties.strength = 0;
-			//pointLight4.lightProperties.specular = 0;
+            pointLight3.lightProperties.attenuation.x = 1.0f;
+            pointLight3.lightProperties.attenuation.y = 0.09f;
+            pointLight3.lightProperties.attenuation.z = 0.032f;
 
 
-
-			//pointLight4.lightProperties.attenuation.x = 1.0f;
-			//pointLight4.lightProperties.attenuation.y = 0.09f;
-			//pointLight4.lightProperties.attenuation.z = 0.032f;
+			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
 
 
-			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
+			r2::draw::PointLight pointLight4;
+
+			pointLight4.position = glm::vec4(2, 2, 0, 1.0);
+			pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+			pointLight4.lightProperties.strength = 1;
+			pointLight4.lightProperties.specular = 0;
+
+
+
+			pointLight4.lightProperties.attenuation.x = 1.0f;
+			pointLight4.lightProperties.attenuation.y = 0.09f;
+			pointLight4.lightProperties.attenuation.z = 0.032f;
+
+
+			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
 
         }
 
@@ -1141,6 +1142,10 @@ public:
         r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
             0, glm::value_ptr(cameraPosTimeW));
 
+        glm::vec4 exposureVec = glm::vec4(mExposure, 0, 0, 0);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
+			1, glm::value_ptr(exposureVec));
+
     }
     
     virtual void Shutdown() override
@@ -1358,7 +1363,7 @@ private:
     s32 mSelectedAnimationID = 0;
     bool mDrawDebugBones = false;
 
-
+    float mExposure = 1.0f;
 
 };
 

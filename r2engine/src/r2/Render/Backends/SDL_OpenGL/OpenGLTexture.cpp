@@ -315,9 +315,22 @@ namespace r2::draw::tex
 		int channels;
 		int mipLevels = 1;
 		bool compressed = false;
-		u8* imageData = stbi_load_from_memory(
-			assetCacheRecord.buffer->Data(),
-			static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+		void* imageData = nullptr;
+		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+
+		if(type == HDR)
+		{
+			imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(),
+				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+			imageFormatSize = GL_FLOAT;
+		}
+		else
+		{
+			imageData = stbi_load_from_memory(
+				assetCacheRecord.buffer->Data(),
+				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+		}
+		
 		bool usedSTBI = true;
 		bool usedTiff = false;
 		bool usedDDS = false;
@@ -379,27 +392,44 @@ namespace r2::draw::tex
 		}
 		else if (channels == 3)
 		{
-			if (type == Diffuse)
+			if (type == HDR)
 			{
-				internalFormat = GL_SRGB8;
+				internalFormat = GL_RGB16F;
 			}
 			else
 			{
-				internalFormat = GL_RGB8;
+				if (type == Diffuse)
+				{
+					internalFormat = GL_SRGB8;
+				}
+				else
+				{
+					internalFormat = GL_RGB8;
+				}
 			}
+			
 
 			format = GL_RGB;
 		}
 		else if (channels == 4)
 		{
-			if (type == Diffuse)
+			if (type == HDR)
 			{
-				internalFormat = GL_SRGB8_ALPHA8;
+				internalFormat = GL_RGBA16F;
 			}
 			else
 			{
-				internalFormat = GL_RGBA8;
+				if (type == Diffuse)
+				{
+					internalFormat = GL_SRGB8_ALPHA8;
+				}
+				else
+				{
+					internalFormat = GL_RGBA8;
+				}
 			}
+
+			
 			
 			format = GL_RGBA;
 		}
@@ -438,13 +468,14 @@ namespace r2::draw::tex
 		}
 		else
 		{
-			r2::draw::gl::tex::TexSubImage2D(newHandle, 0, 0, 0, texWidth, texHeight, format, GL_UNSIGNED_BYTE, imageData);
+			r2::draw::gl::tex::TexSubImage2D(newHandle, 0, 0, 0, texWidth, texHeight, format, imageFormatSize, imageData);
 		}
 		
 
 		if (usedSTBI)
 		{
 			stbi_image_free(imageData);
+
 		}
 
 		if(usedTiff)
@@ -500,12 +531,13 @@ namespace r2::draw::tex
 				}
 				else if (channels == 3)
 				{
-					internalFormat = GL_RGB8;
+					internalFormat = GL_SRGB8;
+
 					format = GL_RGB;
 				}
 				else if (channels == 4)
 				{
-					internalFormat = GL_RGBA8;
+					internalFormat = GL_SRGB8_ALPHA8;
 					format = GL_RGBA;
 				}
 				else

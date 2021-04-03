@@ -48,7 +48,7 @@ namespace r2::draw::rt::impl
 		
 	}
 
-	void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha)
+	void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR)
 	{
 		//@TODO(Serge): implement mip map levels?
 
@@ -58,7 +58,16 @@ namespace r2::draw::rt::impl
 		format.width = rt.width;
 		format.height = rt.height;
 		format.mipLevels = mipLevels;
-		format.internalformat = alpha? GL_RGBA8 : GL_RGB8;
+
+		if (isHDR)
+		{
+			format.internalformat = alpha ? GL_RGBA16F : GL_RGB16F;
+		}
+		else
+		{
+			format.internalformat = alpha ? GL_RGBA8 : GL_RGB8;
+		}
+		
 		format.minFilter = filter;
 		format.magFilter = filter;
 		format.wrapMode = wrapMode;

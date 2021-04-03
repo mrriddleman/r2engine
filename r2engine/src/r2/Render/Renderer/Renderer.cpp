@@ -645,7 +645,7 @@ namespace r2::draw::renderer
 		
 		r2::draw::RenderTarget offscreenRenderTarget = rt::CreateRenderTarget<r2::mem::LinearArena>(*rendererArena, 1, 1, size.width, size.height, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(offscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false);
+		rt::AddTextureAttachment(offscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
 		rt::AddDepthAndStencilAttachment(offscreenRenderTarget);
 
 		s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, offscreenRenderTarget);
