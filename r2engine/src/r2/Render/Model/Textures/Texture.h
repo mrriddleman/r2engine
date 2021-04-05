@@ -23,7 +23,7 @@ namespace r2::draw::tex
 		Normal,
 		Metallic,
 		Height,
-		MicroFacet,
+		MicroFacet, //roughness?
 		Occlusion,
 		Cubemap,
 		HDR,

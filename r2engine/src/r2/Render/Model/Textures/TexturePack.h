@@ -36,7 +36,7 @@ namespace r2::draw::tex
 		r2::SArray<r2::asset::Asset>* normals = nullptr;
 		r2::SArray<r2::asset::Asset>* speculars = nullptr;
 		r2::SArray<r2::asset::Asset>* emissives = nullptr;
-		r2::SArray<r2::asset::Asset>* metalics = nullptr;
+		r2::SArray<r2::asset::Asset>* metallics = nullptr;
 		r2::SArray<r2::asset::Asset>* occlusions = nullptr;
 		r2::SArray<r2::asset::Asset>* micros = nullptr;
 		r2::SArray<r2::asset::Asset>* heights = nullptr;
@@ -64,7 +64,7 @@ namespace r2::draw::tex
 		newTexturePack->normals = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->speculars = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->emissives = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
-		newTexturePack->metalics = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
+		newTexturePack->metallics = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->occlusions = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->micros = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->heights = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
@@ -84,7 +84,7 @@ namespace r2::draw::tex
 		FREE(pack->heights, arena);
 		FREE(pack->micros, arena);
 		FREE(pack->occlusions, arena);
-		FREE(pack->metalics, arena);
+		FREE(pack->metallics, arena);
 		FREE(pack->emissives, arena);
 		FREE(pack->speculars, arena);
 		FREE(pack->normals, arena);

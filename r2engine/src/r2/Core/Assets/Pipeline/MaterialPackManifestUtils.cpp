@@ -136,7 +136,24 @@ namespace r2::asset::pln
 
 			flat::Color theColor{ material->baseColor()->r(), material->baseColor()->g(), material->baseColor()->b(), material->baseColor()->a() };
 
-			auto packMaterial = flat::CreateMaterial(builder, material->name(), material->shader(), material->texturePackName(), material->diffuseTexture(), material->specularTexture(), material->normalMapTexture(), material->emissionTexture(), &theColor, material->specular(), material->roughness(), material->metallic());
+			auto packMaterial = flat::CreateMaterial(
+				builder, material->name(),
+				material->shader(),
+				material->texturePackName(),
+				material->diffuseTexture(),
+				material->specularTexture(),
+				material->normalMapTexture(),
+				material->emissionTexture(),
+				material->metallicTexture(),
+				material->roughnessTexture(),
+				material->aoTexture(),
+				&theColor,
+				material->specular(),
+				material->roughness(),
+				material->metallic(),
+				material->reflectance(),
+				material->ambientOcclusion());
+
 			flatMaterials.push_back(packMaterial);
 
 			delete[] materialData;

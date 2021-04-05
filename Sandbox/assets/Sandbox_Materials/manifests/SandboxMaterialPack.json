@@ -9,12 +9,16 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 7911049628444396188,
       emissionTexture: 15463936376877456632,
+      metallicTexture: 15533827303421986366,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 10574225993394337012,
       baseColor: {
         r: 1.0,
         g: 0.0,
         b: 0.0,
         a: 1.0
-      }
+      },
+      roughness: 0.2
     },
     {
       name: 10074459559892431748,
@@ -24,6 +28,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 8223896901010386733,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -39,6 +46,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 7485921839221740424,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 2827442959005434222,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -54,6 +64,9 @@
       specularTexture: 5208743739925944535,
       normalMapTexture: 16803036875205891942,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 7394477090256391692,
+      roughnessTexture: 14020921424859071797,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -69,6 +82,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -84,6 +100,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,

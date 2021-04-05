@@ -36,11 +36,16 @@ namespace r2::draw
 		tex::TextureAddress specularTexture = {};
 		tex::TextureAddress normalMapTexture = {};
 		tex::TextureAddress emissionTexture = {};
+		tex::TextureAddress metallicTexture = {};
+		tex::TextureAddress roughnessTexture = {};
+		tex::TextureAddress aoTexture = {};
 
-		glm::vec4 baseColor = glm::vec4(1.0f);
+		glm::vec3 baseColor = glm::vec3(1.0f);
 		float specular = 0.f;
 		float roughness= 0.f;
 		float metallic = 0.f;
+		float reflectance = 0.f;
+		float ambientOcclusion = 0.f;
 	};
 
 	struct Material
@@ -53,11 +58,16 @@ namespace r2::draw
 		tex::Texture specularTexture;
 		tex::Texture normalMapTexture;
 		tex::Texture emissionTexture;
+		tex::Texture metallicTexture;
+		tex::Texture roughnessTexture;
+		tex::Texture aoTexture;
 
-		glm::vec4 baseColor = glm::vec4(1.0f);
-		float specular;
-		float roughness;
-		float metallic;
+		glm::vec3 baseColor = glm::vec3(1.0f);
+		float specular = 0.f;
+		float roughness = 0.f;
+		float metallic = 0.f;
+		float reflectance = 0.f;
+		float ambientOcclusion = 0.f;
 	};
 
 	struct MaterialTextureEntry

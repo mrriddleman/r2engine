@@ -2285,11 +2285,18 @@ namespace r2::draw::renderer
 						renderMaterial.metallic = material->metallic;
 						renderMaterial.roughness = material->roughness;
 						renderMaterial.specular = material->specular;
+						renderMaterial.reflectance = material->reflectance;
+						renderMaterial.ambientOcclusion = material->ambientOcclusion;
 
 						renderMaterial.diffuseTexture = texsys::GetTextureAddress(material->diffuseTexture);
 						renderMaterial.specularTexture = texsys::GetTextureAddress(material->specularTexture);
 						renderMaterial.normalMapTexture = texsys::GetTextureAddress(material->normalMapTexture);
 						renderMaterial.emissionTexture = texsys::GetTextureAddress(material->emissionTexture);
+						renderMaterial.metallicTexture = texsys::GetTextureAddress(material->metallicTexture);
+						renderMaterial.roughnessTexture = texsys::GetTextureAddress(material->roughnessTexture);
+						renderMaterial.aoTexture = texsys::GetTextureAddress(material->aoTexture);
+
+
 					}
 				}
 				else

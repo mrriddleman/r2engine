@@ -9,6 +9,9 @@
       specularTexture: 16094578515720185072,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 1.0,
@@ -24,6 +27,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 0.0,
         g: 0.0,
@@ -39,6 +45,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 16071258200335816493,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 0.0,
         g: 0.0,
@@ -54,6 +63,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -69,6 +81,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -84,6 +99,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -99,6 +117,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -114,6 +135,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 1.0,
@@ -129,6 +153,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -144,6 +171,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 0.0,
         g: 1.0,
@@ -159,6 +189,9 @@
       specularTexture: 14695981039346656837,
       normalMapTexture: 14695981039346656837,
       emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,

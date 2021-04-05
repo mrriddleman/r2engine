@@ -182,11 +182,34 @@ namespace r2::asset
 
     bool AssetCache::HasAsset(const Asset& asset)
     {
-		AssetHandle handle = { asset.HashID(), mSlot };
-		AssetBufferRef theDefault;
-		AssetBufferRef& bufferRef = Find(handle, theDefault);
 
-        return bufferRef.mAssetBuffer != nullptr;
+        if (!mnoptrFiles)
+            return false;
+
+        u64 numFiles = r2::sarr::Size(*mnoptrFiles);
+
+        for (u64 i = 0; i < numFiles; ++i)
+        {
+            auto file = r2::sarr::At(*mnoptrFiles, i);
+
+            auto numAssets = file->NumAssets();
+            for (u64 a = 0; a < numAssets; ++a)
+            {
+                if (file->GetAssetHandle(a) == asset.HashID())
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
+
+		//AssetHandle handle = { asset.HashID(), mSlot };
+		//AssetBufferRef theDefault;
+		//AssetBufferRef& bufferRef = Find(handle, theDefault);
+
+  //      return bufferRef.mAssetBuffer != nullptr;
     }
     
     AssetHandle AssetCache::ReloadAsset(const Asset& asset)

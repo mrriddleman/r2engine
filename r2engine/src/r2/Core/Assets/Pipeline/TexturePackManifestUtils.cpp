@@ -100,7 +100,7 @@ namespace r2::asset::pln::tex
 			std::vector<flatbuffers::Offset<flatbuffers::String>> normals;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> speculars;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> emissives;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> metalics;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> metallics;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> micros;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
@@ -144,9 +144,9 @@ namespace r2::asset::pln::tex
 
 					++numTexturesInPack;
 				}
-				else if (file.path().parent_path().stem().string() == "metalic")
+				else if (file.path().parent_path().stem().string() == "metallic")
 				{
-					metalics.push_back(builder.CreateString(sanitizedPath));
+					metallics.push_back(builder.CreateString(sanitizedPath));
 
 					++numTexturesInPack;
 				}
@@ -212,7 +212,7 @@ namespace r2::asset::pln::tex
 				builder.CreateVector(normals),
 				builder.CreateVector(speculars),
 				builder.CreateVector(emissives),
-				builder.CreateVector(metalics),
+				builder.CreateVector(metallics),
 				builder.CreateVector(occlusions),
 				builder.CreateVector(micros),
 				builder.CreateVector(heights), packSize, numTexturesInPack,

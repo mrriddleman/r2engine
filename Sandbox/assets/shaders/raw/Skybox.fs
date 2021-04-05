@@ -18,11 +18,16 @@ struct Material
 	Tex2DAddress specularTexture1;
 	Tex2DAddress normalMapTexture1;
 	Tex2DAddress emissionTexture1;
+	Tex2DAddress metallicTexture1;
+	Tex2DAddress roughnessTexture1;
+	Tex2DAddress aoTexture1;
 
-	vec4 baseColor;
+	vec3 baseColor;
 	float specular;
 	float roughness;
 	float metallic;
+	float reflectance;
+	float ambientOcclusion;
 };
 
 layout (std140, binding = 1) uniform Vectors

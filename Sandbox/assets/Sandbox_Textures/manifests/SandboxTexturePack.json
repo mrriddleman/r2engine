@@ -20,20 +20,22 @@
       emissive: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.tif"
       ],
-      metalic: [
-
+      metallic: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Body_MetallicSmooth.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Hair_MetallicSmooth.tif",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Head_MetallicSmooth.tif"
       ],
       occlusion: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.tif"
       ],
       micro: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/micro/Ellen_Head_Microdetail.tif"
       ],
       height: [
 
       ],
-      packSize: 46986272,
-      totalNumberOfTextures: 10,
+      packSize: 66930008,
+      totalNumberOfTextures: 15,
       metaData: {
       }
     },
@@ -51,7 +53,7 @@
       emissive: [
 
       ],
-      metalic: [
+      metallic: [
 
       ],
       occlusion: [
@@ -82,7 +84,7 @@
       emissive: [
 
       ],
-      metalic: [
+      metallic: [
 
       ],
       occlusion: [
@@ -100,7 +102,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 12,
-  totalTextureSize: 80540836,
-  maxTexturesInAPack: 10
+  totalNumberOfTextures: 17,
+  totalTextureSize: 100484572,
+  maxTexturesInAPack: 15
 }

@@ -24,7 +24,7 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_NORMAL = 8,
     VT_SPECULAR = 10,
     VT_EMISSIVE = 12,
-    VT_METALIC = 14,
+    VT_METALLIC = 14,
     VT_OCCLUSION = 16,
     VT_MICRO = 18,
     VT_HEIGHT = 20,
@@ -47,8 +47,8 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *emissive() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_EMISSIVE);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *metalic() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_METALIC);
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *metallic() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_METALLIC);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *occlusion() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_OCCLUSION);
@@ -83,9 +83,9 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_EMISSIVE) &&
            verifier.VerifyVector(emissive()) &&
            verifier.VerifyVectorOfStrings(emissive()) &&
-           VerifyOffset(verifier, VT_METALIC) &&
-           verifier.VerifyVector(metalic()) &&
-           verifier.VerifyVectorOfStrings(metalic()) &&
+           VerifyOffset(verifier, VT_METALLIC) &&
+           verifier.VerifyVector(metallic()) &&
+           verifier.VerifyVectorOfStrings(metallic()) &&
            VerifyOffset(verifier, VT_OCCLUSION) &&
            verifier.VerifyVector(occlusion()) &&
            verifier.VerifyVectorOfStrings(occlusion()) &&
@@ -122,8 +122,8 @@ struct TexturePackBuilder {
   void add_emissive(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive) {
     fbb_.AddOffset(TexturePack::VT_EMISSIVE, emissive);
   }
-  void add_metalic(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metalic) {
-    fbb_.AddOffset(TexturePack::VT_METALIC, metalic);
+  void add_metallic(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metallic) {
+    fbb_.AddOffset(TexturePack::VT_METALLIC, metallic);
   }
   void add_occlusion(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion) {
     fbb_.AddOffset(TexturePack::VT_OCCLUSION, occlusion);
@@ -162,7 +162,7 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> normal = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> specular = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metalic = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metallic = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> micro = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height = 0,
@@ -177,7 +177,7 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
   builder_.add_height(height);
   builder_.add_micro(micro);
   builder_.add_occlusion(occlusion);
-  builder_.add_metalic(metalic);
+  builder_.add_metallic(metallic);
   builder_.add_emissive(emissive);
   builder_.add_specular(specular);
   builder_.add_normal(normal);
@@ -192,7 +192,7 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *normal = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *specular = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *emissive = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *metalic = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *metallic = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *occlusion = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *micro = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *height = nullptr,
@@ -203,7 +203,7 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
   auto normal__ = normal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*normal) : 0;
   auto specular__ = specular ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*specular) : 0;
   auto emissive__ = emissive ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*emissive) : 0;
-  auto metalic__ = metalic ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*metalic) : 0;
+  auto metallic__ = metallic ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*metallic) : 0;
   auto occlusion__ = occlusion ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*occlusion) : 0;
   auto micro__ = micro ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*micro) : 0;
   auto height__ = height ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*height) : 0;
@@ -214,7 +214,7 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
       normal__,
       specular__,
       emissive__,
-      metalic__,
+      metallic__,
       occlusion__,
       micro__,
       height__,

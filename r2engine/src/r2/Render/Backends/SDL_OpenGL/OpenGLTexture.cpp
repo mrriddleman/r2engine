@@ -297,7 +297,7 @@ namespace r2::draw::tex
 	
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap)
 	{
-		stbi_set_flip_vertically_on_load(true);
+		//stbi_set_flip_vertically_on_load(true);
 
 		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(texture.assetCache);
 
@@ -394,7 +394,7 @@ namespace r2::draw::tex
 		{
 			if (type == HDR)
 			{
-				internalFormat = GL_RGB16F;
+				internalFormat = GL_RGB32F;
 			}
 			else
 			{
@@ -415,7 +415,7 @@ namespace r2::draw::tex
 		{
 			if (type == HDR)
 			{
-				internalFormat = GL_RGBA16F;
+				internalFormat = GL_RGBA32F;
 			}
 			else
 			{
@@ -490,12 +490,14 @@ namespace r2::draw::tex
 
 		assetCache->ReturnAssetBuffer(assetCacheRecord);
 
+		assetCache->FreeAsset(texture);
+
 		return newHandle;
 	}
 
 	TextureHandle UploadToGPU(const CubemapTexture& cubemap)
 	{
-		stbi_set_flip_vertically_on_load(false);
+	//	stbi_set_flip_vertically_on_load(false);
 
 		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(cubemap.sides[CubemapSide::RIGHT].textureAssetHandle.assetCache);
 
@@ -561,6 +563,8 @@ namespace r2::draw::tex
 
 			stbi_image_free(imageData);
 			assetCache->ReturnAssetBuffer(assetCacheRecord);
+
+			assetCache->FreeAsset(cubemap.sides[i].textureAssetHandle);
 		}
 
 

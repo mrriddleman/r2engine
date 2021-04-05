@@ -65,11 +65,16 @@ struct Material
 	Tex2DAddress specularTexture1;
 	Tex2DAddress normalMapTexture1;
 	Tex2DAddress emissionTexture1;
+	Tex2DAddress metallicTexture1;
+	Tex2DAddress roughnessTexture1;
+	Tex2DAddress aoTexture1;
 
-	vec4 baseColor;
+	vec3 baseColor;
 	float specular;
 	float roughness;
 	float metallic;
+	float reflectance;
+	float ambientOcclusion;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -111,6 +116,11 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 vec4 SampleMaterialNormal(uint drawID, vec3 uv);
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv);
 vec4 SampleMaterialEmission(uint drawID, vec3 uv);
+vec4 SampleMaterialMetallic(uint drawID, vec3 uv);
+vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
+vec4 SampleMaterialAO(uint drawID, vec3 uv);
+
+
 vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir);
 vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir);
@@ -119,6 +129,17 @@ vec3 HalfVector(vec3 lightDir, vec3 viewDir);
 float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
 float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
 float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
+
+
+float Fd_Lambert();
+float D_GGX(float NoH, float roughness);
+vec3  F_Schlick(float LoH, vec3 F0);
+float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness);
+
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
+
+
 
 Light CalcLightForMaterial(float diffuse, float specular, float modifier);
 
@@ -129,25 +150,26 @@ float GetTextureModifier(Tex2DAddress addr)
 
 void main()
 {
+	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, fs_in.texCoords).rgb;
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
-	vec3 lightingResult = vec3(0,0,0);
+	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, fs_in.texCoords);
 
-	for(int i = 0; i < numDirectionLights; i++)
-	{
-		lightingResult += CalcDirLight(i, norm, viewDir);
-	}
+	// for(int i = 0; i < numDirectionLights; i++)
+	// {
+	// 	lightingResult += CalcDirLight(i, norm, viewDir);
+	// }
 
-	for(int i = 0; i < numPointLights; ++i)
-	{
-		lightingResult += CalcPointLight(i, norm, fs_in.fragPos, viewDir);
-	}
+	// for(int i = 0; i < numPointLights; ++i)
+	// {
+	// 	lightingResult += CalcPointLight(i, norm, fs_in.fragPos, viewDir);
+	// }
 
-	for(int i = 0; i < numSpotLights; ++i)
-	{
-		lightingResult += CalcSpotLight(i, norm, fs_in.fragPos, viewDir);
-	}
+	// for(int i = 0; i < numSpotLights; ++i)
+	// {
+	// 	lightingResult += CalcSpotLight(i, norm, fs_in.fragPos, viewDir);
+	// }
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
@@ -168,7 +190,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * materials[texIndex].baseColor + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	return (1.0 - modifier) * vec4(materials[texIndex].baseColor,1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
 
 vec4 SampleMaterialNormal(uint drawID, vec3 uv)
@@ -219,6 +241,37 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 
 	return (1.0 - modifier) * vec4(0.0) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
+
+vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].metallicTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * vec4(materials[texIndex].metallic) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+}
+
+vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+}
+
+vec4 SampleMaterialAO(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].aoTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+}
+
 
 
 float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
@@ -326,4 +379,149 @@ float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
 float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
 {
     return CalcSpecular(HalfVector(inLightDir, viewDir), normal, shininess);
+}
+
+float D_GGX(float NoH, float roughness)
+{
+	float a2 = roughness * roughness;
+	float f = (NoH * a2 - NoH) * NoH + 1.0;
+	return a2 / (PI * f * f);
+}
+
+vec3 F_Schlick(float LoH, vec3 F0)
+{
+	return F0 + (vec3(1.0) - F0) * pow(1.0 - LoH, 5.0);
+}
+
+float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
+{
+	float a2 = roughness * roughness;
+	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
+	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+	return clamp(0.5 / (GGXV + GGXL), 0.0, 1.0);
+}
+
+float Fd_Lambert()
+{
+	return 1.0 / PI;
+}
+
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness)
+{
+	vec3 H = normalize(V + L);
+
+	float NoV = abs(dot(N, V)) + 1e-5;
+	float NoH = clamp(dot(N, H), 0.0, 1.0);
+	float LoH = clamp(dot(L, H), 0.0, 1.0);
+
+	float D = D_GGX(NoH, roughness);
+	vec3 F = F_Schlick(LoH, F0);
+	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness);
+
+	//specular BRDF
+	vec3 Fr = (D * VSmith) * F;
+
+	//Energy compensation
+	//vec3 energyCompensation = 1.0 + F0 * (1.0 / dfg.y - 1.0);
+	//Fr *= pixel.energyCompensation
+
+	//float denom = 4.0 * NoV * NoL;
+	vec3 specular = Fr;// max(denom, 0.001);
+	vec3 Fd = diffuseColor * Fd_Lambert();
+
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+
+	return (kD * Fd + specular);
+}
+
+
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	
+	float reflectance = materials[texIndex].reflectance;
+
+	float metallic = SampleMaterialMetallic(drawID, uv).r;
+
+	float ao = SampleMaterialAO(drawID, uv).r;
+
+	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
+
+	float roughness = perceptualRoughness * perceptualRoughness;
+
+	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
+
+	vec3 diffuseColor = (1.0 - metallic) * baseColor;
+
+
+	vec3 L0 = vec3(0,0,0);
+
+	 for(int i = 0; i < numDirectionLights; i++)
+	 {
+	 	DirLight dirLight = dirLights[i];
+
+	 	vec3 L = normalize(-dirLight.direction.xyz);
+
+	 	float NoL = clamp(dot(N, L), 0.0, 1.0);
+
+	 	vec3 radiance = dirLight.lightProperties.color.rgb;
+
+	 	vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+
+	 	L0 += result * radiance * NoL;
+	 }
+
+	for(int i = 0; i < numPointLights; ++i)
+	{
+		PointLight pointLight = pointLights[i];
+
+		vec3 L = pointLight.position.xyz - fs_in.fragPos;
+
+		float distance = length(L);  
+
+		L = normalize(L);
+
+		float NoL = clamp(dot(N, L), 0.0, 1.0);
+
+		float attenuation = 1.0 / (distance * distance);
+
+		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation;
+
+		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+		
+		L0 += result * radiance * NoL;
+	}
+
+	for(int i = 0; i < numSpotLights; ++i)
+	{
+		SpotLight spotLight = spotLights[i];
+
+		vec3 L = spotLight.position.xyz - fs_in.fragPos;
+
+		float distance = length(L);
+
+		L = normalize(L);
+
+		float NoL = clamp(dot(N, L), 0.0, 1.0);
+
+		float attenuation = 1.0 / (distance * distance);
+
+		float theta = dot(L, normalize(-spotLight.direction.xyz));
+
+		float epsilon = spotLight.position.w - spotLight.direction.w;
+
+		float intensity = clamp((theta - spotLight.direction.w) / epsilon, 0.0, 1.0);
+
+		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * intensity;
+
+		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+
+		L0 += result * radiance * NoL;
+	}
+
+	vec3 ambient = vec3(0.03) * baseColor * ao;
+	vec3 color = ambient + L0;
+
+	return color;
 }

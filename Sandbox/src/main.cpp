@@ -704,7 +704,7 @@ public:
             r2::draw::PointLight pointLight;
 
             pointLight.position = glm::vec4(0, 8, 0, 1.0);
-            pointLight.lightProperties.color = glm::vec4(100.0f, 100.0f, 20.0f, 1.0f);
+            pointLight.lightProperties.color = glm::vec4(100.0f, 100.0f, 100.0f, 1.0f);
 
             pointLight.lightProperties.strength = 1;
             pointLight.lightProperties.specular = 0;
@@ -752,7 +752,7 @@ public:
 
 			r2::draw::PointLight pointLight4;
 
-			pointLight4.position = glm::vec4(2, 2, 0, 1.0);
+			pointLight4.position = glm::vec4(3, 2, 0, 1.0);
 			pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
 			pointLight4.lightProperties.strength = 1;

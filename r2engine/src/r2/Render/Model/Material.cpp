@@ -236,13 +236,13 @@ namespace r2::draw::mat
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
-				const auto numMetalics = r2::sarr::Size(*result->metalics);
+				const auto numMetalics = r2::sarr::Size(*result->metallics);
 				for (u64 t = 0; t < numMetalics; ++t)
 				{
 					r2::draw::tex::Texture texture;
 					texture.type = tex::TextureType::Metallic;
 					texture.textureAssetHandle =
-						system.mAssetCache->LoadAsset(r2::sarr::At(*result->metalics, t));
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->metallics, t));
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
@@ -615,15 +615,20 @@ namespace r2::draw::mat
 
 			newMaterial.texturePackHandle = material->texturePackName();
 
-			newMaterial.baseColor = glm::vec4(material->baseColor()->r(), material->baseColor()->g(), material->baseColor()->b(), material->baseColor()->a());
+			newMaterial.baseColor = glm::vec3(material->baseColor()->r(), material->baseColor()->g(), material->baseColor()->b());
 			newMaterial.specular = material->specular();
 			newMaterial.metallic = material->metallic();
 			newMaterial.roughness = material->roughness();
+			newMaterial.reflectance = material->reflectance();
+			newMaterial.ambientOcclusion = material->ambientOcclusion();
 
 			r2::asset::AssetFile* diffuseFile = nullptr;
 			r2::asset::AssetFile* specularFile = nullptr;
 			r2::asset::AssetFile* normalMapFile = nullptr;
 			r2::asset::AssetFile* emissionFile = nullptr;
+			r2::asset::AssetFile* metallicFile = nullptr;
+			r2::asset::AssetFile* roughnessFile = nullptr;
+			r2::asset::AssetFile* aoFile = nullptr;
 
 			if (material->diffuseTexture() != EMPTY)
 			{
@@ -663,6 +668,33 @@ namespace r2::draw::mat
 				newMaterial.emissionTexture.textureAssetHandle = { material->emissionTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
 			}
 
+			if (material->metallicTexture() != EMPTY)
+			{
+				metallicFile = FindAssetFile(list, material->metallicTexture());
+				R2_CHECK(metallicFile != nullptr, "This should never be null!");
+
+				newMaterial.metallicTexture.type = tex::Metallic;
+				newMaterial.metallicTexture.textureAssetHandle = { material->metallicTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+			}
+
+			if (material->roughnessTexture() != EMPTY)
+			{
+				roughnessFile = FindAssetFile(list, material->roughnessTexture());
+				R2_CHECK(roughnessFile != nullptr, "This should never be null!");
+
+				newMaterial.roughnessTexture.type = tex::MicroFacet; //@TODO(Serge): should be it's own thing? ie. a roughness type
+				newMaterial.roughnessTexture.textureAssetHandle = { material->roughnessTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+			}
+
+			if (material->aoTexture() != EMPTY)
+			{
+				aoFile = FindAssetFile(list, material->aoTexture());
+				R2_CHECK(aoFile != nullptr, "This should never be null!");
+
+				newMaterial.aoTexture.type = tex::Occlusion;
+				newMaterial.aoTexture.textureAssetHandle = { material->aoTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+			}
+
 			MaterialHandle handle = AddMaterial(system, newMaterial);
 			R2_CHECK(handle.handle != InvalidMaterialHandle.handle, "We couldn't add the new material?");
 
@@ -679,6 +711,9 @@ namespace r2::draw::mat
 			AddTextureNameToMap(system, handle, specularFile, tex::Specular);
 			AddTextureNameToMap(system, handle, normalMapFile, tex::Normal);
 			AddTextureNameToMap(system, handle, emissionFile, tex::Emissive);
+			AddTextureNameToMap(system, handle, metallicFile, tex::Metallic);
+			AddTextureNameToMap(system, handle, roughnessFile, tex::MicroFacet);
+			AddTextureNameToMap(system, handle, aoFile, tex::Occlusion);
 		}
 	}
 
@@ -699,7 +734,7 @@ namespace r2::draw::mat
 				nextPack->albedo()->size(),
 				nextPack->emissive()->size(),
 				nextPack->height()->size(),
-				nextPack->metalic()->size(),
+				nextPack->metallic()->size(),
 				nextPack->micro()->size(),
 				nextPack->normal()->size(),
 				nextPack->occlusion()->size(),
@@ -800,10 +835,10 @@ namespace r2::draw::mat
 				r2::sarr::Push(*texturePack->heights, textureAsset);
 			}
 
-			const auto numMetalics = nextPack->metalic()->size();
+			const auto numMetalics = nextPack->metallic()->size();
 			for (flatbuffers::uoffset_t t = 0; t < numMetalics; ++t)
 			{
-				auto nextTexturePath = nextPack->metalic()->Get(t);
+				auto nextTexturePath = nextPack->metallic()->Get(t);
 
 				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 
@@ -812,7 +847,7 @@ namespace r2::draw::mat
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 				r2::asset::Asset textureAsset(assetName, textureType);
-				r2::sarr::Push(*texturePack->metalics, textureAsset);
+				r2::sarr::Push(*texturePack->metallics, textureAsset);
 			}
 
 			const auto numMicros = nextPack->micro()->size();
@@ -1194,7 +1229,7 @@ namespace r2::draw::matsys
 			std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
 
 
-			std::filesystem::path filePath = path;
+			std::filesystem::path filePath = sanitizedPath;
 
 			
 			u64 packName = STRING_ID(filePath.parent_path().parent_path().stem().string().c_str());

@@ -14,7 +14,7 @@ table TexturePack
 	normal:[string];
 	specular:[string];
 	emissive:[string];
-	metalic:[string];
+	metallic:[string];
 	occlusion:[string];
 	micro:[string];	
 	height:[string];
