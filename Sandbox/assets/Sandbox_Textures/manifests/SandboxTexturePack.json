@@ -15,7 +15,7 @@
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.tif"
       ],
       specular: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/specular/Ellen_head_SpecularSmoothness.tif"
+
       ],
       emissive: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.tif"
@@ -34,8 +34,8 @@
       height: [
 
       ],
-      packSize: 66930008,
-      totalNumberOfTextures: 15,
+      packSize: 78819212,
+      totalNumberOfTextures: 14,
       metaData: {
       }
     },
@@ -65,7 +65,7 @@
       height: [
 
       ],
-      packSize: 16777282,
+      packSize: 16777256,
       totalNumberOfTextures: 1,
       metaData: {
       }
@@ -96,13 +96,13 @@
       height: [
 
       ],
-      packSize: 16777282,
+      packSize: 16777256,
       totalNumberOfTextures: 1,
       metaData: {
       }
     }
   ],
-  totalNumberOfTextures: 17,
-  totalTextureSize: 100484572,
-  maxTexturesInAPack: 15
+  totalNumberOfTextures: 16,
+  totalTextureSize: 112373724,
+  maxTexturesInAPack: 14
 }

@@ -7,33 +7,19 @@ const uint MAX_NUM_LIGHTS = 100;
 
 layout (location = 0) out vec4 FragColor;
 
+#define PI 3.141596
+
 struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
 };
 
-struct AttenuationState
-{
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-struct Light
-{
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	vec3 emission;
-};
-
 struct LightProperties
 {
 	vec4 color;
-	vec4 attenuation;
-	float specular;
-	float strength;
+	float fallOffRadius;
+	float intensity;
 	int64_t lightID;
 };
 
@@ -41,7 +27,6 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
-
 };
 
 struct DirLight
@@ -55,8 +40,6 @@ struct SpotLight
 	LightProperties lightProperties;
 	vec4 position;//w is radius
 	vec4 direction;//w is cutoff
-	//float radius;
-	//float cutoff;
 };
 
 struct Material
@@ -111,7 +94,7 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-const float PI = 3.14159;
+
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 vec4 SampleMaterialNormal(uint drawID, vec3 uv);
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv);
@@ -120,17 +103,6 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv);
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
 vec4 SampleMaterialAO(uint drawID, vec3 uv);
 
-
-vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir);
-vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir);
-
-vec3 HalfVector(vec3 lightDir, vec3 viewDir);
-float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess);
-float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
-float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess);
-
-
 float Fd_Lambert();
 float D_GGX(float NoH, float roughness);
 vec3  F_Schlick(float LoH, vec3 F0);
@@ -138,10 +110,6 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
 vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness);
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
-
-
-
-Light CalcLightForMaterial(float diffuse, float specular, float modifier);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -272,115 +240,6 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
-
-
-float CalcAttenuation(vec3 state, vec3 lightPos, vec3 fragPos)
-{
-    float distance = length(lightPos - fragPos);
-    float attenuation = 1.0 / (distance*distance);//(state.x + state.y * distance + state.z * (distance * distance));
-    return attenuation;
-}
-
-vec3 CalcPointLight(uint pointLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir)
-{
-	PointLight pointLight = pointLights[pointLightIndex];
-
-	vec3 lightDir = normalize(pointLight.position.xyz - fragPos);
-
-	float diffuse = max(dot(normal, lightDir), 0.0);
- 
-	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
-
-	float attenuation = CalcAttenuation(pointLight.lightProperties.attenuation.xyz, pointLight.position.xyz, fragPos);
-
-	Light result = CalcLightForMaterial(diffuse, specular, attenuation);
-
-	return (result.ambient + result.diffuse + result.specular) * pointLight.lightProperties.color.rgb * pointLight.lightProperties.strength;
-}
-
-vec3 CalcDirLight(uint dirLightIndex, vec3 normal, vec3 viewDir)
-{
-	
-	DirLight dirLight = dirLights[dirLightIndex];
-
-	vec3 lightDir = normalize(-dirLight.direction.xyz);
-
-	float diffuse = max(dot(normal, lightDir), 0.0);
-
-	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
-
-	Light result = CalcLightForMaterial(diffuse, specular, 1.0);
-
-	return (result.ambient + result.diffuse + result.specular) * dirLight.lightProperties.color.rgb * dirLight.lightProperties.strength;
-}
-
-vec3 CalcSpotLight(uint spotLightIndex, vec3 normal, vec3 fragPos, vec3 viewDir)
-{
-	SpotLight spotLight = spotLights[spotLightIndex];
-
-	vec3 lightDir = normalize(spotLight.position.xyz - fragPos);
-
-	float diffuse = max(dot(normal, lightDir), 0.0);
-
-	float specular = BlinnPhongShading(lightDir, viewDir, normal, 0.3);
-
-	float theta = dot(lightDir, normalize(-spotLight.direction.xyz));
-
-	float epsilon = spotLight.position.w - spotLight.direction.w;
-	float intensity = clamp((theta - spotLight.direction.w) / epsilon, 0.0, 1.0);
-
-	float attenuation = CalcAttenuation(spotLight.lightProperties.attenuation.xyz, spotLight.position.xyz, fragPos);
-
-	Light result = CalcLightForMaterial(diffuse, specular, attenuation * intensity);
-
-	return (result.ambient + result.diffuse + result.specular) * spotLight.lightProperties.color.rgb * spotLight.lightProperties.strength;
-}
-
-Light CalcLightForMaterial(float diffuse, float specular, float modifier)
-{
-	Light result;
-
-	vec3 diffuseMat = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords).rgb;
-	result.ambient =  diffuseMat;
-
-	result.diffuse =  diffuse * diffuseMat;
-	result.specular =  specular * SampleMaterialSpecular(fs_in.drawID, fs_in.texCoords).rgb;
-
-	result.ambient *= modifier;
-	result.diffuse *= modifier;
-	result.specular *= modifier;
-
-
-	return result;
-}
-
-vec3 CalcEmissionForMaterial(Light light)
-{
-	vec3 emission = light.emission * SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
-	return emission;
-}
-
-vec3 HalfVector(vec3 lightDir, vec3 viewDir)
-{
-    return normalize(normalize(lightDir) + normalize(viewDir));
-}
-
-float CalcSpecular(vec3 lightDir, vec3 viewDir, float shininess)
-{   
-    return pow(max(dot(viewDir, lightDir), 0.0), shininess);
-}
-
-float PhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
-{
-    vec3 reflectDir = reflect(-inLightDir, normal);
-    return CalcSpecular(reflectDir, viewDir, shininess);
-}
-
-float BlinnPhongShading(vec3 inLightDir, vec3 viewDir, vec3 normal, float shininess)
-{
-    return CalcSpecular(HalfVector(inLightDir, viewDir), normal, shininess);
-}
-
 float D_GGX(float NoH, float roughness)
 {
 	float a2 = roughness * roughness;
@@ -436,6 +295,20 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 }
 
 
+float GetDistanceAttenuation(vec3 posToLight, float falloff)
+{
+	float distanceSquare = dot(posToLight, posToLight);
+
+    float factor = distanceSquare * falloff;
+
+    float smoothFactor = clamp(1.0 - factor * factor, 0.0, 1.0);
+
+    float attenuation = smoothFactor * smoothFactor;
+
+    return attenuation * 1.0 / max(distanceSquare, 1e-4);
+}
+
+
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
@@ -476,17 +349,15 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	{
 		PointLight pointLight = pointLights[i];
 
-		vec3 L = pointLight.position.xyz - fs_in.fragPos;
+		vec3 posToLight = pointLight.position.xyz - fs_in.fragPos;
 
-		float distance = length(L);  
-
-		L = normalize(L);
+		vec3 L = normalize(posToLight);
 
 		float NoL = clamp(dot(N, L), 0.0, 1.0);
 
-		float attenuation = 1.0 / (distance * distance);
+		float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 
-		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation;
+		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity;
 
 		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
 		
@@ -497,23 +368,26 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	{
 		SpotLight spotLight = spotLights[i];
 
-		vec3 L = spotLight.position.xyz - fs_in.fragPos;
+		vec3 posToLight = spotLight.position.xyz - fs_in.fragPos;
 
-		float distance = length(L);
-
-		L = normalize(L);
+		vec3 L = normalize(posToLight);
 
 		float NoL = clamp(dot(N, L), 0.0, 1.0);
 
-		float attenuation = 1.0 / (distance * distance);
+		float attenuation = GetDistanceAttenuation(posToLight, spotLight.lightProperties.fallOffRadius);
+
+		//calculate the spot angle attenuation
 
 		float theta = dot(L, normalize(-spotLight.direction.xyz));
 
-		float epsilon = spotLight.position.w - spotLight.direction.w;
+		float epsilon = max(spotLight.position.w - spotLight.direction.w, 1e-4);
 
-		float intensity = clamp((theta - spotLight.direction.w) / epsilon, 0.0, 1.0);
+		float spotAngleAttenuation = clamp((theta - spotLight.direction.w) / epsilon, 0.0, 1.0);
 
-		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * intensity;
+		spotAngleAttenuation = spotAngleAttenuation * spotAngleAttenuation;
+
+
+		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity;
 
 		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
 

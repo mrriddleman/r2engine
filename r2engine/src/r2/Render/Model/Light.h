@@ -27,20 +27,12 @@ namespace r2::draw
 	using SpotLightHandle = LightHandle;
 
 
-
-	struct AttenuationState
-	{
-		float constant;
-		float linear;
-		float quadratic;
-	};
-
 	struct LightProperties
 	{
 		glm::vec4 color = glm::vec4(1.0f);
-		glm::vec4 attenuation;
-		float specular = 1.0f;
-		float strength = 1.0f;
+		
+		float fallOff = 1.0f;
+		float intensity = 1.0f;
 		s64 lightID = -1; //internal use only
 	};
 

@@ -704,14 +704,10 @@ public:
             r2::draw::PointLight pointLight;
 
             pointLight.position = glm::vec4(0, 8, 0, 1.0);
-            pointLight.lightProperties.color = glm::vec4(100.0f, 100.0f, 100.0f, 1.0f);
+            pointLight.lightProperties.color = glm::vec4(1.0f);
 
-            pointLight.lightProperties.strength = 1;
-            pointLight.lightProperties.specular = 0;
-
-            pointLight.lightProperties.attenuation.x = 1.0f;
-            pointLight.lightProperties.attenuation.y = 0.09f;
-            pointLight.lightProperties.attenuation.z = 0.032f;
+            pointLight.lightProperties.intensity = 100;
+            pointLight.lightProperties.fallOff = 0.01;
 
             r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
 
@@ -720,14 +716,8 @@ public:
 			pointLight2.position = glm::vec4(0, 2, -1, 1.0);
 			pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-			pointLight2.lightProperties.strength = 1;
-			pointLight2.lightProperties.specular = 0;
-
-
-
-			pointLight2.lightProperties.attenuation.x = 1.0f;
-			pointLight2.lightProperties.attenuation.y = 0.09f;
-			pointLight2.lightProperties.attenuation.z = 0.032f;
+			pointLight2.lightProperties.intensity = 1;
+			pointLight2.lightProperties.fallOff = 0.01;
 
 
 			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
@@ -737,14 +727,8 @@ public:
             pointLight3.position = glm::vec4(-1, 2, 0, 1.0);
             pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-            pointLight3.lightProperties.strength = 1;
-            pointLight3.lightProperties.specular = 0;
-
-
-
-            pointLight3.lightProperties.attenuation.x = 1.0f;
-            pointLight3.lightProperties.attenuation.y = 0.09f;
-            pointLight3.lightProperties.attenuation.z = 0.032f;
+            pointLight3.lightProperties.intensity = 2;
+            pointLight3.lightProperties.fallOff = 0.01;
 
 
 			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
@@ -755,14 +739,8 @@ public:
 			pointLight4.position = glm::vec4(3, 2, 0, 1.0);
 			pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
-			pointLight4.lightProperties.strength = 1;
-			pointLight4.lightProperties.specular = 0;
-
-
-
-			pointLight4.lightProperties.attenuation.x = 1.0f;
-			pointLight4.lightProperties.attenuation.y = 0.09f;
-			pointLight4.lightProperties.attenuation.z = 0.032f;
+			pointLight4.lightProperties.intensity = 5;
+			pointLight4.lightProperties.fallOff = 0;
 
 
 			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
