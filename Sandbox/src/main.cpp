@@ -679,29 +679,28 @@ public:
 
         //setup the lights
         {
-			//r2::draw::DirectionLight dirLight;
-			//dirLight.lightProperties.color = glm::vec4(1.0f);
-			//dirLight.lightProperties.attenuation.x = 1.0f;
-			//dirLight.lightProperties.attenuation.y = 0.09f;
-			//dirLight.lightProperties.attenuation.z = 0.032f;
-			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
+			r2::draw::DirectionLight dirLight;
+			dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
+          //  dirLight.lightProperties.intensity = 20;
+
+
+			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
             //r2::draw::SpotLight spotLight;
             //spotLight.lightProperties.color = glm::vec4(1.0f);
-            //spotLight.lightProperties.attenuation.x = 1.0f;
-            //spotLight.lightProperties.attenuation.y = 0.09f;
-            //spotLight.lightProperties.attenuation.z = 0.032f;
 
             //spotLight.position = glm::vec4(0.0f, 5.0f, 3.0f, glm::cos(glm::radians(12.5f)));
-            //spotLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
+            //spotLight.direction = glm::normalize(glm::vec4(0.0f, 0.0f, -5.0f, 0.0) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
             //spotLight.direction.w = glm::cos(glm::radians(15.f));
 
+            //spotLight.lightProperties.intensity = 10;
+            //spotLight.lightProperties.fallOff = 0.01;
 
             //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
 
-            r2::draw::PointLight pointLight;
+           /* r2::draw::PointLight pointLight;
 
             pointLight.position = glm::vec4(0, 8, 0, 1.0);
             pointLight.lightProperties.color = glm::vec4(1.0f);
@@ -743,7 +742,7 @@ public:
 			pointLight4.lightProperties.fallOff = 0;
 
 
-			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
+			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);*/
 
         }
 

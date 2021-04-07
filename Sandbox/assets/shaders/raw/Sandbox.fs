@@ -357,7 +357,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 
-		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity;
+		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
 
 		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
 		
@@ -387,7 +387,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		spotAngleAttenuation = spotAngleAttenuation * spotAngleAttenuation;
 
 
-		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity;
+		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
 
 		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
 
