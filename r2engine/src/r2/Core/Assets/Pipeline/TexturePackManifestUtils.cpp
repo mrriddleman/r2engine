@@ -56,12 +56,12 @@ namespace r2::asset::pln::tex
 
 		for (const auto& texturePackDir : std::filesystem::directory_iterator(directory)) //this will be the texture pack level
 		{
-			//UGH MAC - ignore .DS_Store
-			if (texturePackDir.path().filename() == ".DS_Store")
+			
+			if (texturePackDir.path().filename() == ".DS_Store" || //UGH MAC - ignore .DS_Store
+				texturePackDir.path().stem().string() == "hdr") //skip the hdr directory since we don't use it directly
 			{
 				continue;
 			}
-
 
 			std::filesystem::path texturePackBinPath = binPacksPath / texturePackDir.path().stem();
 			std::filesystem::path metaFilePath = texturePackBinPath / "meta.tmet";

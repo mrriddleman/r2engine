@@ -1,5 +1,6 @@
 #include "r2pch.h"
 #include "r2/Render/Model/Light.h"
+#include "r2/Render/Model/Textures/TextureSystem.h"
 
 namespace r2::draw::light
 {
@@ -26,6 +27,11 @@ namespace r2::draw::lightsys
 	SpotLightHandle GenerateSpotLightHandle(const LightSystem& system)
 	{
 		return { system.mSystemHandle, s_SpotLightID++ };
+	}
+
+	SkyLightHandle GenerateSkyLightHandle(const LightSystem& system)
+	{
+		return { system.mSystemHandle, 0 };
 	}
 
 	void Init(s64 pointLightID, s64 directionLightID, s64 spotLightID)
@@ -212,11 +218,55 @@ namespace r2::draw::lightsys
 		return true;
 	}
 
+	SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight)
+	{
+		SkyLightHandle skylightHandle = GenerateSkyLightHandle(system);
+
+		//system.mSceneLighting.mSkyLight = skylight;
+		//
+		//system.mSceneLighting.mSkyLight.lightProperties.lightID = skylightHandle.handle;
+
+		return skylightHandle;
+	}
+
+	SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& materialHandle)
+	{
+		SkyLight skyLight;
+
+		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+		const Material* material = mat::GetMaterial(*matSystem, materialHandle);
+
+		//@TODO(Serge): would be nice to have some kind of verification here?
+		skyLight.diffuseIrradianceTexture = texsys::GetTextureAddress(material->diffuseTexture);
+
+
+		return AddSkyLight(system, skyLight);
+	}
+
+	bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle)
+	{
+		if (system.mSystemHandle != skylightHandle.lightSystemHandle)
+		{
+			R2_CHECK(false, "We're trying to remove a light that doesn't belong to this system!");
+			return false;
+		}
+
+		//if (system.mSceneLighting.mSkyLight.lightProperties.lightID == skylightHandle.handle)
+		//{
+		//	system.mSceneLighting.mSkyLight = {};
+		//}
+
+		return true;
+	}
+
 	LightSystemHandle GenerateNewLightSystemHandle()
 	{
 		return ++light::s_lightSystemID;
 	}
 
+	
 	
 }
 

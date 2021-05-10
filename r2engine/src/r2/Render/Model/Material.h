@@ -126,6 +126,7 @@ namespace r2::draw::mat
 	static const MaterialHandle InvalidMaterial;
 
 	bool IsInvalidHandle(const MaterialHandle& materialHandle);
+	bool IsValid(const MaterialHandle& materialHandle);
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);

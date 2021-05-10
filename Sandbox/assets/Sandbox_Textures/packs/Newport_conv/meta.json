@@ -1,0 +1,30 @@
+{
+  type: "CUBEMAP",
+  cubemapMetaData: {
+    sides: [
+      {
+        textureName: "newport_loft_conv_right.hdr"
+      },
+      {
+        textureName: "newport_loft_conv_left.hdr",
+        side: "LEFT"
+      },
+      {
+        textureName: "newport_loft_conv_top.hdr",
+        side: "BOTTOM"
+      },
+      {
+        textureName: "newport_loft_conv_bottom.hdr",
+        side: "TOP"
+      },
+      {
+        textureName: "newport_loft_conv_front.hdr",
+        side: "FRONT"
+      },
+      {
+        textureName: "newport_loft_conv_back.hdr",
+        side: "BACK"
+      }
+    ]
+  }
+}

@@ -150,7 +150,12 @@ namespace r2::draw::mat
 
 	bool IsInvalidHandle(const MaterialHandle& materialHandle)
 	{
-		return materialHandle.handle == mat::InvalidMaterialHandle.handle && materialHandle.slot == mat::InvalidMaterialHandle.slot;
+		return materialHandle.handle == mat::InvalidMaterialHandle.handle || materialHandle.slot == mat::InvalidMaterialHandle.slot;
+	}
+
+	bool IsValid(const MaterialHandle& materialHandle)
+	{
+		return !IsInvalidHandle(materialHandle);
 	}
 
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system)
@@ -334,9 +339,7 @@ namespace r2::draw::mat
 		if (entry.mIndex == -1)
 		{
 			return;
-
 		}
-			
 
 		if (entry.mType == r2::asset::TEXTURE)
 		{
@@ -360,9 +363,7 @@ namespace r2::draw::mat
 			const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*system.mMaterialCubemapTextures, entry.mIndex);
 	
 			r2::draw::texsys::UploadToGPU(cubemap);
-
 		}
-		
 	}
 
 	void UnloadAllMaterialTexturesFromGPU(const MaterialSystem& system)

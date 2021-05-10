@@ -1,0 +1,26 @@
+{
+	name:"NewportSkybox",
+	shader:"Skybox",
+	
+	texturePackName:"Newport",
+
+	diffuseTexture:"newport/albedo/newport0_right.hdr",
+	specularTexture:"",
+	normalMapTexture:"",
+	emissionTexture:"",
+	metallicTexture:"",
+	roughnessTexture:"",
+	aoTexture:"",
+
+	baseColor:{
+		r: 1.0,
+		g: 0.0,
+		b: 0.0,
+		a: 1.0
+	},
+	specular:0.0,
+	roughness:0.0,
+	metallic:0.0,
+	reflectance:0.0,
+	ambientOcclusion:0.0
+}

@@ -5,6 +5,8 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "glm/glm.hpp"
+#include "r2/Render/Model/Material.h"
+
 
 namespace r2::draw
 {
@@ -25,7 +27,7 @@ namespace r2::draw
 	using PointLightHandle = LightHandle;
 	using DirectionLightHandle = LightHandle;
 	using SpotLightHandle = LightHandle;
-
+	using SkyLightHandle = LightHandle;
 
 	struct LightProperties
 	{
@@ -57,6 +59,12 @@ namespace r2::draw
 		//float cutoff; //cosine angle
 	};
 
+	struct SkyLight
+	{
+		tex::TextureAddress diffuseIrradianceTexture;
+		int padding;
+	};
+
 	//@NOTE: right now this is the same format as the shaders. If we change the shader layout, we have to change this
 
 	struct SceneLighting
@@ -64,11 +72,15 @@ namespace r2::draw
 		PointLight mPointLights[light::MAX_NUM_LIGHTS];
 		DirectionLight mDirectionLights[light::MAX_NUM_LIGHTS];
 		SpotLight mSpotLights[light::MAX_NUM_LIGHTS];
+	//	SkyLight mSkyLight;
+
 
 		s32 mNumPointLights = 0;
 		s32 mNumDirectionLights = 0;
 		s32 mNumSpotLights = 0;
 		s32 temp = 0;
+
+		
 	};
 
 
@@ -106,6 +118,11 @@ namespace r2::draw
 
 		SpotLightHandle AddSpotLight(LightSystem& system, const SpotLight& spotLight);
 		bool RemoveSpotLight(LightSystem& system, SpotLightHandle lightHandle);
+
+		SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight);
+		SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& materialHandle);
+
+		bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle);
 
 		LightSystemHandle GenerateNewLightSystemHandle();
 	}

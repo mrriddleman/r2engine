@@ -18,6 +18,7 @@
 *.fbx
 *.tif
 *.jpg
+*.hdr
 
 /bin/
 /bin_int/
@@ -52,6 +53,18 @@ r2engine/vendor/loguru/loguru.vcxproj.user
 r2engine/vendor/miniz/bin-int/
 r2engine/vendor/miniz/miniz.vcxproj.user
 r2engine/assets_bin/
+r2engine/libs/ibl/bin/
+r2engine/libs/ibl/bin-int/
+r2engine/libs/ibl/*.vcxproj
+r2engine/libs/cmdln/bin/
+r2engine/libs/cmdln/bin-int/
+r2engine/libs/cmdln/*.vcxproj
+r2engine/tools/cubemapgen/bin/
+r2engine/tools/cubemapgen/bin-int/
+r2engine/tools/cubemapgen/*.vcxproj
+r2engine/libs/ibl/ibl.vcxproj.user
+r2engine/tools/cubemapgen/cubemapgen.vcxproj.user
+r2engine/libs/cmdln/cmdln.vcxproj.user
 
 #r2Tests
 r2Tests/*.xcodeproj/

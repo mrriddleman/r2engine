@@ -317,8 +317,9 @@ namespace r2::draw::tex
 		bool compressed = false;
 		void* imageData = nullptr;
 		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+		bool isHDR = stbi_is_hdr_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
 
-		if(type == HDR)
+		if(isHDR)
 		{
 			imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(),
 				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
@@ -359,7 +360,7 @@ namespace r2::draw::tex
 			else
 			{
 
-				SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), assetCacheRecord.buffer->Size());
+				SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
 
 				R2_CHECK(ops != nullptr, "We should be able to get the RWOps from memory");
 
@@ -388,11 +389,18 @@ namespace r2::draw::tex
 		if (channels == 1)
 		{
 			format = GL_RED;
-			internalFormat = GL_R8;
+			if (isHDR)
+			{
+				internalFormat = GL_R32F;
+			}
+			else
+			{
+				internalFormat = GL_R8;
+			}
 		}
 		else if (channels == 3)
 		{
-			if (type == HDR)
+			if (isHDR)
 			{
 				internalFormat = GL_RGB32F;
 			}
@@ -413,7 +421,7 @@ namespace r2::draw::tex
 		}
 		else if (channels == 4)
 		{
-			if (type == HDR)
+			if (isHDR)
 			{
 				internalFormat = GL_RGBA32F;
 			}
@@ -510,6 +518,7 @@ namespace r2::draw::tex
 		r2::draw::tex::TextureFormat textureFormat;
 		GLenum format;
 		GLenum internalFormat;
+		
 
 		for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 		{
@@ -520,26 +529,66 @@ namespace r2::draw::tex
 			int texWidth;
 			int texHeight;
 			int channels;
-			u8* imageData = stbi_load_from_memory(
-				assetCacheRecord.buffer->Data(),
-				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+
+			void* imageData = nullptr;
+			
+			bool isHDR = stbi_is_hdr_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
+			GLenum formatSize = GL_UNSIGNED_BYTE;
+
+			if (isHDR)
+			{
+				imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()),
+					&texWidth, &texHeight, &channels, 0);
+				formatSize = GL_FLOAT;
+			}
+			else
+			{
+				imageData = stbi_load_from_memory(
+					assetCacheRecord.buffer->Data(),
+					static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
+			}
+			
 
 			if (i == 0)
 			{
 				if (channels == 1)
 				{
 					format = GL_RED;
-					internalFormat = GL_R8;
+
+					if (isHDR)
+					{
+						internalFormat = GL_R32F;
+					}
+					else
+					{
+						internalFormat = GL_R8;
+					}
 				}
 				else if (channels == 3)
 				{
-					internalFormat = GL_SRGB8;
+
+					if (isHDR)
+					{
+						internalFormat = GL_RGB32F;
+					}
+					else
+					{
+						internalFormat = GL_SRGB8;
+					}
 
 					format = GL_RGB;
 				}
 				else if (channels == 4)
 				{
-					internalFormat = GL_SRGB8_ALPHA8;
+					if (isHDR)
+					{
+						internalFormat = GL_RGBA32F;
+					}
+					else
+					{
+						internalFormat = GL_SRGB8_ALPHA8;
+					}
+
 					format = GL_RGBA;
 				}
 				else
@@ -558,7 +607,7 @@ namespace r2::draw::tex
 				r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
 			}
 			
-			r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), 0, 0, 0, texWidth, texHeight, format, GL_UNSIGNED_BYTE, imageData);
+			r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), 0, 0, 0, texWidth, texHeight, format, formatSize, imageData);
 
 
 			stbi_image_free(imageData);

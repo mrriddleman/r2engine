@@ -26,7 +26,6 @@ namespace r2::draw::tex
 		MicroFacet, //roughness?
 		Occlusion,
 		Cubemap,
-		HDR,
 		NUM_TEXTURE_TYPES
 	};
 

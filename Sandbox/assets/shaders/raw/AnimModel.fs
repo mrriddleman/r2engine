@@ -41,7 +41,14 @@ struct SpotLight
 	vec4 direction; //w is cutoff
 };
 
-struct Material
+struct SkyLight
+{
+	//LightProperties lightProperties;
+	Tex2DAddress diffuseIrradianceTexture;
+	int padding;
+};
+
+struct Material 
 {
 	Tex2DAddress diffuseTexture1;
 	Tex2DAddress specularTexture1;
@@ -75,11 +82,14 @@ layout (std430, binding = 4) buffer Lighting
 	PointLight pointLights[MAX_NUM_LIGHTS];
 	DirLight dirLights[MAX_NUM_LIGHTS];
 	SpotLight spotLights[MAX_NUM_LIGHTS];
+	//SkyLight skylight;
 
 	int numPointLights;
 	int numDirectionLights;
 	int numSpotLights;
 	int temp;
+
+	//SkyLight skylight;
 };
 
 in VS_OUT
@@ -104,8 +114,11 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
 vec4 SampleMaterialAO(uint drawID, vec3 uv);
 
 float Fd_Lambert();
+float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
+
 float D_GGX(float NoH, float roughness);
 vec3  F_Schlick(float LoH, vec3 F0);
+float F_Schlick(float f0, float f90, float VoH);
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
 vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness);
 
@@ -242,6 +255,12 @@ vec3 F_Schlick(float LoH, vec3 F0)
 	return F0 + (vec3(1.0) - F0) * pow(1.0 - LoH, 5.0);
 }
 
+float F_Schlick(float f0, float f90, float VoH)
+{
+    return f0 + (f90 - f0) * pow(1.0 - VoH, 5.0);
+}
+
+
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 {
 	float a2 = roughness * roughness;
@@ -253,6 +272,15 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 float Fd_Lambert()
 {
 	return 1.0 / PI;
+}
+
+float Fd_Burley(float roughness, float NoV, float NoL, float LoH) 
+{
+    // Burley 2012, "Physically-Based Shading at Disney"
+    float f90 = 0.5 + 2.0 * roughness * LoH * LoH;
+    float lightScatter = F_Schlick(1.0, f90, NoL);
+    float viewScatter  = F_Schlick(1.0, f90, NoV);
+    return lightScatter * viewScatter * (1.0 / PI);
 }
 
 vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness)
@@ -276,7 +304,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 
 	//float denom = 4.0 * NoV * NoL;
 	vec3 specular = Fr;// max(denom, 0.001);
-	vec3 Fd = diffuseColor * Fd_Lambert();
+	vec3 Fd = diffuseColor * Fd_Burley(roughness, NoV, NoL, LoH);
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;

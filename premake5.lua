@@ -29,6 +29,9 @@ include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
 include "r2engine/vendor/loguru"
 include "r2engine/vendor/imgui"
+include "r2engine/libs/ibl"
+include "r2engine/libs/cmdln"
+include "r2engine/tools/cubemapgen"
 
 project "r2engine"
 	location "r2engine"
@@ -71,14 +74,14 @@ project "r2engine"
 		"%{includeDirs.catch2}",
 		"%{includeDirs.sha256}",
 		"%{includeDirs.stb}",
-		"%{includeDirs.cgltf}"
+		"%{includeDirs.cgltf}",
 	}
 
 	links
 	{
 		"miniz",
 		"loguru",
-		"imgui"
+		"imgui",
 	}
 
 	defines 
@@ -234,7 +237,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 
 
-	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
+	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/stb/stb_image_write_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
 		flags {"NoPCH"}
 
 	filter "files:r2engine/vendor/cgltf/cgltf.cpp or files:r2engine/vendor/cgltf/cgltf_write.cpp"

@@ -624,7 +624,13 @@ public:
         skyboxInfo.numMaterials = 1;
 
         r2::sarr::Push(*skyboxMaterials.infos, skyboxInfo);
-        r2::sarr::Push(*skyboxMaterials.materialHandles, r2::draw::renderer::GetMaterialHandleForDefaultModel(r2::draw::SKYBOX));
+
+        r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"));
+        //r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(r2::draw::SKYBOX);
+
+        R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
+
+        r2::sarr::Push(*skyboxMaterials.materialHandles, skyboxMaterialHandle); //;
 
 
         r2::SArray<r2::draw::ModelRef>* modelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
