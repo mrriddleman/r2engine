@@ -625,7 +625,7 @@ public:
 
         r2::sarr::Push(*skyboxMaterials.infos, skyboxInfo);
 
-        r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"));
+        r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportSkybox"));
         //r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(r2::draw::SKYBOX);
 
         R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
@@ -685,11 +685,14 @@ public:
 
         //setup the lights
         {
+            r2::draw::lightsys::AddSkyLight(*mLightSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")));
+
+
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
-          //  dirLight.lightProperties.intensity = 20;
+			dirLight.lightProperties.intensity = 20;
 
 
 			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);

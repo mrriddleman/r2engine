@@ -3,7 +3,7 @@
 #extension GL_NV_gpu_shader5 : enable
 
 const uint NUM_TEXTURES_PER_DRAWID = 8;
-const uint MAX_NUM_LIGHTS = 100;
+const uint MAX_NUM_LIGHTS = 50;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -44,9 +44,8 @@ struct SpotLight
 
 struct SkyLight
 {
-//	LightProperties lightProperties;
+	LightProperties lightProperties;
 	Tex2DAddress diffuseIrradianceTexture;
-	int padding;
 };
 
 struct Material
@@ -83,14 +82,11 @@ layout (std430, binding = 4) buffer Lighting
 	PointLight pointLights[MAX_NUM_LIGHTS];
 	DirLight dirLights[MAX_NUM_LIGHTS];
 	SpotLight spotLights[MAX_NUM_LIGHTS];
-	//SkyLight skylight;
+	SkyLight skylight;
 
 	int numPointLights;
 	int numDirectionLights;
 	int numSpotLights;
-	int temp;
-
-	
 };
 
 
@@ -112,6 +108,7 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv);
 vec4 SampleMaterialMetallic(uint drawID, vec3 uv);
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
 vec4 SampleMaterialAO(uint drawID, vec3 uv);
+vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
 
 float Fd_Lambert();
 float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
@@ -250,7 +247,13 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(0.3) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+}
+
+vec4 SampleSkylightDiffuseIrradiance(vec3 uv)
+{
+	Tex2DAddress addr = skylight.diffuseIrradianceTexture;
+	return texture(samplerCubeArray(addr.container), vec4(uv, addr.page));
 }
 
 float D_GGX(float NoH, float roughness)
@@ -314,7 +317,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 
 	//float denom = 4.0 * NoV * NoL;
 	vec3 specular = Fr;// max(denom, 0.001);
-	vec3 Fd = diffuseColor * Fd_Burley(roughness, NoV, NoL, LoH);//Fd_Lambert();
+	vec3 Fd = diffuseColor * Fd_Lambert(); //Fd_Burley(roughness, NoV, NoL, LoH);
 
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
@@ -355,6 +358,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
+	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(reflect(-V, N)).rgb;
 
 	vec3 L0 = vec3(0,0,0);
 
@@ -422,7 +426,11 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		L0 += result * radiance * NoL;
 	}
 
-	vec3 ambient = vec3(0.03) * baseColor * ao;
+	vec3 kS = F_Schlick(max(dot(N, V), 0.0), F0);
+	vec3 kD = 1.0 - kS;
+
+	vec3 ambient = diffuseIrradiance * ao * diffuseColor;
+
 	vec3 color = ambient + L0;
 
 	return color;

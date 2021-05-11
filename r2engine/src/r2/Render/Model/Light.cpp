@@ -222,9 +222,9 @@ namespace r2::draw::lightsys
 	{
 		SkyLightHandle skylightHandle = GenerateSkyLightHandle(system);
 
-		//system.mSceneLighting.mSkyLight = skylight;
-		//
-		//system.mSceneLighting.mSkyLight.lightProperties.lightID = skylightHandle.handle;
+		system.mSceneLighting.mSkyLight = skylight;
+
+		system.mSceneLighting.mSkyLight.lightProperties.lightID = skylightHandle.handle;
 
 		return skylightHandle;
 	}
@@ -253,10 +253,10 @@ namespace r2::draw::lightsys
 			return false;
 		}
 
-		//if (system.mSceneLighting.mSkyLight.lightProperties.lightID == skylightHandle.handle)
-		//{
-		//	system.mSceneLighting.mSkyLight = {};
-		//}
+		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == skylightHandle.handle)
+		{
+			system.mSceneLighting.mSkyLight = {};
+		}
 
 		return true;
 	}

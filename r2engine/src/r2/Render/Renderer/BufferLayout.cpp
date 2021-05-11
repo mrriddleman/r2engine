@@ -274,7 +274,7 @@ namespace r2::draw
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[0].offset = 0;
 		mElements[0].typeCount = 1;
-        mElements[0].elementSize = light::MAX_NUM_LIGHTS * sizeof(PointLight) + sizeof(DirectionLight) * light::MAX_NUM_LIGHTS + sizeof(SpotLight) * light::MAX_NUM_LIGHTS + sizeof(int)*4;
+        mElements[0].elementSize = sizeof(SceneLighting);
 		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
 		mElements[0].type = ShaderDataType::Struct;
 

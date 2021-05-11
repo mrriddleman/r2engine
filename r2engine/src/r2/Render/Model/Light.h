@@ -12,7 +12,7 @@ namespace r2::draw
 {
 	namespace light
 	{
-		const u32 MAX_NUM_LIGHTS = 100;
+		const u32 MAX_NUM_LIGHTS = 50;
 		
 	}
 
@@ -61,8 +61,8 @@ namespace r2::draw
 
 	struct SkyLight
 	{
+		LightProperties lightProperties;
 		tex::TextureAddress diffuseIrradianceTexture;
-		int padding;
 	};
 
 	//@NOTE: right now this is the same format as the shaders. If we change the shader layout, we have to change this
@@ -72,13 +72,12 @@ namespace r2::draw
 		PointLight mPointLights[light::MAX_NUM_LIGHTS];
 		DirectionLight mDirectionLights[light::MAX_NUM_LIGHTS];
 		SpotLight mSpotLights[light::MAX_NUM_LIGHTS];
-	//	SkyLight mSkyLight;
-
+		SkyLight mSkyLight;
 
 		s32 mNumPointLights = 0;
 		s32 mNumDirectionLights = 0;
 		s32 mNumSpotLights = 0;
-		s32 temp = 0;
+		
 
 		
 	};
