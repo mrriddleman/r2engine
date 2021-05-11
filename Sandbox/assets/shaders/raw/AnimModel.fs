@@ -421,12 +421,12 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec3 kS = F_Schlick(max(dot(N, V), 0.0), F0);
 	vec3 kD = 1.0 - kS;
 
-	vec3 ambient = diffuseColor * diffuseIrradiance * ao * Fd_Lambert();
+	vec3 ambient = kD * diffuseColor * diffuseIrradiance * ao * Fd_Lambert();
 
 
 
 	//vec3 ambient = vec3(0.03) * baseColor ;//* ao;
-	vec3 color =  ambient  + L0;
+	vec3 color =  ambient+ L0;
 
 	return color;
 }
