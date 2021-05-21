@@ -336,7 +336,7 @@ public:
         //make the buffer layouts
         mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
         mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
-        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 0.0f, 3.0f));
+        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 2.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);

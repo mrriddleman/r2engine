@@ -36,6 +36,8 @@ namespace r2::cam
         float mAspect;
         float mNear;
         float mFar;
+
+        bool mRightMouseButtonHeld;
     };
 }
 

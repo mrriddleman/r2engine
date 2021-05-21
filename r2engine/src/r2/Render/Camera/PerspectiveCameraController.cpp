@@ -21,8 +21,10 @@ namespace r2::cam
         mAspect = aspect;
         mNear = near;
         mFar = far;
+        mRightMouseButtonHeld = false;
         InitPerspectiveCam(mCamera, fov, aspect, near, far, position);
         SetFacingDir(mCamera, glm::vec3(0.0f, 0.0f, -1.0f));
+
         //SetFacingDir(mCamera, pitch, yaw);
     }
     
@@ -113,9 +115,36 @@ namespace r2::cam
         static float lastX = (f32)CENG.DisplaySize().width/2.0f;
         static float lastY = (f32)CENG.DisplaySize().height/2.0f;
         
+
+        dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e) {
+
+            if (e.MouseButton() == r2::io::MOUSE_BUTTON_RIGHT && !mRightMouseButtonHeld)
+            {
+                
+                mRightMouseButtonHeld = true;
+            }
+
+
+            return true;
+        });
+
+        dispatcher.Dispatch<r2::evt::MouseButtonReleasedEvent>([this](const r2::evt::MouseButtonReleasedEvent& e) {
+                
+			if (e.MouseButton() == r2::io::MOUSE_BUTTON_RIGHT && mRightMouseButtonHeld)
+			{
+				
+				mRightMouseButtonHeld = false;
+			}
+
+            return true;
+        });
+
         dispatcher.Dispatch<r2::evt::MouseMovedEvent>([this](const r2::evt::MouseMovedEvent& e){
             
-            
+            if (!mRightMouseButtonHeld)
+            {
+                return true;
+            }
             
             float xOffset = e.X() - lastX;
             float yOffset = lastY - e.Y();
