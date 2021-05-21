@@ -11,8 +11,8 @@ namespace flat {
 struct CubemapSideEntry;
 struct CubemapSideEntryBuilder;
 
-struct CubemapMetaData;
-struct CubemapMetaDataBuilder;
+struct MipLevel;
+struct MipLevelBuilder;
 
 struct TexturePackMetaData;
 struct TexturePackMetaDataBuilder;
@@ -156,16 +156,21 @@ inline flatbuffers::Offset<CubemapSideEntry> CreateCubemapSideEntryDirect(
       side);
 }
 
-struct CubemapMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef CubemapMetaDataBuilder Builder;
+struct MipLevel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef MipLevelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_SIDES = 4
+    VT_LEVEL = 4,
+    VT_SIDES = 6
   };
+  uint32_t level() const {
+    return GetField<uint32_t>(VT_LEVEL, 0);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<flat::CubemapSideEntry>> *sides() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::CubemapSideEntry>> *>(VT_SIDES);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_LEVEL) &&
            VerifyOffset(verifier, VT_SIDES) &&
            verifier.VerifyVector(sides()) &&
            verifier.VerifyVectorOfTables(sides()) &&
@@ -173,39 +178,46 @@ struct CubemapMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct CubemapMetaDataBuilder {
-  typedef CubemapMetaData Table;
+struct MipLevelBuilder {
+  typedef MipLevel Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_sides(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::CubemapSideEntry>>> sides) {
-    fbb_.AddOffset(CubemapMetaData::VT_SIDES, sides);
+  void add_level(uint32_t level) {
+    fbb_.AddElement<uint32_t>(MipLevel::VT_LEVEL, level, 0);
   }
-  explicit CubemapMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  void add_sides(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::CubemapSideEntry>>> sides) {
+    fbb_.AddOffset(MipLevel::VT_SIDES, sides);
+  }
+  explicit MipLevelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  CubemapMetaDataBuilder &operator=(const CubemapMetaDataBuilder &);
-  flatbuffers::Offset<CubemapMetaData> Finish() {
+  MipLevelBuilder &operator=(const MipLevelBuilder &);
+  flatbuffers::Offset<MipLevel> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<CubemapMetaData>(end);
+    auto o = flatbuffers::Offset<MipLevel>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<CubemapMetaData> CreateCubemapMetaData(
+inline flatbuffers::Offset<MipLevel> CreateMipLevel(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t level = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::CubemapSideEntry>>> sides = 0) {
-  CubemapMetaDataBuilder builder_(_fbb);
+  MipLevelBuilder builder_(_fbb);
   builder_.add_sides(sides);
+  builder_.add_level(level);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<CubemapMetaData> CreateCubemapMetaDataDirect(
+inline flatbuffers::Offset<MipLevel> CreateMipLevelDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t level = 0,
     const std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> *sides = nullptr) {
   auto sides__ = sides ? _fbb.CreateVector<flatbuffers::Offset<flat::CubemapSideEntry>>(*sides) : 0;
-  return flat::CreateCubemapMetaData(
+  return flat::CreateMipLevel(
       _fbb,
+      level,
       sides__);
 }
 
@@ -213,19 +225,20 @@ struct TexturePackMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
   typedef TexturePackMetaDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_TYPE = 4,
-    VT_CUBEMAPMETADATA = 6
+    VT_MIPLEVELS = 6
   };
   flat::TextureType type() const {
     return static_cast<flat::TextureType>(GetField<int8_t>(VT_TYPE, 0));
   }
-  const flat::CubemapMetaData *cubemapMetaData() const {
-    return GetPointer<const flat::CubemapMetaData *>(VT_CUBEMAPMETADATA);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::MipLevel>> *mipLevels() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MipLevel>> *>(VT_MIPLEVELS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int8_t>(verifier, VT_TYPE) &&
-           VerifyOffset(verifier, VT_CUBEMAPMETADATA) &&
-           verifier.VerifyTable(cubemapMetaData()) &&
+           VerifyOffset(verifier, VT_MIPLEVELS) &&
+           verifier.VerifyVector(mipLevels()) &&
+           verifier.VerifyVectorOfTables(mipLevels()) &&
            verifier.EndTable();
   }
 };
@@ -237,8 +250,8 @@ struct TexturePackMetaDataBuilder {
   void add_type(flat::TextureType type) {
     fbb_.AddElement<int8_t>(TexturePackMetaData::VT_TYPE, static_cast<int8_t>(type), 0);
   }
-  void add_cubemapMetaData(flatbuffers::Offset<flat::CubemapMetaData> cubemapMetaData) {
-    fbb_.AddOffset(TexturePackMetaData::VT_CUBEMAPMETADATA, cubemapMetaData);
+  void add_mipLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MipLevel>>> mipLevels) {
+    fbb_.AddOffset(TexturePackMetaData::VT_MIPLEVELS, mipLevels);
   }
   explicit TexturePackMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -255,11 +268,22 @@ struct TexturePackMetaDataBuilder {
 inline flatbuffers::Offset<TexturePackMetaData> CreateTexturePackMetaData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flat::TextureType type = flat::TextureType_TEXTURE,
-    flatbuffers::Offset<flat::CubemapMetaData> cubemapMetaData = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MipLevel>>> mipLevels = 0) {
   TexturePackMetaDataBuilder builder_(_fbb);
-  builder_.add_cubemapMetaData(cubemapMetaData);
+  builder_.add_mipLevels(mipLevels);
   builder_.add_type(type);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<TexturePackMetaData> CreateTexturePackMetaDataDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flat::TextureType type = flat::TextureType_TEXTURE,
+    const std::vector<flatbuffers::Offset<flat::MipLevel>> *mipLevels = nullptr) {
+  auto mipLevels__ = mipLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::MipLevel>>(*mipLevels) : 0;
+  return flat::CreateTexturePackMetaData(
+      _fbb,
+      type,
+      mipLevels__);
 }
 
 inline const flat::TexturePackMetaData *GetTexturePackMetaData(const void *buf) {

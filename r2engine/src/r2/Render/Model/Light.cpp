@@ -218,7 +218,7 @@ namespace r2::draw::lightsys
 		return true;
 	}
 
-	SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight)
+	SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight, s32 numPrefilteredMips)
 	{
 		SkyLightHandle skylightHandle = GenerateSkyLightHandle(system);
 
@@ -226,23 +226,36 @@ namespace r2::draw::lightsys
 
 		system.mSceneLighting.mSkyLight.lightProperties.lightID = skylightHandle.handle;
 
+		system.mSceneLighting.numPrefilteredRoughnessMips = numPrefilteredMips;
+
 		return skylightHandle;
 	}
 
-	SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& materialHandle)
+	SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& diffuseMaterialHandle, const MaterialHandle& prefilteredMaterialHandle, const MaterialHandle& lutDFGHandle)
 	{
 		SkyLight skyLight;
 
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(diffuseMaterialHandle.slot);
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		const Material* material = mat::GetMaterial(*matSystem, materialHandle);
+		const Material* diffuseMaterial = mat::GetMaterial(*matSystem, diffuseMaterialHandle);
+		
+		R2_CHECK(diffuseMaterial != nullptr, "Skylight - The diffuse material is null!");
+		const Material* prefilteredMaterial = mat::GetMaterial(*matSystem, prefilteredMaterialHandle);
+		R2_CHECK(prefilteredMaterial != nullptr, "Skylight - The prefiltered material is null!");
+		const Material* lutDFGMaterial = mat::GetMaterial(*matSystem, lutDFGHandle);
+		R2_CHECK(lutDFGMaterial != nullptr, "Skylight - The lutDFG material is null!");
 
 		//@TODO(Serge): would be nice to have some kind of verification here?
-		skyLight.diffuseIrradianceTexture = texsys::GetTextureAddress(material->diffuseTexture);
+		skyLight.diffuseIrradianceTexture = texsys::GetTextureAddress(diffuseMaterial->diffuseTexture);
+		skyLight.prefilteredRoughnessTexture = texsys::GetTextureAddress(prefilteredMaterial->diffuseTexture);
+		skyLight.lutDFGTexture = texsys::GetTextureAddress(lutDFGMaterial->diffuseTexture);
 
+		const auto* prefilteredCubemap = mat::GetCubemapTexture(*matSystem, prefilteredMaterialHandle);
 
-		return AddSkyLight(system, skyLight);
+		R2_CHECK(prefilteredCubemap != nullptr, "We should always get a proper cubemap here!");
+
+		return AddSkyLight(system, skyLight, texsys::GetNumberOfMipMaps(*prefilteredCubemap));
 	}
 
 	bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle)

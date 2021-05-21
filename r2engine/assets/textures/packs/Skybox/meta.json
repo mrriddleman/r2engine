@@ -1,33 +1,33 @@
 {
 	type: "CUBEMAP",
-	cubemapMetaData: {
-		sides: 
-		[
-			{
-				textureName: "left.jpg",
-				side: "LEFT"
-			},
-			{
-				textureName: "right.jpg",
-				side: "RIGHT"
-			},
-			{
-				textureName: "top.jpg",
-				side: "TOP"
-			},
-			{
-				textureName: "bottom.jpg",
-				side: "BOTTOM"
-			},
-			{
-				textureName: "front.jpg",
-				side: "FRONT"
-			},
-			{
-				textureName: "back.jpg",
-				side: "BACK"
-			}
-
-		]
-	}
+	mipLevels: [
+		{
+			sides: [
+				{
+					textureName: "left.jpg",
+					side: "LEFT"
+				},
+				{
+					textureName: "right.jpg",
+					side: "RIGHT"
+				},
+				{
+					textureName: "top.jpg",
+					side: "TOP"
+				},
+				{
+					textureName: "bottom.jpg",
+					side: "BOTTOM"
+				},
+				{
+					textureName: "front.jpg",
+					side: "FRONT"
+				},
+				{
+					textureName: "back.jpg",
+					side: "BACK"
+				}
+			]
+		}
+	]
 }

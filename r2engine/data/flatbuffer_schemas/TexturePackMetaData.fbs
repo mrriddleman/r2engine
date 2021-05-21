@@ -26,15 +26,16 @@ table CubemapSideEntry
 	side:CubemapSide;
 }
 
-table CubemapMetaData
+table MipLevel
 {
+	level:uint;
 	sides:[CubemapSideEntry];
 }
 
 table TexturePackMetaData
 {
 	type:TextureType;
-	cubemapMetaData:CubemapMetaData;
+	mipLevels:[MipLevel];
 }
 
 root_type TexturePackMetaData;

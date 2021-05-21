@@ -16,7 +16,7 @@ namespace r2::draw::texsys
 
 	//Maybe we have entries of texture names based on the hash
 
-	//@NOTE: we don't want to return a new opengl texture id for example because we don't want
+	//@NOTE: we don't want to return a new opengl texture id because we don't want
 	//the client to have a handle to the texture since it can change due to the asset system
 	//So we'll need to keep a mapping of that handle with the Texture we pass back from LoadTexture
 	void UploadToGPU(const r2::asset::AssetHandle& texture, tex::TextureType type);
@@ -28,7 +28,7 @@ namespace r2::draw::texsys
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::TextureHandle& textureHandle);
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap);
 
-	
+	u32 GetNumberOfMipMaps(const r2::draw::tex::CubemapTexture& cubemap);
 	
 	
 	u64 MemorySize(u64 maxNumTextures);

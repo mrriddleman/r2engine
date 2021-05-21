@@ -294,14 +294,17 @@ namespace r2::draw::gl
 			GLsizei levelWidth = container.format.width,
 				levelHeight = container.format.height;
 
-			for (int level = 0; level < container.format.mipLevels; ++level) 
+			//const int k_maxLevels = std::min(container.format.mipLevels, 4);
+			const int k_maxLevels = container.format.mipLevels;
+
+			for (int level = 0; level < k_maxLevels; ++level)
 			{
 				if (container.format.isCubemap)
 				{
 					//@NOTE: YOU HAVE TO COMMIT ALL OF THE PAGES FOR THE CUBE MAP!!!!!!!!
 					for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 					{
-						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice* r2::draw::tex::NUM_SIDES + i, levelWidth, levelHeight, 1, commit));
+						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice * r2::draw::tex::NUM_SIDES + i, levelWidth, levelHeight, 1, commit));
 					}
 				}
 				else
@@ -311,6 +314,14 @@ namespace r2::draw::gl
 
 				levelWidth = std::max(levelWidth / 2, 1);
 				levelHeight = std::max(levelHeight / 2, 1);
+
+				if (levelWidth < container.xTileSize ||
+					levelHeight < container.yTileSize)
+				{
+					//@TODO(Serge): right now I don't think there's a way to go lower than container.xTileSize/yTileSize. Seems to crash when we do
+					//				if we try to use x/yTileSize on a level that requires a lower width or height this also doesn't seem to work. Not sure how to resolve. May need to use non sparse textures for it?
+					break;
+				}
 			}
 		}
 	}
@@ -383,7 +394,7 @@ namespace r2::draw::gl
 				u64 numSlices = s_glTextureSystem->maxNumTextureContainerLayers;
 				if (format.isCubemap)
 				{
-					numSlices = numSlices / r2::draw::tex::NUM_SIDES;
+					numSlices = numSlices / (r2::draw::tex::NUM_SIDES );
 				}
 
 				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format, s_glTextureSystem->sparse);
@@ -410,6 +421,10 @@ namespace r2::draw::tex::impl
 
 		GLboolean fullArrayCubeMipMaps;
 		GLCall(glGetBooleanv(GL_SPARSE_TEXTURE_FULL_ARRAY_CUBE_MIPMAPS_ARB, &fullArrayCubeMipMaps));
+
+		GLint numSparseLevels = 0;
+
+		GLCall(glGetTexParameteriv(GL_TEXTURE_CUBE_MAP_ARRAY, GL_NUM_SPARSE_LEVELS_ARB, &numSparseLevels));
 
 		R2_CHECK(fullArrayCubeMipMaps == GL_TRUE, "Dunno what to do if this is false yet - https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_sparse_texture.txt");
 
@@ -523,5 +538,13 @@ namespace r2::draw::tex::impl
 			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
 		}
 		return maxTextureArrayLevels;
+	}
+
+	u32 GetNumberOfMipMaps(const TextureHandle& texture)
+	{
+		const auto width = texture.container->format.width;
+		const auto xTileSize = texture.container->xTileSize;
+
+		return std::log2( (double)width / (double)xTileSize );
 	}
 }

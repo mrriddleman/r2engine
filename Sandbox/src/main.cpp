@@ -685,14 +685,18 @@ public:
 
         //setup the lights
         {
-            r2::draw::lightsys::AddSkyLight(*mLightSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")));
+            r2::draw::lightsys::AddSkyLight(
+                *mLightSystem,
+                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")),
+                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered")),
+                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
 
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
-			dirLight.lightProperties.intensity = 20;
+			dirLight.lightProperties.intensity = 2;
 
 
 			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
@@ -709,7 +713,7 @@ public:
 
             //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
 
-           /* r2::draw::PointLight pointLight;
+            /*r2::draw::PointLight pointLight;
 
             pointLight.position = glm::vec4(0, 8, 0, 1.0);
             pointLight.lightProperties.color = glm::vec4(1.0f);
@@ -718,7 +722,7 @@ public:
             pointLight.lightProperties.fallOff = 0.01;
 
             r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
-
+            
 			r2::draw::PointLight pointLight2;
 
 			pointLight2.position = glm::vec4(0, 2, -1, 1.0);

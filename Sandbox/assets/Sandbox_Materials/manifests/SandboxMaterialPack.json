@@ -111,6 +111,42 @@
       }
     },
     {
+      name: 747981529608325426,
+      shader: 3292306756035476612,
+      texturePackName: 10574092072377421955,
+      diffuseTexture: 13856910112476437532,
+      specularTexture: 14695981039346656837,
+      normalMapTexture: 14695981039346656837,
+      emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
+      baseColor: {
+        r: 1.0,
+        g: 0.0,
+        b: 0.0,
+        a: 1.0
+      }
+    },
+    {
+      name: 5888278623692366668,
+      shader: 6031424017685759555,
+      texturePackName: 4821508364552419426,
+      diffuseTexture: 1473424487682504667,
+      specularTexture: 14695981039346656837,
+      normalMapTexture: 14695981039346656837,
+      emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
+      baseColor: {
+        r: 1.0,
+        g: 0.0,
+        b: 0.0,
+        a: 1.0
+      }
+    },
+    {
       name: 17037780642595464548,
       shader: 6031424017685759555,
       texturePackName: 12702858826531139154,

@@ -63,6 +63,9 @@ namespace r2::draw
 	{
 		LightProperties lightProperties;
 		tex::TextureAddress diffuseIrradianceTexture;
+		tex::TextureAddress prefilteredRoughnessTexture;
+		tex::TextureAddress lutDFGTexture;
+		//int numPrefilteredRoughnessMips;
 	};
 
 	//@NOTE: right now this is the same format as the shaders. If we change the shader layout, we have to change this
@@ -77,9 +80,7 @@ namespace r2::draw
 		s32 mNumPointLights = 0;
 		s32 mNumDirectionLights = 0;
 		s32 mNumSpotLights = 0;
-		
-
-		
+		s32 numPrefilteredRoughnessMips = 0;
 	};
 
 
@@ -118,8 +119,8 @@ namespace r2::draw
 		SpotLightHandle AddSpotLight(LightSystem& system, const SpotLight& spotLight);
 		bool RemoveSpotLight(LightSystem& system, SpotLightHandle lightHandle);
 
-		SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight);
-		SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& materialHandle);
+		SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight, s32 numPrefilteredMips);
+		SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
 
 		bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle);
 

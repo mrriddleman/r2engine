@@ -16,14 +16,16 @@ namespace r2::draw::tex
 		CubemapSide side;
 	};
 
-	struct CubemapMetaData
+	struct MipLevelMetaData
 	{
+		u32 mipLevel;
 		CubemapSideEntry sides[NUM_SIDES];
 	};
 
 	struct TexturePackMetaData
 	{
-		CubemapMetaData cubemapMetaData;
+		MipLevelMetaData mipLevelMetaData[MAX_MIP_LEVELS];
+		u32 numLevels;
 		r2::asset::AssetType assetType;
 	};
 

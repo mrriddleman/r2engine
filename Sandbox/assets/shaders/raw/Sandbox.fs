@@ -46,6 +46,9 @@ struct SkyLight
 {
 	LightProperties lightProperties;
 	Tex2DAddress diffuseIrradianceTexture;
+	Tex2DAddress prefilteredRoughnessTexture;
+	Tex2DAddress lutDFGTexture;
+//	int numPrefilteredRoughnessMips;
 };
 
 struct Material
@@ -87,6 +90,7 @@ layout (std430, binding = 4) buffer Lighting
 	int numPointLights;
 	int numDirectionLights;
 	int numSpotLights;
+	int numPrefilteredRoughnessMips;
 };
 
 
@@ -109,6 +113,8 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv);
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
 vec4 SampleMaterialAO(uint drawID, vec3 uv);
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
+vec4 SampleLUTDFG(vec2 uv);
+vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue);
 
 float Fd_Lambert();
 float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
@@ -250,6 +256,19 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 	return (1.0 - modifier) * vec4(0.3) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
+vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
+{
+	Tex2DAddress addr = skylight.prefilteredRoughnessTexture;
+	return textureLod(samplerCubeArray(addr.container), vec4(uv, addr.page), roughnessValue);
+}
+
+
+vec4 SampleLUTDFG(vec2 uv)
+{
+	Tex2DAddress addr = skylight.lutDFGTexture;
+	return texture(sampler2DArray(addr.container), vec3(uv, addr.page));
+}
+
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv)
 {
 	Tex2DAddress addr = skylight.diffuseIrradianceTexture;
@@ -358,7 +377,9 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
-	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(reflect(-V, N)).rgb;
+	vec3 R = reflect(-V, N);
+
+	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
 
 	vec3 L0 = vec3(0,0,0);
 
@@ -370,7 +391,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	float NoL = clamp(dot(N, L), 0.0, 1.0);
 
-	 	vec3 radiance = dirLight.lightProperties.color.rgb;
+	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
 	 	vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
 
@@ -429,9 +450,14 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec3 kS = F_Schlick(max(dot(N, V), 0.0), F0);
 	vec3 kD = 1.0 - kS;
 
-	vec3 ambient = kD * diffuseIrradiance * ao * diffuseColor * Fd_Lambert();
+	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
+	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
+	vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
 
-	vec3 color = ambient + L0;
+	vec3 ambient = ((kD * diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
+
+	
+	vec3 color =  ambient + L0;
 
 	return color;
 }

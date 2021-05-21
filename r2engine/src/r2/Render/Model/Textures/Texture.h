@@ -15,6 +15,8 @@ namespace r2::draw::tex
 
 	struct TextureContainer;
 
+	const u32 MAX_MIP_LEVELS = 10;
+
 	enum TextureType
 	{
 		Diffuse = 0,
@@ -44,12 +46,18 @@ namespace r2::draw::tex
 	{
 		r2::asset::AssetHandle textureAssetHandle;
 		TextureType type = TextureType::Diffuse;
+	};
 
+	struct MipLevel
+	{
+		u32 mipLevel;
+		Texture sides[NUM_SIDES];
 	};
 
 	struct CubemapTexture
 	{
-		Texture sides[NUM_SIDES];
+		MipLevel mips[MAX_MIP_LEVELS];
+		u32 numMipLevels = 0;
 	};
 
 	struct TextureHandle
@@ -92,11 +100,14 @@ namespace r2::draw::tex
 
 	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format);
 
+	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap);
+
 	namespace impl
 	{
 		bool Init(const r2::mem::utils::MemBoundary& boundary, u32 numTextureContainers, u32 numTextureContainersPerFormat, bool useMaxNumLayers = false, s32 numTextureLayers = 1, bool sparse = true);
 		void Shutdown();
 
+		u32 GetNumberOfMipMaps(const TextureHandle& texture);
 		
 		u64 MemorySize(u32 maxNumTextureContainers, u32 maxTextureContainersPerFormat, u32 maxTextureLayers, u64 alignment, u32 headerSize, u32 boundsChecking);
 		u64 GetMaxTextureLayers(bool sparse);

@@ -141,6 +141,8 @@ namespace r2::draw::mat
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);
 	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system);
 
+	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID);
+
 
 	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat);
 	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);

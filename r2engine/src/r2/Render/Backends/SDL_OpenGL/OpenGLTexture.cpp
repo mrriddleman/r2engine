@@ -507,7 +507,7 @@ namespace r2::draw::tex
 	{
 	//	stbi_set_flip_vertically_on_load(false);
 
-		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(cubemap.sides[CubemapSide::RIGHT].textureAssetHandle.assetCache);
+		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(GetCubemapAssetHandle(cubemap).assetCache);
 
 		if (!assetCache)
 		{
@@ -519,102 +519,108 @@ namespace r2::draw::tex
 		GLenum format;
 		GLenum internalFormat;
 		
+		const auto numMipLevels = cubemap.numMipLevels;
 
-		for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+		for (u32 mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
 		{
-			r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.sides[CubemapSide::RIGHT + i].textureAssetHandle);
-		
-			R2_CHECK(assetCacheRecord.type == r2::asset::CUBEMAP_TEXTURE, "This better be a cubemap!");
-
-			int texWidth;
-			int texHeight;
-			int channels;
-
-			void* imageData = nullptr;
-			
-			bool isHDR = stbi_is_hdr_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
-			GLenum formatSize = GL_UNSIGNED_BYTE;
-
-			if (isHDR)
+			for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 			{
-				imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()),
-					&texWidth, &texHeight, &channels, 0);
-				formatSize = GL_FLOAT;
-			}
-			else
-			{
-				imageData = stbi_load_from_memory(
-					assetCacheRecord.buffer->Data(),
-					static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
-			}
-			
+				r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[mipLevel].sides[CubemapSide::RIGHT + i].textureAssetHandle);
 
-			if (i == 0)
-			{
-				if (channels == 1)
+				R2_CHECK(assetCacheRecord.type == r2::asset::CUBEMAP_TEXTURE, "This better be a cubemap!");
+
+				int texWidth;
+				int texHeight;
+				int channels;
+
+				void* imageData = nullptr;
+
+				bool isHDR = stbi_is_hdr_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
+				GLenum formatSize = GL_UNSIGNED_BYTE;
+
+				if (isHDR)
 				{
-					format = GL_RED;
-
-					if (isHDR)
-					{
-						internalFormat = GL_R32F;
-					}
-					else
-					{
-						internalFormat = GL_R8;
-					}
-				}
-				else if (channels == 3)
-				{
-
-					if (isHDR)
-					{
-						internalFormat = GL_RGB32F;
-					}
-					else
-					{
-						internalFormat = GL_SRGB8;
-					}
-
-					format = GL_RGB;
-				}
-				else if (channels == 4)
-				{
-					if (isHDR)
-					{
-						internalFormat = GL_RGBA32F;
-					}
-					else
-					{
-						internalFormat = GL_SRGB8_ALPHA8;
-					}
-
-					format = GL_RGBA;
+					imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()),
+						&texWidth, &texHeight, &channels, 0);
+					formatSize = GL_FLOAT;
 				}
 				else
 				{
-					R2_CHECK(false, "UNKNOWN image format");
+					imageData = stbi_load_from_memory(
+						assetCacheRecord.buffer->Data(),
+						static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
 				}
 
-				textureFormat.internalformat = internalFormat;
-				textureFormat.width = texWidth;
-				textureFormat.height = texHeight;
-				textureFormat.mipLevels = 1;
-				textureFormat.isCubemap = true;
-				textureFormat.wrapMode = WRAP_MODE_CLAMP;
-				textureFormat.magFilter = FILTER_LINEAR;
-				textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
-				r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
+
+				if (mipLevel == 0 && i == 0)
+				{
+					if (channels == 1)
+					{
+						format = GL_RED;
+
+						if (isHDR)
+						{
+							internalFormat = GL_R32F;
+						}
+						else
+						{
+							internalFormat = GL_R8;
+						}
+					}
+					else if (channels == 3)
+					{
+
+						if (isHDR)
+						{
+							internalFormat = GL_RGB32F;
+						}
+						else
+						{
+							internalFormat = GL_SRGB8;
+						}
+
+						format = GL_RGB;
+					}
+					else if (channels == 4)
+					{
+						if (isHDR)
+						{
+							internalFormat = GL_RGBA32F;
+						}
+						else
+						{
+							internalFormat = GL_SRGB8_ALPHA8;
+						}
+
+						format = GL_RGBA;
+					}
+					else
+					{
+						R2_CHECK(false, "UNKNOWN image format");
+					}
+
+					textureFormat.internalformat = internalFormat;
+					textureFormat.width = texWidth;
+					textureFormat.height = texHeight;
+					textureFormat.mipLevels = cubemap.numMipLevels;
+					textureFormat.isCubemap = true;
+					textureFormat.wrapMode = WRAP_MODE_CLAMP;
+					textureFormat.magFilter = FILTER_LINEAR;
+					textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
+					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
+				}
+
+				r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), mipLevel, 0, 0, texWidth, texHeight, format, formatSize, imageData);
+
+
+				stbi_image_free(imageData);
+				assetCache->ReturnAssetBuffer(assetCacheRecord);
+
+				assetCache->FreeAsset(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
 			}
-			
-			r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), 0, 0, 0, texWidth, texHeight, format, formatSize, imageData);
-
-
-			stbi_image_free(imageData);
-			assetCache->ReturnAssetBuffer(assetCacheRecord);
-
-			assetCache->FreeAsset(cubemap.sides[i].textureAssetHandle);
 		}
+
+		
 
 
 		return newHandle;
@@ -635,6 +641,11 @@ namespace r2::draw::tex
 		r2::draw::tex::GPUHandle newHandle;
 		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format);
 		return newHandle;
+	}
+
+	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap)
+	{
+		return cubemap.mips[0].sides[RIGHT].textureAssetHandle;
 	}
 }
 

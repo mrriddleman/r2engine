@@ -176,34 +176,42 @@ namespace r2::asset::pln::tex
 
 			auto textureType = packMetaData->type();
 
-			flatbuffers::Offset<flat::CubemapMetaData> cubemapMetaData = 0;
+			std::vector<flatbuffers::Offset<flat::MipLevel>> cubemapMipLevels;
 
-			if (packMetaData->cubemapMetaData())
+			if (packMetaData->mipLevels())
 			{
-				flatbuffers::uoffset_t numSides = packMetaData->cubemapMetaData()->sides()->size();
+				auto numMipLevels = packMetaData->mipLevels()->size();
 
-				
-				std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sides;
-
-				for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
+				for (flatbuffers::uoffset_t m = 0; m < numMipLevels; ++m)
 				{
-					std::string path;
-					for (const auto& cubemapSide : cubemapTexturePaths)
+					const auto& mip = packMetaData->mipLevels()->Get(m);
+
+					flatbuffers::uoffset_t numSides = mip->sides()->size();
+
+					std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sides;
+
+					for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
 					{
-						std::filesystem::path cubemapSidePath = cubemapSide;
-						auto sideImageName = packMetaData->cubemapMetaData()->sides()->Get(i)->textureName()->str();
-						auto stemName = cubemapSidePath.filename().string();
-						if (stemName == sideImageName)
+						std::string path;
+						for (const auto& cubemapSide : cubemapTexturePaths)
 						{
-							path = cubemapSidePath.string();
-							break;
+							std::filesystem::path cubemapSidePath = cubemapSide;
+							auto sideImageName = mip->sides()->Get(i)->textureName()->str();
+							auto stemName = cubemapSidePath.filename().string();
+							if (stemName == sideImageName)
+							{
+								path = cubemapSidePath.string();
+								break;
+							}
 						}
+
+						sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(path), mip->sides()->Get(i)->side()));
 					}
 
-					sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(path), packMetaData->cubemapMetaData()->sides()->Get(i)->side()));
+					cubemapMipLevels.push_back(flat::CreateMipLevel(builder, m, builder.CreateVector(sides)));
 				}
 
-				cubemapMetaData = flat::CreateCubemapMetaData(builder, builder.CreateVector(sides));
+				
 			}
 
 			//make the texture pack and add it to the vector
@@ -216,7 +224,7 @@ namespace r2::asset::pln::tex
 				builder.CreateVector(occlusions),
 				builder.CreateVector(micros),
 				builder.CreateVector(heights), packSize, numTexturesInPack,
-				CreateTexturePackMetaData(builder, textureType, cubemapMetaData));
+				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 
 			texturePacks.push_back(texturePack);
 

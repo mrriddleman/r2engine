@@ -289,17 +289,20 @@ namespace r2::draw::mat
 			{
 				r2::draw::tex::CubemapTexture cubemap;
 
-				const auto numAlbedos = r2::sarr::Size(*result->albedos);
+				const auto numMipLevels = result->metaData.numLevels;
+				cubemap.numMipLevels = numMipLevels;
 
-				R2_CHECK(numAlbedos == r2::draw::tex::NUM_SIDES, "There should be only 6 sides to a cubemap!");
-
-				for (u64 i = 0; i < numAlbedos; ++i)
+				for (auto mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
 				{
-					r2::draw::tex::Texture texture;
-					texture.type = tex::TextureType::Diffuse;
+					for (auto side = 0; side < r2::draw::tex::NUM_SIDES; side++)
+					{
+						r2::draw::tex::Texture texture;
+						texture.type = tex::TextureType::Diffuse;
 
-					texture.textureAssetHandle = system.mAssetCache->LoadAsset(result->metaData.cubemapMetaData.sides[i].asset);
-					cubemap.sides[result->metaData.cubemapMetaData.sides[i].side] = texture;
+						texture.textureAssetHandle = system.mAssetCache->LoadAsset(result->metaData.mipLevelMetaData[mipLevel].sides[side].asset);
+						cubemap.mips[mipLevel].mipLevel = result->metaData.mipLevelMetaData[mipLevel].mipLevel;
+						cubemap.mips[mipLevel].sides[result->metaData.mipLevelMetaData[mipLevel].sides[side].side] = texture;
+					}
 				}
 
 				newEntry.mIndex = r2::sarr::Size(*system.mMaterialCubemapTextures);
@@ -392,9 +395,14 @@ namespace r2::draw::mat
 			const u64 numCubemapTextures = r2::sarr::Size(*system.mMaterialCubemapTextures);
 			for (u64 t = 0; t < numCubemapTextures; ++t)
 			{
-				for (size_t s = 0; s < r2::draw::tex::NUM_SIDES; ++s)
+				const auto numMipLevels = r2::sarr::At(*system.mMaterialCubemapTextures, t).numMipLevels;
+
+				for (u32 i = 0; i < numMipLevels; ++i)
 				{
-					r2::draw::texsys::UnloadFromGPU(r2::sarr::At(*system.mMaterialCubemapTextures, t).sides[s].textureAssetHandle);
+					for (size_t s = 0; s < r2::draw::tex::NUM_SIDES; ++s)
+					{
+						r2::draw::texsys::UnloadFromGPU(r2::sarr::At(*system.mMaterialCubemapTextures, t).mips[i].sides[s].textureAssetHandle);
+					}
 				}
 			}
 		}
@@ -425,6 +433,35 @@ namespace r2::draw::mat
 	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system)
 	{
 		return system.mMaterialCubemapTextures;
+	}
+
+	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID)
+	{
+		if (IsInvalidHandle(matID))
+		{
+			return nullptr;
+		}
+
+		const Material* material = mat::GetMaterial(system, matID);
+
+		R2_CHECK(material != nullptr, "We should have something here!");
+
+		const auto& assetHandle = material->diffuseTexture.textureAssetHandle;
+
+		const u64 numCubemapTextures = r2::sarr::Size(*system.mMaterialCubemapTextures);
+		for (u64 i = 0; i < numCubemapTextures; ++i)
+		{
+			const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*system.mMaterialCubemapTextures, i);
+			const auto& nextAssetHandle = GetCubemapAssetHandle(cubemap);
+			
+			if (nextAssetHandle.handle == assetHandle.handle &&
+				nextAssetHandle.assetCache == assetHandle.assetCache)
+			{
+				return &cubemap;
+			}
+		}
+
+		return nullptr;
 	}
 
 	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat)
@@ -774,20 +811,34 @@ namespace r2::draw::mat
 
 			texturePack->metaData.assetType = textureType;
 
-			if (nextPack->metaData()->cubemapMetaData())
+			if (nextPack->metaData()->mipLevels())
 			{
-				const auto numSides = nextPack->metaData()->cubemapMetaData()->sides()->size();
+				const auto numMipLevels = nextPack->metaData()->mipLevels()->size();
 
-				for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
+				texturePack->metaData.numLevels = static_cast<u32>( numMipLevels );
+
+				for (flatbuffers::uoffset_t m = 0; m < numMipLevels; ++m)
 				{
-					const auto side = nextPack->metaData()->cubemapMetaData()->sides()->Get(i);
-					texturePack->metaData.cubemapMetaData.sides[side->side()].side = (r2::draw::tex::CubemapSide)side->side();
+					const auto mipLevel = nextPack->metaData()->mipLevels()->Get(m);
 
-					char assetName[r2::fs::FILE_PATH_LENGTH];
-					r2::fs::utils::CopyFileNameWithParentDirectories(side->textureName()->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
-					r2::asset::Asset textureAsset(assetName, textureType);
-					texturePack->metaData.cubemapMetaData.sides[side->side()].asset = textureAsset;
+					texturePack->metaData.mipLevelMetaData[m].mipLevel = mipLevel->level();
+
+					const auto numSides = mipLevel->sides()->size();
+
+					for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
+					{
+						const auto side = mipLevel->sides()->Get(i);
+						texturePack->metaData.mipLevelMetaData[m].sides[side->side()].side = (r2::draw::tex::CubemapSide)side->side();
+
+						char assetName[r2::fs::FILE_PATH_LENGTH];
+						r2::fs::utils::CopyFileNameWithParentDirectories(side->textureName()->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+						r2::asset::Asset textureAsset(assetName, textureType);
+						texturePack->metaData.mipLevelMetaData[m].sides[side->side()].asset = textureAsset;
+					}
 				}
+
+
+				
 			}
 
 

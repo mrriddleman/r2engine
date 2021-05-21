@@ -37,6 +37,9 @@
       packSize: 78819212,
       totalNumberOfTextures: 14,
       metaData: {
+        mipLevels: [
+
+        ]
       }
     },
     {
@@ -68,6 +71,9 @@
       packSize: 16777256,
       totalNumberOfTextures: 1,
       metaData: {
+        mipLevels: [
+
+        ]
       }
     },
     {
@@ -101,37 +107,39 @@
       height: [
 
       ],
-      packSize: 8562979,
+      packSize: 8563037,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
-        cubemapMetaData: {
-          sides: [
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_right.hdr"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_left.hdr",
-              side: "LEFT"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_top.hdr",
-              side: "TOP"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.hdr",
-              side: "BOTTOM"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_front.hdr",
-              side: "FRONT"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_back.hdr",
-              side: "BACK"
-            }
-          ]
-        }
+        mipLevels: [
+          {
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_back.hdr",
+                side: "BACK"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -165,37 +173,309 @@
       height: [
 
       ],
-      packSize: 1931758,
+      packSize: 1933168,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
-        cubemapMetaData: {
-          sides: [
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.hdr"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.hdr",
-              side: "LEFT"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.hdr",
-              side: "BOTTOM"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.hdr",
-              side: "TOP"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.hdr",
-              side: "FRONT"
-            },
-            {
-              textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.hdr",
-              side: "BACK"
-            }
-          ]
-        }
+        mipLevels: [
+          {
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.hdr",
+                side: "BACK"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      packName: 10574092072377421955,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_lutDFG/albedo/newport_loft_LutDFG.hdr"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 21501,
+      totalNumberOfTextures: 1,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
+    },
+    {
+      packName: 4821508364552419426,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_top.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_top.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_top.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_top.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_back.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_bottom.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_front.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_left.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_right.hdr",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_top.hdr"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      packSize: 6254342,
+      totalNumberOfTextures: 36,
+      metaData: {
+        type: "CUBEMAP",
+        mipLevels: [
+          {
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          },
+          {
+            level: 1,
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          },
+          {
+            level: 2,
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          },
+          {
+            level: 3,
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          },
+          {
+            level: 4,
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          },
+          {
+            level: 5,
+            sides: [
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_right.hdr"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_left.hdr",
+                side: "LEFT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_top.hdr",
+                side: "TOP"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_bottom.hdr",
+                side: "BOTTOM"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_front.hdr",
+                side: "FRONT"
+              },
+              {
+                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_back.hdr",
+                side: "BACK"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -227,10 +507,13 @@
       packSize: 16777256,
       totalNumberOfTextures: 1,
       metaData: {
+        mipLevels: [
+
+        ]
       }
     }
   ],
-  totalNumberOfTextures: 28,
-  totalTextureSize: 122868461,
-  maxTexturesInAPack: 14
+  totalNumberOfTextures: 65,
+  totalTextureSize: 129145772,
+  maxTexturesInAPack: 36
 }

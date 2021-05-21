@@ -41,6 +41,8 @@ namespace
 {
 	const size_t IBL_DEFAULT_SIZE = 512;
 	const std::string EXT = ".hdr";
+	const size_t IBL_MIN_LOD_SIZE = 16;
+	static const size_t DFG_LUT_DEFAULT_SIZE = 128;
 }
 
 
@@ -49,6 +51,9 @@ struct Arguments
 	bool quiet = false;
 	bool help = false;
 	bool writeMipChain = false;
+	bool prefilter = false;
+	bool lutDFG = false;
+	bool diffuseIrradiance = false;
 	string inputFile = "";
 	string iblOutputDir = "";
 	string mipChainOutputDir = "";
@@ -66,11 +71,36 @@ void IBLDiffuseIrradiance(
 	bool quiet,
 	uint32_t numSamples);
 
+float LodToPerceptualRoughness(float lod);
+
+void IBLRoughnessPrefilter(
+	const std::string& inputFile,
+	const std::vector<r2::ibl::Cubemap>& levels,
+	bool prefilter,
+	const std::string& outputDir,
+	uint32_t outputSize,
+	uint32_t minLodSize,
+	uint32_t maxNumSamples,
+	bool quiet);
+
+void IBLMipmapPrefilter(
+	const std::string& inputFile,
+	const std::vector<r2::ibl::Image>& images,
+	const std::vector<r2::ibl::Cubemap>& levels,
+	const std::string& outputDir);
+
+void IBLLutDFG(
+	const std::string& inputFile,
+	const std::string& outputDir,
+	size_t size,
+	bool multiscatter,
+	bool cloth);
+
 void SaveCubemap(const std::string& filename, const r2::ibl::Image& image);
 
 bool WriteFile(const std::string& filePath, void* data, size_t size);
 flat::CubemapSide GetCubemapSide(r2::ibl::Cubemap::Face face);
-bool WriteAssetDirectory(const std::string& outputDir, const std::string& name, const r2::ibl::Cubemap& cubemap, bool writeMetaData = true);
+bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& name, const std::vector<r2::ibl::Cubemap>& cubemap, bool writeMetaData = true);
 
 
 int RunSystemCommand(const char* command)
@@ -97,7 +127,7 @@ bool GenerateFlatbufferJSONFile(const std::string& outputDir, const std::string&
 int main(int argc, char* argv[])
 {
 
-	//system("pause");
+	system("pause");
 
 	Arguments arguments;
 	r2::cmdln::CommandLine args("Cubemapgen will create a cubemap based on an input equirectangular HDR map");
@@ -110,6 +140,9 @@ int main(int argc, char* argv[])
 	args.AddArgument({ "-n", "--numSamples" }, &arguments.iblsamples, "The number of ibl samples to use. The default is 1024");
 	args.AddArgument({ "-m", "--mipChain" }, &arguments.writeMipChain, "Writes the mip chain to the mip directory");
 	args.AddArgument({ "-c", "--numMips" }, &arguments.numMipsToGenerate, "Writes up to the amount of mip levels in the chain");
+	args.AddArgument({ "-p", "--prefilter" }, &arguments.prefilter, "Make the prefilter cubemap + mipchain");
+	args.AddArgument({ "-l", "--lutDFG" }, &arguments.lutDFG, "Make the lut dfg image");
+	args.AddArgument({ "-d", "--diffuseIrradiance" }, &arguments.diffuseIrradiance, "Make the diffuse irradiance cubemap");
 	args.Parse(argc, argv);
 
 	if (arguments.help)
@@ -211,7 +244,7 @@ int main(int argc, char* argv[])
 
 		}
 		
-		SaveCubemap("D:\\full.hdr", images[0]);
+		//SaveCubemap("D:\\full.hdr", images[0]);
 
 		levels[0].MakeSeamless();
 		if (!arguments.quiet)
@@ -225,6 +258,8 @@ int main(int argc, char* argv[])
 		{
 			const size_t numMipLevels = std::min(levels.size(), (size_t)arguments.numMipsToGenerate);
 
+			std::vector<std::string> names;
+
 			for (size_t mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
 			{
 				char mipLevelStr[128];
@@ -232,23 +267,53 @@ int main(int argc, char* argv[])
 
 				std::string name = fs::path(arguments.mipChainOutputDir).stem().string() + mipLevelStr;
 
-				WriteAssetDirectory(arguments.mipChainOutputDir, name, levels[mipLevel], mipLevel == 0);
+				names.push_back(name);
 			}
+
+			WriteAssetDirectory(arguments.mipChainOutputDir, names, levels, true);
 		}
 
+		if (arguments.prefilter)
 		{
-			//if (!arguments.quiet)
-			//{
-			//	printf("Generating diffuse irradiance...\n");
-			//}
+			if (!arguments.quiet)
+			{
+				printf("Generating prefilter map....\n");
+			}
 
-			//IBLDiffuseIrradiance(
-			//	arguments.inputFile,
-			//	levels,
-			//	arguments.iblOutputDir,
-			//	arguments.outputSize > 0 ? arguments.outputSize : IBL_DEFAULT_SIZE,
-			//	arguments.quiet,
-			//	arguments.iblsamples);
+			IBLRoughnessPrefilter(
+				arguments.inputFile,
+				levels,
+				true,
+				arguments.iblOutputDir + "_prefilter",
+				arguments.outputSize > 0 ? arguments.outputSize : IBL_DEFAULT_SIZE,
+				IBL_MIN_LOD_SIZE, arguments.iblsamples, arguments.quiet);
+		}
+
+		if (arguments.lutDFG)
+		{
+			if (!arguments.quiet)
+			{
+				printf("Generating LUT DFG....\n");
+			}
+
+			size_t size = arguments.outputSize > 0 ? arguments.outputSize : DFG_LUT_DEFAULT_SIZE;
+			IBLLutDFG(arguments.inputFile, arguments.iblOutputDir + "_lutDFG", size, false, false);
+		}
+
+		if(arguments.diffuseIrradiance)
+		{
+			if (!arguments.quiet)
+			{
+				printf("Generating diffuse irradiance...\n");
+			}
+
+			IBLDiffuseIrradiance(
+				arguments.inputFile,
+				levels,
+				arguments.iblOutputDir + "_conv",
+				arguments.outputSize > 0 ? arguments.outputSize : IBL_DEFAULT_SIZE,
+				arguments.quiet,
+				arguments.iblsamples);
 		}
 		
 
@@ -306,11 +371,143 @@ void IBLDiffuseIrradiance(
 
 	dst.MakeSeamless();
 
-	WriteAssetDirectory(outputDir, fs::path(inputFile).stem().string() + "_conv", dst);
+	std::vector<std::string> names;
+	names.push_back(fs::path(inputFile).stem().string() + "_conv");
+	std::vector<r2::ibl::Cubemap> cubemaps;
+	cubemaps.push_back(std::move(dst));
+
+	WriteAssetDirectory(outputDir, names, cubemaps);
 }
 
-bool WriteAssetDirectory(const std::string& outputDir, const std::string& name, const r2::ibl::Cubemap& cubemap, bool writeMetaData)
+void IBLRoughnessPrefilter(
+	const std::string& inputFile,
+	const std::vector<r2::ibl::Cubemap>& levels,
+	bool prefilter,
+	const std::string& outputDir,
+	uint32_t outputSize,
+	uint32_t minLodSize,
+	uint32_t maxNumSamples,
+	bool quiet)
 {
+	const size_t baseExp = ctz(outputSize > 0 ? outputSize : IBL_DEFAULT_SIZE);
+	size_t minLod = ctz(minLodSize > 0 ? minLodSize : IBL_MIN_LOD_SIZE);
+	if (minLod >= baseExp)
+	{
+		minLod = 0;
+	}
+
+	size_t numSamples = maxNumSamples;
+
+	const size_t numLevels = (baseExp + 1) - minLod;
+
+	std::vector<std::string> levelNames;
+	std::vector<r2::ibl::Cubemap> cubemapsToSave;
+
+
+	for (int64_t i = baseExp; i >= int64_t((baseExp + 1) - numLevels); --i)
+	{
+		const size_t dim = 1U << i;
+		const size_t level = baseExp - i;
+		if (level >= 2)
+		{
+			numSamples *= 2;
+		}
+
+		const float lod = glm::clamp(level / (numLevels - 1.0f), 0.0f, 1.0f);
+		const float perceptualRoughness = LodToPerceptualRoughness(lod);
+		const float roughness = perceptualRoughness * perceptualRoughness;
+		if (!quiet)
+		{
+			printf("Level: %zu, roughness: %f, perceptual roughness: %f\n", level, roughness, perceptualRoughness);
+		}
+
+		r2::ibl::Image image;
+		r2::ibl::Cubemap dst = r2::ibl::CubemapUtils::CreateCubemap(image, dim);
+
+		r2::ibl::CubemapIBL::RoughnessFilter(dst, levels, roughness, numSamples, glm::vec3(1), prefilter,
+			[quiet](size_t index, float v, void* userdata){
+			if (!quiet)
+			{
+				//todo
+			}
+		});
+
+		dst.MakeSeamless();
+
+
+		levelNames.push_back(fs::path(inputFile).stem().string() + std::to_string(level) + "_prefilter");
+		cubemapsToSave.push_back(std::move(dst));
+	}
+
+	WriteAssetDirectory(outputDir, levelNames, cubemapsToSave);
+}
+
+void IBLMipmapPrefilter(
+	const std::string& inputFile,
+	const std::vector<r2::ibl::Image>& images,
+	const std::vector<r2::ibl::Cubemap>& levels,
+	const std::string& outputDir)
+{
+
+}
+
+void IBLLutDFG(
+	const std::string& inputFile,
+	const std::string& outputDir,
+	size_t imageSize,
+	bool multiscatter,
+	bool cloth)
+{
+	r2::ibl::Image image(imageSize, imageSize);
+	r2::ibl::CubemapIBL::DFG(image, multiscatter, cloth);
+
+	if (!fs::exists(outputDir))
+	{
+		fs::create_directory(outputDir);
+	}
+
+	std::filesystem::path outputPath(outputDir);
+	fs::path cubemapFilesPath = outputPath / fs::path("albedo");
+
+	if (!fs::exists(cubemapFilesPath))
+	{
+		fs::create_directory(cubemapFilesPath);
+	}
+
+	std::string filename = fs::path(inputFile).stem().string() + "_LutDFG" + EXT;
+
+	std::string filePath =
+		(cubemapFilesPath / fs::path(filename)).string();
+
+	SaveCubemap(filePath, image);
+
+	auto textureType = flat::TextureType_TEXTURE;
+	flatbuffers::FlatBufferBuilder builder;
+
+	auto data = flat::CreateTexturePackMetaData(builder, textureType);
+
+	builder.Finish(data);
+
+	uint8_t* buf = builder.GetBufferPointer();
+	auto size = builder.GetSize();
+
+	fs::path binPath = (fs::path(outputDir) / fs::path("meta.bin"));
+	bool wroteCubemapData = WriteFile(binPath.string(), buf, size);
+	assert(wroteCubemapData);
+	std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+	fs::path schemaPath = fs::path(flatbufferSchemaPath) / fs::path("TexturePackMetaData.fbs");
+
+	bool jsonResult = GenerateFlatbufferJSONFile(outputDir, schemaPath.string(), binPath.string());
+	assert(jsonResult);
+
+	fs::remove(binPath);
+}
+
+bool WriteAssetDirectory(const std::string& outputDir, const std::vector<std::string>& names, const std::vector<r2::ibl::Cubemap>& cubemaps, bool writeMetaData)
+{
+	assert(names.size() <= cubemaps.size());
+
 	if (!fs::exists(outputDir))
 	{
 		fs::create_directory(outputDir);
@@ -327,35 +524,41 @@ bool WriteAssetDirectory(const std::string& outputDir, const std::string& name, 
 	auto textureType = flat::TextureType_CUBEMAP;
 	flatbuffers::FlatBufferBuilder builder;
 
-	std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sides;
-
-	flatbuffers::Offset<flat::CubemapMetaData> cubemapMetaData = 0;
-
+	std::vector<flatbuffers::Offset<flat::MipLevel>> mipLevels;
 	std::string cubemapOutputDir = cubemapFilesPath.string();
 
-	for (size_t j = 0; j < 6; ++j)
+	for (size_t n = 0; n < names.size(); ++n)
 	{
-		r2::ibl::Cubemap::Face face = (r2::ibl::Cubemap::Face)j;
+		const std::string& name = names[n];
+		const r2::ibl::Cubemap& cubemap = cubemaps[n];
 
-		flat::CubemapSide side = GetCubemapSide(face);
+		std::vector<flatbuffers::Offset<flat::CubemapSideEntry>> sides;
 
-		std::string filename = name + "_" + std::string(r2::ibl::CubemapUtils::GetFaceName(face)) + EXT;
-
-		std::string filePath =
-			(fs::path(cubemapOutputDir) / fs::path(filename)).string();
-
-		if (writeMetaData)
+		for (size_t j = 0; j < 6; ++j)
 		{
-			sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(filename), side));
+			r2::ibl::Cubemap::Face face = (r2::ibl::Cubemap::Face)j;
+
+			flat::CubemapSide side = GetCubemapSide(face);
+
+			std::string filename = name + "_" + std::string(r2::ibl::CubemapUtils::GetFaceName(face)) + EXT;
+
+			std::string filePath =
+				(fs::path(cubemapOutputDir) / fs::path(filename)).string();
+
+			if (writeMetaData)
+			{
+				sides.push_back(flat::CreateCubemapSideEntry(builder, builder.CreateString(filename), side));
+			}
+
+			SaveCubemap(filePath, cubemap.GetImageCopyForFace(face));
 		}
 
-		SaveCubemap(filePath, cubemap.GetImageCopyForFace(face));
+		mipLevels.push_back(flat::CreateMipLevel(builder, n, builder.CreateVector(sides)));
 	}
 
 	if (writeMetaData)
 	{
-		cubemapMetaData = flat::CreateCubemapMetaData(builder, builder.CreateVector(sides));
-		auto data = flat::CreateTexturePackMetaData(builder, textureType, cubemapMetaData);
+		auto data = flat::CreateTexturePackMetaData(builder, textureType, builder.CreateVector(mipLevels));
 
 		builder.Finish(data);
 
@@ -432,3 +635,12 @@ bool WriteFile(const std::string& filePath, void* data, size_t size)
 	stream.close();
 	return true;
 }
+
+float LodToPerceptualRoughness(float lod)
+{
+	const float a = 2.0f;
+	const float b = -1.0f;
+	return (lod != 0) ?
+		glm::clamp((std::sqrtf(a * a + 4.0f * b * lod) - a) / (2.0f * b), 0.0f, 1.0f)
+		: 0.0f;
+} 

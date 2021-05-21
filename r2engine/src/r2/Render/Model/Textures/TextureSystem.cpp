@@ -154,8 +154,10 @@ namespace r2::draw::texsys
 
 		TextureGPUHandle theDefault;
 
+		auto cubemapAssetHandle = GetCubemapAssetHandle(cubemap);
+
 		//I guess we'll just take the first asset handle for our mapping? Dunno if that will be a problem down the road?
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemap.sides[tex::RIGHT].textureAssetHandle.handle, theDefault);
+		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, theDefault);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
@@ -164,7 +166,7 @@ namespace r2::draw::texsys
 		texGPUHandle.type = tex::Cubemap;
 
 
-		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemap.sides[tex::RIGHT].textureAssetHandle.handle, texGPUHandle);
+		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
 	}
 
 	void ReloadTexture(const r2::asset::AssetHandle& texture)
@@ -211,9 +213,8 @@ namespace r2::draw::texsys
 
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap)
 	{
-		return GetTextureAddressInternal(cubemap.sides[tex::RIGHT].textureAssetHandle);
+		return GetTextureAddressInternal(GetCubemapAssetHandle(cubemap));
 	}
-
 
 	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture)
 	{
@@ -233,6 +234,19 @@ namespace r2::draw::texsys
 		}
 
 		return r2::draw::tex::GetTextureAddress(gpuHandle.gpuHandle);
+	}
+
+	u32 GetNumberOfMipMaps(const r2::draw::tex::CubemapTexture& cubemap)
+	{
+		TextureGPUHandle defaultGPUHandle;
+		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, GetCubemapAssetHandle(cubemap).handle, defaultGPUHandle);
+
+		if (TextureHandlesEqual(texGPUHandle.gpuHandle, defaultGPUHandle.gpuHandle))
+		{
+			return 1;
+		}
+
+		return r2::draw::tex::impl::GetNumberOfMipMaps(texGPUHandle.gpuHandle);
 	}
 
 	u64 MemorySize(u64 maxNumTextures)

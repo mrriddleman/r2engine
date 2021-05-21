@@ -8,17 +8,11 @@ thisFilePath = os.path.dirname(os.path.abspath(__file__))
 cubemapgenEXEPath = os.path.realpath(thisFilePath + "\\..") + "\\tools\\cubemapgen\\bin\\Debug_windows_x86_64\\cubemapgen\\cubemapgen.exe"
 
 
-def GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, writeMipChain, numMipLevels, mipOutputDir, quiet):
+def GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilterRoughness, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, mipOutputDir, quiet):
 	
-	quietVal = "false"
-	if(quiet):
-		quietVal = "true"
 
-	writeMips = "false"
-	if(writeMipChain):
-		writeMips = "true"
 
-	osCall = cubemapgenEXEPath + " -q=" + quietVal + " -i=" + inputFile + " -o=" + outputDir + " -n=" + str(numSamples) + " -m=" + writeMips + " -c=" + str(numMipLevels) + " -a=" + mipOutputDir
+	osCall = cubemapgenEXEPath + " -q=" + quiet + " -p=" + prefilterRoughness + " -l=" + lutDFG + " -d=" + diffuseIrradiance + " -i=" + inputFile + " -o=" + outputDir + " -n=" + str(numSamples) + " -m=" + writeMipChain + " -c=" + str(numMipLevels) + " -a=" + mipOutputDir
 	os.system(osCall)
 
 	return;
@@ -37,12 +31,19 @@ for opt, arg in opts:
 	if opt in ['-i']:
 		inputDir = arg
 
+prefilter = "false"
+lutDFG = "false"
+diffuseIrradiance = "true"
+writeMipChain = "true"
+quiet = "false"
+numMipLevels = 1
+numSamples = 128
 
 for packdir in os.listdir(inputDir):
 	
 	realpackdir = inputDir + packdir
 
-	convolutionPackDir = inputDir + packdir + "_conv"
+	outputDir = inputDir + packdir
 
 	if os.path.isdir(realpackdir):
 		
@@ -54,7 +55,6 @@ for packdir in os.listdir(inputDir):
 				
 				for hdrfile in os.listdir(realsubpackdir):
 					inputFile = realsubpackdir + '\\' + hdrfile
-	
-					GenerateCubemapsFromEquirectangular(inputFile, convolutionPackDir, 128, True, 1, realpackdir, False)
+					GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilter, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, realpackdir, quiet)
 				break
 			
