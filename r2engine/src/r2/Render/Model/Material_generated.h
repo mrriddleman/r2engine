@@ -58,12 +58,13 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_METALLICTEXTURE = 18,
     VT_ROUGHNESSTEXTURE = 20,
     VT_AOTEXTURE = 22,
-    VT_BASECOLOR = 24,
-    VT_SPECULAR = 26,
-    VT_ROUGHNESS = 28,
-    VT_METALLIC = 30,
-    VT_REFLECTANCE = 32,
-    VT_AMBIENTOCCLUSION = 34
+    VT_HEIGHTTEXTURE = 24,
+    VT_BASECOLOR = 26,
+    VT_SPECULAR = 28,
+    VT_ROUGHNESS = 30,
+    VT_METALLIC = 32,
+    VT_REFLECTANCE = 34,
+    VT_AMBIENTOCCLUSION = 36
   };
   uint64_t name() const {
     return GetField<uint64_t>(VT_NAME, 0);
@@ -95,6 +96,9 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t aoTexture() const {
     return GetField<uint64_t>(VT_AOTEXTURE, 0);
   }
+  uint64_t heightTexture() const {
+    return GetField<uint64_t>(VT_HEIGHTTEXTURE, 0);
+  }
   const flat::Color *baseColor() const {
     return GetStruct<const flat::Color *>(VT_BASECOLOR);
   }
@@ -125,6 +129,7 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint64_t>(verifier, VT_METALLICTEXTURE) &&
            VerifyField<uint64_t>(verifier, VT_ROUGHNESSTEXTURE) &&
            VerifyField<uint64_t>(verifier, VT_AOTEXTURE) &&
+           VerifyField<uint64_t>(verifier, VT_HEIGHTTEXTURE) &&
            VerifyField<flat::Color>(verifier, VT_BASECOLOR) &&
            VerifyField<float>(verifier, VT_SPECULAR) &&
            VerifyField<float>(verifier, VT_ROUGHNESS) &&
@@ -169,6 +174,9 @@ struct MaterialBuilder {
   void add_aoTexture(uint64_t aoTexture) {
     fbb_.AddElement<uint64_t>(Material::VT_AOTEXTURE, aoTexture, 0);
   }
+  void add_heightTexture(uint64_t heightTexture) {
+    fbb_.AddElement<uint64_t>(Material::VT_HEIGHTTEXTURE, heightTexture, 0);
+  }
   void add_baseColor(const flat::Color *baseColor) {
     fbb_.AddStruct(Material::VT_BASECOLOR, baseColor);
   }
@@ -211,6 +219,7 @@ inline flatbuffers::Offset<Material> CreateMaterial(
     uint64_t metallicTexture = 0,
     uint64_t roughnessTexture = 0,
     uint64_t aoTexture = 0,
+    uint64_t heightTexture = 0,
     const flat::Color *baseColor = 0,
     float specular = 0.0f,
     float roughness = 0.0f,
@@ -218,6 +227,7 @@ inline flatbuffers::Offset<Material> CreateMaterial(
     float reflectance = 0.0f,
     float ambientOcclusion = 0.0f) {
   MaterialBuilder builder_(_fbb);
+  builder_.add_heightTexture(heightTexture);
   builder_.add_aoTexture(aoTexture);
   builder_.add_roughnessTexture(roughnessTexture);
   builder_.add_metallicTexture(metallicTexture);

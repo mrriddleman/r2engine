@@ -11,6 +11,7 @@
 	metallicTexture:"ellen/metallic/ellen_hair_metallicsmooth.tif",
 	roughnessTexture:"",
 	aoTexture:"",
+	heightTexture:"",
 
 	baseColor:{
 		r: 1.0,
@@ -19,7 +20,7 @@
 		a: 1.0
 	},
 	specular:0.0,
-	roughness:0.0,
+	roughness:0.4,
 	metallic:0.0,
 	reflectance:0.0,
 	ambientOcclusion:0.0

@@ -133,6 +133,7 @@ namespace r2::draw::gl
 				if (format.mipLevels > 1)
 				{
 					glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+					
 				}
 				else
 				{
@@ -296,7 +297,10 @@ namespace r2::draw::gl
 
 			//const int k_maxLevels = std::min(container.format.mipLevels, 4);
 			const int k_maxLevels = container.format.mipLevels;
-
+			if (k_maxLevels > 2)
+			{
+				int k = 0;
+			}
 			for (int level = 0; level < k_maxLevels; ++level)
 			{
 				if (container.format.isCubemap)
@@ -318,6 +322,8 @@ namespace r2::draw::gl
 				if (levelWidth < container.xTileSize ||
 					levelHeight < container.yTileSize)
 				{
+					levelHeight = container.yTileSize;
+					levelWidth = container.xTileSize;
 					//@TODO(Serge): right now I don't think there's a way to go lower than container.xTileSize/yTileSize. Seems to crash when we do
 					//				if we try to use x/yTileSize on a level that requires a lower width or height this also doesn't seem to work. Not sure how to resolve. May need to use non sparse textures for it?
 					break;

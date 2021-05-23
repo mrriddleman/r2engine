@@ -667,6 +667,7 @@ namespace r2::draw::mat
 			r2::asset::AssetFile* metallicFile = nullptr;
 			r2::asset::AssetFile* roughnessFile = nullptr;
 			r2::asset::AssetFile* aoFile = nullptr;
+			r2::asset::AssetFile* heightFile = nullptr;
 
 			if (material->diffuseTexture() != EMPTY)
 			{
@@ -733,6 +734,15 @@ namespace r2::draw::mat
 				newMaterial.aoTexture.textureAssetHandle = { material->aoTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
 			}
 
+			if (material->heightTexture() != EMPTY)
+			{
+				heightFile = FindAssetFile(list, material->heightTexture());
+				R2_CHECK(heightFile != nullptr, "This should never be null!");
+
+				newMaterial.heightTexture.type = tex::Height;
+				newMaterial.heightTexture.textureAssetHandle = { material->heightTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+			}
+
 			MaterialHandle handle = AddMaterial(system, newMaterial);
 			R2_CHECK(handle.handle != InvalidMaterialHandle.handle, "We couldn't add the new material?");
 
@@ -752,6 +762,7 @@ namespace r2::draw::mat
 			AddTextureNameToMap(system, handle, metallicFile, tex::Metallic);
 			AddTextureNameToMap(system, handle, roughnessFile, tex::MicroFacet);
 			AddTextureNameToMap(system, handle, aoFile, tex::Occlusion);
+			AddTextureNameToMap(system, handle, heightFile, tex::Height);
 		}
 	}
 

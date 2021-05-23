@@ -10,6 +10,7 @@
 	metallicTexture:"",
 	roughnessTexture:"",
 	aoTexture:"",
+	heightTexture:"",
 
 	baseColor:{
 		r: 0.0,
@@ -18,7 +19,7 @@
 		a: 1.0
 	},
 	specular:0.0,
-	roughness:0.0,
+	roughness:1.0,
 	metallic:0.0,
 	reflectance:0.0,
 	ambientOcclusion:0.0

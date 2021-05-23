@@ -2295,7 +2295,7 @@ namespace r2::draw::renderer
 						renderMaterial.metallicTexture = texsys::GetTextureAddress(material->metallicTexture);
 						renderMaterial.roughnessTexture = texsys::GetTextureAddress(material->roughnessTexture);
 						renderMaterial.aoTexture = texsys::GetTextureAddress(material->aoTexture);
-
+						renderMaterial.heightTexture = texsys::GetTextureAddress(material->heightTexture);
 
 					}
 				}

@@ -59,6 +59,7 @@ struct Material
 	Tex2DAddress metallicTexture1;
 	Tex2DAddress roughnessTexture1;
 	Tex2DAddress aoTexture1;
+	Tex2DAddress heightTexture1;
 
 	vec3 baseColor;
 	float specular;
@@ -122,6 +123,8 @@ float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
 float D_GGX(float NoH, float roughness);
 vec3  F_Schlick(float LoH, vec3 F0);
 float F_Schlick(float f0, float f90, float VoH);
+vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness);
+
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
 vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness);
 
@@ -164,7 +167,7 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
 
-	FragColor = vec4(lightingResult + emission, 1.0);
+	FragColor = vec4(lightingResult + emission * exposure.x, 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -228,12 +231,14 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
+	//@TODO(Serge): put this back to roughnessTexture1
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
-	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
+	Tex2DAddress addr = materials[texIndex].metallicTexture1;
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	//@TODO(Serge): put this back to not using the alpha
+	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).a) );
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -243,7 +248,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.8) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(0.2) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -282,6 +287,11 @@ float F_Schlick(float f0, float f90, float VoH)
     return f0 + (f90 - f0) * pow(1.0 - VoH, 5.0);
 }
 
+vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
+
 
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 {
@@ -290,6 +300,26 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
 	return clamp(0.5 / (GGXV + GGXL), 0.0, 1.0);
 }
+
+float V_GeometrySchlickGGX(float NoV, float roughness)
+{
+	float r = roughness + 1.0;
+	float k = (r*r) / 8.0;
+
+	float nom = NoV;
+	float denom = NoV * (1.0 - k) + k;
+
+	return nom / denom;
+}
+
+float GeometrySmith(float NoV, float NoL, float roughness)
+{
+	float ggx2 = V_GeometrySchlickGGX(NoV, roughness);
+	float ggx1 = V_GeometrySchlickGGX(NoL, roughness);
+
+	return ggx1 * ggx2;
+}
+
 
 float Fd_Lambert()
 {
@@ -314,7 +344,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 	float LoH = clamp(dot(L, H), 0.0, 1.0);
 
 	float D = D_GGX(NoH, roughness);
-	vec3 F = F_Schlick(LoH, F0);
+	vec3 F = F_Schlick(max(dot(H,V),0.0), F0);
 	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
 	//specular BRDF
@@ -326,7 +356,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 	//Fr *= energyCompensation;
 
 	//float denom = 4.0 * NoV * NoL;
-	vec3 specular = Fr;// max(denom, 0.001);
+	vec3 specular = Fr;// / max(denom, 0.001);
 	vec3 Fd = diffuseColor * Fd_Lambert();//Fd_Burley(roughness, NoV, NoL, LoH);
 
 	vec3 kS = F;
@@ -369,7 +399,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 R = reflect(-V, N);
 
-	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
+	
 
 	vec3 L0 = vec3(0,0,0);
 
@@ -437,17 +467,18 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		L0 += result * radiance * NoL;
 	}
 
-	vec3 kS = F_Schlick(max(dot(N, V), 0.0), F0);
+	vec3 kS = F_SchlickRoughness(max(dot(N,V), 0.0), F0, roughness);
 	vec3 kD = 1.0 - kS;
-
+ 
+ 	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
 	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
-	vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
+
+	vec3 specular =  prefilteredColor * (F0 * brdf.x + brdf.y);
 
 	vec3 ambient = ((kD * diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
 
-	
-	vec3 color =  ambient + L0;
+	vec3 color = ambient +  L0;
 
 	return color;
 }

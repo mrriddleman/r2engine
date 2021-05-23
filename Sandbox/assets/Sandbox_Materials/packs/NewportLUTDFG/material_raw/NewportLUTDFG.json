@@ -11,6 +11,7 @@
 	metallicTexture:"",
 	roughnessTexture:"",
 	aoTexture:"",
+	heightTexture:"",
 
 	baseColor:{
 		r: 1.0,

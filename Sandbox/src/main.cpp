@@ -603,7 +603,7 @@ public:
 
             r2::sarr::Push(*modelMaterials.infos, materialInfo);
 
-            r2::sarr::Push(*modelMaterials.materialHandles, r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel));
+            r2::sarr::Push(*modelMaterials.materialHandles, r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall")));//r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel));
         }
 
         r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *defaultModelRefs);
@@ -713,49 +713,49 @@ public:
 
             //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
 
-            /*r2::draw::PointLight pointLight;
+   //         r2::draw::PointLight pointLight;
 
-            pointLight.position = glm::vec4(0, 8, 0, 1.0);
-            pointLight.lightProperties.color = glm::vec4(1.0f);
+   //         pointLight.position = glm::vec4(0, 2, 10, 1.0);
+   //         pointLight.lightProperties.color = glm::vec4(1.0f);
 
-            pointLight.lightProperties.intensity = 100;
-            pointLight.lightProperties.fallOff = 0.01;
+   //         pointLight.lightProperties.intensity = 100;
+   //         pointLight.lightProperties.fallOff = 0.01;
 
-            r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
-            
-			r2::draw::PointLight pointLight2;
+   //        // r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
+   //         
+			//r2::draw::PointLight pointLight2;
 
-			pointLight2.position = glm::vec4(0, 2, -1, 1.0);
-			pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+			//pointLight2.position = glm::vec4(-3, 2, -1, 1.0);
+			//pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-			pointLight2.lightProperties.intensity = 1;
-			pointLight2.lightProperties.fallOff = 0.01;
-
-
-			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
-
-			r2::draw::PointLight pointLight3;
-
-            pointLight3.position = glm::vec4(-1, 2, 0, 1.0);
-            pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-            pointLight3.lightProperties.intensity = 2;
-            pointLight3.lightProperties.fallOff = 0.01;
+			//pointLight2.lightProperties.intensity = 1;
+			//pointLight2.lightProperties.fallOff = 0.01;
 
 
-			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
+			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
+
+			//r2::draw::PointLight pointLight3;
+
+   //         pointLight3.position = glm::vec4(-1, 2, 0, 1.0);
+   //         pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+   //         pointLight3.lightProperties.intensity = 2;
+   //         pointLight3.lightProperties.fallOff = 0.01;
 
 
-			r2::draw::PointLight pointLight4;
-
-			pointLight4.position = glm::vec4(3, 2, 0, 1.0);
-			pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
-			pointLight4.lightProperties.intensity = 5;
-			pointLight4.lightProperties.fallOff = 0;
+			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
 
 
-			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);*/
+			//r2::draw::PointLight pointLight4;
+
+			//pointLight4.position = glm::vec4(3, 2, 0, 1.0);
+			//pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+			//pointLight4.lightProperties.intensity = 5;
+			//pointLight4.lightProperties.fallOff = 0;
+
+
+			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
 
         }
 

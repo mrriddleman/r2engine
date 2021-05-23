@@ -60,6 +60,7 @@ struct Material
 	Tex2DAddress metallicTexture1;
 	Tex2DAddress roughnessTexture1;
 	Tex2DAddress aoTexture1;
+	Tex2DAddress heightTexture1;
 
 	vec3 baseColor;
 	float specular;
@@ -101,6 +102,9 @@ in VS_OUT
 	vec3 normal;
 	mat3 TBN;
 
+	vec3 fragPosTangent;
+	vec3 viewPosTangent;
+
 	flat uint drawID;
 } fs_in;
 
@@ -115,6 +119,9 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv);
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
 vec4 SampleLUTDFG(vec2 uv);
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue);
+float SampleMaterialHeight(uint drawID, vec3 uv);
+vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir);
+
 
 float Fd_Lambert();
 float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
@@ -134,33 +141,26 @@ float GetTextureModifier(Tex2DAddress addr)
 
 void main()
 {
-	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
-	vec3 norm = SampleMaterialNormal(fs_in.drawID, fs_in.texCoords).rgb;
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
-	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, fs_in.texCoords);
+	vec3 texCoords = fs_in.texCoords;
 
-	// for(int i = 0; i < numDirectionLights; i++)
-	// {
-	// 	lightingResult += CalcDirLight(i, norm, viewDir);
-	// }
+	vec3 viewDirTangent = normalize(fs_in.viewPosTangent - fs_in.fragPosTangent);
 
-	// for(int i = 0; i < numPointLights; ++i)
-	// {
-	// 	lightingResult += CalcPointLight(i, norm, fs_in.fragPos, viewDir);
-	// }
+	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
 
-	// for(int i = 0; i < numSpotLights; ++i)
-	// {
-	// 	lightingResult += CalcSpotLight(i, norm, fs_in.fragPos, viewDir);
-	// }
+	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+        discard;
 
-	vec3 emission = SampleMaterialEmission(fs_in.drawID, fs_in.texCoords).rgb;
+	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
+	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
-	FragColor = vec4(lightingResult + emission, 1.0);
-	//vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
+	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords);
 
-	//FragColor = vec4(sampledColor.rgb, 1.0);// * (0.4 * sin(cameraPosTimeW.w+PI*1.5) + 0.6);
+
+	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
+
+	FragColor = vec4(lightingResult + emission , 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -253,7 +253,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.3) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(0.2) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -262,6 +262,63 @@ vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
 	return textureLod(samplerCubeArray(addr.container), vec4(uv, addr.page), roughnessValue);
 }
 
+
+float SampleMaterialHeight(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].heightTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * 0.0 + modifier * (1.0 - texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
+}
+
+vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].heightTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	if(modifier <= 0.0)
+		return uv;
+
+	float currentLayerDepth = 0.0;
+
+	const float minLayers = 8;
+	const float maxLayers = 32;
+	const float heightScale = 0.1;
+	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+
+	float layerDepth = 1.0 / numLayers;
+
+	vec2 P = viewDir.xy / viewDir.z * heightScale;
+
+	vec2 deltaTexCoords = P / numLayers;
+
+	vec2 currentTexCoords = uv.rg;
+	float currentDepthMapValue = SampleMaterialHeight(drawID, uv);
+
+	while(currentLayerDepth < currentDepthMapValue)
+	{
+		currentTexCoords -= deltaTexCoords;
+
+		currentDepthMapValue = SampleMaterialHeight(drawID, vec3(currentTexCoords, uv.b));
+
+		currentLayerDepth += layerDepth;
+	}
+
+	vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+	float afterDepth = currentDepthMapValue - currentLayerDepth;
+	float beforeDepth = SampleMaterialHeight(drawID, vec3(prevTexCoords, uv.b)) - currentLayerDepth + layerDepth;
+
+	float weight = afterDepth / (afterDepth - beforeDepth);
+	vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+	
+	return vec3(finalTexCoords, uv.b);
+	
+}
 
 vec4 SampleLUTDFG(vec2 uv)
 {
@@ -324,7 +381,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 	float LoH = clamp(dot(L, H), 0.0, 1.0);
 
 	float D = D_GGX(NoH, roughness);
-	vec3 F = F_Schlick(LoH, F0);
+	vec3 F = F_Schlick(max(dot(H, V), 0.0), F0);
 	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
 	//specular BRDF
@@ -452,9 +509,9 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
-	vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
+	vec3 specular = prefilteredColor * (kS * brdf.x + kS * brdf.y);
 
-	vec3 ambient = ((kD * diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
+	vec3 ambient = (( diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
 
 	
 	vec3 color =  ambient + L0;

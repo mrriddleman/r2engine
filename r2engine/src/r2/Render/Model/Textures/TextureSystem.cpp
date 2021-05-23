@@ -29,7 +29,7 @@ namespace
 	static r2::draw::TextureSystem* s_optrTextureSystem = nullptr;
 	const u64 ALIGNMENT = 16;
 	const f64 LOAD_FACTOR = 1.5;
-	const u32 MAX_TEXTURE_CONTAINERS = 16;
+	const u32 MAX_TEXTURE_CONTAINERS = 32;
 	const u32 MAX_TEXTURE_CONATINERS_PER_FROMAT = 16;
 }
 

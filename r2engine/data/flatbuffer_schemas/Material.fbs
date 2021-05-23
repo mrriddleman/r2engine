@@ -24,7 +24,7 @@ table Material
 	metallicTexture:ulong (hash:"fnv1a_64");
 	roughnessTexture:ulong (hash:"fnv1a_64");
 	aoTexture:ulong (hash:"fnv1a_64");
-
+	heightTexture:ulong (hash:"fnv1a_64");
 
 	baseColor:Color;
 	specular:float;

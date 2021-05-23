@@ -21,6 +21,7 @@ struct Material
 	Tex2DAddress metallicTexture1;
 	Tex2DAddress roughnessTexture1;
 	Tex2DAddress aoTexture1;
+	Tex2DAddress heightTexture1;
 
 	vec3 baseColor;
 	float specular;

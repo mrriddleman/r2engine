@@ -39,6 +39,7 @@ namespace r2::draw
 		tex::TextureAddress metallicTexture = {};
 		tex::TextureAddress roughnessTexture = {};
 		tex::TextureAddress aoTexture = {};
+		tex::TextureAddress heightTexture = {};
 
 		glm::vec3 baseColor = glm::vec3(1.0f);
 		float specular = 0.f;
@@ -61,6 +62,7 @@ namespace r2::draw
 		tex::Texture metallicTexture;
 		tex::Texture roughnessTexture;
 		tex::Texture aoTexture;
+		tex::Texture heightTexture;
 
 		glm::vec3 baseColor = glm::vec3(1.0f);
 		float specular = 0.f;

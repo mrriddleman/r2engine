@@ -20,6 +20,11 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];
 };
 
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+    vec4 exposure;
+};
 
 out VS_OUT
 {
@@ -27,6 +32,9 @@ out VS_OUT
 	vec3 fragPos;
 	vec3 normal;
 	mat3 TBN;
+
+	vec3 fragPosTangent;
+	vec3 viewPosTangent;
 
 	flat uint drawID;
 } vs_out;
@@ -44,6 +52,10 @@ void main()
 	vec3 B = normalize(normalMatrix * aBiTangent);
 
 	vs_out.TBN = mat3(T, B, vs_out.normal);
+	mat3 TBN = transpose(vs_out.TBN);
+
+	vs_out.fragPosTangent = TBN * vs_out.fragPos;
+	vs_out.viewPosTangent = TBN * cameraPosTimeW.xyz;
 
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;

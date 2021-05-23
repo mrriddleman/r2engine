@@ -147,6 +147,7 @@ namespace r2::asset::pln
 				material->metallicTexture(),
 				material->roughnessTexture(),
 				material->aoTexture(),
+				material->heightTexture(),
 				&theColor,
 				material->specular(),
 				material->roughness(),

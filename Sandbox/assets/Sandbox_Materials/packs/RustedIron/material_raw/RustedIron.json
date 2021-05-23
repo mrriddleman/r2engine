@@ -1,0 +1,26 @@
+{
+	name:"RustedIron",
+	shader:"Sandbox",
+	texturePackName:"RustedIron",
+
+	diffuseTexture:"rustediron/albedo/rustediron2_basecolor.png",
+	specularTexture:"",
+	normalMapTexture:"rustediron/normal/rustediron2_normal.png",
+	emissionTexture:"",
+	metallicTexture:"rustediron/metallic/rustediron2_metallic.png",
+	roughnessTexture:"rustediron/micro/rustediron2_roughness.png",
+	aoTexture:"",
+	heightTexture:"",
+
+	baseColor:{
+		r: 1.0,
+		g: 0.0,
+		b: 0.0,
+		a: 1.0
+	},
+	specular:0.0,
+	roughness:0.0,
+	metallic:0.0,
+	reflectance:0.0,
+	ambientOcclusion:0.0
+}
