@@ -287,7 +287,7 @@ vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 
 	const float minLayers = 8;
 	const float maxLayers = 32;
-	const float heightScale = 0.1;
+	const float heightScale = 0.05;
 	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
 
 	float layerDepth = 1.0 / numLayers;

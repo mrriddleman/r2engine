@@ -954,7 +954,7 @@ namespace r2::asset::pln
 
 				positions.push_back(flat::Vertex3(xPos, yPos, zPos));
 				normals.push_back(flat::Vertex3(xPos, yPos, zPos));
-				texCoords.push_back(flat::Vertex2(xSegment, -ySegment));
+				texCoords.push_back(flat::Vertex2(xSegment, ySegment));
 			}
 		}
 
