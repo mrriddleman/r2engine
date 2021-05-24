@@ -9,7 +9,7 @@
 #include "r2/Render/Backends/SDL_OpenGL/OpenGLTextureSystem.h"
 #include "stb_image.h"
 #include "glad/glad.h"
-#include "SDL_image.h"
+//#include "SDL_image.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 
 
@@ -297,7 +297,7 @@ namespace r2::draw::tex
 	
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap)
 	{
-		//stbi_set_flip_vertically_on_load(true);
+		
 
 		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(texture.assetCache);
 
@@ -321,23 +321,25 @@ namespace r2::draw::tex
 
 		if(isHDR)
 		{
+			stbi_set_flip_vertically_on_load(false);
 			imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(),
 				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
 			imageFormatSize = GL_FLOAT;
 		}
 		else
 		{
+			stbi_set_flip_vertically_on_load(true);
 			imageData = stbi_load_from_memory(
 				assetCacheRecord.buffer->Data(),
 				static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
 		}
 		
 		bool usedSTBI = true;
-		bool usedTiff = false;
+		//bool usedTiff = false;
 		bool usedDDS = false;
 
 		DDSTextureDetails ddsTextureDetails;
-		SDL_Surface* imageSurface = nullptr;
+		//SDL_Surface* imageSurface = nullptr;
 
 		if (!imageData)
 		{
@@ -360,7 +362,10 @@ namespace r2::draw::tex
 			else
 			{
 
-				SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
+				R2_CHECK(false, "Failed to load texture, unknown format");
+				return {};
+
+				/*SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
 
 				R2_CHECK(ops != nullptr, "We should be able to get the RWOps from memory");
 
@@ -380,7 +385,7 @@ namespace r2::draw::tex
 
 				channels = imageSurface->format->BytesPerPixel;
 
-				VerticalFlip(imageData, texWidth, texHeight, channels);
+				VerticalFlip(imageData, texWidth, texHeight, channels);*/
 			}
 		}
 		
@@ -486,10 +491,10 @@ namespace r2::draw::tex
 
 		}
 
-		if(usedTiff)
-		{
-			SDL_FreeSurface(imageSurface);
-		}
+		//if(usedTiff)
+		//{
+		//	SDL_FreeSurface(imageSurface);
+		//}
 
 		if (usedDDS)
 		{

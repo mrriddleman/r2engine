@@ -310,6 +310,30 @@ namespace r2::fs::utils
         r2::util::PathCat(path, ext);
         return true;
     }
+
+    bool SetNewExtension(char* path, const char* newExt)
+    {
+        size_t len = strlen(path);
+        s32 index = -1;
+        for (s32 i = (u32)len - 1; i >= 0; --i)
+        {
+            if (path[i] == FILE_EXTENSION_DELIM)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        size_t extLen = strlen(newExt);
+
+        for (s32 i = 0; i < extLen; ++i)
+        {
+            path[index + i] = newExt[i];
+        }
+
+
+        return true;
+    }
     
     bool BuildPathFromCategory(Directory category, const char* fileName, char* outPath)
     {

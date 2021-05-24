@@ -3,38 +3,38 @@
     {
       packName: 18199531748715869547,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Hair_AlbedoTransparency.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Hair_AlbedoTransparency.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.png"
       ],
       normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Body_Normal.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Eye_Normal.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Body_Normal.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Eye_Normal.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.png"
       ],
       specular: [
 
       ],
       emissive: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.png"
       ],
       metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Body_MetallicSmooth.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Hair_MetallicSmooth.tif",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Head_MetallicSmooth.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Body_MetallicSmooth.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Hair_MetallicSmooth.png",
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Head_MetallicSmooth.png"
       ],
       occlusion: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.png"
       ],
       micro: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/micro/Ellen_Head_Microdetail.tif"
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/micro/Ellen_Head_Microdetail.png"
       ],
       height: [
 
       ],
-      packSize: 75387210,
+      packSize: 44828007,
       totalNumberOfTextures: 14,
       metaData: {
         mipLevels: [
@@ -582,6 +582,6 @@
     }
   ],
   totalNumberOfTextures: 75,
-  totalTextureSize: 166123788,
+  totalTextureSize: 135564585,
   maxTexturesInAPack: 36
 }

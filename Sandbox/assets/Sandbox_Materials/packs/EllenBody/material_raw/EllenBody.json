@@ -4,13 +4,13 @@
 	
 	texturePackName:"Ellen",
 
-	diffuseTexture:"ellen/albedo/ellen_body_albedo.tif",
+	diffuseTexture:"ellen/albedo/ellen_body_albedo.png",
 	specularTexture:"",
-	normalMapTexture:"ellen/normal/ellen_body_normal.tif",
-	emissionTexture:"ellen/emissive/ellen_body_emission.tif",
-	metallicTexture:"ellen/metallic/ellen_body_metallicsmooth.tif",
+	normalMapTexture:"ellen/normal/ellen_body_normal.png",
+	emissionTexture:"ellen/emissive/ellen_body_emission.png",
+	metallicTexture:"ellen/metallic/ellen_body_metallicsmooth.png",
 	roughnessTexture:"",
-	aoTexture:"ellen/occlusion/ellen_body_occlusion.tif",
+	aoTexture:"ellen/occlusion/ellen_body_occlusion.png",
 	heightTexture:"",
 
 	baseColor:{

@@ -4,11 +4,11 @@
 	
 	texturePackName:"Ellen",
 
-	diffuseTexture:"ellen/albedo/ellen_hair_albedotransparency.tif",
+	diffuseTexture:"ellen/albedo/ellen_hair_albedotransparency.png",
 	specularTexture:"",
-	normalMapTexture:"ellen/normal/ellen_hair_normal.tif",
+	normalMapTexture:"ellen/normal/ellen_hair_normal.png",
 	emissionTexture:"",
-	metallicTexture:"ellen/metallic/ellen_hair_metallicsmooth.tif",
+	metallicTexture:"ellen/metallic/ellen_hair_metallicsmooth.png",
 	roughnessTexture:"",
 	aoTexture:"",
 	heightTexture:"",

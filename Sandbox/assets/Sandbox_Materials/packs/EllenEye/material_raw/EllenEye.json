@@ -4,9 +4,9 @@
 	
 	texturePackName:"Ellen",
 
-	diffuseTexture:"ellen/albedo/ellen_eye_albedo.tif",
+	diffuseTexture:"ellen/albedo/ellen_eye_albedo.png",
 	specularTexture:"",
-	normalMapTexture:"ellen/normal/ellen_eye_normal.tif",
+	normalMapTexture:"ellen/normal/ellen_eye_normal.png",
 	emissionTexture:"",
 	metallicTexture:"",
 	roughnessTexture:"",

@@ -134,6 +134,17 @@ namespace
 
 					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
 
+					char extType[r2::fs::FILE_PATH_LENGTH];
+					
+					if (r2::fs::utils::CopyFileExtension(textureName, extType))
+					{
+						if (strcmp(extType, ".tif") == 0 || strcmp(extType, "tif") == 0)
+						{
+							r2::fs::utils::SetNewExtension(textureName, ".png");
+						}
+					}
+
+
 					r2::draw::tex::Texture tex;
 					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
 
