@@ -51,7 +51,7 @@ namespace r2::draw::gl
 	namespace texcontainer
 	{
 		template<class ARENA>
-		r2::draw::tex::TextureContainer* MakeGLTextureContainer(ARENA& arena, GLsizei slices, const r2::draw::tex::TextureFormat& format, bool sparse = true)
+		r2::draw::tex::TextureContainer* MakeGLTextureContainer(ARENA& arena, GLsizei slices, const r2::draw::tex::TextureFormat& format)
 		{
 			r2::draw::tex::TextureContainer* container = ALLOC(r2::draw::tex::TextureContainer, arena);
 
@@ -64,7 +64,7 @@ namespace r2::draw::gl
 
 			container->freeSpace = MAKE_SQUEUE(arena, GLsizei, slices);
 
-			bool success = Init(*container, format, slices, sparse);
+			bool success = Init(*container, format, slices);
 
 			if (!success)
 			{
@@ -95,7 +95,7 @@ namespace r2::draw::gl
 			FREE(container, arena);
 		}
 
-		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices, bool sparse = true);
+		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices);
 
 		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container);
 		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container);

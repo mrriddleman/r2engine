@@ -15,7 +15,13 @@ namespace
 		r2::SHashMap<r2::SArray<r2::draw::tex::TextureContainer*>*>* texArray2Ds = nullptr;
 		u32 numTextureContainersPerFormat = 0;
 		u32 maxNumTextureContainerLayers = 0;
-		b32 sparse = true;
+	};
+
+	struct SparseInternalFormatTileSizes
+	{
+		GLint bestIndex = -1;
+		GLint bestXSize = 0;
+		GLint bestYSize = 0;
 	};
 
 	static GLTextureSystem* s_glTextureSystem = nullptr;
@@ -101,87 +107,114 @@ namespace r2::draw::gl
 
 	namespace texcontainer
 	{
-		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices, bool sparse)
+		u32 SmallestMip(const r2::draw::tex::TextureFormat& format)
 		{
-			container.format = format;
-			container.numSlices = slices;
-			container.isSparse = sparse;
+			double denom = format.mipLevels > 1 ? std::pow(2, format.mipLevels - 1) : 1.0;
+			return format.width / denom;
+		}
+
+		bool CanBeSparse(const r2::draw::tex::TextureFormat& format, const SparseInternalFormatTileSizes& tileSize, u32 smallestMip)
+		{
+			return tileSize.bestXSize <= smallestMip;
+		}
+
+		SparseInternalFormatTileSizes FindBestTileSize(GLenum target, const r2::draw::tex::TextureFormat& format)
+		{
+			GLint indexCount = 0,
+				xSize = 0,
+				ySize = 0,
+				zSize = 0;
+
+			SparseInternalFormatTileSizes tileSizes;
+
+			GLCall(glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
+
+			for (GLint i = 0; i < indexCount; ++i)
+			{
+				//GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
+				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
+				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
+				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
+
+
+				// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
+				if (zSize == 1) {
+					if (xSize >= tileSizes.bestXSize && ySize >= tileSizes.bestYSize) {
+						tileSizes.bestIndex = i;
+						tileSizes.bestXSize = xSize;
+						tileSizes.bestYSize = ySize;
+					}
+				}
+			}
+
+			//@TODO(Serge): add caching
+
+			return tileSizes;
+		}
+
+		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices)
+		{
 
 			GLenum target = GL_TEXTURE_2D_ARRAY;
 			if (format.isCubemap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_ARRAY;
 			}
+
+			container.format = format;
+			container.numSlices = slices;
+
+			SparseInternalFormatTileSizes tileSizes = FindBestTileSize(target, format);
 			
+			u32 smallestMip = SmallestMip(format);
+
+			container.isSparse = CanBeSparse(format, tileSizes, smallestMip);
+
+			if (!container.isSparse)
+			{
+				int k = 0;
+			}
+
 			GLCall(glGenTextures(1, &container.texId));
 			GLCall(glBindTexture(target, container.texId));
 
-			if (sparse)
+			if (container.isSparse)
 			{
 				GLCall(glTexParameteri(target, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
 				
-				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode));
-				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode));
-
-				if (format.isCubemap)
-				{
-					GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode));
-				}
-				
-				GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter));
-
-				if (format.mipLevels > 1)
-				{
-					glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-					
-				}
-				else
-				{
-					GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter));
-				}
-
-				// TODO: This could be done once per internal format. For now, just do it every time.
-				GLint indexCount = 0,
-					xSize = 0,
-					ySize = 0,
-					zSize = 0;
-
-				GLint bestIndex = -1,
-					bestXSize = 0,
-					bestYSize = 0;
-
-				GLCall(glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
-
-				for (GLint i = 0; i < indexCount; ++i) 
-				{
-					GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
-					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
-					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
-					GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
-
-
-					// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
-					if (zSize == 1) {
-						if (xSize >= bestXSize && ySize >= bestYSize) {
-							bestIndex = i;
-							bestXSize = xSize;
-							bestYSize = ySize;
-						}
-					}
-				}
 				// This would mean the implementation has no valid sizes for us, or that this format doesn't actually support sparse
 				// texture allocation. Need to implement the fallback. TODO: Implement that.
-				R2_CHECK(bestIndex != -1, "Implementation has no valid sizes for us!");
-				if (bestIndex == -1)
+				R2_CHECK(tileSizes.bestIndex != -1, "Implementation has no valid sizes for us!");
+				if (tileSizes.bestIndex == -1)
 				{
 					GLCall(glDeleteTextures(1, &container.texId));
 					return false;
 				}
 
-				container.xTileSize = bestXSize;
-				container.yTileSize = bestYSize;
+				container.xTileSize = tileSizes.bestXSize;
+				container.yTileSize = tileSizes.bestYSize;
 
-				GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, bestIndex));
+				GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, tileSizes.bestIndex));
+			}
+
+			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode));
+			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode));
+
+			if (format.isCubemap)
+			{
+				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode));
+			}
+
+			GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter));
+
+			if (format.mipLevels > 1)
+			{
+				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+
+			}
+			else
+			{
+				GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter));
 			}
 
 			GLCall(glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices));
@@ -197,8 +230,8 @@ namespace r2::draw::gl
 				r2::squeue::PushBack(*container.freeSpace, i);
 			}
 
-			if (sparse) 
-			{
+		//	if (container.isSparse) 
+		//	{
 				container.handle = glGetTextureHandleARB(container.texId);
 				if (GLenum err = glGetError())
 				{
@@ -206,7 +239,7 @@ namespace r2::draw::gl
 				}
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
 				GLCall(glMakeTextureHandleResidentARB(container.handle));
-			}
+		//	}
 
 			return true;
 		}
@@ -319,15 +352,15 @@ namespace r2::draw::gl
 				levelWidth = std::max(levelWidth / 2, 1);
 				levelHeight = std::max(levelHeight / 2, 1);
 
-				if (levelWidth < container.xTileSize ||
-					levelHeight < container.yTileSize)
-				{
-					levelHeight = container.yTileSize;
-					levelWidth = container.xTileSize;
-					//@TODO(Serge): right now I don't think there's a way to go lower than container.xTileSize/yTileSize. Seems to crash when we do
-					//				if we try to use x/yTileSize on a level that requires a lower width or height this also doesn't seem to work. Not sure how to resolve. May need to use non sparse textures for it?
-					break;
-				}
+				//if (levelWidth < container.xTileSize ||
+				//	levelHeight < container.yTileSize)
+				//{
+				//	levelHeight = container.yTileSize;
+				//	levelWidth = container.xTileSize;
+				//	//@TODO(Serge): right now I don't think there's a way to go lower than container.xTileSize/yTileSize. Seems to crash when we do
+				//	//				if we try to use x/yTileSize on a level that requires a lower width or height this also doesn't seem to work. Not sure how to resolve. May need to use non sparse textures for it?
+				//	break;
+				//}
 			}
 		}
 	}
@@ -403,7 +436,7 @@ namespace r2::draw::gl
 					numSlices = numSlices / (r2::draw::tex::NUM_SIDES );
 				}
 
-				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format, s_glTextureSystem->sparse);
+				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format);
 				r2::sarr::Push(*arrayToUse, containerToUse);
 			}
 
@@ -484,7 +517,7 @@ namespace r2::draw::tex::impl
 		s_glTextureSystem->boundary = boundary;
 		s_glTextureSystem->numTextureContainersPerFormat = numTextureContainersPerFormat;
 		s_glTextureSystem->maxNumTextureContainerLayers = static_cast<u32>(numTextureContainerLayers);
-		s_glTextureSystem->sparse = sparse;
+	//	s_glTextureSystem->sparse = sparse;
 
 		return true;
 	}
@@ -548,9 +581,6 @@ namespace r2::draw::tex::impl
 
 	u32 GetNumberOfMipMaps(const TextureHandle& texture)
 	{
-		const auto width = texture.container->format.width;
-		const auto xTileSize = texture.container->xTileSize;
-
-		return std::log2( (double)width / (double)xTileSize );
+		return texture.container->format.mipLevels;
 	}
 }
