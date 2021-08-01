@@ -20,7 +20,7 @@
 		a: 1.0
 	},
 	specular:0.0,
-	roughness:0.9,
+	roughness:1.0,
 	metallic:0.0,
 	reflectance:0.0,
 	ambientOcclusion:0.0

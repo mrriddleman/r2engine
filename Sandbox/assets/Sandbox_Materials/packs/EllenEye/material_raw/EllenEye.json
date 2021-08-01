@@ -23,5 +23,5 @@
 	roughness:0.3,
 	metallic:0.0,
 	reflectance:0.0,
-	ambientOcclusion:0.0
+	ambientOcclusion:1.0
 }

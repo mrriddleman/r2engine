@@ -121,7 +121,7 @@ vec4 SampleLUTDFG(vec2 uv);
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue);
 float SampleMaterialHeight(uint drawID, vec3 uv);
 vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir);
-
+vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness);
 
 float Fd_Lambert();
 float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
@@ -147,10 +147,10 @@ void main()
 
 	vec3 viewDirTangent = normalize(fs_in.viewPosTangent - fs_in.fragPosTangent);
 
-	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
+//	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
 
-	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
-        discard;
+//	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+  //      discard;
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
@@ -238,12 +238,14 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
+	//@TODO(Serge): put this back to roughnessTexture1
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	//@TODO(Serge): put this back to not using the alpha
+	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -253,7 +255,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.2) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -349,6 +351,12 @@ float F_Schlick(float f0, float f90, float VoH)
     return f0 + (f90 - f0) * pow(1.0 - VoH, 5.0);
 }
 
+vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
+
+
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 {
 	float a2 = roughness * roughness;
@@ -426,17 +434,18 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float ao = SampleMaterialAO(drawID, uv).r;
 
-	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
+	float perceptualRoughness =  SampleMaterialRoughness(drawID, uv).r;
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
+	
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
 	vec3 R = reflect(-V, N);
 
-	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
+	
 
 	vec3 L0 = vec3(0,0,0);
 
@@ -504,17 +513,19 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		L0 += result * radiance * NoL;
 	}
 
-	vec3 kS = F_Schlick(max(dot(N, V), 0.0), F0);
+	vec3 kS = F_SchlickRoughness(max(dot(N,V), 0.0), F0, roughness);
 	vec3 kD = 1.0 - kS;
-
+	kD *= 1.0 - metallic;
+ 
+ 	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
 	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
-	vec3 specular = prefilteredColor * (kS * brdf.x + kS * brdf.y);
 
-	vec3 ambient = (( diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
+	vec3 specular = prefilteredColor * (brdf.y + brdf.x ) * kS;
 
-	
-	vec3 color =  ambient + L0;
+	vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao;
+
+	vec3 color = ambient + L0;
 
 	return color;
 }

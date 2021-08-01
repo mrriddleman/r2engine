@@ -19,7 +19,7 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 0.9
+      roughness: 1.0
     },
     {
       name: 10074459559892431748,
@@ -39,7 +39,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 0.3
+      roughness: 0.3,
+      ambientOcclusion: 1.0
     },
     {
       name: 8222929225575970643,
@@ -59,7 +60,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 0.4
+      roughness: 0.3,
+      ambientOcclusion: 1.0
     },
     {
       name: 10849559150594760209,
@@ -79,7 +81,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 1.0
+      roughness: 1.0,
+      ambientOcclusion: 1.0
     },
     {
       name: 17351122780281340654,
@@ -99,7 +102,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 1.0
+      roughness: 1.0,
+      ambientOcclusion: 1.0
     },
     {
       name: 11939199546922744086,
@@ -214,7 +218,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 1.0
+      roughness: 1.0,
+      ambientOcclusion: 1.0
     },
     {
       name: 3446934687714738491,

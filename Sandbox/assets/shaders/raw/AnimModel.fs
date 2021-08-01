@@ -206,7 +206,7 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 	normalMapNormal = normalize(fs_in.TBN * normalMapNormal);
 
-	return (1.0 - modifier) * vec4(fs_in.normal, 1) + modifier * vec4(normalMapNormal, 1);
+	return (1.0 - modifier) * vec4(fs_in.normal, 0) + modifier * vec4(normalMapNormal, 0);
 }
 
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)
@@ -233,12 +233,12 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
-	Tex2DAddress addr = materials[texIndex].metallicTexture1;
+	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
 
 	float modifier = GetTextureModifier(addr);
 
 	//@TODO(Serge): put this back to not using the alpha
-	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).a) );
+	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -248,7 +248,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.2) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -389,11 +389,12 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float ao = SampleMaterialAO(drawID, uv).r;
 
-	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
+	float perceptualRoughness =  SampleMaterialRoughness(drawID, uv).r;
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
+	
 
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -469,16 +470,17 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 kS = F_SchlickRoughness(max(dot(N,V), 0.0), F0, roughness);
 	vec3 kD = 1.0 - kS;
+	kD *= 1.0 - metallic;
  
  	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
 	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
 
-	vec3 specular =  prefilteredColor * (F0 * brdf.x + brdf.y);
+	vec3 specular = prefilteredColor * (brdf.y + brdf.x ) * kS;
 
-	vec3 ambient = ((kD * diffuseColor * diffuseIrradiance * Fd_Lambert()) + specular) * ao;
+	vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao;
 
-	vec3 color = ambient +  L0;
+	vec3 color = ambient + L0;
 
 	return color;
 }
