@@ -5,6 +5,7 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Utils/Utils.h"
 #include <assimp/Importer.hpp>
 
 #include <assimp/postprocess.h>
@@ -197,6 +198,7 @@ namespace
 		}
 
 		R2_CHECK(materialIndex != -1, "We should have a material for the mesh!");
+		R2_CHECK(materialIndex < r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT, "We should never have more than: %llu number of materials for a model!", r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT);
 
 	//	R2_CHECK(textureIndex == meshIndex, "HMMM");
 
