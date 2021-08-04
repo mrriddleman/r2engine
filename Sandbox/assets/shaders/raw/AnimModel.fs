@@ -248,7 +248,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)

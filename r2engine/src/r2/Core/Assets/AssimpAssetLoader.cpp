@@ -111,7 +111,8 @@ namespace
 			*dataPtr = r2::mem::utils::PointerAdd(*dataPtr, r2::SArray<u32>::MemorySize(mesh->mNumFaces * 3));
 		}
 
-	//	s32 textureIndex = 0;
+		s32 materialIndex = -1;
+
 		if (mesh->mMaterialIndex >= 0)
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -119,6 +120,10 @@ namespace
 			if (material)
 			{
 				const u32 numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
+
+
+				r2::draw::MaterialHandle materialHandle = {};
+
 				if (numTextures > 0)
 				{
 					R2_CHECK(numTextures == 1, "I don't think we can handle more than 1");
@@ -136,6 +141,7 @@ namespace
 
 					char extType[r2::fs::FILE_PATH_LENGTH];
 					
+					//@TODO(Serge): clean up this MAJOR HACK!
 					if (r2::fs::utils::CopyFileExtension(textureName, extType))
 					{
 						if (strcmp(extType, ".tif") == 0 || strcmp(extType, "tif") == 0)
@@ -146,44 +152,51 @@ namespace
 
 
 					r2::draw::tex::Texture tex;
-					auto materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
-
-					if (!r2::draw::mat::IsInvalidHandle(materialHandle))
-					{
-
-//						R2_CHECK(r2::sarr::Size(*model.optrMaterialHandles) == meshIndex, "These should always be the same!");
-
-						r2::sarr::Push(*model.optrMaterialHandles, materialHandle);
-
-						//r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
-						//R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-						////const r2::draw::Material* material =  r2::draw::mat::GetMaterial(*matSystem, materialHandle);
-
-						//const r2::SArray<r2::draw::tex::Texture>* textures = r2::draw::mat::GetTexturesForMaterial(*matSystem, materialHandle);
-
-						//u64 numTextures = r2::sarr::Size(*textures);
-						//for (u64 i = 0; i < numTextures; ++i)
-						//{
-						//	const r2::draw::tex::Texture& nextTexture = r2::sarr::At(*textures, i);
-
-						//	if (nextTexture.textureAssetHandle.handle == tex.textureAssetHandle.handle &&
-						//		nextTexture.textureAssetHandle.assetCache == tex.textureAssetHandle.assetCache)
-						//	{
-						//		textureIndex = i;
-						//		break;
-						//	}
-						//}
-					}
-					else
-					{
-						R2_LOGW("Failed to load the material texture: %s\n", diffuseStr.C_Str());
-					}
-					//R2_CHECK(!, "We have an invalid handle!");
-
+					materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
 				}
+				else
+				{
+					const char* matName = material->GetName().C_Str();
+
+					auto matNameID = STRING_ID(matName);
+
+					materialHandle = r2::draw::matsys::FindMaterialHandle(matNameID);
+				}
+
+				if (!r2::draw::mat::IsInvalidHandle(materialHandle))
+				{
+
+					bool found = false;
+
+					auto numMaterialHandles = r2::sarr::Size(*model.optrMaterialHandles);
+
+					for (u64 i = 0; i < numMaterialHandles; ++i)
+					{
+						auto nextMatHandle = r2::sarr::At(*model.optrMaterialHandles, i);
+
+						if (r2::draw::mat::AreMaterialHandlesEqual(materialHandle, nextMatHandle))
+						{
+							materialIndex = i;
+							found = true;
+							break;
+						}
+					}
+
+					if (!found)
+					{
+						materialIndex = numMaterialHandles;
+						r2::sarr::Push(*model.optrMaterialHandles, materialHandle);
+					}
+				}
+				else
+				{
+					R2_CHECK(false, "Failed to load the material for the mesh");
+				}
+
 			}
 		}
+
+		R2_CHECK(materialIndex != -1, "We should have a material for the mesh!");
 
 	//	R2_CHECK(textureIndex == meshIndex, "HMMM");
 
@@ -200,7 +213,7 @@ namespace
 
 			if (mesh->mTextureCoords)
 			{
-				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, meshIndex);
+				nextVertex.texCoords = glm::vec3(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y, materialIndex);
 			}
 
 			if (mesh->mTangents)

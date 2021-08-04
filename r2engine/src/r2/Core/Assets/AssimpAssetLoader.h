@@ -51,8 +51,6 @@ namespace r2::asset
 		u64 mNumBones = 0;
 		u64 mNumVertices = 0;
 
-		
-
 
 
 		

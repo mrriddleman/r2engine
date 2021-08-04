@@ -158,6 +158,11 @@ namespace r2::draw::mat
 		return !IsInvalidHandle(materialHandle);
 	}
 
+	bool AreMaterialHandlesEqual(const MaterialHandle& materialHandle1, const MaterialHandle& materialHandle2)
+	{
+		return materialHandle1.handle == materialHandle2.handle && materialHandle1.slot == materialHandle2.slot;
+	}
+
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system)
 	{
 		if (!system.mMaterialTextures ||
@@ -1241,7 +1246,7 @@ namespace r2::draw::matsys
 
 		if (result.handle == defaultHandle.handle || result.slot == defaultHandle.slot)
 		{
-			R2_CHECK(false, "We don't have the material handle for that material name!");
+		//	R2_CHECK(false, "We don't have the material handle for that material name!");
 		}
 
 		return result;

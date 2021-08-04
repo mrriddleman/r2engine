@@ -69,7 +69,7 @@ namespace r2::draw
 		float roughness = 0.f;
 		float metallic = 0.f;
 		float reflectance = 0.f;
-		float ambientOcclusion = 0.f;
+		float ambientOcclusion = 1.f;
 	};
 
 	struct MaterialTextureEntry
@@ -129,6 +129,7 @@ namespace r2::draw::mat
 
 	bool IsInvalidHandle(const MaterialHandle& materialHandle);
 	bool IsValid(const MaterialHandle& materialHandle);
+	bool AreMaterialHandlesEqual(const MaterialHandle& materialHandle1, const MaterialHandle& materialHandle2);
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);

@@ -1,12 +1,12 @@
 {
-	name:"EllenEye",
+	name:"Default_Material",
 	shader:"AnimModel",
 	
-	texturePackName:"Ellen",
+	texturePackName:"",
 
-	diffuseTexture:"ellen/albedo/ellen_eye_albedo.png",
+	diffuseTexture:"",
 	specularTexture:"",
-	normalMapTexture:"ellen/normal/ellen_eye_normal.png",
+	normalMapTexture:"",
 	emissionTexture:"",
 	metallicTexture:"",
 	roughnessTexture:"",
@@ -15,13 +15,13 @@
 
 	baseColor:{
 		r: 1.0,
-		g: 0.0,
-		b: 0.0,
+		g: 1.0,
+		b: 1.0,
 		a: 1.0 
 	},
-	specular:1.0,
+	specular:0.0,
 	roughness:1.0,
 	metallic:0.0,
-	reflectance:1.0,
+	reflectance:0.0,
 	ambientOcclusion:1.0
 }

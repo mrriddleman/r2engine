@@ -241,9 +241,9 @@ namespace r2::draw
 		mElements.clear();
 		mElements.emplace_back(ConstantBufferElement());
         mElements[0].offset = 0;
-        mElements[0].typeCount = numMaterials * 8;
-        mElements[0].elementSize = sizeof(r2::draw::tex::TextureAddress) * 4 + sizeof(glm::vec4) + 3 * sizeof(float);
-        mElements[0].size = mElements[0].elementSize * mElements[0].elementSize;
+        mElements[0].typeCount = numMaterials;
+        mElements[0].elementSize = sizeof(r2::draw::RenderMaterial);
+        mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
         mElements[0].type = ShaderDataType::Struct;
 
         mSize = mElements[0].size;

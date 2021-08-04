@@ -24,6 +24,7 @@
 #include "r2/Utils/Hash.h"
 #include <filesystem>
 //#include "r2/Render/Renderer/CommandPacket.h"
+#include "r2/Core/Math/MathUtils.h"
 
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
@@ -2281,6 +2282,11 @@ namespace r2::draw::renderer
 
 					if (material)
 					{
+						//if (r2::math::NearEq(material->specular, 1.0f) && r2::math::NearEq(material->roughness, 1.0f) && r2::math::NearEq(material->reflectance, 1.0f))
+						//{
+						//	int m = 0;
+						//}
+
 						renderMaterial.baseColor = material->baseColor;
 						renderMaterial.metallic = material->metallic;
 						renderMaterial.roughness = material->roughness;
@@ -2313,6 +2319,7 @@ namespace r2::draw::renderer
 			for (u64 k = materialInfo.numMaterials; k < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++k)
 			{
 				RenderMaterial renderMaterial = {};
+				
 				r2::sarr::Push(*modelMaterials, renderMaterial);
 			}
 
