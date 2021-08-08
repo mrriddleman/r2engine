@@ -31,8 +31,8 @@ for opt, arg in opts:
 	if opt in ['-i']:
 		inputDir = arg
 
-prefilter = "false"
-lutDFG = "false"
+prefilter = "true"
+lutDFG = "true"
 diffuseIrradiance = "true"
 writeMipChain = "true"
 quiet = "false"

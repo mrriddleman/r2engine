@@ -127,7 +127,7 @@ bool GenerateFlatbufferJSONFile(const std::string& outputDir, const std::string&
 int main(int argc, char* argv[])
 {
 
-	system("pause");
+	//system("pause");
 
 	Arguments arguments;
 	r2::cmdln::CommandLine args("Cubemapgen will create a cubemap based on an input equirectangular HDR map");
@@ -361,13 +361,13 @@ void IBLDiffuseIrradiance(
 	r2::ibl::Cubemap dst = r2::ibl::CubemapUtils::CreateCubemap(image, dim);
 
 	r2::ibl::CubemapIBL::DiffuseIrradiance(dst, levels, numSamples, [quiet](size_t x, float progress, void* userdata)
+	{
+		if (!quiet)
 		{
-			if (!quiet)
-			{
 				//output
 
-			}
-		});
+		}
+	});
 
 	dst.MakeSeamless();
 

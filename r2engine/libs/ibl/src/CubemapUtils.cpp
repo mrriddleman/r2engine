@@ -390,16 +390,7 @@ namespace r2::ibl
 
 				for (size_t x = 0; x < dimension; ++x, ++data)
 				{
-					
-
 					const glm::vec3 N(dst.GetDirectionFor(f, x, y));
-					float ZVal = N.z;
-					float mul = 1.0f;
-					if (f == Cubemap::Face::PY)
-					{
-						ZVal = 1.0 - N.z;
-					}
-
 					Cubemap::WriteAt(data, src.SampleAt(glm::vec3(-N.x, N.y, N.z)));
 				}
 			}

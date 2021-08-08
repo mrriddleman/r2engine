@@ -141,7 +141,7 @@ void main()
 	if(sampledColor.a < 0.01)
 		discard;
 
-	vec3 norm = normalize(SampleMaterialNormal(fs_in.drawID, fs_in.texCoords).rgb);
+	vec3 norm = SampleMaterialNormal(fs_in.drawID, fs_in.texCoords).xyz;
 
 	vec3 viewDir = normalize(cameraPosTimeW.rgb - fs_in.fragPos);
 
@@ -200,9 +200,7 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 	vec3 coord = vec3(uv.rg, addr.page);
 
-	vec3 normalMapNormal = texture(sampler2DArray(addr.container), coord).rgb;
-
-	normalMapNormal = normalMapNormal * 2.0 - 1.0;
+	vec3 normalMapNormal = texture(sampler2DArray(addr.container), coord).xyz * 2.0 - 1.0;
 
 	normalMapNormal = normalize(fs_in.TBN * normalMapNormal);
 
@@ -238,7 +236,7 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 	float modifier = GetTextureModifier(addr);
 
 	//@TODO(Serge): put this back to not using the alpha
-	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
+	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + vec4(materials[texIndex].roughness) * modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -254,7 +252,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
 {
 	Tex2DAddress addr = skylight.prefilteredRoughnessTexture;
-	return textureLod(samplerCubeArray(addr.container), vec4(uv, addr.page), roughnessValue);
+	return textureLod(samplerCubeArray(addr.container), vec4(uv.x, uv.y, uv.z, addr.page), roughnessValue);
 }
 
 
@@ -389,7 +387,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float ao = SampleMaterialAO(drawID, uv).r;
 
-	float perceptualRoughness =  SampleMaterialRoughness(drawID, uv).r;
+	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
@@ -476,9 +474,9 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
 
-	vec3 specular = prefilteredColor * (brdf.y + brdf.x ) * kS;
+	vec3 specular = prefilteredColor * (brdf.y + brdf.x ) *kS ;
 
-	vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao;
+	vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao ;
 
 	vec3 color = ambient + L0;
 
