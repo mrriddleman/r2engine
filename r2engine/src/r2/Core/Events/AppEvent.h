@@ -22,7 +22,8 @@ namespace r2
             
             inline u32 Width() const {return mWidth;}
             inline u32 Height() const {return mHeight;}
-            
+            bool OverrideEventHandled() const { return true; }
+
             std::string ToString() const override
             {
                 std::stringstream ss;

@@ -85,6 +85,9 @@ namespace r2::util
     void PathCpy(char* dest, const char* source, u64 destLength = r2::fs::FILE_PATH_LENGTH);
     void PathCat(char* dest, const char* source, u64 destLength = r2::fs::FILE_PATH_LENGTH);
     void PathNCpy(char* dest, const char* source, u64 num, u64 destLength = r2::fs::FILE_PATH_LENGTH);
+
+    bool AreSizesEqual(const Size& s1, const Size& s2);
+    bool IsSizeEqual(const Size& s1, u32 width, u32 height);
 }
 
 #endif /* Utils_h */

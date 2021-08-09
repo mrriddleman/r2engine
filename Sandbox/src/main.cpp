@@ -773,7 +773,7 @@ public:
 			{
 				mPersController.SetAspect(static_cast<float>(e.Width()) / static_cast<float>(e.Height()));
 
-				r2::draw::renderer::WindowResized(e.Width(), e.Height());
+				//r2::draw::renderer::WindowResized(e.Width(), e.Height());
 				// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
 				return true;
 			});

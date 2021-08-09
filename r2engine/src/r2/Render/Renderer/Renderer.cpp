@@ -246,12 +246,17 @@ namespace r2::draw
 		ConstantConfigHandle mSubcommandsConfigHandle;
 		ConstantConfigHandle mLightingConfigHandle;
 
+		r2::mem::StackArena* mRenderTargetsArena = nullptr;
+
+		util::Size mResolutionSize;
+		RenderTarget mOffscreenRenderTarget;
+		RenderTarget mScreenRenderTarget;
+
 		//Each bucket needs the bucket and an arena for that bucket
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
 		r2::draw::CommandBucket<r2::draw::key::Basic>* mFinalBucket = nullptr;
 		r2::mem::StackArena* mCommandArena = nullptr;
 
-		
 #ifdef R2_DEBUG
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
 		r2::draw::MaterialHandle mDebugModelMaterialHandle;
@@ -397,6 +402,9 @@ namespace r2::draw::renderer
 	void AddDrawBatchInternal(CommandBucket<key::Basic>& bucket, const BatchConfig& batch, tex::TextureAddress* addr);
 	void AddFinalBatchInternal();
 	void SetupFinalBatchInternal();
+
+	void ResizeRenderSurface(Renderer& renderer, u32 width, u32 height);
+	void DestroyRenderSurface(Renderer& renderer);
 
 #ifdef R2_DEBUG
 	void CreateDebugBatchSubCommands();
@@ -640,24 +648,19 @@ namespace r2::draw::renderer
 		s_optrRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*s_optrRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
 
 
-		//TODO(Serge): resize when window changes
 		auto size = CENG.DisplaySize();
 
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
 		
-		r2::draw::RenderTarget offscreenRenderTarget = rt::CreateRenderTarget<r2::mem::LinearArena>(*rendererArena, 1, 1, size.width, size.height, __FILE__, __LINE__, "");
+		s_optrRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, stackHeaderSize, boundsChecking ) * 2 +
+			RenderTarget::MemorySize(1, 1, ALIGNMENT, stackHeaderSize, boundsChecking));
 
-		rt::AddTextureAttachment(offscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
-		rt::AddDepthAndStencilAttachment(offscreenRenderTarget);
-
-		s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, offscreenRenderTarget);
-		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
-
-
-		r2::draw::RenderTarget screenRenderTarget;
-
-		s_optrRenderer->mFinalBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, screenRenderTarget);
-		R2_CHECK(s_optrRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
-
+		ResizeRenderSurface(*s_optrRenderer, size.width, size.height);
 
 		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY);
 
@@ -774,10 +777,13 @@ namespace r2::draw::renderer
 		FREE(s_optrRenderer->mDepthEnabledDebugLineCmdsToDraw, *arena);
 		FREE(s_optrRenderer->mDepthEnabledDebugLineVerticesToDraw, *arena);
 #endif
+		DestroyRenderSurface(*s_optrRenderer);
 
+		FREE(s_optrRenderer->mRenderTargetsArena, *arena);
 		FREE(s_optrRenderer->mCommandArena, *arena);
-		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, s_optrRenderer->mCommandBucket);
-		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, s_optrRenderer->mFinalBucket);
+
+		
+
 		FREE(s_optrRenderer->finalBatch.models, *arena);
 		FREE(s_optrRenderer->finalBatch.materials.materialHandles, *arena);
 		FREE(s_optrRenderer->finalBatch.materials.infos, *arena);
@@ -1545,6 +1551,8 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS * r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY +
@@ -3278,11 +3286,47 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*s_optrRenderer->finalBatch.materials.materialHandles, s_optrRenderer->mFinalCompositeMaterialHandle);
 	}
 
+	void ResizeRenderSurface(Renderer& renderer, u32 width, u32 height)
+	{
+		//no need to resive if that's the size we already are
+		if (util::IsSizeEqual(renderer.mResolutionSize, width, height))
+		{
+			return;
+		}
+
+		DestroyRenderSurface(renderer);
+
+		renderer.mOffscreenRenderTarget = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 1, width, height, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mOffscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
+		rt::AddDepthAndStencilAttachment(renderer.mOffscreenRenderTarget);
+
+		s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mOffscreenRenderTarget);
+		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
+
+		s_optrRenderer->mFinalBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mScreenRenderTarget);
+		R2_CHECK(s_optrRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
+
+
+		r2::draw::rendererimpl::WindowResized(width, height);
+
+		renderer.mResolutionSize.width = width;
+		renderer.mResolutionSize.height = height;
+	}
+
+	void DestroyRenderSurface(Renderer& renderer)
+	{
+		FREE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, s_optrRenderer->mFinalBucket);
+		FREE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, s_optrRenderer->mCommandBucket);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mOffscreenRenderTarget);
+
+	}
+
 	//events
 	void WindowResized(u32 width, u32 height)
 	{
-		//@TODO(Serge): we need to change the final composite FBO size
-		r2::draw::rendererimpl::WindowResized(width, height);
+		R2_CHECK(s_optrRenderer != nullptr, "We should have created the renderer already!");
+		ResizeRenderSurface(*s_optrRenderer, width, height);
 	}
 
 	void MakeCurrent()
@@ -3302,6 +3346,7 @@ namespace r2::draw::renderer
 
 	void SetWindowSize(u32 width, u32 height)
 	{
-		r2::draw::rendererimpl::SetWindowSize(width, height);
+		R2_CHECK(s_optrRenderer != nullptr, "We should have created the renderer already!");
+		ResizeRenderSurface(*s_optrRenderer, width, height);
 	}
 }

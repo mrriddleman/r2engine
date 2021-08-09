@@ -45,7 +45,14 @@ namespace r2
     
     void RenderLayer::OnEvent(evt::Event& event)
     {
-       
+		r2::evt::EventDispatcher dispatcher(event);
+
+		dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
+		{
+           //printf("Render Layer: Window resized to width: %d, height: %d\n", e.Width(), e.Height());
+		    r2::draw::renderer::WindowResized(e.Width(), e.Height());
+			return true;
+		});
     }
     
     void RenderLayer::Shutdown()

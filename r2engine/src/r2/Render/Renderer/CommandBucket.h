@@ -203,8 +203,8 @@ namespace r2::draw
 		{
 			if (cmdBkt)
 			{
-				rt::DestroyRenderTarget<ARENA>(arena, cmdBkt->renderTarget);
 				FREE(cmdBkt, arena);
+
 			}
 		}
 

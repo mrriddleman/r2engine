@@ -217,4 +217,14 @@ namespace r2::util
         strncpy(source, dest, num);
 #endif 
     }
+
+    bool AreSizesEqual(const Size& s1, const Size& s2)
+    {
+        return s1.width == s2.width && s1.height == s2.height;
+    }
+
+    bool IsSizeEqual(const Size& s1, u32 width, u32 height)
+    {
+        return s1.width == width && s1.height == height;
+    }
 }

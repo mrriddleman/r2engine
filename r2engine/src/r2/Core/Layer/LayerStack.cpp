@@ -89,12 +89,12 @@ namespace r2
             {
                 layer->get()->OnEvent(e);
                 
-                if(e.handled)
+                if(e.handled && !e.OverrideEventHandled())
                     break;
             }
         }
         
-        if(!e.handled)
+        if(!e.handled || (e.handled && !e.OverrideEventHandled()))
         {
             for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
             {
@@ -102,7 +102,7 @@ namespace r2
                 {
                     layer->get()->OnEvent(e);
                     
-                    if(e.handled)
+                    if(e.handled && !e.OverrideEventHandled())
                         break;
                 }
             }
