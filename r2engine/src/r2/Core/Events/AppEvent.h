@@ -18,24 +18,60 @@ namespace r2
         class R2_API WindowResizeEvent: public Event
         {
         public:
-            WindowResizeEvent(u32 width, u32 height): mWidth(width), mHeight(height){}
+            WindowResizeEvent(u32 originalWidth, u32 originalHeight, u32 newWidth, u32 newHeight)
+                : mOriginalWidth(originalWidth)
+                , mOriginalHeight(originalHeight)
+                , mNewWidth(newWidth)
+                , mNewHeight(newHeight)
+            {}
             
-            inline u32 Width() const {return mWidth;}
-            inline u32 Height() const {return mHeight;}
+            inline u32 OriginalWidth() const {return mOriginalWidth;}
+            inline u32 OriginalHeight() const {return mOriginalHeight;}
+            inline u32 NewWidth() const { return mNewWidth; }
+            inline u32 NewHeight() const { return mNewHeight; }
+
             bool OverrideEventHandled() const { return true; }
 
             std::string ToString() const override
             {
                 std::stringstream ss;
                 
-                ss << "WindowResizeEvent to: " << mWidth << ", " << mHeight;
+                ss << "WindowResizeEvent from: " << mOriginalWidth << ", " << mOriginalHeight <<  " to: " << mNewWidth << ", " << mNewHeight;
                 return ss.str();
             }
             
             EVENT_CLASS_TYPE(EVT_WINDOW_RESIZED)
             EVENT_CLASS_CATEGORY(ECAT_APP)
         private:
-            u32 mWidth, mHeight;
+            u32 mOriginalWidth, mOriginalHeight;
+            u32 mNewWidth, mNewHeight;
+        };
+
+        class ResolutionChangedEvent : public Event 
+        {
+        public:
+
+            ResolutionChangedEvent(u32 resX, u32 resY)
+                : mResolutionX(resX)
+                , mResolutionY(resY)
+            {}
+
+            u32 ResolutionX() const { return mResolutionX; }
+            u32 ResolutionY() const { return mResolutionY; }
+
+			std::string ToString() const override
+			{
+				std::stringstream ss;
+
+                ss << "Resolution Changed to: " << mResolutionX << ", " << mResolutionY;
+				return ss.str();
+			}
+
+            EVENT_CLASS_TYPE(EVT_RESOLUTION_CHANGED)
+            EVENT_CLASS_CATEGORY(ECAT_APP)
+
+        private:
+            u32 mResolutionX, mResolutionY;
         };
         
         class R2_API WindowCloseEvent: public Event

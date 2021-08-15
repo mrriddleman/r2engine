@@ -134,10 +134,6 @@ namespace r2::draw::renderer
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
 	bool GenerateLayouts();
-
-#ifdef R2_DEBUG
-	bool GenerateLayoutsWithDebug();
-#endif
 	
 	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
@@ -201,11 +197,11 @@ namespace r2::draw::renderer
 #endif
 
 	//events
-	void WindowResized(u32 width, u32 height);
+	void WindowResized(u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 	void MakeCurrent();
 	int SetFullscreen(int flags);
 	int SetVSYNC(bool vsync);
-	void SetWindowSize(u32 width, u32 height);
+	void SetWindowSize(u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 }
 
 #endif

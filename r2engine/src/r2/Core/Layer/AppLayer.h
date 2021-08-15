@@ -24,6 +24,8 @@ namespace r2
         virtual void Update() override;
         virtual void Render(float alpha) override;
         virtual void OnEvent(evt::Event& event) override;
+
+        const Application& GetApplication() const;
     private:
         std::unique_ptr<Application> mApp;
     };

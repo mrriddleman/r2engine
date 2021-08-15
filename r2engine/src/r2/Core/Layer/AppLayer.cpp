@@ -38,4 +38,9 @@ namespace r2
     {
         mApp->OnEvent(event);
     }
+
+    const Application& AppLayer::GetApplication() const
+    {
+        return *mApp.get();
+    }
 }

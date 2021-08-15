@@ -31,7 +31,6 @@ namespace r2
         void Update();
         void Shutdown();
         void Render(float alpha);
-        util::Size GetInitialResolution() const;
         inline util::Size DisplaySize() const {return mDisplaySize;}
         
         const std::string& OrganizationName() const;
@@ -52,10 +51,16 @@ namespace r2
         const char* GetGameControllerButtonName(r2::io::ControllerButtonName buttonName);
         const char* GetGameControllerAxisName(r2::io::ControllerAxisName axisName);
         const char* GetGameControllerName(r2::io::ControllerID controllerID);
-        
+
+        void SetResolution(util::Size previousResolution, util::Size newResolution);
+
         //Layers
         void PushLayer(std::unique_ptr<Layer> layer);
+        void PushAppLayer(std::unique_ptr<AppLayer> appLayer);
         void PushOverlay(std::unique_ptr<Layer> overlay);
+
+        //GetApplication
+        const Application& GetApplication() const;
         
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
@@ -65,6 +70,9 @@ namespace r2
         using SetVSyncFunc = std::function<bool (bool)>;
         using SetFullScreenFunc = std::function<bool (u32 flags)>;
         using SetWindowSizeFunc = std::function<void (s32 width, s32 height)>;
+        using SetWindowPositionFunc = std::function<void(s32 xPos, s32 yPos)>;
+        using CenterWindowFunc = std::function<void()>;
+
         typedef const char* (*GetClipboardTextFunc)(void* user_data);
         typedef void (*SetClipboardTextFunc)(void* user_data, const char* text);
         using GetPerformanceFrequencyFunc = std::function<u64 (void)>;
@@ -88,6 +96,8 @@ namespace r2
         inline void SetVSyncCallback(SetVSyncFunc vsync) { mSetVSyncFunc = vsync; }
         inline void SetFullscreenCallback(SetFullScreenFunc fullscreen) {mFullScreenFunc = fullscreen;}
         inline void SetScreenSizeCallback(SetWindowSizeFunc windowSize) {mWindowSizeFunc = windowSize;}
+        inline void SetWindowPositionCallback(SetWindowPositionFunc windowPos) { mWindowPosFunc = windowPos; }
+        inline void CenterWindowCallback(CenterWindowFunc centerWindow) { mCenterWindowFunc = centerWindow; }
         SetClipboardTextFunc mSetClipboardTextFunc;
         GetClipboardTextFunc mGetClipboardTextFunc;
         inline void SetGetPerformanceFrequencyCallback(GetPerformanceFrequencyFunc func) {mGetPerformanceFrequencyFunc = func;}
@@ -161,8 +171,12 @@ namespace r2
         void QuitTriggered();
         
         //Window events
+
+
         void WindowResizedEvent(u32 width, u32 height);
         void WindowSizeChangedEvent(u32 width, u32 height);
+        void WindowSizeEventInternal(u32 width, u32 height, u32 resX, u32 resY);
+        
         void WindowMinimizedEvent();
         void WindowUnMinimizedEvent();
         
@@ -185,6 +199,8 @@ namespace r2
         SetVSyncFunc mSetVSyncFunc = nullptr;
         SetFullScreenFunc mFullScreenFunc = nullptr;
         SetWindowSizeFunc mWindowSizeFunc = nullptr;
+        SetWindowPositionFunc mWindowPosFunc = nullptr;
+        CenterWindowFunc mCenterWindowFunc = nullptr;
         GetPerformanceFrequencyFunc mGetPerformanceFrequencyFunc = nullptr;
         GetPerformanceCounterFunc mGetPerformanceCounterFunc = nullptr;
         GetTicksFunc mGetTicksFunc = nullptr;
@@ -205,7 +221,11 @@ namespace r2
         ImGuiLayer* mImGuiLayer;
         void* mPlatformControllers[NUM_PLATFORM_CONTROLLERS];
         b32 mMinimized;
+        b32 mFullScreen;
+        b32 mNeedsResolutionChange;
+        util::Size mResolution;
         r2::mem::utils::MemBoundary mAssetLibMemBoundary;
+        
     };
 }
 

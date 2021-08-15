@@ -52,13 +52,23 @@ namespace r2
         return "Test_App";
     }
     
-    util::Size Application::GetPreferredResolution() const
+    util::Size Application::GetAppResolution() const
     {
         util::Size res;
         res.width = r2::INITIAL_SCREEN_WIDTH;
         res.height = r2::INITIAL_SCREEN_HEIGHT;
         
         return res;
+    }
+
+    bool Application::ShouldKeepAspectRatio() const
+    {
+        return true;
+    }
+
+    bool Application::ShouldScaleResolution() const
+    {
+        return false;
     }
     
     std::string Application::GetAppLogPath() const

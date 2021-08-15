@@ -76,7 +76,7 @@ namespace r2::draw::key
 		materialHandle.handle = DECODE_KEY_VALUE(materialID, materialSystemOffset, 0);
 
 		//@TODO(Serge): hmm not sure if this should be here or be in this form
-		r2::draw::rendererimpl::SetViewport(viewport);
+		r2::draw::rendererimpl::SetViewportKey(viewport);
 		r2::draw::rendererimpl::SetViewportLayer(viewportLayer);
 		r2::draw::rendererimpl::SetMaterialID(materialHandle);
 	}

@@ -66,7 +66,7 @@ namespace r2::draw::rendererimpl
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 
 	//
-	void SetViewport(u32 viewport);
+	void SetViewportKey(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
 	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
 
@@ -83,11 +83,14 @@ namespace r2::draw::rendererimpl
 	void ApplyDrawState(const cmd::DrawState& state);
 
 	//events
-	void WindowResized(u32 width, u32 height);
+	void SetWindowSize(u32 width, u32 height);
+	void SetWindowPosition(s32 xPos, s32 yPos);
+	void CenterWindow();
+
 	void MakeCurrent();
 	int SetFullscreen(int flags);
 	int SetVSYNC(bool vsync);
-	void SetWindowSize(u32 width, u32 height);
+	void SetViewport(u32 xOffset, u32 yOffset, u32 width, u32 height);
 }
 
 #endif

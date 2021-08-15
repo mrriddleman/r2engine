@@ -43,7 +43,10 @@ namespace r2
         virtual void Render(float alpha);
         virtual void OnEvent(evt::Event& e);
         virtual char* GetApplicationName() const;
-        virtual util::Size GetPreferredResolution() const;
+        virtual util::Size GetAppResolution() const;
+        virtual bool ShouldKeepAspectRatio() const;
+        virtual bool ShouldScaleResolution() const;
+
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
         virtual std::string GetSoundDefinitionPath() const;
@@ -52,6 +55,8 @@ namespace r2
         virtual std::vector<std::string> GetTexturePackManifestsRawPaths() const;
         virtual std::vector<std::string> GetMaterialPackManifestsBinaryPaths() const;
         virtual std::vector<std::string> GetMaterialPackManifestsRawPaths() const;
+        
+
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;

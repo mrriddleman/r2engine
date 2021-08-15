@@ -245,10 +245,19 @@ namespace r2::draw
 		ConstantConfigHandle mMaterialConfigHandle;
 		ConstantConfigHandle mSubcommandsConfigHandle;
 		ConstantConfigHandle mLightingConfigHandle;
+		ConstantConfigHandle mResolutionConfigHandle;
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
 		util::Size mResolutionSize;
+		util::Size mCompositeSize;
+
+		float mXOffset;
+		float mYOffset;
+		float mScaleX;
+		float mScaleY;
+		b32 mNeedsResolutionUpdate;
+
 		RenderTarget mOffscreenRenderTarget;
 		RenderTarget mScreenRenderTarget;
 
@@ -403,7 +412,7 @@ namespace r2::draw::renderer
 	void AddFinalBatchInternal();
 	void SetupFinalBatchInternal();
 
-	void ResizeRenderSurface(Renderer& renderer, u32 width, u32 height);
+	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 	void DestroyRenderSurface(Renderer& renderer);
 
 #ifdef R2_DEBUG
@@ -649,6 +658,7 @@ namespace r2::draw::renderer
 
 
 		auto size = CENG.DisplaySize();
+		//@TODO(Serge): we need to get the scale, x and y offsets
 
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -660,7 +670,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, stackHeaderSize, boundsChecking ) * 2 +
 			RenderTarget::MemorySize(1, 1, ALIGNMENT, stackHeaderSize, boundsChecking));
 
-		ResizeRenderSurface(*s_optrRenderer, size.width, size.height);
+		ResizeRenderSurface(*s_optrRenderer, size.width, size.height, size.width, size.height, 1.0f, 1.0f, 0.0f, 0.0f); //@TODO(Serge): we need to get the scale, x and y offsets
 
 		s_optrRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY);
 
@@ -742,8 +752,12 @@ namespace r2::draw::renderer
 		//}
 
 		
-
+		rendererimpl::SetViewport(0, 0, s_optrRenderer->mResolutionSize.width, s_optrRenderer->mResolutionSize.height); //@TODO(Serge): this should probably be a command or something
 		cmdbkt::Submit(*s_optrRenderer->mCommandBucket);
+		
+
+
+		rendererimpl::SetViewport(round(s_optrRenderer->mXOffset), round(s_optrRenderer->mYOffset), round(s_optrRenderer->mScaleX * s_optrRenderer->mResolutionSize.width), round(s_optrRenderer->mScaleY * s_optrRenderer->mResolutionSize.height));
 		cmdbkt::Submit(*s_optrRenderer->mFinalBucket);
 
 		cmdbkt::ClearAll(*s_optrRenderer->mCommandBucket);
@@ -866,28 +880,17 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		return GenerateBufferLayouts(s_optrRenderer->mVertexLayouts) &&
-		GenerateConstantBuffers(s_optrRenderer->mConstantLayouts);
-	}
-
 #ifdef R2_DEBUG
-	bool GenerateLayoutsWithDebug()
-	{
-		if (s_optrRenderer == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return false;
-		}
-
 		//add the debug stuff here
 		AddDebugDrawLayout();
 		AddDebugColorsLayout();
 		AddDebugLineSubCommandsLayout();
-		
-
-		return GenerateLayouts();
-	}
 #endif
+
+
+		return GenerateBufferLayouts(s_optrRenderer->mVertexLayouts) &&
+		GenerateConstantBuffers(s_optrRenderer->mConstantLayouts);
+	}
 
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts)
 	{
@@ -2199,7 +2202,7 @@ namespace r2::draw::renderer
 			return;
 		}
 
-
+		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 		const VertexLayoutConfigHandle& vertexLayoutHandles = r2::sarr::At(*s_optrRenderer->mVertexLayoutConfigHandles, batch.vertexLayoutConfigHandle);
 
 		// r2::draw::key::Basic clearKey;
@@ -2221,13 +2224,49 @@ namespace r2::draw::renderer
 			clearCMD->flags =flags;
 		}
 
+		//r2::draw::cmd::FillConstantBuffer* resolutionCMD = nullptr;
+
+
+		/*if (s_optrRenderer->mNeedsResolutionUpdate)
+		{
+			s_optrRenderer->mNeedsResolutionUpdate = false;
+			u64 resolutionSize = sizeof(glm::vec4);
+
+			if (clearCMD)
+			{
+				resolutionCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer>(clearCMD, resolutionSize);
+			}
+			else
+			{
+				resolutionCMD = AddFillConstantBufferCommand(bucket, batch.key, resolutionSize);
+			}
+
+			char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(resolutionCMD);
+			glm::vec4 resolutionData = glm::vec4(s_optrRenderer->mXOffset, s_optrRenderer->mYOffset, s_optrRenderer->mScaleX, s_optrRenderer->mScaleY);
+			memcpy(auxMemory, glm::value_ptr(resolutionData), resolutionSize);
+
+			auto resolutionHandle = r2::sarr::At(*constHandles, s_optrRenderer->mResolutionConfigHandle);
+			ConstantBufferData* resolutionConstData = GetConstData(resolutionHandle);
+
+			resolutionCMD->data = auxMemory;
+			resolutionCMD->dataSize = resolutionSize;
+			resolutionCMD->offset = resolutionConstData->currentOffset;
+			resolutionCMD->constantBufferHandle = resolutionHandle;
+
+			resolutionCMD->isPersistent = resolutionConstData->isPersistent;
+			resolutionCMD->type = resolutionConstData->type;
+		}*/
+
 		r2::draw::cmd::FillConstantBuffer* constCMD = nullptr;
 		
 		if (batch.models)
 		{
 			u64 modelsSize = batch.models->mSize * sizeof(glm::mat4);
 			
-
+			//if (resolutionCMD)
+			{
+		//		constCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::FillConstantBuffer, r2::draw::cmd::FillConstantBuffer>(resolutionCMD, modelsSize);
+			}
 			if (clearCMD)
 			{
 				constCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::Clear, r2::draw::cmd::FillConstantBuffer>(clearCMD, modelsSize);
@@ -3286,32 +3325,34 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*s_optrRenderer->finalBatch.materials.materialHandles, s_optrRenderer->mFinalCompositeMaterialHandle);
 	}
 
-	void ResizeRenderSurface(Renderer& renderer, u32 width, u32 height)
+	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		//no need to resive if that's the size we already are
-		if (util::IsSizeEqual(renderer.mResolutionSize, width, height))
+		if (!util::IsSizeEqual(renderer.mResolutionSize, resolutionX, resolutionY))
 		{
-			return;
+			DestroyRenderSurface(renderer);
+
+			renderer.mOffscreenRenderTarget = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 1, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+			rt::AddTextureAttachment(renderer.mOffscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
+			rt::AddDepthAndStencilAttachment(renderer.mOffscreenRenderTarget);
+
+			s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mOffscreenRenderTarget);
+			R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
+
+			s_optrRenderer->mFinalBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mScreenRenderTarget);
+			R2_CHECK(s_optrRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
 		}
 
-		DestroyRenderSurface(renderer);
-
-		renderer.mOffscreenRenderTarget = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 1, width, height, __FILE__, __LINE__, "");
-
-		rt::AddTextureAttachment(renderer.mOffscreenRenderTarget, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
-		rt::AddDepthAndStencilAttachment(renderer.mOffscreenRenderTarget);
-
-		s_optrRenderer->mCommandBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mOffscreenRenderTarget);
-		R2_CHECK(s_optrRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
-
-		s_optrRenderer->mFinalBucket = MAKE_CMD_BUCKET(*renderer.mRenderTargetsArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY, renderer.mScreenRenderTarget);
-		R2_CHECK(s_optrRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
-
-
-		r2::draw::rendererimpl::WindowResized(width, height);
-
-		renderer.mResolutionSize.width = width;
-		renderer.mResolutionSize.height = height;
+		renderer.mResolutionSize.width = resolutionX;
+		renderer.mResolutionSize.height = resolutionY;
+		renderer.mCompositeSize.width = windowWidth;
+		renderer.mCompositeSize.height = windowHeight;
+		renderer.mScaleX = scaleX;
+		renderer.mScaleY = scaleY;
+		renderer.mXOffset = xOffset;
+		renderer.mYOffset = yOffset;
+		renderer.mNeedsResolutionUpdate = true;
 	}
 
 	void DestroyRenderSurface(Renderer& renderer)
@@ -3323,10 +3364,10 @@ namespace r2::draw::renderer
 	}
 
 	//events
-	void WindowResized(u32 width, u32 height)
+	void WindowResized(u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		R2_CHECK(s_optrRenderer != nullptr, "We should have created the renderer already!");
-		ResizeRenderSurface(*s_optrRenderer, width, height);
+		ResizeRenderSurface(*s_optrRenderer, windowWidth, windowHeight, resolutionX, resolutionY, scaleX, scaleY, xOffset, yOffset);
 	}
 
 	void MakeCurrent()
@@ -3344,9 +3385,9 @@ namespace r2::draw::renderer
 		return r2::draw::rendererimpl::SetVSYNC(vsync);
 	}
 
-	void SetWindowSize(u32 width, u32 height)
+	void SetWindowSize(u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		R2_CHECK(s_optrRenderer != nullptr, "We should have created the renderer already!");
-		ResizeRenderSurface(*s_optrRenderer, width, height);
+		ResizeRenderSurface(*s_optrRenderer, windowWidth, windowHeight, resolutionX, resolutionY, scaleX, scaleY, xOffset, yOffset);
 	}
 }

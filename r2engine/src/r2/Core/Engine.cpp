@@ -42,7 +42,7 @@ namespace r2
             R2_CHECK(false, "");
     }
 
-    Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr), mMinimized(false)
+    Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr), mMinimized(false), mFullScreen(false), mNeedsResolutionChange(false), mResolution({0,0})
     {
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
         {
@@ -189,7 +189,7 @@ namespace r2
                 assetCommand, soundCommand, shaderCommand, texturePackCommand, materialPackCommand);
 #endif
             
-            mDisplaySize = noptrApp->GetPreferredResolution();
+            mDisplaySize = noptrApp->GetAppResolution();
            
 
             //@TODO(Serge): don't use make unique!
@@ -202,7 +202,7 @@ namespace r2
 
             //Should be last/ first in the stack
             //@TODO(Serge): should check to see if the app initialized!
-            PushLayer(std::make_unique<AppLayer>(std::move(app)));
+            PushAppLayer(std::make_unique<AppLayer>(std::move(app)));
 
             DetectGameControllers();
 
@@ -222,6 +222,14 @@ namespace r2
         r2::asset::pln::Update(); //for shaders
 #endif
         r2::asset::lib::Update();
+
+        if (mNeedsResolutionChange)
+        {
+            mNeedsResolutionChange = false;
+			evt::ResolutionChangedEvent e(mResolution.width, mResolution.height);
+			OnEvent(e);
+        }
+
         if (!mMinimized)
         {
             mLayerStack.Update();
@@ -258,15 +266,6 @@ namespace r2
         mImGuiLayer->Begin();
         mLayerStack.ImGuiRender();
         mImGuiLayer->End();
-    }
-    
-    util::Size Engine::GetInitialResolution() const
-    {
-        util::Size res;
-        res.width = r2::INITIAL_SCREEN_WIDTH;
-        res.height = r2::INITIAL_SCREEN_HEIGHT;
-        
-        return res;
     }
     
     const std::string& Engine::OrganizationName() const
@@ -427,10 +426,52 @@ namespace r2
         return nullptr;
     }
     
+    void Engine::SetResolution(util::Size previousResolution, util::Size newResolution)
+    {
+        if (!mFullScreen)
+        {
+            if (!util::AreSizesEqual(newResolution, mResolution))
+            {
+                mResolution = newResolution;
+				mNeedsResolutionChange = true;
+            }
+
+            if (util::AreSizesEqual(previousResolution, mDisplaySize) ||
+                (mDisplaySize.width < newResolution.width && mDisplaySize.height < newResolution.height))
+            {
+                mWindowSizeFunc(newResolution.width, newResolution.height);
+                mCenterWindowFunc();
+            }
+            else if(mDisplaySize.width >= newResolution.width && mDisplaySize.height < newResolution.height)
+            {
+                mWindowSizeFunc(mDisplaySize.width, newResolution.height);
+                mCenterWindowFunc();
+            }
+            else if (mDisplaySize.height >= newResolution.height && mDisplaySize.width < newResolution.width)
+            {
+                mWindowSizeFunc(newResolution.width, mDisplaySize.height);
+                mCenterWindowFunc();
+            }
+        }
+        else
+        {
+            mResolution = newResolution;
+
+			evt::ResolutionChangedEvent e(newResolution.width, newResolution.height);
+			OnEvent(e);
+        }
+    }
+
     void Engine::PushLayer(std::unique_ptr<Layer> layer)
     {
         layer->Init();
         mLayerStack.PushLayer(std::move(layer));
+    }
+
+    void Engine::PushAppLayer(std::unique_ptr<AppLayer> appLayer)
+    {
+        appLayer->Init();
+        mLayerStack.PushLayer(std::move(appLayer));
     }
     
     void Engine::PushOverlay(std::unique_ptr<Layer> overlay)
@@ -438,22 +479,42 @@ namespace r2
         overlay->Init();
         mLayerStack.PushOverlay(std::move(overlay));
     }
+
+    const Application& Engine::GetApplication() const
+    {
+        return mLayerStack.GetApplication();
+    }
     
     void Engine::WindowResizedEvent(u32 width, u32 height)
     {
-        mDisplaySize.width = width;
-        mDisplaySize.height = height;
-        evt::WindowResizeEvent e(width, height);
-        OnEvent(e);
-        
+        auto appResolution = GetApplication().GetAppResolution();
+
+        WindowSizeEventInternal(width, height, appResolution.width, appResolution.height);
     }
     
     void Engine::WindowSizeChangedEvent(u32 width, u32 height)
     {
-        mDisplaySize.width = width;
-        mDisplaySize.height = height;
-        evt::WindowResizeEvent e(width, height);
-        OnEvent(e);
+		auto appResolution = GetApplication().GetAppResolution();
+
+		WindowSizeEventInternal(width, height, appResolution.width, appResolution.height);
+    }
+
+    void Engine::WindowSizeEventInternal(u32 width, u32 height, u32 resX, u32 resY)
+    {
+        if (width >= resX && height >= resY)
+        {
+            evt::WindowResizeEvent e(mDisplaySize.width, mDisplaySize.height, width, height);
+
+			mDisplaySize.width = width;
+			mDisplaySize.height = height;
+
+            OnEvent(e);
+        }
+        else
+        {
+            mWindowSizeFunc(resX, resY);
+        }
+        mResolution = { resX, resY };
     }
     
     void Engine::WindowMinimizedEvent()

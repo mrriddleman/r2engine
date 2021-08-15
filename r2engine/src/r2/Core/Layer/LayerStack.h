@@ -13,6 +13,9 @@
 
 namespace r2
 {
+    class Application;
+    class AppLayer;
+
     class R2_API LayerStack
     {
     public:
@@ -30,8 +33,15 @@ namespace r2
         void Render(float alpha);
         void ImGuiRender();
         void OnEvent(evt::Event& e);
+
+
+        const Application& GetApplication() const;
+        const AppLayer& GetAppLayer() const;
+
         
         void PushLayer(std::unique_ptr<Layer> layer);
+        void PushLayer(std::unique_ptr<AppLayer> layer);
+
         //release ownership of the layer and remove it from the stack
         Layer* ReleaseLayer(Layer* layer);
         
@@ -86,7 +96,9 @@ namespace r2
         LayerStackContainer mLayers;
         LayerStackContainer mOverlays;
         
-        static Layer * Release(LayerStackContainer& layers, Layer * layer);
+        std::shared_ptr<AppLayer> mAppLayer;
+
+        static Layer* Release(LayerStackContainer& layers, Layer * layer);
         static void MoveBefore(LayerStackContainer& layers, LayerIt layerToMove, Layer* beforeLayer);
         static void MoveAfter(LayerStackContainer& layers, LayerIt layerToMove, Layer* afterLater);
     };

@@ -16,6 +16,8 @@
 #define CENG r2::Platform::Get().EngineConst()
 #define MENG r2::Platform::Get().EngineMutable()
 
+#define CAPP r2::Platform::Get().EngineConst().GetApplication();
+
 namespace r2
 {
     class R2_API Platform

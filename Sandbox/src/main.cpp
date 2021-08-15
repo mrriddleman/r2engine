@@ -50,6 +50,10 @@
 
 namespace
 {
+    constexpr r2::util::Size g_resolutions[] = { {640, 480}, {1024, 768}, {1280, 720}, {1920, 1080}, {2560, 1440} };
+
+    constexpr u32 RESOLUTIONS_COUNT = COUNT_OF(g_resolutions);
+
     void WriteBuffer(const char* name, flatbuffers::FlatBufferBuilder& builder)
     {
         byte* buf = builder.GetBufferPointer();
@@ -564,14 +568,8 @@ public:
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
 
-
-#ifdef R2_DEBUG
-		bool success = r2::draw::renderer::GenerateLayoutsWithDebug();
-		R2_CHECK(success, "We couldn't create the buffer layouts!");
-#else
 		bool success = r2::draw::renderer::GenerateLayouts();
 		R2_CHECK(success, "We couldn't create the buffer layouts!");
-#endif
 
         const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
@@ -660,7 +658,7 @@ public:
             0,
             glm::value_ptr(mPersController.GetCameraPtr()->proj));
 
-        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+        r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
@@ -771,7 +769,10 @@ public:
 
 		dispatcher.Dispatch<r2::evt::WindowResizeEvent>([this](const r2::evt::WindowResizeEvent& e)
 			{
-				mPersController.SetAspect(static_cast<float>(e.Width()) / static_cast<float>(e.Height()));
+                if (!ShouldKeepAspectRatio())
+                {
+                    mPersController.SetAspect(static_cast<float>(e.NewWidth()) / static_cast<float>(e.NewHeight()));
+                }
 
 				//r2::draw::renderer::WindowResized(e.Width(), e.Height());
 				// r2::draw::OpenGLResizeWindow(e.Width(), e.Height());
@@ -824,8 +825,23 @@ public:
                 mDrawDebugBones = !mDrawDebugBones;
                 return true;
             }
+            else if (e.KeyCode() == r2::io::KEY_UP)
+            {
+                s32 prevResolution = mResolution;
+                mResolution = (mResolution + 1) % RESOLUTIONS_COUNT;
+                MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
+                return true;
+            }
+            else if (e.KeyCode() == r2::io::KEY_DOWN)
+            {
+                s32 prevResolution = mResolution;
+                mResolution = (mResolution - 1) % RESOLUTIONS_COUNT;
+                MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
+                return true;
+            }
+
 			return false;
-			});
+		});
 
 		mPersController.OnEvent(e);
     }
@@ -1245,6 +1261,11 @@ public:
 		};
 		return manifestRawPaths;
     }
+
+    r2::util::Size GetAppResolution() const override
+    {
+        return g_resolutions[mResolution];
+    }
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
@@ -1354,7 +1375,7 @@ private:
     bool mDrawDebugBones = false;
 
     float mExposure = 1.0f;
-
+    s32 mResolution = 2;
 };
 
 namespace

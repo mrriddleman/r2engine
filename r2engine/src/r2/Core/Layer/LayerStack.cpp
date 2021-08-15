@@ -7,6 +7,8 @@
 
 #include "r2pch.h"
 #include "LayerStack.h"
+#include "AppLayer.h"
+
 
 namespace r2
 {
@@ -108,10 +110,26 @@ namespace r2
             }
         }
     }
+
+    const Application& LayerStack::GetApplication() const
+    {
+        return GetAppLayer().GetApplication();
+    }
+
+    const AppLayer& LayerStack::GetAppLayer() const
+    {
+        return *mAppLayer.get();
+    }
     
     void LayerStack::PushLayer(std::unique_ptr<Layer> layer)
     {
         mLayers.emplace_back(std::move(layer));
+    }
+
+    void LayerStack::PushLayer(std::unique_ptr<AppLayer> layer)
+    {
+        mLayers.emplace_back(std::move(layer));
+        mAppLayer = std::static_pointer_cast<AppLayer>(mLayers.back());
     }
     
     Layer* LayerStack::ReleaseLayer(Layer* layer)

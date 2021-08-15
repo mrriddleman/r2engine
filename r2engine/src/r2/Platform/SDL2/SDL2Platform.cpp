@@ -191,7 +191,10 @@ namespace r2
             r2::util::PathCpy(mApplicationName, app->GetApplicationName());
 
             setupParams.windowName = mApplicationName;
-            setupParams.resolution = mEngine.GetInitialResolution();
+
+            //@TODO(Serge): maybe the platform should enable a way to read a settings file for the app so we know the proper resolution. 
+            //              This is so that we don't have to init the app before we can know the app's current resolution
+            setupParams.resolution = app->GetAppResolution(); 
             setupParams.platformFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
             if(r2::draw::rendererimpl::PlatformInit(setupParams))
@@ -217,6 +220,15 @@ namespace r2
             mEngine.SetScreenSizeCallback([this](s32 width, s32 height){
                 r2::draw::rendererimpl::SetWindowSize(width, height);
             });
+
+            mEngine.SetWindowPositionCallback([this](s32 xPos, s32 yPos) {
+                r2::draw::rendererimpl::SetWindowPosition(xPos, yPos);
+            });
+
+            mEngine.CenterWindowCallback([this]() {
+                r2::draw::rendererimpl::CenterWindow();
+            });
+
             
             mEngine.SetGetPerformanceFrequencyCallback([]{
                 static u64 frequency = SDL_GetPerformanceFrequency();

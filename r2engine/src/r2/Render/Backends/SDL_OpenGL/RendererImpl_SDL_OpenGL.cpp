@@ -501,7 +501,7 @@ namespace r2::draw::rendererimpl
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 	}
 	
-	void SetViewport(u32 viewport)
+	void SetViewportKey(u32 viewport)
 	{
 		//@TODO(Serge): implement
 	}
@@ -702,9 +702,9 @@ namespace r2::draw::rendererimpl
 	}
 
 	//events
-	void WindowResized(u32 width, u32 height)
+	void SetViewport(u32 xOffset, u32 yOffset, u32 width, u32 height)
 	{
-		glViewport(0, 0, width, height);
+		glViewport(xOffset, yOffset, width, height);
 	}
 
 	void MakeCurrent()
@@ -725,6 +725,16 @@ namespace r2::draw::rendererimpl
 	void SetWindowSize(u32 width, u32 height)
 	{
 		SDL_SetWindowSize(s_optrWindow, width, height);
+	}
+
+	void SetWindowPosition(s32 xPos, s32 yPos)
+	{
+		SDL_SetWindowPosition(s_optrWindow, xPos, yPos);
+	}
+
+	void CenterWindow()
+	{
+		SDL_SetWindowPosition(s_optrWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	}
 }
 
