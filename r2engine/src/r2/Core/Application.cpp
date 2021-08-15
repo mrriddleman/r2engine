@@ -68,7 +68,7 @@ namespace r2
 
     bool Application::ShouldScaleResolution() const
     {
-        return false;
+        return true;
     }
     
     std::string Application::GetAppLogPath() const

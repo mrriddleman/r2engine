@@ -541,14 +541,60 @@ namespace r2
     void Engine::MouseButtonEvent(io::MouseData mouseData)
     {
         //create mouse button event - pass to OnEvent
+        //first check where we are in the window and if we should generate the event
+
+        auto appResolution = GetApplication().GetAppResolution();
+        auto shouldScale = GetApplication().ShouldScaleResolution();
+        auto keepAspectRatio = GetApplication().ShouldKeepAspectRatio();
+
+        u32 windowWidth = mDisplaySize.width;
+        u32 windowHeight = mDisplaySize.height;
+        float xScale = 1.0f, yScale = 1.0f;
+        float xOffset = 0.0f, yOffset = 0.0f;
+
+        u32 appWidth = mDisplaySize.width;
+        u32 appHeight = mDisplaySize.height;
+
+        //@TODO(Serge): maybe move this logic (and the same logic in RenderLayer) into some helper function somewhere
+        if (keepAspectRatio)
+        {
+			if (shouldScale)
+			{
+				xScale = static_cast<float>(windowWidth) / static_cast<float>(appResolution.width);
+				yScale = static_cast<float>(windowHeight) / static_cast<float>(appResolution.height);
+				float scale = std::min(xScale, yScale);
+
+				xOffset = (windowWidth - round(scale * appResolution.width)) / 2.0f;
+				yOffset = (windowHeight - round(scale * appResolution.height)) / 2.0f;
+			}
+			else
+			{
+				xOffset = (windowWidth - appResolution.width) / 2.0f;
+				yOffset = (windowHeight - appResolution.height) / 2.0f;
+			}
+
+            appWidth -= xOffset * 2;
+            appHeight -= yOffset * 2;
+        }
+
+		if (mouseData.x < xOffset || mouseData.x >(xOffset + appWidth) ||
+			mouseData.y < yOffset || mouseData.y >(yOffset + appHeight))
+		{
+			return;
+		}
+
+        
+        s32 mousePosX = mouseData.x - (s32)xOffset;
+        s32 mousePosY = mouseData.y - (s32)yOffset;
+
         if(mouseData.state == io::BUTTON_PRESSED)
         {
-            evt::MouseButtonPressedEvent e(mouseData.button, mouseData.x, mouseData.y, mouseData.numClicks);
+            evt::MouseButtonPressedEvent e(mouseData.button, mousePosX, mousePosY, mouseData.numClicks);
             OnEvent(e);
         }
         else
         {
-            evt::MouseButtonReleasedEvent e(mouseData.button, mouseData.x, mouseData.y);
+            evt::MouseButtonReleasedEvent e(mouseData.button, mousePosX, mousePosY);
             OnEvent(e);
         }
     }
@@ -556,7 +602,50 @@ namespace r2
     void Engine::MouseMovedEvent(io::MouseData mouseData)
     {
         //create Mouse moved event - pass to OnEvent
-        evt::MouseMovedEvent e(mouseData.x, mouseData.y);
+		auto appResolution = GetApplication().GetAppResolution();
+		auto shouldScale = GetApplication().ShouldScaleResolution();
+		auto keepAspectRatio = GetApplication().ShouldKeepAspectRatio();
+
+		u32 windowWidth = mDisplaySize.width;
+		u32 windowHeight = mDisplaySize.height;
+		float xScale = 1.0f, yScale = 1.0f;
+		float xOffset = 0.0f, yOffset = 0.0f;
+
+		u32 appWidth = mDisplaySize.width;
+		u32 appHeight = mDisplaySize.height;
+
+		//@TODO(Serge): maybe move this logic (and the same logic in RenderLayer) into some helper function somewhere
+		if (keepAspectRatio)
+		{
+			if (shouldScale)
+			{
+				xScale = static_cast<float>(windowWidth) / static_cast<float>(appResolution.width);
+				yScale = static_cast<float>(windowHeight) / static_cast<float>(appResolution.height);
+				float scale = std::min(xScale, yScale);
+
+				xOffset = (windowWidth - round(scale * appResolution.width)) / 2.0f;
+				yOffset = (windowHeight - round(scale * appResolution.height)) / 2.0f;
+			}
+			else
+			{
+				xOffset = (windowWidth - appResolution.width) / 2.0f;
+				yOffset = (windowHeight - appResolution.height) / 2.0f;
+			}
+
+			appWidth -= xOffset * 2;
+			appHeight -= yOffset * 2;
+		}
+
+		if (mouseData.x < xOffset || mouseData.x >(xOffset + appWidth) ||
+			mouseData.y < yOffset || mouseData.y >(yOffset + appHeight))
+		{
+			return;
+		}
+
+		s32 mousePosX = mouseData.x - (s32)xOffset;
+		s32 mousePosY = mouseData.y - (s32)yOffset;
+
+        evt::MouseMovedEvent e(mousePosX, mousePosY);
         OnEvent(e);
     }
     
