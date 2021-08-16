@@ -462,6 +462,17 @@ namespace r2
         }
     }
 
+    void Engine::SetFullScreen()
+    {
+        if(!mFullScreen)
+            mFullScreenFunc(FULL_SCREEN_DESKTOP);
+        else
+        {
+            mFullScreenFunc(0);
+        }
+        mFullScreen = !mFullScreen;
+    }
+
     void Engine::PushLayer(std::unique_ptr<Layer> layer)
     {
         layer->Init();

@@ -78,7 +78,7 @@ namespace r2
 
     bool Application::WindowShouldBeMaximized() const
     {
-        return true;
+        return false;
     }
     
     std::string Application::GetAppLogPath() const

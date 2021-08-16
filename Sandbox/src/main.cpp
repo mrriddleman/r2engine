@@ -851,6 +851,11 @@ public:
 
                 return true;
             }
+            else if (e.KeyCode() == r2::io::KEY_f)
+            {
+                MENG.SetFullScreen();
+                return true;
+            }
 
 			return false;
 		});

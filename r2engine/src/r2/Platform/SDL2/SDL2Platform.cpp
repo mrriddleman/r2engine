@@ -48,6 +48,9 @@ namespace
 
 namespace r2
 {
+	const s32 FULL_SCREEN_WINDOW = SDL_WINDOW_FULLSCREEN;
+	const s32 FULL_SCREEN_DESKTOP= SDL_WINDOW_FULLSCREEN_DESKTOP;
+
     //@NOTE: Increase as needed this is for dev
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     

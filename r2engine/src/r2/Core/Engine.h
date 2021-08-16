@@ -16,6 +16,9 @@ namespace r2
 {
     class ImGuiLayer;
     
+    extern const s32 FULL_SCREEN_WINDOW;
+    extern const s32 FULL_SCREEN_DESKTOP;
+
     namespace evt
     {
         class Event;
@@ -24,6 +27,9 @@ namespace r2
     class R2_API Engine
     {
     public:
+
+        
+
         Engine();
         ~Engine();
         
@@ -53,6 +59,7 @@ namespace r2
         const char* GetGameControllerName(r2::io::ControllerID controllerID);
 
         void SetResolution(util::Size previousResolution, util::Size newResolution);
+        void SetFullScreen();
 
         //Layers
         void PushLayer(std::unique_ptr<Layer> layer);
