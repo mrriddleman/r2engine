@@ -195,7 +195,9 @@ namespace r2
             //@TODO(Serge): maybe the platform should enable a way to read a settings file for the app so we know the proper resolution. 
             //              This is so that we don't have to init the app before we can know the app's current resolution
             setupParams.resolution = app->GetAppResolution(); 
-            setupParams.platformFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+            int resizableFlag = app->IsWindowResizable() ? SDL_WINDOW_RESIZABLE : 0;
+            int maximized = app->WindowShouldBeMaximized() ? SDL_WINDOW_MAXIMIZED : 0;
+            setupParams.platformFlags = SDL_WINDOW_OPENGL | resizableFlag | maximized;
 
             if(r2::draw::rendererimpl::PlatformInit(setupParams))
             {

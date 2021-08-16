@@ -70,6 +70,16 @@ namespace r2
     {
         return true;
     }
+
+    bool Application::IsWindowResizable() const
+    {
+        return false;
+    }
+
+    bool Application::WindowShouldBeMaximized() const
+    {
+        return true;
+    }
     
     std::string Application::GetAppLogPath() const
     {

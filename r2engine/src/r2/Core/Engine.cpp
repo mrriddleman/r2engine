@@ -583,7 +583,6 @@ namespace r2
 			return;
 		}
 
-        
         s32 mousePosX = mouseData.x - (s32)xOffset;
         s32 mousePosY = mouseData.y - (s32)yOffset;
 

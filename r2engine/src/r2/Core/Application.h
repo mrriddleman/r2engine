@@ -46,6 +46,8 @@ namespace r2
         virtual util::Size GetAppResolution() const;
         virtual bool ShouldKeepAspectRatio() const;
         virtual bool ShouldScaleResolution() const;
+        virtual bool IsWindowResizable() const;
+        virtual bool WindowShouldBeMaximized() const;
 
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;

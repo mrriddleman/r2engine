@@ -830,13 +830,25 @@ public:
                 s32 prevResolution = mResolution;
                 mResolution = (mResolution + 1) % RESOLUTIONS_COUNT;
                 MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
+                PrintResolution();
+
+
                 return true;
             }
             else if (e.KeyCode() == r2::io::KEY_DOWN)
             {
                 s32 prevResolution = mResolution;
-                mResolution = (mResolution - 1) % RESOLUTIONS_COUNT;
+
+                --mResolution;
+                if (mResolution < 0)
+                {
+                    mResolution = RESOLUTIONS_COUNT - 1;
+                }
+                
                 MENG.SetResolution(g_resolutions[prevResolution], g_resolutions[mResolution]);
+
+                PrintResolution();
+
                 return true;
             }
 
@@ -1326,6 +1338,11 @@ public:
     r2::asset::PathResolver GetPathResolver() const override
     {
         return ResolveCategoryPath;
+    }
+
+    void PrintResolution() const
+    {
+        printf("Resolution is %d by %d\n", g_resolutions[mResolution].width, g_resolutions[mResolution].height);
     }
     
 private:
