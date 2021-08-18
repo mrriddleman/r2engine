@@ -147,6 +147,7 @@ namespace r2::draw::cmd
 		cmd->offset = offset;
 		cmd->type = type;
 		cmd->isPersistent = isPersistent;
+
 		return cmd->dataSize + offset;
 	}
 }
@@ -1320,7 +1321,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		materials.layout.InitForMaterials(0, 0, MAX_NUM_DRAWS);
+		materials.layout.InitForMaterials(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, materials);
 
@@ -1477,9 +1478,40 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		boneTransforms.layout.InitForBoneTransforms(0, 0, MAX_NUM_BONES);
+		boneTransforms.layout.InitForBoneTransforms(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
 
 		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, boneTransforms);
+
+		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
+	}
+
+	ConstantConfigHandle AddBoneTransformOffsetsLayout()
+	{
+		if (s_optrRenderer == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		if (s_optrRenderer->mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration boneTransformOffsets
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		boneTransformOffsets.layout.InitForBoneTransformOffsets(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
+
+		r2::sarr::Push(*s_optrRenderer->mConstantLayouts, boneTransformOffsets);
 
 		return r2::sarr::Size(*s_optrRenderer->mConstantLayouts) - 1;
 	}
@@ -2190,12 +2222,6 @@ namespace r2::draw::renderer
 			return;
 		}
 
-	//	if (batch.models && (r2::sarr::Size(*batch.materials) != r2::sarr::Size(*batch.models)))
-		{
-	//		R2_CHECK(false, "Mismatched number of elements in batch arrays");
-	//		return;
-		}
-
 		if (batch.boneTransformOffsets && r2::sarr::Size(*batch.boneTransformOffsets) == 0)
 		{
 			R2_CHECK(false, "Mismatched number of elements in the boneTranformOffsets!");
@@ -2329,11 +2355,6 @@ namespace r2::draw::renderer
 
 					if (material)
 					{
-						//if (r2::math::NearEq(material->specular, 1.0f) && r2::math::NearEq(material->roughness, 1.0f) && r2::math::NearEq(material->reflectance, 1.0f))
-						//{
-						//	int m = 0;
-						//}
-
 						renderMaterial.baseColor = material->baseColor;
 						renderMaterial.metallic = material->metallic;
 						renderMaterial.roughness = material->roughness;
@@ -2399,11 +2420,12 @@ namespace r2::draw::renderer
 
 			materialsCMD->data = materialsAuxMemory;
 			materialsCMD->dataSize = materialDataSize;
-			materialsCMD->offset = 0;
+			materialsCMD->offset = materialConstData->currentOffset;
 			materialsCMD->constantBufferHandle = batch.materialsHandle;
 
 			materialsCMD->isPersistent = materialConstData->isPersistent;
 			materialsCMD->type = materialConstData->type;
+			materialConstData->AddDataSize(materialDataSize);
 
 		}
 
@@ -2420,23 +2442,25 @@ namespace r2::draw::renderer
 			char* boneTransformsAuxMem = r2::draw::cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(boneTransformsCMD);
 			memcpy(boneTransformsAuxMem, batch.boneTransforms->mData, boneTransformSize);
 
+			ConstantBufferData* boneXFormConstData = GetConstData(batch.boneTransformsHandle);
+
 			boneTransformsCMD->data = boneTransformsAuxMem;
 			boneTransformsCMD->dataSize = boneTransformSize;
-			boneTransformsCMD->offset = 0;
+			boneTransformsCMD->offset = boneXFormConstData->currentOffset;
 			boneTransformsCMD->constantBufferHandle = batch.boneTransformsHandle;
-
-			ConstantBufferData* boneXFormConstData = GetConstData(batch.boneTransformsHandle);
 
 			boneTransformsCMD->isPersistent = boneXFormConstData->isPersistent;
 			boneTransformsCMD->type = boneXFormConstData->type;
+
+			boneXFormConstData->AddDataSize(boneTransformSize);
 
 
 			u64 boneTransformOffsetsDataSize = batch.boneTransformOffsets->mSize * sizeof(glm::ivec4);
 			r2::draw::cmd::FillConstantBuffer* boneTransformOffsetsCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer>(boneTransformsCMD, boneTransformOffsetsDataSize);
 
 			ConstantBufferData* boneXFormOffsetsConstData = GetConstData(batch.boneTransformOffsetsHandle);
-			FillConstantBufferCommand(boneTransformOffsetsCMD, batch.boneTransformOffsetsHandle, boneXFormOffsetsConstData->type, boneXFormOffsetsConstData->isPersistent, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize, 0);
-
+			FillConstantBufferCommand(boneTransformOffsetsCMD, batch.boneTransformOffsetsHandle, boneXFormOffsetsConstData->type, boneXFormOffsetsConstData->isPersistent, batch.boneTransformOffsets->mData, boneTransformOffsetsDataSize, boneXFormOffsetsConstData->currentOffset);
+			boneXFormOffsetsConstData->AddDataSize(boneTransformOffsetsDataSize);
 
 			prevFillCMD = boneTransformOffsetsCMD;
 		}
@@ -2453,7 +2477,7 @@ namespace r2::draw::renderer
 		batchCMD->subCommands = subCommandsMem;
 		batchCMD->primitiveType = batch.primitiveType;
 		batchCMD->state.depthEnabled = batch.depthTest;
-
+		
 		r2::draw::cmd::CompleteConstantBuffer* completeMaterialsCMD = r2::draw::renderer::AppendCommand<r2::draw::cmd::DrawBatch, r2::draw::cmd::CompleteConstantBuffer>(batchCMD, 0);
 
 		completeMaterialsCMD->constantBufferHandle = batch.materialsHandle;

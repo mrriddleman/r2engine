@@ -143,6 +143,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddMaterialLayout();
 	ConstantConfigHandle AddSubCommandsLayout(); //we can use this for the debug 
 	ConstantConfigHandle AddBoneTransformsLayout();
+	ConstantConfigHandle AddBoneTransformOffsetsLayout();
 	ConstantConfigHandle AddLightingLayout();
 
 	//Regular methods

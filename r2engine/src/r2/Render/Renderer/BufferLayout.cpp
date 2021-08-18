@@ -268,6 +268,22 @@ namespace r2::draw
         mCreateFlags = createFlags;
     }
 
+    void ConstantBufferLayout::InitForBoneTransformOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets)
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = numBoneTransformOffsets;
+		mElements[0].elementSize = sizeof(glm::ivec4);
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Int4;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+    }
+
     void ConstantBufferLayout::InitForLighting()
     {
 		mElements.clear();

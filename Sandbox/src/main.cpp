@@ -562,9 +562,7 @@ public:
         //Maybe these should automatically be added by the animated models layout
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout());
 
-		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Big, {
-            {r2::draw::ShaderDataType::Int4, "boneTransformOffsets"}
-		}));
+		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformOffsetsLayout());
 
         r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
 
