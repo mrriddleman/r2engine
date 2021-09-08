@@ -2,7 +2,7 @@
 #define __RENDERER_TYPES_H__
 
 #include "r2/Utils/Utils.h"
-
+#include "r2/Utils/Flags.h"
 #include "glm/glm.hpp"
 
 namespace r2::draw
@@ -15,6 +15,10 @@ namespace r2::draw
     using BatchBufferHandle = u32; //GL_DRAW_INDIRECT_BUFFER
 	using VertexConfigHandle = s32;
 	using ConstantConfigHandle = s32;
+
+    using RenderPassTarget = s32;
+
+    const RenderPassTarget INVALID_RENDER_PASS_TARGET = -1;
 
     const VertexConfigHandle InvalidVertexConfigHandle = -1;
     const ConstantConfigHandle InvalidConstantConfigHandle = -1;
@@ -40,6 +44,43 @@ namespace r2::draw
         IndexBuffer indexBuffer;
         u32 vertexBufferIndex = 0;
     };
+
+	enum class PrimitiveType : u32
+	{
+		POINTS,
+		LINES,
+		LINE_LOOP,
+		LINE_STRIP,
+		TRIANGLES,
+		TRIANGLE_STRIP,
+		TRIANGLE_FAN
+	};
+
+    enum eDrawFlags
+    {
+        DEPTH_TEST = 1 << 0
+    };
+
+    using DrawFlags = r2::Flags<u32, u32>;
+
+    enum DrawType
+    {
+        STATIC = 0,
+        DYNAMIC,
+        NUM_DRAW_TYPES
+    };
+
+    enum DrawLayer : u8
+    {
+        DL_WORLD = 0, //static models
+        DL_CHARACTER, //dynamic models
+        DL_EFFECT,
+        DL_SKYBOX,
+        DL_HUD,
+        DL_SCREEN,
+        DL_DEBUG //should always be last
+    };
+
 }
 
 #endif // !__RENDERER_TYPES_H__

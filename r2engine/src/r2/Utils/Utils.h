@@ -41,7 +41,7 @@ using uptr = uintptr_t;
 
 namespace r2::fs
 {
-    static const u32 FILE_PATH_LENGTH = 512;
+    static const u32 FILE_PATH_LENGTH = 256;
 }
 
 namespace r2::mem::utils
@@ -59,7 +59,7 @@ namespace r2
     const u32 INITIAL_SCREEN_WIDTH = 1280;
     const u32 INITIAL_SCREEN_HEIGHT = 720;
 
-    const u64 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8;
+    const u32 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8;
 }
 
 namespace r2::util

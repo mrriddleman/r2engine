@@ -277,6 +277,8 @@ namespace
             if (parent >= 0)
             {
                 //get the parent's global transform and combine with yours
+                //@Optimization
+                //@TODO(Serge): slow
                 r2::sarr::At(*tempGlobalTransforms, j) = r2::math::Combine(r2::sarr::At(*tempGlobalTransforms, parent), transform);
             }
 
@@ -291,6 +293,8 @@ namespace
                 const r2::math::Transform& globalTransform = r2::sarr::At(*tempGlobalTransforms, j);
 
                 r2::sarr::At(outTransforms, boneIndex + offset).globalInv = model.model.globalInverseTransform;
+                //@Optimization
+                //@TODO(Serge): slow
                 r2::sarr::At(outTransforms, boneIndex + offset).transform = r2::math::ToMatrix(globalTransform);
                 r2::sarr::At(outTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
 

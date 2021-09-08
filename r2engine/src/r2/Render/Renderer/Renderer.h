@@ -10,6 +10,7 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/Commands.h"
+#include "r2/Render/Renderer/RenderPass.h"
 
 namespace r2
 {
@@ -74,6 +75,7 @@ namespace r2::draw::cmd
 
 namespace r2::draw
 {
+	struct RenderTarget;
 
 	struct MaterialBatch
 	{
@@ -101,7 +103,7 @@ namespace r2::draw
 		b32 clear = false;
 		b32 clearDepth = true;
 		u32 numDraws = 0;
-		cmd::PrimitiveType primitiveType = cmd::PrimitiveType::TRIANGLES;
+		PrimitiveType primitiveType = PrimitiveType::TRIANGLES;
 		b32 depthTest = true;
 
 		r2::SArray<glm::mat4>* models = nullptr;
@@ -154,11 +156,6 @@ namespace r2::draw::renderer
 	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs();
 	r2::draw::ModelRef GetDefaultModelRef(r2::draw::DefaultModel defaultModel);
 
-	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
-	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
-
-	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, MaterialBatch& materialBatch, r2::SArray<glm::ivec4>& boneOffsets);
-
 	void UploadEngineModels(VertexConfigHandle vertexLayoutConfig);
 
 	void LoadEngineTexturesFromDisk();
@@ -170,18 +167,41 @@ namespace r2::draw::renderer
 	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vHandle);
 	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs);
 
+	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle);
 	void ClearAllVertexLayoutOffsets();
 
+	//@TODO(Serge): these aren't very nice to use
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
-
 	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
-	
+	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, MaterialBatch& materialBatch, r2::SArray<glm::ivec4>& boneOffsets);
+	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
+	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
+
+
 	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem);
 
 	void AddDrawBatch(const BatchConfig& batch);
 
+
+	//------------------------------------------------------------------------------
+	//@TODO(Serge): NEW Proposal
+
 	
+
+
+
+	void DrawModels(DrawType drawType, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<ShaderBoneTransform>* boneTransforms, const r2::SArray<DrawFlags>& flags);
+	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const r2::SArray<ShaderBoneTransform>* boneTransforms, const DrawFlags& flags);
+	
+	void DrawModelOnLayer(DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const r2::SArray<ShaderBoneTransform>* boneTransforms, const DrawFlags& flags);
+	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<ShaderBoneTransform>* boneTransforms, const r2::SArray<DrawFlags>& flags);
+	
+	///More draw functions...
+
+
+	//------------------------------------------------------------------------------
+
 #ifdef R2_DEBUG
 	void DrawDebugBones(
 		const r2::SArray<DebugBone>& bones,

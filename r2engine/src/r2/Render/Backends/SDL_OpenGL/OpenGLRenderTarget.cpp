@@ -45,7 +45,11 @@ namespace r2::draw::rt::impl
 
 			FREE_ARRAY(bufs, *MEM_ENG_SCRATCH_PTR);
 		}
-		
+	}
+
+	void SetViewport(const RenderTarget& renderTarget)
+	{
+		glViewport(renderTarget.xOffset, renderTarget.yOffset, renderTarget.width, renderTarget.height);
 	}
 
 	void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR)

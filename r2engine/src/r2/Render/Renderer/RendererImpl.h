@@ -69,12 +69,12 @@ namespace r2::draw::rendererimpl
 	void SetViewportKey(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
 	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
-
+	void SetShaderID(r2::draw::ShaderHandle shaderHandle);
 
 	//draw functions
 	void Clear(u32 flags);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
-	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0, cmd::PrimitiveType primitivetype = cmd::PrimitiveType::TRIANGLES);
+	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0, PrimitiveType primitivetype = PrimitiveType::TRIANGLES);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);

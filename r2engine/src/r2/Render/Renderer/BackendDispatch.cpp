@@ -58,7 +58,7 @@ namespace r2::draw::dispatch
 		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
 		//@TODO(Serge): apply drawstate
 		rendererimpl::ApplyDrawState(realData->state);
-		rendererimpl::DrawIndexedCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands, 0, realData->primitiveType);
+		rendererimpl::DrawIndexedCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands, realData->startCommandIndex, 0, realData->primitiveType);
 	}
 
 	void DrawDebugBatch(const void* data)

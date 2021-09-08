@@ -33,7 +33,7 @@ namespace r2::draw
 		r2::SArray<Entry>* entries = nullptr;
 		r2::SArray<Entry*>* sortedEntries = nullptr;
 
-		RenderTarget renderTarget;
+		RenderTarget* noptrRenderTarget;
 		KeyDecoderFunc KeyDecoder = nullptr;
 	};
 
@@ -58,7 +58,7 @@ namespace r2::draw
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt);
 		template<typename T> inline u64 Capacity(const CommandBucket<T>& bkt);
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const RenderTarget& rt, const char* file, s32 line, const char* description);
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, RenderTarget* rt, const char* file, s32 line, const char* description);
 		template<typename T, class ARENA> void DestroyCommandBucket(ARENA& arena, CommandBucket<T>* cmdBkt, const char* file, s32 line, const char* description);
 	}
 
@@ -118,9 +118,10 @@ namespace r2::draw
 
 		template<typename T> void Submit(CommandBucket<T>& bkt)
 		{
-			rt::SetRenderTarget(bkt.renderTarget);
-
-
+			if (bkt.noptrRenderTarget)
+			{
+				rt::SetRenderTarget(*bkt.noptrRenderTarget);
+			}
 
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
@@ -173,7 +174,7 @@ namespace r2::draw
 				});
 		}
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const RenderTarget& rt, const char* file, s32 line, const char* description)
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, RenderTarget* rt, const char* file, s32 line, const char* description)
 		{
 			CommandBucket<T>* cmdBkt = new (ALLOC_BYTES(arena, CommandBucket<T>::MemorySize(capacity), alignof(u64), file, line, description)) CommandBucket<T>;
 
@@ -195,7 +196,7 @@ namespace r2::draw
 
 			cmdBkt->KeyDecoder = decoderFunc;
 
-			cmdBkt->renderTarget = rt;
+			cmdBkt->noptrRenderTarget = rt;
 			return cmdBkt;
 		}
 

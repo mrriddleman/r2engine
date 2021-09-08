@@ -594,7 +594,8 @@ namespace r2::audio
             soundAreaSize = r2::mem::utils::GetMaxMemoryForAllocation(soundAreaSize, SOUND_ALIGNMENT);
             R2_LOGI("sound area size: %llu\n", soundAreaSize);
             
-            AudioEngine::mSoundMemoryAreaHandle = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->AddSubArea(soundAreaSize);
+            r2::mem::MemoryArea* memArea = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle);
+            AudioEngine::mSoundMemoryAreaHandle = memArea->AddSubArea(soundAreaSize);
             
             R2_CHECK(AudioEngine::mSoundMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "We have an invalid sound memory area!");
             

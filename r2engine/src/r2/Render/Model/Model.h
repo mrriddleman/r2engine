@@ -34,9 +34,9 @@ namespace r2::draw
 
 	struct ShaderBoneTransform
 	{
-		glm::mat4 globalInv;
+		glm::mat4 globalInv; //@Memory: could maybe remove or have this be a per object param
 		glm::mat4 transform;
-		glm::mat4 invBindPose;
+		glm::mat4 invBindPose; //@Memory: could maybe remove or have this be a per object param
 	};
 
 
@@ -58,8 +58,11 @@ namespace r2::draw
 	struct Model
 	{
 		u64 hash = 0;
+        
+        //these should be the same size
         r2::SArray<MaterialHandle>* optrMaterialHandles = nullptr;
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
+
         glm::mat4 globalInverseTransform;
 
 		static u64 MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment);
@@ -97,14 +100,14 @@ namespace r2::draw
 	{
 		//Where the data lives
 
-
-		u64 baseVertex = 0;
-		u64 baseIndex = 0;
-		u64 numIndices = 0;
-		u64 numVertices = 0;
+        MaterialHandle materialHandle = mat::InvalidMaterial;
+		u32 baseVertex = 0;
+		u32 baseIndex = 0;
+		u32 numIndices = 0;
+		u32 numVertices = 0;
 	};
 
-    const u32 MAX_NUM_MESHES = 32;
+    const u32 MAX_NUM_MESHES = 8;
 
     //@TODO(Serge): how do we size this?
     struct ModelRef
@@ -116,6 +119,8 @@ namespace r2::draw
 
         MeshRef mMeshRefs[MAX_NUM_MESHES];
         u32 mNumMeshRefs;
+        b32 mAnimated;
+        u32 mNumBones;
     };
 
    

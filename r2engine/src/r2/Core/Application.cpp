@@ -73,7 +73,7 @@ namespace r2
 
     bool Application::IsWindowResizable() const
     {
-        return false;
+        return true;
     }
 
     bool Application::WindowShouldBeMaximized() const

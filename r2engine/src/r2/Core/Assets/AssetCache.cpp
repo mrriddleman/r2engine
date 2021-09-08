@@ -512,7 +512,7 @@ namespace r2::asset
         }
         
 #if R2_ASSET_CACHE_DEBUG
-        PrintLRU();
+   //     PrintLRU();
 #endif
     }
     

@@ -12,9 +12,10 @@ namespace r2::draw::key
 {
 	struct Basic
 	{
+		//@TODO(Serge): change material ID to shaderID
 		/* 2 bits             4 bits    4 bits            2 bits       24 bits    24 bits    4 bits  
 		+------------------+----------+----------------+--------------+-------+-------------+------+
-		| Fullscreen Layer | Viewport | Viewport Layer | Translucency | Depth | Material ID | Pass |
+		| Fullscreen Layer | Viewport | Viewport Layer | Translucency | Depth | Shader   ID | Pass |
 		+------------------+----------+----------------+--------------+-------+-------------+------+
 		*/
 		enum: u64
@@ -44,12 +45,7 @@ namespace r2::draw::key
 
 		static const u8 VP_DEFAULT;
 		
-		static const u8 VPL_WORLD;
-		static const u8 VPL_EFFECT;
-		static const u8 VPL_HUD;
-		static const u8 VPL_SKYBOX;
-		static const u8 VPL_SCREEN;
-		static const u8 VPL_DEBUG;
+
 
 		static const u8 TR_OPAQUE;
 		static const u8 TR_NORMAL;
@@ -62,7 +58,7 @@ namespace r2::draw::key
 
 	bool CompareKey(const Basic& a, const Basic& b);
 
-	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, u8 viewportLayer, u8 translucency, u32 depth, r2::draw::MaterialHandle materialID);
+	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID);
 	
 	void DecodeBasicKey(const Basic& key);
 

@@ -466,10 +466,10 @@ namespace r2::asset
 		CreateBonesVector(scene, scene->mRootNode, -1);
 
 
-		for (u32 i = 0; i < mJoints.size(); ++i)
-		{
-			printf("Joint: %s, joint index: %d, parent index: %d\n", mJoints[i].name.c_str(), mJoints[i].jointIndex, mJoints[i].parentIndex);
-		}
+		//for (u32 i = 0; i < mJoints.size(); ++i)
+		//{
+		//	printf("Joint: %s, joint index: %d, parent index: %d\n", mJoints[i].name.c_str(), mJoints[i].jointIndex, mJoints[i].parentIndex);
+		//}
 
 
 		aiNode* node = scene->mRootNode;

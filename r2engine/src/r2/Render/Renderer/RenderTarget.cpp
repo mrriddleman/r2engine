@@ -26,6 +26,7 @@ namespace r2::draw
 		void SetRenderTarget(const RenderTarget& rt)
 		{
 			impl::SetDrawBuffers(rt);
+			impl::SetViewport(rt);
 		}
 
 		void UnsetRenderTarget(const RenderTarget& rt)

@@ -18,20 +18,11 @@ namespace r2::draw::cmd
 	extern u32 CLEAR_COLOR_BUFFER;
 	extern u32 CLEAR_DEPTH_BUFFER;
 
-	enum class PrimitiveType : u32
-	{
-		POINTS,
-		LINES,
-		LINE_LOOP,
-		LINE_STRIP,
-		TRIANGLES,
-		TRIANGLE_STRIP,
-		TRIANGLE_FAN
-	};
+	
 
 	struct DrawState
 	{
-		
+		DrawLayer layer;
 		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
 	};
 
@@ -121,7 +112,9 @@ namespace r2::draw::cmd
 		DrawState state;
 		r2::draw::BufferLayoutHandle bufferLayoutHandle;
 		r2::draw::ConstantBufferHandle batchHandle;
-		u64 numSubCommands;
+
+		u32 startCommandIndex;
+		u32 numSubCommands;
 		DrawBatchSubCommand* subCommands;
 	};
 	static_assert(std::is_pod<DrawBatch>::value == true, "DrawBatch must be a POD.");

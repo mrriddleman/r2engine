@@ -10,8 +10,8 @@ namespace r2::draw::rendererimpl
 {
 	struct BufferRange
 	{
-		u64 startOffset;
-		u64 length;
+		u32 startOffset;
+		u32 length;
 	};
 
 	bool BufferRangeOverlaps(const BufferRange& _lhs, const BufferRange& _rhs);

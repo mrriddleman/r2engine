@@ -1047,12 +1047,24 @@ public:
 
         r2::draw::MaterialHandle materialHandle = r2::sarr::At(*quadModel->optrMaterialHandles, 0);
 
-        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_WORLD, 0, 0, materialHandle);
+		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+		const r2::draw::Material* material = r2::draw::mat::GetMaterial(*matSystem, materialHandle);
+		R2_CHECK(material != nullptr, "Material shouldn't be null!");
+
+        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_WORLD, 0, 0, material->shaderId);
         
         
         r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*mSelectedAnimModel->model.optrMaterialHandles, 0);
 
-        r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_WORLD, 0, 0, animModelMaterialHandle);
+		r2::draw::MaterialSystem* animMatSystem = r2::draw::matsys::GetMaterialSystem(animModelMaterialHandle.slot);
+		R2_CHECK(animMatSystem != nullptr, "Failed to get the material system!");
+
+		const r2::draw::Material* animMaterial = r2::draw::mat::GetMaterial(*animMatSystem, animModelMaterialHandle);
+		R2_CHECK(animMaterial != nullptr, "Material shouldn't be null!");
+
+        r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_CHARACTER, 0, 0, animMaterial->shaderId);
 
        // 
         //r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
@@ -1095,12 +1107,20 @@ public:
         animModelBatch.boneTransformOffsetsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORM_OFFSETS);
         animModelBatch.boneTransformsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORMS);
 
+
         r2::draw::renderer::AddDrawBatch(animModelBatch);
 
 
 		r2::draw::BatchConfig skyboxBatch;
 
-		skyboxBatch.key = r2::draw::key::GenerateKey(0, 0, r2::draw::key::Basic::VPL_SKYBOX, 0, 0, r2::sarr::At(*skyboxMaterials.materialHandles, 0));
+
+		r2::draw::MaterialSystem* skyboxMatSystem = r2::draw::matsys::GetMaterialSystem(r2::sarr::At(*skyboxMaterials.materialHandles, 0).slot);
+		R2_CHECK(skyboxMatSystem != nullptr, "Failed to get the material system!");
+
+		const r2::draw::Material* skyboxMaterial = r2::draw::mat::GetMaterial(*skyboxMatSystem, r2::sarr::At(*skyboxMaterials.materialHandles, 0));
+		R2_CHECK(skyboxMaterial != nullptr, "Material shouldn't be null!");
+
+		skyboxBatch.key = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_SKYBOX, 0, 0, skyboxMaterial->shaderId);
 		skyboxBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
 		skyboxBatch.subcommands = skyboxCommandsToDraw;
 		skyboxBatch.models = nullptr;

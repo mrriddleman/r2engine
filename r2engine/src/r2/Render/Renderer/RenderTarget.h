@@ -20,12 +20,21 @@ namespace r2::draw::rt
 
 namespace r2::draw
 {
-	//@TODO(Serge): implement for real
+	enum RenderTargetSurface : u8
+	{
+		RTS_EMPTY = -1,
+		RTS_GBUFFER,
+		RTS_COMPOSITE,
+		NUM_RENDER_TARGET_SURFACES
+	};
+
+
 	struct RenderTarget
 	{
 		static const u32 DEFAULT_RENDER_TARGET;
 		u32 frameBufferID = DEFAULT_RENDER_TARGET;
-		u32 width, height;
+		u32 width = 0, height = 0;
+		u32 xOffset = 0, yOffset = 0;
 
 		r2::SArray<rt::ColorAttachment>* colorAttachments = nullptr;
 		r2::SArray<rt::RenderBufferAttachment>* renderBufferAttachments = nullptr;
@@ -40,9 +49,8 @@ namespace r2::draw
 		extern s32 DEPTH_STENCIL_ATTACHMENT;
 		extern s32 MSAA_ATTACHMENT;
 
-
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 width, u32 height, const char* file, s32 line, const char* description);
+		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description);
 
 
 		template <class ARENA>
@@ -64,6 +72,7 @@ namespace r2::draw
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
 			void SetDrawBuffers(const RenderTarget& rt);
+			void SetViewport(const RenderTarget& renderTarget);
 		}
 
 	}
@@ -71,14 +80,15 @@ namespace r2::draw
 	namespace rt
 	{
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 width, u32 height, const char* file, s32 line, const char* description)
+		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description)
 		{
 			RenderTarget rt;
 			rt.colorAttachments = MAKE_SARRAY_VERBOSE(arena, ColorAttachment, maxNumColorAttachments, file, line, description);
 			rt.renderBufferAttachments = MAKE_SARRAY_VERBOSE(arena, RenderBufferAttachment, maxNumRenderBufferAttachments, file, line, description);
 			rt.width = width;
 			rt.height = height;
-
+			rt.xOffset = xOffset;
+			rt.yOffset = yOffset;
 			//Make the actual frame buffer
 			impl::CreateFrameBufferID(rt);
 

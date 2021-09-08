@@ -514,7 +514,7 @@ namespace r2::draw::rendererimpl
 
 		glDepthFunc(GL_LESS);
 
-		if (viewportLayer == r2::draw::key::Basic::VPL_SKYBOX)
+		if (viewportLayer == DrawLayer::DL_SKYBOX)
 		{
 			//glDisable(GL_CULL_FACE);
 			glDepthFunc(GL_LEQUAL); //@TODO(Serge): put this in the state
@@ -539,6 +539,21 @@ namespace r2::draw::rendererimpl
 
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
+		}
+	}
+
+	void SetShaderID(r2::draw::ShaderHandle shaderHandle)
+	{
+
+		if (shaderHandle != InvalidShader)
+		{
+			const Shader* shader = shadersystem::GetShader(shaderHandle);
+			R2_CHECK(shader != nullptr, "Uh oh");
+			r2::draw::shader::Use(*shader);
+		}
+		else
+		{
+			R2_CHECK(false, "Passed in an invalid shaderID");
 		}
 	}
 
@@ -567,7 +582,7 @@ namespace r2::draw::rendererimpl
 		glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (const void*)(startingIndex * sizeof(u32)));
 	}
 
-	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride, cmd::PrimitiveType primitivetype)
+	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride, PrimitiveType primitivetype)
 	{
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
 
@@ -578,9 +593,12 @@ namespace r2::draw::rendererimpl
 		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, batchHandle, theDefault);
 		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
 
-		size_t totalSize = count * ringBuffer.typeSize;
-		void* ptr = ringbuf::Reserve(ringBuffer, count);
-		memcpy(ptr, cmds, totalSize);
+		if (cmds)
+		{
+			size_t totalSize = count * ringBuffer.typeSize;
+			void* ptr = ringbuf::Reserve(ringBuffer, count);
+			memcpy(ptr, cmds, totalSize);
+		}
 
 		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 		{
@@ -591,11 +609,11 @@ namespace r2::draw::rendererimpl
 
 		GLenum primitiveMode;
 
-		if (primitivetype == cmd::PrimitiveType::LINES)
+		if (primitivetype == PrimitiveType::LINES)
 		{
 			primitiveMode = GL_LINES;
 		}
-		else if (primitivetype == cmd::PrimitiveType::TRIANGLES)
+		else if (primitivetype == PrimitiveType::TRIANGLES)
 		{
 			primitiveMode = GL_TRIANGLES;
 		}
@@ -604,8 +622,14 @@ namespace r2::draw::rendererimpl
 			R2_CHECK(false, "We don't support any other types yet!");
 		}
 
-		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, ringbuf::GetHeadOffset(ringBuffer), count, stride);
-		ringbuf::Complete(ringBuffer, count);
+		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, ((cmd::DrawBatchSubCommand*)ringbuf::GetHeadOffset(ringBuffer)) + offset, count, stride);
+		
+		
+		if (cmds) //@TODO(Serge): dunno if that's the right condition...
+		{
+			ringbuf::Complete(ringBuffer, count);
+		}
+		
 	}
 
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride)

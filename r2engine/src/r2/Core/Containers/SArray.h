@@ -75,6 +75,8 @@ namespace r2
         template<typename T> inline void Clear(SArray<T>& arr);
         
         template<typename T> inline void Copy(SArray<T>& dst, const SArray<T>& src);
+        template<typename T> inline void Append(SArray<T>& dst, const SArray<T>& newItems);
+
 
         template<typename T, class ARENA> r2::SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
         template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity);
@@ -173,8 +175,16 @@ namespace r2
 
         template<typename T> inline void Copy(SArray<T>& dst, const SArray<T>& src)
         {
+            R2_CHECK(dst.mCapacity >= src.mSize, "dst doesn't have the capacity needed to copy from src, dst's capacity is: %llu, src's size is: %llu", dst.mCapacity, src.mSize);
             memcpy(dst.mData, src.mData, sizeof(T) * src.mSize);
             dst.mSize = src.mSize;
+        }
+
+        template<typename T> inline void Append(SArray<T>& dst, const SArray<T>& newItems)
+        {
+            R2_CHECK(dst.mSize + newItems.mSize <= dst.mCapacity, "We don't have enough capacity in dst. Dst's capacity is: %llu, size: %llu, and src's size is: %llu", dst.mCapacity, dst.mSize, newItems.mSize);
+            memcpy(dst.mData + dst.mSize * sizeof(T), newItems.mData, sizeof(T) * newItems.mSize);
+            dst.mSize += newItems.mSize;
         }
         
         template<typename T, class ARENA> SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)

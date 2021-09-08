@@ -40,7 +40,8 @@ namespace r2::draw::rendererimpl
 	{
 		BufferRange testRange = { lockBeginBytes, lockLength };
 		const u64 numLocks = r2::sarr::Size(locks);
-
+		//@Optimization
+		//@TODO(Serge): optimize this, too slow
 		r2::SArray<BufferLock>* swapLocks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
 
 		for (u64 i = 0; i < numLocks; ++i)
@@ -58,7 +59,8 @@ namespace r2::draw::rendererimpl
 		}
 
 		r2::sarr::Clear(locks);
-
+		//@Optimization
+		//@TODO(Serge): optimize this, too slow
 		r2::sarr::Copy(locks, *swapLocks);
 
 		FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
@@ -67,7 +69,8 @@ namespace r2::draw::rendererimpl
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
 	{
 		BufferRange newRange = { lockBeginBytes, lockLength };
-
+		//@Optimization
+		//@TODO(Serge): no clue how to make this fast
 		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 		BufferLock lock = { {newRange}, syncName };
