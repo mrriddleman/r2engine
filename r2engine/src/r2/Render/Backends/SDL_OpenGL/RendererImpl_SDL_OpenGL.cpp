@@ -27,6 +27,8 @@ namespace
 	SDL_Window* s_optrWindow = nullptr;
 	SDL_GLContext s_glContext;
 
+	constexpr u32 MAX_NUM_COLOR_ATTACHMENTS = 4;
+
 	struct ConstantBufferPostRenderUpdate
 	{
 		r2::draw::ConstantBufferHandle handle = 0;
@@ -39,6 +41,7 @@ namespace
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
 		r2::SHashMap<r2::draw::rendererimpl::RingBuffer>* mRingBufferMap = nullptr;
+		//@TODO(Serge): might be a good idea to have render targets here instead of how we do it now
 	};
 
 	RendererImplState* s_optrRendererImpl = nullptr;
@@ -584,6 +587,8 @@ namespace r2::draw::rendererimpl
 
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride, PrimitiveType primitivetype)
 	{
+		
+
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
 
 		//glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
@@ -595,9 +600,9 @@ namespace r2::draw::rendererimpl
 
 		if (cmds)
 		{
-			size_t totalSize = count * ringBuffer.typeSize;
-			void* ptr = ringbuf::Reserve(ringBuffer, count);
-			memcpy(ptr, cmds, totalSize);
+			//size_t totalSize = count * ringBuffer.typeSize;
+			//void* ptr = ringbuf::Reserve(ringBuffer, count);
+			//memcpy(ptr, cmds, totalSize);
 		}
 
 		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
@@ -622,12 +627,12 @@ namespace r2::draw::rendererimpl
 			R2_CHECK(false, "We don't support any other types yet!");
 		}
 
-		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, ((cmd::DrawBatchSubCommand*)ringbuf::GetHeadOffset(ringBuffer)) + offset, count, stride);
+		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawBatchSubCommand) * offset), count, stride);
 		
 		
 		if (cmds) //@TODO(Serge): dunno if that's the right condition...
 		{
-			ringbuf::Complete(ringBuffer, count);
+		//	ringbuf::Complete(ringBuffer, count);
 		}
 		
 	}
@@ -684,13 +689,24 @@ namespace r2::draw::rendererimpl
 		{
 			bufferType = GL_SHADER_STORAGE_BUFFER;
 		}
+		else if(type == ConstantBufferLayout::SubCommand)
+		{
+			bufferType = GL_DRAW_INDIRECT_BUFFER;
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cBufferHandle);
+		}
 		else
 		{
-			R2_CHECK(false, "GL_DRAW_INDIRECT_BUFFER updates should be through the DrawBatch command!");
+			R2_CHECK(false, "Unsupported ConstantBufferLayout!");
 		}
 
 		if (isPersistent)
 		{
+
+			if (bufferType == GL_DRAW_INDIRECT_BUFFER)
+			{
+				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cBufferHandle);
+			}
+
 			RingBuffer theDefault;
 			RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, cBufferHandle, theDefault);
 			R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
@@ -700,7 +716,10 @@ namespace r2::draw::rendererimpl
 			void* ptr = ringbuf::Reserve(ringBuffer, count);
 			memcpy(ptr, data, size);
 
-			ringbuf::BindBufferRange(ringBuffer, cBufferHandle, count);
+			if (bufferType != GL_DRAW_INDIRECT_BUFFER)
+			{
+				ringbuf::BindBufferRange(ringBuffer, cBufferHandle, count);
+			}
 
 			if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 			{
@@ -723,6 +742,27 @@ namespace r2::draw::rendererimpl
 		{
 			ringbuf::Complete(ringBuffer, count);
 		}
+	}
+
+	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
+
+		if (numColorAttachments > 0 && fboHandle != 0)
+		{	
+			R2_CHECK(numColorAttachments <= MAX_NUM_COLOR_ATTACHMENTS, "Can't have more than %lu color buffers for now", MAX_NUM_COLOR_ATTACHMENTS);
+
+			GLenum bufs[MAX_NUM_COLOR_ATTACHMENTS];
+
+			for (u64 i = 0; i < numColorAttachments; ++i)
+			{
+				bufs[i] = GL_COLOR_ATTACHMENT0 + i;
+			}
+
+			glDrawBuffers(numColorAttachments, &bufs[0]);
+		}
+
+		glViewport(xOffset, yOffset, width, height);
 	}
 
 	//events

@@ -12,35 +12,40 @@ struct Tex2DAddress
 	float page;
 };
 
-struct Material
-{
-	Tex2DAddress diffuseTexture1;
-	Tex2DAddress specularTexture1;
-	Tex2DAddress normalMapTexture1;
-	Tex2DAddress emissionTexture1;
-	Tex2DAddress metallicTexture1;
-	Tex2DAddress roughnessTexture1;
-	Tex2DAddress aoTexture1;
-	Tex2DAddress heightTexture1;
+// struct Material
+// {
+// 	Tex2DAddress diffuseTexture1;
+// 	Tex2DAddress specularTexture1;
+// 	Tex2DAddress normalMapTexture1;
+// 	Tex2DAddress emissionTexture1;
+// 	Tex2DAddress metallicTexture1;
+// 	Tex2DAddress roughnessTexture1;
+// 	Tex2DAddress aoTexture1;
+// 	Tex2DAddress heightTexture1;
 
-	vec3 baseColor;
-	float specular;
-	float roughness;
-	float metallic;
-	float reflectance;
-	float ambientOcclusion;
-};
+// 	vec3 baseColor;
+// 	float specular;
+// 	float roughness;
+// 	float metallic;
+// 	float reflectance;
+// 	float ambientOcclusion;
+// };
 
-layout (std430, binding = 1) buffer Materials
-{
-	Material materials[];
-};
+// layout (std430, binding = 1) buffer Materials
+// {
+// 	Material materials[];
+// };
 
 
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
     vec4 exposure;
+};
+
+layout (std140, binding = 2) uniform Surfaces
+{
+	Tex2DAddress gBufferSurface;
 };
 
 in VS_OUT
@@ -71,12 +76,16 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
-	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 
-	vec3 coord = vec3(uv.rg,addr.page);
+	vec3 coord = vec3(uv.rg, gBufferSurface.page);
 
-	return texture(sampler2DArray(addr.container), coord);
+	return texture(sampler2DArray(gBufferSurface.container), coord);
+	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	// Tex2DAddress addr = materials[texIndex].diffuseTexture1;
+
+	// vec3 coord = vec3(uv.rg,addr.page);
+
+	// return texture(sampler2DArray(addr.container), coord);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)

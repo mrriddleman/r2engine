@@ -20,7 +20,7 @@ namespace r2::draw::rt
 
 namespace r2::draw
 {
-	enum RenderTargetSurface : u8
+	enum RenderTargetSurface : s8
 	{
 		RTS_EMPTY = -1,
 		RTS_GBUFFER,

@@ -81,6 +81,7 @@ namespace r2::draw::rendererimpl
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0);
 	void ApplyDrawState(const cmd::DrawState& state);
+	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height);
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

@@ -16,10 +16,6 @@ namespace r2::draw
 	using VertexConfigHandle = s32;
 	using ConstantConfigHandle = s32;
 
-    using RenderPassTarget = s32;
-
-    const RenderPassTarget INVALID_RENDER_PASS_TARGET = -1;
-
     const VertexConfigHandle InvalidVertexConfigHandle = -1;
     const ConstantConfigHandle InvalidConstantConfigHandle = -1;
 
@@ -72,7 +68,8 @@ namespace r2::draw
 
     enum DrawLayer : u8
     {
-        DL_WORLD = 0, //static models
+        DL_CLEAR = 0,
+        DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
         DL_EFFECT,
         DL_SKYBOX,

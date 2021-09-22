@@ -99,8 +99,6 @@ namespace r2::draw
 	struct MeshRef
 	{
 		//Where the data lives
-
-        MaterialHandle materialHandle = mat::InvalidMaterial;
 		u32 baseVertex = 0;
 		u32 baseIndex = 0;
 		u32 numIndices = 0;
@@ -118,7 +116,10 @@ namespace r2::draw
 		IndexBufferHandle indexBufferHandle;
 
         MeshRef mMeshRefs[MAX_NUM_MESHES];
+        MaterialHandle mMaterialHandles[MAX_NUM_MESHES];
+
         u32 mNumMeshRefs;
+        u32 mNumMaterialHandles;
         b32 mAnimated;
         u32 mNumBones;
     };

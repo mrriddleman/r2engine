@@ -183,7 +183,7 @@ namespace r2
         template<typename T> inline void Append(SArray<T>& dst, const SArray<T>& newItems)
         {
             R2_CHECK(dst.mSize + newItems.mSize <= dst.mCapacity, "We don't have enough capacity in dst. Dst's capacity is: %llu, size: %llu, and src's size is: %llu", dst.mCapacity, dst.mSize, newItems.mSize);
-            memcpy(dst.mData + dst.mSize * sizeof(T), newItems.mData, sizeof(T) * newItems.mSize);
+            memcpy(r2::mem::utils::PointerAdd(dst.mData, dst.mSize * sizeof(T)), newItems.mData, sizeof(T) * newItems.mSize);
             dst.mSize += newItems.mSize;
         }
         

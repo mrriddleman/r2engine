@@ -140,6 +140,7 @@ namespace r2::draw::renderer
 	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 
+	//@TODO(Serge): hide maybe? We need to re-thing how we expose layouts to the game
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
 	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type);
 	ConstantConfigHandle AddMaterialLayout();
@@ -147,6 +148,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddBoneTransformsLayout();
 	ConstantConfigHandle AddBoneTransformOffsetsLayout();
 	ConstantConfigHandle AddLightingLayout();
+	ConstantConfigHandle AddSurfacesLayout();
 
 	//Regular methods
 	BufferHandles& GetVertexBufferHandles();
@@ -173,29 +175,25 @@ namespace r2::draw::renderer
 
 	//@TODO(Serge): these aren't very nice to use
 	void FillSubCommandsFromModelRefs(r2::SArray<r2::draw::cmd::DrawBatchSubCommand>& subCommands, const r2::SArray<ModelRef>& modelRefs);
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 	void GetMaterialsAndBoneOffsetsForAnimModels(const r2::SArray<const r2::draw::AnimModel*>& models, MaterialBatch& materialBatch, r2::SArray<glm::ivec4>& boneOffsets);
+	void AddDrawBatch(const BatchConfig& batch);
+
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
-
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
 
 	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem);
 
-	void AddDrawBatch(const BatchConfig& batch);
+	
 
 
 	//------------------------------------------------------------------------------
-	//@TODO(Serge): NEW Proposal
-
+	//NEW Proposal
+	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
-
-
-
-	void DrawModels(DrawType drawType, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<ShaderBoneTransform>* boneTransforms, const r2::SArray<DrawFlags>& flags);
-	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const r2::SArray<ShaderBoneTransform>* boneTransforms, const DrawFlags& flags);
-	
-	void DrawModelOnLayer(DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const r2::SArray<ShaderBoneTransform>* boneTransforms, const DrawFlags& flags);
-	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<ShaderBoneTransform>* boneTransforms, const r2::SArray<DrawFlags>& flags);
+	void DrawModelOnLayer(DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	///More draw functions...
 
@@ -203,6 +201,9 @@ namespace r2::draw::renderer
 	//------------------------------------------------------------------------------
 
 #ifdef R2_DEBUG
+
+	void DrawDebugBones(const r2::SArray<DebugBone>& bones, const glm::mat4& modelMatrix, const glm::vec4& color);
+
 	void DrawDebugBones(
 		const r2::SArray<DebugBone>& bones,
 		const r2::SArray<u64>& numBonesPerModel,

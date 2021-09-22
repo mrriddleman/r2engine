@@ -69,4 +69,12 @@ namespace r2::draw::dispatch
 		rendererimpl::ApplyDrawState(realData->state);
 		rendererimpl::DrawDebugCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands);
 	}
+
+	void SetRenderTarget(const void* data)
+	{
+		const cmd::SetRenderTarget* realData = static_cast<const cmd::SetRenderTarget*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::SetRenderTarget(realData->framebufferID, realData->numAttachments, realData->xOffset, realData->yOffset, realData->width, realData->height);
+	}
 }

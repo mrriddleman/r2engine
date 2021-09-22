@@ -139,6 +139,18 @@ namespace r2::draw::cmd
 	};
 	static_assert(std::is_pod<DrawDebugBatch>::value == true, "DrawDebugBatch must be a POD.");
 
+	struct SetRenderTarget
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		u32 framebufferID;
+		u32 width;
+		u32 height;
+		u32 xOffset;
+		u32 yOffset;
+		u32 numAttachments;
+	};
+	static_assert(std::is_pod<SetRenderTarget>::value == true, "SetRenderTarget must be a POD.");
+
 	u64 LargestCommand();
 }
 

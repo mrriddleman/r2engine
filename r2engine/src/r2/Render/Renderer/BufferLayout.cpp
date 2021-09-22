@@ -300,6 +300,22 @@ namespace r2::draw
 		mCreateFlags = 0;
     }
 
+    void ConstantBufferLayout::InitForSurfaces()
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = 1;
+		mElements[0].elementSize = sizeof(tex::TextureAddress);
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Small;
+		mFlags = 0;
+		mCreateFlags = 0;
+    }
+
     void ConstantBufferLayout::CalculateOffsetAndSize()
     {
         size_t offset = 0;

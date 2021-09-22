@@ -12,6 +12,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction CompleteConstantBuffer::DispatchFunc = &r2::draw::dispatch::CompleteConstantBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction DrawBatch::DispatchFunc = &r2::draw::dispatch::DrawBatch;
 	const r2::draw::dispatch::BackendDispatchFunction DrawDebugBatch::DispatchFunc = &r2::draw::dispatch::DrawDebugBatch;
+	const r2::draw::dispatch::BackendDispatchFunction SetRenderTarget::DispatchFunc = &r2::draw::dispatch::SetRenderTarget;
 
 	u64 LargestCommand()
 	{
@@ -23,7 +24,8 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::FillConstantBuffer),
 			sizeof(r2::draw::cmd::CompleteConstantBuffer),
 			sizeof(r2::draw::cmd::DrawBatch),
-			sizeof(r2::draw::cmd::DrawDebugBatch)
+			sizeof(r2::draw::cmd::DrawDebugBatch),
+			sizeof(r2::draw::cmd::SetRenderTarget)
 			});
 	}
 

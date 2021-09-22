@@ -160,6 +160,7 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
+
 	FragColor = vec4(lightingResult + emission , 1.0);
 }
 
@@ -255,7 +256,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].ambientOcclusion) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(0.5) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
