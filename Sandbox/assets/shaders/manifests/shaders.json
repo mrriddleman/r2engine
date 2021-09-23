@@ -8,6 +8,13 @@
       binaryPath: ""
     },
     {
+      shaderName: 7608013471622948757,
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.fs",
+      geometryPath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 3292306756035476612,
       vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.vs",
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.fs",

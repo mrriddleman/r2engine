@@ -1,6 +1,6 @@
 {
 	name:"EllenEye",
-	shader:"AnimModel",
+	shader:"EllenEyeShader",
 	
 	texturePackName:"Ellen",
 
