@@ -211,10 +211,12 @@ namespace r2::draw::renderer
 		const glm::vec4& color);
 
 
-	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled);
-	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled);
-	glm::mat4 DrawCylinder(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled);
+	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest = true);
+	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled, bool depthTest = false);
+	void DrawCylinder(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest = false);
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool disableDepth);
+	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest);
+
 	void DrawTangentVectors(DefaultModel model, const glm::mat4& transform);
 #endif
 

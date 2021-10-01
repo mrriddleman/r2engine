@@ -41,7 +41,7 @@ namespace r2::draw
         u32 vertexBufferIndex = 0;
     };
 
-	enum class PrimitiveType : u32
+	enum class PrimitiveType : u8
 	{
 		POINTS,
 		LINES,
@@ -54,7 +54,8 @@ namespace r2::draw
 
     enum eDrawFlags
     {
-        DEPTH_TEST = 1 << 0
+        DEPTH_TEST = 1 << 0,
+        FILL_MODEL = 1 << 1 //for debug only I guess...
     };
 
     using DrawFlags = r2::Flags<u32, u32>;
@@ -64,6 +65,13 @@ namespace r2::draw
         STATIC = 0,
         DYNAMIC,
         NUM_DRAW_TYPES
+    };
+
+    enum DebugDrawType
+    {
+        DDT_LINES = 0,
+        DDT_MODELS,
+        NUM_DEBUG_DRAW_TYPES
     };
 
     enum DrawLayer : u8

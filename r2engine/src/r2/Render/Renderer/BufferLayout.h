@@ -148,6 +148,7 @@ namespace r2::draw
         void InitForLighting();
         void InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands);
         void InitForSurfaces();
+        void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }

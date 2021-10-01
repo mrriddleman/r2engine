@@ -316,6 +316,22 @@ namespace r2::draw
 		mCreateFlags = 0;
     }
 
+    void ConstantBufferLayout::InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDebugRenderConstants)
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = numDebugRenderConstants;
+		mElements[0].elementSize = sizeof(glm::vec4) + sizeof(glm::mat4);
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+    }
+
     void ConstantBufferLayout::CalculateOffsetAndSize()
     {
         size_t offset = 0;

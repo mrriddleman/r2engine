@@ -13,20 +13,52 @@ namespace r2::draw::key
 	
 
 
-	const u8 Basic::TR_OPAQUE = 0;
-	const u8 Basic::TR_NORMAL = 1;
-	const u8 Basic::TR_ADDITIVE = 2;
-	const u8 Basic::TR_SUBTRACTIVE = 3;
 
 	const u8 NUM_MATERIAL_SYSTEM_BITS = 4;
 
-	bool CompareKey(const Basic& a, const Basic& b)
+
+
+	bool CompareDebugKey(const DebugKey& a, const DebugKey& b)
 	{
 		return a.keyValue < b.keyValue;
 	}
-	
 
-	Basic GenerateKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID)
+	DebugKey GenerateDebugKey(u16 shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u16 depth)
+	{
+		DebugKey key;
+
+		key.keyValue |= ENCODE_KEY_VALUE((u32)shaderID, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((u32)primitiveType, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((u32)(depthTest ? 1 : 0), DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((u32)(translucency), DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((u32)depth, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
+
+		return key;
+	}
+
+	void DecodeDebugKey(const DebugKey& key)
+	{
+		if (key.keyValue == 0)
+			return;
+
+		u32 shaderID = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
+		u32 primitiveType = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
+		u32 depthEnabled = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
+		u32 translucency = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
+		u32 depth = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
+
+		r2::draw::rendererimpl::SetViewportKey(0);
+		r2::draw::rendererimpl::SetViewportLayer(DrawLayer::DL_DEBUG);
+		r2::draw::rendererimpl::SetShaderID(shaderID);
+
+	}
+
+	bool CompareBasicKey(const Basic& a, const Basic& b)
+	{
+		return a.keyValue < b.keyValue;
+	}
+
+	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID)
 	{
 		Basic key;
 

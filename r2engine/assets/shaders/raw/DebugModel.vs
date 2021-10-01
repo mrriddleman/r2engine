@@ -14,18 +14,26 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
 };
 
-layout (std140, binding = 0) buffer Models
+struct DebugRenderConstants
 {
-	mat4 models[];
+	vec4 color;
+	mat4 modelMatrix;
+};
+
+layout (std430, binding = 5) buffer DebugConstants
+{
+	DebugRenderConstants constants[];
 };
 
 out VS_OUT
 {
+	vec4 color;
 	flat uint drawID;
 } vs_out;
 
 void main()
 {
+	vs_out.color = constants[DrawID].color;
 	vs_out.drawID = DrawID;
-	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
+	gl_Position = projection * view * constants[DrawID].modelMatrix * vec4(aPos, 1.0);
 }
