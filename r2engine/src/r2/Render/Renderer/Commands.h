@@ -134,7 +134,8 @@ namespace r2::draw::cmd
 		DrawState state;
 		r2::draw::BufferLayoutHandle bufferLayoutHandle;
 		r2::draw::ConstantBufferHandle batchHandle;
-		u64 numSubCommands;
+		u32 startCommandIndex;
+		u32 numSubCommands;
 		DrawDebugBatchSubCommand* subCommands;
 	};
 	static_assert(std::is_pod<DrawDebugBatch>::value == true, "DrawDebugBatch must be a POD.");

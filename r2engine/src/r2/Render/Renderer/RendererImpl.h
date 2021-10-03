@@ -79,7 +79,7 @@ namespace r2::draw::rendererimpl
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
-	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride = 0);
+	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0);
 	void ApplyDrawState(const cmd::DrawState& state);
 	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height);
 

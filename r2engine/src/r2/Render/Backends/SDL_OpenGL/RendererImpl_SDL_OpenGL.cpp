@@ -637,7 +637,7 @@ namespace r2::draw::rendererimpl
 		
 	}
 
-	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 stride)
+	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride)
 	{
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
 
@@ -645,9 +645,9 @@ namespace r2::draw::rendererimpl
 		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, batchHandle, theDefault);
 		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
 
-		size_t totalSize = count * ringBuffer.typeSize;
-		void* ptr = ringbuf::Reserve(ringBuffer, count);
-		memcpy(ptr, cmds, totalSize);
+		//size_t totalSize = count * ringBuffer.typeSize;
+		//void* ptr = ringbuf::Reserve(ringBuffer, count);
+		//memcpy(ptr, cmds, totalSize);
 
 		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 		{
@@ -655,8 +655,8 @@ namespace r2::draw::rendererimpl
 		}
 
 		BindVertexArray(layoutId);
-		glMultiDrawArraysIndirect(GL_LINES, ringbuf::GetHeadOffset(ringBuffer), count, stride);
-		ringbuf::Complete(ringBuffer, count);
+		glMultiDrawArraysIndirect(GL_LINES, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawDebugBatchSubCommand) * offset), count, stride);
+		//ringbuf::Complete(ringBuffer, count);
 	}
 
 	void ApplyDrawState(const cmd::DrawState& state)
