@@ -164,10 +164,11 @@ namespace r2::draw::renderer
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
 
-	ModelRef UploadModel(const Model* model, VertexConfigHandle vHandle);
-	void UploadModels(const r2::SArray<const Model*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs);
-	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vHandle);
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs);
+	ModelRef UploadModel(const Model* model);
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs);
+
+	ModelRef UploadAnimModel(const AnimModel* model);
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs);
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle);
@@ -180,7 +181,7 @@ namespace r2::draw::renderer
 
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data);
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, const void* data);
 
 	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem);
 
@@ -189,6 +190,12 @@ namespace r2::draw::renderer
 
 	//------------------------------------------------------------------------------
 	//NEW Proposal
+
+	void UpdatePerspectiveMatrix(const glm::mat4& perspectiveMatrix);
+	void UpdateViewMatrix(const glm::mat4& viewMatrix);
+	void UpdateCameraPosition(const glm::vec3& camPosition);
+	void UpdateExposure(float exposure);
+
 	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	

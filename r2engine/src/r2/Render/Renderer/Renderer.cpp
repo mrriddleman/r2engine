@@ -318,6 +318,8 @@ namespace r2::draw
 		ConstantConfigHandle mResolutionConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mBoneTransformOffsetsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mBoneTransformsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mVPMatricesConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mVectorsConfigHandle = InvalidConstantConfigHandle;
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -534,6 +536,8 @@ namespace r2::draw::renderer
 {
 	ConstantBufferData* GetConstData(ConstantBufferHandle handle);
 	ConstantBufferData* GetConstDataByConfigHandle(ConstantConfigHandle handle);
+
+	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
 	bool GenerateBufferLayouts(const r2::SArray<BufferLayoutConfiguration>* layouts);
@@ -947,6 +951,10 @@ namespace r2::draw::renderer
 
 		R2_CHECK(loadedModels, "We didn't load the models for the engine!");
 
+
+		InitializeVertexLayouts(*s_optrRenderer, Megabytes(8), Megabytes(8));
+
+
 		return loadedModels;
 	}
 
@@ -1187,6 +1195,40 @@ namespace r2::draw::renderer
 	void SetClearColor(const glm::vec4& color)
 	{
 		r2::draw::rendererimpl::SetClearColor(color);
+	}
+
+	void InitializeVertexLayouts(Renderer& renderer, u32 staticModelLayoutSize, u32 animatedModelLayoutSize)
+	{
+		AddStaticModelLayout({ staticModelLayoutSize }, staticModelLayoutSize);
+		AddAnimatedModelLayout({ animatedModelLayoutSize, animatedModelLayoutSize }, animatedModelLayoutSize);
+
+		renderer.mVPMatricesConfigHandle = AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Mat4, "projection"},
+			{r2::draw::ShaderDataType::Mat4, "view"},
+			{r2::draw::ShaderDataType::Mat4, "skyboxView"}
+		});
+
+		renderer.mVectorsConfigHandle = AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
+			{r2::draw::ShaderDataType::Float4, "Exposure"}
+		});
+
+		AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big);
+
+		AddSubCommandsLayout();
+		AddMaterialLayout();
+
+		//Maybe these should automatically be added by the animated models layout
+		AddBoneTransformsLayout();
+
+		AddBoneTransformOffsetsLayout();
+
+		AddLightingLayout();
+
+		bool success = GenerateLayouts();
+		R2_CHECK(success, "We couldn't create the buffer layouts!");
+
+		UploadEngineModels(renderer.mStaticVertexModelConfigHandle);//r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
 	}
 
 	bool GenerateLayouts()
@@ -2243,7 +2285,7 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*modelsToUpload, coneModel);
 		r2::sarr::Push(*modelsToUpload, cylinderModel);
 
-		UploadModels(*modelsToUpload, vertexLayoutConfig, *s_optrRenderer->mEngineModelRefs);
+		UploadModels(*modelsToUpload, *s_optrRenderer->mEngineModelRefs);
 
 		FREE(modelsToUpload, *MEM_ENG_SCRATCH_PTR);
 
@@ -2278,12 +2320,12 @@ namespace r2::draw::renderer
 		r2::draw::mat::UploadAllMaterialTexturesToGPU(*s_optrRenderer->mMaterialSystem);
 	}
 
-	ModelRef UploadModel(const Model* model, VertexConfigHandle vertexConfigHandle)
+	ModelRef UploadModel(const Model* model)
 	{
-		return UploadModelInternal(model, nullptr, nullptr, vertexConfigHandle);
+		return UploadModelInternal(model, nullptr, nullptr, s_optrRenderer->mStaticVertexModelConfigHandle);
 	}
 
-	void UploadModels(const r2::SArray<const Model*>& models, VertexConfigHandle vertexConfigHandle, r2::SArray<ModelRef>& modelRefs)
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs)
 	{
 		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
 		{
@@ -2295,16 +2337,16 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numModels; ++i)
 		{
-			r2::sarr::Push(modelRefs, UploadModel(r2::sarr::At(models, i), vertexConfigHandle));
+			r2::sarr::Push(modelRefs, UploadModel(r2::sarr::At(models, i)));
 		}
 	}
 
-	ModelRef UploadAnimModel(const AnimModel* model, VertexConfigHandle vertexConfigHandle)
+	ModelRef UploadAnimModel(const AnimModel* model)
 	{
-		return UploadModelInternal(&model->model, model->boneData, model->boneInfo, vertexConfigHandle);
+		return UploadModelInternal(&model->model, model->boneData, model->boneInfo, s_optrRenderer->mAnimVertexModelConfigHandle);
 	}
 
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, VertexConfigHandle vHandle, r2::SArray<ModelRef>& modelRefs)
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs)
 	{
 		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
 		{
@@ -2316,7 +2358,7 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numModels; ++i)
 		{
-			r2::sarr::Push(modelRefs, UploadAnimModel(r2::sarr::At(models, i), vHandle));
+			r2::sarr::Push(modelRefs, UploadAnimModel(r2::sarr::At(models, i)));
 		}
 	}
 
@@ -2528,7 +2570,7 @@ namespace r2::draw::renderer
 	}
 
 
-	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, void* data)
+	u64 AddFillConstantBufferCommandForData(ConstantBufferHandle handle, u64 elementIndex, const void* data)
 	{
 		if (s_optrRenderer == nullptr)
 		{
@@ -3666,6 +3708,53 @@ namespace r2::draw::renderer
 	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<key::Basic>& commandBucket)
 	{
 		cmdbkt::Close(commandBucket);
+	}
+
+
+	void UpdatePerspectiveMatrix(const glm::mat4& perspectiveMatrix)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles();
+
+		AddFillConstantBufferCommandForData(
+			r2::sarr::At(*constantBufferHandles, s_optrRenderer->mVPMatricesConfigHandle),
+			0,
+			glm::value_ptr(perspectiveMatrix));
+
+	}
+
+	void UpdateViewMatrix(const glm::mat4& viewMatrix)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles();
+
+		AddFillConstantBufferCommandForData(
+			r2::sarr::At(*constantBufferHandles, s_optrRenderer->mVPMatricesConfigHandle),
+			1,
+			glm::value_ptr(viewMatrix));
+
+		
+		AddFillConstantBufferCommandForData(
+			r2::sarr::At(*constantBufferHandles, s_optrRenderer->mVPMatricesConfigHandle),
+			2,
+			glm::value_ptr(glm::mat4(glm::mat3(viewMatrix))));
+	}
+
+	void UpdateCameraPosition(const glm::vec3& camPosition)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles();
+
+		glm::vec4 cameraPosTimeW = glm::vec4(camPosition, CENG.GetTicks() / 1000.0f);
+
+		AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, s_optrRenderer->mVectorsConfigHandle),
+			0, glm::value_ptr(cameraPosTimeW));
+	}
+
+	void UpdateExposure(float exposure)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles();
+
+		glm::vec4 exposureVec = glm::vec4(exposure, 0, 0, 0);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constantBufferHandles, s_optrRenderer->mVectorsConfigHandle),
+			1, glm::value_ptr(exposureVec));
 	}
 
 	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)

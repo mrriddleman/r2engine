@@ -338,8 +338,8 @@ public:
         }
 #endif
         //make the buffer layouts
-        mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
-        mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
+       // mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
+       // mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
         mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 2.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -560,39 +560,39 @@ public:
 
         //@TODO(Serge): Put this in a helper function 
 
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8)) );
-        r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8)) );
-       
+  //      r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8)) );
+  //      r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8)) );
+  //     
 
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
-            {r2::draw::ShaderDataType::Mat4, "projection"},
-            {r2::draw::ShaderDataType::Mat4, "view"},
-            {r2::draw::ShaderDataType::Mat4, "skyboxView"}
-        }));
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+  //          {r2::draw::ShaderDataType::Mat4, "projection"},
+  //          {r2::draw::ShaderDataType::Mat4, "view"},
+  //          {r2::draw::ShaderDataType::Mat4, "skyboxView"}
+  //      }));
 
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
-            {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
-            {r2::draw::ShaderDataType::Float4, "Exposure"}
-        }));
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
+  //          {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
+  //          {r2::draw::ShaderDataType::Float4, "Exposure"}
+  //      }));
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big));
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big));
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout() );
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout() );
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout() );
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout() );
 
-        //Maybe these should automatically be added by the animated models layout
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout());
+  //      //Maybe these should automatically be added by the animated models layout
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout());
 
-		r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformOffsetsLayout());
+		//r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformOffsetsLayout());
 
-        r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
+  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
 
-		bool success = r2::draw::renderer::GenerateLayouts();
-		R2_CHECK(success, "We couldn't create the buffer layouts!");
+		//bool success = r2::draw::renderer::GenerateLayouts();
+		//R2_CHECK(success, "We couldn't create the buffer layouts!");
 
-        const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
+    //    const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
 
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
@@ -607,7 +607,7 @@ public:
 
 
 
-        r2::draw::renderer::UploadEngineModels(r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
+        //r2::draw::renderer::UploadEngineModels(r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
 
        
 
@@ -667,7 +667,7 @@ public:
    //     r2::sarr::Push(*mNumBonesPerModel, mSkeletonModel->boneInfo->mSize);
    //     r2::sarr::Push(*mNumBonesPerModel, mEllenModel->boneInfo->mSize);
 
-        r2::draw::renderer::UploadAnimModels(*animModelsToDraw, r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG), *mAnimModelRefs);
+        r2::draw::renderer::UploadAnimModels(*animModelsToDraw, *mAnimModelRefs);
         //r2::draw::renderer::FillSubCommandsFromModelRefs(*animModelsSubCommandsToDraw, *modelRefs);
 
         //r2::draw::renderer::GetMaterialsAndBoneOffsetsForAnimModels(*animModelsToDraw, animModelMaterials, *mBoneTransformOffsets);
@@ -676,10 +676,12 @@ public:
        
        
 
-		r2::draw::renderer::AddFillConstantBufferCommandForData(
-            r2::sarr::At(*constantBufferHandles, VP_MATRICES),
-            0,
-            glm::value_ptr(mPersController.GetCameraPtr()->proj));
+		//r2::draw::renderer::AddFillConstantBufferCommandForData(
+  //          r2::sarr::At(*constantBufferHandles, VP_MATRICES),
+  //          0,
+  //          glm::value_ptr(mPersController.GetCameraPtr()->proj));
+
+        r2::draw::renderer::UpdatePerspectiveMatrix(mPersController.GetCameraPtr()->proj);
 
         r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
 
@@ -1063,7 +1065,7 @@ public:
 
     virtual void Render(float alpha) override
     {
-        const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
+        //const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 
        
         r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
@@ -1219,28 +1221,33 @@ public:
         }
 
         
-        glm::mat4 skyboxViewMat = glm::mat4(glm::mat3(mPersController.GetCameraPtr()->view));
+       // glm::mat4 skyboxViewMat = glm::mat4(glm::mat3(mPersController.GetCameraPtr()->view));
        
-        glm::vec4 cameraPosTimeW = glm::vec4(mPersController.GetCameraPtr()->position, CENG.GetTicks() / 1000.0f);
+      //  glm::vec4 cameraPosTimeW = glm::vec4(mPersController.GetCameraPtr()->position, CENG.GetTicks() / 1000.0f);
 		//update the camera
-        r2::draw::renderer::AddFillConstantBufferCommandForData(
-            r2::sarr::At(*constHandles, VP_MATRICES),
-            1,
-            glm::value_ptr(mPersController.GetCameraPtr()->view));
+        //r2::draw::renderer::AddFillConstantBufferCommandForData(
+        //    r2::sarr::At(*constHandles, VP_MATRICES),
+        //    1,
+        //    glm::value_ptr(mPersController.GetCameraPtr()->view));
 
-        r2::draw::renderer::AddFillConstantBufferCommandForData(
-            r2::sarr::At(*constHandles, VP_MATRICES),
-            2,
-            glm::value_ptr(skyboxViewMat));
+        r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
+
+        //r2::draw::renderer::AddFillConstantBufferCommandForData(
+        //    r2::sarr::At(*constHandles, VP_MATRICES),
+        //    2,
+        //    glm::value_ptr(skyboxViewMat));
 
 
-        r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
-            0, glm::value_ptr(cameraPosTimeW));
+        //r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
+        //    0, glm::value_ptr(cameraPosTimeW));
 
-        glm::vec4 exposureVec = glm::vec4(mExposure, 0, 0, 0);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
-			1, glm::value_ptr(exposureVec));
+        r2::draw::renderer::UpdateCameraPosition(mPersController.GetCameraPtr()->position);
 
+  //      glm::vec4 exposureVec = glm::vec4(mExposure, 0, 0, 0);
+		//r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
+		//	1, glm::value_ptr(exposureVec));
+
+        r2::draw::renderer::UpdateExposure(mExposure);
     }
     
     virtual void Shutdown() override
@@ -1253,8 +1260,8 @@ public:
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
         FREE(materialBoundary, *linearArenaPtr);
 
-        FREE(mVertexConfigHandles, *linearArenaPtr);
-        FREE(mConstantConfigHandles, *linearArenaPtr);
+    //    FREE(mVertexConfigHandles, *linearArenaPtr);
+     //   FREE(mConstantConfigHandles, *linearArenaPtr);
    //     FREE(layouts, *linearArenaPtr);
     //    FREE(constantLayouts, *linearArenaPtr);
         FREE(modelMats, *linearArenaPtr);
@@ -1447,8 +1454,8 @@ private:
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
 
-    r2::SArray<r2::draw::VertexConfigHandle>* mVertexConfigHandles;
-    r2::SArray<r2::draw::ConstantConfigHandle>* mConstantConfigHandles;
+  //  r2::SArray<r2::draw::VertexConfigHandle>* mVertexConfigHandles;
+   // r2::SArray<r2::draw::ConstantConfigHandle>* mConstantConfigHandles;
 
     //We may not need the extra arrays since we copy the data
  //   r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
