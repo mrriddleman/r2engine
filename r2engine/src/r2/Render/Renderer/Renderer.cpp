@@ -1439,7 +1439,6 @@ namespace r2::draw::renderer
 				{r2::draw::ShaderDataType::Float3, "aNormal"},
 				{r2::draw::ShaderDataType::Float3, "aTexCoord"},
 				{r2::draw::ShaderDataType::Float3, "aTangent"},
-				{r2::draw::ShaderDataType::Float3, "aBiTangent"}
 				}
 			}
 		);
@@ -1501,7 +1500,6 @@ namespace r2::draw::renderer
 				{r2::draw::ShaderDataType::Float3, "aNormal", 0},
 				{r2::draw::ShaderDataType::Float3, "aTexCoord", 0},
 				{r2::draw::ShaderDataType::Float3, "aTangent", 0},
-				{r2::draw::ShaderDataType::Float3, "aBiTangent", 0},
 				{r2::draw::ShaderDataType::Float4, "aBoneWeights", 1},
 				{r2::draw::ShaderDataType::Int4,   "aBoneIDs", 1}
 			}
@@ -3891,7 +3889,7 @@ namespace r2::draw::renderer
 			r2::sarr::Clear(*batch.drawFlags);
 
 			if (batch.debugDrawType == DDT_LINES)
-			{
+			{ 
 				r2::sarr::Clear(*batch.matTransforms);
 				r2::sarr::Clear(*batch.vertices);
 			}
@@ -4128,7 +4126,9 @@ namespace r2::draw::renderer
 
 				glm::vec3 normal = glm::normalize(glm::vec3(transform * glm::vec4(vertex.normal, 0)));
 				glm::vec3 tangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.tangent, 0)));
-				glm::vec3 bitangent = glm::normalize(glm::vec3(transform * glm::vec4(vertex.bitangent, 0)));
+				
+				tangent = glm::normalize(tangent - dot(normal, tangent) * normal);
+				glm::vec3 bitangent = glm::cross(normal, tangent);
 
 				glm::vec3 offset = (normal * 0.015f);
 				initialPosition += offset;

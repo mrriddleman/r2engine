@@ -112,10 +112,10 @@ namespace r2::asset
 				nextVertex.tangent = glm::vec3(tangents->Get(v)->x(), tangents->Get(v)->y(), tangents->Get(v)->z());
 			}
 
-			if (bitangents)
-			{
-				nextVertex.bitangent = glm::vec3(bitangents->Get(v)->x(), bitangents->Get(v)->y(), bitangents->Get(v)->z());
-			}
+			//if (bitangents)
+			//{
+			//	nextVertex.bitangent = glm::vec3(bitangents->Get(v)->x(), bitangents->Get(v)->y(), bitangents->Get(v)->z());
+			//}
 
 			r2::sarr::Push(*mesh->optrVertices, nextVertex);
 		}

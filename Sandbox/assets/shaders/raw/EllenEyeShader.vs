@@ -4,10 +4,9 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec3 aTexCoord;
 layout (location = 3) in vec3 aTangent;
-layout (location = 4) in vec3 aBiTangent;
-layout (location = 5) in vec4 BoneWeights;
-layout (location = 6) in ivec4 BoneIDs;
-layout (location = 7) in uint DrawID;
+layout (location = 4) in vec4 BoneWeights;
+layout (location = 5) in ivec4 BoneIDs;
+layout (location = 6) in uint DrawID;
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -64,7 +63,10 @@ void main()
 	vs_out.normal = normalize(normalMatrix * aNormal);
 
 	vec3 T = normalize(normalMatrix * aTangent);
-	vec3 B = normalize(normalMatrix * aBiTangent);
+
+	T = normalize(T - dot(T, vs_out.normal) * vs_out.normal);
+
+	vec3 B = cross(vs_out.normal, T);
 
 	vs_out.TBN = mat3(T, B, vs_out.normal);
 

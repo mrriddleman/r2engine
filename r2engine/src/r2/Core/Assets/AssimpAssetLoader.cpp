@@ -224,10 +224,10 @@ namespace
 		//		printf("nextVertex.tangent - x: %f, y: %f, z: %f\n", nextVertex.tangent.x, nextVertex.tangent.y, nextVertex.tangent.y);
 			}
 
-			if (mesh->mBitangents)
-			{
-				nextVertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
-			}
+			//if (mesh->mBitangents)
+			//{
+			//	nextVertex.bitangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+			//}
 
 			r2::sarr::Push(*nextMeshPtr->optrVertices, nextVertex);
 		}
@@ -451,7 +451,6 @@ namespace r2::asset
 			 aiProcess_GenUVCoords |
 			// aiProcess_TransformUVCoords |
 			// aiProcess_FindInstances |
-			aiProcess_CalcTangentSpace |
 			aiProcess_LimitBoneWeights |
 			aiProcess_OptimizeMeshes |
 			aiProcess_SplitByBoneCount);
@@ -507,7 +506,6 @@ namespace r2::asset
 			 aiProcess_GenUVCoords |
 			 //aiProcess_TransformUVCoords |
 			// aiProcess_FindInstances |
-			aiProcess_CalcTangentSpace |
 			aiProcess_LimitBoneWeights |
 			aiProcess_OptimizeMeshes |
 			aiProcess_SplitByBoneCount);

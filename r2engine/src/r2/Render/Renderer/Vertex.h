@@ -18,9 +18,8 @@ namespace r2::draw
         glm::vec3 normal = glm::vec3(0.0f);
         glm::vec3 texCoords = glm::vec3(0.0f);
         glm::vec3 tangent = glm::vec3(0.0f);
-        glm::vec3 bitangent = glm::vec3(0.0f);
-    };
-    
+	};
+
 #ifdef R2_DEBUG
     struct DebugVertex
     {
