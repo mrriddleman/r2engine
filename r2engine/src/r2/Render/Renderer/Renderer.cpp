@@ -4039,22 +4039,26 @@ namespace r2::draw::renderer
 		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*s_optrRenderer->mDebugRenderBatches, DDT_MODELS);
 
 		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
-	
+
 		DrawFlags flags;
 		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
 		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
 
 		math::Transform t;
 
+		glm::vec3 ndir = glm::normalize(dir);
 		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+
+		if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
+		{
+			axis = glm::vec3(1, 0, 0);
+		}
 
 		t.position = initialFacing * 0.5f * height;
 
-		glm::vec3 ndir = glm::normalize(dir);
-
 		float angle = glm::acos(glm::dot(ndir, initialFacing));
-
-		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
 
 		math::Transform r;
 		r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
@@ -4073,6 +4077,73 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*debugModelRenderBatch.colors, color);
 		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
 		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
+	}
+
+	void DrawCone(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest)
+	{
+		if (s_optrRenderer == nullptr || s_optrRenderer->mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*s_optrRenderer->mDebugRenderBatches, DDT_MODELS);
+
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		math::Transform t;
+
+		glm::vec3 ndir = glm::normalize(dir);
+		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+
+		if ( math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
+		{
+			axis = glm::vec3(1, 0, 0);
+		}
+
+		t.position = initialFacing * 0.5f * height;
+
+		float angle = glm::acos(glm::dot(ndir, initialFacing));
+		
+		math::Transform r;
+		r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
+
+		math::Transform s;
+
+		s.scale = glm::vec3(radius, radius, height);
+
+		math::Transform t2;
+		t2.position = -t.position;
+
+		math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
+		transformToDraw.position += basePosition;
+
+		r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
+		r2::sarr::Push(*debugModelRenderBatch.colors, color);
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
+	}
+
+	void DrawArrow(const glm::vec3& basePosition, const glm::vec3& dir, float length, float headBaseRadius, const glm::vec4& color, bool filled, bool depthTest)
+	{
+		constexpr float ARROW_CONE_HEIGHT_FRACTION = 0.2;
+		constexpr float ARROW_BASE_RADIUS_FRACTION = 0.2;
+
+		float baseLength = (length * (1.0f - ARROW_CONE_HEIGHT_FRACTION));
+
+		glm::vec3 ndir = glm::normalize(dir);
+		glm::vec3 coneBasePos = ndir * baseLength + basePosition;
+		float coneHeight = length * ARROW_CONE_HEIGHT_FRACTION;
+		float baseRadius = ARROW_BASE_RADIUS_FRACTION * headBaseRadius;
+
+		DrawCylinder(basePosition, dir, baseRadius, baseLength, color, filled, depthTest);
+		DrawCone(coneBasePos, dir, headBaseRadius, coneHeight, color, filled, depthTest);
 	}
 
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool depthTest)
