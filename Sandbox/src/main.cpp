@@ -337,14 +337,10 @@ public:
             });
         }
 #endif
-        //make the buffer layouts
-       // mVertexConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::VertexConfigHandle, NUM_VERTEX_CONFIGS);
-       // mConstantConfigHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::ConstantConfigHandle, NUM_CONSTANT_CONFIGS);
+
         mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 2.0f, 3.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-    //    mNumBonesPerModel = MAKE_SARRAY(*linearArenaPtr, u64, NUM_DRAWS);
-
         mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
 
         r2::draw::DrawFlags drawFlags;
@@ -415,21 +411,6 @@ public:
         ellenModel = glm::translate(ellenModel, glm::vec3(0, 0, -5));
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);
-
-        //subCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
-        //animModelsSubCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
-        //skyboxCommandsToDraw = MAKE_SARRAY(*linearArenaPtr, r2::draw::cmd::DrawBatchSubCommand, NUM_DRAW_COMMANDS);
-
-        //modelMaterials.infos = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialBatch::Info, NUM_DRAWS);
-        //modelMaterials.materialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-
-        //animModelMaterials.infos = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialBatch::Info, NUM_DRAWS);
-        //animModelMaterials.materialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, 100);
-
-        //skyboxMaterials.infos = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialBatch::Info, NUM_DRAWS);
-        //skyboxMaterials.materialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-        
-        
 
         mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::AnimationHandle, 20);
 
@@ -558,42 +539,6 @@ public:
             return false;
         }
 
-        //@TODO(Serge): Put this in a helper function 
-
-  //      r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddStaticModelLayout({ Megabytes(8) }, Megabytes(8)) );
-  //      r2::sarr::Push(*mVertexConfigHandles, r2::draw::renderer::AddAnimatedModelLayout({ Megabytes(8), Megabytes(8) }, Megabytes(8)) );
-  //     
-
-
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
-  //          {r2::draw::ShaderDataType::Mat4, "projection"},
-  //          {r2::draw::ShaderDataType::Mat4, "view"},
-  //          {r2::draw::ShaderDataType::Mat4, "skyboxView"}
-  //      }));
-
-
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddConstantBufferLayout(r2::draw::ConstantBufferLayout::Type::Small, {
-  //          {r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
-  //          {r2::draw::ShaderDataType::Float4, "Exposure"}
-  //      }));
-
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddModelsLayout(r2::draw::ConstantBufferLayout::Type::Big));
-
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddSubCommandsLayout() );
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddMaterialLayout() );
-
-  //      //Maybe these should automatically be added by the animated models layout
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformsLayout());
-
-		//r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddBoneTransformOffsetsLayout());
-
-  //      r2::sarr::Push(*mConstantConfigHandles, r2::draw::renderer::AddLightingLayout());
-
-		//bool success = r2::draw::renderer::GenerateLayouts();
-		//R2_CHECK(success, "We couldn't create the buffer layouts!");
-
-    //    const r2::SArray<r2::draw::ConstantBufferHandle>* constantBufferHandles = r2::draw::renderer::GetConstantBufferHandles();
-
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
@@ -605,81 +550,31 @@ public:
 
         mSelectedAnimModel = mSkeletonModel;
 
-
-
-        //r2::draw::renderer::UploadEngineModels(r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
-
-       
-
         for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-
-            //r2::draw::MaterialBatch::Info materialInfo;
-            //materialInfo.start = i;
-            //materialInfo.numMaterials = 1;
-
-            //r2::sarr::Push(*modelMaterials.infos, materialInfo);
-
-            //r2::sarr::Push(*modelMaterials.materialHandles, r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall")));//r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel));
         }
 
-       // r2::draw::renderer::FillSubCommandsFromModelRefs(*subCommandsToDraw, *defaultModelRefs);
-
-      //  FREE(defaultModelRefs, *MEM_ENG_SCRATCH_PTR);
-
-
-     //   r2::SArray<r2::draw::ModelRef>* skyboxModelRefs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ModelRef, NUM_DRAWS);
 
         mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
 
-        //r2::sarr::Push(*skyboxModelRefs, r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX));
-
-        //r2::draw::renderer::FillSubCommandsFromModelRefs(*skyboxCommandsToDraw, *skyboxModelRefs);
-
-        //FREE(skyboxModelRefs, *MEM_ENG_SCRATCH_PTR);
-
-        //r2::draw::MaterialBatch::Info skyboxInfo;
-        //skyboxInfo.start = 0;
-        //skyboxInfo.numMaterials = 1;
-
-        //r2::sarr::Push(*skyboxMaterials.infos, skyboxInfo);
 
         r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportSkybox"));
-        //r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(r2::draw::SKYBOX);
 
         R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
 
         r2::sarr::Push(*mSkyboxMaterialHandles, skyboxMaterialHandle); //;
 
-
-        
         r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
 
-        
-        
         r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
         r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
         r2::sarr::Push(*animModelsToDraw, mEllenModel);
 
-   //     r2::sarr::Push(*mNumBonesPerModel, mMicroBatModel->boneInfo->mSize);
-   //     r2::sarr::Push(*mNumBonesPerModel, mSkeletonModel->boneInfo->mSize);
-   //     r2::sarr::Push(*mNumBonesPerModel, mEllenModel->boneInfo->mSize);
-
         r2::draw::renderer::UploadAnimModels(*animModelsToDraw, *mAnimModelRefs);
-        //r2::draw::renderer::FillSubCommandsFromModelRefs(*animModelsSubCommandsToDraw, *modelRefs);
-
-        //r2::draw::renderer::GetMaterialsAndBoneOffsetsForAnimModels(*animModelsToDraw, animModelMaterials, *mBoneTransformOffsets);
 
         FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
-       
-       
-
-		//r2::draw::renderer::AddFillConstantBufferCommandForData(
-  //          r2::sarr::At(*constantBufferHandles, VP_MATRICES),
-  //          0,
-  //          glm::value_ptr(mPersController.GetCameraPtr()->proj));
 
         r2::draw::renderer::UpdatePerspectiveMatrix(mPersController.GetCameraPtr()->proj);
 
@@ -1065,9 +960,7 @@ public:
 
     virtual void Render(float alpha) override
     {
-        //const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles();
 
-       
         r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
 
 
@@ -1090,96 +983,6 @@ public:
 
         r2::draw::renderer::DrawModelOnLayer(r2::draw::DL_SKYBOX, mSkyboxModelRef, mSkyboxMaterialHandles, glm::mat4(1.0f), skyboxDrawFlags, nullptr);
 
-        //add my commands here
-        /*
-        const r2::draw::Model* quadModel = r2::draw::renderer::GetDefaultModel(r2::draw::QUAD);
-
-        r2::draw::MaterialHandle materialHandle = r2::sarr::At(*quadModel->optrMaterialHandles, 0);
-
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
-		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-		const r2::draw::Material* material = r2::draw::mat::GetMaterial(*matSystem, materialHandle);
-		R2_CHECK(material != nullptr, "Material shouldn't be null!");
-
-        r2::draw::key::Basic drawElemKey = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_WORLD, 0, 0, material->shaderId);
-        
-        
-        r2::draw::MaterialHandle animModelMaterialHandle = r2::sarr::At(*mSelectedAnimModel->model.optrMaterialHandles, 0);
-
-		r2::draw::MaterialSystem* animMatSystem = r2::draw::matsys::GetMaterialSystem(animModelMaterialHandle.slot);
-		R2_CHECK(animMatSystem != nullptr, "Failed to get the material system!");
-
-		const r2::draw::Material* animMaterial = r2::draw::mat::GetMaterial(*animMatSystem, animModelMaterialHandle);
-		R2_CHECK(animMaterial != nullptr, "Material shouldn't be null!");
-
-        r2::draw::key::Basic animBatchKey = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_CHARACTER, 0, 0, animMaterial->shaderId);
-
-       // 
-        //r2::draw::cmd::DrawIndexed* drawIndexedCMD = r2::draw::renderer::AddDrawIndexedCommand(drawElemKey);
-        //drawIndexedCMD->indexCount = static_cast<u32>(r2::sarr::Size(*r2::sarr::At(*quadModel->optrMeshes, 0).optrIndices));
-        //drawIndexedCMD->startIndex = 0;
-        //drawIndexedCMD->bufferLayoutHandle = r2::sarr::At(*handles.bufferLayoutHandles, 0);
-        //drawIndexedCMD->vertexBufferHandle = r2::sarr::At(*handles.vertexBufferHandles, 0);
-        //drawIndexedCMD->indexBufferHandle = r2::sarr::At(*handles.indexBufferHandles, 0);
-
-        
-
-        
-		r2::draw::BatchConfig batch;
-		batch.key = drawElemKey;
-		batch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
-		batch.subcommands = subCommandsToDraw;
-		batch.models = modelMats;
-        batch.materials = modelMaterials;
-		batch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
-		batch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
-        batch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
-        batch.numDraws = r2::sarr::Size(*modelMats);
-        batch.clear = true;
-
-		r2::draw::renderer::AddDrawBatch(batch);
-
-        r2::draw::BatchConfig animModelBatch;
-        animModelBatch.key = animBatchKey;
-        animModelBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, ANIM_MODELS_CONFIG);
-        animModelBatch.subcommands = animModelsSubCommandsToDraw;
-        animModelBatch.models = animModelMats;
-        animModelBatch.numDraws = r2::sarr::Size(*animModelMats);
-        animModelBatch.materials = animModelMaterials;
-        animModelBatch.boneTransforms = mBoneTransforms;
-        animModelBatch.boneTransformOffsets = mBoneTransformOffsets;
-        
-        animModelBatch.modelsHandle = r2::sarr::At(*constHandles, MODEL_MATRICES);
-        animModelBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
-        animModelBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
-        animModelBatch.boneTransformOffsetsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORM_OFFSETS);
-        animModelBatch.boneTransformsHandle = r2::sarr::At(*constHandles, BONE_TRANSFORMS);
-
-
-        r2::draw::renderer::AddDrawBatch(animModelBatch);
-
-
-		r2::draw::BatchConfig skyboxBatch;
-
-
-		r2::draw::MaterialSystem* skyboxMatSystem = r2::draw::matsys::GetMaterialSystem(r2::sarr::At(*skyboxMaterials.materialHandles, 0).slot);
-		R2_CHECK(skyboxMatSystem != nullptr, "Failed to get the material system!");
-
-		const r2::draw::Material* skyboxMaterial = r2::draw::mat::GetMaterial(*skyboxMatSystem, r2::sarr::At(*skyboxMaterials.materialHandles, 0));
-		R2_CHECK(skyboxMaterial != nullptr, "Material shouldn't be null!");
-
-		skyboxBatch.key = r2::draw::key::GenerateKey(0, 0, r2::draw::DrawLayer::DL_SKYBOX, 0, 0, skyboxMaterial->shaderId);
-		skyboxBatch.vertexLayoutConfigHandle = r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG);
-		skyboxBatch.subcommands = skyboxCommandsToDraw;
-		skyboxBatch.models = nullptr;
-		skyboxBatch.materials = skyboxMaterials;
-		skyboxBatch.subCommandsHandle = r2::sarr::At(*constHandles, SUB_COMMANDS);
-		skyboxBatch.materialsHandle = r2::sarr::At(*constHandles, MODEL_MATERIALS);
-		skyboxBatch.numDraws = 1;
-
-		r2::draw::renderer::AddDrawBatch(skyboxBatch);
-        */
 
 		r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);
 		r2::draw::renderer::DrawSphere(glm::vec3(0, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
@@ -1208,11 +1011,6 @@ public:
        // r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
         if (mDrawDebugBones)
         {
-			//r2::draw::renderer::DrawDebugBones(
-			//	*mDebugBones,
-			//	*mNumBonesPerModel,
-			//	*animModelMats,
-			//	glm::vec4(1,1,0,1));
 
             r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
             r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
@@ -1221,31 +1019,10 @@ public:
         }
 
         
-       // glm::mat4 skyboxViewMat = glm::mat4(glm::mat3(mPersController.GetCameraPtr()->view));
-       
-      //  glm::vec4 cameraPosTimeW = glm::vec4(mPersController.GetCameraPtr()->position, CENG.GetTicks() / 1000.0f);
-		//update the camera
-        //r2::draw::renderer::AddFillConstantBufferCommandForData(
-        //    r2::sarr::At(*constHandles, VP_MATRICES),
-        //    1,
-        //    glm::value_ptr(mPersController.GetCameraPtr()->view));
-
         r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
 
-        //r2::draw::renderer::AddFillConstantBufferCommandForData(
-        //    r2::sarr::At(*constHandles, VP_MATRICES),
-        //    2,
-        //    glm::value_ptr(skyboxViewMat));
-
-
-        //r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
-        //    0, glm::value_ptr(cameraPosTimeW));
 
         r2::draw::renderer::UpdateCameraPosition(mPersController.GetCameraPtr()->position);
-
-  //      glm::vec4 exposureVec = glm::vec4(mExposure, 0, 0, 0);
-		//r2::draw::renderer::AddFillConstantBufferCommandForData(r2::sarr::At(*constHandles, VECTOR_CONSTANTS),
-		//	1, glm::value_ptr(exposureVec));
 
         r2::draw::renderer::UpdateExposure(mExposure);
     }
@@ -1260,22 +1037,11 @@ public:
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
         FREE(materialBoundary, *linearArenaPtr);
 
-    //    FREE(mVertexConfigHandles, *linearArenaPtr);
-     //   FREE(mConstantConfigHandles, *linearArenaPtr);
-   //     FREE(layouts, *linearArenaPtr);
-    //    FREE(constantLayouts, *linearArenaPtr);
         FREE(modelMats, *linearArenaPtr);
-    //    FREE(subCommandsToDraw, *linearArenaPtr);
-    //    FREE(modelMaterials.materialHandles, *linearArenaPtr);
-    //    FREE(modelMaterials.infos, *linearArenaPtr);
+
 
         FREE(mAnimationsHandles, *linearArenaPtr);
         FREE(animModelMats, *linearArenaPtr);
-
-      //  FREE(animModelMaterials.materialHandles, *linearArenaPtr);
-      //  FREE(animModelMaterials.infos, *linearArenaPtr);
-
-      //  FREE(animModelsSubCommandsToDraw, *linearArenaPtr);
 
         FREE(mEllenBoneTransforms, *linearArenaPtr);
         FREE(mEllenDebugBones, *linearArenaPtr);
@@ -1286,9 +1052,6 @@ public:
 		FREE(mBatBoneTransforms, *linearArenaPtr);
 		FREE(mBatDebugBones, *linearArenaPtr);
 
-     //   FREE(mNumBonesPerModel, *linearArenaPtr);
-    //    FREE(skyboxCommandsToDraw, *linearArenaPtr);
-
         FREE(mSkyboxMaterialHandles, *linearArenaPtr);
 
         FREE(mStaticModelRefs, *linearArenaPtr);
@@ -1297,8 +1060,6 @@ public:
         
         FREE(mStaticModelDrawFlags, *linearArenaPtr);
 
-     //   FREE(skyboxMaterials.materialHandles, *linearArenaPtr);
-     //   FREE(skyboxMaterials.infos, *linearArenaPtr);
         r2::draw::lightsys::DestroyLightSystem(*linearArenaPtr, mLightSystem);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
@@ -1454,20 +1215,7 @@ private:
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;
 
-  //  r2::SArray<r2::draw::VertexConfigHandle>* mVertexConfigHandles;
-   // r2::SArray<r2::draw::ConstantConfigHandle>* mConstantConfigHandles;
 
-    //We may not need the extra arrays since we copy the data
- //   r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* subCommandsToDraw;
- //   r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* animModelsSubCommandsToDraw;
- //   r2::SArray<r2::draw::cmd::DrawBatchSubCommand>* skyboxCommandsToDraw;
-
-	//r2::draw::MaterialBatch modelMaterials;
-	//r2::draw::MaterialBatch animModelMaterials;
-	//r2::draw::MaterialBatch skyboxMaterials;
-    //r2::SArray<r2::draw::MaterialHandle>* modelMaterials;
-   // r2::SArray<r2::draw::MaterialHandle>* animModelMaterials;
-    //r2::SArray<r2::draw::MaterialHandle>* skyboxMaterials;
     r2::SArray<r2::draw::ModelRef>* mAnimModelRefs;
     r2::SArray<r2::draw::ModelRef>* mStaticModelRefs;
     r2::draw::ModelRef mSkyboxModelRef;
@@ -1476,7 +1224,6 @@ private:
     r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;
     r2::SArray<glm::mat4>* modelMats;
     r2::SArray<glm::mat4>* animModelMats;
-    //r2::SArray<u64>* mNumBonesPerModel;
 
     r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;
     r2::SArray<r2::draw::DebugBone>* mBatDebugBones;
