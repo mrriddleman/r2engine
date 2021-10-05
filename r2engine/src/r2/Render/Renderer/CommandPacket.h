@@ -14,6 +14,7 @@ namespace r2::draw::cmdpkt
 	void* : a pointer to the next command packet (if any)
 	BackendDispatchFunction : a pointer to the function responsible for dispatching the call to the backend
 	T : the actual command
+	u32 : the number of bytes for the aux memory
 	char[] : auxiliary memory needed by the command (optional)
 
 	*/
@@ -25,13 +26,19 @@ namespace r2::draw::cmdpkt
 	template <typename T, class ARENA>
 	CommandPacket Create(ARENA& arena, u64 auxMemorySize)
 	{
-		return ALLOC_BYTESN(arena, GetSize<T>(auxMemorySize), 16);
+		void* cmdPacket = ALLOC_BYTESN(arena, GetSize<T>(auxMemorySize), 16);
+
+		u32* auxMemorySizePtr = reinterpret_cast<u32*>(reinterpret_cast<char*>(cmdPacket) + OFFSET_COMMAND + sizeof(T));
+
+		*auxMemorySizePtr = static_cast<u32>(auxMemorySize);
+
+		return cmdPacket;
 	}
 
 	template <typename T>
 	size_t GetSize(size_t auxMemorySize)
 	{
-		return OFFSET_COMMAND + sizeof(T) + auxMemorySize;
+		return OFFSET_COMMAND + sizeof(T) + sizeof(u32) + auxMemorySize;
 	};
 
 	CommandPacket* GetNextCommandPacket(CommandPacket packet)
@@ -59,7 +66,14 @@ namespace r2::draw::cmdpkt
 	template <typename T>
 	char* GetAuxiliaryMemory(T* command)
 	{
-		return reinterpret_cast<char*>(command) + sizeof(T);
+		char* auxMemSizeCharPtr = reinterpret_cast<char*>(command) + sizeof(T);
+
+		u32* auxMemSizePtr = reinterpret_cast<u32*>(auxMemSizeCharPtr);
+
+		R2_CHECK(auxMemSizePtr != nullptr, "auxMemSizePtr should never be null");
+		R2_CHECK(*auxMemSizePtr > 0, "This must be greater than 0 if you're trying to use aux memory. Otherwise you'll crash the driver if you write to it");
+
+		return reinterpret_cast<char*>(command) + sizeof(T) + sizeof(u32);
 	}
 
 	void StoreNextCommandPacket(CommandPacket packet, CommandPacket nextPacket)
