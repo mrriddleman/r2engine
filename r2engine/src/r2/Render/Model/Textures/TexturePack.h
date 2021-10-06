@@ -42,6 +42,7 @@ namespace r2::draw::tex
 		r2::SArray<r2::asset::Asset>* occlusions = nullptr;
 		r2::SArray<r2::asset::Asset>* micros = nullptr;
 		r2::SArray<r2::asset::Asset>* heights = nullptr;
+		r2::SArray<r2::asset::Asset>* anisotropys = nullptr;
 	};
 
 
@@ -70,6 +71,7 @@ namespace r2::draw::tex
 		newTexturePack->occlusions = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->micros = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->heights = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
+		newTexturePack->anisotropys = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 
 		return newTexturePack;
 	}
@@ -83,6 +85,7 @@ namespace r2::draw::tex
 			return;
 		}
 		//@NOTE: reverse order
+		FREE(pack->anisotropys, arena);
 		FREE(pack->heights, arena);
 		FREE(pack->micros, arena);
 		FREE(pack->occlusions, arena);
@@ -91,7 +94,7 @@ namespace r2::draw::tex
 		FREE(pack->speculars, arena);
 		FREE(pack->normals, arena);
 		FREE(pack->albedos, arena);
-
+		
 		FREE_VERBOSE(pack, arena, file, line, description);
 	}
 }

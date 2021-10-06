@@ -12,31 +12,6 @@ struct Tex2DAddress
 	float page;
 };
 
-// struct Material
-// {
-// 	Tex2DAddress diffuseTexture1;
-// 	Tex2DAddress specularTexture1;
-// 	Tex2DAddress normalMapTexture1;
-// 	Tex2DAddress emissionTexture1;
-// 	Tex2DAddress metallicTexture1;
-// 	Tex2DAddress roughnessTexture1;
-// 	Tex2DAddress aoTexture1;
-// 	Tex2DAddress heightTexture1;
-
-// 	vec3 baseColor;
-// 	float specular;
-// 	float roughness;
-// 	float metallic;
-// 	float reflectance;
-// 	float ambientOcclusion;
-// };
-
-// layout (std430, binding = 1) buffer Materials
-// {
-// 	Material materials[];
-// };
-
-
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;

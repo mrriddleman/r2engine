@@ -50,7 +50,7 @@ struct SkyLight
 	//int numPrefilteredRoughnessMips;
 };
 
-struct Material 
+struct Material
 {
 	Tex2DAddress diffuseTexture1;
 	Tex2DAddress specularTexture1;
@@ -60,6 +60,7 @@ struct Material
 	Tex2DAddress roughnessTexture1;
 	Tex2DAddress aoTexture1;
 	Tex2DAddress heightTexture1;
+	Tex2DAddress anisotropyTexture1;
 
 	vec3 baseColor;
 	float specular;
@@ -67,6 +68,10 @@ struct Material
 	float metallic;
 	float reflectance;
 	float ambientOcclusion;
+	float clearCoat;
+	float clearCoatRoughness;
+	float anisotropy;
+	float heightScale;
 };
 
 layout (std140, binding = 1) uniform Vectors

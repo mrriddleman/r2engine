@@ -40,6 +40,7 @@ namespace r2::draw
 		tex::TextureAddress roughnessTexture = {};
 		tex::TextureAddress aoTexture = {};
 		tex::TextureAddress heightTexture = {};
+		tex::TextureAddress anisotropyTexture = {};
 
 		glm::vec3 baseColor = glm::vec3(1.0f);
 		float specular = 0.f;
@@ -47,6 +48,10 @@ namespace r2::draw
 		float metallic = 0.f;
 		float reflectance = 0.f;
 		float ambientOcclusion = 0.f;
+		float clearCoat = 0.0f;
+		float clearCoatRoughness = 0.0f;
+		float anisotropy = 0.0f;
+		float heightScale = 0.0f;
 	};
 
 	struct Material
@@ -63,6 +68,7 @@ namespace r2::draw
 		tex::Texture roughnessTexture;
 		tex::Texture aoTexture;
 		tex::Texture heightTexture;
+		tex::Texture anisotropyTexture;
 
 		glm::vec3 baseColor = glm::vec3(1.0f);
 		float specular = 0.f;
@@ -70,6 +76,10 @@ namespace r2::draw
 		float metallic = 0.f;
 		float reflectance = 0.f;
 		float ambientOcclusion = 1.f;
+		float clearCoat = 0.0f;
+		float clearCoatRoughness = 0.0f;
+		float anisotropy = 0.0f;
+		float heightScale = 0.0f;
 	};
 
 	struct MaterialTextureEntry

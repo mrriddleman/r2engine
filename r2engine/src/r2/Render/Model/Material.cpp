@@ -286,6 +286,16 @@ namespace r2::draw::mat
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
+				const auto numAnisotropys = r2::sarr::Size(*result->anisotropys);
+				for (flatbuffers::uoffset_t t = 0; t < numAnisotropys; ++t)
+				{
+					r2::draw::tex::Texture texture;
+					texture.type = tex::TextureType::Anisotropy;
+					texture.textureAssetHandle =
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->anisotropys, t));
+					r2::sarr::Push(*materialTextures, texture);
+				}
+
 				newEntry.mIndex = r2::sarr::Size(*system.mMaterialTextures);
 				
 				r2::sarr::Push(*system.mMaterialTextures, materialTextures);
@@ -664,6 +674,10 @@ namespace r2::draw::mat
 			newMaterial.roughness = material->roughness();
 			newMaterial.reflectance = material->reflectance();
 			newMaterial.ambientOcclusion = material->ambientOcclusion();
+			newMaterial.clearCoat = material->clearCoat();
+			newMaterial.clearCoatRoughness = material->clearCoatRoughness();
+			newMaterial.anisotropy = material->anisotropy();
+			newMaterial.heightScale = material->heightScale();
 
 			r2::asset::AssetFile* diffuseFile = nullptr;
 			r2::asset::AssetFile* specularFile = nullptr;
@@ -673,6 +687,7 @@ namespace r2::draw::mat
 			r2::asset::AssetFile* roughnessFile = nullptr;
 			r2::asset::AssetFile* aoFile = nullptr;
 			r2::asset::AssetFile* heightFile = nullptr;
+			r2::asset::AssetFile* anisotropyFile = nullptr;
 
 			if (material->diffuseTexture() != EMPTY)
 			{
@@ -748,6 +763,15 @@ namespace r2::draw::mat
 				newMaterial.heightTexture.textureAssetHandle = { material->heightTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
 			}
 
+			if (material->anisotropyTexture() != EMPTY)
+			{
+				anisotropyFile = FindAssetFile(list, material->anisotropyTexture());
+				R2_CHECK(anisotropyFile != nullptr, "This should never be null");
+
+				newMaterial.anisotropyTexture.type = tex::Anisotropy;
+				newMaterial.anisotropyTexture.textureAssetHandle = { material->anisotropyTexture(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+			}
+
 			MaterialHandle handle = AddMaterial(system, newMaterial);
 			R2_CHECK(handle.handle != InvalidMaterialHandle.handle, "We couldn't add the new material?");
 
@@ -768,6 +792,7 @@ namespace r2::draw::mat
 			AddTextureNameToMap(system, handle, roughnessFile, tex::MicroFacet);
 			AddTextureNameToMap(system, handle, aoFile, tex::Occlusion);
 			AddTextureNameToMap(system, handle, heightFile, tex::Height);
+			AddTextureNameToMap(system, handle, anisotropyFile, tex::Anisotropy);
 		}
 	}
 
@@ -792,7 +817,8 @@ namespace r2::draw::mat
 				nextPack->micro()->size(),
 				nextPack->normal()->size(),
 				nextPack->occlusion()->size(),
-				nextPack->specular()->size()});
+				nextPack->specular()->size(),
+				nextPack->anisotropy()->size()});
 
 			if (nextPack->metaData()->type() == flat::TextureType_CUBEMAP)
 			{
@@ -976,6 +1002,22 @@ namespace r2::draw::mat
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 				r2::asset::Asset textureAsset(assetName, textureType);
 				r2::sarr::Push(*texturePack->speculars, textureAsset);
+			}
+
+			const auto numAnisotropies = nextPack->anisotropy()->size();
+			for (flatbuffers::uoffset_t t = 0; t < numAnisotropies; ++t)
+			{
+				auto nextTexturePath = nextPack->anisotropy()->Get(t);
+
+				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)nextFile);
+
+				char assetName[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+				r2::asset::Asset textureAsset(assetName, textureType);
+				r2::sarr::Push(*texturePack->anisotropys, textureAsset);
+
 			}
 
 			texturePack->packName = nextPack->packName();

@@ -27,6 +27,7 @@ namespace r2::draw::tex
 		Height,
 		MicroFacet, //roughness?
 		Occlusion,
+		Anisotropy,
 		Cubemap,
 		NUM_TEXTURE_TYPES
 	};

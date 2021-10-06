@@ -11,6 +11,7 @@
 	roughnessTexture:"",
 	aoTexture:"",
 	heightTexture:"",
+	anisotropyTexture:"",
 
 	baseColor:{
 		r: 1.0,
@@ -22,5 +23,9 @@
 	roughness:0.0,
 	metallic:0.0,
 	reflectance:0.0,
-	ambientOcclusion:0.0
+	ambientOcclusion:0.0,
+	clearCoat:0.0,
+	clearCoatRoughness:0.0,
+	anisotropy:0.0,
+	heightScale:0.0
 } 

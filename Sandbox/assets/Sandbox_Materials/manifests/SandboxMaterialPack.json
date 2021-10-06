@@ -13,6 +13,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 8187701920138629096,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -34,6 +35,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 1.0,
@@ -55,6 +57,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -78,6 +81,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -99,6 +103,7 @@
       roughnessTexture: 11456203900100915805,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -120,6 +125,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 1.0,
@@ -141,6 +147,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -162,6 +169,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -181,6 +189,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -200,6 +209,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -219,6 +229,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -238,6 +249,7 @@
       roughnessTexture: 8192149849188030473,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -257,6 +269,7 @@
       roughnessTexture: 14695981039346656837,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,
@@ -278,6 +291,7 @@
       roughnessTexture: 3801060295197912713,
       aoTexture: 17058832840421730690,
       heightTexture: 12237309667035072787,
+      anisotropyTexture: 14695981039346656837,
       baseColor: {
         r: 1.0,
         g: 0.0,

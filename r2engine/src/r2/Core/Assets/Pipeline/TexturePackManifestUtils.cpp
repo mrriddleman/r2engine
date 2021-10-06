@@ -104,6 +104,8 @@ namespace r2::asset::pln::tex
 			std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> micros;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
+
 			std::vector<std::string> cubemapTexturePaths;
 
 			u64 packName = STRING_ID(texturePackDir.path().stem().string().c_str());
@@ -168,6 +170,11 @@ namespace r2::asset::pln::tex
 
 					++numTexturesInPack;
 				}
+				else if (file.path().parent_path().stem().string() == "anisotropy")
+				{
+					anisotropys.push_back(builder.CreateString(sanitizedPath));
+					++numTexturesInPack;
+				}
 			}
 
 			char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
@@ -223,7 +230,9 @@ namespace r2::asset::pln::tex
 				builder.CreateVector(metallics),
 				builder.CreateVector(occlusions),
 				builder.CreateVector(micros),
-				builder.CreateVector(heights), packSize, numTexturesInPack,
+				builder.CreateVector(heights),
+				builder.CreateVector(anisotropys),
+				packSize, numTexturesInPack,
 				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 
 			texturePacks.push_back(texturePack);

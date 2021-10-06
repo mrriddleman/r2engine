@@ -148,12 +148,17 @@ namespace r2::asset::pln
 				material->roughnessTexture(),
 				material->aoTexture(),
 				material->heightTexture(),
+				material->anisotropyTexture(),
 				&theColor,
 				material->specular(),
 				material->roughness(),
 				material->metallic(),
 				material->reflectance(),
-				material->ambientOcclusion());
+				material->ambientOcclusion(),
+				material->clearCoat(),
+				material->clearCoatRoughness(),
+				material->anisotropy(),
+				material->heightScale());
 
 			flatMaterials.push_back(packMaterial);
 

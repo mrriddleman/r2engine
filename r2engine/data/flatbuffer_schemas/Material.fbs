@@ -25,6 +25,7 @@ table Material
 	roughnessTexture:ulong (hash:"fnv1a_64");
 	aoTexture:ulong (hash:"fnv1a_64");
 	heightTexture:ulong (hash:"fnv1a_64");
+	anisotropyTexture:ulong (hash: "fnv1a_64");
 
 	baseColor:Color;
 	specular:float;
@@ -32,6 +33,10 @@ table Material
 	metallic:float;
 	reflectance:float;
 	ambientOcclusion:float;
+	clearCoat:float;
+	clearCoatRoughness:float;
+	anisotropy:float;
+	heightScale:float;
 }
 
 root_type Material;

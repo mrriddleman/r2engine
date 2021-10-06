@@ -18,6 +18,7 @@ table TexturePack
 	occlusion:[string];
 	micro:[string];	
 	height:[string];
+	anisotropy:[string];
 	packSize:ulong;
 	totalNumberOfTextures:ulong;
 	metaData:TexturePackMetaData;

@@ -24,6 +24,8 @@ namespace r2::draw::tex
 			return "texture_microfacet";
 		case TextureType::Occlusion:
 			return "texture_occlusion";
+		case TextureType::Anisotropy:
+			return "texture_anisotropy";
 		default:
 			R2_CHECK(false, "Unsupported texture type!");
 			return "";

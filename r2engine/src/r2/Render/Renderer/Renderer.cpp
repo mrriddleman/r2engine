@@ -2577,6 +2577,10 @@ namespace r2::draw::renderer
 		renderMaterial.specular = material.specular;
 		renderMaterial.reflectance = material.reflectance;
 		renderMaterial.ambientOcclusion = material.ambientOcclusion;
+		renderMaterial.clearCoat = material.clearCoat;
+		renderMaterial.clearCoatRoughness = material.clearCoatRoughness;
+		renderMaterial.anisotropy = material.anisotropy;
+		renderMaterial.heightScale = material.heightScale;
 
 		renderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
 		renderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
@@ -2586,6 +2590,7 @@ namespace r2::draw::renderer
 		renderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
 		renderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
 		renderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
+		renderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
 	}
 
 	void PopulateRenderDataFromRenderBatch(r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, u32 baseInstanceOffset, u32 drawCommandBatchSize)

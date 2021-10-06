@@ -59,12 +59,17 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ROUGHNESSTEXTURE = 20,
     VT_AOTEXTURE = 22,
     VT_HEIGHTTEXTURE = 24,
-    VT_BASECOLOR = 26,
-    VT_SPECULAR = 28,
-    VT_ROUGHNESS = 30,
-    VT_METALLIC = 32,
-    VT_REFLECTANCE = 34,
-    VT_AMBIENTOCCLUSION = 36
+    VT_ANISOTROPYTEXTURE = 26,
+    VT_BASECOLOR = 28,
+    VT_SPECULAR = 30,
+    VT_ROUGHNESS = 32,
+    VT_METALLIC = 34,
+    VT_REFLECTANCE = 36,
+    VT_AMBIENTOCCLUSION = 38,
+    VT_CLEARCOAT = 40,
+    VT_CLEARCOATROUGHNESS = 42,
+    VT_ANISOTROPY = 44,
+    VT_HEIGHTSCALE = 46
   };
   uint64_t name() const {
     return GetField<uint64_t>(VT_NAME, 0);
@@ -99,6 +104,9 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t heightTexture() const {
     return GetField<uint64_t>(VT_HEIGHTTEXTURE, 0);
   }
+  uint64_t anisotropyTexture() const {
+    return GetField<uint64_t>(VT_ANISOTROPYTEXTURE, 0);
+  }
   const flat::Color *baseColor() const {
     return GetStruct<const flat::Color *>(VT_BASECOLOR);
   }
@@ -117,6 +125,18 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float ambientOcclusion() const {
     return GetField<float>(VT_AMBIENTOCCLUSION, 0.0f);
   }
+  float clearCoat() const {
+    return GetField<float>(VT_CLEARCOAT, 0.0f);
+  }
+  float clearCoatRoughness() const {
+    return GetField<float>(VT_CLEARCOATROUGHNESS, 0.0f);
+  }
+  float anisotropy() const {
+    return GetField<float>(VT_ANISOTROPY, 0.0f);
+  }
+  float heightScale() const {
+    return GetField<float>(VT_HEIGHTSCALE, 0.0f);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_NAME) &&
@@ -130,12 +150,17 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint64_t>(verifier, VT_ROUGHNESSTEXTURE) &&
            VerifyField<uint64_t>(verifier, VT_AOTEXTURE) &&
            VerifyField<uint64_t>(verifier, VT_HEIGHTTEXTURE) &&
+           VerifyField<uint64_t>(verifier, VT_ANISOTROPYTEXTURE) &&
            VerifyField<flat::Color>(verifier, VT_BASECOLOR) &&
            VerifyField<float>(verifier, VT_SPECULAR) &&
            VerifyField<float>(verifier, VT_ROUGHNESS) &&
            VerifyField<float>(verifier, VT_METALLIC) &&
            VerifyField<float>(verifier, VT_REFLECTANCE) &&
            VerifyField<float>(verifier, VT_AMBIENTOCCLUSION) &&
+           VerifyField<float>(verifier, VT_CLEARCOAT) &&
+           VerifyField<float>(verifier, VT_CLEARCOATROUGHNESS) &&
+           VerifyField<float>(verifier, VT_ANISOTROPY) &&
+           VerifyField<float>(verifier, VT_HEIGHTSCALE) &&
            verifier.EndTable();
   }
 };
@@ -177,6 +202,9 @@ struct MaterialBuilder {
   void add_heightTexture(uint64_t heightTexture) {
     fbb_.AddElement<uint64_t>(Material::VT_HEIGHTTEXTURE, heightTexture, 0);
   }
+  void add_anisotropyTexture(uint64_t anisotropyTexture) {
+    fbb_.AddElement<uint64_t>(Material::VT_ANISOTROPYTEXTURE, anisotropyTexture, 0);
+  }
   void add_baseColor(const flat::Color *baseColor) {
     fbb_.AddStruct(Material::VT_BASECOLOR, baseColor);
   }
@@ -194,6 +222,18 @@ struct MaterialBuilder {
   }
   void add_ambientOcclusion(float ambientOcclusion) {
     fbb_.AddElement<float>(Material::VT_AMBIENTOCCLUSION, ambientOcclusion, 0.0f);
+  }
+  void add_clearCoat(float clearCoat) {
+    fbb_.AddElement<float>(Material::VT_CLEARCOAT, clearCoat, 0.0f);
+  }
+  void add_clearCoatRoughness(float clearCoatRoughness) {
+    fbb_.AddElement<float>(Material::VT_CLEARCOATROUGHNESS, clearCoatRoughness, 0.0f);
+  }
+  void add_anisotropy(float anisotropy) {
+    fbb_.AddElement<float>(Material::VT_ANISOTROPY, anisotropy, 0.0f);
+  }
+  void add_heightScale(float heightScale) {
+    fbb_.AddElement<float>(Material::VT_HEIGHTSCALE, heightScale, 0.0f);
   }
   explicit MaterialBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -220,13 +260,19 @@ inline flatbuffers::Offset<Material> CreateMaterial(
     uint64_t roughnessTexture = 0,
     uint64_t aoTexture = 0,
     uint64_t heightTexture = 0,
+    uint64_t anisotropyTexture = 0,
     const flat::Color *baseColor = 0,
     float specular = 0.0f,
     float roughness = 0.0f,
     float metallic = 0.0f,
     float reflectance = 0.0f,
-    float ambientOcclusion = 0.0f) {
+    float ambientOcclusion = 0.0f,
+    float clearCoat = 0.0f,
+    float clearCoatRoughness = 0.0f,
+    float anisotropy = 0.0f,
+    float heightScale = 0.0f) {
   MaterialBuilder builder_(_fbb);
+  builder_.add_anisotropyTexture(anisotropyTexture);
   builder_.add_heightTexture(heightTexture);
   builder_.add_aoTexture(aoTexture);
   builder_.add_roughnessTexture(roughnessTexture);
@@ -238,6 +284,10 @@ inline flatbuffers::Offset<Material> CreateMaterial(
   builder_.add_texturePackName(texturePackName);
   builder_.add_shader(shader);
   builder_.add_name(name);
+  builder_.add_heightScale(heightScale);
+  builder_.add_anisotropy(anisotropy);
+  builder_.add_clearCoatRoughness(clearCoatRoughness);
+  builder_.add_clearCoat(clearCoat);
   builder_.add_ambientOcclusion(ambientOcclusion);
   builder_.add_reflectance(reflectance);
   builder_.add_metallic(metallic);
