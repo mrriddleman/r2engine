@@ -352,6 +352,8 @@ public:
         }
 
         mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRef, NUM_DRAWS);
+        mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+
 		mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRef, 3);
 
         mSkyboxMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, 1);
@@ -550,10 +552,15 @@ public:
 
         mSelectedAnimModel = mSkeletonModel;
 
+
+        r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
+        R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
+
         for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
+            r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
         }
 
 
@@ -961,8 +968,10 @@ public:
     virtual void Render(float alpha) override
     {
 
-        r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
+        
 
+      //  r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
+        r2::draw::renderer::DrawModelsOnLayer(r2::draw::DL_WORLD, *mStaticModelRefs, mStaticModelMaterialHandles, *modelMats, *mStaticModelDrawFlags, nullptr);
 
         r2::draw::DrawFlags animDrawFlags;
         animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
@@ -1064,6 +1073,7 @@ public:
 
         FREE(mSkyboxMaterialHandles, *linearArenaPtr);
 
+        FREE(mStaticModelMaterialHandles, *linearArenaPtr);
         FREE(mStaticModelRefs, *linearArenaPtr);
         FREE(mAnimModelRefs, *linearArenaPtr);
 
@@ -1228,6 +1238,7 @@ private:
 
     r2::SArray<r2::draw::ModelRef>* mAnimModelRefs;
     r2::SArray<r2::draw::ModelRef>* mStaticModelRefs;
+    r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
     r2::draw::ModelRef mSkyboxModelRef;
     r2::SArray<r2::draw::MaterialHandle>* mSkyboxMaterialHandles;
 

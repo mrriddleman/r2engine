@@ -298,7 +298,8 @@
         b: 0.0,
         a: 1.0
       },
-      roughness: 1.0
+      roughness: 1.0,
+      heightScale: 0.1
     }
   ]
 }

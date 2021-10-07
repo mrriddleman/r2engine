@@ -152,10 +152,10 @@ void main()
 
 	vec3 viewDirTangent = normalize(fs_in.viewPosTangent - fs_in.fragPosTangent);
 
-//	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
+	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
 
-//	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
-  //      discard;
+	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+ 	    discard;
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
@@ -288,14 +288,16 @@ vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 
 	float modifier = GetTextureModifier(addr);
 
-	if(modifier <= 0.0)
+	const float heightScale =  materials[texIndex].heightScale;
+
+	if(modifier <= 0.0 || heightScale <= 0.0)
 		return uv;
 
 	float currentLayerDepth = 0.0;
 
 	const float minLayers = 8;
 	const float maxLayers = 32;
-	const float heightScale = 0.05;
+
 	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
 
 	float layerDepth = 1.0 / numLayers;

@@ -27,5 +27,5 @@
 	clearCoat:0.0,
 	clearCoatRoughness:0.0,
 	anisotropy:0.0,
-	heightScale:0.0
+	heightScale:0.05
 }

@@ -2582,6 +2582,11 @@ namespace r2::draw::renderer
 		renderMaterial.anisotropy = material.anisotropy;
 		renderMaterial.heightScale = material.heightScale;
 
+		if (renderMaterial.heightScale > 0)
+		{
+			int k = 0;
+		}
+
 		renderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
 		renderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
 		renderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
