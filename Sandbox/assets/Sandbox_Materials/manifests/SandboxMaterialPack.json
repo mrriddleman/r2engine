@@ -2,6 +2,32 @@
   name: 7154290999323336440,
   materials: [
     {
+      name: 254534012248538617,
+      shader: 3292306756035476612,
+      texturePackName: 14695981039346656837,
+      diffuseTexture: 14695981039346656837,
+      specularTexture: 14695981039346656837,
+      normalMapTexture: 14695981039346656837,
+      emissionTexture: 14695981039346656837,
+      metallicTexture: 14695981039346656837,
+      roughnessTexture: 14695981039346656837,
+      aoTexture: 14695981039346656837,
+      heightTexture: 14695981039346656837,
+      anisotropyTexture: 14695981039346656837,
+      baseColor: {
+        r: 0.0,
+        g: 0.0,
+        b: 1.0,
+        a: 1.0
+      },
+      roughness: 0.5,
+      metallic: 0.2,
+      reflectance: 0.2,
+      ambientOcclusion: 1.0,
+      clearCoat: 0.9,
+      clearCoatRoughness: 0.3
+    },
+    {
       name: 6088666330291882227,
       shader: 3766703618186070365,
       texturePackName: 18199531748715869547,
@@ -299,7 +325,7 @@
         a: 1.0
       },
       roughness: 1.0,
-      heightScale: 0.1
+      heightScale: 0.05
     }
   ]
 }

@@ -556,11 +556,22 @@ public:
         r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
         R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
 
+        r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
+        R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+
         for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-            r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+
+            if (nextModel == r2::draw::SPHERE)
+            {
+                r2::sarr::Push(*mStaticModelMaterialHandles, blueClearCoatMaterialHandle);
+            }
+            else
+            {
+                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+            }
         }
 
 
@@ -623,8 +634,7 @@ public:
 			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
 			//dirLight.lightProperties.intensity = 2;
 
-
-			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+		//	r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
             //r2::draw::SpotLight spotLight;
             //spotLight.lightProperties.color = glm::vec4(1.0f);
@@ -680,7 +690,7 @@ public:
 			//pointLight4.lightProperties.fallOff = 0;
 
 
-			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
+//			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
 
         }
 

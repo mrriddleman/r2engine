@@ -8,6 +8,7 @@ const uint MAX_NUM_LIGHTS = 50;
 layout (location = 0) out vec4 FragColor;
 
 #define PI 3.141596
+#define MIN_PERCEPTUAL_ROUGHNESS 0.045
 
 struct Tex2DAddress
 {
@@ -113,6 +114,7 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
+vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 vec4 SampleMaterialNormal(uint drawID, vec3 uv);
@@ -135,7 +137,9 @@ float D_GGX(float NoH, float roughness);
 vec3  F_Schlick(float LoH, vec3 F0);
 float F_Schlick(float f0, float f90, float VoH);
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness);
+float V_Kelemen(float LoH);
+float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float LoH, out float Fcc);
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness, float clearCoat, float clearCoatRoughness);
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
@@ -288,7 +292,7 @@ vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 
 	float modifier = GetTextureModifier(addr);
 
-	const float heightScale =  materials[texIndex].heightScale;
+	const float heightScale =  0.0;//materials[texIndex].heightScale;
 
 	if(modifier <= 0.0 || heightScale <= 0.0)
 		return uv;
@@ -373,6 +377,11 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 	return clamp(0.5 / (GGXV + GGXL), 0.0, 1.0);
 }
 
+float V_Kelemen(float LoH)
+{
+	return clamp(0.25 / (LoH * LoH), 0.0, 1.0);
+}
+
 float Fd_Lambert()
 {
 	return 1.0 / PI;
@@ -388,7 +397,19 @@ float Fd_Burley(float roughness, float NoV, float NoL, float LoH)
 }
 
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness)
+float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float LoH, out float Fcc)
+{
+	float clearCoatNoH = NoH;
+
+	float Dcc = D_GGX(clearCoatNoH, clearCoatRoughness);
+	float Vcc = V_Kelemen(LoH);
+	float F = F_Schlick(0.04, 1.0, LoH) * clearCoat;
+
+	Fcc = F;
+	return Dcc * Vcc * F;
+}
+
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness, float clearCoat, float clearCoatRoughness)
 {
 	vec3 H = normalize(V + L);
 
@@ -414,9 +435,12 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
 
-	return (kD * Fd + specular);
-}
+	float Fcc;
+	float clearCoatLobe = ClearCoatLobe(clearCoat, clearCoatRoughness, NoH, LoH, Fcc);
+	float attenuation = 1.0 - Fcc;
 
+	return (kD * Fd + specular) * attenuation + clearCoatLobe;
+}
 
 float GetDistanceAttenuation(vec3 posToLight, float falloff)
 {
@@ -431,12 +455,51 @@ float GetDistanceAttenuation(vec3 posToLight, float falloff)
     return attenuation * 1.0 / max(distanceSquare, 1e-4);
 }
 
+vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat)
+{
+	vec3 newF0 = clamp(F0 * (F0 * (0.941892 - 0.263008 * F0) + 0.346479) - 0.0285998, 0.0, 1.0);
+	return mix(F0, newF0, clearCoat);
+}
+
+float CalculateClearCoatRoughness(float clearCoatPerceptualRoughness)
+{
+	return clearCoatPerceptualRoughness * clearCoatPerceptualRoughness;
+}
+
+vec3 CalcEnergyCompensation(vec3 F0, vec2 dfg)
+{
+	return 1.0 + F0 * (1.0 / dfg.y - 1.0);
+	//return vec3(1.0);
+}
+
+vec3 SpecularDFG(vec3 F0, vec2 dfg)
+{
+	return mix(dfg.xxx, dfg.yyy, F0);
+}
+
+float SpecularAO_Lagarde(float NoV, float visibility, float roughness) {
+    // Lagarde and de Rousiers 2014, "Moving Frostbite to PBR"
+    return clamp(pow(NoV + visibility, exp2(-16.0 * roughness - 1.0)) - 1.0 + visibility, 0.0, 1.0);
+}
+
+void EvalClearCoatIBL(vec3 clearCoatReflectionVector, float clearCoatNoV, float clearCoat, float clearCoatRoughness, float clearCoatPerceptualRoughness, float diffuseAO, inout vec3 Fd, inout vec3 Fr)
+{
+	float Fc = F_Schlick(0.04, 1.0, clearCoatNoV) * clearCoat;
+	float attenuation = 1.0 - Fc;
+	Fd *= attenuation;
+	Fr *= attenuation;
+
+	float specularAO = SpecularAO_Lagarde(clearCoatNoV, diffuseAO, clearCoatRoughness);
+	Fr += SampleMaterialPrefilteredRoughness(clearCoatReflectionVector, clearCoatPerceptualRoughness * numPrefilteredRoughnessMips).rgb * (specularAO * Fc);
+}
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 {
+	vec3 color = vec3(0.0);
+
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	
-	float reflectance = materials[texIndex].reflectance;
+	float reflectance =  materials[texIndex].reflectance;
 
 	float metallic = SampleMaterialMetallic(drawID, uv).r;
 
@@ -448,13 +511,39 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	
-
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
 	vec3 R = reflect(-V, N);
 
-	
+	float clearCoat = materials[texIndex].clearCoat;
+	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float clearCoatRoughness = CalculateClearCoatRoughness(clearCoatPerceptualRoughness);
 
+	F0 = CalculateClearCoatBaseF0(F0, clearCoat);
+	
+	float NoV = max(dot(N,V), 0.0);
+
+	//this is evaluating the IBL stuff
+	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
+	vec3 prefilteredRadiance = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
+	vec2 dfg = SampleLUTDFG(vec2(NoV, roughness)).rg;
+
+	vec3 energyCompensation = vec3(1.0);//CalcEnergyCompensation(F0, dfg);
+	float specularAO =  SpecularAO_Lagarde(NoV, ao, roughness);
+
+	vec3 E = F_SchlickRoughness(NoV, F0, roughness);
+	vec3 Fr = E * prefilteredRadiance;
+
+	Fr *= (specularAO * energyCompensation);
+
+	vec3 Fd = diffuseColor * diffuseIrradiance * (1.0 - E) * ao;
+
+	EvalClearCoatIBL(R, NoV, clearCoat, clearCoatRoughness, clearCoatPerceptualRoughness, ao, Fd, Fr);
+
+	color += (Fd + Fr);
+
+
+	//evaluate the lights
 	vec3 L0 = vec3(0,0,0);
 
 	 for(int i = 0; i < numDirectionLights; i++)
@@ -467,7 +556,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+	 	vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
 
 	 	L0 += result * radiance * NoL;
 	 }
@@ -486,7 +575,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
 		
 		L0 += result * radiance * NoL;
 	}
@@ -516,24 +605,22 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness);
+		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
 
 		L0 += result * radiance * NoL;
 	}
 
-	vec3 kS = F_SchlickRoughness(max(dot(N,V), 0.0), F0, roughness);
-	vec3 kD = 1.0 - kS;
-	kD *= 1.0 - metallic;
+	//vec3 kS = F_SchlickRoughness(max(dot(N,V), 0.0), F0, roughness);
+	//vec3 kD = 1.0 - kS;
+	//kD *= 1.0 - metallic;
  
- 	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
-	vec3 prefilteredColor = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
-	vec2 brdf = SampleLUTDFG(vec2(max(dot(N,V), 0.0), roughness)).rg;
 
-	vec3 specular = prefilteredColor * (brdf.y + brdf.x ) * kS;
 
-	vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao;
+	//vec3 specular = prefilteredColor * (dfg.y + dfg.x ) * kS;
 
-	vec3 color = ambient + L0;
+	//vec3 ambient = (kD * baseColor * diffuseIrradiance + specular) * ao;
+
+	color += L0; //+ambient
 
 	return color;
 }
