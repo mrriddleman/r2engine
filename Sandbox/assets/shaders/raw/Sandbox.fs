@@ -348,9 +348,12 @@ vec4 SampleSkylightDiffuseIrradiance(vec3 uv)
 
 float D_GGX(float NoH, float roughness)
 {
-	float a2 = roughness * roughness;
-	float f = (NoH * a2 - NoH) * NoH + 1.0;
-	return a2 / (PI * f * f);
+	float oneMinusNoHSquared = 1.0 - NoH * NoH;
+
+	float a = NoH * roughness;
+	float k = roughness / (oneMinusNoHSquared + a * a);
+	float d = k * k * (1.0 / PI);
+	return clamp(d, 0.0, 1.0);
 }
 
 vec3 F_Schlick(float LoH, vec3 F0)
@@ -372,8 +375,8 @@ vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness)
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
 {
 	float a2 = roughness * roughness;
-	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
-	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+	float GGXL = NoV * sqrt((NoL - a2 * NoL) * NoL + a2);
+	float GGXV = NoL * sqrt((NoV - a2 * NoV) * NoV + a2);
 	return clamp(0.5 / (GGXV + GGXL), 0.0, 1.0);
 }
 
@@ -505,7 +508,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float ao = SampleMaterialAO(drawID, uv).r;
 
-	float perceptualRoughness =  SampleMaterialRoughness(drawID, uv).r;
+	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
@@ -515,7 +518,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 R = reflect(-V, N);
 
-	float clearCoat = materials[texIndex].clearCoat;
+	float clearCoat =  materials[texIndex].clearCoat;
 	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 	float clearCoatRoughness = CalculateClearCoatRoughness(clearCoatPerceptualRoughness);
 

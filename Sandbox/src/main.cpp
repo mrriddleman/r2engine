@@ -628,13 +628,13 @@ public:
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
 
 
-			//r2::draw::DirectionLight dirLight;
-			//dirLight.lightProperties.color = glm::vec4(1.0f);
+			r2::draw::DirectionLight dirLight;
+			dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
-			//dirLight.lightProperties.intensity = 2;
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
+			dirLight.lightProperties.intensity = 2;
 
-		//	r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
             //r2::draw::SpotLight spotLight;
             //spotLight.lightProperties.color = glm::vec4(1.0f);
