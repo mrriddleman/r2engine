@@ -1,0 +1,32 @@
+{
+	name:"BrushedMetal",
+	shader:"Sandbox",
+	
+	texturePackName:"BrushedMetal",
+
+	diffuseTexture:"brushedmetal/albedo/brushed_metal_albedo.png",
+	specularTexture:"",
+	normalMapTexture:"brushedmetal/normal/brushed_metal_normal.png",
+	emissionTexture:"",
+	metallicTexture:"brushedmetal/metallic/brushed_metal_metallic.png",
+	roughnessTexture:"",
+	aoTexture:"brushedmetal/occlusion/brushed_metal_ao.png",
+	heightTexture:"",
+	anisotropyTexture:"",
+
+	baseColor:{
+		r: 0.0,
+		g: 0.0,
+		b: 1.0,
+		a: 1.0
+	},
+	specular:0.0,
+	roughness:0.4,
+	metallic:0.2,
+	reflectance:0.6,
+	ambientOcclusion:1.0,
+	clearCoat:0.0,
+	clearCoatRoughness:0.0,
+	anisotropy:1.0,
+	heightScale:0.0
+}

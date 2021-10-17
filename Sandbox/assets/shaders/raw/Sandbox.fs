@@ -106,6 +106,8 @@ in VS_OUT
 	vec3 texCoords;
 	vec3 fragPos;
 	vec3 normal;
+	vec3 tangent;
+	vec3 bitangent;
 	mat3 TBN;
 
 	vec3 fragPosTangent;
@@ -134,12 +136,20 @@ float Fd_Lambert();
 float Fd_Burley(float roughness, float NoV, float NoL, float LoH);
 
 float D_GGX(float NoH, float roughness);
+float D_GGX_Anisotropic(float at, float ab, float ToH, float BoH, float NoH);
 vec3  F_Schlick(float LoH, vec3 F0);
 float F_Schlick(float f0, float f90, float VoH);
+vec3 F_Schlick(const vec3 F0, float F90, float VoH);
 float V_SmithGGXCorrelated(float NoV, float NoL, float roughness);
+float V_SmithGGXCorrelated_Anisotropic(float at, float ab, float ToV, float BoV, float ToL, float BoL, float NoV, float NoL);
 float V_Kelemen(float LoH);
 float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float LoH, out float Fcc);
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness, float clearCoat, float clearCoatRoughness);
+
+
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness);
+vec3 BRDF_Anisotropic(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness);
+
+vec3 Eval_BRDF(bool anisotropic, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness);
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
@@ -156,12 +166,16 @@ void main()
 
 	vec3 viewDirTangent = normalize(fs_in.viewPosTangent - fs_in.fragPosTangent);
 
-	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
+//	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
 
-	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
- 	    discard;
+//	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+// 	    discard;
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
+
+	if(sampledColor.a < 0.0001)
+		discard;
+
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
 	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords);
@@ -171,6 +185,8 @@ void main()
 
 
 	FragColor = vec4(lightingResult + emission , 1.0);
+
+
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -265,7 +281,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.5) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(1.0) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -282,7 +298,21 @@ float SampleMaterialHeight(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * 0.0 + modifier * (1.0 - texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
+	return 0.0 + modifier * (1.0 - texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
+}
+
+vec3 SampleAnisotropy(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	Tex2DAddress addr = materials[texIndex].anisotropyTexture1;
+
+	float modifier = GetTextureModifier(addr);
+
+	vec3 anisotropyDirection = texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
+
+	anisotropyDirection = anisotropyDirection;
+
+	return (1.0 - modifier) * fs_in.tangent + modifier * fs_in.TBN * anisotropyDirection;// + modifier * (fs_in.TBN * anisotropyDirection);
 }
 
 vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
@@ -356,6 +386,17 @@ float D_GGX(float NoH, float roughness)
 	return clamp(d, 0.0, 1.0);
 }
 
+float D_GGX_Anisotropic(float at, float ab, float ToH, float BoH, float NoH)
+{
+	// Burley 2012, "Physically-Based Shading at Disney"
+
+	highp float a2 = at * ab;
+	highp vec3 d = vec3(ab * ToH, at * BoH, a2 * NoH);
+	highp float d2 = dot(d, d);
+	highp float b2 = a2 / d2;
+	return a2 * b2 * b2 * (1.0 / PI);
+}
+
 vec3 F_Schlick(float LoH, vec3 F0)
 {
 	return F0 + (vec3(1.0) - F0) * pow(1.0 - LoH, 5.0);
@@ -366,18 +407,37 @@ float F_Schlick(float f0, float f90, float VoH)
     return f0 + (f90 - f0) * pow(1.0 - VoH, 5.0);
 }
 
+vec3 F_Schlick(const vec3 F0, float F90, float VoH)
+{
+	return F0 + (F90 - F0) * pow(1.0 - VoH, 5.0);
+}
+
+vec3 Fresnel(const vec3 f0, float LoH) 
+{
+    float f90 = clamp(dot(f0, vec3(50.0 * 0.33)), 0.0, 1.0);
+    return F_Schlick(f0, f90, LoH);
+}
+
 vec3 F_SchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
 	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
 
-float V_SmithGGXCorrelated(float NoV, float NoL, float roughness)
+float V_SmithGGXCorrelated(float NoV, float NoL, float roughness, float ggxVTerm)
 {
 	float a2 = roughness * roughness;
 	float GGXL = NoV * sqrt((NoL - a2 * NoL) * NoL + a2);
-	float GGXV = NoL * sqrt((NoV - a2 * NoV) * NoV + a2);
+	float GGXV = NoL * ggxVTerm;
 	return clamp(0.5 / (GGXV + GGXL), 0.0, 1.0);
+}
+
+float V_SmithGGXCorrelated_Anisotropic(float at, float ab, float lambdaVTerm, float ToL, float BoL, float NoV, float NoL)
+{
+	float lambdaV = NoL * lambdaVTerm;
+	float lambdaL = NoV * length(vec3(at * ToL, ab * BoL, NoL));
+	float v = 0.5 / (lambdaV + lambdaL);
+	return clamp(v, 0.0, 1.0);
 }
 
 float V_Kelemen(float LoH)
@@ -412,17 +472,19 @@ float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float 
 	return Dcc * Vcc * F;
 }
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float roughness, float clearCoat, float clearCoatRoughness)
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
 {
 	vec3 H = normalize(V + L);
 
-	float NoV = abs(dot(N, V)) + 1e-5;
+	
 	float NoH = clamp(dot(N, H), 0.0, 1.0);
 	float LoH = clamp(dot(L, H), 0.0, 1.0);
+	float clearCoatNoH = clamp(dot(clearCoatNormal, H), 0.0, 1.0);
+
 
 	float D = D_GGX(NoH, roughness);
 	vec3 F = F_Schlick(max(dot(H, V), 0.0), F0);
-	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness);
+	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness, ggxVTerm);
 
 	//specular BRDF
 	vec3 Fr = (D * VSmith) * F;
@@ -439,10 +501,46 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoL, float r
 	vec3 kD = vec3(1.0) - kS;
 
 	float Fcc;
-	float clearCoatLobe = ClearCoatLobe(clearCoat, clearCoatRoughness, NoH, LoH, Fcc);
+	float clearCoatLobe = ClearCoatLobe(clearCoat, clearCoatRoughness, clearCoatNoH, LoH, Fcc);
 	float attenuation = 1.0 - Fcc;
 
 	return (kD * Fd + specular) * attenuation + clearCoatLobe;
+}
+
+vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float lambdaVTerm, float roughness)
+{
+	vec3 H = normalize(V + L);
+	vec3 T = anisotropicT ; //TODO(Serge): calculate this by passing in the materials anisotropic direction - probably need to pass in
+	vec3 B = anisotropicB; //TODO(Serge): calc based on anisotropic direction
+
+	float LoH = clamp(dot(L, H), 0.0, 1.0);
+	float ToL = dot(T, L);
+	float BoL = dot(B, L);
+	float ToH = dot(T, H);
+	float BoH = dot(B, H);
+	float NoH = dot(N, H);
+
+	float Da = D_GGX_Anisotropic(at, ab, ToH, BoH, NoH);
+	float Va = V_SmithGGXCorrelated_Anisotropic(at, ab, lambdaVTerm, ToL, BoL, NoV, NoL);	
+	vec3 F = Fresnel(F0, LoH);
+
+	vec3 Fr = (Da * Va) * F;
+	vec3 Fd = diffuseColor * Fd_Lambert();
+
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+
+	return (kD * Fd + Fr);
+}
+
+vec3 Eval_BRDF(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
+{
+	if(anisotropy != 0.0)
+	{
+		return BRDF_Anisotropic(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness); 
+	}
+	
+	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 }
 
 float GetDistanceAttenuation(vec3 posToLight, float falloff)
@@ -496,6 +594,23 @@ void EvalClearCoatIBL(vec3 clearCoatReflectionVector, float clearCoatNoV, float 
 	Fr += SampleMaterialPrefilteredRoughness(clearCoatReflectionVector, clearCoatPerceptualRoughness * numPrefilteredRoughnessMips).rgb * (specularAO * Fc);
 }
 
+vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 anisotropyB, float perceptualRoughness, const vec3 V, const vec3 N)
+{
+	if(anisotropy != 0.0)
+	{
+		vec3 anisotropyDirection = anisotropy >= 0.0 ? anisotropyB : anisotropyT;
+		vec3 anisotropicTangent = cross(anisotropyDirection, V);
+		vec3 anisotripicNormal = cross(anisotropicTangent, anisotropyDirection);
+		float bendFactor = abs(anisotropy) * clamp(5.0 * perceptualRoughness, 0.0, 1.0);
+		vec3 bentNormal = normalize(mix(N, anisotripicNormal, bendFactor));
+
+		return reflect(-V, bentNormal);
+	}
+
+	return reflect(-V, N);
+}
+
+
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 {
 	vec3 color = vec3(0.0);
@@ -504,11 +619,13 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	
 	float reflectance =  materials[texIndex].reflectance;
 
+	float anisotropy =  materials[texIndex].anisotropy;
+
 	float metallic = SampleMaterialMetallic(drawID, uv).r;
 
 	float ao = SampleMaterialAO(drawID, uv).r;
 
-	float perceptualRoughness = SampleMaterialRoughness(drawID, uv).r;
+	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
@@ -516,15 +633,23 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
-	vec3 R = reflect(-V, N);
+	vec3 anisotropicT = normalize(SampleAnisotropy(drawID, uv));
+	vec3 anisotropicB = normalize(cross(fs_in.normal, anisotropicT));
 
-	float clearCoat =  materials[texIndex].clearCoat;
+	vec3 R = GetReflectionVector(anisotropy, anisotropicT, anisotropicB, perceptualRoughness, V, N);
+
+	float clearCoat = materials[texIndex].clearCoat;
+	vec3 clearCoatNormal = fs_in.normal; //geometric normal
 	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 	float clearCoatRoughness = CalculateClearCoatRoughness(clearCoatPerceptualRoughness);
 
 	F0 = CalculateClearCoatBaseF0(F0, clearCoat);
 	
+
 	float NoV = max(dot(N,V), 0.0);
+	float ToV = dot(anisotropicT, V);
+	float BoV = dot(anisotropicB, V);
+	float clearCoatNoV = max(dot(clearCoatNormal, V), 0.0);
 
 	//this is evaluating the IBL stuff
 	vec3 diffuseIrradiance = SampleSkylightDiffuseIrradiance(N).rgb;
@@ -541,12 +666,34 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 Fd = diffuseColor * diffuseIrradiance * (1.0 - E) * ao;
 
-	EvalClearCoatIBL(R, NoV, clearCoat, clearCoatRoughness, clearCoatPerceptualRoughness, ao, Fd, Fr);
+	if(anisotropy == 0.0)
+	{
+		vec3 clearCoatR = reflect(-V, clearCoatNormal);
+		EvalClearCoatIBL(clearCoatR, clearCoatNoV, clearCoat, clearCoatRoughness, clearCoatPerceptualRoughness, ao, Fd, Fr);
+	}
+	
 
 	color += (Fd + Fr);
 
 
 	//evaluate the lights
+	
+	//for standard model
+	float a2 = roughness * roughness;
+	float ggxVTerm = sqrt((NoV - a2 * NoV) * NoV + a2);
+
+	//for anisotropic model
+	float at = max(roughness * (1.0 + anisotropy), MIN_PERCEPTUAL_ROUGHNESS);
+	float ab = max(roughness * (1.0 - anisotropy), MIN_PERCEPTUAL_ROUGHNESS);
+
+	if(abs(anisotropy) < 1e-5)
+	{
+		float ToV = dot(fs_in.tangent, V);
+		float BoV = dot(fs_in.bitangent, V);
+
+		ggxVTerm = length(vec3(at * ToV, ab * BoV, NoV));
+	}
+
 	vec3 L0 = vec3(0,0,0);
 
 	 for(int i = 0; i < numDirectionLights; i++)
@@ -556,10 +703,11 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 	vec3 L = normalize(-dirLight.direction.xyz);
 
 	 	float NoL = clamp(dot(N, L), 0.0, 1.0);
+	 	float clearCoatNoL = clamp(dot(clearCoatNormal, L), 0.0, 1.0);
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
+	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 
 	 	L0 += result * radiance * NoL;
 	 }
@@ -578,7 +726,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 		
 		L0 += result * radiance * NoL;
 	}
@@ -608,7 +756,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = BRDF(diffuseColor, N, V, L, F0, NoL, roughness, clearCoat, clearCoatRoughness);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 
 		L0 += result * radiance * NoL;
 	}

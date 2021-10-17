@@ -1,6 +1,43 @@
 {
   texturePacks: [
     {
+      packName: 15429678186849467113,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/albedo/brushed_metal_albedo.png"
+      ],
+      normal: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/normal/brushed_metal_normal.png"
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/metallic/brushed_metal_metallic.png"
+      ],
+      occlusion: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/occlusion/brushed_metal_ao.png"
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      anisotropy: [
+
+      ],
+      packSize: 3220696,
+      totalNumberOfTextures: 4,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
+    },
+    {
       packName: 18199531748715869547,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.png",
@@ -35,10 +72,10 @@
 
       ],
       anisotropy: [
-
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/anisotropy/Ellen_Hair_Aniso.png"
       ],
-      packSize: 44828007,
-      totalNumberOfTextures: 14,
+      packSize: 44891947,
+      totalNumberOfTextures: 15,
       metaData: {
         mipLevels: [
 
@@ -608,7 +645,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 75,
-  totalTextureSize: 135564585,
+  totalNumberOfTextures: 80,
+  totalTextureSize: 138849221,
   maxTexturesInAPack: 36
 }

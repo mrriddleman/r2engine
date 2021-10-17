@@ -30,6 +30,8 @@ out VS_OUT
 	vec3 texCoords; 
 	vec3 fragPos;
 	vec3 normal;
+	vec3 tangent;
+	vec3 bitangent;
 	mat3 TBN;
 
 	vec3 fragPosTangent;
@@ -51,9 +53,10 @@ void main()
 
 	T = normalize(T - dot(T, vs_out.normal) * vs_out.normal);
 
-	vec3 B = cross(vs_out.normal, T);
+	vec3 B = normalize(cross(vs_out.normal, T));
 
-	
+	vs_out.tangent = T;
+	vs_out.bitangent = B;
 
 
 	vs_out.TBN = mat3(T, B, vs_out.normal);

@@ -37,12 +37,23 @@ layout (std140, binding = 3) buffer BoneTransformOffsets
 	ivec4 boneOffsets[];
 };
 
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+    vec4 exposure;
+};
+
 out VS_OUT
 {
-	vec3 normal;
-	vec3 texCoords;
+	vec3 texCoords; 
 	vec3 fragPos;
+	vec3 normal;
+	vec3 tangent;
+	vec3 bitangent;
 	mat3 TBN;
+
+	vec3 fragPosTangent;
+	vec3 viewPosTangent;
 
 	flat uint drawID;
 } vs_out;
@@ -68,11 +79,18 @@ void main()
 
 	vec3 B = cross(vs_out.normal, T);
 
+	vs_out.tangent = T;
+	vs_out.bitangent = B;
+
 	vs_out.TBN = mat3(T, B, vs_out.normal);
+	mat3 TBN = transpose(vs_out.TBN);
 
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
 	vs_out.fragPos = modelPos.xyz;
+
+	vs_out.fragPosTangent = TBN * vs_out.fragPos;
+	vs_out.viewPosTangent = TBN * cameraPosTimeW.xyz;
 
 	gl_Position = projection * view * modelPos;
 

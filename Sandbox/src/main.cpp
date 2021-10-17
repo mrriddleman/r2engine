@@ -559,6 +559,9 @@ public:
         r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
         R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
 
+        r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
+        R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
+
         for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
@@ -566,7 +569,7 @@ public:
 
             if (nextModel == r2::draw::SPHERE)
             {
-                r2::sarr::Push(*mStaticModelMaterialHandles, blueClearCoatMaterialHandle);
+                r2::sarr::Push(*mStaticModelMaterialHandles, brushedMetalMaterialHandle);
             }
             else
             {
