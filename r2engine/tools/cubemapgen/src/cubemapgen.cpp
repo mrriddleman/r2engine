@@ -54,6 +54,7 @@ struct Arguments
 	bool prefilter = false;
 	bool lutDFG = false;
 	bool diffuseIrradiance = false;
+	bool multiscatter = false;
 	string inputFile = "";
 	string iblOutputDir = "";
 	string mipChainOutputDir = "";
@@ -143,6 +144,7 @@ int main(int argc, char* argv[])
 	args.AddArgument({ "-p", "--prefilter" }, &arguments.prefilter, "Make the prefilter cubemap + mipchain");
 	args.AddArgument({ "-l", "--lutDFG" }, &arguments.lutDFG, "Make the lut dfg image");
 	args.AddArgument({ "-d", "--diffuseIrradiance" }, &arguments.diffuseIrradiance, "Make the diffuse irradiance cubemap");
+	args.AddArgument({ "-s", "--multiScatter" }, &arguments.multiscatter, "Use multiscattering");
 	args.Parse(argc, argv);
 
 	if (arguments.help)
@@ -297,7 +299,7 @@ int main(int argc, char* argv[])
 			}
 
 			size_t size = arguments.outputSize > 0 ? arguments.outputSize : DFG_LUT_DEFAULT_SIZE;
-			IBLLutDFG(arguments.inputFile, arguments.iblOutputDir + "_lutDFG", size, false, false);
+			IBLLutDFG(arguments.inputFile, arguments.iblOutputDir + "_lutDFG", size, arguments.multiscatter, false);
 		}
 
 		if(arguments.diffuseIrradiance)

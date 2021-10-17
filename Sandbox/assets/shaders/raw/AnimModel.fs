@@ -472,7 +472,7 @@ float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float 
 	return Dcc * Vcc * F;
 }
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
 {
 	vec3 H = normalize(V + L);
 
@@ -491,20 +491,20 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float N
 
 	//Energy compensation
 	//vec3 energyCompensation = 1.0 + F0 * (1.0 / dfg.y - 1.0);
-	//Fr *= pixel.energyCompensation
+	Fr *= energyCompensation;
 
 	//float denom = 4.0 * NoV * NoL;
 	vec3 specular = Fr;// max(denom, 0.001);
 	vec3 Fd = diffuseColor * Fd_Lambert(); //Fd_Burley(roughness, NoV, NoL, LoH);
 
-	vec3 kS = F;
-	vec3 kD = vec3(1.0) - kS;
+	//vec3 kS = F;
+	//vec3 kD = vec3(1.0) - kS;
 
 	float Fcc;
 	float clearCoatLobe = ClearCoatLobe(clearCoat, clearCoatRoughness, clearCoatNoH, LoH, Fcc);
 	float attenuation = 1.0 - Fcc;
 
-	return (kD * Fd + specular) * attenuation + clearCoatLobe;
+	return (Fd + specular) * attenuation + clearCoatLobe;
 }
 
 vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float lambdaVTerm, float roughness)
@@ -533,14 +533,14 @@ vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, v
 	return (kD * Fd + Fr);
 }
 
-vec3 Eval_BRDF(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
+vec3 Eval_BRDF(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
 {
 	if(anisotropy != 0.0)
 	{
-		return BRDF_Anisotropic(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness); 
+		return BRDF_Anisotropic(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm,  roughness); 
 	}
 	
-	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 }
 
 float GetDistanceAttenuation(vec3 posToLight, float falloff)
@@ -570,7 +570,6 @@ float CalculateClearCoatRoughness(float clearCoatPerceptualRoughness)
 vec3 CalcEnergyCompensation(vec3 F0, vec2 dfg)
 {
 	return 1.0 + F0 * (1.0 / dfg.y - 1.0);
-	//return vec3(1.0);
 }
 
 vec3 SpecularDFG(vec3 F0, vec2 dfg)
@@ -656,7 +655,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec3 prefilteredRadiance = SampleMaterialPrefilteredRoughness(R, roughness * numPrefilteredRoughnessMips).rgb;
 	vec2 dfg = SampleLUTDFG(vec2(NoV, roughness)).rg;
 
-	vec3 energyCompensation = vec3(1.0);//CalcEnergyCompensation(F0, dfg);
+	vec3 energyCompensation = CalcEnergyCompensation(F0, dfg);
 	float specularAO =  SpecularAO_Lagarde(NoV, ao, roughness);
 
 	vec3 E = F_SchlickRoughness(NoV, F0, roughness);
@@ -707,7 +706,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 
 	 	L0 += result * radiance * NoL;
 	 }
@@ -726,7 +725,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 		
 		L0 += result * radiance * NoL;
 	}
@@ -756,7 +755,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
 
 		L0 += result * radiance * NoL;
 	}

@@ -8,11 +8,9 @@ thisFilePath = os.path.dirname(os.path.abspath(__file__))
 cubemapgenEXEPath = os.path.realpath(thisFilePath + "\\..") + "\\tools\\cubemapgen\\bin\\Debug_windows_x86_64\\cubemapgen\\cubemapgen.exe"
 
 
-def GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilterRoughness, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, mipOutputDir, quiet):
+def GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilterRoughness, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, mipOutputDir, quiet, multiScatter):
 	
-
-
-	osCall = cubemapgenEXEPath + " -q=" + quiet + " -p=" + prefilterRoughness + " -l=" + lutDFG + " -d=" + diffuseIrradiance + " -i=" + inputFile + " -o=" + outputDir + " -n=" + str(numSamples) + " -m=" + writeMipChain + " -c=" + str(numMipLevels) + " -a=" + mipOutputDir
+	osCall = cubemapgenEXEPath + " -q=" + quiet + " -p=" + prefilterRoughness + " -l=" + lutDFG + " -d=" + diffuseIrradiance + " -i=" + inputFile + " -o=" + outputDir + " -n=" + str(numSamples) + " -m=" + writeMipChain + " -c=" + str(numMipLevels) + " -a=" + mipOutputDir + " -s=" + multiScatter
 	os.system(osCall)
 
 	return;
@@ -31,13 +29,14 @@ for opt, arg in opts:
 	if opt in ['-i']:
 		inputDir = arg
 
-prefilter = "true"
+prefilter = "false"
 lutDFG = "true"
-diffuseIrradiance = "true"
-writeMipChain = "true"
+diffuseIrradiance = "false"
+writeMipChain = "false"
 quiet = "false"
 numMipLevels = 1
 numSamples = 128
+multiScatter = "true"
 
 for packdir in os.listdir(inputDir):
 	
@@ -55,6 +54,6 @@ for packdir in os.listdir(inputDir):
 				
 				for hdrfile in os.listdir(realsubpackdir):
 					inputFile = realsubpackdir + '\\' + hdrfile
-					GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilter, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, realpackdir, quiet)
+					GenerateCubemapsFromEquirectangular(inputFile, outputDir, numSamples, prefilter, lutDFG, diffuseIrradiance, writeMipChain, numMipLevels, realpackdir, quiet, multiScatter)
 				break
 			
