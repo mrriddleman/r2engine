@@ -41,10 +41,9 @@ namespace r2::draw
 		SPHERE,
 		CONE,
 		CYLINDER,
-		
-		
-		SKYBOX, 
 		FULLSCREEN_TRIANGLE,
+		SKYBOX, 
+		
 
 		NUM_DEFAULT_MODELS,
 		

@@ -475,9 +475,9 @@ namespace
 		SPHERE,
 		CONE,
 		CYLINDER,
-		
-		SKYBOX,
 		FULLSCREEN_TRIANGLE,
+		SKYBOX,
+		
 		*/
 
 		r2::SArray<r2::asset::Asset>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, MAX_DEFAULT_MODELS); 
@@ -487,10 +487,10 @@ namespace
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cone.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
-		//
 		
-		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("FullscreenTriangle.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
+		
 
 		r2::draw::modlsys::LoadMeshes(s_optrRenderer->mModelSystem, *defaultModels, *s_optrRenderer->mDefaultModelHandles);
 
@@ -2122,9 +2122,8 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*defaultModels, sphereModel);
 		r2::sarr::Push(*defaultModels, coneModel);
 		r2::sarr::Push(*defaultModels, cylinderModel);
-		
-		r2::sarr::Push(*defaultModels, skyboxModel);
 		r2::sarr::Push(*defaultModels, fullscreenTriangleModel);
+		r2::sarr::Push(*defaultModels, skyboxModel);
 
 		u64 numModels = r2::sarr::Size(*defaultModels);
 		for (u64 i = 0; i < numModels; ++i)
@@ -2174,7 +2173,7 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*modelsToUpload, sphereModel);
 		r2::sarr::Push(*modelsToUpload, coneModel);
 		r2::sarr::Push(*modelsToUpload, cylinderModel);
-		
+		r2::sarr::Push(*modelsToUpload, fullScreenTriangleModel);
 
 		UploadModels(*modelsToUpload, *s_optrRenderer->mEngineModelRefs);
 
@@ -2188,7 +2187,7 @@ namespace r2::draw::renderer
 
 		//@NOTE: because we can now re-use meshes for other models, we can re-use the CUBE mesh for the SKYBOX model
 		r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(CUBE));
-		r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, UploadModel(fullScreenTriangleModel));
+		//r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, UploadModel(fullScreenTriangleModel));
 	//	r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(QUAD));
 	}
 
@@ -3407,6 +3406,7 @@ namespace r2::draw::renderer
 		}
 
 		R2_CHECK(r2::sarr::Size(modelRefs) == r2::sarr::Size(modelMatrices), "These must be the same!");
+		R2_CHECK(r2::sarr::Size(modelRefs) == r2::sarr::Size(flags), "These must be the same!");
 
 		auto numModelRefs = r2::sarr::Size(modelRefs);
 

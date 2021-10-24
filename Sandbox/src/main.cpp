@@ -346,7 +346,7 @@ public:
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
+        for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         {
             r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
         }
@@ -565,7 +565,7 @@ public:
         r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
         R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
 
-        for (u32 i = 0; i < r2::draw::SKYBOX; ++i)
+        for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
