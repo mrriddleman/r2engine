@@ -60,7 +60,10 @@
         b: 1.0,
         a: 1.0
       },
-      roughness: 1.0,
+      roughness: 0.5,
+      metallic: 0.2,
+      reflectance: 0.2,
+      ambientOcclusion: 1.0,
       heightScale: 0.05
     },
     {

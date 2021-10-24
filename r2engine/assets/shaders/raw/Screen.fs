@@ -52,7 +52,7 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	vec3 coord = vec3(uv.rg, gBufferSurface.page);
+	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page);
 
 	return texture(sampler2DArray(gBufferSurface.container), coord);
 	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;

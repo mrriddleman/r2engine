@@ -67,5 +67,5 @@ vec4 SampleCubemapDiffuse(uint drawID, vec3 uv)
 {
 	highp uint texIndex =  drawID * NUM_TEXTURES_PER_DRAWID;
 	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
-	return textureLod(samplerCubeArray(addr.container), vec4(uv.rgb, addr.page), 0);
+	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
 } 

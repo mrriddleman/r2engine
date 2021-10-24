@@ -30,9 +30,9 @@ for opt, arg in opts:
 		inputDir = arg
 
 prefilter = "false"
-lutDFG = "true"
+lutDFG = "false"
 diffuseIrradiance = "false"
-writeMipChain = "false"
+writeMipChain = "true"
 quiet = "false"
 numMipLevels = 1
 numSamples = 128

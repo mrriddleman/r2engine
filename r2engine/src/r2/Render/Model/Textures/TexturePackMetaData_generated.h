@@ -52,8 +52,8 @@ enum CubemapSide {
   CubemapSide_LEFT = 1,
   CubemapSide_TOP = 2,
   CubemapSide_BOTTOM = 3,
-  CubemapSide_FRONT = 4,
-  CubemapSide_BACK = 5,
+  CubemapSide_BACK = 4,
+  CubemapSide_FRONT = 5,
   CubemapSide_NUM_SIDES = 6,
   CubemapSide_MIN = CubemapSide_RIGHT,
   CubemapSide_MAX = CubemapSide_NUM_SIDES
@@ -65,8 +65,8 @@ inline const CubemapSide (&EnumValuesCubemapSide())[7] {
     CubemapSide_LEFT,
     CubemapSide_TOP,
     CubemapSide_BOTTOM,
-    CubemapSide_FRONT,
     CubemapSide_BACK,
+    CubemapSide_FRONT,
     CubemapSide_NUM_SIDES
   };
   return values;
@@ -78,8 +78,8 @@ inline const char * const *EnumNamesCubemapSide() {
     "LEFT",
     "TOP",
     "BOTTOM",
-    "FRONT",
     "BACK",
+    "FRONT",
     "NUM_SIDES",
     nullptr
   };

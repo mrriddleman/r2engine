@@ -140,9 +140,8 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_POSITIONS = 10,
     VT_NORMALS = 12,
     VT_TANGENTS = 14,
-    VT_BITANGENTS = 16,
-    VT_TEXTURECOORDS = 18,
-    VT_FACES = 20
+    VT_TEXTURECOORDS = 16,
+    VT_FACES = 18
   };
   uint64_t name() const {
     return GetField<uint64_t>(VT_NAME, 0);
@@ -162,9 +161,6 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<const flat::Vertex3 *> *tangents() const {
     return GetPointer<const flatbuffers::Vector<const flat::Vertex3 *> *>(VT_TANGENTS);
   }
-  const flatbuffers::Vector<const flat::Vertex3 *> *bitangents() const {
-    return GetPointer<const flatbuffers::Vector<const flat::Vertex3 *> *>(VT_BITANGENTS);
-  }
   const flatbuffers::Vector<const flat::Vertex2 *> *textureCoords() const {
     return GetPointer<const flatbuffers::Vector<const flat::Vertex2 *> *>(VT_TEXTURECOORDS);
   }
@@ -182,8 +178,6 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(normals()) &&
            VerifyOffset(verifier, VT_TANGENTS) &&
            verifier.VerifyVector(tangents()) &&
-           VerifyOffset(verifier, VT_BITANGENTS) &&
-           verifier.VerifyVector(bitangents()) &&
            VerifyOffset(verifier, VT_TEXTURECOORDS) &&
            verifier.VerifyVector(textureCoords()) &&
            VerifyOffset(verifier, VT_FACES) &&
@@ -215,9 +209,6 @@ struct MeshBuilder {
   void add_tangents(flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> tangents) {
     fbb_.AddOffset(Mesh::VT_TANGENTS, tangents);
   }
-  void add_bitangents(flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> bitangents) {
-    fbb_.AddOffset(Mesh::VT_BITANGENTS, bitangents);
-  }
   void add_textureCoords(flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex2 *>> textureCoords) {
     fbb_.AddOffset(Mesh::VT_TEXTURECOORDS, textureCoords);
   }
@@ -244,7 +235,6 @@ inline flatbuffers::Offset<Mesh> CreateMesh(
     flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> positions = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> normals = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> tangents = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex3 *>> bitangents = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Vertex2 *>> textureCoords = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::Face>>> faces = 0) {
   MeshBuilder builder_(_fbb);
@@ -253,7 +243,6 @@ inline flatbuffers::Offset<Mesh> CreateMesh(
   builder_.add_name(name);
   builder_.add_faces(faces);
   builder_.add_textureCoords(textureCoords);
-  builder_.add_bitangents(bitangents);
   builder_.add_tangents(tangents);
   builder_.add_normals(normals);
   builder_.add_positions(positions);
@@ -268,13 +257,11 @@ inline flatbuffers::Offset<Mesh> CreateMeshDirect(
     const std::vector<flat::Vertex3> *positions = nullptr,
     const std::vector<flat::Vertex3> *normals = nullptr,
     const std::vector<flat::Vertex3> *tangents = nullptr,
-    const std::vector<flat::Vertex3> *bitangents = nullptr,
     const std::vector<flat::Vertex2> *textureCoords = nullptr,
     const std::vector<flatbuffers::Offset<flat::Face>> *faces = nullptr) {
   auto positions__ = positions ? _fbb.CreateVectorOfStructs<flat::Vertex3>(*positions) : 0;
   auto normals__ = normals ? _fbb.CreateVectorOfStructs<flat::Vertex3>(*normals) : 0;
   auto tangents__ = tangents ? _fbb.CreateVectorOfStructs<flat::Vertex3>(*tangents) : 0;
-  auto bitangents__ = bitangents ? _fbb.CreateVectorOfStructs<flat::Vertex3>(*bitangents) : 0;
   auto textureCoords__ = textureCoords ? _fbb.CreateVectorOfStructs<flat::Vertex2>(*textureCoords) : 0;
   auto faces__ = faces ? _fbb.CreateVector<flatbuffers::Offset<flat::Face>>(*faces) : 0;
   return flat::CreateMesh(
@@ -285,7 +272,6 @@ inline flatbuffers::Offset<Mesh> CreateMeshDirect(
       positions__,
       normals__,
       tangents__,
-      bitangents__,
       textureCoords__,
       faces__);
 }

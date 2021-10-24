@@ -30,7 +30,6 @@ table Mesh
 	positions:[Vertex3];
 	normals:[Vertex3];
 	tangents:[Vertex3];
-	bitangents:[Vertex3];
 	textureCoords:[Vertex2];
 	faces:[Face];
 }

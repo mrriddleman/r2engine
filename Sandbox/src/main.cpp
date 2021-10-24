@@ -338,7 +338,7 @@ public:
         }
 #endif
 
-        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.01f, 100.f, glm::vec3(0.0f, 2.0f, 3.0f));
+        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
@@ -372,45 +372,48 @@ public:
 
         glm::mat4 quadMat = glm::mat4(1.0f);
         
-        quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+      //  quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadMat = glm::scale(quadMat, glm::vec3(10.0f));
         r2::sarr::Push(*modelMats, quadMat);
 
 		glm::mat4 cubeMat = glm::mat4(1.0f);
-		cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 2, 0));
+		cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0, 2));
 		r2::sarr::Push(*modelMats, cubeMat);
 
         glm::mat4 sphereMat = glm::mat4(1.0f);
-        sphereMat = glm::translate(sphereMat, glm::vec3(4, 1.1, 0));
+        sphereMat = glm::translate(sphereMat, glm::vec3(4, 0, 1.1));
         r2::sarr::Push(*modelMats, sphereMat);
 
 		glm::mat4 coneMat = glm::mat4(1.0f);
-		coneMat = glm::translate(coneMat, glm::vec3(-1, 0.6, 0));
-		coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		coneMat = glm::translate(coneMat, glm::vec3(-1, 0, 0.6));
+		//coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 		r2::sarr::Push(*modelMats, coneMat);
 
         glm::mat4 cylinderMat = glm::mat4(1.0f);
         
-        cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.6, 0));
-        cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+        cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.0, 1.6));
+       // cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
         r2::sarr::Push(*modelMats, cylinderMat);
 
 
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(5, 0, -5));
+        microbatMat = glm::translate(microbatMat, glm::vec3(5, 5, 0));
+        microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);
 
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-5, 0, -5));
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-5, 5, 0));
+        skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
 
 
         glm::mat4 ellenModel = glm::mat4(1.0f);
-        ellenModel = glm::translate(ellenModel, glm::vec3(0, 0, -5));
+        ellenModel = glm::translate(ellenModel, glm::vec3(0, 5, 0));
+        ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);
 
@@ -566,10 +569,10 @@ public:
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-
+           // defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
             if (nextModel == r2::draw::SPHERE)
             {
-                r2::sarr::Push(*mStaticModelMaterialHandles, brushedMetalMaterialHandle);
+                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
             }
             else
             {
@@ -624,20 +627,22 @@ public:
 
         //setup the lights
         {
+         
+            
             r2::draw::lightsys::AddSkyLight(
                 *mLightSystem,
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")),
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered")),
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
-
+               
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(3.0f, 5.0f, 0.0f, 0.0f));
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 3.0f, 5.0f, 0.0f));
 			dirLight.lightProperties.intensity = 2;
 
-			r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
+			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
             //r2::draw::SpotLight spotLight;
             //spotLight.lightProperties.color = glm::vec4(1.0f);
@@ -1012,35 +1017,35 @@ public:
         r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
 
 
-		r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);
-		r2::draw::renderer::DrawSphere(glm::vec3(0, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
-		r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 0), 0.5, glm::vec4(1, 0, 1, 1), true);
-		r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 0), 0.5, glm::vec4(1, 1, 0, 1), true);
-		r2::draw::renderer::DrawSphere(glm::vec3(5, 5, -5), 0.5, glm::vec4(0.6, 0.3, 0.7, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 0), 0.5, glm::vec4(1, 0, 1, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 0), 0.5, glm::vec4(1, 1, 0, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, -5), 0.5, glm::vec4(0.6, 0.3, 0.7, 1), true);
 
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), false);
+  //      r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), false);
 
-       // r2::draw::renderer::DrawCone(glm::vec3(5, 5, -5), glm::vec3(-5, -5, 5), 0.5, 1, glm::vec4(0.6, 0.3, 0.7, 1), true);
+  //     // r2::draw::renderer::DrawCone(glm::vec3(5, 5, -5), glm::vec3(-5, -5, 5), 0.5, 1, glm::vec4(0.6, 0.3, 0.7, 1), true);
 
-        r2::draw::renderer::DrawCylinder(glm::vec3(-5, 5, -5), glm::vec3(0, 1, 0), 0.5, 1, glm::vec4(0.5, 0.5, 1, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, -5), 0.5, glm::vec4(0.5, 0.5, 1, 1), true);
-        r2::draw::renderer::DrawCube(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
-		r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 5), 0.5, glm::vec4(1, 1, 1, 1), false);
+  //      r2::draw::renderer::DrawCylinder(glm::vec3(-5, 5, -5), glm::vec3(0, 1, 0), 0.5, 1, glm::vec4(0.5, 0.5, 1, 1), true);
+		////r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, -5), 0.5, glm::vec4(0.5, 0.5, 1, 1), true);
+  //      r2::draw::renderer::DrawCube(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
+		////r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
+		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 5), 0.5, glm::vec4(1, 1, 1, 1), false);
 
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(1, 1, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(1, 1, 0, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(1, 0, 1, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
-        r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(1, 1, 1, 1), true);
-		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 0, 0, 1), true);
-		r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0.5, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(1, 1, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(1, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(1, 0, 1, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
+  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(1, 1, 1, 1), true);
+		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 0, 0, 1), true);
+		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0.5, 1, 0, 1), true);
 
        // glm::mat4 mat = r2::draw::renderer::DrawCylinder(glm::vec3(0, 5, -5), glm::vec3(0, 1, 0), 1, 5, glm::vec4(1, 1, 1, 1), false);
          
-       // r2::draw::renderer::DrawTangentVectors(r2::draw::CYLINDER, mat);//r2::sarr::At(*modelMats,r2::draw::CYLINDER));
-       // r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
+  //      r2::draw::renderer::DrawTangentVectors(r2::draw::CYLINDER, r2::sarr::At(*modelMats,r2::draw::CYLINDER));
+        r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
         if (mDrawDebugBones)
         {
 

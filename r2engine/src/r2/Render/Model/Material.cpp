@@ -870,19 +870,19 @@ namespace r2::draw::mat
 					for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
 					{
 						const auto side = mipLevel->sides()->Get(i);
-						texturePack->metaData.mipLevelMetaData[m].sides[side->side()].side = (r2::draw::tex::CubemapSide)side->side();
+
+
+						tex::CubemapSide cubemapSide = (tex::CubemapSide)side->side();
+
+						texturePack->metaData.mipLevelMetaData[m].sides[cubemapSide].side = cubemapSide;
 
 						char assetName[r2::fs::FILE_PATH_LENGTH];
 						r2::fs::utils::CopyFileNameWithParentDirectories(side->textureName()->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 						r2::asset::Asset textureAsset(assetName, textureType);
-						texturePack->metaData.mipLevelMetaData[m].sides[side->side()].asset = textureAsset;
+						texturePack->metaData.mipLevelMetaData[m].sides[cubemapSide].asset = textureAsset;
 					}
 				}
-
-
-				
 			}
-
 
 			const auto numAlbedos = nextPack->albedo()->size();
 			for (flatbuffers::uoffset_t t = 0; t < numAlbedos; ++t)

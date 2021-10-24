@@ -166,10 +166,10 @@ void main()
 
 	vec3 viewDirTangent = normalize(fs_in.viewPosTangent - fs_in.fragPosTangent);
 
-//	texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
+	//texCoords = ParallaxMapping(fs_in.drawID, texCoords, viewDirTangent);
 
-//	if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
-// 	    discard;
+	//if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+ 	//    discard;
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 
@@ -183,7 +183,7 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
-
+	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);
 
 
@@ -217,11 +217,11 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 	vec3 normalMapNormal = textureLod(sampler2DArray(addr.container), coord, mipmapLevel).rgb;
 
-	normalMapNormal = normalMapNormal * 2.0 - 1.0;
+	normalMapNormal = normalize(normalMapNormal * 2.0 - 1.0);
 
 	normalMapNormal = normalize(fs_in.TBN * normalMapNormal);
 
-	return (1.0 - modifier) * vec4(fs_in.normal, 1) +  modifier * vec4(normalMapNormal, 1);
+	return  (1.0 - modifier) * vec4(fs_in.normal, 1) +  modifier * vec4(normalMapNormal, 1);
 }
 
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
@@ -287,7 +287,8 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
 {
 	Tex2DAddress addr = skylight.prefilteredRoughnessTexture;
-	return textureLod(samplerCubeArray(addr.container), vec4(uv, addr.page), roughnessValue);
+	//z is up so we rotate this... not sure if this is right?
+	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.b, -uv.g, addr.page), roughnessValue);
 }
 
 
@@ -322,7 +323,7 @@ vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 
 	float modifier = GetTextureModifier(addr);
 
-	const float heightScale =  0.0;//materials[texIndex].heightScale;
+	const float heightScale = materials[texIndex].heightScale;
 
 	if(modifier <= 0.0 || heightScale <= 0.0)
 		return uv;
@@ -373,7 +374,8 @@ vec4 SampleLUTDFG(vec2 uv)
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv)
 {
 	Tex2DAddress addr = skylight.diffuseIrradianceTexture;
-	return texture(samplerCubeArray(addr.container), vec4(uv, addr.page));
+	//z is up so we rotate this... not sure if this is right?
+	return texture(samplerCubeArray(addr.container), vec4(uv.r, uv.b, -uv.g, addr.page));
 }
 
 float D_GGX(float NoH, float roughness)
@@ -487,10 +489,11 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float N
 	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness, ggxVTerm);
 
 	//specular BRDF
-	vec3 Fr = (D * VSmith) * F;
+	vec3 Fr =  (D * VSmith) * F;
 
 	//Energy compensation
 	//vec3 energyCompensation = 1.0 + F0 * (1.0 / dfg.y - 1.0);
+
 	Fr *= energyCompensation;
 
 	//float denom = 4.0 * NoV * NoL;
@@ -569,6 +572,10 @@ float CalculateClearCoatRoughness(float clearCoatPerceptualRoughness)
 
 vec3 CalcEnergyCompensation(vec3 F0, vec2 dfg)
 {
+	if(dfg.y == 0)
+	{
+		return vec3(1);
+	}
 	return 1.0 + F0 * (1.0 / dfg.y - 1.0);
 }
 
@@ -616,13 +623,13 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	
-	float reflectance =  materials[texIndex].reflectance;
+	float reflectance = materials[texIndex].reflectance;
 
 	float anisotropy =  materials[texIndex].anisotropy;
 
 	float metallic = SampleMaterialMetallic(drawID, uv).r;
 
-	float ao = SampleMaterialAO(drawID, uv).r;
+	float ao =  SampleMaterialAO(drawID, uv).r;
 
 	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
@@ -659,11 +666,14 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	float specularAO =  SpecularAO_Lagarde(NoV, ao, roughness);
 
 	vec3 E = F_SchlickRoughness(NoV, F0, roughness);
-	vec3 Fr = E * prefilteredRadiance;
+	vec3 Fr = vec3(0);
+	Fr += E * prefilteredRadiance;
 
 	Fr *= (specularAO * energyCompensation);
 
-	vec3 Fd = diffuseColor * diffuseIrradiance * (1.0 - E) * ao;
+	vec3 Fd = vec3(0);
+
+	Fd += diffuseColor * diffuseIrradiance * (1.0 - E) * ao;
 
 	if(anisotropy == 0.0)
 	{

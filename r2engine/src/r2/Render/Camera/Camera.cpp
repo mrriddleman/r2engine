@@ -13,9 +13,10 @@
 namespace r2::cam
 {
     
-    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& pos)
+    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& pos, const glm::vec3& facing)
     {
         cam.position = pos;
+        cam.facing = facing;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
         cam.proj = glm::perspective(glm::radians(fovDegrees), aspect, near, far);
         

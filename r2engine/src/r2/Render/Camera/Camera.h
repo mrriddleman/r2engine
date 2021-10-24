@@ -40,7 +40,7 @@ namespace r2::cam
     
     using CameraDirectionPressed = r2::Flags<u8, u8>;
     
-    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& position);
+    void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing);
     
     void InitOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far, const glm::vec3& position);
     

@@ -17,7 +17,7 @@ namespace r2::cam
     {
     public:
         
-        void Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position);
+        void Init(float camMoveSpeed, float fov, float aspect, float near, float far, const glm::vec3& position, const glm::vec3& facing);
         void OnEvent(r2::evt::Event& e);
         void Update();
         

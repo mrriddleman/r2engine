@@ -90,7 +90,7 @@ namespace r2::asset
 			const auto* normals = flatMesh->normals();
 			const auto* texCoords = flatMesh->textureCoords();
 			const auto* tangents = flatMesh->tangents();
-			const auto* bitangents = flatMesh->bitangents();
+
 
 			R2_CHECK(positions != nullptr, "We should always have positions!");
 

@@ -103,7 +103,7 @@ namespace r2::ibl
 						//                 +----+
 						*/
 
-		//@NOTE: we're remapping this to the internal engine layout. ie. reversing right and left, front and back
+		//@NOTE: we're remapping this to the internal engine layout. ie. reversing right and left, front and back, top and bottom (?)
 		switch (face)
 		{
 		case r2::ibl::Cubemap::Face::PX:

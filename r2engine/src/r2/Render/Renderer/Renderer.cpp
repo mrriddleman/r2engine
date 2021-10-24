@@ -3636,6 +3636,11 @@ namespace r2::draw::renderer
 	void AddDebugSubCommandPreAndPostCMDs(Renderer& renderer, const DebugRenderBatch& debugRenderBatch, r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData, r2::SArray<BatchRenderOffsets>* debugRenderBatchesOffsets, u32 numObjectsToDraw, u64 subCommandMemorySize)
 	{
 
+		if (numObjectsToDraw <= 0)
+		{
+			return;
+		}
+
 		R2_CHECK(!mat::IsInvalidHandle(debugRenderBatch.materialHandle), "This can't be invalid!");
 
 		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(debugRenderBatch.materialHandle.slot);
@@ -3802,32 +3807,62 @@ namespace r2::draw::renderer
 		const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugLinesRenderBatch.vertexConfigHandle);
 
 		u64 numModelsToDraw = r2::sarr::Size(*debugModelsRenderBatch.debugModelTypesToDraw);
+
+
+
+
 		u64 numLinesToDraw = r2::sarr::Size(*debugLinesRenderBatch.vertices) / 2;
 		
 		const u64 totalObjectsToDraw = numModelsToDraw + numLinesToDraw;
 
+		
+
 		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 1000);
 
-		r2::SArray<DebugRenderConstants>* debugRenderConstants = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DebugRenderConstants, totalObjectsToDraw);
-		r2::sarr::Push(*tempAllocations, (void*)debugRenderConstants);
+		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
+		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData = nullptr;
 
-		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData = MAKE_SHASHMAP(*MEM_ENG_SCRATCH_PTR, DebugDrawCommandData*, (totalObjectsToDraw) * r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
-		r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
+		if (totalObjectsToDraw > 0)
+		{
+			debugRenderConstants = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DebugRenderConstants, totalObjectsToDraw);
+			r2::sarr::Push(*tempAllocations, (void*)debugRenderConstants);
 
+			debugDrawCommandData = MAKE_SHASHMAP(*MEM_ENG_SCRATCH_PTR, DebugDrawCommandData*, (totalObjectsToDraw)*r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
+			r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
+		}
+		else
+		{
+			return; //there's nothing to do!
+		}
 
-		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numModelsToDraw );
-		r2::sarr::Push(*tempAllocations, (void*)modelBatchRenderOffsets);
+		
+		r2::SArray<BatchRenderOffsets>* modelBatchRenderOffsets = nullptr;
+		
+		if (numModelsToDraw > 0)
+		{
+			modelBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numModelsToDraw);
+			r2::sarr::Push(*tempAllocations, (void*)modelBatchRenderOffsets);
 
-		CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, tempAllocations, debugRenderConstants, debugDrawCommandData);
-		AddDebugSubCommandPreAndPostCMDs(renderer, debugModelsRenderBatch, debugDrawCommandData, modelBatchRenderOffsets, numModelsToDraw, sizeof(cmd::DrawBatchSubCommand));
+			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			AddDebugSubCommandPreAndPostCMDs(renderer, debugModelsRenderBatch, debugDrawCommandData, modelBatchRenderOffsets, numModelsToDraw, sizeof(cmd::DrawBatchSubCommand));
 
-		r2::shashmap::Clear(*debugDrawCommandData);
+		}
+		
+		
 
-		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numLinesToDraw);
-		r2::sarr::Push(*tempAllocations, (void*)linesBatchRenderOffsets);
+		r2::SArray<BatchRenderOffsets>* linesBatchRenderOffsets = nullptr;
 
-		CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelsToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
-		AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesRenderBatch, debugDrawCommandData, linesBatchRenderOffsets, numLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
+		if (numLinesToDraw > 0)
+		{
+			r2::shashmap::Clear(*debugDrawCommandData);
+
+			linesBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numLinesToDraw);
+			r2::sarr::Push(*tempAllocations, (void*)linesBatchRenderOffsets);
+
+			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelsToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
+			AddDebugSubCommandPreAndPostCMDs(renderer, debugLinesRenderBatch, debugDrawCommandData, linesBatchRenderOffsets, numLinesToDraw, sizeof(cmd::DrawDebugBatchSubCommand));
+		}
+		
 
 		key::DebugKey emptyDebugKey;
 		emptyDebugKey.keyValue = 0;
@@ -3862,8 +3897,15 @@ namespace r2::draw::renderer
 			completeRenderConstantsCMD->count = totalObjectsToDraw;
 		}
 
-		FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelsVertexLayoutConfigHandle, debugModelsSubCommandsBufferHandle, false);
-		FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesVertexLayoutConfigHandle, debugLinesSubCommandsBufferHandle, true);
+		if (modelBatchRenderOffsets)
+		{
+			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelsVertexLayoutConfigHandle, debugModelsSubCommandsBufferHandle, false);
+		}
+		
+		if (linesBatchRenderOffsets)
+		{
+			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesVertexLayoutConfigHandle, debugLinesSubCommandsBufferHandle, true);
+		}
 
 		const s64 numAllocations = r2::sarr::Size(*tempAllocations);
 
@@ -4209,9 +4251,9 @@ namespace r2::draw::renderer
 				glm::vec3 offset = (normal * 0.015f);
 				initialPosition += offset;
 
-				DrawLine(initialPosition, initialPosition + normal * 0.1f, glm::vec4(0, 0, 1, 1), true);
-				DrawLine(initialPosition, initialPosition + tangent * 0.1f, glm::vec4(1, 0, 0, 1), true);
-				DrawLine(initialPosition, initialPosition + bitangent * 0.1f, glm::vec4(0, 1, 0, 1), true);
+				DrawLine(initialPosition, initialPosition + normal * 0.3f, glm::vec4(0, 0, 1, 1), true);
+				DrawLine(initialPosition, initialPosition + tangent * 0.3f, glm::vec4(1, 0, 0, 1), true);
+				DrawLine(initialPosition, initialPosition + bitangent * 0.3f, glm::vec4(0, 1, 0, 1), true);
 			}
 
 		}

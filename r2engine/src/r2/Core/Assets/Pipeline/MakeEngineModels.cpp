@@ -100,7 +100,7 @@ namespace
 		return result;
 	}
 
-	void CalculateTangentAndBiTangent(const flat::Vertex3& edge1, const flat::Vertex3& edge2, const flat::Vertex2& deltaUV1, const flat::Vertex2& deltaUV2, flat::Vertex3& tangent, flat::Vertex3& bitangent)
+	void CalculateTangent(const flat::Vertex3& edge1, const flat::Vertex3& edge2, const flat::Vertex2& deltaUV1, const flat::Vertex2& deltaUV2, flat::Vertex3& tangent)
     {
         float denom = deltaUV1.x() * deltaUV2.y() - deltaUV2.x() * deltaUV1.y();
         R2_CHECK(!r2::math::NearEq( denom, 0.0), "denominator is 0!");
@@ -111,18 +111,10 @@ namespace
 			f * (deltaUV2.y() * edge1.x() - deltaUV1.y() * edge2.x()),
 			f * (deltaUV2.y() * edge1.y() - deltaUV1.y() * edge2.y()),
 			f * (deltaUV2.y() * edge1.z() - deltaUV1.y() * edge2.z())
+			
 		);
 
 		tangent = Normalize(tangent);
-        
-
-		bitangent = flat::Vertex3(
-			f * (-deltaUV2.x() * edge1.x() + deltaUV1.x() * edge2.x()),
-			f * (-deltaUV2.x() * edge1.y() + deltaUV1.x() * edge2.y()),
-			f * (-deltaUV2.x() * edge1.z() + deltaUV1.x() * edge2.z())
-		);
-
-		bitangent = Normalize(bitangent);
     }
 
 	//From: https://www.cs.upc.edu/~virtual/G/1.%20Teoria/06.%20Textures/Tangent%20Space%20Calculation.pdf
@@ -131,11 +123,9 @@ namespace
 		const std::vector<flat::Vertex3>& normals,
 		const std::vector<flat::Vertex2>& texCoords,
 		const std::vector<Triangle>& triangles,
-		std::vector<flat::Vertex3>& tangents,
-		std::vector<flat::Vertex3>& bitangents)
+		std::vector<flat::Vertex3>& tangents)
 	{
 		tangents.clear();
-		bitangents.clear();
 
 		flat::Vertex3* tan1 = new flat::Vertex3[vertices.size() * 2];
 		flat::Vertex3* tan2 = tan1 + vertices.size();
@@ -189,9 +179,12 @@ namespace
 			//Gram-Schmidt orthogonalize
 			tangents.push_back(Normalize(Subtract(t, Multiply(n, DotProduct(n, t)))));
 
-			float handedness = (DotProduct(CrossProduct(n, t), tan2[a]) < 0.0f) ? -1.0f : 1.0f;
-
-			bitangents.push_back(Multiply(Normalize(CrossProduct(n, tangents.back())), handedness));
+			float handedness = (DotProduct(CrossProduct(n, t), tan2[a]) < 0.0) ? -1.0f : 1.0f;
+			
+			if (handedness)
+			{
+				int k = 0;
+			}
 		}
 
 		delete[] tan1;
@@ -323,11 +316,10 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
 		std::vector<flat::Vertex3> tangents;
-		std::vector<flat::Vertex3> bitangents;
 
 
-		flat::Vertex3 p1 = flat::Vertex3(-0.5f, -0.5f, 0.0f);
-		flat::Vertex3 p2 = flat::Vertex3(-0.5f, 0.5f, 0.0f);
+		flat::Vertex3 p1 = flat::Vertex3(-0.5f, 0.5f, 0.0f);
+		flat::Vertex3 p2 = flat::Vertex3(-0.5f, -0.5f, 0.0f);
 		flat::Vertex3 p3 = flat::Vertex3(0.5f, -0.5f, 0.0f);
 		flat::Vertex3 p4 = flat::Vertex3(0.5f, 0.5f, 0.0f);
 
@@ -337,17 +329,17 @@ namespace r2::asset::pln
 		positions.push_back(p4);
 
 		flat::Vertex3 n1 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-		flat::Vertex3 n2 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-		flat::Vertex3 n3 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-		flat::Vertex3 n4 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+	//	flat::Vertex3 n2 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+	//	flat::Vertex3 n3 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+	//	flat::Vertex3 n4 = flat::Vertex3(0.0f, 0.0f, 1.0f);
 
 		normals.push_back(n1);
-		normals.push_back(n2);
-		normals.push_back(n3);
-		normals.push_back(n4);
+		normals.push_back(n1);
+		normals.push_back(n1);
+		normals.push_back(n1);
 
-		flat::Vertex2 t1 = flat::Vertex2(0.0f, 0.0f);
-		flat::Vertex2 t2 = flat::Vertex2(0.0f, 1.0f);
+		flat::Vertex2 t1 = flat::Vertex2(0.0f, 1.0f);
+		flat::Vertex2 t2 = flat::Vertex2(0.0f, 0.0f);
 		flat::Vertex2 t3 = flat::Vertex2(1.0f, 0.0f);
 		flat::Vertex2 t4 = flat::Vertex2(1.0f, 1.0f);
 
@@ -357,67 +349,81 @@ namespace r2::asset::pln
 		texCoords.push_back(t4);
 
 
-		flat::Vertex3 tangent1;
-		flat::Vertex3 bitangent1;
-
-		flat::Vertex3 tangent2;
-		flat::Vertex3 bitangent2;
-
-		flat::Vertex3 tri1Edge1 = Subtract(positions[0], positions[1]);
-		flat::Vertex3 tri1Edge2 = Subtract(positions[2], positions[1]);
-		flat::Vertex2 deltaUV1 = Subtract(t1, t2);
-		flat::Vertex2 deltaUV2 = Subtract(t3, t2);
-
-		CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
-
-		flat::Vertex3 tri2Edge1 = Subtract(positions[2], positions[1]);
-		flat::Vertex3 tri2Edge2 = Subtract(positions[3], positions[1]);
-		deltaUV1 = Subtract(t3, t2);
-		deltaUV2 = Subtract(t4, t2);
-
-		CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+		//flat::Vertex3 tangent1;
+		//flat::Vertex3 tangent2;
 
 
-		std::vector<flat::Vertex3> temp{tangent1, tangent2};
-		
-		flat::Vertex3 averagedTangent = Average(temp);
+		//
 
-		temp.clear();
-		temp.push_back(bitangent1);
-		temp.push_back(bitangent2);
+		//flat::Vertex3 tri1Edge1 = Subtract(positions[1], positions[0]);
+		//flat::Vertex3 tri1Edge2 = Subtract(positions[2], positions[0]);
+		//flat::Vertex2 deltaUV1 = Subtract(t2, t1);
+		//flat::Vertex2 deltaUV2 = Subtract(t3, t1);
 
-		flat::Vertex3 averagedBiTangent = Average(temp);
+		//CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
-		tangents.push_back(tangent1);
-		tangents.push_back(averagedTangent);
-		tangents.push_back(averagedTangent);
-		tangents.push_back(tangent2);
+		//flat::Vertex3 tri2Edge1 = Subtract(positions[2], positions[0]);
+		//flat::Vertex3 tri2Edge2 = Subtract(positions[3], positions[0]);
+		//deltaUV1 = Subtract(t3, t1);
+		//deltaUV2 = Subtract(t4, t1);
+
+		//CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 
-		bitangents.push_back(bitangent1);
-		bitangents.push_back(averagedBiTangent);
-		bitangents.push_back(averagedBiTangent);
-		bitangents.push_back(bitangent2);
+		////tangent1 = Multiply(tangent1, -1.0f);
+		////tangent2 = Multiply(tangent2, -1.0f);
+
+		//std::vector<flat::Vertex3> temp{ tangent1, tangent2 };
+
+		//flat::Vertex3 averagedTangent = Average(temp);
+
+		//
+
+
+		//tangents.push_back(tangent1);
+		//tangents.push_back(averagedTangent);
+		//tangents.push_back(averagedTangent);
+		//tangents.push_back(tangent2);
+
 
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
 		std::vector<uint32_t> indices;
 
-		indices.push_back(0);
 		indices.push_back(2);
 		indices.push_back(1);
+		indices.push_back(0);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)) );
 
 		indices.clear();
 		
-		indices.push_back(1);
-		indices.push_back(2);
+		indices.push_back(0);
 		indices.push_back(3);
+		indices.push_back(2);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
 
-		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("QuadMesh"), positions.size(), faces.size(), &positions, &normals, &tangents, &bitangents, &texCoords, &faces);
+		std::vector<Triangle> triangles;
+
+
+		Triangle tri1;
+		tri1.index[0] = 2;
+		tri1.index[1] = 1;
+		tri1.index[2] = 0;
+
+		Triangle tri2;
+		tri2.index[0] = 0;
+		tri2.index[1] = 3;
+		tri2.index[2] = 2;
+
+		triangles.push_back(tri1);
+		triangles.push_back(tri2);
+
+		CalculateTangentArray(positions, normals, texCoords, triangles, tangents);
+
+
+		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("QuadMesh"), positions.size(), faces.size(), &positions, &normals, &tangents, &texCoords, &faces);
 		fbb.Finish(mesh);
 		const std::string name = "QuadMesh";
 
@@ -438,21 +444,28 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
 		std::vector<flat::Vertex3> tangents;
-		std::vector<flat::Vertex3> bitangents;
 
 		//Front face
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
+		constexpr float UNIT = 1.0f;
+		constexpr float HUNIT = 0.5f;
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, UNIT));
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, UNIT));
+
+
+	//	positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
 		
 		
 		
 
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
+		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
 
 
 		texCoords.push_back(flat::Vertex2(0.0f, 0.0f));
@@ -461,10 +474,7 @@ namespace r2::asset::pln
 		texCoords.push_back(flat::Vertex2(1.0f, 1.0f));
 		
 		flat::Vertex3 tangent1;
-		flat::Vertex3 bitangent1;
-
 		flat::Vertex3 tangent2;
-		flat::Vertex3 bitangent2;
 
 		flat::Vertex3 tri1Edge1;
 		flat::Vertex3 tri1Edge2;
@@ -481,7 +491,7 @@ namespace r2::asset::pln
 		deltaUV1 = Subtract(texCoords[0], texCoords[1]);
 		deltaUV2 = Subtract(texCoords[2], texCoords[1]);
 
-		CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+		CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 		tri2Edge1 = Subtract(positions[2], positions[1]);
 		tri2Edge2 = Subtract(positions[3], positions[1]);
@@ -489,34 +499,28 @@ namespace r2::asset::pln
 		deltaUV1 = Subtract(texCoords[2], texCoords[1]);
 		deltaUV2 = Subtract(texCoords[3], texCoords[1]);
 
-		CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+		CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 		std::vector<flat::Vertex3> temp{ tangent1, tangent2 };
 
 		flat::Vertex3 averagedTangent = Average(temp);
 
-		temp.clear();
-		temp.push_back(bitangent1);
-		temp.push_back(bitangent2);
-
-		flat::Vertex3 averagedBiTangent = Average(temp);
 
 		tangents.push_back(tangent1);
 		tangents.push_back(averagedTangent);
 		tangents.push_back(averagedTangent);
 		tangents.push_back(tangent2);
 
-		bitangents.push_back(bitangent1);
-		bitangents.push_back(averagedBiTangent);
-		bitangents.push_back(averagedBiTangent);
-		bitangents.push_back(bitangent2);
-
-
 		//Right Face
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
+
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, UNIT));
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, UNIT));
 
 		normals.push_back(flat::Vertex3(1.0f, 0.0f, 0.0f));
 		normals.push_back(flat::Vertex3(1.0f, 0.0f, 0.0f));
@@ -536,7 +540,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[5], texCoords[4]);
 			deltaUV2 = Subtract(texCoords[6], texCoords[4]);
 
-			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+			CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 			tri2Edge1 = Subtract(positions[5], positions[4]);
 			tri2Edge2 = Subtract(positions[7], positions[4]);
@@ -544,7 +548,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[5], texCoords[4]);
 			deltaUV2 = Subtract(texCoords[7], texCoords[4]);
 
-			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+			CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 			temp.clear();
 			temp.push_back(tangent1);
@@ -552,30 +556,24 @@ namespace r2::asset::pln
 
 			averagedTangent = Average(temp);
 
-			temp.clear();
-			temp.push_back(bitangent1);
-			temp.push_back(bitangent2);
-
-			averagedBiTangent = Average(temp);
-
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent1);
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent2);
-
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent1);
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent2);
 		}
 		
 
 
 		//Left Face
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
+
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, UNIT));
 
 		normals.push_back(flat::Vertex3(-1.0f, 0.0f, 0.0f));
 		normals.push_back(flat::Vertex3(-1.0f, 0.0f, 0.0f));
@@ -594,7 +592,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[8], texCoords[9]);
 			deltaUV2 = Subtract(texCoords[10], texCoords[9]);
 
-			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+			CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 			tri2Edge1 = Subtract(positions[10], positions[9]);
 			tri2Edge2 = Subtract(positions[11], positions[9]);
@@ -602,7 +600,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[10], texCoords[9]);
 			deltaUV2 = Subtract(texCoords[11], texCoords[9]);
 
-			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+			CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 			temp.clear();
 			temp.push_back(tangent1);
@@ -610,36 +608,30 @@ namespace r2::asset::pln
 
 			averagedTangent = Average(temp);
 
-			temp.clear();
-			temp.push_back(bitangent1);
-			temp.push_back(bitangent2);
-
-			averagedBiTangent = Average(temp);
-
 			tangents.push_back(tangent1);
 			tangents.push_back(averagedTangent);
 
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent2);
-
-			bitangents.push_back(bitangent1);
-			bitangents.push_back(averagedBiTangent);
-
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent2);
 		}
 		
 
 		//Back Face
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
+	//	positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
 
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
-		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, UNIT));
+
+
+		normals.push_back(flat::Vertex3(0.0f, 1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, 1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, 1.0f, 0.0f));
+		normals.push_back(flat::Vertex3(0.0f, 1.0f, 0.0f));
 
 		texCoords.push_back(flat::Vertex2(0.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
@@ -655,7 +647,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[12], texCoords[13]);
 			deltaUV2 = Subtract(texCoords[14], texCoords[13]);
 
-			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+			CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 			tri2Edge1 = Subtract(positions[14], positions[13]);
 			tri2Edge2 = Subtract(positions[15], positions[13]);
@@ -663,7 +655,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[14], texCoords[13]);
 			deltaUV2 = Subtract(texCoords[15], texCoords[13]);
 
-			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+			CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 			temp.clear();
 			temp.push_back(tangent1);
@@ -671,11 +663,7 @@ namespace r2::asset::pln
 
 			averagedTangent = Average(temp);
 
-			temp.clear();
-			temp.push_back(bitangent1);
-			temp.push_back(bitangent2);
-
-			averagedBiTangent = Average(temp);
+			
 
 			tangents.push_back(tangent1);
 			tangents.push_back(averagedTangent);
@@ -683,23 +671,24 @@ namespace r2::asset::pln
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent2);
 
-			bitangents.push_back(bitangent1);
-			bitangents.push_back(averagedBiTangent);
-
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent2);
+		
 		}
 
 		//Top Face
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
+		//positions.push_back(flat::Vertex3(-1.0f, 1.0f, 1.0f));
+		//positions.push_back(flat::Vertex3(-1.0f, 1.0f, -1.0f));
+		//positions.push_back(flat::Vertex3(1.0f, 1.0f, 1.0f));
+		//positions.push_back(flat::Vertex3(1.0f, 1.0f, -1.0f));
 
-		normals.push_back(flat::Vertex3(0.0, 1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0, 1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0, 1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0, 1.0f, 0.0f));
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, UNIT));
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, UNIT));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, UNIT));
+
+		normals.push_back(flat::Vertex3(0.0, 0.0f, 1.0f));
+		normals.push_back(flat::Vertex3(0.0, 0.0f, 1.0f));
+		normals.push_back(flat::Vertex3(0.0, 0.0f, 1.0f));
+		normals.push_back(flat::Vertex3(0.0, 0.0f, 1.0f));
 
 		texCoords.push_back(flat::Vertex2(0.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
@@ -715,7 +704,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[16], texCoords[17]);
 			deltaUV2 = Subtract(texCoords[18], texCoords[17]);
 
-			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+			CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 			tri2Edge1 = Subtract(positions[18], positions[17]);
 			tri2Edge2 = Subtract(positions[19], positions[17]);
@@ -723,7 +712,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[18], texCoords[17]);
 			deltaUV2 = Subtract(texCoords[19], texCoords[17]);
 
-			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+			CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 			temp.clear();
 			temp.push_back(tangent1);
@@ -731,35 +720,28 @@ namespace r2::asset::pln
 
 			averagedTangent = Average(temp);
 
-			temp.clear();
-			temp.push_back(bitangent1);
-			temp.push_back(bitangent2);
-
-			averagedBiTangent = Average(temp);
-
 			tangents.push_back(tangent1);
 			tangents.push_back(averagedTangent);
 
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent2);
-
-			bitangents.push_back(bitangent1);
-			bitangents.push_back(averagedBiTangent);
-
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent2);
 		}
 
 		//Bottom Face
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
-		positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
+		//positions.push_back(flat::Vertex3(-1.0f, -1.0f, -1.0f));
+		//positions.push_back(flat::Vertex3(-1.0f, -1.0f, 1.0f));
+		//positions.push_back(flat::Vertex3(1.0f, -1.0f, -1.0f));
+		//positions.push_back(flat::Vertex3(1.0f, -1.0f, 1.0f));
 
-		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
-		normals.push_back(flat::Vertex3(0.0f, -1.0f, 0.0f));
+		positions.push_back(flat::Vertex3(-UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(-UNIT, -UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, UNIT, -UNIT));
+		positions.push_back(flat::Vertex3(UNIT, -UNIT, -UNIT));
+
+		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
+		normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
 
 		texCoords.push_back(flat::Vertex2(0.0f, 0.0f));
 		texCoords.push_back(flat::Vertex2(0.0f, 1.0f));
@@ -774,7 +756,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[20], texCoords[21]);
 			deltaUV2 = Subtract(texCoords[22], texCoords[21]);
 
-			CalculateTangentAndBiTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1, bitangent1);
+			CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
 
 			tri2Edge1 = Subtract(positions[22], positions[21]);
 			tri2Edge2 = Subtract(positions[23], positions[21]);
@@ -782,7 +764,7 @@ namespace r2::asset::pln
 			deltaUV1 = Subtract(texCoords[22], texCoords[21]);
 			deltaUV2 = Subtract(texCoords[23], texCoords[21]);
 
-			CalculateTangentAndBiTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2, bitangent2);
+			CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
 
 			temp.clear();
 			temp.push_back(tangent1);
@@ -790,23 +772,11 @@ namespace r2::asset::pln
 
 			averagedTangent = Average(temp);
 
-			temp.clear();
-			temp.push_back(bitangent1);
-			temp.push_back(bitangent2);
-
-			averagedBiTangent = Average(temp);
-
 			tangents.push_back(tangent1);
 			tangents.push_back(averagedTangent);
 
 			tangents.push_back(averagedTangent);
 			tangents.push_back(tangent2);
-
-			bitangents.push_back(bitangent1);
-			bitangents.push_back(averagedBiTangent);
-
-			bitangents.push_back(averagedBiTangent);
-			bitangents.push_back(bitangent2);
 		}
 		
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
@@ -910,7 +880,7 @@ namespace r2::asset::pln
 		indices.clear();
 
 		auto mesh= flat::CreateMeshDirect(fbb, STRING_ID("CubeMesh"), positions.size(), faces.size(),
-			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
+			&positions, &normals, &tangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string name = "CubeMesh";
@@ -934,7 +904,6 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
 		std::vector<flat::Vertex3> tangents;
-		std::vector<flat::Vertex3> bitangents;
 
 		std::vector<Triangle> triangles;
 
@@ -949,8 +918,8 @@ namespace r2::asset::pln
 				float xSegment = (float)x / (float)segments;
 				float ySegment = (float)y / (float)segments;
 				float xPos = cos(xSegment * 2.0f * PI) * sin(ySegment * PI);
-				float yPos = cos(ySegment * PI);
-				float zPos = sin(xSegment * 2.0f * PI) * sin(ySegment * PI);
+				float zPos = cos(ySegment * PI);
+				float yPos = sin(xSegment * 2.0f * PI) * sin(ySegment * PI);
 
 				positions.push_back(flat::Vertex3(xPos, yPos, zPos));
 				normals.push_back(flat::Vertex3(xPos, yPos, zPos));
@@ -1006,10 +975,10 @@ namespace r2::asset::pln
 			}
 		}
 		
-		CalculateTangentArray(positions, normals, texCoords, triangles, tangents, bitangents);
+		CalculateTangentArray(positions, normals, texCoords, triangles, tangents);
 
 		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("SphereMesh"), positions.size(), faces.size(),
-			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
+			&positions, &normals, &tangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string name = "SphereMesh";
@@ -1046,7 +1015,6 @@ namespace r2::asset::pln
 		std::vector<flat::Vertex3> normals;
 		std::vector<flat::Vertex2> texCoords;
 		std::vector<flat::Vertex3> tangents;
-		std::vector<flat::Vertex3> bitangents;
 
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
@@ -1120,7 +1088,7 @@ namespace r2::asset::pln
 			y = unitCircleVertices[j + 1];
 			positions.push_back(flat::Vertex3(x * baseRadius, y * baseRadius, z));
 			normals.push_back(flat::Vertex3(0.0f, 0.0f, -1.0f));
-			texCoords.push_back(flat::Vertex2(-x * 0.5f + 0.5f, -y * 0.5f + 0.5f));
+			texCoords.push_back(flat::Vertex2(-x * 0.5f + 0.5f, y * 0.5f + 0.5f));
 		}
 
 		// remember where the base vertices start
@@ -1137,7 +1105,7 @@ namespace r2::asset::pln
 			y = unitCircleVertices[j + 1];
 			positions.push_back(flat::Vertex3(x * topRadius, y * topRadius, z));
 			normals.push_back(flat::Vertex3(0.0f, 0.0f, 1.0f));
-			texCoords.push_back(flat::Vertex2(x * 0.5f + 0.5f, -y * 0.5f + 0.5f));
+			texCoords.push_back(flat::Vertex2(x * 0.5f + 0.5f, y * 0.5f + 0.5f));
 		}
 
 
@@ -1279,10 +1247,10 @@ namespace r2::asset::pln
 			}	
 		}
 
-		CalculateTangentArray(positions, normals, texCoords, triangles, tangents, bitangents);
+		CalculateTangentArray(positions, normals, texCoords, triangles, tangents);
 
 		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID(name), positions.size(), faces.size(),
-			&positions, &normals, &tangents, &bitangents, &texCoords, &faces);
+			&positions, &normals, &tangents, &texCoords, &faces);
 
 		fbb.Finish(mesh);
 		const std::string fileName = name;

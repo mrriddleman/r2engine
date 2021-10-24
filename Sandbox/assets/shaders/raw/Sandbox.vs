@@ -51,7 +51,7 @@ void main()
 	vs_out.normal = normalize(normalMatrix * aNormal);
 	vec3 T = normalize(normalMatrix * aTangent);
 
-	T = normalize(T - dot(T, vs_out.normal) * vs_out.normal);
+	T = normalize(T - (dot(T, vs_out.normal) * vs_out.normal));
 
 	vec3 B = normalize(cross(vs_out.normal, T));
 
