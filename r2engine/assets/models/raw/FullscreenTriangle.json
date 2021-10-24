@@ -1,0 +1,11 @@
+{
+  name: 17183674298746072604,
+  meshNames: [
+    "FullscreenTriangleMesh.mesh"
+  ],
+  materials: [
+    {
+      name: 7983052081214385298
+    }
+  ]
+}

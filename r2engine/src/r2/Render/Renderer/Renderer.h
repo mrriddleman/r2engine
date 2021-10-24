@@ -41,8 +41,13 @@ namespace r2::draw
 		SPHERE,
 		CONE,
 		CYLINDER,
-		SKYBOX,
-		NUM_DEFAULT_MODELS
+		
+		
+		SKYBOX, 
+		FULLSCREEN_TRIANGLE,
+
+		NUM_DEFAULT_MODELS,
+		
 	};
 
 	enum DebugModelType : u32

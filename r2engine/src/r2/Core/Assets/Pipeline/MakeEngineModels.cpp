@@ -206,13 +206,15 @@ namespace r2::asset::pln
 	void MakeCylinder(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCylinderInternal(const char* name, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir, const std::string& materialName, float baseRadius = 1.0f, float topRadius = 1.0f, float height = 1.0f,
 		int sectorCount = 36, int stackCount = 1, bool smooth = true);
-	
+	void MakeFullscreenTriangle(const std::string& schemaPath, const std::string& bindaryParentDir, const std::string& jsonParentDir);
+
 	void MakeQuadModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCubeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeSphereModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeConeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeCylinderModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 
 
@@ -223,7 +225,10 @@ namespace r2::asset::pln
 		{"Sphere.modl", MakeSphereModel},
 		{"Cone.modl", MakeConeModel},
 		{"Cylinder.modl", MakeCylinderModel},
-		{"Skybox.modl", MakeSkyboxModel}
+		{"FullscreenTriangle.modl", MakeFullscreenTriangleModel},
+		{"Skybox.modl", MakeSkyboxModel},
+		
+		
 	};
 
 	std::map<std::string, MakeModlFunc> s_makeMeshesMap
@@ -233,6 +238,7 @@ namespace r2::asset::pln
 		{"SphereMesh.mesh", MakeSphere},
 		{"ConeMesh.mesh", MakeCone},
 		{"CylinderMesh.mesh", MakeCylinder},
+		{"FullScreenTriangle.mesh", MakeFullscreenTriangle}
 	};
 
 	std::vector<MakeModlFunc> ShouldMakeEngineModels()
@@ -244,7 +250,9 @@ namespace r2::asset::pln
 			MakeSphereModel,
 			MakeConeModel,
 			MakeCylinderModel,
-			MakeSkyboxModel
+			MakeFullscreenTriangleModel,
+			MakeSkyboxModel,
+			
 		};
 
 		for (const auto& modelFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -268,7 +276,7 @@ namespace r2::asset::pln
 			MakeSphere,
 			MakeCylinder,
 			MakeCone,
-			
+			MakeFullscreenTriangle
 		};
 
 		for (const auto& meshFile : std::filesystem::directory_iterator(R2_ENGINE_INTERNAL_MODELS_BIN))
@@ -426,6 +434,89 @@ namespace r2::asset::pln
 		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("QuadMesh"), positions.size(), faces.size(), &positions, &normals, &tangents, &texCoords, &faces);
 		fbb.Finish(mesh);
 		const std::string name = "QuadMesh";
+
+		byte* buf = fbb.GetBufferPointer();
+		u32 size = fbb.GetSize();
+
+		r2::asset::pln::flathelp::GenerateJSONAndBinary(
+			buf, size,
+			schemaPath, binaryParentDir + name + MESH_EXT,
+			jsonParentDir + name + JSON_EXT);
+	}
+
+
+	void MakeFullscreenTriangle(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		//I guess what we're really making now is a .mesh file
+		flatbuffers::FlatBufferBuilder fbb;
+
+		std::vector<flat::Vertex3> positions;
+		std::vector<flat::Vertex3> normals;
+		std::vector<flat::Vertex2> texCoords;
+		std::vector<flat::Vertex3> tangents;
+
+
+		flat::Vertex3 p1 = flat::Vertex3(-1.0f, -1.0f, 0.0f);
+		flat::Vertex3 p2 = flat::Vertex3(3.0f, -1.0f, 0.0f);
+		flat::Vertex3 p3 = flat::Vertex3(-1.0f, 3.0f, 0.0f);
+		
+
+		positions.push_back(p1);
+		positions.push_back(p2);
+		positions.push_back(p3);
+
+
+		flat::Vertex3 n1 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+		//	flat::Vertex3 n2 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+		//	flat::Vertex3 n3 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+		//	flat::Vertex3 n4 = flat::Vertex3(0.0f, 0.0f, 1.0f);
+
+		normals.push_back(n1);
+		normals.push_back(n1);
+		normals.push_back(n1);
+
+
+		flat::Vertex2 t1 = flat::Vertex2(0.0f, 0.0f);
+		flat::Vertex2 t2 = flat::Vertex2(2.0f, 0.0f);
+		flat::Vertex2 t3 = flat::Vertex2(0.0f, 2.0f);
+
+
+		texCoords.push_back(t1);
+		texCoords.push_back(t2);
+		texCoords.push_back(t3);
+
+
+		std::vector<flatbuffers::Offset<flat::Face>> faces;
+
+		std::vector<uint32_t> indices;
+
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(2);
+
+		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
+
+		
+
+		std::vector<Triangle> triangles;
+
+
+		Triangle tri1;
+		tri1.index[0] = 0;
+		tri1.index[1] = 1;
+		tri1.index[2] = 2;
+
+
+
+		triangles.push_back(tri1);
+
+
+		CalculateTangentArray(positions, normals, texCoords, triangles, tangents);
+
+
+		auto mesh = flat::CreateMeshDirect(fbb, STRING_ID("FullscreenTriangleMesh"), positions.size(), faces.size(), &positions, &normals, &tangents, &texCoords, &faces);
+		fbb.Finish(mesh);
+		const std::string name = "FullscreenTriangleMesh";
 
 		byte* buf = fbb.GetBufferPointer();
 		u32 size = fbb.GetSize();
@@ -1293,6 +1384,11 @@ namespace r2::asset::pln
 	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
 		MakeModelInternal("Skybox", "CubeMesh", "Skybox", schemaPath, binaryParentDir, jsonParentDir);
+	}
+
+	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	{
+		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)

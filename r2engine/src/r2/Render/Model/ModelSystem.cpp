@@ -10,7 +10,7 @@
 
 namespace r2::draw::modlsys
 {
-	const u64 ALIGNMENT = 64;
+	const u64 ALIGNMENT = 16;
 
 	ModelSystem* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
 	{

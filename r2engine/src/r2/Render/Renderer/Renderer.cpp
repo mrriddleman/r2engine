@@ -455,6 +455,8 @@ namespace
 		u64 sphereMeshSize = r2::draw::Mesh::MemorySize(1089, 5952, ALIGNMENT, headerSize, boundsChecking);
 		u64 coneMeshSize = r2::draw::Mesh::MemorySize(148, 144 * 3, ALIGNMENT, headerSize, boundsChecking);
 		u64 cylinderMeshSize = r2::draw::Mesh::MemorySize(148, 144 * 3, ALIGNMENT, headerSize, boundsChecking);
+		u64 fullScreenMeshSize = r2::draw::Mesh::MemorySize(3, 3, ALIGNMENT, headerSize, boundsChecking);
+
 		u64 modelSize = r2::draw::Model::ModelMemorySize(1, ALIGNMENT, headerSize, boundsChecking) * r2::draw::NUM_DEFAULT_MODELS;
 
 		return quadMeshSize + cubeMeshSize + sphereMeshSize + coneMeshSize + cylinderMeshSize + modelSize;
@@ -473,7 +475,9 @@ namespace
 		SPHERE,
 		CONE,
 		CYLINDER,
-		SKYBOX
+		
+		SKYBOX,
+		FULLSCREEN_TRIANGLE,
 		*/
 
 		r2::SArray<r2::asset::Asset>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, MAX_DEFAULT_MODELS); 
@@ -483,7 +487,10 @@ namespace
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Sphere.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cone.modl", r2::asset::MODEL));
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Cylinder.modl", r2::asset::MODEL));
+		//
+		
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
+		r2::sarr::Push(*defaultModels, r2::asset::Asset("FullscreenTriangle.modl", r2::asset::MODEL));
 
 		r2::draw::modlsys::LoadMeshes(s_optrRenderer->mModelSystem, *defaultModels, *s_optrRenderer->mDefaultModelHandles);
 
@@ -508,7 +515,6 @@ namespace r2::draw::renderer
 	VertexConfigHandle AddStaticModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 	VertexConfigHandle AddAnimatedModelLayout(const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 
-	//@TODO(Serge): hide maybe? We need to re-thing how we expose layouts to the game
 	ConstantConfigHandle AddConstantBufferLayout(ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
 	ConstantConfigHandle AddModelsLayout(ConstantBufferLayout::Type type);
 	ConstantConfigHandle AddMaterialLayout();
@@ -2108,6 +2114,7 @@ namespace r2::draw::renderer
 		const r2::draw::Model* cylinderModel = GetDefaultModel(r2::draw::CYLINDER);
 		const r2::draw::Model* coneModel = GetDefaultModel(r2::draw::CONE);
 		const r2::draw::Model* skyboxModel = GetDefaultModel(r2::draw::SKYBOX);
+		const r2::draw::Model* fullscreenTriangleModel = GetDefaultModel(r2::draw::FULLSCREEN_TRIANGLE);
 
 		r2::SArray<const r2::draw::Model*>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DEFAULT_MODELS);
 		r2::sarr::Push(*defaultModels, quadModel);
@@ -2115,7 +2122,9 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*defaultModels, sphereModel);
 		r2::sarr::Push(*defaultModels, coneModel);
 		r2::sarr::Push(*defaultModels, cylinderModel);
+		
 		r2::sarr::Push(*defaultModels, skyboxModel);
+		r2::sarr::Push(*defaultModels, fullscreenTriangleModel);
 
 		u64 numModels = r2::sarr::Size(*defaultModels);
 		for (u64 i = 0; i < numModels; ++i)
@@ -2157,20 +2166,30 @@ namespace r2::draw::renderer
 		const r2::draw::Model* cubeModel = GetDefaultModel(r2::draw::CUBE);
 		const r2::draw::Model* cylinderModel = GetDefaultModel(r2::draw::CYLINDER);
 		const r2::draw::Model* coneModel = GetDefaultModel(r2::draw::CONE);
+		const r2::draw::Model* fullScreenTriangleModel = GetDefaultModel(r2::draw::FULLSCREEN_TRIANGLE);
 
-		r2::SArray<const r2::draw::Model*>* modelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DEFAULT_MODELS-1);
+		r2::SArray<const r2::draw::Model*>* modelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, MAX_DEFAULT_MODELS);
 		r2::sarr::Push(*modelsToUpload, quadModel);
 		r2::sarr::Push(*modelsToUpload, cubeModel);
 		r2::sarr::Push(*modelsToUpload, sphereModel);
 		r2::sarr::Push(*modelsToUpload, coneModel);
 		r2::sarr::Push(*modelsToUpload, cylinderModel);
+		
 
 		UploadModels(*modelsToUpload, *s_optrRenderer->mEngineModelRefs);
 
 		FREE(modelsToUpload, *MEM_ENG_SCRATCH_PTR);
 
+
+		//r2::sarr::Push(*modelsToUpload, fullScreenTriangleModel);
+		 
+
+	//	
+
 		//@NOTE: because we can now re-use meshes for other models, we can re-use the CUBE mesh for the SKYBOX model
 		r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(CUBE));
+		r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, UploadModel(fullScreenTriangleModel));
+	//	r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(QUAD));
 	}
 
 	void LoadEngineTexturesFromDisk()
@@ -2344,6 +2363,10 @@ namespace r2::draw::renderer
 		if (boneInfo)
 		{
 			modelRef.mNumBones = boneInfo->mSize;
+		}
+		else
+		{
+			modelRef.mNumBones = 0;
 		}
 
 		if (boneData)
@@ -2770,11 +2793,6 @@ namespace r2::draw::renderer
 		const u64 modelsMemorySize = numModels * sizeof(glm::mat4);
 
 		glm::mat4 finalBatchModelMat = glm::mat4(1.0f);
-		//Add final batch here
-		{
-			//We need to scale because our quad is -0.5 to 0.5 and it needs to be -1.0 to 1.0
-			finalBatchModelMat = glm::scale(finalBatchModelMat, glm::vec3(2.0f));
-		}
 
 		cmd::FillConstantBuffer* modelsCmd = AddFillConstantBufferCommand(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, basicKey, modelsMemorySize);
 
@@ -2923,7 +2941,7 @@ namespace r2::draw::renderer
 		//Make our final batch data here
 		BatchRenderOffsets finalBatchOffsets;
 		{
-			const ModelRef& quadModelRef = GetDefaultModelRef(QUAD);
+			const ModelRef& quadModelRef = GetDefaultModelRef(FULLSCREEN_TRIANGLE);
 
 			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(renderer.mFinalCompositeMaterialHandle.slot);
 			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
@@ -3808,22 +3826,20 @@ namespace r2::draw::renderer
 
 		u64 numModelsToDraw = r2::sarr::Size(*debugModelsRenderBatch.debugModelTypesToDraw);
 
-
-
-
 		u64 numLinesToDraw = r2::sarr::Size(*debugLinesRenderBatch.vertices) / 2;
 		
 		const u64 totalObjectsToDraw = numModelsToDraw + numLinesToDraw;
 
 		
-
-		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 1000);
+		r2::SArray<void*>* tempAllocations = nullptr;
 
 		r2::SArray<DebugRenderConstants>* debugRenderConstants = nullptr;
 		r2::SHashMap<DebugDrawCommandData*>* debugDrawCommandData = nullptr;
 
 		if (totalObjectsToDraw > 0)
 		{
+			tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 1000);
+
 			debugRenderConstants = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DebugRenderConstants, totalObjectsToDraw);
 			r2::sarr::Push(*tempAllocations, (void*)debugRenderConstants);
 

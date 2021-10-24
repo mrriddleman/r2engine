@@ -1012,9 +1012,9 @@ public:
 
 
         //Draw the axis
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), true);
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 1, 0.1, glm::vec4(0, 1, 0, 1), true);
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
+    //    r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), true);
+    //    r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 1, 0.1, glm::vec4(0, 1, 0, 1), true);
+    //    r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
 
 
 		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);
@@ -1045,7 +1045,7 @@ public:
        // glm::mat4 mat = r2::draw::renderer::DrawCylinder(glm::vec3(0, 5, -5), glm::vec3(0, 1, 0), 1, 5, glm::vec4(1, 1, 1, 1), false);
          
   //      r2::draw::renderer::DrawTangentVectors(r2::draw::CYLINDER, r2::sarr::At(*modelMats,r2::draw::CYLINDER));
-        r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
+  //      r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
         if (mDrawDebugBones)
         {
 
