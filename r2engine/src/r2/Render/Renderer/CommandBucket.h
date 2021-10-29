@@ -7,7 +7,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/RenderTarget.h"
-//
+#include "r2/Render/Renderer/CommandPacket.h"
 #include <algorithm>
 
 #define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")

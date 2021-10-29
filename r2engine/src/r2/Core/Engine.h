@@ -12,6 +12,12 @@
 #include "r2/Platform/IO.h"
 #include "r2/Core/Layer/LayerStack.h"
 
+
+namespace r2::draw
+{
+    struct Renderer;
+}
+
 namespace r2
 {
     class ImGuiLayer;
@@ -60,6 +66,10 @@ namespace r2
 
         void SetResolution(util::Size previousResolution, util::Size newResolution);
         void SetFullScreen();
+        void SetRendererBackend(r2::draw::RendererBackend newBackend);
+
+        r2::draw::Renderer* GetCurrentRendererPtr();
+        r2::draw::Renderer& GetCurrentRendererRef();
 
         //Layers
         void PushLayer(std::unique_ptr<Layer> layer);
@@ -226,6 +236,11 @@ namespace r2
         util::Size mDisplaySize;
         LayerStack mLayerStack;
         ImGuiLayer* mImGuiLayer;
+        
+        draw::Renderer* mRendererBackends[draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES];
+        
+        draw::RendererBackend mCurrentRendererBackend;
+
         void* mPlatformControllers[NUM_PLATFORM_CONTROLLERS];
         b32 mMinimized;
         b32 mFullScreen;

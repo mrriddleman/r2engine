@@ -10,6 +10,7 @@
 #include "Application.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Containers/SinglyLinkedList.h"
+#include "r2/Core/Events/AppEvent.h"
 
 namespace
 {
@@ -50,6 +51,16 @@ namespace r2
     char* Application::GetApplicationName() const
     {
         return "Test_App";
+    }
+
+    draw::RendererBackend Application::GetRendererBackend() const
+    {
+        return draw::RendererBackend::OpenGL;
+    }
+
+    void Application::ChangeRendererBackend(r2::draw::RendererBackend newBackend)
+    {
+        MENG.SetRendererBackend(newBackend);
     }
     
     util::Size Application::GetAppResolution() const

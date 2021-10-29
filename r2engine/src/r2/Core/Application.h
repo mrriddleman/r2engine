@@ -12,6 +12,7 @@
 #include "r2/Platform/MacroDefines.h"
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Assets/Asset.h"
+#include "r2/Render/Renderer/RendererTypes.h"
 
 #include <memory>
 #include <string>
@@ -43,6 +44,10 @@ namespace r2
         virtual void Render(float alpha);
         virtual void OnEvent(evt::Event& e);
         virtual char* GetApplicationName() const;
+
+        virtual draw::RendererBackend GetRendererBackend() const;
+        void ChangeRendererBackend(r2::draw::RendererBackend newBackend);
+
         virtual util::Size GetAppResolution() const;
         virtual bool ShouldKeepAspectRatio() const;
         virtual bool ShouldScaleResolution() const;
@@ -57,6 +62,7 @@ namespace r2
         virtual std::vector<std::string> GetTexturePackManifestsRawPaths() const;
         virtual std::vector<std::string> GetMaterialPackManifestsBinaryPaths() const;
         virtual std::vector<std::string> GetMaterialPackManifestsRawPaths() const;
+        
         
 
 #ifdef R2_ASSET_PIPELINE

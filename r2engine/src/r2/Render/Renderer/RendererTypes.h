@@ -86,6 +86,16 @@ namespace r2::draw
         DL_DEBUG //should always be last
     };
 
+	enum RendererBackend : u8
+	{
+		OpenGL = 0,
+		Vulkan,
+		D3D11,
+		D3D12,
+        NUM_RENDERER_BACKEND_TYPES
+	};
+
+    const std::string GetRendererBackendName(r2::draw::RendererBackend backend);
 }
 
 #endif // !__RENDERER_TYPES_H__

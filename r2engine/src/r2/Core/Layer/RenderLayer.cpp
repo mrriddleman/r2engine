@@ -8,39 +8,37 @@
 #include "r2pch.h"
 #include "RenderLayer.h"
 #include "r2/Core/Events/Events.h"
-#include "r2/Core/Memory/InternalEngineMemory.h"
+//#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Platform/Platform.h"
-//temp
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Render/Renderer/RenderKey.h"
-//#include "r2/Render/Backends/RendererBackend.h"
+
 
 
 
 namespace r2
 {
-    RenderLayer::RenderLayer(const char* shaderManifestPath, const char* internalShaderManifestPath)
+    RenderLayer::RenderLayer()
         : Layer("Render Layer", true)
 		
 	{
-        r2::util::PathCpy(mShaderManifestPath, shaderManifestPath);
-        r2::util::PathCpy(mInternalShaderManifestPath, internalShaderManifestPath);
+     //   r2::util::PathCpy(mShaderManifestPath, shaderManifestPath);
+      //  r2::util::PathCpy(mInternalShaderManifestPath, internalShaderManifestPath);
     }
     
     void RenderLayer::Init()
     {
-        r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
-        r2::draw::renderer::Init(engineMem.internalEngineMemoryHandle, mShaderManifestPath, mInternalShaderManifestPath);
+      //  r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
+      //  r2::draw::renderer::Init(engineMem.internalEngineMemoryHandle, mShaderManifestPath, mInternalShaderManifestPath);
     }
     
     void RenderLayer::Update()
     {
-        r2::draw::renderer::Update();
+        r2::draw::renderer::Update(MENG.GetCurrentRendererRef());
     }
     
     void RenderLayer::Render(float alpha)
     {
-        r2::draw::renderer::Render(alpha);
+        r2::draw::renderer::Render(MENG.GetCurrentRendererRef(), alpha);
     }
 
 	void UpdateRendererResolution(u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY)
@@ -85,7 +83,7 @@ namespace r2
 		}
 
 		//printf("Render Layer: Window resized to width: %d, height: %d\n", e.Width(), e.Height());
-		r2::draw::renderer::WindowResized(windowWidth, windowHeight, resolutionX, resolutionY, xScale, yScale, xOffset, yOffset);
+		r2::draw::renderer::WindowResized(MENG.GetCurrentRendererRef(), windowWidth, windowHeight, resolutionX, resolutionY, xScale, yScale, xOffset, yOffset);
 
 	}
     
@@ -110,7 +108,7 @@ namespace r2
     
     void RenderLayer::Shutdown()
     {
-        r2::draw::renderer::Shutdown();
+      //  r2::draw::renderer::Shutdown();
         //@Temp
         //r2::draw::OpenGLShutdown();
     }

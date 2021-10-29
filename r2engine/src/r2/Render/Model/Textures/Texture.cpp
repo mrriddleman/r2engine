@@ -5,7 +5,6 @@ namespace r2::draw::tex
 {
 	const char* TextureTypeToString(TextureType type)
 	{
-		//@TODO(Serge): fix this somehow or remove it
 		switch (type)
 		{
 		case TextureType::Diffuse:

@@ -9,6 +9,7 @@
 #define AppEvent_h
 
 #include "r2/Core/Events/Event.h"
+#include "r2/Render/Renderer/RendererTypes.h"
 #include <sstream>
 
 namespace r2
@@ -72,6 +73,38 @@ namespace r2
 
         private:
             u32 mResolutionX, mResolutionY;
+        };
+
+
+        class RendererBackendChangedEvent : public Event
+        {
+        public:
+
+            RendererBackendChangedEvent(r2::draw::RendererBackend newRendererBacked, r2::draw::RendererBackend currentRendererBackend)
+                : mNewRendererBackend(newRendererBacked)
+                , mCurrentRendererBackend(currentRendererBackend)
+            {}
+
+            inline r2::draw::RendererBackend GetCurrentRendererBackend() const { return mCurrentRendererBackend; }
+            inline r2::draw::RendererBackend GetNewRendererBackend() const { return mNewRendererBackend; }
+
+            std::string ToString() const override
+            {
+                std::stringstream ss;
+                
+                ss << "Renderer Backend Changed from: " << r2::draw::GetRendererBackendName(mCurrentRendererBackend) << " to: "<< r2::draw::GetRendererBackendName(mNewRendererBackend);
+
+                return ss.str();
+            }
+
+			EVENT_CLASS_TYPE(EVT_RENDERER_BACKEND_CHANGED)
+			EVENT_CLASS_CATEGORY(ECAT_APP)
+        private:
+            r2::draw::RendererBackend mNewRendererBackend;
+            r2::draw::RendererBackend mCurrentRendererBackend;
+
+            
+
         };
         
         class R2_API WindowCloseEvent: public Event

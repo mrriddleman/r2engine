@@ -21,6 +21,7 @@
 #include "r2/Audio/AudioEngine.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Render/Renderer/Renderer.h"
 #ifdef R2_DEBUG
 #include <chrono>
 #include "r2/Core/Assets/Pipeline/AssetWatcher.h"
@@ -42,12 +43,26 @@ namespace r2
             R2_CHECK(false, "");
     }
 
-    Engine::Engine():mSetVSyncFunc(nullptr), mFullScreenFunc(nullptr), mWindowSizeFunc(nullptr), mMinimized(false), mFullScreen(false), mNeedsResolutionChange(false), mResolution({0,0})
+    Engine::Engine()
+        : mSetVSyncFunc(nullptr)
+        , mFullScreenFunc(nullptr)
+        , mWindowSizeFunc(nullptr)
+        , mMinimized(false)
+        , mFullScreen(false)
+        , mNeedsResolutionChange(false)
+        , mResolution({0,0})
+        , mCurrentRendererBackend(r2::draw::RendererBackend::OpenGL)
     {
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
         {
             mPlatformControllers[i] = nullptr;
         }
+
+        for (u32 i = 0; i < draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES; ++i)
+        {
+            mRendererBackends[i] = nullptr;
+        }
+
     }
     
     Engine::~Engine()
@@ -190,10 +205,20 @@ namespace r2
 #endif
             
             mDisplaySize = noptrApp->GetAppResolution();
-           
+            draw::RendererBackend rendererBackend = noptrApp->GetRendererBackend();
+            mCurrentRendererBackend = rendererBackend;
 
+            R2_CHECK(mCurrentRendererBackend == draw::RendererBackend::OpenGL, "Only supported renderer backend at the moment is OpenGL");
+
+            
+
+            
+            r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
+
+            R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             //@TODO(Serge): don't use make unique!
-            PushLayer(std::make_unique<RenderLayer>(noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath));
+            PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
@@ -239,6 +264,16 @@ namespace r2
     void Engine::Shutdown()
     {
         mLayerStack.ShutdownAll();
+
+        for (u32 i = 0; i < r2::draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES; ++i)
+        {
+            r2::draw::Renderer* nextRenderer = mRendererBackends[i];
+
+            if (nextRenderer != nullptr)
+            {
+                r2::draw::renderer::Shutdown(nextRenderer);
+            }
+        }
         
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
         {
@@ -471,6 +506,32 @@ namespace r2
             mFullScreenFunc(0);
         }
         mFullScreen = !mFullScreen;
+    }
+
+    void Engine::SetRendererBackend(r2::draw::RendererBackend newBackend)
+    {
+        R2_CHECK(newBackend == draw::OpenGL, "OpenGL is the only backend we support at the moment");
+        
+        
+        //@TODO(Serge): Do whatever setup
+        
+        evt::RendererBackendChangedEvent e(newBackend, mCurrentRendererBackend);
+        OnEvent(e);
+
+        
+        mCurrentRendererBackend = newBackend;
+
+        
+    }
+
+    r2::draw::Renderer* Engine::GetCurrentRendererPtr()
+    {
+        return mRendererBackends[mCurrentRendererBackend];
+    }
+
+    r2::draw::Renderer& Engine::GetCurrentRendererRef()
+    {
+        return *mRendererBackends[mCurrentRendererBackend];
     }
 
     void Engine::PushLayer(std::unique_ptr<Layer> layer)
