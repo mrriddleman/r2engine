@@ -52,7 +52,7 @@ namespace r2::draw::light
 
 		lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = glm::lookAt(eye, frustumCenter, math::GLOBAL_UP);
 
-		constexpr float mult = 1.5f;
+		constexpr float mult = 1.25f;
 
 		lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = glm::ortho(-radius * mult, radius * mult, -radius * mult, radius * mult, -radius * zMult, radius * zMult);
 	}

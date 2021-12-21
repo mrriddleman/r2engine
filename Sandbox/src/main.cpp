@@ -401,7 +401,7 @@ public:
 
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(5, 5, 0));
+        microbatMat = glm::translate(microbatMat, glm::vec3(1.5, -3, 0));
         microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);

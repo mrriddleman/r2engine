@@ -933,6 +933,8 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 		layer = NUM_FRUSTUM_SPLITS;
 	}
 
+
+
 	vec4 fragPosLightSpace = lightProjs[layer] * lightViews[layer] * vec4(fragPosWorldSpace, 1.0);
 
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -945,15 +947,16 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 		return 0.0;
 	}
 
+
 	
 	float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
 	if(layer == NUM_FRUSTUM_SPLITS)
 	{
-		bias *= 1 / (cascadePlanes[NUM_FRUSTUM_SPLITS - 1] * 0.5);
+		bias *= 1 / (cascadePlanes[NUM_FRUSTUM_SPLITS - 1] * 0.15);
 	}
-	else
+	else if(layer < NUM_FRUSTUM_SPLITS -1)
 	{
-		bias *= 1 / (cascadePlanes[layer] * 0.25);
+		bias *= 1 / (cascadePlanes[layer] * 0.15);
 	}
 
 	//@TODO(Serge): PCF stuff would be here	

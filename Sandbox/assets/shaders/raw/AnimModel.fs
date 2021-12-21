@@ -9,7 +9,7 @@ layout (location = 0) out vec4 FragColor;
 
 #define PI 3.141596
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
-#define NUM_FRUSTUM_SPLITS 4
+#define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 
 struct Tex2DAddress
 {
@@ -40,7 +40,7 @@ struct PointLight
 
 struct DirLight
 {
-
+//	
 	LightProperties lightProperties;
 	vec4 direction;
 	LightSpaceMatrixData lightSpaceMatrixData;
@@ -111,6 +111,21 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 };
 
+layout (std140, binding = 0) uniform Matrices 
+{
+    mat4 projection;
+    mat4 view;
+    mat4 skyboxView;
+};
+
+//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
+layout (std140, binding = 2) uniform Surfaces
+{
+	Tex2DAddress gBufferSurface;
+	Tex2DAddress shadowsSurface;
+	Tex2DAddress compositeSurface;
+};
+
 
 in VS_OUT
 {
@@ -126,6 +141,8 @@ in VS_OUT
 
 	flat uint drawID;
 } fs_in;
+
+vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
@@ -157,20 +174,77 @@ float V_Kelemen(float LoH);
 float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float LoH, out float Fcc);
 
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness);
-vec3 BRDF_Anisotropic(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness);
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness, float shadow);
+vec3 BRDF_Anisotropic(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float shadow);
 
-vec3 Eval_BRDF(bool anisotropic, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, float roughness, float clearCoat, float clearCoatRoughness);
+vec3 Eval_BRDF(
+	float anisotropy,
+	float at,
+	float ab,
+	vec3 anisotropicT,
+	vec3 anisotropicB,
+	vec3 diffuseColor,
+	vec3 N,
+	vec3 V,
+	vec3 L,
+	vec3 F0,
+	float NoV,
+	float ToV,
+	float BoV,
+	float NoL,
+	float ggxVTerm,
+	vec3 energyCompensation,
+	float roughness,
+	float clearCoat,
+	float clearCoatRoughness,
+	vec3 clearCoatNormal,
+	float shadow);
+
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
+
+float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, mat4 lightViews[NUM_FRUSTUM_SPLITS], mat4 lightProjs[NUM_FRUSTUM_SPLITS]);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
 	return float( min(max(addr.container, 0), 1) );
 }
 
+float Saturate(float x)
+{
+	return clamp(x, 0.0, 1.0);
+}
+
+vec4 DebugFrustumSplitColor()
+{
+	vec4 fragPosViewSpace = view * vec4(fs_in.fragPos, 1.0);
+
+	float depthValue = abs(fragPosViewSpace.z);
+
+	int layer = -1;
+	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
+	{
+		if(depthValue < cascadePlanes[i])
+		{
+			layer = i;
+			break;
+		}
+	}
+
+	if(layer == -1)
+	{
+		layer = NUM_FRUSTUM_SPLITS;
+	}
+
+	return splitColors[layer];
+}
+
+
 void main()
 {
+
+	//vec4 debugCascadePlanes = {1000.0 / 100.0, 1000.0 / 20.0, 1000.0 / 10.0, 1000.0};
+
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
 	vec3 texCoords = fs_in.texCoords;
@@ -194,9 +268,14 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
-	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
-	FragColor = vec4(lightingResult + emission , 1.0);
 
+
+
+	
+
+
+	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
+	FragColor = vec4(lightingResult + emission , 1.0) ;//* DebugFrustumSplitColor();
 
 }
 
@@ -485,7 +564,7 @@ float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float 
 	return Dcc * Vcc * F;
 }
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
+vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal, float shadow)
 {
 	vec3 H = normalize(V + L);
 
@@ -500,7 +579,7 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float N
 	float VSmith = V_SmithGGXCorrelated(NoV, NoL, roughness, ggxVTerm);
 
 	//specular BRDF
-	vec3 Fr = (D * VSmith) * F;
+	vec3 Fr =  (D * VSmith) * F;
 
 	//Energy compensation
 	//vec3 energyCompensation = 1.0 + F0 * (1.0 / dfg.y - 1.0);
@@ -518,10 +597,10 @@ vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float N
 	float clearCoatLobe = ClearCoatLobe(clearCoat, clearCoatRoughness, clearCoatNoH, LoH, Fcc);
 	float attenuation = 1.0 - Fcc;
 
-	return (Fd + specular) * attenuation + clearCoatLobe;
+	return ((Fd + specular) * attenuation + clearCoatLobe) * shadow;
 }
 
-vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float lambdaVTerm, float roughness)
+vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float lambdaVTerm, float roughness, float shadow)
 {
 	vec3 H = normalize(V + L);
 	vec3 T = anisotropicT ; //TODO(Serge): calculate this by passing in the materials anisotropic direction - probably need to pass in
@@ -544,17 +623,38 @@ vec3 BRDF_Anisotropic(float anisotropy, float at, float ab, vec3 anisotropicT, v
 	vec3 kS = F;
 	vec3 kD = vec3(1.0) - kS;
 
-	return (kD * Fd + Fr);
+	return (kD * Fd + Fr) * shadow;
 }
 
-vec3 Eval_BRDF(float anisotropy, float at, float ab, vec3 anisotropicT, vec3 anisotropicB, vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float ToV, float BoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal)
+vec3 Eval_BRDF(
+	float anisotropy,
+	float at,
+	float ab,
+	vec3 anisotropicT,
+	vec3 anisotropicB,
+	vec3 diffuseColor,
+	vec3 N,
+	vec3 V,
+	vec3 L,
+	vec3 F0,
+	float NoV,
+	float ToV,
+	float BoV,
+	float NoL,
+	float ggxVTerm,
+	vec3 energyCompensation,
+	float roughness,
+	float clearCoat,
+	float clearCoatRoughness,
+	vec3 clearCoatNormal,
+	float shadow)
 {
 	if(anisotropy != 0.0)
 	{
-		return BRDF_Anisotropic(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm,  roughness); 
+		return BRDF_Anisotropic(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm,  roughness, shadow); 
 	}
 	
-	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, shadow);
 }
 
 float GetDistanceAttenuation(vec3 posToLight, float falloff)
@@ -640,7 +740,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float metallic = SampleMaterialMetallic(drawID, uv).r;
 
-	float ao = SampleMaterialAO(drawID, uv).r;
+	float ao =  SampleMaterialAO(drawID, uv).r;
 
 	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
@@ -727,7 +827,9 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+	 	float shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightSpaceMatrixData.lightViewMatrices, dirLight.lightSpaceMatrixData.lightProjMatrices);
+
+	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 
 	 	L0 += result * radiance * NoL;
 	 }
@@ -746,7 +848,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
 		
 		L0 += result * radiance * NoL;
 	}
@@ -776,7 +878,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal);
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
 
 		L0 += result * radiance * NoL;
 	}
@@ -794,4 +896,87 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	color += L0; //+ambient
 
 	return color;
+}
+
+float SampleShadowMap(vec2 uv, float page)
+{
+	vec3 coord = vec3(uv, page);
+	return texture(sampler2DArray(shadowsSurface.container), coord).r;
+}
+
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[NUM_FRUSTUM_SPLITS], mat4 lightProjs[NUM_FRUSTUM_SPLITS])
+{
+	vec3 normal = normalize(fs_in.normal);
+	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
+
+	if(dot(viewDir, normal) < 0.0)
+	{
+		return 0.0;
+	}
+
+	vec4 fragPosViewSpace = view * vec4(fragPosWorldSpace, 1.0);
+
+	float depthValue = abs(fragPosViewSpace.z);
+
+	int layer = -1;
+	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
+	{
+		if(depthValue < cascadePlanes[i])
+		{
+			layer = i;
+			break;
+		}
+	}
+
+	if(layer == -1)
+	{
+		layer = NUM_FRUSTUM_SPLITS;
+	}
+
+
+
+	vec4 fragPosLightSpace = lightProjs[layer] * lightViews[layer] * vec4(fragPosWorldSpace, 1.0);
+
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+	projCoords = projCoords * 0.5 + 0.5;
+
+	float currentDepth = projCoords.z;
+	if(currentDepth > 1.0)
+	{
+		return 0.0;
+	}
+
+
+	
+	float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
+	if(layer == NUM_FRUSTUM_SPLITS)
+	{
+		bias *= 1 / (cascadePlanes[NUM_FRUSTUM_SPLITS - 1] * 0.15);
+	}
+	else if(layer < NUM_FRUSTUM_SPLITS -1)
+	{
+		bias *= 1 / (cascadePlanes[layer] * 0.15);
+	}
+
+	//@TODO(Serge): PCF stuff would be here	
+
+	float shadow = 0.0;//(currentDepth - bias) > SampleShadowMap(projCoords.xy, layer) ? 1.0 : 0.0;
+    vec2 texelSize = 1.0 / vec2(textureSize(sampler2DArray(shadowsSurface.container), 0));
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = SampleShadowMap(projCoords.xy + vec2(x,y) * texelSize, layer);
+            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+
+	if(projCoords.z > 1.0)
+	{
+		shadow = 0.0;
+	}
+
+	return shadow;
 }
