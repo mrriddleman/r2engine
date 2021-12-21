@@ -17,13 +17,15 @@ namespace r2::draw::cmd
 {
 	extern u32 CLEAR_COLOR_BUFFER;
 	extern u32 CLEAR_DEPTH_BUFFER;
-
+	extern u32 CULL_FACE_FRONT;
+	extern u32 CULL_FACE_BACK;
 	
 
 	struct DrawState
 	{
 		DrawLayer layer;
 		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
+		u32 cullState;
 	};
 
 	struct Clear
@@ -148,7 +150,9 @@ namespace r2::draw::cmd
 		u32 height;
 		u32 xOffset;
 		u32 yOffset;
-		u32 numAttachments;
+		u32 numColorAttachments;
+		u32 numDepthAttachments;
+		u32 depthTexture;
 	};
 	static_assert(std::is_pod<SetRenderTarget>::value == true, "SetRenderTarget must be a POD.");
 

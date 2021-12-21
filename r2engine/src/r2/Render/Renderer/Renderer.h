@@ -13,14 +13,18 @@
 #include "r2/Render/Renderer/RenderPass.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/Light.h"
 
+namespace r2
+{
+	struct Camera;
+}
 
 namespace r2::draw
 {
 
 
 	class BufferLayout;
-	struct LightSystem;
 	struct BufferLayoutConfiguration;
 
 	struct BufferHandles
@@ -176,10 +180,21 @@ namespace r2::draw
 	struct Renderer
 	{
 		RendererBackend mBackendType;
-		//memory
+		//--------------BEGIN Memory stuff---------------- -
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
+		//--------------END Memory stuff-----------------
+
+		//--------------BEGIN Systems stuff----------------
+		ModelSystem* mModelSystem = nullptr;
+		MaterialSystem* mMaterialSystem = nullptr;
+		LightSystem* mLightSystem = nullptr;
+		r2::SArray<r2::draw::ModelRef>* mEngineModelRefs = nullptr;
+		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
+		//--------------END Systems stuff----------------
+
+		//--------------BEGIN Buffer Layout stuff-----------------
 
 		//@TODO(Serge): don't expose this to the outside (or figure out how to remove this)
 		//				we should only be exposing/using mVertexLayoutConfigHandles
@@ -187,20 +202,11 @@ namespace r2::draw
 		r2::SArray<r2::draw::ConstantBufferHandle>* mConstantBufferHandles = nullptr;
 		r2::SHashMap<ConstantBufferData>* mConstantBufferData = nullptr;
 
-
 		r2::SArray<VertexLayoutConfigHandle>* mVertexLayoutConfigHandles = nullptr;
 		r2::SArray<r2::draw::BufferLayoutConfiguration>* mVertexLayouts = nullptr;
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
 		r2::SArray<VertexLayoutUploadOffset>* mVertexLayoutUploadOffsets = nullptr;
-
-		//@TODO(Serge): Maybe should move these to somewhere else?
-		r2::SArray<r2::draw::ModelRef>* mEngineModelRefs = nullptr;
-		ModelSystem* mModelSystem = nullptr;
-		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
-		MaterialSystem* mMaterialSystem = nullptr;
-
-
-
+		
 		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
 
 		VertexConfigHandle mStaticVertexModelConfigHandle = InvalidVertexConfigHandle;
@@ -217,6 +223,11 @@ namespace r2::draw
 		ConstantConfigHandle mBoneTransformsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mVPMatricesConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mVectorsConfigHandle = InvalidConstantConfigHandle;
+		//--------------END Buffer Layout stuff-----------------
+
+		//------------BEGIN Drawing Stuff--------------
+		const Camera* mnoptrRenderCam = nullptr;
+		ShaderHandle mDepthShaders[2]; //0 - static, 1 - dynamic
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -226,21 +237,22 @@ namespace r2::draw
 		RenderTarget mRenderTargets[NUM_RENDER_TARGET_SURFACES];
 		RenderPass* mRenderPasses[NUM_RENDER_PASSES];
 
-		//	RenderTarget mOffscreenRenderTarget;
-		//	RenderTarget mScreenRenderTarget;
-
-
-			//@TODO(Serge): Each bucket needs the bucket and an arena for that bucket. We should partition the AUX memory properly
-		r2::draw::CommandBucket<r2::draw::key::Basic>* mPreRenderBucket = nullptr;
-		r2::draw::CommandBucket<r2::draw::key::Basic>* mPostRenderBucket = nullptr;
+		//@TODO(Serge): Each bucket needs the bucket and an arena for that bucket. We should partition the AUX memory properly
+		CommandBucket<key::Basic>* mPreRenderBucket = nullptr;
+		CommandBucket<key::Basic>* mPostRenderBucket = nullptr;
 		r2::mem::StackArena* mPrePostRenderCommandArena = nullptr;
 
-		r2::draw::CommandBucket<r2::draw::key::Basic>* mCommandBucket = nullptr;
-		r2::draw::CommandBucket<r2::draw::key::Basic>* mFinalBucket = nullptr;
+		CommandBucket<key::Basic>* mCommandBucket = nullptr;
+		CommandBucket<key::Basic>* mFinalBucket = nullptr;
 		r2::mem::StackArena* mCommandArena = nullptr;
 
-		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
+		CommandBucket<key::ShadowKey>* mShadowBucket = nullptr;
+		r2::mem::StackArena* mShadowArena = nullptr;
 
+		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
+		//------------END Drawing Stuff--------------
+
+		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
 		r2::draw::MaterialHandle mDebugModelMaterialHandle;
@@ -259,7 +271,7 @@ namespace r2::draw
 
 		r2::SArray<DebugRenderBatch>* mDebugRenderBatches = nullptr;
 #endif
-
+		//------------END Debug Stuff--------------
 	};
 }
 
@@ -288,6 +300,7 @@ namespace r2::draw::renderer
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
+	void SetClearDepth(float color);
 
 	const Model* GetDefaultModel( r2::draw::DefaultModel defaultModel);
 	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs();
@@ -310,11 +323,35 @@ namespace r2::draw::renderer
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
-	void UpdatePerspectiveMatrix(const glm::mat4& perspectiveMatrix);
-	void UpdateViewMatrix(const glm::mat4& viewMatrix);
-	void UpdateCameraPosition(const glm::vec3& camPosition);
-	void UpdateExposure(float exposure);
-	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem);
+
+	void SetRenderCamera(const Camera* cameraPtr);
+
+	DirectionLightHandle AddDirectionLight(const DirectionLight& light);
+	PointLightHandle AddPointLight(const PointLight& pointLight);
+	SpotLightHandle AddSpotLight(const SpotLight& spotLight);
+	SkyLightHandle AddSkyLight(const SkyLight& skylight, s32 numPrefilteredMips);
+	SkyLightHandle AddSkyLight(const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
+
+	const DirectionLight* GetDirectionLightConstPtr(DirectionLightHandle dirLightHandle);
+	DirectionLight* GetDirectionLightPtr(DirectionLightHandle dirLightHandle);
+
+	const PointLight* GetPointLightConstPtr(PointLightHandle pointLightHandle);
+	PointLight* GetPointLightPtr(PointLightHandle pointLightHandle);
+
+	const SpotLight* GetSpotLightConstPtr(SpotLightHandle spotLightHandle);
+	SpotLight* GetSpotLightPtr(SpotLightHandle spotLightHandle);
+
+	const SkyLight* GetSkyLightConstPtr(SkyLightHandle skyLightHandle);
+	SkyLight* GetSkyLightPtr(SkyLightHandle skyLightHandle);
+
+	//@TODO(Serge): add the get light properties functions here
+
+	void RemoveDirectionLight(DirectionLightHandle dirLightHandle);
+	void RemovePointLight(PointLightHandle pointLightHandle);
+	void RemoveSpotLight(SpotLightHandle spotLightHandle);
+	void RemoveSkyLight(SkyLightHandle skylightHandle);
+	void ClearAllLighting();
+
 
 	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
@@ -323,7 +360,7 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	///More draw functions...
-
+	ShaderHandle GetDepthShaderHandle(bool isDynamic);
 
 	//------------------------------------------------------------------------------
 

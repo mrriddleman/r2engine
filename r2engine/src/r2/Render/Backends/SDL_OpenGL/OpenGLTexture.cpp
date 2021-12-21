@@ -288,7 +288,8 @@ namespace
 namespace r2::draw::tex
 {
 
-	s32 WRAP_MODE_CLAMP = GL_CLAMP_TO_EDGE;
+	s32 WRAP_MODE_CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE;
+	s32 WRAP_MODE_CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER;
 	s32 WRAP_MODE_REPEAT = GL_REPEAT;
 	s32 FILTER_LINEAR = GL_LINEAR;
 	s32 FILTER_NEAREST = GL_NEAREST;
@@ -609,7 +610,7 @@ namespace r2::draw::tex
 					textureFormat.height = texHeight;
 					textureFormat.mipLevels = cubemap.numMipLevels;
 					textureFormat.isCubemap = true;
-					textureFormat.wrapMode = WRAP_MODE_CLAMP;
+					textureFormat.wrapMode = WRAP_MODE_CLAMP_TO_EDGE;
 					textureFormat.magFilter = FILTER_LINEAR;
 					textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
 					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
@@ -646,6 +647,13 @@ namespace r2::draw::tex
 		r2::draw::tex::GPUHandle newHandle;
 		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format);
 		return newHandle;
+	}
+
+	const s32 GetMaxTextureSize()
+	{
+		GLint maxSize;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
+		return (s32)maxSize;
 	}
 
 	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap)

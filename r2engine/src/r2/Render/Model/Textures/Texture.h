@@ -2,11 +2,13 @@
 #define __TEXTURE_H__
 
 #include "r2/Core/Assets/AssetTypes.h"
+#include <glm/vec4.hpp>
 
 namespace r2::draw::tex
 {
 
-	extern s32 WRAP_MODE_CLAMP;
+	extern s32 WRAP_MODE_CLAMP_TO_EDGE;
+	extern s32 WRAP_MODE_CLAMP_TO_BORDER;
 	extern s32 WRAP_MODE_REPEAT;
 	extern s32 FILTER_LINEAR;
 	extern s32 FILTER_NEAREST;
@@ -88,6 +90,21 @@ namespace r2::draw::tex
 		s32 minFilter = FILTER_LINEAR;
 		s32 magFilter = FILTER_LINEAR;
 		s32 wrapMode = WRAP_MODE_REPEAT;
+		glm::vec4 borderColor = glm::vec4(0);
+		u32 numCommitLayers = 1;
+	};
+
+	struct TextureContainer
+	{
+		u64 handle;
+		u32 texId;
+		r2::SQueue<s32>* freeSpace;
+
+		r2::draw::tex::TextureFormat format;
+		u32 numSlices;
+		s32 xTileSize;
+		s32 yTileSize;
+		b32 isSparse;
 	};
 
 	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap);
@@ -103,6 +120,8 @@ namespace r2::draw::tex
 	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format);
 
 	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap);
+
+	const s32 GetMaxTextureSize();
 
 	namespace impl
 	{

@@ -338,7 +338,9 @@ public:
         }
 #endif
 
-        mPersController.Init(3.5f, 60.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mPersController.Init(3.5f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
+        
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
@@ -348,6 +350,7 @@ public:
 
         for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         {
+            auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
             r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
         }
 
@@ -568,6 +571,7 @@ public:
         for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+
             r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
            // defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
             if (nextModel == r2::draw::SPHERE)
@@ -600,9 +604,10 @@ public:
 
         FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
 
-        r2::draw::renderer::UpdatePerspectiveMatrix(mPersController.GetCameraPtr()->proj);
+       // r2::draw::renderer::UpdatePerspectiveMatrix(mPersController.GetCameraPtr()->proj);
 
         r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+        //r2::draw::renderer::SetClearDepth(0.5f);
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
         r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
@@ -629,8 +634,7 @@ public:
         {
          
             
-            r2::draw::lightsys::AddSkyLight(
-                *mLightSystem,
+            r2::draw::renderer::AddSkyLight(
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")),
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered")),
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
@@ -639,8 +643,11 @@ public:
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 3.0f, 5.0f, 0.0f));
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
 			dirLight.lightProperties.intensity = 2;
+           // dirLight.lightProperties.castsShadows = true;
+
+            r2::draw::renderer::AddDirectionLight(dirLight);
 
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
@@ -702,7 +709,7 @@ public:
 
         }
 
-        r2::draw::renderer::UpdateSceneLighting(*mLightSystem);
+      //  r2::draw::renderer::UpdateSceneLighting(*mLightSystem);
 
 
         return assetCache != nullptr;
@@ -981,6 +988,18 @@ public:
         
         r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
+
+	//	r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
+
+
+	//	r2::draw::renderer::UpdateCameraPosition(mPersController.GetCameraPtr()->position);
+
+
+        
+
+        //r2::draw::renderer::UpdateCamera(mPersController.GetCamera());
+
+		//r2::draw::renderer::UpdateExposure(mExposure);
     }
 
     virtual void Render(float alpha) override
@@ -1007,7 +1026,7 @@ public:
 
         //Draw the Skybox
         r2::draw::DrawFlags skyboxDrawFlags;
-
+        skyboxDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         r2::draw::renderer::DrawModelOnLayer(r2::draw::DL_SKYBOX, mSkyboxModelRef, mSkyboxMaterialHandles, glm::mat4(1.0f), skyboxDrawFlags, nullptr);
 
 
@@ -1056,12 +1075,7 @@ public:
         }
 
         
-        r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
-
-
-        r2::draw::renderer::UpdateCameraPosition(mPersController.GetCameraPtr()->position);
-
-        r2::draw::renderer::UpdateExposure(mExposure);
+        
     }
     
     virtual void Shutdown() override

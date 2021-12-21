@@ -36,12 +36,6 @@ struct Material
 	float heightScale;
 };
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposure;
-};
-
 layout (std430, binding = 1) buffer Materials
 {
 	Material materials[];

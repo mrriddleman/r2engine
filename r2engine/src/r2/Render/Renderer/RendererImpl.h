@@ -56,6 +56,7 @@ namespace r2::draw::rendererimpl
 
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
+	void SetDepthClearColor(float color);
 	void GenerateBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
 	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
 	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
@@ -64,6 +65,7 @@ namespace r2::draw::rendererimpl
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
+	void SetCullFace(u32 cullFace);
 
 	//
 	void SetViewportKey(u32 viewport);
@@ -81,7 +83,7 @@ namespace r2::draw::rendererimpl
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0);
 	void ApplyDrawState(const cmd::DrawState& state);
-	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height);
+	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 numDepthAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, u32 depthTexture);
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

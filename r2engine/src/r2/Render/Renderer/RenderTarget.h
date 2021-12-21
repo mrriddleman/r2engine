@@ -6,15 +6,22 @@
 
 namespace r2::draw::rt
 {
-	struct ColorAttachment
+	struct TextureAttachment
 	{
 		tex::TextureHandle texture;
+		u32 numLayers = 1;
 	};
 
 	struct RenderBufferAttachment
 	{
 		u32 rbo = 0;
 		s32 attachmentType = -1;
+	};
+
+	enum TextureAttachmentType
+	{
+		COLOR = 0,
+		DEPTH
 	};
 }
 
@@ -24,10 +31,11 @@ namespace r2::draw
 	{
 		RTS_EMPTY = -1,
 		RTS_GBUFFER,
+		RTS_SHADOWS,
 		RTS_COMPOSITE,
+		
 		NUM_RENDER_TARGET_SURFACES
 	};
-
 
 	struct RenderTarget
 	{
@@ -36,43 +44,38 @@ namespace r2::draw
 		u32 width = 0, height = 0;
 		u32 xOffset = 0, yOffset = 0;
 
-		r2::SArray<rt::ColorAttachment>* colorAttachments = nullptr;
+		r2::SArray<rt::TextureAttachment>* colorAttachments = nullptr;
+		r2::SArray<rt::TextureAttachment>* depthAttachments = nullptr;
 		r2::SArray<rt::RenderBufferAttachment>* renderBufferAttachments = nullptr;
 
-		static u64 RenderTarget::MemorySize(u64 numColorAttachments, u64 numRenderBufferAttachments, u64 alignmnet, u32 headerSize, u32 boundsChecking);
+		static u64 RenderTarget::MemorySize(u32 numColorAttachments, u32 numDepthAttachments, u32 numRenderBufferAttachments, u64 alignmnet, u32 headerSize, u32 boundsChecking);
 	};
 
 	namespace rt
 	{
+
 		extern s32 COLOR_ATTACHMENT;
 		extern s32 DEPTH_ATTACHMENT;
 		extern s32 DEPTH_STENCIL_ATTACHMENT;
 		extern s32 MSAA_ATTACHMENT;
 
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description);
-
+		RenderTarget CreateRenderTarget(ARENA& arena, u32 maxNumColorAttachments, u32 maxNumDepthAttachments, u32 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description);
 
 		template <class ARENA>
 		void DestroyRenderTarget(ARENA& arena, RenderTarget& rt);
 
-		void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR);
-		void AddDepthAndStencilAttachment(RenderTarget& rt);
+		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR);
 
-		void SetRenderTarget(const RenderTarget& rt);
-		void UnsetRenderTarget(const RenderTarget& rt);
+		void AddDepthAndStencilAttachment(RenderTarget& rt);
 
 		//private
 		namespace impl
 		{
-			void Bind(const RenderTarget& rt);
-			void Unbind(const RenderTarget& rt);
-			void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR);
+			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR);
 			void AddDepthAndStencilAttachment(RenderTarget& rt);
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
-			void SetDrawBuffers(const RenderTarget& rt);
-			void SetViewport(const RenderTarget& renderTarget);
 		}
 
 	}
@@ -80,11 +83,25 @@ namespace r2::draw
 	namespace rt
 	{
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u64 maxNumColorAttachments, u64 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description)
+		RenderTarget CreateRenderTarget(ARENA& arena, u32 maxNumColorAttachments, u32 maxNumDepthAttachments, u32 maxNumRenderBufferAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description)
 		{
 			RenderTarget rt;
-			rt.colorAttachments = MAKE_SARRAY_VERBOSE(arena, ColorAttachment, maxNumColorAttachments, file, line, description);
-			rt.renderBufferAttachments = MAKE_SARRAY_VERBOSE(arena, RenderBufferAttachment, maxNumRenderBufferAttachments, file, line, description);
+
+			if (maxNumColorAttachments > 0)
+			{
+				rt.colorAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, maxNumColorAttachments, file, line, description);
+			}
+
+			if (maxNumDepthAttachments > 0)
+			{
+				rt.depthAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, maxNumDepthAttachments, file, line, description);
+			}
+			
+			if (maxNumRenderBufferAttachments > 0)
+			{
+				rt.renderBufferAttachments = MAKE_SARRAY_VERBOSE(arena, RenderBufferAttachment, maxNumRenderBufferAttachments, file, line, description);
+			}
+			
 			rt.width = width;
 			rt.height = height;
 			rt.xOffset = xOffset;
@@ -110,6 +127,11 @@ namespace r2::draw
 			if (rt.colorAttachments)
 			{
 				FREE(rt.colorAttachments, arena);
+			}
+
+			if (rt.depthAttachments)
+			{
+				FREE(rt.depthAttachments, arena);
 			}
 		}
 

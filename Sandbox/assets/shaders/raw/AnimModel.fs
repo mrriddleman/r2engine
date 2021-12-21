@@ -9,6 +9,7 @@ layout (location = 0) out vec4 FragColor;
 
 #define PI 3.141596
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
+#define NUM_FRUSTUM_SPLITS 4
 
 struct Tex2DAddress
 {
@@ -21,7 +22,14 @@ struct LightProperties
 	vec4 color;
 	float fallOffRadius;
 	float intensity;
+	//uint32_t castsShadows;
 	int64_t lightID;
+};
+
+struct LightSpaceMatrixData
+{
+	mat4 lightViewMatrices[NUM_FRUSTUM_SPLITS];
+	mat4 lightProjMatrices[NUM_FRUSTUM_SPLITS];
 };
 
 struct PointLight
@@ -32,8 +40,10 @@ struct PointLight
 
 struct DirLight
 {
+
 	LightProperties lightProperties;
 	vec4 direction;
+	LightSpaceMatrixData lightSpaceMatrixData;
 };
 
 struct SpotLight
@@ -80,6 +90,7 @@ layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
     vec4 exposure;
+    vec4 cascadePlanes;
 };
 
 layout (std430, binding = 1) buffer Materials

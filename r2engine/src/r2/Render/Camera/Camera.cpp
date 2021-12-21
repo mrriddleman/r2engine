@@ -12,33 +12,66 @@
 
 namespace r2::cam
 {
+
+    void CalculateFrustumProjections(Camera& cam)
+    {
+        float frustumSplits[NUM_FRUSTUM_SPLITS];
+        GetFrustumSplits(cam, frustumSplits);
+
+        for (u32 i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
+        {
+            if (i == 0)
+            {
+                cam.frustumProjections[i] = glm::perspective(cam.fov, cam.aspectRatio, cam.nearPlane, frustumSplits[i]);
+            }
+            else
+            {
+                cam.frustumProjections[i] = glm::perspective(cam.fov, cam.aspectRatio, frustumSplits[i - 1], frustumSplits[i]);
+            }
+        }
+    }
     
     void InitPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far, const glm::vec3& pos, const glm::vec3& facing)
     {
         cam.position = pos;
         cam.facing = facing;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-        cam.proj = glm::perspective(glm::radians(fovDegrees), aspect, near, far);
-        
-        cam.vp = cam.proj * cam.view;
+       
+        SetPerspectiveCam(cam, fovDegrees, aspect, near, far);
     }
     
     void InitOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far, const glm::vec3& pos)
     {
         cam.position = pos;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-        cam.proj = glm::ortho(left, right, bottom, top, near, far);
-        cam.vp = cam.proj * cam.view;
+
+        SetOrthoCam(cam, left, right, bottom, top, near, far);
+    }
+
+    void SetFOV(Camera& cam, float fovDegrees)
+    {
+        SetPerspectiveCam(cam, fovDegrees, cam.aspectRatio, cam.nearPlane, cam.farPlane);
     }
 
     void SetPerspectiveCam(Camera& cam, float fovDegrees, float aspect, float near, float far)
     {
-        cam.proj = glm::perspective(glm::radians(fovDegrees), aspect, near, far);
+        cam.aspectRatio = aspect;
+        cam.fov = glm::radians(fovDegrees);
+        cam.nearPlane = near;
+        cam.farPlane = far;
+
+        cam.proj = glm::perspective(cam.fov, aspect, near, far);
         cam.vp = cam.proj * cam.view;
+
+        CalculateFrustumProjections(cam);
     }
     
     void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far)
     {
+        cam.aspectRatio = (right - left) / abs(bottom - top);
+        cam.nearPlane = near;
+        cam.farPlane = far;
+
         cam.proj = glm::ortho(left, right, bottom, top, near, far);
         cam.vp = cam.proj * cam.view;
     }
@@ -71,7 +104,78 @@ namespace r2::cam
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
         cam.vp = cam.proj * cam.view;
     }
+
+    void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS])
+    {
+        return GetFrustumCorners(cam.proj, cam.view, corners);
+    }
+
+    void GetFrustumCorners(const glm::mat4& proj, const glm::mat4& view, glm::vec3 outCorners[NUM_FRUSTUM_CORNERS])
+    {
+		constexpr glm::vec4 frustumCorners[NUM_FRUSTUM_CORNERS] =
+		{
+			glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f),
+			glm::vec4(1.0f, 1.0f, -1.0f, 1.0f),
+			glm::vec4(1.0f, -1.0f, -1.0f, 1.0f),
+			glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f),
+			glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f),
+			glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+			glm::vec4(1.0f, -1.0f, 1.0f, 1.0f),
+			glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f)
+		};
+
+		const auto inv = glm::inverse(proj * view);
+
+		for (u32 i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+		{
+			glm::vec4 pt = inv * frustumCorners[i];
+			outCorners[i] = pt / pt.w;
+		}
+
+		//const auto inv = glm::inverse(proj * view);
+  //      s32 i = 0;
+
+		//for (unsigned int x = 0; x < 2; ++x)
+		//{
+		//	for (unsigned int y = 0; y < 2; ++y)
+		//	{
+		//		for (unsigned int z = 0; z < 2; ++z)
+		//		{
+		//			const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, 2.0f * z - 1.0f, 1.0f);
+  //                  outCorners[i] = pt / pt.w;
+  //                  ++i;
+		//		}
+		//	}
+		//}
+
+		//return frustumCorners;
+    }
+
+    glm::vec3 GetFrustumCenter(const glm::vec3 corners[NUM_FRUSTUM_CORNERS])
+    {
+        glm::vec3 center = glm::vec3(0.f, 0.f, 0.f);
+
+        for (u32 i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+        {
+            center += corners[i];
+        }
+
+        return center * (1.0f / (float)NUM_FRUSTUM_CORNERS);
+    }
     
+    void GetFrustumSplits(const Camera& cam, float frustumSplits[NUM_FRUSTUM_SPLITS])
+    {
+		constexpr float m_pssm_lambda = 0.3;
+		constexpr float m_near_offset = 250.0f;
+
+        float ratio = cam.farPlane / cam.nearPlane;
+
+        frustumSplits[0] = 10.f; 
+        frustumSplits[1] = 30.f; 
+        frustumSplits[2] = 80.f; 
+        frustumSplits[3] = cam.farPlane;
+    }
+
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir)
     {
         glm::vec3 facingDir(0.0f);

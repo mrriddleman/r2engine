@@ -17,18 +17,7 @@ namespace r2
 
 namespace r2::draw::tex
 {
-	struct TextureContainer
-	{
-		GLuint64 handle;
-		GLuint texId;
-		r2::SQueue<GLsizei>* freeSpace;
-
-		r2::draw::tex::TextureFormat format;
-		u32 numSlices;
-		GLsizei xTileSize;
-		GLsizei yTileSize;
-		b32 isSparse;
-	};
+	
 }
 
 namespace r2::draw::gl
@@ -113,7 +102,7 @@ namespace r2::draw::gl
 		u64 MemorySize(u64 slices, u64 alignment, u32 headerSize, u32 boundsChecking);
 
 		//Don't use publically 
-		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLboolean commit);
+		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLsizei numLayersToCommit, GLboolean commit);
 	}
 
 	namespace texsys

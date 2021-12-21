@@ -85,24 +85,50 @@ namespace r2::draw::key
 			DEBUG_KEY_DEPTH_OFFSET = DEBUG_KEY_TRANSLUCENCY_OFFSET - DEBUG_KEY_BITS_DEPTH
 
 		};
-
-
-		
 	};
 
+	struct ShadowKey
+	{
+		/*
+		+------1 bit-----+-15 bits-+
+		| Static/Dynamic |  Depth  |
+		+----------------+---------+
+		*/
+
+		u16 keyValue = 0;
+
+		enum : u16
+		{
+			SHADOW_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
+
+			SHADOW_KEY_BITS_IS_DYNAMIC = 0x1,
+			SHADOW_KEY_BITS_DEPTH = 0xF,
+
+			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_IS_DYNAMIC,
+			SHADOW_KEY_DEPTH_OFFSET = SHADOW_KEY_IS_DYNAMIC_OFFSET - SHADOW_KEY_BITS_DEPTH
+		};
+	};
+
+	//DEBUG
 	bool CompareDebugKey(const DebugKey& a, const DebugKey& b);
 
 	DebugKey GenerateDebugKey(u16 shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u16 depth);
 
 	void DecodeDebugKey(const DebugKey& key);
 
-
+	//Normal GBUFFER
 	bool CompareBasicKey(const Basic& a, const Basic& b);
 
 	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID);
 	
 	void DecodeBasicKey(const Basic& key);
 
+	//Shadows
+	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
+
+	ShadowKey GenerateShadowKey(bool isDynamic, u16 depth);
+
+	void DecodeShadowKey(const ShadowKey& key);
 }
 
 #endif

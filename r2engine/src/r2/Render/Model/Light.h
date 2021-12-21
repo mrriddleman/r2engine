@@ -4,16 +4,16 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SHashMap.h"
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 #include "r2/Render/Model/Material.h"
-
+#include "r2/Render/Camera/Camera.h"
 
 namespace r2::draw
 {
 	namespace light
 	{
 		const u32 MAX_NUM_LIGHTS = 50;
-		
+		const u32 SHADOW_MAP_SIZE = 2048;
 	}
 
 	using LightSystemHandle = s64;
@@ -32,29 +32,36 @@ namespace r2::draw
 	struct LightProperties
 	{
 		glm::vec4 color = glm::vec4(1.0f);
-		
 		float fallOff = 1.0f;
 		float intensity = 1.0f;
 		s64 lightID = -1; //internal use only
 	};
 
+	struct LightSpaceMatrixData
+	{
+		glm::mat4 lightViewMatrices[cam::NUM_FRUSTUM_SPLITS];
+		glm::mat4 lightProjMatrices[cam::NUM_FRUSTUM_SPLITS];
+	};
+
 	struct DirectionLight
 	{
 		LightProperties lightProperties;
-		glm::vec4 direction;
+		glm::vec4 direction; //@TODO(Serge): make these vec3?
+		//calculated automatically
+		LightSpaceMatrixData lightSpaceMatrixData;
 	};
 
 	struct PointLight
 	{
 		LightProperties lightProperties;
-		glm::vec4 position;	
+		glm::vec4 position;	//@TODO(Serge): make these vec3?
 	};
 
 	struct SpotLight
 	{
 		LightProperties lightProperties;
-		glm::vec4 position;
-		glm::vec4 direction;
+		glm::vec4 position;//@TODO(Serge): make these vec3?
+		glm::vec4 direction;//@TODO(Serge): make these vec3?
 		//float radius; //cosine angle
 		//float cutoff; //cosine angle
 	};
@@ -83,7 +90,6 @@ namespace r2::draw
 		s32 numPrefilteredRoughnessMips = 0;
 	};
 
-
 	struct SceneLightMetaData
 	{
 		r2::SHashMap<s64>* mPointLightMap = nullptr;
@@ -100,6 +106,12 @@ namespace r2::draw
 		static u64 MemorySize(u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
+	namespace light
+	{
+		void GetDirectionalLightSpaceMatrices(LightSpaceMatrixData& lightSpaceMatrixData, const Camera& cam, const glm::vec3& lightDir, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS]);
+		void GetDirectionalLightSpaceMatricesForCascade(LightSpaceMatrixData& lightSpaceMatrixData, const glm::vec3& lightDir, u32 cascadeIndex, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS], const glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS]);
+	}
+
 	namespace lightsys
 	{
 		void Init(s64 pointLightID, s64 directionLightID, s64 spotLightID);
@@ -112,19 +124,29 @@ namespace r2::draw
 
 		PointLightHandle AddPointLight(LightSystem& system, const PointLight& pointLight);
 		bool RemovePointLight(LightSystem& system, PointLightHandle lightHandle);
+		PointLight* GetPointLightPtr(LightSystem& system, PointLightHandle handle);
+		const PointLight* GetPointLightConstPtr(const LightSystem& system, PointLightHandle handle);
 
 		DirectionLightHandle AddDirectionalLight(LightSystem& system, const DirectionLight& dirLight);
 		bool RemoveDirectionalLight(LightSystem& system, DirectionLightHandle lightHandle);
+		DirectionLight* GetDirectionLightPtr(LightSystem& system, DirectionLightHandle handle);
+		const DirectionLight* GetDirectionLightConstPtr(const LightSystem& system, DirectionLightHandle handle);
 
 		SpotLightHandle AddSpotLight(LightSystem& system, const SpotLight& spotLight);
 		bool RemoveSpotLight(LightSystem& system, SpotLightHandle lightHandle);
+		SpotLight* GetSpotLightPtr(LightSystem& system, SpotLightHandle handle);
+		const SpotLight* GetSpotLightConstPtr(const LightSystem& system, SpotLightHandle handle);
 
 		SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight, s32 numPrefilteredMips);
 		SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
-
 		bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle);
+		SkyLight* GetSkyLightPtr(LightSystem& system, SkyLightHandle handle);
+		const SkyLight* GetSkyLightConstPtr(const LightSystem& system, SkyLightHandle handle);
 
 		LightSystemHandle GenerateNewLightSystemHandle();
+
+
+		void ClearAllLighting(LightSystem& system);
 	}
 
 

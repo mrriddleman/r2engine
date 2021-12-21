@@ -15,6 +15,7 @@ namespace r2::draw
 		RPT_NONE = -1,
 		RPT_GBUFFER,
 		RPT_FINAL_COMPOSITE,
+		RPT_SHADOWS,
 		NUM_RENDER_PASSES
 	};
 

@@ -66,26 +66,26 @@ namespace r2
 
     void ImGuiLayer::Begin()
     {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
-        ImGui::NewFrame();
+    //    ImGui_ImplOpenGL3_NewFrame();
+   //     ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
+  //      ImGui::NewFrame();
     }
     
     void ImGuiLayer::End()
     {
-        ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
-        
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            r2::draw::rendererimpl::MakeCurrent();
-        }
+        //ImGuiIO& io = ImGui::GetIO();
+        //io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
+        //
+        //ImGui::Render();
+        //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //
+        //if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        //{
+        //    
+        //    ImGui::UpdatePlatformWindows();
+        //    ImGui::RenderPlatformWindowsDefault();
+        //    r2::draw::rendererimpl::MakeCurrent();
+        //}
     }
     
     void ImGuiLayer::ImGuiRender()

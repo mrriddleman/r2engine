@@ -75,7 +75,7 @@ namespace r2::asset::pln
                 std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
                 if (vertexPath.stem() == file.path().stem())
                 {
-                    shaderManifest.fragmentShaderPath = file.path().string();
+                    shaderManifest.geometryShaderPath = file.path().string();
                     break;
                 }
             }

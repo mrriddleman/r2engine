@@ -396,8 +396,6 @@ namespace r2::draw::shader
             *program = reloadedShaderProgram.shaderProg;
         }
     }
-
-   
 }
 
 

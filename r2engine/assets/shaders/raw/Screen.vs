@@ -11,12 +11,6 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];	
 };
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposure;
-};
-
 out VS_OUT
 {
 	vec3 normal;

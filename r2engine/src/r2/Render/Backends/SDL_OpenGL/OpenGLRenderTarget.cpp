@@ -17,7 +17,7 @@ namespace r2::draw::rt
 
 namespace r2::draw::rt::impl
 {
-	void Bind(const RenderTarget& rt)
+	/*void Bind(const RenderTarget& rt)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 	}
@@ -45,32 +45,49 @@ namespace r2::draw::rt::impl
 
 			FREE_ARRAY(bufs, *MEM_ENG_SCRATCH_PTR);
 		}
+
 	}
 
 	void SetViewport(const RenderTarget& renderTarget)
 	{
 		glViewport(renderTarget.xOffset, renderTarget.yOffset, renderTarget.width, renderTarget.height);
-	}
+	}*/
 
-	void AddTextureAttachment(RenderTarget& rt, s32 filter, s32 wrapMode, s32 mipLevels, bool alpha, bool isHDR)
+	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR)
 	{
+		R2_CHECK(layers > 0, "We need at least 1 layer");
+
 		//@TODO(Serge): implement mip map levels?
 
-		ColorAttachment textureAttachment;
+		TextureAttachment textureAttachment;
 
 		tex::TextureFormat format;
 		format.width = rt.width;
 		format.height = rt.height;
 		format.mipLevels = mipLevels;
+		format.numCommitLayers = layers;
 
-		if (isHDR)
+		if (type == COLOR)
 		{
-			format.internalformat = alpha ? GL_RGBA16F : GL_RGB16F;
+			if (isHDR)
+			{
+				format.internalformat = alpha ? GL_RGBA16F : GL_RGB16F;
+			}
+			else
+			{
+				format.internalformat = alpha ? GL_RGBA8 : GL_RGB8;
+			}
+		}
+		else if (type == DEPTH)
+		{
+			format.internalformat = GL_DEPTH_COMPONENT32F;
+			format.borderColor = glm::vec4(1.0f);
 		}
 		else
 		{
-			format.internalformat = alpha ? GL_RGBA8 : GL_RGB8;
+			R2_CHECK(false, "Unsupported TextureAttachmentType!");
 		}
+		
 		
 		format.minFilter = filter;
 		format.magFilter = filter;
@@ -79,14 +96,38 @@ namespace r2::draw::rt::impl
 		textureAttachment.texture = tex::CreateTexture(format);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
-		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
-		
+		if (type == COLOR)
+		{
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+		}
+		else if (type == DEPTH)
+		{
+			//Have to do layered rendering with this
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0);
+			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
+		}
+		else
+		{
+			R2_CHECK(false, "Unknown texture attachment type");
+		}
 
 		auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
 		R2_CHECK(result, "Failed to attach texture to frame buffer");
 
-		r2::sarr::Push(*rt.colorAttachments, textureAttachment);
+		if (type == COLOR)
+		{
+			r2::sarr::Push(*rt.colorAttachments, textureAttachment);
+		}
+		else if (type == DEPTH)
+		{
+			r2::sarr::Push(*rt.depthAttachments, textureAttachment);
+		}
+		else
+		{
+			R2_CHECK(false, "Unknown texture attachment type");
+		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -94,7 +135,7 @@ namespace r2::draw::rt::impl
 
 	void AddDepthAndStencilAttachment(RenderTarget& rt)
 	{
-		Bind(rt);
+		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 		u32 rbo;
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -108,7 +149,7 @@ namespace r2::draw::rt::impl
 		R2_CHECK(result, "Failed to attach texture to frame buffer");
 
 		
-		Unbind(rt);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		RenderBufferAttachment ra;
 		ra.rbo = rbo;
@@ -133,6 +174,16 @@ namespace r2::draw::rt::impl
 				tex::UnloadFromGPU(r2::sarr::At(*renderTarget.colorAttachments, i).texture);
 			}
 		}
+
+		if (renderTarget.depthAttachments)
+		{
+			u64 numDepthAttachments = r2::sarr::Size(*renderTarget.depthAttachments);
+
+			for (u64 i = 0; i < numDepthAttachments; ++i)
+			{
+				tex::UnloadFromGPU(r2::sarr::At(*renderTarget.depthAttachments, i).texture);
+			}
+		}
 		
 		if (renderTarget.renderBufferAttachments)
 		{
@@ -142,7 +193,6 @@ namespace r2::draw::rt::impl
 				glDeleteRenderbuffers(1, &r2::sarr::At(*renderTarget.renderBufferAttachments, i).rbo);
 			}
 		}
-
 
 		if (renderTarget.frameBufferID > 0)
 		{

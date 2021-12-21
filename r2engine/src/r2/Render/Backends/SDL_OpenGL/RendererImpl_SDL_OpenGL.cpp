@@ -92,6 +92,8 @@ namespace r2::draw::cmd
 {
 	u32 CLEAR_COLOR_BUFFER = GL_COLOR_BUFFER_BIT;
 	u32 CLEAR_DEPTH_BUFFER = GL_DEPTH_BUFFER_BIT;
+	u32 CULL_FACE_FRONT = GL_FRONT;
+	u32 CULL_FACE_BACK = GL_BACK;
 }
 
 namespace r2::draw::rendererimpl
@@ -289,6 +291,11 @@ namespace r2::draw::rendererimpl
 		glClearColor(color.r, color.g, color.b, color.a);
 	}
 
+	void SetDepthClearColor(float color)
+	{
+		glClearDepth(color);
+	}
+
 	void GenerateBufferLayouts(u32 numBufferLayouts, u32* layoutIds)
 	{
 		glGenVertexArrays(numBufferLayouts, layoutIds);
@@ -320,6 +327,11 @@ namespace r2::draw::rendererimpl
 			glEnable(GL_DEPTH_TEST);
 		else
 			glDisable(GL_DEPTH_TEST);
+	}
+
+	void SetCullFace(u32 cullFace)
+	{
+		glCullFace(cullFace);
 	}
 
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
@@ -663,6 +675,7 @@ namespace r2::draw::rendererimpl
 	{
 		//glDepthMask(state.depthEnabled);
 		SetDepthTest(state.depthEnabled);
+		SetCullFace(state.cullState);
 	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)
@@ -744,7 +757,7 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
-	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height)
+	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 numDepthAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, u32 depthTexture)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
@@ -760,6 +773,10 @@ namespace r2::draw::rendererimpl
 			}
 
 			glDrawBuffers(numColorAttachments, &bufs[0]);
+		}
+		else if (numDepthAttachments > 0 && fboHandle != 0)
+		{
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 		}
 
 		glViewport(xOffset, yOffset, width, height);

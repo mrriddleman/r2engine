@@ -170,10 +170,6 @@ namespace r2::draw::gl
 
 			container.isSparse = CanBeSparse(format, tileSizes, smallestMip);
 
-			if (!container.isSparse)
-			{
-				int k = 0;
-			}
 
 			GLCall(glGenTextures(1, &container.texId));
 			GLCall(glBindTexture(target, container.texId));
@@ -200,6 +196,13 @@ namespace r2::draw::gl
 			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode));
 			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode));
 
+			if (format.wrapMode == GL_CLAMP_TO_BORDER)
+			{
+				float borderColor[] = { format.borderColor.r, format.borderColor.g, format.borderColor.b, format.borderColor.a };
+
+				GLCall(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor));
+			}
+
 			if (format.isCubemap)
 			{
 				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode));
@@ -218,6 +221,8 @@ namespace r2::draw::gl
 			}
 
 			GLCall(glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices));
+
+			
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
 			{
@@ -246,19 +251,27 @@ namespace r2::draw::gl
 
 		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container)
 		{
-			return r2::squeue::Size(*container.freeSpace) > 0;
+			return r2::squeue::Size(*container.freeSpace) >= container.format.numCommitLayers;
 		}
 
 		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container)
 		{
 			GLsizei front = r2::squeue::First(*container.freeSpace);
-			r2::squeue::PopFront(*container.freeSpace);
+			
+			for (u32 i = 0; i < container.format.numCommitLayers; ++i)
+			{
+				r2::squeue::PopFront(*container.freeSpace);
+			}
+			
 			return front;
 		}
 
 		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice)
 		{
-			r2::squeue::PushBack(*container.freeSpace, slice);
+			for (GLsizei i = 0; i < container.format.numCommitLayers; ++i)
+			{
+				r2::squeue::PushBack(*container.freeSpace, slice + i);
+			}
 		}
 
 		void Commit(r2::draw::tex::TextureContainer& container, r2::draw::tex::TextureHandle* tex)
@@ -270,7 +283,7 @@ namespace r2::draw::gl
 				return;
 			}
 
-			ChangeCommitment(container, (GLsizei)tex->sliceIndex, GL_TRUE);
+			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)container.format.numCommitLayers, GL_TRUE);
 		}
 
 		void Free(r2::draw::tex::TextureContainer& container, r2::draw::tex::TextureHandle* tex)
@@ -282,7 +295,7 @@ namespace r2::draw::gl
 				return;
 			}
 
-			ChangeCommitment(container, (GLsizei)tex->sliceIndex, GL_FALSE);
+			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)container.format.numCommitLayers, GL_FALSE);
 		}
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
@@ -310,7 +323,7 @@ namespace r2::draw::gl
 		}
 
 		//Don't use publically 
-		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLboolean commit)
+		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLsizei numLayersToCommit, GLboolean commit)
 		{
 
 			if (!container.isSparse)
@@ -346,7 +359,11 @@ namespace r2::draw::gl
 				}
 				else
 				{
-					GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice, levelWidth, levelHeight, 1, commit));
+					for (int layer = 0; layer < numLayersToCommit; ++layer)
+					{
+						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice + layer, levelWidth, levelHeight, 1, commit));
+					}
+					
 				}
 
 				levelWidth = std::max(levelWidth / 2, 1);

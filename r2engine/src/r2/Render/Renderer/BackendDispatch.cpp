@@ -75,6 +75,6 @@ namespace r2::draw::dispatch
 		const cmd::SetRenderTarget* realData = static_cast<const cmd::SetRenderTarget*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
-		rendererimpl::SetRenderTarget(realData->framebufferID, realData->numAttachments, realData->xOffset, realData->yOffset, realData->width, realData->height);
+		rendererimpl::SetRenderTarget(realData->framebufferID, realData->numColorAttachments, realData->numDepthAttachments, realData->xOffset, realData->yOffset, realData->width, realData->height, realData->depthTexture);
 	}
 }

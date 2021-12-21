@@ -339,6 +339,39 @@ namespace r2::draw::renderer
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
 	void UpdateExposure(Renderer& renderer, float exposure);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
+	void UpdateCamera(Renderer& renderer, const Camera& camera);
+	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
+
+	//Camera and Lighting
+	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr);
+
+	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light);
+	PointLightHandle AddPointLight(Renderer& renderer, const PointLight& pointLight);
+	SpotLightHandle AddSpotLight(Renderer& renderer, const SpotLight& spotLight);
+	SkyLightHandle AddSkyLight(Renderer& renderer, const SkyLight& skylight, s32 numPrefilteredMips);
+	SkyLightHandle AddSkyLight(Renderer& renderer, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
+
+	const DirectionLight* GetDirectionLightConstPtr(Renderer& renderer, DirectionLightHandle dirLightHandle);
+	DirectionLight* GetDirectionLightPtr(Renderer& renderer, DirectionLightHandle dirLightHandle);
+
+	const PointLight* GetPointLightConstPtr(Renderer& renderer, PointLightHandle pointLightHandle);
+	PointLight* GetPointLightPtr(Renderer& renderer, PointLightHandle pointLightHandle);
+
+	const SpotLight* GetSpotLightConstPtr(Renderer& renderer, SpotLightHandle spotLightHandle);
+	SpotLight* GetSpotLightPtr(Renderer& renderer, SpotLightHandle spotLightHandle);
+
+	const SkyLight* GetSkyLightConstPtr(Renderer& renderer, SkyLightHandle skyLightHandle);
+	SkyLight* GetSkyLightPtr(Renderer& renderer, SkyLightHandle skyLightHandle);
+
+	//@TODO(Serge): add the get light properties functions here
+
+	void RemoveDirectionLight(Renderer& renderer, DirectionLightHandle dirLightHandle);
+	void RemovePointLight(Renderer& renderer, PointLightHandle pointLightHandle);
+	void RemoveSpotLight(Renderer& renderer, SpotLightHandle spotLightHandle);
+	void RemoveSkyLight(Renderer& renderer, SkyLightHandle skylightHandle);
+	void ClearAllLighting(Renderer& renderer);
+
+	void UpdateLighting(Renderer& renderer);
 
 	void DrawModels(Renderer& renderer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModel(Renderer& renderer, const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
@@ -347,7 +380,7 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
-
+	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic);
 
 	//------------------------------------------------------------------------------
 
@@ -373,8 +406,10 @@ namespace r2::draw::renderer
 
 	void DrawTangentVectors(Renderer& renderer, DefaultModel model, const glm::mat4& transform);
 #endif
+}
 
-
+namespace r2::draw::renderer
+{
 	ConstantBufferData* GetConstData(Renderer& renderer, ConstantBufferHandle handle);
 	ConstantBufferData* GetConstDataByConfigHandle(Renderer& renderer, ConstantConfigHandle handle);
 
@@ -402,9 +437,18 @@ namespace r2::draw::renderer
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
 	bool GenerateBufferLayouts(Renderer& renderer, const r2::SArray<BufferLayoutConfiguration>* layouts);
 	bool GenerateConstantBuffers(Renderer& renderer, const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
-	r2::draw::cmd::Clear* AddClearCommand(CommandBucket<key::Basic>& bucket, r2::draw::key::Basic key);
-	template<class ARENA>
-	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<key::Basic>& bucket, r2::draw::key::Basic key, u64 auxMemory);
+
+
+	template <class T>
+	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena);
+
+	template <typename T>
+	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<T>& commandBucket);
+
+
+	template<class ARENA, typename T>
+	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<T>& bucket, T key, u64 auxMemory);
+
 	ModelRef UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vHandle);
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data);
 
@@ -415,11 +459,10 @@ namespace r2::draw::renderer
 	void CreateRenderPasses(Renderer& renderer);
 	void DestroyRenderPasses(Renderer& renderer);
 
-	void BeginRenderPass(Renderer& renderer, RenderPassType renderPass, const ClearSurfaceOptions& clearOptions, const ShaderHandle& shaderHandle, r2::draw::CommandBucket<key::Basic>& commandBucket, mem::StackArena& arena);
-	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<key::Basic>& commandBucket);
 
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
+	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void DestroyRenderSurfaces(Renderer& renderer);
 
 	void PreRender(Renderer& renderer);
@@ -656,12 +699,21 @@ namespace r2::draw::renderer
 		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 
+		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
+
+
 #ifdef R2_DEBUG
 		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DebugLines"));
 		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DebugModels"));
 #endif
 		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
 
+		//Get the depth shader handles
+		newRenderer->mDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticDepth")))->shaderId;
+		newRenderer->mDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicDepth")))->shaderId;
+
+
+		CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
 		auto size = CENG.DisplaySize();
 		
@@ -675,13 +727,22 @@ namespace r2::draw::renderer
 
 		
 		newRenderer->mPreRenderBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mPreRenderBucket != nullptr, "We couldn't create the command bucket!");
 		newRenderer->mPostRenderBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mPostRenderBucket != nullptr, "We couldn't create the command bucket!");
 
-		newRenderer->mPrePostRenderCommandArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 2);
+		newRenderer->mPrePostRenderCommandArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 2); // I think we want more memory here because it needs to do more heavy ops
+		R2_CHECK(newRenderer->mPrePostRenderCommandArena != nullptr, "We couldn't create the pre/post command arena!");
+
+		newRenderer->mShadowBucket = MAKE_CMD_BUCKET(*rendererArena, key::ShadowKey, key::DecodeShadowKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mShadowBucket != nullptr, "We couldn't create the command bucket!");
+
+		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
+		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
 
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
-			RenderTarget::MemorySize(1, 1, ALIGNMENT, stackHeaderSize, boundsChecking));
+			RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking));
 
 		//@TODO(Serge): we need to get the scale, x and y offsets
 		ResizeRenderSurface(*newRenderer, size.width, size.height, size.width, size.height, 1.0f, 1.0f, 0.0f, 0.0f); //@TODO(Serge): we need to get the scale, x and y offsets
@@ -692,7 +753,7 @@ namespace r2::draw::renderer
 		newRenderer->mFinalBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
 
-		newRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY/2);
+		newRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY/4);
 
 		R2_CHECK(newRenderer->mCommandArena != nullptr, "We couldn't create the stack arena for commands");
 
@@ -772,11 +833,14 @@ namespace r2::draw::renderer
 	{
 		r2::draw::shadersystem::Update();
 		r2::draw::matsys::Update();
+		
 	}
 
 	void Render(Renderer& renderer, float alpha)
 	{
-		
+		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
+		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
+		UpdateLighting(renderer);
 
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
@@ -801,6 +865,7 @@ namespace r2::draw::renderer
 
 		//printf("================================================\n");
 		cmdbkt::Sort(*renderer.mPreRenderBucket, r2::draw::key::CompareBasicKey);
+		cmdbkt::Sort(*renderer.mShadowBucket, key::CompareShadowKey);
 		cmdbkt::Sort(*renderer.mCommandBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mFinalBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mPostRenderBucket, r2::draw::key::CompareBasicKey);
@@ -816,6 +881,7 @@ namespace r2::draw::renderer
 		//}
 
 		cmdbkt::Submit(*renderer.mPreRenderBucket);
+		cmdbkt::Submit(*renderer.mShadowBucket);
 		cmdbkt::Submit(*renderer.mCommandBucket);
 
 #ifdef R2_DEBUG
@@ -835,6 +901,7 @@ namespace r2::draw::renderer
 
 		cmdbkt::ClearAll(*renderer.mPreRenderBucket);
 		cmdbkt::ClearAll(*renderer.mCommandBucket);
+		cmdbkt::ClearAll(*renderer.mShadowBucket);
 		cmdbkt::ClearAll(*renderer.mFinalBucket);
 		cmdbkt::ClearAll(*renderer.mPostRenderBucket);
 		
@@ -843,6 +910,7 @@ namespace r2::draw::renderer
 		//This is kinda bad but... 
 		RESET_ARENA(*renderer.mCommandArena);
 		RESET_ARENA(*renderer.mPrePostRenderCommandArena);
+		RESET_ARENA(*renderer.mShadowArena);
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -914,10 +982,12 @@ namespace r2::draw::renderer
 		FREE(renderer->mRenderBatches, *arena);
 
 
-
+		rt::DestroyRenderTarget<r2::mem::LinearArena>(*arena, renderer->mRenderTargets[RTS_SHADOWS]);
 		DestroyRenderSurfaces(*renderer);
 		
 		FREE(renderer->mCommandArena, *arena);
+
+		FREE(renderer->mShadowArena, *arena);
 
 		FREE(renderer->mRenderTargetsArena, *arena);
 
@@ -925,15 +995,17 @@ namespace r2::draw::renderer
 
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
+		FREE_CMD_BUCKET(*arena, key::ShadowKey, renderer->mShadowBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPostRenderBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPreRenderBucket);
-
+		
 
 		modlsys::Shutdown(renderer->mModelSystem);
 		FREE(renderer->mDefaultModelHandles, *arena);
 
 		r2::mem::utils::MemBoundary materialSystemBoundary = renderer->mMaterialSystem->mMaterialMemBoundary;
 		
+		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
 		r2::draw::matsys::ShutdownMaterialSystems();
 		r2::draw::texsys::Shutdown();
@@ -990,6 +1062,11 @@ namespace r2::draw::renderer
 		r2::draw::rendererimpl::SetClearColor(color);
 	}
 
+	void SetClearDepth(float color)
+	{
+		rendererimpl::SetDepthClearColor(color);
+	}
+
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticModelLayoutSize, u32 animatedModelLayoutSize)
 	{
 		AddStaticModelLayout(renderer, { staticModelLayoutSize }, staticModelLayoutSize);
@@ -1003,7 +1080,8 @@ namespace r2::draw::renderer
 
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
-			{r2::draw::ShaderDataType::Float4, "Exposure"}
+			{r2::draw::ShaderDataType::Float4, "Exposure"},
+			{r2::draw::ShaderDataType::Float4, "CascadePlanes"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -1748,7 +1826,10 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 1, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, headerSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, headerSize, boundsChecking) +
+			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -1762,11 +1843,15 @@ namespace r2::draw::renderer
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
-			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/2, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/2, ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -1807,10 +1892,10 @@ namespace r2::draw::renderer
 		return renderer.mConstantBufferHandles;
 	}
 
-	template<class CMD, class ARENA>
-	CMD* AddCommand(ARENA& arena, r2::draw::CommandBucket<r2::draw::key::Basic>& bucket, r2::draw::key::Basic key, u64 auxMemory)
+	template<typename T,  class CMD, class ARENA>
+	CMD* AddCommand(ARENA& arena, r2::draw::CommandBucket<T>& bucket, T key, u64 auxMemory)
 	{
-		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, CMD>(arena, bucket, key, auxMemory);
+		return r2::draw::cmdbkt::AddCommand<T, r2::mem::StackArena, CMD>(arena, bucket, key, auxMemory);
 	}
 
 	template<class CMDTOAPPENDTO, class CMD, class ARENA>
@@ -2054,7 +2139,7 @@ namespace r2::draw::renderer
 		}
 
 		//@TODO(Serge): maybe change to the upload command bucket?
-		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = r2::draw::renderer::AddCommand<r2::draw::cmd::FillVertexBuffer, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, fillKey, 0);
+		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, r2::draw::cmd::FillVertexBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, 0);
 		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mVertexBufferHandles[0], vOffset);
 
 		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
@@ -2075,7 +2160,7 @@ namespace r2::draw::renderer
 			}
 
 			//@TODO(Serge): maybe change to the upload command bucket?
-			nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mCommandArena, nextVertexCmd, 0);
+			nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
 			vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mVertexBufferHandles[0], vOffset);
 		}
 
@@ -2103,7 +2188,7 @@ namespace r2::draw::renderer
 				return {};
 			}
 
-			r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mCommandArena, nextVertexCmd, 0);
+			r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
 			r2::draw::cmd::FillBonesBufferCommand(fillBoneDataCommand, *boneData, vHandle.mVertexBufferHandles[1], bOffset);
 
 			nextVertexCmd = fillBoneDataCommand;
@@ -2119,7 +2204,7 @@ namespace r2::draw::renderer
 			return {};
 		}
 
-		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mCommandArena, nextVertexCmd, 0);
+		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
 		iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mIndexBufferHandle, iOffset);
 
 		cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
@@ -2139,7 +2224,7 @@ namespace r2::draw::renderer
 				return {};
 			}
 
-			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mCommandArena, nextIndexCmd, 0);
+			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextIndexCmd, 0);
 			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
 		}
 
@@ -2222,7 +2307,8 @@ namespace r2::draw::renderer
 		
 		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*renderer.mConstantLayouts, constBufferIndex);
 
-		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = r2::draw::renderer::AddFillConstantBufferCommand<mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, fillKey, config.layout.GetSize());
+		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillConstantBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, config.layout.GetSize());
+		
 		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData->type, constBufferData->isPersistent, data, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
 	}
 
@@ -2231,7 +2317,7 @@ namespace r2::draw::renderer
 		key::Basic lightKey;
 		lightKey.keyValue = 0;
 
-		cmd::FillConstantBuffer* fillLightsCMD = AddFillConstantBufferCommand(*renderer.mCommandArena, *renderer.mCommandBucket, lightKey, sizeof(r2::draw::SceneLighting));
+		cmd::FillConstantBuffer* fillLightsCMD = AddFillConstantBufferCommand(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, lightKey, sizeof(r2::draw::SceneLighting));
 
 		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mLightingConfigHandle);
 
@@ -2240,15 +2326,10 @@ namespace r2::draw::renderer
 		r2::draw::cmd::FillConstantBufferCommand(fillLightsCMD, lightBufferHandle, constBufferData->type, constBufferData->isPersistent, &lightSystem.mSceneLighting, sizeof(r2::draw::SceneLighting), 0);
 	}
 
-	r2::draw::cmd::Clear* AddClearCommand(Renderer& renderer, CommandBucket<key::Basic>& bucket, r2::draw::key::Basic key)
+	template<class ARENA, typename T>
+	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<T>& bucket, T key, u64 auxMemory)
 	{
-		return r2::draw::cmdbkt::AddCommand<r2::draw::key::Basic, r2::mem::StackArena, r2::draw::cmd::Clear>(*renderer.mCommandArena, bucket, key, 0);
-	}
-
-	template<class ARENA>
-	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<key::Basic>& bucket, r2::draw::key::Basic key, u64 auxMemory)
-	{
-		return r2::draw::renderer::AddCommand<r2::draw::cmd::FillConstantBuffer, ARENA>(arena, bucket, key, auxMemory);
+		return r2::draw::renderer::AddCommand<T, r2::draw::cmd::FillConstantBuffer, ARENA>(arena, bucket, key, auxMemory);
 	}
 
 	ConstantBufferData* GetConstData(Renderer& renderer, ConstantBufferHandle handle)
@@ -2493,7 +2574,7 @@ namespace r2::draw::renderer
 
 		glm::mat4 finalBatchModelMat = glm::mat4(1.0f);
 
-		cmd::FillConstantBuffer* modelsCmd = AddFillConstantBufferCommand(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, basicKey, modelsMemorySize);
+		cmd::FillConstantBuffer* modelsCmd = AddFillConstantBufferCommand<mem::StackArena, key::Basic>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, basicKey, modelsMemorySize);
 
 		char* modelsAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(modelsCmd);
 		 
@@ -2681,7 +2762,7 @@ namespace r2::draw::renderer
 
 		//PostRenderBucket commands
 		{
-			cmd::CompleteConstantBuffer* completeModelsCMD = AddCommand<cmd::CompleteConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPostRenderBucket, basicKey, 0);
+			cmd::CompleteConstantBuffer* completeModelsCMD = AddCommand<key::Basic, cmd::CompleteConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPostRenderBucket, basicKey, 0);
 			completeModelsCMD->constantBufferHandle = modelsConstantBufferHandle;
 			completeModelsCMD->count = numModels;
 
@@ -2717,12 +2798,9 @@ namespace r2::draw::renderer
 			completeSubCommandsCMD->count = subCommandsOffset;
 		}
 
-		
 		ClearSurfaceOptions clearGBufferOptions;
 		clearGBufferOptions.shouldClear = true;
 		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_DEPTH_BUFFER;
-
-		
 		
 		const u64 numStaticDrawBatches = r2::sarr::Size(*staticRenderBatchesOffsets);
 
@@ -2734,7 +2812,15 @@ namespace r2::draw::renderer
 			clearShaderHandle = batchOffset.shaderId;
 		}
 
-		BeginRenderPass(renderer, RPT_GBUFFER, clearGBufferOptions, clearShaderHandle, *renderer.mCommandBucket, *renderer.mCommandArena);
+		ClearSurfaceOptions clearDepthOptions;
+		clearDepthOptions.shouldClear = true;
+		clearDepthOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
+
+		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
+		key::ShadowKey shadowClearKey = key::GenerateShadowKey(0, 0);
+
+		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
+		BeginRenderPass<key::Basic>(renderer, RPT_GBUFFER, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
 
 		//@TODO(Serge): figure out how these two for loops will work with different render passes
 		for (u64 i = 0; i < numStaticDrawBatches; ++i)
@@ -2743,9 +2829,7 @@ namespace r2::draw::renderer
 
 			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
 
-			
-
-			cmd::DrawBatch* drawBatch = AddCommand<cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
 			drawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -2754,9 +2838,27 @@ namespace r2::draw::renderer
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
 
-			//@TODO(Serge): add commands to different buckets 
-			
+
+			if (batchOffset.layer == DL_WORLD)
+			{
+				key::ShadowKey shadowKey = key::GenerateShadowKey(false, 0);
+
+				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
+				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+				shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				shadowDrawBatch->subCommands = nullptr;
+				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+			}
+
+
+			//@TODO(Serge): add commands to different buckets
 		}
 
 		const u64 numDynamicDrawBatches = r2::sarr::Size(*dynamicRenderBatchesOffsets);
@@ -2766,7 +2868,7 @@ namespace r2::draw::renderer
 
 			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
 
-			cmd::DrawBatch* drawBatch = AddCommand<cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
 			drawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -2775,11 +2877,30 @@ namespace r2::draw::renderer
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
+
+
+			if (batchOffset.layer == DL_CHARACTER)
+			{
+				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0);
+
+				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
+				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+				shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				shadowDrawBatch->subCommands = nullptr;
+				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+
+			}
 
 			//@TODO(Serge): add commands to different buckets
-
 		}
 
+		EndRenderPass(renderer, RPT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_GBUFFER, *renderer.mCommandBucket);
 
 
@@ -2788,11 +2909,13 @@ namespace r2::draw::renderer
 		clearCompositeOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 
-		BeginRenderPass(renderer, RPT_FINAL_COMPOSITE, clearCompositeOptions, finalBatchOffsets.shaderId, *renderer.mFinalBucket, *renderer.mCommandArena);
+		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_FINAL_COMPOSITE, clearCompositeOptions, *renderer.mFinalBucket, finalBatchClearKey, *renderer.mCommandArena);
 
 		key::Basic finalBatchKey = key::GenerateBasicKey(0, 0, finalBatchOffsets.layer, 0, 0, finalBatchOffsets.shaderId);
 
-		cmd::DrawBatch* finalDrawBatch = AddCommand<cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, finalBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
+		cmd::DrawBatch* finalDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, finalBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		finalDrawBatch->batchHandle = subCommandsConstantBufferHandle;
 		finalDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
 		finalDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
@@ -2801,6 +2924,7 @@ namespace r2::draw::renderer
 		finalDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		finalDrawBatch->subCommands = nullptr;
 		finalDrawBatch->state.depthEnabled = false;
+		finalDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
@@ -2863,18 +2987,20 @@ namespace r2::draw::renderer
 		RenderPassConfig passConfig;
 		passConfig.primitiveType = PrimitiveType::TRIANGLES;
 		passConfig.flags = 0;
-		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {}, RTS_GBUFFER, __FILE__, __LINE__, "");
-
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS}, RTS_GBUFFER, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {}, RTS_SHADOWS, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_GBUFFER]);
 	}
 
-	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, const ShaderHandle& shaderHandle, CommandBucket<key::Basic>& commandBucket, mem::StackArena& arena)
+	template <class T>
+	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena)
 	{
 		RenderPass* renderPass = GetRenderPass(renderer, renderPassType);
 
@@ -2884,17 +3010,24 @@ namespace r2::draw::renderer
 
 		R2_CHECK(renderTarget != nullptr, "We have an null render target!");
 
-		key::Basic renderKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, shaderHandle);
+		//key::Basic renderKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, shaderHandle);
 
-		cmd::SetRenderTarget* setRenderTargetCMD = AddCommand<cmd::SetRenderTarget, mem::StackArena>(arena, commandBucket, renderKey, 0);
+		cmd::SetRenderTarget* setRenderTargetCMD = AddCommand<T, cmd::SetRenderTarget, mem::StackArena>(arena, commandBucket, key, 0);
 			
 		setRenderTargetCMD->framebufferID = renderTarget->frameBufferID;
 
-		setRenderTargetCMD->numAttachments = 0;
-		
+		setRenderTargetCMD->numColorAttachments = 0;
+		setRenderTargetCMD->numDepthAttachments = 0;
+
 		if (renderTarget->colorAttachments)
 		{
-			setRenderTargetCMD->numAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
+			setRenderTargetCMD->numColorAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
+		}
+		if (renderTarget->depthAttachments)
+		{
+			setRenderTargetCMD->numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
+			//@NOTE(Serge): only using the first one right now...
+			setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture.container->texId;
 		}
 		 
 		setRenderTargetCMD->xOffset = renderTarget->xOffset;
@@ -2917,13 +3050,15 @@ namespace r2::draw::renderer
 
 		cmd::FillConstantBuffer* prevCommand = nullptr;
 
+		//@NOTE(Serge): this is set in the order of the render target surfaces
+		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES] = { RTS_GBUFFER, RTS_SHADOWS, RTS_COMPOSITE };
+		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
+
 		for (u32 i = 0; i < numInputTextures; ++i)
 		{
 			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
 
 			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
-
-			cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
 
 			if (i == 0)
 			{
@@ -2942,15 +3077,64 @@ namespace r2::draw::renderer
 				fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
 			}
 
-			auto surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture);
+			
+			tex::TextureAddress surfaceTextureAddress;
+
+			//@TODO(Serge): this is still wrong, we need a way to map the individual textures of the render target to the surface
+			//				but this will do for now
+			if (inputRenderTarget->colorAttachments)
+			{
+				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture);
+			}
+			else if(inputRenderTarget->depthAttachments)
+			{
+				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture);
+			}
 
 			FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderInputTargetHandles[i] * sizeof(tex::TextureAddress));
 
+			renderTargetSurfacesUsed[renderPass->renderInputTargetHandles[i]] = RTS_EMPTY;
+
 			prevCommand = fillSurfaceCMD;
 		}
+
+
+		//Zero out the other surface handles so we don't leak state
+		for (u32 i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			if (renderTargetSurfacesUsed[i] != RTS_EMPTY)
+			{
+				tex::TextureAddress surfaceTextureAddress;
+
+				if (i == 0 && prevCommand == nullptr)
+				{
+					if (clearCMD)
+					{
+						fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+					}
+					else
+					{
+						fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+					
+					}
+				}
+				else
+				{
+					R2_CHECK(prevCommand != nullptr, "Should never be null here");
+					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+				}
+
+				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), i * sizeof(tex::TextureAddress));
+
+				prevCommand = fillSurfaceCMD;
+			}
+		}
+		
+		
 	}
 
-	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<key::Basic>& commandBucket)
+	template<class T>
+	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<T>& commandBucket)
 	{
 		cmdbkt::Close(commandBucket);
 	}
@@ -3003,6 +3187,28 @@ namespace r2::draw::renderer
 		glm::vec4 exposureVec = glm::vec4(exposure, 0, 0, 0);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
 			1, glm::value_ptr(exposureVec));
+	}
+
+	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			2, glm::value_ptr(cascades));
+	}
+
+	void UpdateCamera(Renderer& renderer, const Camera& camera)
+	{
+		UpdatePerspectiveMatrix(renderer, camera.proj);
+		UpdateViewMatrix(renderer, camera.view);
+		UpdateCameraPosition(renderer, camera.position);
+		UpdateExposure(renderer, camera.exposure);
+
+		float frustumSplits[cam::NUM_FRUSTUM_SPLITS];
+		cam::GetFrustumSplits(camera, frustumSplits);
+
+		R2_CHECK(cam::NUM_FRUSTUM_SPLITS == 4, "Change to not be a vec4 if cam::NUM_FRUSTUM_SPLITS is >");
+		UpdateCameraCascades(renderer, glm::vec4(frustumSplits[0], frustumSplits[1], frustumSplits[2], frustumSplits[3]));
+
 	}
 
 	void DrawModels(Renderer& renderer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
@@ -3210,8 +3416,13 @@ namespace r2::draw::renderer
 		}
 	}
 
-#ifdef R2_DEBUG
+	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic)
+	{
+		u32 shaderIndex = isDynamic ? 1 : 0;
+		return renderer.mDepthShaders[shaderIndex];
+	}
 
+#ifdef R2_DEBUG
 
 	struct DebugDrawCommandData
 	{
@@ -3497,6 +3708,7 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
+				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
 
 			}
 			else
@@ -3510,6 +3722,7 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
+				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
 			}
 		}
 	}
@@ -3976,6 +4189,8 @@ namespace r2::draw::renderer
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
+		
+
 		//no need to resize if that's the size we already are
 		renderer.mRenderTargets[RTS_COMPOSITE].xOffset	= round(xOffset);
 		renderer.mRenderTargets[RTS_COMPOSITE].yOffset	= round(yOffset);
@@ -3986,9 +4201,9 @@ namespace r2::draw::renderer
 		{
 			DestroyRenderSurfaces(renderer);
 
-			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 1, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1,0, 1, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, false, true);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, 1, false, true);
 			rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
 		}
 		
@@ -3998,10 +4213,32 @@ namespace r2::draw::renderer
 		renderer.mCompositeSize.height = windowHeight;
 
 	}
+	
+
+	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
+
+		if (resolutionX > MAX_TEXTURE_SIZE)
+		{
+			resolutionX = MAX_TEXTURE_SIZE;
+		}
+
+		if (resolutionY > MAX_TEXTURE_SIZE)
+		{
+			resolutionY = MAX_TEXTURE_SIZE;
+		}
+
+		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::LinearArena>(*renderer.mSubAreaArena, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, cam::NUM_FRUSTUM_SPLITS, 1, false, false);
+	}
+
 
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
+		
 	}
 
 	//events
@@ -4028,6 +4265,145 @@ namespace r2::draw::renderer
 	void SetWindowSize(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		ResizeRenderSurface(renderer, windowWidth, windowHeight, resolutionX, resolutionY, scaleX, scaleY, xOffset, yOffset);
+	}
+
+
+	//Camera and Lighting
+	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr)
+	{
+		R2_CHECK(cameraPtr != nullptr, "We should always pass in a valid camera");
+		renderer.mnoptrRenderCam = cameraPtr;
+	}
+
+	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::AddDirectionalLight(*renderer.mLightSystem, light);
+	}
+
+	PointLightHandle AddPointLight(Renderer& renderer, const PointLight& pointLight)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::AddPointLight(*renderer.mLightSystem, pointLight);
+	}
+
+	SpotLightHandle AddSpotLight(Renderer& renderer, const SpotLight& spotLight)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::AddSpotLight(*renderer.mLightSystem, spotLight);
+	}
+
+	SkyLightHandle AddSkyLight(Renderer& renderer, const SkyLight& skylight, s32 numPrefilteredMips)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::AddSkyLight(*renderer.mLightSystem, skylight, numPrefilteredMips);
+	}
+
+	SkyLightHandle AddSkyLight(Renderer& renderer, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::AddSkyLight(*renderer.mLightSystem, diffuseMaterial, prefilteredMaterial, lutDFG);
+	}
+
+	const DirectionLight* GetDirectionLightConstPtr(Renderer& renderer, DirectionLightHandle dirLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetDirectionLightConstPtr(*renderer.mLightSystem, dirLightHandle);
+	}
+
+	DirectionLight* GetDirectionLightPtr(Renderer& renderer, DirectionLightHandle dirLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetDirectionLightPtr(*renderer.mLightSystem, dirLightHandle);
+	}
+
+	const PointLight* GetPointLightConstPtr(Renderer& renderer, PointLightHandle pointLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetPointLightConstPtr(*renderer.mLightSystem, pointLightHandle);
+	}
+
+	PointLight* GetPointLightPtr(Renderer& renderer, PointLightHandle pointLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetPointLightPtr(*renderer.mLightSystem, pointLightHandle);
+	}
+
+	const SpotLight* GetSpotLightConstPtr(Renderer& renderer, SpotLightHandle spotLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetSpotLightConstPtr(*renderer.mLightSystem, spotLightHandle);
+	}
+
+	SpotLight* GetSpotLightPtr(Renderer& renderer, SpotLightHandle spotLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetSpotLightPtr(*renderer.mLightSystem, spotLightHandle);
+	}
+
+	const SkyLight* GetSkyLightConstPtr(Renderer& renderer, SkyLightHandle skyLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetSkyLightConstPtr(*renderer.mLightSystem, skyLightHandle);
+	}
+
+	SkyLight* GetSkyLightPtr(Renderer& renderer, SkyLightHandle skyLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		return lightsys::GetSkyLightPtr(*renderer.mLightSystem, skyLightHandle);
+	}
+
+	//@TODO(Serge): add the get light properties functions here
+
+	void RemoveDirectionLight(Renderer& renderer, DirectionLightHandle dirLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		lightsys::RemoveDirectionalLight(*renderer.mLightSystem, dirLightHandle);
+	}
+
+	void RemovePointLight(Renderer& renderer, PointLightHandle pointLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		lightsys::RemovePointLight(*renderer.mLightSystem, pointLightHandle);
+	}
+
+	void RemoveSpotLight(Renderer& renderer, SpotLightHandle spotLightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		lightsys::RemoveSpotLight(*renderer.mLightSystem, spotLightHandle);
+	}
+
+	void RemoveSkyLight(Renderer& renderer, SkyLightHandle skylightHandle)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		lightsys::RemoveSkyLight(*renderer.mLightSystem, skylightHandle);
+	}
+
+	void ClearAllLighting(Renderer& renderer)
+	{
+		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
+		lightsys::ClearAllLighting(*renderer.mLightSystem);
+	}
+
+	void UpdateLighting(Renderer& renderer)
+	{
+		static u32 SHADOWMAP_SIZES[cam::NUM_FRUSTUM_SPLITS] = { light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE };
+		static float Z_MULT = 10.f;
+
+		//Do the shadow stuff here
+		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We must have a camera to do this");
+		R2_CHECK(renderer.mLightSystem != nullptr, "We must have a light system!");
+
+		const u32 numDirLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
+
+		//@TEMPORARY
+		if (numDirLights > 0)
+		{
+			DirectionLight& dirLight = renderer.mLightSystem->mSceneLighting.mDirectionLights[0];
+			light::GetDirectionalLightSpaceMatrices(dirLight.lightSpaceMatrixData, *renderer.mnoptrRenderCam, dirLight.direction, Z_MULT, SHADOWMAP_SIZES);
+		}
+
+		UpdateSceneLighting(renderer, *renderer.mLightSystem);		
 	}
 }
 
@@ -4105,31 +4481,6 @@ namespace r2::draw::renderer
 		return GetMaterialHandleForDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	void UpdatePerspectiveMatrix(const glm::mat4& perspectiveMatrix)
-	{
-		UpdatePerspectiveMatrix(MENG.GetCurrentRendererRef(), perspectiveMatrix);
-	}
-
-	void UpdateViewMatrix(const glm::mat4& viewMatrix)
-	{
-		UpdateViewMatrix(MENG.GetCurrentRendererRef(), viewMatrix);
-	}
-
-	void UpdateCameraPosition(const glm::vec3& camPosition)
-	{
-		UpdateCameraPosition(MENG.GetCurrentRendererRef(), camPosition);
-	}
-
-	void UpdateExposure(float exposure)
-	{
-		UpdateExposure(MENG.GetCurrentRendererRef(), exposure);
-	}
-
-	void UpdateSceneLighting(const r2::draw::LightSystem& lightSystem)
-	{
-		UpdateSceneLighting(MENG.GetCurrentRendererRef(), lightSystem);
-	}
-
 	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModels(MENG.GetCurrentRendererRef(), modelRefs, modelMatrices, flags, boneTransforms);
@@ -4151,7 +4502,107 @@ namespace r2::draw::renderer
 	}
 
 	///More draw functions...
+	ShaderHandle GetDepthShaderHandle(bool isDynamic)
+	{
+		return GetDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic);
+	}
 
+	void SetRenderCamera(const Camera* cameraPtr)
+	{
+		SetRenderCamera(MENG.GetCurrentRendererRef(), cameraPtr);
+	}
+
+	DirectionLightHandle AddDirectionLight(const DirectionLight& light)
+	{
+		return AddDirectionLight(MENG.GetCurrentRendererRef(), light);
+	}
+
+	PointLightHandle AddPointLight(const PointLight& pointLight)
+	{
+		return AddPointLight(MENG.GetCurrentRendererRef(), pointLight);
+	}
+
+	SpotLightHandle AddSpotLight(const SpotLight& spotLight)
+	{
+		return AddSpotLight(MENG.GetCurrentRendererRef(), spotLight);
+	}
+
+	SkyLightHandle AddSkyLight(const SkyLight& skylight, s32 numPrefilteredMips)
+	{
+		return AddSkyLight(MENG.GetCurrentRendererRef(), skylight, numPrefilteredMips);
+	}
+
+	SkyLightHandle AddSkyLight(const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG)
+	{
+		return AddSkyLight(MENG.GetCurrentRendererRef(), diffuseMaterial, prefilteredMaterial, lutDFG);
+	}
+
+	const DirectionLight* GetDirectionLightConstPtr(DirectionLightHandle dirLightHandle)
+	{
+		return GetDirectionLightConstPtr(MENG.GetCurrentRendererRef(), dirLightHandle);
+	}
+
+	DirectionLight* GetDirectionLightPtr(DirectionLightHandle dirLightHandle)
+	{
+		return GetDirectionLightPtr(MENG.GetCurrentRendererRef(), dirLightHandle);
+	}
+
+	const PointLight* GetPointLightConstPtr(PointLightHandle pointLightHandle)
+	{
+		return GetPointLightConstPtr(MENG.GetCurrentRendererRef(), pointLightHandle);
+	}
+
+	PointLight* GetPointLightPtr(PointLightHandle pointLightHandle)
+	{
+		return GetPointLightPtr(MENG.GetCurrentRendererRef(), pointLightHandle);
+	}
+
+	const SpotLight* GetSpotLightConstPtr(SpotLightHandle spotLightHandle)
+	{
+		return GetSpotLightConstPtr(MENG.GetCurrentRendererRef(), spotLightHandle);
+	}
+
+	SpotLight* GetSpotLightPtr(SpotLightHandle spotLightHandle)
+	{
+		return GetSpotLightPtr(MENG.GetCurrentRendererRef(), spotLightHandle);
+	}
+
+	const SkyLight* GetSkyLightConstPtr(SkyLightHandle skyLightHandle)
+	{
+		return GetSkyLightConstPtr(MENG.GetCurrentRendererRef(), skyLightHandle);
+	}
+
+	SkyLight* GetSkyLightPtr(SkyLightHandle skyLightHandle)
+	{
+		return GetSkyLightPtr(MENG.GetCurrentRendererRef(), skyLightHandle);
+	}
+
+	//@TODO(Serge): add the get light properties functions here
+
+	void RemoveDirectionLight(DirectionLightHandle dirLightHandle)
+	{
+		RemoveDirectionLight(MENG.GetCurrentRendererRef(), dirLightHandle);
+	}
+
+	void RemovePointLight(PointLightHandle pointLightHandle)
+	{
+		RemovePointLight(MENG.GetCurrentRendererRef(), pointLightHandle);
+	}
+
+	void RemoveSpotLight(SpotLightHandle spotLightHandle)
+	{
+		RemoveSpotLight(MENG.GetCurrentRendererRef(), spotLightHandle);
+	}
+
+	void RemoveSkyLight(SkyLightHandle skylightHandle)
+	{
+		RemoveSkyLight(MENG.GetCurrentRendererRef(), skylightHandle);
+	}
+
+	void ClearAllLighting()
+	{
+		ClearAllLighting(MENG.GetCurrentRendererRef());
+	}
 
 	//------------------------------------------------------------------------------
 
@@ -4211,5 +4662,7 @@ namespace r2::draw::renderer
 	{
 		DrawTangentVectors(MENG.GetCurrentRendererRef(), model, transform);
 	}
+
+
 #endif
 }

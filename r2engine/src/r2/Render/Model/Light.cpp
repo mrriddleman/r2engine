@@ -1,11 +1,64 @@
 #include "r2pch.h"
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
+#include "r2/Core/Math/MathUtils.h"
 
 namespace r2::draw::light
 {
 	s64 s_lightSystemID = -1;
 }
+
+
+namespace r2::draw::light
+{
+
+	void GetDirectionalLightSpaceMatrices(LightSpaceMatrixData& lightSpaceMatrixData, const Camera& cam, const glm::vec3& lightDir, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS])
+	{
+		glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS];
+		
+		for (u32 i = 0; i < r2::cam::NUM_FRUSTUM_SPLITS; ++i)
+		{
+			cam::GetFrustumCorners(cam.frustumProjections[i], cam.view, frustumCorners);
+
+			GetDirectionalLightSpaceMatricesForCascade(lightSpaceMatrixData, lightDir, i, zMult, shadowMapSizes, frustumCorners);
+		}
+	}
+
+	//Credit: http://www.alextardif.com/shadowmapping.html
+	void GetDirectionalLightSpaceMatricesForCascade(LightSpaceMatrixData& lightSpaceMatrixData, const glm::vec3& lightDir, u32 cascadeIndex, float zMult, const u32 shadowMapSizes[cam::NUM_FRUSTUM_SPLITS], const glm::vec3 frustumCorners[cam::NUM_FRUSTUM_CORNERS])
+	{
+		glm::vec3 frustumCenter = cam::GetFrustumCenter(frustumCorners);
+
+		const float diameter = glm::length((frustumCorners[0] - frustumCorners[6]));
+		const float radius = diameter / 2.0f;
+
+		float texelsPerUnit = (float)shadowMapSizes[cascadeIndex] / diameter;
+
+		glm::mat4 scalar = glm::mat4(1.0f);
+		scalar = glm::scale(scalar, glm::vec3(texelsPerUnit));
+
+		constexpr glm::vec3 ZERO = glm::vec3(0.0f);
+		glm::vec3 baseLookAt = -lightDir;
+
+		glm::mat4 lookAtMat = glm::lookAt(ZERO, baseLookAt, math::GLOBAL_UP) * scalar;
+		glm::mat4 lookAtMatInv = glm::inverse(lookAtMat);
+
+		frustumCenter = lookAtMat * glm::vec4(frustumCenter, 1.0f);
+		frustumCenter.x = (float)floor(frustumCenter.x);
+		frustumCenter.y = (float)floor(frustumCenter.y);
+		frustumCenter = lookAtMatInv * glm::vec4(frustumCenter, 1.0f);
+
+		glm::vec3 eye = frustumCenter - (lightDir * diameter);
+
+		lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = glm::lookAt(eye, frustumCenter, math::GLOBAL_UP);
+
+		constexpr float mult = 1.5f;
+
+		lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = glm::ortho(-radius * mult, radius * mult, -radius * mult, radius * mult, -radius * zMult, radius * zMult);
+	}
+
+}
+
 
 namespace r2::draw::lightsys
 {
@@ -100,6 +153,32 @@ namespace r2::draw::lightsys
 		return true;
 	}
 
+	PointLight* GetPointLightPtr(LightSystem& system, PointLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mPointLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mPointLights[lightIndex];
+		}
+
+		return nullptr;
+	}
+
+	const PointLight* GetPointLightConstPtr(const LightSystem& system, PointLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mPointLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mPointLights[lightIndex];
+		}
+
+		return nullptr;
+	}
+
 	DirectionLightHandle AddDirectionalLight(LightSystem& system, const DirectionLight& dirLight)
 	{
 		if (system.mSceneLighting.mNumDirectionLights + 1 > light::MAX_NUM_LIGHTS)
@@ -157,6 +236,32 @@ namespace r2::draw::lightsys
 		}
 
 		return true;
+	}
+
+	DirectionLight* GetDirectionLightPtr(LightSystem& system, DirectionLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mDirectionLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mDirectionLights[lightIndex];
+		}
+
+		return nullptr;
+	}
+
+	const DirectionLight* GetDirectionLightConstPtr(const LightSystem& system, DirectionLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mDirectionLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mDirectionLights[lightIndex];
+		}
+
+		return nullptr;
 	}
 
 	SpotLightHandle AddSpotLight(LightSystem& system, const SpotLight& spotLight)
@@ -218,6 +323,33 @@ namespace r2::draw::lightsys
 		return true;
 	}
 
+	SpotLight* GetSpotLightPtr(LightSystem& system, SpotLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mSpotLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mSpotLights[lightIndex];
+		}
+
+		return nullptr;
+	}
+
+	const SpotLight* GetSpotLightConstPtr(const LightSystem& system, SpotLightHandle handle)
+	{
+		s64 defaultIndex = -1;
+		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mSpotLightMap, handle.handle, defaultIndex);
+
+		if (lightIndex != defaultIndex)
+		{
+			return &system.mSceneLighting.mSpotLights[lightIndex];
+		}
+
+		return nullptr;
+	}
+
+
 	SkyLightHandle AddSkyLight(LightSystem& system, const SkyLight& skylight, s32 numPrefilteredMips)
 	{
 		SkyLightHandle skylightHandle = GenerateSkyLightHandle(system);
@@ -274,12 +406,35 @@ namespace r2::draw::lightsys
 		return true;
 	}
 
+	SkyLight* GetSkyLightPtr(LightSystem& system, SkyLightHandle handle)
+	{
+		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == handle.handle)
+		{
+			return &system.mSceneLighting.mSkyLight;
+		}
+
+		return nullptr;
+	}
+
+	const SkyLight* GetSkyLightConstPtr(const LightSystem& system, SkyLightHandle handle)
+	{
+		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == handle.handle)
+		{
+			return &system.mSceneLighting.mSkyLight;
+		}
+
+		return nullptr;
+	}
+
 	LightSystemHandle GenerateNewLightSystemHandle()
 	{
 		return ++light::s_lightSystemID;
 	}
 
-	
+	void ClearAllLighting(LightSystem& system)
+	{
+
+	}
 	
 }
 

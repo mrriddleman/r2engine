@@ -12,6 +12,7 @@
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/Light.h"
+#include "r2/Render/Renderer/RenderTarget.h"
 
 namespace r2::draw
 {
@@ -305,7 +306,7 @@ namespace r2::draw
 		mElements.clear();
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[0].offset = 0;
-		mElements[0].typeCount = 1;
+		mElements[0].typeCount = NUM_RENDER_TARGET_SURFACES;
 		mElements[0].elementSize = sizeof(tex::TextureAddress);
 		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
 		mElements[0].type = ShaderDataType::Struct;
