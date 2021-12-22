@@ -1517,7 +1517,7 @@ namespace r2::draw::renderer
 		CreateConstantBufferFlags createFlags = 0;
 		if (type > ConstantBufferLayout::Type::Small)
 		{
-			flags = r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT;
+			flags = r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT;
 			createFlags = r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE;
 		}
 
@@ -1556,7 +1556,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		materials.layout.InitForMaterials(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
+		materials.layout.InitForMaterials(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, materials);
 
@@ -1596,7 +1596,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
+		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, subCommands);
 
@@ -1622,7 +1622,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		subCommands.layout.InitForDebugSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
+		subCommands.layout.InitForDebugSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, subCommands);
 
@@ -1646,7 +1646,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
+		subCommands.layout.InitForSubCommands(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, subCommands);
 
@@ -1665,10 +1665,6 @@ namespace r2::draw::renderer
 			return InvalidConstantConfigHandle;
 		}
 
-		ConstantBufferFlags flags = r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT;
-		CreateConstantBufferFlags createFlags = r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE;
-		auto type = ConstantBufferLayout::Type::Big;
-
 		r2::draw::ConstantBufferLayoutConfiguration debugRenderConstantsLayout
 		{
 			//layout
@@ -1677,7 +1673,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		debugRenderConstantsLayout.layout.InitForDebugRenderConstants(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS * 2);
+		debugRenderConstantsLayout.layout.InitForDebugRenderConstants(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_DRAWS * 2);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, debugRenderConstantsLayout);
 
@@ -1706,7 +1702,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		boneTransforms.layout.InitForBoneTransforms(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
+		boneTransforms.layout.InitForBoneTransforms(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, boneTransforms);
 
@@ -1732,7 +1728,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		boneTransformOffsets.layout.InitForBoneTransformOffsets(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
+		boneTransformOffsets.layout.InitForBoneTransformOffsets(r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT, r2::draw::CB_CREATE_FLAG_DYNAMIC_STORAGE, MAX_NUM_BONES);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, boneTransformOffsets);
 
@@ -2905,7 +2901,7 @@ namespace r2::draw::renderer
 
 
 		ClearSurfaceOptions clearCompositeOptions;
-		clearCompositeOptions.shouldClear = true;
+		clearCompositeOptions.shouldClear = false;
 		clearCompositeOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 

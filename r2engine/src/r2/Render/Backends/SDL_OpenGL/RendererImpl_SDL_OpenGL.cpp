@@ -600,22 +600,12 @@ namespace r2::draw::rendererimpl
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride, PrimitiveType primitivetype)
 	{
 		
-
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
-
-		//glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
-		//glBufferSubData(GL_DRAW_INDIRECT_BUFFER, 0, count* sizeof(r2::draw::cmd::DrawBatchSubCommand), cmds);
 
 		RingBuffer theDefault;
 		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, batchHandle, theDefault);
 		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
 
-		if (cmds)
-		{
-			//size_t totalSize = count * ringBuffer.typeSize;
-			//void* ptr = ringbuf::Reserve(ringBuffer, count);
-			//memcpy(ptr, cmds, totalSize);
-		}
 
 		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 		{
@@ -641,12 +631,6 @@ namespace r2::draw::rendererimpl
 
 		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawBatchSubCommand) * offset), count, stride);
 		
-		
-		if (cmds) //@TODO(Serge): dunno if that's the right condition...
-		{
-		//	ringbuf::Complete(ringBuffer, count);
-		}
-		
 	}
 
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride)
@@ -657,10 +641,6 @@ namespace r2::draw::rendererimpl
 		RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, batchHandle, theDefault);
 		R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
 
-		//size_t totalSize = count * ringBuffer.typeSize;
-		//void* ptr = ringbuf::Reserve(ringBuffer, count);
-		//memcpy(ptr, cmds, totalSize);
-
 		if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 		{
 			glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
@@ -668,7 +648,7 @@ namespace r2::draw::rendererimpl
 
 		BindVertexArray(layoutId);
 		glMultiDrawArraysIndirect(GL_LINES, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawDebugBatchSubCommand) * offset), count, stride);
-		//ringbuf::Complete(ringBuffer, count);
+
 	}
 
 	void ApplyDrawState(const cmd::DrawState& state)

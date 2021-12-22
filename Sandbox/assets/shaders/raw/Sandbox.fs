@@ -129,7 +129,7 @@ layout (std140, binding = 2) uniform Surfaces
 
 in VS_OUT
 {
-	vec3 texCoords;
+	vec3 texCoords; 
 	vec3 fragPos;
 	vec3 normal;
 	vec3 tangent;
@@ -140,6 +140,11 @@ in VS_OUT
 	vec3 viewPosTangent;
 
 	flat uint drawID;
+
+	//section for shadows in the fragment shader - speeds up the shadow calculations
+	vec3 fragPosViewSpace;
+	vec4 fragPosLightSpace[NUM_FRUSTUM_SPLITS]; //@TODO(Serge): this is only one light...
+
 } fs_in;
 
 vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
@@ -906,19 +911,21 @@ float SampleShadowMap(vec2 uv, float page)
 
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[NUM_FRUSTUM_SPLITS], mat4 lightProjs[NUM_FRUSTUM_SPLITS])
 {
+
+
 	vec3 normal = normalize(fs_in.normal);
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
+	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
 	{
-		return 0.0;
+		return 0.0; //or maybe return 1?
 	}
 
-	vec4 fragPosViewSpace = view * vec4(fragPosWorldSpace, 1.0);
-
-	float depthValue = abs(fragPosViewSpace.z);
+	float depthValue = abs(fs_in.fragPosViewSpace.z);
 
 	int layer = -1;
+
 	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
 	{
 		if(depthValue < cascadePlanes[i])
@@ -930,14 +937,12 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 
 	if(layer == -1)
 	{
-		layer = NUM_FRUSTUM_SPLITS;
+		return 0.0;
 	}
 
+	//layer = 0;
 
-
-	vec4 fragPosLightSpace = lightProjs[layer] * lightViews[layer] * vec4(fragPosWorldSpace, 1.0);
-
-	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	vec3 projCoords = fs_in.fragPosLightSpace[layer].xyz / fs_in.fragPosLightSpace[layer].w;
 
 	projCoords = projCoords * 0.5 + 0.5;
 
@@ -946,8 +951,6 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 	{
 		return 0.0;
 	}
-
-
 	
 	float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
 	if(layer == NUM_FRUSTUM_SPLITS)
@@ -959,9 +962,12 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 		bias *= 1 / (cascadePlanes[layer] * 0.15);
 	}
 
-	//@TODO(Serge): PCF stuff would be here	
+	
 
-	float shadow = 0.0;//(currentDepth - bias) > SampleShadowMap(projCoords.xy, layer) ? 1.0 : 0.0;
+	//float shadow = (currentDepth - bias) > shadowMapSample ? 1.0 : 0.0;
+
+	//@TODO(Serge): PCF stuff would be here	
+	float shadow = 0.0;//(currentDepth - bias) > SampleShadowMap(projCoords.xy, layer);
     vec2 texelSize = 1.0 / vec2(textureSize(sampler2DArray(shadowsSurface.container), 0));
     for(int x = -1; x <= 1; ++x)
     {
@@ -973,10 +979,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
     }
     shadow /= 9.0;
 
-	if(projCoords.z > 1.0)
-	{
-		shadow = 0.0;
-	}
+	
 
 	return shadow;
 }
