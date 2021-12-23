@@ -77,13 +77,39 @@ void main()
 {
 	if(numDirectionLights > 0)
 	{
-		for(int i = 0; i < 3; ++i)
-		{
-			gl_Position = dirLights[0].lightSpaceMatrixData.lightProjMatrices[gl_InvocationID] * dirLights[0].lightSpaceMatrixData.lightViewMatrices[gl_InvocationID] * gl_in[i].gl_Position;
-			gl_Layer = gl_InvocationID;
-			EmitVertex();
-		}
+		vec3 normal = cross(gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz, gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz);
+		vec3 view = -dirLights[0].direction.xyz;
 
-		EndPrimitive();
+		if(dot(normal, view) > 0.0f)
+		{
+			vec4 vertex[3];
+			int outOfBound[6] = { 0 , 0 , 0 , 0 , 0 , 0 };
+			for (int i =0; i < 3; ++i )
+			{
+				vertex[i] = dirLights[0].lightSpaceMatrixData.lightProjMatrices[gl_InvocationID] * dirLights[0].lightSpaceMatrixData.lightViewMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
+				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];
+				if ( vertex[i].y > +vertex[i].w ) ++outOfBound[2];
+				if ( vertex[i].y < -vertex[i].w ) ++outOfBound[3];
+				if ( vertex[i].z > +vertex[i].w ) ++outOfBound[4];
+				if ( vertex[i].z < -vertex[i].w ) ++outOfBound[5];
+			}
+
+			bool inFrustum = true;
+			for (int i = 0; i < 6; ++i )
+				if ( outOfBound[i] == 3) inFrustum = false;
+
+			if(inFrustum)
+			{
+				for(int i = 0; i < 3; ++i)
+				{
+					gl_Position = vertex[i];
+					gl_Layer = gl_InvocationID;
+					EmitVertex();
+				}
+
+				EndPrimitive();
+			}
+		}
 	}
 }

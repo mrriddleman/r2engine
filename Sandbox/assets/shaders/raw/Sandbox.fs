@@ -919,7 +919,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
 	{
-		return 0.0; //or maybe return 1?
+		return 1.0; //or maybe return 1?
 	}
 
 	float depthValue = abs(fs_in.fragPosViewSpace.z);
