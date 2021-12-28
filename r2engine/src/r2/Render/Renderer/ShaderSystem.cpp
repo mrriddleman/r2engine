@@ -163,7 +163,8 @@ namespace r2::draw::shadersystem
                     shaderToReload.manifest.hashName,
                     shaderToReload.manifest.vertexShaderPath.c_str(),
                     shaderToReload.manifest.fragmentShaderPath.c_str(),
-                    shaderToReload.manifest.geometryShaderPath.c_str());
+                    shaderToReload.manifest.geometryShaderPath.c_str(),
+                    shaderToReload.manifest.computeShaderPath.c_str());
             }
 
             r2::sarr::Clear(*s_optrShaderSystem->mShadersToReload);
@@ -356,7 +357,9 @@ namespace r2::draw::shadersystem
                     shaderManifestsBuf->manifests()->Get(i)->shaderName(),
                     shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str().c_str(),
                     shaderManifestsBuf->manifests()->Get(i)->fragmentPath()->str().c_str(),
-                    shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str().c_str(), assertOnFailure);
+                    shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str().c_str(),
+                    shaderManifestsBuf->manifests()->Get(i)->computePath()->str().c_str(),
+                    assertOnFailure);
 
                 r2::sarr::Push(*s_optrShaderSystem->mShaders, nextShader);
             }

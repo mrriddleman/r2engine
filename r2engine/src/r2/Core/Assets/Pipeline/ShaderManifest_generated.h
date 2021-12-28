@@ -21,7 +21,8 @@ struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_VERTEXPATH = 6,
     VT_FRAGMENTPATH = 8,
     VT_GEOMETRYPATH = 10,
-    VT_BINARYPATH = 12
+    VT_COMPUTEPATH = 12,
+    VT_BINARYPATH = 14
   };
   uint64_t shaderName() const {
     return GetField<uint64_t>(VT_SHADERNAME, 0);
@@ -35,6 +36,9 @@ struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *geometryPath() const {
     return GetPointer<const flatbuffers::String *>(VT_GEOMETRYPATH);
   }
+  const flatbuffers::String *computePath() const {
+    return GetPointer<const flatbuffers::String *>(VT_COMPUTEPATH);
+  }
   const flatbuffers::String *binaryPath() const {
     return GetPointer<const flatbuffers::String *>(VT_BINARYPATH);
   }
@@ -47,6 +51,8 @@ struct ShaderManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(fragmentPath()) &&
            VerifyOffset(verifier, VT_GEOMETRYPATH) &&
            verifier.VerifyString(geometryPath()) &&
+           VerifyOffset(verifier, VT_COMPUTEPATH) &&
+           verifier.VerifyString(computePath()) &&
            VerifyOffset(verifier, VT_BINARYPATH) &&
            verifier.VerifyString(binaryPath()) &&
            verifier.EndTable();
@@ -69,6 +75,9 @@ struct ShaderManifestBuilder {
   void add_geometryPath(flatbuffers::Offset<flatbuffers::String> geometryPath) {
     fbb_.AddOffset(ShaderManifest::VT_GEOMETRYPATH, geometryPath);
   }
+  void add_computePath(flatbuffers::Offset<flatbuffers::String> computePath) {
+    fbb_.AddOffset(ShaderManifest::VT_COMPUTEPATH, computePath);
+  }
   void add_binaryPath(flatbuffers::Offset<flatbuffers::String> binaryPath) {
     fbb_.AddOffset(ShaderManifest::VT_BINARYPATH, binaryPath);
   }
@@ -90,10 +99,12 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifest(
     flatbuffers::Offset<flatbuffers::String> vertexPath = 0,
     flatbuffers::Offset<flatbuffers::String> fragmentPath = 0,
     flatbuffers::Offset<flatbuffers::String> geometryPath = 0,
+    flatbuffers::Offset<flatbuffers::String> computePath = 0,
     flatbuffers::Offset<flatbuffers::String> binaryPath = 0) {
   ShaderManifestBuilder builder_(_fbb);
   builder_.add_shaderName(shaderName);
   builder_.add_binaryPath(binaryPath);
+  builder_.add_computePath(computePath);
   builder_.add_geometryPath(geometryPath);
   builder_.add_fragmentPath(fragmentPath);
   builder_.add_vertexPath(vertexPath);
@@ -106,10 +117,12 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifestDirect(
     const char *vertexPath = nullptr,
     const char *fragmentPath = nullptr,
     const char *geometryPath = nullptr,
+    const char *computePath = nullptr,
     const char *binaryPath = nullptr) {
   auto vertexPath__ = vertexPath ? _fbb.CreateString(vertexPath) : 0;
   auto fragmentPath__ = fragmentPath ? _fbb.CreateString(fragmentPath) : 0;
   auto geometryPath__ = geometryPath ? _fbb.CreateString(geometryPath) : 0;
+  auto computePath__ = computePath ? _fbb.CreateString(computePath) : 0;
   auto binaryPath__ = binaryPath ? _fbb.CreateString(binaryPath) : 0;
   return r2::CreateShaderManifest(
       _fbb,
@@ -117,6 +130,7 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifestDirect(
       vertexPath__,
       fragmentPath__,
       geometryPath__,
+      computePath__,
       binaryPath__);
 }
 

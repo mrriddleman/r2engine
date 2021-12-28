@@ -438,7 +438,9 @@ namespace r2::asset::pln
             for (const auto& shaderManifest : shaderManifests)
             {
 				if (changedPath == shaderManifest.vertexShaderPath ||
-					changedPath == shaderManifest.fragmentShaderPath)
+					changedPath == shaderManifest.fragmentShaderPath ||
+                    changedPath == shaderManifest.geometryShaderPath ||
+                    changedPath == shaderManifest.computeShaderPath)
 				{
 					bool success = BuildShaderManifestsIfNeeded(shaderManifests, s_shaderCommand.manifestFilePaths[i], s_shaderCommand.shaderWatchPaths[i]);
 

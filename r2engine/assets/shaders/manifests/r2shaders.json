@@ -5,6 +5,7 @@
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -12,6 +13,7 @@
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DebugModel.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DebugModel.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -19,6 +21,7 @@
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.fs",
       geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.gs",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -26,6 +29,7 @@
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Screen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Screen.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -33,6 +37,15 @@
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.fs",
       geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.gs",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
+      shaderName: 2323301175361195004,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCascades.cs",
       binaryPath: ""
     }
   ]

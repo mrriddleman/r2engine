@@ -99,13 +99,26 @@ namespace r2::draw::shader
         return shader.shaderProg != InvalidShader;
     }
     
-    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr)
+    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr)
     {
-        R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
+        if (!computeShaderStr)
+        {
+            R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
+        }
         
-        GLuint shaderProgram          = glCreateProgram();
-        GLuint vertexShaderHandle     = glCreateShader( GL_VERTEX_SHADER );
-        GLuint fragmentShaderHandle   = glCreateShader( GL_FRAGMENT_SHADER );
+        GLuint shaderProgram = glCreateProgram();
+
+        GLuint vertexShaderHandle;
+        if (vertexShaderStr)
+        {
+            vertexShaderHandle = glCreateShader(GL_VERTEX_SHADER);
+        }
+        
+        GLuint fragmentShaderHandle;
+        if (fragShaderStr)
+        {
+            fragmentShaderHandle = glCreateShader(GL_FRAGMENT_SHADER);
+        }
         
         GLuint geometryShaderHandle;
         if (geometryShaderStr)
@@ -113,6 +126,13 @@ namespace r2::draw::shader
             geometryShaderHandle = glCreateShader(GL_GEOMETRY_SHADER);
         }
         
+        GLuint computeShaderHandle;
+        if (computeShaderStr)
+        {
+            computeShaderHandle = glCreateShader(GL_COMPUTE_SHADER);
+        }
+
+        if(vertexShaderStr != nullptr)
         { // compile shader and check for errors
             glShaderSource( vertexShaderHandle, 1, &vertexShaderStr, NULL );
             glCompileShader( vertexShaderHandle );
@@ -138,9 +158,9 @@ namespace r2::draw::shader
                 glDeleteProgram( shaderProgram );
                 return 0;
             }
-            
         }
         
+        if(fragShaderStr != nullptr)
         { // compile shader and check for errors
             glShaderSource( fragmentShaderHandle, 1, &fragShaderStr, NULL );
             glCompileShader( fragmentShaderHandle );
@@ -197,163 +217,171 @@ namespace r2::draw::shader
                 return 0;
             }
         }
-        
-        glAttachShader( shaderProgram, fragmentShaderHandle );
-        glAttachShader( shaderProgram, vertexShaderHandle );
-        if (geometryShaderStr)
+
+        if (computeShaderStr != nullptr)
         {
-            glAttachShader( shaderProgram, geometryShaderHandle );
-        }
-        
-        { // link program and check for errors
-            glLinkProgram( shaderProgram );
-            glDeleteShader( vertexShaderHandle );
-            glDeleteShader( fragmentShaderHandle );
-            if (geometryShaderStr)
-            {
-                glDeleteShader( geometryShaderHandle );
-            }
-            
+            glShaderSource(computeShaderHandle, 1, &computeShaderStr, nullptr);
+            glCompileShader(computeShaderHandle);
             int lparams = -1;
-            glGetProgramiv( shaderProgram, GL_LINK_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: could not link shader program GL index %u\n",
-                        shaderProgram );
-                
+            glGetShaderiv(computeShaderHandle, GL_COMPILE_STATUS, &lparams);
+
+            if (GL_TRUE != lparams)
+            {
+                R2_LOGE("ERROR: compute shader index %u did not compile\n", computeShaderHandle);
+
                 const int max_length = 2048;
-                int actual_length    = 0;
-                char plog[2048];
-                glGetProgramInfoLog( shaderProgram, max_length, &actual_length, plog );
-                R2_LOGE("Program info log for GL index %u:\n%s", shaderProgram, plog );
-                
-                glDeleteProgram( shaderProgram );
+                int actual_length = 0;
+                char slog[2048];
+                glGetShaderInfoLog(computeShaderHandle, max_length, &actual_length, slog);
+                R2_LOGE("Shader info log for GL index %u:\n%s\n", computeShaderHandle, slog);
+
+                glDeleteShader(computeShaderHandle);
+                glDeleteProgram(shaderProgram);
+
                 return 0;
             }
         }
+
+        if (computeShaderStr == nullptr)
+        {
+			glAttachShader(shaderProgram, fragmentShaderHandle);
+			glAttachShader(shaderProgram, vertexShaderHandle);
+			if (geometryShaderStr)
+			{
+				glAttachShader(shaderProgram, geometryShaderHandle);
+			}
+
+			{ // link program and check for errors
+				glLinkProgram(shaderProgram);
+				glDeleteShader(vertexShaderHandle);
+				glDeleteShader(fragmentShaderHandle);
+				if (geometryShaderStr)
+				{
+					glDeleteShader(geometryShaderHandle);
+				}
+			}
+        }
+        else
+        {
+            glAttachShader(shaderProgram, computeShaderHandle);
+            glLinkProgram(shaderProgram);
+            glDeleteShader(computeShaderHandle);
+        }
+        
+		int lparams = -1;
+		glGetProgramiv(shaderProgram, GL_LINK_STATUS, &lparams);
+
+		if (GL_TRUE != lparams) 
+        {
+			R2_LOGE("ERROR: could not link shader program GL index %u\n",
+				shaderProgram);
+
+			const int max_length = 2048;
+			int actual_length = 0;
+			char plog[2048];
+			glGetProgramInfoLog(shaderProgram, max_length, &actual_length, plog);
+			R2_LOGE("Program info log for GL index %u:\n%s", shaderProgram, plog);
+
+			glDeleteProgram(shaderProgram);
+			return 0;
+		}
         
         return shaderProgram;
     }
+
+
+    char* ReadShaderData(const char* shaderFilePath)
+    {
+		r2::fs::File* shaderFile = r2::fs::FileSystem::Open(DISK_CONFIG, shaderFilePath, r2::fs::Read | r2::fs::Binary);
+
+		R2_CHECK(shaderFile != nullptr, "Failed to open file: %s\n", shaderFilePath);
+		if (!shaderFile)
+		{
+			R2_LOGE("Failed to open file: %s\n", shaderFilePath);
+			return nullptr;
+		}
+
+		u64 fileSize = shaderFile->Size();
+
+		char* shaderFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize + 1, sizeof(char));
+
+		if (!shaderFileData)
+		{
+			R2_CHECK(false, "Could not allocate: %llu bytes", fileSize + 1);
+			return nullptr;
+		}
+
+		bool success = shaderFile->ReadAll(shaderFileData);
+
+		if (!success)
+		{
+			FREE(shaderFileData, *MEM_ENG_SCRATCH_PTR);
+			R2_LOGE("Failed to read file: %s", shaderFilePath);
+			return nullptr;
+		}
+
+        shaderFileData[fileSize] = '\0';
+		r2::fs::FileSystem::Close(shaderFile);
+
+        return shaderFileData;
+    }
     
-    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, bool assertOnFailure)
+    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, bool assertOnFailure)
     {
         Shader newShader;
-        R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
-        R2_CHECK(fragmentShaderFilePath != nullptr, "Fragment shader is null");
+
+        if (!computeShaderFilePath)
+        {
+			R2_CHECK(vertexShaderFilePath != nullptr, "Vertex shader is null");
+			R2_CHECK(fragmentShaderFilePath != nullptr, "Fragment shader is null");
+        }
         
         char* vertexFileData = nullptr;
         char* fragmentFileData = nullptr;
         char* geometryFileData = nullptr;
+        char* computeFileData = nullptr;
         
+        if(vertexShaderFilePath && strlen(vertexShaderFilePath) > 0)
         {
-            r2::fs::File* vertexFile = r2::fs::FileSystem::Open(DISK_CONFIG, vertexShaderFilePath, r2::fs::Read | r2::fs::Binary);
-            
-            R2_CHECK(vertexFile != nullptr, "Failed to open file: %s\n", vertexShaderFilePath);
-            if(!vertexFile)
-            {
-                R2_LOGE("Failed to open file: %s\n", vertexShaderFilePath);
-                return newShader;
-            }
-            
-            u64 fileSize = vertexFile->Size();
-            
-            vertexFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
-            
-            if(!vertexFileData)
-            {
-                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return newShader;
-            }
-            
-            bool success = vertexFile->ReadAll(vertexFileData);
-            
-            if(!success)
-            {
-                FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
-                R2_LOGE("Failed to read file: %s", vertexShaderFilePath);
-                return newShader;
-            }
-            
-            vertexFileData[fileSize] = '\0';
-            r2::fs::FileSystem::Close(vertexFile);
+            vertexFileData = ReadShaderData(vertexShaderFilePath);
         }
         
+        if(fragmentShaderFilePath && strlen(fragmentShaderFilePath) > 0)
         {
-            r2::fs::File* fragmentFile = r2::fs::FileSystem::Open(DISK_CONFIG, fragmentShaderFilePath, r2::fs::Read | r2::fs::Binary);
-            
-            R2_CHECK(fragmentFile != nullptr, "Failed to open file: %s\n", fragmentShaderFilePath);
-            if(!fragmentFile)
-            {
-                R2_LOGE("Failed to open file: %s\n", fragmentShaderFilePath);
-                return newShader;
-            }
-            
-            u64 fileSize = fragmentFile->Size();
-            
-            fragmentFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
-            
-            if(!fragmentFileData)
-            {
-                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return newShader;
-            }
-            
-            bool success = fragmentFile->ReadAll(fragmentFileData);
-            
-            if(!success)
-            {
-                FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
-                R2_LOGE("Failed to read file: %s", fragmentShaderFilePath);
-                return newShader;
-            }
-            
-            fragmentFileData[fileSize] = '\0';
-            r2::fs::FileSystem::Close(fragmentFile);
+            fragmentFileData = ReadShaderData(fragmentShaderFilePath);
         }
         
-        if(geometryShaderFilePath != nullptr && strlen(geometryShaderFilePath) > 0)
+        if(geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
         {
-            r2::fs::File* geometryFile = r2::fs::FileSystem::Open(DISK_CONFIG, geometryShaderFilePath, r2::fs::Read | r2::fs::Binary);
-            
-            R2_CHECK(geometryFile != nullptr, "Failed to open file: %s\n", geometryShaderFilePath);
-            if(!geometryFile)
-            {
-                R2_LOGE("Failed to open file: %s\n", geometryShaderFilePath);
-                return newShader;
-            }
-            
-            u64 fileSize = geometryFile->Size();
-            
-            geometryFileData = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, sizeof(char));
-            
-            if(!geometryFileData)
-            {
-                R2_CHECK(false, "Could not allocate: %llu bytes", fileSize+1);
-                return newShader;
-            }
-            
-            bool success = geometryFile->ReadAll(geometryFileData);
-            
-            if(!success)
-            {
-                FREE(geometryFileData, *MEM_ENG_SCRATCH_PTR);
-                R2_LOGE("Failed to read file: %s", geometryShaderFilePath);
-                return newShader;
-            }
-            
-            geometryFileData[fileSize] = '\0';
-            r2::fs::FileSystem::Close(geometryFile);
+            geometryFileData = ReadShaderData(geometryShaderFilePath);
+        }
+
+        if (computeShaderFilePath && strlen(computeShaderFilePath) > 0)
+        {
+            computeFileData = ReadShaderData(computeShaderFilePath);
         }
         
-        u32 shaderProg = CreateShaderProgramFromStrings(vertexFileData, fragmentFileData, geometryFileData);
+        u32 shaderProg = CreateShaderProgramFromStrings(vertexFileData, fragmentFileData, geometryFileData, computeFileData);
         
+        if (computeFileData != nullptr)
+        {
+            FREE(computeFileData, *MEM_ENG_SCRATCH_PTR);
+        }
+
         if (geometryFileData != nullptr)
         {
             FREE(geometryFileData, *MEM_ENG_SCRATCH_PTR);
         }
         
-        FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);//fragment first since it was allocated last - this is a stack currently
-        FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
+        if (fragmentFileData != nullptr)
+        {
+            FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
+        }
+        
+        if (vertexFileData != nullptr)
+        {
+            FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
+        }
         
         if (!shaderProg)
         {
@@ -373,18 +401,29 @@ namespace r2::draw::shader
         newShader.manifest.vertexShaderPath = vertexShaderFilePath;
         newShader.manifest.fragmentShaderPath = fragmentShaderFilePath;
         newShader.manifest.geometryShaderPath = geometryShaderFilePath;
+        newShader.manifest.computeShaderPath = computeShaderFilePath;
 #endif
 
         return newShader;
     }
     
-    void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath)
+    void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath)
     {
         R2_CHECK(program != nullptr, "Shader Program is nullptr");
-        R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
-        R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
-        
-        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath, false);
+
+        if (computeShaderFilePath != nullptr)
+		{
+			R2_CHECK(vertexShaderFilePath != nullptr, "vertex shader file path is nullptr");
+			R2_CHECK(fragmentShaderFilePath != nullptr, "fragment shader file path is nullptr");
+        }
+        else
+        {
+            R2_CHECK(vertexShaderFilePath == nullptr, "vertex shader file path is not nullptr");
+            R2_CHECK(fragmentShaderFilePath == nullptr, "fragment shader file path is not nullptr");
+            R2_CHECK(geometryShaderFilePath == nullptr, "geometry shader file path is not nullptr");
+        }
+
+        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath, computeShaderFilePath, false);
         
         if (reloadedShaderProgram.shaderProg)
         {

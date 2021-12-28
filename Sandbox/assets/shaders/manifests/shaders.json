@@ -5,6 +5,7 @@
       vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/AnimModel.vs",
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/AnimModel.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -12,6 +13,7 @@
       vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.vs",
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -19,6 +21,7 @@
       vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.vs",
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     },
     {
@@ -26,6 +29,7 @@
       vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.vs",
       fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.fs",
       geometryPath: "",
+      computePath: "",
       binaryPath: ""
     }
   ]
