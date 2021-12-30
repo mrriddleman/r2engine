@@ -314,9 +314,11 @@ namespace r2::draw::mat
 						r2::draw::tex::Texture texture;
 						texture.type = tex::TextureType::Diffuse;
 
-						texture.textureAssetHandle = system.mAssetCache->LoadAsset(result->metaData.mipLevelMetaData[mipLevel].sides[side].asset);
+						auto cubemapSide = result->metaData.mipLevelMetaData[mipLevel].sides[side].side;
+
+						texture.textureAssetHandle = system.mAssetCache->LoadAsset(result->metaData.mipLevelMetaData[mipLevel].sides[cubemapSide].asset);
 						cubemap.mips[mipLevel].mipLevel = result->metaData.mipLevelMetaData[mipLevel].mipLevel;
-						cubemap.mips[mipLevel].sides[result->metaData.mipLevelMetaData[mipLevel].sides[side].side] = texture;
+						cubemap.mips[mipLevel].sides[cubemapSide] = texture;
 					}
 				}
 

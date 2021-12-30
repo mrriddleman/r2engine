@@ -30,14 +30,6 @@ layout (std140, binding = 3) buffer BoneTransformOffsets
 	ivec4 boneOffsets[];
 };
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-};
-
-
 void main()
 {
 	int boneOffset = boneOffsets[DrawID].x;
@@ -47,5 +39,5 @@ void main()
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
 
 	mat4 vertexTransform = models[DrawID] * finalBoneVertexTransform;
-	gl_Position = view * vertexTransform * vec4(aPos, 1.0);
+	gl_Position = vertexTransform * vec4(aPos, 1.0);
 }

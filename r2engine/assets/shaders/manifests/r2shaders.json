@@ -20,7 +20,15 @@
       shaderName: 13212531284513343367,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.gs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
+      shaderName: 10231838077290944487,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicShadowDepth.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicShadowDepth.gs",
       computePath: "",
       binaryPath: ""
     },
@@ -36,7 +44,15 @@
       shaderName: 8833047848476087300,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.gs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
+      shaderName: 13510344869207716212,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticShadowDepth.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticShadowDepth.gs",
       computePath: "",
       binaryPath: ""
     },

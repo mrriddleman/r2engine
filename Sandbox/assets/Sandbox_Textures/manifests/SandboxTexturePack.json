@@ -286,7 +286,7 @@
       anisotropy: [
 
       ],
-      packSize: 21501,
+      packSize: 18754,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -636,7 +636,7 @@
       anisotropy: [
 
       ],
-      packSize: 15343533,
+      packSize: 22303758,
       totalNumberOfTextures: 6,
       metaData: {
         mipLevels: [
@@ -646,6 +646,6 @@
     }
   ],
   totalNumberOfTextures: 80,
-  totalTextureSize: 138849221,
+  totalTextureSize: 145806699,
   maxTexturesInAPack: 36
 }

@@ -13,9 +13,11 @@ namespace r2::draw
 	enum RenderPassType: s8
 	{
 		RPT_NONE = -1,
+		
 		RPT_GBUFFER,
-		RPT_FINAL_COMPOSITE,
 		RPT_SHADOWS,
+		RPT_FINAL_COMPOSITE,
+		RPT_ZPREPASS,
 		NUM_RENDER_PASSES
 	};
 

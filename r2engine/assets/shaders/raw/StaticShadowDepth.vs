@@ -11,14 +11,7 @@ layout (std140, binding = 0) buffer Models
 	mat4 models[];
 };
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-};
-
 void main()
 {
-	gl_Position = view * models[DrawID] * vec4(aPos, 1.0);
+	gl_Position = models[DrawID] * vec4(aPos, 1.0);
 }

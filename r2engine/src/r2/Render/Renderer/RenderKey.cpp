@@ -135,10 +135,40 @@ namespace r2::draw::key
 		u16 depthValue = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_DEPTH, ShadowKey::SHADOW_KEY_DEPTH_OFFSET);
 		
 		//How do we get the shader from the isDynamic variable
+		ShaderHandle shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic);
+
+		//r2::draw::rendererimpl::SetViewportKey(0);
+		r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
+		r2::draw::rendererimpl::SetShaderID(shaderHandle);
+	}
+
+
+	bool CompareDepthKey(const DepthKey& a, const DepthKey& b)
+	{
+		return a.keyValue < b.keyValue;
+	}
+
+	DepthKey GenerateDepthKey(bool isDynamic, u16 depth)
+	{
+		DepthKey theKey;
+
+		theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
+		theKey.keyValue |= ENCODE_KEY_VALUE(depth, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
+
+		return theKey;
+	}
+
+	void DecodeDepthKey(const DepthKey& key)
+	{
+		bool isDynamic = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
+		u16 depthValue = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
+
+		//How do we get the shader from the isDynamic variable
 		ShaderHandle shaderHandle = r2::draw::renderer::GetDepthShaderHandle(isDynamic);
 
 		//r2::draw::rendererimpl::SetViewportKey(0);
 		r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
 		r2::draw::rendererimpl::SetShaderID(shaderHandle);
 	}
+
 }

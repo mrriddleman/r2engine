@@ -4,7 +4,7 @@
 
 const uint NUM_TEXTURES_PER_DRAWID = 8;
 const float near = 0.1; 
-const float far  = 1000.0; 
+const float far  = 500.0; 
 
 layout (location = 0) out vec4 FragColor;
 
@@ -28,6 +28,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress gBufferSurface;
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
+	Tex2DAddress zPrePassSurface;
 };
 
 in VS_OUT
@@ -50,7 +51,12 @@ vec3 ExposureToneMapping(vec3 hdrColor);
 float LinearizeDepth(float depth) 
 {
     float z = depth * 2.0 - 1.0; // back to NDC 
-    return (2.0 * near * far) / (far + near - z * (far - near));	
+    return (2 *  near * far) / (far + near - z * (far - near));	
+}
+
+float NormalizeViewDepth(float depth)
+{
+	return (depth - near) / (far - near) * depth;
 }
 
 void main()

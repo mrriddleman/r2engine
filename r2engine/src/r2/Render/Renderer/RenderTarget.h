@@ -30,10 +30,11 @@ namespace r2::draw
 	enum RenderTargetSurface : s8
 	{
 		RTS_EMPTY = -1,
+		
 		RTS_GBUFFER,
 		RTS_SHADOWS,
 		RTS_COMPOSITE,
-		
+		RTS_ZPREPASS,
 		NUM_RENDER_TARGET_SURFACES
 	};
 

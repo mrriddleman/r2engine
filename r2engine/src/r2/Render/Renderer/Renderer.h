@@ -227,7 +227,8 @@ namespace r2::draw
 
 		//------------BEGIN Drawing Stuff--------------
 		const Camera* mnoptrRenderCam = nullptr;
-		ShaderHandle mDepthShaders[2]; //0 - static, 1 - dynamic
+		ShaderHandle mShadowDepthShaders[2]; //0 - static, 1 - dynamic
+		ShaderHandle mDepthShaders[2];
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -247,7 +248,12 @@ namespace r2::draw
 		r2::mem::StackArena* mCommandArena = nullptr;
 
 		CommandBucket<key::ShadowKey>* mShadowBucket = nullptr;
+		CommandBucket<key::DepthKey>* mDepthPrePassBucket = nullptr;
 		r2::mem::StackArena* mShadowArena = nullptr;
+
+
+		
+		
 
 		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
 		//------------END Drawing Stuff--------------
@@ -360,8 +366,8 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	///More draw functions...
+	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic);
 	ShaderHandle GetDepthShaderHandle(bool isDynamic);
-
 	//------------------------------------------------------------------------------
 
 #ifdef R2_DEBUG

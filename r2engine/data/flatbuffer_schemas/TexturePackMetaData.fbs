@@ -15,8 +15,8 @@ enum CubemapSide: byte
 	LEFT,
 	TOP,
 	BOTTOM,
-	BACK,
 	FRONT,
+	BACK,
 	NUM_SIDES
 }
 

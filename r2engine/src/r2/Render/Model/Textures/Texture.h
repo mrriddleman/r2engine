@@ -40,9 +40,8 @@ namespace r2::draw::tex
 		LEFT,
 		TOP,
 		BOTTOM,
-		BACK,
 		FRONT,
-		
+		BACK,
 		NUM_SIDES
 	};
 

@@ -109,6 +109,28 @@ namespace r2::draw::key
 		};
 	};
 
+	struct DepthKey
+	{
+		/*
+		+------1 bit-----+-15 bits-+
+		| Static/Dynamic |  Depth  |
+		+----------------+---------+
+		*/
+
+		u16 keyValue = 0;
+
+		enum : u16
+		{
+			DEPTH_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
+
+			DEPTH_KEY_BITS_IS_DYNAMIC = 0x1,
+			DEPTH_KEY_BITS_DEPTH = 0xF,
+
+			DEPTH_KEY_IS_DYNAMIC_OFFSET = DEPTH_KEY_BITS_TOTAL - DEPTH_KEY_BITS_IS_DYNAMIC,
+			DEPTH_KEY_DEPTH_OFFSET = DEPTH_KEY_IS_DYNAMIC_OFFSET - DEPTH_KEY_BITS_DEPTH
+		};
+	};
+
 	//DEBUG
 	bool CompareDebugKey(const DebugKey& a, const DebugKey& b);
 
@@ -125,10 +147,13 @@ namespace r2::draw::key
 
 	//Shadows
 	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
-
 	ShadowKey GenerateShadowKey(bool isDynamic, u16 depth);
-
 	void DecodeShadowKey(const ShadowKey& key);
+
+	//Depth
+	bool CompareDepthKey(const DepthKey& a, const DepthKey& b);
+	DepthKey GenerateDepthKey(bool isDynamic, u16 depth);
+	void DecodeDepthKey(const DepthKey& key);
 }
 
 #endif

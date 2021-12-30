@@ -380,6 +380,7 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
+	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic);
 	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic);
 
 	//------------------------------------------------------------------------------
@@ -463,6 +464,8 @@ namespace r2::draw::renderer
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+
 	void DestroyRenderSurfaces(Renderer& renderer);
 
 	void PreRender(Renderer& renderer);
@@ -709,6 +712,9 @@ namespace r2::draw::renderer
 		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
 
 		//Get the depth shader handles
+		newRenderer->mShadowDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticShadowDepth")))->shaderId;
+		newRenderer->mShadowDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicShadowDepth")))->shaderId;
+
 		newRenderer->mDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticDepth")))->shaderId;
 		newRenderer->mDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicDepth")))->shaderId;
 
@@ -737,12 +743,16 @@ namespace r2::draw::renderer
 		newRenderer->mShadowBucket = MAKE_CMD_BUCKET(*rendererArena, key::ShadowKey, key::DecodeShadowKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mShadowBucket != nullptr, "We couldn't create the command bucket!");
 
-		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
+		newRenderer->mDepthPrePassBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mDepthPrePassBucket != nullptr, "We couldn't create the command bucket!");
+
+		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
 		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
 
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
-			RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking));
+			RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking) + 
+			RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
 
 		//@TODO(Serge): we need to get the scale, x and y offsets
 		ResizeRenderSurface(*newRenderer, size.width, size.height, size.width, size.height, 1.0f, 1.0f, 0.0f, 0.0f); //@TODO(Serge): we need to get the scale, x and y offsets
@@ -864,6 +874,7 @@ namespace r2::draw::renderer
 		//}
 
 		//printf("================================================\n");
+		cmdbkt::Sort(*renderer.mDepthPrePassBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mPreRenderBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mShadowBucket, key::CompareShadowKey);
 		cmdbkt::Sort(*renderer.mCommandBucket, r2::draw::key::CompareBasicKey);
@@ -881,6 +892,7 @@ namespace r2::draw::renderer
 		//}
 
 		cmdbkt::Submit(*renderer.mPreRenderBucket);
+		cmdbkt::Submit(*renderer.mDepthPrePassBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
 		cmdbkt::Submit(*renderer.mCommandBucket);
 
@@ -900,6 +912,7 @@ namespace r2::draw::renderer
 #endif
 
 		cmdbkt::ClearAll(*renderer.mPreRenderBucket);
+		cmdbkt::ClearAll(*renderer.mDepthPrePassBucket);
 		cmdbkt::ClearAll(*renderer.mCommandBucket);
 		cmdbkt::ClearAll(*renderer.mShadowBucket);
 		cmdbkt::ClearAll(*renderer.mFinalBucket);
@@ -995,6 +1008,7 @@ namespace r2::draw::renderer
 
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
+		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mDepthPrePassBucket);
 		FREE_CMD_BUCKET(*arena, key::ShadowKey, renderer->mShadowBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPostRenderBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPreRenderBucket);
@@ -1824,7 +1838,8 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, headerSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, headerSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -1846,7 +1861,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/2, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY +
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
@@ -2814,7 +2829,9 @@ namespace r2::draw::renderer
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
 		key::ShadowKey shadowClearKey = key::GenerateShadowKey(0, 0);
+		key::DepthKey depthClearKey = key::GenerateDepthKey(0, 0);
 
+		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::Basic>(renderer, RPT_GBUFFER, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
 
@@ -2851,8 +2868,21 @@ namespace r2::draw::renderer
 				shadowDrawBatch->subCommands = nullptr;
 				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-			}
+			
 
+				key::DepthKey zppKey = key::GenerateDepthKey(false, 0);
+
+				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				zppDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				zppDrawBatch->subCommands = nullptr;
+				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+			}
 
 			//@TODO(Serge): add commands to different buckets
 		}
@@ -2891,11 +2921,25 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0);
+
+				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				zppDrawBatch->subCommands = nullptr;
+				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+
 			}
 
 			//@TODO(Serge): add commands to different buckets
 		}
 
+		EndRenderPass(renderer, RPT_ZPREPASS, *renderer.mDepthPrePassBucket);
 		EndRenderPass(renderer, RPT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_GBUFFER, *renderer.mCommandBucket);
 
@@ -2983,9 +3027,10 @@ namespace r2::draw::renderer
 		RenderPassConfig passConfig;
 		passConfig.primitiveType = PrimitiveType::TRIANGLES;
 		passConfig.flags = 0;
+		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS}, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {}, RTS_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -2993,6 +3038,7 @@ namespace r2::draw::renderer
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_GBUFFER]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_ZPREPASS]);
 	}
 
 	template <class T>
@@ -3416,6 +3462,12 @@ namespace r2::draw::renderer
 	{
 		u32 shaderIndex = isDynamic ? 1 : 0;
 		return renderer.mDepthShaders[shaderIndex];
+	}
+
+	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic)
+	{
+		u32 shaderIndex = isDynamic ? 1 : 0;
+		return renderer.mShadowDepthShaders[shaderIndex];
 	}
 
 #ifdef R2_DEBUG
@@ -4196,11 +4248,14 @@ namespace r2::draw::renderer
 		if (!util::IsSizeEqual(renderer.mResolutionSize, resolutionX, resolutionY))
 		{
 			DestroyRenderSurfaces(renderer);
+			CreateZPrePassRenderSurface(renderer, resolutionX, resolutionY);
 
 			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1,0, 1, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, 1, false, true);
 			rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
+
+			
 		}
 		
 		renderer.mResolutionSize.width = resolutionX;
@@ -4230,11 +4285,30 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, cam::NUM_FRUSTUM_SPLITS, 1, false, false);
 	}
 
+	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
+
+		if (resolutionX > MAX_TEXTURE_SIZE)
+		{
+			resolutionX = MAX_TEXTURE_SIZE;
+		}
+
+		if (resolutionY > MAX_TEXTURE_SIZE)
+		{
+			resolutionY = MAX_TEXTURE_SIZE;
+		}
+
+		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false);
+	}
+
 
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
-		
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS]);
 	}
 
 	//events
@@ -4501,6 +4575,11 @@ namespace r2::draw::renderer
 	ShaderHandle GetDepthShaderHandle(bool isDynamic)
 	{
 		return GetDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic);
+	}
+
+	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic)
+	{
+		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic);
 	}
 
 	void SetRenderCamera(const Camera* cameraPtr)
