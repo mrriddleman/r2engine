@@ -17,6 +17,9 @@ namespace r2::draw::dispatch
 	void DrawBatch(const void* data);
 	void DrawDebugBatch(const void* data);
 	void SetRenderTarget(const void* data);
+	void DispatchComputeIndirect(const void* data);
+	void DispatchCompute(const void* data);
+	void Barrier(const void* data);
 }
 
 

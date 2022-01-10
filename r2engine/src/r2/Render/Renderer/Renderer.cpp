@@ -336,11 +336,13 @@ namespace r2::draw::renderer
 
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix);
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
+	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera);
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
 	void UpdateExposure(Renderer& renderer, float exposure);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
 	void UpdateCamera(Renderer& renderer, const Camera& camera);
 	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
+	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr);
@@ -718,6 +720,7 @@ namespace r2::draw::renderer
 		newRenderer->mDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticDepth")))->shaderId;
 		newRenderer->mDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicDepth")))->shaderId;
 
+		newRenderer->mShadowSplitComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCascades"));
 
 		CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
@@ -1089,13 +1092,16 @@ namespace r2::draw::renderer
 		renderer.mVPMatricesConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Mat4, "projection"},
 			{r2::draw::ShaderDataType::Mat4, "view"},
-			{r2::draw::ShaderDataType::Mat4, "skyboxView"}
+			{r2::draw::ShaderDataType::Mat4, "skyboxView"},
+			{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS}
+
 		});
 
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "CameraPosTimeW"},
 			{r2::draw::ShaderDataType::Float4, "Exposure"},
-			{r2::draw::ShaderDataType::Float4, "CascadePlanes"}
+			{r2::draw::ShaderDataType::Float4, "CascadePlanes"},
+			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -2828,8 +2834,8 @@ namespace r2::draw::renderer
 		clearDepthOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
-		key::ShadowKey shadowClearKey = key::GenerateShadowKey(0, 0);
-		key::DepthKey depthClearKey = key::GenerateDepthKey(0, 0);
+		key::ShadowKey shadowClearKey = key::GenerateShadowKey(true, 0, false, 0);
+		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
@@ -2856,7 +2862,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_WORLD)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(false, 0);
+				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, false, 0);
 
 				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
 				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2870,7 +2876,7 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 			
 
-				key::DepthKey zppKey = key::GenerateDepthKey(false, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, false, 0);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2908,7 +2914,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0);
+				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, true, 0);
 
 				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
 				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2921,7 +2927,7 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, true, 0);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3212,6 +3218,20 @@ namespace r2::draw::renderer
 			glm::value_ptr(glm::mat4(glm::mat3(viewMatrix))));
 	}
 
+	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		 
+	//	for (int i = 0; i < cam::NUM_FRUSTUM_SPLITS; ++i)
+		{
+			AddFillConstantBufferCommandForData(
+				renderer,
+				r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+				3 ,
+				glm::value_ptr(camera.frustumProjections[0]));
+		}
+	}
+
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -3238,10 +3258,18 @@ namespace r2::draw::renderer
 			2, glm::value_ptr(cascades));
 	}
 
+	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			3, glm::value_ptr(shadowMapSizes));
+	}
+
 	void UpdateCamera(Renderer& renderer, const Camera& camera)
 	{
 		UpdatePerspectiveMatrix(renderer, camera.proj);
 		UpdateViewMatrix(renderer, camera.view);
+		UpdateCameraFrustumProjections(renderer, camera);
 		UpdateCameraPosition(renderer, camera.position);
 		UpdateExposure(renderer, camera.exposure);
 
@@ -3251,6 +3279,7 @@ namespace r2::draw::renderer
 		R2_CHECK(cam::NUM_FRUSTUM_SPLITS == 4, "Change to not be a vec4 if cam::NUM_FRUSTUM_SPLITS is >");
 		UpdateCameraCascades(renderer, glm::vec4(frustumSplits[0], frustumSplits[1], frustumSplits[2], frustumSplits[3]));
 
+		UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
 	}
 
 	void DrawModels(Renderer& renderer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
@@ -4469,11 +4498,24 @@ namespace r2::draw::renderer
 		//@TEMPORARY
 		if (numDirLights > 0)
 		{
-			DirectionLight& dirLight = renderer.mLightSystem->mSceneLighting.mDirectionLights[0];
-			light::GetDirectionalLightSpaceMatrices(dirLight.lightSpaceMatrixData, *renderer.mnoptrRenderCam, dirLight.direction, Z_MULT, SHADOWMAP_SIZES);
+		//	DirectionLight& dirLight = renderer.mLightSystem->mSceneLighting.mDirectionLights[0];
+		//	light::GetDirectionalLightSpaceMatrices(dirLight.lightSpaceMatrixData, *renderer.mnoptrRenderCam, dirLight.direction, Z_MULT, SHADOWMAP_SIZES);
 		}
 
 		UpdateSceneLighting(renderer, *renderer.mLightSystem);		
+
+
+		//add the commands to split the shadow frustum in the compute shader
+		key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(false, renderer.mShadowSplitComputeShader, false, 0);
+
+		cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchShadowSplitsKey, 0);
+
+		dispatchCMD->numGroupsX = cam::NUM_FRUSTUM_SPLITS;
+		dispatchCMD->numGroupsY = 1;
+		dispatchCMD->numGroupsZ = 1;
+
+		cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
+		barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 	}
 }
 

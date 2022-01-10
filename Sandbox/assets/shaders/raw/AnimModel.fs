@@ -91,6 +91,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 cameraPosTimeW;
     vec4 exposure;
     vec4 cascadePlanes;
+    vec4 shadowMapSizes;
 };
 
 layout (std430, binding = 1) buffer Materials
@@ -116,6 +117,7 @@ layout (std140, binding = 0) uniform Matrices
     mat4 projection;
     mat4 view;
     mat4 skyboxView;
+    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
 };
 
 //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h

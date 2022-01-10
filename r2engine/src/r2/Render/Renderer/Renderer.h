@@ -227,6 +227,7 @@ namespace r2::draw
 
 		//------------BEGIN Drawing Stuff--------------
 		const Camera* mnoptrRenderCam = nullptr;
+		ShaderHandle mShadowSplitComputeShader;
 		ShaderHandle mShadowDepthShaders[2]; //0 - static, 1 - dynamic
 		ShaderHandle mDepthShaders[2];
 

@@ -6,11 +6,14 @@ layout (location = 2) in vec3 aTexCoord;
 layout (location = 3) in vec3 aTangent;
 layout (location = 4) in uint DrawID;
 
+#define NUM_FRUSTUM_SPLITS 4
+
 layout (std140, binding = 0) uniform Matrices
 {
     mat4 projection;
     mat4 view;
     mat4 skyboxView;
+    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
 };
 
 out VS_OUT

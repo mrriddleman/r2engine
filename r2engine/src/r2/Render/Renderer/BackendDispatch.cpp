@@ -77,4 +77,28 @@ namespace r2::draw::dispatch
 
 		rendererimpl::SetRenderTarget(realData->framebufferID, realData->numColorAttachments, realData->numDepthAttachments, realData->xOffset, realData->yOffset, realData->width, realData->height, realData->depthTexture);
 	}
+
+	void DispatchComputeIndirect(const void* data)
+	{
+		const cmd::DispatchComputeIndirect* realData = static_cast<const r2::draw::cmd::DispatchComputeIndirect*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::DispatchComputeIndirect(realData->batchHandle, realData->offset);
+	}
+
+	void DispatchCompute(const void* data)
+	{
+		const cmd::DispatchCompute* realData = static_cast<const r2::draw::cmd::DispatchCompute*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::DispatchCompute(realData->numGroupsX, realData->numGroupsY, realData->numGroupsZ);
+	}
+
+	void Barrier(const void* data)
+	{
+		const cmd::Barrier* realData = static_cast<const r2::draw::cmd::Barrier*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::Barrier(realData->flags);
+	}
 }

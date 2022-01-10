@@ -83,6 +83,7 @@ layout (std140, binding = 0) uniform Matrices
     mat4 projection;
     mat4 view;
     mat4 skyboxView;
+    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
 };
 
 layout (std140, binding = 0) buffer Models
@@ -112,6 +113,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 cameraPosTimeW;
     vec4 exposure;
     vec4 cascadePlanes;
+    vec4 shadowMapSizes;
 };
 
 out VS_OUT

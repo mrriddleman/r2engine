@@ -8,11 +8,14 @@ layout (location = 4) in vec4 BoneWeights;
 layout (location = 5) in ivec4 BoneIDs;
 layout (location = 6) in uint DrawID;
 
+#define NUM_FRUSTUM_SPLITS 4
+
 layout (std140, binding = 0) uniform Matrices
 {
     mat4 projection;
     mat4 view;
     mat4 skyboxView;
+    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
 };
 
 layout (std140, binding = 0) buffer Models

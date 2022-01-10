@@ -84,6 +84,10 @@ namespace r2::draw::rendererimpl
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0);
 	void ApplyDrawState(const cmd::DrawState& state);
 	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 numDepthAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, u32 depthTexture);
+	void DispatchComputeIndirect(ConstantBufferHandle dispatchBufferHandle, u32 offset);
+	void DispatchCompute(u32 numGroupX, u32 numGroupY, u32 numGroupZ);
+	void Barrier(u32 flags);
+
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

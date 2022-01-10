@@ -94,6 +94,7 @@ namespace r2::draw::cmd
 	u32 CLEAR_DEPTH_BUFFER = GL_DEPTH_BUFFER_BIT;
 	u32 CULL_FACE_FRONT = GL_FRONT;
 	u32 CULL_FACE_BACK = GL_BACK;
+	u32 SHADER_STORAGE_BARRIER_BIT = GL_SHADER_STORAGE_BARRIER_BIT;
 }
 
 namespace r2::draw::rendererimpl
@@ -649,6 +650,22 @@ namespace r2::draw::rendererimpl
 		BindVertexArray(layoutId);
 		glMultiDrawArraysIndirect(GL_LINES, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawDebugBatchSubCommand) * offset), count, stride);
 
+	}
+
+	void DispatchComputeIndirect(ConstantBufferHandle dispatchBufferHandle, u32 offset)
+	{
+		glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, dispatchBufferHandle);
+		glDispatchComputeIndirect(sizeof(cmd::DispatchSubCommand) * offset);
+	}
+
+	void DispatchCompute(u32 numGroupsX, u32 numGroupsY, u32 numGroupsZ)
+	{
+		glDispatchCompute(numGroupsX, numGroupsY, numGroupsZ);
+	}
+
+	void Barrier(u32 flags)
+	{
+		glMemoryBarrier(flags);
 	}
 
 	void ApplyDrawState(const cmd::DrawState& state)

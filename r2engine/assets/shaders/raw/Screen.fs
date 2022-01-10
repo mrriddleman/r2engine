@@ -19,6 +19,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 cameraPosTimeW;
     vec4 exposure;
     vec4 cascadePlanes;
+    vec4 shadowMapSizes;
 };
 
 

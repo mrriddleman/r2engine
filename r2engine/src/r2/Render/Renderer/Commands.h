@@ -19,6 +19,8 @@ namespace r2::draw::cmd
 	extern u32 CLEAR_DEPTH_BUFFER;
 	extern u32 CULL_FACE_FRONT;
 	extern u32 CULL_FACE_BACK;
+
+	extern u32 SHADER_STORAGE_BARRIER_BIT;
 	
 
 	struct DrawState
@@ -155,6 +157,45 @@ namespace r2::draw::cmd
 		u32 depthTexture;
 	};
 	static_assert(std::is_pod<SetRenderTarget>::value == true, "SetRenderTarget must be a POD.");
+
+	//Compute stuff
+
+	struct DispatchSubCommand
+	{
+		u32 numGroupsX;
+		u32 numGroupsY;
+		u32 numGroupsZ;
+	};
+
+	struct DispatchComputeIndirect
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		r2::draw::ConstantBufferHandle batchHandle;
+		u32 offset;
+	};
+
+	static_assert(std::is_pod<DispatchComputeIndirect>::value == true, "DispatchComputeIndirect must be a POD.");
+
+
+	struct DispatchCompute
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		u32 numGroupsX;
+		u32 numGroupsY;
+		u32 numGroupsZ;
+	};
+
+	static_assert(std::is_pod<DispatchCompute>::value == true, "DispatchCompute must be a POD.");
+
+
+	struct Barrier
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		u32 flags;
+	};
+
+	static_assert(std::is_pod<Barrier>::value == true, "Barrier must be a POD.");
 
 	u64 LargestCommand();
 }
