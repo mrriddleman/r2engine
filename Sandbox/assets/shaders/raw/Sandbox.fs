@@ -43,6 +43,7 @@ struct DirLight
 //	
 	LightProperties lightProperties;
 	vec4 direction;
+	mat4 cameraViewToLightProj;
 	LightSpaceMatrixData lightSpaceMatrixData;
 };
 
@@ -89,7 +90,7 @@ struct Material
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
-    vec4 exposure;
+    vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
 };
@@ -110,6 +111,7 @@ layout (std430, binding = 4) buffer Lighting
 	int numDirectionLights;
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
+	int useSDSMShadows;
 };
 
 layout (std140, binding = 0) uniform Matrices 
@@ -854,7 +856,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 
-		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposure.x;
+		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposureNearFar.x;
 
 		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
 		
@@ -884,7 +886,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		spotAngleAttenuation = spotAngleAttenuation * spotAngleAttenuation;
 
 
-		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposure.x;
+		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposureNearFar.x;
 
 		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
 

@@ -223,6 +223,9 @@ namespace r2::draw
 		ConstantConfigHandle mBoneTransformsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mVPMatricesConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mVectorsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mSDSMParamsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mShadowDataConfigHandle = InvalidConstantConfigHandle;
+
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -230,6 +233,10 @@ namespace r2::draw
 		ShaderHandle mShadowSplitComputeShader;
 		ShaderHandle mShadowDepthShaders[2]; //0 - static, 1 - dynamic
 		ShaderHandle mDepthShaders[2];
+		ShaderHandle mSDSMReduceZBoundsComputeShader;
+		ShaderHandle mSDSMCalculateLogPartitionsComputeShader;
+		ShaderHandle mSDSMReduceBoundsComputeShader;
+		ShaderHandle mSDSMCalculatePartitionsComputeShader;
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 

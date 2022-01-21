@@ -15,6 +15,30 @@ struct Tex2DAddress
 	float page;
 };
 
+struct Partition
+{
+	float intervalBegin;
+	float intervalEnd;
+
+	vec3 scale;
+	vec3 bias;
+};
+
+struct UPartition
+{
+	uint intervalBegin;
+	uint intervalEnd;
+
+	vec3 scale;
+	vec3 bias;
+};
+
+struct BoundsUint
+{
+    uvec3 minCoord;
+    uvec3 maxCoord;
+};
+
 struct LightProperties
 {
 	vec4 color;
@@ -41,6 +65,7 @@ struct DirLight
 
 	LightProperties lightProperties;
 	vec4 direction;
+	mat4 cameraViewToLightProj;
 	LightSpaceMatrixData lightSpaceMatrixData;
 };
 
@@ -71,6 +96,14 @@ layout (std430, binding = 4) buffer Lighting
 	int numDirectionLights;
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
+	int useSDSMShadows;
+};
+
+layout (std430, binding = 6) buffer ShadowData
+{
+	Partition gPartitions[NUM_FRUSTUM_SPLITS];
+	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
+	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
 };
 
 void main()
@@ -79,6 +112,7 @@ void main()
 	{
 		vec3 normal = cross(gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz, gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz);
 		vec3 view = -dirLights[0].direction.xyz;
+		Partition part = gPartitions[gl_InvocationID];
 
 		if(dot(normal, view) > 0.0f)
 		{
@@ -87,6 +121,17 @@ void main()
 			for (int i =0; i < 3; ++i )
 			{
 				vertex[i] = dirLights[0].lightSpaceMatrixData.lightProjMatrices[gl_InvocationID] * dirLights[0].lightSpaceMatrixData.lightViewMatrices[gl_InvocationID] * gl_in[i].gl_Position;
+				
+				if(useSDSMShadows > 0)
+				{
+					vertex[i].xy = part.scale.xy;
+					vertex[i].x += 2.0 * part.bias.x + part.scale.x - 1.0;
+					vertex[i].y += 2.0 * part.bias.y + part.scale.y - 1.0;
+
+					vertex[i].z = vertex[i].z * part.scale.z + part.bias.z;
+					//vertex[i].z += 2.0 * partition.bias.z + partition.scale.z - 1.0;
+				}
+
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];
 				if ( vertex[i].y > +vertex[i].w ) ++outOfBound[2];

@@ -47,6 +47,10 @@ namespace r2::cam
     void SetFOV(Camera& cam, float fovDegrees);
     void GetFrustumSplits(const Camera& cam, float frustumSplits[NUM_FRUSTUM_SPLITS]);
 
+    glm::vec3 GetWorldRight(const Camera& cam);
+    glm::vec3 GetWorldUp(const Camera& cam);
+    glm::vec3 GetWorldForward(const Camera& cam);
+
     void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
     void GetFrustumCorners(const glm::mat4& proj, const glm::mat4& view, glm::vec3 outCorners[NUM_FRUSTUM_CORNERS]);
     glm::vec3 GetFrustumCenter(const glm::vec3 corners[NUM_FRUSTUM_CORNERS]);
@@ -63,6 +67,7 @@ namespace r2
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 proj = glm::mat4(1.0f);
 		glm::mat4 vp = glm::mat4(1.0f);
+        glm::mat4 invView = glm::mat4(1.0f);
 
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 facing = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));

@@ -119,7 +119,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	ShadowKey GenerateShadowKey(bool isNormalPath, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth)
+	ShadowKey GenerateShadowKey(bool isNormalPath, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth)
 	{
 		ShadowKey theKey;
 
@@ -132,6 +132,7 @@ namespace r2::draw::key
 		}
 		else
 		{
+			theKey.keyValue |= ENCODE_KEY_VALUE(shaderOrder, ShadowKey::SHADOW_KEY_BITS_SHADER_ORDER, ShadowKey::SHADOW_KEY_SHADER_ORDER_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(shader, ShadowKey::SHADOW_KEY_BITS_SHADER_ID, ShadowKey::SHADOW_KEY_SHADER_ID_OFFSET);
 		}
 		
@@ -156,6 +157,7 @@ namespace r2::draw::key
 		}
 		else
 		{
+			u8 shaderOrder = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_SHADER_ORDER, ShadowKey::SHADOW_KEY_SHADER_ORDER_OFFSET);
 			shaderHandle = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_SHADER_ID, ShadowKey::SHADOW_KEY_SHADER_ID_OFFSET);
 		}
 
@@ -168,7 +170,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	DepthKey GenerateDepthKey(bool isNormalPath, ShaderHandle shader, bool isDynamic, u16 depth)
+	DepthKey GenerateDepthKey(bool isNormalPath, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u16 depth)
 	{
 		DepthKey theKey;
 
@@ -181,6 +183,7 @@ namespace r2::draw::key
 		}
 		else
 		{
+			theKey.keyValue |= ENCODE_KEY_VALUE(shaderOrder, DepthKey::DEPTH_KEY_BITS_SHADER_ORDER, DepthKey::DEPTH_KEY_SHADER_ORDER_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(shader, DepthKey::DEPTH_KEY_BITS_SHADER_ID, DepthKey::DEPTH_KEY_SHADER_ID_OFFSET);
 		}
 

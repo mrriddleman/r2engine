@@ -66,6 +66,29 @@ namespace r2::draw::lightsys
 	s32 s_DirectionalLightID = 0;
 	s32 s_SpotLightID = 0;
 
+	void CalculateDirectionLightProjView(LightSystem& system, const Camera& cam, const glm::vec3& radius, const glm::mat4& centerTransform, s64 directionLightIndex)
+	{
+		R2_CHECK(directionLightIndex >= 0 && directionLightIndex < system.mSceneLighting.mNumDirectionLights, "We should have a proper light index");
+
+		DirectionLight& dirLight = system.mSceneLighting.mDirectionLights[directionLightIndex];
+
+		glm::vec3 eye = -dirLight.direction;
+		glm::vec3 up = cam::GetWorldRight(cam);
+
+		glm::mat4 lightView = glm::lookAt(eye, glm::vec3(0), up);
+
+		lightView *= centerTransform;
+
+		glm::mat4 lightProj = glm::ortho(-radius.x, radius.x, -radius.y, radius.y, -radius.z, radius.z);
+
+		dirLight.cameraViewToLightProj = lightProj * lightView * cam.invView;
+
+		for (u32 i = 0; i < cam::NUM_FRUSTUM_SPLITS; ++i)
+		{
+			dirLight.lightSpaceMatrixData.lightViewMatrices[i] = lightView;
+			dirLight.lightSpaceMatrixData.lightProjMatrices[i] = lightProj;
+		}
+	}
 
 	PointLightHandle GeneratePointLightHandle(const LightSystem& system)
 	{
@@ -94,6 +117,78 @@ namespace r2::draw::lightsys
 		s_SpotLightID = spotLightID;
 	}
 
+	void ClearModifiedLights(LightSystem& system)
+	{
+		r2::sarr::Clear(*system.mMetaData.mPointLightsModifiedList);
+		r2::sarr::Clear(*system.mMetaData.mDirectionLightsModifiedList);
+		r2::sarr::Clear(*system.mMetaData.mSpotLightsModifiedList);
+	}
+
+	bool Update(LightSystem& system, const Camera& cam, glm::vec3& lightProjRadius)
+	{
+		glm::vec3 corners[cam::NUM_FRUSTUM_CORNERS];
+
+		cam::GetFrustumCorners(cam, corners);
+		
+		glm::vec3 min = corners[0];
+		glm::vec3 max = corners[0];
+
+		for (u32 i = 1; i < cam::NUM_FRUSTUM_CORNERS; ++i)
+		{
+			min = glm::min(min, corners[i]);
+			max = glm::max(max, corners[i]);
+		}
+
+		glm::vec3 center = 0.5f * (min + max);
+
+		glm::mat4 centerTransform = glm::mat4(1.0f);
+
+		centerTransform = glm::translate(centerTransform, glm::vec3(-center.x, -center.y, -min.z));
+
+		glm::vec3 dimensions = max - min;
+		float xRadius = dimensions.x / 2.0f;
+		float yRadius = dimensions.y / 2.0f;
+		float zRadius = dimensions.z / 2.0f;
+		glm::vec3 radius = glm::vec3(xRadius, yRadius, zRadius);
+		lightProjRadius = radius;
+
+
+		const auto numDirLightsToUpdate = r2::sarr::Size(*system.mMetaData.mDirectionLightsModifiedList);
+		const auto numPointLightsToUpdate = r2::sarr::Size(*system.mMetaData.mPointLightsModifiedList);
+		const auto numSpotLightsToUpdate = r2::sarr::Size(*system.mMetaData.mSpotLightsModifiedList);
+
+		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0;
+
+		for (u32 i = 0; i < numDirLightsToUpdate; ++i)
+		{
+			CalculateDirectionLightProjView(system, cam, radius, centerTransform, r2::sarr::At(*system.mMetaData.mDirectionLightsModifiedList, i));
+		}
+
+		//@TODO(Serge): implement for point and spot lights
+
+		if(needsUpdate)
+			ClearModifiedLights(system);
+
+		return needsUpdate;
+	}
+
+
+	void SetShouldUpdatePointLight(LightSystem& system, s64 lightIndex)
+	{
+		r2::sarr::Push(*system.mMetaData.mPointLightsModifiedList, lightIndex);
+	}
+
+	void SetShouldUpdateDirectionLight(LightSystem& system, s64 lightIndex)
+	{
+		r2::sarr::Push(*system.mMetaData.mDirectionLightsModifiedList, lightIndex);
+	}
+
+	void SetShouldUpdateSpotLight(LightSystem& system, s64 lightIndex)
+	{
+		r2::sarr::Push(*system.mMetaData.mSpotLightsModifiedList, lightIndex);
+	}
+
+
 	PointLightHandle AddPointLight(LightSystem& system, const PointLight& pointLight)
 	{
 		if (system.mSceneLighting.mNumPointLights + 1 > light::MAX_NUM_LIGHTS)
@@ -111,6 +206,8 @@ namespace r2::draw::lightsys
 		system.mSceneLighting.mPointLights[pointLightIndex].lightProperties.lightID = newPointLightHandle.handle;
 
 		r2::shashmap::Set(*system.mMetaData.mPointLightMap, newPointLightHandle.handle, pointLightIndex);
+
+		SetShouldUpdatePointLight(system, pointLightIndex);
 
 		return newPointLightHandle;
 	}
@@ -160,6 +257,7 @@ namespace r2::draw::lightsys
 
 		if (lightIndex != defaultIndex)
 		{
+			SetShouldUpdatePointLight(system, lightIndex);
 			return &system.mSceneLighting.mPointLights[lightIndex];
 		}
 
@@ -196,6 +294,8 @@ namespace r2::draw::lightsys
 		system.mSceneLighting.mDirectionLights[lightIndex].lightProperties.lightID = newDirectionalLightHandle.handle;
 
 		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, newDirectionalLightHandle.handle, lightIndex);
+
+		SetShouldUpdateDirectionLight(system, lightIndex);
 
 		return newDirectionalLightHandle;
 	}
@@ -245,6 +345,7 @@ namespace r2::draw::lightsys
 
 		if (lightIndex != defaultIndex)
 		{
+			SetShouldUpdateDirectionLight(system, lightIndex);
 			return &system.mSceneLighting.mDirectionLights[lightIndex];
 		}
 
@@ -281,6 +382,9 @@ namespace r2::draw::lightsys
 		system.mSceneLighting.mSpotLights[lightIndex].lightProperties.lightID = newSpotLightHandle.handle;
 
 		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, newSpotLightHandle.handle, lightIndex);
+
+
+		SetShouldUpdateSpotLight(system, lightIndex);
 
 		return newSpotLightHandle;
 	}
@@ -330,6 +434,7 @@ namespace r2::draw::lightsys
 
 		if (lightIndex != defaultIndex)
 		{
+			SetShouldUpdateSpotLight(system, lightIndex);
 			return &system.mSceneLighting.mSpotLights[lightIndex];
 		}
 
@@ -443,6 +548,7 @@ namespace r2::draw
 	u64 LightSystem::MemorySize(u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(LightSystem), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) * 3;
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) * 3 +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3;
 	}
 }

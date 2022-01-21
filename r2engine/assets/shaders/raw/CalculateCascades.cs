@@ -2,13 +2,17 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (local_size_x = 1, local_size_y = 1) in;
+
 
 //@TODO(Serge): make this into a real thing we can pass in
 #define MAX_NUM_LIGHTS 50
 #define SHADOW_MAP_SIZE 2048 
 #define NUM_FRUSTUM_SPLITS 4
 #define NUM_FRUSTUM_CORNERS 8
+
+
+layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
+
 
 const float projMult = 1.25;
 const float zMult = 10;
@@ -61,6 +65,7 @@ struct DirLight
 {
 	LightProperties lightProperties;
 	vec4 direction;	
+	mat4 cameraViewToLightProj;
 	LightSpaceMatrixData lightSpaceMatrixData;
 };
 
@@ -91,6 +96,7 @@ layout (std430, binding = 4) buffer Lighting
 	int numDirectionLights;
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
+	int useSDSMShadows;
 };
 
 mat4 MatInverse(mat4 mat)
@@ -139,7 +145,7 @@ mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 
 void main(void)
 {
-	uint cascadeIndex = gl_GlobalInvocationID.x;
+	uint cascadeIndex = gl_LocalInvocationIndex;
 
 	mat4 projViewInv = MatInverse(cameraFrustumProjections[cascadeIndex] * view);
 
@@ -175,14 +181,14 @@ void main(void)
 	float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
 	mat4 scalar = mat4(1.0);
-	scalar[0] = scalar[0] * texelsPerUnit;
-	scalar[1] = scalar[1] * texelsPerUnit;
-	scalar[2] = scalar[2] * texelsPerUnit;
+	scalar[0][0] = scalar[0][0] * texelsPerUnit;
+	scalar[1][1] = scalar[1][1] * texelsPerUnit;
+	scalar[2][1] = scalar[2][2] * texelsPerUnit;
 
 	vec3 baseLookAt = -dirLights[0].direction.xyz;
 	vec3 ZERO = vec3(0);
 
-	mat4 lookAtMat = LookAt(ZERO, baseLookAt, GLOBAL_UP);
+	mat4 lookAtMat = scalar * LookAt(ZERO, baseLookAt, GLOBAL_UP);
 	mat4 lookAtMatInv = MatInverse(lookAtMat);
 
 	center = vec3(lookAtMat * vec4(center, 1.0));

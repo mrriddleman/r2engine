@@ -45,6 +45,7 @@ struct DirLight
 //	
 	LightProperties lightProperties;
 	vec4 direction;
+	mat4 cameraViewToLightProj;
 	LightSpaceMatrixData lightSpaceMatrixData;
 };
 
@@ -75,6 +76,7 @@ layout (std430, binding = 4) buffer Lighting
 	int numDirectionLights;
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
+	int useSDSMShadows;
 };
 
 
@@ -111,7 +113,7 @@ layout (std140, binding = 3) buffer BoneTransformOffsets
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
-    vec4 exposure;
+    vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
 };

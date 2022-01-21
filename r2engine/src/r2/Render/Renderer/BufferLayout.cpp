@@ -14,6 +14,116 @@
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Renderer/RenderTarget.h"
 
+
+/*
+
+Current overall layout
+
+uniform buffers:
+
+layout (std140, binding = 0) uniform Matrices
+{
+	mat4 projection;
+	mat4 view;
+	mat4 skyboxView;
+	mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+};
+
+layout (std140, binding = 1) uniform Vectors
+{
+	vec4 cameraPosTimeW;
+	vec4 exposureNearFar;
+	vec4 cascadePlanes;
+	vec4 shadowMapSizes;
+};
+
+layout (std140, binding = 2) uniform Surfaces
+{
+	Tex2DAddress gBufferSurface;
+	Tex2DAddress shadowsSurface;
+	Tex2DAddress compositeSurface;
+	Tex2DAddress zPrePassSurface;
+};
+
+layout (std140, binding = 3) uniform SDSMParams
+{
+	vec4 lightSpaceBorder;
+	vec4 maxScale;
+	float dilationFactor;
+	uint scatterTileDim;
+	uint reduceTileDim;
+}
+
+ssbo buffers:
+
+
+layout (std140, binding = 0) buffer Models
+{
+	mat4 models[];
+};
+
+layout (std430, binding = 1) buffer Materials
+{
+	Material materials[];
+};
+
+layout (std430, binding = 2) buffer BoneTransforms
+{
+	BoneTransform bonesXForms[];
+};
+
+layout (std140, binding = 3) buffer BoneTransformOffsets
+{
+	ivec4 boneOffsets[];
+};
+
+layout (std430, binding = 4) buffer Lighting
+{
+	PointLight pointLights[MAX_NUM_LIGHTS];
+	DirLight dirLights[MAX_NUM_LIGHTS];
+	SpotLight spotLights[MAX_NUM_LIGHTS];
+	SkyLight skylight;
+
+	int numPointLights;
+	int numDirectionLights;
+	int numSpotLights;
+	int numPrefilteredRoughnessMips;
+};
+
+struct DebugRenderConstants
+{
+	vec4 color;
+	mat4 modelMatrix;
+};
+
+layout (std430, binding = 5) buffer DebugConstants
+{
+	DebugRenderConstants constants[];
+};
+
+
+layout (std430, binding = 6) buffer ShadowData
+{
+	Partition gPartitions[NUM_FRUSTUM_SPLITS];
+	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
+	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
+}
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 namespace r2::draw
 {
     
@@ -32,6 +142,7 @@ namespace r2::draw
             case ShaderDataType::Int3:     return 4 * 3;
             case ShaderDataType::Int4:     return 4 * 4;
             case ShaderDataType::Bool:     return 1;
+            case ShaderDataType::UInt:      return 4;
             case ShaderDataType::None:
                 break;
         }
@@ -56,6 +167,7 @@ namespace r2::draw
 		case ShaderDataType::Int4:    return 4;
 		case ShaderDataType::Bool:    return 1;
         case ShaderDataType::Struct:  return 1;
+        case ShaderDataType::UInt: return 1;
 		case ShaderDataType::None:      break;
 		}
 
@@ -144,6 +256,7 @@ namespace r2::draw
 		case ShaderDataType::Int4:     return 4 * 4;
 		case ShaderDataType::Bool:     return 4;
         case ShaderDataType::Struct:   return 4 * 4;
+        case ShaderDataType::UInt:      return 4;
 		case ShaderDataType::None:
 			break;
 		}
@@ -299,6 +412,37 @@ namespace r2::draw
 		mType = Big;
 		mFlags = 0;
 		mCreateFlags = 0;
+    }
+
+    
+
+    void ConstantBufferLayout::InitForShadowData()
+    {
+        mElements.clear();
+
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[0].typeCount = cam::NUM_FRUSTUM_SPLITS;
+        mElements[0].type = ShaderDataType::Struct;
+        mElements[0].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(Partition), GetBaseAlignmentSize(mElements[0].type)));
+        mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[1].typeCount = cam::NUM_FRUSTUM_SPLITS;
+        mElements[1].type = ShaderDataType::Struct;
+        mElements[1].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[1].type)));
+        mElements[1].size = mElements[1].elementSize * mElements[1].typeCount;
+
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[2].typeCount = cam::NUM_FRUSTUM_SPLITS;
+        mElements[2].type = ShaderDataType::Struct;
+        mElements[2].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(BoundsUint), GetBaseAlignmentSize(mElements[2].type)));
+        mElements[2].size = mElements[2].elementSize * mElements[2].typeCount;
+
+		mType = Big;
+		mFlags = 0;
+		mCreateFlags = 0;
+
+        CalculateOffsetAndSize();
     }
 
     void ConstantBufferLayout::InitForSurfaces()

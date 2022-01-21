@@ -63,6 +63,38 @@
       geometryPath: "",
       computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCascades.cs",
       binaryPath: ""
+    },
+    {
+      shaderName: 12661614224162408745,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCustumPartitions.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 85501954573468744,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateLogPartitions.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 12353944570042614978,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ReduceBounds.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 14883135572630148354,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ReduceZBounds.cs",
+      binaryPath: ""
     }
   ]
 }

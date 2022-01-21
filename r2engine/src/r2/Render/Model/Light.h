@@ -47,6 +47,11 @@ namespace r2::draw
 	{
 		LightProperties lightProperties;
 		glm::vec4 direction; //@TODO(Serge): make these vec3?
+		
+
+		glm::mat4 cameraViewToLightProj;
+
+
 		//calculated automatically
 		LightSpaceMatrixData lightSpaceMatrixData;
 	};
@@ -88,6 +93,7 @@ namespace r2::draw
 		s32 mNumDirectionLights = 0;
 		s32 mNumSpotLights = 0;
 		s32 numPrefilteredRoughnessMips = 0;
+		s32 useSDSMShadows = 0;
 	};
 
 	struct SceneLightMetaData
@@ -95,6 +101,10 @@ namespace r2::draw
 		r2::SHashMap<s64>* mPointLightMap = nullptr;
 		r2::SHashMap<s64>* mDirectionLightMap = nullptr;
 		r2::SHashMap<s64>* mSpotLightMap = nullptr;
+
+		r2::SArray<s64>* mPointLightsModifiedList = nullptr;
+		r2::SArray<s64>* mDirectionLightsModifiedList = nullptr;
+		r2::SArray<s64>* mSpotLightsModifiedList = nullptr;
 	};
 
 	struct LightSystem
@@ -115,6 +125,8 @@ namespace r2::draw
 	namespace lightsys
 	{
 		void Init(s64 pointLightID, s64 directionLightID, s64 spotLightID);
+
+		bool Update(LightSystem& system, const Camera& cam, glm::vec3& lightProjRadius);
 
 		template <class ARENA>
 		LightSystem* CreateLightSystem(ARENA& arena);
@@ -167,6 +179,20 @@ namespace r2::draw
 			lightSystem->mMetaData.mSpotLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
 			R2_CHECK(lightSystem->mMetaData.mSpotLightMap != nullptr, "We couldn't create the light system!");
 
+
+			lightSystem->mMetaData.mPointLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mPointLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
+
+			lightSystem->mMetaData.mDirectionLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mDirectionLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
+
+
+			lightSystem->mMetaData.mSpotLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mSpotLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
+
 			lightSystem->mSystemHandle = GenerateNewLightSystemHandle();
 
 
@@ -184,6 +210,10 @@ namespace r2::draw
 				R2_CHECK(false, "We probably shouldn't be destroying a null light system");
 				return;
 			}
+
+			FREE(system->mMetaData.mSpotLightsModifiedList, arena);
+			FREE(system->mMetaData.mDirectionLightsModifiedList, arena);
+			FREE(system->mMetaData.mPointLightsModifiedList, arena);
 			
 			FREE(system->mMetaData.mSpotLightMap, arena);
 			FREE(system->mMetaData.mDirectionLightMap, arena);

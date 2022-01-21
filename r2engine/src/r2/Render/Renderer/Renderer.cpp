@@ -231,6 +231,10 @@ namespace
 	const u64 MAX_NUM_TEXTURES = 2048;
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
 	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 32;
+	const u32 SCATTER_TILE_DIM = 64;
+	const u32 REDUCE_TILE_DIM = 128;
+	const float DIALATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
+	const float EDGE_SOFTENING_AMOUNT = 0.02f;
 	
 	const u32 MAX_NUM_DRAWS = 2 << 13;
 
@@ -338,11 +342,18 @@ namespace r2::draw::renderer
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
 	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera);
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
-	void UpdateExposure(Renderer& renderer, float exposure);
+	void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
 	void UpdateCamera(Renderer& renderer, const Camera& camera);
 	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
+	void ClearShadowData(Renderer& renderer);
+
+	void UpdateSDSMLightSpaceBorder(Renderer& renderer, const glm::vec4& lightSpaceBorder);
+	void UpdateSDSMMaxScale(Renderer& renderer, const glm::vec4& maxScale);
+	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor);
+	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim);
+	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr);
@@ -434,6 +445,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddBoneTransformOffsetsLayout(Renderer& renderer);
 	ConstantConfigHandle AddLightingLayout(Renderer& renderer);
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer);
+	ConstantConfigHandle AddShadowDataLayout(Renderer& renderer);
 
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 
@@ -721,6 +733,11 @@ namespace r2::draw::renderer
 		newRenderer->mDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicDepth")))->shaderId;
 
 		newRenderer->mShadowSplitComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCascades"));
+		newRenderer->mSDSMReduceZBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceZBounds"));
+		newRenderer->mSDSMCalculateLogPartitionsComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateLogPartitions"));
+		newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
+		newRenderer->mSDSMCalculateLogPartitionsComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCustomPartitions"));
+
 
 		CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
@@ -1104,17 +1121,30 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"}
 		});
 
+		AddSurfacesLayout(renderer);
+
+		renderer.mSDSMParamsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Float4, "lightSpaceBorder"},
+			{r2::draw::ShaderDataType::Float4, "maxScale"},
+			{r2::draw::ShaderDataType::Float, "dialationFactor"},
+			{r2::draw::ShaderDataType::UInt, "scatterTileDim"},
+			{r2::draw::ShaderDataType::UInt, "reduceTileDim"},
+			{r2::draw::ShaderDataType::UInt, "padding"}
+		});
+
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
 
 		AddSubCommandsLayout(renderer);
 		AddMaterialLayout(renderer);
-
+		
 		//Maybe these should automatically be added by the animated models layout
 		AddBoneTransformsLayout(renderer);
 
 		AddBoneTransformOffsetsLayout(renderer);
 
 		AddLightingLayout(renderer);
+	
+		
 
 		bool success = GenerateLayouts(renderer);
 		R2_CHECK(success, "We couldn't create the buffer layouts!");
@@ -1132,7 +1162,8 @@ namespace r2::draw::renderer
 		AddDebugModelSubCommandsLayout(renderer);
 		AddDebugLineSubCommandsLayout(renderer);
 #endif
-		AddSurfacesLayout(renderer);
+		
+		AddShadowDataLayout(renderer);
 
 		bool success = GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
 		GenerateConstantBuffers(renderer, renderer.mConstantLayouts);
@@ -1782,6 +1813,33 @@ namespace r2::draw::renderer
 		renderer.mLightingConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
 
 		return renderer.mLightingConfigHandle;
+	}
+
+	ConstantConfigHandle AddShadowDataLayout(Renderer& renderer)
+	{
+		if (renderer.mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration shadowData
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		shadowData.layout.InitForShadowData();
+
+		r2::sarr::Push(*renderer.mConstantLayouts, shadowData);
+
+		renderer.mShadowDataConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+		return renderer.mShadowDataConfigHandle;
 	}
 
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer)
@@ -2834,8 +2892,8 @@ namespace r2::draw::renderer
 		clearDepthOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
-		key::ShadowKey shadowClearKey = key::GenerateShadowKey(true, 0, false, 0);
-		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, false, 0);
+		key::ShadowKey shadowClearKey = key::GenerateShadowKey(true, 0, 0, false, 0);
+		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
@@ -2862,7 +2920,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_WORLD)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, false, 0);
+				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, 0, false, 0);
 
 				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
 				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2876,7 +2934,7 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 			
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, false, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2914,7 +2972,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, true, 0);
+				key::ShadowKey shadowKey = key::GenerateShadowKey(true, 0, 0, true, 0);
 
 				cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
 				shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -2927,7 +2985,7 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, true, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3035,8 +3093,8 @@ namespace r2::draw::renderer
 		passConfig.flags = 0;
 		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS}, RTS_GBUFFER, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {}, RTS_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS}, RTS_SHADOWS, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -3242,11 +3300,11 @@ namespace r2::draw::renderer
 			0, glm::value_ptr(cameraPosTimeW));
 	}
 
-	void UpdateExposure(Renderer& renderer, float exposure)
+	void UpdateExposure(Renderer& renderer, float exposure, float near, float far)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
-		glm::vec4 exposureVec = glm::vec4(exposure, 0, 0, 0);
+		glm::vec4 exposureVec = glm::vec4(exposure, near, far, 0);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
 			1, glm::value_ptr(exposureVec));
 	}
@@ -3265,13 +3323,61 @@ namespace r2::draw::renderer
 			3, glm::value_ptr(shadowMapSizes));
 	}
 
+	void ClearShadowData(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		static Partition sEmptyPartitions[cam::NUM_FRUSTUM_SPLITS] = { {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)} };
+		static UPartition sEmptyPartitionsU[cam::NUM_FRUSTUM_SPLITS] = { {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)}, {0x7F7FFFFF, 0, glm::vec3(0), glm::vec3(0)} };
+		static BoundsUint sEmptyBoundsUInt[cam::NUM_FRUSTUM_SPLITS] = { {glm::uvec3(0x7F7FFFFF, 0x7F7FFFFF, 0x7F7FFFFF), glm::vec3(0)}, {glm::uvec3(0x7F7FFFFF, 0x7F7FFFFF, 0x7F7FFFFF), glm::vec3(0)} , {glm::uvec3(0x7F7FFFFF, 0x7F7FFFFF, 0x7F7FFFFF), glm::vec3(0)} , {glm::uvec3(0x7F7FFFFF, 0x7F7FFFFF, 0x7F7FFFFF), glm::vec3(0)} };
+
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mShadowDataConfigHandle), 0, &sEmptyPartitions);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mShadowDataConfigHandle), 1, &sEmptyPartitionsU);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mShadowDataConfigHandle), 2, &sEmptyBoundsUInt);
+	}
+
+	void UpdateSDSMLightSpaceBorder(Renderer& renderer, const glm::vec4& lightSpaceBorder)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 0, glm::value_ptr(lightSpaceBorder));
+	}
+
+	void UpdateSDSMMaxScale(Renderer& renderer, const glm::vec4& maxScale)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 1, glm::value_ptr(maxScale));
+	}
+
+	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 2, &dialationFactor);
+	}
+
+	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 3, &scatterTileDim);
+	}
+
+	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 4, &reduceTileDim);
+	}
+
 	void UpdateCamera(Renderer& renderer, const Camera& camera)
 	{
 		UpdatePerspectiveMatrix(renderer, camera.proj);
 		UpdateViewMatrix(renderer, camera.view);
 		UpdateCameraFrustumProjections(renderer, camera);
 		UpdateCameraPosition(renderer, camera.position);
-		UpdateExposure(renderer, camera.exposure);
+		UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
 
 		float frustumSplits[cam::NUM_FRUSTUM_SPLITS];
 		cam::GetFrustumSplits(camera, frustumSplits);
@@ -4493,29 +4599,129 @@ namespace r2::draw::renderer
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We must have a camera to do this");
 		R2_CHECK(renderer.mLightSystem != nullptr, "We must have a light system!");
 
-		const u32 numDirLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
+		glm::vec3 lightProjRadius;
+		bool lightingNeedsUpdate = lightsys::Update(*renderer.mLightSystem, *renderer.mnoptrRenderCam, lightProjRadius);
 
-		//@TEMPORARY
-		if (numDirLights > 0)
+
+		bool useSDSMShadows = false;
+
+		renderer.mLightSystem->mSceneLighting.useSDSMShadows = useSDSMShadows;
+
+		if (lightingNeedsUpdate)
 		{
-		//	DirectionLight& dirLight = renderer.mLightSystem->mSceneLighting.mDirectionLights[0];
-		//	light::GetDirectionalLightSpaceMatrices(dirLight.lightSpaceMatrixData, *renderer.mnoptrRenderCam, dirLight.direction, Z_MULT, SHADOWMAP_SIZES);
+			UpdateSceneLighting(renderer, *renderer.mLightSystem);
 		}
 
-		UpdateSceneLighting(renderer, *renderer.mLightSystem);		
+		if (useSDSMShadows)
+		{
+
+			ClearShadowData(renderer);
+
+			glm::mat4 dirLightProj = glm::ortho(-lightProjRadius.x, lightProjRadius.x, -lightProjRadius.y, lightProjRadius.y, -lightProjRadius.z, lightProjRadius.z);
+			//Update SDSM shadow constants
+			{
+				glm::vec2 blurSizeLightSpace = glm::vec2(0.0f, 0.0f);
+				const float maxFloat = std::numeric_limits<float>::max();
+				glm::vec3 maxPartitionScale = glm::vec3(maxFloat, maxFloat, maxFloat);
+				bool edgeSoftening = false;
+				if (edgeSoftening)
+				{
+					//@TODO(Serge): implement
+					blurSizeLightSpace.x = EDGE_SOFTENING_AMOUNT * 0.5f * dirLightProj[0][0];
+					blurSizeLightSpace.y = EDGE_SOFTENING_AMOUNT * 0.5f * dirLightProj[1][1];
+					const float maxEdgeSofteningFilter = 16.0f;
+
+					float maxBlurLightSpace = maxEdgeSofteningFilter / static_cast<float>(light::SHADOW_MAP_SIZE);
+					maxPartitionScale.x = maxBlurLightSpace / blurSizeLightSpace.x;
+					maxPartitionScale.y = maxBlurLightSpace / blurSizeLightSpace.y;
+				}
+
+				glm::vec4 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, dirLightProj[2][2], 0.0f);
 
 
-		//add the commands to split the shadow frustum in the compute shader
-		key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(false, renderer.mShadowSplitComputeShader, false, 0);
+				UpdateSDSMLightSpaceBorder(renderer, partitionBorderLightSpace);
+				UpdateSDSMMaxScale(renderer, glm::vec4(maxPartitionScale, 0.0));
+				UpdateSDSMDialationFactor(renderer, DIALATION_FACTOR);
+				UpdateSDSMReduceTileDim(renderer, REDUCE_TILE_DIM);
+				UpdateSDSMScatterTileDim(renderer, SCATTER_TILE_DIM);
 
-		cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchShadowSplitsKey, 0);
+			}
 
-		dispatchCMD->numGroupsX = cam::NUM_FRUSTUM_SPLITS;
-		dispatchCMD->numGroupsY = 1;
-		dispatchCMD->numGroupsZ = 1;
 
-		cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
-		barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+			//Dispatch the compute shaders for SDSM shadows
+			{
+				key::ShadowKey dispatchReduceZBoundsKey = key::GenerateShadowKey(false, 0, renderer.mSDSMReduceZBoundsComputeShader, false, 0);
+				key::ShadowKey dispatchCalculateLogPartitionsKey = key::GenerateShadowKey(false, 1,  renderer.mSDSMCalculateLogPartitionsComputeShader, false, 0);
+				key::ShadowKey dispatchReduceBoundsKey = key::GenerateShadowKey(false, 2,  renderer.mSDSMReduceBoundsComputeShader, false, 0);
+				key::ShadowKey dispatchCalculateCustomPartitionsKey = key::GenerateShadowKey(false, 3, renderer.mSDSMCalculatePartitionsComputeShader, false, 0);
+
+				int dispatchWidth = (renderer.mResolutionSize.width + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
+				int dispatchHeight = (renderer.mResolutionSize.height + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
+
+
+				cmd::DispatchCompute* dispatchReduceZBoundsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchReduceZBoundsKey, 0);
+				dispatchReduceZBoundsCMD->numGroupsX = dispatchWidth;
+				dispatchReduceZBoundsCMD->numGroupsY = dispatchHeight;
+				dispatchReduceZBoundsCMD->numGroupsZ = 1;
+
+
+				cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchReduceZBoundsCMD, 0);
+				barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+
+				cmd::DispatchCompute* calculateLogPartitionsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchCalculateLogPartitionsKey, 0);
+				calculateLogPartitionsCMD->numGroupsX = 1;
+				calculateLogPartitionsCMD->numGroupsY = 1;
+				calculateLogPartitionsCMD->numGroupsZ = 1;
+
+
+				cmd::Barrier* barrierCMD2 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, calculateLogPartitionsCMD, 0);
+				barrierCMD2->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+
+
+
+
+				cmd::DispatchCompute* dispatchReduceBoundsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchReduceBoundsKey, 0);
+				dispatchReduceBoundsCMD->numGroupsX = dispatchWidth;
+				dispatchReduceBoundsCMD->numGroupsY = dispatchHeight;
+				dispatchReduceBoundsCMD->numGroupsZ = 1;
+
+
+				cmd::Barrier* barrierCMD3 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchReduceBoundsCMD, 0);
+				barrierCMD3->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+
+				cmd::DispatchCompute* calculatePartitionsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchCalculateCustomPartitionsKey, 0);
+				calculatePartitionsCMD->numGroupsX = 1;
+				calculatePartitionsCMD->numGroupsY = 1;
+				calculatePartitionsCMD->numGroupsZ = 1;
+
+
+				cmd::Barrier* barrierCMD4 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, calculatePartitionsCMD, 0);
+				barrierCMD4->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+
+
+			}
+
+		}
+		else
+		{
+			//normal custom PSSM shadows
+
+			//add the commands to split the shadow frustum in the compute shader
+			key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(false, 0, renderer.mShadowSplitComputeShader, false, 0);
+
+			cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchShadowSplitsKey, 0);
+
+			dispatchCMD->numGroupsX = 1;
+			dispatchCMD->numGroupsY = 1;
+			dispatchCMD->numGroupsZ = 1;
+
+			cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
+			barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+		}
 	}
 }
 

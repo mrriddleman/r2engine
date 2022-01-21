@@ -94,9 +94,9 @@ namespace r2::draw::key
 		|   Normal(1)  | Static/Dynamic |  Depth  |
 		+--------------+----------------+---------+
 
-		+----1 bit-----+--15 bits--+
-		| Normal(0)    | Shader ID | //compute
-		+--------------+-----------+
+		+----1 bit---+---3 bits---+--12 bits--+
+		| Normal(0)  |Shader Order| Shader ID | //compute
+		+------------+------------+-----------+
 
 		*/
 
@@ -109,12 +109,14 @@ namespace r2::draw::key
 			SHADOW_KEY_BITS_IS_NORMAL_PATH = 0x1,
 			SHADOW_KEY_BITS_IS_DYNAMIC = 0x1,
 			SHADOW_KEY_BITS_DEPTH = 0xE,
-			SHADOW_KEY_BITS_SHADER_ID = 0xF,
+			SHADOW_KEY_BITS_SHADER_ORDER = 0x3,
+			SHADOW_KEY_BITS_SHADER_ID = 0xC,
 
 			SHADOW_KEY_IS_NORMAL_PATH_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_IS_NORMAL_PATH,
 			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_IS_NORMAL_PATH_OFFSET - SHADOW_KEY_BITS_IS_DYNAMIC,
 			SHADOW_KEY_DEPTH_OFFSET = SHADOW_KEY_IS_DYNAMIC_OFFSET - SHADOW_KEY_BITS_DEPTH,
-			SHADOW_KEY_SHADER_ID_OFFSET = SHADOW_KEY_IS_NORMAL_PATH_OFFSET - SHADOW_KEY_BITS_SHADER_ID
+			SHADOW_KEY_SHADER_ORDER_OFFSET = SHADOW_KEY_IS_NORMAL_PATH_OFFSET - SHADOW_KEY_BITS_SHADER_ORDER,
+			SHADOW_KEY_SHADER_ID_OFFSET = SHADOW_KEY_SHADER_ORDER_OFFSET - SHADOW_KEY_BITS_SHADER_ID
 		};
 	};
 
@@ -140,12 +142,14 @@ namespace r2::draw::key
 			DEPTH_KEY_BITS_IS_NORMAL_PATH = 0x1,
 			DEPTH_KEY_BITS_IS_DYNAMIC = 0x1,
 			DEPTH_KEY_BITS_DEPTH = 0xE,
-			DEPTH_KEY_BITS_SHADER_ID = 0xF,
+			DEPTH_KEY_BITS_SHADER_ORDER = 0x3,
+			DEPTH_KEY_BITS_SHADER_ID = 0xC,
 
 			DEPTH_KEY_IS_NORMAL_PATH_OFFSET = DEPTH_KEY_BITS_TOTAL - DEPTH_KEY_BITS_IS_NORMAL_PATH,
 			DEPTH_KEY_IS_DYNAMIC_OFFSET = DEPTH_KEY_IS_NORMAL_PATH_OFFSET - DEPTH_KEY_BITS_IS_DYNAMIC,
 			DEPTH_KEY_DEPTH_OFFSET = DEPTH_KEY_IS_DYNAMIC_OFFSET - DEPTH_KEY_BITS_DEPTH,
-			DEPTH_KEY_SHADER_ID_OFFSET = DEPTH_KEY_IS_NORMAL_PATH_OFFSET - DEPTH_KEY_BITS_SHADER_ID
+			DEPTH_KEY_SHADER_ORDER_OFFSET = DEPTH_KEY_IS_NORMAL_PATH_OFFSET - DEPTH_KEY_BITS_SHADER_ORDER,
+			DEPTH_KEY_SHADER_ID_OFFSET = DEPTH_KEY_SHADER_ORDER_OFFSET - DEPTH_KEY_BITS_SHADER_ID
 		};
 	};
 
@@ -165,12 +169,12 @@ namespace r2::draw::key
 
 	//Shadows
 	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
-	ShadowKey GenerateShadowKey(bool normalPath, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
+	ShadowKey GenerateShadowKey(bool normalPath, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
 	void DecodeShadowKey(const ShadowKey& key);
 
 	//Depth
 	bool CompareDepthKey(const DepthKey& a, const DepthKey& b);
-	DepthKey GenerateDepthKey(bool normalPath, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
+	DepthKey GenerateDepthKey(bool normalPath, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
 	void DecodeDepthKey(const DepthKey& key);
 }
 

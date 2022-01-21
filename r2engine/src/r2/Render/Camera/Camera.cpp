@@ -36,7 +36,8 @@ namespace r2::cam
         cam.position = pos;
         cam.facing = facing;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-       
+        cam.invView = glm::inverse(cam.view);
+
         SetPerspectiveCam(cam, fovDegrees, aspect, near, far);
     }
     
@@ -44,7 +45,7 @@ namespace r2::cam
     {
         cam.position = pos;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-
+        cam.invView = glm::inverse(cam.view);
         SetOrthoCam(cam, left, right, bottom, top, near, far);
     }
 
@@ -62,6 +63,7 @@ namespace r2::cam
 
         cam.proj = glm::perspective(cam.fov, aspect, near, far);
         cam.vp = cam.proj * cam.view;
+        
 
         CalculateFrustumProjections(cam);
     }
@@ -88,6 +90,7 @@ namespace r2::cam
     {
         cam.position += offset;
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
+        cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
     }
     
@@ -95,6 +98,7 @@ namespace r2::cam
     {
         cam.facing = CalculateFacingDirection(pitch, yaw, cam.up);
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
+        cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
     }
     
@@ -102,7 +106,29 @@ namespace r2::cam
     {
         cam.facing = facingDir;
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
+        cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
+    }
+
+    glm::vec3 GetWorldRight(const Camera& cam)
+    {
+        //cam.view[col][row]
+        //first row
+        return glm::vec3(cam.view[0][0], cam.view[0][1], cam.view[0][1]);
+    }
+
+    glm::vec3 GetWorldUp(const Camera& cam)
+    {
+        //cam.view[col][row]
+        //second row
+        return glm::vec3(cam.view[1][0], cam.view[1][1], cam.view[1][2]);
+    }
+
+    glm::vec3 GetWorldForward(const Camera& cam)
+    {
+        //cam.view[col][row]
+        //third row
+        return glm::vec3(cam.view[2][0], cam.view[2][1], cam.view[2][2]);
     }
 
     void GetFrustumCorners(const Camera& cam, glm::vec3 corners[NUM_FRUSTUM_CORNERS])
@@ -170,9 +196,9 @@ namespace r2::cam
 
         float ratio = cam.farPlane / cam.nearPlane;
 
-        frustumSplits[0] = 10.f; 
-        frustumSplits[1] = 30.f; 
-        frustumSplits[2] = 80.f; 
+        frustumSplits[0] = 5.f; 
+        frustumSplits[1] = 20.f; 
+        frustumSplits[2] = 100.f; 
         frustumSplits[3] = cam.farPlane;
     }
 

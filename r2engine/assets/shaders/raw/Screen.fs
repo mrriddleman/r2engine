@@ -17,7 +17,7 @@ struct Tex2DAddress
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
-    vec4 exposure;
+    vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
 };
@@ -91,5 +91,5 @@ vec3 ReinhardToneMapping(vec3 hdrColor)
 
 vec3 ExposureToneMapping(vec3 hdrColor)
 {
-	return vec3(1.0) - exp(-hdrColor * exposure.x  );
+	return vec3(1.0) - exp(-hdrColor * exposureNearFar.x  );
 }

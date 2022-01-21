@@ -32,7 +32,8 @@ namespace r2::draw
         Int4,
         Bool,
         UInt64,
-        Struct
+        Struct,
+        UInt
     };
     
     enum class VertexType
@@ -40,6 +41,30 @@ namespace r2::draw
         Vertex = 0,
         Instanced
     };
+
+	struct Partition
+	{
+		float intervalBegin;
+		float intervalEnd;
+
+		glm::vec3 scale;
+		glm::vec3 bias;
+	};
+
+	struct UPartition
+	{
+		u32 intervalBegin;
+		u32 intervalEnd;
+
+		glm::vec3 scale;
+		glm::vec3 bias;
+	};
+
+	struct BoundsUint
+	{
+		glm::uvec3 minCoord;
+		glm::uvec3 maxCoord;
+	};
     
     struct BufferElement
     {
@@ -55,6 +80,7 @@ namespace r2::draw
         u32 GetComponentCount() const;
         
     };
+
     
     class BufferLayout
     {
@@ -149,6 +175,9 @@ namespace r2::draw
         void InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands);
         void InitForSurfaces();
         void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
+
+        void InitForShadowData();
+
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }
