@@ -97,6 +97,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
+    vec4 fovAspect;
 };
 
 out VS_OUT

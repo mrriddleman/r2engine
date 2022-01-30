@@ -13,7 +13,7 @@ namespace r2::draw
 	namespace light
 	{
 		const u32 MAX_NUM_LIGHTS = 50;
-		const u32 SHADOW_MAP_SIZE = 2048;
+		const u32 SHADOW_MAP_SIZE = 1024;
 	}
 
 	using LightSystemHandle = s64;

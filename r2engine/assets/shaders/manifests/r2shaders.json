@@ -65,11 +65,19 @@
       binaryPath: ""
     },
     {
-      shaderName: 12661614224162408745,
+      shaderName: 6522980064705455247,
       vertexPath: "",
       fragmentPath: "",
       geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCustumPartitions.cs",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCascadesSDSM.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 3012536493754366699,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateCustomPartitions.cs",
       binaryPath: ""
     },
     {

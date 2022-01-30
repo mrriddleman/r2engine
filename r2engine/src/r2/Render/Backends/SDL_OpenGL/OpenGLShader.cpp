@@ -393,11 +393,35 @@ namespace r2::draw::shader
                 }
                 else
                 {
-                    R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+                    if (geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
+                    {
+                        R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\nAND\nGeometry shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath);
+                    }
+                    else
+                    {
+                        R2_CHECK(false, "Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+                    }
+                    
                 }
             }
            
-            R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+            if (computeShaderFilePath && strlen(computeShaderFilePath) > 0)
+            {
+                R2_LOGE("Failed to create the shader program for compute shader: %s\n", computeShaderFilePath);
+            }
+            else
+            {
+                if (geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
+                {
+                    R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\nAND\nGeometry shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath);
+                }
+                else
+                {
+                    R2_LOGE("Failed to create the shader program for vertex shader: %s\nAND\nFragment shader: %s\n", vertexShaderFilePath, fragmentShaderFilePath);
+                }
+                
+            }
+            
             return newShader;
         }
         

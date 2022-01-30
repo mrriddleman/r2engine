@@ -17,27 +17,16 @@ struct Tex2DAddress
 
 struct Partition
 {
-	float intervalBegin;
-	float intervalEnd;
-
-	vec3 scale;
-	vec3 bias;
+	vec4 intervalBeginScale;
+	vec4 intervalEndBias;
 };
 
 struct UPartition
 {
-	uint intervalBegin;
-	uint intervalEnd;
-
-	vec3 scale;
-	vec3 bias;
+	uvec4 intervalBeginMinCoord;
+	uvec4 intervalEndMaxCoord;
 };
 
-struct BoundsUint
-{
-    uvec3 minCoord;
-    uvec3 maxCoord;
-};
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -53,7 +42,9 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
+    vec4 fovAspect;
 };
+
 
 //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
 layout (std140, binding = 2) uniform Surfaces
@@ -79,8 +70,9 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
+	//BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
 };
+
 
 
 shared float sMinZ[REDUCE_ZBOUNDS_BLOCK_SIZE];
@@ -96,14 +88,13 @@ void main(void)
 	float minZ = exposureNearFar.z;
 	float maxZ = exposureNearFar.y;
 
-	uvec2 tileStart = (gl_WorkGroupID.xy * reduceTileDim) + gl_LocalInvocationID.xy;
+	uvec2 tileStart = (gl_WorkGroupID.xy * uvec2(reduceTileDim, reduceTileDim)) + gl_LocalInvocationID.xy;
 	for(uint tileY = 0; tileY < reduceTileDim; tileY += REDUCE_ZBOUNDS_BLOCK_DIM)
 	{
 		for(uint tileX = 0; tileX < reduceTileDim; tileX += REDUCE_ZBOUNDS_BLOCK_DIM)
 		{
 			uvec2 globalCoords = tileStart + uvec2(tileX, tileY);
 			float positionViewZ = ComputeSurfaceDataPositionView(globalCoords, depthBufferSize.xy);
-			//uint uintPositionViewZ = floatBitsToUint(positionViewZ);
 
 			if(positionViewZ >= exposureNearFar.y && positionViewZ < exposureNearFar.z)
 			{
@@ -117,8 +108,12 @@ void main(void)
 	sMaxZ[gl_LocalInvocationIndex] = maxZ;
 
 	//Barrier
+	
+	
 	barrier();
 	memoryBarrierShared();
+	
+	
 
 	for(uint offset = (REDUCE_ZBOUNDS_BLOCK_SIZE >> 1); offset > 0; offset >>= 1)
 	{
@@ -129,40 +124,34 @@ void main(void)
 		}
 
 		//Barrier
+		
 		barrier();
 		memoryBarrierShared();
+		
+		
 	}
 
 	if(gl_LocalInvocationIndex == 0)
 	{
-		atomicMin(gPartitionsU[0].intervalBegin, floatBitsToUint(sMinZ[0]));
-		atomicMax(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEnd, floatBitsToUint(sMaxZ[0]));
+		atomicMin(gPartitionsU[0].intervalBeginMinCoord.x, floatBitsToUint(sMinZ[0]));
+		atomicMax(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEndMaxCoord.x, floatBitsToUint(sMaxZ[0]));
 	}
 }
 
-float UnprojectDepthBufferZValue(float zBuffer)
+float LinearizeDepth(float depth) 
 {
-	//@TODO(Serge): not sure if this is correct...
-	return projection[2][3] / (zBuffer - projection[2][2]);
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    float near = exposureNearFar.y;
+    float far = exposureNearFar.z;
+
+    return (2.0 * near * far) / (far + near - z * (far - near));	
 }
 
 float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize)
 {
-	//uvec2 depthBufferSize = textureSize(sampler2DArray(zPrePassSurface.container), zPrePassSurface.page);
 
 	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassSurface.page);
 
-	//@NOTE(Serge): if we change our z pre pass to use projection, we should do an unproject here
-	//return UnprojectDepthBufferZValue(texture(sampler2DArray(zPrePassSurface.container), texCoords).z);
-
-	return texture(sampler2DArray(zPrePassSurface.container), texCoords).r;
+	return LinearizeDepth(texture(sampler2DArray(zPrePassSurface.container), texCoords).r);
 }
 
-// vec3 ComputePositionViewFromZ(vec2 positionScreen, float viewSpaceZ)
-// {
-// 	vec2 screenSpaceRay = vec2(positionScreen.x / projection[0][0], positionScreen.y / projection[1][1]);
-// 	vec3 positionView;
-// 	positionView.z = viewSpaceZ;
-// 	positionView.xy = screenSpaceRay.xy * positionView.z;
-// 	return positionView;
-// }

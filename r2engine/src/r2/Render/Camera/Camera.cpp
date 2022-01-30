@@ -114,7 +114,7 @@ namespace r2::cam
     {
         //cam.view[col][row]
         //first row
-        return glm::vec3(cam.view[0][0], cam.view[0][1], cam.view[0][1]);
+        return glm::vec3(cam.view[0][0], cam.view[0][1], cam.view[0][2]);
     }
 
     glm::vec3 GetWorldUp(const Camera& cam)

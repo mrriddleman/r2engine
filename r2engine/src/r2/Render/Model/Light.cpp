@@ -79,8 +79,8 @@ namespace r2::draw::lightsys
 
 		lightView *= centerTransform;
 
-		glm::mat4 lightProj = glm::ortho(-radius.x, radius.x, -radius.y, radius.y, -radius.z, radius.z);
-
+		glm::mat4 lightProj = glm::ortho(-radius.x, radius.x, -radius.y, radius.y, -radius.z / 10.0f, radius.z / 10.f);
+		
 		dirLight.cameraViewToLightProj = lightProj * lightView * cam.invView;
 
 		for (u32 i = 0; i < cam::NUM_FRUSTUM_SPLITS; ++i)

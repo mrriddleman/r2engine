@@ -51,5 +51,5 @@ void main()
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
 
 	mat4 vertexTransform = models[DrawID] * finalBoneVertexTransform;
-	gl_Position = view * vertexTransform * vec4(aPos, 1.0);
+	gl_Position = projection * view * vertexTransform * vec4(aPos, 1.0);
 }

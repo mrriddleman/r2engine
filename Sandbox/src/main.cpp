@@ -50,7 +50,7 @@
 
 namespace
 {
-    constexpr r2::util::Size g_resolutions[] = { {640, 480}, {1024, 768}, {1280, 720}, {1920, 1080}, {2560, 1440} };
+    constexpr r2::util::Size g_resolutions[] = { {640, 480}, {1024, 768}, {1280, 768}, {1920, 1080}, {2560, 1440} };
 
     constexpr u32 RESOLUTIONS_COUNT = COUNT_OF(g_resolutions);
 

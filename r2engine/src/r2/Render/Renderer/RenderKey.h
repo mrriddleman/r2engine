@@ -90,32 +90,45 @@ namespace r2::draw::key
 	struct ShadowKey
 	{
 		/*
-		+----1 bit-----+------1 bit-----+-14 bits-+
-		|   Normal(1)  | Static/Dynamic |  Depth  |
-		+--------------+----------------+---------+
 
-		+----1 bit---+---3 bits---+--12 bits--+
-		| Normal(0)  |Shader Order| Shader ID | //compute
+		+-----2 bits----+------13 bits----+
+		|     Type      |    Ignored      | //Clear
+		+---------------+-----------------+
+
+		+----2 bit---+------1 bit-----+-13 bits-+
+		|    Type    | Static/Dynamic |  Depth  | //Normal
+		+------------+----------------+---------+
+
+		+----2 bit---+---3 bits---+--12 bits--+
+		|     Type   |Shader Order| Shader ID | //compute
 		+------------+------------+-----------+
 
 		*/
 
 		u16 keyValue = 0;
 
+		enum Type : u8
+		{
+			CLEAR = 0,
+			COMPUTE,
+			NORMAL,
+			UNUSED
+		};
+
 		enum : u16
 		{
 			SHADOW_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
 
-			SHADOW_KEY_BITS_IS_NORMAL_PATH = 0x1,
+			SHADOW_KEY_BITS_TYPE = 0x2,
 			SHADOW_KEY_BITS_IS_DYNAMIC = 0x1,
-			SHADOW_KEY_BITS_DEPTH = 0xE,
+			SHADOW_KEY_BITS_DEPTH = 0xD,
 			SHADOW_KEY_BITS_SHADER_ORDER = 0x3,
-			SHADOW_KEY_BITS_SHADER_ID = 0xC,
+			SHADOW_KEY_BITS_SHADER_ID = 0xB,
 
-			SHADOW_KEY_IS_NORMAL_PATH_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_IS_NORMAL_PATH,
-			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_IS_NORMAL_PATH_OFFSET - SHADOW_KEY_BITS_IS_DYNAMIC,
+			SHADOW_KEY_TYPE_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_TYPE,
+			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_TYPE_OFFSET - SHADOW_KEY_BITS_IS_DYNAMIC,
 			SHADOW_KEY_DEPTH_OFFSET = SHADOW_KEY_IS_DYNAMIC_OFFSET - SHADOW_KEY_BITS_DEPTH,
-			SHADOW_KEY_SHADER_ORDER_OFFSET = SHADOW_KEY_IS_NORMAL_PATH_OFFSET - SHADOW_KEY_BITS_SHADER_ORDER,
+			SHADOW_KEY_SHADER_ORDER_OFFSET = SHADOW_KEY_TYPE_OFFSET - SHADOW_KEY_BITS_SHADER_ORDER,
 			SHADOW_KEY_SHADER_ID_OFFSET = SHADOW_KEY_SHADER_ORDER_OFFSET - SHADOW_KEY_BITS_SHADER_ID
 		};
 	};
@@ -169,7 +182,7 @@ namespace r2::draw::key
 
 	//Shadows
 	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
-	ShadowKey GenerateShadowKey(bool normalPath, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth);
 	void DecodeShadowKey(const ShadowKey& key);
 
 	//Depth

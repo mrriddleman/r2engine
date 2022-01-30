@@ -44,26 +44,26 @@ namespace r2::draw
 
 	struct Partition
 	{
-		float intervalBegin;
-		float intervalEnd;
+        glm::vec4 intervalBeginScale;
+        glm::vec4 intervalEndBias;
 
-		glm::vec3 scale;
-		glm::vec3 bias;
+		//float intervalBegin;
+		//float intervalEnd;
+
+		//glm::vec3 scale;
+		//glm::vec3 bias;
 	};
 
 	struct UPartition
 	{
-		u32 intervalBegin;
-		u32 intervalEnd;
+        glm::uvec4 intervalBeginMinCoord;
+        glm::uvec4 intervalEndMaxCoord;
 
-		glm::vec3 scale;
-		glm::vec3 bias;
-	};
+		//u32 intervalBegin;
+		//u32 intervalEnd;
 
-	struct BoundsUint
-	{
-		glm::uvec3 minCoord;
-		glm::uvec3 maxCoord;
+		//glm::uvec3 minCoord;
+		//glm::uvec3 maxCoord;
 	};
     
     struct BufferElement

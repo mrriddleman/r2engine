@@ -6,7 +6,6 @@
 
 //@TODO(Serge): make this into a real thing we can pass in
 #define MAX_NUM_LIGHTS 50
-#define SHADOW_MAP_SIZE 2048 
 #define NUM_FRUSTUM_SPLITS 4
 #define NUM_FRUSTUM_CORNERS 8
 
@@ -29,10 +28,12 @@ layout (std140, binding = 0) uniform Matrices
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
-    vec4 exposure;
+    vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
+    vec4 fovAspect;
 };
+
 
 struct Tex2DAddress
 {

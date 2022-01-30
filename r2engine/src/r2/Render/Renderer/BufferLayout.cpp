@@ -432,11 +432,11 @@ namespace r2::draw
         mElements[1].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[1].type)));
         mElements[1].size = mElements[1].elementSize * mElements[1].typeCount;
 
-        mElements.emplace_back(ConstantBufferElement());
-        mElements[2].typeCount = cam::NUM_FRUSTUM_SPLITS;
-        mElements[2].type = ShaderDataType::Struct;
-        mElements[2].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(BoundsUint), GetBaseAlignmentSize(mElements[2].type)));
-        mElements[2].size = mElements[2].elementSize * mElements[2].typeCount;
+        //mElements.emplace_back(ConstantBufferElement());
+        //mElements[2].typeCount = cam::NUM_FRUSTUM_SPLITS;
+        //mElements[2].type = ShaderDataType::Struct;
+        //mElements[2].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[2].type)));
+        //mElements[2].size = mElements[2].elementSize * mElements[2].typeCount;
 
 		mType = Big;
 		mFlags = 0;

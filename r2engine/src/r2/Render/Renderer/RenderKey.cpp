@@ -119,21 +119,25 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	ShadowKey GenerateShadowKey(bool isNormalPath, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth)
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth)
 	{
 		ShadowKey theKey;
 
-		theKey.keyValue |= ENCODE_KEY_VALUE(isNormalPath ? 1 : 0, ShadowKey::SHADOW_KEY_BITS_IS_NORMAL_PATH, ShadowKey::SHADOW_KEY_IS_NORMAL_PATH_OFFSET);
+		theKey.keyValue |= ENCODE_KEY_VALUE(type, ShadowKey::SHADOW_KEY_BITS_TYPE, ShadowKey::SHADOW_KEY_TYPE_OFFSET);
 
-		if (isNormalPath)
+		if (type == ShadowKey::Type::NORMAL)
 		{
 			theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(depth, ShadowKey::SHADOW_KEY_BITS_DEPTH, ShadowKey::SHADOW_KEY_DEPTH_OFFSET);
 		}
-		else
+		else if(type == ShadowKey::Type::COMPUTE)
 		{
 			theKey.keyValue |= ENCODE_KEY_VALUE(shaderOrder, ShadowKey::SHADOW_KEY_BITS_SHADER_ORDER, ShadowKey::SHADOW_KEY_SHADER_ORDER_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(shader, ShadowKey::SHADOW_KEY_BITS_SHADER_ID, ShadowKey::SHADOW_KEY_SHADER_ID_OFFSET);
+		}
+		else if (type == ShadowKey::Type::CLEAR)
+		{
+			//nothing
 		}
 		
 
@@ -142,26 +146,37 @@ namespace r2::draw::key
 
 	void DecodeShadowKey(const ShadowKey& key)
 	{
-		bool isNormalPath = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_NORMAL_PATH, ShadowKey::SHADOW_KEY_IS_NORMAL_PATH_OFFSET);
+		ShadowKey::Type type = static_cast<ShadowKey::Type>(DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_TYPE, ShadowKey::SHADOW_KEY_TYPE_OFFSET));
 
 		ShaderHandle shaderHandle = InvalidShader;
-		if (isNormalPath)
+		if (type == ShadowKey::Type::NORMAL)
 		{
 			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
 			u16 depthValue = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_DEPTH, ShadowKey::SHADOW_KEY_DEPTH_OFFSET);
 
-			//r2::draw::rendererimpl::SetViewportKey(0);
 			r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
 
 			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic);
+
+			r2::draw::rendererimpl::SetShaderID(shaderHandle);
 		}
-		else
+		else if(type == ShadowKey::Type::COMPUTE)
 		{
 			u8 shaderOrder = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_SHADER_ORDER, ShadowKey::SHADOW_KEY_SHADER_ORDER_OFFSET);
 			shaderHandle = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_SHADER_ID, ShadowKey::SHADOW_KEY_SHADER_ID_OFFSET);
+
+			r2::draw::rendererimpl::SetShaderID(shaderHandle);
+		}
+		else if (type == ShadowKey::Type::CLEAR)
+		{
+			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
+
+			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic);
+
+			r2::draw::rendererimpl::SetShaderID(shaderHandle);
 		}
 
-		r2::draw::rendererimpl::SetShaderID(shaderHandle);
+		
 	}
 
 

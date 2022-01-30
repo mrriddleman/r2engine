@@ -11,6 +11,19 @@ layout (location = 0) out vec4 FragColor;
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
 #define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 
+struct Partition
+{
+	vec4 intervalBeginScale;
+	vec4 intervalEndBias;
+};
+
+struct UPartition
+{
+	uvec4 intervalBeginMinCoord;
+	uvec4 intervalEndMaxCoord;
+};
+
+
 struct Tex2DAddress
 {
 	uint64_t  container;
@@ -93,7 +106,9 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
+    vec4 fovAspect;
 };
+
 
 layout (std430, binding = 1) buffer Materials
 {
@@ -129,6 +144,12 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+};
+
+layout (std430, binding = 6) buffer ShadowData
+{
+	Partition gPartitions[NUM_FRUSTUM_SPLITS];
+	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
 };
 
 
@@ -234,7 +255,7 @@ vec4 DebugFrustumSplitColor()
 	int layer = -1;
 	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
 	{
-		if(depthValue < cascadePlanes[i])
+		if(depthValue < gPartitions[i].intervalEndBias.x)
 		{
 			layer = i;
 			break;
@@ -285,7 +306,7 @@ void main()
 
 
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
-	FragColor = vec4(lightingResult + emission , 1.0) ;//* DebugFrustumSplitColor();
+	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
 }
 
@@ -933,7 +954,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 
 	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
 	{
-		if(depthValue < cascadePlanes[i])
+		if(depthValue <= gPartitions[i].intervalEndBias.x)
 		{
 			layer = i;
 			break;
@@ -944,8 +965,6 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 	{
 		return 0.0;
 	}
-
-	//layer = 0;
 
 	vec3 projCoords = fs_in.fragPosLightSpace[layer].xyz / fs_in.fragPosLightSpace[layer].w;
 
@@ -958,13 +977,9 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 	}
 	
 	float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
-	if(layer == NUM_FRUSTUM_SPLITS)
+	if(layer < NUM_FRUSTUM_SPLITS -1)
 	{
-		bias *= 1 / (cascadePlanes[NUM_FRUSTUM_SPLITS - 1] * 0.15);
-	}
-	else if(layer < NUM_FRUSTUM_SPLITS -1)
-	{
-		bias *= 1 / (cascadePlanes[layer] * 0.15);
+		bias *= 1 / (gPartitions[layer].intervalBeginScale.x * 0.15);
 	}
 
 	
@@ -985,6 +1000,18 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
     shadow /= 9.0;
 
 	
+    const float BLEND_THRESHOLD = 0.1f;
+
+    float nextSplit = gPartitions[layer].intervalEndBias.x;
+    float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions[layer - 1].intervalEndBias.x;
+    float fadeFactor = (nextSplit - depthValue) / splitSize;
+
+    if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS -1)
+    {
+    	
+    }
+
+
 
 	return shadow;
 }

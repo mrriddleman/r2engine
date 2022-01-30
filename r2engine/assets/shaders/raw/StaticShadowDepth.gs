@@ -17,27 +17,16 @@ struct Tex2DAddress
 
 struct Partition
 {
-	float intervalBegin;
-	float intervalEnd;
-
-	vec3 scale;
-	vec3 bias;
+	vec4 intervalBeginScale;
+	vec4 intervalEndBias;
 };
 
 struct UPartition
 {
-	uint intervalBegin;
-	uint intervalEnd;
-
-	vec3 scale;
-	vec3 bias;
+	uvec4 intervalBeginMinCoord;
+	uvec4 intervalEndMaxCoord;
 };
 
-struct BoundsUint
-{
-    uvec3 minCoord;
-    uvec3 maxCoord;
-};
 
 struct LightProperties
 {
@@ -103,7 +92,6 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
 };
 
 void main()
@@ -124,12 +112,18 @@ void main()
 				
 				if(useSDSMShadows > 0)
 				{
-					vertex[i].xy = part.scale.xy;
-					vertex[i].x += 2.0 * part.bias.x + part.scale.x - 1.0;
-					vertex[i].y += 2.0 * part.bias.y + part.scale.y - 1.0;
 
-					vertex[i].z = vertex[i].z * part.scale.z + part.bias.z;
-					//vertex[i].z += 2.0 * partition.bias.z + partition.scale.z - 1.0;
+					//vertex[i].x *= part.intervalBeginScale.y;
+					//vertex[i].y *= part.intervalBeginScale.z;
+					//vertex[i].z *= part.intervalBeginScale.w;
+				//	vertex[i].xy *= part.intervalBeginScale.yz;
+				//	vertex[i].x += 2.0 * part.intervalEndBias.y + part.intervalBeginScale.y - 1.0;
+				//	vertex[i].y += 2.0 * part.intervalEndBias.z + part.intervalBeginScale.z - 1.0;
+
+				//	vertex[i].z += 0.001;
+
+				//	vertex[i].z = vertex[i].z * part.intervalBeginScale.z + part.intervalEndBias.z;
+				//	vertex[i].z += 2.0 * part.intervalEndBias.w + part.intervalBeginScale.w - 1.0;
 				}
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
