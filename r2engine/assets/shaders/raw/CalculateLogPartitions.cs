@@ -53,6 +53,7 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
+	mat4 gShadowMatrix;
 };
 
 float LogPartitionFromRange(uint part, float minZ, float maxZ);

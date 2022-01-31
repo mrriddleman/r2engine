@@ -116,7 +116,7 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-//	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
+	mat4 gShadowMatrix;
 };
 
 mat4 MatInverse(mat4 mat)
@@ -244,7 +244,7 @@ mat4 MakeGlobalShadowMatrix()
 	mat4 lightView = LookAt(center + dirLights[0].direction.xyz * -0.5, center, GLOBAL_UP);
 
 	mat4 texScaleBias = mat4(0.5);
-	texScaleBias[2][2] = 0.5;
+	//texScaleBias[2][2] = 0.5;
 	texScaleBias[3][0] = 0.5;
 	texScaleBias[3][1] = 0.5;
 	texScaleBias[3][2] = 0.5;
@@ -260,6 +260,7 @@ void main(void)
 	if(cascadeIndex == 0)
 	{
 		GlobalShadowMatrix = MakeGlobalShadowMatrix();
+		gShadowMatrix = GlobalShadowMatrix;
 	}
 
 	barrier();
@@ -402,8 +403,10 @@ void main(void)
 	mat4 texScaleBias = mat4(1.0);
 	texScaleBias[0][0] = 0.5;
 	texScaleBias[1][1] = 0.5;
+	texScaleBias[2][2] = 0.5;
 	texScaleBias[3][0] = 0.5;
 	texScaleBias[3][1] = 0.5;
+	texScaleBias[3][2] = 0.5;
 
 	mat4 texScaleBiasInv = MatInverse(texScaleBias);
 

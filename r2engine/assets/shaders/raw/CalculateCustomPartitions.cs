@@ -41,6 +41,7 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
+	mat4 gShadowMatrix;
 };
 
 void ComputePartitionDataFromBounds(vec3 minCoord, vec3 maxCoord, inout vec3 scale, inout vec3 bias);

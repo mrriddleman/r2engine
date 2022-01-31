@@ -150,6 +150,7 @@ layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions[NUM_FRUSTUM_SPLITS];
 	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
+	mat4 gShadowMatrix;
 };
 
 
@@ -166,10 +167,6 @@ in VS_OUT
 	vec3 viewPosTangent;
 
 	flat uint drawID;
-
-	//section for shadows in the fragment shader - speeds up the shadow calculations
-	vec3 fragPosViewSpace;
-	vec4 fragPosLightSpace[NUM_FRUSTUM_SPLITS]; //@TODO(Serge): this is only one light...
 
 } fs_in;
 
@@ -234,7 +231,7 @@ vec3 Eval_BRDF(
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
-float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, mat4 lightViews[NUM_FRUSTUM_SPLITS], mat4 lightProjs[NUM_FRUSTUM_SPLITS]);
+float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -858,7 +855,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	float shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightSpaceMatrixData.lightViewMatrices, dirLight.lightSpaceMatrixData.lightProjMatrices);
+	 	float shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz);
 
 	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 
@@ -929,16 +926,89 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	return color;
 }
 
-float SampleShadowMap(vec2 uv, float page)
+vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
 {
-	vec3 coord = vec3(uv, page);
-	return texture(sampler2DArray(shadowsSurface.container), coord).r;
+	const float OFFSET_SCALE = 0.0f;
+
+	float texelSize = 2.0 / shadowMapSizes[cascadeIndex];
+	float nmlOffsetScale = clamp(1.0 - NoL, 0.0, 1.0);
+	return texelSize * OFFSET_SCALE * nmlOffsetScale * normal;
 }
 
-float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[NUM_FRUSTUM_SPLITS], mat4 lightProjs[NUM_FRUSTUM_SPLITS])
+float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
 {
+	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
+	vec3 coord = vec3(uv, cascadeIndex);
+	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
 
 
+	return depth > shadowSample ? 1.0 : 0.0;
+}
+
+float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
+{
+	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
+	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	float s = (uv.x + 0.5 - base_uv.x);
+	float t = (uv.y + 0.5 - base_uv.y);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+	float sum = 0;
+
+	float uw0 = (3 - 2 * s);
+	float uw1 = (1 + 2 * s);
+
+	float u0 = (2 - s) / uw0 - 1;
+	float u1 = s / uw1 + 1;
+
+	float vw0 = (3 - 2 * t);
+	float vw1 = (1 + 2 * t);
+
+	float v0 = (2 - t) / vw0 - 1;
+	float v1 = t / vw1 + 1;
+
+
+	sum += uw0 * vw0 * SampleShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
+	sum += uw1 * vw0 * SampleShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
+	sum += uw0 * vw1 * SampleShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightDepth);
+	sum += uw1 * vw1 * SampleShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightDepth);
+
+	return sum * 0.0625; //1 / 16
+}
+
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL)
+{
+	shadowPosition += gPartitions[cascadeIndex].intervalEndBias.yzw;
+	shadowPosition *= gPartitions[cascadeIndex].intervalBeginScale.yzw;
+
+	if(shadowPosition.z > 1.0)
+	{
+		return 0.0;
+	}
+
+	float lightDepth = shadowPosition.z;
+	float bias = max(0.005 * (1.0 - NoL), 0.0005);
+	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
+	{
+		bias *= 1.0 / (gPartitions[cascadeIndex].intervalBeginScale.x * 0.15);
+	}
+
+	lightDepth -= bias;
+
+	return OptimizedPCF(shadowPosition, cascadeIndex, lightDepth);
+}
+
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
+{
 	vec3 normal = normalize(fs_in.normal);
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
@@ -948,70 +1018,55 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, mat4 lightViews[N
 		return 1.0; //or maybe return 1?
 	}
 
-	float depthValue = abs(fs_in.fragPosViewSpace.z);
+	float NoL = max(dot(-lightDir, normal), 0.0);
 
-	int layer = -1;
+	vec3 projectionPos = (gShadowMatrix * vec4(fragPosWorldSpace, 1.0)).xyz;
 
-	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
+	uint layer = NUM_FRUSTUM_SPLITS - 1;
+
+	for(int i = int(layer); i >= 0; --i)
 	{
-		if(depthValue <= gPartitions[i].intervalEndBias.x)
+		vec3 cascadePos = projectionPos + gPartitions[i].intervalEndBias.yzw;
+		cascadePos *= gPartitions[i].intervalBeginScale.yzw;
+		cascadePos = abs(cascadePos - 0.5f);
+		if(cascadePos.x <= 0.5 && cascadePos.y <= 0.5 && cascadePos.z <= 0.5)
 		{
 			layer = i;
-			break;
 		}
 	}
 
-	if(layer == -1)
-	{
-		return 0.0;
-	}
 
-	vec3 projCoords = fs_in.fragPosLightSpace[layer].xyz / fs_in.fragPosLightSpace[layer].w;
+	vec3 offset = GetShadowPosOffset(NoL, normal, layer);
 
-	projCoords = projCoords * 0.5 + 0.5;
+	vec3 samplePos = fragPosWorldSpace + offset;
 
-	float currentDepth = projCoords.z;
-	if(currentDepth > 1.0)
-	{
-		return 0.0;
-	}
-	
-	float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
-	if(layer < NUM_FRUSTUM_SPLITS -1)
-	{
-		bias *= 1 / (gPartitions[layer].intervalBeginScale.x * 0.15);
-	}
+	vec3 shadowPosition = (gShadowMatrix * vec4(samplePos, 1.0)).xyz;
+
+	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, NoL);
 
 	
-
-	//float shadow = (currentDepth - bias) > shadowMapSample ? 1.0 : 0.0;
-
-	//@TODO(Serge): PCF stuff would be here	
-	float shadow = 0.0;//(currentDepth - bias) > SampleShadowMap(projCoords.xy, layer);
-    vec2 texelSize = 1.0 / vec2(textureSize(sampler2DArray(shadowsSurface.container), 0));
-    for(int x = -1; x <= 1; ++x)
-    {
-        for(int y = -1; y <= 1; ++y)
-        {
-            float pcfDepth = SampleShadowMap(projCoords.xy + vec2(x,y) * texelSize, layer);
-            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;        
-        }    
-    }
-    shadow /= 9.0;
-
-	
-    const float BLEND_THRESHOLD = 0.1f;
+	const float BLEND_THRESHOLD = 0.1f;
 
     float nextSplit = gPartitions[layer].intervalEndBias.x;
     float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = (nextSplit - depthValue) / splitSize;
+    float fadeFactor = (nextSplit - gl_FragDepth) / splitSize;
 
-    if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS -1)
+    vec3 cascadePos = projectionPos + gPartitions[layer].intervalEndBias.yzw;
+    cascadePos *= gPartitions[layer].intervalBeginScale.yzw;
+    cascadePos = abs(cascadePos * 2.0 - 1.0);
+    float distToEdge = 1.0 - max(max(cascadePos.x, cascadePos.y), cascadePos.z);
+    fadeFactor = max(distToEdge, fadeFactor);
+
+    if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS - 1)
     {
-    	
+    	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gPartitions[layer+1].intervalBeginScale.w);
+    	vec3 nextCascadeShadowPosition = (gShadowMatrix * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
+
+    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, NoL);
+
+    	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
+    	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
     }
 
-
-
-	return shadow;
+	return shadowVisibility;
 }
