@@ -74,6 +74,14 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+layout (std140, binding = 2) uniform Surfaces
+{
+	Tex2DAddress gBufferSurface;
+	Tex2DAddress shadowsSurface;
+	Tex2DAddress compositeSurface;
+	Tex2DAddress zPrePassSurface;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_LIGHTS];
@@ -111,21 +119,6 @@ void main()
 			{
 				vertex[i] = dirLights[0].lightSpaceMatrixData.lightProjMatrices[gl_InvocationID] * dirLights[0].lightSpaceMatrixData.lightViewMatrices[gl_InvocationID] * gl_in[i].gl_Position;
 				
-				if(useSDSMShadows > 0)
-				{
-
-					//vertex[i].x *= part.intervalBeginScale.y;
-					//vertex[i].y *= part.intervalBeginScale.z;
-					//vertex[i].z *= part.intervalBeginScale.w;
-				//	vertex[i].xy *= part.intervalBeginScale.yz;
-				//	vertex[i].x += 2.0 * part.intervalEndBias.y + part.intervalBeginScale.y - 1.0;
-				//	vertex[i].y += 2.0 * part.intervalEndBias.z + part.intervalBeginScale.z - 1.0;
-
-				//	vertex[i].z += 0.001;
-
-				//	vertex[i].z = vertex[i].z * part.intervalBeginScale.z + part.intervalEndBias.z;
-				//	vertex[i].z += 2.0 * part.intervalEndBias.w + part.intervalBeginScale.w - 1.0;
-				}
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];
@@ -144,7 +137,7 @@ void main()
 				for(int i = 0; i < 3; ++i)
 				{
 					gl_Position = vertex[i];
-					gl_Layer = gl_InvocationID;
+					gl_Layer = gl_InvocationID + int(shadowsSurface.page);
 					EmitVertex();
 				}
 

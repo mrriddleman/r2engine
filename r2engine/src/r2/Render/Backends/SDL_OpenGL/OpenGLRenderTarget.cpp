@@ -103,7 +103,15 @@ namespace r2::draw::rt::impl
 		else if (type == DEPTH)
 		{
 			//Have to do layered rendering with this
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0);
+			if (layers == 1)
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+			}
+			else
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0);
+			}
+
 			glDrawBuffer(GL_NONE);
 			glReadBuffer(GL_NONE);
 		}

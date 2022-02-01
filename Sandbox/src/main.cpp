@@ -1303,7 +1303,7 @@ private:
     bool mDrawDebugBones = false;
 
     float mExposure = 1.0f;
-    s32 mResolution = 2;
+    s32 mResolution = 3;
 };
 
 namespace

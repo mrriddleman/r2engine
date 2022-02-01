@@ -126,31 +126,31 @@ namespace r2::draw::lightsys
 
 	bool Update(LightSystem& system, const Camera& cam, glm::vec3& lightProjRadius)
 	{
-		glm::vec3 corners[cam::NUM_FRUSTUM_CORNERS];
+		//glm::vec3 corners[cam::NUM_FRUSTUM_CORNERS];
 
-		cam::GetFrustumCorners(cam, corners);
-		
-		glm::vec3 min = corners[0];
-		glm::vec3 max = corners[0];
+		//cam::GetFrustumCorners(cam, corners);
+		//
+		//glm::vec3 min = corners[0];
+		//glm::vec3 max = corners[0];
 
-		for (u32 i = 1; i < cam::NUM_FRUSTUM_CORNERS; ++i)
-		{
-			min = glm::min(min, corners[i]);
-			max = glm::max(max, corners[i]);
-		}
+		//for (u32 i = 1; i < cam::NUM_FRUSTUM_CORNERS; ++i)
+		//{
+		//	min = glm::min(min, corners[i]);
+		//	max = glm::max(max, corners[i]);
+		//}
 
-		glm::vec3 center = 0.5f * (min + max);
+		//glm::vec3 center = 0.5f * (min + max);
 
-		glm::mat4 centerTransform = glm::mat4(1.0f);
+		//glm::mat4 centerTransform = glm::mat4(1.0f);
 
-		centerTransform = glm::translate(centerTransform, glm::vec3(-center.x, -center.y, -min.z));
+		//centerTransform = glm::translate(centerTransform, glm::vec3(-center.x, -center.y, -min.z));
 
-		glm::vec3 dimensions = max - min;
-		float xRadius = dimensions.x / 2.0f;
-		float yRadius = dimensions.y / 2.0f;
-		float zRadius = dimensions.z / 2.0f;
-		glm::vec3 radius = glm::vec3(xRadius, yRadius, zRadius);
-		lightProjRadius = radius;
+		//glm::vec3 dimensions = max - min;
+		//float xRadius = dimensions.x / 2.0f;
+		//float yRadius = dimensions.y / 2.0f;
+		//float zRadius = dimensions.z / 2.0f;
+		//glm::vec3 radius = glm::vec3(xRadius, yRadius, zRadius);
+		//lightProjRadius = radius;
 
 
 		const auto numDirLightsToUpdate = r2::sarr::Size(*system.mMetaData.mDirectionLightsModifiedList);
@@ -161,7 +161,7 @@ namespace r2::draw::lightsys
 
 		for (u32 i = 0; i < numDirLightsToUpdate; ++i)
 		{
-			CalculateDirectionLightProjView(system, cam, radius, centerTransform, r2::sarr::At(*system.mMetaData.mDirectionLightsModifiedList, i));
+			//CalculateDirectionLightProjView(system, cam, radius, centerTransform, r2::sarr::At(*system.mMetaData.mDirectionLightsModifiedList, i));
 		}
 
 		//@TODO(Serge): implement for point and spot lights

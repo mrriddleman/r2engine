@@ -290,19 +290,6 @@ void main(void)
 	}
 
 
-	// float prevSplitDist = gPartitions[cascadeIndex].intervalBeginScale.x;
-	// float splitDist = gPartitions[cascadeIndex].intervalEndBias.x;
-
-	// for(int i = 0; i < 4; ++i)
-	// {
-	//  	vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
-	//  	vec3 nearCornerRay = cornerRay * prevSplitDist;
-	//  	vec3 farCornerRay = cornerRay * splitDist;
-	//  	frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
-	//  	frustumCorners[i] = frustumCorners[i] + nearCornerRay;
-	// }
-
-
 	vec3 center = vec3(0.0);
 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
 	{
@@ -327,21 +314,6 @@ void main(void)
 
 	float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
-	//mat4 scalar = mat4(1.0);
-	//scalar[0][0] = scalar[0][0] * texelsPerUnit;
-	//scalar[1][1] = scalar[1][1] * texelsPerUnit;
-	//scalar[2][1] = scalar[2][2] * texelsPerUnit;
-
-	//vec3 baseLookAt = -dirLights[0].direction.xyz;
-	//vec3 ZERO = vec3(0);
-
-	//mat4 lookAtMat = scalar * LookAt(ZERO, baseLookAt, GLOBAL_UP);
-	//mat4 lookAtMatInv = MatInverse(lookAtMat);
-
-	//center = vec3(lookAtMat * vec4(center, 1.0));
-	//center.x = floor(center.x);
-	//center.y = floor(center.y);
-	//center = vec3(lookAtMatInv * vec4(center, 1.0));
 
 	vec3 eye = center - (dirLights[0].direction.xyz * diameter);
 
@@ -372,33 +344,6 @@ void main(void)
 	mat4 shadowProjInv = MatInverse(dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex]);
 	mat4 shadowViewInv = MatInverse(dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex]);
 	
-	// vec3 corners[NUM_FRUSTUM_CORNERS] =
-	// {
-	// 	{-1.0, 1.0, -1.0},
-	// 	{1.0, 1.0, -1.0},
-	// 	{1.0, -1.0, -1.0},
-	// 	{-1.0, -1.0, -1.0},
-	// 	{-1.0, 1.0, 1.0},
-	// 	{1.0, 1.0, 1.0},
-	// 	{1.0, -1.0, 1.0},
-	// 	{-1.0, -1.0, 1.0}
-	// };
-
-
-	// for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
-	// {
-	// 	vec4 corner = shadowInvProj * vec4(corners[i], 1.0);
-	// 	corners[i] = corner.xyz / corner.w;
-	// }
-
-	// vec4 frustumPlanes[6];
-
-	// frustumPlanes[0] = PlaneFromPoints(corners[0], corners[4], corners[2]);
-	// frustumPlanes[1] = PlaneFromPoints(corners[1], corners[3], corners[5]);
-	// frustumPlanes[2] = PlaneFromPoints(corners[3], corners[2], corners[7]);
-	// frustumPlanes[3] = PlaneFromPoints(corners[1], corners[5], corners[0]);
-	// frustumPlanes[4] = PlaneFromPoints(corners[5], corners[7], corners[4]);
-	// frustumPlanes[5] = PlaneFromPoints(corners[1], corners[0], corners[3]);
 
 	mat4 texScaleBias = mat4(1.0);
 	texScaleBias[0][0] = 0.5;

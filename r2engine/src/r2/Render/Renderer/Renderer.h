@@ -235,8 +235,8 @@ namespace r2::draw
 		ShaderHandle mDepthShaders[2];
 		ShaderHandle mSDSMReduceZBoundsComputeShader;
 		ShaderHandle mSDSMCalculateLogPartitionsComputeShader;
-		ShaderHandle mSDSMReduceBoundsComputeShader;
-		ShaderHandle mSDSMCalculateCustomPartitionsComputeShader;
+		//ShaderHandle mSDSMReduceBoundsComputeShader;
+		//ShaderHandle mSDSMCalculateCustomPartitionsComputeShader;
 		ShaderHandle mShadowSplitSDSMComputeShader;
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;

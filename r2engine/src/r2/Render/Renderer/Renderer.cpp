@@ -745,17 +745,17 @@ namespace r2::draw::renderer
 		newRenderer->mSDSMCalculateLogPartitionsComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateLogPartitions"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSDSMCalculateLogPartitionsComputeShader, "CalculateLogPartitions");
 
-		newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
-		CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
+	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
+	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
-		newRenderer->mSDSMCalculateCustomPartitionsComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCustomPartitions"));
-		CheckIfValidShader(*newRenderer, newRenderer->mSDSMCalculateCustomPartitionsComputeShader, "CalculateCustomPartitions");
+	//	newRenderer->mSDSMCalculateCustomPartitionsComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCustomPartitions"));
+	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMCalculateCustomPartitionsComputeShader, "CalculateCustomPartitions");
+		
 
-		//@TEMPORARY
 		newRenderer->mShadowSplitSDSMComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCascadesSDSM"));
 		CheckIfValidShader(*newRenderer, newRenderer->mShadowSplitSDSMComputeShader, "CalculateCascadesSDSM");
 
-		CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
+		//CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
 		auto size = CENG.DisplaySize();
 		
@@ -788,6 +788,7 @@ namespace r2::draw::renderer
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
 			RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking) + 
+			RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
 
 		//@TODO(Serge): we need to get the scale, x and y offsets
@@ -1031,7 +1032,7 @@ namespace r2::draw::renderer
 		FREE(renderer->mRenderBatches, *arena);
 
 
-		rt::DestroyRenderTarget<r2::mem::LinearArena>(*arena, renderer->mRenderTargets[RTS_SHADOWS]);
+	//	rt::DestroyRenderTarget<r2::mem::LinearArena>(*arena, renderer->mRenderTargets[RTS_SHADOWS]);
 		DestroyRenderSurfaces(*renderer);
 		
 		FREE(renderer->mCommandArena, *arena);
@@ -1917,7 +1918,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, headerSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 1, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
@@ -3110,7 +3111,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS}, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS}, RTS_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -3165,6 +3166,7 @@ namespace r2::draw::renderer
 		}
 
 		const auto numInputTextures = renderPass->numRenderInputTargets;
+		//renderPass->renderOutputTargetHandle
 
 		ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
 
@@ -3176,29 +3178,48 @@ namespace r2::draw::renderer
 		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES] = { RTS_GBUFFER, RTS_SHADOWS, RTS_COMPOSITE, RTS_ZPREPASS };
 		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
 
+
+		//Always fill out our own TextureAddress
+		{
+			if (clearCMD)
+			{
+				fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+			}
+			else
+			{
+				fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+			}
+
+			tex::TextureAddress surfaceTextureAddress;
+
+			//@NOTE(Serge): if we want a deferred renderer we need to change this I think
+			if (renderTarget->colorAttachments)
+			{
+				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture);
+			}
+			else if (renderTarget->depthAttachments)
+			{
+				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture);
+			}
+
+			FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderOutputTargetHandle * sizeof(tex::TextureAddress));
+
+			renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
+
+			prevCommand = fillSurfaceCMD;
+		}
+		
+
+
 		for (u32 i = 0; i < numInputTextures; ++i)
 		{
 			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
 
 			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
 
-			if (i == 0)
-			{
-				if (clearCMD)
-				{
-					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
-				}
-				else
-				{
-					fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
-				}
-			}
-			else
-			{
-				R2_CHECK(prevCommand != nullptr, "Should never be null here");
-				fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
-			}
-
+			
+			R2_CHECK(prevCommand != nullptr, "Should never be null here");
+			fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
 			
 			tex::TextureAddress surfaceTextureAddress;
 
@@ -4401,8 +4422,6 @@ namespace r2::draw::renderer
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
-		
-
 		//no need to resize if that's the size we already are
 		renderer.mRenderTargets[RTS_COMPOSITE].xOffset	= round(xOffset);
 		renderer.mRenderTargets[RTS_COMPOSITE].yOffset	= round(yOffset);
@@ -4413,6 +4432,7 @@ namespace r2::draw::renderer
 		{
 			DestroyRenderSurfaces(renderer);
 			CreateZPrePassRenderSurface(renderer, resolutionX, resolutionY);
+			CreateShadowRenderSurface(renderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
 			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1,0, 1, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
@@ -4444,7 +4464,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::LinearArena>(*renderer.mSubAreaArena, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, cam::NUM_FRUSTUM_SPLITS, 1, false, false);
 	}
@@ -4472,6 +4492,7 @@ namespace r2::draw::renderer
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS]);
 	}
 
@@ -4651,21 +4672,8 @@ namespace r2::draw::renderer
 				glm::vec2 blurSizeLightSpace = glm::vec2(0.0f, 0.0f);
 				const float maxFloat = std::numeric_limits<float>::max();
 				glm::vec3 maxPartitionScale = glm::vec3(maxFloat, maxFloat, maxFloat);
-				bool edgeSoftening = false;
-				if (edgeSoftening)
-				{
-					//@TODO(Serge): implement
-					blurSizeLightSpace.x = EDGE_SOFTENING_AMOUNT * 0.5f * dirLightProj[0][0];
-					blurSizeLightSpace.y = EDGE_SOFTENING_AMOUNT * 0.5f * dirLightProj[1][1];
-					const float maxEdgeSofteningFilter = 16.0f;
 
-					float maxBlurLightSpace = maxEdgeSofteningFilter / static_cast<float>(light::SHADOW_MAP_SIZE);
-					maxPartitionScale.x = maxBlurLightSpace / blurSizeLightSpace.x;
-					maxPartitionScale.y = maxBlurLightSpace / blurSizeLightSpace.y;
-				}
-
-				glm::vec4 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, dirLightProj[2][2], 0.0f);
-
+				glm::vec4 partitionBorderLightSpace(blurSizeLightSpace.x, blurSizeLightSpace.y, 0.0f, 0.0f);
 
 				UpdateSDSMLightSpaceBorder(renderer, partitionBorderLightSpace);
 				UpdateSDSMMaxScale(renderer, glm::vec4(maxPartitionScale, 0.0));
@@ -4680,12 +4688,9 @@ namespace r2::draw::renderer
 			{
 				key::ShadowKey dispatchReduceZBoundsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 0, renderer.mSDSMReduceZBoundsComputeShader, false, 0);
 				key::ShadowKey dispatchCalculateLogPartitionsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 1,  renderer.mSDSMCalculateLogPartitionsComputeShader, false, 0);
-				key::ShadowKey dispatchReduceBoundsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 2,  renderer.mSDSMReduceBoundsComputeShader, false, 0);
-				key::ShadowKey dispatchCalculateCustomPartitionsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 3, renderer.mSDSMCalculateCustomPartitionsComputeShader, false, 0);
 
 				int dispatchWidth = (renderer.mResolutionSize.width + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
 				int dispatchHeight = (renderer.mResolutionSize.height + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
-
 
 				cmd::DispatchCompute* dispatchReduceZBoundsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchReduceZBoundsKey, 0);
 				dispatchReduceZBoundsCMD->numGroupsX = dispatchWidth;
@@ -4706,30 +4711,6 @@ namespace r2::draw::renderer
 				cmd::Barrier* barrierCMD2 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, calculateLogPartitionsCMD, 0);
 				barrierCMD2->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 
-
-
-
-
-				//cmd::DispatchCompute* dispatchReduceBoundsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchReduceBoundsKey, 0);
-				//dispatchReduceBoundsCMD->numGroupsX = dispatchWidth;
-				//dispatchReduceBoundsCMD->numGroupsY = dispatchHeight;
-				//dispatchReduceBoundsCMD->numGroupsZ = 1;
-
-
-				//cmd::Barrier* barrierCMD3 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchReduceBoundsCMD, 0);
-				//barrierCMD3->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
-
-
-				//cmd::DispatchCompute* calculatePartitionsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchCalculateCustomPartitionsKey, 0);
-				//calculatePartitionsCMD->numGroupsX = 1;
-				//calculatePartitionsCMD->numGroupsY = 1;
-				//calculatePartitionsCMD->numGroupsZ = 1;
-
-
-				//cmd::Barrier* barrierCMD4 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, calculatePartitionsCMD, 0);
-				//barrierCMD4->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
-
-				//@TEMPORARY
 
 				key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 4, renderer.mShadowSplitSDSMComputeShader, false, 0);
 

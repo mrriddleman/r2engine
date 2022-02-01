@@ -938,7 +938,7 @@ vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
 float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
 {
 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
-	vec3 coord = vec3(uv, cascadeIndex);
+	vec3 coord = vec3(uv, cascadeIndex + shadowsSurface.page);
 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
 
 

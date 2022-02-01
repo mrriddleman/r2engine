@@ -95,6 +95,8 @@ namespace r2::draw::cmd
 	u32 CULL_FACE_FRONT = GL_FRONT;
 	u32 CULL_FACE_BACK = GL_BACK;
 	u32 SHADER_STORAGE_BARRIER_BIT = GL_SHADER_STORAGE_BARRIER_BIT;
+	u32 FRAMEBUFFER_BARRIER_BIT = GL_FRAMEBUFFER_BARRIER_BIT;
+	u32 ALL_BARRIER_BITS = GL_ALL_BARRIER_BITS;
 }
 
 namespace r2::draw::rendererimpl
@@ -770,10 +772,6 @@ namespace r2::draw::rendererimpl
 			}
 
 			glDrawBuffers(numColorAttachments, &bufs[0]);
-		}
-		else if (numDepthAttachments > 0 && fboHandle != 0)
-		{
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 		}
 
 		glViewport(xOffset, yOffset, width, height);

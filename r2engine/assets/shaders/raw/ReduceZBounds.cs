@@ -108,8 +108,6 @@ void main(void)
 	sMaxZ[gl_LocalInvocationIndex] = maxZ;
 
 	//Barrier
-	
-	
 	barrier();
 	memoryBarrierShared();
 	
@@ -134,13 +132,13 @@ void main(void)
 	if(gl_LocalInvocationIndex == 0)
 	{
 		atomicMin(gPartitionsU[0].intervalBeginMinCoord.x, floatBitsToUint(sMinZ[0]));
-		atomicMax(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEndMaxCoord.x, floatBitsToUint(sMaxZ[0]));
+		atomicMax(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEndMaxCoord.x, floatBitsToUint(sMaxZ[NUM_FRUSTUM_SPLITS - 1]));
 	}
 }
 
 float LinearizeDepth(float depth) 
 {
-    float z = depth * 2.0 - 1.0; // back to NDC 
+    float z = depth * 2.0-1.0; // back to NDC 
     float near = exposureNearFar.y;
     float far = exposureNearFar.z;
 
@@ -149,7 +147,6 @@ float LinearizeDepth(float depth)
 
 float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize)
 {
-
 	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassSurface.page);
 
 	return LinearizeDepth(texture(sampler2DArray(zPrePassSurface.container), texCoords).r);

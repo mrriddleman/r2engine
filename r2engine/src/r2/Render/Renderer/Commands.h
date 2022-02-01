@@ -21,6 +21,8 @@ namespace r2::draw::cmd
 	extern u32 CULL_FACE_BACK;
 
 	extern u32 SHADER_STORAGE_BARRIER_BIT;
+	extern u32 FRAMEBUFFER_BARRIER_BIT;
+	extern u32 ALL_BARRIER_BITS;
 	
 
 	struct DrawState

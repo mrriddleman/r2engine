@@ -343,10 +343,7 @@ namespace r2::draw::gl
 
 			//const int k_maxLevels = std::min(container.format.mipLevels, 4);
 			const int k_maxLevels = container.format.mipLevels;
-			if (k_maxLevels > 2)
-			{
-				int k = 0;
-			}
+
 			for (int level = 0; level < k_maxLevels; ++level)
 			{
 				if (container.format.isCubemap)
@@ -456,6 +453,7 @@ namespace r2::draw::gl
 				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format);
 				r2::sarr::Push(*arrayToUse, containerToUse);
 			}
+
 
 			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse);
 			handle.container = containerToUse;

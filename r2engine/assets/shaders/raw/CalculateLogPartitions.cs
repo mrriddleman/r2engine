@@ -67,9 +67,6 @@ void main(void)
 
 	gPartitions[cascadeIndex].intervalBeginScale.x = LogPartitionFromRange(cascadeIndex, minZ, maxZ);
 	gPartitions[cascadeIndex].intervalEndBias.x = LogPartitionFromRange(cascadeIndex + 1, minZ, maxZ);
-
-	//gPartitionsU[cascadeIndex].intervalBegin = floatBitsToUint(gPartitions[cascadeIndex].intervalBegin);
-	//gPartitionsU[cascadeIndex].intervalEnd = floatBitsToUint(gPartitions[cascadeIndex].intervalEnd);
 }
 
 
