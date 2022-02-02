@@ -319,7 +319,7 @@ void main(void)
 
 	dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, GLOBAL_UP);
 
-	dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(-radius * projMult, radius *projMult, -radius *projMult, radius * projMult, -zMult, radius * zMult);
+	dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(-radius, radius, -radius, radius, -zMult, radius * zMult);
 	
 
 	//Stabalize Cascades
