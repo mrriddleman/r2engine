@@ -8,6 +8,7 @@ const uint MAX_NUM_LIGHTS = 50;
 layout (location = 0) out vec4 FragColor;
 
 #define PI 3.141596
+#define TWO_PI 2.0 * PI
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
 #define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 
@@ -172,6 +173,12 @@ in VS_OUT
 
 vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
 
+vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
+float InterleavedGradientNoise(vec2 screenPosition);
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex);
+float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth);
+
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
@@ -303,7 +310,7 @@ void main()
 
 
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
-	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
+	FragColor = vec4(lightingResult + emission , 1.0);//* DebugFrustumSplitColor();
 
 }
 
@@ -976,7 +983,6 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 	float v0 = (2 - t) / vw0 - 1;
 	float v1 = t / vw1 + 1;
 
-
 	sum += uw0 * vw0 * SampleShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
 	sum += uw1 * vw0 * SampleShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
 	sum += uw0 * vw1 * SampleShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightDepth);
@@ -984,6 +990,8 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 
 	return sum * 0.0625; //1 / 16
 }
+
+
 
 float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL)
 {
@@ -1004,7 +1012,7 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL)
 
 	lightDepth -= bias;
 
-	return OptimizedPCF(shadowPosition, cascadeIndex, lightDepth);
+	return SoftShadow(shadowPosition, cascadeIndex, lightDepth);
 }
 
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
@@ -1069,4 +1077,93 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
     }
 
 	return shadowVisibility;
+}
+
+const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
+const float SHADOW_FILTER_MAX_SIZE = 0.002f;
+const float PENUMBRA_FILTER_SCALE = 1.2f;
+
+
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
+{
+	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+
+	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
+
+	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
+	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex);
+
+	float shadow = 0.0;
+	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
+	{
+		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
+		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
+
+		shadow += SampleShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightDepth);
+	}
+
+	return shadow / NUM_SOFT_SHADOW_SAMPLES;
+}
+
+vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi)
+{
+	float GOLDEN_ANGLE = 2.4;
+
+	float r = sqrt(sampleIndex + 0.5) / sqrt(samplesCount);
+	float theta = sampleIndex * GOLDEN_ANGLE + phi;
+	
+	return vec2(r * cos(theta), r * sin(theta));
+}
+
+float InterleavedGradientNoise(vec2 screenPosition)
+{
+	vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
+  	return fract(magic.z * fract(dot(screenPosition, magic.xy)));
+}
+
+//float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
+{
+	float avgBlockerDepth = 0.0;
+	float blockersCount = 0.0;
+
+
+	for(int i = 0; i < samplesCount; ++i)
+	{
+		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
+		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
+
+		float sampleDepth = SampleShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, depth);
+
+		if(sampleDepth < depth)
+		{
+			avgBlockerDepth += sampleDepth;
+			blockersCount += 1.0;
+		}
+	}
+
+	if(blockersCount > 0.0)
+	{
+		avgBlockerDepth /= blockersCount;
+		return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+	}
+
+	return 0.0;
+}
+
+float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
+{
+	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
+	penumbra *= penumbra;
+	return clamp(penumbra * 80.0, 0.0, 1.0);
 }
