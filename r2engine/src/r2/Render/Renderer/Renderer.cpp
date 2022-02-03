@@ -4466,7 +4466,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, cam::NUM_FRUSTUM_SPLITS, 1, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, cam::NUM_FRUSTUM_SPLITS, 1, false, false);
 	}
 
 	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
