@@ -32,6 +32,7 @@ namespace r2::draw
 	struct LightProperties
 	{
 		glm::vec4 color = glm::vec4(1.0f);
+		glm::uvec4 castsShadowsUseSoftShadows = glm::uvec4(0);
 		float fallOff = 1.0f;
 		float intensity = 1.0f;
 		s64 lightID = -1; //internal use only

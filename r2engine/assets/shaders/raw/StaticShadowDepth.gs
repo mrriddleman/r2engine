@@ -31,6 +31,7 @@ struct UPartition
 struct LightProperties
 {
 	vec4 color;
+	uvec4 castsShadowsUseSoftShadows;
 	float fallOffRadius;
 	float intensity;
 //	uint32_t castsShadows;
@@ -111,7 +112,7 @@ void main()
 		vec3 view = -dirLights[0].direction.xyz;
 		Partition part = gPartitions[gl_InvocationID];
 
-		if(dot(normal, view) > 0.0f)
+		if(dirLights[0].lightProperties.castsShadowsUseSoftShadows.x > 0 && dot(normal, view) > 0.0f)
 		{
 			vec4 vertex[3];
 			int outOfBound[6] = { 0 , 0 , 0 , 0 , 0 , 0 };

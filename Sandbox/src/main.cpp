@@ -645,6 +645,8 @@ public:
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
 			dirLight.lightProperties.intensity = 2;
+            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+
            // dirLight.lightProperties.castsShadows = true;
 
             r2::draw::renderer::AddDirectionLight(dirLight);

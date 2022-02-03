@@ -56,6 +56,7 @@ struct Tex2DAddress
 struct LightProperties
 {
 	vec4 color;
+	uvec4 castsShadowsUseSoftShadows;
 	float fallOffRadius;
 	float intensity;
 //	uint32_t castsShadows;

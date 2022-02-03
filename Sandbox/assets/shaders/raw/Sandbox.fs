@@ -34,6 +34,7 @@ struct Tex2DAddress
 struct LightProperties
 {
 	vec4 color;
+	uvec4 castsShadowsUseSoftShadows;
 	float fallOffRadius;
 	float intensity;
 	//uint32_t castsShadows;
@@ -238,7 +239,7 @@ vec3 Eval_BRDF(
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
-float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir);
+float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, bool softShadows);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -862,7 +863,12 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
 
-	 	float shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz);
+	 	float shadow = 0;
+
+	 	if(dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
+	 	{
+	 	 	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+	 	}
 
 	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 
@@ -993,7 +999,7 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 
 
 
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL)
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL, bool softShadows)
 {
 	shadowPosition += gPartitions[cascadeIndex].intervalEndBias.yzw;
 	shadowPosition *= gPartitions[cascadeIndex].intervalBeginScale.yzw;
@@ -1012,10 +1018,18 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL)
 
 	lightDepth -= bias;
 
-	return SoftShadow(shadowPosition, cascadeIndex, lightDepth);
+
+	if(softShadows)
+	{
+		return SoftShadow(shadowPosition, cascadeIndex, lightDepth);
+	}
+	else
+	{
+		return OptimizedPCF(shadowPosition, cascadeIndex, lightDepth);
+	}
 }
 
-float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, bool softShadows)
 {
 	vec3 normal = normalize(fs_in.normal);
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
@@ -1050,7 +1064,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
 
 	vec3 shadowPosition = (gShadowMatrix * vec4(samplePos, 1.0)).xyz;
 
-	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, NoL);
+	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, NoL, softShadows);
 
 	
 	const float BLEND_THRESHOLD = 0.1f;
@@ -1070,7 +1084,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir)
     	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gPartitions[layer+1].intervalBeginScale.w);
     	vec3 nextCascadeShadowPosition = (gShadowMatrix * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, NoL);
+    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, NoL, softShadows);
 
     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
