@@ -3002,18 +3002,18 @@ namespace r2::draw::renderer
 				shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 
-				//key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
 
-				//cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
-				//zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
-				//zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
-				//zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//zppDrawBatch->subCommands = nullptr;
-				//zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				zppDrawBatch->subCommands = nullptr;
+				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
 
 			}
 
