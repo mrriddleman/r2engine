@@ -2,6 +2,10 @@
 #extension GL_NV_gpu_shader5 : enable
 
 #define NUM_FRUSTUM_SPLITS 4
+const uint MAX_NUM_LIGHTS = 50;
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
@@ -12,17 +16,7 @@ struct Tex2DAddress
 	float page;
 };
 
-struct Partition
-{
-	vec4 intervalBeginScale;
-	vec4 intervalEndBias;
-};
 
-struct UPartition
-{
-	uvec4 intervalBeginMinCoord;
-	uvec4 intervalEndMaxCoord;
-};
 
 struct BoundsUint
 {
@@ -49,24 +43,45 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress zPrePassSurface;
 };
 
+struct Partition
+{
+	vec4 intervalBegin;
+	vec4 intervalEnd;
+};
+
+struct UPartition
+{
+	uvec4 intervalBegin;
+	uvec4 intervalEnd;
+};
+
 layout (std430, binding = 6) buffer ShadowData
 {
-	Partition gPartitions[NUM_FRUSTUM_SPLITS];
-	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	mat4 gShadowMatrix;
+	Partition gPartitions;
+	UPartition gPartitionsU;
+
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+
+	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+
+	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
+
 
 float LogPartitionFromRange(uint part, float minZ, float maxZ);
 
 void main(void)
 {
-	float minZ = uintBitsToFloat(gPartitionsU[0].intervalBeginMinCoord.x);
-	float maxZ = uintBitsToFloat(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEndMaxCoord.x);
+	float minZ = uintBitsToFloat(gPartitionsU.intervalBegin[0]);
+	float maxZ = uintBitsToFloat(gPartitionsU.intervalEnd[NUM_FRUSTUM_SPLITS-1]);
 
 	uint cascadeIndex = gl_LocalInvocationIndex;
 
-	gPartitions[cascadeIndex].intervalBeginScale.x = LogPartitionFromRange(cascadeIndex, minZ, maxZ);
-	gPartitions[cascadeIndex].intervalEndBias.x = LogPartitionFromRange(cascadeIndex + 1, minZ, maxZ);
+	gPartitions.intervalBegin[cascadeIndex] = LogPartitionFromRange(cascadeIndex, minZ, maxZ);
+	gPartitions.intervalEnd[cascadeIndex] = LogPartitionFromRange(cascadeIndex + 1, minZ, maxZ);
 
 //	gPartitionsU[cascadeIndex].intervalBeginMinCoord.x = floatBitsToUint(gPartitions[cascadeIndex].intervalBeginScale.x);
 //	gPartitionsU[cascadeIndex].intervalEndMaxCoord.x = floatBitsToUint(gPartitions[cascadeIndex].intervalEndBias.x);

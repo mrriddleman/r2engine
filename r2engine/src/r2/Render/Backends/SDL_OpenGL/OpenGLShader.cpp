@@ -98,6 +98,14 @@ namespace r2::draw::shader
     {
         return shader.shaderProg != InvalidShader;
     }
+
+    u32 GetMaxNumberOfGeometryShaderInvocations()
+    {
+        GLint maxInvocations;
+        glGetIntegerv(GL_MAX_GEOMETRY_SHADER_INVOCATIONS, &maxInvocations);
+
+        return maxInvocations;
+    }
     
     u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr)
     {

@@ -20,6 +20,7 @@ namespace r2::draw::dispatch
 	void DispatchComputeIndirect(const void* data);
 	void DispatchCompute(const void* data);
 	void Barrier(const void* data);
+	void ConstantUint(const void* data);
 }
 
 

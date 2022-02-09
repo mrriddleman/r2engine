@@ -6,6 +6,7 @@
 namespace r2::draw::light
 {
 	s64 s_lightSystemID = -1;
+	
 }
 
 
@@ -62,10 +63,6 @@ namespace r2::draw::light
 
 namespace r2::draw::lightsys
 {
-	s32 s_PointLightID = 0;
-	s32 s_DirectionalLightID = 0;
-	s32 s_SpotLightID = 0;
-
 	void CalculateDirectionLightProjView(LightSystem& system, const Camera& cam, const glm::vec3& radius, const glm::mat4& centerTransform, s64 directionLightIndex)
 	{
 		R2_CHECK(directionLightIndex >= 0 && directionLightIndex < system.mSceneLighting.mNumDirectionLights, "We should have a proper light index");
@@ -92,17 +89,35 @@ namespace r2::draw::lightsys
 
 	PointLightHandle GeneratePointLightHandle(const LightSystem& system)
 	{
-		return { system.mSystemHandle, s_PointLightID++ };
+		R2_CHECK(r2::squeue::Size(*system.mMetaData.mDirectionlightIDs) > 0, "We don't have any more point lights that can be added");
+
+		auto pointLightID = r2::squeue::First(*system.mMetaData.mPointLightIDs);
+
+		r2::squeue::PopFront(*system.mMetaData.mPointLightIDs);
+
+		return { system.mSystemHandle, pointLightID };
 	}
 
 	DirectionLightHandle GenerateDirectionLightHandle(const LightSystem& system)
 	{
-		return { system.mSystemHandle, s_DirectionalLightID++ };
+		R2_CHECK(r2::squeue::Size(*system.mMetaData.mDirectionlightIDs) > 0, "We don't have any more direction lights that can be added");
+
+		auto directionLightID = r2::squeue::First(*system.mMetaData.mDirectionlightIDs);
+
+		r2::squeue::PopFront(*system.mMetaData.mDirectionlightIDs);
+
+		return { system.mSystemHandle, directionLightID };
 	}
 
 	SpotLightHandle GenerateSpotLightHandle(const LightSystem& system)
 	{
-		return { system.mSystemHandle, s_SpotLightID++ };
+		R2_CHECK(r2::squeue::Size(*system.mMetaData.mSpotlightIDs) > 0, "We don't have any more spot lights that can be added");
+
+		auto spotlightID = r2::squeue::First(*system.mMetaData.mSpotlightIDs);
+
+		r2::squeue::PopFront(*system.mMetaData.mSpotlightIDs);
+
+		return { system.mSystemHandle, spotlightID };
 	}
 
 	SkyLightHandle GenerateSkyLightHandle(const LightSystem& system)
@@ -110,11 +125,32 @@ namespace r2::draw::lightsys
 		return { system.mSystemHandle, 0 };
 	}
 
+	void ReclaimPointLightHandle(LightSystem& system, PointLightHandle handle)
+	{
+		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a point light handle that doesn't match the light system you passed in");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid point light handle");
+
+		r2::squeue::PushBack(*system.mMetaData.mPointLightIDs, handle.handle);
+	}
+
+	void ReclaimSpotLightHandle(LightSystem& system, SpotLightHandle handle)
+	{
+		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a spot light handle that doesn't match the light system you passed in");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid spot light handle");
+
+		r2::squeue::PushBack(*system.mMetaData.mSpotlightIDs, handle.handle);
+	}
+
+	void ReclaimDirectionLightHandle(LightSystem& system, DirectionLightHandle handle)
+	{
+		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a direction light handle that doesn't match the light system you passed in");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid direction light handle");
+
+		r2::squeue::PushBack(*system.mMetaData.mDirectionlightIDs, handle.handle);
+	}
+
 	void Init(s64 pointLightID, s64 directionLightID, s64 spotLightID)
 	{
-		s_PointLightID = pointLightID;
-		s_DirectionalLightID = directionLightID;
-		s_SpotLightID = spotLightID;
 	}
 
 	void ClearModifiedLights(LightSystem& system)
@@ -126,45 +162,12 @@ namespace r2::draw::lightsys
 
 	bool Update(LightSystem& system, const Camera& cam, glm::vec3& lightProjRadius)
 	{
-		//glm::vec3 corners[cam::NUM_FRUSTUM_CORNERS];
-
-		//cam::GetFrustumCorners(cam, corners);
-		//
-		//glm::vec3 min = corners[0];
-		//glm::vec3 max = corners[0];
-
-		//for (u32 i = 1; i < cam::NUM_FRUSTUM_CORNERS; ++i)
-		//{
-		//	min = glm::min(min, corners[i]);
-		//	max = glm::max(max, corners[i]);
-		//}
-
-		//glm::vec3 center = 0.5f * (min + max);
-
-		//glm::mat4 centerTransform = glm::mat4(1.0f);
-
-		//centerTransform = glm::translate(centerTransform, glm::vec3(-center.x, -center.y, -min.z));
-
-		//glm::vec3 dimensions = max - min;
-		//float xRadius = dimensions.x / 2.0f;
-		//float yRadius = dimensions.y / 2.0f;
-		//float zRadius = dimensions.z / 2.0f;
-		//glm::vec3 radius = glm::vec3(xRadius, yRadius, zRadius);
-		//lightProjRadius = radius;
-
 
 		const auto numDirLightsToUpdate = r2::sarr::Size(*system.mMetaData.mDirectionLightsModifiedList);
 		const auto numPointLightsToUpdate = r2::sarr::Size(*system.mMetaData.mPointLightsModifiedList);
 		const auto numSpotLightsToUpdate = r2::sarr::Size(*system.mMetaData.mSpotLightsModifiedList);
 
 		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0;
-
-		for (u32 i = 0; i < numDirLightsToUpdate; ++i)
-		{
-			//CalculateDirectionLightProjView(system, cam, radius, centerTransform, r2::sarr::At(*system.mMetaData.mDirectionLightsModifiedList, i));
-		}
-
-		//@TODO(Serge): implement for point and spot lights
 
 		if(needsUpdate)
 			ClearModifiedLights(system);
@@ -235,17 +238,29 @@ namespace r2::draw::lightsys
 			return false;
 		}
 
-		//swap the point light with the last point light
-		system.mSceneLighting.mNumPointLights--;
 
-		if (system.mSceneLighting.mNumPointLights != lightIndex)
+		r2::shashmap::Set(*system.mMetaData.mPointLightMap, lightHandle.handle, defaultIndex);
+
+		//swap the point light with the last point light
+
+		if (lightIndex == (system.mSceneLighting.mNumPointLights - 1))
 		{
-			const PointLight& lastPointLight = system.mSceneLighting.mPointLights[system.mSceneLighting.mNumPointLights];
+			system.mSceneLighting.mNumPointLights--;
+		}
+		else
+		{
+			const PointLight& lastPointLight = system.mSceneLighting.mPointLights[system.mSceneLighting.mNumPointLights - 1];
 
 			system.mSceneLighting.mPointLights[lightIndex] = lastPointLight;
 
 			r2::shashmap::Set(*system.mMetaData.mPointLightMap, lastPointLight.lightProperties.lightID, lightIndex);
+
+			system.mSceneLighting.mNumPointLights--;
 		}
+
+		ReclaimPointLightHandle(system, lightHandle);
+
+		SetShouldUpdatePointLight(system, lightIndex);
 
 		return true;
 	}
@@ -323,17 +338,28 @@ namespace r2::draw::lightsys
 			return false;
 		}
 
-		//swap the point light with the last point light
-		system.mSceneLighting.mNumDirectionLights--;
+		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, lightHandle.handle, defaultIndex);
 
-		if (system.mSceneLighting.mNumDirectionLights != lightIndex)
+		//swap the point light with the last point light
+		
+		if (lightIndex == (system.mSceneLighting.mNumDirectionLights - 1))
 		{
-			const DirectionLight& lastDirectionalLight = system.mSceneLighting.mDirectionLights[system.mSceneLighting.mNumDirectionLights];
+			system.mSceneLighting.mNumDirectionLights--;
+		}
+		else
+		{
+			const DirectionLight& lastDirectionalLight = system.mSceneLighting.mDirectionLights[system.mSceneLighting.mNumDirectionLights-1];
 
 			system.mSceneLighting.mDirectionLights[lightIndex] = lastDirectionalLight;
 
 			r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, lastDirectionalLight.lightProperties.lightID, lightIndex);
+
+			system.mSceneLighting.mNumDirectionLights--;
 		}
+
+		ReclaimDirectionLightHandle(system, lightHandle);
+
+		SetShouldUpdateDirectionLight(system, lightIndex);
 
 		return true;
 	}
@@ -412,17 +438,28 @@ namespace r2::draw::lightsys
 			return false;
 		}
 
-		//swap the point light with the last point light
-		system.mSceneLighting.mNumSpotLights--;
+		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, lightHandle.handle, defaultIndex);
 
-		if (system.mSceneLighting.mNumSpotLights != lightIndex)
+		//swap the point light with the last point light
+
+		if (lightIndex == (system.mSceneLighting.mNumSpotLights - 1))
 		{
-			const SpotLight& lastSpotLight = system.mSceneLighting.mSpotLights[system.mSceneLighting.mNumSpotLights];
+			system.mSceneLighting.mNumSpotLights--;
+		}
+		else
+		{
+			const SpotLight& lastSpotLight = system.mSceneLighting.mSpotLights[system.mSceneLighting.mNumSpotLights - 1];
 
 			system.mSceneLighting.mSpotLights[lightIndex] = lastSpotLight;
 
 			r2::shashmap::Set(*system.mMetaData.mSpotLightMap, lastSpotLight.lightProperties.lightID, lightIndex);
+
+			system.mSceneLighting.mNumSpotLights--;
 		}
+
+		SetShouldUpdateSpotLight(system, lightIndex);
+
+		ReclaimSpotLightHandle(system, lightHandle);
 
 		return true;
 	}
@@ -540,6 +577,38 @@ namespace r2::draw::lightsys
 	{
 
 	}
+
+	void InitLightIDs(LightSystem& system)
+	{
+		r2::squeue::ConsumeAll(*system.mMetaData.mPointLightIDs);
+		r2::squeue::ConsumeAll(*system.mMetaData.mSpotlightIDs);
+		r2::squeue::ConsumeAll(*system.mMetaData.mDirectionlightIDs);
+
+		for (s64 i = 0; i < light::MAX_NUM_LIGHTS; ++i)
+		{
+			r2::squeue::PushBack(*system.mMetaData.mPointLightIDs, i);
+			r2::squeue::PushBack(*system.mMetaData.mSpotlightIDs, i);
+			r2::squeue::PushBack(*system.mMetaData.mDirectionlightIDs, i);
+		}
+	}
+
+	void ClearShadowMapPages(LightSystem& system)
+	{
+		for (u32 i = 0; i < light::NUM_SPOTLIGHT_SHADOW_PAGES; ++i)
+		{
+			system.mShadowMapPages.mSpotLightShadowMapPages[i] = -1;
+		}
+
+		for (u32 i = 0; i < light::NUM_POINTLIGHT_SHADOW_PAGES; ++i)
+		{
+			system.mShadowMapPages.mPointLightShadowMapPages[i] = -1;
+		}
+
+		for (u32 i = 0; i < light::NUM_DIRECTIONLIGHT_SHADOW_PAGES; ++i)
+		{
+			system.mShadowMapPages.mDirectionLightShadowMapPages[i] = -1;
+		}
+	}
 	
 }
 
@@ -549,6 +618,7 @@ namespace r2::draw
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(LightSystem), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) * 3 +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3;
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3 +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3;
 	}
 }

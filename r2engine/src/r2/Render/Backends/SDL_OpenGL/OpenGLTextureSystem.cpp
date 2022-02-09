@@ -249,16 +249,16 @@ namespace r2::draw::gl
 			return true;
 		}
 
-		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container)
+		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container, u32 numPages)
 		{
-			return r2::squeue::Size(*container.freeSpace) >= container.format.numCommitLayers;
+			return r2::squeue::Size(*container.freeSpace) >= numPages;
 		}
 
-		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container)
+		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container, u32 numPages)
 		{
 			GLsizei front = r2::squeue::First(*container.freeSpace);
 			
-			for (u32 i = 0; i < container.format.numCommitLayers; ++i)
+			for (u32 i = 0; i < numPages; ++i)
 			{
 				r2::squeue::PopFront(*container.freeSpace);
 			}
@@ -266,9 +266,9 @@ namespace r2::draw::gl
 			return front;
 		}
 
-		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice)
+		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice, u32 numPages)
 		{
-			for (GLsizei i = 0; i < container.format.numCommitLayers; ++i)
+			for (GLsizei i = 0; i < numPages; ++i)
 			{
 				r2::squeue::PushBack(*container.freeSpace, slice + i);
 			}
@@ -283,7 +283,7 @@ namespace r2::draw::gl
 				return;
 			}
 
-			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)container.format.numCommitLayers, GL_TRUE);
+			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)tex->numPages, GL_TRUE);
 		}
 
 		void Free(r2::draw::tex::TextureContainer& container, r2::draw::tex::TextureHandle* tex)
@@ -295,7 +295,7 @@ namespace r2::draw::gl
 				return;
 			}
 
-			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)container.format.numCommitLayers, GL_FALSE);
+			ChangeCommitment(container, (GLsizei)tex->sliceIndex, (GLsizei)tex->numPages, GL_FALSE);
 		}
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
@@ -381,7 +381,7 @@ namespace r2::draw::gl
 
 	namespace texsys
 	{
-		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format)
+		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
 		{
 			if (s_glTextureSystem == nullptr)
 			{
@@ -389,7 +389,23 @@ namespace r2::draw::gl
 				return;
 			}
 
-			AllocGLTexture(handle, format);
+			AllocGLTexture(handle, format, numPages);
+
+			tex::Commit(handle);
+		}
+
+		void AddTexturePages(r2::draw::tex::TextureHandle& handle, u32 numPages)
+		{
+			if (s_glTextureSystem == nullptr)
+			{
+				R2_CHECK(false, "We haven't initialized the GLTextureSystem yet!");
+				return;
+			}
+
+			R2_CHECK(texcontainer::HasRoom(*handle.container, numPages), "We don't have enough room in the container for the new: %lu pages", numPages);
+
+			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*handle.container, numPages);
+			handle.numPages = numPages;
 
 			tex::Commit(handle);
 		}
@@ -404,11 +420,11 @@ namespace r2::draw::gl
 
 			tex::Free(handle);
 
-			texcontainer::VirtualFree(*handle.container, handle.sliceIndex);
+			texcontainer::VirtualFree(*handle.container, handle.sliceIndex, handle.numPages);
 		}
 
 		//private
-		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format)
+		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
 		{
 			if (s_glTextureSystem == nullptr)
 			{
@@ -435,7 +451,7 @@ namespace r2::draw::gl
 			for (u64 i = 0; i < arraySize; ++i)
 			{
 				r2::draw::tex::TextureContainer* container = r2::sarr::At(*arrayToUse, i);
-				if (container != nullptr && texcontainer::HasRoom(*container))
+				if (container != nullptr && texcontainer::HasRoom(*container, numPages))
 				{
 					containerToUse = container;
 					break;
@@ -455,8 +471,9 @@ namespace r2::draw::gl
 			}
 
 
-			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse);
+			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse, numPages);
 			handle.container = containerToUse;
+			handle.numPages = numPages;
 		}
 	}
 }

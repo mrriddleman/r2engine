@@ -14,6 +14,14 @@ namespace r2::draw
 	{
 		const u32 MAX_NUM_LIGHTS = 50;
 		const u32 SHADOW_MAP_SIZE = 1024;
+
+		const u32 NUM_SPOTLIGHT_LAYERS = 1;
+		const u32 NUM_POINTLIGHT_LAYERS = 6;
+		const u32 NUM_DIRECTIONLIGHT_LAYERS = cam::NUM_FRUSTUM_SPLITS;
+
+		constexpr u32 NUM_SPOTLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
+		constexpr u32 NUM_POINTLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
+		constexpr u32 NUM_DIRECTIONLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
 	}
 
 	using LightSystemHandle = s64;
@@ -106,6 +114,18 @@ namespace r2::draw
 		r2::SArray<s64>* mPointLightsModifiedList = nullptr;
 		r2::SArray<s64>* mDirectionLightsModifiedList = nullptr;
 		r2::SArray<s64>* mSpotLightsModifiedList = nullptr;
+
+		r2::SQueue<s64>* mPointLightIDs = nullptr;
+		r2::SQueue<s64>* mDirectionlightIDs = nullptr;
+		r2::SQueue<s64>* mSpotlightIDs = nullptr;
+
+	};
+
+	struct ShadowMapPages
+	{
+		float mSpotLightShadowMapPages[light::NUM_SPOTLIGHT_SHADOW_PAGES];
+		float mPointLightShadowMapPages[light::NUM_POINTLIGHT_SHADOW_PAGES];
+		float mDirectionLightShadowMapPages[light::NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 	};
 
 	struct LightSystem
@@ -113,6 +133,7 @@ namespace r2::draw
 		LightSystemHandle mSystemHandle;
 		SceneLightMetaData mMetaData;
 		SceneLighting mSceneLighting;
+		ShadowMapPages mShadowMapPages;
 
 		static u64 MemorySize(u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
@@ -160,6 +181,10 @@ namespace r2::draw
 
 
 		void ClearAllLighting(LightSystem& system);
+
+		void InitLightIDs(LightSystem& system);
+
+		void ClearShadowMapPages(LightSystem& system);
 	}
 
 
@@ -189,15 +214,32 @@ namespace r2::draw
 
 			R2_CHECK(lightSystem->mMetaData.mDirectionLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
 
-
 			lightSystem->mMetaData.mSpotLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mSpotLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
+
+
+			lightSystem->mMetaData.mPointLightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mPointLightIDs != nullptr, "We couldn't create the mPointLightIDs");
+
+			lightSystem->mMetaData.mDirectionlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mDirectionlightIDs != nullptr, "We couldn't create the mDirectionlightIDs");
+			
+			lightSystem->mMetaData.mSpotlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+
+			R2_CHECK(lightSystem->mMetaData.mSpotlightIDs != nullptr, "We couldn't create the mSpotlightIDs");
+
 
 			lightSystem->mSystemHandle = GenerateNewLightSystemHandle();
 
 
 			memset(&lightSystem->mSceneLighting, 0, sizeof(SceneLighting));
+
+
+			InitLightIDs(*lightSystem);
+			ClearShadowMapPages(*lightSystem);
 
 			return lightSystem;
 		}
@@ -211,6 +253,10 @@ namespace r2::draw
 				R2_CHECK(false, "We probably shouldn't be destroying a null light system");
 				return;
 			}
+
+			FREE(system->mMetaData.mSpotlightIDs, arena);
+			FREE(system->mMetaData.mDirectionlightIDs, arena);
+			FREE(system->mMetaData.mPointLightIDs, arena);
 
 			FREE(system->mMetaData.mSpotLightsModifiedList, arena);
 			FREE(system->mMetaData.mDirectionLightsModifiedList, arena);

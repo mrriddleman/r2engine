@@ -175,7 +175,12 @@ namespace r2::draw
 
 	template<typename T> struct CommandBucket;
 
+	enum eRendererFlags : u32
+	{
+		RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH = 1 << 0
+	};
 
+	using RendererFlags = r2::Flags<u32, u32>;
 
 	struct Renderer
 	{
@@ -237,7 +242,7 @@ namespace r2::draw
 		ShaderHandle mSDSMCalculateLogPartitionsComputeShader;
 		//ShaderHandle mSDSMReduceBoundsComputeShader;
 		//ShaderHandle mSDSMCalculateCustomPartitionsComputeShader;
-		ShaderHandle mShadowSplitSDSMComputeShader;
+		ShaderHandle mShadowSDSMComputeShader;
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -287,6 +292,13 @@ namespace r2::draw
 		r2::SArray<DebugRenderBatch>* mDebugRenderBatches = nullptr;
 #endif
 		//------------END Debug Stuff--------------
+
+		//------------BEGIN FLAGS------------------
+		RendererFlags mFlags;
+		//-------------END FLAGS-------------------
+
+
+
 	};
 }
 

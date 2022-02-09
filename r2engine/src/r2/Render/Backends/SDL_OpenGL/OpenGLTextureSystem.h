@@ -86,9 +86,9 @@ namespace r2::draw::gl
 
 		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices);
 
-		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container);
-		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container);
-		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice);
+		GLsizei HasRoom(const r2::draw::tex::TextureContainer& container, u32 numPages);
+		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container, u32 numPages);
+		void VirtualFree(r2::draw::tex::TextureContainer& container, GLsizei slice, u32 numPages);
 
 		void Commit(r2::draw::tex::TextureContainer& container, r2::draw::tex::TextureHandle* _tex);
 		void Free(r2::draw::tex::TextureContainer& container, r2::draw::tex::TextureHandle* _tex);
@@ -107,11 +107,13 @@ namespace r2::draw::gl
 
 	namespace texsys
 	{
-		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format);
+		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages);
 		void FreeGLTexture(r2::draw::tex::TextureHandle& handle);
+		void AddTexturePages(r2::draw::tex::TextureHandle& handle, u32 numPages);
+
 
 		//private
-		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format);
+		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages);
 		
 	}
 }

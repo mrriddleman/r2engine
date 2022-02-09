@@ -16,6 +16,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction DispatchComputeIndirect::DispatchFunc = &r2::draw::dispatch::DispatchComputeIndirect;
 	const r2::draw::dispatch::BackendDispatchFunction DispatchCompute::DispatchFunc = &r2::draw::dispatch::DispatchCompute;
 	const r2::draw::dispatch::BackendDispatchFunction Barrier::DispatchFunc = &r2::draw::dispatch::Barrier;
+	const r2::draw::dispatch::BackendDispatchFunction ConstantUint::DispatchFunc = &r2::draw::dispatch::ConstantUint;
 
 	u64 LargestCommand()
 	{
@@ -31,7 +32,8 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::SetRenderTarget),
 			sizeof(r2::draw::cmd::DispatchComputeIndirect),
 			sizeof(r2::draw::cmd::DispatchCompute),
-			sizeof(r2::draw::cmd::Barrier)
+			sizeof(r2::draw::cmd::Barrier),
+			sizeof(r2::draw::cmd::ConstantUint)
 			});
 	}
 

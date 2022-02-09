@@ -104,23 +104,21 @@ layout (std430, binding = 5) buffer DebugConstants
 
 layout (std430, binding = 6) buffer ShadowData
 {
-	Partition gPartitions[NUM_FRUSTUM_SPLITS];
-	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	BoundsUint gPartitionBoundsU[NUM_FRUSTUM_SPLITS];
-}
+	Partition gPartitions;
+	UPartition gPartitionsU;
+
+	vec4 gScale[MAX_NUM_LIGHTS][NUM_FRUSTUM_SPLITS];
+	vec4 gBias[MAX_NUM_LIGHTS][NUM_FRUSTUM_SPLITS];
+
+	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+
+	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
+};
 
 
 */
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -420,29 +418,82 @@ namespace r2::draw
     {
         mElements.clear();
 
-        mElements.emplace_back(ConstantBufferElement());
-        mElements[0].typeCount = cam::NUM_FRUSTUM_SPLITS;
-        mElements[0].type = ShaderDataType::Struct;
-        mElements[0].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(Partition), GetBaseAlignmentSize(mElements[0].type)));
-        mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+        int index = 0;
 
+        //gPartitions
         mElements.emplace_back(ConstantBufferElement());
-        mElements[1].typeCount = cam::NUM_FRUSTUM_SPLITS;
-        mElements[1].type = ShaderDataType::Struct;
-        mElements[1].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[1].type)));
-        mElements[1].size = mElements[1].elementSize * mElements[1].typeCount;
+        mElements[index].typeCount = 1;
+        mElements[index].type = ShaderDataType::Struct;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(Partition), GetBaseAlignmentSize(mElements[index].type)));
+        mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
+        ++index;
+
+        //gPartitionsU
         mElements.emplace_back(ConstantBufferElement());
-        mElements[2].typeCount = 1;
-        mElements[2].type = ShaderDataType::Mat4;
-        mElements[2].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::mat4), GetBaseAlignmentSize(mElements[2].type)));
-        mElements[2].size = mElements[2].elementSize * mElements[2].typeCount;
+        mElements[index].typeCount = 1;
+        mElements[index].type = ShaderDataType::Struct;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[index].type)));
+        mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
-        //mElements.emplace_back(ConstantBufferElement());
-        //mElements[2].typeCount = cam::NUM_FRUSTUM_SPLITS;
-        //mElements[2].type = ShaderDataType::Struct;
-        //mElements[2].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(UPartition), GetBaseAlignmentSize(mElements[2].type)));
-        //mElements[2].size = mElements[2].elementSize * mElements[2].typeCount;
+        ++index;
+
+        //gScale
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_LIGHTS * cam::NUM_FRUSTUM_SPLITS;
+		mElements[index].type = ShaderDataType::Float4;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::vec4), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        ++index;
+
+        //gBias
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_LIGHTS * cam::NUM_FRUSTUM_SPLITS;
+		mElements[index].type = ShaderDataType::Float4;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::vec4), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		++index;
+
+
+
+        //gShadowMatrix
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[index].typeCount = light::MAX_NUM_LIGHTS;
+        mElements[index].type = ShaderDataType::Mat4;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::mat4), GetBaseAlignmentSize(mElements[index].type)));
+        mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        ++index;
+
+
+        //gSpotLightShadowMapPages
+        mElements.emplace_back(ConstantBufferElement());
+        mElements[index].typeCount = light::NUM_SPOTLIGHT_SHADOW_PAGES;
+        mElements[index].type = ShaderDataType::Float;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(float), GetBaseAlignmentSize(mElements[index].type)));
+        mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        ++index;
+
+        //gPointLightShadowMapPages
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::NUM_POINTLIGHT_SHADOW_PAGES;
+		mElements[index].type = ShaderDataType::Float;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(float), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        ++index;
+
+        //gDirectionLightShadowMapPages
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::NUM_DIRECTIONLIGHT_SHADOW_PAGES;
+		mElements[index].type = ShaderDataType::Float;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(float), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        ++index;
 
 		mType = Big;
 		mFlags = 0;

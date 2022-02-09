@@ -17,43 +17,7 @@ namespace r2::draw::rt
 
 namespace r2::draw::rt::impl
 {
-	/*void Bind(const RenderTarget& rt)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
-	}
-	
-	void Unbind(const RenderTarget& rt)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-
-	void SetDrawBuffers(const RenderTarget& rt)
-	{
-		Bind(rt);
-
-		if (rt.colorAttachments && rt.frameBufferID != 0)
-		{
-			const u64 numBufs = r2::sarr::Size(*rt.colorAttachments);
-			GLenum* bufs = ALLOC_ARRAYN(GLenum, numBufs, *MEM_ENG_SCRATCH_PTR);
-
-			for (u64 i = 0; i < numBufs; ++i)
-			{
-				bufs[i] = GL_COLOR_ATTACHMENT0 + i;
-			}
-
-			glDrawBuffers(numBufs, bufs);
-
-			FREE_ARRAY(bufs, *MEM_ENG_SCRATCH_PTR);
-		}
-
-	}
-
-	void SetViewport(const RenderTarget& renderTarget)
-	{
-		glViewport(renderTarget.xOffset, renderTarget.yOffset, renderTarget.width, renderTarget.height);
-	}*/
-
-	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR)
+	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRenderering)
 	{
 		R2_CHECK(layers > 0, "We need at least 1 layer");
 
@@ -65,7 +29,6 @@ namespace r2::draw::rt::impl
 		format.width = rt.width;
 		format.height = rt.height;
 		format.mipLevels = mipLevels;
-		format.numCommitLayers = layers;
 
 		if (type == COLOR)
 		{
@@ -80,7 +43,7 @@ namespace r2::draw::rt::impl
 		}
 		else if (type == DEPTH)
 		{
-			format.internalformat = GL_DEPTH_COMPONENT32F;
+			format.internalformat = GL_DEPTH_COMPONENT16;
 			format.borderColor = glm::vec4(1.0f);
 		}
 		else
@@ -93,7 +56,7 @@ namespace r2::draw::rt::impl
 		format.magFilter = filter;
 		format.wrapMode = wrapMode;
 
-		textureAttachment.texture = tex::CreateTexture(format);
+		textureAttachment.texture = tex::CreateTexture(format, layers);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 		if (type == COLOR)
@@ -102,13 +65,14 @@ namespace r2::draw::rt::impl
 		}
 		else if (type == DEPTH)
 		{
-			//Have to do layered rendering with this
-			if (layers == 1)
+			
+			if (!useLayeredRenderering)
 			{
 				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
 			}
 			else
 			{
+				//Have to do layered rendering with this
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0);
 			}
 
@@ -139,6 +103,64 @@ namespace r2::draw::rt::impl
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	}
+
+
+	float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages)
+	{
+		r2::SArray<TextureAttachment>* textureAttachmentsToUse = nullptr;
+
+		if (type == COLOR)
+		{
+			textureAttachmentsToUse = rt.colorAttachments;
+		}
+		else if (type == DEPTH)
+		{
+			textureAttachmentsToUse = rt.depthAttachments;
+		}
+		else
+		{
+			R2_CHECK(false, "Unsupported TextureAttachmentType");
+		}
+
+
+		//@NOTE(Serge): we only use the first one right now
+		R2_CHECK(r2::sarr::Size(*textureAttachmentsToUse) > 0, "We should have at least one texture here!");
+
+		r2::draw::tex::TextureHandle textureHandle = r2::sarr::At(*textureAttachmentsToUse, 0).texture;
+
+		return tex::AddTexturePages(textureHandle, pages).sliceIndex;
+	}
+
+	void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages)
+	{
+		if (!(index >= 0 && pages > 0))
+		{
+			return;
+		}
+
+		r2::SArray<TextureAttachment>* textureAttachmentsToUse = nullptr;
+
+		if (type == COLOR)
+		{
+			textureAttachmentsToUse = rt.colorAttachments;
+		}
+		else if (type == DEPTH)
+		{
+			textureAttachmentsToUse = rt.depthAttachments;
+		}
+		else
+		{
+			R2_CHECK(false, "Unsupported TextureAttachmentType");
+		}
+
+		R2_CHECK(r2::sarr::Size(*textureAttachmentsToUse) > 0, "We should have at least one texture here!");
+
+		r2::draw::tex::TextureHandle textureHandle = r2::sarr::At(*textureAttachmentsToUse, 0).texture;
+		textureHandle.sliceIndex = index;
+		textureHandle.numPages = pages;
+
+		tex::UnloadFromGPU(textureHandle);
 	}
 
 	void AddDepthAndStencilAttachment(RenderTarget& rt)

@@ -67,6 +67,7 @@ namespace r2::draw::tex
 	{
 		r2::draw::tex::TextureContainer* container = nullptr;
 		f32 sliceIndex = -1.0f;
+		u32 numPages = 0;
 	};
 
 	using GPUHandle = TextureHandle;
@@ -90,7 +91,7 @@ namespace r2::draw::tex
 		s32 magFilter = FILTER_LINEAR;
 		s32 wrapMode = WRAP_MODE_REPEAT;
 		glm::vec4 borderColor = glm::vec4(0);
-		u32 numCommitLayers = 1;
+		//u32 numCommitLayers = 1;
 	};
 
 	struct TextureContainer
@@ -116,7 +117,9 @@ namespace r2::draw::tex
 
 	const char* TextureTypeToString(TextureType type);
 
-	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format);
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
+	TextureHandle AddTexturePages(const TextureHandle& textureHandle, u32 numPages);
+	
 
 	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap);
 

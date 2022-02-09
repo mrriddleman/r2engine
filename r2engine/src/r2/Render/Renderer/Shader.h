@@ -42,6 +42,9 @@ namespace r2::draw
         void Delete(Shader& shader);
         bool IsValid(const Shader& shader);
 
+
+        u32 GetMaxNumberOfGeometryShaderInvocations();
+
         u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr);
         
         //@TODO(Serge): move this to shader system

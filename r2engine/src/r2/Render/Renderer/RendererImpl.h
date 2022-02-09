@@ -73,7 +73,7 @@ namespace r2::draw::rendererimpl
 	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
 	void SetShaderID(r2::draw::ShaderHandle shaderHandle);
 
-	//draw functions
+	//Command functions
 	void Clear(u32 flags);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0, PrimitiveType primitivetype = PrimitiveType::TRIANGLES);
@@ -87,7 +87,7 @@ namespace r2::draw::rendererimpl
 	void DispatchComputeIndirect(ConstantBufferHandle dispatchBufferHandle, u32 offset);
 	void DispatchCompute(u32 numGroupX, u32 numGroupY, u32 numGroupZ);
 	void Barrier(u32 flags);
-
+	void ConstantUint(r2::draw::ShaderHandle shaderHandle, const char* name, u32 value);
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

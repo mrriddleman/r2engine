@@ -5,10 +5,17 @@
 
 
 //@TODO(Serge): make this into a real thing we can pass in
-#define MAX_NUM_LIGHTS 50 
+const uint MAX_NUM_LIGHTS = 50;
 #define NUM_FRUSTUM_SPLITS 4
 #define NUM_FRUSTUM_CORNERS 8
 
+#define NUM_SPOTLIGHT_LAYERS 1
+#define NUM_POINTLIGHT_LAYERS 6
+#define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
+
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
@@ -17,19 +24,6 @@ const float projMult = 1;
 const float zMult = 5;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
 const bool STABALIZE_CASCADES = true;
-
-struct Partition
-{
-	vec4 intervalBeginScale;
-	vec4 intervalEndBias;
-};
-
-struct UPartition
-{
-	uvec4 intervalBeginMinCoord;
-	uvec4 intervalEndMaxCoord;
-};
-
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -114,11 +108,31 @@ layout (std430, binding = 4) buffer Lighting
 	int useSDSMShadows;
 };
 
+struct Partition
+{
+	vec4 intervalBegin;
+	vec4 intervalEnd;
+};
+
+struct UPartition
+{
+	uvec4 intervalBegin;
+	uvec4 intervalEnd;
+};
+
 layout (std430, binding = 6) buffer ShadowData
 {
-	Partition gPartitions[NUM_FRUSTUM_SPLITS];
-	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	mat4 gShadowMatrix;
+	Partition gPartitions;
+	UPartition gPartitionsU;
+
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+
+	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+
+	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
 mat4 MatInverse(mat4 mat)
@@ -206,7 +220,7 @@ vec4 PlaneFromPoints(in vec3 point1, in vec3 point2, in vec3 point3)
 shared mat4 GlobalShadowMatrix;
 
 
-mat4 MakeGlobalShadowMatrix()
+mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 {
 	mat4 projViewInv = MatInverse(projection * view);
 
@@ -249,7 +263,7 @@ mat4 MakeGlobalShadowMatrix()
 
 	mat4 shadowCamera = Ortho(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5);
 
-	mat4 lightView = LookAt(center + dirLights[0].direction.xyz * -0.5, center, upDir);
+	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
 	mat4 texScaleBias = mat4(0.5);
 	//texScaleBias[2][2] = 0.5;
@@ -260,22 +274,29 @@ mat4 MakeGlobalShadowMatrix()
 	return texScaleBias * shadowCamera * lightView;
 }
 
+int GetCurrentDirectionLightLightID(int dirLightIndex)
+{
+	return int(dirLights[dirLightIndex].lightProperties.lightID);
+}
+
 void main(void)
 {
-	uint cascadeIndex = gl_LocalInvocationIndex;
-
+	uint cascadeIndex = gl_LocalInvocationID.x;
+	int directionLightIndex = int(gl_WorkGroupID.x);
+	int directionLightLightID = GetCurrentDirectionLightLightID(directionLightIndex);
+	
 
 	if(cascadeIndex == 0)
 	{
-		GlobalShadowMatrix = MakeGlobalShadowMatrix();
-		gShadowMatrix = GlobalShadowMatrix;
+		GlobalShadowMatrix = MakeGlobalShadowMatrix(directionLightIndex);
+		gShadowMatrix[directionLightLightID] = GlobalShadowMatrix;
 	}
 
 	barrier();
 	memoryBarrierShared();
 
 
-	mat4 proj = Projection(fovAspect.x, fovAspect.y, gPartitions[cascadeIndex].intervalBeginScale.x, gPartitions[cascadeIndex].intervalEndBias.x );
+	mat4 proj = Projection(fovAspect.x, fovAspect.y, gPartitions.intervalBegin[cascadeIndex], gPartitions.intervalEnd[cascadeIndex] );
 
 	mat4 projViewInv = MatInverse(proj * view);
 
@@ -345,7 +366,7 @@ void main(void)
 		vec3 lightCameraPos = center;
 
 
-		mat4 lightView = LookAt(lightCameraPos - dirLights[0].direction.xyz, lightCameraPos, upDir);
+		mat4 lightView = LookAt(lightCameraPos - dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
 
 
 		const float MAX_FLOAT = 3.402823466e+38F;
@@ -371,23 +392,23 @@ void main(void)
 
 	}
 	
-	vec3 eye = center - (dirLights[0].direction.xyz * maxExtents.z);
+	vec3 eye = center - (dirLights[directionLightIndex].direction.xyz * maxExtents.z);
 
 	//float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
 
 	
 
-	dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, upDir);
+	dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, upDir);
 
-	dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult, -zMult, maxExtents.z * zMult);
+	dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult, -zMult, maxExtents.z * zMult);
 	
 
 	//Stabalize Cascades
 
 	if(STABALIZE_CASCADES)
 	{
-		mat4 shadowMatrix = dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex];
+		mat4 shadowMatrix = dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex];
 
 		vec3 shadowOrigin = vec3(0);
 		shadowOrigin = (shadowMatrix * vec4(shadowOrigin, 1.0)).xyz;
@@ -398,16 +419,16 @@ void main(void)
 		roundOffset = roundOffset * (2.0 / shadowMapSizes[cascadeIndex]);
 		roundOffset.z = 0.0;
 
-		dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex][3][0] += roundOffset.x;
-		dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex][3][1] += roundOffset.y;
+		dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex][3][0] += roundOffset.x;
+		dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex][3][1] += roundOffset.y;
 	}
 	
 
 	//Do all the offset and scale calculations
 
 
-	mat4 shadowProjInv = MatInverse(dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex]);
-	mat4 shadowViewInv = MatInverse(dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex]);
+	mat4 shadowProjInv = MatInverse(dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex]);
+	mat4 shadowViewInv = MatInverse(dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex]);
 	
 
 	mat4 texScaleBias = mat4(1.0);
@@ -429,12 +450,15 @@ void main(void)
 
 	vec3 cascadeScale = 1.0 / (otherCorner - cascadeCorner);
 
-	gPartitions[cascadeIndex].intervalBeginScale.y = cascadeScale.x;
-	gPartitions[cascadeIndex].intervalBeginScale.z = cascadeScale.y;
-	gPartitions[cascadeIndex].intervalBeginScale.w = cascadeScale.z;
 
-	gPartitions[cascadeIndex].intervalEndBias.y = -cascadeCorner.x;
-	gPartitions[cascadeIndex].intervalEndBias.z = -cascadeCorner.y;
-	gPartitions[cascadeIndex].intervalEndBias.w = -cascadeCorner.z;
+	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale, 0);
+	gBias[cascadeIndex][directionLightLightID] = vec4(-cascadeCorner, 0);
+	//gPartitions[cascadeIndex].intervalBeginScale.y = cascadeScale.x;
+	//gPartitions[cascadeIndex].intervalBeginScale.z = cascadeScale.y;
+	//gPartitions[cascadeIndex].intervalBeginScale.w = cascadeScale.z;
+
+	//gPartitions[cascadeIndex].intervalEndBias.y = -cascadeCorner.x;
+	//gPartitions[cascadeIndex].intervalEndBias.z = -cascadeCorner.y;
+	//gPartitions[cascadeIndex].intervalEndBias.w = -cascadeCorner.z;
 
 }

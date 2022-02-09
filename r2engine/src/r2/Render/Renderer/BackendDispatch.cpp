@@ -101,4 +101,12 @@ namespace r2::draw::dispatch
 
 		rendererimpl::Barrier(realData->flags);
 	}
+
+	void ConstantUint(const void* data)
+	{
+		const cmd::ConstantUint* realData = static_cast<const r2::draw::cmd::ConstantUint*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::ConstantUint(realData->shaderID, realData->uniformName, realData->value);
+	}
 }

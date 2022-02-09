@@ -670,6 +670,23 @@ namespace r2::draw::rendererimpl
 		glMemoryBarrier(flags);
 	}
 
+	void ConstantUint(r2::draw::ShaderHandle shaderHandle, const char* name, u32 value)
+	{
+		const Shader* shader = shadersystem::GetShader(shaderHandle);
+		R2_CHECK(shader != nullptr, "We couldn't get the shader from the shader handle: %lu", shaderHandle);
+
+
+		GLint location =  glGetUniformLocation(shader->shaderProg, name);
+
+		R2_CHECK(location >= 0, "We couldn't get the uniform location of the uniform name passed in: %s", name);
+
+		GLenum err = glGetError();
+		//if(err != GL_NO_ERROR)
+		R2_CHECK(err == GL_NO_ERROR, "We got an OpenGL error from ConstantUint: %i", err);
+
+		glUniform1ui(location, value);
+	}
+
 	void ApplyDrawState(const cmd::DrawState& state)
 	{
 		//glDepthMask(state.depthEnabled);

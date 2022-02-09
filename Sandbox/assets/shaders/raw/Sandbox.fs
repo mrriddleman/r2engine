@@ -5,6 +5,9 @@
 const uint NUM_TEXTURES_PER_DRAWID = 8;
 const uint MAX_NUM_LIGHTS = 50;
 
+
+
+
 layout (location = 0) out vec4 FragColor;
 
 #define PI 3.141596
@@ -12,17 +15,14 @@ layout (location = 0) out vec4 FragColor;
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
 #define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 
-struct Partition
-{
-	vec4 intervalBeginScale;
-	vec4 intervalEndBias;
-};
+#define NUM_SPOTLIGHT_LAYERS 1
+#define NUM_POINTLIGHT_LAYERS 6
+#define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
 
-struct UPartition
-{
-	uvec4 intervalBeginMinCoord;
-	uvec4 intervalEndMaxCoord;
-};
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+
 
 
 struct Tex2DAddress
@@ -148,11 +148,33 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress zPrePassSurface;
 };
 
+//@NOTE(Serge): we can only have 4 cascades like this
+struct Partition
+{
+	vec4 intervalBegin;
+	vec4 intervalEnd;
+};
+
+struct UPartition
+{
+	uvec4 intervalBegin;
+	uvec4 intervalEnd;
+};
+
+
 layout (std430, binding = 6) buffer ShadowData
 {
-	Partition gPartitions[NUM_FRUSTUM_SPLITS];
-	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	mat4 gShadowMatrix;
+	Partition gPartitions;
+	UPartition gPartitionsU;
+
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+
+	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+
+	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
 
@@ -176,9 +198,13 @@ vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0
 
 vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
 float InterleavedGradientNoise(vec2 screenPosition);
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex);
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID);
 float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth);
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
+
+float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth);
+float SampleSpotlightShadowMap(vec2 uv, int64_t spotlightID, float depth);
+
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
@@ -239,7 +265,7 @@ vec3 Eval_BRDF(
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
-float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, bool softShadows);
+float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -260,7 +286,7 @@ vec4 DebugFrustumSplitColor()
 	int layer = -1;
 	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
 	{
-		if(depthValue < gPartitions[i].intervalEndBias.x)
+		if(depthValue < gPartitions.intervalEnd[i])
 		{
 			layer = i;
 			break;
@@ -867,7 +893,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	 	if(dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 	 	{
-	 	 	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+	 	 	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.lightID, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 	 	}
 
 	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
@@ -948,17 +974,25 @@ vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
 	return texelSize * OFFSET_SCALE * nmlOffsetScale * normal;
 }
 
-float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
+float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth)
 {
 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
-	vec3 coord = vec3(uv, cascadeIndex + shadowsSurface.page);
+	vec3 coord = vec3(uv, cascadeIndex + gDirectionLightShadowMapPages[int(lightID)]);
 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
-
 
 	return depth > shadowSample ? 1.0 : 0.0;
 }
 
-float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
+float SampleSpotlightShadowMap(vec2 uv, int64_t spotlightID, float depth)
+{
+	//vec3 coord = vec3(uv, gSpotLightShadowMapPages[spotlightID]);
+	//float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
+
+	//return depth > shadowSample ? 1.0 : 0.0;
+	return 0;
+}
+
+float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
 {
 	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
@@ -989,20 +1023,20 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 	float v0 = (2 - t) / vw0 - 1;
 	float v1 = t / vw1 + 1;
 
-	sum += uw0 * vw0 * SampleShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
-	sum += uw1 * vw0 * SampleShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightDepth);
-	sum += uw0 * vw1 * SampleShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightDepth);
-	sum += uw1 * vw1 * SampleShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightDepth);
+	sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+	sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+	sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+	sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
 	return sum * 0.0625; //1 / 16
 }
 
 
 
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL, bool softShadows)
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, bool softShadows)
 {
-	shadowPosition += gPartitions[cascadeIndex].intervalEndBias.yzw;
-	shadowPosition *= gPartitions[cascadeIndex].intervalBeginScale.yzw;
+	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
+	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 
 	if(shadowPosition.z > 1.0)
 	{
@@ -1013,7 +1047,7 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL, boo
 	float bias = max(0.005 * (1.0 - NoL), 0.0005);
 	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
 	{
-		bias *= 1.0 / (gPartitions[cascadeIndex].intervalBeginScale.x * 0.15);
+		bias *= 1.0 / (gPartitions.intervalBegin[cascadeIndex] * 0.15);
 	}
 
 	lightDepth -= bias;
@@ -1021,18 +1055,20 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, float NoL, boo
 
 	if(softShadows)
 	{
-		return SoftShadow(shadowPosition, cascadeIndex, lightDepth);
+		return SoftShadow(shadowPosition, cascadeIndex, lightID, lightDepth);
 	}
 	else
 	{
-		return OptimizedPCF(shadowPosition, cascadeIndex, lightDepth);
+		return OptimizedPCF(shadowPosition, cascadeIndex, lightID, lightDepth);
 	}
 }
 
-float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, bool softShadows)
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows)
 {
 	vec3 normal = normalize(fs_in.normal);
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
+
+	int lightIndex = int(lightID);
 
 	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
@@ -1042,14 +1078,19 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, bool softShadows)
 
 	float NoL = max(dot(-lightDir, normal), 0.0);
 
-	vec3 projectionPos = (gShadowMatrix * vec4(fragPosWorldSpace, 1.0)).xyz;
+	vec3 projectionPos = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0)).xyz;
 
 	uint layer = NUM_FRUSTUM_SPLITS - 1;
 
+
+
 	for(int i = int(layer); i >= 0; --i)
 	{
-		vec3 cascadePos = projectionPos + gPartitions[i].intervalEndBias.yzw;
-		cascadePos *= gPartitions[i].intervalBeginScale.yzw;
+		vec3 scale = gScale[i][lightIndex].xyz;
+		vec3 bias = gBias[i][lightIndex].xyz;
+
+		vec3 cascadePos = projectionPos + bias;
+		cascadePos *= scale;
 		cascadePos = abs(cascadePos - 0.5f);
 		if(cascadePos.x <= 0.5 && cascadePos.y <= 0.5 && cascadePos.z <= 0.5)
 		{
@@ -1062,29 +1103,29 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, bool softShadows)
 
 	vec3 samplePos = fragPosWorldSpace + offset;
 
-	vec3 shadowPosition = (gShadowMatrix * vec4(samplePos, 1.0)).xyz;
+	vec3 shadowPosition = (gShadowMatrix[lightIndex] * vec4(samplePos, 1.0)).xyz;
 
-	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, NoL, softShadows);
+	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, softShadows);
 
 	
 	const float BLEND_THRESHOLD = 0.1f;
 
-    float nextSplit = gPartitions[layer].intervalEndBias.x;
-    float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions[layer - 1].intervalEndBias.x;
+    float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
+    float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
     float fadeFactor = (nextSplit - gl_FragDepth) / splitSize;
 
-    vec3 cascadePos = projectionPos + gPartitions[layer].intervalEndBias.yzw;
-    cascadePos *= gPartitions[layer].intervalBeginScale.yzw;
+    vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
+    cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
     cascadePos = abs(cascadePos * 2.0 - 1.0);
     float distToEdge = 1.0 - max(max(cascadePos.x, cascadePos.y), cascadePos.z);
     fadeFactor = max(distToEdge, fadeFactor);
 
     if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS - 1)
     {
-    	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gPartitions[layer+1].intervalBeginScale.w);
-    	vec3 nextCascadeShadowPosition = (gShadowMatrix * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
+    	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
+    	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, NoL, softShadows);
+    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, softShadows);
 
     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
@@ -1098,7 +1139,7 @@ const float SHADOW_FILTER_MAX_SIZE = 0.002f;
 const float PENUMBRA_FILTER_SCALE = 1.2f;
 
 
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
 {
 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
 
@@ -1115,7 +1156,7 @@ float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
 
 	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
-	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex);
+	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID);
 
 	float shadow = 0.0;
 	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
@@ -1123,7 +1164,7 @@ float SoftShadow(vec3 shadowPosition, uint cascadeIndex, float lightDepth)
 		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
 		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
 
-		shadow += SampleShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightDepth);
+		shadow += SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 	}
 
 	return shadow / NUM_SOFT_SHADOW_SAMPLES;
@@ -1146,7 +1187,7 @@ float InterleavedGradientNoise(vec2 screenPosition)
 }
 
 //float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID)
 {
 	float avgBlockerDepth = 0.0;
 	float blockersCount = 0.0;
@@ -1157,7 +1198,7 @@ float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCo
 		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
 		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
 
-		float sampleDepth = SampleShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, depth);
+		float sampleDepth = SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, depth);
 
 		if(sampleDepth < depth)
 		{

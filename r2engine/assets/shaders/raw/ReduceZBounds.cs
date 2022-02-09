@@ -4,7 +4,12 @@
 #define NUM_FRUSTUM_SPLITS 4
 #define REDUCE_ZBOUNDS_BLOCK_DIM 16
 #define REDUCE_ZBOUNDS_BLOCK_SIZE (REDUCE_ZBOUNDS_BLOCK_DIM * REDUCE_ZBOUNDS_BLOCK_DIM)
+const uint MAX_NUM_LIGHTS = 50;
 
+
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 
 layout (local_size_x = REDUCE_ZBOUNDS_BLOCK_DIM, local_size_y = REDUCE_ZBOUNDS_BLOCK_DIM, local_size_z = 1) in;
 
@@ -13,18 +18,6 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
-};
-
-struct Partition
-{
-	vec4 intervalBeginScale;
-	vec4 intervalEndBias;
-};
-
-struct UPartition
-{
-	uvec4 intervalBeginMinCoord;
-	uvec4 intervalEndMaxCoord;
 };
 
 
@@ -66,12 +59,36 @@ layout (std140, binding = 3) uniform SDSMParams
 	uint padding;
 };
 
+
+//@NOTE(Serge): we can only have 4 cascades like this
+struct Partition
+{
+	vec4 intervalBegin;
+	vec4 intervalEnd;
+};
+
+struct UPartition
+{
+	uvec4 intervalBegin;
+	uvec4 intervalEnd;
+};
+
+
 layout (std430, binding = 6) buffer ShadowData
 {
-	Partition gPartitions[NUM_FRUSTUM_SPLITS];
-	UPartition gPartitionsU[NUM_FRUSTUM_SPLITS];
-	mat4 gShadowMatrix;
+	Partition gPartitions;
+	UPartition gPartitionsU;
+
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+
+	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+
+	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
+
 
 
 
@@ -131,8 +148,8 @@ void main(void)
 
 	if(gl_LocalInvocationIndex == 0)
 	{
-		atomicMin(gPartitionsU[0].intervalBeginMinCoord.x, floatBitsToUint(sMinZ[0]));
-		atomicMax(gPartitionsU[NUM_FRUSTUM_SPLITS - 1].intervalEndMaxCoord.x, floatBitsToUint(sMaxZ[NUM_FRUSTUM_SPLITS - 1]));
+		atomicMin(gPartitionsU.intervalBegin[0], floatBitsToUint(sMinZ[0]));
+		atomicMax(gPartitionsU.intervalEnd[NUM_FRUSTUM_SPLITS - 1], floatBitsToUint(sMaxZ[NUM_FRUSTUM_SPLITS - 1]));
 	}
 }
 

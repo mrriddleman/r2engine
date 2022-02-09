@@ -469,7 +469,7 @@ namespace r2::draw::tex
 		textureFormat.minFilter = FILTER_LINEAR;
 		textureFormat.magFilter = FILTER_LINEAR;
 
-		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
+		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
 
 		if (compressed && usedDDS)
 		{
@@ -613,7 +613,7 @@ namespace r2::draw::tex
 					textureFormat.wrapMode = WRAP_MODE_CLAMP_TO_EDGE;
 					textureFormat.magFilter = FILTER_LINEAR;
 					textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
-					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat);
+					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
 				}
 
 				r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), mipLevel, 0, 0, texWidth, texHeight, format, formatSize, imageData);
@@ -642,10 +642,20 @@ namespace r2::draw::tex
 		return r2::draw::gl::tex::GetAddress(handle);
 	}
 
-	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format)
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages)
 	{
 		r2::draw::tex::GPUHandle newHandle;
-		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format);
+		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format, numPages);
+		return newHandle;
+	}
+
+	TextureHandle AddTexturePages(const TextureHandle& textureHandle, u32 numPages)
+	{
+		r2::draw::tex::GPUHandle newHandle;
+		newHandle.container = textureHandle.container;
+		
+		r2::draw::gl::texsys::AddTexturePages(newHandle, numPages);
+
 		return newHandle;
 	}
 
