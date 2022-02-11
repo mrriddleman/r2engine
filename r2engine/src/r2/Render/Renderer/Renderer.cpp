@@ -402,7 +402,7 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
-	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic);
+	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic, light::LightType lightType);
 	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic);
 
 	//------------------------------------------------------------------------------
@@ -740,6 +740,15 @@ namespace r2::draw::renderer
 		newRenderer->mShadowDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicShadowDepth")))->shaderId;
 		CheckIfValidShader(*newRenderer, newRenderer->mShadowDepthShaders[1], "DynamicShadowDepth");
 
+		newRenderer->mSpotLightShadowShaders[0] = shadersystem::FindShaderHandle(STRING_ID("SpotLightStaticShadowDepth"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSpotLightShadowShaders[0], "SpotLightStaticShadowDepth");
+
+		newRenderer->mSpotLightShadowShaders[1] = shadersystem::FindShaderHandle(STRING_ID("SpotLightDynamicShadowDepth"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSpotLightShadowShaders[1], "SpotLightDynamicShadowDepth");
+
+		newRenderer->mSpotLightLightMatrixShader = shadersystem::FindShaderHandle(STRING_ID("SpotLightLightMatrices"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSpotLightLightMatrixShader, "SpotLightLightMatrices");
+
 		newRenderer->mDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticDepth")))->shaderId;
 		CheckIfValidShader(*newRenderer, newRenderer->mDepthShaders[0], "StaticDepth");
 
@@ -764,6 +773,19 @@ namespace r2::draw::renderer
 
 		newRenderer->mShadowSDSMComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCascadesSDSM"));
 		CheckIfValidShader(*newRenderer, newRenderer->mShadowSDSMComputeShader, "CalculateCascadesSDSM");
+
+
+		//@TODO(Serge): get rid of this - it's a giant hack
+		newRenderer->mStaticDirectionLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mShadowDepthShaders[0], "directionLightBatch");
+		newRenderer->mDynamicDirectionLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mShadowDepthShaders[1], "directionLightBatch");
+		//s32 mStaticDirectionLightBatchUniformLocation;
+		//s32 mDynamicDirectionLightBatchUniformLocation;
+
+		newRenderer->mStaticSpotLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mSpotLightShadowShaders[0], "spotLightBatch");
+		newRenderer->mDynamicSpotLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mSpotLightShadowShaders[1], "spotLightBatch");
+		//s32 mStaticSpotLightBatchUniformLocation;
+		//s32 mDynamicSpotLightBatchUniformLocation;
+
 
 		//CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
@@ -2607,6 +2629,7 @@ namespace r2::draw::renderer
 		//PreRender should be setting up the batches to render
 		static int MAX_NUM_GEOMETRY_SHADER_INVOCATIONS = shader::GetMaxNumberOfGeometryShaderInvocations();
 		const s32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
+		const s32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
 
 		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 100); //@TODO(Serge): measure how many allocations
 
@@ -2921,7 +2944,7 @@ namespace r2::draw::renderer
 		clearDepthOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
-		key::ShadowKey shadowClearKey = key::GenerateShadowKey(key::ShadowKey::CLEAR, 0, 0, false, 0);
+		key::ShadowKey shadowClearKey = key::GenerateShadowKey(key::ShadowKey::CLEAR, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
@@ -2949,7 +2972,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_WORLD)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, 0);
+				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 
 				//I guess we need to loop here to submit all of the draws for each light...
@@ -2959,10 +2982,9 @@ namespace r2::draw::renderer
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
-					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
+					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, directionShadowKey, 0);
 					directionLightBatchIndexUpdateCMD->value = i;
-					directionLightBatchIndexUpdateCMD->shaderID = GetShadowDepthShaderHandle(renderer, false);
-					strcpy(directionLightBatchIndexUpdateCMD->uniformName, "directionLightBatch"); //@TODO(Serge): HACK!!!
+					directionLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticDirectionLightBatchUniformLocation;
 
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
 					
@@ -2977,6 +2999,28 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 				}
 
+				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
+
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_SPOT_LIGHT, 0);
+
+				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
+					spotLightBatchIndexUpdateCMD->value = i;
+					spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticSpotLightBatchUniformLocation;
+
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
+
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+				}
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
@@ -3016,17 +3060,18 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
-				key::ShadowKey shadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, 0);
+				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numDirectionLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numDirectionLights > 0 ? 1.0f : 0.0f));
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
 
-					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
+					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, directionShadowKey, 0);
 					directionLightBatchIndexUpdateCMD->value = i;
-					directionLightBatchIndexUpdateCMD->shaderID = GetShadowDepthShaderHandle(renderer, true);
-					strcpy(directionLightBatchIndexUpdateCMD->uniformName, "directionLightBatch"); //@TODO(Serge): HACK!!!
+					directionLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicDirectionLightBatchUniformLocation;
+					//directionLightBatchIndexUpdateCMD->shaderID = GetShadowDepthShaderHandle(renderer, true, light::LightType::LT_DIRECTIONAL_LIGHT);
+					//strcpy(directionLightBatchIndexUpdateCMD->uniformName, "directionLightBatch"); //@TODO(Serge): HACK!!!
 
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
 
@@ -3042,7 +3087,28 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 				}
 
+				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
 
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_SPOT_LIGHT, 0);
+
+				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
+					spotLightBatchIndexUpdateCMD->value = i;
+					spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicSpotLightBatchUniformLocation;
+
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
+
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+				}
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
 
@@ -3888,10 +3954,22 @@ namespace r2::draw::renderer
 		return renderer.mDepthShaders[shaderIndex];
 	}
 
-	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic)
+	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic, light::LightType lightType)
 	{
 		u32 shaderIndex = isDynamic ? 1 : 0;
-		return renderer.mShadowDepthShaders[shaderIndex];
+
+		if (lightType == light::LightType::LT_DIRECTIONAL_LIGHT)
+		{
+			return renderer.mShadowDepthShaders[shaderIndex];
+		}
+		else if (lightType == light::LightType::LT_SPOT_LIGHT)
+		{
+			return renderer.mSpotLightShadowShaders[shaderIndex];
+		}
+		else
+		{
+			R2_CHECK(false, "No other light types are implemented yet!");
+		}
 	}
 
 #ifdef R2_DEBUG
@@ -4971,8 +5049,8 @@ namespace r2::draw::renderer
 			//Dispatch the compute shaders for SDSM shadows
 			if (numDirectionLights > 0)
 			{
-				key::ShadowKey dispatchReduceZBoundsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 0, renderer.mSDSMReduceZBoundsComputeShader, false, 0);
-				key::ShadowKey dispatchCalculateLogPartitionsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 1,  renderer.mSDSMCalculateLogPartitionsComputeShader, false, 0);
+				key::ShadowKey dispatchReduceZBoundsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 0, renderer.mSDSMReduceZBoundsComputeShader, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
+				key::ShadowKey dispatchCalculateLogPartitionsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 1,  renderer.mSDSMCalculateLogPartitionsComputeShader, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 				int dispatchWidth = (renderer.mResolutionSize.width + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
 				int dispatchHeight = (renderer.mResolutionSize.height + REDUCE_TILE_DIM - 1) / REDUCE_TILE_DIM;
@@ -4998,7 +5076,7 @@ namespace r2::draw::renderer
 
 				
 				
-				key::ShadowKey dispatchShadowSDSMKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 4, renderer.mShadowSDSMComputeShader, false, 0);
+				key::ShadowKey dispatchShadowSDSMKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 4, renderer.mShadowSDSMComputeShader, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 				cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchShadowSDSMKey, 0);
 
@@ -5009,8 +5087,21 @@ namespace r2::draw::renderer
 				cmd::Barrier* splitShadowsBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
 				splitShadowsBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 				
+			}
 
+			const u32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
 
+			if (numSpotLights > 0)
+			{
+				key::ShadowKey dispatchSpotLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mSpotLightLightMatrixShader, false, light::LightType::LT_SPOT_LIGHT, 0);
+
+				cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchSpotLightShadowMatricesKey, 0);
+				dispatchCMD->numGroupsX = numSpotLights;
+				dispatchCMD->numGroupsY = 1;
+				dispatchCMD->numGroupsZ = 1;
+
+				cmd::Barrier* spotLightBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
+				spotLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 			}
 
 		}
@@ -5019,7 +5110,7 @@ namespace r2::draw::renderer
 			//normal custom PSSM shadows
 
 			//add the commands to split the shadow frustum in the compute shader
-			key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 0, renderer.mShadowSplitComputeShader, false, 0);
+			key::ShadowKey dispatchShadowSplitsKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 0, renderer.mShadowSplitComputeShader, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 			cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchShadowSplitsKey, 0);
 
@@ -5133,9 +5224,9 @@ namespace r2::draw::renderer
 		return GetDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic);
 	}
 
-	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic)
+	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType)
 	{
-		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic);
+		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic, lightType);
 	}
 
 	void SetRenderCamera(const Camera* cameraPtr)

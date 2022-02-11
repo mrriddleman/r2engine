@@ -12,6 +12,15 @@ namespace r2::draw
 {
 	namespace light
 	{
+		enum LightType : u8
+		{
+			LT_DIRECTIONAL_LIGHT = 0,
+			LT_SPOT_LIGHT,
+			LT_POINT_LIGHT,
+			NUM_LIGHT_TYPES
+		};
+
+
 		const u32 MAX_NUM_LIGHTS = 50;
 		const u32 SHADOW_MAP_SIZE = 1024;
 
@@ -78,6 +87,8 @@ namespace r2::draw
 		glm::vec4 direction;//@TODO(Serge): make these vec3?
 		//float radius; //cosine angle
 		//float cutoff; //cosine angle
+
+		glm::mat4 lightSpaceMatrix;
 	};
 
 	struct SkyLight
@@ -119,6 +130,7 @@ namespace r2::draw
 		r2::SQueue<s64>* mDirectionlightIDs = nullptr;
 		r2::SQueue<s64>* mSpotlightIDs = nullptr;
 
+		b32 mShouldUpdateSkyLight;
 	};
 
 	struct ShadowMapPages

@@ -3,6 +3,7 @@
 
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Light.h"
 
 #define MAX_BIT_VAL(x) static_cast<u64>((2 << (static_cast<u64>(x)-1))-1)
 #define ENCODE_KEY_VALUE(value, num_bits, offset) ((MAX_BIT_VAL(num_bits) & static_cast<u64>(value)) << static_cast<u64>(offset))
@@ -95,9 +96,9 @@ namespace r2::draw::key
 		|     Type      |    Ignored      | //Clear
 		+---------------+-----------------+
 
-		+----2 bit---+------1 bit-----+-13 bits-+
-		|    Type    | Static/Dynamic |  Depth  | //Normal
-		+------------+----------------+---------+
+		+----2 bit---+------1 bit-----+----2 bits----+-11 bits-+
+		|    Type    | Static/Dynamic |  Light Type  |  Depth  | //Normal
+		+------------+----------------+--------------+---------+
 
 		+----2 bit---+---3 bits---+--12 bits--+
 		|     Type   |Shader Order| Shader ID | //compute
@@ -121,13 +122,15 @@ namespace r2::draw::key
 
 			SHADOW_KEY_BITS_TYPE = 0x2,
 			SHADOW_KEY_BITS_IS_DYNAMIC = 0x1,
+			SHADOW_KEY_BITS_LIGHT_TYPE = 0x2,
 			SHADOW_KEY_BITS_DEPTH = 0xD,
 			SHADOW_KEY_BITS_SHADER_ORDER = 0x3,
 			SHADOW_KEY_BITS_SHADER_ID = 0xB,
 
 			SHADOW_KEY_TYPE_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_TYPE,
 			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_TYPE_OFFSET - SHADOW_KEY_BITS_IS_DYNAMIC,
-			SHADOW_KEY_DEPTH_OFFSET = SHADOW_KEY_IS_DYNAMIC_OFFSET - SHADOW_KEY_BITS_DEPTH,
+			SHADOW_KEY_LIGHT_TYPE_OFFSET = SHADOW_KEY_IS_DYNAMIC_OFFSET - SHADOW_KEY_BITS_LIGHT_TYPE,
+			SHADOW_KEY_DEPTH_OFFSET = SHADOW_KEY_LIGHT_TYPE_OFFSET - SHADOW_KEY_BITS_DEPTH,
 			SHADOW_KEY_SHADER_ORDER_OFFSET = SHADOW_KEY_TYPE_OFFSET - SHADOW_KEY_BITS_SHADER_ORDER,
 			SHADOW_KEY_SHADER_ID_OFFSET = SHADOW_KEY_SHADER_ORDER_OFFSET - SHADOW_KEY_BITS_SHADER_ID
 		};
@@ -182,7 +185,7 @@ namespace r2::draw::key
 
 	//Shadows
 	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
-	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth);
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u16 depth);
 	void DecodeShadowKey(const ShadowKey& key);
 
 	//Depth

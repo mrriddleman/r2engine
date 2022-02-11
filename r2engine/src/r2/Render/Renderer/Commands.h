@@ -200,13 +200,10 @@ namespace r2::draw::cmd
 
 	static_assert(std::is_pod<Barrier>::value == true, "Barrier must be a POD.");
 
-	const u32 MAX_NUM_CHARACTERS_IN_UNIFORM_NAME = 32;
-	
 	struct ConstantUint
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
-		char uniformName[MAX_NUM_CHARACTERS_IN_UNIFORM_NAME + 1];
-		ShaderHandle shaderID;
+		u32 uniformLocation;
 		u32 value;
 	};
 

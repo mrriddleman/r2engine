@@ -337,6 +337,22 @@ namespace r2::draw::rendererimpl
 		glCullFace(cullFace);
 	}
 
+	s32 GetContantLocation(ShaderHandle shaderHandle, const char* name)
+	{
+		const Shader* shader = shadersystem::GetShader(shaderHandle);
+		R2_CHECK(shader != nullptr, "We couldn't get the shader from the shader handle: %lu", shaderHandle);
+
+		GLint location = glGetUniformLocation(shader->shaderProg, name);
+
+		R2_CHECK(location >= 0, "We couldn't get the uniform location of the uniform name passed in: %s", name);
+
+		GLenum err = glGetError();
+		//if(err != GL_NO_ERROR)
+		R2_CHECK(err == GL_NO_ERROR, "We got an OpenGL error from ConstantUint: %i", err);
+
+		return location;
+	}
+
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
 		
@@ -670,21 +686,9 @@ namespace r2::draw::rendererimpl
 		glMemoryBarrier(flags);
 	}
 
-	void ConstantUint(r2::draw::ShaderHandle shaderHandle, const char* name, u32 value)
+	void ConstantUint(u32 uniformLocation, u32 value)
 	{
-		const Shader* shader = shadersystem::GetShader(shaderHandle);
-		R2_CHECK(shader != nullptr, "We couldn't get the shader from the shader handle: %lu", shaderHandle);
-
-
-		GLint location =  glGetUniformLocation(shader->shaderProg, name);
-
-		R2_CHECK(location >= 0, "We couldn't get the uniform location of the uniform name passed in: %s", name);
-
-		GLenum err = glGetError();
-		//if(err != GL_NO_ERROR)
-		R2_CHECK(err == GL_NO_ERROR, "We got an OpenGL error from ConstantUint: %i", err);
-
-		glUniform1ui(location, value);
+		glUniform1ui(uniformLocation, value);
 	}
 
 	void ApplyDrawState(const cmd::DrawState& state)

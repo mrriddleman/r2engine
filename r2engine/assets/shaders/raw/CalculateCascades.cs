@@ -76,6 +76,8 @@ struct SpotLight
 	LightProperties lightProperties;
 	vec4 position;//w is radius
 	vec4 direction;//w is cutoff
+
+	mat4 lightSpaceMatrix;
 };
 
 struct SkyLight

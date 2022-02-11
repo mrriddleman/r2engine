@@ -119,7 +119,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, u16 depth)
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u16 depth)
 	{
 		ShadowKey theKey;
 
@@ -128,6 +128,7 @@ namespace r2::draw::key
 		if (type == ShadowKey::Type::NORMAL)
 		{
 			theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
+			theKey.keyValue |= ENCODE_KEY_VALUE(lightType, ShadowKey::SHADOW_KEY_BITS_LIGHT_TYPE, ShadowKey::SHADOW_KEY_LIGHT_TYPE_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(depth, ShadowKey::SHADOW_KEY_BITS_DEPTH, ShadowKey::SHADOW_KEY_DEPTH_OFFSET);
 		}
 		else if(type == ShadowKey::Type::COMPUTE)
@@ -152,11 +153,12 @@ namespace r2::draw::key
 		if (type == ShadowKey::Type::NORMAL)
 		{
 			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
+			light::LightType lightType = static_cast<light::LightType>(DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_LIGHT_TYPE, ShadowKey::SHADOW_KEY_LIGHT_TYPE_OFFSET));
 			u16 depthValue = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_DEPTH, ShadowKey::SHADOW_KEY_DEPTH_OFFSET);
-
+			
 			r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
 
-			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic);
+			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic, lightType);
 
 			r2::draw::rendererimpl::SetShaderID(shaderHandle);
 		}
@@ -171,7 +173,7 @@ namespace r2::draw::key
 		{
 			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
 
-			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic);
+			shaderHandle = r2::draw::renderer::GetShadowDepthShaderHandle(isDynamic, light::LightType::LT_DIRECTIONAL_LIGHT);
 
 			r2::draw::rendererimpl::SetShaderID(shaderHandle);
 		}

@@ -3,7 +3,6 @@
 #extension GL_NV_gpu_shader5 : enable
 
 const uint NUM_FRUSTUM_SPLITS = 4; 
-const uint NUM_TEXTURES_PER_DRAWID = 8;
 const uint MAX_NUM_LIGHTS = 50;
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
 const uint MAX_NUM_LIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_FRUSTUM_SPLITS;
@@ -58,6 +57,8 @@ struct SpotLight
 	LightProperties lightProperties;
 	vec4 position;//w is radius
 	vec4 direction;//w is cutoff
+
+	mat4 lightSpaceMatrix;
 };
 
 struct SkyLight
@@ -124,7 +125,7 @@ uniform uint directionLightBatch;
 void main()
 {
 
-	int lightIndex = (gl_InvocationID / int(NUM_FRUSTUM_SPLITS)) + int(directionLightBatch);
+	int lightIndex = (gl_InvocationID / int(NUM_FRUSTUM_SPLITS)) + int(directionLightBatch) * int(MAX_NUM_LIGHTS_PER_BATCH);
 	int cascadeIndex = gl_InvocationID % int(NUM_FRUSTUM_SPLITS);
 
 	if(lightIndex < numDirectionLights)

@@ -644,36 +644,37 @@ public:
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
-			dirLight.lightProperties.intensity = 1;
+			dirLight.lightProperties.intensity = 2;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
            // dirLight.lightProperties.castsShadows = true;
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+        //    r2::draw::renderer::AddDirectionLight(dirLight);
 
 
 
-            r2::draw::DirectionLight dirLight2;
-            dirLight2.lightProperties.color = glm::vec4(1.0f);
-            dirLight2.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(4.0f, 0.0f, 4.0f, 0.0f));
-            dirLight2.lightProperties.intensity = 2;
-            dirLight2.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+            //r2::draw::DirectionLight dirLight2;
+            //dirLight2.lightProperties.color = glm::vec4(1.0f);
+            //dirLight2.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(4.0f, 0.0f, 4.0f, 0.0f));
+            //dirLight2.lightProperties.intensity = 2;
+            //dirLight2.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight2);
+            //r2::draw::renderer::AddDirectionLight(dirLight2);
 
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
-            //r2::draw::SpotLight spotLight;
-            //spotLight.lightProperties.color = glm::vec4(1.0f);
+			r2::draw::SpotLight spotLight;
+			spotLight.lightProperties.color = glm::vec4(1.0f);
 
-            //spotLight.position = glm::vec4(0.0f, 5.0f, 3.0f, glm::cos(glm::radians(12.5f)));
-            //spotLight.direction = glm::normalize(glm::vec4(0.0f, 0.0f, -5.0f, 0.0) - glm::vec4(0.0f, 5.0f, 3.0f, 0.0f));
-            //spotLight.direction.w = glm::cos(glm::radians(15.f));
+			spotLight.position = glm::vec4(1.0f, 0.0f, 5.0f, glm::cos(glm::radians(30.f)));
+			spotLight.direction = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - glm::vec3(spotLight.position)), glm::cos(glm::radians(45.f)));
 
-            //spotLight.lightProperties.intensity = 10;
-            //spotLight.lightProperties.fallOff = 0.01;
 
-            //r2::draw::lightsys::AddSpotLight(*mLightSystem, spotLight);
+			spotLight.lightProperties.intensity = 100;
+			spotLight.lightProperties.fallOff = 0.01;
+            spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+
+			r2::draw::renderer::AddSpotLight( spotLight);
 
    //         r2::draw::PointLight pointLight;
 

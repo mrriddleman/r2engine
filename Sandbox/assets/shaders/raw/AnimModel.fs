@@ -5,7 +5,9 @@
 const uint NUM_TEXTURES_PER_DRAWID = 8;
 const uint MAX_NUM_LIGHTS = 50;
 
-
+const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
+const float SHADOW_FILTER_MAX_SIZE = 0.002f;
+const float PENUMBRA_FILTER_SCALE = 1.2f;
 
 
 layout (location = 0) out vec4 FragColor;
@@ -67,6 +69,8 @@ struct SpotLight
 	LightProperties lightProperties;
 	vec4 position;//w is radius
 	vec4 direction;//w is cutoff
+
+	mat4 lightSpaceMatrix;
 };
 
 struct SkyLight
@@ -200,10 +204,16 @@ vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
 float InterleavedGradientNoise(vec2 screenPosition);
 float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID);
 float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
+
+float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
 float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, bool softShadows);
+
+float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
 
 float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth);
-float SampleSpotlightShadowMap(vec2 uv, int64_t spotlightID, float depth);
+float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth);
 
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
@@ -265,7 +275,7 @@ vec3 Eval_BRDF(
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
-float ShadowCalculation(vec3 fragePosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
+
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -909,7 +919,11 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 L = normalize(posToLight);
 
+
+
 		float NoL = clamp(dot(N, L), 0.0, 1.0);
+
+
 
 		float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 
@@ -945,7 +959,16 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 radiance = spotLight.lightProperties.color.rgb * attenuation * spotAngleAttenuation * spotLight.lightProperties.intensity * exposureNearFar.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
+
+		float shadow = 0;
+
+		if(spotLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			shadow = SpotLightShadowCalculation(fs_in.fragPos, spotLight.direction.xyz, spotLight.lightProperties.lightID, i, spotLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+		}
+
+
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 
 		L0 += result * radiance * NoL;
 	}
@@ -983,13 +1006,13 @@ float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSiz
 	return depth > shadowSample ? 1.0 : 0.0;
 }
 
-float SampleSpotlightShadowMap(vec2 uv, int64_t spotlightID, float depth)
+float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth)
 {
-	//vec3 coord = vec3(uv, gSpotLightShadowMapPages[spotlightID]);
-	//float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
+	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
+	vec3 coord = vec3(uv, gSpotLightShadowMapPages[int(spotlightID)]);
+	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
 
-	//return depth > shadowSample ? 1.0 : 0.0;
-	return 0;
+	return depth > shadowSample ? 1.0 : 0.0;
 }
 
 float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
@@ -1134,9 +1157,141 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	return shadowVisibility;
 }
 
-const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
-const float SHADOW_FILTER_MAX_SIZE = 0.002f;
-const float PENUMBRA_FILTER_SCALE = 1.2f;
+float SpotLightOptimizedPCF(vec3 shadowPosition, int64_t lightID, float lightDepth)
+{
+	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
+	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	float s = (uv.x + 0.5 - base_uv.x);
+	float t = (uv.y + 0.5 - base_uv.y);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+	float sum = 0;
+
+	float uw0 = (3 - 2 * s);
+	float uw1 = (1 + 2 * s);
+
+	float u0 = (2 - s) / uw0 - 1;
+	float u1 = s / uw1 + 1;
+
+	float vw0 = (3 - 2 * t);
+	float vw1 = (1 + 2 * t);
+
+	float v0 = (2 - t) / vw0 - 1;
+	float v1 = t / vw1 + 1;
+
+	sum += uw0 * vw0 * SampleSpotlightShadowMap(base_uv, u0, v0, shadowMapSizeInv, lightID, lightDepth);
+	sum += uw1 * vw0 * SampleSpotlightShadowMap(base_uv, u1, v0, shadowMapSizeInv, lightID, lightDepth);
+	sum += uw0 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
+	sum += uw1 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
+
+	return sum * 0.0625; //1 / 16
+}
+
+float SpotLightPenumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, int64_t lightID)
+{
+	float avgBlockerDepth = 0.0;
+	float blockersCount = 0.0;
+
+
+	for(int i = 0; i < samplesCount; ++i)
+	{
+		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
+		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
+
+		float sampleDepth = SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, depth);
+
+		if(sampleDepth < depth)
+		{
+			avgBlockerDepth += sampleDepth;
+			blockersCount += 1.0;
+		}
+	}
+
+	if(blockersCount > 0.0)
+	{
+		avgBlockerDepth /= blockersCount;
+		return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+	}
+
+	return 0.0;
+}
+
+float SpotLightSoftShadow(vec3 shadowPosition, int64_t lightID, float lightDepth)
+{
+	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+
+	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
+
+	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
+	float penumbra = SpotLightPenumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, lightID);
+
+	float shadow = 0.0;
+	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
+	{
+		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
+		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
+
+		shadow += SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, lightDepth);
+	}
+
+	return shadow / NUM_SOFT_SHADOW_SAMPLES;
+}
+
+
+float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int index, bool softShadows)
+{
+
+	vec3 normal = normalize(fs_in.normal);
+	vec3 viewDir = normalize(cameraPosTimeW.xyz - fragPosWorldSpace);
+
+	//don't put the shadow on the back of a surface
+	if(dot(viewDir, normal) < 0.0)
+	{
+		return 1.0; //or maybe return 1?
+	}
+
+	float NoL = max(dot(-lightDir, normal), 0.0);
+
+	vec4 posLightSpace = spotLights[index].lightSpaceMatrix * vec4(fragPosWorldSpace, 1);
+
+	vec3 projCoords = posLightSpace.xyz / posLightSpace.w;
+
+	projCoords = projCoords * 0.5 + 0.5;
+
+	float bias = max(0.005 * (1.0 - NoL), 0.0005);
+
+	float lightDepth = projCoords.z - bias;
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+
+	if(softShadows)
+	{
+		return SpotLightSoftShadow(projCoords, lightID, lightDepth);
+	}
+
+	return SpotLightOptimizedPCF(projCoords, lightID, lightDepth);
+}
+
+
 
 
 float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)

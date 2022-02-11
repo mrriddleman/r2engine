@@ -2,11 +2,11 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint NUM_FRUSTUM_SPLITS = 4; 
+#define NUM_FRUSTUM_SPLITS 4
 const uint MAX_NUM_LIGHTS = 50;
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
-const uint MAX_NUM_LIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_FRUSTUM_SPLITS;
-
+const uint NUM_SPOTLIGHT_LAYERS = 1;
+const uint MAX_SPOTLIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_SPOTLIGHT_LAYERS;
 
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
@@ -45,9 +45,8 @@ struct PointLight
 
 struct DirLight
 {
-
 	LightProperties lightProperties;
-	vec4 direction;
+	vec4 direction;	
 	mat4 cameraViewToLightProj;
 	LightSpaceMatrixData lightSpaceMatrixData;
 };
@@ -68,14 +67,6 @@ struct SkyLight
 	Tex2DAddress prefilteredRoughnessTexture;
 	Tex2DAddress lutDFGTexture;
 //	int numPrefilteredRoughnessMips;
-};
-
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
 };
 
 layout (std430, binding = 4) buffer Lighting
@@ -120,47 +111,46 @@ layout (std430, binding = 6) buffer ShadowData
 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
-uniform uint directionLightBatch;
+uniform uint spotLightBatch;
 
-void main()
+void main(void)
 {
+	int lightIndex = gl_InvocationID + int(spotLightBatch) * int(MAX_SPOTLIGHTS_PER_BATCH);
 
-	int lightIndex = (gl_InvocationID / int(NUM_FRUSTUM_SPLITS)) + int(directionLightBatch) * int(MAX_NUM_LIGHTS_PER_BATCH);
-	int cascadeIndex = gl_InvocationID % int(NUM_FRUSTUM_SPLITS);
-
-	if(lightIndex < numDirectionLights)
+	if(lightIndex < numSpotLights)
 	{
 		vec3 normal = cross(gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz, gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz);
-		vec3 view = -dirLights[lightIndex].direction.xyz;
-	//	Partition part = gPartitions[gl_InvocationID];
+		vec3 lightDir = -spotLights[lightIndex].direction.xyz;
 
-		if(dirLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0 && dot(normal, view) > 0.0f)
+		if(spotLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0 && dot(normal, lightDir) > 0.0)
 		{
 			vec4 vertex[3];
-			int outOfBound[6] = { 0 , 0 , 0 , 0 , 0 , 0 };
-			for (int i =0; i < 3; ++i )
-			{
-				vertex[i] = dirLights[lightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[lightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] * gl_in[i].gl_Position;
-				
+			int outOfBounds[6] = {0,0,0,0,0,0};
 
-				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
-				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];
-				if ( vertex[i].y > +vertex[i].w ) ++outOfBound[2];
-				if ( vertex[i].y < -vertex[i].w ) ++outOfBound[3];
-				if ( vertex[i].z > +vertex[i].w ) ++outOfBound[4];
-				if ( vertex[i].z < -vertex[i].w ) ++outOfBound[5];
+			for(int i = 0; i < 3; ++i)
+			{
+				vertex[i] = spotLights[lightIndex].lightSpaceMatrix * gl_in[i].gl_Position;
+
+				if ( vertex[i].x > +vertex[i].w ) ++outOfBounds[0];
+				if ( vertex[i].x < -vertex[i].w ) ++outOfBounds[1];
+				if ( vertex[i].y > +vertex[i].w ) ++outOfBounds[2];
+				if ( vertex[i].y < -vertex[i].w ) ++outOfBounds[3];
+				if ( vertex[i].z > +vertex[i].w ) ++outOfBounds[4];
+				if ( vertex[i].z < -vertex[i].w ) ++outOfBounds[5];
 			}
 
 			bool inFrustum = true;
-			for (int i = 0; i < 6; ++i )
-				if ( outOfBound[i] == 3) inFrustum = false;
+			for(int i = 0; i < 6; ++i)
+			{
+				if(outOfBounds[i] == 3) inFrustum = false;
+			}
 
 			if(inFrustum)
 			{
 				for(int i = 0; i < 3; ++i)
 				{
 					gl_Position = vertex[i];
-					gl_Layer = cascadeIndex + int(gDirectionLightShadowMapPages[int(dirLights[lightIndex].lightProperties.lightID)]);
+					gl_Layer = int(gSpotLightShadowMapPages[int(spotLights[lightIndex].lightProperties.lightID)]);
 					EmitVertex();
 				}
 

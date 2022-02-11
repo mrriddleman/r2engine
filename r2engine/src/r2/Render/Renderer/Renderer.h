@@ -235,14 +235,27 @@ namespace r2::draw
 
 		//------------BEGIN Drawing Stuff--------------
 		const Camera* mnoptrRenderCam = nullptr;
+
+
+		//@TODO(Serge): figure out a nicer way to store all this stuff
+		//----------------------------------------------------------------
 		ShaderHandle mShadowSplitComputeShader;
 		ShaderHandle mShadowDepthShaders[2]; //0 - static, 1 - dynamic
 		ShaderHandle mDepthShaders[2];
 		ShaderHandle mSDSMReduceZBoundsComputeShader;
 		ShaderHandle mSDSMCalculateLogPartitionsComputeShader;
-		//ShaderHandle mSDSMReduceBoundsComputeShader;
-		//ShaderHandle mSDSMCalculateCustomPartitionsComputeShader;
 		ShaderHandle mShadowSDSMComputeShader;
+
+		ShaderHandle mSpotLightShadowShaders[2];
+		ShaderHandle mSpotLightLightMatrixShader;
+
+		s32 mStaticDirectionLightBatchUniformLocation;
+		s32 mDynamicDirectionLightBatchUniformLocation;
+
+		s32 mStaticSpotLightBatchUniformLocation;
+		s32 mDynamicSpotLightBatchUniformLocation;
+
+		//----------------------------------------------------------------
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -387,7 +400,7 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	///More draw functions...
-	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic);
+	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);
 	ShaderHandle GetDepthShaderHandle(bool isDynamic);
 	//------------------------------------------------------------------------------
 

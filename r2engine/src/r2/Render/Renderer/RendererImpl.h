@@ -66,7 +66,7 @@ namespace r2::draw::rendererimpl
 	void SetDepthTest(bool shouldDepthTest);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 	void SetCullFace(u32 cullFace);
-
+	s32 GetContantLocation(ShaderHandle shaderHandle, const char* name);
 	//
 	void SetViewportKey(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
@@ -87,7 +87,7 @@ namespace r2::draw::rendererimpl
 	void DispatchComputeIndirect(ConstantBufferHandle dispatchBufferHandle, u32 offset);
 	void DispatchCompute(u32 numGroupX, u32 numGroupY, u32 numGroupZ);
 	void Barrier(u32 flags);
-	void ConstantUint(r2::draw::ShaderHandle shaderHandle, const char* name, u32 value);
+	void ConstantUint(u32 uniformLocation, u32 value);
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

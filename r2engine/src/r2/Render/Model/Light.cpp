@@ -158,6 +158,7 @@ namespace r2::draw::lightsys
 		r2::sarr::Clear(*system.mMetaData.mPointLightsModifiedList);
 		r2::sarr::Clear(*system.mMetaData.mDirectionLightsModifiedList);
 		r2::sarr::Clear(*system.mMetaData.mSpotLightsModifiedList);
+		system.mMetaData.mShouldUpdateSkyLight = false;
 	}
 
 	bool Update(LightSystem& system, const Camera& cam, glm::vec3& lightProjRadius)
@@ -167,7 +168,7 @@ namespace r2::draw::lightsys
 		const auto numPointLightsToUpdate = r2::sarr::Size(*system.mMetaData.mPointLightsModifiedList);
 		const auto numSpotLightsToUpdate = r2::sarr::Size(*system.mMetaData.mSpotLightsModifiedList);
 
-		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0;
+		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0 || system.mMetaData.mShouldUpdateSkyLight;
 
 		if(needsUpdate)
 			ClearModifiedLights(system);
@@ -189,6 +190,11 @@ namespace r2::draw::lightsys
 	void SetShouldUpdateSpotLight(LightSystem& system, s64 lightIndex)
 	{
 		r2::sarr::Push(*system.mMetaData.mSpotLightsModifiedList, lightIndex);
+	}
+
+	void SetShouldUpdateSkyLight(LightSystem& system)
+	{
+		system.mMetaData.mShouldUpdateSkyLight = true;
 	}
 
 
@@ -502,6 +508,8 @@ namespace r2::draw::lightsys
 
 		system.mSceneLighting.numPrefilteredRoughnessMips = numPrefilteredMips;
 
+		SetShouldUpdateSkyLight(system);
+
 		return skylightHandle;
 	}
 
@@ -545,6 +553,8 @@ namespace r2::draw::lightsys
 			system.mSceneLighting.mSkyLight = {};
 		}
 
+		SetShouldUpdateSkyLight(system);
+
 		return true;
 	}
 
@@ -552,6 +562,7 @@ namespace r2::draw::lightsys
 	{
 		if (system.mSceneLighting.mSkyLight.lightProperties.lightID == handle.handle)
 		{
+			SetShouldUpdateSkyLight(system);
 			return &system.mSceneLighting.mSkyLight;
 		}
 

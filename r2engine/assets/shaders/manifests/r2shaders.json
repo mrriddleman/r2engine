@@ -41,6 +41,22 @@
       binaryPath: ""
     },
     {
+      shaderName: 12180725488998902253,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightDynamicShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightDynamicShadowDepth.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightDynamicShadowDepth.gs",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
+      shaderName: 14930033009169502222,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightStaticShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightStaticShadowDepth.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightStaticShadowDepth.gs",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 8833047848476087300,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.fs",
@@ -102,6 +118,14 @@
       fragmentPath: "",
       geometryPath: "",
       computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ReduceZBounds.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 3981253823243940405,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightLightMatrices.cs",
       binaryPath: ""
     }
   ]
