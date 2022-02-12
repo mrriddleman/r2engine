@@ -6,7 +6,7 @@ const uint NUM_FRUSTUM_SPLITS = 4;
 const uint MAX_NUM_LIGHTS = 50;
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
 const uint MAX_NUM_LIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_FRUSTUM_SPLITS;
-
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
@@ -41,6 +41,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight
@@ -76,6 +78,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+	Tex2DAddress pointLightShadowsSurface;
 };
 
 layout (std430, binding = 4) buffer Lighting

@@ -5,16 +5,19 @@
 #define NUM_FRUSTUM_SPLITS 4
 const uint MAX_NUM_LIGHTS = 50;
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
-const uint NUM_SPOTLIGHT_LAYERS = 1;
-const uint MAX_SPOTLIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_SPOTLIGHT_LAYERS;
-const uint NUM_SIDES_FOR_POINTLIGHT = 6;
+
+const uint NUM_SIDES_FOR_POINTLIGHT =6;
+const uint MAX_POINTLIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH;
+
+const uint MAX_VERTICES = NUM_SIDES_FOR_POINTLIGHT * 3;
+
 
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 
 layout (triangles, invocations = MAX_INVOCATIONS_PER_BATCH) in;
-layout (triangle_strip, max_vertices = 3) out;
+layout (triangle_strip, max_vertices = MAX_VERTICES) out;
 
 struct Tex2DAddress
 {
@@ -98,7 +101,6 @@ struct UPartition
 	uvec4 intervalEnd;
 };
 
-
 layout (std430, binding = 6) buffer ShadowData
 {
 	Partition gPartitions;
@@ -114,25 +116,29 @@ layout (std430, binding = 6) buffer ShadowData
 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
-uniform uint spotLightBatch;
+uniform uint pointLightBatch;
+
+
+out vec4 FragPos; // FragPos from GS (output per emitvertex)
+out vec3 LightPos;
+out float FarPlane;
 
 void main(void)
 {
-	int lightIndex = gl_InvocationID + int(spotLightBatch) * int(MAX_SPOTLIGHTS_PER_BATCH);
+	int lightIndex = gl_InvocationID  + int(pointLightBatch) * int(MAX_POINTLIGHTS_PER_BATCH);
 
-	if(lightIndex < numSpotLights)
+	if(lightIndex < numPointLights)
 	{
-		vec3 normal = cross(gl_in[2].gl_Position.xyz - gl_in[0].gl_Position.xyz, gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz);
-		vec3 lightDir = -spotLights[lightIndex].direction.xyz;
-
-		if(spotLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0 && dot(normal, lightDir) > 0.0)
+		for(int face = 0; face < NUM_SIDES_FOR_POINTLIGHT; ++face)
 		{
+			gl_Layer = face + int(gPointLightShadowMapPages[int(pointLights[lightIndex].lightProperties.lightID)]) * int(NUM_SIDES_FOR_POINTLIGHT);
+
 			vec4 vertex[3];
 			int outOfBounds[6] = {0,0,0,0,0,0};
 
 			for(int i = 0; i < 3; ++i)
 			{
-				vertex[i] = spotLights[lightIndex].lightSpaceMatrix * gl_in[i].gl_Position;
+				vertex[i] = pointLights[lightIndex].lightSpaceMatrices[face] * gl_in[i].gl_Position;
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBounds[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBounds[1];
@@ -153,12 +159,15 @@ void main(void)
 				for(int i = 0; i < 3; ++i)
 				{
 					gl_Position = vertex[i];
-					gl_Layer = int(gSpotLightShadowMapPages[int(spotLights[lightIndex].lightProperties.lightID)]);
+					FragPos = gl_in[i].gl_Position;
+					LightPos = pointLights[lightIndex].position.xyz;
+					FarPlane = pointLights[lightIndex].lightProperties.intensity; //if we change the compute shader, this needs to change as well
 					EmitVertex();
 				}
 
 				EndPrimitive();
 			}
+			
 		}
 	}
 }

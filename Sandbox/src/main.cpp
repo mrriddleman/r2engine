@@ -640,12 +640,12 @@ public:
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
                
 
-			r2::draw::DirectionLight dirLight;
-			dirLight.lightProperties.color = glm::vec4(1.0f);
+			//r2::draw::DirectionLight dirLight;
+			//dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
-			dirLight.lightProperties.intensity = 2;
-            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
+			//dirLight.lightProperties.intensity = 2;
+   //         dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
            // dirLight.lightProperties.castsShadows = true;
 
@@ -663,26 +663,31 @@ public:
 
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
-			r2::draw::SpotLight spotLight;
-			spotLight.lightProperties.color = glm::vec4(1.0f);
+			//r2::draw::SpotLight spotLight;
+			//spotLight.lightProperties.color = glm::vec4(1.0f);
 
-			spotLight.position = glm::vec4(1.0f, 0.0f, 5.0f, glm::cos(glm::radians(30.f)));
-			spotLight.direction = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - glm::vec3(spotLight.position)), glm::cos(glm::radians(45.f)));
+			//spotLight.position = glm::vec4(1.0f, 0.0f, 5.0f, glm::cos(glm::radians(30.f)));
+			//spotLight.direction = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - glm::vec3(spotLight.position)), glm::cos(glm::radians(45.f)));
 
 
-			spotLight.lightProperties.intensity = 100;
-			spotLight.lightProperties.fallOff = 0.01;
-            spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+			//spotLight.lightProperties.intensity = 100;
+			//spotLight.lightProperties.fallOff = 0.01;
+   //         spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-			r2::draw::renderer::AddSpotLight( spotLight);
+			//r2::draw::renderer::AddSpotLight( spotLight);
 
-   //         r2::draw::PointLight pointLight;
+            r2::draw::PointLight pointLight;
 
-   //         pointLight.position = glm::vec4(0, 2, 10, 1.0);
-   //         pointLight.lightProperties.color = glm::vec4(1.0f);
+            pointLight.position = glm::vec4(0, 0, 5, 1.0);
+            pointLight.lightProperties.color = glm::vec4(1.0f);
 
-   //         pointLight.lightProperties.intensity = 100;
-   //         pointLight.lightProperties.fallOff = 0.01;
+            pointLight.lightProperties.intensity = 100.0;
+            pointLight.lightProperties.fallOff = 0.01;
+
+            pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+
+            r2::draw::renderer::AddPointLight(pointLight);
+
 
    //        // r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
    //         

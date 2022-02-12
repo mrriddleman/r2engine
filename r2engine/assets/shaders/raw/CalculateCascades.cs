@@ -16,6 +16,7 @@ layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) i
 const float projMult = 1.25;
 const float zMult = 10;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -61,6 +62,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight

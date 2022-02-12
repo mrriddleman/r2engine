@@ -125,7 +125,7 @@ namespace r2::draw::key
 
 		theKey.keyValue |= ENCODE_KEY_VALUE(type, ShadowKey::SHADOW_KEY_BITS_TYPE, ShadowKey::SHADOW_KEY_TYPE_OFFSET);
 
-		if (type == ShadowKey::Type::NORMAL)
+		if (type == ShadowKey::Type::NORMAL || type == ShadowKey::Type::POINT_LIGHT)
 		{
 			theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(lightType, ShadowKey::SHADOW_KEY_BITS_LIGHT_TYPE, ShadowKey::SHADOW_KEY_LIGHT_TYPE_OFFSET);
@@ -150,7 +150,7 @@ namespace r2::draw::key
 		ShadowKey::Type type = static_cast<ShadowKey::Type>(DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_TYPE, ShadowKey::SHADOW_KEY_TYPE_OFFSET));
 
 		ShaderHandle shaderHandle = InvalidShader;
-		if (type == ShadowKey::Type::NORMAL)
+		if (type == ShadowKey::Type::NORMAL || type == ShadowKey::Type::POINT_LIGHT)
 		{
 			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_IS_DYNAMIC, ShadowKey::SHADOW_KEY_IS_DYNAMIC_OFFSET);
 			light::LightType lightType = static_cast<light::LightType>(DECODE_KEY_VALUE(key.keyValue, ShadowKey::SHADOW_KEY_BITS_LIGHT_TYPE, ShadowKey::SHADOW_KEY_LIGHT_TYPE_OFFSET));

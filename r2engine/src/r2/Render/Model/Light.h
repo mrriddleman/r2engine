@@ -78,6 +78,8 @@ namespace r2::draw
 	{
 		LightProperties lightProperties;
 		glm::vec4 position;	//@TODO(Serge): make these vec3?
+
+		glm::mat4 lightSpaceMatrices[light::NUM_POINTLIGHT_LAYERS];
 	};
 
 	struct SpotLight

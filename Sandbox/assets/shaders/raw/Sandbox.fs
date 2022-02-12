@@ -8,7 +8,7 @@ const uint MAX_NUM_LIGHTS = 50;
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
 const float SHADOW_FILTER_MAX_SIZE = 0.002f;
 const float PENUMBRA_FILTER_SCALE = 1.2f;
-
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -53,6 +53,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight
@@ -150,6 +152,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+	Tex2DAddress pointLightShadowsSurface;
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this
@@ -212,9 +215,11 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 
 float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
 
+float PointLightShadowCalculation(vec3 fragToLight, float farPlane, int64_t lightID, bool softShadows);
+
 float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth);
 float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth);
-
+float SamplePointlightShadowMap(vec3 fragtolight, float farPlane, int64_t lightID, float depth);
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
@@ -342,10 +347,14 @@ void main()
 
 
 
-
+	
 	
 
+	//vec3 fragToLight = (fs_in.fragPos - pointLights[0].position.xyz);
+//	fragToLight = vec3(fragToLight.x, fragToLight.z, -fragToLight.y);
+	//vec4 coord = vec4(fragToLight, gPointLightShadowMapPages[int(pointLights[0].lightProperties.lightID)] );
 
+	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);//* DebugFrustumSplitColor();
 
@@ -919,17 +928,21 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 		vec3 L = normalize(posToLight);
 
-
-
 		float NoL = clamp(dot(N, L), 0.0, 1.0);
-
-
 
 		float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 
 		vec3 radiance = pointLight.lightProperties.color.rgb * attenuation * pointLight.lightProperties.intensity * exposureNearFar.x;
 
-		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0);
+		float shadow = 0;
+
+		if(pointLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			vec3 fragToPointLight = fs_in.fragPos - pointLight.position.xyz;
+			shadow = PointLightShadowCalculation(vec3(fragToPointLight.x, fragToPointLight.y, fragToPointLight.z) , pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+		}
+
+		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 		
 		L0 += result * radiance * NoL;
 	}
@@ -1011,6 +1024,14 @@ float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSiz
 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
 	vec3 coord = vec3(uv, gSpotLightShadowMapPages[int(spotlightID)]);
 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
+
+	return depth > shadowSample ? 1.0 : 0.0;
+}
+
+float SamplePointlightShadowMap(vec3 fragToLight, float farPlane, int64_t lightID, float depth)
+{
+	vec4 coord = vec4(fragToLight, gPointLightShadowMapPages[int(lightID)]);
+	float shadowSample = texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r * farPlane;
 
 	return depth > shadowSample ? 1.0 : 0.0;
 }
@@ -1292,7 +1313,13 @@ float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t 
 }
 
 
+float PointLightShadowCalculation(vec3 fragToLight, float farPlane, int64_t lightID, bool softShadows)
+{
+	float bias = 0.05;
+	float lightDepth = length(fragToLight) - bias;
 
+	return SamplePointlightShadowMap(fragToLight, farPlane, lightID, lightDepth);
+}
 
 float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
 {

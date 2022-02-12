@@ -3,8 +3,8 @@
 #extension GL_NV_gpu_shader5 : enable
 
 const uint NUM_TEXTURES_PER_DRAWID = 8;
-const float near = 0.005; 
-const float far  = 1000.0; 
+const float near = 0.1; 
+const float far  = 100.0; 
 
 layout (location = 0) out vec4 FragColor;
 
@@ -32,6 +32,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+	Tex2DAddress pointLightShadowsSurface;
 };
 
 in VS_OUT
@@ -53,12 +54,14 @@ vec3 ExposureToneMapping(vec3 hdrColor);
 
 float LinearizeDepth(float depth) 
 {
-    float z = depth * 2.0 - 1.0; // back to NDC 
-    return (2 *  near * far) / (far + near - z * (far - near));	
+	return depth / 100.0;
+   // float z = depth * 2.0 - 1.0; // back to NDC 
+   // return (2 *  near * far) / (far + near - z * (far - near));	
 }
 
 float NormalizeViewDepth(float depth)
 {
+	//return depth / 100.0;
 	return (depth - near) / (far - near) * depth;
 }
 
@@ -67,17 +70,17 @@ void main()
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
 	vec3 toneMapping = ExposureToneMapping(sampledColor.rgb);
-	//FragColor = vec4(vec3(LinearizeDepth(sampledColor.r)), 1.0);
+//	FragColor = vec4(vec3(LinearizeDepth(sampledColor.r)), 1.0);
 	FragColor = vec4(GammaCorrect(toneMapping), 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page);
+	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 
-//	return texture(sampler2DArray(zPrePassSurface.container), coord);
-	return texture(sampler2DArray(gBufferSurface.container), coord);
+	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
+	return texture(sampler2DArray(gBufferSurface.container), coord) ;
 	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	// Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 

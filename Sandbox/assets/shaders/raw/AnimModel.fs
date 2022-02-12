@@ -8,7 +8,7 @@ const uint MAX_NUM_LIGHTS = 50;
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
 const float SHADOW_FILTER_MAX_SIZE = 0.002f;
 const float PENUMBRA_FILTER_SCALE = 1.2f;
-
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -53,6 +53,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight
@@ -150,6 +152,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+	Tex2DAddress pointLightShadowsSurface;
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this

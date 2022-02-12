@@ -7,6 +7,7 @@ const uint MAX_NUM_LIGHTS = 50;
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
 const uint NUM_SPOTLIGHT_LAYERS = 1;
 const uint MAX_SPOTLIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH / NUM_SPOTLIGHT_LAYERS;
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
@@ -41,6 +42,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight

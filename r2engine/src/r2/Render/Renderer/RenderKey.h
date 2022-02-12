@@ -113,7 +113,7 @@ namespace r2::draw::key
 			CLEAR = 0,
 			COMPUTE,
 			NORMAL,
-			UNUSED
+			POINT_LIGHT
 		};
 
 		enum : u16

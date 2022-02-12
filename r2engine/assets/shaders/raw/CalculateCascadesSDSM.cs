@@ -24,6 +24,7 @@ const float projMult = 1;
 const float zMult = 5;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
 const bool STABALIZE_CASCADES = true;
+const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -68,6 +69,8 @@ struct PointLight
 {
 	LightProperties lightProperties;
 	vec4 position;
+
+	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
 };
 
 struct DirLight

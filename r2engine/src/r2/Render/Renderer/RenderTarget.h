@@ -21,7 +21,8 @@ namespace r2::draw::rt
 	enum TextureAttachmentType: u32
 	{
 		COLOR = 0,
-		DEPTH
+		DEPTH,
+		DEPTH_CUBEMAP,
 	};
 
 	struct RenderTargetPageAllocation
@@ -43,6 +44,7 @@ namespace r2::draw
 		RTS_SHADOWS,
 		RTS_COMPOSITE,
 		RTS_ZPREPASS,
+		RTS_POINTLIGHT_SHADOWS,
 		NUM_RENDER_TARGET_SURFACES
 	};
 	

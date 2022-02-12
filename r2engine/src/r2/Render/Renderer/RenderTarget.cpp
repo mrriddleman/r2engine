@@ -30,19 +30,6 @@ namespace r2::draw
 		{
 			float sliceIndex = impl::AddTexturePagesToAttachment(rt, type, pages);
 
-			tex::TextureHandle textureHandle;
-			//Do page allocation book keeping
-
-			//@NOTE(Serge): we're only using the first attachment right now...
-			if (type == COLOR)
-			{
-				textureHandle = r2::sarr::At(*rt.colorAttachments, 0).texture;
-			}
-			else
-			{
-				textureHandle = r2::sarr::At(*rt.depthAttachments, 0).texture;
-			}
-
 			RenderTargetPageAllocation newAllocation;
 			newAllocation.attachmentIndex = 0;
 			newAllocation.numPages = pages;

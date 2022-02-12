@@ -46,6 +46,12 @@ namespace r2::draw::rt::impl
 			format.internalformat = GL_DEPTH_COMPONENT16;
 			format.borderColor = glm::vec4(1.0f);
 		}
+		else if (type == DEPTH_CUBEMAP)
+		{
+			format.internalformat = GL_DEPTH_COMPONENT16;
+			format.borderColor = glm::vec4(1.0f);
+			format.isCubemap = true;
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported TextureAttachmentType!");
@@ -63,7 +69,7 @@ namespace r2::draw::rt::impl
 		{
 			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
 		}
-		else if (type == DEPTH)
+		else if (type == DEPTH || type == DEPTH_CUBEMAP)
 		{
 			
 			if (!useLayeredRenderering)
@@ -92,7 +98,7 @@ namespace r2::draw::rt::impl
 		{
 			r2::sarr::Push(*rt.colorAttachments, textureAttachment);
 		}
-		else if (type == DEPTH)
+		else if (type == DEPTH || type == DEPTH_CUBEMAP)
 		{
 			r2::sarr::Push(*rt.depthAttachments, textureAttachment);
 		}
@@ -114,7 +120,7 @@ namespace r2::draw::rt::impl
 		{
 			textureAttachmentsToUse = rt.colorAttachments;
 		}
-		else if (type == DEPTH)
+		else if (type == DEPTH || type == DEPTH_CUBEMAP)
 		{
 			textureAttachmentsToUse = rt.depthAttachments;
 		}
@@ -145,7 +151,7 @@ namespace r2::draw::rt::impl
 		{
 			textureAttachmentsToUse = rt.colorAttachments;
 		}
-		else if (type == DEPTH)
+		else if (type == DEPTH || type == DEPTH_CUBEMAP)
 		{
 			textureAttachmentsToUse = rt.depthAttachments;
 		}

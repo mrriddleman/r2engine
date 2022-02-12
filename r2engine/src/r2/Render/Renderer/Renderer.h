@@ -249,11 +249,17 @@ namespace r2::draw
 		ShaderHandle mSpotLightShadowShaders[2];
 		ShaderHandle mSpotLightLightMatrixShader;
 
+		ShaderHandle mPointLightShadowShaders[2];
+		ShaderHandle mPointLightLightMatrixShader;
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 
 		s32 mStaticSpotLightBatchUniformLocation;
 		s32 mDynamicSpotLightBatchUniformLocation;
+
+		s32 mStaticPointLightBatchUniformLocation;
+		s32 mDynamicPointLightBatchUniformLocation;
 
 		//----------------------------------------------------------------
 
