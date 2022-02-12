@@ -250,7 +250,7 @@ public:
         NUM_VERTEX_CONFIGS
     };
     
-    const u64 NUM_DRAWS = 10;
+    const u64 NUM_DRAWS = 15;
     const u64 NUM_DRAW_COMMANDS = 30;
     const u64 NUM_BONES = 1000;
 
@@ -351,6 +351,15 @@ public:
         for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+
+            if (nextModel == r2::draw::QUAD)
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
+                }
+            }
+
             r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
         }
 
@@ -378,6 +387,39 @@ public:
       //  quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         quadMat = glm::scale(quadMat, glm::vec3(10.0f));
         r2::sarr::Push(*modelMats, quadMat);
+
+        glm::mat4 quadMat1 = glm::mat4(1.0f);
+        quadMat1 = glm::translate(quadMat1, glm::vec3(5.0f, 0.0f, 5.0f));
+        quadMat1 = glm::rotate(quadMat1, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        quadMat1 = glm::scale(quadMat1, glm::vec3(10.0f));
+       
+        
+        r2::sarr::Push(*modelMats, quadMat1);
+
+		glm::mat4 quadMat2 = glm::mat4(1.0f);
+        quadMat2 = glm::translate(quadMat2, glm::vec3(-5.0f, 0.0f, 5.0f));
+        quadMat2 = glm::rotate(quadMat2, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		quadMat2 = glm::scale(quadMat2, glm::vec3(10.0f));
+		
+        
+		r2::sarr::Push(*modelMats, quadMat2);
+
+		glm::mat4 quadMat3 = glm::mat4(1.0f);
+        quadMat3 = glm::translate(quadMat3, glm::vec3(0.0f, 5.0f, 5.0f));
+        quadMat3 = glm::rotate(quadMat3, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		quadMat3 = glm::scale(quadMat3, glm::vec3(10.0f));
+		
+		
+		r2::sarr::Push(*modelMats, quadMat3);
+
+		glm::mat4 quadMat4 = glm::mat4(1.0f);
+        quadMat4 = glm::translate(quadMat4, glm::vec3(0.0f, -5.0f, 5.0f));
+        quadMat4 = glm::rotate(quadMat4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		quadMat4 = glm::scale(quadMat4, glm::vec3(10.0f));
+		
+		
+		r2::sarr::Push(*modelMats, quadMat4);
+
 
 		glm::mat4 cubeMat = glm::mat4(1.0f);
 		cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0, 2));
@@ -408,14 +450,14 @@ public:
 
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-5, 5, 0));
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-4, 4, 0));
         skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
 
 
         glm::mat4 ellenModel = glm::mat4(1.0f);
-        ellenModel = glm::translate(ellenModel, glm::vec3(0, 5, 0));
+        ellenModel = glm::translate(ellenModel, glm::vec3(0, 4, 0));
         ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);
@@ -572,16 +614,32 @@ public:
         {
             auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
 
-            r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-           // defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
-            if (nextModel == r2::draw::SPHERE)
+            if (nextModel == r2::draw::QUAD)
             {
-                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+                for (int i = 0; i < 5; ++i)
+                {
+                    r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
+                    r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+                }
+
+
+               
             }
+            
             else
             {
-                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+                r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
+				// defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
+				if (nextModel == r2::draw::SPHERE)
+				{
+					r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+				}
+				else
+				{
+					r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+				}
             }
+            
         }
 
 
