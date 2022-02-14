@@ -906,7 +906,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 	float NoL = clamp(dot(N, L), 0.0, 1.0);
 	 	float clearCoatNoL = clamp(dot(clearCoatNormal, L), 0.0, 1.0);
 
-	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity;
+	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity * exposureNearFar.x;
 
 	 	float shadow = 0;
 

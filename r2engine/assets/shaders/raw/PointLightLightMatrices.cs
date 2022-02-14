@@ -165,7 +165,7 @@ void main(void)
 	mat4 lightView = LookAt(pointLights[pointLightIndex].position.xyz, pointLights[pointLightIndex].position.xyz + lookAtVectors[side].dir, lookAtVectors[side].up);
 
 pointLights[pointLightIndex].lightProperties.intensity = 50;
-	mat4 lightProj = Projection(PI/2.0, 1, 0.01, pointLights[pointLightIndex].lightProperties.intensity);
+	mat4 lightProj = Projection(PI/2.0, 1, exposureNearFar.y, pointLights[pointLightIndex].lightProperties.intensity);
 
 
 
