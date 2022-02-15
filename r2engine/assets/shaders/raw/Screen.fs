@@ -75,7 +75,7 @@ void main()
 
 	//vec3 toneMapping = FilmicToneMapping(sampledColor.rgb);
 //	FragColor = vec4(vec3(LinearizeDepth(sampledColor.r)), 1.0);
-	FragColor = vec4(ACESFitted(sampledColor.rgb), 1.0);
+	FragColor = vec4(FilmicToneMapping(sampledColor.rgb), 1.0);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
