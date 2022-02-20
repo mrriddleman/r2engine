@@ -197,6 +197,7 @@ namespace r2::draw
 		LightSystem* mLightSystem = nullptr;
 		r2::SArray<r2::draw::ModelRef>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
+		r2::SHashMap<RenderMaterial>* mRenderMaterialsCache = nullptr;
 		//--------------END Systems stuff----------------
 
 		//--------------BEGIN Buffer Layout stuff-----------------
@@ -365,6 +366,7 @@ namespace r2::draw::renderer
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets( VertexConfigHandle vHandle);
 	void ClearAllVertexLayoutOffsets();
+	void ClearRenderMaterialsCache();
 	
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);

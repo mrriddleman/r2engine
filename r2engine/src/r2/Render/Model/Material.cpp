@@ -15,6 +15,7 @@
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Core/Math/MathUtils.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include <filesystem>
@@ -161,6 +162,16 @@ namespace r2::draw::mat
 	bool AreMaterialHandlesEqual(const MaterialHandle& materialHandle1, const MaterialHandle& materialHandle2)
 	{
 		return materialHandle1.handle == materialHandle2.handle && materialHandle1.slot == materialHandle2.slot;
+	}
+
+	bool AreRenderMaterialsEqual(const RenderMaterial& rm1, const RenderMaterial& rm2)
+	{
+		return	r2::math::NearEq(rm1.ambientOcclusion, rm2.ambientOcclusion) && r2::math::NearEq(rm1.anisotropy, rm2.anisotropy) && r2::draw::tex::AreTextureAddressEqual(rm1.anisotropyTexture, rm2.anisotropyTexture) &&
+				r2::draw::tex::AreTextureAddressEqual(rm1.aoTexture, rm2.aoTexture) && r2::draw::tex::AreTextureAddressEqual(rm1.diffuseTexture, rm2.diffuseTexture) && rm1.baseColor == rm2.baseColor && r2::math::NearEq(rm1.clearCoat, rm2.clearCoat) &&
+				r2::math::NearEq(rm1.clearCoatRoughness, rm2.clearCoatRoughness) && r2::draw::tex::AreTextureAddressEqual(rm1.emissionTexture, rm2.emissionTexture) &&  r2::math::NearEq(rm1.heightScale, rm2.heightScale) &&
+				r2::math::NearEq(rm1.metallic, rm2.metallic) && r2::draw::tex::AreTextureAddressEqual(rm1.heightTexture, rm2.heightTexture) && r2::draw::tex::AreTextureAddressEqual(rm1.metallicTexture, rm2.metallicTexture) &&
+				r2::draw::tex::AreTextureAddressEqual(rm1.normalMapTexture, rm2.normalMapTexture) && r2::math::NearEq(rm1.reflectance, rm2.reflectance) && r2::math::NearEq(rm1.roughness, rm2.roughness) &&
+				r2::draw::tex::AreTextureAddressEqual(rm1.roughnessTexture, rm2.roughnessTexture) && r2::math::NearEq(rm1.specular, rm2.specular) && r2::draw::tex::AreTextureAddressEqual(rm1.specularTexture, rm2.specularTexture);
 	}
 
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system)

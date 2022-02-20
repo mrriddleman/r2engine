@@ -659,6 +659,16 @@ namespace r2::draw::tex
 		return newHandle;
 	}
 
+	bool IsInvalidTextureAddress(const TextureAddress& texAddress)
+	{
+		return texAddress.containerHandle == 0 && texAddress.texPage == -1.0f;
+	}
+
+	bool AreTextureAddressEqual(const TextureAddress& ta1, const TextureAddress& ta2)
+	{
+		return ta1.containerHandle == ta2.containerHandle && ta1.texPage == ta2.texPage;
+	}
+
 	const s32 GetMaxTextureSize()
 	{
 		GLint maxSize;

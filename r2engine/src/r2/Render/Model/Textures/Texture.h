@@ -114,6 +114,8 @@ namespace r2::draw::tex
 	void UnloadFromGPU(TextureHandle& texture);
 	TextureAddress GetTextureAddress(const TextureHandle& handle);
 	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2);
+	bool TexturesEqual(const Texture& t1, const Texture& t2);
+
 
 	const char* TextureTypeToString(TextureType type);
 
@@ -122,6 +124,9 @@ namespace r2::draw::tex
 	
 
 	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap);
+
+	bool IsInvalidTextureAddress(const TextureAddress& texAddress);
+	bool AreTextureAddressEqual(const TextureAddress& ta1, const TextureAddress& ta2);
 
 	const s32 GetMaxTextureSize();
 

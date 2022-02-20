@@ -329,6 +329,7 @@ namespace r2::draw::renderer
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle);
 	void ClearAllVertexLayoutOffsets(Renderer& renderer);
+	void ClearRenderMaterialsCache(Renderer& renderer);
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
@@ -725,6 +726,8 @@ namespace r2::draw::renderer
 		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 
+		
+
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
 
@@ -886,6 +889,8 @@ namespace r2::draw::renderer
 		}
 
 		CreateRenderPasses(*newRenderer);
+
+		newRenderer->mRenderMaterialsCache = MAKE_SHASHMAP(*newRenderer->mSubAreaArena, RenderMaterial, MAX_NUM_DRAWS * r2::SHashMap<RenderMaterial>::LoadFactorMultiplier());
 
 		r2::asset::FileList files = r2::asset::lib::MakeFileList(MAX_DEFAULT_MODELS);
 
@@ -1072,6 +1077,8 @@ namespace r2::draw::renderer
 			FREE(nextBatch.modelRefs, *arena);
 
 		}
+
+		FREE(renderer->mRenderMaterialsCache, *arena);
 
 		DestroyRenderPasses(*renderer);
 
@@ -1964,7 +1971,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS*2, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS * 2, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -1982,15 +1989,15 @@ namespace r2::draw::renderer
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
-			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/4, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
-			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/2, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 2, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
-			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY/4, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -1999,8 +2006,8 @@ namespace r2::draw::renderer
 			materialSystemMemorySize +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
-
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RenderMaterial>::MemorySize(MAX_NUM_DRAWS * r2::SHashMap<RenderMaterial>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking)
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2
@@ -2417,6 +2424,11 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void ClearRenderMaterialsCache(Renderer& renderer)
+	{
+		r2::shashmap::Clear(*renderer.mRenderMaterialsCache);
+	}
+
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
 	{
@@ -2513,31 +2525,47 @@ namespace r2::draw::renderer
 		b32 depthEnabled = false;
 	};
 
-	void FillRenderMaterial(const Material& material, RenderMaterial& renderMaterial)
+	void FillRenderMaterial(Renderer& renderer, const Material& material, RenderMaterial& renderMaterial)
 	{
-		renderMaterial.baseColor = material.baseColor;
-		renderMaterial.metallic = material.metallic;
-		renderMaterial.roughness = material.roughness;
-		renderMaterial.specular = material.specular;
-		renderMaterial.reflectance = material.reflectance;
-		renderMaterial.ambientOcclusion = material.ambientOcclusion;
-		renderMaterial.clearCoat = material.clearCoat;
-		renderMaterial.clearCoatRoughness = material.clearCoatRoughness;
-		renderMaterial.anisotropy = material.anisotropy;
-		renderMaterial.heightScale = material.heightScale;
+		RenderMaterial defaultRenderMaterial;
 
-		renderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
-		renderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
-		renderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
-		renderMaterial.emissionTexture = texsys::GetTextureAddress(material.emissionTexture);
-		renderMaterial.metallicTexture = texsys::GetTextureAddress(material.metallicTexture);
-		renderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
-		renderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
-		renderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
-		renderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
+		//@NOTE(Serge): possible issue - if material handles (material.materialID) are the same across different material systems, this would be an issue and cause the renderer to draw the wrong textures
+		//if this happens, we'll need a cache per material system or some other kind of solution like ensuring we never have the same materialID
+		RenderMaterial cachedRenderMaterial = r2::shashmap::Get(*renderer.mRenderMaterialsCache, material.materialID, defaultRenderMaterial);
+
+		if (r2::draw::mat::AreRenderMaterialsEqual(defaultRenderMaterial, cachedRenderMaterial)) //might need a better way of doing this if say we have a normal/roughness etc and no diffuse
+		{
+			cachedRenderMaterial.baseColor = material.baseColor;
+			cachedRenderMaterial.metallic = material.metallic;
+			cachedRenderMaterial.roughness = material.roughness;
+			cachedRenderMaterial.specular = material.specular;
+			cachedRenderMaterial.reflectance = material.reflectance;
+			cachedRenderMaterial.ambientOcclusion = material.ambientOcclusion;
+			cachedRenderMaterial.clearCoat = material.clearCoat;
+			cachedRenderMaterial.clearCoatRoughness = material.clearCoatRoughness;
+			cachedRenderMaterial.anisotropy = material.anisotropy;
+			cachedRenderMaterial.heightScale = material.heightScale;
+
+			cachedRenderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
+			cachedRenderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
+			cachedRenderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
+			cachedRenderMaterial.emissionTexture = texsys::GetTextureAddress(material.emissionTexture);
+			cachedRenderMaterial.metallicTexture = texsys::GetTextureAddress(material.metallicTexture);
+			cachedRenderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
+			cachedRenderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
+			cachedRenderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
+			cachedRenderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
+
+			//@TODO(Serge): clear this cache somewhere (make a function for it)
+
+			r2::shashmap::Set(*renderer.mRenderMaterialsCache, material.materialID, cachedRenderMaterial);
+		}
+
+		renderMaterial = cachedRenderMaterial;
+		
 	}
 
-	void PopulateRenderDataFromRenderBatch(r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, u32 baseInstanceOffset, u32 drawCommandBatchSize)
+	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
 
@@ -2551,7 +2579,6 @@ namespace r2::draw::renderer
 			ShaderHandle shaders[MAX_NUM_MESHES]; //@TODO(Serge): make this dynamic
 
 			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
-
 			
 
 			for (u32 materialIndex = 0; materialIndex < materialBatchInfo.numMaterials; ++materialIndex)
@@ -2570,7 +2597,7 @@ namespace r2::draw::renderer
 
 				RenderMaterial nextRenderMaterial;
 
-				FillRenderMaterial(*material, nextRenderMaterial);
+				FillRenderMaterial(renderer, *material, nextRenderMaterial);
 
 				r2::sarr::Push(*renderMaterials, nextRenderMaterial);
 
@@ -2587,14 +2614,16 @@ namespace r2::draw::renderer
 			R2_CHECK(numMeshRefs >= materialBatchInfo.numMaterials, "We should always have greater than or equal the amount of meshes to materials for a model");
 
 
-			if (numMeshRefs != materialBatchInfo.numMaterials)
-			{
-				R2_CHECK(materialBatchInfo.numMaterials == 1, "We should probably only have 1 material in this case");
-			}
+			//if (numMeshRefs != materialBatchInfo.numMaterials)
+			//{
+			//	R2_CHECK(materialBatchInfo.numMaterials == 1, "We should probably only have 1 material in this case");
+			//}
 			
 			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
 			{
 				const MaterialHandle materialHandle = modelRef.mMaterialHandles[modelRef.mMeshRefs[meshIndex].materialIndex];
+
+				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "this should be valid");
 
 				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
 
@@ -2722,8 +2751,8 @@ namespace r2::draw::renderer
 
 		r2::sarr::Push(*tempAllocations, (void*)shaderDrawCommandData);
 
-		PopulateRenderDataFromRenderBatch(tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, 0, dynamicDrawCommandBatchSize);
-		PopulateRenderDataFromRenderBatch(tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, numDynamicModels, staticDrawCommandBatchSize);
+		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, 0, dynamicDrawCommandBatchSize);
+		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, numDynamicModels, staticDrawCommandBatchSize);
 
 
 		key::Basic basicKey;
@@ -5321,6 +5350,11 @@ namespace r2::draw::renderer
 	void ClearAllVertexLayoutOffsets()
 	{
 		ClearAllVertexLayoutOffsets(MENG.GetCurrentRendererRef());
+	}
+
+	void ClearRenderMaterialsCache()
+	{
+		ClearRenderMaterialsCache(MENG.GetCurrentRendererRef());
 	}
 
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)

@@ -140,6 +140,7 @@ namespace r2::draw::mat
 	bool IsInvalidHandle(const MaterialHandle& materialHandle);
 	bool IsValid(const MaterialHandle& materialHandle);
 	bool AreMaterialHandlesEqual(const MaterialHandle& materialHandle1, const MaterialHandle& materialHandle2);
+	bool AreRenderMaterialsEqual(const RenderMaterial& rm1, const RenderMaterial& rm2);
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);
