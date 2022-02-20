@@ -103,18 +103,22 @@ namespace r2::draw
 		u32 baseIndex = 0;
 		u32 numIndices = 0;
 		u32 numVertices = 0;
-	};
 
+        u32 materialIndex = 0;
+    };
+
+    //@TODO(Serge): remove this
     const u32 MAX_NUM_MESHES = 8;
 
     //@TODO(Serge): how do we size this?
     struct ModelRef
     {
         u64 hash;
-        //I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
+        //@NOTE(Serge): I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
 		VertexBufferHandle vertexBufferHandle;
 		IndexBufferHandle indexBufferHandle;
 
+        //@TODO(Serge): make these dynamic
         MeshRef mMeshRefs[MAX_NUM_MESHES];
         MaterialHandle mMaterialHandles[MAX_NUM_MESHES];
 

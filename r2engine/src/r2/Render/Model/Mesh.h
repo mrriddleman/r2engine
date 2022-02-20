@@ -21,6 +21,7 @@ namespace r2::draw
         u64 hashName = 0;
         r2::SArray<r2::draw::Vertex>* optrVertices = nullptr;
         r2::SArray<u32>* optrIndices = nullptr;
+        u32 materialIndex = 0;
         //r2::SArray<glm::vec4>* optrWeights = nullptr;
         //r2::SArray<glm::ivec4>* optrJoints = nullptr;
         //r2::SArray<r2::draw::MaterialHandle>* optrMaterials = nullptr;

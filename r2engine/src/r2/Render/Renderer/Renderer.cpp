@@ -2251,6 +2251,7 @@ namespace r2::draw::renderer
 		modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
 		modelRef.mMeshRefs[0].baseIndex = vOffsets.mIndexBufferOffset.baseIndex + vOffsets.mIndexBufferOffset.numIndices;
 		modelRef.mMeshRefs[0].baseVertex = vOffsets.mVertexBufferOffset.baseVertex + vOffsets.mVertexBufferOffset.numVertices;
+		modelRef.mMeshRefs[0].materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
 
 		modelRef.mNumMeshRefs = numMeshes;
 		modelRef.mNumMaterialHandles = numMaterals;
@@ -2288,6 +2289,7 @@ namespace r2::draw::renderer
 			u64 numMeshVertices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrVertices);
 			modelRef.mMeshRefs[i].numVertices = numMeshVertices;
 			modelRef.mMeshRefs[i].baseVertex = modelRef.mMeshRefs[i - 1].numVertices + modelRef.mMeshRefs[i - 1].baseVertex;
+			modelRef.mMeshRefs[i].materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
 
 			totalNumVertices += numMeshVertices;
 			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
@@ -2537,18 +2539,20 @@ namespace r2::draw::renderer
 
 	void PopulateRenderDataFromRenderBatch(r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
-		const u64 numStaticModels = r2::sarr::Size(*renderBatch.modelRefs);
+		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
 
-		for (u64 modelIndex = 0; modelIndex < numStaticModels; ++modelIndex)
+		for (u64 modelIndex = 0; modelIndex < numModels; ++modelIndex)
 		{
 			const ModelRef& modelRef = r2::sarr::At(*renderBatch.modelRefs, modelIndex);
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
 
 			const u32 numMeshRefs = modelRef.mNumMeshRefs;
 
+			ShaderHandle shaders[MAX_NUM_MESHES]; //@TODO(Serge): make this dynamic
+
 			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
 
-			ShaderHandle shaders[MAX_NUM_MESHES];
+			
 
 			for (u32 materialIndex = 0; materialIndex < materialBatchInfo.numMaterials; ++materialIndex)
 			{
@@ -2573,6 +2577,7 @@ namespace r2::draw::renderer
 				shaders[materialIndex] = material->shaderId;
 			}
 
+			//@TODO(Serge): remove the empty materials - won't need this anymore 
 			for (u32 renderMaterialIndex = materialBatchInfo.numMaterials; renderMaterialIndex < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++renderMaterialIndex)
 			{
 				RenderMaterial emptyRenderMaterial = {};
@@ -2587,9 +2592,21 @@ namespace r2::draw::renderer
 				R2_CHECK(materialBatchInfo.numMaterials == 1, "We should probably only have 1 material in this case");
 			}
 			
-			for (u32 shaderIndex = materialBatchInfo.numMaterials; shaderIndex < numMeshRefs; ++shaderIndex)
+			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
 			{
-				shaders[shaderIndex] = shaders[0]; //This is kind of assuming that there was only 1 shader and all meshes use the same one
+				const MaterialHandle materialHandle = modelRef.mMaterialHandles[modelRef.mMeshRefs[meshIndex].materialIndex];
+
+				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+
+				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+				const Material* material = mat::GetMaterial(*matSystem, materialHandle);
+
+				R2_CHECK(material != nullptr, "Invalid material?");
+
+				shaders[meshIndex] = material->shaderId;
+
+				R2_CHECK(shaders[meshIndex] != InvalidShader, "This shouldn't be invalid!");
 			}
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
@@ -2697,7 +2714,7 @@ namespace r2::draw::renderer
 		//@Threading: If we want to thread this in the future, we can call PopulateRenderDataFromRenderBatch from different threads provided they have their own temp allocators
 		//			  You will need to add jobs(or whatever) to dealloc the memory after we merge and create the prerenderbucket which might be tricky since we'll have to make sure the proper threads free the memory
 
-		r2::SArray<RenderMaterial>* renderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterial, (numStaticModels + numDynamicModels) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT);
+		r2::SArray<RenderMaterial>* renderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterial, (numStaticModels + numDynamicModels) * MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT); //@TODO(Serge): remove this
 
 		r2::sarr::Push(*tempAllocations, (void*)renderMaterials);
 

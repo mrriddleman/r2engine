@@ -1060,7 +1060,7 @@ public:
 
         r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel,  skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+        r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
         
         r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         

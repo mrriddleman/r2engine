@@ -27,7 +27,6 @@ namespace
 		u64 bytes = 0;
 		for (u32 i = 0; i < node->mNumChildren; ++i)
 		{
-			//bytes += r2::draw::Skeleton::MemorySizeNoData(node->mNumChildren, alignment, header, boundsChecking);
 			bytes += GetTotalMeshBytes(node->mChildren[i], scene, numMeshes, numBones, numVertices, alignment, header, boundsChecking);
 		}
 
@@ -36,13 +35,6 @@ namespace
 		for (u32 i = 0; i < node->mNumMeshes; ++i)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
-			//@Temporary
-			u64 numMaterials = 0;
-			if (mesh->mMaterialIndex >= 0)
-			{
-				numMaterials = 1;
-			}
 
 			numVertices += mesh->mNumVertices;
 
@@ -198,6 +190,10 @@ namespace
 		}
 
 		R2_CHECK(materialIndex != -1, "We should have a material for the mesh!");
+
+		nextMeshPtr->materialIndex = materialIndex;
+
+		//@TODO(Serge): remove this
 		R2_CHECK(materialIndex < r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT, "We should never have more than: %llu number of materials for a model!", r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT);
 
 	//	R2_CHECK(textureIndex == meshIndex, "HMMM");
