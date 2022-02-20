@@ -2531,40 +2531,38 @@ namespace r2::draw::renderer
 
 		//@NOTE(Serge): possible issue - if material handles (material.materialID) are the same across different material systems, this would be an issue and cause the renderer to draw the wrong textures
 		//if this happens, we'll need a cache per material system or some other kind of solution like ensuring we never have the same materialID
-		RenderMaterial cachedRenderMaterial = r2::shashmap::Get(*renderer.mRenderMaterialsCache, material.materialID, defaultRenderMaterial);
+		bool success = false;
+		renderMaterial = r2::shashmap::Get(*renderer.mRenderMaterialsCache, material.materialID, defaultRenderMaterial, success);
 
-		if (r2::draw::mat::AreRenderMaterialsEqual(defaultRenderMaterial, cachedRenderMaterial)) //might need a better way of doing this if say we have a normal/roughness etc and no diffuse
+		if (!success) //might need a better way of doing this if say we have a normal/roughness etc and no diffuse
 		{
-			cachedRenderMaterial.baseColor = material.baseColor;
-			cachedRenderMaterial.metallic = material.metallic;
-			cachedRenderMaterial.roughness = material.roughness;
-			cachedRenderMaterial.specular = material.specular;
-			cachedRenderMaterial.reflectance = material.reflectance;
-			cachedRenderMaterial.ambientOcclusion = material.ambientOcclusion;
-			cachedRenderMaterial.clearCoat = material.clearCoat;
-			cachedRenderMaterial.clearCoatRoughness = material.clearCoatRoughness;
-			cachedRenderMaterial.anisotropy = material.anisotropy;
-			cachedRenderMaterial.heightScale = material.heightScale;
+			renderMaterial.baseColor = material.baseColor;
+			renderMaterial.metallic = material.metallic;
+			renderMaterial.roughness = material.roughness;
+			renderMaterial.specular = material.specular;
+			renderMaterial.reflectance = material.reflectance;
+			renderMaterial.ambientOcclusion = material.ambientOcclusion;
+			renderMaterial.clearCoat = material.clearCoat;
+			renderMaterial.clearCoatRoughness = material.clearCoatRoughness;
+			renderMaterial.anisotropy = material.anisotropy;
+			renderMaterial.heightScale = material.heightScale;
 
-			cachedRenderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
-			cachedRenderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
-			cachedRenderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
-			cachedRenderMaterial.emissionTexture = texsys::GetTextureAddress(material.emissionTexture);
-			cachedRenderMaterial.metallicTexture = texsys::GetTextureAddress(material.metallicTexture);
-			cachedRenderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
-			cachedRenderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
-			cachedRenderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
-			cachedRenderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
+			renderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
+			renderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
+			renderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
+			renderMaterial.emissionTexture = texsys::GetTextureAddress(material.emissionTexture);
+			renderMaterial.metallicTexture = texsys::GetTextureAddress(material.metallicTexture);
+			renderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
+			renderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
+			renderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
+			renderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
 
-			//@TODO(Serge): clear this cache somewhere (make a function for it)
-
-			r2::shashmap::Set(*renderer.mRenderMaterialsCache, material.materialID, cachedRenderMaterial);
+			r2::shashmap::Set(*renderer.mRenderMaterialsCache, material.materialID, renderMaterial);
 		}
-
-		renderMaterial = cachedRenderMaterial;
-		
 	}
 
+	//@TODO(Serge): pass in an array of u32 that will act as the material offsets per draw ID
+	//				Then make a new big buffer ssbo that will store them and upload them along with the other materials
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
