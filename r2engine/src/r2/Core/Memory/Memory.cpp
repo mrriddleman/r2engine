@@ -196,7 +196,7 @@ namespace r2
             //first check to see if we have enough space left in the MemoryArea
             u64 bytesLeftInArea = UnAllocatedSpace();
             
-            R2_CHECK(sizeInBytes <= bytesLeftInArea, "Requested too many bytes for this MemoryArea to hold!");
+            R2_CHECK(sizeInBytes <= bytesLeftInArea, "Requested too many bytes for this MemoryArea to hold! We requested: %llu and we only have: %llu, difference of %llu", sizeInBytes, bytesLeftInArea, sizeInBytes - bytesLeftInArea);
             
             if(sizeInBytes <= bytesLeftInArea)
             {

@@ -151,9 +151,10 @@ namespace r2::draw::rendererimpl
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
 		u64 subAreaSize = MemorySize(numRingBuffers * HASH_MULT, maxRingLocks * RING_BUFFER_MULT);
-		if (memoryArea->UnAllocatedSpace() < subAreaSize)
+		u64 unallocatedSpace = memoryArea->UnAllocatedSpace();
+		if ( unallocatedSpace < subAreaSize)
 		{
-			R2_CHECK(false, "We don't have enought space to allocate the renderer!");
+			R2_CHECK(false, "We don't have enough space to allocate the Impl Renderer! We requested: %llu and we only have %llu left in the memory area. Difference of: %llu", subAreaSize, unallocatedSpace, subAreaSize - unallocatedSpace);
 			return false;
 		}
 

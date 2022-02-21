@@ -119,11 +119,11 @@ namespace r2::draw
 		IndexBufferHandle indexBufferHandle;
 
         //@TODO(Serge): make these dynamic
-        MeshRef mMeshRefs[MAX_NUM_MESHES];
-        MaterialHandle mMaterialHandles[MAX_NUM_MESHES];
+        r2::SArray<MeshRef>* mMeshRefs;
+        r2::SArray<MaterialHandle>* mMaterialHandles;
 
-        u32 mNumMeshRefs;
-        u32 mNumMaterialHandles;
+     //   u32 mNumMeshRefs; //@TODO(Serge): remove
+     //   u32 mNumMaterialHandles; //@TODO(Serge): remove
         b32 mAnimated;
         u32 mNumBones;
     };

@@ -263,6 +263,10 @@ namespace r2::draw
 		s32 mDynamicPointLightBatchUniformLocation;
 
 		//----------------------------------------------------------------
+		r2::mem::StackArena* mModelRefArena = nullptr;
+
+		r2::SArray<ModelRef>* mModelRefs = nullptr;
+		
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 

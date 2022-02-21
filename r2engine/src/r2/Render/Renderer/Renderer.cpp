@@ -212,8 +212,11 @@ namespace r2::draw
 
 namespace
 {
-	//r2::draw::Renderer* s_optrRenderer = nullptr;
 
+	//r2::draw::Renderer* s_optrRenderer = nullptr;
+	const u32 MAX_NUM_DRAWS = 2 << 13;
+	const u32 MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME = 512;
+	constexpr u32 MODEL_REF_ARENA_SIZE = sizeof(r2::draw::ModelRef) * MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * 20 * (sizeof(r2::draw::MeshRef) + sizeof(r2::draw::MaterialHandle));
 	const u64 COMMAND_CAPACITY = 2048;
 	const u64 COMMAND_AUX_MEMORY = Megabytes(16); //I dunno lol
 	const u64 ALIGNMENT = 16;
@@ -228,8 +231,6 @@ namespace
 	const u32 REDUCE_TILE_DIM = 128;
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
 	const float EDGE_SOFTENING_AMOUNT = 0.02f;
-	
-	const u32 MAX_NUM_DRAWS = 2 << 13;
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
 	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS; 
@@ -726,6 +727,7 @@ namespace r2::draw::renderer
 		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 
+
 		
 
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
@@ -814,6 +816,12 @@ namespace r2::draw::renderer
 #endif
 
 		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+
+
+		
+		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
+		newRenderer->mModelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+
 
 		
 		newRenderer->mPreRenderBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
@@ -1079,6 +1087,17 @@ namespace r2::draw::renderer
 		}
 
 		FREE(renderer->mRenderMaterialsCache, *arena);
+
+		const auto numModelRefs = r2::sarr::Size(*renderer->mModelRefs);
+
+		for (s32 i = numModelRefs-1; i >= 0; --i)
+		{
+			FREE(r2::sarr::At(*renderer->mModelRefs, i).mMaterialHandles, *renderer->mModelRefArena);
+			FREE(r2::sarr::At(*renderer->mModelRefs, i).mMeshRefs, *renderer->mModelRefArena);
+		}
+
+		FREE(renderer->mModelRefs, *arena);
+		FREE(renderer->mModelRefArena, *arena);
 
 		DestroyRenderPasses(*renderer);
 
@@ -1985,6 +2004,9 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS * r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderPass), ALIGNMENT, headerSize, boundsChecking) * NUM_RENDER_PASSES +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelRef>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)+
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(MODEL_REF_ARENA_SIZE, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -2237,17 +2259,29 @@ namespace r2::draw::renderer
 		}
 
 		u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+		u64 numMaterals = r2::sarr::Size(*model->optrMaterialHandles);
+
+		R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
+		R2_CHECK(numMaterals >= 1, "We should have at least one material");
+
+		modelRef.mMeshRefs = MAKE_SARRAY(*renderer.mModelRefArena, MeshRef, numMeshes);
+		modelRef.mMaterialHandles = MAKE_SARRAY(*renderer.mModelRefArena, MaterialHandle, numMaterals);
+
+
+		for (u64 i = 0; i < numMaterals; ++i)
+		{
+			r2::sarr::Push(*modelRef.mMaterialHandles, r2::sarr::At(*model->optrMaterialHandles, i));
+			//modelRef.mMaterialHandles[i] = r2::sarr::At(*model->optrMaterialHandles, i);
+		}
+
+		for (u64 i = 0; i < numMeshes; ++i)
+		{
+			r2::sarr::Push(*modelRef.mMeshRefs, MeshRef());
+		}
+
 		r2::draw::key::Basic fillKey;
 		//@TODO(Serge): fix this or pass it in
 		fillKey.keyValue = 0;
-
-		if (numMeshes == 0)
-		{
-			R2_CHECK(false, "We don't have any meshes in the model!");
-			return modelRef;
-		}
-
-		u64 numMaterals = r2::sarr::Size(*model->optrMaterialHandles);
 
 		const VertexLayoutConfigHandle& vHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, vertexConfigHandle);
 		VertexLayoutUploadOffset& vOffsets = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, vertexConfigHandle);
@@ -2256,28 +2290,25 @@ namespace r2::draw::renderer
 		modelRef.hash = model->hash;
 		modelRef.indexBufferHandle = vHandle.mIndexBufferHandle;
 		modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
-		modelRef.mMeshRefs[0].baseIndex = vOffsets.mIndexBufferOffset.baseIndex + vOffsets.mIndexBufferOffset.numIndices;
-		modelRef.mMeshRefs[0].baseVertex = vOffsets.mVertexBufferOffset.baseVertex + vOffsets.mVertexBufferOffset.numVertices;
-		modelRef.mMeshRefs[0].materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex + vOffsets.mIndexBufferOffset.numIndices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex + vOffsets.mVertexBufferOffset.numVertices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
 
-		modelRef.mNumMeshRefs = numMeshes;
-		modelRef.mNumMaterialHandles = numMaterals;
+		//modelRef.mNumMeshRefs = numMeshes;
+		//modelRef.mNumMaterialHandles = numMaterals;
 
-		for (u64 i = 0; i < numMaterals; ++i)
-		{
-			modelRef.mMaterialHandles[i] = r2::sarr::At(*model->optrMaterialHandles, i);
-		}
 
-		u64 vOffset = sizeof(r2::draw::Vertex) * (modelRef.mMeshRefs[0].baseVertex);
-		u64 iOffset = sizeof(u32) * (modelRef.mMeshRefs[0].baseIndex);
+
+		u64 vOffset = sizeof(r2::draw::Vertex) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
+		u64 iOffset = sizeof(u32) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex);
 
 		u64 totalNumVertices = 0;
 		u64 totalNumIndices = 0;
 
-		modelRef.mMeshRefs[0].numVertices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrVertices);
-		totalNumVertices = modelRef.mMeshRefs[0].numVertices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrVertices);
+		totalNumVertices = r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices;
 
-		u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * modelRef.mMeshRefs[0].numVertices);
+		u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices);
 
 		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
 		{
@@ -2294,9 +2325,9 @@ namespace r2::draw::renderer
 		for (u64 i = 1; i < numMeshes; ++i)
 		{
 			u64 numMeshVertices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrVertices);
-			modelRef.mMeshRefs[i].numVertices = numMeshVertices;
-			modelRef.mMeshRefs[i].baseVertex = modelRef.mMeshRefs[i - 1].numVertices + modelRef.mMeshRefs[i - 1].baseVertex;
-			modelRef.mMeshRefs[i].materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
+			r2::sarr::At(*modelRef.mMeshRefs, i).numVertices = numMeshVertices;
+			r2::sarr::At(*modelRef.mMeshRefs, i).baseVertex = r2::sarr::At(*modelRef.mMeshRefs, i-1).numVertices + r2::sarr::At(*modelRef.mMeshRefs, i-1).baseVertex;
+			r2::sarr::At(*modelRef.mMeshRefs, i).materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
 
 			totalNumVertices += numMeshVertices;
 			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
@@ -2326,7 +2357,7 @@ namespace r2::draw::renderer
 		if (boneData)
 		{
 			
-			u64 bOffset = sizeof(r2::draw::BoneData) * (modelRef.mMeshRefs[0].baseVertex);
+			u64 bOffset = sizeof(r2::draw::BoneData) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
 
 			resultingMemorySize = (bOffset + sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData));
 
@@ -2342,10 +2373,10 @@ namespace r2::draw::renderer
 			nextVertexCmd = fillBoneDataCommand;
 		}
 		
-		modelRef.mMeshRefs[0].numIndices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrIndices);
-		totalNumIndices = modelRef.mMeshRefs[0].numIndices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrIndices);
+		totalNumIndices = r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices;
 
-		resultingMemorySize = (iOffset + sizeof(u32) * modelRef.mMeshRefs[0].numIndices);
+		resultingMemorySize = (iOffset + sizeof(u32) * r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices);
 		if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
 		{
 			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
@@ -2360,8 +2391,8 @@ namespace r2::draw::renderer
 		for (u64 i = 1; i < numMeshes; ++i)
 		{
 			u64 numMeshIndices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrIndices);
-			modelRef.mMeshRefs[i].numIndices = numMeshIndices;
-			modelRef.mMeshRefs[i].baseIndex = modelRef.mMeshRefs[i - 1].baseIndex + modelRef.mMeshRefs[i - 1].numIndices;
+			r2::sarr::At(*modelRef.mMeshRefs, i).numIndices = numMeshIndices;
+			r2::sarr::At(*modelRef.mMeshRefs, i).baseIndex = r2::sarr::At(*modelRef.mMeshRefs, i-1).baseIndex + r2::sarr::At(*modelRef.mMeshRefs, i-1).numIndices;
 
 			totalNumIndices += numMeshIndices;
 
@@ -2376,11 +2407,13 @@ namespace r2::draw::renderer
 			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
 		}
 
-		vOffsets.mVertexBufferOffset.baseVertex = modelRef.mMeshRefs[0].baseVertex;
+		vOffsets.mVertexBufferOffset.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex;
 		vOffsets.mVertexBufferOffset.numVertices = totalNumVertices;
 
-		vOffsets.mIndexBufferOffset.baseIndex = modelRef.mMeshRefs[0].baseIndex;
+		vOffsets.mIndexBufferOffset.baseIndex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex;
 		vOffsets.mIndexBufferOffset.numIndices = totalNumIndices;
+
+		r2::sarr::Push(*renderer.mModelRefs, modelRef);
 
 		return modelRef;
 	}
@@ -2572,7 +2605,7 @@ namespace r2::draw::renderer
 			const ModelRef& modelRef = r2::sarr::At(*renderBatch.modelRefs, modelIndex);
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
 
-			const u32 numMeshRefs = modelRef.mNumMeshRefs;
+			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);//modelRef.mNumMeshRefs;
 
 			ShaderHandle shaders[MAX_NUM_MESHES]; //@TODO(Serge): make this dynamic
 
@@ -2619,7 +2652,7 @@ namespace r2::draw::renderer
 			
 			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
 			{
-				const MaterialHandle materialHandle = modelRef.mMaterialHandles[modelRef.mMeshRefs[meshIndex].materialIndex];
+				const MaterialHandle materialHandle = r2::sarr::At(*modelRef.mMaterialHandles, r2::sarr::At(*modelRef.mMeshRefs, meshIndex).materialIndex);// modelRef.mMaterialHandles[modelRef.mMeshRefs[meshIndex].materialIndex];
 
 				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "this should be valid");
 
@@ -2638,7 +2671,7 @@ namespace r2::draw::renderer
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
 			{
-				const MeshRef& meshRef = modelRef.mMeshRefs[meshRefIndex];
+				const MeshRef& meshRef = r2::sarr::At(*modelRef.mMeshRefs, meshRefIndex);//modelRef.mMeshRefs[meshRefIndex];
 
 				ShaderHandle shaderId = shaders[meshRefIndex];
 
@@ -2713,7 +2746,7 @@ namespace r2::draw::renderer
 		{
 			const ModelRef& modelRef = r2::sarr::At(*staticRenderBatch.modelRefs, i);
 
-			totalSubCommands += modelRef.mNumMeshRefs;
+			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);//modelRef.mNumMeshRefs;
 		}
 
 		staticDrawCommandBatchSize = totalSubCommands;
@@ -2733,7 +2766,7 @@ namespace r2::draw::renderer
 
 			boneOffset += modelRef.mNumBones;
 
-			totalSubCommands += modelRef.mNumMeshRefs;
+			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
 		}
 
 		dynamicDrawCommandBatchSize = totalSubCommands - staticDrawCommandBatchSize;
@@ -2909,7 +2942,7 @@ namespace r2::draw::renderer
 		//Make our final batch data here
 		BatchRenderOffsets finalBatchOffsets;
 		{
-			const ModelRef& quadModelRef = GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE);
+			const ModelRef& fullScreenTriangleModelRef = GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE);
 
 			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(renderer.mFinalCompositeMaterialHandle.slot);
 			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
@@ -2918,10 +2951,10 @@ namespace r2::draw::renderer
 
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
-			finalBatchSubcommand.baseVertex = quadModelRef.mMeshRefs[0].baseVertex;
-			finalBatchSubcommand.firstIndex = quadModelRef.mMeshRefs[0].baseIndex;
+			finalBatchSubcommand.baseVertex = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).baseVertex;
+			finalBatchSubcommand.firstIndex = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).baseIndex;
 			finalBatchSubcommand.instanceCount = 1;
-			finalBatchSubcommand.count = quadModelRef.mMeshRefs[0].numIndices;
+			finalBatchSubcommand.count = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).numIndices;
 			memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), &finalBatchSubcommand, sizeof(cmd::DrawBatchSubCommand));
 
 			finalBatchOffsets.layer = DL_SCREEN;
@@ -3926,19 +3959,19 @@ namespace r2::draw::renderer
 			MaterialBatch::Info materialBatchInfo;
 
 			materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-			materialBatchInfo.numMaterials = modelRef.mNumMaterialHandles;
+			materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);//modelRef.mNumMaterialHandles;
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 			
-			for (u32 i = 0; i < modelRef.mNumMaterialHandles; ++i)
+			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
 			{
-				r2::sarr::Push(*batch.materialBatch.materialHandles, modelRef.mMaterialHandles[i]);
+				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));//modelRef.mMaterialHandles[i]);
 			}
 		}
 		else
 		{
 			u64 numMaterials = r2::sarr::Size(*materials);
-			R2_CHECK(numMaterials == modelRef.mNumMaterialHandles, "This should be the same in this case");
+			R2_CHECK(numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles), "This should be the same in this case");
 
 
 			MaterialBatch::Info materialBatchInfo;
@@ -4025,13 +4058,13 @@ namespace r2::draw::renderer
 
 				MaterialBatch::Info info;
 				info.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				info.numMaterials = modelRef.mNumMaterialHandles;
+				info.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
 
 				r2::sarr::Push(*batch.materialBatch.infos, info);
 
-				for (u32 j = 0; j < modelRef.mNumMaterialHandles; ++j)
+				for (u32 j = 0; j < info.numMaterials; ++j)
 				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, modelRef.mMaterialHandles[j]);
+					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, j));//modelRef.mMaterialHandles[j]);
 				}
 			}
 		}
@@ -4047,16 +4080,16 @@ namespace r2::draw::renderer
 
 				MaterialBatch::Info materialBatchInfo;
 				materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				materialBatchInfo.numMaterials = modelRef.mNumMaterialHandles;
+				materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
 
 				r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
-				for (u32 j = 0; j < modelRef.mNumMaterialHandles; ++j)
+				for (u32 j = 0; j < materialBatchInfo.numMaterials; ++j)
 				{
 					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*materialHandles,j + materialOffset));
 				}
 
-				materialOffset += modelRef.mNumMaterialHandles;
+				materialOffset += materialBatchInfo.numMaterials;
 
 			}
 		}
@@ -4211,15 +4244,15 @@ namespace r2::draw::renderer
 			if (modelType != DEBUG_LINE)
 			{
 				const ModelRef& modelRef = GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType));
-
-				for (u64 j = 0; j < modelRef.mNumMeshRefs; ++j)
+				const auto numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
+				for (u64 j = 0; j < numMeshRefs; ++j)
 				{
 					r2::draw::cmd::DrawBatchSubCommand subCommand;
 					subCommand.baseInstance = i + instanceOffset;
-					subCommand.baseVertex = modelRef.mMeshRefs[j].baseVertex;
-					subCommand.firstIndex = modelRef.mMeshRefs[j].baseIndex;
+					subCommand.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, j).baseVertex;//modelRef.mMeshRefs[j].baseVertex;
+					subCommand.firstIndex = r2::sarr::At(*modelRef.mMeshRefs, j).baseIndex;
 					subCommand.instanceCount = 1;
-					subCommand.count = modelRef.mMeshRefs[j].numIndices;
+					subCommand.count = r2::sarr::At(*modelRef.mMeshRefs, j).numIndices;
 
 					r2::sarr::Push(*debugDrawCommandData->debugModelDrawBatchCommands, subCommand);
 				}
