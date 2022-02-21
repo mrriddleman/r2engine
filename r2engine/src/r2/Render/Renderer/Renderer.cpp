@@ -314,18 +314,18 @@ namespace r2::draw::renderer
 	void SetClearColor(const glm::vec4& color);
 
 	const Model* GetDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
-	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs(Renderer& renderer);
-	r2::draw::ModelRef GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
+	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs(Renderer& renderer);
+	r2::draw::ModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 
 	void LoadEngineTexturesFromDisk(Renderer& renderer);
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName);
 	void UploadEngineMaterialTexturesToGPU(Renderer& renderer);
 
-	ModelRef UploadModel(Renderer& renderer, const Model* model);
-	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs);
+	ModelRefHandle UploadModel(Renderer& renderer, const Model* model);
+	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs);
 
-	ModelRef UploadAnimModel(Renderer& renderer, const AnimModel* model);
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs);
+	ModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
+	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs);
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle);
@@ -397,11 +397,11 @@ namespace r2::draw::renderer
 
 	void UpdateLighting(Renderer& renderer);
 
-	void DrawModels(Renderer& renderer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModel(Renderer& renderer, const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(Renderer& renderer, const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
-	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic, light::LightType lightType);
@@ -475,7 +475,7 @@ namespace r2::draw::renderer
 	template<class ARENA, typename T>
 	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<T>& bucket, T key, u64 auxMemory);
 
-	ModelRef UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vHandle);
+	ModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vHandle);
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data);
 
 
@@ -637,7 +637,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(newRenderer->mConstantLayouts != nullptr, "We couldn't create the constant layouts!");
 
-		newRenderer->mEngineModelRefs = MAKE_SARRAY(*rendererArena, r2::draw::ModelRef, NUM_DEFAULT_MODELS);
+		newRenderer->mEngineModelRefs = MAKE_SARRAY(*rendererArena, r2::draw::ModelRefHandle, NUM_DEFAULT_MODELS);
 
 		R2_CHECK(newRenderer->mEngineModelRefs != nullptr, "We couldn't create the engine model refs");
 
@@ -2084,7 +2084,7 @@ namespace r2::draw::renderer
 		return modlsys::GetModel(renderer.mModelSystem, modelHandle);
 	}
 
-	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs(Renderer& renderer)
+	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs(Renderer& renderer)
 	{
 		if (renderer.mEngineModelRefs == nullptr)
 		{
@@ -2095,12 +2095,12 @@ namespace r2::draw::renderer
 		return renderer.mEngineModelRefs;
 	}
 
-	r2::draw::ModelRef GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel)
+	r2::draw::ModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel)
 	{
 		if (renderer.mEngineModelRefs == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return r2::draw::ModelRef{};
+			return InvalidModelRefHandle;
 		}
 
 		return r2::sarr::At(*renderer.mEngineModelRefs, defaultModel);
@@ -2199,12 +2199,12 @@ namespace r2::draw::renderer
 		r2::draw::mat::UploadAllMaterialTexturesToGPU(*renderer.mMaterialSystem);
 	}
 
-	ModelRef UploadModel(Renderer& renderer, const Model* model)
+	ModelRefHandle UploadModel(Renderer& renderer, const Model* model)
 	{
 		return UploadModelInternal(renderer, model, nullptr, nullptr, renderer.mStaticVertexModelConfigHandle);
 	}
 
-	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs)
+	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs)
 	{
 		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
 		{
@@ -2220,12 +2220,12 @@ namespace r2::draw::renderer
 		}
 	}
 
-	ModelRef UploadAnimModel(Renderer& renderer, const AnimModel* model)
+	ModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
 	{
 		return UploadModelInternal(renderer, &model->model, model->boneData, model->boneInfo, renderer.mAnimVertexModelConfigHandle);
 	}
 
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs)
+	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs)
 	{
 		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
 		{
@@ -2242,20 +2242,20 @@ namespace r2::draw::renderer
 	}
 
 
-	ModelRef UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vertexConfigHandle)
+	ModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vertexConfigHandle)
 	{
 		ModelRef modelRef;
 
 		if (model == nullptr)
 		{
 			R2_CHECK(false, "We don't have a proper model!");
-			return modelRef;
+			return InvalidModelRefHandle;
 		}
 
 		if (vertexConfigHandle == InvalidVertexConfigHandle)
 		{
 			R2_CHECK(false, "We only should have 2 vHandles, 0 - mesh data, 1 - bone data");
-			return modelRef;
+			return InvalidModelRefHandle;
 		}
 
 		u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
@@ -2415,7 +2415,7 @@ namespace r2::draw::renderer
 
 		r2::sarr::Push(*renderer.mModelRefs, modelRef);
 
-		return modelRef;
+		return r2::sarr::Size(*renderer.mModelRefs) - 1;
 	}
 
 	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle)
@@ -2942,7 +2942,7 @@ namespace r2::draw::renderer
 		//Make our final batch data here
 		BatchRenderOffsets finalBatchOffsets;
 		{
-			const ModelRef& fullScreenTriangleModelRef = GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE);
+			const ModelRef& fullScreenTriangleModelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
 
 			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(renderer.mFinalCompositeMaterialHandle.slot);
 			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
@@ -3896,21 +3896,23 @@ namespace r2::draw::renderer
 		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, 0, 0));
 	}
 
-	void DrawModels(Renderer& renderer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		R2_CHECK(!r2::sarr::IsEmpty(modelRefs), "This should not be empty!");
+		R2_CHECK(!r2::sarr::IsEmpty(modelRefHandles), "This should not be empty!");
 
-		const ModelRef& firstModelRef = r2::sarr::At(modelRefs, 0);
+		const ModelRef& firstModelRef = r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, 0));
 
-		DrawModelsOnLayer(renderer, firstModelRef.mAnimated? DL_CHARACTER : DL_WORLD, modelRefs, nullptr, modelMatrices, flags, boneTransforms);
+		DrawModelsOnLayer(renderer, firstModelRef.mAnimated? DL_CHARACTER : DL_WORLD, modelRefHandles, nullptr, modelMatrices, flags, boneTransforms);
 	}
 
-	void DrawModel(Renderer& renderer, const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(Renderer& renderer, const ModelRefHandle& modelRefHandle, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModelOnLayer(renderer, modelRef.mAnimated ? DL_CHARACTER : DL_WORLD, modelRef, nullptr, modelMatrix, flags, boneTransforms);
+		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
+
+		DrawModelOnLayer(renderer, modelRef.mAnimated ? DL_CHARACTER : DL_WORLD, modelRefHandle, nullptr, modelMatrix, flags, boneTransforms);
 	}
 
-	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -3924,6 +3926,9 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "We haven't generated the layouts yet!");
 			return;
 		}
+
+		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
+		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
 
 		DrawType drawType = STATIC;
 
@@ -3991,7 +3996,7 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -3999,12 +4004,24 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(r2::sarr::Size(modelRefs) == r2::sarr::Size(modelMatrices), "These must be the same!");
-		R2_CHECK(r2::sarr::Size(modelRefs) == r2::sarr::Size(flags), "These must be the same!");
+		R2_CHECK(r2::sarr::Size(modelRefHandles) == r2::sarr::Size(modelMatrices), "These must be the same!");
+		R2_CHECK(r2::sarr::Size(modelRefHandles) == r2::sarr::Size(flags), "These must be the same!");
 
-		auto numModelRefs = r2::sarr::Size(modelRefs);
+		auto numModelRefs = r2::sarr::Size(modelRefHandles);
 
 		R2_CHECK(numModelRefs > 0, "We should have model refs here!");
+
+		r2::SArray<ModelRef>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numModelRefs);
+
+		//get all the model refs
+		for (u64 i = 0; i < numModelRefs; ++i)
+		{
+			r2::sarr::Push(*modelRefArray, r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, i)));
+		}
+
+
+		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
+
 
 #if defined(R2_DEBUG)
 		//check to see if what we're being given is all one type
@@ -4099,6 +4116,8 @@ namespace r2::draw::renderer
 			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
 			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
 		}
+
+		FREE(modelRefArray, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic)
@@ -4243,7 +4262,7 @@ namespace r2::draw::renderer
 
 			if (modelType != DEBUG_LINE)
 			{
-				const ModelRef& modelRef = GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType));
+				const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
 				const auto numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
 				for (u64 j = 0; j < numMeshRefs; ++j)
 				{
@@ -5327,12 +5346,12 @@ namespace r2::draw::renderer
 		return GetDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs()
+	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs()
 	{
 		return GetDefaultModelRefs(MENG.GetCurrentRendererRef());
 	}
 
-	r2::draw::ModelRef GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
+	r2::draw::ModelRefHandle GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
 	{
 		return GetDefaultModelRef(MENG.GetCurrentRendererRef(), defaultModel);
 	}
@@ -5352,22 +5371,22 @@ namespace r2::draw::renderer
 		UploadEngineMaterialTexturesToGPU(MENG.GetCurrentRendererRef());
 	}
 
-	ModelRef UploadModel(const Model* model)
+	ModelRefHandle UploadModel(const Model* model)
 	{
 		return UploadModel(MENG.GetCurrentRendererRef(), model);
 	}
 
-	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs)
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs)
 	{
 		UploadModels(MENG.GetCurrentRendererRef(), models, modelRefs);
 	}
 
-	ModelRef UploadAnimModel(const AnimModel* model)
+	ModelRefHandle UploadAnimModel(const AnimModel* model)
 	{
 		return UploadAnimModel(MENG.GetCurrentRendererRef(), model);
 	}
 
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs)
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs)
 	{
 		UploadAnimModels(MENG.GetCurrentRendererRef(), models, modelRefs);
 	}
@@ -5398,22 +5417,22 @@ namespace r2::draw::renderer
 		return GetMaterialHandleForDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModels(MENG.GetCurrentRendererRef(), modelRefs, modelMatrices, flags, boneTransforms);
 	}
 
-	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModel(MENG.GetCurrentRendererRef(), modelRef, modelMatrix, flags, boneTransforms);
 	}
 
-	void DrawModelOnLayer(DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModelOnLayer(MENG.GetCurrentRendererRef(), layer, modelRef, materials, modelMatrix, flags, boneTransforms);
 	}
 
-	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModelsOnLayer(MENG.GetCurrentRendererRef(), layer, modelRefs, materialHandles, modelMatrices, flags, boneTransforms);
 	}

@@ -195,7 +195,7 @@ namespace r2::draw
 		ModelSystem* mModelSystem = nullptr;
 		MaterialSystem* mMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
-		r2::SArray<r2::draw::ModelRef>* mEngineModelRefs = nullptr;
+		r2::SArray<r2::draw::ModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
 		r2::SHashMap<RenderMaterial>* mRenderMaterialsCache = nullptr;
 		//--------------END Systems stuff----------------
@@ -354,18 +354,18 @@ namespace r2::draw::renderer
 	void SetClearDepth(float color);
 
 	const Model* GetDefaultModel( r2::draw::DefaultModel defaultModel);
-	const r2::SArray<r2::draw::ModelRef>* GetDefaultModelRefs();
-	r2::draw::ModelRef GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
+	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs();
+	r2::draw::ModelRefHandle GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
 
 	void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName( u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();
 
-	ModelRef UploadModel(const Model* model);
-	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRef>& modelRefs);
+	ModelRefHandle UploadModel(const Model* model);
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs);
 
-	ModelRef UploadAnimModel(const AnimModel* model);
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRef>& modelRefs);
+	ModelRefHandle UploadAnimModel(const AnimModel* model);
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs);
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets( VertexConfigHandle vHandle);
@@ -405,11 +405,11 @@ namespace r2::draw::renderer
 	void ClearAllLighting();
 
 
-	void DrawModels(const r2::SArray<ModelRef>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModel(const ModelRef& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(const ModelRefHandle& modelRefHandles, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
-	void DrawModelOnLayer(DrawLayer layer, const ModelRef& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRef>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);

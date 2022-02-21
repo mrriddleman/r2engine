@@ -363,10 +363,10 @@ public:
             r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
         }
 
-        mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRef, NUM_DRAWS);
+        mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRefHandle, NUM_DRAWS);
         mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
 
-		mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRef, 3);
+		mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRefHandle, 3);
 
         mSkyboxMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, 1);
         
@@ -1344,10 +1344,10 @@ private:
     r2::mem::LinearArena* linearArenaPtr;
 
 
-    r2::SArray<r2::draw::ModelRef>* mAnimModelRefs;
-    r2::SArray<r2::draw::ModelRef>* mStaticModelRefs;
+    r2::SArray<r2::draw::ModelRefHandle>* mAnimModelRefs;
+    r2::SArray<r2::draw::ModelRefHandle>* mStaticModelRefs;
     r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
-    r2::draw::ModelRef mSkyboxModelRef;
+    r2::draw::ModelRefHandle mSkyboxModelRef;
     r2::SArray<r2::draw::MaterialHandle>* mSkyboxMaterialHandles;
 
     r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;

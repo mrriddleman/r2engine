@@ -10,6 +10,7 @@ namespace r2::draw
 	// r2::mem::utils::GetMaxMemoryForAllocation() calls for everything except the 
 	// r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel)) / r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model) call
 
+
 	u64 Skeleton::MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) * 2 + //*2 for mRealParents

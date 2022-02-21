@@ -110,7 +110,6 @@ namespace r2::draw
     //@TODO(Serge): remove this
     const u32 MAX_NUM_MESHES = 8;
 
-    //@TODO(Serge): how do we size this?
     struct ModelRef
     {
         u64 hash;
@@ -118,17 +117,15 @@ namespace r2::draw
 		VertexBufferHandle vertexBufferHandle;
 		IndexBufferHandle indexBufferHandle;
 
-        //@TODO(Serge): make these dynamic
         r2::SArray<MeshRef>* mMeshRefs;
         r2::SArray<MaterialHandle>* mMaterialHandles;
 
-     //   u32 mNumMeshRefs; //@TODO(Serge): remove
-     //   u32 mNumMaterialHandles; //@TODO(Serge): remove
         b32 mAnimated;
         u32 mNumBones;
     };
 
-   
+    using ModelRefHandle = s64; //index into the model refs of the renderer currently
+    const ModelRefHandle InvalidModelRefHandle = -1;
 
     template<class ARENA>
     Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description);
