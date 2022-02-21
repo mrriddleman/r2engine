@@ -117,6 +117,10 @@ layout (std430, binding = 6) buffer ShadowData
 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
+layout (std430, binding = 7) buffer MaterialOffsets
+{
+    uint32_t materialOffsets[];
+}
 
 */
 
@@ -500,6 +504,22 @@ namespace r2::draw
 		mCreateFlags = 0;
 
         CalculateOffsetAndSize();
+    }
+
+    void ConstantBufferLayout::InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws)
+    {
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = numDraws;
+		mElements[0].elementSize = sizeof(u32);
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::UInt;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
     }
 
     void ConstantBufferLayout::InitForSurfaces()

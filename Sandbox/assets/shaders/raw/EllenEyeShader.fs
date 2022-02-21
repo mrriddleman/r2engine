@@ -4,8 +4,6 @@
 
 layout (location = 0) out vec4 FragColor;
 
-const uint NUM_TEXTURES_PER_DRAWID = 8;
-
 struct Tex2DAddress
 {
 	uint64_t  container;
@@ -41,6 +39,11 @@ layout (std430, binding = 1) buffer Materials
 	Material materials[];
 };
 
+layout (std430, binding = 7) buffer MaterialOffsets
+{
+	uint materialOffsets[];
+};
+
 in VS_OUT
 {
 	vec3 normal;
@@ -58,7 +61,7 @@ float GetTextureModifier(Tex2DAddress addr)
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 
 	vec3 coord = vec3(uv.rg,addr.page);

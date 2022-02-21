@@ -127,10 +127,12 @@ namespace r2::draw
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
 		ConstantBufferHandle materialsHandle;
+		ConstantBufferHandle materialOffsetsHandle;
 		ConstantBufferHandle boneTransformOffsetsHandle;
 		ConstantBufferHandle boneTransformsHandle;
 
 		r2::SArray<ModelRef>* modelRefs = nullptr;
+		//@TODO(Serge): Might be a good idea to store all of the shaderIDs that the meshrefs use as well so we don't have to dynamically allocate the shaders array in the populate method later on
 
 		MaterialBatch materialBatch;
 
@@ -231,7 +233,7 @@ namespace r2::draw
 		ConstantConfigHandle mVectorsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mSDSMParamsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mShadowDataConfigHandle = InvalidConstantConfigHandle;
-
+		ConstantConfigHandle mMaterialOffsetsConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------

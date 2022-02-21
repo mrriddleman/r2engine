@@ -2,7 +2,6 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint NUM_TEXTURES_PER_DRAWID = 8;
 const uint MAX_NUM_LIGHTS = 50;
 
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
@@ -121,6 +120,11 @@ layout (std140, binding = 1) uniform Vectors
 layout (std430, binding = 1) buffer Materials
 {
 	Material materials[];
+};
+
+layout (std430, binding = 7) buffer MaterialOffsets
+{
+	uint materialOffsets[];
 };
 
 layout (std430, binding = 4) buffer Lighting
@@ -362,7 +366,7 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 
 	vec3 coord = vec3(uv.rg,addr.page);
@@ -376,7 +380,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 
 	Tex2DAddress addr = materials[texIndex].normalMapTexture1;
 
@@ -397,7 +401,7 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].specularTexture1;
 
 	vec3 coord = vec3(uv.rg,addr.page);
@@ -411,7 +415,7 @@ vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
 
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].emissionTexture1;
 
 	vec3 coord = vec3(uv.rg,addr.page);
@@ -425,7 +429,7 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 
 vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].metallicTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -436,7 +440,7 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -447,7 +451,7 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].aoTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -465,7 +469,7 @@ vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
 
 float SampleMaterialHeight(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].heightTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -475,7 +479,7 @@ float SampleMaterialHeight(uint drawID, vec3 uv)
 
 vec3 SampleAnisotropy(uint drawID, vec3 uv)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].anisotropyTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -489,7 +493,7 @@ vec3 SampleAnisotropy(uint drawID, vec3 uv)
 
 vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 {
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].heightTexture1;
 
 	float modifier = GetTextureModifier(addr);
@@ -813,7 +817,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 {
 	vec3 color = vec3(0.0);
 
-	highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	
 	float reflectance = materials[texIndex].reflectance;
 

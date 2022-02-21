@@ -107,9 +107,6 @@ namespace r2::draw
         u32 materialIndex = 0;
     };
 
-    //@TODO(Serge): remove this
-    const u32 MAX_NUM_MESHES = 8;
-
     struct ModelRef
     {
         u64 hash;

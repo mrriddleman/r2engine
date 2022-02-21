@@ -177,7 +177,7 @@ namespace r2::draw
         void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
 
         void InitForShadowData();
-
+        void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }

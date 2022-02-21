@@ -59,8 +59,6 @@ namespace r2
 {
     const u32 INITIAL_SCREEN_WIDTH = 1280;
     const u32 INITIAL_SCREEN_HEIGHT = 720;
-
-    const u32 MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT = 8; //@TODO(Serge): remove this
 }
 
 namespace r2::util

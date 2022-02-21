@@ -193,11 +193,6 @@ namespace
 
 		nextMeshPtr->materialIndex = materialIndex;
 
-		//@TODO(Serge): remove this
-		R2_CHECK(materialIndex < r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT, "We should never have more than: %llu number of materials for a model!", r2::MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT);
-
-	//	R2_CHECK(textureIndex == meshIndex, "HMMM");
-
 		for (u32 i = 0; i < mesh->mNumVertices; ++i)
 		{
 			r2::draw::Vertex nextVertex;
