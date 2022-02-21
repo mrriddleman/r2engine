@@ -2313,7 +2313,7 @@ namespace r2::draw::renderer
 		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
 		{
 			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-			return {};
+			return InvalidModelRefHandle;
 		}
 
 		//@TODO(Serge): maybe change to the upload command bucket?
@@ -2335,7 +2335,7 @@ namespace r2::draw::renderer
 			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
 			{
 				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-				return {};
+				return InvalidModelRefHandle;
 			}
 
 			//@TODO(Serge): maybe change to the upload command bucket?
@@ -2364,7 +2364,7 @@ namespace r2::draw::renderer
 			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[1].bufferSize)
 			{
 				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[1].bufferSize);
-				return {};
+				return InvalidModelRefHandle;
 			}
 
 			r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
@@ -2380,7 +2380,7 @@ namespace r2::draw::renderer
 		if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
 		{
 			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-			return {};
+			return InvalidModelRefHandle;
 		}
 
 		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
@@ -2400,7 +2400,7 @@ namespace r2::draw::renderer
 			if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
 			{
 				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-				return {};
+				return InvalidModelRefHandle;
 			}
 
 			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextIndexCmd, 0);
