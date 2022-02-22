@@ -123,6 +123,7 @@ namespace
 
 
 					//@TODO(Serge): check other texture types if we don't find this one
+					//@TODO(Serge): what do we do if we don't have any textures?
 					aiString diffuseStr;
 					material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseStr);
 

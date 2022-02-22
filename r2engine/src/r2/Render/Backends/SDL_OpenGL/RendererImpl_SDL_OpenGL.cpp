@@ -338,7 +338,7 @@ namespace r2::draw::rendererimpl
 		glCullFace(cullFace);
 	}
 
-	s32 GetContantLocation(ShaderHandle shaderHandle, const char* name)
+	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name)
 	{
 		const Shader* shader = shadersystem::GetShader(shaderHandle);
 		R2_CHECK(shader != nullptr, "We couldn't get the shader from the shader handle: %lu", shaderHandle);

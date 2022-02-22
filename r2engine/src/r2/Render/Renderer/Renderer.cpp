@@ -803,19 +803,17 @@ namespace r2::draw::renderer
 
 
 		//@TODO(Serge): get rid of this - it's a giant hack
-		newRenderer->mStaticDirectionLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mShadowDepthShaders[0], "directionLightBatch");
-		newRenderer->mDynamicDirectionLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mShadowDepthShaders[1], "directionLightBatch");
+		newRenderer->mStaticDirectionLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mShadowDepthShaders[0], "directionLightBatch");
+		newRenderer->mDynamicDirectionLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mShadowDepthShaders[1], "directionLightBatch");
 		//s32 mStaticDirectionLightBatchUniformLocation;
 		//s32 mDynamicDirectionLightBatchUniformLocation;
 
-		newRenderer->mStaticSpotLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mSpotLightShadowShaders[0], "spotLightBatch");
-		newRenderer->mDynamicSpotLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mSpotLightShadowShaders[1], "spotLightBatch");
+		newRenderer->mStaticSpotLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mSpotLightShadowShaders[0], "spotLightBatch");
+		newRenderer->mDynamicSpotLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mSpotLightShadowShaders[1], "spotLightBatch");
 		//s32 mStaticSpotLightBatchUniformLocation;
 		//s32 mDynamicSpotLightBatchUniformLocation;
-		newRenderer->mStaticPointLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mPointLightShadowShaders[0], "pointLightBatch");
-		newRenderer->mDynamicPointLightBatchUniformLocation = rendererimpl::GetContantLocation(newRenderer->mPointLightShadowShaders[1], "pointLightBatch");
-
-		//CreateShadowRenderSurface(*newRenderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
+		newRenderer->mStaticPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[0], "pointLightBatch");
+		newRenderer->mDynamicPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[1], "pointLightBatch");
 
 		auto size = CENG.DisplaySize();
 		
