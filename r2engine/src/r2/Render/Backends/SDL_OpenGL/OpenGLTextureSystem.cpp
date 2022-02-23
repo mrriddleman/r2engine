@@ -171,44 +171,44 @@ namespace r2::draw::gl
 			container.isSparse = CanBeSparse(format, tileSizes, smallestMip);
 
 
-			GLCall(glGenTextures(1, &container.texId));
-			GLCall(glBindTexture(target, container.texId));
+			glGenTextures(1, &container.texId);
+			glBindTexture(target, container.texId);
 
 			if (container.isSparse)
 			{
-				GLCall(glTexParameteri(target, GL_TEXTURE_SPARSE_ARB, GL_TRUE));
+				glTexParameteri(target, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
 				
 				// This would mean the implementation has no valid sizes for us, or that this format doesn't actually support sparse
 				// texture allocation. Need to implement the fallback. TODO: Implement that.
 				R2_CHECK(tileSizes.bestIndex != -1, "Implementation has no valid sizes for us!");
 				if (tileSizes.bestIndex == -1)
 				{
-					GLCall(glDeleteTextures(1, &container.texId));
+					glDeleteTextures(1, &container.texId);
 					return false;
 				}
 
 				container.xTileSize = tileSizes.bestXSize;
 				container.yTileSize = tileSizes.bestYSize;
 
-				GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, tileSizes.bestIndex));
+				glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, tileSizes.bestIndex);
 			}
 
-			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode));
-			GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode));
+			glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode);
+			glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode);
 
 			if (format.wrapMode == GL_CLAMP_TO_BORDER)
 			{
 				float borderColor[] = { format.borderColor.r, format.borderColor.g, format.borderColor.b, format.borderColor.a };
 
-				GLCall(glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor));
+				glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor);
 			}
 
 			if (format.isCubemap)
 			{
-				GLCall(glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode));
+				glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode);
 			}
 
-			GLCall(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter));
+			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter);
 
 			if (format.mipLevels > 1)
 			{
@@ -217,16 +217,16 @@ namespace r2::draw::gl
 			}
 			else
 			{
-				GLCall(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter));
+				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter);
 			}
 
-			GLCall(glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices));
+			glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices);
 
 			
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
 			{
-				GLCall(glDeleteTextures(1, &container.texId));
+				glDeleteTextures(1, &container.texId);
 				return false;
 			}
 
@@ -243,7 +243,7 @@ namespace r2::draw::gl
 					R2_CHECK(false, "");
 				}
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
-				GLCall(glMakeTextureHandleResidentARB(container.handle));
+				glMakeTextureHandleResidentARB(container.handle);
 		//	}
 
 			return true;

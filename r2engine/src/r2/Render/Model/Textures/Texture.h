@@ -27,7 +27,7 @@ namespace r2::draw::tex
 		Normal,
 		Metallic,
 		Height,
-		MicroFacet, //roughness?
+		MicroFacet, //Currently with Ellen, it's used as a secondary for the albedo
 		Occlusion,
 		Anisotropy,
 		Cubemap,

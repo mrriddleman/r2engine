@@ -54,7 +54,7 @@ namespace
 	r2::draw::mat::MaterialSystems* s_optrMaterialSystems = nullptr;
 	
 	const u64 ALIGNMENT = 16;
-	const u32 MAX_TEXTURES_PER_MATERIAL = 8;
+	const u32 MAX_TEXTURES_PER_MATERIAL = 9;
 	const u64 MAX_TEXTURE_PACKS = 1024;
 	const u64 TEXTURE_PACK_CAPCITY = 1024;
 	const f64 HASH_MAP_BUFFER_MULTIPLIER = 1.5f;

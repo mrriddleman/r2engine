@@ -375,7 +375,17 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].baseColor,1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+
+	//micro detail
+	Tex2DAddress roughness = materials[texIndex].roughnessTexture1;
+
+	float modifier2 = GetTextureModifier(roughness);
+
+	vec4 roughnessMult = (1.0 - modifier2) * (materials[texIndex].roughness) + modifier2 * vec4(texture(sampler2DArray(roughness.container), vec3(uv.rg, roughness.page)));
+
+
+
+	return roughnessMult * ( (1.0 - modifier) * vec4(materials[texIndex].baseColor,1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel));
 }
 
 vec4 SampleMaterialNormal(uint drawID, vec3 uv)
@@ -441,12 +451,13 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
+	Tex2DAddress addr = materials[texIndex].metallicTexture1;
 
 	float modifier = GetTextureModifier(addr);
 
+	
 	//@TODO(Serge): put this back to not using the alpha
-	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
+	return ((1.0 - modifier) * vec4(materials[texIndex].roughness) + vec4(1.0 - texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page))).a);
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -829,7 +840,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
-	float roughness = perceptualRoughness * perceptualRoughness;
+	float roughness = perceptualRoughness ;
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	
