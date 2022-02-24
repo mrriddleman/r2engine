@@ -3,9 +3,9 @@
 	shader:"Sandbox",
 	texturePackName:"Sponza",
 
-	diffuseTexture:"sponza/albedo/2775690330959970771.jpg",
+	diffuseTexture:"sponza/albedo/2775690330959970771.dds",
 	specularTexture:"",
-	normalMapTexture:"sponza/normal/2374361008830720677.jpg",
+	normalMapTexture:"sponza/normal/2374361008830720677.dds",
 	emissionTexture:"",
 	metallicTexture:"",
 	roughnessTexture:"",

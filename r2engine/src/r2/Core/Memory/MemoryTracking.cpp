@@ -15,11 +15,13 @@ namespace r2
     {
         BasicMemoryTracking::BasicMemoryTracking():mName("")
         {
+            mTags.reserve(1024);
         }
         
         BasicMemoryTracking::BasicMemoryTracking(const std::string& name)
         {
             mName = name;
+            mTags.reserve(1024);
         }
         
         void BasicMemoryTracking::SetName(const std::string& name)

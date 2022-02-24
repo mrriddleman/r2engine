@@ -212,17 +212,29 @@ namespace r2::draw::gl
 
 			if (format.mipLevels > 1)
 			{
-				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+				//glTexParameterf(target, GL_TEXTURE_MAX_LOD, 2.0f);
+				//glTexParameterf(target, GL_TEXTURE_LOD_BIAS, -1.4);
 			}
 			else
 			{
 				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter);
 			}
+			
+			if (format.isAnisotropic)
+			{
+				float maxAniso = 0.0f;
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAniso);
+
+				float aniso = glm::min(maxAniso, maxAniso);
+				glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY, aniso);
+			}
 
 			glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices);
 
-			
+			glGenerateMipmap(target);
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
 			{
@@ -308,6 +320,7 @@ namespace r2::draw::gl
 		{
 			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId));
 			GLCall(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data));
+			
 		}
 
 		void TexSubCubemapImage3D(r2::draw::tex::TextureContainer& container, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)

@@ -91,6 +91,8 @@ namespace r2::draw::tex
 		s32 magFilter = FILTER_LINEAR;
 		s32 wrapMode = WRAP_MODE_REPEAT;
 		glm::vec4 borderColor = glm::vec4(0);
+		b32 isAnisotropic = false;
+		float anisotropy = 0.0;
 		//u32 numCommitLayers = 1;
 	};
 
