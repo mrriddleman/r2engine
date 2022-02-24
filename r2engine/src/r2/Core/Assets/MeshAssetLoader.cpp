@@ -23,7 +23,7 @@ namespace r2::asset
 		return true;
 	}
 
-	u64 MeshAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
+	u64 MeshAssetLoader::GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		if (!rawBuffer)
 		{
@@ -51,7 +51,7 @@ namespace r2::asset
 		return totalMemorySize;
 	}
 
-	bool MeshAssetLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
+	bool MeshAssetLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		if (!rawBuffer)
 		{

@@ -24,12 +24,12 @@ bool BreakoutLevelLoader::ShouldProcess()
     return false;
 }
 
-u64 BreakoutLevelLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
+u64 BreakoutLevelLoader::GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 {
     return 0;
 }
 
-bool BreakoutLevelLoader::LoadAsset(byte* rawBuffer, u64 rawSize, r2::asset::AssetBuffer& assetBuffer)
+bool BreakoutLevelLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, r2::asset::AssetBuffer& assetBuffer)
 {
     return false;
 }

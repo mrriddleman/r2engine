@@ -145,7 +145,7 @@ namespace r2::asset
 		return true;
 	}
 
-	u64 AssimpAnimationLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
+	u64 AssimpAnimationLoader::GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		Assimp::Importer import;
 
@@ -175,7 +175,7 @@ namespace r2::asset
 		return totalSizeInBytes;
 	}
 
-	bool AssimpAnimationLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
+	bool AssimpAnimationLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		Assimp::Importer import;
 		

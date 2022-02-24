@@ -28,8 +28,8 @@ public:
     virtual const char* GetPattern() override;
     virtual r2::asset::AssetType GetType() const override;
     virtual bool ShouldProcess() override;
-    virtual u64 GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking) override;
-    virtual bool LoadAsset(byte* rawBuffer, u64 rawSize, r2::asset::AssetBuffer& assetBuffer) override;
+    virtual u64 GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking) override;
+    virtual bool LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, r2::asset::AssetBuffer& assetBuffer) override;
 };
 
 #endif /* BreakoutLevelLoader_h*/

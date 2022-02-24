@@ -25,6 +25,7 @@ namespace r2::asset
         virtual u64 GetAssetHandle(u64 index) const = 0;
         virtual ~AssetFile() {}
         virtual const char* FilePath() const = 0;
+
     };
 }
 

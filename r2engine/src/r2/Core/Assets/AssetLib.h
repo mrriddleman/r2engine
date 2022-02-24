@@ -18,6 +18,7 @@ namespace r2::asset
     using FileList = r2::SArray<AssetFile*>*;
     class RawAssetFile;
     class ZipAssetFile;
+    class GLTFAssetFile;
 }
 
 //@TODO(Serge): this is bad for multithreading. We should consider a different way of doing this if we're going
@@ -38,6 +39,8 @@ namespace r2::asset::lib
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     ZipAssetFile* MakeZipAssetFile(const char* path);  
+    GLTFAssetFile* MakeGLTFAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
+
     FileList MakeFileList(u64 capacity);
     
     //@TODO(Serge): implement helpers to create file lists easier

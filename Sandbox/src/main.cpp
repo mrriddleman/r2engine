@@ -22,6 +22,7 @@
 #include "BreakoutLevelsFile.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Assets/AssetBuffer.h"
+#include "r2/Core/Assets/GLTFAssetFile.h"
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
@@ -348,20 +349,22 @@ public:
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
-        {
-            auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+        //for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
+        //{
+        //    auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
 
-            if (nextModel == r2::draw::QUAD)
-            {
-                for (int i = 0; i < 4; ++i)
-                {
-                    r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
-                }
-            }
+        //    if (nextModel == r2::draw::QUAD)
+        //    {
+        //        for (int i = 0; i < 4; ++i)
+        //        {
+        //            r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
+        //        }
+        //    }
 
-            r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
-        }
+        //    r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
+        //}
+
+        r2::sarr::Push(*mStaticModelDrawFlags, drawFlags); //for Sponza
 
         mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRefHandle, NUM_DRAWS);
         mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
@@ -379,66 +382,65 @@ public:
 		mEllenBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
 		mEllenDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
-        mLightSystem = r2::draw::lightsys::CreateLightSystem(*linearArenaPtr);
 
 
         glm::mat4 quadMat = glm::mat4(1.0f);
         
       //  quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        quadMat = glm::scale(quadMat, glm::vec3(10.0f));
-        r2::sarr::Push(*modelMats, quadMat);
+  //      quadMat = glm::scale(quadMat, glm::vec3(10.0f));
+  //      r2::sarr::Push(*modelMats, quadMat);
 
-        glm::mat4 quadMat1 = glm::mat4(1.0f);
-        quadMat1 = glm::translate(quadMat1, glm::vec3(5.0f, 0.0f, 5.0f));
-        quadMat1 = glm::rotate(quadMat1, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        quadMat1 = glm::scale(quadMat1, glm::vec3(10.0f));
-       
-        
-        r2::sarr::Push(*modelMats, quadMat1);
+  //      glm::mat4 quadMat1 = glm::mat4(1.0f);
+  //      quadMat1 = glm::translate(quadMat1, glm::vec3(5.0f, 0.0f, 5.0f));
+  //      quadMat1 = glm::rotate(quadMat1, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  //      quadMat1 = glm::scale(quadMat1, glm::vec3(10.0f));
+  //     
+  //      
+  //      r2::sarr::Push(*modelMats, quadMat1);
 
-		glm::mat4 quadMat2 = glm::mat4(1.0f);
-        quadMat2 = glm::translate(quadMat2, glm::vec3(-5.0f, 0.0f, 5.0f));
-        quadMat2 = glm::rotate(quadMat2, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		quadMat2 = glm::scale(quadMat2, glm::vec3(10.0f));
-		
-        
-		r2::sarr::Push(*modelMats, quadMat2);
+		//glm::mat4 quadMat2 = glm::mat4(1.0f);
+  //      quadMat2 = glm::translate(quadMat2, glm::vec3(-5.0f, 0.0f, 5.0f));
+  //      quadMat2 = glm::rotate(quadMat2, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//quadMat2 = glm::scale(quadMat2, glm::vec3(10.0f));
+		//
+  //      
+		//r2::sarr::Push(*modelMats, quadMat2);
 
-		glm::mat4 quadMat3 = glm::mat4(1.0f);
-        quadMat3 = glm::translate(quadMat3, glm::vec3(0.0f, 5.0f, 5.0f));
-        quadMat3 = glm::rotate(quadMat3, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		quadMat3 = glm::scale(quadMat3, glm::vec3(10.0f));
-		
-		
-		r2::sarr::Push(*modelMats, quadMat3);
+		//glm::mat4 quadMat3 = glm::mat4(1.0f);
+  //      quadMat3 = glm::translate(quadMat3, glm::vec3(0.0f, 5.0f, 5.0f));
+  //      quadMat3 = glm::rotate(quadMat3, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//quadMat3 = glm::scale(quadMat3, glm::vec3(10.0f));
+		//
+		//
+		//r2::sarr::Push(*modelMats, quadMat3);
 
-		glm::mat4 quadMat4 = glm::mat4(1.0f);
-        quadMat4 = glm::translate(quadMat4, glm::vec3(0.0f, -5.0f, 5.0f));
-        quadMat4 = glm::rotate(quadMat4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		quadMat4 = glm::scale(quadMat4, glm::vec3(10.0f));
-		
-		
-		r2::sarr::Push(*modelMats, quadMat4);
+		//glm::mat4 quadMat4 = glm::mat4(1.0f);
+  //      quadMat4 = glm::translate(quadMat4, glm::vec3(0.0f, -5.0f, 5.0f));
+  //      quadMat4 = glm::rotate(quadMat4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//quadMat4 = glm::scale(quadMat4, glm::vec3(10.0f));
+		//
+		//
+		//r2::sarr::Push(*modelMats, quadMat4);
 
 
-		glm::mat4 cubeMat = glm::mat4(1.0f);
-		cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0, 2));
-		r2::sarr::Push(*modelMats, cubeMat);
+		//glm::mat4 cubeMat = glm::mat4(1.0f);
+		//cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0, 2));
+		//r2::sarr::Push(*modelMats, cubeMat);
 
-        glm::mat4 sphereMat = glm::mat4(1.0f);
-        sphereMat = glm::translate(sphereMat, glm::vec3(4, 0, 1.1));
-        r2::sarr::Push(*modelMats, sphereMat);
+  //      glm::mat4 sphereMat = glm::mat4(1.0f);
+  //      sphereMat = glm::translate(sphereMat, glm::vec3(4, 0, 1.1));
+  //      r2::sarr::Push(*modelMats, sphereMat);
 
-		glm::mat4 coneMat = glm::mat4(1.0f);
-		coneMat = glm::translate(coneMat, glm::vec3(-1, 0, 0.6));
-		//coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-		r2::sarr::Push(*modelMats, coneMat);
+		//glm::mat4 coneMat = glm::mat4(1.0f);
+		//coneMat = glm::translate(coneMat, glm::vec3(-1, 0, 0.6));
+		////coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		//r2::sarr::Push(*modelMats, coneMat);
 
-        glm::mat4 cylinderMat = glm::mat4(1.0f);
-        
-        cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.0, 1.6));
-       // cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-        r2::sarr::Push(*modelMats, cylinderMat);
+  //      glm::mat4 cylinderMat = glm::mat4(1.0f);
+  //      
+  //      cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.0, 1.6));
+  //     // cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+  //      r2::sarr::Push(*modelMats, cylinderMat);
 
 
 
@@ -512,6 +514,12 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
 
+
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.gltf", modelFilePath);
+
+        r2::asset::GLTFAssetFile* sponzaFile = r2::asset::lib::MakeGLTFAssetFile(modelFilePath);
+
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
         mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Kilobytes(750), false, modelFiles, "Sandbox Model System");
 
@@ -600,47 +608,56 @@ public:
 
         mSelectedAnimModel = mSkeletonModel;
 
+        auto sponzaHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Sponza.gltf", r2::asset::ASSIMP_MODEL));
+        mSponzaModel = r2::draw::modlsys::GetModel(mModelSystem, sponzaHandle);
 
-        r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
-        R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
+        glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
 
-        r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
-        R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+        sponzaModelMatrix = sponzaModelMatrix * mSponzaModel->globalInverseTransform;
 
-        r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
-        R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
+        sponzaModelMatrix = glm::rotate(sponzaModelMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
 
-        for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
-        {
-            auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+        r2::sarr::Push(*modelMats, sponzaModelMatrix);
+    //    r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
+    //    R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
 
-            if (nextModel == r2::draw::QUAD)
-            {
-                for (int i = 0; i < 5; ++i)
-                {
-                    r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-                    r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-                }
+    //    r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
+    //    R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+
+    //    r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
+    //    R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
+
+    //    for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
+    //    {
+    //        auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+
+    //        if (nextModel == r2::draw::QUAD)
+    //        {
+    //            for (int i = 0; i < 5; ++i)
+    //            {
+    //                r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
+    //                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+    //            }
 
 
-               
-            }
-            
-            else
-            {
-                r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-				// defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
-				if (nextModel == r2::draw::SPHERE)
-				{
-					r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-				}
-				else
-				{
-					r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-				}
-            }
-            
-        }
+    //           
+    //        }
+    //        
+    //        else
+    //        {
+    //            r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
+				//// defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
+				//if (nextModel == r2::draw::SPHERE)
+				//{
+				//	r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+				//}
+				//else
+				//{
+				//	r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
+				//}
+    //        }
+    //        
+    //    }
 
 
         mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
@@ -660,11 +677,14 @@ public:
 
         r2::draw::renderer::UploadAnimModels(*animModelsToDraw, *mAnimModelRefs);
 
+       
+
         FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
 
+        mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
        // r2::draw::renderer::UpdatePerspectiveMatrix(mPersController.GetCameraPtr()->proj);
 
-        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+        
         //r2::draw::renderer::SetClearDepth(0.5f);
 
         r2::draw::renderer::LoadEngineTexturesFromDisk();
@@ -688,6 +708,8 @@ public:
 
         FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
 
+
+        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
          
@@ -734,17 +756,17 @@ public:
 
 			//r2::draw::renderer::AddSpotLight( spotLight);
 
-            r2::draw::PointLight pointLight;
+     //       r2::draw::PointLight pointLight;
 
-            pointLight.position = glm::vec4(0, 0, 5, 1.0);
-            pointLight.lightProperties.color = glm::vec4(1.0f);
+    //        pointLight.position = glm::vec4(0, 0, 5, 1.0);
+    //        pointLight.lightProperties.color = glm::vec4(1.0f);
 
-            pointLight.lightProperties.intensity = 100.0;
-            pointLight.lightProperties.fallOff = 0.01;
+    //        pointLight.lightProperties.intensity = 100.0;
+    //        pointLight.lightProperties.fallOff = 0.01;
 
-            pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+    //        pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-            r2::draw::renderer::AddPointLight(pointLight);
+    //        r2::draw::renderer::AddPointLight(pointLight);
 
 
    //        // r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
@@ -1054,15 +1076,15 @@ public:
         auto time = CENG.GetTicks();
   //      auto curTime = time;
 
-        const r2::draw::Animation* microbatAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
-        const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-        const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+   //     const r2::draw::Animation* microbatAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
+   //     const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+   //     const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
+   //     r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+   //     r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
         
-        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
+   //     r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
 
 	//	r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
@@ -1081,10 +1103,10 @@ public:
     virtual void Render(float alpha) override
     {
 
-        
+        r2::draw::renderer::DrawModel(mSponzaModelRefHandle, r2::sarr::At(*modelMats, 0), r2::sarr::At(*mStaticModelDrawFlags, 0), nullptr);
 
       //  r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
-        r2::draw::renderer::DrawModelsOnLayer(r2::draw::DL_WORLD, *mStaticModelRefs, mStaticModelMaterialHandles, *modelMats, *mStaticModelDrawFlags, nullptr);
+     //   r2::draw::renderer::DrawModelsOnLayer(r2::draw::DL_WORLD, *mStaticModelRefs, mStaticModelMaterialHandles, *modelMats, *mStaticModelDrawFlags, nullptr);
 
         r2::draw::DrawFlags animDrawFlags;
         animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
@@ -1092,13 +1114,13 @@ public:
         R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
 
         //Draw the bat
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
+     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
 
         //Draw the Skeleton
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
+     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
 
         //Draw Ellen
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
+     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
 
         //Draw the Skybox
         r2::draw::DrawFlags skyboxDrawFlags;
@@ -1144,9 +1166,9 @@ public:
         if (mDrawDebugBones)
         {
 
-            r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
+       //     r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
+       //     r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
+       //     r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
           
         }
 
@@ -1188,7 +1210,6 @@ public:
         
         FREE(mStaticModelDrawFlags, *linearArenaPtr);
 
-        r2::draw::lightsys::DestroyLightSystem(*linearArenaPtr, mLightSystem);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -1373,7 +1394,8 @@ private:
     const r2::draw::AnimModel* mSkeletonModel = nullptr;
     const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
-    r2::draw::LightSystem* mLightSystem = nullptr;
+    const r2::draw::Model* mSponzaModel = nullptr;
+    r2::draw::ModelRefHandle mSponzaModelRefHandle;
 
     s32 mSelectedAnimationID = 0;
     bool mDrawDebugBones = false;

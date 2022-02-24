@@ -10,6 +10,7 @@
 #include "r2/Core/Assets/AssetFile.h"
 
 #include "r2/Utils/Hash.h"
+#include "r2/Core/Assets/GLTFAssetFile.h"
 #include "r2/Core/Assets/RawAssetFile.h"
 #include "r2/Core/Assets/ZipAssetFile.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -169,6 +170,15 @@ namespace r2::asset::lib
         bool result = rawAssetFile->Init(path, numParentDirectoriesToInclude);
         R2_CHECK(result, "Failed to initialize raw asset file");
         return rawAssetFile;
+    }
+
+    GLTFAssetFile* MakeGLTFAssetFile(const char* path, u32 numParentDirectoriesToInclude)
+    {
+        GLTFAssetFile* gltfAssetFile = ALLOC(GLTFAssetFile, *s_arenaPtr);
+
+		bool result = gltfAssetFile->Init(path, numParentDirectoriesToInclude);
+		R2_CHECK(result, "Failed to initialize raw asset file");
+		return gltfAssetFile;
     }
     
     ZipAssetFile* MakeZipAssetFile(const char* path)

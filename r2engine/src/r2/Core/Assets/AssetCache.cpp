@@ -379,7 +379,7 @@ namespace r2::asset
         
         bool result = MakeRoom(rawAssetSize);
         
-        R2_CHECK(result, "We don't have enough room to fit this asset!");
+        R2_CHECK(result, "We don't have enough room to fit %s!\n", theAssetFile->FilePath());
         
         byte* rawAssetBuffer = ALLOC_BYTESN(mAssetCacheArena, rawAssetSize, alignof(size_t));
         
@@ -428,7 +428,12 @@ namespace r2::asset
 
             const u64 ALIGNMENT = 16;
 
-            u64 size = loader->GetLoadedAssetSize(rawAssetBuffer, rawAssetSize, ALIGNMENT, headerSize, boundsChecking);
+            u64 size = loader->GetLoadedAssetSize(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, ALIGNMENT, headerSize, boundsChecking);
+
+            bool madeRoom = MakeRoom(size);
+
+            R2_CHECK(madeRoom, "We don't have enough room to fit %s!\n", theAssetFile->FilePath());
+
             byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, alignof(size_t));
             
             R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
@@ -443,7 +448,7 @@ namespace r2::asset
 
             assetBuffer->Load(asset, mSlot, buffer, size);
             
-            bool success = loader->LoadAsset(rawAssetBuffer, rawAssetSize, *assetBuffer);
+            bool success = loader->LoadAsset(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, *assetBuffer);
             
             R2_CHECK(success, "Failed to load asset");
             
@@ -587,13 +592,14 @@ namespace r2::asset
     
     bool AssetCache::MakeRoom(u64 amount)
     {
-        if(amount > mAssetCacheArena.MemorySize())
+        const auto cacheMemorySize = mAssetCacheArena.MemorySize();
+        if(amount > cacheMemorySize)
         {
             R2_CHECK(false, "Can't even fit %llu into the total amount we have: %llu", amount, mAssetCacheArena.MemorySize());
             return false;
         }
         
-        while (amount > (mAssetCacheArena.MemorySize() - mAssetCacheArena.TotalBytesAllocated()))
+        while (amount > (cacheMemorySize - mAssetCacheArena.TotalBytesAllocated()))
         {
             if (r2::squeue::Size(*mAssetLRU) == 0)
             {

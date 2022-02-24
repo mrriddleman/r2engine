@@ -119,34 +119,36 @@ namespace
 
 				if (numTextures > 0)
 				{
-					R2_CHECK(numTextures == 1, "I don't think we can handle more than 1");
-
-
-					//@TODO(Serge): check other texture types if we don't find this one
-					//@TODO(Serge): what do we do if we don't have any textures?
-					aiString diffuseStr;
-					material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseStr);
-
-					char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-					char textureName[r2::fs::FILE_PATH_LENGTH];
-					r2::fs::utils::SanitizeSubPath(diffuseStr.C_Str(), sanitizedPath);
-
-					r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
-
-					char extType[r2::fs::FILE_PATH_LENGTH];
-					
-					//@TODO(Serge): clean up this MAJOR HACK!
-					if (r2::fs::utils::CopyFileExtension(textureName, extType))
+					//find the first one that isn't invalid
+					for (int i = 0; i < numTextures && r2::draw::mat::IsInvalidHandle(materialHandle); ++i)
 					{
-						if (strcmp(extType, ".tif") == 0 || strcmp(extType, "tif") == 0)
+						//@TODO(Serge): check other texture types if we don't find this one
+						//@TODO(Serge): what do we do if we don't have any textures?
+						aiString diffuseStr;
+
+						material->GetTexture(aiTextureType_DIFFUSE, i, &diffuseStr);
+
+
+						char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+						char textureName[r2::fs::FILE_PATH_LENGTH];
+						r2::fs::utils::SanitizeSubPath(diffuseStr.C_Str(), sanitizedPath);
+
+						r2::fs::utils::CopyFileNameWithExtension(sanitizedPath, textureName);
+
+						char extType[r2::fs::FILE_PATH_LENGTH];
+
+						//@TODO(Serge): clean up this MAJOR HACK!
+						if (r2::fs::utils::CopyFileExtension(textureName, extType))
 						{
-							r2::fs::utils::SetNewExtension(textureName, ".png");
+							if (strcmp(extType, ".tif") == 0 || strcmp(extType, "tif") == 0)
+							{
+								r2::fs::utils::SetNewExtension(textureName, ".png");
+							}
 						}
+
+						r2::draw::tex::Texture tex;
+						materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
 					}
-
-
-					r2::draw::tex::Texture tex;
-					materialHandle = r2::draw::matsys::FindMaterialFromTextureName(textureName, tex);
 				}
 				else
 				{
@@ -427,25 +429,32 @@ namespace r2::asset
 		return true;
 	}
 
-	u64 AssimpAssetLoader::GetLoadedAssetSize(byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
+	u64 AssimpAssetLoader::GetLoadedAssetSize(const char* filePath, byte* rawBuffer, u64 size, u64 alignment, u32 header, u32 boundsChecking)
 	{
 		Assimp::Importer import;
 	//	import.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 		
-
-		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, aiProcess_Triangulate |
+		u32 flags = aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
 			aiProcess_CalcTangentSpace |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_RemoveRedundantMaterials |
-			 aiProcess_FindDegenerates |
-			 aiProcess_GenUVCoords |
+			aiProcess_FindDegenerates |
+			aiProcess_GenUVCoords |
 			// aiProcess_TransformUVCoords |
 			// aiProcess_FindInstances |
 			aiProcess_LimitBoneWeights |
 			aiProcess_OptimizeMeshes |
-			aiProcess_SplitByBoneCount);
+			aiProcess_SplitByBoneCount;
+
+		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, size, flags);
+
+		if (scene == nullptr)
+		{
+			//Load it directly if we can't get it from memory
+			scene = import.ReadFile(filePath, flags);
+		}
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
@@ -483,24 +492,31 @@ namespace r2::asset
 		return totalSizeInBytes + r2::draw::Model::ModelMemorySize(mNumMeshes, alignment, header, boundsChecking);
 	}
 
-	bool AssimpAssetLoader::LoadAsset(byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
+	bool AssimpAssetLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)
 	{
 		Assimp::Importer import;
 
-
-		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, aiProcess_Triangulate |
+		u32 flags = aiProcess_Triangulate |
 			// aiProcess_SortByPType | // ?
 			aiProcess_GenSmoothNormals |
 			aiProcess_CalcTangentSpace |
 			aiProcess_ImproveCacheLocality |
 			aiProcess_RemoveRedundantMaterials |
-			 aiProcess_FindDegenerates |
-			 aiProcess_GenUVCoords |
-			 //aiProcess_TransformUVCoords |
-			// aiProcess_FindInstances |
+			aiProcess_FindDegenerates |
+			aiProcess_GenUVCoords |
+			//aiProcess_TransformUVCoords |
+		   // aiProcess_FindInstances |
 			aiProcess_LimitBoneWeights |
 			aiProcess_OptimizeMeshes |
-			aiProcess_SplitByBoneCount);
+			aiProcess_SplitByBoneCount;
+
+		const aiScene* scene = import.ReadFileFromMemory(rawBuffer, rawSize, flags);
+
+		if (scene == nullptr)
+		{
+			//Load it directly if we can't get it from memory
+			scene = import.ReadFile(filePath, flags);
+		}
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{

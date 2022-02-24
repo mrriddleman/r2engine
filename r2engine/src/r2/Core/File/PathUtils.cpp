@@ -331,6 +331,7 @@ namespace r2::fs::utils
             path[index + i] = newExt[i];
         }
 
+        path[index + extLen] = '\0';
 
         return true;
     }
