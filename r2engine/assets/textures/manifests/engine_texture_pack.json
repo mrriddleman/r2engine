@@ -1,46 +1,9 @@
 {
   texturePacks: [
     {
-      packName: 7455725871122533885,
+      packName: 8749292291342238949,
       albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/albedo/container2.png"
-      ],
-      normal: [
-
-      ],
-      specular: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Basic/specular/container2_specular.png"
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 581178,
-      totalNumberOfTextures: 2,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 8133868392780950315,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Bricks/albedo/bricks2.png"
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.png"
       ],
       normal: [
 
@@ -66,192 +29,7 @@
       anisotropy: [
 
       ],
-      packSize: 479657,
-      totalNumberOfTextures: 1,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 7983052081214385298,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Brickwall/albedo/brickwall.jpg"
-      ],
-      normal: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Brickwall/normal/brickwall_normal.jpg"
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 771155,
-      totalNumberOfTextures: 2,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 16075504797566260416,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/DebugMipMap/albedo/DebugMipMap.dds"
-      ],
-      normal: [
-
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 699214,
-      totalNumberOfTextures: 1,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 9578052887469947454,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Default/albedo/image.png"
-      ],
-      normal: [
-
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 10772,
-      totalNumberOfTextures: 1,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 3713060012401881788,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Face/albedo/awesomeface.png"
-      ],
-      normal: [
-
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 43355,
-      totalNumberOfTextures: 1,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
-      packName: 7674942759422362775,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Mandelbrot/albedo/Mandelbrot.png"
-      ],
-      normal: [
-
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 601198,
+      packSize: 147,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -327,9 +105,46 @@
           }
         ]
       }
+    },
+    {
+      packName: 11826259269100960472,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.png"
+      ],
+      normal: [
+
+      ],
+      specular: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      micro: [
+
+      ],
+      height: [
+
+      ],
+      anisotropy: [
+
+      ],
+      packSize: 147,
+      totalNumberOfTextures: 1,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
     }
   ],
-  totalNumberOfTextures: 15,
-  totalTextureSize: 6167043,
+  totalNumberOfTextures: 8,
+  totalTextureSize: 2980808,
   maxTexturesInAPack: 6
 }

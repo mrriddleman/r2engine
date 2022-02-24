@@ -1,9 +1,9 @@
 {
-	name:"Face",
-	shader:"Sandbox",
-	texturePackName:"Face",
+	name:"DynamicDefault",
+	shader:"AnimModel",	
+	texturePackName:"",
 
-	diffuseTexture:"face/albedo/awesomeface.png",
+	diffuseTexture:"",
 	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",
@@ -14,14 +14,13 @@
 	anisotropyTexture:"",
 
 	baseColor:{
-		r: 1.0,
-		g: 1.0,
-		b: 0.0,
+		r: 0.5,
+		g: 0.5,
+		b: 0.5,
 		a: 1.0
 	},
-
 	specular:0.0,
-	roughness:0.0,
+	roughness:1.0,
 	metallic:0.0,
 	reflectance:0.0,
 	ambientOcclusion:0.0,
@@ -29,4 +28,4 @@
 	clearCoatRoughness:0.0,
 	anisotropy:0.0,
 	heightScale:0.0
-}
+} 

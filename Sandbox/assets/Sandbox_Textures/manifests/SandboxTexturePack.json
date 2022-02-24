@@ -1,43 +1,6 @@
 {
   texturePacks: [
     {
-      packName: 15429678186849467113,
-      albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/albedo/brushed_metal_albedo.png"
-      ],
-      normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/normal/brushed_metal_normal.png"
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/metallic/brushed_metal_metallic.png"
-      ],
-      occlusion: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/BrushedMetal/occlusion/brushed_metal_ao.png"
-      ],
-      micro: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 3220696,
-      totalNumberOfTextures: 4,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
       packName: 18199531748715869547,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.png",
@@ -534,43 +497,6 @@
       }
     },
     {
-      packName: 15862543810768175432,
-      albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/RustedIron/albedo/rustediron2_basecolor.png"
-      ],
-      normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/RustedIron/normal/rustediron2_normal.png"
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/RustedIron/metallic/rustediron2_metallic.png"
-      ],
-      occlusion: [
-
-      ],
-      micro: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/RustedIron/micro/rustediron2_roughness.png"
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 25066485,
-      totalNumberOfTextures: 4,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
       packName: 5241291254806722222,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.tga"
@@ -709,46 +635,9 @@
 
         ]
       }
-    },
-    {
-      packName: 3446934687714738491,
-      albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/albedo/stone-block-wall_albedo.png"
-      ],
-      normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/normal/stone-block-wall_normal-dx.png"
-      ],
-      specular: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/metallic/stone-block-wall_metallic.png"
-      ],
-      occlusion: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/occlusion/stone-block-wall_ao.png"
-      ],
-      micro: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/micro/stone-block-wall_roughness.png"
-      ],
-      height: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/StoneBlockWall/height/stone-block-wall_height.png"
-      ],
-      anisotropy: [
-
-      ],
-      packSize: 22303758,
-      totalNumberOfTextures: 6,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
     }
   ],
-  totalNumberOfTextures: 149,
-  totalTextureSize: 184943888,
+  totalNumberOfTextures: 135,
+  totalTextureSize: 134352949,
   maxTexturesInAPack: 69
 }

@@ -1,10 +1,10 @@
 {
-	name:"Basic",
-	shader:"Sandbox",
-	texturePackName:"Basic",
-	
-	diffuseTexture:"basic/albedo/container2.png",
-	specularTexture:"basic/specular/container2_specular.png",
+	name:"StaticMissingTexture",
+	shader:"Sandbox",	
+	texturePackName:"StaticMissingTexture",
+
+	diffuseTexture:"staticmissingtexture/albedo/staticmissingtexture.png",
+	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",
 	metallicTexture:"",
@@ -28,4 +28,4 @@
 	clearCoatRoughness:0.0,
 	anisotropy:0.0,
 	heightScale:0.0
-}
+} 

@@ -1358,27 +1358,27 @@ namespace r2::asset::pln
 
 	void MakeQuadModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Quad", "QuadMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Quad", "QuadMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeCubeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cube", "CubeMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Cube", "CubeMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeSphereModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Sphere", "SphereMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Sphere", "SphereMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeConeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cone", "ConeMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Cone", "ConeMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeCylinderModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cylinder", "CylinderMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("Cylinder", "CylinderMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
@@ -1388,7 +1388,7 @@ namespace r2::asset::pln
 
 	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", "Brickwall", schemaPath, binaryParentDir, jsonParentDir);
+		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)

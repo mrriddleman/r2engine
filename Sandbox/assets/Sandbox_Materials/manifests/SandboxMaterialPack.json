@@ -28,31 +28,6 @@
       clearCoatRoughness: 0.3
     },
     {
-      name: 15429678186849467113,
-      shader: 3292306756035476612,
-      texturePackName: 15429678186849467113,
-      diffuseTexture: 16729548325504102798,
-      specularTexture: 14695981039346656837,
-      normalMapTexture: 6448978621402701554,
-      emissionTexture: 14695981039346656837,
-      metallicTexture: 9638897438313446870,
-      roughnessTexture: 14695981039346656837,
-      aoTexture: 8846253597677248467,
-      heightTexture: 14695981039346656837,
-      anisotropyTexture: 14695981039346656837,
-      baseColor: {
-        r: 0.0,
-        g: 0.0,
-        b: 1.0,
-        a: 1.0
-      },
-      roughness: 0.4,
-      metallic: 0.2,
-      reflectance: 0.6,
-      ambientOcclusion: 1.0,
-      anisotropy: 1.0
-    },
-    {
       name: 6088666330291882227,
       shader: 3766703618186070365,
       texturePackName: 18199531748715869547,
@@ -279,26 +254,6 @@
       emissionTexture: 14695981039346656837,
       metallicTexture: 14695981039346656837,
       roughnessTexture: 14695981039346656837,
-      aoTexture: 14695981039346656837,
-      heightTexture: 14695981039346656837,
-      anisotropyTexture: 14695981039346656837,
-      baseColor: {
-        r: 1.0,
-        g: 0.0,
-        b: 0.0,
-        a: 1.0
-      }
-    },
-    {
-      name: 15862543810768175432,
-      shader: 3292306756035476612,
-      texturePackName: 15862543810768175432,
-      diffuseTexture: 7072479421883910132,
-      specularTexture: 14695981039346656837,
-      normalMapTexture: 13164562372078691375,
-      emissionTexture: 14695981039346656837,
-      metallicTexture: 18094643449020664499,
-      roughnessTexture: 8192149849188030473,
       aoTexture: 14695981039346656837,
       heightTexture: 14695981039346656837,
       anisotropyTexture: 14695981039346656837,
@@ -880,28 +835,6 @@
       },
       roughness: 1.0,
       ambientOcclusion: 1.0
-    },
-    {
-      name: 3446934687714738491,
-      shader: 3292306756035476612,
-      texturePackName: 3446934687714738491,
-      diffuseTexture: 4692756272741238039,
-      specularTexture: 14695981039346656837,
-      normalMapTexture: 11295989110001700876,
-      emissionTexture: 14695981039346656837,
-      metallicTexture: 7003376359878370631,
-      roughnessTexture: 3801060295197912713,
-      aoTexture: 17058832840421730690,
-      heightTexture: 12237309667035072787,
-      anisotropyTexture: 14695981039346656837,
-      baseColor: {
-        r: 1.0,
-        g: 0.0,
-        b: 0.0,
-        a: 1.0
-      },
-      roughness: 1.0,
-      heightScale: 0.05
     }
   ]
 }

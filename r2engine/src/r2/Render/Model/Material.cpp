@@ -107,7 +107,7 @@ namespace r2::draw::mat
 
 			if (r2::shashmap::Has(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, filenameID))
 			{
-				R2_CHECK(false, "We Shouldnt already have the asset: %s in out map!", assetName);
+				R2_CHECK(false, "We Shouldn't already have the asset: %s in our map!", assetName);
 				return;
 			}
 

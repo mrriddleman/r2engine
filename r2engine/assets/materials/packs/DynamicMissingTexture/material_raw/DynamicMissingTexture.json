@@ -1,9 +1,9 @@
 {
-	name:"Bricks",
-	shader:"Sandbox",
-	texturePackName:"Bricks",
+	name:"DynamicMissingTexture",
+	shader:"AnimModel",	
+	texturePackName:"DynamicMissingTexture",
 
-	diffuseTexture:"bricks/albedo/bricks2.png",
+	diffuseTexture:"dynamicmissingtexture/albedo/dynamicmissingtexture.png",
 	specularTexture:"",
 	normalMapTexture:"",
 	emissionTexture:"",
@@ -14,8 +14,8 @@
 	anisotropyTexture:"",
 
 	baseColor:{
-		r: 0.0,
-		g: 0.0,
+		r: 1.0,
+		g: 1.0,
 		b: 1.0,
 		a: 1.0
 	},
@@ -28,4 +28,4 @@
 	clearCoatRoughness:0.0,
 	anisotropy:0.0,
 	heightScale:0.0
-}
+} 

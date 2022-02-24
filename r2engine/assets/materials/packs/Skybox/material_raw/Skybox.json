@@ -1,7 +1,6 @@
 {
 	name:"Skybox",
 	shader:"Skybox",
-	
 	texturePackName:"Skybox",
 
 	diffuseTexture:"skybox/albedo/right.jpg",
