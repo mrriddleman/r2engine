@@ -29,7 +29,9 @@ fbsCodeOutputMap = {
 "Mesh.fbs" : "/r2/Render/Model/",
 "Model.fbs": "/r2/Render/Model/",
 "TexturePackManifest.fbs": "/r2/Render/Model/Textures/",
-"TexturePackMetaData.fbs": "/r2/Render/Model/Textures/"
+"TexturePackMetaData.fbs": "/r2/Render/Model/Textures/",
+"MaterialParams.fbs":"/r2/Render/Model/",
+"MaterialParamsPack.fbs":"/r2/Render/Model/"
 }
 
 for filename in os.listdir(dataPath):

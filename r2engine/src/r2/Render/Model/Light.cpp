@@ -520,18 +520,10 @@ namespace r2::draw::lightsys
 		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(diffuseMaterialHandle.slot);
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		const Material* diffuseMaterial = mat::GetMaterial(*matSystem, diffuseMaterialHandle);
-		
-		R2_CHECK(diffuseMaterial != nullptr, "Skylight - The diffuse material is null!");
-		const Material* prefilteredMaterial = mat::GetMaterial(*matSystem, prefilteredMaterialHandle);
-		R2_CHECK(prefilteredMaterial != nullptr, "Skylight - The prefiltered material is null!");
-		const Material* lutDFGMaterial = mat::GetMaterial(*matSystem, lutDFGHandle);
-		R2_CHECK(lutDFGMaterial != nullptr, "Skylight - The lutDFG material is null!");
-
 		//@TODO(Serge): would be nice to have some kind of verification here?
-		skyLight.diffuseIrradianceTexture = texsys::GetTextureAddress(diffuseMaterial->diffuseTexture);
-		skyLight.prefilteredRoughnessTexture = texsys::GetTextureAddress(prefilteredMaterial->diffuseTexture);
-		skyLight.lutDFGTexture = texsys::GetTextureAddress(lutDFGMaterial->diffuseTexture);
+		skyLight.diffuseIrradianceTexture = mat::GetRenderMaterial(*matSystem, diffuseMaterialHandle).diffuseTexture;
+		skyLight.prefilteredRoughnessTexture = mat::GetRenderMaterial(*matSystem, prefilteredMaterialHandle).diffuseTexture;
+		skyLight.lutDFGTexture = mat::GetRenderMaterial(*matSystem, lutDFGHandle).diffuseTexture;
 
 		const auto* prefilteredCubemap = mat::GetCubemapTexture(*matSystem, prefilteredMaterialHandle);
 

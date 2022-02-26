@@ -76,6 +76,7 @@ namespace r2::draw::tex
 	{
 		u64 containerHandle = 0;
 		f32 texPage = -1.0f;
+		s32 channel = -1; //maybe -1 is full, then R = 0, G = 1, B = 2, A = 3 - set by the material, here for packing reasons
 	};
 
 	struct TextureFormat

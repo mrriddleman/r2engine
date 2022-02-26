@@ -53,44 +53,51 @@ namespace r2::fs
 
 namespace r2::fs
 {
-    template <class ARENA>
-    void* ReadFile(ARENA& arena, const char* filePath)
-    {
-        r2::fs::File* theFile = r2::fs::FileSystem::Open(DISK_CONFIG, filePath, r2::fs::Read | r2::fs::Binary);
+	template <class ARENA>
+	void* ReadFile(ARENA& arena, const char* filePath, u64 &size)
+	{
+		r2::fs::File* theFile = r2::fs::FileSystem::Open(DISK_CONFIG, filePath, r2::fs::Read | r2::fs::Binary);
 
-        if (theFile == nullptr)
-        {
-            R2_CHECK(false, "We couldn't open the file at the path: %s", filePath);
-            return nullptr;
-        }
+		if (theFile == nullptr)
+		{
+			R2_CHECK(false, "We couldn't open the file at the path: %s", filePath);
+			return nullptr;
+		}
 
-        s64 fileSize = theFile->Size();
+		s64 fileSize = theFile->Size();
 
-        if (fileSize <= 0)
-        {
-            R2_CHECK(false, "We have a zero byte file");
-            r2::fs::FileSystem::Close(theFile);
-            return nullptr;
-        }
+		if (fileSize <= 0)
+		{
+			R2_CHECK(false, "We have a zero byte file");
+			r2::fs::FileSystem::Close(theFile);
+			return nullptr;
+		}
 
-        char* buffer = (char*)ALLOC_BYTESN(arena, fileSize, 16);
+		char* buffer = (char*)ALLOC_BYTESN(arena, fileSize, 16);
 
-        R2_CHECK(buffer != nullptr, "We couldn't allocate the buffer to read the file");
+		R2_CHECK(buffer != nullptr, "We couldn't allocate the buffer to read the file");
 
-        bool readAllBytes = theFile->ReadAll(buffer);
+		bool readAllBytes = theFile->ReadAll(buffer);
 
-        if (!readAllBytes)
-        {
-            R2_CHECK(false, "Failed to read all of the bytes!");
-            FREE(buffer, arena);
-            r2::fs::FileSystem::Close(theFile);
-            return nullptr;
-        }
+		if (!readAllBytes)
+		{
+			R2_CHECK(false, "Failed to read all of the bytes!");
+			FREE(buffer, arena);
+			r2::fs::FileSystem::Close(theFile);
+			return nullptr;
+		}
 
-        r2::fs::FileSystem::Close(theFile);
+		r2::fs::FileSystem::Close(theFile);
 
-        return buffer;
-    }
+		return buffer;
+	}
+
+	template <class ARENA>
+	void* ReadFile(ARENA& arena, const char* filePath)
+	{
+		u64 size = 0;
+		return ReadFile<ARENA>(arena, filePath, size);
+	}
 }
 
 #endif /* FileSystem_h */

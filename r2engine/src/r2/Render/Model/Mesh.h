@@ -10,7 +10,6 @@
 
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/RendererTypes.h"
-#include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/Vertex.h"
 
 

@@ -750,10 +750,9 @@ namespace r2::draw::renderer
 		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
 
 		//Get the depth shader handles
-		newRenderer->mShadowDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticShadowDepth")))->shaderId;
-		CheckIfValidShader(*newRenderer, newRenderer->mShadowDepthShaders[0], "StaticShadowDepth");
+		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
 
-		newRenderer->mShadowDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicShadowDepth")))->shaderId;
+		newRenderer->mShadowDepthShaders[1] = shadersystem::FindShaderHandle(STRING_ID("DynamicShadowDepth"));
 		CheckIfValidShader(*newRenderer, newRenderer->mShadowDepthShaders[1], "DynamicShadowDepth");
 
 		newRenderer->mSpotLightShadowShaders[0] = shadersystem::FindShaderHandle(STRING_ID("SpotLightStaticShadowDepth"));
@@ -776,10 +775,10 @@ namespace r2::draw::renderer
 		CheckIfValidShader(*newRenderer, newRenderer->mPointLightLightMatrixShader, "PointLightLightMatrices");
 
 
-		newRenderer->mDepthShaders[0] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticDepth")))->shaderId;
+		newRenderer->mDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticDepth"));
 		CheckIfValidShader(*newRenderer, newRenderer->mDepthShaders[0], "StaticDepth");
 
-		newRenderer->mDepthShaders[1] = mat::GetMaterial(*newRenderer->mMaterialSystem, mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicDepth")))->shaderId;
+		newRenderer->mDepthShaders[1] = shadersystem::FindShaderHandle(STRING_ID("DynamicDepth"));
 		CheckIfValidShader(*newRenderer, newRenderer->mDepthShaders[1], "DynamicDepth");
 
 		newRenderer->mShadowSplitComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateCascades"));
@@ -2667,17 +2666,15 @@ namespace r2::draw::renderer
 
 				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-				const Material* material = mat::GetMaterial(*matSystem, materialHandle);
+				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
 
-				R2_CHECK(material != nullptr, "Invalid material?");
 
-				RenderMaterial nextRenderMaterial;
+				RenderMaterial nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
 
-				FillRenderMaterial(renderer, *material, nextRenderMaterial);
 
 				r2::sarr::Push(*renderMaterials, nextRenderMaterial);
 
-				r2::sarr::Push(*shaders, material->shaderId);
+				r2::sarr::Push(*shaders, materialShaderHandle);
 			}
 
 			//@TODO(Serge): remove the empty materials - won't need this anymore 
@@ -2705,13 +2702,13 @@ namespace r2::draw::renderer
 
 				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-				const Material* material = mat::GetMaterial(*matSystem, materialHandle);
 
-				R2_CHECK(material != nullptr, "Invalid material?");
+				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
 
-				R2_CHECK(material->shaderId != InvalidShader, "This shouldn't be invalid!");
 
-				r2::sarr::Push(*shaders, material->shaderId);
+				R2_CHECK(materialShaderHandle != InvalidShader, "This shouldn't be invalid!");
+
+				r2::sarr::Push(*shaders, materialShaderHandle);
 			}
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
@@ -3025,7 +3022,7 @@ namespace r2::draw::renderer
 			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(renderer.mFinalCompositeMaterialHandle.slot);
 			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-			const Material* material = mat::GetMaterial(*matSystem, renderer.mFinalCompositeMaterialHandle);
+			ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, renderer.mFinalCompositeMaterialHandle);
 
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
@@ -3038,7 +3035,7 @@ namespace r2::draw::renderer
 			finalBatchOffsets.layer = DL_SCREEN;
 			finalBatchOffsets.numSubCommands = 1;
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
-			finalBatchOffsets.shaderId = material->shaderId;
+			finalBatchOffsets.shaderId = materialShaderHandle;
 
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 			subCommandsOffset += 1;
@@ -4280,11 +4277,8 @@ namespace r2::draw::renderer
 
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		const Material* material = mat::GetMaterial(*matSystem, debugRenderBatch.materialHandle);
 
-		R2_CHECK(material != nullptr, "Invalid material?");
-
-		ShaderHandle shaderID = material->shaderId;
+		ShaderHandle shaderID = mat::GetShaderHandle(*matSystem, debugRenderBatch.materialHandle);
 
 		for (u64 i = 0; i < numDebugObjectsToDraw; ++i)
 		{
@@ -4388,11 +4382,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		const Material* material = mat::GetMaterial(*matSystem, debugRenderBatch.materialHandle);
-
-		R2_CHECK(material != nullptr, "Invalid material?");
-
-		ShaderHandle shaderID = material->shaderId;
+		ShaderHandle shaderID = mat::GetShaderHandle(*matSystem, debugRenderBatch.materialHandle);
 
 		key::DebugKey preDrawKey;
 		preDrawKey.keyValue = 0;

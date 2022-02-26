@@ -1,0 +1,14 @@
+include "MaterialParams.fbs";
+
+namespace flat;
+
+file_identifier "mppk";
+file_extension "mppk";
+
+table MaterialParamsPack
+{
+	name:ulong (hash:"fnv1a_64");
+	pack:[MaterialParams];
+}
+
+root_type MaterialParamsPack;

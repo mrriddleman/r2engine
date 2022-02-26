@@ -16,6 +16,9 @@ namespace flat
 {
 	struct MaterialPack;
 	struct TexturePacksManifest;
+
+	struct MaterialParamsPack;
+	
 }
 
 namespace r2::draw::tex
@@ -30,6 +33,35 @@ namespace r2::asset
 
 namespace r2::draw
 {
+
+
+	struct RenderMaterialParam
+	{
+		tex::TextureAddress texture;
+		glm::vec4 color; //for normal floats, we'll fill all the values with that value so when we access the channel, we get it the right value
+	};
+
+	struct RenderMaterialParams
+	{
+		RenderMaterialParam albedo;
+		RenderMaterialParam normalMap;
+		RenderMaterialParam emission;
+		RenderMaterialParam metallic;
+		RenderMaterialParam roughness;
+		RenderMaterialParam ao;
+		RenderMaterialParam height;
+		RenderMaterialParam anisotropy;
+		RenderMaterialParam detail;
+
+		RenderMaterialParam clearCoat;
+		RenderMaterialParam clearCoatRoughness;
+		RenderMaterialParam clearCoatNormal;
+
+		b32 doubleSided;
+		f32 heightScale;
+		f32 reflectance;
+	};
+
 	struct RenderMaterial
 	{
 		tex::TextureAddress diffuseTexture = {};
@@ -88,6 +120,27 @@ namespace r2::draw
 		s64 mIndex = -1; //index into either mMaterialTextures or mCubemapTextures based on mType
 	};
 
+	struct MaterialTextureAssets
+	{
+		tex::Texture diffuseTexture;
+		tex::Texture specularTexture;
+		tex::Texture normalMapTexture;
+		tex::Texture emissionTexture;
+		tex::Texture metallicTexture;
+		tex::Texture roughnessTexture;
+		tex::Texture aoTexture;
+		tex::Texture heightTexture;
+		tex::Texture anisotropyTexture;
+	};
+
+	//struct
+	struct InternalMaterialData
+	{
+		MaterialTextureAssets textureAssets;
+		r2::draw::RenderMaterial renderMaterial = {}; //@TODO(Serge): change to RenderMaterialParams
+		ShaderHandle shaderHandle = InvalidShader;
+	};
+
 	struct MaterialSystem
 	{
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
@@ -95,13 +148,20 @@ namespace r2::draw
 		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
 		r2::SArray<r2::draw::Material>* mMaterials = nullptr;
 
+		r2::SArray<InternalMaterialData>* mInternalData = nullptr; 
+
 		r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
 		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
 
+
+		const flat::MaterialParamsPack* mMaterialParamsPack = nullptr;
+		const flat::TexturePacksManifest* mTexturePackManifest = nullptr;
+
 		r2::asset::AssetCache* mAssetCache = nullptr;
 		r2::mem::utils::MemBoundary mCacheBoundary = {};
 		s32 mSlot = -1;
+		u32 mNextAvailableHandle = 0;
 	};
 
 	struct MaterialHandle
@@ -130,6 +190,7 @@ namespace r2::draw::matsys
 
 	//creating/freeing a new material system
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const flat::MaterialPack* materialPack, const flat::TexturePacksManifest* texturePackManifest);
+	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const char* texturePackManifestPath);
 	void FreeMaterialSystem(MaterialSystem* system);
 }
 
@@ -146,11 +207,11 @@ namespace r2::draw::mat
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);
 	//@TODO(Serge): add function to upload only 1 material?
 
-	void UploadAllMaterialTexturesToGPU(const MaterialSystem& system);
-	void UploadMaterialTexturesToGPUFromMaterialName(const MaterialSystem& system, u64 materialName);
-	void UploadMaterialTexturesToGPU(const MaterialSystem& system, MaterialHandle matID);
+	void UploadAllMaterialTexturesToGPU(MaterialSystem& system);
+	void UploadMaterialTexturesToGPUFromMaterialName(MaterialSystem& system, u64 materialName);
+	void UploadMaterialTexturesToGPU(MaterialSystem& system, MaterialHandle matID);
 
-	void UnloadAllMaterialTexturesFromGPU(const MaterialSystem& system);
+	void UnloadAllMaterialTexturesFromGPU(MaterialSystem& system);
 
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);
 	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system);
@@ -159,12 +220,17 @@ namespace r2::draw::mat
 
 
 	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat);
-	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);
+
+//	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);
+	ShaderHandle GetShaderHandle(const MaterialSystem& system, MaterialHandle matID);
+	const RenderMaterial& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID);
+
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
-	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack);
+	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);
 
 	u64 LoadMaterialAndTextureManifests(const char* materialManifestPath, const char* textureManifestPath, void** materialPack, void** texturePacks);
 
+	u64 GetMaterialBoundarySize(const char* materialManifestPath, const char* textureManifestPath);
 }
 
 #endif // !__MATERIAL_H__

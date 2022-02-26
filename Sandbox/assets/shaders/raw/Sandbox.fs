@@ -339,7 +339,7 @@ void main()
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 
-	if(sampledColor.a < 0.0001)
+	if(sampledColor.a < 0.5)
 		discard;
 
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
@@ -901,8 +901,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 L0 = vec3(0,0,0);
 
-	 for(int i = 0; i < numDirectionLights; i++)
-	 {
+	for(int i = 0; i < numDirectionLights; i++)
+	{
 	 	DirLight dirLight = dirLights[i];
 
 	 	vec3 L = normalize(-dirLight.direction.xyz);

@@ -566,11 +566,11 @@ namespace r2::draw::rendererimpl
 		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialID.slot);
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		const Material* material = mat::GetMaterial(*matSystem, materialID);
+		ShaderHandle shaderHandle = mat::GetShaderHandle(*matSystem, materialID);
 
-		if (material)
+		if (shaderHandle != InvalidShader)
 		{			
-			const Shader* shader = r2::draw::shadersystem::GetShader(material->shaderId);
+			const Shader* shader = r2::draw::shadersystem::GetShader(shaderHandle);
 
 			//@TODO(Serge): check current opengl state first
 			r2::draw::shader::Use(*shader);
