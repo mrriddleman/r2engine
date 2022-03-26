@@ -103,7 +103,7 @@ enum TextureWrapMode : uint8
 
 table MaterialTextureParam
 {
-	proprtyType:MaterialPropertyType;
+	propertyType:MaterialPropertyType;
 	value:ulong (hash:"fnv1a_64");
 	packingType:MaterialPropertyPackingType;
 	texturePackName:ulong (hash:"fnv1a_64");

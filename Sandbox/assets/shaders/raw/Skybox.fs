@@ -8,30 +8,35 @@ struct Tex2DAddress
 {
 	uint64_t container;
 	float page;	
+	int channel;
+};
+
+struct RenderMaterialParam
+{
+	Tex2DAddress texture;
+	vec4 color;
 };
 
 struct Material
 {
-	Tex2DAddress diffuseTexture1;
-	Tex2DAddress specularTexture1;
-	Tex2DAddress normalMapTexture1;
-	Tex2DAddress emissionTexture1;
-	Tex2DAddress metallicTexture1;
-	Tex2DAddress roughnessTexture1;
-	Tex2DAddress aoTexture1;
-	Tex2DAddress heightTexture1;
-	Tex2DAddress anisotropyTexture1;
+	RenderMaterialParam albedo;
+	RenderMaterialParam normalMap;
+	RenderMaterialParam emission;
+	RenderMaterialParam metallic;
+	RenderMaterialParam roughness;
+	RenderMaterialParam ao;
+	RenderMaterialParam height;
+	RenderMaterialParam anisotropy;
+	RenderMaterialParam detail;
 
-	vec3 baseColor;
-	float specular;
-	float roughness;
-	float metallic;
-	float reflectance;
-	float ambientOcclusion;
-	float clearCoat;
-	float clearCoatRoughness;
-	float anisotropy;
-	float heightScale;
+	RenderMaterialParam clearCoat;
+	RenderMaterialParam clearCoatRoughness;
+	RenderMaterialParam clearCoatNormal;
+
+	int 	doubleSided;
+	float 	heightScale;
+	float	reflectance;
+	int 	padding;
 };
 
 layout (std430, binding = 1) buffer Materials
@@ -63,6 +68,6 @@ void main()
 vec4 SampleCubemapDiffuse(uint drawID, vec3 uv) 
 {
 	highp uint texIndex =  materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
+	Tex2DAddress addr = materials[texIndex].albedo.texture;
 	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
 } 

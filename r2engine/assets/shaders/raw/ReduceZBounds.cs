@@ -18,6 +18,7 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
+	int channel;
 };
 
 

@@ -521,9 +521,9 @@ namespace r2::draw::lightsys
 		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
 		//@TODO(Serge): would be nice to have some kind of verification here?
-		skyLight.diffuseIrradianceTexture = mat::GetRenderMaterial(*matSystem, diffuseMaterialHandle).diffuseTexture;
-		skyLight.prefilteredRoughnessTexture = mat::GetRenderMaterial(*matSystem, prefilteredMaterialHandle).diffuseTexture;
-		skyLight.lutDFGTexture = mat::GetRenderMaterial(*matSystem, lutDFGHandle).diffuseTexture;
+		skyLight.diffuseIrradianceTexture = mat::GetRenderMaterial(*matSystem, diffuseMaterialHandle).albedo.texture;
+		skyLight.prefilteredRoughnessTexture = mat::GetRenderMaterial(*matSystem, prefilteredMaterialHandle).albedo.texture;
+		skyLight.lutDFGTexture = mat::GetRenderMaterial(*matSystem, lutDFGHandle).albedo.texture;
 
 		const auto* prefilteredCubemap = mat::GetCubemapTexture(*matSystem, prefilteredMaterialHandle);
 

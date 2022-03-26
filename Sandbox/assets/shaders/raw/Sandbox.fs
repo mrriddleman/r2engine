@@ -5,8 +5,8 @@
 const uint MAX_NUM_LIGHTS = 50;
 
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
-const float SHADOW_FILTER_MAX_SIZE = 0.002f;
-const float PENUMBRA_FILTER_SCALE = 1.2f;
+const float SHADOW_FILTER_MAX_SIZE = 0.0035f;
+const float PENUMBRA_FILTER_SCALE = 2.4f;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
@@ -30,6 +30,7 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
+	int channel;
 };
 
 struct LightProperties
@@ -83,28 +84,32 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct RenderMaterialParam
+{
+	Tex2DAddress texture;
+	vec4 color;
+};
+
 struct Material
 {
-	Tex2DAddress diffuseTexture1;
-	Tex2DAddress specularTexture1;
-	Tex2DAddress normalMapTexture1;
-	Tex2DAddress emissionTexture1;
-	Tex2DAddress metallicTexture1;
-	Tex2DAddress roughnessTexture1;
-	Tex2DAddress aoTexture1;
-	Tex2DAddress heightTexture1;
-	Tex2DAddress anisotropyTexture1;
+	RenderMaterialParam albedo;
+	RenderMaterialParam normalMap;
+	RenderMaterialParam emission;
+	RenderMaterialParam metallic;
+	RenderMaterialParam roughness;
+	RenderMaterialParam ao;
+	RenderMaterialParam height;
+	RenderMaterialParam anisotropy;
+	RenderMaterialParam detail;
 
-	vec3 baseColor;
-	float specular;
-	float roughness;
-	float metallic;
-	float reflectance;
-	float ambientOcclusion;
-	float clearCoat;
-	float clearCoatRoughness;
-	float anisotropy;
-	float heightScale;
+	RenderMaterialParam clearCoat;
+	RenderMaterialParam clearCoatRoughness;
+	RenderMaterialParam clearCoatNormal;
+
+	int 	doubleSided;
+	float 	heightScale;
+	float	reflectance;
+	int 	padding;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -298,26 +303,40 @@ float Saturate(float x)
 
 vec4 DebugFrustumSplitColor()
 {
-	vec4 fragPosViewSpace = view * vec4(fs_in.fragPos, 1.0);
-
-	float depthValue = abs(fragPosViewSpace.z);
-
-	int layer = -1;
-	for(int i = 0; i < NUM_FRUSTUM_SPLITS; ++i)
+	if(numDirectionLights > 0)
 	{
-		if(depthValue < gPartitions.intervalEnd[i])
+		vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[0] * vec4(fs_in.fragPos, 1.0));
+
+		vec3 projectionPos = projectionPosInCSMSplitSpace.xyz;
+
+		uint layer = NUM_FRUSTUM_SPLITS - 1;
+
+
+
+		for(int i = int(layer); i >= 0; --i)
 		{
-			layer = i;
-			break;
+			vec3 scale = gScale[i][0].xyz;
+			vec3 bias = gBias[i][0].xyz;
+
+			vec3 cascadePos = projectionPos + bias;
+			cascadePos *= scale;
+			cascadePos = abs(cascadePos - 0.5f);
+			if(cascadePos.x <= 0.5 && cascadePos.y <= 0.5 && cascadePos.z <= 0.5)
+			{
+				layer = i;
+			}
 		}
-	}
 
-	if(layer == -1)
-	{
-		layer = NUM_FRUSTUM_SPLITS;
-	}
+		if(layer == -1)
+		{
+			layer = NUM_FRUSTUM_SPLITS-1;
+		}
 
-	return splitColors[layer];
+		return splitColors[layer];
+	}
+	
+
+	return vec4(1);
 }
 
 
@@ -360,14 +379,20 @@ void main()
 
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
-	FragColor = vec4(lightingResult + emission , 1.0);//* DebugFrustumSplitColor();
+	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
+}
+
+vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
+{
+	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	return addr.channel < 0 ? vec4(textureSample.rgba) : vec4(textureSample[addr.channel]); //no rgb right now
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
+	Tex2DAddress addr = materials[texIndex].albedo.texture;
 
 	vec3 coord = vec3(uv.rg,addr.page);
 
@@ -375,14 +400,14 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].baseColor,1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	return (1.0 - modifier) * vec4(materials[texIndex].albedo.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
 vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 
-	Tex2DAddress addr = materials[texIndex].normalMapTexture1;
+	Tex2DAddress addr = materials[texIndex].normalMap.texture;
 
 	vec3 coord = vec3(uv.rg, addr.page);
 
@@ -399,24 +424,10 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 	return  (1.0 - modifier) * vec4(fs_in.normal, 1) +  modifier * vec4(normalMapNormal, 1);
 }
 
-vec4 SampleMaterialSpecular(uint drawID, vec3 uv)
-{
-	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].specularTexture1;
-
-	vec3 coord = vec3(uv.rg,addr.page);
-
-	float mipmapLevel = textureQueryLod(sampler2DArray(addr.container), uv.rg).x;
-
-	float modifier = GetTextureModifier(addr);
-
-	return (1.0 - modifier) * vec4(vec3(materials[texIndex].specular), 1.0) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
-}
-
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].emissionTexture1;
+	Tex2DAddress addr = materials[texIndex].emission.texture;
 
 	vec3 coord = vec3(uv.rg,addr.page);
 
@@ -424,39 +435,43 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(0.0) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	return (1.0 - modifier) * vec4(materials[texIndex].emission.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
 vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].metallicTexture1;
+	Tex2DAddress addr = materials[texIndex].metallic.texture;
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].metallic) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	vec4 color = materials[texIndex].metallic.color;
+
+	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].roughnessTexture1;
+	Tex2DAddress addr = materials[texIndex].roughness.texture;
 
 	float modifier = GetTextureModifier(addr);
 
+	vec4 color = materials[texIndex].roughness.color;
+
 	//@TODO(Serge): put this back to not using the alpha
-	return(1.0 - modifier) * vec4(materials[texIndex].roughness) + modifier * (vec4(texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r) );
+	return(1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].aoTexture1;
+	Tex2DAddress addr = materials[texIndex].ao.texture;
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(1.0) + modifier * texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page));
+	return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -470,21 +485,21 @@ vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
 float SampleMaterialHeight(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].heightTexture1;
+	Tex2DAddress addr = materials[texIndex].height.texture;
 
 	float modifier = GetTextureModifier(addr);
 
-	return 0.0 + modifier * (1.0 - texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
+	return 0.0 + modifier * (1.0 - SampleTexture(addr, vec3(uv.rg, addr.page), 0).r);//texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
 }
 
 vec3 SampleAnisotropy(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].anisotropyTexture1;
+	Tex2DAddress addr = materials[texIndex].anisotropy.texture;
 
 	float modifier = GetTextureModifier(addr);
 
-	vec3 anisotropyDirection = texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
+	vec3 anisotropyDirection = SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
 
 	anisotropyDirection = anisotropyDirection;
 
@@ -494,7 +509,7 @@ vec3 SampleAnisotropy(uint drawID, vec3 uv)
 vec3 ParallaxMapping(uint drawID, vec3 uv, vec3 viewDir)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].heightTexture1;
+	Tex2DAddress addr = materials[texIndex].height.texture;
 
 	float modifier = GetTextureModifier(addr);
 
@@ -821,7 +836,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	
 	float reflectance = materials[texIndex].reflectance;
 
-	float anisotropy =  materials[texIndex].anisotropy;
+	float anisotropy =  materials[texIndex].anisotropy.color.r;
 
 	float metallic = SampleMaterialMetallic(drawID, uv).r;
 
@@ -840,9 +855,9 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 R = GetReflectionVector(anisotropy, anisotropicT, anisotropicB, perceptualRoughness, V, N);
 
-	float clearCoat = materials[texIndex].clearCoat;
+	float clearCoat = materials[texIndex].clearCoat.color.r;
 	vec3 clearCoatNormal = fs_in.normal; //geometric normal
-	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 	float clearCoatRoughness = CalculateClearCoatRoughness(clearCoatPerceptualRoughness);
 
 	F0 = CalculateClearCoatBaseF0(F0, clearCoat);
@@ -1104,10 +1119,10 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 	}
 
 	float lightDepth = shadowPosition.z;
-	float bias = max(0.005 * (1.0 - NoL), 0.0005);
+	float bias = max(0.001 * (1.0 - NoL), 0.0005);
 	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
 	{
-		bias *= 1.0 / (gPartitions.intervalBegin[cascadeIndex] * 0.15);
+		bias *= 1.0 / (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]);
 	}
 
 	lightDepth -= bias;
@@ -1133,12 +1148,14 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
 	{
-		return 1.0; //or maybe return 1?
+		return 0.0; //or maybe return 1?
 	}
 
 	float NoL = max(dot(-lightDir, normal), 0.0);
 
-	vec3 projectionPos = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0)).xyz;
+	vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0));
+
+	vec3 projectionPos = projectionPosInCSMSplitSpace.xyz;
 
 	uint layer = NUM_FRUSTUM_SPLITS - 1;
 
@@ -1384,10 +1401,8 @@ float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float 
 	base_uv -= vec2(0.5, 0.5);
 	base_uv *= shadowMapSizeInv;
 
-
 	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
 
-	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
 	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID);
 
 	float shadow = 0.0;
@@ -1442,15 +1457,16 @@ float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCo
 	if(blockersCount > 0.0)
 	{
 		avgBlockerDepth /= blockersCount;
-		return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+		//return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
 	}
 
-	return 0.0;
+	return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+	//return 0;
 }
 
 float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
 {
 	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
 	penumbra *= penumbra;
-	return clamp(penumbra * 80.0, 0.0, 1.0);
+	return clamp(penumbra , 0.0, 1.0);
 }

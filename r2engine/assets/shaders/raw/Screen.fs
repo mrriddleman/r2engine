@@ -12,6 +12,7 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
+	int channel;
 };
 
 layout (std140, binding = 1) uniform Vectors

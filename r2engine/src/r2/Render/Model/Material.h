@@ -60,31 +60,32 @@ namespace r2::draw
 		b32 doubleSided;
 		f32 heightScale;
 		f32 reflectance;
+		s32 padding;
 	};
 
-	struct RenderMaterial
-	{
-		tex::TextureAddress diffuseTexture = {};
-		tex::TextureAddress specularTexture = {};
-		tex::TextureAddress normalMapTexture = {};
-		tex::TextureAddress emissionTexture = {};
-		tex::TextureAddress metallicTexture = {};
-		tex::TextureAddress roughnessTexture = {};
-		tex::TextureAddress aoTexture = {};
-		tex::TextureAddress heightTexture = {};
-		tex::TextureAddress anisotropyTexture = {};
+	//struct RenderMaterial
+	//{
+	//	tex::TextureAddress diffuseTexture = {};
+	//	tex::TextureAddress specularTexture = {};
+	//	tex::TextureAddress normalMapTexture = {};
+	//	tex::TextureAddress emissionTexture = {};
+	//	tex::TextureAddress metallicTexture = {};
+	//	tex::TextureAddress roughnessTexture = {};
+	//	tex::TextureAddress aoTexture = {};
+	//	tex::TextureAddress heightTexture = {};
+	//	tex::TextureAddress anisotropyTexture = {};
 
-		glm::vec3 baseColor = glm::vec3(1.0f);
-		float specular = 0.f;
-		float roughness= 0.f;
-		float metallic = 0.f;
-		float reflectance = 0.f;
-		float ambientOcclusion = 0.f;
-		float clearCoat = 0.0f;
-		float clearCoatRoughness = 0.0f;
-		float anisotropy = 0.0f;
-		float heightScale = 0.0f;
-	};
+	//	glm::vec3 baseColor = glm::vec3(1.0f);
+	//	float specular = 0.f;
+	//	float roughness= 0.f;
+	//	float metallic = 0.f;
+	//	float reflectance = 0.f;
+	//	float ambientOcclusion = 0.f;
+	//	float clearCoat = 0.0f;
+	//	float clearCoatRoughness = 0.0f;
+	//	float anisotropy = 0.0f;
+	//	float heightScale = 0.0f;
+	//};
 
 	struct Material
 	{
@@ -133,12 +134,13 @@ namespace r2::draw
 		tex::Texture anisotropyTexture;
 	};
 
-	//struct
 	struct InternalMaterialData
 	{
-		MaterialTextureAssets textureAssets;
-		r2::draw::RenderMaterial renderMaterial = {}; //@TODO(Serge): change to RenderMaterialParams
+		u64 materialName;
+		u64 texturePackName;
 		ShaderHandle shaderHandle = InvalidShader;
+		MaterialTextureAssets textureAssets;
+		r2::draw::RenderMaterialParams renderMaterial = {}; //@TODO(Serge): change to RenderMaterialParams
 	};
 
 	struct MaterialSystem
@@ -146,7 +148,7 @@ namespace r2::draw
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
 		r2::mem::LinearArena* mLinearArena = nullptr;
 		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
-		r2::SArray<r2::draw::Material>* mMaterials = nullptr;
+	//	r2::SArray<r2::draw::Material>* mMaterials = nullptr; //@TODO(Serge): remove
 
 		r2::SArray<InternalMaterialData>* mInternalData = nullptr; 
 
@@ -154,6 +156,8 @@ namespace r2::draw
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
 		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
 
+		void* mMaterialParamsPackData = nullptr;
+		void* mTexturePackManifestData = nullptr;
 
 		const flat::MaterialParamsPack* mMaterialParamsPack = nullptr;
 		const flat::TexturePacksManifest* mTexturePackManifest = nullptr;
@@ -189,7 +193,6 @@ namespace r2::draw::matsys
 #endif // R2_ASSET_PIPELINE
 
 	//creating/freeing a new material system
-	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const flat::MaterialPack* materialPack, const flat::TexturePacksManifest* texturePackManifest);
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const char* texturePackManifestPath);
 	void FreeMaterialSystem(MaterialSystem* system);
 }
@@ -201,7 +204,6 @@ namespace r2::draw::mat
 	bool IsInvalidHandle(const MaterialHandle& materialHandle);
 	bool IsValid(const MaterialHandle& materialHandle);
 	bool AreMaterialHandlesEqual(const MaterialHandle& materialHandle1, const MaterialHandle& materialHandle2);
-	bool AreRenderMaterialsEqual(const RenderMaterial& rm1, const RenderMaterial& rm2);
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);
@@ -219,11 +221,11 @@ namespace r2::draw::mat
 	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID);
 
 
-	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat);
+//	MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat);
 
 //	const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID);
 	ShaderHandle GetShaderHandle(const MaterialSystem& system, MaterialHandle matID);
-	const RenderMaterial& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID);
+	const RenderMaterialParams& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID);
 
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
 	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);

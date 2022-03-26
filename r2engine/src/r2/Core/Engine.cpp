@@ -166,14 +166,32 @@ namespace r2
             //for the engine
 			std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
             std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
+
+            std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
+            std::string engineMaterialParamsPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN;
+
 			std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
 			std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
 
+            std::string engineMaterialParamsPackManifestRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_params_pack.json");
+            std::string engineMaterialParamsPackManifestBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_params_pack.mppk");
+
             materialPackCommand.manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
             materialPackCommand.manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
+            
+			materialPackCommand.manifestRawFilePaths.push_back(engineMaterialParamsPackManifestRaw);
+			materialPackCommand.manifestBinaryFilePaths.push_back(engineMaterialParamsPackManifestBin);
+
             materialPackCommand.materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
             materialPackCommand.materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
 
+            materialPackCommand.materialPacksWatchDirectoriesRaw.push_back(engineMaterialParamsPackDirRaw);
+            materialPackCommand.materialPacksWatchDirectoriesBin.push_back(engineMaterialParamsPackDirBin);
+
+            materialPackCommand.findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
+            materialPackCommand.findMaterialFuncs.push_back(r2::asset::pln::FindMaterialParamsPackManifestFile);
+            materialPackCommand.generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
+            materialPackCommand.generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories);
 			//for the app
             for (const std::string& nextPath: noptrApp->GetMaterialPackManifestsBinaryPaths())
             {
@@ -193,6 +211,16 @@ namespace r2
             for (const std::string& nextPath : noptrApp->GetMaterialPacksBinaryPaths())
             {
                 materialPackCommand.materialPacksWatchDirectoriesBin.push_back(nextPath);
+            }
+
+            for (auto findFunc : noptrApp->GetFindMaterialManifestsFuncs())
+            {
+                materialPackCommand.findMaterialFuncs.push_back(findFunc);
+            }
+
+            for (auto generateFunc : noptrApp->GetGenerateMaterialManifestsFromDirectoriesFuncs())
+            {
+                materialPackCommand.generateMaterialPackFuncs.push_back(generateFunc);
             }
 
             materialPackCommand.buildFunc = [](std::vector<std::string> paths)

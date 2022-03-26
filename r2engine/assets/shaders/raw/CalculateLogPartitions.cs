@@ -14,6 +14,7 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
+	int channel;
 };
 
 
@@ -110,8 +111,8 @@ float LogPartitionFromRange(uint part, float minDistance, float maxDistance)
 		float power = float(part + 1) * (1.0 / float(NUM_FRUSTUM_SPLITS));
 		float logScale = minZ * pow(ratio, power);
 		float uniformScale = minZ + range * power;
-		float d = (logScale - uniformScale) + uniformScale;
-		z = lambda * (d - nearClip) / clipRange;
+		float d = lambda * (logScale - uniformScale) + uniformScale;
+		z =  (d - nearClip) / clipRange;
 
 	}
 

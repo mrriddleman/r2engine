@@ -1,0 +1,3879 @@
+{
+  name: 16054392096995780502,
+  pack: [
+    {
+      name: 254534012248538617,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 0.5
+        },
+        {
+          propertyType: "METALLIC",
+          value: 0.2
+        },
+        {
+          propertyType: "REFLECTANCE",
+          value: 0.2
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT",
+          value: 0.9
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS",
+          value: 0.3
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 0.0,
+            g: 0.0,
+            b: 1.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 6088666330291882227,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 0.5
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 12649312764143549080,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "NORMAL",
+          value: 5554924852679410800,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "EMISSION",
+          value: 17818075434642271404,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "METALLIC",
+          value: 13181678361703855054,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 8187701920138629096,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 15020192277099594154,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 10074459559892431748,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 7608013471622948757
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE",
+          value: 1.0
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 1914873744711721033,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "NORMAL",
+          value: 5659460851229052757,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 8222929225575970643,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 0.3
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 1.0
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 6298319434836369894,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "NORMAL",
+          value: 9840060896986555196,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "METALLIC",
+          value: 230340418756385086,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 9574009497472948762,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 10849559150594760209,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 6835937376744617226,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14481568705955305174,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "METALLIC",
+          value: 4793469084704693984,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 11456203900100915805,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 18199531748715869547
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 16871083686207126629,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 14695981039346656837
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 17351122780281340654,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 14381582140258054622,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17351122780281340654
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 11939199546922744086,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 6031424017685759555
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS"
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION"
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 6834641307753482285,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 6377220994408905929
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 747981529608325426,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS"
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION"
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 13856910112476437532,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 10574092072377421955
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5888278623692366668,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 6031424017685759555
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS"
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION"
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 1473424487682504667,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 4821508364552419426
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 17037780642595464548,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 6031424017685759555
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS"
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION"
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 6922505407432338645,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 12702858826531139154
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5241291254806722222,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3766703618186070365
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 15388954475296012333,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 5241291254806722222
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 2191929442153370249,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 16410199853740042615,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 8020432205034491982,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 17116071044852532028,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 17361256573556235170,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 9799509963834938514,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 151525349772927348,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 2422420436303484833,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 16223632222773071211,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 1250174769109493738,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 12329306037502047282,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 15371548457155765750,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 6672287905260019413,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 1238240858397218132,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 4270121546124523768,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 12930837855527852669,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 963951288669208312,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 2951322593608408045,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 8145633656637884532,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 11026520730182107980,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 13489364522144282339,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 1439807986245414403,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 11171291842220535321,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 7455514469255221924,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 11066278595232299432,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 7122740488652169688,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14118817005494085023,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 6894896099151112035,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 16624042264019625284,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 6850782759924242505,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 7801476042652392317,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 3839643115477097422,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 8011142129690784467,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 7470224791640852787,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 722194261051664333,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 11370466349373203151,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 9791586214575832680,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 5059581792814627648,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 4193014739179211167,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5246457941392705303,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 10016583066622203483,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 12996527148527852480,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 11412110603620388499,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 7071822858687105372,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 6157076991712050369,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5669317547529202594,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 8058974104371964613,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 17907432319987538234,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 14818281701145395351,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 1891085352956276944,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 6285245738518595351,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 16775513102546423521,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 18407710445247479994,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 1825805698115919382,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 10814149529960584285,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 12914802001744389144,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 17532043272181099327,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5788349427589635987,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 5756178105871002143,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 16973065429580176926,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 9563529688673692329,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 10542844600236430148,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 3530609090157000289,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 17590638093559374990,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 3005676504940618899,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 10887627394072977937,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 16940304359131613044,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 89225940474289798,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14892502478507996795,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 5406175627352774136,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 8857806338636215149,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    },
+    {
+      name: 17045398062959099023,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS",
+          value: 1.0
+        },
+        {
+          propertyType: "METALLIC"
+        },
+        {
+          propertyType: "REFLECTANCE"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 0.0,
+            b: 0.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 1798179374708363256,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "NORMAL",
+          value: 16711514268871601311,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 11585652685679969130
+        }
+      ],
+      stringParams: [
+
+      ]
+    }
+  ]
+}

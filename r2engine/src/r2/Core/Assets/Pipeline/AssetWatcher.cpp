@@ -514,6 +514,13 @@ namespace r2::asset::pln
 		R2_CHECK(s_materialPackCommand.manifestBinaryFilePaths.size() == s_materialPackCommand.manifestRawFilePaths.size(),
 			"these should be the same size!");
 
+        R2_CHECK(s_materialPackCommand.findMaterialFuncs.size() == s_materialPackCommand.manifestBinaryFilePaths.size(), "these should be the same size");
+        R2_CHECK(s_materialPackCommand.generateMaterialPackFuncs.size() == s_materialPackCommand.manifestBinaryFilePaths.size(), "these should be the same size");
+
+
+		//std::vector<FindMaterialPackManifestFileFunc> findMaterialFuncs;
+		//std::vector<GenerateMaterialPackManifestFromDirectoriesFunc> generateMaterialPackFuncs;
+
 		for (size_t i = 0; i < s_materialPackCommand.manifestBinaryFilePaths.size(); ++i)
 		{
 			std::string manifestPathBin = s_materialPackCommand.manifestBinaryFilePaths[i];
@@ -528,11 +535,15 @@ namespace r2::asset::pln
             std::string rawManifestDir = rawPath.parent_path().string();
 
 			std::string materialPackManifestFile;
-			r2::asset::pln::FindMaterialPackManifestFile(binManifestDir, binaryPath.stem().string(), materialPackManifestFile, true);
+
+            FindMaterialPackManifestFileFunc FindFunc = s_materialPackCommand.findMaterialFuncs[i];
+            GenerateMaterialPackManifestFromDirectoriesFunc GenerateFromDirFunc = s_materialPackCommand.generateMaterialPackFuncs[i];
+
+            FindFunc(binManifestDir, binaryPath.stem().string(), materialPackManifestFile, true);
 
 			if (materialPackManifestFile.empty())
 			{
-				if (r2::asset::pln::FindMaterialPackManifestFile(rawManifestDir, rawPath.stem().string(), materialPackManifestFile, false))
+				if (FindFunc(rawManifestDir, rawPath.stem().string(), materialPackManifestFile, false))
 				{
 					if (!std::filesystem::remove(materialPackManifestFile))
 					{
@@ -541,7 +552,7 @@ namespace r2::asset::pln
 					}
 				}
 
-				if (!r2::asset::pln::GenerateMaterialPackManifestFromDirectories(binaryPath.string(), rawPath.string(), materialPackDirBin, materialPackDirRaw))
+				if (!GenerateFromDirFunc(binaryPath.string(), rawPath.string(), materialPackDirBin, materialPackDirRaw))
 				{
 					R2_CHECK(false, "Failed to generate texture pack manifest file from directories!");
 					return;

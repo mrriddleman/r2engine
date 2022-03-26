@@ -1,0 +1,100 @@
+{
+  name: 254534012248538617,
+  ulongParams: [
+    {
+      propertyType: "SHADER",
+      value: 3292306756035476612
+    }
+  ],
+  floatParams: [
+    {
+      propertyType: "ROUGHNESS",
+      value: 0.5
+    },
+    {
+      propertyType: "METALLIC",
+      value: 0.2
+    },
+    {
+      propertyType: "REFLECTANCE",
+      value: 0.2
+    },
+    {
+      propertyType: "AMBIENT_OCCLUSION",
+      value: 1.0
+    },
+    {
+      propertyType: "CLEAR_COAT",
+      value: 0.9
+    },
+    {
+      propertyType: "CLEAR_COAT_ROUGHNESS",
+      value: 0.3
+    },
+    {
+      propertyType: "HEIGHT_SCALE"
+    },
+    {
+      propertyType: "ANISOTROPY"
+    }
+  ],
+  colorParams: [
+    {
+      value: {
+        r: 0.0,
+        g: 0.0,
+        b: 1.0,
+        a: 1.0
+      }
+    }
+  ],
+  textureParams: [
+    {
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "NORMAL",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "EMISSION",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "METALLIC",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "ROUGHNESS",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "AMBIENT_OCCLUSION",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "HEIGHT",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    },
+    {
+      propertyType: "ANISOTROPY",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: 14695981039346656837
+    }
+  ]
+}

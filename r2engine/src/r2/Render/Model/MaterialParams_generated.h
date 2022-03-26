@@ -572,7 +572,7 @@ inline flatbuffers::Offset<MaterialStringParam> CreateMaterialStringParamDirect(
 struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialTextureParamBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PROPRTYTYPE = 4,
+    VT_PROPERTYTYPE = 4,
     VT_VALUE = 6,
     VT_PACKINGTYPE = 8,
     VT_TEXTUREPACKNAME = 10,
@@ -583,8 +583,8 @@ struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
     VT_WRAPT = 20,
     VT_WRAPR = 22
   };
-  flat::MaterialPropertyType proprtyType() const {
-    return static_cast<flat::MaterialPropertyType>(GetField<uint16_t>(VT_PROPRTYTYPE, 0));
+  flat::MaterialPropertyType propertyType() const {
+    return static_cast<flat::MaterialPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
   }
   uint64_t value() const {
     return GetField<uint64_t>(VT_VALUE, 0);
@@ -615,7 +615,7 @@ struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint16_t>(verifier, VT_PROPRTYTYPE) &&
+           VerifyField<uint16_t>(verifier, VT_PROPERTYTYPE) &&
            VerifyField<uint64_t>(verifier, VT_VALUE) &&
            VerifyField<int8_t>(verifier, VT_PACKINGTYPE) &&
            VerifyField<uint64_t>(verifier, VT_TEXTUREPACKNAME) &&
@@ -633,8 +633,8 @@ struct MaterialTextureParamBuilder {
   typedef MaterialTextureParam Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_proprtyType(flat::MaterialPropertyType proprtyType) {
-    fbb_.AddElement<uint16_t>(MaterialTextureParam::VT_PROPRTYTYPE, static_cast<uint16_t>(proprtyType), 0);
+  void add_propertyType(flat::MaterialPropertyType propertyType) {
+    fbb_.AddElement<uint16_t>(MaterialTextureParam::VT_PROPERTYTYPE, static_cast<uint16_t>(propertyType), 0);
   }
   void add_value(uint64_t value) {
     fbb_.AddElement<uint64_t>(MaterialTextureParam::VT_VALUE, value, 0);
@@ -677,7 +677,7 @@ struct MaterialTextureParamBuilder {
 
 inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParam(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flat::MaterialPropertyType proprtyType = flat::MaterialPropertyType_ALBEDO,
+    flat::MaterialPropertyType propertyType = flat::MaterialPropertyType_ALBEDO,
     uint64_t value = 0,
     flat::MaterialPropertyPackingType packingType = flat::MaterialPropertyPackingType_R,
     uint64_t texturePackName = 0,
@@ -691,7 +691,7 @@ inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParam(
   builder_.add_texturePackName(texturePackName);
   builder_.add_value(value);
   builder_.add_anisotropicFiltering(anisotropicFiltering);
-  builder_.add_proprtyType(proprtyType);
+  builder_.add_propertyType(propertyType);
   builder_.add_wrapR(wrapR);
   builder_.add_wrapT(wrapT);
   builder_.add_wrapS(wrapS);

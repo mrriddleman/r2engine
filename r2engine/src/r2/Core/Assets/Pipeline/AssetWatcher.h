@@ -14,6 +14,7 @@
 #include <string>
 #include <functional>
 #include "r2/Core/Assets/Pipeline/FileWatcher.h"
+#include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 
 namespace r2::asset::pln
 {
@@ -52,6 +53,10 @@ namespace r2::asset::pln
         std::vector<std::string> manifestBinaryFilePaths;
 		std::vector<std::string> materialPacksWatchDirectoriesRaw;
         std::vector<std::string> materialPacksWatchDirectoriesBin;
+
+        std::vector<FindMaterialPackManifestFileFunc> findMaterialFuncs;
+        std::vector<GenerateMaterialPackManifestFromDirectoriesFunc> generateMaterialPackFuncs;
+
 
 		AssetsBuiltFunc buildFunc;
     };

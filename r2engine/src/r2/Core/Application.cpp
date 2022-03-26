@@ -172,5 +172,15 @@ namespace r2
         return {};
     }
 
+    std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> Application::GetFindMaterialManifestsFuncs() const
+    {
+        return {};
+    }
+
+    std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> Application::GetGenerateMaterialManifestsFromDirectoriesFuncs() const
+    {
+        return {};
+    }
+
 #endif
 }

@@ -6,32 +6,37 @@ layout (location = 0) out vec4 FragColor;
 
 struct Tex2DAddress
 {
-	uint64_t  container;
-	float page;
+	uint64_t container;
+	float page;	
+	int channel;
+};
+
+struct RenderMaterialParam
+{
+	Tex2DAddress texture;
+	vec4 color;
 };
 
 struct Material
 {
-	Tex2DAddress diffuseTexture1;
-	Tex2DAddress specularTexture1;
-	Tex2DAddress normalMapTexture1;
-	Tex2DAddress emissionTexture1;
-	Tex2DAddress metallicTexture1;
-	Tex2DAddress roughnessTexture1;
-	Tex2DAddress aoTexture1;
-	Tex2DAddress heightTexture1;
-	Tex2DAddress anisotropyTexture1;
+	RenderMaterialParam albedo;
+	RenderMaterialParam normalMap;
+	RenderMaterialParam emission;
+	RenderMaterialParam metallic;
+	RenderMaterialParam roughness;
+	RenderMaterialParam ao;
+	RenderMaterialParam height;
+	RenderMaterialParam anisotropy;
+	RenderMaterialParam detail;
 
-	vec3 baseColor;
-	float specular;
-	float roughness;
-	float metallic;
-	float reflectance;
-	float ambientOcclusion;
-	float clearCoat;
-	float clearCoatRoughness;
-	float anisotropy;
-	float heightScale;
+	RenderMaterialParam clearCoat;
+	RenderMaterialParam clearCoatRoughness;
+	RenderMaterialParam clearCoatNormal;
+
+	int 	doubleSided;
+	float 	heightScale;
+	float	reflectance;
+	int 	padding;
 };
 
 layout (std430, binding = 1) buffer Materials
@@ -62,7 +67,7 @@ float GetTextureModifier(Tex2DAddress addr)
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Tex2DAddress addr = materials[texIndex].diffuseTexture1;
+	Tex2DAddress addr = materials[texIndex].albedo.texture;
 
 	vec3 coord = vec3(uv.rg,addr.page);
 
@@ -70,7 +75,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(materials[texIndex].baseColor,1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+	return (1.0 - modifier) * vec4(materials[texIndex].albedo.color.rgb, 1) + modifier * textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
 }
 
 void main()

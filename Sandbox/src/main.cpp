@@ -264,20 +264,20 @@ public:
         R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Invalid memory area");
         
         r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
-        R2_CHECK(sandBoxMemoryArea != nullptr, "Feailed to get the memory area!");
+        R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
         
         u64 materialMemorySystemSize = 0;
 
 		
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialPack.mpak");
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
 
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
-        void* materialPackData = nullptr;
-        void* texturePackManifestData = nullptr;
-        materialMemorySystemSize = r2::draw::mat::LoadMaterialAndTextureManifests(materialsPath, texturePackPath, &materialPackData, &texturePackManifestData);
+      //  void* materialPackData = nullptr;
+      //  void* texturePackManifestData = nullptr;
+        materialMemorySystemSize = r2::draw::mat::GetMaterialBoundarySize(materialsPath, texturePackPath);//r2::draw::mat::LoadMaterialAndTextureManifests(materialsPath, texturePackPath, &materialPackData, &texturePackManifestData);
 		
         R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
 
@@ -468,15 +468,15 @@ public:
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
-		const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
+		//const flat::MaterialPack* materialPack = flat::GetMaterialPack(materialPackData);
 
-		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
+		//R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
 
-		const flat::TexturePacksManifest* texturePacks = flat::GetTexturePacksManifest(texturePackManifestData);
+		//const flat::TexturePacksManifest* texturePacks = flat::GetTexturePacksManifest(texturePackManifestData);
 
-		R2_CHECK(texturePacks != nullptr, "Failed to get the material pack from the data!");
+		//R2_CHECK(texturePacks != nullptr, "Failed to get the material pack from the data!");
 
-		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacks);
+		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);
 
 		if (!mMaterialSystem)
 		{
@@ -484,8 +484,8 @@ public:
 			return false;
 		}
 
-        FREE(texturePackManifestData, *MEM_ENG_SCRATCH_PTR);
-        FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
+      //  FREE(texturePackManifestData, *MEM_ENG_SCRATCH_PTR);
+      //  FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
 		r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
@@ -720,16 +720,14 @@ public:
                 r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
                
 
-			//r2::draw::DirectionLight dirLight;
-			//dirLight.lightProperties.color = glm::vec4(1.0f);
+			r2::draw::DirectionLight dirLight;
+			dirLight.lightProperties.color = glm::vec4(1.0f);
 
-			//dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(1.0f, 5.0f, 4.0f, 0.0f));
-			//dirLight.lightProperties.intensity = 2;
-   //         dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 20.0f, 100.0f, 0.0f));
+			dirLight.lightProperties.intensity = 2;
+            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-           // dirLight.lightProperties.castsShadows = true;
-
-        //    r2::draw::renderer::AddDirectionLight(dirLight);
+            r2::draw::renderer::AddDirectionLight(dirLight);
 
 
 
@@ -1267,9 +1265,10 @@ public:
 
     virtual std::vector<std::string> GetMaterialPackManifestsBinaryPaths() const override
     {
-		std::vector<std::string> manifestBinPaths
-		{
-			SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak")
+        std::vector<std::string> manifestBinPaths
+        {
+            SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak"),
+            SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialParamsPack.mppk")
 		};
 		return manifestBinPaths;
     }
@@ -1278,7 +1277,8 @@ public:
     {
 		std::vector<std::string> manifestRawPaths
 		{
-			SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json")
+			SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json"),
+            SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialParamsPack.json")
 		};
 		return manifestRawPaths;
     }
@@ -1330,13 +1330,24 @@ public:
 
     virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
     {
-        return {SANDBOX_MATERIALS_DIR};
+        return {SANDBOX_MATERIALS_DIR, SANDBOX_MATERIAL_PARAMS_DIR };
     }
 
-	std::vector<std::string> Application::GetMaterialPacksBinaryPaths() const
+	std::vector<std::string> GetMaterialPacksBinaryPaths() const
 	{
-		return {SANDBOX_MATERIALS_PACKS_DIR_BIN};
+		return {SANDBOX_MATERIALS_PACKS_DIR_BIN, SANDBOX_MATERIALS_PARAMS_DIR_BIN };
 	}
+
+    std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const
+    {
+        return { r2::asset::pln::FindMaterialPackManifestFile, r2::asset::pln::FindMaterialParamsPackManifestFile };
+    }
+
+    std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const
+    {
+        return { r2::asset::pln::GenerateMaterialPackManifestFromDirectories, r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories };
+    }
+
 #endif
     
     char* GetApplicationName() const

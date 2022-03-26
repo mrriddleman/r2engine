@@ -19,7 +19,7 @@ namespace r2::draw::tex
 			return "texture_height";
 		case TextureType::Metallic:
 			return "texture_metallic";
-		case TextureType::MicroFacet:
+		case TextureType::Roughness:
 			return "texture_microfacet";
 		case TextureType::Occlusion:
 			return "texture_occlusion";

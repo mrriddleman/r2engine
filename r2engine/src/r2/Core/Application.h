@@ -17,6 +17,10 @@
 #include <memory>
 #include <string>
 
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+#endif
+
 namespace r2
 {
     namespace evt
@@ -73,6 +77,9 @@ namespace r2
         virtual std::vector<std::string> GetTexturePacksWatchPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksWatchPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksBinaryPaths() const = 0;
+
+        virtual std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const = 0;
+        virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
 #endif
     };
     

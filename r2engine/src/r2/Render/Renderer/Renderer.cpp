@@ -339,7 +339,7 @@ namespace r2::draw::renderer
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
 	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle);
 	void ClearAllVertexLayoutOffsets(Renderer& renderer);
-	void ClearRenderMaterialsCache(Renderer& renderer);
+
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
@@ -536,12 +536,12 @@ namespace r2::draw::renderer
 
 		//@Temporary
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_pack.mpak");
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
 
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
-		void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
+		/*void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
 		if (!materialPackData)
 		{
 			R2_CHECK(false, "Failed to read the material pack file: %s", materialsPath);
@@ -567,7 +567,10 @@ namespace r2::draw::renderer
 			texturePacksManifest->totalTextureSize(),
 			texturePacksManifest->totalNumberOfTextures(),
 			texturePacksManifest->texturePacks()->size(),
-			texturePacksManifest->maxTexturesInAPack());
+			texturePacksManifest->maxTexturesInAPack());*/
+
+
+		u64 materialMemorySystemSize = mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
 
 		u64 subAreaSize = MemorySize(materialMemorySystemSize);
 
@@ -725,7 +728,7 @@ namespace r2::draw::renderer
 		
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
 		
-		newRenderer->mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
+		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);//r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
 
 		if (!newRenderer->mMaterialSystem)
 		{
@@ -733,8 +736,8 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
-		FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
+		//FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
+		//FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
 
 
 
@@ -904,8 +907,6 @@ namespace r2::draw::renderer
 		}
 
 		CreateRenderPasses(*newRenderer);
-
-		newRenderer->mRenderMaterialsCache = MAKE_SHASHMAP(*newRenderer->mSubAreaArena, RenderMaterial, MAX_NUM_DRAWS * r2::SHashMap<RenderMaterial>::LoadFactorMultiplier());
 
 		r2::asset::FileList files = r2::asset::lib::MakeFileList(MAX_DEFAULT_MODELS);
 
@@ -1093,7 +1094,7 @@ namespace r2::draw::renderer
 
 		}
 
-		FREE(renderer->mRenderMaterialsCache, *arena);
+		//FREE(renderer->mRenderMaterialsCache, *arena);
 
 		const auto numModelRefs = r2::sarr::Size(*renderer->mModelRefs);
 
@@ -2068,7 +2069,6 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RenderMaterial>::MemorySize(MAX_NUM_DRAWS * r2::SHashMap<RenderMaterial>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking)
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2
@@ -2496,11 +2496,6 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void ClearRenderMaterialsCache(Renderer& renderer)
-	{
-		r2::shashmap::Clear(*renderer.mRenderMaterialsCache);
-	}
-
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
 	{
@@ -2597,45 +2592,9 @@ namespace r2::draw::renderer
 		b32 depthEnabled = false;
 	};
 
-	void FillRenderMaterial(Renderer& renderer, const Material& material, RenderMaterial& renderMaterial)
-	{
-		RenderMaterial defaultRenderMaterial;
-
-		//@NOTE(Serge): possible issue - if material handles (material.materialID) are the same across different material systems, this would be an issue and cause the renderer to draw the wrong textures
-		//if this happens, we'll need a cache per material system or some other kind of solution like ensuring we never have the same materialID
-		bool success = false;
-		renderMaterial = r2::shashmap::Get(*renderer.mRenderMaterialsCache, material.materialID, defaultRenderMaterial, success);
-
-		if (!success) //might need a better way of doing this if say we have a normal/roughness etc and no diffuse
-		{
-			renderMaterial.baseColor = material.baseColor;
-			renderMaterial.metallic = material.metallic;
-			renderMaterial.roughness = material.roughness;
-			renderMaterial.specular = material.specular;
-			renderMaterial.reflectance = material.reflectance;
-			renderMaterial.ambientOcclusion = material.ambientOcclusion;
-			renderMaterial.clearCoat = material.clearCoat;
-			renderMaterial.clearCoatRoughness = material.clearCoatRoughness;
-			renderMaterial.anisotropy = material.anisotropy;
-			renderMaterial.heightScale = material.heightScale;
-
-			renderMaterial.diffuseTexture = texsys::GetTextureAddress(material.diffuseTexture);
-			renderMaterial.specularTexture = texsys::GetTextureAddress(material.specularTexture);
-			renderMaterial.normalMapTexture = texsys::GetTextureAddress(material.normalMapTexture);
-			renderMaterial.emissionTexture = texsys::GetTextureAddress(material.emissionTexture);
-			renderMaterial.metallicTexture = texsys::GetTextureAddress(material.metallicTexture);
-			renderMaterial.roughnessTexture = texsys::GetTextureAddress(material.roughnessTexture);
-			renderMaterial.aoTexture = texsys::GetTextureAddress(material.aoTexture);
-			renderMaterial.heightTexture = texsys::GetTextureAddress(material.heightTexture);
-			renderMaterial.anisotropyTexture = texsys::GetTextureAddress(material.anisotropyTexture);
-
-			r2::shashmap::Set(*renderer.mRenderMaterialsCache, material.materialID, renderMaterial);
-		}
-	}
-
 	//@TODO(Serge): pass in an array of u32 that will act as the material offsets per draw ID
 	//				Then make a new big buffer ssbo that will store them and upload them along with the other materials
-	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterial>* renderMaterials, r2::SArray<u32>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
+	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<u32>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
 
@@ -2669,20 +2628,13 @@ namespace r2::draw::renderer
 				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
 
 
-				RenderMaterial nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
+				const RenderMaterialParams& nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
 
 
 				r2::sarr::Push(*renderMaterials, nextRenderMaterial);
 
 				r2::sarr::Push(*shaders, materialShaderHandle);
 			}
-
-			//@TODO(Serge): remove the empty materials - won't need this anymore 
-			//for (u32 renderMaterialIndex = materialBatchInfo.numMaterials; renderMaterialIndex < MAX_NUM_MATERIAL_TEXTURES_PER_OBJECT; ++renderMaterialIndex)
-			//{
-			//	RenderMaterial emptyRenderMaterial = {};
-			//	r2::sarr::Push(*renderMaterials, emptyRenderMaterial);
-			//}
 
 			R2_CHECK(numMeshRefs >= materialBatchInfo.numMaterials, "We should always have greater than or equal the amount of meshes to materials for a model");
 
@@ -2820,7 +2772,7 @@ namespace r2::draw::renderer
 		//@Threading: If we want to thread this in the future, we can call PopulateRenderDataFromRenderBatch from different threads provided they have their own temp allocators
 		//			  You will need to add jobs(or whatever) to dealloc the memory after we merge and create the prerenderbucket which might be tricky since we'll have to make sure the proper threads free the memory
 
-		r2::SArray<RenderMaterial>* renderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterial, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
+		r2::SArray<RenderMaterialParams>* renderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterialParams, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
 		
 
 		r2::sarr::Push(*tempAllocations, (void*)renderMaterials);
@@ -2877,7 +2829,7 @@ namespace r2::draw::renderer
 		}
 
 		const u64 numRenderMaterials = r2::sarr::Size(*renderMaterials);
-		const u64 materialsDataSize = sizeof(r2::draw::RenderMaterial) * numRenderMaterials;
+		const u64 materialsDataSize = sizeof(r2::draw::RenderMaterialParams) * numRenderMaterials;
 
 		cmd::FillConstantBuffer* materialsCMD = nullptr;
 
@@ -5473,11 +5425,6 @@ namespace r2::draw::renderer
 	void ClearAllVertexLayoutOffsets()
 	{
 		ClearAllVertexLayoutOffsets(MENG.GetCurrentRendererRef());
-	}
-
-	void ClearRenderMaterialsCache()
-	{
-		ClearRenderMaterialsCache(MENG.GetCurrentRendererRef());
 	}
 
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)

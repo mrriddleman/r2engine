@@ -21,8 +21,8 @@ layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) i
 
 
 const float projMult = 1;
-const float zMult = 5;
-const vec3 GLOBAL_UP = vec3(0, 0, 1);
+const float zMult = 8;
+const vec3 GLOBAL_UP = vec3(0, 1, 0);
 const bool STABALIZE_CASCADES = true;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -47,6 +47,7 @@ struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
+	int channel;
 };
 
 struct LightProperties
@@ -211,6 +212,17 @@ vec3 GetCameraRight()
 	return cameraRight;
 }
 
+vec3 GetCameraUp()
+{
+	vec3 cameraUp;
+
+	cameraUp.x = view[2][0];
+	cameraUp.y = view[2][1];
+	cameraUp.z = view[2][2];
+
+	return cameraUp;
+}
+
 vec4 PlaneFromPoints(in vec3 point1, in vec3 point2, in vec3 point3)
 {
 	vec3 v21 = point1 - point2;
@@ -256,25 +268,23 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 	center *= (1.0 / NUM_FRUSTUM_CORNERS);
 
 
-	vec3 upDir = GetCameraRight();
-	if(STABALIZE_CASCADES)
-	{
-		upDir = GLOBAL_UP;
-	}
+	vec3 upDir = GLOBAL_UP;
+
+	
 
 //	vec3 lightCameraPos = center;
 //	vec3 lookAt = center - dirLights[0].direction.xyz;
 //	mat4 lightView = LookAt(lightCameraPos, lookAt, GLOBAL_UP);
 
-	mat4 shadowCamera = Ortho(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5);
+	mat4 shadowCamera = Ortho(-0.5, 0.5, -0.5, 0.5, 0, 1);
 
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
 	mat4 texScaleBias = mat4(0.5);
-	//texScaleBias[2][2] = 0.5;
+	texScaleBias[2][2] = 1.0;
 	texScaleBias[3][0] = 0.5;
 	texScaleBias[3][1] = 0.5;
-	texScaleBias[3][2] = 0.5;
+	texScaleBias[3][2] = 0;
 
 	return texScaleBias * shadowCamera * lightView;
 }
@@ -332,21 +342,13 @@ void main(void)
 
 	center *= (1.0 / NUM_FRUSTUM_CORNERS);
 
-	
-
-
-	vec3 upDir = GetCameraRight();
-
-	if(STABALIZE_CASCADES)
-	{
-		upDir = GLOBAL_UP;
-	}
+	vec3 upDir = GLOBAL_UP;
 
 	vec3 minExtents;
 	vec3 maxExtents;
 	
 
-	if(STABALIZE_CASCADES)
+	//if(STABALIZE_CASCADES)
 	{
 		float sphereRadius = 0.0;
 
@@ -358,7 +360,7 @@ void main(void)
 
 		sphereRadius = ceil(sphereRadius * 16.0) / 16.0;
 
-		float diameter = sphereRadius * 2.0;
+		//float diameter = sphereRadius * 2.0;
 		
 		
 
@@ -366,38 +368,38 @@ void main(void)
 		minExtents = -maxExtents;
 
 	}
-	else
-	{
-		vec3 lightCameraPos = center;
+	// else
+	// {
+	// 	vec3 lightCameraPos = center;
 
 
-		mat4 lightView = LookAt(lightCameraPos - dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
+	// 	mat4 lightView = LookAt(lightCameraPos - dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
 
 
-		const float MAX_FLOAT = 3.402823466e+38F;
-		vec3 mins = vec3(MAX_FLOAT);
-		vec3 maxes = vec3(-MAX_FLOAT);
+	// 	const float MAX_FLOAT = 3.402823466e+38F;
+	// 	vec3 mins = vec3(MAX_FLOAT);
+	// 	vec3 maxes = vec3(-MAX_FLOAT);
 
-		for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
-		{
-			vec3 corner = (lightView * vec4(frustumCorners[i], 1.0)).xyz;
-			mins = min(mins, corner);
-			maxes = max(maxes, corner);
-		}
+	// 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+	// 	{
+	// 		vec3 corner = (lightView * vec4(frustumCorners[i], 1.0)).xyz;
+	// 		mins = min(mins, corner);
+	// 		maxes = max(maxes, corner);
+	// 	}
 
-		minExtents = mins;
-		maxExtents = maxes;
+	// 	minExtents = mins;
+	// 	maxExtents = maxes;
 
-		float scale = (shadowMapSizes[cascadeIndex] + 9.0)/shadowMapSizes[cascadeIndex];
+	// 	float scale = (shadowMapSizes[cascadeIndex] + 9.0)/shadowMapSizes[cascadeIndex];
 
-		minExtents.x *= scale;
-		minExtents.y *= scale;
-		maxExtents.x *= scale;
-		maxExtents.y *= scale;
+	// 	minExtents.x *= scale;
+	// 	minExtents.y *= scale;
+	// 	maxExtents.x *= scale;
+	// 	maxExtents.y *= scale;
 
-	}
+	// }
 	
-	vec3 eye = center - (dirLights[directionLightIndex].direction.xyz * maxExtents.z);
+	vec3 eye = center + (dirLights[directionLightIndex].direction.xyz) * minExtents.z;
 
 	//float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
@@ -406,12 +408,14 @@ void main(void)
 
 	dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, upDir);
 
-	dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult, -zMult, maxExtents.z * zMult);
+	dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = 
+	Ortho(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult,
+	 (minExtents.z - maxExtents.z) * zMult, (maxExtents.z - minExtents.z) * zMult);
 	
 
 	//Stabalize Cascades
 
-	if(STABALIZE_CASCADES)
+	//if(STABALIZE_CASCADES)
 	{
 		mat4 shadowMatrix = dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex];
 
@@ -456,7 +460,7 @@ void main(void)
 	vec3 cascadeScale = 1.0 / (otherCorner - cascadeCorner);
 
 
-	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale, 0);
+	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale, 1.0);
 	gBias[cascadeIndex][directionLightLightID] = vec4(-cascadeCorner, 0);
 	//gPartitions[cascadeIndex].intervalBeginScale.y = cascadeScale.x;
 	//gPartitions[cascadeIndex].intervalBeginScale.z = cascadeScale.y;
