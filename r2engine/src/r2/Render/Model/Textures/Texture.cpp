@@ -40,4 +40,9 @@ namespace r2::draw::tex
 	{
 		return t1.textureAssetHandle.assetCache == t2.textureAssetHandle.assetCache && t1.textureAssetHandle.handle == t2.textureAssetHandle.handle && t1.type == t2.type;
 	}
+
+	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2)
+	{
+		return t1.textureAssetHandle.assetCache == t2.textureAssetHandle.assetCache && t1.textureAssetHandle.handle == t2.textureAssetHandle.handle;
+	}
 }

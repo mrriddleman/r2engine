@@ -415,7 +415,7 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	vec3 normalMapNormal = textureLod(sampler2DArray(addr.container), coord, mipmapLevel).rgb;
+	vec3 normalMapNormal = SampleTexture(addr, coord, mipmapLevel).rgb;
 
 	normalMapNormal = normalize(normalMapNormal * 2.0 - 1.0);
 
@@ -442,6 +442,7 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 {
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = materials[texIndex].metallic.texture;
+	//addr.channel = 2;
 
 	float modifier = GetTextureModifier(addr);
 
@@ -461,7 +462,7 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 	vec4 color = materials[texIndex].roughness.color;
 
 	//@TODO(Serge): put this back to not using the alpha
-	return(1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	return SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)
@@ -838,7 +839,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float anisotropy =  materials[texIndex].anisotropy.color.r;
 
-	float metallic = SampleMaterialMetallic(drawID, uv).r;
+	float metallic = SampleMaterialMetallic(drawID, uv).r ;
 
 	float ao =  SampleMaterialAO(drawID, uv).r;
 

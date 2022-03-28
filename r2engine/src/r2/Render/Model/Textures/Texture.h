@@ -119,7 +119,7 @@ namespace r2::draw::tex
 	TextureAddress GetTextureAddress(const TextureHandle& handle);
 	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2);
 	bool TexturesEqual(const Texture& t1, const Texture& t2);
-
+	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2);
 
 	const char* TextureTypeToString(TextureType type);
 

@@ -116,7 +116,9 @@ namespace r2::draw::mat
 
 			if (r2::shashmap::Has(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, filenameID))
 			{
-				R2_CHECK(false, "We Shouldn't already have the asset: %s in our map!", assetName);
+				//R2_CHECK(false, "We Shouldn't already have the asset: %s in our map!", assetName);
+
+				//this might come up now so just return
 				return;
 			}
 
@@ -389,8 +391,6 @@ namespace r2::draw::mat
 			{
 				const auto& texture = r2::sarr::At(*textures, i);
 				r2::draw::texsys::UploadToGPU(texture.textureAssetHandle, texture.type);
-
-				//UpdateRenderMaterialDataTexture(system, materialIndex, texture);
 			}
 		}
 		else
@@ -398,8 +398,6 @@ namespace r2::draw::mat
 			const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*system.mMaterialCubemapTextures, entry.mIndex);
 			
 			r2::draw::texsys::UploadToGPU(cubemap);
-
-			//UpdateRenderMaterialDataTexture(system, materialIndex, cubemap);
 		}
 
 		UpdateRenderMaterialData(system, materialIndex);
@@ -1314,53 +1312,61 @@ namespace r2::draw::mat
 
 		InternalMaterialData& internalMaterialData = r2::sarr::At(*system.mInternalData, materialIndex);
 
-		if (texture.type == tex::TextureType::Diffuse)
+		//we're excluding type here because we could have multiple texture types packed together in one (eg. metallic with roughness etc)
+		//We're also not doing if else for that same reason 
+		if ( tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.diffuseTexture)) 
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.diffuseTexture);
 			internalMaterialData.renderMaterial.albedo.texture = address;
-			internalMaterialData.renderMaterial.albedo.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.albedo.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Diffuse);
 		}
-		else if (texture.type == tex::TextureType::Normal)
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.normalMapTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.normalMapTexture);
 			internalMaterialData.renderMaterial.normalMap.texture = address;
-			internalMaterialData.renderMaterial.normalMap.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.normalMap.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Normal);
 		}
-		else if (texture.type == tex::TextureType::Emissive)
+		
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.emissionTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.emissionTexture);
 			internalMaterialData.renderMaterial.emission.texture = address;
-			internalMaterialData.renderMaterial.emission.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.emission.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Emissive);
 		}
-		else if (texture.type == tex::TextureType::Metallic)
+		
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.metallicTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.metallicTexture);
 			internalMaterialData.renderMaterial.metallic.texture = address;
-			internalMaterialData.renderMaterial.metallic.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.metallic.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Metallic);
 		}
-		else if (texture.type == tex::TextureType::Anisotropy)
+		
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.anisotropyTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.anisotropyTexture);
 			internalMaterialData.renderMaterial.anisotropy.texture = address;
-			internalMaterialData.renderMaterial.anisotropy.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.anisotropy.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Anisotropy);
 		}
-		else if (texture.type == tex::TextureType::Occlusion)
+		
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.aoTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.aoTexture);
 			internalMaterialData.renderMaterial.ao.texture = address;
-			internalMaterialData.renderMaterial.ao.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.ao.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Occlusion);
 		}
-		else if (texture.type == tex::TextureType::Height)
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.heightTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.heightTexture);
 			internalMaterialData.renderMaterial.height.texture = address;
-			internalMaterialData.renderMaterial.height.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.height.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Height);
 		}
-		else if (texture.type == tex::TextureType::Roughness)
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.roughnessTexture))
 		{
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.roughnessTexture);
 			internalMaterialData.renderMaterial.roughness.texture = address;
-			internalMaterialData.renderMaterial.roughness.texture.channel = GetPackingType(system, materialIndex, texture.type);
+			internalMaterialData.renderMaterial.roughness.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Roughness);
 		}
 	}
 

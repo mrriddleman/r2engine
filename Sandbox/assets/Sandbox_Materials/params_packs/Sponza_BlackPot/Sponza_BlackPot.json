@@ -12,7 +12,8 @@
       value: 1.0
     },
     {
-      propertyType: "METALLIC"
+      propertyType: "METALLIC",
+      value: 1.0
     },
     {
       propertyType: "REFLECTANCE"
@@ -64,14 +65,14 @@
     },
     {
       propertyType: "METALLIC",
-      value: 14695981039346656837,
-      packingType: "RGBA",
+      value: "sponza/metallic/2411100444841994089.jpg",
+      packingType: "B",
       texturePackName: 11585652685679969130
     },
     {
       propertyType: "ROUGHNESS",
-      value: 14695981039346656837,
-      packingType: "RGBA",
+      value: "sponza/metallic/2411100444841994089.jpg",
+      packingType: "G",
       texturePackName: 11585652685679969130
     },
     {

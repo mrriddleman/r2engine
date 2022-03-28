@@ -1342,7 +1342,8 @@
           value: 1.0
         },
         {
-          propertyType: "METALLIC"
+          propertyType: "METALLIC",
+          value: 1.0
         },
         {
           propertyType: "REFLECTANCE"
@@ -1394,14 +1395,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6964238094246224661,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6964238094246224661,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -1496,14 +1497,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -1598,14 +1599,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -1700,14 +1701,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 4716452448451824777,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 4716452448451824777,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -1802,14 +1803,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 916088486930129969,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 916088486930129969,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -1904,14 +1905,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 13738431834727895485,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 13738431834727895485,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2006,14 +2007,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 2035496095119230153,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 2035496095119230153,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2108,14 +2109,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6145307520437486526,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6145307520437486526,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2210,14 +2211,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 11393339600689546262,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 11393339600689546262,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2312,14 +2313,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 9130083552419576053,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 9130083552419576053,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2414,14 +2415,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2516,14 +2517,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2618,14 +2619,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 9787103198163614789,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 9787103198163614789,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2720,14 +2721,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 5536487751316107068,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 5536487751316107068,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2822,14 +2823,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8882997609827980812,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8882997609827980812,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -2924,14 +2925,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 18147983664313421872,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 18147983664313421872,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3026,14 +3027,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 2340028985529376517,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 2340028985529376517,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3128,14 +3129,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 12504742233947936043,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 12504742233947936043,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3230,14 +3231,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8521598155652684120,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3332,14 +3333,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 8826660085042552551,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3434,14 +3435,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6851400401661748106,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 6851400401661748106,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3536,14 +3537,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 11053270146398813323,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 11053270146398813323,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3638,14 +3639,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 676396283236161328,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 676396283236161328,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
@@ -3842,14 +3843,14 @@
         },
         {
           propertyType: "METALLIC",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 3440731195927265319,
+          packingType: "B",
           texturePackName: 11585652685679969130
         },
         {
           propertyType: "ROUGHNESS",
-          value: 14695981039346656837,
-          packingType: "RGBA",
+          value: 3440731195927265319,
+          packingType: "G",
           texturePackName: 11585652685679969130
         },
         {
