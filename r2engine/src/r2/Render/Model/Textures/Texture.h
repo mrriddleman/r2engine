@@ -35,6 +35,9 @@ namespace r2::draw::tex
 		Occlusion,
 		Anisotropy,
 		Detail,
+		ClearCoat,
+		ClearCoatRoughness,
+		ClearCoatNormal,
 		Cubemap,
 		NUM_TEXTURE_TYPES
 	};

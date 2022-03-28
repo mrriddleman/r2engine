@@ -37,6 +37,15 @@
       detail: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/detail/Ellen_Head_Microdetail.png"
       ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
       packSize: 43450951,
       totalNumberOfTextures: 15,
       metaData: {
@@ -72,6 +81,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 16777256,
@@ -114,6 +132,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 8563037,
@@ -185,6 +212,15 @@
       detail: [
 
       ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
       packSize: 1933168,
       totalNumberOfTextures: 6,
       metaData: {
@@ -247,6 +283,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 18754,
@@ -319,6 +364,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 6254342,
@@ -525,6 +579,15 @@
       detail: [
 
       ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
       packSize: 16777256,
       totalNumberOfTextures: 1,
       metaData: {
@@ -626,6 +689,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 40169305,

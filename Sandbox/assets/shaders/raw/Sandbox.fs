@@ -234,11 +234,14 @@ vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 vec4 SampleMaterialNormal(uint drawID, vec3 uv);
-vec4 SampleMaterialSpecular(uint drawID, vec3 uv);
 vec4 SampleMaterialEmission(uint drawID, vec3 uv);
 vec4 SampleMaterialMetallic(uint drawID, vec3 uv);
 vec4 SampleMaterialRoughness(uint drawID, vec3 uv);
 vec4 SampleMaterialAO(uint drawID, vec3 uv);
+vec4 SampleDetail(uint drawID, vec3 uv);
+vec4 SampleClearCoat(uint drawID, vec3 uv);
+vec4 SampleClearCoatRoughness(uint drawID, vec3 uv);
+
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
 vec4 SampleLUTDFG(vec2 uv);
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue);
@@ -473,6 +476,36 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 	float modifier = GetTextureModifier(addr);
 
 	return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+}
+
+vec4 SampleDetail(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
+	Tex2DAddress addr = materials[texIndex].detail.texture;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * materials[texIndex].detail.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+}
+
+vec4 SampleClearCoat(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
+	Tex2DAddress addr = materials[texIndex].clearCoat.texture;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * materials[texIndex].clearCoat.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+}
+
+vec4 SampleClearCoatRoughness(uint drawID, vec3 uv)
+{
+	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
+	Tex2DAddress addr = materials[texIndex].clearCoatRoughness.texture;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * materials[texIndex].clearCoatRoughness.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)

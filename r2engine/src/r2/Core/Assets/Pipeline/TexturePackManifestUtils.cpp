@@ -105,6 +105,10 @@ namespace r2::asset::pln::tex
 			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> roughnesses;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoats;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatRoughnesses;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> clearCoatNormals;
+
 
 			std::vector<std::string> cubemapTexturePaths;
 
@@ -174,6 +178,22 @@ namespace r2::asset::pln::tex
 					roughnesses.push_back(builder.CreateString(sanitizedPath));
 					++numTexturesInPack;
 				}
+				else if (file.path().parent_path().stem().string() == "clearCoat")
+				{
+					roughnesses.push_back(builder.CreateString(sanitizedPath));
+					++numTexturesInPack;
+				}
+				else if (file.path().parent_path().stem().string() == "clearCoatRoughness")
+				{
+					roughnesses.push_back(builder.CreateString(sanitizedPath));
+					++numTexturesInPack;
+				}
+				else if (file.path().parent_path().stem().string() == "clearCoatNormal")
+				{
+					roughnesses.push_back(builder.CreateString(sanitizedPath));
+					++numTexturesInPack;
+				}
+
 			}
 
 			char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
@@ -231,6 +251,9 @@ namespace r2::asset::pln::tex
 				builder.CreateVector(heights),
 				builder.CreateVector(anisotropys),
 				builder.CreateVector(details),
+				builder.CreateVector(clearCoats),
+				builder.CreateVector(clearCoatRoughnesses),
+				builder.CreateVector(clearCoatNormals),
 				packSize, numTexturesInPack,
 				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 

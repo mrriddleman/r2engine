@@ -29,9 +29,12 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_HEIGHT = 18,
     VT_ANISOTROPY = 20,
     VT_DETAIL = 22,
-    VT_PACKSIZE = 24,
-    VT_TOTALNUMBEROFTEXTURES = 26,
-    VT_METADATA = 28
+    VT_CLEARCOAT = 24,
+    VT_CLEARCOATROUGHNESS = 26,
+    VT_CLEARCOATNORMAL = 28,
+    VT_PACKSIZE = 30,
+    VT_TOTALNUMBEROFTEXTURES = 32,
+    VT_METADATA = 34
   };
   uint64_t packName() const {
     return GetField<uint64_t>(VT_PACKNAME, 0);
@@ -62,6 +65,15 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *detail() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_DETAIL);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoat() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOAT);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatRoughness() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOATROUGHNESS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatNormal() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_CLEARCOATNORMAL);
   }
   uint64_t packSize() const {
     return GetField<uint64_t>(VT_PACKSIZE, 0);
@@ -102,6 +114,15 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_DETAIL) &&
            verifier.VerifyVector(detail()) &&
            verifier.VerifyVectorOfStrings(detail()) &&
+           VerifyOffset(verifier, VT_CLEARCOAT) &&
+           verifier.VerifyVector(clearCoat()) &&
+           verifier.VerifyVectorOfStrings(clearCoat()) &&
+           VerifyOffset(verifier, VT_CLEARCOATROUGHNESS) &&
+           verifier.VerifyVector(clearCoatRoughness()) &&
+           verifier.VerifyVectorOfStrings(clearCoatRoughness()) &&
+           VerifyOffset(verifier, VT_CLEARCOATNORMAL) &&
+           verifier.VerifyVector(clearCoatNormal()) &&
+           verifier.VerifyVectorOfStrings(clearCoatNormal()) &&
            VerifyField<uint64_t>(verifier, VT_PACKSIZE) &&
            VerifyField<uint64_t>(verifier, VT_TOTALNUMBEROFTEXTURES) &&
            VerifyOffset(verifier, VT_METADATA) &&
@@ -144,6 +165,15 @@ struct TexturePackBuilder {
   void add_detail(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail) {
     fbb_.AddOffset(TexturePack::VT_DETAIL, detail);
   }
+  void add_clearCoat(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoat) {
+    fbb_.AddOffset(TexturePack::VT_CLEARCOAT, clearCoat);
+  }
+  void add_clearCoatRoughness(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatRoughness) {
+    fbb_.AddOffset(TexturePack::VT_CLEARCOATROUGHNESS, clearCoatRoughness);
+  }
+  void add_clearCoatNormal(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatNormal) {
+    fbb_.AddOffset(TexturePack::VT_CLEARCOATNORMAL, clearCoatNormal);
+  }
   void add_packSize(uint64_t packSize) {
     fbb_.AddElement<uint64_t>(TexturePack::VT_PACKSIZE, packSize, 0);
   }
@@ -177,6 +207,9 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> anisotropy = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoat = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatRoughness = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> clearCoatNormal = 0,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
@@ -185,6 +218,9 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
   builder_.add_packSize(packSize);
   builder_.add_packName(packName);
   builder_.add_metaData(metaData);
+  builder_.add_clearCoatNormal(clearCoatNormal);
+  builder_.add_clearCoatRoughness(clearCoatRoughness);
+  builder_.add_clearCoat(clearCoat);
   builder_.add_detail(detail);
   builder_.add_anisotropy(anisotropy);
   builder_.add_height(height);
@@ -209,6 +245,9 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *height = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *anisotropy = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *detail = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoat = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatRoughness = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *clearCoatNormal = nullptr,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
@@ -221,6 +260,9 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
   auto height__ = height ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*height) : 0;
   auto anisotropy__ = anisotropy ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*anisotropy) : 0;
   auto detail__ = detail ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*detail) : 0;
+  auto clearCoat__ = clearCoat ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoat) : 0;
+  auto clearCoatRoughness__ = clearCoatRoughness ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoatRoughness) : 0;
+  auto clearCoatNormal__ = clearCoatNormal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*clearCoatNormal) : 0;
   return flat::CreateTexturePack(
       _fbb,
       packName,
@@ -233,6 +275,9 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
       height__,
       anisotropy__,
       detail__,
+      clearCoat__,
+      clearCoatRoughness__,
+      clearCoatNormal__,
       packSize,
       totalNumberOfTextures,
       metaData);

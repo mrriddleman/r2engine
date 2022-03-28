@@ -29,6 +29,15 @@
       detail: [
 
       ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
       packSize: 147,
       totalNumberOfTextures: 1,
       metaData: {
@@ -69,6 +78,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 2980514,
@@ -133,6 +151,15 @@
 
       ],
       detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
 
       ],
       packSize: 147,

@@ -4,7 +4,7 @@
 
 namespace r2::draw::tex
 {
-	const u32 NUM_ARRAYS = 9; //number of arrays we have in the texture pack
+	const u32 NUM_ARRAYS = 12; //number of arrays we have in the texture pack
 	u64 TexturePackMemorySize(u64 capacity, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(TexturePack), alignment, headerSize, boundsChecking) +

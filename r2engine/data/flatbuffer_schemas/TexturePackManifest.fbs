@@ -19,6 +19,9 @@ table TexturePack
 	height:[string];
 	anisotropy:[string];
 	detail:[string];
+	clearCoat:[string];
+	clearCoatRoughness:[string];
+	clearCoatNormal:[string];
 	packSize:ulong;
 	totalNumberOfTextures:ulong;
 	metaData:TexturePackMetaData;

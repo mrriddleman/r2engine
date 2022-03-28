@@ -43,6 +43,9 @@ namespace r2::draw::tex
 		r2::SArray<r2::asset::Asset>* details = nullptr;
 		r2::SArray<r2::asset::Asset>* heights = nullptr;
 		r2::SArray<r2::asset::Asset>* anisotropys = nullptr;
+		r2::SArray<r2::asset::Asset>* clearCoats = nullptr;
+		r2::SArray<r2::asset::Asset>* clearCoatRoughnesses = nullptr;
+		r2::SArray<r2::asset::Asset>* clearCoatNormals = nullptr;
 	};
 
 
@@ -72,6 +75,9 @@ namespace r2::draw::tex
 		newTexturePack->details = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->heights = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 		newTexturePack->anisotropys = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
+		newTexturePack->clearCoats = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
+		newTexturePack->clearCoatRoughnesses = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
+		newTexturePack->clearCoatNormals = MAKE_SARRAY_VERBOSE(arena, r2::asset::Asset, capacity, file, line, description);
 
 		return newTexturePack;
 	}
@@ -85,6 +91,9 @@ namespace r2::draw::tex
 			return;
 		}
 		//@NOTE: reverse order
+		FREE(pack->clearCoatNormals, arena);
+		FREE(pack->clearCoatRoughnesses, arena);
+		FREE(pack->clearCoats, arena);
 		FREE(pack->anisotropys, arena);
 		FREE(pack->heights, arena);
 		FREE(pack->details, arena);

@@ -311,6 +311,36 @@ namespace r2::draw::mat
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
+				const auto numClearCoats = r2::sarr::Size(*result->clearCoats);
+				for (flatbuffers::uoffset_t t = 0; t < numClearCoats; ++t)
+				{
+					r2::draw::tex::Texture texture;
+					texture.type = tex::TextureType::ClearCoat;
+					texture.textureAssetHandle =
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->clearCoats, t));
+					r2::sarr::Push(*materialTextures, texture);
+				}
+
+				const auto numClearCoatRoughnesses = r2::sarr::Size(*result->clearCoatRoughnesses);
+				for (flatbuffers::uoffset_t t = 0; t < numClearCoatRoughnesses; ++t)
+				{
+					r2::draw::tex::Texture texture;
+					texture.type = tex::TextureType::ClearCoatRoughness;
+					texture.textureAssetHandle =
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->clearCoatRoughnesses, t));
+					r2::sarr::Push(*materialTextures, texture);
+				}
+
+				const auto numClearCoatNormals = r2::sarr::Size(*result->clearCoatNormals);
+				for (flatbuffers::uoffset_t t = 0; t < numClearCoatNormals; ++t)
+				{
+					r2::draw::tex::Texture texture;
+					texture.type = tex::TextureType::ClearCoatNormal;
+					texture.textureAssetHandle =
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->clearCoatNormals, t));
+					r2::sarr::Push(*materialTextures, texture);
+				}
+
 				newEntry.mIndex = r2::sarr::Size(*system.mMaterialTextures);
 				
 				r2::sarr::Push(*system.mMaterialTextures, materialTextures);
@@ -386,8 +416,6 @@ namespace r2::draw::mat
 				return texParam;
 			}
 
-
-
 			if (textureType == tex::TextureType::Diffuse && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
 			{
 				return texParam;
@@ -398,15 +426,20 @@ namespace r2::draw::mat
 				return texParam;
 			}
 
-			//if (textureType = tex::TextureType::ClearCoat && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
-			//{
-			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
-			//}
+			if (textureType == tex::TextureType::ClearCoat && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
+			{
+				return texParam;
+			}
 
-			//if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
-			//{
-			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
-			//}
+			if (textureType == tex::TextureType::ClearCoatRoughness && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::ClearCoatNormal && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_NORMAL)
+			{
+				return texParam;
+			}
 
 			if (textureType == tex::TextureType::Anisotropy && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
 			{
@@ -424,6 +457,11 @@ namespace r2::draw::mat
 			}
 
 			if (textureType == tex::TextureType::Normal && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_NORMAL)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Detail && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_DETAIL)
 			{
 				return texParam;
 			}
@@ -656,36 +694,6 @@ namespace r2::draw::mat
 
 		return nullptr;
 	}
-
-	//MaterialHandle AddMaterial(MaterialSystem& system, const Material& mat)
-	//{
-	//	//see if we already have this material - if we do then return that
-	//	const u64 numMaterials = r2::sarr::Size(*system.mMaterials);
-
-	//	for (u64 i = 0; i < numMaterials; ++i)
-	//	{
-	//		const Material& nextMaterial = r2::sarr::At(*system.mMaterials, i);
-	//		if (mat.materialID == nextMaterial.materialID)
-	//		{
-	//			return MakeMaterialHandleFromIndex(system, i);
-	//		}
-	//	}
-
-	//	r2::sarr::Push(*system.mMaterials, mat);
-	//	return MakeMaterialHandleFromIndex(system, numMaterials);
-	//}
-
-	//const Material* GetMaterial(const MaterialSystem& system, MaterialHandle matID)
-	//{
-	//	u64 materialIndex = GetIndexFromMaterialHandle(matID);
-
-	//	if (materialIndex >= r2::sarr::Size(*system.mMaterials))
-	//	{
-	//		return nullptr;
-	//	}
-
-	//	return &r2::sarr::At(*system.mMaterials, materialIndex);
-	//}
 
 	ShaderHandle GetShaderHandle(const MaterialSystem& system, MaterialHandle matID)
 	{
@@ -938,6 +946,9 @@ namespace r2::draw::mat
 			r2::asset::AssetFile* aoFile = nullptr;
 			r2::asset::AssetFile* heightFile = nullptr;
 			r2::asset::AssetFile* anisotropyFile = nullptr;
+			r2::asset::AssetFile* clearCoatFile = nullptr;
+			r2::asset::AssetFile* clearCoatRoughnessFile = nullptr;
+			r2::asset::AssetFile* clearCoatNormalFile = nullptr;
 
 			for (flatbuffers::uoffset_t i = 0; i < material->textureParams()->size(); ++i)
 			{
@@ -1027,6 +1038,46 @@ namespace r2::draw::mat
 					materialTextureAssets.anisotropyTexture.type = tex::Anisotropy;
 					materialTextureAssets.anisotropyTexture.textureAssetHandle = { textureParam->value(), static_cast<s64>(system.mAssetCache->GetSlot()) };
 				}
+
+				if (textureParam->propertyType() == flat::MaterialPropertyType_DETAIL &&
+					textureParamValue != EMPTY)
+				{
+					detailFile = FindAssetFile(list, textureParamValue);
+					R2_CHECK(detailFile != nullptr, "This should never be null!");
+
+					materialTextureAssets.detailTexture.type = tex::Detail;
+					materialTextureAssets.detailTexture.textureAssetHandle = { textureParam->value(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+				}
+
+				if (textureParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT &&
+					textureParamValue != EMPTY)
+				{
+					clearCoatFile = FindAssetFile(list, textureParamValue);
+					R2_CHECK(clearCoatFile != nullptr, "This should never be null!");
+
+					materialTextureAssets.clearCoatTexture.type = tex::ClearCoat;
+					materialTextureAssets.clearCoatTexture.textureAssetHandle = { textureParam->value(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+				}
+
+				if (textureParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS &&
+					textureParamValue != EMPTY)
+				{
+					clearCoatRoughnessFile = FindAssetFile(list, textureParamValue);
+					R2_CHECK(clearCoatRoughnessFile != nullptr, "This should never be null!");
+
+					materialTextureAssets.clearCoatRoughnessTexture.type = tex::ClearCoatRoughness;
+					materialTextureAssets.clearCoatRoughnessTexture.textureAssetHandle = { textureParam->value(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+				}
+
+				if (textureParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_NORMAL &&
+					textureParamValue != EMPTY)
+				{
+					clearCoatNormalFile = FindAssetFile(list, textureParamValue);
+					R2_CHECK(clearCoatNormalFile != nullptr, "This should never be null!");
+
+					materialTextureAssets.clearCoatNormalTexture.type = tex::ClearCoatNormal;
+					materialTextureAssets.clearCoatNormalTexture.textureAssetHandle = { textureParam->value(), static_cast<s64>(system.mAssetCache->GetSlot()) };
+				}
 			}
 
 			internalMaterialData.textureAssets = materialTextureAssets;
@@ -1049,6 +1100,10 @@ namespace r2::draw::mat
 			AddTextureNameToMap(system, handle, aoFile, tex::Occlusion);
 			AddTextureNameToMap(system, handle, heightFile, tex::Height);
 			AddTextureNameToMap(system, handle, anisotropyFile, tex::Anisotropy);
+			AddTextureNameToMap(system, handle, detailFile, tex::Detail);
+			AddTextureNameToMap(system, handle, clearCoatFile, tex::ClearCoat);
+			AddTextureNameToMap(system, handle, clearCoatRoughnessFile, tex::ClearCoatRoughness);
+			AddTextureNameToMap(system, handle, clearCoatNormalFile, tex::ClearCoatNormal);
 		}
 	}
 
@@ -1074,7 +1129,10 @@ namespace r2::draw::mat
 				nextPack->normal()->size(),
 				nextPack->occlusion()->size(),
 				nextPack->roughness()->size(),
-				nextPack->anisotropy()->size()});
+				nextPack->anisotropy()->size(),
+				nextPack->clearCoat()->size(),
+				nextPack->clearCoatRoughness()->size(),
+				nextPack->clearCoatNormal()->size()});
 
 			if (nextPack->metaData()->type() == flat::TextureType_CUBEMAP)
 			{
@@ -1200,8 +1258,8 @@ namespace r2::draw::mat
 				r2::sarr::Push(*texturePack->metallics, textureAsset);
 			}
 
-			const auto numMicros = nextPack->detail()->size();
-			for (flatbuffers::uoffset_t t = 0; t < numMicros; ++t)
+			const auto numDetails = nextPack->detail()->size();
+			for (flatbuffers::uoffset_t t = 0; t < numDetails; ++t)
 			{
 				auto nextTexturePath = nextPack->detail()->Get(t);
 
@@ -1264,6 +1322,54 @@ namespace r2::draw::mat
 			for (flatbuffers::uoffset_t t = 0; t < numAnisotropies; ++t)
 			{
 				auto nextTexturePath = nextPack->anisotropy()->Get(t);
+
+				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)nextFile);
+
+				char assetName[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+				r2::asset::Asset textureAsset(assetName, textureType);
+				r2::sarr::Push(*texturePack->anisotropys, textureAsset);
+
+			}
+
+			const auto numClearCoats = nextPack->clearCoat()->size();
+			for (flatbuffers::uoffset_t t = 0; t < numClearCoats; ++t)
+			{
+				auto nextTexturePath = nextPack->clearCoat()->Get(t);
+
+				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)nextFile);
+
+				char assetName[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+				r2::asset::Asset textureAsset(assetName, textureType);
+				r2::sarr::Push(*texturePack->anisotropys, textureAsset);
+
+			}
+
+			const auto numClearCoatRoughnesses = nextPack->clearCoatRoughness()->size();
+			for (flatbuffers::uoffset_t t = 0; t < numClearCoatRoughnesses; ++t)
+			{
+				auto nextTexturePath = nextPack->clearCoatRoughness()->Get(t);
+
+				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)nextFile);
+
+				char assetName[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
+				r2::asset::Asset textureAsset(assetName, textureType);
+				r2::sarr::Push(*texturePack->anisotropys, textureAsset);
+
+			}
+
+			const auto numClearCoatNormals = nextPack->clearCoatNormal()->size();
+			for (flatbuffers::uoffset_t t = 0; t < numClearCoatNormals; ++t)
+			{
+				auto nextTexturePath = nextPack->clearCoatNormal()->Get(t);
 
 				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 
@@ -1363,8 +1469,6 @@ namespace r2::draw::mat
 				}
 			}
 
-			//@TODO(Serge): once we use RenderMaterialParams - add other properties here
-
 		}
 		else
 		{
@@ -1426,15 +1530,20 @@ namespace r2::draw::mat
 				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
 			}
 
-			//if (textureType = tex::TextureType::ClearCoat && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
-			//{
-			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
-			//}
+			if (textureType == tex::TextureType::ClearCoat && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
+			{
+				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			}
 
-			//if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
-			//{
-			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
-			//}
+			if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
+			{
+				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			}
+
+			if (textureType == tex::TextureType::ClearCoatNormal && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_NORMAL)
+			{
+				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			}
 
 			if (textureType == tex::TextureType::Anisotropy && texParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
 			{
@@ -1452,6 +1561,11 @@ namespace r2::draw::mat
 			}
 
 			if (textureType == tex::TextureType::Normal && texParam->propertyType() == flat::MaterialPropertyType_NORMAL)
+			{
+				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			}
+
+			if (textureType == tex::TextureType::Detail && texParam->propertyType() == flat::MaterialPropertyType_DETAIL)
 			{
 				return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
 			}
@@ -1525,6 +1639,34 @@ namespace r2::draw::mat
 			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.roughnessTexture);
 			internalMaterialData.renderMaterial.roughness.texture = address;
 			internalMaterialData.renderMaterial.roughness.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Roughness);
+		}
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.detailTexture))
+		{
+			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.detailTexture);
+			internalMaterialData.renderMaterial.detail.texture = address;
+			internalMaterialData.renderMaterial.detail.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::Detail);
+		}
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.clearCoatTexture))
+		{
+			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.clearCoatTexture);
+			internalMaterialData.renderMaterial.clearCoat.texture = address;
+			internalMaterialData.renderMaterial.clearCoat.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::ClearCoat);
+		}
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.clearCoatRoughnessTexture))
+		{
+			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.clearCoatRoughnessTexture);
+			internalMaterialData.renderMaterial.clearCoatRoughness.texture = address;
+			internalMaterialData.renderMaterial.clearCoatRoughness.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::ClearCoatRoughness);
+		}
+
+		if (tex::TexturesEqualExcludeType(texture, internalMaterialData.textureAssets.clearCoatNormalTexture))
+		{
+			auto address = r2::draw::texsys::GetTextureAddress(internalMaterialData.textureAssets.clearCoatNormalTexture);
+			internalMaterialData.renderMaterial.clearCoatNormal.texture = address;
+			internalMaterialData.renderMaterial.clearCoatNormal.texture.channel = GetPackingType(system, materialIndex, tex::TextureType::ClearCoatNormal);
 		}
 	}
 

@@ -133,6 +133,9 @@ namespace r2::draw
 		tex::Texture heightTexture;
 		tex::Texture anisotropyTexture;
 		tex::Texture detailTexture;
+		tex::Texture clearCoatTexture;
+		tex::Texture clearCoatRoughnessTexture;
+		tex::Texture clearCoatNormalTexture;
 	};
 
 	struct InternalMaterialData
