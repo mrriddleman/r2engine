@@ -22,13 +22,13 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PACKNAME = 4,
     VT_ALBEDO = 6,
     VT_NORMAL = 8,
-    VT_SPECULAR = 10,
-    VT_EMISSIVE = 12,
-    VT_METALLIC = 14,
-    VT_OCCLUSION = 16,
-    VT_MICRO = 18,
-    VT_HEIGHT = 20,
-    VT_ANISOTROPY = 22,
+    VT_EMISSIVE = 10,
+    VT_METALLIC = 12,
+    VT_OCCLUSION = 14,
+    VT_ROUGHNESS = 16,
+    VT_HEIGHT = 18,
+    VT_ANISOTROPY = 20,
+    VT_DETAIL = 22,
     VT_PACKSIZE = 24,
     VT_TOTALNUMBEROFTEXTURES = 26,
     VT_METADATA = 28
@@ -42,9 +42,6 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *normal() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_NORMAL);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *specular() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_SPECULAR);
-  }
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *emissive() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_EMISSIVE);
   }
@@ -54,14 +51,17 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *occlusion() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_OCCLUSION);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *micro() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_MICRO);
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *roughness() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_ROUGHNESS);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *height() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_HEIGHT);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *anisotropy() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_ANISOTROPY);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *detail() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_DETAIL);
   }
   uint64_t packSize() const {
     return GetField<uint64_t>(VT_PACKSIZE, 0);
@@ -81,9 +81,6 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_NORMAL) &&
            verifier.VerifyVector(normal()) &&
            verifier.VerifyVectorOfStrings(normal()) &&
-           VerifyOffset(verifier, VT_SPECULAR) &&
-           verifier.VerifyVector(specular()) &&
-           verifier.VerifyVectorOfStrings(specular()) &&
            VerifyOffset(verifier, VT_EMISSIVE) &&
            verifier.VerifyVector(emissive()) &&
            verifier.VerifyVectorOfStrings(emissive()) &&
@@ -93,15 +90,18 @@ struct TexturePack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_OCCLUSION) &&
            verifier.VerifyVector(occlusion()) &&
            verifier.VerifyVectorOfStrings(occlusion()) &&
-           VerifyOffset(verifier, VT_MICRO) &&
-           verifier.VerifyVector(micro()) &&
-           verifier.VerifyVectorOfStrings(micro()) &&
+           VerifyOffset(verifier, VT_ROUGHNESS) &&
+           verifier.VerifyVector(roughness()) &&
+           verifier.VerifyVectorOfStrings(roughness()) &&
            VerifyOffset(verifier, VT_HEIGHT) &&
            verifier.VerifyVector(height()) &&
            verifier.VerifyVectorOfStrings(height()) &&
            VerifyOffset(verifier, VT_ANISOTROPY) &&
            verifier.VerifyVector(anisotropy()) &&
            verifier.VerifyVectorOfStrings(anisotropy()) &&
+           VerifyOffset(verifier, VT_DETAIL) &&
+           verifier.VerifyVector(detail()) &&
+           verifier.VerifyVectorOfStrings(detail()) &&
            VerifyField<uint64_t>(verifier, VT_PACKSIZE) &&
            VerifyField<uint64_t>(verifier, VT_TOTALNUMBEROFTEXTURES) &&
            VerifyOffset(verifier, VT_METADATA) &&
@@ -123,9 +123,6 @@ struct TexturePackBuilder {
   void add_normal(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> normal) {
     fbb_.AddOffset(TexturePack::VT_NORMAL, normal);
   }
-  void add_specular(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> specular) {
-    fbb_.AddOffset(TexturePack::VT_SPECULAR, specular);
-  }
   void add_emissive(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive) {
     fbb_.AddOffset(TexturePack::VT_EMISSIVE, emissive);
   }
@@ -135,14 +132,17 @@ struct TexturePackBuilder {
   void add_occlusion(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion) {
     fbb_.AddOffset(TexturePack::VT_OCCLUSION, occlusion);
   }
-  void add_micro(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> micro) {
-    fbb_.AddOffset(TexturePack::VT_MICRO, micro);
+  void add_roughness(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> roughness) {
+    fbb_.AddOffset(TexturePack::VT_ROUGHNESS, roughness);
   }
   void add_height(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height) {
     fbb_.AddOffset(TexturePack::VT_HEIGHT, height);
   }
   void add_anisotropy(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> anisotropy) {
     fbb_.AddOffset(TexturePack::VT_ANISOTROPY, anisotropy);
+  }
+  void add_detail(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail) {
+    fbb_.AddOffset(TexturePack::VT_DETAIL, detail);
   }
   void add_packSize(uint64_t packSize) {
     fbb_.AddElement<uint64_t>(TexturePack::VT_PACKSIZE, packSize, 0);
@@ -170,13 +170,13 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
     uint64_t packName = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> albedo = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> normal = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> specular = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> emissive = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> metallic = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> occlusion = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> micro = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> roughness = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> height = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> anisotropy = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> detail = 0,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
@@ -185,13 +185,13 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePack(
   builder_.add_packSize(packSize);
   builder_.add_packName(packName);
   builder_.add_metaData(metaData);
+  builder_.add_detail(detail);
   builder_.add_anisotropy(anisotropy);
   builder_.add_height(height);
-  builder_.add_micro(micro);
+  builder_.add_roughness(roughness);
   builder_.add_occlusion(occlusion);
   builder_.add_metallic(metallic);
   builder_.add_emissive(emissive);
-  builder_.add_specular(specular);
   builder_.add_normal(normal);
   builder_.add_albedo(albedo);
   return builder_.Finish();
@@ -202,37 +202,37 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
     uint64_t packName = 0,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *albedo = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *normal = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *specular = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *emissive = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *metallic = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *occlusion = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *micro = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *roughness = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *height = nullptr,
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *anisotropy = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *detail = nullptr,
     uint64_t packSize = 0,
     uint64_t totalNumberOfTextures = 0,
     flatbuffers::Offset<flat::TexturePackMetaData> metaData = 0) {
   auto albedo__ = albedo ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*albedo) : 0;
   auto normal__ = normal ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*normal) : 0;
-  auto specular__ = specular ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*specular) : 0;
   auto emissive__ = emissive ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*emissive) : 0;
   auto metallic__ = metallic ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*metallic) : 0;
   auto occlusion__ = occlusion ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*occlusion) : 0;
-  auto micro__ = micro ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*micro) : 0;
+  auto roughness__ = roughness ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*roughness) : 0;
   auto height__ = height ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*height) : 0;
   auto anisotropy__ = anisotropy ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*anisotropy) : 0;
+  auto detail__ = detail ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*detail) : 0;
   return flat::CreateTexturePack(
       _fbb,
       packName,
       albedo__,
       normal__,
-      specular__,
       emissive__,
       metallic__,
       occlusion__,
-      micro__,
+      roughness__,
       height__,
       anisotropy__,
+      detail__,
       packSize,
       totalNumberOfTextures,
       metaData);

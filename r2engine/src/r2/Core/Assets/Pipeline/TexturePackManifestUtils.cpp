@@ -98,13 +98,13 @@ namespace r2::asset::pln::tex
 			u64 packSize = 0;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> albedos;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> normals;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> speculars;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> emissives;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> metallics;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> occlusions;
-			std::vector<flatbuffers::Offset<flatbuffers::String>> micros;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> details;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> heights;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> anisotropys;
+			std::vector<flatbuffers::Offset<flatbuffers::String>> roughnesses;
 
 			std::vector<std::string> cubemapTexturePaths;
 
@@ -134,12 +134,6 @@ namespace r2::asset::pln::tex
 
 					++numTexturesInPack;
 				}
-				else if (file.path().parent_path().stem().string() == "specular")
-				{
-					speculars.push_back(builder.CreateString(sanitizedPath));
-
-					++numTexturesInPack;
-				}
 				else if (file.path().parent_path().stem().string() == "emissive")
 				{
 					emissives.push_back(builder.CreateString(sanitizedPath));
@@ -158,9 +152,9 @@ namespace r2::asset::pln::tex
 
 					++numTexturesInPack;
 				}
-				else if (file.path().parent_path().stem().string() == "micro")
+				else if (file.path().parent_path().stem().string() == "detail")
 				{
-					micros.push_back(builder.CreateString(sanitizedPath));
+					details.push_back(builder.CreateString(sanitizedPath));
 
 					++numTexturesInPack;
 				}
@@ -173,6 +167,11 @@ namespace r2::asset::pln::tex
 				else if (file.path().parent_path().stem().string() == "anisotropy")
 				{
 					anisotropys.push_back(builder.CreateString(sanitizedPath));
+					++numTexturesInPack;
+				}
+				else if (file.path().parent_path().stem().string() == "roughness")
+				{
+					roughnesses.push_back(builder.CreateString(sanitizedPath));
 					++numTexturesInPack;
 				}
 			}
@@ -225,13 +224,13 @@ namespace r2::asset::pln::tex
 			auto texturePack = flat::CreateTexturePack(builder, packName,
 				builder.CreateVector(albedos),
 				builder.CreateVector(normals),
-				builder.CreateVector(speculars),
 				builder.CreateVector(emissives),
 				builder.CreateVector(metallics),
 				builder.CreateVector(occlusions),
-				builder.CreateVector(micros),
+				builder.CreateVector(roughnesses),
 				builder.CreateVector(heights),
 				builder.CreateVector(anisotropys),
+				builder.CreateVector(details),
 				packSize, numTexturesInPack,
 				CreateTexturePackMetaData(builder, textureType, builder.CreateVector(cubemapMipLevels)));
 

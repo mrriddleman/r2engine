@@ -11,7 +11,7 @@
 #include "glad/glad.h"
 //#include "SDL_image.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-
+#include "r2/Core/Math/MathUtils.h"
 
 #include <errno.h>
 
@@ -291,12 +291,16 @@ namespace r2::draw::tex
 	s32 WRAP_MODE_CLAMP_TO_EDGE = GL_CLAMP_TO_EDGE;
 	s32 WRAP_MODE_CLAMP_TO_BORDER = GL_CLAMP_TO_BORDER;
 	s32 WRAP_MODE_REPEAT = GL_REPEAT;
+	s32 WRAP_MODE_MIRRORED_REPEAT = GL_MIRRORED_REPEAT;
 	s32 FILTER_LINEAR = GL_LINEAR;
 	s32 FILTER_NEAREST = GL_NEAREST;
 	s32 FILTER_NEAREST_MIP_MAP_LINEAR = GL_NEAREST_MIPMAP_LINEAR;
-	u32 FORMAT_DEPTH = GL_DEPTH_COMPONENT;
+	s32 FILTER_NEAREST_MIPMAP_NEAREST = GL_NEAREST_MIPMAP_NEAREST;
+	s32 FILTER_LINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST;
+	s32 FILTER_LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR;
+	u32 DEPTH_COMPONENT = GL_DEPTH_COMPONENT;
 	
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap)
+	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		
 
@@ -465,9 +469,11 @@ namespace r2::draw::tex
 		textureFormat.height = texHeight;
 		textureFormat.mipLevels = mipLevels;
 		textureFormat.compressed = compressed;
-		textureFormat.wrapMode = WRAP_MODE_REPEAT;
-		textureFormat.minFilter = FILTER_LINEAR;
-		textureFormat.magFilter = FILTER_LINEAR;
+		textureFormat.wrapMode = wrapMode;
+		textureFormat.minFilter = minFilter;
+		textureFormat.magFilter = magFilter;
+		textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+		textureFormat.anisotropy = anisotropy;
 
 		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
 
@@ -509,7 +515,7 @@ namespace r2::draw::tex
 		return newHandle;
 	}
 
-	TextureHandle UploadToGPU(const CubemapTexture& cubemap)
+	TextureHandle UploadToGPU(const CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		stbi_set_flip_vertically_on_load(false);
 
@@ -610,9 +616,13 @@ namespace r2::draw::tex
 					textureFormat.height = texHeight;
 					textureFormat.mipLevels = cubemap.numMipLevels;
 					textureFormat.isCubemap = true;
-					textureFormat.wrapMode = WRAP_MODE_CLAMP_TO_EDGE;
-					textureFormat.magFilter = FILTER_LINEAR;
-					textureFormat.minFilter = FILTER_NEAREST_MIP_MAP_LINEAR;
+					textureFormat.wrapMode = wrapMode;//WRAP_MODE_CLAMP_TO_EDGE;
+					textureFormat.magFilter = magFilter;//FILTER_LINEAR;
+					textureFormat.minFilter = minFilter;//FILTER_NEAREST_MIP_MAP_LINEAR;
+					textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+					textureFormat.anisotropy = anisotropy;
+
+
 					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
 				}
 

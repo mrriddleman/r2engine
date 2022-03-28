@@ -592,7 +592,7 @@
         },
         {
           propertyType: "ROUGHNESS",
-          value: 11456203900100915805,
+          value: 14695981039346656837,
           packingType: "RGBA",
           texturePackName: 18199531748715869547
         },
@@ -874,7 +874,11 @@
         {
           value: 6834641307753482285,
           packingType: "RGBA",
-          texturePackName: 6377220994408905929
+          texturePackName: 6377220994408905929,
+          minFilter: "NEAREST_MIPMAP_LINEAR",
+          wrapS: "CLAMP_TO_EDGE",
+          wrapT: "CLAMP_TO_EDGE",
+          wrapR: "CLAMP_TO_EDGE"
         },
         {
           propertyType: "NORMAL",
@@ -974,7 +978,11 @@
         {
           value: 13856910112476437532,
           packingType: "RGBA",
-          texturePackName: 10574092072377421955
+          texturePackName: 10574092072377421955,
+          minFilter: "NEAREST_MIPMAP_LINEAR",
+          wrapS: "CLAMP_TO_EDGE",
+          wrapT: "CLAMP_TO_EDGE",
+          wrapR: "CLAMP_TO_EDGE"
         },
         {
           propertyType: "NORMAL",
@@ -1074,7 +1082,11 @@
         {
           value: 1473424487682504667,
           packingType: "RGBA",
-          texturePackName: 4821508364552419426
+          texturePackName: 4821508364552419426,
+          minFilter: "NEAREST_MIPMAP_LINEAR",
+          wrapS: "CLAMP_TO_EDGE",
+          wrapT: "CLAMP_TO_EDGE",
+          wrapR: "CLAMP_TO_EDGE"
         },
         {
           propertyType: "NORMAL",
@@ -1174,7 +1186,11 @@
         {
           value: 6922505407432338645,
           packingType: "RGBA",
-          texturePackName: 12702858826531139154
+          texturePackName: 12702858826531139154,
+          minFilter: "NEAREST_MIPMAP_LINEAR",
+          wrapS: "CLAMP_TO_EDGE",
+          wrapT: "CLAMP_TO_EDGE",
+          wrapR: "CLAMP_TO_EDGE"
         },
         {
           propertyType: "NORMAL",

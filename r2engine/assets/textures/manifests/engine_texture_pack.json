@@ -8,9 +8,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -20,13 +17,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 147,
@@ -50,9 +50,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -62,13 +59,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 2980514,
@@ -114,9 +114,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -126,13 +123,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 147,

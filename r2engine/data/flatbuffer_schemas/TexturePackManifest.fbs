@@ -12,13 +12,13 @@ table TexturePack
 	packName:ulong (hash:"fnv1a_64");
 	albedo:[string];
 	normal:[string];
-	specular:[string];
 	emissive:[string];
 	metallic:[string];
 	occlusion:[string];
-	micro:[string];	
+	roughness:[string];	
 	height:[string];
 	anisotropy:[string];
+	detail:[string];
 	packSize:ulong;
 	totalNumberOfTextures:ulong;
 	metaData:TexturePackMetaData;

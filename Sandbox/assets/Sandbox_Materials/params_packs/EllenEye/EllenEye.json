@@ -47,13 +47,14 @@
   ],
   textureParams: [
     {
-      value: 1914873744711721033,
+      propertyType: "ALBEDO",
+      value: "ellen/albedo/ellen_eye_albedo.png",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
     {
       propertyType: "NORMAL",
-      value: 5659460851229052757,
+      value: "ellen/normal/ellen_eye_normal.png",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },

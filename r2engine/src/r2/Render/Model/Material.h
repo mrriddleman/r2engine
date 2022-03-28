@@ -87,33 +87,33 @@ namespace r2::draw
 	//	float heightScale = 0.0f;
 	//};
 
-	struct Material
-	{
-		u64 materialID = 0;
-		ShaderHandle shaderId = InvalidShader;
-		u64 texturePackHandle = 0;
-		
-		tex::Texture diffuseTexture;
-		tex::Texture specularTexture;
-		tex::Texture normalMapTexture;
-		tex::Texture emissionTexture;
-		tex::Texture metallicTexture;
-		tex::Texture roughnessTexture;
-		tex::Texture aoTexture;
-		tex::Texture heightTexture;
-		tex::Texture anisotropyTexture;
+	//struct Material
+	//{
+	//	u64 materialID = 0;
+	//	ShaderHandle shaderId = InvalidShader;
+	//	u64 texturePackHandle = 0;
+	//	
+	//	tex::Texture diffuseTexture;
+	//	tex::Texture specularTexture;
+	//	tex::Texture normalMapTexture;
+	//	tex::Texture emissionTexture;
+	//	tex::Texture metallicTexture;
+	//	tex::Texture roughnessTexture;
+	//	tex::Texture aoTexture;
+	//	tex::Texture heightTexture;
+	//	tex::Texture anisotropyTexture;
 
-		glm::vec3 baseColor = glm::vec3(1.0f);
-		float specular = 0.f;
-		float roughness = 0.f;
-		float metallic = 0.f;
-		float reflectance = 0.f;
-		float ambientOcclusion = 1.f;
-		float clearCoat = 0.0f;
-		float clearCoatRoughness = 0.0f;
-		float anisotropy = 0.0f;
-		float heightScale = 0.0f;
-	};
+	//	glm::vec3 baseColor = glm::vec3(1.0f);
+	//	float specular = 0.f;
+	//	float roughness = 0.f;
+	//	float metallic = 0.f;
+	//	float reflectance = 0.f;
+	//	float ambientOcclusion = 1.f;
+	//	float clearCoat = 0.0f;
+	//	float clearCoatRoughness = 0.0f;
+	//	float anisotropy = 0.0f;
+	//	float heightScale = 0.0f;
+	//};
 
 	struct MaterialTextureEntry
 	{
@@ -132,6 +132,7 @@ namespace r2::draw
 		tex::Texture aoTexture;
 		tex::Texture heightTexture;
 		tex::Texture anisotropyTexture;
+		tex::Texture detailTexture;
 	};
 
 	struct InternalMaterialData

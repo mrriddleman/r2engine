@@ -10,10 +10,15 @@ namespace r2::draw::tex
 	extern s32 WRAP_MODE_CLAMP_TO_EDGE;
 	extern s32 WRAP_MODE_CLAMP_TO_BORDER;
 	extern s32 WRAP_MODE_REPEAT;
+	extern s32 WRAP_MODE_MIRRORED_REPEAT;
 	extern s32 FILTER_LINEAR;
 	extern s32 FILTER_NEAREST;
 	extern s32 FILTER_NEAREST_MIP_MAP_LINEAR;
-	extern u32 FORMAT_DEPTH;
+	extern u32 DEPTH_COMPONENT;
+
+	extern s32 FILTER_NEAREST_MIPMAP_NEAREST;
+	extern s32 FILTER_LINEAR_MIPMAP_NEAREST;
+	extern s32 FILTER_LINEAR_MIPMAP_LINEAR;
 
 	struct TextureContainer;
 
@@ -22,7 +27,6 @@ namespace r2::draw::tex
 	enum TextureType
 	{
 		Diffuse = 0,
-		Specular,
 		Emissive,
 		Normal,
 		Metallic,
@@ -30,8 +34,8 @@ namespace r2::draw::tex
 		Roughness,
 		Occlusion,
 		Anisotropy,
+		Detail,
 		Cubemap,
-		//@TODO(Serge): add detail here
 		NUM_TEXTURE_TYPES
 	};
 
@@ -111,8 +115,8 @@ namespace r2::draw::tex
 		b32 isSparse;
 	};
 
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, bool generateMipMap);
-	TextureHandle UploadToGPU(const CubemapTexture& cubemap);
+	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
+	TextureHandle UploadToGPU(const CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
 
 
 	void UnloadFromGPU(TextureHandle& texture);
@@ -120,8 +124,6 @@ namespace r2::draw::tex
 	bool TextureHandlesEqual(const TextureHandle& h1, const TextureHandle& h2);
 	bool TexturesEqual(const Texture& t1, const Texture& t2);
 	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2);
-
-	const char* TextureTypeToString(TextureType type);
 
 	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
 	TextureHandle AddTexturePages(const TextureHandle& textureHandle, u32 numPages);

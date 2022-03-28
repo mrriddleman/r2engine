@@ -11,6 +11,10 @@ namespace r2::draw
 	{
 		r2::draw::tex::GPUHandle gpuHandle;
 		r2::draw::tex::TextureType type = tex::Diffuse;
+		float anisotropy;
+		s32 wrapMode;
+		s32 minFilter;
+		s32 magFilter;
 	};
 
 
@@ -122,7 +126,7 @@ namespace r2::draw::texsys
 		FREE_EMPLACED_ARENA(arena);
 	}
 
-	void UploadToGPU(const r2::asset::AssetHandle& texture, tex::TextureType type)
+	void UploadToGPU(const r2::asset::AssetHandle& texture, tex::TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		if (s_optrTextureSystem == nullptr)
 		{
@@ -137,14 +141,18 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 		
-		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(texture, type, false);
+		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(texture, type, anisotropy, wrapMode, minFilter, magFilter);
 		texGPUHandle.type = type;
+		texGPUHandle.anisotropy = anisotropy;
+		texGPUHandle.minFilter = minFilter;
+		texGPUHandle.magFilter = magFilter;
+		texGPUHandle.wrapMode = wrapMode;
 
 		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.handle, texGPUHandle);
 
 	}
 
-	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap)
+	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		if (s_optrTextureSystem == nullptr)
 		{
@@ -162,9 +170,12 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 
-		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(cubemap);
+		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(cubemap, anisotropy, wrapMode, minFilter, magFilter);
 		texGPUHandle.type = tex::Cubemap;
-
+		texGPUHandle.anisotropy = anisotropy;
+		texGPUHandle.minFilter = minFilter;
+		texGPUHandle.magFilter = magFilter;
+		texGPUHandle.wrapMode = wrapMode;
 
 		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
 	}
@@ -180,7 +191,7 @@ namespace r2::draw::texsys
 			UnloadFromGPU(texture);
 		}
 
-		UploadToGPU(texture, texGPUHandle.type);
+		texsys::UploadToGPU(texture, texGPUHandle.type, texGPUHandle.anisotropy, texGPUHandle.wrapMode, texGPUHandle.minFilter, texGPUHandle.magFilter);
 	}
 
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture)

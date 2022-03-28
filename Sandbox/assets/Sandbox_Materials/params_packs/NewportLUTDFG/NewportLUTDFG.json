@@ -46,7 +46,13 @@
     {
       value: 13856910112476437532,
       packingType: "RGBA",
-      texturePackName: 10574092072377421955
+      texturePackName: 10574092072377421955,
+      minFilter: "NEAREST_MIPMAP_LINEAR",
+      magFilter: "LINEAR",
+      anisotropicFiltering:0.0,
+      wrapS:"CLAMP_TO_EDGE",
+      wrapT:"CLAMP_TO_EDGE",
+      wrapR:"CLAMP_TO_EDGE"
     },
     {
       propertyType: "NORMAL",

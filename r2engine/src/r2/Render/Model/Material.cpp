@@ -231,16 +231,6 @@ namespace r2::draw::mat
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
-				const auto numSpeculars = r2::sarr::Size(*result->speculars);
-				for (flatbuffers::uoffset_t t = 0; t < numSpeculars; ++t)
-				{
-					r2::draw::tex::Texture texture;
-					texture.type = tex::TextureType::Specular;
-					texture.textureAssetHandle =
-						system.mAssetCache->LoadAsset(r2::sarr::At(*result->speculars, t));
-					r2::sarr::Push(*materialTextures, texture);
-				}
-
 				const auto numEmissives = r2::sarr::Size(*result->emissives);
 				for (u64 t = 0; t < numEmissives; ++t)
 				{
@@ -281,13 +271,13 @@ namespace r2::draw::mat
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
-				const auto numMicros = r2::sarr::Size(*result->micros);
-				for (u64 t = 0; t < numMicros; ++t)
+				const auto numDetails = r2::sarr::Size(*result->details);
+				for (u64 t = 0; t < numDetails; ++t)
 				{
 					r2::draw::tex::Texture texture;
-					texture.type = tex::TextureType::Roughness;
+					texture.type = tex::TextureType::Detail;
 					texture.textureAssetHandle =
-						system.mAssetCache->LoadAsset(r2::sarr::At(*result->micros, t));
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->details, t));
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
@@ -308,6 +298,16 @@ namespace r2::draw::mat
 					texture.type = tex::TextureType::Anisotropy;
 					texture.textureAssetHandle =
 						system.mAssetCache->LoadAsset(r2::sarr::At(*result->anisotropys, t));
+					r2::sarr::Push(*materialTextures, texture);
+				}
+
+				const auto numRoughnesses = r2::sarr::Size(*result->roughnesses);
+				for (flatbuffers::uoffset_t t = 0; t < numRoughnesses; ++t)
+				{
+					r2::draw::tex::Texture texture;
+					texture.type = tex::TextureType::Roughness;
+					texture.textureAssetHandle =
+						system.mAssetCache->LoadAsset(r2::sarr::At(*result->roughnesses, t));
 					r2::sarr::Push(*materialTextures, texture);
 				}
 
@@ -367,6 +367,149 @@ namespace r2::draw::mat
 		UploadMaterialTexturesToGPUInternal(system, index);
 	}
 
+	const flat::MaterialTextureParam* GetMaterialTextureParam(const flat::MaterialParams* materialParams, const tex::Texture& texture)
+	{
+		tex::TextureType textureType = texture.type;
+
+		for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
+		{
+			const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(i);
+
+			if (textureType == tex::TextureType::Roughness && texture.textureAssetHandle.handle == texParam->value() &&
+				texParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ROUGHNESS)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Metallic && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_METALLIC)
+			{
+				return texParam;
+			}
+
+
+
+			if (textureType == tex::TextureType::Diffuse && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Occlusion && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION)
+			{
+				return texParam;
+			}
+
+			//if (textureType = tex::TextureType::ClearCoat && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
+			//{
+			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			//}
+
+			//if (textureType == tex::TextureType::ClearCoatRoughness && texParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
+			//{
+			//	return texParam->packingType() > flat::MaterialPropertyPackingType_A ? -1 : texParam->packingType();
+			//}
+
+			if (textureType == tex::TextureType::Anisotropy && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Height && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_HEIGHT)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Emissive && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_EMISSION)
+			{
+				return texParam;
+			}
+
+			if (textureType == tex::TextureType::Normal && texture.textureAssetHandle.handle == texParam->value() && texParam->propertyType() == flat::MaterialPropertyType_NORMAL)
+			{
+				return texParam;
+			}
+		}
+
+	//	R2_CHECK(false, "Should never get here!"); //@TODO(Serge): re-enable this, mind is too tired
+
+		return nullptr;
+	}
+
+	const flat::MaterialTextureParam* GetMaterialTextureParam(const flat::MaterialParams* materialParams, const tex::CubemapTexture& cubemap)
+	{
+		for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
+		{
+			const flat::MaterialTextureParam* texParam = materialParams->textureParams()->Get(i);
+
+			if (texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+			{
+				return texParam;
+			}
+		}
+
+		R2_CHECK(false, "Should never get here");
+		return nullptr;
+	}
+
+	s32 GetWrapMode(const flat::MaterialTextureParam* texParam)
+	{
+		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
+		switch (texParam->wrapS())
+		{
+		case flat::TextureWrapMode_REPEAT:
+			return tex::WRAP_MODE_REPEAT;
+		case flat::TextureWrapMode_CLAMP_TO_BORDER:
+			return tex::WRAP_MODE_CLAMP_TO_BORDER;
+		case flat::TextureWrapMode_CLAMP_TO_EDGE:
+			return tex::WRAP_MODE_CLAMP_TO_EDGE;
+		case flat::TextureWrapMode_MIRRORED_REPEAT:
+			return tex::WRAP_MODE_MIRRORED_REPEAT;
+		default:
+			R2_CHECK(false, "Unsupported wrap mode!");
+			break;
+		}
+		return 0;
+	}
+
+	s32 GetMinFilter(const flat::MaterialTextureParam* texParam)
+	{
+		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
+		switch (texParam->minFilter())
+		{
+		case flat::MinTextureFilter_LINEAR:
+			return tex::FILTER_LINEAR;
+		case flat::MinTextureFilter_NEAREST:
+			return tex::FILTER_NEAREST;
+		case flat::MinTextureFilter_LINEAR_MIPMAP_LINEAR:
+			return tex::FILTER_LINEAR_MIPMAP_LINEAR;
+		case flat::MinTextureFilter_LINEAR_MIPMAP_NEAREST:
+			return tex::FILTER_LINEAR_MIPMAP_NEAREST;
+		case flat::MinTextureFilter_NEAREST_MIPMAP_LINEAR:
+			return tex::FILTER_NEAREST_MIP_MAP_LINEAR;
+		case flat::MinTextureFilter_NEAREST_MIPMAP_NEAREST:
+			return tex::FILTER_NEAREST_MIPMAP_NEAREST;
+		default:
+			R2_CHECK(false, "Unsupported Min Filter!");
+			break;
+		}
+		return 0;
+	}
+
+	s32 GetMagFilter(const flat::MaterialTextureParam* texParam)
+	{
+		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
+		if (texParam->magFilter() == flat::MagTextureFilter_LINEAR)
+		{
+			return tex::FILTER_LINEAR;
+		}
+		else if (texParam->magFilter() == flat::MagTextureFilter_NEAREST)
+		{
+			return tex::FILTER_NEAREST;
+		}
+
+		R2_CHECK(false, "Unsupported Mag filter!");
+		return 0;
+	}
+
 	void UploadMaterialTexturesToGPUInternal(MaterialSystem& system, u64 materialIndex)
 	{
 		const MaterialTextureEntry& entry = r2::sarr::At(*system.mMaterialTextureEntries, materialIndex);
@@ -375,6 +518,11 @@ namespace r2::draw::mat
 		{
 			return;
 		}
+
+		const flat::MaterialParams* materialParams = system.mMaterialParamsPack->pack()->Get(materialIndex);
+
+		R2_CHECK(materialParams != nullptr, "We should have the material params!");
+		R2_CHECK(r2::sarr::At(*system.mInternalData, materialIndex).materialName == materialParams->name(), "hmmm");
 
 		if (entry.mType == r2::asset::TEXTURE)
 		{
@@ -390,14 +538,22 @@ namespace r2::draw::mat
 			for (u64 i = 0; i < numTextures; ++i)
 			{
 				const auto& texture = r2::sarr::At(*textures, i);
-				r2::draw::texsys::UploadToGPU(texture.textureAssetHandle, texture.type);
+
+				const flat::MaterialTextureParam* texParam = GetMaterialTextureParam(materialParams, texture);
+
+				if (texParam == nullptr)
+				{
+					continue;
+				}
+
+				r2::draw::texsys::UploadToGPU(texture.textureAssetHandle, texture.type, texParam->anisotropicFiltering(), GetWrapMode(texParam), GetMinFilter(texParam), GetMagFilter(texParam));
 			}
 		}
 		else
 		{
 			const r2::draw::tex::CubemapTexture& cubemap = r2::sarr::At(*system.mMaterialCubemapTextures, entry.mIndex);
-			
-			r2::draw::texsys::UploadToGPU(cubemap);
+			const flat::MaterialTextureParam* texParam = GetMaterialTextureParam(materialParams, cubemap);
+			r2::draw::texsys::UploadToGPU(cubemap, texParam->anisotropicFiltering(), GetWrapMode(texParam), GetMinFilter(texParam), GetMagFilter(texParam));
 		}
 
 		UpdateRenderMaterialData(system, materialIndex);
@@ -789,11 +945,13 @@ namespace r2::draw::mat
 
 				//@TODO(Serge): this should probably be per texture not per material but...
 				internalMaterialData.texturePackName = textureParam->texturePackName();
+				const auto textureParamValue = textureParam->value();
+				const auto packName = textureParam->texturePackName();
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_ALBEDO &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					diffuseFile = FindAssetFile(list, textureParam->value());
+					diffuseFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(diffuseFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.diffuseTexture.type = tex::Diffuse;
@@ -801,9 +959,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_NORMAL &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					normalMapFile = FindAssetFile(list, textureParam->value());
+					normalMapFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(normalMapFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.normalMapTexture.type = tex::Normal;
@@ -811,9 +969,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_EMISSION &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					emissionFile = FindAssetFile(list, textureParam->value());
+					emissionFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(emissionFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.emissionTexture.type = tex::Emissive;
@@ -821,9 +979,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_METALLIC &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					metallicFile = FindAssetFile(list, textureParam->value());
+					metallicFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(metallicFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.metallicTexture.type = tex::Metallic;
@@ -831,9 +989,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_ROUGHNESS &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					roughnessFile = FindAssetFile(list, textureParam->value());
+					roughnessFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(roughnessFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.roughnessTexture.type = tex::Roughness;
@@ -841,9 +999,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					aoFile = FindAssetFile(list, textureParam->value());
+					aoFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(aoFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.aoTexture.type = tex::Occlusion;
@@ -851,9 +1009,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_HEIGHT &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					heightFile = FindAssetFile(list, textureParam->value());
+					heightFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(heightFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.heightTexture.type = tex::Height;
@@ -861,9 +1019,9 @@ namespace r2::draw::mat
 				}
 
 				if (textureParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY &&
-					textureParam->value() != EMPTY)
+					textureParamValue != EMPTY)
 				{
-					anisotropyFile = FindAssetFile(list, textureParam->value());
+					anisotropyFile = FindAssetFile(list, textureParamValue);
 					R2_CHECK(anisotropyFile != nullptr, "This should never be null!");
 
 					materialTextureAssets.anisotropyTexture.type = tex::Anisotropy;
@@ -912,10 +1070,10 @@ namespace r2::draw::mat
 				nextPack->emissive()->size(),
 				nextPack->height()->size(),
 				nextPack->metallic()->size(),
-				nextPack->micro()->size(),
+				nextPack->detail()->size(),
 				nextPack->normal()->size(),
 				nextPack->occlusion()->size(),
-				nextPack->specular()->size(),
+				nextPack->roughness()->size(),
 				nextPack->anisotropy()->size()});
 
 			if (nextPack->metaData()->type() == flat::TextureType_CUBEMAP)
@@ -1042,10 +1200,10 @@ namespace r2::draw::mat
 				r2::sarr::Push(*texturePack->metallics, textureAsset);
 			}
 
-			const auto numMicros = nextPack->micro()->size();
+			const auto numMicros = nextPack->detail()->size();
 			for (flatbuffers::uoffset_t t = 0; t < numMicros; ++t)
 			{
-				auto nextTexturePath = nextPack->micro()->Get(t);
+				auto nextTexturePath = nextPack->detail()->Get(t);
 
 				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 
@@ -1054,7 +1212,7 @@ namespace r2::draw::mat
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 				r2::asset::Asset textureAsset(assetName, textureType);
-				r2::sarr::Push(*texturePack->micros, textureAsset);
+				r2::sarr::Push(*texturePack->details, textureAsset);
 			}
 
 			const auto numNormals = nextPack->normal()->size();
@@ -1087,10 +1245,10 @@ namespace r2::draw::mat
 				r2::sarr::Push(*texturePack->occlusions, textureAsset);
 			}
 
-			const auto numSpeculars = nextPack->specular()->size();
+			const auto numSpeculars = nextPack->roughness()->size();
 			for (flatbuffers::uoffset_t t = 0; t < numSpeculars; ++t)
 			{
-				auto nextTexturePath = nextPack->specular()->Get(t);
+				auto nextTexturePath = nextPack->roughness()->Get(t);
 
 				r2::asset::RawAssetFile* nextFile = r2::asset::lib::MakeRawAssetFile(nextTexturePath->c_str(), NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 
@@ -1099,7 +1257,7 @@ namespace r2::draw::mat
 				char assetName[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::CopyFileNameWithParentDirectories(nextTexturePath->c_str(), assetName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 				r2::asset::Asset textureAsset(assetName, textureType);
-				r2::sarr::Push(*texturePack->speculars, textureAsset);
+				r2::sarr::Push(*texturePack->roughnesses, textureAsset);
 			}
 
 			const auto numAnisotropies = nextPack->anisotropy()->size();

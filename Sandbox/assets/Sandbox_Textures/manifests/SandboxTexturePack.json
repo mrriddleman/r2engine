@@ -14,9 +14,6 @@
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.png",
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.png"
       ],
-      specular: [
-
-      ],
       emissive: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.png"
       ],
@@ -28,14 +25,17 @@
       occlusion: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.png"
       ],
-      micro: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/micro/Ellen_Head_Microdetail.png"
+      roughness: [
+
       ],
       height: [
 
       ],
       anisotropy: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/anisotropy/Ellen_Hair_Aniso.png"
+      ],
+      detail: [
+        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/detail/Ellen_Head_Microdetail.png"
       ],
       packSize: 43450951,
       totalNumberOfTextures: 15,
@@ -53,9 +53,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -65,13 +62,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 16777256,
@@ -95,9 +95,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -107,13 +104,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 8563037,
@@ -164,9 +164,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -176,13 +173,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 1933168,
@@ -228,9 +228,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -240,13 +237,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 18754,
@@ -300,9 +300,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -312,13 +309,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 6254342,
@@ -504,9 +504,6 @@
       normal: [
 
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -516,13 +513,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 16777256,
@@ -588,9 +588,6 @@
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/7645212358685992005.jpg",
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/8773302468495022225.jpg"
       ],
-      specular: [
-
-      ],
       emissive: [
 
       ],
@@ -619,13 +616,16 @@
       occlusion: [
 
       ],
-      micro: [
+      roughness: [
 
       ],
       height: [
 
       ],
       anisotropy: [
+
+      ],
+      detail: [
 
       ],
       packSize: 40169305,
