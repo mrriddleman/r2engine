@@ -61,6 +61,10 @@ namespace r2::asset
     
     bool ZipAssetFile::Close()
     {
+        if (mZipFile == nullptr)
+        {
+            return true;
+        }
         r2::fs::FileSystem::Close(mZipFile);
         mZipFile = nullptr;
         return true;

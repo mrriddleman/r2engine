@@ -2187,9 +2187,14 @@ namespace r2::draw::matsys
 
 
 #ifdef R2_ASSET_PIPELINE
-	void TextureChanged(std::string texturePath)
+	void TextureChanged(const std::string& texturePath)
 	{
 		mat::s_texturesChangedQueue.Push(texturePath);
+	}
+
+	void TextureAdded(const std::string& textureAdded)
+	{
+
 	}
 #endif // R2_ASSET_PIPELINE
 }

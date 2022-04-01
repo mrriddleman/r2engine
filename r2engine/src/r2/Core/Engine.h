@@ -12,6 +12,11 @@
 #include "r2/Platform/IO.h"
 #include "r2/Core/Layer/LayerStack.h"
 
+#ifdef R2_ASSET_PIPELINE
+
+#include "r2/Core/Assets/Pipeline/AssetCommandHandler.h"
+
+#endif
 
 namespace r2::draw
 {
@@ -248,6 +253,9 @@ namespace r2
         util::Size mResolution;
         r2::mem::utils::MemBoundary mAssetLibMemBoundary;
         
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::pln::AssetCommandHandler mAssetCommandHandler;
+#endif
     };
 }
 

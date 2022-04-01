@@ -16,6 +16,7 @@
 #include "r2/Core/Assets/Pipeline/FileWatcher.h"
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 
+
 namespace r2::asset::pln
 {
     
@@ -32,7 +33,6 @@ namespace r2::asset::pln
     
     struct ShaderManifestCommand
     {
-        std::vector<std::string> manifestDirectories;
         std::vector<std::string> shaderWatchPaths;
         std::vector<std::string> manifestFilePaths;
         AssetsBuiltFunc buildFunc;

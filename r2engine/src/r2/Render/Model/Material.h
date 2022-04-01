@@ -193,7 +193,9 @@ namespace r2::draw::matsys
 	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture);
 
 #ifdef R2_ASSET_PIPELINE
-	void TextureChanged(std::string texturePath);
+	void TextureChanged(const std::string& texturePath);
+
+	void TextureAdded(const std::string& textureAdded);
 #endif // R2_ASSET_PIPELINE
 
 	//creating/freeing a new material system

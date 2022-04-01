@@ -9,6 +9,11 @@
       soundName: "D:/Projects/r2engine/Sandbox/assets/sound/music/wave.mp3",
       defaultVolume: 1.0,
       pitch: 1.0
+    },
+    {
+      soundName: "D:/Projects/r2engine/Sandbox/assets/sound/sound_fx\\mixkit-arcade-retro-game-over-213.wav",
+      defaultVolume: 1.0,
+      pitch: 1.0
     }
   ]
 }

@@ -96,7 +96,6 @@ namespace r2::asset::pln
     void GenerateTexturePackManifestsIfNeeded();
     void TextureChangedRequest(std::string chagedPath);
     void TextureAddedRequest(std::string newPath);
-    void ReloadTexturePackManifests();
 
     void GenerateMaterialPackManifestsIfNeeded();
 
@@ -179,7 +178,17 @@ namespace r2::asset::pln
         }
 
 
+
+        //Materials
         GenerateMaterialPackManifestsIfNeeded();
+
+        //hot reload code
+        {
+
+        }
+
+
+
 
         s_manifestFileWatcher.Init(std::chrono::milliseconds(delay), s_assetCommand.assetManifestsPath);
         //@TODO(Serge): modify these to be their own functions
@@ -224,7 +233,8 @@ namespace r2::asset::pln
     {
         auto now = std::chrono::steady_clock::now();
         auto dt = std::chrono::duration_cast<Milliseconds>(now - s_lastTime);
-        
+        s_lastTime = now;
+
         if (dt >= s_delay)
         {
             //@NOTE(Serge): shaders need to run on the main thread because of OpenGL context

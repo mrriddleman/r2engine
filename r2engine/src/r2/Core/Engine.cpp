@@ -24,7 +24,14 @@
 #include "r2/Render/Renderer/Renderer.h"
 #ifdef R2_DEBUG
 #include <chrono>
+#endif
+
+#ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/TexturePackHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/SoundHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/GameAssetHotReloadCommand.h"
 #endif
 
 namespace r2
@@ -90,76 +97,12 @@ namespace r2
             r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR, internalShaderManifestPath, "r2shaders.sman");
 
 #ifdef R2_ASSET_PIPELINE
-            r2::asset::pln::SoundDefinitionCommand soundCommand;
-
-            soundCommand.soundDefinitionFilePath = noptrApp->GetSoundDefinitionPath();
-            soundCommand.soundDirectories = noptrApp->GetSoundDirectoryWatchPaths();
-            soundCommand.buildFunc = [](std::vector<std::string> paths)
-            {
-                r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions(paths);
-            };
-
-            r2::asset::pln::AssetCommand assetCommand;
-
+            
             std::string flatcPath = R2_FLATC;
-            assetCommand.assetManifestsPath = noptrApp->GetAssetManifestPath();
-            assetCommand.assetTempPath = noptrApp->GetAssetCompilerTempPath();
-            assetCommand.pathsToWatch = noptrApp->GetAssetWatchPaths();
-            assetCommand.assetsBuldFunc = r2::asset::lib::PushFilesBuilt;
-
-            r2::asset::pln::ShaderManifestCommand shaderCommand;
-            char path[r2::fs::FILE_PATH_LENGTH];
-
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
-
-            shaderCommand.manifestDirectories.push_back(std::string(path));
-            shaderCommand.manifestFilePaths.push_back(noptrApp->GetShaderManifestsPath());
 
 
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
-            shaderCommand.shaderWatchPaths.push_back(std::string(path));
 
-
-            shaderCommand.manifestDirectories.push_back(std::string( R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR) );
-            shaderCommand.manifestFilePaths.push_back(std::string(internalShaderManifestPath));
-            shaderCommand.shaderWatchPaths.push_back(std::string(R2_ENGINE_INTERNAL_SHADERS_RAW_DIR));
-
-
-            r2::asset::pln::TexturePackManifestCommand texturePackCommand;
-
-            //Texture pack command
-            
-            //for the engine
-            std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
-            std::string engineRawManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.json");
-            std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
-            
-            texturePackCommand.manifestRawFilePaths.push_back(engineRawManifestPath);
-            texturePackCommand.manifestBinaryFilePaths.push_back(engineBinaryTexturePackManifestPath);
-            texturePackCommand.texturePacksWatchDirectories.push_back(engineTexturePackDir);
-
-            //for the app
-            for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsBinaryPaths())
-            {
-                texturePackCommand.manifestBinaryFilePaths.push_back(nextManifestPath);
-            }
-
-			for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsRawPaths())
-			{
-				texturePackCommand.manifestRawFilePaths.push_back(nextManifestPath);
-			}
-
-			for (const std::string& nextPath : noptrApp->GetTexturePacksWatchPaths())
-			{
-				texturePackCommand.texturePacksWatchDirectories.push_back(nextPath);
-			}
-
-            texturePackCommand.buildFunc = [](std::vector<std::string> paths)
-            {
-                //@TODO(Serge): implement
-            };
-
-
+           
 			//Material pack command
             r2::asset::pln::MaterialPackManifestCommand materialPackCommand;
 
@@ -228,8 +171,97 @@ namespace r2
 				//@TODO(Serge): implement
 			};
 
-            r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200),
-                assetCommand, soundCommand, shaderCommand, texturePackCommand, materialPackCommand);
+
+            std::vector<std::string> textureRawManifestPaths;
+            std::vector<std::string> textureBinaryManifestPaths;
+            std::vector<std::string> textureWatchPaths;
+			
+            //Texture pack command
+            {
+				//for the engine
+				std::string engineTexturePackDir = R2_ENGINE_INTERNAL_TEXTURES_DIR;
+				std::string engineRawManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS) + std::string("/engine_texture_pack.json");
+				std::string engineBinaryTexturePackManifestPath = std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman");
+
+				textureRawManifestPaths.push_back(engineRawManifestPath);
+				textureBinaryManifestPaths.push_back(engineBinaryTexturePackManifestPath);
+				textureWatchPaths.push_back(engineTexturePackDir);
+
+				//for the app
+				for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsBinaryPaths())
+				{
+					textureBinaryManifestPaths.push_back(nextManifestPath);
+				}
+
+				for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsRawPaths())
+				{
+					textureRawManifestPaths.push_back(nextManifestPath);
+				}
+
+				for (const std::string& nextPath : noptrApp->GetTexturePacksWatchPaths())
+				{
+					textureWatchPaths.push_back(nextPath);
+				}
+            }
+
+			std::unique_ptr<r2::asset::pln::TexturePackHotReloadCommand> texturePackAssetCommand = std::make_unique<r2::asset::pln::TexturePackHotReloadCommand>();
+
+			texturePackAssetCommand->AddRawManifestFilePaths(textureRawManifestPaths);
+			texturePackAssetCommand->AddBinaryManifestFilePaths(textureBinaryManifestPaths);
+			texturePackAssetCommand->AddTexturePackWatchDirectories(textureWatchPaths);
+
+            
+            std::vector<std::string> shaderWatchDirectories;
+            std::vector<std::string> shaderManifestFilePaths;
+
+            //shader directories
+            {
+				char path[r2::fs::FILE_PATH_LENGTH];
+
+				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
+				shaderManifestFilePaths.push_back(noptrApp->GetShaderManifestsPath());
+
+				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
+				shaderWatchDirectories.push_back(std::string(path));
+
+				shaderManifestFilePaths.push_back(std::string(internalShaderManifestPath));
+				shaderWatchDirectories.push_back(std::string(R2_ENGINE_INTERNAL_SHADERS_RAW_DIR));
+            }
+
+            std::unique_ptr<r2::asset::pln::ShaderHotReloadCommand> shaderAssetCommand = std::make_unique<r2::asset::pln::ShaderHotReloadCommand>();
+
+            {
+				shaderAssetCommand->AddShaderWatchPaths(shaderWatchDirectories);
+				shaderAssetCommand->AddManifestFilePaths(shaderManifestFilePaths);
+            }
+
+            std::unique_ptr<r2::asset::pln::SoundHotReloadCommand> soundAssetCommand = std::make_unique<r2::asset::pln::SoundHotReloadCommand>();
+
+            {
+                soundAssetCommand->AddSoundDirectories(noptrApp->GetSoundDirectoryWatchPaths());
+                soundAssetCommand->SetSoundDefinitionFilePath(noptrApp->GetSoundDefinitionPath());
+            }
+
+            std::unique_ptr<r2::asset::pln::GameAssetHotReloadCommand> gameAssetCommand = std::make_unique<r2::asset::pln::GameAssetHotReloadCommand>();
+
+            {
+                gameAssetCommand->SetAssetTempPath(noptrApp->GetAssetCompilerTempPath());
+                gameAssetCommand->SetAssetManifestsPath(noptrApp->GetAssetManifestPath());
+                gameAssetCommand->AddWatchPaths(noptrApp->GetAssetWatchPaths());
+            }
+
+			std::vector<std::unique_ptr<r2::asset::pln::AssetHotReloadCommand>> mAssetCommands;
+
+			mAssetCommands.push_back(std::move(texturePackAssetCommand));
+            mAssetCommands.push_back(std::move(shaderAssetCommand));
+            mAssetCommands.push_back(std::move(soundAssetCommand));
+            mAssetCommands.push_back(std::move(gameAssetCommand));
+
+
+            mAssetCommandHandler.Init(std::chrono::milliseconds(200), std::move(mAssetCommands));
+
+            /*r2::asset::pln::Init(flatcPath, std::chrono::milliseconds(200),
+                assetCommand, soundCommand, shaderCommand, texturePackCommand, materialPackCommand);*/
 #endif
             
             mDisplaySize = noptrApp->GetAppResolution();
@@ -272,7 +304,9 @@ namespace r2
     void Engine::Update()
     {
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::pln::Update(); //for shaders
+     //   r2::asset::pln::Update(); //for shaders
+
+        mAssetCommandHandler.Update();
 #endif
         r2::asset::lib::Update();
 
@@ -313,7 +347,8 @@ namespace r2
         
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
-        r2::asset::pln::Shutdown();
+        mAssetCommandHandler.Shutdown();
+      //  r2::asset::pln::Shutdown();
 #endif
         
         FREE((byte*)mAssetLibMemBoundary.location, *MEM_ENG_PERMANENT_PTR);
