@@ -140,11 +140,14 @@ namespace r2::asset::pln
 	{
 		for (auto& cmd : mAssetCommands)
 		{
-			const AssetHotReloadCommand::CreateDirCmd createDirCmd = cmd->DirectoriesToCreate();
+			const auto& createDirCMDs = cmd->DirectoriesToCreate();
 
-			if (!createDirCmd.pathsToCreate.empty())
+			for (const auto& createDirCmd : createDirCMDs)
 			{
-				MakeDirectoriesRecursively(createDirCmd.pathsToCreate, createDirCmd.startAtOne, createDirCmd.startAtParent);
+				if (!createDirCmd.pathsToCreate.empty())
+				{
+					MakeDirectoriesRecursively(createDirCmd.pathsToCreate, createDirCmd.startAtOne, createDirCmd.startAtParent);
+				}	
 			}
 		}
 	}

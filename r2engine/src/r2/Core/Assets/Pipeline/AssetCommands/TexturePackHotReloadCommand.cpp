@@ -98,14 +98,14 @@ namespace r2::asset::pln
 		r2::draw::matsys::TextureAdded(newPath);
 	}
 
-	r2::asset::pln::AssetHotReloadCommand::CreateDirCmd TexturePackHotReloadCommand::DirectoriesToCreate() const
+	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> TexturePackHotReloadCommand::DirectoriesToCreate() const
 	{
 		CreateDirCmd createDirCMD;
 		createDirCMD.pathsToCreate = mManifestBinaryFilePaths;
 		createDirCMD.startAtOne = true;
 		createDirCMD.startAtParent = true;
 
-		return createDirCMD;
+		return { createDirCMD };
 	}
 
 }

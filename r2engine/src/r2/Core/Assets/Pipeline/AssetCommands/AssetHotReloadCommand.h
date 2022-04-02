@@ -25,7 +25,7 @@ namespace r2::asset::pln
 		virtual void Update() = 0;
 		virtual void Shutdown() = 0;
 		virtual bool ShouldRunOnMainThread() = 0;
-		virtual CreateDirCmd DirectoriesToCreate() const = 0;
+		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const = 0;
 
 	protected:
 		std::vector<FileWatcher> mFileWatchers;

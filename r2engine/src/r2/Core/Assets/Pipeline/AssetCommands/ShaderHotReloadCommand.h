@@ -15,7 +15,7 @@ namespace r2::asset::pln
 		virtual void Update() override;
 		virtual void Shutdown() {};
 		virtual bool ShouldRunOnMainThread() override { return true; }
-		virtual CreateDirCmd DirectoriesToCreate() const override;
+		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
 		void AddShaderWatchPaths(const std::vector<std::string>& watchPaths);
 		void AddManifestFilePaths(const std::vector<std::string>& manifestFilePaths);

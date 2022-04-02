@@ -67,7 +67,7 @@ namespace r2::asset::pln
 		return false;
 	}
 
-	r2::asset::pln::AssetHotReloadCommand::CreateDirCmd GameAssetHotReloadCommand::DirectoriesToCreate() const
+	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> GameAssetHotReloadCommand::DirectoriesToCreate() const
 	{
 		return {};
 	}

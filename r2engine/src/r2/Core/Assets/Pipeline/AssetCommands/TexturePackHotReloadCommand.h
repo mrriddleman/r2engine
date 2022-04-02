@@ -14,7 +14,7 @@ namespace r2::asset::pln
 		virtual void Update() override;
 		virtual void Shutdown() {};
 		virtual bool ShouldRunOnMainThread() override { return false; }
-		virtual CreateDirCmd DirectoriesToCreate() const override;
+		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
 		void AddRawManifestFilePaths(const std::vector<std::string>& rawFilePaths);
 		void AddBinaryManifestFilePaths(const std::vector<std::string>& binFilePaths);

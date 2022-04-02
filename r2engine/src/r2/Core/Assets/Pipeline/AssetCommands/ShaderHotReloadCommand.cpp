@@ -31,7 +31,7 @@ namespace r2::asset::pln
 		}
 	}
 
-	r2::asset::pln::AssetHotReloadCommand::CreateDirCmd ShaderHotReloadCommand::DirectoriesToCreate() const
+	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> ShaderHotReloadCommand::DirectoriesToCreate() const
 	{
 		return {};
 	}

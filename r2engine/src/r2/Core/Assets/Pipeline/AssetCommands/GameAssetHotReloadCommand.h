@@ -17,7 +17,7 @@ namespace r2::asset::pln
 		virtual void Update() override;
 		virtual void Shutdown() {};
 		virtual bool ShouldRunOnMainThread() override;
-		virtual CreateDirCmd DirectoriesToCreate() const override;
+		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
 		void SetAssetManifestsPath(const std::string& assetManifestPath);
 		void SetAssetTempPath(const std::string& assetTempPath);

@@ -59,7 +59,7 @@ namespace r2::asset::pln
 		return false;
 	}
 
-	r2::asset::pln::AssetHotReloadCommand::CreateDirCmd SoundHotReloadCommand::DirectoriesToCreate() const
+	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> SoundHotReloadCommand::DirectoriesToCreate() const
 	{
 		return {};
 	}

@@ -15,7 +15,7 @@ namespace r2::asset::pln
 		virtual void Update() override;
 		virtual void Shutdown() {};
 		virtual bool ShouldRunOnMainThread() override;
-		virtual CreateDirCmd DirectoriesToCreate() const override;
+		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
 		void AddSoundDirectories(const std::vector<std::string>& soundDirectories);
 
