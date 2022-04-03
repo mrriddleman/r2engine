@@ -98,6 +98,11 @@ namespace r2::asset::pln
 		r2::draw::matsys::TextureAdded(newPath);
 	}
 
+	void TexturePackHotReloadCommand::TextureRemovedRequest(const std::string& removedPath)
+	{
+		r2::draw::matsys::TextureRemoved(removedPath);
+	}
+
 	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> TexturePackHotReloadCommand::DirectoriesToCreate() const
 	{
 		CreateDirCmd createDirCMD;

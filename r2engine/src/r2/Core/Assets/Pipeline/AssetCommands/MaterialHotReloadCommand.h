@@ -29,6 +29,10 @@ namespace r2::asset::pln
 
 		void GenerateMaterialPackManifestsIfNeeded();
 
+		void MaterialChangedRequest(const std::string& changedPath);
+		void MaterialAddedRequest(const std::string& newPath);
+		void MaterialRemovedRequest(const std::string& removedPath);
+
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mMaterialPacksWatchDirectoriesRaw;

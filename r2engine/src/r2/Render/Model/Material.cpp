@@ -28,6 +28,7 @@ namespace r2::draw::mat
 {
 #ifdef R2_ASSET_PIPELINE
 	r2::asset::pln::AssetThreadSafeQueue<std::string> s_texturesChangedQueue;
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_materialsChangesQueue;
 #endif // R2_ASSET_PIPELINE
 
 
@@ -1846,11 +1847,19 @@ namespace r2::draw::matsys
 		const flat::TexturePacksManifest* texturePack = flat::GetTexturePacksManifest(texturePacksData);
 		R2_CHECK(texturePack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
 
-		const auto memorySize = r2::draw::mat::MemorySize(16, materialPack->pack()->size(),
-			texturePack->totalTextureSize(),
-			texturePack->totalNumberOfTextures(),
-			texturePack->texturePacks()->size(),
-			texturePack->maxTexturesInAPack(), materialParamsPackSize, texturePacksSize);
+		auto numMaterialsInPack = materialPack->pack()->size();
+		auto totalTextureSize = texturePack->totalTextureSize();
+		auto totalNumberOfTextures = texturePack->totalNumberOfTextures();
+		auto numTexturePacks = texturePack->texturePacks()->size();
+		auto maxTexturesInAPack = texturePack->maxTexturesInAPack();
+
+		const auto memorySize = r2::draw::mat::MemorySize(
+			16,
+			numMaterialsInPack,
+			totalTextureSize,
+			totalNumberOfTextures,
+			numTexturePacks,
+			maxTexturesInAPack, materialParamsPackSize, texturePacksSize);
 
 		if (memorySize > unallocatedSpace)
 		{
@@ -1864,13 +1873,10 @@ namespace r2::draw::matsys
 
 		system->mLinearArena = materialLinearArena;
 		
-	//	system->mMaterials = MAKE_SARRAY(*materialLinearArena, r2::draw::Material, materialPack->pack()->size());
-	//	R2_CHECK(system->mMaterials != nullptr, "we couldn't allocate the array for materials?");
-		
-		system->mTexturePacks = MAKE_SHASHMAP(*materialLinearArena, r2::draw::tex::TexturePack*, static_cast<u64>(static_cast<f64>(texturePack->texturePacks()->size() * HASH_MAP_BUFFER_MULTIPLIER)));
+		system->mTexturePacks = MAKE_SHASHMAP(*materialLinearArena, r2::draw::tex::TexturePack*, static_cast<u64>(static_cast<f64>(numTexturePacks * HASH_MAP_BUFFER_MULTIPLIER)));
 		R2_CHECK(system->mTexturePacks != nullptr, "we couldn't allocate the array for mTexturePacks?");
 
-		system->mInternalData = MAKE_SARRAY(*materialLinearArena, InternalMaterialData, materialPack->pack()->size());
+		system->mInternalData = MAKE_SARRAY(*materialLinearArena, InternalMaterialData, numMaterialsInPack);
 		R2_CHECK(system->mInternalData != nullptr, "We couldn't allocate the array for mInternalData");
 
 		system->mMaterialMemBoundary = boundary;
@@ -1890,8 +1896,9 @@ namespace r2::draw::matsys
 		u64 assetCacheBoundarySize =
 			r2::mem::utils::GetMaxMemoryForAllocation(
 				r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking,
-					texturePack->totalNumberOfTextures(), texturePack->totalTextureSize(), boundary.alignment),
+					totalNumberOfTextures, totalTextureSize + materialParamsPackSize + texturePacksSize, boundary.alignment),
 				boundary.alignment, headerSize, boundsChecking);
+
 		system->mCacheBoundary = MAKE_BOUNDARY(*materialLinearArena, assetCacheBoundarySize, boundary.alignment);
 
 		u32 numNormalTexturePacks;
@@ -2057,6 +2064,22 @@ namespace r2::draw::matsys
 	{
 #ifdef R2_ASSET_PIPELINE
 		
+		std::string materialPath;
+
+		while (s_optrMaterialSystems && mat::s_materialsChangesQueue.TryPop(materialPath))
+		{
+			//find the material system this path belongs to
+
+			MaterialSystem* foundSystem = FindMaterialSystemForMaterialPath(materialPath);
+
+			if (foundSystem)
+			{
+
+			}
+		}
+
+
+
 		std::string path;
 		while (s_optrMaterialSystems && mat::s_texturesChangedQueue.TryPop(path))
 		{
@@ -2187,6 +2210,18 @@ namespace r2::draw::matsys
 
 
 #ifdef R2_ASSET_PIPELINE
+
+	MaterialSystem* FindMaterialSystemForMaterialPath(const std::string& materialPath)
+	{
+		return nullptr;
+	}
+
+	MaterialSystem* FindMaterialSystemForTexturePath(const std::string& texturePath)
+	{
+		return nullptr;
+	}
+
+
 	void TextureChanged(const std::string& texturePath)
 	{
 		mat::s_texturesChangedQueue.Push(texturePath);
@@ -2194,7 +2229,28 @@ namespace r2::draw::matsys
 
 	void TextureAdded(const std::string& textureAdded)
 	{
-
+		//@TODO(Serge): implement
 	}
+
+	void TextureRemoved(const std::string& textureRemoved)
+	{
+		//@TODO(Serge): implement
+	}
+
+	void MaterialChanged(const std::string& materialPathChanged)
+	{
+		mat::s_materialsChangesQueue.Push(materialPathChanged);
+	}
+
+	void MaterialAdded(const std::string& materialPathAdded)
+	{
+		//@TODO(Serge): implement
+	}
+
+	void MaterialRemoved(const std::string& materialPathRemoved)
+	{
+		//@TODO(Serge): implement
+	}
+
 #endif // R2_ASSET_PIPELINE
 }

@@ -29,6 +29,7 @@ namespace r2::asset::pln
 		void GenerateTexturePackManifestsIfNeeded();
 		void TextureChangedRequest(const std::string& changedPath);
 		void TextureAddedRequest(const std::string& newPath);
+		void TextureRemovedRequest(const std::string& removedPath);
 		//AssetsBuiltFunc mBuildFunc;
 	};
 }

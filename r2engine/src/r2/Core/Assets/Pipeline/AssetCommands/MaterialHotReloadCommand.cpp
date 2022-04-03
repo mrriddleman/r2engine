@@ -2,6 +2,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
+#include "r2/Render/Model/Material.h"
 
 namespace r2::asset::pln
 {
@@ -14,11 +15,26 @@ namespace r2::asset::pln
 	void MaterialHotReloadCommand::Init(Milliseconds delay)
 	{
 		GenerateMaterialPackManifestsIfNeeded();
+
+		for (const auto& path : mMaterialPacksWatchDirectoriesRaw)
+		{
+			FileWatcher fw;
+			fw.Init(delay, path);
+
+			fw.AddModifyListener(std::bind(&MaterialHotReloadCommand::MaterialChangedRequest, this, std::placeholders::_1));
+			fw.AddCreatedListener(std::bind(&MaterialHotReloadCommand::MaterialAddedRequest, this, std::placeholders::_1));
+			fw.AddRemovedListener(std::bind(&MaterialHotReloadCommand::MaterialRemovedRequest, this, std::placeholders::_1));
+
+			mFileWatchers.push_back(fw);
+		}
 	}
 
 	void MaterialHotReloadCommand::Update()
 	{
-
+		for (auto& fw : mFileWatchers)
+		{
+			fw.Run();
+		}
 	}
 
 	void MaterialHotReloadCommand::Shutdown()
@@ -131,6 +147,20 @@ namespace r2::asset::pln
 		}
 	}
 
+	void MaterialHotReloadCommand::MaterialChangedRequest(const std::string& changedPath)
+	{
+		r2::draw::matsys::MaterialChanged(changedPath);
+	}
+
+	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)
+	{
+		r2::draw::matsys::MaterialAdded(newPath);
+	}
+
+	void MaterialHotReloadCommand::MaterialRemovedRequest(const std::string& removedPath)
+	{
+		r2::draw::matsys::MaterialRemoved(removedPath);
+	}
 
 }
 

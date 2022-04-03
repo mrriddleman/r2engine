@@ -151,14 +151,24 @@ namespace r2::draw
 	{
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
 		r2::mem::LinearArena* mLinearArena = nullptr;
-		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
-	//	r2::SArray<r2::draw::Material>* mMaterials = nullptr; //@TODO(Serge): remove
 
+#ifdef R2_ASSET_PIPELINE
+		//std::vector<InternalMaterialData> mInternalData;
+
+#else
+
+#endif
+
+		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
 		r2::SArray<InternalMaterialData>* mInternalData = nullptr; 
 
 		r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
 		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
+
+		//@TODO(Serge): implement
+		r2::asset::Asset mMaterialParamsPackAsset;
+		r2::asset::Asset mTexturePackManifestAsset;
 
 		void* mMaterialParamsPackData = nullptr;
 		void* mTexturePackManifestData = nullptr;
@@ -193,9 +203,25 @@ namespace r2::draw::matsys
 	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture);
 
 #ifdef R2_ASSET_PIPELINE
+	//Find material functions
+
+	MaterialSystem* FindMaterialSystemForMaterialPath(const std::string& materialPath);
+
+	MaterialSystem* FindMaterialSystemForTexturePath(const std::string& texturePath);
+
+	//Path changes functions
 	void TextureChanged(const std::string& texturePath);
 
 	void TextureAdded(const std::string& textureAdded);
+
+	void TextureRemoved(const std::string& textureRemoved);
+
+	void MaterialChanged(const std::string& materialPathChanged);
+
+	void MaterialAdded(const std::string& materialPathAdded);
+
+	void MaterialRemoved(const std::string& materialPathRemoved);
+
 #endif // R2_ASSET_PIPELINE
 
 	//creating/freeing a new material system
