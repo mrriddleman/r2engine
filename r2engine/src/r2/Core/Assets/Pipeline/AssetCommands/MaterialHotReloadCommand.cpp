@@ -149,7 +149,72 @@ namespace r2::asset::pln
 
 	void MaterialHotReloadCommand::MaterialChangedRequest(const std::string& changedPath)
 	{
-		r2::draw::matsys::MaterialChanged(changedPath);
+		std::filesystem::path changedMaterialPath = changedPath;
+
+		R2_CHECK(changedMaterialPath.extension() == ".json", "This should be a json file!");
+
+		size_t index = 0;
+		bool found = false;
+		for (const std::string& rawWatchDir : mMaterialPacksWatchDirectoriesRaw)
+		{
+			std::filesystem::path rawWatchDirPath = rawWatchDir;
+			std::filesystem::path changedPathParent = changedMaterialPath.parent_path().parent_path();
+
+			while (!found && !changedPathParent.empty() && changedPathParent.root_path() != changedPathParent)
+			{
+				if (rawWatchDirPath == changedPathParent)
+				{
+					found = true;
+				}
+				else
+				{
+					changedPathParent = changedPathParent.parent_path();
+				}
+			}
+
+			if(found)
+				break;
+
+			++index;
+		}
+
+		if (!found)
+		{
+			return;
+		}
+
+		//we know which index to use now
+		std::string manifestPathBin = mManifestBinaryFilePaths[index];
+		std::string manifestPathRaw = mManifestRawFilePaths[index];
+		std::string materialPackDirRaw = mMaterialPacksWatchDirectoriesRaw[index];
+		std::string materialPackDirBin = mMaterialPacksWatchDirectoriesBin[index];
+
+
+		//delete the mprm associated with this material
+	    std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / changedMaterialPath.parent_path().stem();
+		const std::string MPRM_EXT = ".mprm";
+
+		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
+		{
+			if (file.path().extension() == MPRM_EXT)
+			{
+				std::filesystem::remove(file.path());
+			}
+		}
+
+		//Then make the mprm again
+		GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), changedPath);
+
+		//now regenerate the params packs manifest
+		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+
+		if (!result)
+		{
+			R2_CHECK(false, "We failed to regenerate the material params pack manifest");
+			return;
+		}
+
+		//r2::draw::matsys::MaterialChanged(changedPath); -- @TODO(Serge): call this when we have the other part done
 	}
 
 	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)

@@ -10,7 +10,8 @@
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SHashMap.h"
-
+#include "r2/Core/Assets/AssetCache.h"
+#include "r2/Core/Assets/AssetBuffer.h"
 
 namespace flat
 {
@@ -167,11 +168,11 @@ namespace r2::draw
 		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
 
 		//@TODO(Serge): implement
-		r2::asset::Asset mMaterialParamsPackAsset;
-		r2::asset::Asset mTexturePackManifestAsset;
+		char mMaterialPacksManifestFilePath[fs::FILE_PATH_LENGTH];
+		char mTexturePacksManifestFilePath[fs::FILE_PATH_LENGTH];
 
-		void* mMaterialParamsPackData = nullptr;
-		void* mTexturePackManifestData = nullptr;
+		r2::asset::AssetCacheRecord mMaterialParamsPackData;
+		r2::asset::AssetCacheRecord mTexturePackManifestData;
 
 		const flat::MaterialParamsPack* mMaterialParamsPack = nullptr;
 		const flat::TexturePacksManifest* mTexturePackManifest = nullptr;
@@ -200,6 +201,7 @@ namespace r2::draw::matsys
 
 	MaterialSystem* FindMaterialSystem(u64 materialName);
 	MaterialHandle FindMaterialHandle(u64 materialName);
+	
 	MaterialHandle FindMaterialFromTextureName(const char* textureName, r2::draw::tex::Texture& outTexture);
 
 #ifdef R2_ASSET_PIPELINE
@@ -260,6 +262,8 @@ namespace r2::draw::mat
 	const RenderMaterialParams& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID);
 
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
+	MaterialHandle GetMaterialHandleFromMaterialPath(const MaterialSystem& system, const char* materialPath);
+
 	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);
 
 	u64 LoadMaterialAndTextureManifests(const char* materialManifestPath, const char* textureManifestPath, void** materialPack, void** texturePacks);

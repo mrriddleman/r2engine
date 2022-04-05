@@ -36,6 +36,8 @@ namespace r2::asset
 		TEXTURE_PACK_MANIFEST,
 		NUM_ENGINE_ASSET_TYPES
 	};
+
+	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 }
 
 #endif // 

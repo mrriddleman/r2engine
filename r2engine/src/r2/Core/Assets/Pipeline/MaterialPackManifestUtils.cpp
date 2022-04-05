@@ -384,6 +384,11 @@ namespace r2::asset::pln
 		return generatedJSON;
 	}
 
+	bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
+	{
+		return GenerateBinaryParamsPackManifest(binaryDir, binFilePath, rawFilePath);
+	}
+
 	bool GenerateMaterialParamsFromJSON(const std::string& outputDir, const std::string& path)
 	{
 		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
@@ -465,6 +470,11 @@ namespace r2::asset::pln
 			}
 		}
 
+		return GenerateBinaryParamsPackManifest(binaryDir, binFilePath, rawFilePath);
+	}
+
+	bool GenerateBinaryParamsPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath)
+	{
 		flatbuffers::FlatBufferBuilder builder;
 		std::vector < flatbuffers::Offset< flat::MaterialParams >> flatMaterialParams;
 
@@ -510,7 +520,7 @@ namespace r2::asset::pln
 					ulongParams.push_back(flat::CreateMaterialULongParam(builder, materialParams->ulongParams()->Get(i)->propertyType(), materialParams->ulongParams()->Get(i)->value()));
 				}
 			}
-			
+
 			if (materialParams->boolParams())
 			{
 				for (flatbuffers::uoffset_t i = 0; i < materialParams->boolParams()->size(); ++i)
@@ -519,7 +529,7 @@ namespace r2::asset::pln
 					boolParams.push_back(flat::CreateMaterialBoolParam(builder, boolParam->propertyType(), boolParam->value()));
 				}
 			}
-			
+
 			if (materialParams->floatParams())
 			{
 				for (flatbuffers::uoffset_t i = 0; i < materialParams->floatParams()->size(); ++i)
@@ -537,7 +547,7 @@ namespace r2::asset::pln
 					colorParams.push_back(flat::CreateMaterialColorParam(builder, colorParam->propertyType(), colorParam->value()));
 				}
 			}
-			
+
 			if (materialParams->textureParams())
 			{
 				for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
