@@ -1046,7 +1046,7 @@ namespace r2::draw::mat
 			//@TODO(Serge): this should probably be per texture not per material but...
 			internalMaterialData.texturePackName = textureParam->texturePackName();
 			const auto textureParamValue = textureParam->value();
-			const auto packName = textureParam->texturePackName();
+			const auto packName = textureParam->texturePackName(); //@TODO(Serge): this needs to be cleaned up, easy to mess up if the texture pack changes per texture param
 
 			if (textureParam->propertyType() == flat::MaterialPropertyType_ALBEDO &&
 				textureParamValue != EMPTY_STR)
