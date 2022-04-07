@@ -1837,7 +1837,9 @@ namespace r2::draw::mat
 		R2_CHECK(!IsInvalidHandle(materialHandle), "We should never get an invalid material handle here!");
 		R2_CHECK(materialHandle.slot == system.mSlot, "These should be the same material system for this to work!");
 		R2_CHECK(system.mMaterialParamsPack != nullptr, "We should have a valid material params pack!");
-		
+		//@TODO(Serge): unload all of the material textures that this material is using that no other material is using from the GPU
+	//	UnloadAllMaterialTexturesFromGPUForMaterial(system, materialHandle);
+
 		u64 materialIndex = GetIndexFromMaterialHandle(materialHandle);
 
 		const flat::MaterialParams* materialParams = system.mMaterialParamsPack->pack()->Get(materialIndex);
