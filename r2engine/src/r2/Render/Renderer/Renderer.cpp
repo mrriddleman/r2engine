@@ -39,12 +39,11 @@ namespace
 	const u64 COMMAND_AUX_MEMORY = Megabytes(16); //I dunno lol
 	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
-	const u64 MAX_NUM_MATERIALS = 2048;
 	const u64 MAX_NUM_SHADERS = 1000;
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
-	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16;
-	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 32;
+	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
+	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
 	const u32 SCATTER_TILE_DIM = 64;
 	const u32 REDUCE_TILE_DIM = 128;
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);

@@ -13,6 +13,8 @@
 #include "r2/Core/Memory/MemoryTagging.h"
 #include "r2/Core/Memory/MemoryTracking.h"
 
+#define EMPLACE_MALLOC_ARENA_IN_BOUNDARY(boundary) r2::mem::utils::EmplaceMallocArenaInMemoryBoundary(boundary, __FILE__, __LINE__, "")
+
 namespace r2::mem
 {
     class MallocAllocator
@@ -43,6 +45,11 @@ namespace r2::mem
 #else
     typedef MemoryArena<MallocAllocator, SingleThreadPolicy, NoBoundsChecking, NoMemoryTracking, NoMemoryTagging> MallocArena;
 #endif
+}
+
+namespace r2::mem::utils
+{
+    MallocArena* EmplaceMallocArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description);
 }
 
 #endif /* MallocAllocator_h */

@@ -46,7 +46,7 @@
   ],
   textureParams: [
     {
-      value: 10016583066622203483,
+      value: "sponza/albedo/6772804448157695701.jpg",
       packingType: "RGBA",
       texturePackName: 11585652685679969130
     },

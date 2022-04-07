@@ -151,13 +151,11 @@ namespace r2::draw
 	struct MaterialSystem
 	{
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
-		r2::mem::LinearArena* mLinearArena = nullptr;
-
+		
 #ifdef R2_ASSET_PIPELINE
-		//std::vector<InternalMaterialData> mInternalData;
-
+		r2::mem::MallocArena* mLinearArena = nullptr;
 #else
-
+		r2::mem::LinearArena* mLinearArena = nullptr;
 #endif
 
 		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
@@ -165,7 +163,7 @@ namespace r2::draw
 
 		r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
-		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr;
+		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr; //@TODO(Serge): make this an array of an array like mMaterialTextures
 
 		//@TODO(Serge): implement
 		char mMaterialPacksManifestFilePath[fs::FILE_PATH_LENGTH];
@@ -241,6 +239,7 @@ namespace r2::draw::mat
 
 	//@TODO(Serge): add a progress function here
 	void LoadAllMaterialTexturesFromDisk(MaterialSystem& system);
+	void LoadAllMaterialTexturesForMaterialFromDisk(MaterialSystem& system, const MaterialHandle& materialHandle);
 	//@TODO(Serge): add function to upload only 1 material?
 
 	void UploadAllMaterialTexturesToGPU(MaterialSystem& system);

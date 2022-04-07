@@ -56,3 +56,24 @@ namespace r2::mem
         return static_cast<u32>(header->size);
     }
 }
+
+namespace r2::mem::utils
+{
+    MallocArena* EmplaceMallocArenaInMemoryBoundary(const MemBoundary& boundary, const char* file, s32 line, const char* description)
+    {
+		//we need to figure out how much space we have and calculate a memory boundary for the Allocator
+		R2_CHECK(boundary.size > sizeof(MallocArena), "subArea size(%llu) must be greater than sizeof(MallocArena)(%lu)!", boundary.size, sizeof(MallocArena));
+		if (boundary.size <= sizeof(MallocArena))
+		{
+			return nullptr;
+		}
+
+		MemBoundary mallocAllocatorBoundary;
+        mallocAllocatorBoundary.location = PointerAdd(boundary.location, sizeof(MallocArena));
+        mallocAllocatorBoundary.size = boundary.size - sizeof(MallocArena);
+
+        MallocArena* mallocArena = new (boundary.location) MallocArena(mallocAllocatorBoundary);
+
+		return mallocArena;
+    }
+}
