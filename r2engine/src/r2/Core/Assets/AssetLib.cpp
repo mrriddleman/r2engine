@@ -30,7 +30,7 @@ namespace r2::asset::lib
     FileList* s_filesForCaches = nullptr;
     
     u64 s_numCaches = 0;
-    r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
+//    r2::SHashMap<u64>* s_fileToAssetCacheMap = nullptr;
 #ifdef R2_ASSET_PIPELINE
     r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_assetsBuiltQueue;
     std::vector<AssetFilesBuiltListener> s_listeners;
@@ -63,15 +63,15 @@ namespace r2::asset::lib
             s_filesForCaches[i] = nullptr;
         }
         
-        s_fileToAssetCacheMap = MAKE_SHASHMAP(*s_arenaPtr, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
+       // s_fileToAssetCacheMap = MAKE_SHASHMAP(*s_arenaPtr, u64, MAX_FILES_TO_ASSET_CACHE_CAPACITY);
         
-        return s_assetCaches != nullptr && s_fileToAssetCacheMap != nullptr;
+        return s_assetCaches != nullptr;//&& s_fileToAssetCacheMap != nullptr;
     }
     
     void Update()
     {
 #ifdef R2_ASSET_PIPELINE
-        if (s_assetCaches && s_fileToAssetCacheMap)
+        if (s_assetCaches)// && s_fileToAssetCacheMap)
         {
             std::vector<std::string> paths;
             
@@ -89,7 +89,7 @@ namespace r2::asset::lib
     
     void Shutdown()
     {
-        if (s_assetCaches && s_fileToAssetCacheMap)
+        if (s_assetCaches)// && s_fileToAssetCacheMap)
         {
 
             for (u64 i = 0; i < MAX_ASSET_CACHES; ++i)
@@ -121,7 +121,7 @@ namespace r2::asset::lib
                 }
             }
             
-            FREE(s_fileToAssetCacheMap, *s_arenaPtr);
+       //     FREE(s_fileToAssetCacheMap, *s_arenaPtr);
             FREE(s_assetCaches, *s_arenaPtr);
             FREE(s_filesForCaches, *s_arenaPtr);
         }
@@ -132,18 +132,18 @@ namespace r2::asset::lib
     
     void AddFiles(const r2::asset::AssetCache& cache, FileList list)
     {
-        if (s_assetCaches && s_fileToAssetCacheMap)
-        {
-            u64 numFiles = r2::sarr::Size(*list);
-            
-            for (u64 i = 0; i < numFiles; ++i)
-            {
-                r2::asset::AssetFile* file = r2::sarr::At(*list, i);
-                u64 hash = r2::utils::Hash<const char*>{}(file->FilePath());
-                
-                r2::shashmap::Set(*s_fileToAssetCacheMap, hash, cache.GetSlot());
-            }
-        }
+        //if (s_assetCaches)// && s_fileToAssetCacheMap)
+        //{
+        //    u64 numFiles = r2::sarr::Size(*list);
+        //    
+        //    for (u64 i = 0; i < numFiles; ++i)
+        //    {
+        //        r2::asset::AssetFile* file = r2::sarr::At(*list, i);
+        //        u64 hash = r2::utils::Hash<const char*>{}(file->FilePath());
+        //        
+        //        r2::shashmap::Set(*s_fileToAssetCacheMap, hash, cache.GetSlot());
+        //    }
+        //}
     }
     
 #ifdef R2_ASSET_PIPELINE
@@ -155,6 +155,31 @@ namespace r2::asset::lib
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func)
     {
         s_listeners.push_back(func);
+    }
+
+    void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list)
+    {
+        R2_CHECK(list != nullptr, "passed in a null list!");
+        const FileList fileList = cache.GetFileList();
+
+        R2_CHECK(fileList != nullptr, "The cache had an empty list?");
+        const auto numFiles = r2::sarr::Size(*cache.GetFileList());
+
+		for (u64 i = 0; i < numFiles; ++i)
+		{
+			AssetFile* file = r2::sarr::At(*fileList, i);
+
+			if (file->IsOpen())
+			{
+				file->Close();
+			}
+
+			FREE(file, *s_arenaPtr);
+		}
+
+        FREE(fileList, *s_arenaPtr);
+
+        s_filesForCaches[cache.GetSlot()] = list;
     }
 #endif
     

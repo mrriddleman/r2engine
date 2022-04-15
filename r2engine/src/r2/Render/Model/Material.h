@@ -64,58 +64,6 @@ namespace r2::draw
 		s32 padding;
 	};
 
-	//struct RenderMaterial
-	//{
-	//	tex::TextureAddress diffuseTexture = {};
-	//	tex::TextureAddress specularTexture = {};
-	//	tex::TextureAddress normalMapTexture = {};
-	//	tex::TextureAddress emissionTexture = {};
-	//	tex::TextureAddress metallicTexture = {};
-	//	tex::TextureAddress roughnessTexture = {};
-	//	tex::TextureAddress aoTexture = {};
-	//	tex::TextureAddress heightTexture = {};
-	//	tex::TextureAddress anisotropyTexture = {};
-
-	//	glm::vec3 baseColor = glm::vec3(1.0f);
-	//	float specular = 0.f;
-	//	float roughness= 0.f;
-	//	float metallic = 0.f;
-	//	float reflectance = 0.f;
-	//	float ambientOcclusion = 0.f;
-	//	float clearCoat = 0.0f;
-	//	float clearCoatRoughness = 0.0f;
-	//	float anisotropy = 0.0f;
-	//	float heightScale = 0.0f;
-	//};
-
-	//struct Material
-	//{
-	//	u64 materialID = 0;
-	//	ShaderHandle shaderId = InvalidShader;
-	//	u64 texturePackHandle = 0;
-	//	
-	//	tex::Texture diffuseTexture;
-	//	tex::Texture specularTexture;
-	//	tex::Texture normalMapTexture;
-	//	tex::Texture emissionTexture;
-	//	tex::Texture metallicTexture;
-	//	tex::Texture roughnessTexture;
-	//	tex::Texture aoTexture;
-	//	tex::Texture heightTexture;
-	//	tex::Texture anisotropyTexture;
-
-	//	glm::vec3 baseColor = glm::vec3(1.0f);
-	//	float specular = 0.f;
-	//	float roughness = 0.f;
-	//	float metallic = 0.f;
-	//	float reflectance = 0.f;
-	//	float ambientOcclusion = 1.f;
-	//	float clearCoat = 0.0f;
-	//	float clearCoatRoughness = 0.0f;
-	//	float anisotropy = 0.0f;
-	//	float heightScale = 0.0f;
-	//};
-
 	struct MaterialTextureEntry
 	{
 		r2::asset::AssetType mType = r2::asset::TEXTURE; //TEXTURE OR CUBEMAP
@@ -139,13 +87,14 @@ namespace r2::draw
 		tex::Texture clearCoatNormalTexture;
 	};
 
+
+
 	struct InternalMaterialData
 	{
 		u64 materialName;
-		u64 texturePackName;
 		ShaderHandle shaderHandle = InvalidShader;
 		MaterialTextureAssets textureAssets;
-		r2::draw::RenderMaterialParams renderMaterial = {}; //@TODO(Serge): change to RenderMaterialParams
+		r2::draw::RenderMaterialParams renderMaterial = {};
 	};
 
 	struct MaterialSystem
@@ -165,7 +114,7 @@ namespace r2::draw
 		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
 		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr; //@TODO(Serge): make this an array of an array like mMaterialTextures
 
-		//@TODO(Serge): implement
+
 		char mMaterialPacksManifestFilePath[fs::FILE_PATH_LENGTH];
 		char mTexturePacksManifestFilePath[fs::FILE_PATH_LENGTH];
 
@@ -209,12 +158,18 @@ namespace r2::draw::matsys
 
 	MaterialSystem* FindMaterialSystemForTexturePath(const std::string& texturePath);
 
+	MaterialSystem* FindMaterialSystemForTextureManifestFilePath(const std::string& textureManifestFilePath);
+
 	//Path changes functions
 	void TextureChanged(const std::string& texturePath);
 
-	void TextureAdded(const std::string& textureAdded);
+	void TexturePackAdded(const std::string& texturePacksManifestFilePath);
+
+	void TextureAdded(const std::string& texturePacksManifestFilePath);
 
 	void TextureRemoved(const std::string& textureRemoved);
+	void TexturePackRemoved(const std::string& texturePackPath);
+
 
 	void MaterialChanged(const std::string& materialPathChanged);
 
@@ -242,11 +197,16 @@ namespace r2::draw::mat
 	void LoadAllMaterialTexturesForMaterialFromDisk(MaterialSystem& system, const MaterialHandle& materialHandle);
 	//@TODO(Serge): add function to upload only 1 material?
 
+	void UnloadAllMaterialTexturesFromMemory(MaterialSystem& system);
+	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHanle);
+
 	void UploadAllMaterialTexturesToGPU(MaterialSystem& system);
 	void UploadMaterialTexturesToGPUFromMaterialName(MaterialSystem& system, u64 materialName);
 	void UploadMaterialTexturesToGPU(MaterialSystem& system, MaterialHandle matID);
 
+
 	void UnloadAllMaterialTexturesFromGPU(MaterialSystem& system);
+
 
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);
 	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system);

@@ -84,6 +84,8 @@ namespace r2::asset
         u64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
+
+        void ResetFileList(FileList fileList);
 #endif
         
         const FileList GetFileList() const { return mnoptrFiles; }

@@ -21,15 +21,20 @@ namespace r2::asset::pln
 		void AddTexturePackWatchDirectories(const std::vector<std::string>& watchPaths);
 
 	private:
-		std::vector<std::string> mManifestRawFilePaths;
-		std::vector<std::string> mManifestBinaryFilePaths;
-		std::vector<std::string> mTexturePacksWatchDirectories;
-
 
 		void GenerateTexturePackManifestsIfNeeded();
 		void TextureChangedRequest(const std::string& changedPath);
 		void TextureAddedRequest(const std::string& newPath);
 		void TextureRemovedRequest(const std::string& removedPath);
+
+
+
+		std::vector<std::string> mManifestRawFilePaths;
+		std::vector<std::string> mManifestBinaryFilePaths;
+		std::vector<std::string> mTexturePacksWatchDirectories;
+
+
+
 		//AssetsBuiltFunc mBuildFunc;
 	};
 }

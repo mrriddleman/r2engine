@@ -71,7 +71,7 @@ namespace r2::asset
         
 #ifdef R2_ASSET_PIPELINE
         
-        r2::asset::lib::AddFiles(*this, mnoptrFiles);
+     //   r2::asset::lib::AddFiles(*this, mnoptrFiles);
         //@TODO(Serge): may need an update function that does the following instead
         //The below will just add paths to a vector or something
         r2::asset::lib::AddAssetFilesBuiltListener([this](std::vector<std::string> paths)
@@ -820,6 +820,12 @@ namespace r2::asset
     void AssetCache::AddReloadFunction(AssetReloadedFunc func)
     {
         mReloadFunctions.push_back(func);
+    }
+
+    void AssetCache::ResetFileList(FileList fileList)
+    {
+        asset::lib::ResetFilesForCache(*this, fileList);
+        mnoptrFiles = fileList;
     }
 #endif
     

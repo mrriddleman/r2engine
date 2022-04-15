@@ -20,6 +20,8 @@ namespace r2::draw::tex
 	{
 		u32 mipLevel;
 		CubemapSideEntry sides[NUM_SIDES];
+
+		MipLevelMetaData& operator=(const MipLevelMetaData& mipLevelMetaData);
 	};
 
 	struct TexturePackMetaData
@@ -27,6 +29,9 @@ namespace r2::draw::tex
 		MipLevelMetaData mipLevelMetaData[MAX_MIP_LEVELS];
 		u32 numLevels;
 		r2::asset::AssetType assetType;
+
+
+		TexturePackMetaData& operator=(const TexturePackMetaData& metaData);
 	};
 
 	struct TexturePack
@@ -48,6 +53,7 @@ namespace r2::draw::tex
 		r2::SArray<r2::asset::Asset>* clearCoatNormals = nullptr;
 	};
 
+	void UnloadAllTexturePackTexturesFromGPU(const TexturePack* texturePack, s64 slotID);
 
 	//@TODO(Serge): make this so that we don't allocate stuff we don't need - right now we allocate for all texture types which is unneeded
 	u64 TexturePackMemorySize(u64 capacity, u64 alignment, u32 headerSize, u32 boundsChecking);

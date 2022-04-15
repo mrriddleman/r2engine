@@ -317,6 +317,182 @@ namespace r2::asset::pln::tex
 		return false;
 	}
 
+	bool HasTexturePackInManifestFile(const std::string& manifestFilePath, const std::string& packName)
+	{
+		char* manifestFileDate = utils::ReadFile(manifestFilePath);
+
+		if (!manifestFileDate)
+		{
+			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
+			return false;
+		}
+
+
+		auto packNameStringID = STRING_ID(packName.c_str());
+
+		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileDate);
+
+		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
+
+		auto numTexturePacks = manifest->texturePacks()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			const auto texturePack = manifest->texturePacks()->Get(i);
+
+			if (texturePack->packName() == packNameStringID)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool HasTexturePathInManifestFile(const std::string& manifestFilePath, const std::string& packName, const std::string& filePath)
+	{
+		char* manifestFileDate = utils::ReadFile(manifestFilePath);
+
+		if (!manifestFileDate)
+		{
+			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
+			return false;
+		}
+
+
+		auto packNameStringID = STRING_ID(packName.c_str());
+
+		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileDate);
+
+		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
+
+		auto numTexturePacks = manifest->texturePacks()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			const auto texturePack = manifest->texturePacks()->Get(i);
+
+			if (texturePack->packName() == packNameStringID)
+			{
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->albedo()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->normal()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->normal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->metallic()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->metallic()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->roughness()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->roughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->occlusion()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->occlusion()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->emissive()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->emissive()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->anisotropy()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->anisotropy()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->height()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->height()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->detail()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->detail()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoat()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->clearCoat()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatRoughness()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->clearCoatRoughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+				for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatNormal()->size(); ++filePathIndex)
+				{
+					if (std::filesystem::path(texturePack->clearCoatNormal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
+					{
+						return  true;
+					}
+				}
+
+
+
+			}
+		}
+
+		return false;
+	}
+
+	bool GenerateTexturePackManifestFromDirectory(const std::string& sourcePackDirectory, const std::string& outputDir)
+	{
+
+		std::filesystem::path binPacksPath = std::filesystem::path(outputDir) / PACKS_DIR;
+
+
+
+
+		return false;
+	}
+
+	bool GenerateTexturePackManifestFromBinaryDir(const std::string& binaryDir, const std::string& binFilePath, const std::string& jsonFilePath)
+	{
+		return false;
+	}
 }
 
 

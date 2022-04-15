@@ -29,12 +29,14 @@ namespace r2::asset::lib
     bool Init(const r2::mem::utils::MemBoundary& boundary);
     void Update();
     void Shutdown();
-    void AddFiles(const r2::asset::AssetCache& cache, FileList list);
+  //  void AddFiles(const r2::asset::AssetCache& cache, FileList list);
     
 #ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths);
     using AssetFilesBuiltListener = std::function<void(std::vector<std::string> paths)>;
     void AddAssetFilesBuiltListener(AssetFilesBuiltListener func);
+
+    void ResetFilesForCache(const r2::asset::AssetCache& cache, FileList list);
 #endif
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);

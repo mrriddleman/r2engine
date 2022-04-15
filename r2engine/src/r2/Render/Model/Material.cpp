@@ -30,6 +30,12 @@ namespace r2::draw::mat
 #ifdef R2_ASSET_PIPELINE
 	r2::asset::pln::AssetThreadSafeQueue<std::string> s_texturesChangedQueue;
 	r2::asset::pln::AssetThreadSafeQueue<std::string> s_materialsChangesQueue;
+
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_textureAddedQueue;
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_textureRemovedQueue;
+
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_materialAddedQueue;
+	r2::asset::pln::AssetThreadSafeQueue<std::string> s_materialRemovedQueue;
 #endif // R2_ASSET_PIPELINE
 
 
@@ -47,8 +53,8 @@ namespace r2::draw::mat
 		r2::mem::LinearArena* mSystemsArena;
 		r2::SArray<r2::draw::MaterialSystem*>* mMaterialSystems = nullptr;
 
-		r2::SHashMap<MaterialHandle>* mMaterialNamesToMaterialHandles = nullptr;
-		r2::SHashMap<TextureLookUpEntry>* mTextureNamesToMaterialHandles = nullptr;
+		r2::SHashMap<MaterialHandle>* mMaterialNamesToMaterialHandles = nullptr; //TODO(Serge): REMOVE!
+		r2::SHashMap<TextureLookUpEntry>* mTextureNamesToMaterialHandles = nullptr; //TODO(Serge): REMOVE!
 	};
 }
 
@@ -205,29 +211,19 @@ namespace r2::draw::mat
 		const InternalMaterialData& internalMaterialData = r2::sarr::At(*system.mInternalData, materialIndex);
 
 		//We may want to move this to the load from disk as that's what this is basically for...
-		r2::draw::tex::TexturePack* defaultTexturePack = nullptr;
-
-		//@TODO(Serge): we should instead do this per texture and have the texture pack name on the texture param, that way we can mix and match per material
-		r2::draw::tex::TexturePack* result = r2::shashmap::Get(*system.mTexturePacks, internalMaterialData.texturePackName, defaultTexturePack);
-
-		if (internalMaterialData.texturePackName == STRING_ID(""))
-		{
-			//we don't have one!
-			return;
-		}
-
-		if (result == defaultTexturePack)
-		{
-			R2_CHECK(false, "We couldn't get the texture pack!");
-			return;
-		}
+		
 
 		MaterialTextureEntry newEntry;
-		newEntry.mType = result->metaData.assetType;
+		tex::TexturePackMetaData metaData;
+		//newEntry.mType = result->metaData.assetType;
 
 		//figure out how many textures we have for this specific material
 
 		const flat::MaterialParams* materialParams = system.mMaterialParamsPack->pack()->Get(materialIndex);
+
+
+		if (materialParams->textureParams()->size() == 0)
+			return;
 
 		const auto emptyString = STRING_ID("");
 		u64 numTexturesForMaterial = 0;
@@ -240,6 +236,25 @@ namespace r2::draw::mat
 			
 			if (texParam->value() != emptyString)
 			{
+
+				r2::draw::tex::TexturePack* defaultTexturePack = nullptr;
+
+				
+				r2::draw::tex::TexturePack* result = r2::shashmap::Get(*system.mTexturePacks, texParam->texturePackName(), defaultTexturePack);
+
+				if (texParam->texturePackName() == STRING_ID(""))
+				{
+					//we don't have one!
+					continue;
+				}
+
+				if (result == defaultTexturePack)
+				{
+					R2_CHECK(false, "We couldn't get the texture pack!");
+					return;
+				}
+
+
 				TextureAssetEntry texAssetEntry;
 
 				const r2::SArray<r2::asset::Asset>* texturePackTextures = nullptr;
@@ -261,6 +276,10 @@ namespace r2::draw::mat
 					texAssetEntry.textureType = tex::TextureType::Diffuse;
 
 					texturePackTextures = result->albedos;
+
+					//@NOTE(Serge): doing this here for now since cubemaps will only have this field
+					newEntry.mType = result->metaData.assetType;
+					metaData = result->metaData;
 				}
 				else if (texParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION)
 				{
@@ -345,7 +364,14 @@ namespace r2::draw::mat
 			}
 		}
 
-		if (result->metaData.assetType == r2::asset::TEXTURE && numTexturesForMaterial > 0)
+		if (numTexturesForMaterial <= 0)
+		{
+			FREE(textureAssets, *MEM_ENG_SCRATCH_PTR);
+			return;
+		}
+
+
+		if (newEntry.mType == r2::asset::TEXTURE && numTexturesForMaterial > 0)
 		{
 			r2::SArray<r2::draw::tex::Texture>* materialTextures = MAKE_SARRAY(*system.mLinearArena, r2::draw::tex::Texture, numTexturesForMaterial);
 
@@ -379,7 +405,7 @@ namespace r2::draw::mat
 		{
 			r2::draw::tex::CubemapTexture cubemap;
 
-			const auto numMipLevels = result->metaData.numLevels;
+			const auto numMipLevels = metaData.numLevels;
 			cubemap.numMipLevels = numMipLevels;
 
 			for (auto mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
@@ -389,10 +415,10 @@ namespace r2::draw::mat
 					r2::draw::tex::Texture texture;
 					texture.type = tex::TextureType::Diffuse;
 
-					auto cubemapSide = result->metaData.mipLevelMetaData[mipLevel].sides[side].side;
+					auto cubemapSide = metaData.mipLevelMetaData[mipLevel].sides[side].side;
 
-					texture.textureAssetHandle = system.mAssetCache->LoadAsset(result->metaData.mipLevelMetaData[mipLevel].sides[cubemapSide].asset);
-					cubemap.mips[mipLevel].mipLevel = result->metaData.mipLevelMetaData[mipLevel].mipLevel;
+					texture.textureAssetHandle = system.mAssetCache->LoadAsset(metaData.mipLevelMetaData[mipLevel].sides[cubemapSide].asset);
+					cubemap.mips[mipLevel].mipLevel = metaData.mipLevelMetaData[mipLevel].mipLevel;
 					cubemap.mips[mipLevel].sides[cubemapSide] = texture;
 				}
 			}
@@ -431,6 +457,16 @@ namespace r2::draw::mat
 		{
 			LoadAllMaterialTexturesForMaterialFromDisk(system, i);
 		}
+	}
+
+	void UnloadAllMaterialTexturesFromMemory(MaterialSystem& system)
+	{
+		//@TODO(Serge): implement
+	}
+
+	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHanle)
+	{
+		//@TODO(Serge): implement
 	}
 
 	void UploadAllMaterialTexturesToGPU(MaterialSystem& system)
@@ -698,7 +734,21 @@ namespace r2::draw::mat
 
 	void UnloadAllMaterialTexturesFromGPU(MaterialSystem& system)
 	{
-		const u64 capacity = r2::sarr::Capacity(*system.mMaterialTextures);
+		auto texturePackItr = r2::shashmap::Begin(*system.mTexturePacks);
+		auto texturePackEnd = r2::shashmap::End(*system.mTexturePacks);
+		auto slotID = system.mSlot;
+
+		for (; texturePackItr != texturePackEnd; texturePackItr++)
+		{
+			const tex::TexturePack* texturePack = texturePackItr->value;
+
+			if ( texturePack != nullptr)
+			{
+				tex::UnloadAllTexturePackTexturesFromGPU(texturePack, slotID);
+			}
+		}
+
+		/*const u64 capacity = r2::sarr::Capacity(*system.mMaterialTextures);
 
 		for (u64 i = 0; i < capacity; ++i)
 		{
@@ -732,7 +782,7 @@ namespace r2::draw::mat
 					}
 				}
 			}
-		}
+		}*/
 
 		ClearRenderMaterialData(system);
 
@@ -1044,7 +1094,7 @@ namespace r2::draw::mat
 			const flat::MaterialTextureParam* textureParam = material->textureParams()->Get(i);
 
 			//@TODO(Serge): this should probably be per texture not per material but...
-			internalMaterialData.texturePackName = textureParam->texturePackName();
+			//internalMaterialData.texturePackName = textureParam->texturePackName();
 			const auto textureParamValue = textureParam->value();
 			const auto packName = textureParam->texturePackName(); //@TODO(Serge): this needs to be cleaned up, easy to mess up if the texture pack changes per texture param
 
@@ -2307,7 +2357,6 @@ namespace r2::draw::matsys
 	void Update()
 	{
 #ifdef R2_ASSET_PIPELINE
-		
 		std::string materialPath;
 
 		while (s_optrMaterialSystems && mat::s_materialsChangesQueue.TryPop(materialPath))
@@ -2341,16 +2390,97 @@ namespace r2::draw::matsys
 			}
 		}
 
+		std::string texturePacksManifestPath;
+		while (s_optrMaterialSystems && mat::s_textureAddedQueue.TryPop(texturePacksManifestPath))
+		{
+			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::SanitizeSubPath(texturePacksManifestPath.c_str(), sanitizedPath);
+
+			MaterialSystem* foundSystem = FindMaterialSystemForTextureManifestFilePath(sanitizedPath);
+
+			if (foundSystem)
+			{
+				foundSystem->mAssetCache->ReturnAssetBuffer(foundSystem->mTexturePackManifestData);
+				char fileName[fs::FILE_PATH_LENGTH];
+				r2::fs::utils::CopyFileNameWithExtension(foundSystem->mTexturePacksManifestFilePath, fileName);
+				r2::asset::Asset texturePackManifestAsset(fileName, r2::asset::TEXTURE_PACK_MANIFEST);
+
+				auto texturePacksManifestAssetHandle = foundSystem->mAssetCache->ReloadAsset(texturePackManifestAsset);
+
+				R2_CHECK(!r2::asset::IsInvalidAssetHandle(texturePacksManifestAssetHandle), "We didn't get a proper asset handle!");
+
+				foundSystem->mTexturePackManifestData = foundSystem->mAssetCache->GetAssetBuffer(texturePacksManifestAssetHandle);
+
+				R2_CHECK(foundSystem->mTexturePackManifestData.buffer->Data() != nullptr, "We don't have the mTexturePackManifestData!");
+
+				foundSystem->mTexturePackManifest = flat::GetTexturePacksManifest(foundSystem->mTexturePackManifestData.buffer->Data());
+
+				R2_CHECK(foundSystem->mTexturePackManifest != nullptr, "We should have the manifest reloaded!");
+
+				//now that we have the mTexturePackManifest reloaded
+				//we need to remake the mTexturePacks and reload them
+				const s64 numTexturePacks = static_cast<s64>(r2::sarr::Capacity(*foundSystem->mTexturePacks->mData));
+				for (s64 i = numTexturePacks - 1; i >= 0; --i)
+				{
+					r2::SHashMap<r2::draw::tex::TexturePack*>::HashMapEntry& entry = r2::sarr::At(*foundSystem->mTexturePacks->mData, i);
+					if (entry.value != nullptr)
+					{
+						FREE_TEXTURE_PACK(*foundSystem->mLinearArena, entry.value);
+					}
+				}
+
+				FREE(foundSystem->mTexturePacks, *foundSystem->mLinearArena);
+
+				foundSystem->mTexturePacks = MAKE_SHASHMAP(*foundSystem->mLinearArena, r2::draw::tex::TexturePack*, static_cast<u64>(static_cast<f64>(foundSystem->mTexturePackManifest->texturePacks()->size() * HASH_MAP_BUFFER_MULTIPLIER)));
+				R2_CHECK(foundSystem->mTexturePacks != nullptr, "we couldn't allocate the array for mTexturePacks?");
 
 
-		std::string path;
-		while (s_optrMaterialSystems && mat::s_texturesChangedQueue.TryPop(path))
+
+				//Remake the list of assets for this material system
+				r2::asset::FileList list = r2::asset::lib::MakeFileList(foundSystem->mTexturePackManifest->totalNumberOfTextures() + 2); //+2 for material manifest, and texture pack manifest
+
+				r2::asset::RawAssetFile* materialManifestAssetFile = r2::asset::lib::MakeRawAssetFile(foundSystem->mMaterialPacksManifestFilePath);
+				r2::asset::RawAssetFile* texturePackManifestAssetFile = r2::asset::lib::MakeRawAssetFile(foundSystem->mTexturePacksManifestFilePath);
+
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)materialManifestAssetFile);
+				r2::sarr::Push(*list, (r2::asset::AssetFile*)texturePackManifestAssetFile);
+
+				u32 numNormalTexturePacks, numCubemapTexturePacks;
+
+				mat::LoadTexturePacks(*foundSystem, foundSystem->mTexturePackManifest, list, numNormalTexturePacks, numCubemapTexturePacks);
+
+
+				if (r2::sarr::Size(*foundSystem->mMaterialCubemapTextures) != numCubemapTexturePacks)
+				{
+					//we need to remake the cubemap array
+
+					r2::SArray<r2::draw::tex::CubemapTexture>* oldCubemapArray = foundSystem->mMaterialCubemapTextures;
+
+					foundSystem->mMaterialCubemapTextures = MAKE_SARRAY(*foundSystem->mLinearArena, tex::CubemapTexture, numCubemapTexturePacks);
+
+					r2::sarr::Copy(*foundSystem->mMaterialCubemapTextures, *oldCubemapArray);
+
+					FREE(oldCubemapArray, *foundSystem->mLinearArena);
+
+					R2_CHECK(r2::sarr::Capacity(*foundSystem->mMaterialCubemapTextures) == numCubemapTexturePacks,
+						"These should be the same r2::sarr::Capacity(*foundSystem->mMaterialCubemapTextures) = %llu, numCubemapTexturePacks = %llu",
+						r2::sarr::Capacity(*foundSystem->mMaterialCubemapTextures), numCubemapTexturePacks);
+				}
+
+				//We also need to add the new files to the asset cache 
+				foundSystem->mAssetCache->ResetFileList(list);
+			}
+		}
+
+
+		std::string textureChangedPath;
+		while (s_optrMaterialSystems && mat::s_texturesChangedQueue.TryPop(textureChangedPath))
 		{
 			//find which texture pack the path belongs to
 
 			char fileName[r2::fs::FILE_PATH_LENGTH];
 			char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::SanitizeSubPath(path.c_str(), sanitizedPath);
+			r2::fs::utils::SanitizeSubPath(textureChangedPath.c_str(), sanitizedPath);
 			r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, fileName, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_ASSET_NAME);
 
 			std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
@@ -2494,25 +2624,53 @@ namespace r2::draw::matsys
 		return nullptr;
 	}
 
+	MaterialSystem* FindMaterialSystemForTextureManifestFilePath(const std::string& textureManifestFilePath)
+	{
+		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		for (u64 i = 0; i < capacity; ++i)
+		{
+			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+			if (system != nullptr)
+			{
+				if (std::string(system->mTexturePacksManifestFilePath) == textureManifestFilePath)
+				{
+					return system;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
 	MaterialSystem* FindMaterialSystemForTexturePath(const std::string& texturePath)
 	{
 		return nullptr;
 	}
-
 
 	void TextureChanged(const std::string& texturePath)
 	{
 		mat::s_texturesChangedQueue.Push(texturePath);
 	}
 
-	void TextureAdded(const std::string& textureAdded)
+	void TexturePackAdded(const std::string& texturePacksManifestFilePath)
 	{
-		//@TODO(Serge): implement
+		mat::s_textureAddedQueue.Push(texturePacksManifestFilePath);
+	}
+
+	void TextureAdded(const std::string& texturePacksManifestFilePath)
+	{
+		mat::s_textureAddedQueue.Push(texturePacksManifestFilePath);
 	}
 
 	void TextureRemoved(const std::string& textureRemoved)
 	{
 		//@TODO(Serge): implement
+	}
+	
+	void TexturePackRemoved(const std::string& texturePackPath)
+	{
+
 	}
 
 	void MaterialChanged(const std::string& materialPathChanged)

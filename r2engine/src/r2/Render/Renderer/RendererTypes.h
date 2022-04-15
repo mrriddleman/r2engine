@@ -3,7 +3,7 @@
 
 #include "r2/Utils/Utils.h"
 #include "r2/Utils/Flags.h"
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 namespace r2::draw
 {

@@ -214,7 +214,7 @@ namespace r2::asset::pln
 			return;
 		}
 
-		r2::draw::matsys::MaterialChanged(changedPath);// -- @TODO(Serge): call this when we have the other part done
+		r2::draw::matsys::MaterialChanged(changedPath);
 	}
 
 	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)
