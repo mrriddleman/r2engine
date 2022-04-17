@@ -27,7 +27,9 @@ namespace r2::asset::pln
 		void TextureAddedRequest(const std::string& newPath);
 		void TextureRemovedRequest(const std::string& removedPath);
 
-
+		s64 FindPathIndex(const std::string& newPath, std::string& nameOfPack);
+		bool HasMetaFileAndAtleast1File(const std::string& watchDir, const std::string& nameOfPack);
+		void RegenerateTexturePackManifestFile(s64 index);
 
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;

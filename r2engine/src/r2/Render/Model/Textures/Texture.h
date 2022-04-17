@@ -139,6 +139,9 @@ namespace r2::draw::tex
 
 	const s32 GetMaxTextureSize();
 
+
+	const char* GetTextureTypeName(TextureType type);
+
 	namespace impl
 	{
 		bool Init(const r2::mem::utils::MemBoundary& boundary, u32 numTextureContainers, u32 numTextureContainersPerFormat, bool useMaxNumLayers = false, s32 numTextureLayers = 1, bool sparse = true);

@@ -5,6 +5,7 @@
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Render/Model/Textures/TexturePackMetaData_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+#include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Flags.h"
 #include "r2/Utils/Hash.h"
@@ -478,20 +479,134 @@ namespace r2::asset::pln::tex
 		return false;
 	}
 
-	bool GenerateTexturePackManifestFromDirectory(const std::string& sourcePackDirectory, const std::string& outputDir)
+	std::vector<std::vector<std::string>> GetAllTexturesInTexturePack(const std::string& manifestFilePath, const std::string& packName)
 	{
+		std::vector<std::vector<std::string>> texturesInPack;
+		texturesInPack.resize(r2::draw::tex::TextureType::NUM_TEXTURE_TYPES);
 
-		std::filesystem::path binPacksPath = std::filesystem::path(outputDir) / PACKS_DIR;
+		char* manifestFileData = utils::ReadFile(manifestFilePath);
 
+		if (!manifestFileData)
+		{
+			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
+			return texturesInPack;
+		}
 
+		auto packNameStringID = STRING_ID(packName.c_str());
 
+		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 
-		return false;
-	}
+		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
 
-	bool GenerateTexturePackManifestFromBinaryDir(const std::string& binaryDir, const std::string& binFilePath, const std::string& jsonFilePath)
-	{
-		return false;
+		auto numTexturePacks = manifest->texturePacks()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			const auto texturePack = manifest->texturePacks()->Get(i);
+
+			if (texturePack->packName() == packNameStringID)
+			{
+				if (texturePack->albedo()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->albedo()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Diffuse].push_back(texturePack->albedo()->Get(filePathIndex)->str());
+					}
+				}
+
+				if (texturePack->normal()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->normal()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Normal].push_back(texturePack->normal()->Get(filePathIndex)->str());
+					}
+				}
+
+				
+				if (texturePack->metallic()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->metallic()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Metallic].push_back(texturePack->metallic()->Get(filePathIndex)->str());
+					}
+				}
+				
+				if (texturePack->roughness()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->roughness()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Roughness].push_back(texturePack->roughness()->Get(filePathIndex)->str());
+					}
+				}
+				
+				if (texturePack->occlusion()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->occlusion()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Occlusion].push_back(texturePack->occlusion()->Get(filePathIndex)->str());
+					}
+				}
+
+				if (texturePack->emissive()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->emissive()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Emissive].push_back(texturePack->emissive()->Get(filePathIndex)->str());
+					}
+				}
+
+				if (texturePack->anisotropy()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->anisotropy()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Anisotropy].push_back(texturePack->anisotropy()->Get(filePathIndex)->str());
+					}
+				}
+
+				
+				if (texturePack->height()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->height()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Height].push_back(texturePack->height()->Get(filePathIndex)->str());
+					}
+				}
+				
+				if (texturePack->detail()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->detail()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::Detail].push_back(texturePack->detail()->Get(filePathIndex)->str());
+					}
+				}
+				
+				if (texturePack->clearCoat()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoat()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::ClearCoat].push_back(texturePack->clearCoat()->Get(filePathIndex)->str());
+					}
+				}
+				
+				if (texturePack->clearCoatRoughness()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatRoughness()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::ClearCoatRoughness].push_back(texturePack->clearCoatRoughness()->Get(filePathIndex)->str());
+					}
+				}
+
+				if (texturePack->clearCoatNormal()->size() > 0)
+				{
+					for (flatbuffers::uoffset_t filePathIndex = 0; filePathIndex < texturePack->clearCoatNormal()->size(); ++filePathIndex)
+					{
+						texturesInPack[r2::draw::tex::TextureType::ClearCoatNormal].push_back(texturePack->clearCoatNormal()->Get(filePathIndex)->str());
+					}
+				}
+			}
+		}
+
+		return texturesInPack;
 	}
 }
 

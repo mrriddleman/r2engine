@@ -95,15 +95,12 @@ namespace r2::asset::pln
 		r2::draw::matsys::TextureChanged(changedPath);
 	}
 
-	void TexturePackHotReloadCommand::TextureAddedRequest(const std::string& newPath)
+	s64 TexturePackHotReloadCommand::FindPathIndex(const std::string& newPath, std::string& nameOfPack)
 	{
-		//We could have different methods that will add a texture pack instead of an individual file
-		//We could check the parent path, and figure out the manifest and see if we have it already in the manifest - if we don't then add the pack, otherwise call TextureAdded()
-
 		//We need to check to see if we have a meta file and more than 1 file, if true then we can trigger the add
-		size_t index = 0;
+		s64 index = 0;
 		bool found = false;
-		std::string nameOfPack = "";
+		
 
 		for (const std::string& rawWatchDir : mTexturePacksWatchDirectories)
 		{
@@ -133,14 +130,21 @@ namespace r2::asset::pln
 		}
 
 		if (!found)
-			return;
+			return -1;
 
-		//Check to see if we have a meta file and at least 1 file in one of the sub directories
-		
-		std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+		return index;
+	}
+
+	bool TexturePackHotReloadCommand::HasMetaFileAndAtleast1File(const std::string& watchDir, const std::string& nameOfPack)
+	{
+		std::filesystem::path packPath = std::filesystem::path(watchDir) / nameOfPack;
 
 		bool hasMetaFile = false;
 		bool hasAFile = false;
+
+		if (!std::filesystem::exists(packPath) || !std::filesystem::is_directory(packPath))
+			return false;
+
 		for (const auto& packItem : std::filesystem::directory_iterator(packPath))
 		{
 			if (!packItem.is_directory() && packItem.file_size() > 0 && packItem.path().stem().string() == "meta")
@@ -159,14 +163,34 @@ namespace r2::asset::pln
 				}
 			}
 
-			if(hasMetaFile && hasAFile)
+			if (hasMetaFile && hasAFile)
 				break;
 		}
 
+		return hasAFile && hasMetaFile;
+	}
 
-		if (!hasAFile || !hasMetaFile)
+	void TexturePackHotReloadCommand::RegenerateTexturePackManifestFile(s64 index)
+	{
+		std::string binaryTextureDir = std::filesystem::path(mManifestBinaryFilePaths[index]).parent_path().parent_path().string();
+
+		pln::tex::GenerateTexturePacksManifestFromDirectories(
+			mManifestBinaryFilePaths[index],
+			mManifestRawFilePaths[index],
+			mTexturePacksWatchDirectories[index],
+			binaryTextureDir);
+	}
+
+	void TexturePackHotReloadCommand::TextureAddedRequest(const std::string& newPath)
+	{
+		//Check to see if we have a meta file and at least 1 file in one of the sub directories
+		std::string nameOfPack = "";
+		s64 index = FindPathIndex(newPath, nameOfPack);
+
+		bool result = HasMetaFileAndAtleast1File(mTexturePacksWatchDirectories[index], nameOfPack);
+
+		if (!result)
 			return;
-
 
 		//load the manifest and check to see if we have the texture pack already
 		bool hasTexturePackInManifest = r2::asset::pln::tex::HasTexturePackInManifestFile(mManifestBinaryFilePaths[index], nameOfPack);
@@ -183,14 +207,7 @@ namespace r2::asset::pln
 		}
 
 		//We need to regenerate the manifest file
-		std::string binaryTextureDir = std::filesystem::path(mManifestBinaryFilePaths[index]).parent_path().parent_path().string();
-
-
-		pln::tex::GenerateTexturePacksManifestFromDirectories(
-			mManifestBinaryFilePaths[index],
-			mManifestRawFilePaths[index],
-			mTexturePacksWatchDirectories[index],
-			binaryTextureDir);
+		RegenerateTexturePackManifestFile(index);
 
 
 		if (!hasTexturePackInManifest)
@@ -203,9 +220,42 @@ namespace r2::asset::pln
 		}
 	}
 
-	void TexturePackHotReloadCommand::TextureRemovedRequest(const std::string& removedPath)
+	void TexturePackHotReloadCommand::TextureRemovedRequest(const std::string& removedPathStr)
 	{
-		r2::draw::matsys::TextureRemoved(removedPath);
+		std::string nameOfPack = "";
+		s64 index = FindPathIndex(removedPathStr, nameOfPack);
+
+		//@NOTE(Serge): this might break if we have 2 of the same name?
+
+		bool hasTexturePackInManifest = r2::asset::pln::tex::HasTexturePackInManifestFile(mManifestBinaryFilePaths[index], nameOfPack);
+
+		if (!hasTexturePackInManifest)
+		{
+			return;
+		}
+
+		bool hasMetaAndAtleast1File = HasMetaFileAndAtleast1File(mTexturePacksWatchDirectories[index], nameOfPack);
+
+		std::filesystem::path removedPath = std::filesystem::path(removedPathStr);
+		std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+
+		if (!hasMetaAndAtleast1File)
+		{
+			std::vector<std::vector<std::string>> pathsLeftInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
+			
+			RegenerateTexturePackManifestFile(index);
+			r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
+			return;
+		}
+
+		bool hasTexturePathInManifest = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, removedPathStr);
+
+		if (hasTexturePathInManifest)
+		{
+			RegenerateTexturePackManifestFile(index);
+			r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], removedPathStr);
+		}
+		
 	}
 
 	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> TexturePackHotReloadCommand::DirectoriesToCreate() const

@@ -167,8 +167,8 @@ namespace r2::draw::matsys
 
 	void TextureAdded(const std::string& texturePacksManifestFilePath);
 
-	void TextureRemoved(const std::string& textureRemoved);
-	void TexturePackRemoved(const std::string& texturePackPath);
+	void TextureRemoved(const std::string& texturePacksManifestFilePath, const std::string& textureRemoved);
+	void TexturePackRemoved(const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsLeft);
 
 
 	void MaterialChanged(const std::string& materialPathChanged);

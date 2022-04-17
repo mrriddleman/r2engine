@@ -2663,14 +2663,30 @@ namespace r2::draw::matsys
 		mat::s_textureAddedQueue.Push(texturePacksManifestFilePath);
 	}
 
-	void TextureRemoved(const std::string& textureRemoved)
+	void TextureRemoved(const std::string& texturePacksManifestFilePath, const std::string& textureRemoved)
 	{
 		//@TODO(Serge): implement
+
+		printf("Removed from manifest file: %s, removed path: %s\n", texturePacksManifestFilePath.c_str(), textureRemoved.c_str());
 	}
 	
-	void TexturePackRemoved(const std::string& texturePackPath)
+	void TexturePackRemoved(const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsLeft)
 	{
+		printf("Removed from manifest file: %s, removed path: %s\n", texturePacksManifestFilePath.c_str(), texturePackPath.c_str());
 
+		for (int i = 0; i < tex::NUM_TEXTURE_TYPES; ++i)
+		{
+			printf("Texture type %s:\n\n", tex::GetTextureTypeName((tex::TextureType)i));
+
+			const auto& textures = texturePathsLeft[i];
+
+			for (const auto& texture : textures)
+			{
+				printf("%s\n\n", texture.c_str());
+			}
+
+			printf("\n");
+		}
 	}
 
 	void MaterialChanged(const std::string& materialPathChanged)

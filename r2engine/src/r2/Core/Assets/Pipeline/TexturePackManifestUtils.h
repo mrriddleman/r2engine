@@ -12,6 +12,7 @@ namespace r2::asset::pln::tex
 
 	bool HasTexturePackInManifestFile(const std::string& manifestFilePath, const std::string& packName);
 	bool HasTexturePathInManifestFile(const std::string& manifestFilePath, const std::string& packName, const std::string& filePath);
+	std::vector<std::vector<std::string>> GetAllTexturesInTexturePack(const std::string& manifestFilePath, const std::string& packName);
 }
 
 #endif
