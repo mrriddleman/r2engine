@@ -3,11 +3,14 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include <string>
+//#include "r2/Render/Model/Material.h"
 
 namespace flat
 {
 	struct Material;
 }
+
+
 
 namespace r2::asset::pln
 {
@@ -30,6 +33,8 @@ namespace r2::asset::pln
 	bool GenerateMaterialParamsPackManifestFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool FindMaterialParamsPackManifestFile(const std::string& directory, const std::string& stemName, std::string& outPath, bool isBinary);
 	bool GenerateBinaryParamsPackManifest(const std::string& binaryDir, const std::string& binFilePath, const std::string& rawFilePath);
+
+	
 }
 
 #endif

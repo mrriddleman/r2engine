@@ -359,9 +359,9 @@ namespace r2::draw::renderer
 	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs();
 	r2::draw::ModelRefHandle GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
 
-	void LoadEngineTexturesFromDisk();
+	/*void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName( u64 materialName);
-	void UploadEngineMaterialTexturesToGPU();
+	void UploadEngineMaterialTexturesToGPU();*/
 
 	ModelRefHandle UploadModel(const Model* model);
 	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs);
@@ -376,6 +376,8 @@ namespace r2::draw::renderer
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
+	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
+	const tex::Texture& GetMissingTexture();
 
 	void SetRenderCamera(const Camera* cameraPtr);
 

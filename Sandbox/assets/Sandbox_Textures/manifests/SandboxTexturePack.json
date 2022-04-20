@@ -551,54 +551,6 @@
       }
     },
     {
-      packName: 15475299649339459089,
-      albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/NewTexturePack/albedo/bricks2.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/NewTexturePack/albedo/container.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/NewTexturePack/albedo/wood.png"
-      ],
-      normal: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      roughness: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      detail: [
-
-      ],
-      clearCoat: [
-
-      ],
-      clearCoatRoughness: [
-
-      ],
-      clearCoatNormal: [
-
-      ],
-      packSize: 1931062,
-      totalNumberOfTextures: 3,
-      metaData: {
-        mipLevels: [
-
-        ]
-      }
-    },
-    {
       packName: 5241291254806722222,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.tga"
@@ -757,7 +709,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 138,
-  totalTextureSize: 135875139,
+  totalNumberOfTextures: 135,
+  totalTextureSize: 133944077,
   maxTexturesInAPack: 69
 }

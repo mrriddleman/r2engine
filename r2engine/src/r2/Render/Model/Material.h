@@ -64,22 +64,37 @@ namespace r2::draw
 		s32 padding;
 	};
 
-	struct MaterialTextureEntry
-	{
-		r2::asset::AssetType mType = r2::asset::TEXTURE; //TEXTURE OR CUBEMAP
-		s64 mIndex = -1; //index into either mMaterialTextures or mCubemapTextures based on mType
-	};
+	//struct MaterialTextureEntry
+	//{
+	//	r2::asset::AssetType mType = r2::asset::TEXTURE; //TEXTURE OR CUBEMAP
+	//	s64 mIndex = -1; //index into either mMaterialTextures or mCubemapTextures based on mType
+	//};
 
-	struct MaterialTextureAssets
+	/*
+		Diffuse = 0,
+		Emissive,
+		Normal,
+		Metallic,
+		Height,
+		Roughness,
+		Occlusion,
+		Anisotropy,
+		Detail,
+		ClearCoat,
+		ClearCoatRoughness,
+		ClearCoatNormal,
+		Cubemap,
+	*/
+	
+	struct TextureAssets
 	{
 		tex::Texture diffuseTexture;
-		tex::Texture specularTexture;
-		tex::Texture normalMapTexture;
 		tex::Texture emissionTexture;
+		tex::Texture normalMapTexture;
 		tex::Texture metallicTexture;
+		tex::Texture heightTexture;
 		tex::Texture roughnessTexture;
 		tex::Texture aoTexture;
-		tex::Texture heightTexture;
 		tex::Texture anisotropyTexture;
 		tex::Texture detailTexture;
 		tex::Texture clearCoatTexture;
@@ -87,14 +102,27 @@ namespace r2::draw
 		tex::Texture clearCoatNormalTexture;
 	};
 
+	union MatTexUnion
+	{
+		TextureAssets materialTexture;
+		tex::Texture textureTypes[tex::TextureType::Cubemap] = { tex::Texture{}, tex::Texture{}, tex::Texture{}, tex::Texture{}, tex::Texture{}, tex::Texture{},
+																tex::Texture {}, tex::Texture{}, tex::Texture{}, tex::Texture{}, tex::Texture{}, tex::Texture{} };
+	};
 
+	struct MaterialTextureAssets
+	{
+		MatTexUnion normalTextures;
+		tex::CubemapTexture cubemap; //may need more at some point
+	};
 
 	struct InternalMaterialData
 	{
-		u64 materialName;
+		u64 materialName = 0;
 		ShaderHandle shaderHandle = InvalidShader;
 		MaterialTextureAssets textureAssets;
 		r2::draw::RenderMaterialParams renderMaterial = {};
+		r2::asset::AssetType mType = r2::asset::TEXTURE;//TEXTURE OR CUBEMAP
+
 	};
 
 	struct MaterialSystem
@@ -110,9 +138,11 @@ namespace r2::draw
 		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
 		r2::SArray<InternalMaterialData>* mInternalData = nullptr; 
 
-		r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
-		r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
-		r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr; //@TODO(Serge): make this an array of an array like mMaterialTextures
+		//r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
+
+
+	//	r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
+	//	r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr; //@TODO(Serge): make this an array of an array like mMaterialTextures
 
 
 		char mMaterialPacksManifestFilePath[fs::FILE_PATH_LENGTH];
@@ -208,8 +238,8 @@ namespace r2::draw::mat
 	void UnloadAllMaterialTexturesFromGPU(MaterialSystem& system);
 
 
-	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);
-	const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system);
+	//const r2::SArray<r2::draw::tex::Texture>* GetTexturesForMaterial(const MaterialSystem& system, MaterialHandle matID);
+	//const r2::SArray<r2::draw::tex::CubemapTexture>* GetCubemapTextures(const MaterialSystem& system);
 
 	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID);
 
@@ -222,6 +252,8 @@ namespace r2::draw::mat
 
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
 	MaterialHandle GetMaterialHandleFromMaterialPath(const MaterialSystem& system, const char* materialPath);
+
+	const MaterialTextureAssets& GetMaterialTextureAssetsForMaterial(const MaterialSystem& system, MaterialHandle materialHandle);
 
 	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);
 

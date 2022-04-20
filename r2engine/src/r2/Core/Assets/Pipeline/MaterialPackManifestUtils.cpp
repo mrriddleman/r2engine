@@ -645,6 +645,11 @@ namespace r2::asset::pln
 
 		return false;
 	}
+
+	/*std::vector<r2::draw::MaterialHandle> FindMaterialHandleForTexturePaths(const std::string& binFilePath, const std::vector<std::string>& texturePaths)
+	{
+		return {};
+	}*/
 }
 
 #endif

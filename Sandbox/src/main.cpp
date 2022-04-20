@@ -687,8 +687,8 @@ public:
         
         //r2::draw::renderer::SetClearDepth(0.5f);
 
-        r2::draw::renderer::LoadEngineTexturesFromDisk();
-        r2::draw::renderer::UploadEngineMaterialTexturesToGPU();
+        /*r2::draw::renderer::LoadEngineTexturesFromDisk();
+        r2::draw::renderer::UploadEngineMaterialTexturesToGPU();*/
 
         r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
 
