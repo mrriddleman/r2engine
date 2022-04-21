@@ -59,7 +59,8 @@ namespace r2::asset::pln::tex
 		{
 			
 			if (texturePackDir.path().filename() == ".DS_Store" || //UGH MAC - ignore .DS_Store
-				texturePackDir.path().stem().string() == "hdr") //skip the hdr directory since we don't use it directly
+				texturePackDir.path().stem().string() == "hdr" ||
+				texturePackDir.is_regular_file()) //skip the hdr directory since we don't use it directly
 			{
 				continue;
 			}

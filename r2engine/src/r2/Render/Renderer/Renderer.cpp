@@ -326,7 +326,7 @@ namespace r2::draw::renderer
 	r2::draw::ModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer);
-	const tex::Texture& GetMissingTexture(Renderer& renderer);
+	const tex::Texture* GetMissingTexture(Renderer* renderer);
 
 	void LoadEngineTexturesFromDisk(Renderer& renderer);
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName);
@@ -2165,19 +2165,18 @@ namespace r2::draw::renderer
 		return r2::draw::mat::GetRenderMaterial(*renderer.mMaterialSystem, materialID);
 	}
 
-	const tex::Texture& GetMissingTexture(Renderer& renderer)
+	const tex::Texture* GetMissingTexture(Renderer* renderer)
 	{
-		if (renderer.mMaterialSystem == nullptr)
+		if (renderer == nullptr || renderer->mMaterialSystem == nullptr)
 		{
-			R2_CHECK(false, "We haven't initialized the renderer yet");
-			return {};
+			return nullptr;
 		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mMaterialSystem, STRING_ID("StaticMissingTexture"));
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mMaterialSystem, STRING_ID("StaticMissingTexture"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return mat::GetMaterialTextureAssetsForMaterial(*renderer.mMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
 	}
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
@@ -5477,9 +5476,9 @@ namespace r2::draw::renderer
 		return GetMissingTextureRenderMaterialParam(MENG.GetCurrentRendererRef());
 	}
 
-	const tex::Texture& GetMissingTexture()
+	const tex::Texture* GetMissingTexture()
 	{
-		return GetMissingTexture(MENG.GetCurrentRendererRef());
+		return GetMissingTexture(MENG.GetCurrentRendererPtr());
 	}
 
 	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)

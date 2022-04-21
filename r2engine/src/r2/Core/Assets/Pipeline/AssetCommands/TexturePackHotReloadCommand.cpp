@@ -212,11 +212,15 @@ namespace r2::asset::pln
 
 		if (!hasTexturePackInManifest)
 		{
-			r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index]);
+			std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+
+			std::vector<std::vector<std::string>> pathsInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
+
+			r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index], packPath.string(), pathsInTexturePack);
 		}
 		else
 		{
-			r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index]);
+			r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index], newPath);
 		}
 	}
 

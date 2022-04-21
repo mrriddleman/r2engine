@@ -377,7 +377,7 @@ namespace r2::draw::renderer
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
-	const tex::Texture& GetMissingTexture();
+	const tex::Texture* GetMissingTexture();
 
 	void SetRenderCamera(const Camera* cameraPtr);
 

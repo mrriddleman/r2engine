@@ -55,6 +55,8 @@ namespace r2::draw::tex
 
 	void UnloadAllTexturePackTexturesFromGPU(const TexturePack* texturePack, s64 slotID);
 
+	bool IsTextureInTexturePack(const TexturePack* texturePack, u64 textureName, r2::asset::Asset& asset);
+
 	//@TODO(Serge): make this so that we don't allocate stuff we don't need - right now we allocate for all texture types which is unneeded
 	u64 TexturePackMemorySize(u64 capacity, u64 alignment, u32 headerSize, u32 boundsChecking);
 

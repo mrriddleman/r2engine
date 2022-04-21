@@ -138,13 +138,6 @@ namespace r2::draw
 		r2::SHashMap<r2::draw::tex::TexturePack*>* mTexturePacks = nullptr;
 		r2::SArray<InternalMaterialData>* mInternalData = nullptr; 
 
-		//r2::SArray<MaterialTextureEntry>* mMaterialTextureEntries = nullptr; //size should the number of materials in the pack
-
-
-	//	r2::SArray<r2::SArray<r2::draw::tex::Texture>*>* mMaterialTextures = nullptr;
-	//	r2::SArray<r2::draw::tex::CubemapTexture>* mMaterialCubemapTextures = nullptr; //@TODO(Serge): make this an array of an array like mMaterialTextures
-
-
 		char mMaterialPacksManifestFilePath[fs::FILE_PATH_LENGTH];
 		char mTexturePacksManifestFilePath[fs::FILE_PATH_LENGTH];
 
@@ -193,9 +186,9 @@ namespace r2::draw::matsys
 	//Path changes functions
 	void TextureChanged(const std::string& texturePath);
 
-	void TexturePackAdded(const std::string& texturePacksManifestFilePath);
+	void TexturePackAdded(const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsAdded);
 
-	void TextureAdded(const std::string& texturePacksManifestFilePath);
+	void TextureAdded(const std::string& texturePacksManifestFilePath, const std::string& texturePath);
 
 	void TextureRemoved(const std::string& texturePacksManifestFilePath, const std::string& textureRemoved);
 	void TexturePackRemoved(const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsLeft);
