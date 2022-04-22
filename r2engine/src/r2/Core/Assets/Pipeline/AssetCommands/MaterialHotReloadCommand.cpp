@@ -4,6 +4,11 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Render/Model/Material.h"
 
+namespace
+{
+	const std::string MPRM_EXT = ".mprm";
+}
+
 namespace r2::asset::pln
 {
 
@@ -147,20 +152,19 @@ namespace r2::asset::pln
 		}
 	}
 
-	void MaterialHotReloadCommand::MaterialChangedRequest(const std::string& changedPath)
+	s64 MaterialHotReloadCommand::FindIndexForPath(const std::string& path, std::string& nameOfMaterial)
 	{
-		std::filesystem::path changedMaterialPath = changedPath;
-
-		R2_CHECK(changedMaterialPath.extension() == ".json", "This should be a json file!");
+		std::filesystem::path materialPath = path;
 
 		size_t index = 0;
 		bool found = false;
 		for (const std::string& rawWatchDir : mMaterialPacksWatchDirectoriesRaw)
 		{
 			std::filesystem::path rawWatchDirPath = rawWatchDir;
-			std::filesystem::path changedPathParent = changedMaterialPath.parent_path().parent_path();
+			std::filesystem::path changedPathParent = materialPath.parent_path().parent_path();
+			nameOfMaterial = materialPath.parent_path().stem().string();
 
-			while (!found && !changedPathParent.empty() && changedPathParent.root_path() != changedPathParent)
+			while (!found && !changedPathParent.empty() && materialPath.root_path() != changedPathParent)
 			{
 				if (rawWatchDirPath == changedPathParent)
 				{
@@ -168,20 +172,36 @@ namespace r2::asset::pln
 				}
 				else
 				{
+					nameOfMaterial = changedPathParent.stem().string();
 					changedPathParent = changedPathParent.parent_path();
 				}
 			}
 
-			if(found)
+			if (found)
 				break;
 
 			++index;
 		}
 
 		if (!found)
+			return -1;
+
+		return index;
+	}
+
+	void MaterialHotReloadCommand::MaterialChangedRequest(const std::string& changedPath)
+	{
+		std::filesystem::path changedMaterialPath = changedPath;
+
+		R2_CHECK(changedMaterialPath.extension() == ".json", "This should be a json file!");
+		std::string nameOfMaterial = "";
+		s64 index = FindIndexForPath(changedPath, nameOfMaterial);
+
+		if (index < 0)
 		{
 			return;
 		}
+
 
 		//we know which index to use now
 		std::string manifestPathBin = mManifestBinaryFilePaths[index];
@@ -192,13 +212,14 @@ namespace r2::asset::pln
 
 		//delete the mprm associated with this material
 	    std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / changedMaterialPath.parent_path().stem();
-		const std::string MPRM_EXT = ".mprm";
+		
 
 		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
 		{
 			if (file.path().extension() == MPRM_EXT)
 			{
 				std::filesystem::remove(file.path());
+				break;
 			}
 		}
 
@@ -219,12 +240,83 @@ namespace r2::asset::pln
 
 	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)
 	{
-		r2::draw::matsys::MaterialAdded(newPath);
+		std::filesystem::path newMaterialPath = newPath;
+
+		std::string nameOfMaterial = "";
+		s64 index = FindIndexForPath(newPath, nameOfMaterial);
+
+		if (index < 0)
+		{
+			return;
+		}
+
+		std::string manifestPathBin = mManifestBinaryFilePaths[index];
+		std::string manifestPathRaw = mManifestRawFilePaths[index];
+		std::string materialPackDirRaw = mMaterialPacksWatchDirectoriesRaw[index];
+		std::string materialPackDirBin = mMaterialPacksWatchDirectoriesBin[index];
+
+		std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / nameOfMaterial;
+
+		if (!std::filesystem::exists(mprmParentDirBinPath))
+		{
+			std::filesystem::create_directory(mprmParentDirBinPath);
+		}
+
+		GenerateMaterialParamsFromJSON(mprmParentDirBinPath.string(), newPath);
+
+		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+
+		if (!result)
+		{
+			R2_CHECK(false, "We failed to regenerate the material params pack manifest");
+			return;
+		}
+
+		r2::draw::matsys::MaterialAdded(manifestPathBin, newPath);
 	}
 
 	void MaterialHotReloadCommand::MaterialRemovedRequest(const std::string& removedPath)
 	{
-		r2::draw::matsys::MaterialRemoved(removedPath);
+		std::filesystem::path removedMaterialPath = removedPath;
+
+		std::string nameOfMaterial = "";
+		s64 index = FindIndexForPath(removedPath, nameOfMaterial);
+
+		if (index < 0)
+		{
+			return;
+		}
+
+		std::string manifestPathBin = mManifestBinaryFilePaths[index];
+		std::string manifestPathRaw = mManifestRawFilePaths[index];
+		std::string materialPackDirRaw = mMaterialPacksWatchDirectoriesRaw[index];
+		std::string materialPackDirBin = mMaterialPacksWatchDirectoriesBin[index];
+
+		std::filesystem::path mprmParentDirBinPath = std::filesystem::path(materialPackDirBin) / nameOfMaterial;
+
+		for (const auto& file : std::filesystem::directory_iterator(mprmParentDirBinPath))
+		{
+			if (file.path().extension() == MPRM_EXT)
+			{
+				std::filesystem::remove(file.path());
+				break;
+			}
+		}
+
+		if (std::filesystem::exists(mprmParentDirBinPath))
+		{
+			std::filesystem::remove(mprmParentDirBinPath);
+		}
+
+		bool result = RegenerateMaterialParamsPackManifest(manifestPathBin, manifestPathRaw, materialPackDirBin, materialPackDirRaw);
+
+		if (!result)
+		{
+			R2_CHECK(false, "We failed to regenerate the material params pack manifest");
+			return;
+		}
+		
+		r2::draw::matsys::MaterialRemoved(manifestPathBin, removedPath);
 	}
 
 }

@@ -33,6 +33,8 @@ namespace r2::asset::pln
 		void MaterialAddedRequest(const std::string& newPath);
 		void MaterialRemovedRequest(const std::string& removedPath);
 
+		s64 FindIndexForPath(const std::string& path, std::string& nameOfMaterial);
+
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mMaterialPacksWatchDirectoriesRaw;

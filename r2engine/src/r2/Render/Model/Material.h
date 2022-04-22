@@ -196,9 +196,9 @@ namespace r2::draw::matsys
 
 	void MaterialChanged(const std::string& materialPathChanged);
 
-	void MaterialAdded(const std::string& materialPathAdded);
+	void MaterialAdded(const std::string& materialPacksManifestFile, const std::string& materialPathAdded);
 
-	void MaterialRemoved(const std::string& materialPathRemoved);
+	void MaterialRemoved(const std::string& materialPacksManifestFile, const std::string& materialPathRemoved);
 
 #endif // R2_ASSET_PIPELINE
 

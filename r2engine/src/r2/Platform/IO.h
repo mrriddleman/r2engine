@@ -120,7 +120,7 @@ namespace r2::io
     extern s32 KEY_DOWN;
     extern s32 KEY_UP;
     
-    enum R2_API ControllerButtonName
+    enum ControllerButtonName
     {
         CONTROLLER_BUTTON_INVALID = -1,
         CONTROLLER_BUTTON_A,
@@ -141,13 +141,13 @@ namespace r2::io
         CONTROLLER_BUTTON_MAX
     };
     
-    struct R2_API ControllerButton
+    struct ControllerButton
     {
         const ControllerButtonName buttonName;
         u8 state = BUTTON_RELEASED;
     };
     
-    enum R2_API ControllerAxisName
+    enum ControllerAxisName
     {
         CONTROLLER_AXIS_INVALID = -1,
         CONTROLLER_AXIS_LEFTX,
@@ -159,13 +159,13 @@ namespace r2::io
         CONTROLLER_AXIS_MAX
     };
     
-    struct R2_API ControllerAxis
+    struct ControllerAxis
     {
         const ControllerAxisName axis;
         s16 value = 0;
     };
     
-    struct R2_API MouseData
+    struct MouseData
     {
         u8 numClicks = 0;
         u8 state  = 0;
@@ -175,7 +175,7 @@ namespace r2::io
         u32 direction = MOUSE_DIRECTION_NORMAL;
     };
     
-    struct R2_API Key
+    struct Key
     {
         enum
         {
@@ -192,7 +192,7 @@ namespace r2::io
     
     using ControllerID = s32;
     
-    struct R2_API ControllerState
+    struct ControllerState
     {
         static const s32 INVALID_CONTROLLER_ID = -1;
         ControllerID controllerID = INVALID_CONTROLLER_ID;

@@ -483,7 +483,7 @@ namespace r2::asset::pln
 		//we do that for each pack
 		for (const auto& materialParamsPackDir : std::filesystem::directory_iterator(binaryDir))
 		{
-			if (materialParamsPackDir.path().filename() == ".DS_Store")
+			if (materialParamsPackDir.path().filename() == ".DS_Store" || std::filesystem::is_empty(materialParamsPackDir))
 			{
 				continue;
 			}

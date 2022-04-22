@@ -2764,12 +2764,12 @@ namespace r2::draw::matsys
 		mat::s_materialsChangesQueue.Push(materialPathChanged);
 	}
 
-	void MaterialAdded(const std::string& materialPathAdded)
+	void MaterialAdded(const std::string& materialPacksManifestFile, const std::string& materialPathAdded)
 	{
 		//@TODO(Serge): implement
 	}
 
-	void MaterialRemoved(const std::string& materialPathRemoved)
+	void MaterialRemoved(const std::string& materialPacksManifestFile, const std::string& materialPathRemoved)
 	{
 		//@TODO(Serge): implement
 	}
