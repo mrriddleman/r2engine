@@ -39,7 +39,7 @@ namespace r2::draw
 	struct RenderMaterialParam
 	{
 		tex::TextureAddress texture;
-		glm::vec4 color; //for normal floats, we'll fill all the values with that value so when we access the channel, we get it the right value
+		glm::vec4 color = glm::vec4(0); //for normal floats, we'll fill all the values with that value so when we access the channel, we get it the right value
 	};
 
 	struct RenderMaterialParams
@@ -58,10 +58,10 @@ namespace r2::draw
 		RenderMaterialParam clearCoatRoughness;
 		RenderMaterialParam clearCoatNormal;
 
-		b32 doubleSided;
-		f32 heightScale;
-		f32 reflectance;
-		s32 padding;
+		b32 doubleSided = false;
+		f32 heightScale = 0.0f;
+		f32 reflectance = 0.0f;
+		s32 padding = 0;
 	};
 
 	//struct MaterialTextureEntry
@@ -146,6 +146,8 @@ namespace r2::draw
 
 		const flat::MaterialParamsPack* mMaterialParamsPack = nullptr;
 		const flat::TexturePacksManifest* mTexturePackManifest = nullptr;
+
+		RenderMaterialParams mDefaultRenderMaterialParams;
 
 		r2::asset::AssetCache* mAssetCache = nullptr;
 		r2::mem::utils::MemBoundary mCacheBoundary = {};

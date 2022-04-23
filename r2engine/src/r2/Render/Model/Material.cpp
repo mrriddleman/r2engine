@@ -774,12 +774,17 @@ namespace r2::draw::mat
 
 	const RenderMaterialParams& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID)
 	{
+		if (mat::IsInvalidHandle(matID))
+		{
+			return system.mDefaultRenderMaterialParams;
+		}
+
 		R2_CHECK(system.mSlot == matID.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
 		u64 materialIndex = GetIndexFromMaterialHandle(matID);
 
 		if (materialIndex >= r2::sarr::Size(*system.mInternalData))
 		{
-			return RenderMaterialParams{};
+			return system.mDefaultRenderMaterialParams;
 		}
 
 		return r2::sarr::At(*system.mInternalData, materialIndex).renderMaterial;
@@ -2175,6 +2180,9 @@ namespace r2::draw::matsys
 
 		system->mMaterialParamsPack = flat::GetMaterialParamsPack(materialParamsPackData);
 		system->mTexturePackManifest = flat::GetTexturePacksManifest(texturePacksData);
+
+
+		system->mDefaultRenderMaterialParams.albedo.color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 		return system;
 	}
