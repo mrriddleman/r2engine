@@ -243,6 +243,9 @@ namespace r2::draw::mat
 	ShaderHandle GetShaderHandle(const MaterialSystem& system, MaterialHandle matID);
 	const RenderMaterialParams& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID);
 
+	ShaderHandle GetShaderHandle(MaterialHandle matID);
+	const RenderMaterialParams& GetRenderMaterial(MaterialHandle matID);
+
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName);
 	MaterialHandle GetMaterialHandleFromMaterialPath(const MaterialSystem& system, const char* materialPath);
 

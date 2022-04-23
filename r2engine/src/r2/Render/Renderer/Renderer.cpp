@@ -2682,14 +2682,7 @@ namespace r2::draw::renderer
 			{
 				const MaterialHandle materialHandle = r2::sarr::At(*modelRef.mMaterialHandles, r2::sarr::At(*modelRef.mMeshRefs, meshIndex).materialIndex);
 
-				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "this should be valid");
-
-				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
-
-				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-
-				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
+				ShaderHandle materialShaderHandle = mat::GetShaderHandle(materialHandle);
 
 
 				R2_CHECK(materialShaderHandle != InvalidShader, "This shouldn't be invalid!");
@@ -3005,10 +2998,7 @@ namespace r2::draw::renderer
 		{
 			const ModelRef& fullScreenTriangleModelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
 
-			r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(renderer.mFinalCompositeMaterialHandle.slot);
-			R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-			ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, renderer.mFinalCompositeMaterialHandle);
+			ShaderHandle materialShaderHandle = mat::GetShaderHandle(renderer.mFinalCompositeMaterialHandle);
 
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
@@ -4259,12 +4249,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(!mat::IsInvalidHandle(debugRenderBatch.materialHandle), "This can't be invalid!");
 
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(debugRenderBatch.materialHandle.slot);
-
-		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-
-		ShaderHandle shaderID = mat::GetShaderHandle(*matSystem, debugRenderBatch.materialHandle);
+		ShaderHandle shaderID = mat::GetShaderHandle(debugRenderBatch.materialHandle);
 
 		for (u64 i = 0; i < numDebugObjectsToDraw; ++i)
 		{
@@ -4364,11 +4349,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(!mat::IsInvalidHandle(debugRenderBatch.materialHandle), "This can't be invalid!");
 
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(debugRenderBatch.materialHandle.slot);
-
-		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-		ShaderHandle shaderID = mat::GetShaderHandle(*matSystem, debugRenderBatch.materialHandle);
+		ShaderHandle shaderID = mat::GetShaderHandle(debugRenderBatch.materialHandle);
 
 		key::DebugKey preDrawKey;
 		preDrawKey.keyValue = 0;

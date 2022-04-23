@@ -605,6 +605,7 @@ namespace r2
 				r2::io::MouseData mouseData;
 
 				mouseData.direction = e.wheel.direction;
+                
 				mouseData.x = e.wheel.x;
 				mouseData.y = e.wheel.y;
 

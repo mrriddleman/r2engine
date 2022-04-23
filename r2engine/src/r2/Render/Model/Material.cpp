@@ -176,11 +176,14 @@ namespace r2::draw::mat
 
 	u64 GetIndexFromMaterialHandle(MaterialHandle handle)
 	{
-		if (handle.handle == InvalidMaterialHandle.handle)
+		if (IsInvalidHandle(handle))
 		{
 			R2_CHECK(false, "You passed in an invalid material handle!");
 			return 0;
 		}
+		
+
+
 
 		return static_cast<u64>(handle.handle - 1);
 	}
@@ -452,8 +455,9 @@ namespace r2::draw::mat
 		//@TODO(Serge): implement
 	}
 
-	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHanle)
+	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHandle)
 	{
+		R2_CHECK(system.mSlot == materialHandle.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
 		//@TODO(Serge): implement
 	}
 
@@ -474,6 +478,8 @@ namespace r2::draw::mat
 
 	void UploadMaterialTexturesToGPU(MaterialSystem& system, MaterialHandle matID)
 	{
+		R2_CHECK(system.mSlot == matID.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
+
 		u64 index = GetIndexFromMaterialHandle(matID);
 		UploadMaterialTexturesToGPUInternal(system, index);
 	}
@@ -675,6 +681,8 @@ namespace r2::draw::mat
 
 	void UnloadAllMaterialTexturesFromGPUForMaterial(MaterialSystem& system, MaterialHandle materialHandle)
 	{
+		R2_CHECK(system.mSlot == materialHandle.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
+
 		if (mat::IsInvalidHandle(materialHandle))
 		{
 			R2_CHECK(false, "Passed in invalid material handle");
@@ -735,6 +743,8 @@ namespace r2::draw::mat
 
 	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID)
 	{
+		R2_CHECK(system.mSlot == matID.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
+
 		if (IsInvalidHandle(matID))
 		{
 			return nullptr;
@@ -749,7 +759,10 @@ namespace r2::draw::mat
 
 	ShaderHandle GetShaderHandle(const MaterialSystem& system, MaterialHandle matID)
 	{
+
+		R2_CHECK(system.mSlot == matID.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
 		u64 materialIndex = GetIndexFromMaterialHandle(matID);
+
 
 		if (materialIndex >= r2::sarr::Size(*system.mInternalData))
 		{
@@ -761,6 +774,7 @@ namespace r2::draw::mat
 
 	const RenderMaterialParams& GetRenderMaterial(const MaterialSystem& system, MaterialHandle matID)
 	{
+		R2_CHECK(system.mSlot == matID.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
 		u64 materialIndex = GetIndexFromMaterialHandle(matID);
 
 		if (materialIndex >= r2::sarr::Size(*system.mInternalData))
@@ -769,6 +783,33 @@ namespace r2::draw::mat
 		}
 
 		return r2::sarr::At(*system.mInternalData, materialIndex).renderMaterial;
+	}
+
+	ShaderHandle GetShaderHandle(MaterialHandle matID)
+	{
+
+		R2_CHECK(!r2::draw::mat::IsInvalidHandle(matID), "this should be valid");
+
+		MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(matID.slot);
+
+		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+		u64 materialIndex = GetIndexFromMaterialHandle(matID);
+
+		return r2::sarr::At(*(matSystem->mInternalData), materialIndex).shaderHandle;
+	}
+
+	const RenderMaterialParams& GetRenderMaterial(MaterialHandle matID)
+	{
+		R2_CHECK(!r2::draw::mat::IsInvalidHandle(matID), "this should be valid");
+
+		MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(matID.slot);
+
+		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+		u64 materialIndex = GetIndexFromMaterialHandle(matID);
+
+		return r2::sarr::At(*(matSystem->mInternalData), materialIndex).renderMaterial;
 	}
 
 	MaterialHandle GetMaterialHandleFromMaterialName(const MaterialSystem& system, u64 materialName)
@@ -810,6 +851,8 @@ namespace r2::draw::mat
 
 	const MaterialTextureAssets& GetMaterialTextureAssetsForMaterial(const MaterialSystem& system, MaterialHandle materialHandle)
 	{
+		R2_CHECK(system.mSlot == materialHandle.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
+
 		u64 materialIndex = GetIndexFromMaterialHandle(materialHandle);
 
 		if (materialIndex >= r2::sarr::Size(*system.mInternalData))

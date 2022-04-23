@@ -122,6 +122,6 @@ namespace r2
         s32 KEY_RIGHT = SDL_SCANCODE_RIGHT;
         s32 KEY_LEFT = SDL_SCANCODE_LEFT;
         s32 KEY_DOWN = SDL_SCANCODE_DOWN;
-        s32 KEY_UP = SDL_SCANCODE_UP;
+        s32 KEY_UP = SDL_SCANCODE_UP; 
     }
 }
