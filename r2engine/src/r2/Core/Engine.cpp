@@ -27,7 +27,6 @@
 #endif
 
 #ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/TexturePackHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/SoundHotReloadCommand.h"

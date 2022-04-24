@@ -18,7 +18,7 @@
 #include <string>
 
 #ifdef R2_ASSET_PIPELINE
-#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
+#include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #endif
 
 namespace r2
