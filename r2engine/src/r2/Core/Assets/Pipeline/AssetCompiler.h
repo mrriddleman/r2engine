@@ -10,15 +10,17 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include <string>
-#include "r2/Core/Assets/Pipeline/AssetWatcher.h"
 
 namespace r2::asset::pln
 {
     struct AssetManifest;
+    using AssetsBuiltFunc = std::function<void(std::vector<std::string> paths)>;
 }
 
 namespace r2::asset::pln::cmp
 {
+    
+
     bool Init(const std::string& tempBuildPath, r2::asset::pln::AssetsBuiltFunc assetsBuiltFunc);
     //Should ignore dups
     void PushBuildRequest(const r2::asset::pln::AssetManifest& manifest);

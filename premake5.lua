@@ -24,14 +24,17 @@ includeDirs["catch2"] = "r2engine/vendor/Catch2"
 includeDirs["sha256"] = "r2engine/vendor/sha256"
 includeDirs["stb"] = "r2engine/vendor/stb"
 includeDirs["cgltf"] = "r2engine/vendor/cgltf"
+includeDirs["assetlib"] = "r2engine/libs/assetlib/include"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
 include "r2engine/vendor/loguru"
 include "r2engine/vendor/imgui"
+include "r2engine/libs/assetlib"
 include "r2engine/libs/ibl"
 include "r2engine/libs/cmdln"
 include "r2engine/tools/cubemapgen"
+
 
 project "r2engine"
 	location "r2engine"
@@ -75,6 +78,7 @@ project "r2engine"
 		"%{includeDirs.sha256}",
 		"%{includeDirs.stb}",
 		"%{includeDirs.cgltf}",
+		"%{includeDirs.assetlib}"
 	}
 
 	links
@@ -82,6 +86,7 @@ project "r2engine"
 		"miniz",
 		"loguru",
 		"imgui",
+		"assetlib"
 	}
 
 	defines 
@@ -299,6 +304,7 @@ project "r2Tests"
 	includedirs
 	{
 		"%{includeDirs.catch2}",
+		"%{includeDirs.glm}",
 		"r2engine/src"
 	}
 

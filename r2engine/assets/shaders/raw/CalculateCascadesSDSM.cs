@@ -259,6 +259,8 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
+	
+
 	vec3 center = vec3(0.0);
 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
 	{
@@ -280,11 +282,13 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
-	mat4 texScaleBias = mat4(0.5);
-	texScaleBias[2][2] = 1.0;
+	mat4 texScaleBias = mat4(1.0);
+	texScaleBias[0][0] = 0.5;
+	texScaleBias[1][1] = 0.5;
+	texScaleBias[2][2] = 0.5;
 	texScaleBias[3][0] = 0.5;
 	texScaleBias[3][1] = 0.5;
-	texScaleBias[3][2] = 0;
+	texScaleBias[3][2] = 0.5;
 
 	return texScaleBias * shadowCamera * lightView;
 }
@@ -332,6 +336,21 @@ void main(void)
 		vec4 pt = projViewInv * vec4(frustumCorners[i], 1.0);
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
+
+	// float minDistance = uintBitsToFloat(gPartitionsU.intervalBegin[0]);
+
+	// float prevSplitDist = gPartitions.intervalBegin[cascadeIndex];
+	// float splitDist = gPartitions.intervalEnd[cascadeIndex];
+
+
+	// for(int i = 0; i < 4; ++i)
+ //    {
+ //        vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
+ //        vec3 nearCornerRay = cornerRay * prevSplitDist;
+ //        vec3 farCornerRay = cornerRay * splitDist;
+ //        frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
+ //        frustumCorners[i] = frustumCorners[i] + nearCornerRay;
+ //    }
 
 
 	vec3 center = vec3(0.0);

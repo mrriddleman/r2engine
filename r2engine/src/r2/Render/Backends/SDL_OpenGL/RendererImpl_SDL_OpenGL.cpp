@@ -338,6 +338,18 @@ namespace r2::draw::rendererimpl
 		glCullFace(cullFace);
 	}
 
+	void SetDepthClamp(bool shouldDepthClamp)
+	{
+		if (shouldDepthClamp)
+		{
+			glEnable(GL_DEPTH_CLAMP);
+		}
+		else
+		{
+			glDisable(GL_DEPTH_CLAMP);
+		}
+	}
+
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name)
 	{
 		const Shader* shader = shadersystem::GetShader(shaderHandle);

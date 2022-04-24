@@ -11,6 +11,8 @@
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Assets/AssetLoader.h"
 #include "r2/Core/Assets/DefaultAssetLoader.h"
+#include "assetlib/AssetFile.h"
+
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
 #include "r2/Core/Memory/MemoryBoundsChecking.h"
 #endif

@@ -1,0 +1,43 @@
+namespace flat;
+
+file_identifier "rtex";
+file_extension "rtex";
+
+
+enum CompressionMode : uint8
+{
+	NONE = 0,
+	LZ4
+}
+
+table MipInfo
+{
+	width:uint;
+	height:uint;
+	compressedSize:uint;
+	originalSize:uint;
+}
+
+enum TextureFormat : uint16
+{
+	UNKNOWN = 0,
+	RGBA8,
+	RGB8,
+	RGBA32,
+	R8,
+	R32,
+	SRGB8,
+	SRGBA8,
+	COMPRESSED_RGBA_S3TC_DXT1_EXT
+}
+
+table TextureMetaData
+{
+	originalPath:string;
+	textureSize:ulong;
+	textureFormat:TextureFormat;
+	compressionMode:CompressionMode;
+	mips:[MipInfo];
+}
+
+root_type TextureMetaData;

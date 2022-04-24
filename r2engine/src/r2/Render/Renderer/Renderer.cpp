@@ -1001,8 +1001,10 @@ namespace r2::draw::renderer
 		//}
 
 		cmdbkt::Submit(*renderer.mPreRenderBucket);
+	//	rendererimpl::SetDepthClamp(true);
 		cmdbkt::Submit(*renderer.mDepthPrePassBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
+	//	rendererimpl::SetDepthClamp(false);
 		cmdbkt::Submit(*renderer.mCommandBucket);
 
 #ifdef R2_DEBUG

@@ -109,7 +109,7 @@ float LogPartitionFromRange(uint part, float minDistance, float maxDistance)
 		float lambda = 1;
 		float ratio = maxZ / minZ;
 		float power = float(part + 1) * (1.0 / float(NUM_FRUSTUM_SPLITS));
-		float logScale = minZ * pow(ratio, power);
+		float logScale = minZ * pow(abs(ratio), power);
 		float uniformScale = minZ + range * power;
 		float d = lambda * (logScale - uniformScale) + uniformScale;
 		z =  (d - nearClip) / clipRange;
