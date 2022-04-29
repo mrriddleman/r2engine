@@ -5,7 +5,7 @@
 
 namespace r2::assets::assetlib
 {
-	bool save_binaryfile(const  char* path, const AssetFile& file)
+	bool save_binaryfile(const char* path, const AssetFile& file)
 	{
 		file.OpenForWrite(path);
 

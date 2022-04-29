@@ -26,6 +26,7 @@ includeDirs["stb"] = "r2engine/vendor/stb"
 includeDirs["cgltf"] = "r2engine/vendor/cgltf"
 includeDirs["assetlib"] = "r2engine/libs/assetlib/include"
 
+
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
 include "r2engine/vendor/loguru"
@@ -34,7 +35,7 @@ include "r2engine/libs/assetlib"
 include "r2engine/libs/ibl"
 include "r2engine/libs/cmdln"
 include "r2engine/tools/cubemapgen"
-
+include "r2engine/tools/assetconverter"
 
 project "r2engine"
 	location "r2engine"

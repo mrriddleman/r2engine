@@ -69,6 +69,15 @@ r2engine/libs/ibl/ibl.vcxproj.user
 r2engine/tools/cubemapgen/cubemapgen.vcxproj.user
 r2engine/libs/cmdln/cmdln.vcxproj.user
 
+r2engine/libs/assetlib/bin/**
+r2engine/libs/assetlib/bin-int/**
+r2engine/libs/assetlib/*.vcxproj
+r2engine/libs/assetlib/assetlib.vcxproj.user
+
+r2engine/tools/assetconverter/bin/
+r2engine/tools/assetconverter/bin-int/
+r2engine/tools/assetconverter/*.vcxproj
+
 #r2Tests
 r2Tests/*.xcodeproj/
 r2Tests/*.vcxproj

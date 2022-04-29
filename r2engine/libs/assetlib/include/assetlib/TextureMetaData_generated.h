@@ -106,14 +106,26 @@ struct MipInfo FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint32_t width() const {
     return GetField<uint32_t>(VT_WIDTH, 0);
   }
+  bool mutate_width(uint32_t _width) {
+    return SetField<uint32_t>(VT_WIDTH, _width, 0);
+  }
   uint32_t height() const {
     return GetField<uint32_t>(VT_HEIGHT, 0);
+  }
+  bool mutate_height(uint32_t _height) {
+    return SetField<uint32_t>(VT_HEIGHT, _height, 0);
   }
   uint32_t compressedSize() const {
     return GetField<uint32_t>(VT_COMPRESSEDSIZE, 0);
   }
+  bool mutate_compressedSize(uint32_t _compressedSize) {
+    return SetField<uint32_t>(VT_COMPRESSEDSIZE, _compressedSize, 0);
+  }
   uint32_t originalSize() const {
     return GetField<uint32_t>(VT_ORIGINALSIZE, 0);
+  }
+  bool mutate_originalSize(uint32_t _originalSize) {
+    return SetField<uint32_t>(VT_ORIGINALSIZE, _originalSize, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -179,17 +191,32 @@ struct TextureMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *originalPath() const {
     return GetPointer<const flatbuffers::String *>(VT_ORIGINALPATH);
   }
+  flatbuffers::String *mutable_originalPath() {
+    return GetPointer<flatbuffers::String *>(VT_ORIGINALPATH);
+  }
   uint64_t textureSize() const {
     return GetField<uint64_t>(VT_TEXTURESIZE, 0);
+  }
+  bool mutate_textureSize(uint64_t _textureSize) {
+    return SetField<uint64_t>(VT_TEXTURESIZE, _textureSize, 0);
   }
   flat::TextureFormat textureFormat() const {
     return static_cast<flat::TextureFormat>(GetField<uint16_t>(VT_TEXTUREFORMAT, 0));
   }
+  bool mutate_textureFormat(flat::TextureFormat _textureFormat) {
+    return SetField<uint16_t>(VT_TEXTUREFORMAT, static_cast<uint16_t>(_textureFormat), 0);
+  }
   flat::CompressionMode compressionMode() const {
     return static_cast<flat::CompressionMode>(GetField<uint8_t>(VT_COMPRESSIONMODE, 0));
   }
+  bool mutate_compressionMode(flat::CompressionMode _compressionMode) {
+    return SetField<uint8_t>(VT_COMPRESSIONMODE, static_cast<uint8_t>(_compressionMode), 0);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<flat::MipInfo>> *mips() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MipInfo>> *>(VT_MIPS);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<flat::MipInfo>> *mutable_mips() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::MipInfo>> *>(VT_MIPS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -276,6 +303,10 @@ inline const flat::TextureMetaData *GetTextureMetaData(const void *buf) {
 
 inline const flat::TextureMetaData *GetSizePrefixedTextureMetaData(const void *buf) {
   return flatbuffers::GetSizePrefixedRoot<flat::TextureMetaData>(buf);
+}
+
+inline TextureMetaData *GetMutableTextureMetaData(void *buf) {
+  return flatbuffers::GetMutableRoot<TextureMetaData>(buf);
 }
 
 inline const char *TextureMetaDataIdentifier() {

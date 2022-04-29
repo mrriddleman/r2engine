@@ -1,13 +1,15 @@
-
+#ifndef __ASSET_LIB_ASSET_FILE_H__
+#define __ASSET_LIB_ASSET_FILE_H__
 #include <vector>
 #include <string>
 
-namespace r2::assets::assetlib {
+namespace r2::assets::assetlib
+{
 
 	struct BinaryBlob
 	{
-		uint32_t size;
-		char* data;
+		uint32_t size = 0;
+		char* data = nullptr;
 	};
 	
 	struct AssetFile 
@@ -20,6 +22,7 @@ namespace r2::assets::assetlib {
 		virtual uint32_t Size() = 0;
 
 		virtual uint32_t Read(char* data, uint32_t dataBufSize) = 0;
+		virtual uint32_t Read(char* data, uint32_t offset, uint32_t dataBufSize) = 0;
 		virtual uint32_t Write(const char* data, uint32_t size) const = 0;
 		virtual bool AllocateForBlob(BinaryBlob& blob) = 0;
 
@@ -36,3 +39,5 @@ namespace r2::assets::assetlib {
 
 	bool load_binaryfile(const char* path, AssetFile& outputFile);
 }
+
+#endif

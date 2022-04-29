@@ -1,8 +1,8 @@
 import os
 import platform
 
-def GeneratedCode(flatcPath, codeOutputDir, flatbufferPath, fbsName):
-	osCall = flatcPath + " -c -o " + codeOutputDir + " " + flatbufferPath + fbsName
+def GeneratedCode(flatcPath, codeOutputDir, flatbufferPath, fbsName, extraParam):
+	osCall = flatcPath + " -c -o " + codeOutputDir + " " + flatbufferPath + fbsName + " " + extraParam
 	os.system(osCall)
 	return
 
@@ -35,8 +35,25 @@ fbsCodeOutputMap = {
 "TextureMetaData.fbs": "/../libs/assetlib/include/assetlib/"
 }
 
+extraParams = {
+"AssetManifest.fbs": "",
+"SoundDefinition.fbs": "",
+"ShaderManifest.fbs": "",
+"Utils.fbs": "",
+"Material.fbs": "",
+"MaterialPack.fbs": "",
+"Mesh.fbs" : "",
+"Model.fbs": "",
+"TexturePackManifest.fbs": "",
+"TexturePackMetaData.fbs": "",
+"MaterialParams.fbs":"",
+"MaterialParamsPack.fbs":"",
+"TextureMetaData.fbs": "--gen-mutable"
+}
+
 for filename in os.listdir(dataPath):
 	if(filename in fbsCodeOutputMap):
 		outputPath = srcPath + fbsCodeOutputMap[filename]
+		extraParam = extraParams[filename]
 		if os.path.exists(outputPath):
-			GeneratedCode(flatcPath, outputPath, dataPath, filename)
+			GeneratedCode(flatcPath, outputPath, dataPath, filename, extraParam)
