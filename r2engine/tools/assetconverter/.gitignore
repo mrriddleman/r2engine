@@ -3,3 +3,5 @@
 
 *.vcxproj
 *.vcxproj.user
+
+/libs/nvtt/**

@@ -16,6 +16,8 @@
 #include <filesystem>
 #include <string>
 
+#include "nvtt/nvtt.h"
+
 namespace fs = std::filesystem;
 
 struct Arguments

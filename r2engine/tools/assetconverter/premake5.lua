@@ -5,7 +5,7 @@ assetconverterIncludeDirs["glm"] = "../../vendor/glm"
 assetconverterIncludeDirs["cmdln"] = "../../libs/cmdln/include"
 assetconverterIncludeDirs["stb"] = "../../vendor/stb"
 assetconverterIncludeDirs["flatbuffers"] = "../../vendor/flatbuffers/include"
-
+assetconverterIncludeDirs["nvtt"] = "./libs/nvtt/include"
 
 project "assetconverter"
 	kind "ConsoleApp"
@@ -30,6 +30,7 @@ project "assetconverter"
 		"%{assetconverterIncludeDirs.cmdln}",
 		"%{assetconverterIncludeDirs.stb}",
 		"%{assetconverterIncludeDirs.flatbuffers}",
+		"%{assetconverterIncludeDirs.nvtt}"
 	}
 
 	sysincludedirs
@@ -44,10 +45,16 @@ project "assetconverter"
 		"Publish"
 	}
 
+	libdirs
+	{
+		"libs/nvtt/lib/x64-v142"
+	}
+
 	links
 	{
 		"assetlib",
-		"cmdln"
+		"cmdln",
+		"nvtt30106"
 	}
 
 	filter "system:windows"
@@ -75,7 +82,8 @@ project "assetconverter"
 
 		postbuildcommands
 		{
-			"{COPY} ../../vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ./bin/Debug_windows_x86_64/%{prj.name}"
+			"{COPY} ../../vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ./bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Debug_windows_x86_64/%{prj.name}"
 		}
 
 	filter "configurations:Release"
@@ -96,7 +104,8 @@ project "assetconverter"
 
 		postbuildcommands
 		{
-			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Release_windows_x86_64/%{prj.name}"
+			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Release_windows_x86_64/%{prj.name}"
 		}
 
 
@@ -118,5 +127,6 @@ project "assetconverter"
 
 		postbuildcommands
 		{
-			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Publish_windows_x86_64/%{prj.name}"
+			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Publish_windows_x86_64/%{prj.name}"
 		}
