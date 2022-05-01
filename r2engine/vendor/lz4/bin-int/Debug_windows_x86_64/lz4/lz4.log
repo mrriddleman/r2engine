@@ -1,5 +1,0 @@
-﻿  lz4.c
-  lz4frame.c
-  lz4hc.c
-  xxhash.c
-  lz4.vcxproj -> D:\Projects\r2engine\r2engine\vendor\lz4\bin\Debug_windows_x86_64\lz4\lz4.lib

@@ -1,2 +1,0 @@
-D:\Projects\r2engine\r2engine\vendor\lz4\bin\Debug_windows_x86_64\lz4\lz4.pdb
-D:\Projects\r2engine\r2engine\vendor\lz4\bin-int\Debug_windows_x86_64\lz4\lz4.pdb
