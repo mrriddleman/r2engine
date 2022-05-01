@@ -69,6 +69,9 @@ r2engine/libs/ibl/ibl.vcxproj.user
 r2engine/tools/cubemapgen/cubemapgen.vcxproj.user
 r2engine/libs/cmdln/cmdln.vcxproj.user
 
+r2engine/vendor/lz4/bin-int
+r2engine/vendor/lz4/bin
+
 r2engine/libs/assetlib/bin/**
 r2engine/libs/assetlib/bin-int/**
 r2engine/libs/assetlib/*.vcxproj
