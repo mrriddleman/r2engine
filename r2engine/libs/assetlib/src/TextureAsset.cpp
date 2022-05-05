@@ -62,7 +62,7 @@ namespace r2::assets::assetlib
 	{
 		assert(info != nullptr && "Passed in a null texture meta data object");
 		assert(pixelData != nullptr && "Passed in empty pixel data");
-
+		assert(file.binaryBlob.data != nullptr && "binary blob data shouldn't be null!");
 		file.type[0] = 'r';
 		file.type[1] = 't';
 		file.type[2] = 'e';
@@ -79,6 +79,8 @@ namespace r2::assets::assetlib
 		{
 			flat::MipInfo* mip = info->mutable_mips()->GetMutableObject(p);
 
+			page_buffer.resize(mip->originalSize());
+
 			int compressStaging = LZ4_compressBound(mip->originalSize());
 
 			page_buffer.resize(compressStaging);
@@ -90,6 +92,7 @@ namespace r2::assets::assetlib
 			if (compressionRate > 0.8f)
 			{
 				compressedSize = mip->originalSize();
+
 				page_buffer.resize(compressedSize);
 
 				memcpy(page_buffer.data(), pixels, compressedSize);
@@ -101,11 +104,11 @@ namespace r2::assets::assetlib
 
 			mip->mutate_compressedSize(compressedSize);
 
-			memcpy(file.binaryBlob.data + file.binaryBlob.size, page_buffer.data(), page_buffer.size());
+			memcpy(&file.binaryBlob.data[file.binaryBlob.size], page_buffer.data(), page_buffer.size() * sizeof(char));
 
-			file.binaryBlob.size += static_cast<uint32_t>(page_buffer.size());
+			file.binaryBlob.size += page_buffer.size();
 
-			pixels += mip->originalSize();
+			pixels += mip->originalSize();			
 		}
 
 		//these will have to be set already since we can't get the data pointer or the size at this point

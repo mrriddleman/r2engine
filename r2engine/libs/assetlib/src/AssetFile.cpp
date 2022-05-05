@@ -7,6 +7,11 @@ namespace r2::assets::assetlib
 {
 	bool save_binaryfile(const char* path, const AssetFile& file)
 	{
+		if (!file.metaData.data || !file.binaryBlob.data || file.binaryBlob.size <= 0 || file.metaData.size <= 0)
+		{
+			return false;
+		}
+
 		file.OpenForWrite(path);
 
 		file.Write(file.type, 4);

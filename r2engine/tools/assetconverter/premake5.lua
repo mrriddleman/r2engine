@@ -83,7 +83,8 @@ project "assetconverter"
 		postbuildcommands
 		{
 			"{COPY} ../../vendor/assimp/Windows/lib/Debug/assimp-vc142-mtd.dll ./bin/Debug_windows_x86_64/%{prj.name}",
-			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Debug_windows_x86_64/%{prj.name}"
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Debug_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/cudart64_110.dll ./bin/Debug_windows_x86_64/%{prj.name}"
 		}
 
 	filter "configurations:Release"
@@ -105,7 +106,8 @@ project "assetconverter"
 		postbuildcommands
 		{
 			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Release_windows_x86_64/%{prj.name}",
-			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Release_windows_x86_64/%{prj.name}"
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Release_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/cudart64_110.dll ./bin/Release_windows_x86_64/%{prj.name}"
 		}
 
 
@@ -128,5 +130,6 @@ project "assetconverter"
 		postbuildcommands
 		{
 			"{COPY} ../../vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ./bin/Publish_windows_x86_64/%{prj.name}",
-			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Publish_windows_x86_64/%{prj.name}"
+			"{COPY} ./libs/nvtt/nvtt30106.dll ./bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ./libs/nvtt/cudart64_110.dll ./bin/Publish_windows_x86_64/%{prj.name}"
 		}
