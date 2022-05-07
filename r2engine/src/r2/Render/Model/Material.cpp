@@ -344,16 +344,10 @@ namespace r2::draw::mat
 				++numTexturesForMaterial;
 				if (found)
 				{
-
-					//mak
-					
 					r2::sarr::Push(*textureAssets, texAssetEntry);
 				}
-				//@TODO(Serge): I think the roughness/metallic combo is messing this up - need a way around it
-
 				else
 				{
-					//++numTexturesForMaterial;
 					texAssetEntry.textureAsset = r2::asset::Asset();
 					r2::sarr::Push(*textureAssets, texAssetEntry);
 				}
@@ -402,6 +396,9 @@ namespace r2::draw::mat
 		}
 		else
 		{
+
+			//@TODO(Serge): we don't need the mip levels anymore for the cubemap since those are taken care of now
+
 			r2::draw::tex::CubemapTexture cubemap;
 
 			const auto numMipLevels = metaData.numLevels;

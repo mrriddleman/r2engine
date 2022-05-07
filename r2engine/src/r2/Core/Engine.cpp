@@ -188,7 +188,7 @@ namespace r2
             std::vector<std::string> textureRawManifestPaths;
             std::vector<std::string> textureBinaryManifestPaths;
             std::vector<std::string> textureWatchPaths;
-			
+            std::vector<std::string> textureOutputPaths;
             //Texture pack command
             {
 				//for the engine
@@ -199,6 +199,7 @@ namespace r2
 				textureRawManifestPaths.push_back(engineRawManifestPath);
 				textureBinaryManifestPaths.push_back(engineBinaryTexturePackManifestPath);
 				textureWatchPaths.push_back(engineTexturePackDir);
+                textureOutputPaths.push_back(R2_ENGINE_INTERNAL_TEXTURES_DIR_BIN);
 
 				//for the app
 				for (const std::string& nextManifestPath : noptrApp->GetTexturePackManifestsBinaryPaths())
@@ -215,6 +216,11 @@ namespace r2
 				{
 					textureWatchPaths.push_back(nextPath);
 				}
+
+                for (const std::string& nexOutputPath : noptrApp->GetTexturePacksBinaryDirectoryPaths())
+                {
+                    textureOutputPaths.push_back(nexOutputPath);
+                }
             }
 
 			std::unique_ptr<r2::asset::pln::TexturePackHotReloadCommand> texturePackAssetCommand = std::make_unique<r2::asset::pln::TexturePackHotReloadCommand>();
@@ -222,7 +228,7 @@ namespace r2
 			texturePackAssetCommand->AddRawManifestFilePaths(textureRawManifestPaths);
 			texturePackAssetCommand->AddBinaryManifestFilePaths(textureBinaryManifestPaths);
 			texturePackAssetCommand->AddTexturePackWatchDirectories(textureWatchPaths);
-
+            texturePackAssetCommand->AddTexturePackBinaryOutputDirectories(textureOutputPaths);
             
             std::vector<std::string> shaderWatchDirectories;
             std::vector<std::string> shaderManifestFilePaths;

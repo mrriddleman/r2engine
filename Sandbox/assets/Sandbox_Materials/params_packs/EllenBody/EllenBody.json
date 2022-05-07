@@ -46,25 +46,25 @@
   ],
   textureParams: [
     {
-      value: 12649312764143549080,
+      value: "ellen/albedo/ellen_body_albedo.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
     {
       propertyType: "NORMAL",
-      value: 5554924852679410800,
+      value: "ellen/normal/ellen_body_normal.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
     {
       propertyType: "EMISSION",
-      value: 17818075434642271404,
+      value: "ellen/emissive/ellen_body_emission.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
     {
       propertyType: "METALLIC",
-      value: 13181678361703855054,
+      value: "ellen/metallic/ellen_body_metallicsmooth.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
@@ -76,7 +76,7 @@
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
-      value: 8187701920138629096,
+      value: "ellen/occlusion/ellen_body_occlusion.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },

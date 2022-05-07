@@ -87,6 +87,8 @@ namespace r2::draw
 
 namespace r2::draw::cmd
 {
+
+#ifdef R2_DEBUG
 	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const r2::SArray<r2::draw::DebugBone>& debugBones, VertexBufferHandle handle, u64 offset)
 	{
 		if (cmd == nullptr)
@@ -122,6 +124,7 @@ namespace r2::draw::cmd
 
 		return cmd->dataSize + offset;
 	}
+#endif
 
 	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
 	{
@@ -1558,9 +1561,9 @@ namespace r2::draw::renderer
 		renderer.mStaticVertexModelConfigHandle = r2::sarr::Size(*renderer.mVertexLayouts) - 1;
 		renderer.mFinalBatchVertexLayoutConfigHandle = renderer.mStaticVertexModelConfigHandle;
 
-
+#ifdef R2_DEBUG
 		renderer.mDebugModelVertexConfigHandle = renderer.mStaticVertexModelConfigHandle;
-
+#endif
 		return renderer.mStaticVertexModelConfigHandle;
 	}
 
@@ -2075,7 +2078,7 @@ namespace r2::draw::renderer
 			materialSystemMemorySize +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1) +
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2

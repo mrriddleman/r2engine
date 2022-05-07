@@ -44,7 +44,7 @@
   ],
   textureParams: [
     {
-      value: 1473424487682504667,
+      value: "newport_prefilter/albedo/newport_loft0_prefilter_right.rtex",
       packingType: "RGBA",
       texturePackName: 4821508364552419426,
       minFilter: "NEAREST_MIPMAP_LINEAR",

@@ -4,26 +4,26 @@
     {
       sides: [
         {
-          textureName: "newport_loft_conv_right.hdr"
+          textureName: "newport_loft_conv_right.rtex"
         },
         {
-          textureName: "newport_loft_conv_left.hdr",
+          textureName: "newport_loft_conv_left.rtex",
           side: "LEFT"
         },
         {
-          textureName: "newport_loft_conv_top.hdr",
+          textureName: "newport_loft_conv_top.rtex",
           side: "TOP"
         },
         {
-          textureName: "newport_loft_conv_bottom.hdr",
+          textureName: "newport_loft_conv_bottom.rtex",
           side: "BOTTOM"
         },
         {
-          textureName: "newport_loft_conv_front.hdr",
+          textureName: "newport_loft_conv_front.rtex",
           side: "FRONT"
         },
         {
-          textureName: "newport_loft_conv_back.hdr",
+          textureName: "newport_loft_conv_back.rtex",
           side: "BACK"
         }
       ]

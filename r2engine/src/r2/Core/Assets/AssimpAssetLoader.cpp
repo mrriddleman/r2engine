@@ -15,7 +15,7 @@
 
 namespace
 {
-	
+	const std::string RTEX_EXT = ".rtex";
 
 	std::unordered_map<std::string, b32> mBoneNecessityMap;
 	std::vector<r2::asset::AssimpAssetLoader::Joint> mJoints;
@@ -140,9 +140,9 @@ namespace
 						//@TODO(Serge): clean up this MAJOR HACK!
 						if (r2::fs::utils::CopyFileExtension(textureName, extType))
 						{
-							if (strcmp(extType, ".tif") == 0 || strcmp(extType, "tif") == 0)
+							if(strcmp(extType, RTEX_EXT.c_str()) != 0)
 							{
-								r2::fs::utils::SetNewExtension(textureName, ".png");
+								r2::fs::utils::SetNewExtension(textureName, RTEX_EXT.c_str());
 							}
 						}
 

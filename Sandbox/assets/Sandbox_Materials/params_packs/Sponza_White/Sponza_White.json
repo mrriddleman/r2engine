@@ -46,7 +46,7 @@
   ],
   textureParams: [
     {
-      value: 8857806338636215149,
+      value: "sponza/albedo/white.rtex",
       packingType: "RGBA",
       texturePackName: 11585652685679969130
     },

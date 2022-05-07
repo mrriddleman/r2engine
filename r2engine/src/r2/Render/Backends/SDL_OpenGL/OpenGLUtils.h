@@ -7,7 +7,7 @@
 #define GLCall(x) GLClearError();\
 	x;\
 	R2_CHECK(GLLogCall(#x), "OpenGL Function: %s failed in file: %s on line %d", #x, __FILE__, __LINE__);
-#elif 
+#else
 #define GLCall(x) x;
 #endif
 

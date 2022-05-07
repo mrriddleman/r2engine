@@ -44,7 +44,7 @@
   ],
   textureParams: [
     {
-      value: 6587797906328310461,
+      value: "staticmissingtexture/albedo/staticmissingtexture.rtex",
       packingType: "RGBA",
       texturePackName: 11826259269100960472
     },

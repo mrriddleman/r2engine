@@ -3,7 +3,7 @@
     {
       packName: 8749292291342238949,
       albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.png"
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.rtex"
       ],
       normal: [
 
@@ -38,7 +38,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 147,
+      packSize: 318,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -49,12 +49,12 @@
     {
       packName: 6031424017685759555,
       albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/back.jpg",
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/bottom.jpg",
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/front.jpg",
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/left.jpg",
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/right.jpg",
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/top.jpg"
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/back.rtex",
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/bottom.rtex",
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/front.rtex",
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/left.rtex",
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/right.rtex",
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/top.rtex"
       ],
       normal: [
 
@@ -89,7 +89,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 2980514,
+      packSize: 47579106,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
@@ -97,26 +97,26 @@
           {
             sides: [
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/left.jpg",
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/left.rtex",
                 side: "LEFT"
               },
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/right.jpg"
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/right.rtex"
               },
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/top.jpg",
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/top.rtex",
                 side: "TOP"
               },
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/bottom.jpg",
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/bottom.rtex",
                 side: "BOTTOM"
               },
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/front.jpg",
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/front.rtex",
                 side: "FRONT"
               },
               {
-                textureName: "D:/Projects/r2engine/r2engine/assets/textures/packs/Skybox/albedo/back.jpg",
+                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/back.rtex",
                 side: "BACK"
               }
             ]
@@ -127,7 +127,7 @@
     {
       packName: 11826259269100960472,
       albedo: [
-        "D:/Projects/r2engine/r2engine/assets/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.png"
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.rtex"
       ],
       normal: [
 
@@ -162,7 +162,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 147,
+      packSize: 318,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -172,6 +172,6 @@
     }
   ],
   totalNumberOfTextures: 8,
-  totalTextureSize: 2980808,
+  totalTextureSize: 47579742,
   maxTexturesInAPack: 6
 }

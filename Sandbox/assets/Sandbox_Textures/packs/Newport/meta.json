@@ -4,26 +4,26 @@
     {
       sides: [
         {
-          textureName: "Newport0_right.hdr"
+          textureName: "Newport0_right.rtex"
         },
         {
-          textureName: "Newport0_left.hdr",
+          textureName: "Newport0_left.rtex",
           side: "LEFT"
         },
         {
-          textureName: "Newport0_top.hdr",
+          textureName: "Newport0_top.rtex",
           side: "TOP"
         },
         {
-          textureName: "Newport0_bottom.hdr",
+          textureName: "Newport0_bottom.rtex",
           side: "BOTTOM"
         },
         {
-          textureName: "Newport0_front.hdr",
+          textureName: "Newport0_front.rtex",
           side: "FRONT"
         },
         {
-          textureName: "Newport0_back.hdr",
+          textureName: "Newport0_back.rtex",
           side: "BACK"
         }
       ]

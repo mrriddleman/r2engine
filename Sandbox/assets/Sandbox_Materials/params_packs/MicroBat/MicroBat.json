@@ -46,7 +46,7 @@
   ],
   textureParams: [
     {
-      value: 14381582140258054622,
+      value: "microbat/albedo/micro_bat_col.rtex",
       packingType: "RGBA",
       texturePackName: 17351122780281340654
     },

@@ -47,6 +47,11 @@ namespace r2::asset::pln
 		mTexturePacksWatchDirectories.insert(mTexturePacksWatchDirectories.end(), watchPaths.begin(), watchPaths.end());
 	}
 
+	void TexturePackHotReloadCommand::AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories)
+	{
+		mTexturePacksBinaryOutputDirectories.insert(mTexturePacksBinaryOutputDirectories.end(), outputDirectories.begin(), outputDirectories.end());
+	}
+
 	//Private methods
 	void TexturePackHotReloadCommand::GenerateTexturePackManifestsIfNeeded()
 	{
@@ -92,6 +97,8 @@ namespace r2::asset::pln
 
 	void TexturePackHotReloadCommand::TextureChangedRequest(const std::string& changedPath)
 	{
+		//@TODO(Serge): convert the texture again
+
 		r2::draw::matsys::TextureChanged(changedPath);
 	}
 
@@ -198,7 +205,11 @@ namespace r2::asset::pln
 		bool hasFileAlready = false;
 		if (hasTexturePackInManifest)
 		{
-			hasFileAlready = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, newPath);
+			//TODO(Serge): newPath should be the .rtex file
+
+			std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(newPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+			hasFileAlready = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, outputFilePath.string());
 		}
 
 		if (hasFileAlready)
@@ -252,7 +263,12 @@ namespace r2::asset::pln
 			return;
 		}
 
-		bool hasTexturePathInManifest = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, removedPathStr);
+		//TODO(Serge): removedPathStr should be the .rtex file
+
+		std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(removedPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+
+		bool hasTexturePathInManifest = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, outputFilePath.string());
 
 		if (hasTexturePathInManifest)
 		{

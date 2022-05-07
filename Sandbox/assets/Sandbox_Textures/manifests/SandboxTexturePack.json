@@ -3,27 +3,27 @@
     {
       packName: 18199531748715869547,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Hair_AlbedoTransparency.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Hair_AlbedoTransparency.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Head_Albedo.rtex"
       ],
       normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Body_Normal.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Eye_Normal.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/normal/Ellen_Body_Normal.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/normal/Ellen_Eye_Normal.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/normal/Ellen_Hair_Normal.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/normal/Ellen_Head_Normal.rtex"
       ],
       emissive: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/emissive/Ellen_Body_Emission.rtex"
       ],
       metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Body_MetallicSmooth.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Hair_MetallicSmooth.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/metallic/Ellen_Head_MetallicSmooth.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/metallic/Ellen_Body_MetallicSmooth.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/metallic/Ellen_Hair_MetallicSmooth.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/metallic/Ellen_Head_MetallicSmooth.rtex"
       ],
       occlusion: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/occlusion/Ellen_Body_Occlusion.rtex"
       ],
       roughness: [
 
@@ -32,10 +32,10 @@
 
       ],
       anisotropy: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/anisotropy/Ellen_Hair_Aniso.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/anisotropy/Ellen_Hair_Aniso.rtex"
       ],
       detail: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Ellen/detail/Ellen_Head_Microdetail.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/detail/Ellen_Head_Microdetail.rtex"
       ],
       clearCoat: [
 
@@ -46,7 +46,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 43450951,
+      packSize: 153152023,
       totalNumberOfTextures: 15,
       metaData: {
         mipLevels: [
@@ -57,7 +57,7 @@
     {
       packName: 17351122780281340654,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/MicroBat/albedo/micro_bat_col.tga"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/MicroBat/albedo/micro_bat_col.rtex"
       ],
       normal: [
 
@@ -92,7 +92,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 16777256,
+      packSize: 8185816,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -103,12 +103,12 @@
     {
       packName: 12702858826531139154,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_top.hdr"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_back.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_front.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_left.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_right.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_top.rtex"
       ],
       normal: [
 
@@ -143,7 +143,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 8563037,
+      packSize: 35754,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
@@ -151,26 +151,26 @@
           {
             sides: [
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_right.hdr"
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_right.rtex"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_left.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_left.rtex",
                 side: "LEFT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_top.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_top.rtex",
                 side: "TOP"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.rtex",
                 side: "BOTTOM"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_front.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_front.rtex",
                 side: "FRONT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport/albedo/Newport0_back.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_back.rtex",
                 side: "BACK"
               }
             ]
@@ -181,12 +181,12 @@
     {
       packName: 6377220994408905929,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.hdr"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.rtex"
       ],
       normal: [
 
@@ -221,7 +221,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 1933168,
+      packSize: 35826,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
@@ -229,26 +229,26 @@
           {
             sides: [
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.hdr"
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_right.rtex"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_left.rtex",
                 side: "LEFT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_top.rtex",
                 side: "TOP"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.rtex",
                 side: "BOTTOM"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_front.rtex",
                 side: "FRONT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.rtex",
                 side: "BACK"
               }
             ]
@@ -259,7 +259,7 @@
     {
       packName: 10574092072377421955,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_lutDFG/albedo/newport_loft_LutDFG.hdr"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_lutDFG/albedo/newport_loft_LutDFG.rtex"
       ],
       normal: [
 
@@ -294,7 +294,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 18754,
+      packSize: 771,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -305,42 +305,12 @@
     {
       packName: 4821508364552419426,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_top.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_top.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_top.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_top.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_back.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_bottom.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_front.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_left.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_right.hdr",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_top.hdr"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.rtex"
       ],
       normal: [
 
@@ -375,174 +345,34 @@
       clearCoatNormal: [
 
       ],
-      packSize: 6254342,
-      totalNumberOfTextures: 36,
+      packSize: 35914,
+      totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
         mipLevels: [
           {
             sides: [
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.hdr"
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_right.rtex"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_left.rtex",
                 side: "LEFT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_top.rtex",
                 side: "TOP"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.rtex",
                 side: "BOTTOM"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_front.rtex",
                 side: "FRONT"
               },
               {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.hdr",
-                side: "BACK"
-              }
-            ]
-          },
-          {
-            level: 1,
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_right.hdr"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_left.hdr",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_top.hdr",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_bottom.hdr",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_front.hdr",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft1_prefilter_back.hdr",
-                side: "BACK"
-              }
-            ]
-          },
-          {
-            level: 2,
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_right.hdr"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_left.hdr",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_top.hdr",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_bottom.hdr",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_front.hdr",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft2_prefilter_back.hdr",
-                side: "BACK"
-              }
-            ]
-          },
-          {
-            level: 3,
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_right.hdr"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_left.hdr",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_top.hdr",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_bottom.hdr",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_front.hdr",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft3_prefilter_back.hdr",
-                side: "BACK"
-              }
-            ]
-          },
-          {
-            level: 4,
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_right.hdr"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_left.hdr",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_top.hdr",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_bottom.hdr",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_front.hdr",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft4_prefilter_back.hdr",
-                side: "BACK"
-              }
-            ]
-          },
-          {
-            level: 5,
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_right.hdr"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_left.hdr",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_top.hdr",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_bottom.hdr",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_front.hdr",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft5_prefilter_back.hdr",
+                textureName: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.rtex",
                 side: "BACK"
               }
             ]
@@ -553,7 +383,7 @@
     {
       packName: 5241291254806722222,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.tga"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.rtex"
       ],
       normal: [
 
@@ -588,7 +418,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 16777256,
+      packSize: 9252553,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -599,82 +429,82 @@
     {
       packName: 11585652685679969130,
       albedo: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/11474523244911310074.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/11490520546946913238.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/14650633544276105767.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/15295713303328085182.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/16275776544635328252.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/17876391417123941155.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/2185409758123873465.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/2775690330959970771.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/2969916736137545357.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/4675343432951571524.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/4975155472559461469.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/5061699253647017043.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/5792855332885324923.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/5823059166183034438.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/6047387724914829168.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/6151467286084645207.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/6772804448157695701.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/7268504077753552595.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/7441062115984513793.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/755318871556304029.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/8006627369776289000.png",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/8481240838833932244.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/8750083169368950601.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/9288698199695299068.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/albedo/white.png"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/11474523244911310074.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/11490520546946913238.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/14650633544276105767.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/15295713303328085182.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/16275776544635328252.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/17876391417123941155.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/2185409758123873465.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/2775690330959970771.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/2969916736137545357.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/4675343432951571524.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/4975155472559461469.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/5061699253647017043.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/5792855332885324923.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/5823059166183034438.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/6047387724914829168.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/6151467286084645207.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/6772804448157695701.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/7268504077753552595.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/7441062115984513793.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/755318871556304029.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/8006627369776289000.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/8481240838833932244.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/8750083169368950601.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/9288698199695299068.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/white.rtex"
       ],
       normal: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/10381718147657362067.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/10388182081421875623.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/12501374198249454378.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/13982482287905699490.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/14118779221266351425.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/14170708867020035030.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/14267839433702832875.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/15722799267630235092.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/16299174074766089871.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/2051777328469649772.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/2299742237651021498.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/2374361008830720677.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/332936164838540657.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/3628158980083700836.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/3827035219084910048.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/4477655471536070370.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/4601176305987539675.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/4910669866631290573.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/6593109234861095314.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/6667038893015345571.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/7056944414013900257.dds",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/759203620573749278.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/7645212358685992005.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/normal/8773302468495022225.jpg"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/10381718147657362067.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/10388182081421875623.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/12501374198249454378.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/13982482287905699490.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/14118779221266351425.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/14170708867020035030.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/14267839433702832875.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/15722799267630235092.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/16299174074766089871.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/2051777328469649772.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/2299742237651021498.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/2374361008830720677.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/332936164838540657.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/3628158980083700836.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/3827035219084910048.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/4477655471536070370.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/4601176305987539675.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/4910669866631290573.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/6593109234861095314.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/6667038893015345571.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/7056944414013900257.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/759203620573749278.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/7645212358685992005.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/normal/8773302468495022225.rtex"
       ],
       emissive: [
 
       ],
       metallic: [
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/11872827283454512094.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/11968150294050148237.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/1219024358953944284.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/13196865903111448057.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/13824894030729245199.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/16885566240357350108.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/17556969131407844942.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/2411100444841994089.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/3371964815757888145.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/3455394979645218238.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/466164707995436622.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/4871783166746854860.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/715093869573992647.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/7815564343179553343.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/8051790464816141987.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/8114461559286000061.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/8503262930880235456.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/8747919177698443163.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/8783994986360286082.jpg",
-        "D:/Projects/r2engine/Sandbox/assets/Sandbox_Textures/packs/Sponza/metallic/9916269861720640319.jpg"
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/11872827283454512094.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/11968150294050148237.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/1219024358953944284.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/13196865903111448057.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/13824894030729245199.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/16885566240357350108.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/17556969131407844942.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/2411100444841994089.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/3371964815757888145.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/3455394979645218238.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/466164707995436622.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/4871783166746854860.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/715093869573992647.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/7815564343179553343.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/8051790464816141987.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/8114461559286000061.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/8503262930880235456.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/8747919177698443163.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/8783994986360286082.rtex",
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/metallic/9916269861720640319.rtex"
       ],
       occlusion: [
 
@@ -700,7 +530,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 40169324,
+      packSize: 223126039,
       totalNumberOfTextures: 69,
       metaData: {
         mipLevels: [
@@ -709,7 +539,7 @@
       }
     }
   ],
-  totalNumberOfTextures: 135,
-  totalTextureSize: 133944088,
+  totalNumberOfTextures: 105,
+  totalTextureSize: 393824696,
   maxTexturesInAPack: 69
 }

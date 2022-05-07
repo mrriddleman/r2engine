@@ -88,3 +88,4 @@ r2Tests/*.vcxproj.user
 
 engine_assets/
 
+**/hdr/**

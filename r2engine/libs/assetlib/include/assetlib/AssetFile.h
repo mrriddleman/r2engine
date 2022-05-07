@@ -26,6 +26,10 @@ namespace r2::assets::assetlib
 		virtual uint32_t Write(const char* data, uint32_t size) const = 0;
 		virtual bool AllocateForBlob(BinaryBlob& blob) = 0;
 		virtual void FreeForBlob(const BinaryBlob& blob) = 0;
+
+		virtual bool LoadMetaData();
+		virtual bool LoadBinaryData();
+
 		virtual ~AssetFile() {}
 		virtual const char* FilePath() const = 0;
 
@@ -33,6 +37,7 @@ namespace r2::assets::assetlib
 		uint32_t version;
 		BinaryBlob metaData;
 		BinaryBlob binaryBlob;
+		uint32_t headerSize;
 	};
 
 	bool save_binaryfile(const char* path, const AssetFile& file);

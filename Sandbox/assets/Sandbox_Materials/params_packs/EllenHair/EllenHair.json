@@ -47,13 +47,13 @@
   ],
   textureParams: [
     {
-      value: 6298319434836369894,
+      value: "ellen/albedo/ellen_hair_albedotransparency.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
     {
       propertyType: "NORMAL",
-      value: 9840060896986555196,
+      value: "ellen/normal/ellen_hair_normal.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
@@ -65,7 +65,7 @@
     },
     {
       propertyType: "METALLIC",
-      value: 230340418756385086,
+      value: "ellen/metallic/ellen_hair_metallicsmooth.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     },
@@ -89,7 +89,7 @@
     },
     {
       propertyType: "ANISOTROPY",
-      value: 9574009497472948762,
+      value: "ellen/anisotropy/ellen_hair_aniso.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547
     }

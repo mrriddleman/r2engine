@@ -3,7 +3,6 @@
 	shader:"DynamicDepth",
 	
 	texturePackName:"",
-
 	diffuseTexture:"",
 	specularTexture:"",
 	normalMapTexture:"",

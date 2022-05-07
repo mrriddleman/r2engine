@@ -13,6 +13,8 @@
 #include <filesystem>
 #include <fstream>
 
+#ifdef R2_ASSET_PIPELINE
+
 namespace r2::asset::pln
 {
     const std::string SHADER_MANIFEST_NAME_FBS = "ShaderManifest.fbs";
@@ -243,3 +245,4 @@ namespace r2::asset::pln
     }
 }
 
+#endif

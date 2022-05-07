@@ -19,6 +19,7 @@ namespace r2::asset::pln::tex
 	const std::string JSON_EXT = ".json";
 	const std::string TMAN_EXT = ".tman";
 	const std::string PACKS_DIR = "packs";
+	const std::string RTEX_EXT = ".rtex";
 	
 
 	bool GenerateTexturePackMetaDataFromJSON(const std::string& jsonFile, const std::string& outputDir)
@@ -43,6 +44,58 @@ namespace r2::asset::pln::tex
 		return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(outputDir, texturePackManifestSchemaPath, jsonManifestFilePath);
 	}
 
+	std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir)
+	{
+		std::vector<std::filesystem::path> pathsSeen;
+
+		std::filesystem::path thePath = inputPath;
+
+		std::filesystem::path outputFilenamePath = "";
+
+		if (std::filesystem::is_regular_file(inputPath))
+		{
+			thePath = inputPath.parent_path();
+
+			outputFilenamePath = inputPath.filename().replace_extension(RTEX_EXT);
+		}
+
+		bool found = false;
+
+		while (!found && !thePath.empty() && thePath != thePath.root_path())
+		{
+			if (inputPathRootDir == thePath)
+			{
+				found = true;
+				break;
+			}
+
+			pathsSeen.push_back(thePath.stem());
+			thePath = thePath.parent_path();
+		}
+
+		if (!found)
+		{
+			R2_CHECK(false, "We couldn't get the output path!");
+			return "";
+		}
+
+		std::filesystem::path output = outputDir;
+
+		auto rIter = pathsSeen.rbegin();
+
+		for (; rIter != pathsSeen.rend(); ++rIter)
+		{
+			output = output / *rIter;
+		}
+
+		if (!outputFilenamePath.empty())
+		{
+			output = output / outputFilenamePath;
+		}
+
+		return output;
+	}
+
 	bool GenerateTexturePacksManifestFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& directory, const std::string& binDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -54,6 +107,8 @@ namespace r2::asset::pln::tex
 		std::filesystem::path binPacksPath = std::filesystem::path(binDir) / PACKS_DIR;
 
 		std::filesystem::create_directory(binPacksPath);
+
+		std::filesystem::path inputRootDir = directory;
 
 		for (const auto& texturePackDir : std::filesystem::directory_iterator(directory)) //this will be the texture pack level
 		{
@@ -94,8 +149,6 @@ namespace r2::asset::pln::tex
 
 			}
 
-			
-
 			u64 numTexturesInPack = 0;
 			u64 packSize = 0;
 			std::vector<flatbuffers::Offset<flatbuffers::String>> albedos;
@@ -118,14 +171,18 @@ namespace r2::asset::pln::tex
 
 			for (const auto& file : std::filesystem::recursive_directory_iterator(texturePackDir.path().string()))
 			{
-				if(file.is_directory())
+				if(file.is_directory() || file.path().extension() == JSON_EXT || file.path().parent_path().stem().string() == "hdr")
 					continue;
 
-				
-				packSize += file.file_size();
+				std::filesystem::path outputFilePath = GetOutputFilePath(file.path(), inputRootDir, binPacksPath);
+
+				R2_CHECK(std::filesystem::exists(outputFilePath), "This should already exist right now");
+
+				packSize += std::filesystem::file_size(outputFilePath);
 
 				char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-				r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), sanitizedPath);
+
+				r2::fs::utils::SanitizeSubPath(outputFilePath.string().c_str(), sanitizedPath);
 
 				if (file.path().parent_path().stem().string() == "albedo")
 				{
@@ -471,9 +528,6 @@ namespace r2::asset::pln::tex
 						return  true;
 					}
 				}
-
-
-
 			}
 		}
 

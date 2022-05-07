@@ -162,6 +162,11 @@ namespace r2
         return {};
     }
 
+    std::vector<std::string> Application::GetTexturePacksBinaryDirectoryPaths() const
+    {
+        return {};
+    }
+
     std::vector<std::string> Application::GetMaterialPacksWatchPaths() const
     {
         return {};

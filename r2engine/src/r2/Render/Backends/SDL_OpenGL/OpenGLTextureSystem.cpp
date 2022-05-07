@@ -312,21 +312,21 @@ namespace r2::draw::gl
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
 		{
-			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId));
-			GLCall(glCompressedTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data));
+			glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId);
+			glCompressedTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data);
 		}
 
 		void TexSubImage3D(r2::draw::tex::TextureContainer& constainer, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
 		{
-			GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId));
-			GLCall(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data));
+			glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId);
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
 			
 		}
 
 		void TexSubCubemapImage3D(r2::draw::tex::TextureContainer& container, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
 		{
-			GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, container.texId));
-			GLCall(glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, level, xOffset, yOffset, zOffset * r2::draw::tex::CubemapSide::NUM_SIDES + static_cast<GLint>(side), width, height, depth, format, type, data));
+			glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, container.texId);
+			glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, level, xOffset, yOffset, zOffset * r2::draw::tex::CubemapSide::NUM_SIDES + static_cast<GLint>(side), width, height, depth, format, type, data);
 		}
 
 		u64 MemorySize(u64 slices, u64 alignment, u32 headerSize, u32 boundsChecking)

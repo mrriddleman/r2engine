@@ -46,7 +46,7 @@
   ],
   textureParams: [
     {
-      value: 15388954475296012333,
+      value: "skeleton/albedo/skel_archer_col.rtex",
       packingType: "RGBA",
       texturePackName: 5241291254806722222
     },

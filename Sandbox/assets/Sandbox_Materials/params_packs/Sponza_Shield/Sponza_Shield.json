@@ -46,13 +46,13 @@
   ],
   textureParams: [
     {
-      value: 3005676504940618899,
+      value: "sponza/albedo/8750083169368950601.rtex",
       packingType: "RGBA",
       texturePackName: 11585652685679969130
     },
     {
       propertyType: "NORMAL",
-      value: 10887627394072977937,
+      value: "sponza/normal/13982482287905699490.rtex",
       packingType: "RGBA",
       texturePackName: 11585652685679969130
     },
@@ -64,13 +64,13 @@
     },
     {
       propertyType: "METALLIC",
-      value: "sponza/metallic/16885566240357350108.jpg",
+      value: "sponza/metallic/16885566240357350108.rtex",
       packingType: "B",
       texturePackName: 11585652685679969130
     },
     {
       propertyType: "ROUGHNESS",
-      value: "sponza/metallic/16885566240357350108.jpg",
+      value: "sponza/metallic/16885566240357350108.rtex",
       packingType: "G",
       texturePackName: 11585652685679969130
     },

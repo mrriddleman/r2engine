@@ -44,7 +44,7 @@
   ],
   textureParams: [
     {
-      value: 12598334220080276841,
+      value: "skybox/albedo/right.rtex",
       packingType: "RGBA",
       texturePackName: 6031424017685759555,
       minFilter: "NEAREST_MIPMAP_LINEAR",

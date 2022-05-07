@@ -19,7 +19,7 @@ namespace r2::asset::pln
 		void AddRawManifestFilePaths(const std::vector<std::string>& rawFilePaths);
 		void AddBinaryManifestFilePaths(const std::vector<std::string>& binFilePaths);
 		void AddTexturePackWatchDirectories(const std::vector<std::string>& watchPaths);
-
+		void AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories);
 	private:
 
 		void GenerateTexturePackManifestsIfNeeded();
@@ -34,7 +34,7 @@ namespace r2::asset::pln
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mTexturePacksWatchDirectories;
-
+		std::vector<std::string> mTexturePacksBinaryOutputDirectories;
 
 
 		//AssetsBuiltFunc mBuildFunc;

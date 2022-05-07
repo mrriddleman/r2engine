@@ -45,6 +45,7 @@ namespace r2::assets::assetlib
 
 		//move file cursor to beginning
 		//infile.seekg(0);
+		outputFile.headerSize = 4 + sizeof(uint32_t) * 3;
 
 		outputFile.Read(outputFile.type, 4);
 		outputFile.Read((char*)&outputFile.version, sizeof(uint32_t));
@@ -52,14 +53,25 @@ namespace r2::assets::assetlib
 		outputFile.Read((char*)&outputFile.metaData.size, sizeof(uint32_t));
 		outputFile.Read((char*)&outputFile.binaryBlob.size, sizeof(uint32_t));
 
-		outputFile.AllocateForBlob(outputFile.metaData);
+		outputFile.LoadMetaData();
 
-		outputFile.Read(outputFile.metaData.data, outputFile.metaData.size);
+		outputFile.LoadBinaryData();
 
-		outputFile.AllocateForBlob(outputFile.binaryBlob);
+		return true;
+	}
 
-		outputFile.Read(outputFile.binaryBlob.data, outputFile.binaryBlob.size);
+	bool AssetFile::LoadMetaData()
+	{
+		AllocateForBlob(metaData);
+		Read(metaData.data, metaData.size);
 
+		return true;
+	}
+
+	bool AssetFile::LoadBinaryData()
+	{
+		AllocateForBlob(binaryBlob);
+		Read(binaryBlob.data, binaryBlob.size);
 		return true;
 	}
 }

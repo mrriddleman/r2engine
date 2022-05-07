@@ -116,6 +116,7 @@ project "r2engine"
 		'R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS="'..os.getcwd()..'/r2engine/assets/textures/manifests"',
 		'R2_ENGINE_INTERNAL_TEXTURES_BIN="'..os.getcwd()..'/r2engine/assets_bin/textures"',
 		'R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/r2engine/assets_bin/textures/manifests"',
+		'R2_ENGINE_INTERNAL_TEXTURES_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/textures/packs"',
 
 		'R2_ENGINE_INTERNAL_MODELS_RAW="'..os.getcwd()..'/r2engine/assets/models/raw"',
 		'R2_ENGINE_INTERNAL_MODELS_BIN="'..os.getcwd()..'/r2engine/assets_bin/models/"'
@@ -472,6 +473,8 @@ project "Sandbox"
 		'SANDBOX_TEXTURES_DIR="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Textures/packs"',
 		'SANDBOX_TEXTURES_MANIFESTS="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Textures/manifests"',
 		'SANDBOX_TEXTURES_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures"',
+		'SANDBOX_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/manifests"',
+		'SANDBOX_TEXTURES_PACKS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/packs"',
 		'SANDBOX_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/manifests"',
 	}
 

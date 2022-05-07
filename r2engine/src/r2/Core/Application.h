@@ -75,6 +75,7 @@ namespace r2
         virtual std::string GetAssetCompilerTempPath() const = 0;
         virtual std::vector<std::string> GetSoundDirectoryWatchPaths() const = 0;
         virtual std::vector<std::string> GetTexturePacksWatchPaths() const = 0;
+        virtual std::vector<std::string> GetTexturePacksBinaryDirectoryPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksWatchPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksBinaryPaths() const = 0;
 

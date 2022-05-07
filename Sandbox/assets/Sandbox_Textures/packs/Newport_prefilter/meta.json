@@ -4,166 +4,26 @@
     {
       sides: [
         {
-          textureName: "newport_loft0_prefilter_right.hdr"
+          textureName: "newport_loft0_prefilter_right.rtex"
         },
         {
-          textureName: "newport_loft0_prefilter_left.hdr",
+          textureName: "newport_loft0_prefilter_left.rtex",
           side: "LEFT"
         },
         {
-          textureName: "newport_loft0_prefilter_top.hdr",
+          textureName: "newport_loft0_prefilter_top.rtex",
           side: "TOP"
         },
         {
-          textureName: "newport_loft0_prefilter_bottom.hdr",
+          textureName: "newport_loft0_prefilter_bottom.rtex",
           side: "BOTTOM"
         },
         {
-          textureName: "newport_loft0_prefilter_front.hdr",
+          textureName: "newport_loft0_prefilter_front.rtex",
           side: "FRONT"
         },
         {
-          textureName: "newport_loft0_prefilter_back.hdr",
-          side: "BACK"
-        }
-      ]
-    },
-    {
-      level: 1,
-      sides: [
-        {
-          textureName: "newport_loft1_prefilter_right.hdr"
-        },
-        {
-          textureName: "newport_loft1_prefilter_left.hdr",
-          side: "LEFT"
-        },
-        {
-          textureName: "newport_loft1_prefilter_top.hdr",
-          side: "TOP"
-        },
-        {
-          textureName: "newport_loft1_prefilter_bottom.hdr",
-          side: "BOTTOM"
-        },
-        {
-          textureName: "newport_loft1_prefilter_front.hdr",
-          side: "FRONT"
-        },
-        {
-          textureName: "newport_loft1_prefilter_back.hdr",
-          side: "BACK"
-        }
-      ]
-    },
-    {
-      level: 2,
-      sides: [
-        {
-          textureName: "newport_loft2_prefilter_right.hdr"
-        },
-        {
-          textureName: "newport_loft2_prefilter_left.hdr",
-          side: "LEFT"
-        },
-        {
-          textureName: "newport_loft2_prefilter_top.hdr",
-          side: "TOP"
-        },
-        {
-          textureName: "newport_loft2_prefilter_bottom.hdr",
-          side: "BOTTOM"
-        },
-        {
-          textureName: "newport_loft2_prefilter_front.hdr",
-          side: "FRONT"
-        },
-        {
-          textureName: "newport_loft2_prefilter_back.hdr",
-          side: "BACK"
-        }
-      ]
-    },
-    {
-      level: 3,
-      sides: [
-        {
-          textureName: "newport_loft3_prefilter_right.hdr"
-        },
-        {
-          textureName: "newport_loft3_prefilter_left.hdr",
-          side: "LEFT"
-        },
-        {
-          textureName: "newport_loft3_prefilter_top.hdr",
-          side: "TOP"
-        },
-        {
-          textureName: "newport_loft3_prefilter_bottom.hdr",
-          side: "BOTTOM"
-        },
-        {
-          textureName: "newport_loft3_prefilter_front.hdr",
-          side: "FRONT"
-        },
-        {
-          textureName: "newport_loft3_prefilter_back.hdr",
-          side: "BACK"
-        }
-      ]
-    },
-    {
-      level: 4,
-      sides: [
-        {
-          textureName: "newport_loft4_prefilter_right.hdr"
-        },
-        {
-          textureName: "newport_loft4_prefilter_left.hdr",
-          side: "LEFT"
-        },
-        {
-          textureName: "newport_loft4_prefilter_top.hdr",
-          side: "TOP"
-        },
-        {
-          textureName: "newport_loft4_prefilter_bottom.hdr",
-          side: "BOTTOM"
-        },
-        {
-          textureName: "newport_loft4_prefilter_front.hdr",
-          side: "FRONT"
-        },
-        {
-          textureName: "newport_loft4_prefilter_back.hdr",
-          side: "BACK"
-        }
-      ]
-    },
-    {
-      level: 5,
-      sides: [
-        {
-          textureName: "newport_loft5_prefilter_right.hdr"
-        },
-        {
-          textureName: "newport_loft5_prefilter_left.hdr",
-          side: "LEFT"
-        },
-        {
-          textureName: "newport_loft5_prefilter_top.hdr",
-          side: "TOP"
-        },
-        {
-          textureName: "newport_loft5_prefilter_bottom.hdr",
-          side: "BOTTOM"
-        },
-        {
-          textureName: "newport_loft5_prefilter_front.hdr",
-          side: "FRONT"
-        },
-        {
-          textureName: "newport_loft5_prefilter_back.hdr",
+          textureName: "newport_loft0_prefilter_back.rtex",
           side: "BACK"
         }
       ]

@@ -1328,6 +1328,11 @@ public:
         return {SANDBOX_TEXTURES_DIR};
     }
 
+	virtual std::vector<std::string> GetTexturePacksBinaryDirectoryPaths() const override
+	{
+		return { SANDBOX_TEXTURES_PACKS_BIN };
+	}
+
     virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
     {
         return {SANDBOX_MATERIALS_DIR, SANDBOX_MATERIAL_PARAMS_DIR };
