@@ -417,6 +417,12 @@ namespace r2::draw::tex
 			{
 				const auto mip = textureMetaData->mips()->Get(m);
 
+				if ("D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs\\Newport_lutDFG\\albedo\\newport_loft_LutDFG.hdr" == textureMetaData->originalPath()->str())
+				{
+					int k = 0;
+				}
+				printf("Loading: %s\n", textureMetaData->originalPath()->c_str());
+
 				r2::assets::assetlib::unpack_texture_page(textureMetaData, m, memoryAssetFile.binaryBlob.data, data.data());
 
 				draw::gl::tex::TexSubImage2D(newHandle, m, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
@@ -641,66 +647,117 @@ namespace r2::draw::tex
 		int numMips = 0;
 		r2::draw::tex::TextureFormat textureFormat;
 
-		for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+		//for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+		//{
+		//	r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[0].sides[CubemapSide::RIGHT + i].textureAssetHandle);
+
+		//	r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
+
+		//	r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
+
+		//	const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
+
+		//	GLenum format;
+		//	GLenum internalFormat;
+		//	GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+		//	GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), Diffuse, format, internalFormat, imageFormatSize);
+
+		//	if (numMips == 0 && i == 0)
+		//	{
+		//		numMips = textureInfo->mips()->size();
+
+		//		textureFormat.internalformat = internalFormat;
+		//		textureFormat.width = textureInfo->mips()->Get(0)->width();
+		//		textureFormat.height = textureInfo->mips()->Get(0)->height();
+		//		textureFormat.mipLevels = textureInfo->mips()->size();
+		//		textureFormat.isCubemap = true;
+		//		textureFormat.wrapMode = wrapMode;
+		//		textureFormat.magFilter = magFilter;
+		//		textureFormat.minFilter = minFilter;
+		//		textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+		//		textureFormat.anisotropy = anisotropy;
+
+		//		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
+		//	}
+		//	else
+		//	{
+		//		R2_CHECK(numMips == textureInfo->mips()->size(), "These should always be the same!");
+		//	}
+
+		//	std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
+
+		//	data.resize(textureInfo->mips()->Get(0)->originalSize());
+
+
+		//	for (int m = 0; m < textureInfo->mips()->size(); ++m)
+		//	{
+		//		const auto mip = textureInfo->mips()->Get(m);
+
+		//		r2::assets::assetlib::unpack_texture_page(textureInfo, m, memoryAssetFile.binaryBlob.data, data.data());
+
+		//		r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), m, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
+		//		
+		//		data.clear();
+		//	}
+
+		//	assetCache->ReturnAssetBuffer(assetCacheRecord);
+
+		//	assetCache->FreeAsset(cubemap.mips[0].sides[i].textureAssetHandle);
+		//}
+
+		std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
+
+		const auto numMipLevels = cubemap.numMipLevels;
+
+		for (u32 mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
 		{
-			r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[0].sides[CubemapSide::RIGHT + i].textureAssetHandle);
-
-			r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
-
-			r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
-
-			const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
-
-			GLenum format;
-			GLenum internalFormat;
-			GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-			GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), Diffuse, format, internalFormat, imageFormatSize);
-
-			if (numMips == 0 && i == 0)
+			for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 			{
-				numMips = textureInfo->mips()->size();
+				r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[mipLevel].sides[CubemapSide::RIGHT + i].textureAssetHandle);
 
-				textureFormat.internalformat = internalFormat;
-				textureFormat.width = textureInfo->mips()->Get(0)->width();
-				textureFormat.height = textureInfo->mips()->Get(0)->height();
-				textureFormat.mipLevels = textureInfo->mips()->size();
-				textureFormat.isCubemap = true;
-				textureFormat.wrapMode = wrapMode;
-				textureFormat.magFilter = magFilter;
-				textureFormat.minFilter = minFilter;
-				textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
-				textureFormat.anisotropy = anisotropy;
+				r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
 
-				r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
-			}
-			else
-			{
-				R2_CHECK(numMips == textureInfo->mips()->size(), "These should always be the same!");
-			}
+				r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
 
-			std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
+				const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
 
-			data.resize(textureInfo->mips()->Get(0)->originalSize());
+				GLenum format;
+				GLenum internalFormat;
+				GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+				GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), Diffuse, format, internalFormat, imageFormatSize);
 
+				if (mipLevel == 0 && i == 0)
+				{
+					textureFormat.internalformat = internalFormat;
+					textureFormat.width = textureInfo->mips()->Get(0)->width();
+					textureFormat.height = textureInfo->mips()->Get(0)->height();
+					textureFormat.mipLevels = numMipLevels;
+					textureFormat.isCubemap = true;
+					textureFormat.wrapMode = wrapMode;
+					textureFormat.magFilter = magFilter;
+					textureFormat.minFilter = minFilter;
+					textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+					textureFormat.anisotropy = anisotropy;
 
-			for (int m = 0; m < textureInfo->mips()->size(); ++m)
-			{
-				const auto mip = textureInfo->mips()->Get(m);
+					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
+				}
 
-				r2::assets::assetlib::unpack_texture_page(textureInfo, m, memoryAssetFile.binaryBlob.data, data.data());
-
-				r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), m, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
+				const auto mip = textureInfo->mips()->Get(0);
 				
+				data.resize(textureInfo->mips()->Get(0)->originalSize());
+
+				r2::assets::assetlib::unpack_texture_page(textureInfo, 0, memoryAssetFile.binaryBlob.data, data.data());
+
+				r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), mipLevel, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
+
 				data.clear();
+
+				assetCache->ReturnAssetBuffer(assetCacheRecord);
+
+				assetCache->FreeAsset(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
 			}
 
-			assetCache->ReturnAssetBuffer(assetCacheRecord);
-
-			assetCache->FreeAsset(cubemap.mips[0].sides[i].textureAssetHandle);
 		}
-
-
-		
 
 
 		//r2::draw::tex::TextureFormat textureFormat;

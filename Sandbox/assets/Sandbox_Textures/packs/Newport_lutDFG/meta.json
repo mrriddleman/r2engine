@@ -1,3 +1,6 @@
 {
-	type: "TEXTURE"
+	type: "TEXTURE",
+	mipLevels:[],
+	desiredMipLevels: 1,
+	mipMapFilter: "BOX"
 }

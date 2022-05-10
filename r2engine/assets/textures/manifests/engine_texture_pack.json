@@ -38,7 +38,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 318,
+      packSize: 230,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -89,7 +89,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 47579106,
+      packSize: 31964039,
       totalNumberOfTextures: 6,
       metaData: {
         type: "CUBEMAP",
@@ -162,7 +162,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 318,
+      packSize: 230,
       totalNumberOfTextures: 1,
       metaData: {
         mipLevels: [
@@ -172,6 +172,6 @@
     }
   ],
   totalNumberOfTextures: 8,
-  totalTextureSize: 47579742,
+  totalTextureSize: 31964499,
   maxTexturesInAPack: 6
 }

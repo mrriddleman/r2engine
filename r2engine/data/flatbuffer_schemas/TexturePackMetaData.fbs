@@ -20,6 +20,13 @@ enum CubemapSide: byte
 	NUM_SIDES
 }
 
+enum MipMapFilter: byte
+{
+	BOX = 0,
+	TRIANGLE,
+	KAISER
+}
+
 table CubemapSideEntry
 {
 	textureName:string;
@@ -36,6 +43,8 @@ table TexturePackMetaData
 {
 	type:TextureType;
 	mipLevels:[MipLevel];
+	desiredMipLevels:uint;
+	mipMapFilter:MipMapFilter;
 }
 
 root_type TexturePackMetaData;

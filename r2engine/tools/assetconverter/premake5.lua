@@ -19,12 +19,13 @@ project "assetconverter"
 	files
 	{
 		"include/**.h",
-		"src/**.cpp",	
+		"src/**.cpp",
 	}
 
 	includedirs
 	{
 		"include",
+		"../../src/r2/Render/Model/Textures/",
 		"%{assetconverterIncludeDirs.assetlib}",
 		"%{assetconverterIncludeDirs.glm}",
 		"%{assetconverterIncludeDirs.cmdln}",

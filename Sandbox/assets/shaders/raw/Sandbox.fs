@@ -361,8 +361,7 @@ void main()
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 
-	if(sampledColor.a < 0.5)
-		discard;
+
 
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
@@ -465,7 +464,7 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 	vec4 color = materials[texIndex].roughness.color;
 
 	//@TODO(Serge): put this back to not using the alpha
-	return SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
 vec4 SampleMaterialAO(uint drawID, vec3 uv)

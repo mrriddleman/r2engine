@@ -3,6 +3,7 @@
 #include "AssetConverterAssetFile.h"
 #include "assetlib/TextureAsset.h"
 #include "assetlib/TextureMetaData_generated.h"
+#include "TexturePackMetaData_generated.h"
 
 #include "cmdln/CommandLine.h"
 
@@ -20,6 +21,7 @@
 #include <fstream>
 
 #include "nvtt/nvtt.h"
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -383,7 +385,75 @@ fs::path GetOutputPathForInputDirectory(const fs::path& outputPath, const fs::pa
 	return output;
 }
 
-bool ConvertImage(const fs::path& parentOutputDir, const fs::path& inputFilePath, const std::string& extension);
+int RunSystemCommand(const char* command)
+{
+	int result = system(command);
+	if (result != 0)
+	{
+		printf("Failed to run command: %s\n\n with result: %i\n", command, result);
+	}
+	return result;
+}
+
+bool GenerateFlatbufferBinaryFile(const std::string& outputDir, const std::string& fbsPath, const std::string& sourcePath)
+{
+	char command[2048];
+	std::string flatc = R2_FLATC;
+
+	fs::path flatcPath = flatc;
+	flatcPath.make_preferred();
+
+	fs::path sanitizedSourcePath = sourcePath;
+	sanitizedSourcePath.make_preferred();
+
+	fs::path sanitizedOutputPath = outputDir;
+	sanitizedOutputPath.make_preferred();
+
+	sprintf_s(command, 2048, "%s -b -o %s %s %s", flatcPath.string().c_str(), sanitizedOutputPath.string().c_str(), fbsPath.c_str(), sanitizedSourcePath.string().c_str());
+
+	return RunSystemCommand(command) == 0;
+}
+
+const std::string TEXTURE_PACK_META_DATA_NAME_FBS = "TexturePackMetaData.fbs";
+
+bool GenerateTexturePackMetaDataFromJSON(const std::string& jsonFile, const std::string& outputDir)
+{
+	fs::path flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+
+	flatbufferSchemaPath.make_preferred();
+
+	fs::path texturePackMetaDataSchemaPath = flatbufferSchemaPath / TEXTURE_PACK_META_DATA_NAME_FBS;
+
+	return GenerateFlatbufferBinaryFile(outputDir, texturePackMetaDataSchemaPath.string(), jsonFile);
+}
+
+void ReadMipMapData(const std::string& path, uint32_t& desiredMipLevels, flat::MipMapFilter& filter)
+{
+	std::ifstream ddsFile;
+
+	ddsFile.open(path, std::ios::in | std::ios::binary);
+
+	ddsFile.seekg(0, std::ios::end);
+
+	std::streampos fSize = ddsFile.tellg();
+
+	ddsFile.seekg(0, std::ios::beg);
+
+	void* data = malloc(fSize);
+
+	ddsFile.read((char*)data, fSize);
+
+	ddsFile.close();
+
+	const auto texturePackMetaData = flat::GetTexturePackMetaData(data);
+
+	desiredMipLevels = texturePackMetaData->desiredMipLevels();
+	filter = texturePackMetaData->mipMapFilter();
+
+	free(data);
+}
+
+bool ConvertImage(const fs::path& parentOutputDir, const fs::path& inputFilePath, const std::string& extension, uint32_t desiredMipLevels, flat::MipMapFilter filter);
 
 int main(int agrc, char** argv)
 {
@@ -392,6 +462,11 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-i", "--input" }, &arguments.inputDir, "Input Directory");
 	args.AddArgument({ "-o", "--output" }, &arguments.outputDir, "Output Directory");
 	args.Parse(agrc, argv);
+
+
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\packs";
+
 
 	if (arguments.inputDir.empty())
 	{
@@ -408,28 +483,69 @@ int main(int agrc, char** argv)
 	fs::path inputPath{ arguments.inputDir };
 	fs::path outputPath{ arguments.outputDir };
 
+	fs::path currentMetaPath = "";
+
+	uint32_t desiredMipLevels = 1;
+	flat::MipMapFilter mipMapFilter = flat::MipMapFilter_BOX;
+
 	for (auto& p : fs::recursive_directory_iterator(inputPath))
 	{
 		fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, p.path());
 
 		std::string extension = p.path().extension().string();
 
+	//	printf("Next file or folder: %s\n", p.path().string().c_str());
+
 		if (p.is_directory())
 		{
-			if (!fs::exists(newOutputPath) && !SkipDirectory(p.path()))
+			if(SkipDirectory(p.path()))
+				continue;
+
+			if (!fs::exists(newOutputPath))
 			{
 				printf("Making new directory: %s\n", newOutputPath.string().c_str());
 
 				fs::create_directory(newOutputPath);
 			}
 
-			continue;
+			//make the meta.tmet file 
+			for (auto& sp : fs::directory_iterator(p.path()))
+			{
+				if (fs::is_regular_file(sp) && sp.path().filename().string() == "meta.json" )
+				{
+					fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, sp.path());
+
+					fs::path binMetaFilePath = newOutputPath / "meta.tmet";
+
+					if(!fs::exists(binMetaFilePath))
+					{ 
+						bool result = GenerateTexturePackMetaDataFromJSON(sp.path().string(), newOutputPath.string());
+
+						if (!result)
+						{
+							printf("Couldn't make the tmet file: %s!\n", binMetaFilePath.string().c_str());
+						}
+						else
+						{
+							currentMetaPath = binMetaFilePath;
+
+							ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
+						}
+					}
+					else if(currentMetaPath != binMetaFilePath)
+					{
+						currentMetaPath = binMetaFilePath;
+
+						ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
+					}
+				}
+			}
 		}
 		else if (p.is_regular_file() && p.file_size() > 0)
 		{
 			if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
 			{
-				ConvertImage(p.path(), newOutputPath, extension);
+				ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);
 			}
 			else if (IsAnimation(extension))
 			{
@@ -445,9 +561,9 @@ int main(int agrc, char** argv)
 	return 0;
 }
 
-bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir,  const std::string& extension)
+bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir,  const std::string& extension, uint32_t desiredMipLevels, flat::MipMapFilter filter)
 {
-//	printf("Converting file: %s, and putting it in directory: %s, extension: %s\n", inputFilePath.string().c_str(), parentOutputDir.string().c_str(), extension.c_str());
+	printf("Converting file: %s, and putting it in directory: %s, extension: %s, desiredMipLevels: %lu, filter: %lu\n", inputFilePath.string().c_str(), parentOutputDir.string().c_str(), extension.c_str(), desiredMipLevels, filter);
 
 	void* pixels = nullptr;
 	void* imageData = nullptr;
@@ -457,10 +573,8 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 	flat::TextureFormat textureFormat;
 
-//	nvtt::Surface image0;
-//	nvtt::SurfaceSet images;
-
-	
+	nvtt::Surface image0;
+	nvtt::SurfaceSet images;
 
 	uint64_t textureSize = 0;
 
@@ -472,21 +586,25 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 	if (extension == DDS_EXTENSION)
 	{
-//		bool result = images.loadDDS(inputFilePath.string().c_str());
+		textureFormat = flat::TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
-//		height = images.GetHeight();
-		//width = images.GetWidth();
-		
+		//bool result = images.loadDDS(inputFilePath.string().c_str());
+
 		//images.GetSurface(0, 0, image0);
 
 		//auto alphaMode = image0.alphaMode();
 
 		//if (alphaMode == nvtt::AlphaMode_None)
 		//{
-		//	image0.addChannel(image0, 0, 3, 1);
+		////	image0.addChannel(image0, 0, 3, 1);
 		//}
 
-		//pixels = image0.data();
+		//height = image0.height();
+		//width = image0.width();
+		//
+		//textureSize = width * height * 4;
+
+		//imageData = image0.data();
 		std::ifstream ddsFile;
 
 		ddsFile.open(inputFilePath.string(), std::ios::in | std::ios::binary);
@@ -505,7 +623,7 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 		bool result = ReadDDSFileData(pixels, fSize, ddsTextureDetails);
 
-		textureFormat = flat::TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+		
 
 		width = ddsTextureDetails.width;
 		height = ddsTextureDetails.height;
@@ -514,6 +632,8 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 		DWORD mipWidth = ddsTextureDetails.width;
 		DWORD mipHeight = ddsTextureDetails.height;
+
+		desiredMipLevels = ddsTextureDetails.mipMapCount;
 
 		for (int m = 0; m < ddsTextureDetails.mipMapCount; ++m)
 		{
@@ -526,12 +646,12 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 	else if (extension == HDR_EXTENSION)
 	{
 		stbi_set_flip_vertically_on_load(false);
-		pixels = stbi_loadf(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+		imageData = stbi_loadf(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
 		textureFormat = flat::TextureFormat_RGBA32;
 
 		textureSize = width * height * sizeof(float) * 4;
 
-		imageData = pixels;
+	//	imageData = pixels;
 
 
 		metaMipInfo.push_back(flat::CreateMipInfo(builder, width, height, textureSize, textureSize));
@@ -539,19 +659,19 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 	else
 	{
 		stbi_set_flip_vertically_on_load(true);
-		pixels = stbi_load(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+		imageData = stbi_load(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
 		textureFormat = flat::TextureFormat_RGBA8;
 
-
+		
 		
 		textureSize = width * height * 4;
 
-		imageData = pixels;
+	//	imageData = pixels;
 
 		metaMipInfo.push_back(flat::CreateMipInfo(builder, width, height, textureSize, textureSize));
 	}
 
-	if (pixels == nullptr)
+	if (imageData == nullptr)
 	{
 		printf("Failed to load the file: %s\n", inputFilePath.string().c_str());
 		return 0;
@@ -560,73 +680,97 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 	//void* pixelData = malloc(textureSize);
 
-	/*struct DumbHandler : nvtt::OutputHandler
-	{
-		virtual bool writeData(const void* data, int size)
-		{
-			for (int i = 0; i < size; ++i)
-			{
-				buffer.push_back(((char*)data)[i]);
-			}
+	//struct DumbHandler : nvtt::OutputHandler
+	//{
+	//	virtual bool writeData(const void* data, int size)
+	//	{
+	//		for (int i = 0; i < size; ++i)
+	//		{
+	//			buffer.push_back(((char*)data)[i]);
+	//		}
 
-			return true;
-		}
+	//		return true;
+	//	}
 
-		virtual void beginImage(int size, int width, int height, int depth, int face, int mipLevel) {};
+	//	virtual void beginImage(int size, int width, int height, int depth, int face, int mipLevel) {};
 
-		virtual void endImage() {};
+	//	virtual void endImage() {};
 
-		std::vector<char> buffer;
-	};
+	//	std::vector<char> buffer;
+	//};
 
-	nvtt::Context context;
-	context.enableCudaAcceleration(true);
+	//nvtt::Context context;
+	//context.enableCudaAcceleration(true);
 
-	nvtt::CompressionOptions compressorOptions;
-	compressorOptions.setFormat(nvtt::Format::Format_RGBA);
-	compressorOptions.setPixelType(nvtt::PixelType_UnsignedNorm);*/
+	//nvtt::CompressionOptions compressorOptions;
+	//
+	//nvtt::Format format = nvtt::Format::Format_RGBA;
+
+	//if (textureFormat == flat::TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT)
+	//{
+	//	format = nvtt::Format_BC1a;
+	//}
+
+	//compressorOptions.setFormat(format);
+
+	//compressorOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
 
 	//if (textureFormat == flat::TextureFormat_RGBA32)
 	//{
 	//	compressorOptions.setPixelType(nvtt::PixelType_Float);
 	//}
-	
 
 	//nvtt::OutputOptions outputOptions;
 
 	//nvtt::Surface outputSurface;
 
 	//DumbHandler handler;
-//	outputOptions.setOutputHandler(&handler);
+	//outputOptions.setOutputHandler(&handler);
 
 	//nvtt::InputFormat inputFormat = nvtt::InputFormat_BGRA_8UB;
-	
-	// = ;
+	//
+	//if (textureFormat == flat::TextureFormat_RGBA32)
+	//{
+	//	inputFormat = nvtt::InputFormat_RGBA_32F;		
+	//}
 
-//	if (textureFormat == flat::TextureFormat_RGBA32)
-//	{
-	//	inputFormat = nvtt::InputFormat_RGBA_32F;
-		
-//	}
+	//outputSurface.setImage(inputFormat, width, height, 1, imageData);
+	//
+	//const auto numMipMaps = std::min(static_cast<uint32_t>(outputSurface.countMipmaps()), desiredMipLevels);
 
-//	outputSurface.setImage(inputFormat, width, height, 1, pixels);
-//	const auto numMipMaps = outputSurface.countMipmaps();
-	
-//	printf("Number of mips calculated: %i\n", numMipMaps);
+	//std::vector<char> all_buffer;
+	//all_buffer.reserve(textureSize);
 
 	//for(int m = 0; m < numMipMaps; ++m)
 	//{
+	//	
+	//	
+
 	//	context.compress(outputSurface, 0, m, compressorOptions, outputOptions);
 
-	//	metaMipInfo.push_back( flat::CreateMipInfo(builder, outputSurface.width(), outputSurface.height(), 0, handler.buffer.size()));
-	//	
+	//	auto width = outputSurface.width();
+	//	auto height = outputSurface.height();
+
+	//	metaMipInfo.push_back( flat::CreateMipInfo(builder, width, height, handler.buffer.size(), handler.buffer.size()));
+	//
 	//	all_buffer.insert(all_buffer.end(), handler.buffer.begin(), handler.buffer.end());
 
 	//	handler.buffer.clear();
 
 	//	if (m == numMipMaps - 1) break;
 	//	
-	//	outputSurface.buildNextMipmap(nvtt::MipmapFilter_Kaiser);
+	//	if (filter == flat::MipMapFilter_KAISER)
+	//	{
+	//		outputSurface.buildNextMipmap(nvtt::MipmapFilter_Kaiser);
+	//	}
+	//	else if (filter == flat::MipMapFilter_TRIANGLE)
+	//	{
+	//		outputSurface.buildNextMipmap(nvtt::MipmapFilter_Triangle);
+	//	}
+	//	else
+	//	{
+	//		outputSurface.buildNextMipmap(nvtt::MipmapFilter_Box);
+	//	}
 	//}
 	
 	auto textureMetaData = flat::CreateTextureMetaData(builder, builder.CreateString(inputFilePath.string()), textureSize, textureFormat, flat::CompressionMode_LZ4, builder.CreateVector(metaMipInfo));
@@ -655,10 +799,11 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 
 	if (extension != DDS_EXTENSION)
 	{
-		stbi_image_free(pixels);
+		stbi_image_free(imageData);
 	}
 	else
 	{
+
 		CleanupDDSTextureDetails(ddsTextureDetails);
 		free(pixels);
 	}
