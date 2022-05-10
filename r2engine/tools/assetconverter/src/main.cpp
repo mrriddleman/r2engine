@@ -464,8 +464,8 @@ int main(int agrc, char** argv)
 	args.Parse(agrc, argv);
 
 
-	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs";
-	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\packs";
+//	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs";
+//	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\packs";
 
 
 	if (arguments.inputDir.empty())
