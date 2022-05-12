@@ -290,11 +290,16 @@ namespace r2
 
             R2_CHECK(mCurrentRendererBackend == draw::RendererBackend::OpenGL, "Only supported renderer backend at the moment is OpenGL");
 
-            
-
-            
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
-            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
+
+            //@TODO(Serge): WAYYY IN THE FUTURE - maybe noptrApp->GetTexturePackManifestsBinaryPaths() should be a specific set just for startup
+
+            auto appInitialTexturePackManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
+            std::vector<std::string> initialTexturePackManifests;
+            initialTexturePackManifests.insert(initialTexturePackManifests.begin(), appInitialTexturePackManifests.begin(), appInitialTexturePackManifests.end());
+            initialTexturePackManifests.push_back(std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman"));
+
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialTexturePackManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             //@TODO(Serge): don't use make unique!

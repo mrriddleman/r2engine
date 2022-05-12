@@ -463,11 +463,6 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-o", "--output" }, &arguments.outputDir, "Output Directory");
 	args.Parse(agrc, argv);
 
-
-//	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs";
-//	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Textures\\packs";
-
-
 	if (arguments.inputDir.empty())
 	{
 		printf("Failed to set an input directory\n");
@@ -662,6 +657,10 @@ bool ConvertImage(const fs::path& inputFilePath, const fs::path& parentOutputDir
 		imageData = stbi_load(inputFilePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
 		textureFormat = flat::TextureFormat_RGBA8;
 
+		if (parentOutputDir.stem().string() == "albedo")
+		{
+			textureFormat = flat::TextureFormat_SRGBA8;
+		}
 		
 		
 		textureSize = width * height * 4;

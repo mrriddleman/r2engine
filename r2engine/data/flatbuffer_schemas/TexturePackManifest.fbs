@@ -1,5 +1,6 @@
 
 include "TexturePackMetaData.fbs";
+include "TextureMetaData.fbs";
 
 namespace flat;
 
@@ -27,12 +28,24 @@ table TexturePack
 	metaData:TexturePackMetaData;
 }
 
+table FormatMetaData
+{
+	format:TextureFormat;
+	maxWidth:uint;
+	maxHeight:uint;
+	numTextures:uint;
+	maxMips:uint;
+	isCubemap:bool;
+	isAnisotropic:bool;
+}
+
 table TexturePacksManifest
 {
 	texturePacks:[TexturePack];
 	totalNumberOfTextures:ulong;
 	totalTextureSize:ulong;	
 	maxTexturesInAPack:ulong;
+	formatMetaData:[FormatMetaData];
 }
 
 root_type TexturePacksManifest;

@@ -25,7 +25,7 @@ includeDirs["sha256"] = "r2engine/vendor/sha256"
 includeDirs["stb"] = "r2engine/vendor/stb"
 includeDirs["cgltf"] = "r2engine/vendor/cgltf"
 includeDirs["assetlib"] = "r2engine/libs/assetlib/include"
-
+includeDirs["texturemetadata"] = "r2engine/libs/assetlib/include/assetlib"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -79,7 +79,8 @@ project "r2engine"
 		"%{includeDirs.sha256}",
 		"%{includeDirs.stb}",
 		"%{includeDirs.cgltf}",
-		"%{includeDirs.assetlib}"
+		"%{includeDirs.assetlib}",
+		"%{includeDirs.texturemetadata}"
 	}
 
 	links
@@ -443,7 +444,8 @@ project "Sandbox"
 	{
 		"r2engine/src",
 		"%{includeDirs.glm}",
-		"%{includeDirs.flatbuffers}"
+		"%{includeDirs.flatbuffers}",
+		"%{includeDirs.texturemetadata}"
 	}
 
 	links

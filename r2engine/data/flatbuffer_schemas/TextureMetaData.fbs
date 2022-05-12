@@ -24,11 +24,14 @@ enum TextureFormat : uint16
 	RGBA8,
 	RGB8,
 	RGBA32,
+	RGB16,
 	R8,
 	R32,
 	SRGB8,
 	SRGBA8,
-	COMPRESSED_RGBA_S3TC_DXT1_EXT
+	COMPRESSED_RGBA_S3TC_DXT1_EXT,
+	DEPTH16,
+	DEPTH32
 }
 
 table TextureMetaData

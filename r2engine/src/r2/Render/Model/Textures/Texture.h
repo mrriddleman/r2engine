@@ -128,6 +128,8 @@ namespace r2::draw::tex
 	bool TexturesEqual(const Texture& t1, const Texture& t2);
 	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2);
 
+
+	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
 	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
 	TextureHandle AddTexturePages(const TextureHandle& textureHandle, u32 numPages);
 	
@@ -150,7 +152,9 @@ namespace r2::draw::tex
 		u32 GetNumberOfMipMaps(const TextureHandle& texture);
 		
 		u64 MemorySize(u32 maxNumTextureContainers, u32 maxTextureContainersPerFormat, u32 maxTextureLayers, u64 alignment, u32 headerSize, u32 boundsChecking);
-		u64 GetMaxTextureLayers(bool sparse);
+		u32 GetMaxTextureLayers(bool sparse);
+
+
 	}
 }
 

@@ -334,7 +334,7 @@ namespace r2::draw
 namespace r2::draw::renderer
 {
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath);
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const char* shaderManifestPath, const char* internalShaderManifestPath);
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);

@@ -49,48 +49,57 @@ enum TextureFormat {
   TextureFormat_RGBA8 = 1,
   TextureFormat_RGB8 = 2,
   TextureFormat_RGBA32 = 3,
-  TextureFormat_R8 = 4,
-  TextureFormat_R32 = 5,
-  TextureFormat_SRGB8 = 6,
-  TextureFormat_SRGBA8 = 7,
-  TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT = 8,
+  TextureFormat_RGB16 = 4,
+  TextureFormat_R8 = 5,
+  TextureFormat_R32 = 6,
+  TextureFormat_SRGB8 = 7,
+  TextureFormat_SRGBA8 = 8,
+  TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT = 9,
+  TextureFormat_DEPTH16 = 10,
+  TextureFormat_DEPTH32 = 11,
   TextureFormat_MIN = TextureFormat_UNKNOWN,
-  TextureFormat_MAX = TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT
+  TextureFormat_MAX = TextureFormat_DEPTH32
 };
 
-inline const TextureFormat (&EnumValuesTextureFormat())[9] {
+inline const TextureFormat (&EnumValuesTextureFormat())[12] {
   static const TextureFormat values[] = {
     TextureFormat_UNKNOWN,
     TextureFormat_RGBA8,
     TextureFormat_RGB8,
     TextureFormat_RGBA32,
+    TextureFormat_RGB16,
     TextureFormat_R8,
     TextureFormat_R32,
     TextureFormat_SRGB8,
     TextureFormat_SRGBA8,
-    TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT
+    TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+    TextureFormat_DEPTH16,
+    TextureFormat_DEPTH32
   };
   return values;
 }
 
 inline const char * const *EnumNamesTextureFormat() {
-  static const char * const names[10] = {
+  static const char * const names[13] = {
     "UNKNOWN",
     "RGBA8",
     "RGB8",
     "RGBA32",
+    "RGB16",
     "R8",
     "R32",
     "SRGB8",
     "SRGBA8",
     "COMPRESSED_RGBA_S3TC_DXT1_EXT",
+    "DEPTH16",
+    "DEPTH32",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameTextureFormat(TextureFormat e) {
-  if (flatbuffers::IsOutRange(e, TextureFormat_UNKNOWN, TextureFormat_COMPRESSED_RGBA_S3TC_DXT1_EXT)) return "";
+  if (flatbuffers::IsOutRange(e, TextureFormat_UNKNOWN, TextureFormat_DEPTH32)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTextureFormat()[index];
 }

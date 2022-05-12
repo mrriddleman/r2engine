@@ -41,10 +41,17 @@ namespace r2::draw::texsys
 {
 	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture);
 
-
-
-	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const char* systemName)
+	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const r2::SArray<InitialTextureFormat>* formatsToMake, const char* systemName)
 	{
+		//const u64 numInitialFormats = r2::sarr::Size(*formatsToMake);
+
+		//for (u64 i = 0; i < numInitialFormats; ++i)
+		//{
+		//	const InitialTextureFormat& format = r2::sarr::At(*formatsToMake, i);
+		//	
+		//	printf("InitialTextureFormat: %s, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu\n", flat::EnumNameTextureFormat(format.textureFormat), format.width, format.height, format.numMips, format.isCubemap, format.isAnisotropic);
+		//}
+
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");

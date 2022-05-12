@@ -6,12 +6,25 @@
 #include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Core/File/PathUtils.h"
+#include "assetlib/TextureMetaData_generated.h"
 
 namespace r2::draw::texsys
 {
+
+	struct InitialTextureFormat
+	{
+		flat::TextureFormat textureFormat;
+		u32 numPages;
+		u32 width;
+		u32 height;
+		u32 numMips;
+		bool isCubemap;
+		bool isAnisotropic;
+	};
+
 	//@NOTE: this system holds map of the gpu texture handles to the texture asset
 	//		 The texture data should be loaded into memory already
-	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const char* systemName);
+	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const r2::SArray<InitialTextureFormat>* formatsToMake, const char* systemName);
 	void Shutdown();
 
 	//Maybe we have entries of texture names based on the hash

@@ -6,12 +6,16 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "TextureMetaData_generated.h"
 #include "TexturePackMetaData_generated.h"
 
 namespace flat {
 
 struct TexturePack;
 struct TexturePackBuilder;
+
+struct FormatMetaData;
+struct FormatMetaDataBuilder;
 
 struct TexturePacksManifest;
 struct TexturePacksManifestBuilder;
@@ -283,13 +287,116 @@ inline flatbuffers::Offset<TexturePack> CreateTexturePackDirect(
       metaData);
 }
 
+struct FormatMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef FormatMetaDataBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FORMAT = 4,
+    VT_MAXWIDTH = 6,
+    VT_MAXHEIGHT = 8,
+    VT_NUMTEXTURES = 10,
+    VT_MAXMIPS = 12,
+    VT_ISCUBEMAP = 14,
+    VT_ISANISOTROPIC = 16
+  };
+  flat::TextureFormat format() const {
+    return static_cast<flat::TextureFormat>(GetField<uint16_t>(VT_FORMAT, 0));
+  }
+  uint32_t maxWidth() const {
+    return GetField<uint32_t>(VT_MAXWIDTH, 0);
+  }
+  uint32_t maxHeight() const {
+    return GetField<uint32_t>(VT_MAXHEIGHT, 0);
+  }
+  uint32_t numTextures() const {
+    return GetField<uint32_t>(VT_NUMTEXTURES, 0);
+  }
+  uint32_t maxMips() const {
+    return GetField<uint32_t>(VT_MAXMIPS, 0);
+  }
+  bool isCubemap() const {
+    return GetField<uint8_t>(VT_ISCUBEMAP, 0) != 0;
+  }
+  bool isAnisotropic() const {
+    return GetField<uint8_t>(VT_ISANISOTROPIC, 0) != 0;
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_FORMAT) &&
+           VerifyField<uint32_t>(verifier, VT_MAXWIDTH) &&
+           VerifyField<uint32_t>(verifier, VT_MAXHEIGHT) &&
+           VerifyField<uint32_t>(verifier, VT_NUMTEXTURES) &&
+           VerifyField<uint32_t>(verifier, VT_MAXMIPS) &&
+           VerifyField<uint8_t>(verifier, VT_ISCUBEMAP) &&
+           VerifyField<uint8_t>(verifier, VT_ISANISOTROPIC) &&
+           verifier.EndTable();
+  }
+};
+
+struct FormatMetaDataBuilder {
+  typedef FormatMetaData Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_format(flat::TextureFormat format) {
+    fbb_.AddElement<uint16_t>(FormatMetaData::VT_FORMAT, static_cast<uint16_t>(format), 0);
+  }
+  void add_maxWidth(uint32_t maxWidth) {
+    fbb_.AddElement<uint32_t>(FormatMetaData::VT_MAXWIDTH, maxWidth, 0);
+  }
+  void add_maxHeight(uint32_t maxHeight) {
+    fbb_.AddElement<uint32_t>(FormatMetaData::VT_MAXHEIGHT, maxHeight, 0);
+  }
+  void add_numTextures(uint32_t numTextures) {
+    fbb_.AddElement<uint32_t>(FormatMetaData::VT_NUMTEXTURES, numTextures, 0);
+  }
+  void add_maxMips(uint32_t maxMips) {
+    fbb_.AddElement<uint32_t>(FormatMetaData::VT_MAXMIPS, maxMips, 0);
+  }
+  void add_isCubemap(bool isCubemap) {
+    fbb_.AddElement<uint8_t>(FormatMetaData::VT_ISCUBEMAP, static_cast<uint8_t>(isCubemap), 0);
+  }
+  void add_isAnisotropic(bool isAnisotropic) {
+    fbb_.AddElement<uint8_t>(FormatMetaData::VT_ISANISOTROPIC, static_cast<uint8_t>(isAnisotropic), 0);
+  }
+  explicit FormatMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  FormatMetaDataBuilder &operator=(const FormatMetaDataBuilder &);
+  flatbuffers::Offset<FormatMetaData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<FormatMetaData>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<FormatMetaData> CreateFormatMetaData(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flat::TextureFormat format = flat::TextureFormat_UNKNOWN,
+    uint32_t maxWidth = 0,
+    uint32_t maxHeight = 0,
+    uint32_t numTextures = 0,
+    uint32_t maxMips = 0,
+    bool isCubemap = false,
+    bool isAnisotropic = false) {
+  FormatMetaDataBuilder builder_(_fbb);
+  builder_.add_maxMips(maxMips);
+  builder_.add_numTextures(numTextures);
+  builder_.add_maxHeight(maxHeight);
+  builder_.add_maxWidth(maxWidth);
+  builder_.add_format(format);
+  builder_.add_isAnisotropic(isAnisotropic);
+  builder_.add_isCubemap(isCubemap);
+  return builder_.Finish();
+}
+
 struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef TexturePacksManifestBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_TEXTUREPACKS = 4,
     VT_TOTALNUMBEROFTEXTURES = 6,
     VT_TOTALTEXTURESIZE = 8,
-    VT_MAXTEXTURESINAPACK = 10
+    VT_MAXTEXTURESINAPACK = 10,
+    VT_FORMATMETADATA = 12
   };
   const flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>> *texturePacks() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>> *>(VT_TEXTUREPACKS);
@@ -303,6 +410,9 @@ struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   uint64_t maxTexturesInAPack() const {
     return GetField<uint64_t>(VT_MAXTEXTURESINAPACK, 0);
   }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::FormatMetaData>> *formatMetaData() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::FormatMetaData>> *>(VT_FORMATMETADATA);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_TEXTUREPACKS) &&
@@ -311,6 +421,9 @@ struct TexturePacksManifest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
            VerifyField<uint64_t>(verifier, VT_TOTALNUMBEROFTEXTURES) &&
            VerifyField<uint64_t>(verifier, VT_TOTALTEXTURESIZE) &&
            VerifyField<uint64_t>(verifier, VT_MAXTEXTURESINAPACK) &&
+           VerifyOffset(verifier, VT_FORMATMETADATA) &&
+           verifier.VerifyVector(formatMetaData()) &&
+           verifier.VerifyVectorOfTables(formatMetaData()) &&
            verifier.EndTable();
   }
 };
@@ -331,6 +444,9 @@ struct TexturePacksManifestBuilder {
   void add_maxTexturesInAPack(uint64_t maxTexturesInAPack) {
     fbb_.AddElement<uint64_t>(TexturePacksManifest::VT_MAXTEXTURESINAPACK, maxTexturesInAPack, 0);
   }
+  void add_formatMetaData(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::FormatMetaData>>> formatMetaData) {
+    fbb_.AddOffset(TexturePacksManifest::VT_FORMATMETADATA, formatMetaData);
+  }
   explicit TexturePacksManifestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -348,11 +464,13 @@ inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifest(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::TexturePack>>> texturePacks = 0,
     uint64_t totalNumberOfTextures = 0,
     uint64_t totalTextureSize = 0,
-    uint64_t maxTexturesInAPack = 0) {
+    uint64_t maxTexturesInAPack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::FormatMetaData>>> formatMetaData = 0) {
   TexturePacksManifestBuilder builder_(_fbb);
   builder_.add_maxTexturesInAPack(maxTexturesInAPack);
   builder_.add_totalTextureSize(totalTextureSize);
   builder_.add_totalNumberOfTextures(totalNumberOfTextures);
+  builder_.add_formatMetaData(formatMetaData);
   builder_.add_texturePacks(texturePacks);
   return builder_.Finish();
 }
@@ -362,14 +480,17 @@ inline flatbuffers::Offset<TexturePacksManifest> CreateTexturePacksManifestDirec
     const std::vector<flatbuffers::Offset<flat::TexturePack>> *texturePacks = nullptr,
     uint64_t totalNumberOfTextures = 0,
     uint64_t totalTextureSize = 0,
-    uint64_t maxTexturesInAPack = 0) {
+    uint64_t maxTexturesInAPack = 0,
+    const std::vector<flatbuffers::Offset<flat::FormatMetaData>> *formatMetaData = nullptr) {
   auto texturePacks__ = texturePacks ? _fbb.CreateVector<flatbuffers::Offset<flat::TexturePack>>(*texturePacks) : 0;
+  auto formatMetaData__ = formatMetaData ? _fbb.CreateVector<flatbuffers::Offset<flat::FormatMetaData>>(*formatMetaData) : 0;
   return flat::CreateTexturePacksManifest(
       _fbb,
       texturePacks__,
       totalNumberOfTextures,
       totalTextureSize,
-      maxTexturesInAPack);
+      maxTexturesInAPack,
+      formatMetaData__);
 }
 
 inline const flat::TexturePacksManifest *GetTexturePacksManifest(const void *buf) {

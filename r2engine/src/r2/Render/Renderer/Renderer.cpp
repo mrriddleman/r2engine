@@ -524,8 +524,99 @@ namespace r2::draw::renderer
 #endif
 
 
+	s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat::TextureFormat format, bool isCubemap)
+	{
+		const u64 numFormats = r2::sarr::Size(*formats);
+		for (u64 i = 0; i < numFormats; ++i)
+		{
+			const texsys::InitialTextureFormat& initialTextureFormat = r2::sarr::At(*formats, i);
+			if (initialTextureFormat.textureFormat == format && initialTextureFormat.isCubemap == isCubemap)
+				return i;
+		}
+
+		return -1;
+	}
+
+	void AddRenderSurfaceTextures(r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats)
+	{
+		const auto displaySize = CENG.DisplaySize();
+
+		s64 hasDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, false);
+
+		if (hasDepth < 0)
+		{
+			texsys::InitialTextureFormat depthFormat;
+			depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
+			depthFormat.numMips = 1;
+			depthFormat.isCubemap = false;
+			depthFormat.isAnisotropic = false;
+			depthFormat.numPages = light::MAX_NUM_LIGHTS * 2 + 1; //for shadows -> light::MAX_NUM_LIGHTS*2, for zpp -> 1
+			depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
+			depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
+			
+			r2::sarr::Push(*formats, depthFormat);
+		}
+		else
+		{
+			texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasDepth);
+
+			depthFormat.numPages += light::MAX_NUM_LIGHTS * 2 + 1;
+			depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
+			depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
+
+		}
+
+		s64 hasCubemapDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, true);
+
+		if (hasCubemapDepth < 0)
+		{
+			texsys::InitialTextureFormat depthFormat;
+			depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
+			depthFormat.numMips = 1;
+			depthFormat.isCubemap = true;
+			depthFormat.isAnisotropic = false;
+			depthFormat.numPages = light::MAX_NUM_LIGHTS; //for pointligt shadows -> light::MAX_NUM_LIGHTS
+			depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
+			depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
+
+			r2::sarr::Push(*formats, depthFormat);
+		}
+		else
+		{
+			texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasCubemapDepth);
+
+			depthFormat.numPages += light::MAX_NUM_LIGHTS;
+			depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
+			depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
+		}
+
+		s64 hasGBuffer = HasFormat(formats, flat::TextureFormat_RGB16, false);
+		if (hasGBuffer < 0)
+		{
+			texsys::InitialTextureFormat gbufferFormat;
+			gbufferFormat.textureFormat = flat::TextureFormat_RGB16;
+			gbufferFormat.numMips = 1;
+			gbufferFormat.isCubemap = false;
+			gbufferFormat.isAnisotropic = false;
+			gbufferFormat.numPages = 1; //for pointligt shadows -> light::MAX_NUM_LIGHTS
+			gbufferFormat.width =  displaySize.width;
+			gbufferFormat.height = displaySize.height;
+
+			r2::sarr::Push(*formats, gbufferFormat);
+		}
+		else
+		{
+			texsys::InitialTextureFormat& gbufferFormat = r2::sarr::At(*formats, hasGBuffer);
+
+			gbufferFormat.numPages += 1;
+			gbufferFormat.width = std::max(gbufferFormat.width, displaySize.width);
+			gbufferFormat.height = std::max(gbufferFormat.height, displaySize.height);
+		}
+
+	}
+
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const char* shaderManifestPath, const char* internalShaderManifestPath)
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
 	{
 		//R2_CHECK(s_optrRenderer == nullptr, "We've already create the s_optrRenderer - are you trying to initialize more than once?");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
@@ -716,12 +807,73 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, "Texture System");
+		
+
+		//need to do some processing to figure out all of the initial formats we want to make
+		//For now we'll be dumb and read them all and figure out how many pages etc we need
+
+		//r2::SArray<r2::draw::texsys::InitialTextureFormat>* initialTextureFormats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, texsys::InitialTextureFormat, flat::TextureFormat::TextureFormat_MAX);
+
+		//R2_CHECK(initialTextureFormats != nullptr, "This should exist!");
+
+		//for (const auto& appPathToRead : appTexturePackManifests)
+		//{
+		//	void* ptrToFileMemory = r2::fs::ReadFile<r2::mem::StackArena>(*MEM_ENG_SCRATCH_PTR, appPathToRead.c_str());
+
+		//	const flat::TexturePacksManifest* metaData = flat::GetTexturePacksManifest(ptrToFileMemory);
+
+		//	const auto formats = metaData->formatMetaData();
+
+		//	for (flatbuffers::uoffset_t i = 0; i < formats->size(); ++i)
+		//	{
+		//		const auto format = formats->Get(i);
+
+		//		s64 index = HasFormat(initialTextureFormats, format->format(), format->isCubemap());
+
+		//		if (index < 0)
+		//		{
+		//			//add the format
+		//			texsys::InitialTextureFormat initialTextureFormat;
+		//			initialTextureFormat.textureFormat = format->format();
+		//			initialTextureFormat.isCubemap = format->isCubemap();
+		//			initialTextureFormat.isAnisotropic = format->isAnisotropic();
+		//			initialTextureFormat.numMips = format->maxMips();
+		//			initialTextureFormat.numPages = format->numTextures(); //check for max pages first from the texture system
+		//			initialTextureFormat.width = format->maxWidth();
+		//			initialTextureFormat.height = format->maxHeight();
+
+		//			r2::sarr::Push(*initialTextureFormats, initialTextureFormat);
+		//		}
+		//		else
+		//		{
+		//			//get the format
+		//			//add necessary info
+		//			texsys::InitialTextureFormat& initialFormat = r2::sarr::At(*initialTextureFormats, index);
+
+		//			initialFormat.width = std::max(initialFormat.width, format->maxWidth());
+		//			initialFormat.height = std::max(initialFormat.height, format->maxHeight());
+		//			initialFormat.numMips = std::max(initialFormat.numMips, format->maxMips());
+		//			initialFormat.numPages += format->numTextures();
+		//		}
+		//	}
+
+
+		//	FREE(ptrToFileMemory, *MEM_ENG_SCRATCH_PTR);
+		//}
+
+		////now add in the formats needed for the render surfaces
+		//AddRenderSurfaceTextures(initialTextureFormats);
+
+
+		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, nullptr, "Texture System");
 		if (!textureSystemInitialized)
 		{
 			R2_CHECK(false, "We couldn't initialize the texture system");
+		//	FREE(initialTextureFormats, *MEM_ENG_SCRATCH_PTR);
 			return false;
 		}
+
+		//FREE(initialTextureFormats, *MEM_ENG_SCRATCH_PTR);
 
 
 		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
@@ -822,7 +974,7 @@ namespace r2::draw::renderer
 		newRenderer->mStaticPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[0], "pointLightBatch");
 		newRenderer->mDynamicPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[1], "pointLightBatch");
 
-		auto size = CENG.DisplaySize();
+		
 		
 
 		u32 boundsChecking = 0;
@@ -856,6 +1008,7 @@ namespace r2::draw::renderer
 		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
 		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
 
+		auto size = CENG.DisplaySize();
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
 			RenderTarget::MemorySize(1, 0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) + 

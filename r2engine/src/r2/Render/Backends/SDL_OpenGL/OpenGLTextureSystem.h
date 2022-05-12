@@ -113,6 +113,7 @@ namespace r2::draw::gl
 
 
 		//private
+		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices);
 		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages);
 		
 	}

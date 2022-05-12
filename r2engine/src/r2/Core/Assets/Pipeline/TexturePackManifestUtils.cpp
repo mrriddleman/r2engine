@@ -11,6 +11,165 @@
 #include "r2/Utils/Hash.h"
 #include <filesystem>
 #include <fstream>
+#include "assetlib/TextureMetaData_generated.h"
+#include "assetlib/TextureAsset.h"
+#include "assetlib/AssetFile.h"
+
+
+namespace
+{
+	class RTEXAssetFile : public r2::assets::assetlib::AssetFile
+	{
+	public:
+		RTEXAssetFile()
+			:mFilePath("")
+		{
+		}
+
+		~RTEXAssetFile()
+		{
+			Close();
+
+			if (binaryBlob.data)
+			{
+				FreeForBlob(binaryBlob);
+				binaryBlob.data = nullptr;
+				binaryBlob.size = 0;
+			}
+
+			if (metaData.data)
+			{
+				FreeForBlob(metaData);
+				metaData.data = nullptr;
+				metaData.size = 0;
+			}
+		}
+
+		virtual bool OpenForRead(const char* filePath) override
+		{
+			Close();
+
+			mFile.open(filePath, std::ios::binary | std::ios::in);
+
+			bool isOpen = mFile.is_open();
+
+			if (isOpen)
+			{
+				mFilePath = filePath;
+			}
+
+			return isOpen;
+		}
+
+		virtual bool OpenForWrite(const char* filePath) const override
+		{
+			Close();
+
+			mFile.open(filePath, std::ios::binary | std::ios::out);
+
+			bool isOpen = mFile.is_open();
+
+			if (isOpen)
+			{
+				mFilePath = filePath;
+			}
+
+			return isOpen;
+		}
+
+		virtual bool OpenForReadWrite(const char* filePath) override
+		{
+			Close();
+
+			mFile.open(filePath, std::ios::binary | std::ios::out | std::ios::in);
+
+			bool isOpen = mFile.is_open();
+
+			if (isOpen)
+			{
+				mFilePath = filePath;
+			}
+
+			return isOpen;
+		}
+
+		virtual bool Close() const override
+		{
+			if (IsOpen())
+			{
+				mFile.close();
+				mFilePath = "";
+			}
+
+			return true;
+		}
+
+		virtual bool IsOpen() const override
+		{
+			return mFile.is_open();
+		}
+
+		virtual uint32_t Size() override
+		{
+			if (!IsOpen())
+				return 0;
+
+			auto currentOffset = mFile.tellg();
+
+			mFile.seekg(0, std::ios::end);
+
+			std::streampos fSize = mFile.tellg();
+
+			mFile.seekg(currentOffset);
+
+			return fSize;
+		}
+
+		virtual uint32_t Read(char* data, uint32_t dataBufSize) override
+		{
+			mFile.read(data, dataBufSize);
+			return dataBufSize;
+		}
+
+		virtual uint32_t Read(char* data, uint32_t offset, uint32_t dataBufSize) override
+		{
+			mFile.seekg(offset, std::ios::beg);
+			mFile.read(data, dataBufSize);
+			return dataBufSize;
+		}
+
+		virtual uint32_t Write(const char* data, uint32_t size) const override
+		{
+			mFile.write(data, size);
+			return size;
+		}
+
+		virtual bool AllocateForBlob(r2::assets::assetlib::BinaryBlob& blob) override
+		{
+			if (blob.size > 0)
+				blob.data = new char[blob.size];
+
+			return blob.size > 0;
+		}
+
+		virtual void FreeForBlob(const r2::assets::assetlib::BinaryBlob& blob) override
+		{
+			if (blob.data)
+			{
+				delete[] blob.data;
+			}
+		}
+
+		virtual const char* FilePath() const override
+		{
+			return mFilePath.c_str();
+		}
+
+	private:
+		mutable std::string mFilePath;
+		mutable std::fstream mFile;
+	};
+}
 
 namespace r2::asset::pln::tex
 {
@@ -96,6 +255,29 @@ namespace r2::asset::pln::tex
 		return output;
 	}
 
+	struct RawFormatMetaData
+	{
+		flat::TextureFormat textureFormat;
+		u32 maxWidth;
+		u32 maxHeight;
+		u32 maxMips;
+		u32 numTextures;
+		bool isCubemap;
+		bool isAnisotropic;
+	};
+
+
+	s64 HasTextureFormat(const std::vector<RawFormatMetaData>& metaData, const flat::TextureFormat& format, bool isCubemap)
+	{
+		for (u32 i = 0; i < metaData.size(); ++i)
+		{
+			if (metaData[i].textureFormat == format && metaData[i].isCubemap == isCubemap)
+				return i;
+		}
+
+		return -1;
+	}
+
 	bool GenerateTexturePacksManifestFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& directory, const std::string& binDir)
 	{
 		flatbuffers::FlatBufferBuilder builder;
@@ -109,6 +291,12 @@ namespace r2::asset::pln::tex
 		std::filesystem::create_directory(binPacksPath);
 
 		std::filesystem::path inputRootDir = directory;
+
+		std::vector<RawFormatMetaData> rawFormatMetaData;
+
+
+	
+		std::filesystem::path binMetaFilePath;
 
 		for (const auto& texturePackDir : std::filesystem::directory_iterator(directory)) //this will be the texture pack level
 		{
@@ -145,9 +333,29 @@ namespace r2::asset::pln::tex
 					bool generated = GenerateTexturePackMetaDataFromJSON(metaJsonFilePath.string(), texturePackBinPath.string());
 
 					R2_CHECK(generated, "We couldn't generate the .tmet file for: %s\n", metaJsonFilePath.string().c_str());
+
+					
 				}
 
+				binMetaFilePath = metaFilePath;
+
 			}
+
+			
+
+			char* metaData = r2::asset::pln::utils::ReadFile(binMetaFilePath.string().c_str());
+			R2_CHECK(metaData != nullptr, "Should have read the file: %s!\n", binMetaFilePath.string().c_str());
+			const flat::TexturePackMetaData* texturePackMetaData = flat::GetTexturePackMetaData(metaData);
+			R2_CHECK(texturePackMetaData != nullptr, "");
+
+			bool isCubemap = texturePackMetaData->type() == flat::TextureType_CUBEMAP;
+			u32 numMips = std::max((u32)1,(u32)texturePackMetaData->mipLevels()->size());
+			bool isAnisotropic = false;
+			bool hasIncrementedForCubemap = false;
+
+
+			
+
 
 			u64 numTexturesInPack = 0;
 			u64 packSize = 0;
@@ -177,6 +385,53 @@ namespace r2::asset::pln::tex
 				std::filesystem::path outputFilePath = GetOutputFilePath(file.path(), inputRootDir, binPacksPath);
 
 				R2_CHECK(std::filesystem::exists(outputFilePath), "This should already exist right now");
+
+				//@TODO(Serge): read the .rtex file to get the info out of it
+				RTEXAssetFile rtexAssetFile;
+
+				r2::assets::assetlib::load_meta_data(outputFilePath.string().c_str(), rtexAssetFile);
+
+				const flat::TextureMetaData* textureMetaData = r2::assets::assetlib::read_texture_meta_data(rtexAssetFile);
+
+				R2_CHECK(textureMetaData != nullptr, "We should have the meta data here!");
+
+
+				s64 index = HasTextureFormat(rawFormatMetaData, textureMetaData->textureFormat(), isCubemap);
+
+				if (index < 0)
+				{
+					RawFormatMetaData rawMetaData;
+
+					rawMetaData.isAnisotropic = isAnisotropic;
+					rawMetaData.isCubemap = isCubemap;
+					rawMetaData.textureFormat = textureMetaData->textureFormat();
+					rawMetaData.maxMips = numMips;
+
+					rawMetaData.numTextures = 1;
+					rawMetaData.maxWidth = textureMetaData->mips()->Get(0)->width();
+					rawMetaData.maxHeight = textureMetaData->mips()->Get(0)->height();
+
+					rawFormatMetaData.push_back(rawMetaData);
+
+					if(isCubemap)
+						hasIncrementedForCubemap = true;
+				}
+				else
+				{
+					RawFormatMetaData& rawMetaData = rawFormatMetaData.at(index);
+
+					rawMetaData.maxWidth = std::max(rawMetaData.maxWidth, textureMetaData->mips()->Get(0)->width());
+					rawMetaData.maxHeight = std::max(rawMetaData.maxHeight, textureMetaData->mips()->Get(0)->height());
+					rawMetaData.maxMips = std::max(rawMetaData.maxMips, numMips);
+
+					if ((rawMetaData.isCubemap && !hasIncrementedForCubemap) || !rawMetaData.isCubemap)
+					{
+						if (rawMetaData.isCubemap && !hasIncrementedForCubemap)
+							hasIncrementedForCubemap = true;
+
+						rawMetaData.numTextures++;
+					}
+				}
 
 				packSize += std::filesystem::file_size(outputFilePath);
 
@@ -255,21 +510,21 @@ namespace r2::asset::pln::tex
 
 			}
 
-			char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
+		//	char* texturePackMetaData = utils::ReadFile(metaFilePath.string());
 
-			const auto packMetaData = flat::GetTexturePackMetaData(texturePackMetaData);
+		//	const auto packMetaData = flat::GetTexturePackMetaData(texturePackMetaData);
 
-			auto textureType = packMetaData->type();
+			auto textureType = texturePackMetaData->type();
 
 			std::vector<flatbuffers::Offset<flat::MipLevel>> cubemapMipLevels;
 
-			if (packMetaData->mipLevels())
+			if (texturePackMetaData->mipLevels())
 			{
-				auto numMipLevels = packMetaData->mipLevels()->size();
+				auto numMipLevels = texturePackMetaData->mipLevels()->size();
 
 				for (flatbuffers::uoffset_t m = 0; m < numMipLevels; ++m)
 				{
-					const auto& mip = packMetaData->mipLevels()->Get(m);
+					const auto& mip = texturePackMetaData->mipLevels()->Get(m);
 
 					flatbuffers::uoffset_t numSides = mip->sides()->size();
 
@@ -295,8 +550,6 @@ namespace r2::asset::pln::tex
 
 					cubemapMipLevels.push_back(flat::CreateMipLevel(builder, m, builder.CreateVector(sides)));
 				}
-
-				
 			}
 
 			//make the texture pack and add it to the vector
@@ -322,10 +575,18 @@ namespace r2::asset::pln::tex
 			totalNumberOfTextures += numTexturesInPack;
 			maxNumTexturesInAPack = std::max(maxNumTexturesInAPack, numTexturesInPack);
 
-			delete[] texturePackMetaData;
+			delete[] metaData;
 		}
+
+		std::vector<flatbuffers::Offset<flat::FormatMetaData>> formatMetaData;
+
+		for (const auto& rawFormat : rawFormatMetaData)
+		{
+			formatMetaData.push_back(flat::CreateFormatMetaData(builder, rawFormat.textureFormat, rawFormat.maxWidth, rawFormat.maxHeight, rawFormat.numTextures, rawFormat.maxMips, rawFormat.isCubemap, rawFormat.isAnisotropic));
+		}
+
 		//add the texture packs to the manifest
- 		auto manifest = flat::CreateTexturePacksManifest(builder, builder.CreateVector(texturePacks), totalNumberOfTextures, manifestTotalTextureSize, maxNumTexturesInAPack);
+ 		auto manifest = flat::CreateTexturePacksManifest(builder, builder.CreateVector(texturePacks), totalNumberOfTextures, manifestTotalTextureSize, maxNumTexturesInAPack, builder.CreateVector(formatMetaData));
 
 		//generate the manifest
 		builder.Finish(manifest);
@@ -378,9 +639,9 @@ namespace r2::asset::pln::tex
 
 	bool HasTexturePackInManifestFile(const std::string& manifestFilePath, const std::string& packName)
 	{
-		char* manifestFileDate = utils::ReadFile(manifestFilePath);
+		char* manifestFileData = utils::ReadFile(manifestFilePath);
 
-		if (!manifestFileDate)
+		if (!manifestFileData)
 		{
 			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
 			return false;
@@ -389,7 +650,7 @@ namespace r2::asset::pln::tex
 
 		auto packNameStringID = STRING_ID(packName.c_str());
 
-		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileDate);
+		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 
 		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
 
@@ -401,18 +662,20 @@ namespace r2::asset::pln::tex
 
 			if (texturePack->packName() == packNameStringID)
 			{
+				delete[] manifestFileData;
 				return true;
 			}
 		}
 
+		delete[] manifestFileData;
 		return false;
 	}
 
 	bool HasTexturePathInManifestFile(const std::string& manifestFilePath, const std::string& packName, const std::string& filePath)
 	{
-		char* manifestFileDate = utils::ReadFile(manifestFilePath);
+		char* manifestFileData = utils::ReadFile(manifestFilePath);
 
-		if (!manifestFileDate)
+		if (!manifestFileData)
 		{
 			R2_CHECK(false, "We couldn't read the manifest file path: %s", manifestFilePath.c_str());
 			return false;
@@ -421,7 +684,7 @@ namespace r2::asset::pln::tex
 
 		auto packNameStringID = STRING_ID(packName.c_str());
 
-		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileDate);
+		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 
 		R2_CHECK(manifest != nullptr, "We couldn't make the texture pack manifest data!");
 
@@ -437,6 +700,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->albedo()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -445,6 +709,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->normal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -453,6 +718,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->metallic()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -461,6 +727,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->roughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -469,6 +736,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->occlusion()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -477,6 +745,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->emissive()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -485,6 +754,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->anisotropy()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -493,6 +763,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->height()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -501,6 +772,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->detail()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -509,6 +781,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->clearCoat()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -517,6 +790,7 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->clearCoatRoughness()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
@@ -525,11 +799,14 @@ namespace r2::asset::pln::tex
 				{
 					if (std::filesystem::path(texturePack->clearCoatNormal()->Get(filePathIndex)->str()) == std::filesystem::path(filePath))
 					{
+						delete[] manifestFileData;
 						return  true;
 					}
 				}
 			}
 		}
+
+		delete[] manifestFileData;
 
 		return false;
 	}
@@ -661,6 +938,7 @@ namespace r2::asset::pln::tex
 			}
 		}
 
+		delete[] manifestFileData;
 		return texturesInPack;
 	}
 }

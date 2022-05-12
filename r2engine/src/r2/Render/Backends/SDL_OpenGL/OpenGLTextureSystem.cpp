@@ -252,7 +252,7 @@ namespace r2::draw::gl
 				container.handle = glGetTextureHandleARB(container.texId);
 				if (GLenum err = glGetError())
 				{
-					R2_CHECK(false, "");
+					R2_CHECK(false, "Couldn't get the texture handle with error: %lu\n", err);
 				}
 				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
 				glMakeTextureHandleResidentARB(container.handle);
@@ -437,9 +437,70 @@ namespace r2::draw::gl
 		}
 
 		//private
-		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
+		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices)
 		{
 			if (s_glTextureSystem == nullptr)
+			{
+				R2_CHECK(false, "We haven't initialized the GLTextureSystem yet!");
+				return nullptr;
+			}
+
+			r2::draw::tex::TextureContainer* containerToUse = nullptr;
+
+			u64 intFormat = ConvertFormat(format);
+
+			r2::SArray<r2::draw::tex::TextureContainer*>* theDefault = nullptr;
+
+			r2::SArray<r2::draw::tex::TextureContainer*>* arrayToUse = r2::shashmap::Get(*s_glTextureSystem->texArray2Ds, intFormat, theDefault);
+
+			if (arrayToUse == theDefault)
+			{
+				arrayToUse = MAKE_SARRAY(*s_glTextureSystem->arena, r2::draw::tex::TextureContainer*, s_glTextureSystem->numTextureContainersPerFormat);
+				r2::shashmap::Set(*s_glTextureSystem->texArray2Ds, intFormat, arrayToUse);
+			}
+
+			const u64 arraySize = r2::sarr::Size(*arrayToUse);
+
+
+			//making new texture container with format : 35907, width : 2048, height : 2048, num mips : 1, is cubemap : 0, anisotropic : 0, numSlices : 2048
+
+			for (u64 i = 0; i < arraySize; ++i)
+			{
+				r2::draw::tex::TextureContainer* container = r2::sarr::At(*arrayToUse, i);
+				if (container != nullptr &&
+					texcontainer::HasRoom(*container, slices))
+				{
+					containerToUse = container;
+					break;
+				}
+			}
+
+			if (containerToUse == nullptr)
+			{
+				u32 maxSlices = s_glTextureSystem->maxNumTextureContainerLayers;
+
+				if (format.isCubemap)
+				{
+					maxSlices /= (r2::draw::tex::NUM_SIDES);
+				}
+
+				u32 numSlicesToAllocate = maxSlices;
+
+				printf("making new texture container with format: %lu, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu, numSlices: %lu\n", format.internalformat, format.width, format.height, format.mipLevels, format.isCubemap, format.anisotropy, numSlicesToAllocate);
+
+				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlicesToAllocate, format);
+				r2::sarr::Push(*arrayToUse, containerToUse);
+			}
+
+			R2_CHECK(containerToUse != nullptr, "We failed to create the texture container!");
+
+			return containerToUse;
+		}
+
+
+		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
+		{
+			/*if (s_glTextureSystem == nullptr)
 			{
 				R2_CHECK(false, "We haven't initialized the GLTextureSystem yet!");
 				return;
@@ -479,10 +540,13 @@ namespace r2::draw::gl
 					numSlices = numSlices / (r2::draw::tex::NUM_SIDES );
 				}
 
+
+				printf("making new texture container with format: %lu, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu\n", format.internalformat, format.width, format.height, format.mipLevels, format.isCubemap, format.anisotropy);
+
 				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format);
 				r2::sarr::Push(*arrayToUse, containerToUse);
-			}
-
+			}*/
+			r2::draw::tex::TextureContainer* containerToUse = MakeGLTextureIfNeeded(format, numPages);
 
 			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse, numPages);
 			handle.container = containerToUse;
@@ -610,7 +674,7 @@ namespace r2::draw::tex::impl
 			r2::draw::gl::texcontainer::MemorySize(maxTextureLayers, alignment, headerSize, boundsChecking) * maxNumTextureContainers * maxTextureContainersPerFormat;
 	}
 
-	u64 GetMaxTextureLayers(bool sparse)
+	u32 GetMaxTextureLayers(bool sparse)
 	{
 		GLint maxTextureArrayLevels = 0;
 		if (sparse) 
@@ -621,6 +685,7 @@ namespace r2::draw::tex::impl
 		{
 			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
 		}
+
 		return maxTextureArrayLevels;
 	}
 

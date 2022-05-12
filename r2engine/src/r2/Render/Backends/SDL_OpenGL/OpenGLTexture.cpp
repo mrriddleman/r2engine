@@ -328,11 +328,6 @@ namespace r2::draw::tex
 		case flat::TextureFormat::TextureFormat_RGBA8:
 			glFormat = GL_RGBA;
 			glInternalFormat = GL_RGBA8;
-
-			if (type == Diffuse)
-			{
-				glInternalFormat = GL_SRGB8;
-			}
 			break;
 		case flat::TextureFormat::TextureFormat_SRGB8:
 			glFormat = GL_RGB;
@@ -417,11 +412,11 @@ namespace r2::draw::tex
 			{
 				const auto mip = textureMetaData->mips()->Get(m);
 
-				if ("D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs\\Newport_lutDFG\\albedo\\newport_loft_LutDFG.hdr" == textureMetaData->originalPath()->str())
-				{
-					int k = 0;
-				}
-				printf("Loading: %s\n", textureMetaData->originalPath()->c_str());
+				//if ("D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs\\Newport_lutDFG\\albedo\\newport_loft_LutDFG.hdr" == textureMetaData->originalPath()->str())
+				//{
+				//	int k = 0;
+				//}
+			//	printf("Loading: %s\n", textureMetaData->originalPath()->c_str());
 
 				r2::assets::assetlib::unpack_texture_page(textureMetaData, m, memoryAssetFile.binaryBlob.data, data.data());
 
@@ -883,6 +878,11 @@ namespace r2::draw::tex
 	TextureAddress GetTextureAddress(const TextureHandle& handle)
 	{
 		return r2::draw::gl::tex::GetAddress(handle);
+	}
+
+	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages)
+	{
+		return r2::draw::gl::texsys::MakeGLTextureIfNeeded(format, numPages) != nullptr;
 	}
 
 	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages)

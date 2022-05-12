@@ -173,5 +173,22 @@
   ],
   totalNumberOfTextures: 8,
   totalTextureSize: 31964499,
-  maxTexturesInAPack: 6
+  maxTexturesInAPack: 6,
+  formatMetaData: [
+    {
+      format: "SRGBA8",
+      maxWidth: 8,
+      maxHeight: 8,
+      numTextures: 2,
+      maxMips: 1
+    },
+    {
+      format: "SRGBA8",
+      maxWidth: 2048,
+      maxHeight: 2048,
+      numTextures: 1,
+      maxMips: 1,
+      isCubemap: true
+    }
+  ]
 }

@@ -711,5 +711,43 @@
   ],
   totalNumberOfTextures: 135,
   totalTextureSize: 298680404,
-  maxTexturesInAPack: 69
+  maxTexturesInAPack: 69,
+  formatMetaData: [
+    {
+      format: "SRGBA8",
+      maxWidth: 4096,
+      maxHeight: 4096,
+      numTextures: 24,
+      maxMips: 1
+    },
+    {
+      format: "RGBA8",
+      maxWidth: 4096,
+      maxHeight: 4096,
+      numTextures: 48,
+      maxMips: 1
+    },
+    {
+      format: "RGBA32",
+      maxWidth: 512,
+      maxHeight: 512,
+      numTextures: 3,
+      maxMips: 6,
+      isCubemap: true
+    },
+    {
+      format: "RGBA32",
+      maxWidth: 128,
+      maxHeight: 128,
+      numTextures: 1,
+      maxMips: 1
+    },
+    {
+      format: "COMPRESSED_RGBA_S3TC_DXT1_EXT",
+      maxWidth: 1024,
+      maxHeight: 1024,
+      numTextures: 14,
+      maxMips: 1
+    }
+  ]
 }

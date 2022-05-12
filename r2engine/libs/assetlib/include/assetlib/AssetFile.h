@@ -43,6 +43,8 @@ namespace r2::assets::assetlib
 	bool save_binaryfile(const char* path, const AssetFile& file);
 
 	bool load_binaryfile(const char* path, AssetFile& outputFile);
+
+	bool load_meta_data(const char* path, AssetFile& outputFile);
 }
 
 #endif

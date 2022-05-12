@@ -60,6 +60,27 @@ namespace r2::assets::assetlib
 		return true;
 	}
 
+	bool load_meta_data(const char* path, AssetFile& outputFile)
+	{
+		outputFile.OpenForRead(path);
+
+		if (!outputFile.IsOpen()) return false;
+
+		//move file cursor to beginning
+		//infile.seekg(0);
+		outputFile.headerSize = 4 + sizeof(uint32_t) * 3;
+
+		outputFile.Read(outputFile.type, 4);
+		outputFile.Read((char*)&outputFile.version, sizeof(uint32_t));
+
+		outputFile.Read((char*)&outputFile.metaData.size, sizeof(uint32_t));
+		outputFile.Read((char*)&outputFile.binaryBlob.size, sizeof(uint32_t));
+
+		outputFile.LoadMetaData();
+
+		return true;
+	}
+
 	bool AssetFile::LoadMetaData()
 	{
 		AllocateForBlob(metaData);
