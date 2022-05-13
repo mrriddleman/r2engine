@@ -31,6 +31,8 @@ namespace r2::asset::pln
 		bool HasMetaFileAndAtleast1File(const std::string& watchDir, const std::string& nameOfPack);
 		void RegenerateTexturePackManifestFile(s64 index);
 
+		bool ConvertImage(const std::string& imagePath, s64 index, std::filesystem::path& outputPath);
+
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mTexturePacksWatchDirectories;

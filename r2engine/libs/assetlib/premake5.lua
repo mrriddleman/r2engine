@@ -4,6 +4,8 @@ include "../../vendor/lz4"
 libIncludeDirs = {}
 libIncludeDirs["lz4"] = "../../vendor/lz4/include"
 libIncludeDirs["flatbuffers"] = "../../vendor/flatbuffers/include"
+libIncludeDirs["stb"] = "../../vendor/stb"
+
 flatcPath, err = os.realpath('.')
 
 project "assetlib"
@@ -23,8 +25,10 @@ project "assetlib"
 	includedirs
 	{
 		"include",
+		"../../src/r2/Render/Model/Textures",
 		"%{libIncludeDirs.lz4}",
-		"%{libIncludeDirs.flatbuffers}"
+		"%{libIncludeDirs.flatbuffers}",
+		"%{libIncludeDirs.stb}"
 	}
 
 	links

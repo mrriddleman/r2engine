@@ -2,8 +2,10 @@
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetCommands/TexturePackHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
-
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+#include "assetlib/ImageConvert.h"
 #include "r2/Render/Model/Material.h"
+#include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
 
 namespace r2::asset::pln
 {
@@ -95,19 +97,12 @@ namespace r2::asset::pln
 		}
 	}
 
-	void TexturePackHotReloadCommand::TextureChangedRequest(const std::string& changedPath)
-	{
-		//@TODO(Serge): convert the texture again
-
-		r2::draw::matsys::TextureChanged(changedPath);
-	}
-
 	s64 TexturePackHotReloadCommand::FindPathIndex(const std::string& newPath, std::string& nameOfPack)
 	{
 		//We need to check to see if we have a meta file and more than 1 file, if true then we can trigger the add
 		s64 index = 0;
 		bool found = false;
-		
+
 
 		for (const std::string& rawWatchDir : mTexturePacksWatchDirectories)
 		{
@@ -140,6 +135,32 @@ namespace r2::asset::pln
 			return -1;
 
 		return index;
+	}
+
+	bool TexturePackHotReloadCommand::ConvertImage(const std::string& imagePath, s64 index, std::filesystem::path& outputPath)
+	{
+		outputPath = r2::asset::pln::tex::GetOutputFilePath(imagePath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+		std::filesystem::path imageChangedPath = imagePath;
+
+		bool result = r2::assets::assetlib::ConvertImage(imageChangedPath, outputPath.parent_path(), imageChangedPath.extension().string(), 1, flat::MipMapFilter_BOX);
+
+		R2_CHECK(result, "We should have converted: %s\n", imagePath.c_str());
+
+		return result;
+	}
+
+	void TexturePackHotReloadCommand::TextureChangedRequest(const std::string& changedPath)
+	{
+		std::string nameOfPack = "";
+
+		s64 index = FindPathIndex(changedPath, nameOfPack);
+
+		std::filesystem::path outputPath;
+
+		ConvertImage(changedPath, index, outputPath);
+
+		r2::draw::matsys::TextureChanged(outputPath.string());
 	}
 
 	bool TexturePackHotReloadCommand::HasMetaFileAndAtleast1File(const std::string& watchDir, const std::string& nameOfPack)
@@ -191,6 +212,12 @@ namespace r2::asset::pln
 	void TexturePackHotReloadCommand::TextureAddedRequest(const std::string& newPath)
 	{
 		//Check to see if we have a meta file and at least 1 file in one of the sub directories
+
+		std::filesystem::path newlyCreatedPath = newPath;
+
+		if (newlyCreatedPath.filename().string() == "meta.json")
+			return;
+
 		std::string nameOfPack = "";
 		s64 index = FindPathIndex(newPath, nameOfPack);
 
@@ -217,9 +244,36 @@ namespace r2::asset::pln
 			return;
 		}
 
+		//Generate the .rtex files
+		if (!hasTexturePackInManifest)
+		{
+			std::filesystem::path inputPackPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
+			std::filesystem::path outputDir = pln::tex::GetOutputFilePath(inputPackPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+			if (!std::filesystem::exists(outputDir))
+			{
+				std::filesystem::create_directories(outputDir);
+			}
+
+			int result = pln::assetconvert::RunConverter(inputPackPath.string(), outputDir.string());
+
+			if (result != 0)
+			{
+				R2_CHECK(false, "Converter failed!");
+			}
+
+		}
+		else
+		{
+			std::filesystem::path outputFilePath;
+			bool result = ConvertImage(newPath, index, outputFilePath);
+
+			R2_CHECK(result, "Couldn't convert: %s\n", newPath.c_str());
+		}
+
+
 		//We need to regenerate the manifest file
 		RegenerateTexturePackManifestFile(index);
-
 
 		if (!hasTexturePackInManifest)
 		{
@@ -258,6 +312,10 @@ namespace r2::asset::pln
 		{
 			std::vector<std::vector<std::string>> pathsLeftInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
 			
+			std::filesystem::path outputPackPath = pln::tex::GetOutputFilePath(packPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
+
+//			std::filesystem::remove(outputPackPath);
+
 			RegenerateTexturePackManifestFile(index);
 			r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
 			return;
@@ -272,8 +330,9 @@ namespace r2::asset::pln
 
 		if (hasTexturePathInManifest)
 		{
+
 			RegenerateTexturePackManifestFile(index);
-			r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], removedPathStr);
+			r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], outputFilePath.string());
 		}
 		
 	}

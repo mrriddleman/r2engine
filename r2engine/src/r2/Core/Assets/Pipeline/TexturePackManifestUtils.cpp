@@ -208,10 +208,11 @@ namespace r2::asset::pln::tex
 		std::vector<std::filesystem::path> pathsSeen;
 
 		std::filesystem::path thePath = inputPath;
+		thePath.make_preferred();
 
 		std::filesystem::path outputFilenamePath = "";
 
-		if (std::filesystem::is_regular_file(inputPath))
+		if (inputPath.has_extension())
 		{
 			thePath = inputPath.parent_path();
 
