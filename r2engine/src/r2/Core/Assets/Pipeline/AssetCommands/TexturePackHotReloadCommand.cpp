@@ -11,8 +11,9 @@ namespace r2::asset::pln
 {
 	void TexturePackHotReloadCommand::Init(Milliseconds delay)
 	{
+		GenerateRTexFilesIfNeeded();
 		GenerateTexturePackManifestsIfNeeded();
-
+		
 		for (const auto& path : mTexturePacksWatchDirectories)
 		{
 			FileWatcher fw;
@@ -261,7 +262,6 @@ namespace r2::asset::pln
 			{
 				R2_CHECK(false, "Converter failed!");
 			}
-
 		}
 		else
 		{
@@ -270,7 +270,6 @@ namespace r2::asset::pln
 
 			R2_CHECK(result, "Couldn't convert: %s\n", newPath.c_str());
 		}
-
 
 		//We need to regenerate the manifest file
 		RegenerateTexturePackManifestFile(index);
@@ -314,8 +313,6 @@ namespace r2::asset::pln
 			
 			std::filesystem::path outputPackPath = pln::tex::GetOutputFilePath(packPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
 
-//			std::filesystem::remove(outputPackPath);
-
 			RegenerateTexturePackManifestFile(index);
 			r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
 			return;
@@ -325,16 +322,13 @@ namespace r2::asset::pln
 
 		std::filesystem::path outputFilePath = pln::tex::GetOutputFilePath(removedPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
 
-
 		bool hasTexturePathInManifest = r2::asset::pln::tex::HasTexturePathInManifestFile(mManifestBinaryFilePaths[index], nameOfPack, outputFilePath.string());
 
 		if (hasTexturePathInManifest)
 		{
-
 			RegenerateTexturePackManifestFile(index);
 			r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], outputFilePath.string());
 		}
-		
 	}
 
 	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> TexturePackHotReloadCommand::DirectoriesToCreate() const
@@ -344,9 +338,57 @@ namespace r2::asset::pln
 		createDirCMD.startAtOne = true;
 		createDirCMD.startAtParent = true;
 
-		return { createDirCMD };
+		CreateDirCmd createDirCMD2;
+		createDirCMD2.pathsToCreate = mTexturePacksBinaryOutputDirectories;
+		createDirCMD2.startAtOne = true;
+		createDirCMD2.startAtParent = false;
+
+
+		return { createDirCMD, createDirCMD2 };
 	}
 
+	void TexturePackHotReloadCommand::GenerateRTexFilesIfNeeded()
+	{
+		R2_CHECK(mTexturePacksWatchDirectories.size() == mTexturePacksBinaryOutputDirectories.size(), "These should be the same");
+
+		const u64 numWatchPaths = mTexturePacksWatchDirectories.size();
+
+		for (u64 i = 0; i < numWatchPaths; ++i)
+		{
+			std::filesystem::path inputDirPath = mTexturePacksWatchDirectories[i];
+			inputDirPath.make_preferred();
+			std::filesystem::path outputDirPath = mTexturePacksBinaryOutputDirectories[i];
+			outputDirPath.make_preferred();
+
+			if (std::filesystem::is_empty(outputDirPath))
+			{
+				int result = pln::assetconvert::RunConverter(inputDirPath.string(), outputDirPath.string());
+				R2_CHECK(result == 0, "Failed to create the rtex files of: %s\n", inputDirPath.string().c_str());
+			}
+			else
+			{
+				//for now I guess we'll just check to see if we have an equivalent directory in the sub directories (and if they aren't empty
+				//if not then run the converter for that directory, otherwise skip. Unfortunately, this will not catch the case of individual files not being converted...
+				for (const auto& p : std::filesystem::directory_iterator(inputDirPath))
+				{
+					std::filesystem::path outputPath = pln::tex::GetOutputFilePath(p.path(), mTexturePacksWatchDirectories[i], mTexturePacksBinaryOutputDirectories[i]);
+					outputPath.make_preferred();
+
+					if (!std::filesystem::exists(outputPath))
+					{
+						std::filesystem::create_directory(outputPath);
+					}
+
+					if (std::filesystem::is_empty(outputPath))
+					{
+						int result = pln::assetconvert::RunConverter(p.path().string(), outputPath.string());
+
+						R2_CHECK(result == 0, "Failed to create the rtex files of: %s\n", p.path().string().c_str());
+					}
+				}
+			}
+		}
+	}
 }
 
 #endif

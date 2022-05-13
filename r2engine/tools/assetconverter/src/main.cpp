@@ -184,6 +184,36 @@ void ReadMipMapData(const std::string& path, uint32_t& desiredMipLevels, flat::M
 	free(data);
 }
 
+
+void CreateMetaDataFile(fs::path metaDataJSONPath, fs::path inputPath, fs::path outputPath, fs::path& currentMetaPath, uint32_t& desiredMipLevels, flat::MipMapFilter& mipMapFilter)
+{
+	fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, metaDataJSONPath);
+
+	fs::path binMetaFilePath = newOutputPath / "meta.tmet";
+
+	if (!fs::exists(binMetaFilePath))
+	{
+		bool result = GenerateTexturePackMetaDataFromJSON(metaDataJSONPath.string(), newOutputPath.string());
+
+		if (!result)
+		{
+			printf("Couldn't make the tmet file: %s!\n", binMetaFilePath.string().c_str());
+		}
+		else
+		{
+			currentMetaPath = binMetaFilePath;
+
+			ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
+		}
+	}
+	else if (currentMetaPath != binMetaFilePath)
+	{
+		currentMetaPath = binMetaFilePath;
+
+		ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
+	}
+}
+
 int main(int agrc, char** argv)
 {
 	Arguments arguments;
@@ -212,6 +242,15 @@ int main(int agrc, char** argv)
 	uint32_t desiredMipLevels = 1;
 	flat::MipMapFilter mipMapFilter = flat::MipMapFilter_BOX;
 
+
+	for (auto& p : fs::directory_iterator(inputPath))
+	{
+		if (p.is_regular_file() && p.file_size() > 0 && p.path().filename().string() == "meta.json")
+		{
+			CreateMetaDataFile(p.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
+		}
+	}
+
 	for (auto& p : fs::recursive_directory_iterator(inputPath))
 	{
 		fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, p.path());
@@ -237,36 +276,14 @@ int main(int agrc, char** argv)
 			{
 				if (fs::is_regular_file(sp) && sp.path().filename().string() == "meta.json" )
 				{
-					fs::path newOutputPath = GetOutputPathForInputDirectory(outputPath, inputPath, sp.path());
-
-					fs::path binMetaFilePath = newOutputPath / "meta.tmet";
-
-					if(!fs::exists(binMetaFilePath))
-					{ 
-						bool result = GenerateTexturePackMetaDataFromJSON(sp.path().string(), newOutputPath.string());
-
-						if (!result)
-						{
-							printf("Couldn't make the tmet file: %s!\n", binMetaFilePath.string().c_str());
-						}
-						else
-						{
-							currentMetaPath = binMetaFilePath;
-
-							ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
-						}
-					}
-					else if(currentMetaPath != binMetaFilePath)
-					{
-						currentMetaPath = binMetaFilePath;
-
-						ReadMipMapData(currentMetaPath.string(), desiredMipLevels, mipMapFilter);
-					}
+					CreateMetaDataFile(sp.path(), inputPath, outputPath, currentMetaPath, desiredMipLevels, mipMapFilter);
 				}
 			}
 		}
 		else if (p.is_regular_file() && p.file_size() > 0)
 		{
+			
+
 			if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
 			{
 				r2::assets::assetlib::ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);

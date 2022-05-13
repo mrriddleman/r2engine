@@ -33,6 +33,9 @@ namespace r2::asset::pln
 
 		bool ConvertImage(const std::string& imagePath, s64 index, std::filesystem::path& outputPath);
 
+		void GenerateRTexFilesIfNeeded();
+
+
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mTexturePacksWatchDirectories;
