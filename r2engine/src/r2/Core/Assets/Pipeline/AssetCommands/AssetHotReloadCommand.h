@@ -7,8 +7,6 @@
 
 namespace r2::asset::pln
 {
-	
-
 	class AssetHotReloadCommand
 	{
 	public:

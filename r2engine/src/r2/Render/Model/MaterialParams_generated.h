@@ -576,12 +576,13 @@ struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
     VT_VALUE = 6,
     VT_PACKINGTYPE = 8,
     VT_TEXTUREPACKNAME = 10,
-    VT_MINFILTER = 12,
-    VT_MAGFILTER = 14,
-    VT_ANISOTROPICFILTERING = 16,
-    VT_WRAPS = 18,
-    VT_WRAPT = 20,
-    VT_WRAPR = 22
+    VT_TEXTUREPACKNAMESTR = 12,
+    VT_MINFILTER = 14,
+    VT_MAGFILTER = 16,
+    VT_ANISOTROPICFILTERING = 18,
+    VT_WRAPS = 20,
+    VT_WRAPT = 22,
+    VT_WRAPR = 24
   };
   flat::MaterialPropertyType propertyType() const {
     return static_cast<flat::MaterialPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
@@ -594,6 +595,9 @@ struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
   }
   uint64_t texturePackName() const {
     return GetField<uint64_t>(VT_TEXTUREPACKNAME, 0);
+  }
+  const flatbuffers::String *texturePackNameStr() const {
+    return GetPointer<const flatbuffers::String *>(VT_TEXTUREPACKNAMESTR);
   }
   flat::MinTextureFilter minFilter() const {
     return static_cast<flat::MinTextureFilter>(GetField<uint8_t>(VT_MINFILTER, 0));
@@ -619,6 +623,8 @@ struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table
            VerifyField<uint64_t>(verifier, VT_VALUE) &&
            VerifyField<int8_t>(verifier, VT_PACKINGTYPE) &&
            VerifyField<uint64_t>(verifier, VT_TEXTUREPACKNAME) &&
+           VerifyOffset(verifier, VT_TEXTUREPACKNAMESTR) &&
+           verifier.VerifyString(texturePackNameStr()) &&
            VerifyField<uint8_t>(verifier, VT_MINFILTER) &&
            VerifyField<uint8_t>(verifier, VT_MAGFILTER) &&
            VerifyField<float>(verifier, VT_ANISOTROPICFILTERING) &&
@@ -644,6 +650,9 @@ struct MaterialTextureParamBuilder {
   }
   void add_texturePackName(uint64_t texturePackName) {
     fbb_.AddElement<uint64_t>(MaterialTextureParam::VT_TEXTUREPACKNAME, texturePackName, 0);
+  }
+  void add_texturePackNameStr(flatbuffers::Offset<flatbuffers::String> texturePackNameStr) {
+    fbb_.AddOffset(MaterialTextureParam::VT_TEXTUREPACKNAMESTR, texturePackNameStr);
   }
   void add_minFilter(flat::MinTextureFilter minFilter) {
     fbb_.AddElement<uint8_t>(MaterialTextureParam::VT_MINFILTER, static_cast<uint8_t>(minFilter), 0);
@@ -681,6 +690,7 @@ inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParam(
     uint64_t value = 0,
     flat::MaterialPropertyPackingType packingType = flat::MaterialPropertyPackingType_R,
     uint64_t texturePackName = 0,
+    flatbuffers::Offset<flatbuffers::String> texturePackNameStr = 0,
     flat::MinTextureFilter minFilter = flat::MinTextureFilter_LINEAR,
     flat::MagTextureFilter magFilter = flat::MagTextureFilter_LINEAR,
     float anisotropicFiltering = 0.0f,
@@ -691,6 +701,7 @@ inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParam(
   builder_.add_texturePackName(texturePackName);
   builder_.add_value(value);
   builder_.add_anisotropicFiltering(anisotropicFiltering);
+  builder_.add_texturePackNameStr(texturePackNameStr);
   builder_.add_propertyType(propertyType);
   builder_.add_wrapR(wrapR);
   builder_.add_wrapT(wrapT);
@@ -699,6 +710,35 @@ inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParam(
   builder_.add_minFilter(minFilter);
   builder_.add_packingType(packingType);
   return builder_.Finish();
+}
+
+inline flatbuffers::Offset<MaterialTextureParam> CreateMaterialTextureParamDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flat::MaterialPropertyType propertyType = flat::MaterialPropertyType_ALBEDO,
+    uint64_t value = 0,
+    flat::MaterialPropertyPackingType packingType = flat::MaterialPropertyPackingType_R,
+    uint64_t texturePackName = 0,
+    const char *texturePackNameStr = nullptr,
+    flat::MinTextureFilter minFilter = flat::MinTextureFilter_LINEAR,
+    flat::MagTextureFilter magFilter = flat::MagTextureFilter_LINEAR,
+    float anisotropicFiltering = 0.0f,
+    flat::TextureWrapMode wrapS = flat::TextureWrapMode_REPEAT,
+    flat::TextureWrapMode wrapT = flat::TextureWrapMode_REPEAT,
+    flat::TextureWrapMode wrapR = flat::TextureWrapMode_REPEAT) {
+  auto texturePackNameStr__ = texturePackNameStr ? _fbb.CreateString(texturePackNameStr) : 0;
+  return flat::CreateMaterialTextureParam(
+      _fbb,
+      propertyType,
+      value,
+      packingType,
+      texturePackName,
+      texturePackNameStr__,
+      minFilter,
+      magFilter,
+      anisotropicFiltering,
+      wrapS,
+      wrapT,
+      wrapR);
 }
 
 struct MaterialParams FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

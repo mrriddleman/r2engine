@@ -5,6 +5,7 @@ libIncludeDirs = {}
 libIncludeDirs["lz4"] = "../../vendor/lz4/include"
 libIncludeDirs["flatbuffers"] = "../../vendor/flatbuffers/include"
 libIncludeDirs["stb"] = "../../vendor/stb"
+libIncludeDirs["glm"] = "../../vendor/glm"
 
 flatcPath, err = os.realpath('.')
 
@@ -26,9 +27,12 @@ project "assetlib"
 	{
 		"include",
 		"../../src/r2/Render/Model/Textures",
+		"../../src/r2/Render/Model",
+		"../../src/r2/Utils",
 		"%{libIncludeDirs.lz4}",
 		"%{libIncludeDirs.flatbuffers}",
-		"%{libIncludeDirs.stb}"
+		"%{libIncludeDirs.stb}",
+		"%{libIncludeDirs.glm}"
 	}
 
 	links
@@ -48,6 +52,11 @@ project "assetlib"
 		defines
 		{
 			'FLATC="%{flatcPath}"'
+		}
+
+		sysincludedirs
+		{
+			"../../vendor/assimp/Windows/include"
 		}
 
 	filter "configurations:Debug"

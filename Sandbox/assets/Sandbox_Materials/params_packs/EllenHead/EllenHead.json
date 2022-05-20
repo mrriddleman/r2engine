@@ -48,55 +48,64 @@
     {
       value: "ellen/albedo/ellen_head_albedo.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "NORMAL",
       value: "ellen/normal/ellen_head_normal.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "METALLIC",
       value: "ellen/metallic/ellen_head_metallicsmooth.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "DETAIL",
       value: "ellen/micro/ellen_head_microdetail.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     }
   ]
 }

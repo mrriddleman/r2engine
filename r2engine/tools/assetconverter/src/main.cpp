@@ -3,23 +3,18 @@
 
 #include "assetlib/TextureAsset.h"
 #include "assetlib/ImageConvert.h"
+#include "assetlib/ModelConvert.h"
 #include "TexturePackMetaData_generated.h"
 
 #include "cmdln/CommandLine.h"
 
 #include "flatbuffers/flatbuffers.h"
 
-
-
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-
 #include <filesystem>
 #include <string>
 
 #include <fstream>
 
-#include "nvtt/nvtt.h"
 #include <algorithm>
 
 namespace fs = std::filesystem;
@@ -27,21 +22,32 @@ namespace fs = std::filesystem;
 
 namespace
 {
+	//textures
 	std::string PNG_EXTENSION = ".png";
 	std::string JPG_EXTENSION = ".jpg";
 	std::string TIF_EXTENSION = ".tif";
 	std::string TGA_EXTENSION = ".tga";
 	std::string DDS_EXTENSION = ".dds";
 	std::string HDR_EXTENSION = ".hdr";
-	std::string RTEX_EXTENSION = ".rtex";
+
+	//models
+	std::string FBX_EXTENSION = ".fbx";
+	std::string GLTF_EXTENSION = ".gltf";
+
 }
 
 struct Arguments
 {
 	std::string inputDir;
 	std::string outputDir;
+	std::string materialParamsManifestPath;
+	bool isAnimations;
 };
 
+bool SkipDirectory(const fs::path& p)
+{
+	return p.stem().string() == "hdr";
+}
 
 bool IsImage(const std::string& extension)
 {
@@ -59,19 +65,21 @@ bool IsImage(const std::string& extension)
 		theExtension == HDR_EXTENSION;
 }
 
-bool SkipDirectory(const fs::path& p)
-{
-	return p.stem().string() == "hdr";
-}
-
 bool IsModel(const std::string& extension)
 {
-	return false;
+	std::string theExtension = extension;
+
+	std::transform(theExtension.begin(), theExtension.end(), theExtension.begin(),
+		[](unsigned char c) { return std::tolower(c); });
+
+	return
+		theExtension == FBX_EXTENSION ||
+		theExtension == GLTF_EXTENSION;
 }
 
 bool IsAnimation(const std::string& extension)
 {
-	return false;
+	return IsModel(extension);
 }
 
 fs::path GetOutputPathForInputDirectory(const fs::path& outputPath, const fs::path& inputPath, const fs::path& path)
@@ -220,6 +228,8 @@ int main(int agrc, char** argv)
 	r2::cmdln::CommandLine args("Asset Converter will convert raw assets into assets r2 can use");
 	args.AddArgument({ "-i", "--input" }, &arguments.inputDir, "Input Directory");
 	args.AddArgument({ "-o", "--output" }, &arguments.outputDir, "Output Directory");
+	args.AddArgument({ "-m", "--material" }, &arguments.materialParamsManifestPath, "Material Params Manifest Path");
+	args.AddArgument({ "-a", "--animation" }, &arguments.isAnimations, "Animations");
 	args.Parse(agrc, argv);
 
 	if (arguments.inputDir.empty())
@@ -236,6 +246,7 @@ int main(int agrc, char** argv)
 
 	fs::path inputPath{ arguments.inputDir };
 	fs::path outputPath{ arguments.outputDir };
+	fs::path materialParamsManifestPath{ arguments.materialParamsManifestPath };
 
 	fs::path currentMetaPath = "";
 
@@ -282,17 +293,15 @@ int main(int agrc, char** argv)
 		}
 		else if (p.is_regular_file() && p.file_size() > 0)
 		{
-			
-
 			if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
 			{
 				r2::assets::assetlib::ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);
 			}
-			else if (IsAnimation(extension))
+			else if (IsModel(extension) && !arguments.isAnimations)
 			{
-
+				r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, extension);
 			}
-			else if (IsModel(extension))
+			else if (IsAnimation(extension) && arguments.isAnimations)
 			{
 
 			}

@@ -46,49 +46,57 @@
     {
       value: "staticmissingtexture/albedo/staticmissingtexture.rtex",
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "NORMAL",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "METALLIC",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11826259269100960472
+      texturePackName: 11826259269100960472,
+      texturePackNameStr:"staticmissingtexture"
     }
   ]
 }

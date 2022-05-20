@@ -1,0 +1,73 @@
+include "Mesh.fbs";
+include "Model.fbs";
+
+namespace flat;
+
+file_identifier "rmdl";
+file_extension "rmdl";
+
+table RMesh
+{
+	materialIndex:int32;
+	data:[byte];
+}
+
+struct Transform
+{
+	position:[float:3];
+	scale:[float:3];
+	rotation:[float:4];
+}
+
+struct Vertex4
+{
+	v:[float:4];
+}
+
+struct Vertex4i
+{
+	v:[int32:4];
+}
+
+struct Matrix4
+{
+	cols:[Vertex4:4];
+}
+
+struct Matrix3
+{
+	cols:[Vertex3:3];
+}
+
+struct BoneData
+{
+	boneWeights:Vertex4;
+	boneIDs:Vertex4i;
+}
+
+struct BoneInfo
+{
+	offsetTransform:Matrix4;
+}
+
+table AnimationData
+{
+	boneData:[BoneData];
+	boneInfo:[BoneInfo];
+	jointNames:[uint64];
+	parents:[int32];
+	restPoseTransforms:[Transform];
+	bindPoseTransforms:[Transform];
+	realParentBones:[int32];
+}
+
+table RModel
+{
+	name:ulong (hash:"fnv1a_64");
+	materials:[MaterialName];
+	meshes:[RMesh];
+	globalInverseTransform:Matrix4;
+	animationData:AnimationData;
+}
+
+root_type RModel;

@@ -340,7 +340,7 @@ namespace r2::asset::pln
 
 		CreateDirCmd createDirCMD2;
 		createDirCMD2.pathsToCreate = mTexturePacksBinaryOutputDirectories;
-		createDirCMD2.startAtOne = true;
+		createDirCMD2.startAtOne = false;
 		createDirCMD2.startAtParent = false;
 
 

@@ -46,49 +46,57 @@
     {
       value: "dynamicmissingtexture/albedo/dynamicmissingtexture.rtex",
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "NORMAL",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "METALLIC",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 8749292291342238949
+      texturePackName: 8749292291342238949,
+      texturePackNameStr:"dynamicmissingtexture"
     }
   ]
 }

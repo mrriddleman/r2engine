@@ -1,4 +1,3 @@
-#pragma once
 
 #ifndef __ASSET_LIB_IMAGE_CONVERT_H__
 #define __ASSET_LIB_IMAGE_CONVERT_H__

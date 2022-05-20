@@ -1,0 +1,74 @@
+include "Mesh.fbs";
+
+namespace flat;
+
+file_identifier "mdmd";
+file_extension "mdmd";
+
+enum MeshCompressionMode : uint8
+{
+	NONE = 0,
+	LZ4
+}
+
+table SkeletonMetaData
+{
+	numJoints:uint;
+	numParents:uint;
+	numRestPoseTransforms:uint;
+	numBindPoseTransforms:uint;
+}
+
+table BoneMetaData
+{
+	numBoneData:uint;
+	numBoneInfo:uint;
+}
+
+enum VertexFormat: uint8
+{
+	UNKNOWN = 0,
+	P32N32UV32T32
+}
+
+enum VertexOrdering: uint8
+{
+	INTERLEAVED = 0,
+	INDIVIDUAL_COMPONENTS
+}
+
+struct Bounds
+{
+	 origin:Vertex3;
+	 radius:float;
+	 extents:Vertex3;
+}
+
+table MeshInfo
+{
+	meshName:ulong (hash:"fnv1a_64");
+ 	vertexOrdering:VertexOrdering;
+ 	vertexFormat:VertexFormat;
+ 	vertexBufferSize:uint64;
+ 	indexBufferSize:uint64;
+ 	meshBounds:Bounds;
+	sizeOfAnIndex:ubyte;
+	compressionMode:MeshCompressionMode;
+	compressedSize:uint;
+	originalPath:string;
+}
+
+table RModelMetaData
+{
+	modelName:ulong (hash:"fnv1a_64");
+	meshInfos:[MeshInfo];
+	modelBounds:Bounds;
+	numMeshes:uint;
+	numMaterials:uint;
+	isAnimatedModel:bool;
+	boneMetaData:BoneMetaData;
+	skeletonMetaData:SkeletonMetaData;
+	originalPath:string;
+}
+
+root_type RModelMetaData;

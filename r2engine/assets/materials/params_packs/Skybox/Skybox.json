@@ -47,6 +47,7 @@
       value: "skybox/albedo/right.rtex",
       packingType: "RGBA",
       texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox",
       minFilter: "NEAREST_MIPMAP_LINEAR",
       magFilter: "LINEAR",
       anisotropicFiltering:0.0,
@@ -58,43 +59,50 @@
       propertyType: "NORMAL",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "METALLIC",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 6031424017685759555
+      texturePackName: 6031424017685759555,
+      texturePackNameStr:"skybox"
     }
   ]
 }

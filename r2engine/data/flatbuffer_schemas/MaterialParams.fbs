@@ -107,6 +107,7 @@ table MaterialTextureParam
 	value:ulong (hash:"fnv1a_64");
 	packingType:MaterialPropertyPackingType;
 	texturePackName:ulong (hash:"fnv1a_64");
+	texturePackNameStr:string;
 	minFilter:MinTextureFilter;
 	magFilter:MagTextureFilter;
 	anisotropicFiltering:float;

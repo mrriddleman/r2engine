@@ -98,11 +98,11 @@ namespace r2::asset::pln
 			std::filesystem::create_directory(assetBinPath);
 		}
 
-		std::filesystem::path modelsBinPath = R2_ENGINE_INTERNAL_MODELS_BIN;
-		if (!std::filesystem::exists(modelsBinPath))
-		{
-			std::filesystem::create_directory(modelsBinPath);
-		}
+		//std::filesystem::path modelsBinPath = R2_ENGINE_INTERNAL_MODELS_BIN;
+		//if (!std::filesystem::exists(modelsBinPath))
+		//{
+		//	std::filesystem::create_directory(modelsBinPath);
+		//}
 
 		std::filesystem::path texturesBinPath = R2_ENGINE_INTERNAL_TEXTURES_BIN;
 		if (!std::filesystem::exists(texturesBinPath))

@@ -1283,6 +1283,11 @@ public:
 		return manifestRawPaths;
     }
 
+    virtual std::vector<std::string> GetModelBinaryPaths() const override
+    {
+        return {SANDBOX_MODELS_DIR_BIN};
+    }
+
     r2::util::Size GetAppResolution() const override
     {
         return g_resolutions[mResolution];

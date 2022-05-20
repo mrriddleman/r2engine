@@ -32,6 +32,7 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/SoundHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/GameAssetHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
 #endif
 
 namespace r2
@@ -99,6 +100,22 @@ namespace r2
 #ifdef R2_ASSET_PIPELINE
             
             std::string flatcPath = R2_FLATC;
+
+            
+            std::vector<std::string> binaryModelPaths;
+            //Model command data
+            {
+                binaryModelPaths.push_back(R2_ENGINE_INTERNAL_MODELS_BIN);
+
+				for (const std::string& nextPath : noptrApp->GetModelBinaryPaths())
+				{
+					binaryModelPaths.push_back(nextPath);
+				}
+            }
+
+            std::unique_ptr<asset::pln::ModelHotReloadCommand> modelAssetCMD = std::make_unique<asset::pln::ModelHotReloadCommand>();
+
+            modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
 
 
             std::vector<std::string> manifestRawFilePaths;
@@ -271,6 +288,7 @@ namespace r2
 
 			std::vector<std::unique_ptr<r2::asset::pln::AssetHotReloadCommand>> mAssetCommands;
 
+            mAssetCommands.push_back(std::move(modelAssetCMD));
             mAssetCommands.push_back(std::move(materialAssetCMD));
 			mAssetCommands.push_back(std::move(texturePackAssetCommand));
             mAssetCommands.push_back(std::move(shaderAssetCommand));

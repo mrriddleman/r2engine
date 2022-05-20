@@ -48,49 +48,57 @@
     {
       value: "ellen/albedo/ellen_body_albedo.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "NORMAL",
       value: "ellen/normal/ellen_body_normal.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "EMISSION",
       value: "ellen/emissive/ellen_body_emission.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "METALLIC",
       value: "ellen/metallic/ellen_body_metallicsmooth.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: "ellen/occlusion/ellen_body_occlusion.rtex",
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 18199531748715869547
+      texturePackName: 18199531748715869547,
+      texturePackNameStr:"ellen"
     }
   ]
 }

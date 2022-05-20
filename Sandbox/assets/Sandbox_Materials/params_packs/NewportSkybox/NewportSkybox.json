@@ -47,6 +47,7 @@
       value: "newport/albedo/newport0_right.rtex",
       packingType: "RGBA",
       texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport",
       minFilter: "NEAREST_MIPMAP_LINEAR",
       magFilter: "LINEAR",
       anisotropicFiltering:0.0,
@@ -58,43 +59,50 @@
       propertyType: "NORMAL",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "METALLIC",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 12702858826531139154
+      texturePackName: 12702858826531139154,
+      texturePackNameStr:"newport"
     }
   ]
 }

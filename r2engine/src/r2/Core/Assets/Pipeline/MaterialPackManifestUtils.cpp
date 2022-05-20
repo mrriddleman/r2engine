@@ -559,6 +559,7 @@ namespace r2::asset::pln
 						textureParam->value(),
 						textureParam->packingType(),
 						textureParam->texturePackName(),
+						builder.CreateString(textureParam->texturePackNameStr()),
 						textureParam->minFilter(),
 						textureParam->magFilter(),
 						textureParam->anisotropicFiltering(),

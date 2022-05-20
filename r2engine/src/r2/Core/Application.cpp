@@ -134,6 +134,11 @@ namespace r2
 		return {};
 	}
 
+    std::vector<std::string> Application::GetModelBinaryPaths() const
+    {
+        return {};
+    }
+
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {
