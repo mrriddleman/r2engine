@@ -32,7 +32,7 @@ namespace r2::assets::assetlib
 
 	void pack_model(AssetFile& file, uint8_t* metaBuffer, size_t metaBufferSize, uint8_t* dataBuffer, size_t dataBufferSize);
 
-	//const flatbuffers::Offset<flat::RMesh> pack_mesh(flatbuffers::FlatBufferBuilder& builder, flat::RModelMetaData* info, uint32_t meshIndex, char** data, const char* name, char* vertexData, char* indexData);
+	const flatbuffers::Offset<flat::RMesh> pack_mesh(flatbuffers::FlatBufferBuilder& builder, flat::RModelMetaData* info, uint32_t meshIndex, char* data, int materialIndex, char* vertexData, char* indexData);
 
 	void unpack_mesh(const flat::RModelMetaData* info, uint32_t meshIndex, char* sourceBuffer, size_t sourceSize, char** vertexBuffer, char** indexBuffer);
 

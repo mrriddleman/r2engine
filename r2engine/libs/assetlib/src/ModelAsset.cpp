@@ -27,7 +27,7 @@ namespace r2::assets::assetlib
 		assert(dataBuffer != nullptr && "Passed in null model data");
 		assert(metaBufferSize > 0 && "meta buffer size should be greater than 0");
 		assert(dataBufferSize > 0 && "data buffer size should be greater than 0");
-		assert(file.binaryBlob.data != nullptr && "binary blob data shouldn't be null");
+		//assert(file.binaryBlob.data != nullptr && "binary blob data shouldn't be null");
 
 		file.type[0] = 'r';
 		file.type[1] = 'm';
@@ -40,10 +40,10 @@ namespace r2::assets::assetlib
 		file.metaData.data = (char*)metaBuffer;
 
 		file.binaryBlob.size = dataBufferSize;
-		file.binaryBlob.data = (char*)dataBufferSize;
+		file.binaryBlob.data = (char*)dataBuffer;
 	}
 
-	/*const flatbuffers::Offset<flat::RMesh> pack_mesh(flatbuffers::FlatBufferBuilder& builder, flat::RModelMetaData* info, uint32_t meshIndex, char** data, const char* name, char* vertexData, char* indexData)
+	const flatbuffers::Offset<flat::RMesh> pack_mesh(flatbuffers::FlatBufferBuilder& builder, flat::RModelMetaData* info, uint32_t meshIndex, char* data, int materialIndex, char* vertexData, char* indexData)
 	{
 		flat::MeshInfo* meshInfo = info->meshInfos()->GetMutableObject(meshIndex);
 
@@ -60,23 +60,23 @@ namespace r2::assets::assetlib
 		{
 			auto vertexCompressStaging = LZ4_compressBound(static_cast<int>(fullSize));
 
-			*data = new char[vertexCompressStaging];
+			//*data = new char[vertexCompressStaging];
 
-			auto compressedSize = LZ4_compress_default(mergedBuffer.data(), *data, static_cast<int>(mergedBuffer.size()), vertexCompressStaging);
+			auto compressedSize = LZ4_compress_default(mergedBuffer.data(), data, static_cast<int>(mergedBuffer.size()), vertexCompressStaging);
 
 			meshInfo->mutate_compressedSize(compressedSize);
 		}
 		else
 		{
-			*data = new char[mergedBuffer.size()];
+			//*data = new char[mergedBuffer.size()];
 
-			memcpy(*data, mergedBuffer.data(), mergedBuffer.size());
+			memcpy(data, mergedBuffer.data(), mergedBuffer.size());
 
 			meshInfo->mutate_compressedSize(mergedBuffer.size());
 		}
 
-		return flat::CreateRMesh(builder, meshIndex, builder.CreateVectorScalarCast<int8_t>(*data, meshInfo->compressedSize()) );
-	}*/
+		return flat::CreateRMesh(builder, materialIndex, builder.CreateVectorScalarCast<int8_t>(data, meshInfo->compressedSize()) );
+	}
 
 	void unpack_mesh(const flat::RModelMetaData* info, uint32_t meshIndex, char* sourceBuffer, size_t sourceSize, char** vertexBuffer, char** indexBuffer)
 	{

@@ -3,7 +3,8 @@
 namespace r2::assets::assetlib
 {
 	DiskAssetFile::DiskAssetFile()
-		:mFilePath("")
+		: mFilePath("")
+		, mFreeDataBlob(true)
 	{
 	}
 
@@ -126,7 +127,7 @@ namespace r2::assets::assetlib
 	{
 		Close();
 
-		if (binaryBlob.data)
+		if (mFreeDataBlob && binaryBlob.data)
 		{
 			FreeForBlob(binaryBlob);
 			binaryBlob.data = nullptr;
@@ -145,6 +146,12 @@ namespace r2::assets::assetlib
 	{
 		return mFilePath.c_str();
 	}
+
+	void DiskAssetFile::SetFreeDataBlob(bool freeDataBlob)
+	{
+		mFreeDataBlob = freeDataBlob;
+	}
+
 }
 
 

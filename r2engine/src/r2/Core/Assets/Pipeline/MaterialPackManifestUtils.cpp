@@ -553,13 +553,16 @@ namespace r2::asset::pln
 				for (flatbuffers::uoffset_t i = 0; i < materialParams->textureParams()->size(); ++i)
 				{
 					const auto textureParam = materialParams->textureParams()->Get(i);
+
+					std::string textureParamNameString = textureParam->texturePackNameStr()->str();
+
 					textureParams.push_back(flat::CreateMaterialTextureParam(
 						builder,
 						textureParam->propertyType(),
 						textureParam->value(),
 						textureParam->packingType(),
 						textureParam->texturePackName(),
-						builder.CreateString(textureParam->texturePackNameStr()),
+						builder.CreateString(textureParamNameString),
 						textureParam->minFilter(),
 						textureParam->magFilter(),
 						textureParam->anisotropicFiltering(),

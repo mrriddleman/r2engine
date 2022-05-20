@@ -232,6 +232,11 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-a", "--animation" }, &arguments.isAnimations, "Animations");
 	args.Parse(agrc, argv);
 
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
+	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
+	arguments.isAnimations = false;
+
 	if (arguments.inputDir.empty())
 	{
 		printf("Failed to set an input directory\n");

@@ -126,7 +126,7 @@ namespace r2::assets::assetlib
 	void ProcessMeshForModel(Model& model, aiMesh* mesh, uint32_t meshIndex, const aiNode* node, const aiScene* scene);
 	void GetMeshData(aiNode* node, const aiScene* scene, uint64_t& numMeshes, uint64_t& numBones, uint64_t& numVertices);
 
-	bool ConvertModelToFlatbuffer(const Model& model, const fs::path& inputFilePath, const fs::path& outputPath);
+	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath);
 
 
 	
@@ -608,7 +608,11 @@ namespace r2::assets::assetlib
 						fs::path diffuseTextureName = diffuseTexturePath.filename();
 
 						diffuseTextureName.replace_extension(".rtex");
-						
+						std::string diffuseTextureNameStr = diffuseTextureName.string();
+
+						std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
+							[](unsigned char c) { return std::tolower(c); });
+
 						//now look into all the materials and find the material that matches this texture name
 
 
@@ -628,8 +632,9 @@ namespace r2::assets::assetlib
 
 								if (texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
 								{
-
-									std::string textureNameWithParents = texParam->texturePackNameStr()->str() + '/' + diffuseTextureName.string();
+									auto packNameStr = texParam->texturePackNameStr()->str();
+									
+									std::string textureNameWithParents = packNameStr + "/albedo/" + diffuseTextureNameStr;
 
 									auto textureNameID = STRING_ID(textureNameWithParents.c_str());
 
@@ -829,7 +834,7 @@ namespace r2::assets::assetlib
 
 			auto result = model.boneMapping.find(boneName);
 
-			if (result != model.boneMapping.end())
+			if (result == model.boneMapping.end())
 			{
 				boneIndex = model.boneInfo.size();//(u32)r2::sarr::Size(*model.boneInfo);
 				BoneInfo info;
@@ -947,7 +952,7 @@ namespace r2::assets::assetlib
 		}
 	}
 
-	bool ConvertModelToFlatbuffer(const Model& model, const fs::path& inputFilePath, const fs::path& outputPath )
+	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath )
 	{
 		//meta data
 		flatbuffers::FlatBufferBuilder builder;
@@ -1011,7 +1016,7 @@ namespace r2::assets::assetlib
 			modelBounds.radius,
 			flat::Vertex3(modelBounds.extents[0], modelBounds.extents[1], modelBounds.extents[2]));
 
-		auto modelMetaData = flat::CreateRModelMetaData(
+		auto modelMetaDataOffset = flat::CreateRModelMetaData(
 			builder,
 			STRING_ID(model.modelName.c_str()),
 			builder.CreateVector(meshInfos),
@@ -1023,10 +1028,13 @@ namespace r2::assets::assetlib
 			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNames.size(), model.skeleton.mParents.size(), model.skeleton.mRestPoseTransforms.size(), model.skeleton.mBindPoseTransforms.size()),
 			builder.CreateString(model.originalPath));
 
-		builder.Finish(modelMetaData, "mdmd");
+		builder.Finish(modelMetaDataOffset, "mdmd");
 
 		uint8_t* metaDataBuf = builder.GetBufferPointer();
 		size_t metaDataSize = builder.GetSize();
+
+		auto modelMetaData = flat::GetMutableRModelMetaData(metaDataBuf);
+
 
 		//mesh data
 		flatbuffers::FlatBufferBuilder dataBuilder;
@@ -1041,16 +1049,27 @@ namespace r2::assets::assetlib
 
 		for (size_t i = 0; i < numMeshesInModel; ++i)
 		{
-			const auto& mesh = model.meshes[i];
+			auto& mesh = model.meshes[i];
 
-			const auto vertexBufferSize = sizeof(Vertex) * mesh.vertices.size();
-			const auto indexBufferSize = sizeof(uint32_t) * mesh.indices.size();
-			meshData[i].resize(vertexBufferSize + indexBufferSize);
+			//const auto vertexBufferSize = sizeof(Vertex) * mesh.vertices.size();
+			//const auto indexBufferSize = sizeof(uint32_t) * mesh.indices.size();
+			//meshData[i].resize(vertexBufferSize + indexBufferSize);
 
-			memcpy(meshData[i].data(), mesh.vertices.data(), vertexBufferSize);
-			memcpy(meshData[i].data() + vertexBufferSize, mesh.indices.data(), indexBufferSize);
+			//memcpy(meshData[i].data(), mesh.vertices.data(), vertexBufferSize);
+			//memcpy(meshData[i].data() + vertexBufferSize, mesh.indices.data(), indexBufferSize);
+			auto compressedSize = modelMetaData->meshInfos()->Get(i)->compressedSize();
+
+			meshData[i].resize(compressedSize);
+
+			pack_mesh(dataBuilder, modelMetaData, i, reinterpret_cast<char*>(meshData[i].data()), mesh.materialIndex, reinterpret_cast<char*>(mesh.vertices.data()), reinterpret_cast<char*>(mesh.indices.data()));
+
+			compressedSize = modelMetaData->meshInfos()->Get(i)->compressedSize();
+
+			meshData[i].resize(compressedSize);
 
 			flatMeshes.push_back(flat::CreateRMesh(dataBuilder, mesh.materialIndex, dataBuilder.CreateVector(meshData[i])));
+
+
 		}
 
 		const auto numMaterialsInModel = model.materialNames.size();
@@ -1150,7 +1169,7 @@ namespace r2::assets::assetlib
 		size_t modelDataSize = dataBuilder.GetSize();
 
 		DiskAssetFile assetFile;
-
+		assetFile.SetFreeDataBlob(false);
 		pack_model(assetFile, metaDataBuf, metaDataSize, modelData, modelDataSize);
 
 

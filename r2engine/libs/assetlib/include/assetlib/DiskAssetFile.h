@@ -26,9 +26,13 @@ namespace r2::assets::assetlib
 		virtual ~DiskAssetFile();
 		virtual const char* FilePath() const override;
 
+		void SetFreeDataBlob(bool freeDataBlob);
+
 	private:
 		mutable std::string mFilePath;
 		mutable std::fstream mFile;
+
+		bool mFreeDataBlob;
 	};
 }
 
