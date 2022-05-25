@@ -490,10 +490,12 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_MODELBOUNDS = 8,
     VT_NUMMESHES = 10,
     VT_NUMMATERIALS = 12,
-    VT_ISANIMATEDMODEL = 14,
-    VT_BONEMETADATA = 16,
-    VT_SKELETONMETADATA = 18,
-    VT_ORIGINALPATH = 20
+    VT_NUMVERTICES = 14,
+    VT_NUMINDICES = 16,
+    VT_ISANIMATEDMODEL = 18,
+    VT_BONEMETADATA = 20,
+    VT_SKELETONMETADATA = 22,
+    VT_ORIGINALPATH = 24
   };
   uint64_t modelName() const {
     return GetField<uint64_t>(VT_MODELNAME, 0);
@@ -524,6 +526,18 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool mutate_numMaterials(uint32_t _numMaterials) {
     return SetField<uint32_t>(VT_NUMMATERIALS, _numMaterials, 0);
+  }
+  uint32_t numVertices() const {
+    return GetField<uint32_t>(VT_NUMVERTICES, 0);
+  }
+  bool mutate_numVertices(uint32_t _numVertices) {
+    return SetField<uint32_t>(VT_NUMVERTICES, _numVertices, 0);
+  }
+  uint32_t numIndices() const {
+    return GetField<uint32_t>(VT_NUMINDICES, 0);
+  }
+  bool mutate_numIndices(uint32_t _numIndices) {
+    return SetField<uint32_t>(VT_NUMINDICES, _numIndices, 0);
   }
   bool isAnimatedModel() const {
     return GetField<uint8_t>(VT_ISANIMATEDMODEL, 0) != 0;
@@ -558,6 +572,8 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<flat::Bounds>(verifier, VT_MODELBOUNDS) &&
            VerifyField<uint32_t>(verifier, VT_NUMMESHES) &&
            VerifyField<uint32_t>(verifier, VT_NUMMATERIALS) &&
+           VerifyField<uint32_t>(verifier, VT_NUMVERTICES) &&
+           VerifyField<uint32_t>(verifier, VT_NUMINDICES) &&
            VerifyField<uint8_t>(verifier, VT_ISANIMATEDMODEL) &&
            VerifyOffset(verifier, VT_BONEMETADATA) &&
            verifier.VerifyTable(boneMetaData()) &&
@@ -587,6 +603,12 @@ struct RModelMetaDataBuilder {
   }
   void add_numMaterials(uint32_t numMaterials) {
     fbb_.AddElement<uint32_t>(RModelMetaData::VT_NUMMATERIALS, numMaterials, 0);
+  }
+  void add_numVertices(uint32_t numVertices) {
+    fbb_.AddElement<uint32_t>(RModelMetaData::VT_NUMVERTICES, numVertices, 0);
+  }
+  void add_numIndices(uint32_t numIndices) {
+    fbb_.AddElement<uint32_t>(RModelMetaData::VT_NUMINDICES, numIndices, 0);
   }
   void add_isAnimatedModel(bool isAnimatedModel) {
     fbb_.AddElement<uint8_t>(RModelMetaData::VT_ISANIMATEDMODEL, static_cast<uint8_t>(isAnimatedModel), 0);
@@ -619,6 +641,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
     const flat::Bounds *modelBounds = 0,
     uint32_t numMeshes = 0,
     uint32_t numMaterials = 0,
+    uint32_t numVertices = 0,
+    uint32_t numIndices = 0,
     bool isAnimatedModel = false,
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
@@ -628,6 +652,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
   builder_.add_originalPath(originalPath);
   builder_.add_skeletonMetaData(skeletonMetaData);
   builder_.add_boneMetaData(boneMetaData);
+  builder_.add_numIndices(numIndices);
+  builder_.add_numVertices(numVertices);
   builder_.add_numMaterials(numMaterials);
   builder_.add_numMeshes(numMeshes);
   builder_.add_modelBounds(modelBounds);
@@ -643,6 +669,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
     const flat::Bounds *modelBounds = 0,
     uint32_t numMeshes = 0,
     uint32_t numMaterials = 0,
+    uint32_t numVertices = 0,
+    uint32_t numIndices = 0,
     bool isAnimatedModel = false,
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
@@ -656,6 +684,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
       modelBounds,
       numMeshes,
       numMaterials,
+      numVertices,
+      numIndices,
       isAnimatedModel,
       boneMetaData,
       skeletonMetaData,

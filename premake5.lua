@@ -80,7 +80,8 @@ project "r2engine"
 		"%{includeDirs.stb}",
 		"%{includeDirs.cgltf}",
 		"%{includeDirs.assetlib}",
-		"%{includeDirs.texturemetadata}"
+		"%{includeDirs.texturemetadata}",
+		"%{prj.name}/src/r2/Render/Model"
 	}
 
 	links

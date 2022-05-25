@@ -255,6 +255,10 @@ namespace r2::assets::assetlib
 
 	bool ConvertModel(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::filesystem::path& binaryMaterialParamPacksManifestFile, const std::string& extension)
 	{
+		mJoints.clear();
+		mBoneNecessityMap.clear();
+		mBoneMap.clear();
+
 		Assimp::Importer import;
 
 		uint8_t flags = 
@@ -556,12 +560,12 @@ namespace r2::assets::assetlib
 			localTransform = bindMat * localTransform * AssimpMat4ToGLMMat4(scene->mRootNode->mTransformation);
 		}
 
-		nextMesh.vertices.resize(mesh->mNumVertices);
+		nextMesh.vertices.reserve(mesh->mNumVertices);
 
 
 		if (mesh->mNumFaces > 0)
 		{
-			nextMesh.indices.resize(mesh->mNumFaces * 3);
+			nextMesh.indices.reserve(mesh->mNumFaces * 3);
 		}
 
 		uint64_t materialName = 0;
@@ -965,6 +969,9 @@ namespace r2::assets::assetlib
 
 		std::vector<Position> modelPositions;
 
+		uint32_t totalVertices = 0;
+		uint32_t totalIndices = 0;
+
 		for (size_t i = 0; i < numMeshes; ++i)
 		{
 			std::vector<Position> meshPositions;
@@ -1003,11 +1010,14 @@ namespace r2::assets::assetlib
 				numIndices * sizeof(uint32_t),
 				&flatBounds,
 				sizeof(uint32_t),
-				flat::MeshCompressionMode_NONE,
+				flat::MeshCompressionMode_LZ4,
 				numVertices * sizeof(Vertex) + numIndices * sizeof(uint32_t),
 				builder.CreateString(model.originalPath));
 
 			meshInfos.push_back(meshInfo);
+
+			totalVertices += numVertices;
+			totalIndices += numIndices;
 		}
 
 		Bounds modelBounds = CalculateBounds(modelPositions.data(), modelPositions.size());
@@ -1023,6 +1033,8 @@ namespace r2::assets::assetlib
 			&flatBounds,
 			numMeshes,
 			model.materialNames.size(),
+			totalVertices,
+			totalIndices,
 			model.boneData.size() > 0,
 			flat::CreateBoneMetaData(builder, model.boneData.size(), model.boneInfo.size()),
 			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNames.size(), model.skeleton.mParents.size(), model.skeleton.mRestPoseTransforms.size(), model.skeleton.mBindPoseTransforms.size()),
@@ -1158,9 +1170,9 @@ namespace r2::assets::assetlib
 		const auto rmodel = flat::CreateRModel(
 			dataBuilder,
 			STRING_ID(model.modelName.c_str()),
+			&flatGlobalInverseTransform,
 			dataBuilder.CreateVector(flatMaterialNames),
 			dataBuilder.CreateVector(flatMeshes),
-			&flatGlobalInverseTransform,
 			animationData);
 
 		dataBuilder.Finish(rmodel, "rmdl");

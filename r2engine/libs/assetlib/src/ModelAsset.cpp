@@ -13,11 +13,13 @@ namespace r2::assets::assetlib
 {
 	const flat::RModelMetaData* read_model_meta_data(const AssetFile& file)
 	{
+		assert(file.metaData.data != nullptr&& "Did you forget to load the file first?");
 		return flat::GetRModelMetaData(file.metaData.data);
 	}
 
 	const flat::RModel* read_model_data(const flat::RModelMetaData* info, const AssetFile& file)
 	{
+		assert(file.binaryBlob.data != nullptr && "Did you forget to load the file first?");
 		return flat::GetRModel(file.binaryBlob.data);
 	}
 
@@ -78,7 +80,7 @@ namespace r2::assets::assetlib
 		return flat::CreateRMesh(builder, materialIndex, builder.CreateVectorScalarCast<int8_t>(data, meshInfo->compressedSize()) );
 	}
 
-	void unpack_mesh(const flat::RModelMetaData* info, uint32_t meshIndex, char* sourceBuffer, size_t sourceSize, char** vertexBuffer, char** indexBuffer)
+	void unpack_mesh(const flat::RModelMetaData* info, uint32_t meshIndex,const char* sourceBuffer, size_t sourceSize, char* vertexBuffer, char* indexBuffer)
 	{
 		const flat::MeshInfo* meshInfo = info->meshInfos()->Get(meshIndex);
 		assert(meshInfo->compressedSize() == sourceSize && "These should be the same in this case");
@@ -88,15 +90,20 @@ namespace r2::assets::assetlib
 			std::vector<char> decompressedBuffer;
 			decompressedBuffer.resize(meshInfo->vertexBufferSize() + meshInfo->indexBufferSize());
 
-			LZ4_decompress_safe(sourceBuffer, decompressedBuffer.data(), static_cast<int>(sourceSize), static_cast<int>(decompressedBuffer.size()));
+			int result = LZ4_decompress_safe(sourceBuffer, decompressedBuffer.data(), static_cast<int>(sourceSize), static_cast<int>(decompressedBuffer.size()));
 
-			memcpy(*vertexBuffer, decompressedBuffer.data(), meshInfo->vertexBufferSize());
-			memcpy(*indexBuffer, decompressedBuffer.data() + meshInfo->vertexBufferSize(), meshInfo->indexBufferSize());
+			if (result < 0)
+			{
+				assert(false && "Failed to unpack mesh!");
+			}
+
+			memcpy(vertexBuffer, decompressedBuffer.data(), meshInfo->vertexBufferSize());
+			memcpy(indexBuffer, decompressedBuffer.data() + meshInfo->vertexBufferSize(), meshInfo->indexBufferSize());
 		}
 		else
 		{
-			*vertexBuffer = sourceBuffer;
-			*indexBuffer = (sourceBuffer + meshInfo->vertexBufferSize());
+			memcpy(vertexBuffer, sourceBuffer, meshInfo->vertexBufferSize());
+			memcpy(indexBuffer, sourceBuffer + meshInfo->vertexBufferSize(), meshInfo->indexBufferSize());
 		}
 	}
 

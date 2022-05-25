@@ -6,7 +6,7 @@
 #include "r2/Core/Assets/ModelAssetLoader.h"
 #include "r2/Core/Assets/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssimpAssetLoader.h"
-
+#include "r2/Core/Assets/RModelAssetLoader.h"
 
 namespace r2::draw::modlsys
 {
@@ -69,9 +69,8 @@ namespace r2::draw::modlsys
 		r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(assimpModelLoader);
 
-
-	//	r2::asset::GLTFAssetLoader* gltfModelLoader = (r2::asset::GLTFAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader< r2::asset::GLTFAssetLoader > ();
-	//	newModelSystem->mModelCache->RegisterAssetLoader(gltfModelLoader);
+		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
+		newModelSystem->mModelCache->RegisterAssetLoader(rmodelLoader);
 
 		return newModelSystem;
 	}

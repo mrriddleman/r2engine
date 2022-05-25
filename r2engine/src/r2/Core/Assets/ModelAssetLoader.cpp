@@ -45,7 +45,7 @@ namespace r2::asset
 	
 		u64 totalMemorySize = 0;
 
-		totalMemorySize += r2::draw::Model::ModelMemorySize(numMeshes, alignment, header, boundsChecking);
+		totalMemorySize += r2::draw::Model::ModelMemorySize(numMeshes, numMeshes, alignment, header, boundsChecking);
 
 		return totalMemorySize;
 	}

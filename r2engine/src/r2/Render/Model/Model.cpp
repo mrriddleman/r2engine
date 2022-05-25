@@ -13,43 +13,50 @@ namespace r2::draw
 
 	u64 Skeleton::MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) * 2 + //*2 for mRealParents
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) * 2 + //*2 for bind pose + rest pose
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numJoints), alignment, headerSize, boundsChecking);
+		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + //rest pose
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numJoints), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::math::Transform>::MemorySize(numJoints), alignment, headerSize, boundsChecking) + // bind pose
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numJoints), alignment, headerSize, boundsChecking); //real parents
 	}
-	
 
-
-	u64 AnimModel::MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking)
+	u64 AnimModel::MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<u32>::MemorySize(boneMapping), alignment, headerSize, boundsChecking) +
+		u64 totalSize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Mesh>::MemorySize(numMeshes), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
+
+		if (boneMapping > 0)
+		{
+			totalSize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<u32>::MemorySize(boneMapping), alignment, headerSize, boundsChecking);
+		}
+
+		return totalSize;
 			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Animation>::MemorySize(numAnimations), alignment, headerSize, boundsChecking);
 	}
 
-	u64 AnimModel::MemorySizeNoData(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking)
+	u64 AnimModel::MemorySizeNoData(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AnimModel), alignment, headerSize, boundsChecking) +
-			Model::ModelMemorySize(numMeshes, alignment, headerSize, boundsChecking) - r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking);
+			Model::ModelMemorySize(numMeshes, numMaterials, alignment, headerSize, boundsChecking) - r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking);
 			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Mesh>::MemorySize(numMeshes), alignment, headerSize, boundsChecking);
 	
 	}
 
 
-    u64 Model::MemorySize(u64 numMeshes, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment)
+    u64 Model::MemorySize(u64 numMeshes, u64 numMaterials, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment)
     {
         //@NOTE: the passed in u64 numVertices, u64 numIndices, u64 numTextures should be max values
-        return ModelMemorySize(numMeshes, alignment, headerSize, boundsChecking) +
+        return ModelMemorySize(numMeshes, numMaterials, alignment, headerSize, boundsChecking) +
             numMeshes * Mesh::MemorySize(numVertices, numIndices, alignment, headerSize, boundsChecking);
     }
 
-    u64 Model::ModelMemorySize(u64 numMeshes, u64 alignment, u32 headerSize, u32 boundsChecking)
+    u64 Model::ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking)
     {
         return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking) +
-            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMeshes), alignment, headerSize, boundsChecking);
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
     }
 }

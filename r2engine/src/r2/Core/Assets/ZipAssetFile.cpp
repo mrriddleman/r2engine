@@ -95,7 +95,7 @@ namespace r2::asset
         return 0;
     }
     
-    u64 ZipAssetFile::GetRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
+    u64 ZipAssetFile::LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
     {
 		if (!(mZipFile && mZipFile->IsOpen()))
 		{

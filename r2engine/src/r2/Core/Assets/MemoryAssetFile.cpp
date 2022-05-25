@@ -6,9 +6,18 @@ namespace r2::asset
 
 	MemoryAssetFile::MemoryAssetFile(const AssetCacheRecord& record)
 		: mOffset(0)
-		, mRecord(record)
+		, mData(record.buffer->MutableData())
+		, mSize(record.buffer->Size())
 	{
 		strcpy(mFilePath, "");
+	}
+
+	MemoryAssetFile::MemoryAssetFile(void* data, u64 size)
+		: mOffset(0)
+		, mData(data)
+		, mSize(size)
+	{
+
 	}
 
 	MemoryAssetFile::~MemoryAssetFile()
@@ -42,12 +51,12 @@ namespace r2::asset
 
 	bool MemoryAssetFile::IsOpen() const
 	{
-		return mRecord.buffer && mRecord.buffer->IsLoaded() && mRecord.buffer->Data() != nullptr;
+		return mData != nullptr;
 	}
 
 	uint32_t MemoryAssetFile::Size()
 	{
-		return mRecord.buffer->Size();
+		return mSize;
 	}
 
 	uint32_t MemoryAssetFile::Read(char* data, uint32_t dataBufSize)
@@ -58,7 +67,9 @@ namespace r2::asset
 			return 0;
 		}
 		
-		memcpy(data, &mRecord.buffer->Data()[mOffset], dataBufSize);
+		const byte* memoryData = (byte*)mData;
+
+		memcpy(data, &memoryData[mOffset], dataBufSize);
 
 		mOffset += dataBufSize;
 
@@ -75,7 +86,9 @@ namespace r2::asset
 
 		mOffset = offset;
 
-		memcpy(data, &mRecord.buffer->Data()[mOffset], dataBufSize);
+		const byte* memoryData = (byte*)mData;
+
+		memcpy(data, &memoryData[mOffset], dataBufSize);
 
 		mOffset += dataBufSize;
 
@@ -106,13 +119,13 @@ namespace r2::asset
 
 	bool MemoryAssetFile::LoadMetaData()
 	{
-		metaData.data = (char*)r2::mem::utils::PointerAdd(mRecord.buffer->MutableData(), headerSize);
+		metaData.data = (char*)r2::mem::utils::PointerAdd(mData, headerSize);
 		return true;
 	}
 
 	bool MemoryAssetFile::LoadBinaryData() 
 	{
-		binaryBlob.data = (char*)r2::mem::utils::PointerAdd(mRecord.buffer->MutableData(), headerSize + metaData.size);
+		binaryBlob.data = (char*)r2::mem::utils::PointerAdd(mData, headerSize + metaData.size);
 		return true;
 	}
 

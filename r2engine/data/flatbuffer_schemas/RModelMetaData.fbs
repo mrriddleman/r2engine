@@ -65,6 +65,8 @@ table RModelMetaData
 	modelBounds:Bounds;
 	numMeshes:uint;
 	numMaterials:uint;
+	numVertices:uint;
+	numIndices:uint;
 	isAnimatedModel:bool;
 	boneMetaData:BoneMetaData;
 	skeletonMetaData:SkeletonMetaData;

@@ -87,7 +87,7 @@ namespace r2::asset
 		return mSize;
 	}
 
-	u64 GLTFAssetFile::GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
+	u64 GLTFAssetFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
 	{
 		return mSize;
 	}

@@ -389,7 +389,7 @@ namespace r2::asset
         
         mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
 
-        theAssetFile->GetRawAsset(asset, rawAssetBuffer, (u32)rawAssetSize);
+        theAssetFile->LoadRawAsset(asset, rawAssetBuffer, (u32)rawAssetSize);
         
         if (rawAssetBuffer == nullptr)
         {
@@ -413,7 +413,7 @@ namespace r2::asset
         
         if (!loader->ShouldProcess())
         {
-            assetBuffer->Load(asset,mSlot, rawAssetBuffer, rawAssetSize);
+            assetBuffer->Load(asset, mSlot, rawAssetBuffer, rawAssetSize);
         }
         else
         {
@@ -431,36 +431,37 @@ namespace r2::asset
             const u64 ALIGNMENT = 16;
 
             u64 size = loader->GetLoadedAssetSize(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, ALIGNMENT, headerSize, boundsChecking);
+            bool success = false;
 
-            bool madeRoom = MakeRoom(size);
+			bool madeRoom = MakeRoom(size);
 
-            R2_CHECK(madeRoom, "We don't have enough room to fit %s!\n", theAssetFile->FilePath());
+			R2_CHECK(madeRoom, "We don't have enough room to fit %s!\n", theAssetFile->FilePath());
 
-            byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, alignof(size_t));
-            
-            R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
-            
-            if (!buffer)
-            {
-                theAssetFile->Close();
-                return nullptr;
-            }
-            
-            mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
+			byte* buffer = ALLOC_BYTESN(mAssetCacheArena, size, alignof(size_t));
 
-            assetBuffer->Load(asset, mSlot, buffer, size);
-            
-            bool success = loader->LoadAsset(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, *assetBuffer);
-            
-            R2_CHECK(success, "Failed to load asset");
-            
-            FREE(rawAssetBuffer, mAssetCacheArena);
-            
+			R2_CHECK(buffer != nullptr, "Failed to allocate buffer!");
+
+			if (!buffer)
+			{
+				theAssetFile->Close();
+				return nullptr;
+			}
+
+			mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
+
+			assetBuffer->Load(asset, mSlot, buffer, size);
+
+			success = loader->LoadAsset(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, *assetBuffer);
+				
             if (!success)
-            {
-                theAssetFile->Close();
-                return nullptr;
-            }
+			{
+				theAssetFile->Close();
+				return nullptr;
+			}
+
+			R2_CHECK(success, "Failed to load asset");
+
+			FREE(rawAssetBuffer, mAssetCacheArena);
         }
         AssetBufferRef bufferRef;
         

@@ -63,7 +63,7 @@ u64 BreakoutLevelsFile::RawAssetSize(const r2::asset::Asset& asset)
     return mFile->Size();
 }
 
-u64 BreakoutLevelsFile::GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
+u64 BreakoutLevelsFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
 {
     return mFile->ReadAll(data);
 }

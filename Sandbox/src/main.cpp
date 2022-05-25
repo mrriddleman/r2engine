@@ -494,7 +494,7 @@ public:
 
 		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
 
 		r2::asset::RawAssetFile* modelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
@@ -515,9 +515,9 @@ public:
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.gltf", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
 
-        r2::asset::GLTFAssetFile* sponzaFile = r2::asset::lib::MakeGLTFAssetFile(modelFilePath);
+        r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
@@ -597,7 +597,7 @@ public:
             return false;
         }
 
-        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.fbx", r2::asset::ASSIMP_MODEL));
+        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
         auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.fbx", r2::asset::ASSIMP_MODEL));
@@ -608,7 +608,7 @@ public:
 
         mSelectedAnimModel = mSkeletonModel;
 
-        auto sponzaHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Sponza.gltf", r2::asset::ASSIMP_MODEL));
+        auto sponzaHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
         mSponzaModel = r2::draw::modlsys::GetModel(mModelSystem, sponzaHandle);
 
         glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
@@ -1458,7 +1458,7 @@ namespace
                 r2::util::PathCpy(subpath, "assets/shaders/manifests");
                 break;
             case r2::fs::utils::MODELS:
-                r2::util::PathCpy(subpath, "assets/Sandbox_Models");
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Models");
                 break;
             case r2::fs::utils::ANIMATIONS:
                 r2::util::PathCpy(subpath, "assets/Sandbox_Animations");

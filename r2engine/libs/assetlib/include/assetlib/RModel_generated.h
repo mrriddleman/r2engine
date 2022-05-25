@@ -412,9 +412,9 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RModelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
-    VT_MATERIALS = 6,
-    VT_MESHES = 8,
-    VT_GLOBALINVERSETRANSFORM = 10,
+    VT_GLOBALINVERSETRANSFORM = 6,
+    VT_MATERIALS = 8,
+    VT_MESHES = 10,
     VT_ANIMATIONDATA = 12
   };
   uint64_t name() const {
@@ -422,6 +422,12 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool mutate_name(uint64_t _name) {
     return SetField<uint64_t>(VT_NAME, _name, 0);
+  }
+  const flat::Matrix4 *globalInverseTransform() const {
+    return GetStruct<const flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
+  }
+  flat::Matrix4 *mutable_globalInverseTransform() {
+    return GetStruct<flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *materials() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *>(VT_MATERIALS);
@@ -435,12 +441,6 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<flatbuffers::Offset<flat::RMesh>> *mutable_meshes() {
     return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::RMesh>> *>(VT_MESHES);
   }
-  const flat::Matrix4 *globalInverseTransform() const {
-    return GetStruct<const flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
-  }
-  flat::Matrix4 *mutable_globalInverseTransform() {
-    return GetStruct<flat::Matrix4 *>(VT_GLOBALINVERSETRANSFORM);
-  }
   const flat::AnimationData *animationData() const {
     return GetPointer<const flat::AnimationData *>(VT_ANIMATIONDATA);
   }
@@ -450,13 +450,13 @@ struct RModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_NAME) &&
+           VerifyField<flat::Matrix4>(verifier, VT_GLOBALINVERSETRANSFORM) &&
            VerifyOffset(verifier, VT_MATERIALS) &&
            verifier.VerifyVector(materials()) &&
            verifier.VerifyVectorOfTables(materials()) &&
            VerifyOffset(verifier, VT_MESHES) &&
            verifier.VerifyVector(meshes()) &&
            verifier.VerifyVectorOfTables(meshes()) &&
-           VerifyField<flat::Matrix4>(verifier, VT_GLOBALINVERSETRANSFORM) &&
            VerifyOffset(verifier, VT_ANIMATIONDATA) &&
            verifier.VerifyTable(animationData()) &&
            verifier.EndTable();
@@ -470,14 +470,14 @@ struct RModelBuilder {
   void add_name(uint64_t name) {
     fbb_.AddElement<uint64_t>(RModel::VT_NAME, name, 0);
   }
+  void add_globalInverseTransform(const flat::Matrix4 *globalInverseTransform) {
+    fbb_.AddStruct(RModel::VT_GLOBALINVERSETRANSFORM, globalInverseTransform);
+  }
   void add_materials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> materials) {
     fbb_.AddOffset(RModel::VT_MATERIALS, materials);
   }
   void add_meshes(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RMesh>>> meshes) {
     fbb_.AddOffset(RModel::VT_MESHES, meshes);
-  }
-  void add_globalInverseTransform(const flat::Matrix4 *globalInverseTransform) {
-    fbb_.AddStruct(RModel::VT_GLOBALINVERSETRANSFORM, globalInverseTransform);
   }
   void add_animationData(flatbuffers::Offset<flat::AnimationData> animationData) {
     fbb_.AddOffset(RModel::VT_ANIMATIONDATA, animationData);
@@ -497,34 +497,34 @@ struct RModelBuilder {
 inline flatbuffers::Offset<RModel> CreateRModel(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t name = 0,
+    const flat::Matrix4 *globalInverseTransform = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> materials = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RMesh>>> meshes = 0,
-    const flat::Matrix4 *globalInverseTransform = 0,
     flatbuffers::Offset<flat::AnimationData> animationData = 0) {
   RModelBuilder builder_(_fbb);
   builder_.add_name(name);
   builder_.add_animationData(animationData);
-  builder_.add_globalInverseTransform(globalInverseTransform);
   builder_.add_meshes(meshes);
   builder_.add_materials(materials);
+  builder_.add_globalInverseTransform(globalInverseTransform);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<RModel> CreateRModelDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t name = 0,
+    const flat::Matrix4 *globalInverseTransform = 0,
     const std::vector<flatbuffers::Offset<flat::MaterialName>> *materials = nullptr,
     const std::vector<flatbuffers::Offset<flat::RMesh>> *meshes = nullptr,
-    const flat::Matrix4 *globalInverseTransform = 0,
     flatbuffers::Offset<flat::AnimationData> animationData = 0) {
   auto materials__ = materials ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialName>>(*materials) : 0;
   auto meshes__ = meshes ? _fbb.CreateVector<flatbuffers::Offset<flat::RMesh>>(*meshes) : 0;
   return flat::CreateRModel(
       _fbb,
       name,
+      globalInverseTransform,
       materials__,
       meshes__,
-      globalInverseTransform,
       animationData);
 }
 

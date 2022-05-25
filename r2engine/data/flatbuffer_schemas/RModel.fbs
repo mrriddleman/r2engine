@@ -64,9 +64,9 @@ table AnimationData
 table RModel
 {
 	name:ulong (hash:"fnv1a_64");
+	globalInverseTransform:Matrix4;
 	materials:[MaterialName];
 	meshes:[RMesh];
-	globalInverseTransform:Matrix4;
 	animationData:AnimationData;
 }
 

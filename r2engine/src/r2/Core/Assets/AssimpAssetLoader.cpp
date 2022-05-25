@@ -486,10 +486,10 @@ namespace r2::asset
 		{
 			totalSizeInBytes += r2::draw::Skeleton::MemorySizeNoData(mJoints.size(), alignment, header, boundsChecking);
 
-			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, alignment, header, boundsChecking);
+			return totalSizeInBytes + r2::draw::AnimModel::MemorySizeNoData(mNumBones * r2::SHashMap<u32>::LoadFactorMultiplier(), mNumVertices, mNumBones, mNumMeshes, mNumMeshes, alignment, header, boundsChecking);
 		}
 
-		return totalSizeInBytes + r2::draw::Model::ModelMemorySize(mNumMeshes, alignment, header, boundsChecking);
+		return totalSizeInBytes + r2::draw::Model::ModelMemorySize(mNumMeshes, mNumMeshes, alignment, header, boundsChecking);
 	}
 
 	bool AssimpAssetLoader::LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer)

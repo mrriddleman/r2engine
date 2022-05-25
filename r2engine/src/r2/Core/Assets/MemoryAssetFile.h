@@ -15,6 +15,8 @@ namespace r2::asset
 	public:
 
 		MemoryAssetFile(const AssetCacheRecord& record);
+		MemoryAssetFile(void* data, u64 size);
+
 		virtual ~MemoryAssetFile();
 
 		virtual bool OpenForRead(const char* filePath) override;
@@ -38,7 +40,8 @@ namespace r2::asset
 	private:
 		mutable u64 mOffset;
 		mutable char mFilePath[r2::fs::FILE_PATH_LENGTH];
-		AssetCacheRecord mRecord;
+		void* mData;
+		u64 mSize;
 	};
 }
 

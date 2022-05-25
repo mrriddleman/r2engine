@@ -275,7 +275,7 @@ namespace
 		u64 cylinderMeshSize = r2::draw::Mesh::MemorySize(148, 144 * 3, ALIGNMENT, headerSize, boundsChecking);
 		u64 fullScreenMeshSize = r2::draw::Mesh::MemorySize(3, 3, ALIGNMENT, headerSize, boundsChecking);
 
-		u64 modelSize = r2::draw::Model::ModelMemorySize(1, ALIGNMENT, headerSize, boundsChecking) * r2::draw::NUM_DEFAULT_MODELS;
+		u64 modelSize = r2::draw::Model::ModelMemorySize(1, 1, ALIGNMENT, headerSize, boundsChecking) * r2::draw::NUM_DEFAULT_MODELS;
 
 		return quadMeshSize + cubeMeshSize + sphereMeshSize + coneMeshSize + cylinderMeshSize + modelSize;
 	}
@@ -2521,8 +2521,8 @@ namespace r2::draw::renderer
 		modelRef.hash = model->hash;
 		modelRef.indexBufferHandle = vHandle.mIndexBufferHandle;
 		modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
-		r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex + vOffsets.mIndexBufferOffset.numIndices;
-		r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex + vOffsets.mVertexBufferOffset.numVertices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex;// +vOffsets.mIndexBufferOffset.numIndices;
+		r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex;// +vOffsets.mVertexBufferOffset.numVertices;
 		r2::sarr::At(*modelRef.mMeshRefs, 0).materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
 
 		//modelRef.mNumMeshRefs = numMeshes;
@@ -2638,11 +2638,11 @@ namespace r2::draw::renderer
 			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
 		}
 
-		vOffsets.mVertexBufferOffset.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex;
-		vOffsets.mVertexBufferOffset.numVertices = totalNumVertices;
+		vOffsets.mVertexBufferOffset.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex + totalNumIndices;
+		vOffsets.mVertexBufferOffset.numVertices += totalNumVertices;
 
-		vOffsets.mIndexBufferOffset.baseIndex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex;
-		vOffsets.mIndexBufferOffset.numIndices = totalNumIndices;
+		vOffsets.mIndexBufferOffset.baseIndex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex + totalNumIndices;
+		vOffsets.mIndexBufferOffset.numIndices += totalNumIndices;
 
 		r2::sarr::Push(*renderer.mModelRefs, modelRef);
 

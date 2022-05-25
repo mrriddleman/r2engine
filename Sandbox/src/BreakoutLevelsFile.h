@@ -23,7 +23,7 @@ public:
     virtual bool IsOpen() const override;
     virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;
     
-    virtual u64 GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;
+    virtual u64 LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;
     
     virtual u64 NumAssets() const override;
     virtual void GetAssetName(u64 index, char* name,u32 nameBufSize) const override;

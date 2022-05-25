@@ -75,7 +75,7 @@ namespace r2::asset
         return mFile->Size();
     }
     
-    u64 RawAssetFile::GetRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
+    u64 RawAssetFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
     {
         return mFile->ReadAll(data);
     }
