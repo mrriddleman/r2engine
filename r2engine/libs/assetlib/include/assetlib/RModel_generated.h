@@ -28,6 +28,8 @@ struct BoneData;
 
 struct BoneInfo;
 
+struct BoneMapEntry;
+
 struct AnimationData;
 struct AnimationDataBuilder;
 
@@ -181,6 +183,37 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) BoneInfo FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(BoneInfo, 64);
 
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) BoneMapEntry FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint64_t key_;
+  int32_t val_;
+  int32_t padding0__;
+
+ public:
+  BoneMapEntry() {
+    memset(static_cast<void *>(this), 0, sizeof(BoneMapEntry));
+  }
+  BoneMapEntry(uint64_t _key, int32_t _val)
+      : key_(flatbuffers::EndianScalar(_key)),
+        val_(flatbuffers::EndianScalar(_val)),
+        padding0__(0) {
+    (void)padding0__;
+  }
+  uint64_t key() const {
+    return flatbuffers::EndianScalar(key_);
+  }
+  void mutate_key(uint64_t _key) {
+    flatbuffers::WriteScalar(&key_, _key);
+  }
+  int32_t val() const {
+    return flatbuffers::EndianScalar(val_);
+  }
+  void mutate_val(int32_t _val) {
+    flatbuffers::WriteScalar(&val_, _val);
+  }
+};
+FLATBUFFERS_STRUCT_END(BoneMapEntry, 16);
+
 struct RMesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RMeshBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -256,11 +289,12 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_BONEDATA = 4,
     VT_BONEINFO = 6,
-    VT_JOINTNAMES = 8,
-    VT_PARENTS = 10,
-    VT_RESTPOSETRANSFORMS = 12,
-    VT_BINDPOSETRANSFORMS = 14,
-    VT_REALPARENTBONES = 16
+    VT_BONEMAPPING = 8,
+    VT_JOINTNAMES = 10,
+    VT_PARENTS = 12,
+    VT_RESTPOSETRANSFORMS = 14,
+    VT_BINDPOSETRANSFORMS = 16,
+    VT_REALPARENTBONES = 18
   };
   const flatbuffers::Vector<const flat::BoneData *> *boneData() const {
     return GetPointer<const flatbuffers::Vector<const flat::BoneData *> *>(VT_BONEDATA);
@@ -273,6 +307,12 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   flatbuffers::Vector<const flat::BoneInfo *> *mutable_boneInfo() {
     return GetPointer<flatbuffers::Vector<const flat::BoneInfo *> *>(VT_BONEINFO);
+  }
+  const flatbuffers::Vector<const flat::BoneMapEntry *> *boneMapping() const {
+    return GetPointer<const flatbuffers::Vector<const flat::BoneMapEntry *> *>(VT_BONEMAPPING);
+  }
+  flatbuffers::Vector<const flat::BoneMapEntry *> *mutable_boneMapping() {
+    return GetPointer<flatbuffers::Vector<const flat::BoneMapEntry *> *>(VT_BONEMAPPING);
   }
   const flatbuffers::Vector<uint64_t> *jointNames() const {
     return GetPointer<const flatbuffers::Vector<uint64_t> *>(VT_JOINTNAMES);
@@ -310,6 +350,8 @@ struct AnimationData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(boneData()) &&
            VerifyOffset(verifier, VT_BONEINFO) &&
            verifier.VerifyVector(boneInfo()) &&
+           VerifyOffset(verifier, VT_BONEMAPPING) &&
+           verifier.VerifyVector(boneMapping()) &&
            VerifyOffset(verifier, VT_JOINTNAMES) &&
            verifier.VerifyVector(jointNames()) &&
            VerifyOffset(verifier, VT_PARENTS) &&
@@ -333,6 +375,9 @@ struct AnimationDataBuilder {
   }
   void add_boneInfo(flatbuffers::Offset<flatbuffers::Vector<const flat::BoneInfo *>> boneInfo) {
     fbb_.AddOffset(AnimationData::VT_BONEINFO, boneInfo);
+  }
+  void add_boneMapping(flatbuffers::Offset<flatbuffers::Vector<const flat::BoneMapEntry *>> boneMapping) {
+    fbb_.AddOffset(AnimationData::VT_BONEMAPPING, boneMapping);
   }
   void add_jointNames(flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames) {
     fbb_.AddOffset(AnimationData::VT_JOINTNAMES, jointNames);
@@ -365,6 +410,7 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<const flat::BoneData *>> boneData = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::BoneInfo *>> boneInfo = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const flat::BoneMapEntry *>> boneMapping = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint64_t>> jointNames = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> parents = 0,
     flatbuffers::Offset<flatbuffers::Vector<const flat::Transform *>> restPoseTransforms = 0,
@@ -376,6 +422,7 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationData(
   builder_.add_restPoseTransforms(restPoseTransforms);
   builder_.add_parents(parents);
   builder_.add_jointNames(jointNames);
+  builder_.add_boneMapping(boneMapping);
   builder_.add_boneInfo(boneInfo);
   builder_.add_boneData(boneData);
   return builder_.Finish();
@@ -385,6 +432,7 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<flat::BoneData> *boneData = nullptr,
     const std::vector<flat::BoneInfo> *boneInfo = nullptr,
+    const std::vector<flat::BoneMapEntry> *boneMapping = nullptr,
     const std::vector<uint64_t> *jointNames = nullptr,
     const std::vector<int32_t> *parents = nullptr,
     const std::vector<flat::Transform> *restPoseTransforms = nullptr,
@@ -392,6 +440,7 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationDataDirect(
     const std::vector<int32_t> *realParentBones = nullptr) {
   auto boneData__ = boneData ? _fbb.CreateVectorOfStructs<flat::BoneData>(*boneData) : 0;
   auto boneInfo__ = boneInfo ? _fbb.CreateVectorOfStructs<flat::BoneInfo>(*boneInfo) : 0;
+  auto boneMapping__ = boneMapping ? _fbb.CreateVectorOfStructs<flat::BoneMapEntry>(*boneMapping) : 0;
   auto jointNames__ = jointNames ? _fbb.CreateVector<uint64_t>(*jointNames) : 0;
   auto parents__ = parents ? _fbb.CreateVector<int32_t>(*parents) : 0;
   auto restPoseTransforms__ = restPoseTransforms ? _fbb.CreateVectorOfStructs<flat::Transform>(*restPoseTransforms) : 0;
@@ -401,6 +450,7 @@ inline flatbuffers::Offset<AnimationData> CreateAnimationDataDirect(
       _fbb,
       boneData__,
       boneInfo__,
+      boneMapping__,
       jointNames__,
       parents__,
       restPoseTransforms__,

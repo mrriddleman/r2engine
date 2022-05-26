@@ -13,7 +13,7 @@ namespace r2::asset
 	glm::mat4 GetGLMMatrix4FromFlatMatrix(const flat::Matrix4* mat)
 	{
 		glm::mat4 glmMat;
-
+		
 		glmMat[0] = glm::vec4(mat->cols()->Get(0)->v()->Get(0), mat->cols()->Get(0)->v()->Get(1), mat->cols()->Get(0)->v()->Get(2), mat->cols()->Get(0)->v()->Get(3));
 		glmMat[1] = glm::vec4(mat->cols()->Get(1)->v()->Get(0), mat->cols()->Get(1)->v()->Get(1), mat->cols()->Get(1)->v()->Get(2), mat->cols()->Get(1)->v()->Get(3));
 		glmMat[2] = glm::vec4(mat->cols()->Get(2)->v()->Get(0), mat->cols()->Get(2)->v()->Get(1), mat->cols()->Get(2)->v()->Get(2), mat->cols()->Get(2)->v()->Get(3));
@@ -28,7 +28,7 @@ namespace r2::asset
 
 		newTransform.position = glm::vec3(t->position()->Get(0), t->position()->Get(1), t->position()->Get(2));
 
-		newTransform.rotation = { t->rotation()->Get(0), t->rotation()->Get(1), t->rotation()->Get(2), t->rotation()->Get(3) };
+		newTransform.rotation = glm::quat(t->rotation()->Get(3), t->rotation()->Get(0), t->rotation()->Get(1), t->rotation()->Get(2));
 
 		newTransform.scale = glm::vec3(t->scale()->Get(0), t->scale()->Get(1), t->scale()->Get(2));
 
@@ -99,7 +99,11 @@ namespace r2::asset
 		{
 			totalSize += r2::draw::Skeleton::MemorySizeNoData(metaData->skeletonMetaData()->numJoints(), alignment, header, boundsChecking);
 			
-			totalSize += r2::draw::AnimModel::MemorySizeNoData(0, totalVertices, metaData->boneMetaData()->numBoneInfo(), metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
+			const auto numBones = metaData->boneMetaData()->numBoneInfo();
+
+			u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
+
+			totalSize += r2::draw::AnimModel::MemorySizeNoData(hashCapacity, totalVertices, numBones, metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
 
 			return static_cast<u64>(totalSize);
 		}
@@ -157,7 +161,10 @@ namespace r2::asset
 
 			u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
 
-			
+			model->boneMapping = MAKE_SHASHMAP_IN_PLACE(s32, startOfArrayPtr, hashCapacity);
+
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<u32>::MemorySize(hashCapacity));
+
 
 			//Process the Nodes
 
@@ -254,6 +261,13 @@ namespace r2::asset
 				boneData.boneIDs = GetIVec4FromFlatIVec4(&flatBoneData->Get(i)->boneIDs());
 
 				r2::sarr::Push(*model->boneData, boneData);
+			}
+
+			const auto flatBoneMapEntries = modelData->animationData()->boneMapping();
+
+			for (flatbuffers::uoffset_t i = 0; i < flatBoneMapEntries->size(); ++i)
+			{
+				r2::shashmap::Set(*model->boneMapping, flatBoneMapEntries->Get(i)->key(), flatBoneMapEntries->Get(i)->val());
 			}
 
 			const auto flatJoints = modelData->animationData()->jointNames();

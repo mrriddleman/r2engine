@@ -445,14 +445,14 @@ public:
 
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(1.5, -3, 0));
+        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 1));
         microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);
 
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-4, 4, 0));
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(0, 0, 1));
         skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
@@ -1078,9 +1078,9 @@ public:
    //     const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
    //     const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
-   //     r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
+        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, nullptr, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-   //     r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+      //  r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, nullptr, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
         
    //     r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
@@ -1112,7 +1112,7 @@ public:
         R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
 
         //Draw the bat
-     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
+        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
 
         //Draw the Skeleton
      //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
@@ -1164,7 +1164,7 @@ public:
         if (mDrawDebugBones)
         {
 
-       //     r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
        //     r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
        //     r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
           

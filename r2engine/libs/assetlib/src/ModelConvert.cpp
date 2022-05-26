@@ -105,7 +105,7 @@ namespace r2::assets::assetlib
 		std::vector<BoneData> boneData;
 		std::vector<BoneInfo> boneInfo;
 
-		std::unordered_map<int64_t, int> boneMapping;
+		std::unordered_map<uint64_t, int> boneMapping;
 
 		Skeleton skeleton;
 	};
@@ -1103,6 +1103,7 @@ namespace r2::assets::assetlib
 			std::vector<uint64_t> flatJointNames;
 			std::vector<int32_t> flatParents;
 			std::vector<int32_t> flatRealParentBones;
+			std::vector<flat::BoneMapEntry> flatBoneMapEntries;
 
 			const auto numBoneDatas = model.boneData.size();
 
@@ -1156,10 +1157,19 @@ namespace r2::assets::assetlib
 				flatRealParentBones.push_back(model.skeleton.mRealParentBones[i]);
 			}
 
+			auto boneMapIter = model.boneMapping.begin();
+
+			for (; boneMapIter != model.boneMapping.end(); boneMapIter++)
+			{
+				flat::BoneMapEntry flatBoneMapEntry(boneMapIter->first, boneMapIter->second);
+				flatBoneMapEntries.push_back(flatBoneMapEntry);
+			}
+
 			animationData = flat::CreateAnimationData(
 				dataBuilder,
 				dataBuilder.CreateVectorOfStructs(flatBoneDatas),
 				dataBuilder.CreateVectorOfStructs(flatBoneInfos),
+				dataBuilder.CreateVectorOfStructs(flatBoneMapEntries),
 				dataBuilder.CreateVector(flatJointNames),
 				dataBuilder.CreateVector(flatParents),
 				dataBuilder.CreateVectorOfStructs(flatRestPoseTransforms),

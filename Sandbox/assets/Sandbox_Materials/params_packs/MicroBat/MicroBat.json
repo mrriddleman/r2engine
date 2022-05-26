@@ -9,17 +9,19 @@
   floatParams: [
     {
       propertyType: "ROUGHNESS",
-      value: 1.0
+      value: 0.9
     },
     {
-      propertyType: "METALLIC"
+      propertyType: "METALLIC",
+      value: 0.1
     },
     {
-      propertyType: "REFLECTANCE"
+      propertyType: "REFLECTANCE",
+      value: 0.2
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
-      value: 1.0
+      value: 0.0
     },
     {
       propertyType: "CLEAR_COAT"
