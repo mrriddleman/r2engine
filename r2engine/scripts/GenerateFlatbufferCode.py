@@ -34,7 +34,9 @@ fbsCodeOutputMap = {
 "MaterialParamsPack.fbs":"/r2/Render/Model/",
 "TextureMetaData.fbs": "/../libs/assetlib/include/assetlib/",
 "RModelMetaData.fbs": "/../libs/assetlib/include/assetlib/",
-"RModel.fbs":"/../libs/assetlib/include/assetlib/"
+"RModel.fbs":"/../libs/assetlib/include/assetlib/",
+"RAnimationMetaData.fbs":"/../libs/assetlib/include/assetlib/",
+"RAnimation.fbs":"/../libs/assetlib/include/assetlib/"
 }
 
 extraParams = {
@@ -52,7 +54,9 @@ extraParams = {
 "MaterialParamsPack.fbs":"",
 "TextureMetaData.fbs": "--gen-mutable",
 "RModelMetaData.fbs":"--gen-mutable",
-"RModel.fbs":"--gen-mutable"
+"RModel.fbs":"--gen-mutable",
+"RAnimationMetaData.fbs":"--gen-mutable",
+"RAnimation.fbs":"--gen-mutable"
 }
 
 for filename in os.listdir(dataPath):

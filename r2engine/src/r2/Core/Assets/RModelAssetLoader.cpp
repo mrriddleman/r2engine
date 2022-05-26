@@ -28,6 +28,7 @@ namespace r2::asset
 
 		newTransform.position = glm::vec3(t->position()->Get(0), t->position()->Get(1), t->position()->Get(2));
 
+		//w is first here
 		newTransform.rotation = glm::quat(t->rotation()->Get(3), t->rotation()->Get(0), t->rotation()->Get(1), t->rotation()->Get(2));
 
 		newTransform.scale = glm::vec3(t->scale()->Get(0), t->scale()->Get(1), t->scale()->Get(2));

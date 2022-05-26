@@ -1,0 +1,22 @@
+file_identifier "rman";
+file_extension "rman";
+
+namespace flat;
+
+table RChannelMetaData
+{
+	numPositionKeys:uint;
+	numScaleKeys:uint;
+	numRotationKeys:uint;
+}
+
+table RAnimationMetaData
+{
+	animationName:ulong (hash:"fnv1a_64");
+	durationInTicks:float64;
+	ticksPerSeconds:float64;
+	channelsMetaData:[RChannelMetaData];
+	originalPath:string;
+}
+
+root_type RAnimationMetaData;

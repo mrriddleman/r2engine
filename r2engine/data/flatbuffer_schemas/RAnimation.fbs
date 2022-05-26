@@ -1,0 +1,44 @@
+include "Mesh.fbs";
+
+file_identifier "ranm";
+file_extension "ranm";
+
+namespace flat;
+
+struct Quaternion
+{
+	x:float;
+	y:float;
+	z:float;
+	w:float;
+}
+
+struct VectorKey
+{
+	time:float64;
+	value:Vertex3;
+}
+
+struct RotationKey
+{
+	time:float64;
+	value:Quaternion;
+}
+
+table Channel
+{
+	channelName:ulong (hash:"fnv1a_64");
+	positionKeys:[VectorKey];
+	scaleKeys:[VectorKey];
+	rotationKeys:[RotationKey];
+}
+
+table RAnimation
+{
+	animationName:ulong (hash:"fnv1a_64");
+	durationInTicks:float64;
+	ticksPerSeconds:float64;
+	channels:[Channel];
+}
+
+root_type RAnimation;

@@ -4,6 +4,8 @@
 #include "assetlib/TextureAsset.h"
 #include "assetlib/ImageConvert.h"
 #include "assetlib/ModelConvert.h"
+#include "assetlib/AnimationConvert.h"
+
 #include "TexturePackMetaData_generated.h"
 
 #include "cmdln/CommandLine.h"
