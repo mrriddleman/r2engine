@@ -1288,6 +1288,11 @@ public:
         return {SANDBOX_MODELS_DIR_BIN};
     }
 
+    virtual std::vector<std::string> GetAnimationBinaryPaths() const override
+    {
+        return { SANDBOX_ANIMATIONS_DIR_BIN };
+    }
+
     r2::util::Size GetAppResolution() const override
     {
         return g_resolutions[mResolution];

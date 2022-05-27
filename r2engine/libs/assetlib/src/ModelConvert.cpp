@@ -146,16 +146,6 @@ namespace r2::assets::assetlib
 		return result;
 	}
 
-	glm::vec3 AssimpVec3ToGLMVec3(const aiVector3D& vec3D)
-	{
-		return glm::vec3(vec3D.x, vec3D.y, vec3D.z);
-	}
-
-	glm::quat AssimpQuatToGLMQuat(const aiQuaternion& quat)
-	{
-		return glm::quat(quat.w, quat.x, quat.y, quat.z);
-	}
-
 	Transform ToTransform(const glm::mat4& mat)
 	{
 		Transform out;
@@ -277,7 +267,7 @@ namespace r2::assets::assetlib
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
-			std::string errString = "Failed to load model: " + std::string( import.GetErrorString() );
+			std::string errString = std::string("Failed to load model: ") + inputFilePath.string() + std::string(" with error: ") + std::string( import.GetErrorString() );
 
 			assert(false && errString.c_str());
 			return false;

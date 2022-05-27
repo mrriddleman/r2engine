@@ -482,7 +482,8 @@ project "Sandbox"
 		'SANDBOX_TEXTURES_PACKS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/packs"',
 		'SANDBOX_TEXTURES_MANIFESTS_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Textures/manifests"',
 
-		'SANDBOX_MODELS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Models"'
+		'SANDBOX_MODELS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Models"',
+		'SANDBOX_ANIMATIONS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Animations"'
 	}
 
 	filter "system:windows"

@@ -33,6 +33,7 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/GameAssetHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/AnimationHotReloadCommand.h"
 #endif
 
 namespace r2
@@ -117,6 +118,20 @@ namespace r2
 
             modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
 
+
+            std::vector<std::string> binaryAnimationPaths;
+
+            //Animation command data
+            {
+                for (const std::string& nextPath : noptrApp->GetAnimationBinaryPaths())
+                {
+                    binaryAnimationPaths.push_back(nextPath);
+                }
+            }
+
+            std::unique_ptr<asset::pln::AnimationHotReloadCommand> animationAssetCMD = std::make_unique<asset::pln::AnimationHotReloadCommand>();
+
+            animationAssetCMD->AddBinaryAnimationDirectories(binaryAnimationPaths);
 
             std::vector<std::string> manifestRawFilePaths;
             std::vector<std::string> manifestBinaryFilePaths;
@@ -289,6 +304,7 @@ namespace r2
 			std::vector<std::unique_ptr<r2::asset::pln::AssetHotReloadCommand>> mAssetCommands;
 
             mAssetCommands.push_back(std::move(modelAssetCMD));
+            mAssetCommands.push_back(std::move(animationAssetCMD));
             mAssetCommands.push_back(std::move(materialAssetCMD));
 			mAssetCommands.push_back(std::move(texturePackAssetCommand));
             mAssetCommands.push_back(std::move(shaderAssetCommand));
