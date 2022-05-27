@@ -5,6 +5,7 @@
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssimpAnimationAssetLoader.h"
+#include "r2/Core/Assets/RAnimationAssetLoader.h"
 
 namespace r2::draw
 {
@@ -58,6 +59,9 @@ namespace r2::draw
 		
 			r2::asset::AssimpAnimationLoader* animationLoader = (r2::asset::AssimpAnimationLoader*)newAnimationCache->mAnimationCache->MakeAssetLoader<r2::asset::AssimpAnimationLoader>();
 			newAnimationCache->mAnimationCache->RegisterAssetLoader(animationLoader);
+
+			r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)newAnimationCache->mAnimationCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
+			newAnimationCache->mAnimationCache->RegisterAssetLoader(ranimationLoader);
 
 			return newAnimationCache;
 		}

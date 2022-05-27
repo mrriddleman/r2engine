@@ -44,6 +44,8 @@ namespace r2::draw
 		
 
 		static u64 MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, float duration, u64 alignment, u32 headerSize, u32 boundsChecking);
+
+
 	};
 
 	namespace chnl
@@ -65,6 +67,7 @@ namespace r2::draw
 		r2::SHashMap<AnimationChannel>* channels;
 
 		static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
+		static u64 MemorySize(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
 	

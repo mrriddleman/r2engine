@@ -253,4 +253,10 @@ namespace r2::draw
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<AnimationChannel>::MemorySize(numChannels * r2::SHashMap<AnimationChannel>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking);
 	}
+
+	u64 Animation::MemorySize(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking)
+	{
+		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Animation), alignment, headerSize, boundsChecking) +
+			MemorySizeNoData(numChannels, alignment, headerSize, boundsChecking);
+	}
 }
