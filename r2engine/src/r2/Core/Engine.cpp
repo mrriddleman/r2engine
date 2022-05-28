@@ -104,22 +104,37 @@ namespace r2
 
             
             std::vector<std::string> binaryModelPaths;
+            std::vector<std::string> rawModelPaths;
+            std::vector<std::string> binaryMaterialManifestPaths;
+
             //Model command data
             {
-                binaryModelPaths.push_back(R2_ENGINE_INTERNAL_MODELS_BIN);
+               // binaryModelPaths.push_back(R2_ENGINE_INTERNAL_MODELS_BIN);
 
 				for (const std::string& nextPath : noptrApp->GetModelBinaryPaths())
 				{
 					binaryModelPaths.push_back(nextPath);
+				}
+
+                for (const std::string& nextPath : noptrApp->GetModelRawPaths())
+                {
+                    rawModelPaths.push_back(nextPath);
+                }
+
+				for (const std::string& nextPath : noptrApp->GetMaterialPackManifestsBinaryPaths())
+				{
+                    binaryMaterialManifestPaths.push_back(nextPath);
 				}
             }
 
             std::unique_ptr<asset::pln::ModelHotReloadCommand> modelAssetCMD = std::make_unique<asset::pln::ModelHotReloadCommand>();
 
             modelAssetCMD->AddBinaryModelDirectories(binaryModelPaths);
-
+            modelAssetCMD->AddRawModelDirectories(rawModelPaths);
+            modelAssetCMD->AddMaterialManifestPaths(binaryMaterialManifestPaths);
 
             std::vector<std::string> binaryAnimationPaths;
+            std::vector<std::string> rawAnimationPaths;
 
             //Animation command data
             {
@@ -127,11 +142,17 @@ namespace r2
                 {
                     binaryAnimationPaths.push_back(nextPath);
                 }
+
+                for (const std::string& nextPath : noptrApp->GetAnimationRawPaths())
+                {
+                    rawAnimationPaths.push_back(nextPath);
+                }
             }
 
             std::unique_ptr<asset::pln::AnimationHotReloadCommand> animationAssetCMD = std::make_unique<asset::pln::AnimationHotReloadCommand>();
 
             animationAssetCMD->AddBinaryAnimationDirectories(binaryAnimationPaths);
+            animationAssetCMD->AddRawAnimationDirectories(rawAnimationPaths);
 
             std::vector<std::string> manifestRawFilePaths;
             std::vector<std::string> manifestBinaryFilePaths;
@@ -144,33 +165,33 @@ namespace r2
 			//Material pack command data
             {
 				//for the engine
-				std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
-				std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
+			//	std::string engineMaterialPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_DIR;
+			//	std::string engineMaterialPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PACKS_DIR_BIN;
 
 				std::string engineMaterialParamsPackDirRaw = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR;
 				std::string engineMaterialParamsPackDirBin = R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN;
 
-				std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
-				std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
+				//std::string engineMaterialPackManifestPathRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_pack.json");
+				//std::string engineMaterialPackManifestPathBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_pack.mpak");
 
 				std::string engineMaterialParamsPackManifestRaw = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS) + std::string("/engine_material_params_pack.json");
 				std::string engineMaterialParamsPackManifestBin = std::string(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN) + std::string("/engine_material_params_pack.mppk");
 
-				manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
-				manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
+				//manifestRawFilePaths.push_back(engineMaterialPackManifestPathRaw);
+				//manifestBinaryFilePaths.push_back(engineMaterialPackManifestPathBin);
 
 				manifestRawFilePaths.push_back(engineMaterialParamsPackManifestRaw);
 				manifestBinaryFilePaths.push_back(engineMaterialParamsPackManifestBin);
 
-				materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
-				materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
+			//	materialPacksWatchDirectoriesRaw.push_back(engineMaterialPackDirRaw);
+			//	materialPacksWatchDirectoriesBin.push_back(engineMaterialPackDirBin);
 
 				materialPacksWatchDirectoriesRaw.push_back(engineMaterialParamsPackDirRaw);
 				materialPacksWatchDirectoriesBin.push_back(engineMaterialParamsPackDirBin);
 
-				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
+				//findMaterialFuncs.push_back(r2::asset::pln::FindMaterialPackManifestFile);
 				findMaterialFuncs.push_back(r2::asset::pln::FindMaterialParamsPackManifestFile);
-				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
+			//	generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialPackManifestFromDirectories);
 				generateMaterialPackFuncs.push_back(r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories);
 
 				//for the app
@@ -303,10 +324,11 @@ namespace r2
 
 			std::vector<std::unique_ptr<r2::asset::pln::AssetHotReloadCommand>> mAssetCommands;
 
-            mAssetCommands.push_back(std::move(modelAssetCMD));
-            mAssetCommands.push_back(std::move(animationAssetCMD));
+            
             mAssetCommands.push_back(std::move(materialAssetCMD));
 			mAssetCommands.push_back(std::move(texturePackAssetCommand));
+			mAssetCommands.push_back(std::move(modelAssetCMD));
+			mAssetCommands.push_back(std::move(animationAssetCMD));
             mAssetCommands.push_back(std::move(shaderAssetCommand));
             mAssetCommands.push_back(std::move(soundAssetCommand));
             mAssetCommands.push_back(std::move(gameAssetCommand));

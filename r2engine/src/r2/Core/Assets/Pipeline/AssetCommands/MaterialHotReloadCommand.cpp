@@ -61,7 +61,7 @@ namespace r2::asset::pln
 
 		CreateDirCmd createWatchDirBinCmd;
 		createWatchDirBinCmd.pathsToCreate = mMaterialPacksWatchDirectoriesBin;
-		createWatchDirBinCmd.startAtOne = true;
+		createWatchDirBinCmd.startAtOne = false;
 		createWatchDirBinCmd.startAtParent = false;
 
 		return {createBinaryManifestDirCmd, createWatchDirBinCmd};

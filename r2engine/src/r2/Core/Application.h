@@ -68,7 +68,9 @@ namespace r2
         virtual std::vector<std::string> GetMaterialPackManifestsRawPaths() const;
         
         virtual std::vector<std::string> GetModelBinaryPaths() const;
+        virtual std::vector<std::string> GetModelRawPaths() const;
         virtual std::vector<std::string> GetAnimationBinaryPaths() const;
+        virtual std::vector<std::string> GetAnimationRawPaths() const;
 
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;

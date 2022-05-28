@@ -1267,7 +1267,7 @@ public:
     {
         std::vector<std::string> manifestBinPaths
         {
-            SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak"),
+           // SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak"),
             SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialParamsPack.mppk")
 		};
 		return manifestBinPaths;
@@ -1277,7 +1277,7 @@ public:
     {
 		std::vector<std::string> manifestRawPaths
 		{
-			SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json"),
+			//SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json"),
             SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialParamsPack.json")
 		};
 		return manifestRawPaths;
@@ -1288,9 +1288,19 @@ public:
         return {SANDBOX_MODELS_DIR_BIN};
     }
 
+    virtual std::vector<std::string> GetModelRawPaths() const override
+    {
+        return {SANDBOX_MODELS_DIR_RAW};
+    }
+
     virtual std::vector<std::string> GetAnimationBinaryPaths() const override
     {
         return { SANDBOX_ANIMATIONS_DIR_BIN };
+    }
+
+    virtual std::vector<std::string> GetAnimationRawPaths() const override
+    {
+        return { SANDBOX_ANIMATIONS_DIR_RAW };
     }
 
     r2::util::Size GetAppResolution() const override
@@ -1345,22 +1355,22 @@ public:
 
     virtual std::vector<std::string> GetMaterialPacksWatchPaths() const override
     {
-        return {SANDBOX_MATERIALS_DIR, SANDBOX_MATERIAL_PARAMS_DIR };
+        return {SANDBOX_MATERIAL_PARAMS_DIR };
     }
 
 	std::vector<std::string> GetMaterialPacksBinaryPaths() const
 	{
-		return {SANDBOX_MATERIALS_PACKS_DIR_BIN, SANDBOX_MATERIALS_PARAMS_DIR_BIN };
+		return {SANDBOX_MATERIALS_PARAMS_DIR_BIN };
 	}
 
     std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const
     {
-        return { r2::asset::pln::FindMaterialPackManifestFile, r2::asset::pln::FindMaterialParamsPackManifestFile };
+        return { r2::asset::pln::FindMaterialParamsPackManifestFile };
     }
 
     std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const
     {
-        return { r2::asset::pln::GenerateMaterialPackManifestFromDirectories, r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories };
+        return { r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories };
     }
 
 #endif

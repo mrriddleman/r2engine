@@ -234,10 +234,10 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-a", "--animation" }, &arguments.isAnimations, "Animations");
 	args.Parse(agrc, argv);
 
-	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Animations";
-	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Animations";
-	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
-	arguments.isAnimations = true;
+	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Animations";
+	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Animations";
+	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
+	//arguments.isAnimations = true;
 
 	if (arguments.inputDir.empty())
 	{

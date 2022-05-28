@@ -20,10 +20,14 @@ namespace r2::asset::pln
 		virtual bool ShouldRunOnMainThread() override;
 		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
-		void AddBinaryAnimationDirectories(const std::vector<std::string>& binaryModelDirectories);
-
+		void AddBinaryAnimationDirectories(const std::vector<std::string>& binaryAnimationDirectories);
+		void AddRawAnimationDirectories(const std::vector<std::string>& rawAnimationDirectories);
 	private:
+		static std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir);
+		void GenerateRANMFilesIfNeeded();
+
 		std::vector<std::string> mBinaryAnimationDirectories;
+		std::vector<std::string> mRawAnimationDirectories;
 	};
 }
 

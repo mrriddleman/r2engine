@@ -139,7 +139,17 @@ namespace r2
         return {};
     }
 
+    std::vector<std::string> Application::GetModelRawPaths() const
+    {
+        return {};
+    }
+
     std::vector<std::string> Application::GetAnimationBinaryPaths() const
+    {
+        return {};
+    }
+
+    std::vector<std::string> Application::GetAnimationRawPaths() const
     {
         return {};
     }

@@ -36,6 +36,47 @@ namespace r2::asset::pln::assetconvert
 
 		return RunSystemCommand(command);
 	}
+
+	int RunModelConverter(const std::string& inputDir, const std::string& outputDir, const std::string& materialManifestPath)
+	{
+		char command[Kilobytes(2)];
+		std::string converterEXEPathStr = R2_ENGINE_ASSET_CONVERTER_EXE;
+
+		std::filesystem::path converterEXEPath = std::filesystem::path(converterEXEPathStr);
+		converterEXEPath.make_preferred();
+
+		std::filesystem::path inputDirPath = inputDir;
+		inputDirPath.make_preferred();
+
+		std::filesystem::path outputDirPath = outputDir;
+		outputDirPath.make_preferred();
+
+		std::filesystem::path materialPath = materialManifestPath;
+		materialPath.make_preferred();
+
+		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -m %s -a false", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str(), materialPath.string().c_str());
+
+		return RunSystemCommand(command);
+	}
+
+	int RunAnimationConverter(const std::string& inputDir, const std::string& outputDir)
+	{
+		char command[Kilobytes(2)];
+		std::string converterEXEPathStr = R2_ENGINE_ASSET_CONVERTER_EXE;
+
+		std::filesystem::path converterEXEPath = std::filesystem::path(converterEXEPathStr);
+		converterEXEPath.make_preferred();
+
+		std::filesystem::path inputDirPath = inputDir;
+		inputDirPath.make_preferred();
+
+		std::filesystem::path outputDirPath = outputDir;
+		outputDirPath.make_preferred();
+
+		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -a true", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str());
+
+		return RunSystemCommand(command);
+	}
 }
 
 #endif

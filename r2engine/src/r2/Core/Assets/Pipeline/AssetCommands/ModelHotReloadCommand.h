@@ -21,9 +21,15 @@ namespace r2::asset::pln
 		virtual std::vector<CreateDirCmd> DirectoriesToCreate() const override;
 
 		void AddBinaryModelDirectories(const std::vector<std::string>& binaryModelDirectories);
-
+		void AddRawModelDirectories(const std::vector<std::string>& rawModelDirectories);
+		void AddMaterialManifestPaths(const std::vector<std::string>& materialManifestPaths);
 	private:
+		void GenerateRMDLFilesIfNeeded();
+		static std::filesystem::path GetOutputFilePath(const std::filesystem::path& inputPath, const std::filesystem::path& inputPathRootDir, const std::filesystem::path& outputDir);
+
+		std::vector<std::string> mRawModelDirectories;
 		std::vector<std::string> mBinaryModelDirectories;
+		std::vector<std::string> mMaterialManifestPaths;
 	};
 }
 
