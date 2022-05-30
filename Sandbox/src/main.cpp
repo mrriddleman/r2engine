@@ -376,11 +376,11 @@ public:
         mBatBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mBatDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
         
-		//mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-		//mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
+		mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
+		mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
-		//mEllenBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-		//mEllenDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
+		mEllenBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
+		mEllenDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
 
 
@@ -451,18 +451,18 @@ public:
         r2::sarr::Push(*animModelMats, microbatMat);
 
 
-        //glm::mat4 skeletonModel = glm::mat4(1.0f);
-        //skeletonModel = glm::translate(skeletonModel, glm::vec3(0, 0, 1));
-        //skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        //skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
-        //r2::sarr::Push(*animModelMats, skeletonModel);
+        glm::mat4 skeletonModel = glm::mat4(1.0f);
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 1));
+        skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
+        r2::sarr::Push(*animModelMats, skeletonModel);
 
 
-        //glm::mat4 ellenModel = glm::mat4(1.0f);
-        //ellenModel = glm::translate(ellenModel, glm::vec3(0, 4, 0));
-        //ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        //ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
-        //r2::sarr::Push(*animModelMats, ellenModel);
+        glm::mat4 ellenModel = glm::mat4(1.0f);
+        ellenModel = glm::translate(ellenModel, glm::vec3(3, 0, 0));
+        ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
+        r2::sarr::Push(*animModelMats, ellenModel);
 
         mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::AnimationHandle, 20);
 
@@ -501,18 +501,18 @@ public:
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)batModelFile);
 
 
-        //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
 
-        //r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+        r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        //r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
 
 
-        //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
 
-        //r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+        r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        //r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
+        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
 
 
         r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
@@ -546,47 +546,47 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)attackAnimFile);
 
 
-       /* r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.fbx", modelFilePath);
+        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.ranm", modelFilePath);
 
         r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
         r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonIdleAnimFile);
 
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.fbx", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* skeletonWalkAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonWalkAnimFile);
 
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/run.fbx", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/run.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* skeletonRoarAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonRoarAnimFile);
 
 
-
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.fbx", modelFilePath);
+        
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* ellenIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenIdleAnimFile);
 
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenRunForward.fbx", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenRunForward.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* ellenRunForwardAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenRunForwardAnimFile);
 
 
-		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenSpawn.fbx", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenSpawn.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* ellenSpawnAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);*/
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);
 
 
         mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(1), animationFiles, "Sandbox Animation Cache");
@@ -600,11 +600,11 @@ public:
         auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
         mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
 
-        //auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.fbx", r2::asset::ASSIMP_MODEL));
-        //mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
+        auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
+        mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
 
-        //auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.fbx", r2::asset::ASSIMP_MODEL));
-        //mEllenModel = r2::draw::modlsys::GetAnimModel(mModelSystem, ellenHandle);
+        auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
+        mEllenModel = r2::draw::modlsys::GetAnimModel(mModelSystem, ellenHandle);
 
         mSelectedAnimModel = mMicroBatModel;
 
@@ -672,8 +672,8 @@ public:
         r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
 
         r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
-        //r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
-        //r2::sarr::Push(*animModelsToDraw, mEllenModel);
+        r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
+        r2::sarr::Push(*animModelsToDraw, mEllenModel);
 
         r2::draw::renderer::UploadAnimModels(*animModelsToDraw, *mAnimModelRefs);
 
@@ -696,13 +696,13 @@ public:
         r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION));
         r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION));
 
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.fbx", r2::asset::ASSIMP_ANIMATION));
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.fbx", r2::asset::ASSIMP_ANIMATION));
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("run.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.ranm", r2::asset::RANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.ranm", r2::asset::RANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("run.ranm", r2::asset::RANIMATION));
 
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenIdle.fbx", r2::asset::ASSIMP_ANIMATION));
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.fbx", r2::asset::ASSIMP_ANIMATION));
-        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.fbx", r2::asset::ASSIMP_ANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenIdle.ranm", r2::asset::RANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.ranm", r2::asset::RANIMATION));
+        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.ranm", r2::asset::RANIMATION));
 
         r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
 
@@ -845,7 +845,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 1;
+                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
 					if (mSelectedAnimationID - 1 < 0)
 					{
 						mSelectedAnimationID = (s32)numAnimations - 1;
@@ -862,7 +862,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 1;
+                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
                     mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
                 }
                 
@@ -1064,25 +1064,25 @@ public:
         //r2::sarr::Clear(*mDebugBones);
 
         r2::sarr::Clear(*mBatBoneTransforms);
-        //r2::sarr::Clear(*mSkeletonBoneTransforms);
-        //r2::sarr::Clear(*mEllenBoneTransforms);
+        r2::sarr::Clear(*mSkeletonBoneTransforms);
+        r2::sarr::Clear(*mEllenBoneTransforms);
 
         r2::sarr::Clear(*mBatDebugBones);
-        //r2::sarr::Clear(*mSkeletonDebugBones);
-        //r2::sarr::Clear(*mEllenDebugBones);
+        r2::sarr::Clear(*mSkeletonDebugBones);
+        r2::sarr::Clear(*mEllenDebugBones);
 
         auto time = CENG.GetTicks();
   //      auto curTime = time;
 
         const r2::draw::Animation* microbatAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
-   //     const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-   //     const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+        const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+        const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
         r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-      //  r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, nullptr, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+        r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
         
-   //     r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
+        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
 
 	//	r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
@@ -1115,10 +1115,10 @@ public:
         r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
 
         //Draw the Skeleton
-     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
+        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
 
         //Draw Ellen
-     //   r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
+        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
 
         //Draw the Skybox
         r2::draw::DrawFlags skyboxDrawFlags;
@@ -1165,8 +1165,8 @@ public:
         {
 
             r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-       //     r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
-       //     r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
           
         }
 
@@ -1190,11 +1190,11 @@ public:
         FREE(mAnimationsHandles, *linearArenaPtr);
         FREE(animModelMats, *linearArenaPtr);
 
-  //      FREE(mEllenBoneTransforms, *linearArenaPtr);
-  //      FREE(mEllenDebugBones, *linearArenaPtr);
+        FREE(mEllenBoneTransforms, *linearArenaPtr);
+        FREE(mEllenDebugBones, *linearArenaPtr);
 
-		//FREE(mSkeletonBoneTransforms, *linearArenaPtr);
-		//FREE(mSkeletonDebugBones, *linearArenaPtr);
+		FREE(mSkeletonBoneTransforms, *linearArenaPtr);
+		FREE(mSkeletonDebugBones, *linearArenaPtr);
 
 		FREE(mBatBoneTransforms, *linearArenaPtr);
 		FREE(mBatDebugBones, *linearArenaPtr);
@@ -1414,11 +1414,11 @@ private:
     r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;
     r2::SArray<r2::draw::DebugBone>* mBatDebugBones;
 
-	//r2::SArray<r2::draw::ShaderBoneTransform>* mSkeletonBoneTransforms;
-	//r2::SArray<r2::draw::DebugBone>* mSkeletonDebugBones;
+	r2::SArray<r2::draw::ShaderBoneTransform>* mSkeletonBoneTransforms;
+	r2::SArray<r2::draw::DebugBone>* mSkeletonDebugBones;
 
-	//r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
-	//r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
+	r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
+	r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
 
 
     r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
@@ -1427,8 +1427,8 @@ private:
     r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
-    //const r2::draw::AnimModel* mSkeletonModel = nullptr;
-    //const r2::draw::AnimModel* mEllenModel = nullptr;
+    const r2::draw::AnimModel* mSkeletonModel = nullptr;
+    const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
     const r2::draw::Model* mSponzaModel = nullptr;
     r2::draw::ModelRefHandle mSponzaModelRefHandle;
