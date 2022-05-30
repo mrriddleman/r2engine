@@ -128,7 +128,7 @@ namespace r2::assets::assetlib
 
 	bool ConvertModelToFlatbuffer(Model& model, const fs::path& inputFilePath, const fs::path& outputPath);
 
-
+	void ProcessMaterial(const std::string& modelName, aiMaterial* aiMaterial);
 	
 
 	glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)
@@ -288,8 +288,8 @@ namespace r2::assets::assetlib
 		Model model;
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
-
-		model.modelName = scene->mRootNode->mName.C_Str();
+		
+		model.modelName = inputFilePath.stem().string();
 
 		model.materialNames.reserve(numMeshes);
 
@@ -569,6 +569,9 @@ namespace r2::assets::assetlib
 			assert(material != nullptr && "Material is null!");
 			if (material)
 			{
+
+			//	ProcessMaterial(mesh->mName.C_Str(), material);
+
 				const uint32_t numTextures = aiGetMaterialTextureCount(material, aiTextureType_DIFFUSE);
 
 				DiskAssetFile diskFile;
@@ -1198,5 +1201,108 @@ namespace r2::assets::assetlib
 		}
 
 		return result;
+	}
+
+
+	void ProcessMaterialTextureForType(const aiMaterial* assimpMaterial, aiTextureType textureType, std::vector<std::string>& textureNames)
+	{
+		const uint32_t numDiffuseTextures = aiGetMaterialTextureCount(assimpMaterial, textureType);
+
+		for (int i = 0; i < numDiffuseTextures; ++i)
+		{
+			aiString diffuseStr;
+
+			assimpMaterial->GetTexture(textureType, i, &diffuseStr);
+
+			fs::path diffuseTexturePath = diffuseStr.C_Str();
+
+			diffuseTexturePath.make_preferred();
+
+			//fs::path diffuseTextureName = diffuseTexturePath.filename();
+
+			diffuseTexturePath.replace_extension(".rtex");
+			std::string diffuseTextureNameStr = diffuseTexturePath.string();
+
+			std::transform(diffuseTextureNameStr.begin(), diffuseTextureNameStr.end(), diffuseTextureNameStr.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
+			textureNames.push_back(diffuseTextureNameStr);
+		}
+	}
+
+
+	void PrintTextureNames(const std::string& modelName, const std::string& name, const std::vector<std::string>& textures)
+	{
+		printf("========================================\n");
+		printf("%s - %s: \n", modelName.c_str(), name.c_str());
+		printf("========================================\n");
+		for (const auto& texture : textures)
+		{
+			printf("%s\n", texture.c_str());
+		}
+		printf("========================================\n\n");
+	}
+
+	void ProcessMaterial(const std::string& modelName, aiMaterial* assimpMaterial)
+	{
+		//printf("Model Name: %s\n\n", modelName.c_str());
+		//printf("----------------------------------\n");
+
+		std::vector<std::string> diffuseTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE, diffuseTextures);
+		PrintTextureNames(modelName, "Diffuse Textures", diffuseTextures);
+
+		std::vector<std::string> normalTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMALS, normalTextures);
+		PrintTextureNames(modelName, "Normal Textures", normalTextures);
+
+		std::vector<std::string> emissiveTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_EMISSIVE, emissiveTextures);
+		PrintTextureNames(modelName, "Emissive Textures", emissiveTextures);
+
+		std::vector<std::string> heightTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_HEIGHT, heightTextures);
+		PrintTextureNames(modelName, "Height Textures", heightTextures);
+
+		std::vector<std::string> ambientOcclusionTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_AMBIENT_OCCLUSION, ambientOcclusionTextures);
+		PrintTextureNames(modelName, "Ambient Occlusion Textures", ambientOcclusionTextures);
+
+		std::vector<std::string> metallicTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_METALNESS, metallicTextures);
+		PrintTextureNames(modelName, "Metallic Textures", metallicTextures);
+
+		std::vector<std::string> roughnessTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_DIFFUSE_ROUGHNESS, roughnessTextures);
+		PrintTextureNames(modelName, "Roughness Textures", roughnessTextures);
+		
+		std::vector<std::string> specularTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_NORMAL_CAMERA, specularTextures);
+		PrintTextureNames(modelName, "Normal Camera Textures", specularTextures);
+
+
+		std::vector<std::string> unknownTextures;
+		ProcessMaterialTextureForType(assimpMaterial, aiTextureType_UNKNOWN, unknownTextures);
+		PrintTextureNames(modelName, "Unknown Textures", unknownTextures);
+
+		/*
+		enum TextureType
+		{
+			Diffuse = 0,
+			Emissive,
+			Normal,
+			Metallic,
+			Height,
+			Roughness,
+			Occlusion,
+			Anisotropy,
+			Detail,
+			ClearCoat,
+			ClearCoatRoughness,
+			ClearCoatNormal,
+			Cubemap,
+			NUM_TEXTURE_TYPES
+		};
+		*/
 	}
 }
