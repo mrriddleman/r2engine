@@ -58,6 +58,9 @@ namespace
 
 	const bool USE_SDSM_SHADOWS = true;
 
+	const u64 PRE_RENDER_STACK_ARENA_SIZE = Megabytes(4);
+	const u32 NUM_RENDER_MATERIALS_TO_RENDER = 2048;
+
 #ifdef R2_DEBUG
 	const u32 MAX_NUM_DEBUG_DRAW_COMMANDS = MAX_NUM_DRAWS;//Megabytes(4) / sizeof(InternalDebugRenderCommand);
 	const u32 MAX_NUM_DEBUG_LINES = MAX_NUM_DRAWS;// Megabytes(8) / (2 * sizeof(DebugVertex));
@@ -1016,6 +1019,11 @@ namespace r2::draw::renderer
 			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
 
+		// r2::SArray<RenderMaterialParams>*mRenderMaterialsToRender = nullptr;
+		newRenderer->mRenderMaterialsToRender = MAKE_SARRAY(*rendererArena, RenderMaterialParams, NUM_RENDER_MATERIALS_TO_RENDER);
+
+		newRenderer->mPreRenderStackArena = MAKE_STACK_ARENA(*rendererArena, PRE_RENDER_STACK_ARENA_SIZE);
+
 		//@TODO(Serge): we need to get the scale, x and y offsets
 		ResizeRenderSurface(*newRenderer, size.width, size.height, size.width, size.height, 1.0f, 1.0f, 0.0f, 0.0f); //@TODO(Serge): we need to get the scale, x and y offsets
 
@@ -1281,6 +1289,10 @@ namespace r2::draw::renderer
 		FREE(renderer->mCommandArena, *arena);
 
 		FREE(renderer->mShadowArena, *arena);
+
+		FREE(renderer->mRenderMaterialsToRender, *arena);
+
+		FREE(renderer->mPreRenderStackArena, *arena);
 
 		FREE(renderer->mRenderTargetsArena, *arena);
 
@@ -2207,7 +2219,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS * r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderPass), ALIGNMENT, headerSize, boundsChecking) * NUM_RENDER_PASSES +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelRef>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking)+
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelRef>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(MODEL_REF_ARENA_SIZE, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -2223,6 +2235,11 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(PRE_RENDER_STACK_ARENA_SIZE, ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderMaterialParams>::MemorySize(NUM_RENDER_MATERIALS_TO_RENDER), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -2797,7 +2814,7 @@ namespace r2::draw::renderer
 
 			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
 
-			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ShaderHandle, numMeshRefs);
+			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
 
 			r2::sarr::Push(*tempAllocations, (void*)shaders);
 
@@ -2864,7 +2881,7 @@ namespace r2::draw::renderer
 
 				if (drawCommandData == defaultDrawCommandData)
 				{
-					drawCommandData = ALLOC(DrawCommandData, *MEM_ENG_SCRATCH_PTR);
+					drawCommandData = ALLOC(DrawCommandData, *renderer.mPreRenderStackArena);
 
 					r2::sarr::Push(*tempAllocations, (void*)drawCommandData);
 
@@ -2873,7 +2890,7 @@ namespace r2::draw::renderer
 					drawCommandData->shaderId = shaderId;
 					drawCommandData->isDynamic = modelRef.mAnimated;
 					drawCommandData->layer = drawState.layer;
-					drawCommandData->subCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawBatchSubCommand, drawCommandBatchSize);
+					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
 					r2::sarr::Push(*tempAllocations, (void*)drawCommandData->subCommands);
 
 					r2::shashmap::Set(*shaderDrawCommandData, commandKey.keyValue, drawCommandData);
@@ -2932,9 +2949,9 @@ namespace r2::draw::renderer
 		staticDrawCommandBatchSize = totalSubCommands;
 
 
-		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 100 + numDynamicModels + numStaticModels); //@TODO(Serge): measure how many allocations
+		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*renderer.mPreRenderStackArena, void*, 100 + numDynamicModels + numStaticModels); //@TODO(Serge): measure how many allocations
 
-		r2::SArray<glm::ivec4>* boneOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::ivec4, numDynamicModels);
+		r2::SArray<glm::ivec4>* boneOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, glm::ivec4, numDynamicModels);
 
 		r2::sarr::Push(*tempAllocations, (void*)boneOffsets);
 		u32 boneOffset = 0;
@@ -2957,16 +2974,16 @@ namespace r2::draw::renderer
 		//@Threading: If we want to thread this in the future, we can call PopulateRenderDataFromRenderBatch from different threads provided they have their own temp allocators
 		//			  You will need to add jobs(or whatever) to dealloc the memory after we merge and create the prerenderbucket which might be tricky since we'll have to make sure the proper threads free the memory
 
-		r2::SArray<RenderMaterialParams>* renderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterialParams, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
+		r2::SArray<RenderMaterialParams>* renderMaterials = renderer.mRenderMaterialsToRender;//MAKE_SARRAY(*renderer.mPreRenderStackArena, RenderMaterialParams, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
 		
 
-		r2::sarr::Push(*tempAllocations, (void*)renderMaterials);
+		//r2::sarr::Push(*tempAllocations, (void*)renderMaterials);
 
-		r2::SArray<u32>* materialOffsetsPerObject = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, numStaticModels + numDynamicModels);
+		r2::SArray<u32>* materialOffsetsPerObject = MAKE_SARRAY(*renderer.mPreRenderStackArena, u32, numStaticModels + numDynamicModels);
 		
 		r2::sarr::Push(*tempAllocations, (void*)materialOffsetsPerObject);
 
-		r2::SHashMap<DrawCommandData*>* shaderDrawCommandData = MAKE_SHASHMAP(*MEM_ENG_SCRATCH_PTR, DrawCommandData*, totalSubCommands * r2::SHashMap<DrawCommandData>::LoadFactorMultiplier());
+		r2::SHashMap<DrawCommandData*>* shaderDrawCommandData = MAKE_SHASHMAP(*renderer.mPreRenderStackArena, DrawCommandData*, totalSubCommands * r2::SHashMap<DrawCommandData>::LoadFactorMultiplier());
 
 		r2::sarr::Push(*tempAllocations, (void*)shaderDrawCommandData);
 
@@ -3099,8 +3116,8 @@ namespace r2::draw::renderer
 		}
 
 
-		r2::SArray<BatchRenderOffsets>* staticRenderBatchesOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, staticDrawCommandBatchSize);//@NOTE: pretty sure this is an overestimate - could reduce to save mem
-		r2::SArray<BatchRenderOffsets>* dynamicRenderBatchesOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, dynamicDrawCommandBatchSize); 
+		r2::SArray<BatchRenderOffsets>* staticRenderBatchesOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, staticDrawCommandBatchSize);//@NOTE: pretty sure this is an overestimate - could reduce to save mem
+		r2::SArray<BatchRenderOffsets>* dynamicRenderBatchesOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, dynamicDrawCommandBatchSize);
 
 		r2::sarr::Push(*tempAllocations, (void*)staticRenderBatchesOffsets);
 		r2::sarr::Push(*tempAllocations, (void*)dynamicRenderBatchesOffsets);
@@ -3518,16 +3535,9 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
-		const s64 numAllocations = r2::sarr::Size(*tempAllocations);
+		r2::sarr::Clear(*renderer.mRenderMaterialsToRender);
 
-		for (s64 i = numAllocations - 1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*tempAllocations, i), *MEM_ENG_SCRATCH_PTR );
-		}
-
-		r2::sarr::Clear(*tempAllocations);
-
-		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);
+		RESET_ARENA(*renderer.mPreRenderStackArena);
 	}
 
 	void ClearRenderBatches(Renderer& renderer)
@@ -4437,17 +4447,17 @@ namespace r2::draw::renderer
 
 			if (debugDrawCommandData == defaultDebugDrawCommandData)
 			{
-				debugDrawCommandData = ALLOC(DebugDrawCommandData, *MEM_ENG_SCRATCH_PTR);
+				debugDrawCommandData = ALLOC(DebugDrawCommandData, *renderer.mPreRenderStackArena);
 				r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
 
 				if (modelType != DEBUG_LINE)
 				{
-					debugDrawCommandData->debugModelDrawBatchCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawBatchSubCommand, numDebugObjectsToDraw); //@NOTE(Serge): overestimate
+					debugDrawCommandData->debugModelDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, numDebugObjectsToDraw); //@NOTE(Serge): overestimate
 					r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData->debugModelDrawBatchCommands);
 				}
 				else
 				{
-					debugDrawCommandData->debugLineDrawBatchCommands = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawDebugBatchSubCommand, numDebugObjectsToDraw);
+					debugDrawCommandData->debugLineDrawBatchCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawDebugBatchSubCommand, numDebugObjectsToDraw);
 					r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData->debugLineDrawBatchCommands);
 				}
 
@@ -4678,12 +4688,12 @@ namespace r2::draw::renderer
 
 		if (totalObjectsToDraw > 0)
 		{
-			tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 1000);
+			tempAllocations = MAKE_SARRAY(*renderer.mPreRenderStackArena, void*, 1000);
 
-			debugRenderConstants = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DebugRenderConstants, totalObjectsToDraw);
+			debugRenderConstants = MAKE_SARRAY(*renderer.mPreRenderStackArena, DebugRenderConstants, totalObjectsToDraw);
 			r2::sarr::Push(*tempAllocations, (void*)debugRenderConstants);
 
-			debugDrawCommandData = MAKE_SHASHMAP(*MEM_ENG_SCRATCH_PTR, DebugDrawCommandData*, (totalObjectsToDraw)*r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
+			debugDrawCommandData = MAKE_SHASHMAP(*renderer.mPreRenderStackArena, DebugDrawCommandData*, (totalObjectsToDraw)*r2::SHashMap<DebugDrawCommandData*>::LoadFactorMultiplier());
 			r2::sarr::Push(*tempAllocations, (void*)debugDrawCommandData);
 		}
 		else
@@ -4696,7 +4706,7 @@ namespace r2::draw::renderer
 		
 		if (numModelsToDraw > 0)
 		{
-			modelBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numModelsToDraw);
+			modelBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numModelsToDraw);
 			r2::sarr::Push(*tempAllocations, (void*)modelBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugModelsRenderBatch, numModelsToDraw, 0, tempAllocations, debugRenderConstants, debugDrawCommandData);
@@ -4712,7 +4722,7 @@ namespace r2::draw::renderer
 		{
 			r2::shashmap::Clear(*debugDrawCommandData);
 
-			linesBatchRenderOffsets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BatchRenderOffsets, numLinesToDraw);
+			linesBatchRenderOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, BatchRenderOffsets, numLinesToDraw);
 			r2::sarr::Push(*tempAllocations, (void*)linesBatchRenderOffsets);
 
 			CreateDebugSubCommands(renderer, debugLinesRenderBatch, numLinesToDraw, numModelsToDraw, tempAllocations, debugRenderConstants, debugDrawCommandData);
@@ -4763,7 +4773,8 @@ namespace r2::draw::renderer
 			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesVertexLayoutConfigHandle, debugLinesSubCommandsBufferHandle, true);
 		}
 
-		const s64 numAllocations = r2::sarr::Size(*tempAllocations);
+		RESET_ARENA(*renderer.mPreRenderStackArena);
+		/*const s64 numAllocations = r2::sarr::Size(*tempAllocations);
 
 		for (s64 i = numAllocations - 1; i >= 0; --i)
 		{
@@ -4772,7 +4783,7 @@ namespace r2::draw::renderer
 
 		r2::sarr::Clear(*tempAllocations);
 
-		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);
+		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);*/
 	}
 
 	void ClearDebugRenderData(Renderer& renderer)

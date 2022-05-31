@@ -36,13 +36,13 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
-	void WaitForLockedRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
+	void WaitForLockedRange(r2::SArray<BufferLock>& locks, r2::SArray<BufferLock>& swapLocks, u64 lockBeginBytes, u64 lockLength)
 	{
 		BufferRange testRange = { lockBeginBytes, lockLength };
 		const u64 numLocks = r2::sarr::Size(locks);
 		//@Optimization
 		//@TODO(Serge): optimize this, too slow
-		r2::SArray<BufferLock>* swapLocks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
+	//	r2::SArray<BufferLock>* swapLocks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
 
 		for (u64 i = 0; i < numLocks; ++i)
 		{
@@ -54,16 +54,18 @@ namespace r2::draw::rendererimpl
 			}
 			else 
 			{
-				r2::sarr::Push(*swapLocks, nextLock);
+				r2::sarr::Push(swapLocks, nextLock);
 			}
 		}
 
 		r2::sarr::Clear(locks);
 		//@Optimization
 		//@TODO(Serge): optimize this, too slow
-		r2::sarr::Copy(locks, *swapLocks);
+		r2::sarr::Copy(locks, swapLocks);
 
-		FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
+		r2::sarr::Clear(swapLocks);
+
+		//FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
@@ -92,7 +94,7 @@ namespace r2::draw::rendererimpl
 				lockStart = ringBuffer.head;
 			}
 
-			WaitForLockedRange(*ringBuffer.locks, lockStart, count);
+			WaitForLockedRange(*ringBuffer.locks, *ringBuffer.swapLocks, lockStart, count);
 			char* ringData = (char*)ringBuffer.dataPtr;
 
 			return &ringData[lockStart * ringBuffer.typeSize];
@@ -110,7 +112,7 @@ namespace r2::draw::rendererimpl
 			r2::SArray<BufferLock>& locks = *ringBuffer.locks;
 			const u64 numLocks = r2::sarr::Size(locks);
 
-			r2::SArray<BufferLock>* swapLocks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
+			r2::SArray<BufferLock>* swapLocks = ringBuffer.swapLocks;//MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
 
 			for (u64 i = 0; i < numLocks; ++i)
 			{
@@ -135,7 +137,8 @@ namespace r2::draw::rendererimpl
 
 			r2::sarr::Copy(locks, *swapLocks);
 
-			FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
+			r2::sarr::Clear(*ringBuffer.swapLocks);
+		//	FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		GLsizeiptr GetHead(RingBuffer& ringBuffer)
@@ -160,7 +163,9 @@ namespace r2::draw::rendererimpl
 
 		u64 MemorySize(u64 headerSize, u64 boundsChecking, u64 alignment, u64 capacity)
 		{
-			return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BufferLock>::MemorySize(capacity), alignment, headerSize, boundsChecking);
+			return 
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BufferLock>::MemorySize(RingBuffer::MAX_SWAP_LOCKS), alignment, headerSize, boundsChecking)+
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BufferLock>::MemorySize(RingBuffer::MAX_SWAP_LOCKS), alignment, headerSize, boundsChecking);
 		}
 	}
 }

@@ -296,6 +296,11 @@ namespace r2::draw
 		
 
 		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
+		r2::SArray<RenderMaterialParams>* mRenderMaterialsToRender = nullptr;
+
+		r2::mem::StackArena* mPreRenderStackArena = nullptr;
+
+
 		//------------END Drawing Stuff--------------
 
 		//------------BEGIN Debug Stuff--------------

@@ -25,6 +25,7 @@ namespace r2::draw::rendererimpl
 	struct RingBuffer
 	{
 		r2::SArray<BufferLock>* locks = nullptr;
+		r2::SArray<BufferLock>* swapLocks = nullptr;
 		void* dataPtr = nullptr;
 		GLsizeiptr count = 0;
 		GLsizeiptr head = 0;
@@ -33,10 +34,13 @@ namespace r2::draw::rendererimpl
 		GLuint bufferName = 0;
 		GLuint index = 0;
 		CreateConstantBufferFlags flags{0};
+
+		static const u32 MAX_SWAP_LOCKS = 100;
+
 	};
 	
 	//private
-	void WaitForLockedRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength);
+	void WaitForLockedRange(r2::SArray<BufferLock>& locks, r2::SArray<BufferLock>& swapLocks, u64 lockBeginBytes, u64 lockLength);
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength);
 
 	namespace ringbuf
@@ -72,7 +76,8 @@ namespace r2::draw::rendererimpl
 			ringBuffer.head = 0;
 			ringBuffer.typeSize = typeSize;
 			ringBuffer.index = index;
-			ringBuffer.locks = MAKE_SARRAY(arena, BufferLock, count);
+			ringBuffer.locks = MAKE_SARRAY(arena, BufferLock, RingBuffer::MAX_SWAP_LOCKS);
+			ringBuffer.swapLocks = MAKE_SARRAY(arena, BufferLock, RingBuffer::MAX_SWAP_LOCKS);
 			ringBuffer.flags = flags;
 		}
 
@@ -91,8 +96,10 @@ namespace r2::draw::rendererimpl
 			}
 
 			r2::sarr::Clear(*ringBuffer.locks);
-
+			r2::sarr::Clear(*ringBuffer.swapLocks);
+			FREE(ringBuffer.swapLocks, arena);
 			FREE(ringBuffer.locks, arena);
+
 			ringBuffer.dataPtr = nullptr;
 			ringBuffer.count = 0;
 			ringBuffer.head = 0;
