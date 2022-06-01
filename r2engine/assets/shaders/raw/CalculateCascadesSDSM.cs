@@ -22,7 +22,7 @@ layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) i
 
 const float projMult = 1;
 const float zMult = 8;
-const vec3 GLOBAL_UP = vec3(0, 1, 0);
+const vec3 GLOBAL_UP = vec3(0, 0, 1);
 const bool STABALIZE_CASCADES = true;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -337,21 +337,19 @@ void main(void)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
-	// float minDistance = uintBitsToFloat(gPartitionsU.intervalBegin[0]);
+	float minDistance = uintBitsToFloat(gPartitionsU.intervalBegin[0]);
 
-	// float prevSplitDist = gPartitions.intervalBegin[cascadeIndex];
-	// float splitDist = gPartitions.intervalEnd[cascadeIndex];
+	float prevSplitDist = cascadeIndex == 0 ? exposureNearFar.y : gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
+	float splitDist =  gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex];
 
-
-	// for(int i = 0; i < 4; ++i)
- //    {
- //        vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
- //        vec3 nearCornerRay = cornerRay * prevSplitDist;
- //        vec3 farCornerRay = cornerRay * splitDist;
- //        frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
- //        frustumCorners[i] = frustumCorners[i] + nearCornerRay;
- //    }
-
+	for(int i = 0; i < 4; ++i)
+    {
+         vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
+         vec3 nearCornerRay = cornerRay * prevSplitDist;
+         vec3 farCornerRay = cornerRay * splitDist;
+         frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
+         frustumCorners[i] = frustumCorners[i] + nearCornerRay;
+    }
 
 	vec3 center = vec3(0.0);
 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)

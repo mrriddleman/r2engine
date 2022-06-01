@@ -339,7 +339,7 @@ public:
         }
 #endif
 
-        mPersController.Init(3.5f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -2.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mPersController.Init(3.5f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -445,21 +445,21 @@ public:
 
 
         glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 1));
+        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 0.1));
         microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);
 
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 1));
+        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 0.1));
         skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
 
 
         glm::mat4 ellenModel = glm::mat4(1.0f);
-        ellenModel = glm::translate(ellenModel, glm::vec3(3, 0, 0));
+        ellenModel = glm::translate(ellenModel, glm::vec3(3, 0, 0.1));
         ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);

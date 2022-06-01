@@ -106,7 +106,7 @@ float LogPartitionFromRange(uint part, float minDistance, float maxDistance)
 
 		float range = maxZ - minZ;
 
-		float lambda = 1;
+		float lambda = 1.2;
 		float ratio = maxZ / minZ;
 		float power = float(part + 1) * (1.0 / float(NUM_FRUSTUM_SPLITS));
 		float logScale = minZ * pow(abs(ratio), power);
