@@ -20,9 +20,7 @@ const uint MAX_NUM_LIGHTS = 50;
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
 
-const float projMult = 1;
-const float zMult = 8;
-const vec3 GLOBAL_UP = vec3(0, 0, 1);
+const vec3 GLOBAL_UP = vec3(0, 1, 0);
 const bool STABALIZE_CASCADES = true;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -41,6 +39,17 @@ layout (std140, binding = 1) uniform Vectors
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
     vec4 fovAspect;
+};
+
+layout (std140, binding = 3) uniform SDSMParams
+{
+	vec4 lightSpaceBorder;
+	vec4 maxScale;
+	vec4 projMultSplitScaleZMultLambda;
+	float dilationFactor;
+	uint scatterTileDim;
+	uint reduceTileDim;
+	uint padding;
 };
 
 struct Tex2DAddress
@@ -185,6 +194,20 @@ mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 	return result;
 }
 
+mat4 Ortho_ZO(float left, float right, float bottom, float top, float near, float far)
+{
+	mat4 result = mat4(1.0);
+
+	result[0][0] = 2.0 / (right - left);
+	result[1][1] = 2.0 / (top - bottom);
+	result[2][2] = -1.0 / (far - near);
+	result[3][0] = -(right + left) / (right - left);
+	result[3][1] = -(top + bottom) / (top - bottom);
+	result[3][2] = -near / (far - near);
+
+	return result;
+}
+
 mat4 Projection(float fov, float aspect, float near, float far)
 {
 	mat4 result = mat4(0.0);
@@ -200,6 +223,24 @@ mat4 Projection(float fov, float aspect, float near, float far)
 
 	return result;
 }
+
+mat4 Projection_ZO(float fov, float aspect, float near, float far)
+{
+	mat4 result = mat4(0.0);
+
+	float tanHalfFovy = tan(fov / 2.0);
+
+	result[0][0] = 1.0 / (aspect * tanHalfFovy);
+	result[1][1] = 1.0 / (tanHalfFovy);
+	result[2][2] = - far / (far - near);
+	result[2][3] = -1.0;
+	result[3][2] = - (far * near) / (far - near);
+
+
+	return result;
+}
+
+
 
 vec3 GetCameraRight()
 {
@@ -278,7 +319,7 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 //	vec3 lookAt = center - dirLights[0].direction.xyz;
 //	mat4 lightView = LookAt(lightCameraPos, lookAt, GLOBAL_UP);
 
-	mat4 shadowCamera = Ortho(-0.5, 0.5, -0.5, 0.5, 0, 1);
+	mat4 shadowCamera = Ortho_ZO(-0.5, 0.5, -0.5, 0.5, 0, 1);
 
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
@@ -337,16 +378,15 @@ void main(void)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
-	float minDistance = uintBitsToFloat(gPartitionsU.intervalBegin[0]);
-
 	float prevSplitDist = cascadeIndex == 0 ? exposureNearFar.y : gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
 	float splitDist =  gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex];
+	float splitScale = projMultSplitScaleZMultLambda.y;
 
 	for(int i = 0; i < 4; ++i)
     {
          vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
-         vec3 nearCornerRay = cornerRay * prevSplitDist;
-         vec3 farCornerRay = cornerRay * splitDist;
+         vec3 nearCornerRay = cornerRay * prevSplitDist * splitScale;
+         vec3 farCornerRay = cornerRay * splitDist * splitScale;
          frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
          frustumCorners[i] = frustumCorners[i] + nearCornerRay;
     }
@@ -371,7 +411,7 @@ void main(void)
 
 		for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
 		{
-			float dist = length(frustumCorners[i] - center);
+			float dist = length(frustumCorners[i] - center) ;
 			sphereRadius = max(sphereRadius, dist);
 		}
 
@@ -420,14 +460,15 @@ void main(void)
 
 	//float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
-
+	float zMult = projMultSplitScaleZMultLambda.z;
+	float projMult = projMultSplitScaleZMultLambda.x;
 	
 
 	dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, upDir);
 
 	dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = 
-	Ortho(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult,
-	 (minExtents.z - maxExtents.z) * zMult, (maxExtents.z - minExtents.z) * zMult);
+	Ortho_ZO(minExtents.x * projMult, maxExtents.x * projMult, minExtents.y * projMult, maxExtents.y * projMult,
+	0, (maxExtents.z - minExtents.z)*zMult);
 	
 
 	//Stabalize Cascades

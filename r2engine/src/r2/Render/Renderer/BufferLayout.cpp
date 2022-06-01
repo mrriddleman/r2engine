@@ -49,6 +49,7 @@ layout (std140, binding = 3) uniform SDSMParams
 {
 	vec4 lightSpaceBorder;
 	vec4 maxScale;
+    vec4 projMultSplitScaleZMult;
 	float dilationFactor;
 	uint scatterTileDim;
 	uint reduceTileDim;
@@ -460,8 +461,6 @@ namespace r2::draw
 
 		++index;
 
-
-
         //gShadowMatrix
         mElements.emplace_back(ConstantBufferElement());
         mElements[index].typeCount = light::MAX_NUM_LIGHTS;
@@ -498,6 +497,8 @@ namespace r2::draw
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
         ++index;
+
+
 
 		mType = Big;
 		mFlags = 0;

@@ -377,6 +377,7 @@ namespace r2::draw::renderer
 
 	void UpdateSDSMLightSpaceBorder(Renderer& renderer, const glm::vec4& lightSpaceBorder);
 	void UpdateSDSMMaxScale(Renderer& renderer, const glm::vec4& maxScale);
+	void UpdateSDSMProjMultSplitScaleZMultLambda(Renderer& renderer, float projMult, float splitScale, float zMult, float lambda);
 	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor);
 	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim);
 	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
@@ -1399,6 +1400,7 @@ namespace r2::draw::renderer
 		renderer.mSDSMParamsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "lightSpaceBorder"},
 			{r2::draw::ShaderDataType::Float4, "maxScale"},
+			{r2::draw::ShaderDataType::Float4, "projMultSplitScaleZMultLambda"},
 			{r2::draw::ShaderDataType::Float, "dialationFactor"},
 			{r2::draw::ShaderDataType::UInt, "scatterTileDim"},
 			{r2::draw::ShaderDataType::UInt, "reduceTileDim"},
@@ -4075,25 +4077,34 @@ namespace r2::draw::renderer
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 1, glm::value_ptr(maxScale));
 	}
 
+	void UpdateSDSMProjMultSplitScaleZMultLambda(Renderer& renderer, float projMult, float splitScale, float zMult, float lambda)
+	{
+		glm::vec4 data(projMult, splitScale, zMult, lambda);
+
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 2, glm::value_ptr(data));
+	}
+
 	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 2, &dialationFactor);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 3, &dialationFactor);
 	}
 
 	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 3, &scatterTileDim);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 4, &scatterTileDim);
 	}
 
 	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
-		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 4, &reduceTileDim);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 5, &reduceTileDim);
 	}
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name)
@@ -5439,6 +5450,7 @@ namespace r2::draw::renderer
 
 				UpdateSDSMLightSpaceBorder(renderer, partitionBorderLightSpace);
 				UpdateSDSMMaxScale(renderer, glm::vec4(maxPartitionScale, 0.0));
+				UpdateSDSMProjMultSplitScaleZMultLambda(renderer, 1, 1, 8, 1.2);
 				UpdateSDSMDialationFactor(renderer, DILATION_FACTOR);
 				UpdateSDSMReduceTileDim(renderer, REDUCE_TILE_DIM);
 				UpdateSDSMScatterTileDim(renderer, SCATTER_TILE_DIM);

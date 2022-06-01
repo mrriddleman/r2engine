@@ -44,6 +44,17 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress zPrePassSurface;
 };
 
+layout (std140, binding = 3) uniform SDSMParams
+{
+	vec4 lightSpaceBorder;
+	vec4 maxScale;
+	vec4 projMultSplitScaleZMultLambda;
+	float dilationFactor;
+	uint scatterTileDim;
+	uint reduceTileDim;
+	uint padding;
+};
+
 struct Partition
 {
 	vec4 intervalBegin;
@@ -106,7 +117,7 @@ float LogPartitionFromRange(uint part, float minDistance, float maxDistance)
 
 		float range = maxZ - minZ;
 
-		float lambda = 1.2;
+		float lambda = projMultSplitScaleZMultLambda.w;
 		float ratio = maxZ / minZ;
 		float power = float(part + 1) * (1.0 / float(NUM_FRUSTUM_SPLITS));
 		float logScale = minZ * pow(abs(ratio), power);

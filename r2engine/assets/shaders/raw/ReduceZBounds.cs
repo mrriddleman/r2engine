@@ -55,6 +55,7 @@ layout (std140, binding = 3) uniform SDSMParams
 {
 	vec4 lightSpaceBorder;
 	vec4 maxScale;
+	vec4 projMultSplitScaleZMultLambda;
 	float dilationFactor;
 	uint scatterTileDim;
 	uint reduceTileDim;
