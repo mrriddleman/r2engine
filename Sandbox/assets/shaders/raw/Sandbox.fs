@@ -5,7 +5,7 @@
 const uint MAX_NUM_LIGHTS = 50;
 
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
-const float SHADOW_FILTER_MAX_SIZE = 0.0035f;
+const float SHADOW_FILTER_MAX_SIZE = 0.0025f;
 const float PENUMBRA_FILTER_SCALE = 2.4f;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -1471,7 +1471,6 @@ float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCo
 {
 	float avgBlockerDepth = 0.0;
 	float blockersCount = 0.0;
-
 
 	for(int i = 0; i < samplesCount; ++i)
 	{

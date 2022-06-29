@@ -246,9 +246,11 @@ vec3 GetCameraRight()
 {
 	vec3 cameraRight;
 
-	cameraRight.x = view[0][0];
-	cameraRight.y = view[0][1];
-	cameraRight.z = view[0][2];
+	mat3 newView = mat3(view);
+
+	cameraRight.x = newView[0][0];
+	cameraRight.y = newView[1][0];
+	cameraRight.z = newView[2][0];
 
 	return cameraRight;
 }
@@ -257,9 +259,9 @@ vec3 GetCameraUp()
 {
 	vec3 cameraUp;
 
-	cameraUp.x = view[2][0];
-	cameraUp.y = view[2][1];
-	cameraUp.z = view[2][2];
+	cameraUp.x = view[1][0];
+	cameraUp.y = view[1][1];
+	cameraUp.z = view[1][2];
 
 	return cameraUp;
 }
@@ -378,9 +380,11 @@ void main(void)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
-	float prevSplitDist = cascadeIndex == 0 ? exposureNearFar.y : gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
+
+	float splitScale =  projMultSplitScaleZMultLambda.y;
+	float prevSplitDist = cascadeIndex == 0 ? splitScale * max(exposureNearFar.y, (gPartitions.intervalEnd[0] - gPartitions.intervalEnd[0])) : gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
 	float splitDist =  gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex];
-	float splitScale = projMultSplitScaleZMultLambda.y;
+	
 
 	for(int i = 0; i < 4; ++i)
     {
@@ -417,7 +421,7 @@ void main(void)
 
 		sphereRadius = ceil(sphereRadius * 16.0) / 16.0;
 
-		//float diameter = sphereRadius * 2.0;
+		float diameter = sphereRadius * 2.0;
 		
 		
 
@@ -430,7 +434,7 @@ void main(void)
 	// 	vec3 lightCameraPos = center;
 
 
-	// 	mat4 lightView = LookAt(lightCameraPos - dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
+	// 	mat4 lightView = LookAt(lightCameraPos + dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
 
 
 	// 	const float MAX_FLOAT = 3.402823466e+38F;
