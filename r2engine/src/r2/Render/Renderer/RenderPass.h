@@ -35,8 +35,6 @@ namespace r2::draw
 	//	NUM_COMMAND_BUCKET_TYPES
 	//};
 
-	const u32 MAX_RENDER_TARGETS_FOR_RENDER_PASS = 4;
-
 	struct RenderPassConfig
 	{
 		PrimitiveType primitiveType;
@@ -48,7 +46,7 @@ namespace r2::draw
 		RenderPassType type;
 		RenderPassConfig config;
 
-		RenderTargetSurface renderInputTargetHandles[MAX_RENDER_TARGETS_FOR_RENDER_PASS];
+		RenderTargetSurface renderInputTargetHandles[NUM_RENDER_TARGET_SURFACES];
 		u32 numRenderInputTargets;
 
 		RenderTargetSurface renderOutputTargetHandle;
@@ -60,7 +58,7 @@ namespace r2::draw::rp
 	template <class ARENA>
 	RenderPass* CreateRenderPass(ARENA& arena, RenderPassType type, const RenderPassConfig& config, const std::initializer_list<RenderTargetSurface>& renderInputTargets, RenderTargetSurface renderOutputTarget, const char* file, s32 line, const char* description)
 	{
-		R2_CHECK(renderInputTargets.size() <= MAX_RENDER_TARGETS_FOR_RENDER_PASS, "Added too many render input targets to the render pass! Trying to add %d targets but only %d are allowed!", renderInputTargets.size(), MAX_RENDER_TARGETS_FOR_RENDER_PASS);
+		R2_CHECK(renderInputTargets.size() <= NUM_RENDER_TARGET_SURFACES, "Added too many render input targets to the render pass! Trying to add %d targets but only %d are allowed!", renderInputTargets.size(), NUM_RENDER_TARGET_SURFACES);
 
 		RenderPass* pass = ALLOC_VERBOSE(RenderPass, arena, file, line, description);
 
