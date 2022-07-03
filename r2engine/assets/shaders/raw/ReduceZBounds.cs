@@ -48,6 +48,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
 	Tex2DAddress pointLightShadowsSurface;
+	Tex2DAddress ambientOcclusionSurface;
 };
 
 

@@ -42,5 +42,5 @@ in VS_OUT
 
 void main()
 {
-	FragColor = vec2(0.4, 0.47);
+	FragColor = vec2(0, 1);
 }
