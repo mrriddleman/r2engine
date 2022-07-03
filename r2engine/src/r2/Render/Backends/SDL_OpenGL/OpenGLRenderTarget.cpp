@@ -52,6 +52,10 @@ namespace r2::draw::rt::impl
 			format.borderColor = glm::vec4(1.0f);
 			format.isCubemap = true;
 		}
+		else if (type == RG32F)
+		{
+			format.internalformat = GL_RG32F;
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported TextureAttachmentType!");
@@ -65,7 +69,7 @@ namespace r2::draw::rt::impl
 		textureAttachment.texture = tex::CreateTexture(format, layers);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
-		if (type == COLOR)
+		if (type == COLOR || type == RG32F)
 		{
 			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
 		}
@@ -94,7 +98,7 @@ namespace r2::draw::rt::impl
 
 		R2_CHECK(result, "Failed to attach texture to frame buffer");
 
-		if (type == COLOR)
+		if (type == COLOR || type == RG32F)
 		{
 			r2::sarr::Push(*rt.colorAttachments, textureAttachment);
 		}

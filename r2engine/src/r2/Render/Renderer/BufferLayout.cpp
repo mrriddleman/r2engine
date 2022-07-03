@@ -43,6 +43,8 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
+    Tex2DAddress pointLightShadowsSurface;
+    Tex2DAddress ambientOcclusionSurface;
 };
 
 layout (std140, binding = 3) uniform SDSMParams

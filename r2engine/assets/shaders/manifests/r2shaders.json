@@ -33,6 +33,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 14268373098985025575,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\GroundTruthAO.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\GroundTruthAO.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 8182487414207287337,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\PointLightDynamicShadowDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\PointLightDynamicShadowDepth.fs",

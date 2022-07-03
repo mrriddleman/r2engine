@@ -255,6 +255,8 @@ namespace r2::draw
 		ShaderHandle mPointLightShadowShaders[2];
 		ShaderHandle mPointLightLightMatrixShader;
 
+		ShaderHandle mAmbientOcclusionShader;
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 
@@ -292,7 +294,8 @@ namespace r2::draw
 		r2::mem::StackArena* mShadowArena = nullptr;
 
 
-		
+		CommandBucket<key::DepthKey>* mAmbientOcclusionBucket = nullptr;
+		r2::mem::StackArena* mAmbientOcclusionArena = nullptr;
 		
 
 		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
