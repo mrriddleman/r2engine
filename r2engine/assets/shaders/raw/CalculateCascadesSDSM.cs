@@ -30,6 +30,7 @@ layout (std140, binding = 0) uniform Matrices
     mat4 view;
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+    mat4 inverseProjection;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -38,7 +39,9 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-    vec4 fovAspect;
+	vec4 fovAspectResXResY;
+    uint64_t frame;
+    uint64_t unused;
 };
 
 layout (std140, binding = 3) uniform SDSMParams
@@ -357,8 +360,7 @@ void main(void)
 	barrier();
 	memoryBarrierShared();
 
-
-	mat4 proj = Projection(fovAspect.x, fovAspect.y, gPartitions.intervalBegin[cascadeIndex], gPartitions.intervalEnd[cascadeIndex] );
+	mat4 proj = Projection(fovAspectResXResY.x, fovAspectResXResY.y, gPartitions.intervalBegin[cascadeIndex], gPartitions.intervalEnd[cascadeIndex] );
 
 	mat4 projViewInv = MatInverse(proj * view);
 

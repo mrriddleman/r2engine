@@ -63,7 +63,7 @@ namespace r2::draw::light
 
 namespace r2::draw::lightsys
 {
-	void CalculateDirectionLightProjView(LightSystem& system, const Camera& cam, const glm::vec3& radius, const glm::mat4& centerTransform, s64 directionLightIndex)
+	/*void CalculateDirectionLightProjView(LightSystem& system, const Camera& cam, const glm::vec3& radius, const glm::mat4& centerTransform, s64 directionLightIndex)
 	{
 		R2_CHECK(directionLightIndex >= 0 && directionLightIndex < system.mSceneLighting.mNumDirectionLights, "We should have a proper light index");
 
@@ -77,15 +77,15 @@ namespace r2::draw::lightsys
 		lightView *= centerTransform;
 
 		glm::mat4 lightProj = glm::ortho(-radius.x, radius.x, -radius.y, radius.y, -radius.z / 10.0f, radius.z / 10.f);
-		
-		dirLight.cameraViewToLightProj = lightProj * lightView * cam.invView;
+
+		dirLight.cameraViewToLightProj = lightProj * lightView * glm::inverse(cam.view);
 
 		for (u32 i = 0; i < cam::NUM_FRUSTUM_SPLITS; ++i)
 		{
 			dirLight.lightSpaceMatrixData.lightViewMatrices[i] = lightView;
 			dirLight.lightSpaceMatrixData.lightProjMatrices[i] = lightProj;
 		}
-	}
+	}*/
 
 	PointLightHandle GeneratePointLightHandle(const LightSystem& system)
 	{

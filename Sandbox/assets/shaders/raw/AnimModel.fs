@@ -118,7 +118,9 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-    vec4 fovAspect;
+    vec4 fovAspectResXResY;
+    uint64_t frame;
+    uint64_t unused;
 };
 
 
@@ -152,6 +154,7 @@ layout (std140, binding = 0) uniform Matrices
     mat4 view;
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+    mat4 inverseProjection;
 };
 
 //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h

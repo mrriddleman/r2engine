@@ -36,7 +36,7 @@ namespace r2::cam
         cam.position = pos;
         cam.facing = facing;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-        cam.invView = glm::inverse(cam.view);
+     //   cam.invView = glm::inverse(cam.view);
 
         SetPerspectiveCam(cam, fovDegrees, aspect, near, far);
     }
@@ -45,7 +45,7 @@ namespace r2::cam
     {
         cam.position = pos;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
-        cam.invView = glm::inverse(cam.view);
+ //       cam.invView = glm::inverse(cam.view);
         SetOrthoCam(cam, left, right, bottom, top, near, far);
     }
 
@@ -63,7 +63,7 @@ namespace r2::cam
 
         cam.proj = glm::perspective(cam.fov, aspect, near, far);
         cam.vp = cam.proj * cam.view;
-        
+        cam.invProj = glm::inverse(cam.proj);
 
         CalculateFrustumProjections(cam);
     }
@@ -76,6 +76,8 @@ namespace r2::cam
 
         cam.proj = glm::ortho(left, right, bottom, top, near, far);
         cam.vp = cam.proj * cam.view;
+
+        cam.invProj = glm::inverse(cam.proj);
     }
     
     void MoveCameraTo(Camera& cam, const glm::vec3& pos)
@@ -90,7 +92,7 @@ namespace r2::cam
     {
         cam.position += offset;
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
-        cam.invView = glm::inverse(cam.view);
+   //     cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
     }
     
@@ -98,7 +100,7 @@ namespace r2::cam
     {
         cam.facing = CalculateFacingDirection(pitch, yaw, cam.up);
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
-        cam.invView = glm::inverse(cam.view);
+  //      cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
     }
     
@@ -106,7 +108,7 @@ namespace r2::cam
     {
         cam.facing = facingDir;
         cam.view = glm::lookAt(cam.position, cam.position + cam.facing, cam.up);
-        cam.invView = glm::inverse(cam.view);
+     //   cam.invView = glm::inverse(cam.view);
         cam.vp = cam.proj * cam.view;
     }
 

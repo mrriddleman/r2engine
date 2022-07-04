@@ -356,6 +356,7 @@ namespace r2::draw::renderer
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix);
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
 	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera);
+	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj);
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
 	void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
@@ -363,7 +364,8 @@ namespace r2::draw::renderer
 	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
 	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
-	
+	void UpdateFrameCounter(Renderer& renderer, u64 frame);
+
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
 
@@ -1138,8 +1140,9 @@ namespace r2::draw::renderer
 	{
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
 		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
+		UpdateFrameCounter(renderer, renderer.mFrameCounter++);
 		UpdateLighting(renderer);
-
+		
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
 #endif
@@ -1404,8 +1407,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Mat4, "projection"},
 			{r2::draw::ShaderDataType::Mat4, "view"},
 			{r2::draw::ShaderDataType::Mat4, "skyboxView"},
-			{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS}
-
+			{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS},
+			{r2::draw::ShaderDataType::Mat4, "InverseProjection"}
 		});
 
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
@@ -1413,7 +1416,9 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float4, "Exposure"},
 			{r2::draw::ShaderDataType::Float4, "CascadePlanes"},
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"},
-			{r2::draw::ShaderDataType::Float4, "fovAspect"}
+			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
+			{r2::draw::ShaderDataType::UInt64, "Frame"},
+			{r2::draw::ShaderDataType::UInt64, "Unused"}
 		});
 
 		AddSurfacesLayout(renderer);
@@ -3858,6 +3863,17 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			4,
+			glm::value_ptr(invProj));
+	}
+
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -3884,11 +3900,18 @@ namespace r2::draw::renderer
 			2, glm::value_ptr(cascades));
 	}
 
-	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect)
+	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspectResXResY)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			4, glm::value_ptr(fovAspect));
+			4, glm::value_ptr(fovAspectResXResY));
+	}
+
+	void UpdateFrameCounter(Renderer& renderer, u64 frame)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			5, &frame);
 	}
 
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
@@ -4163,6 +4186,7 @@ namespace r2::draw::renderer
 	void UpdateCamera(Renderer& renderer, const Camera& camera)
 	{
 		UpdatePerspectiveMatrix(renderer, camera.proj);
+		UpdateInverseProjectionMatrix(renderer, camera.invProj);
 		UpdateViewMatrix(renderer, camera.view);
 		UpdateCameraFrustumProjections(renderer, camera);
 		UpdateCameraPosition(renderer, camera.position);
@@ -4176,7 +4200,7 @@ namespace r2::draw::renderer
 		
 		UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
 
-		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, 0, 0));
+		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
 	}
 
 	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)

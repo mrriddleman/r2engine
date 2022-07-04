@@ -331,7 +331,7 @@ namespace r2::draw
 		RendererFlags mFlags;
 		//-------------END FLAGS-------------------
 
-
+		u64 mFrameCounter = 0;
 
 	};
 }

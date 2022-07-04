@@ -27,6 +27,7 @@ layout (std140, binding = 0) uniform Matrices
 	mat4 view;
 	mat4 skyboxView;
 	mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+    mat4 invProjection;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -35,6 +36,7 @@ layout (std140, binding = 1) uniform Vectors
 	vec4 exposureNearFar;
 	vec4 cascadePlanes;
 	vec4 shadowMapSizes;
+    vec4 fovAspectResXResY;
 };
 
 layout (std140, binding = 2) uniform Surfaces
@@ -262,6 +264,7 @@ namespace r2::draw
 		case ShaderDataType::Bool:     return 4;
         case ShaderDataType::Struct:   return 4 * 4;
         case ShaderDataType::UInt:      return 4;
+        case ShaderDataType::UInt64:    return 8;
 		case ShaderDataType::None:
 			break;
 		}
