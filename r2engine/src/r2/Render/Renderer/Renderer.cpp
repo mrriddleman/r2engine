@@ -1140,7 +1140,8 @@ namespace r2::draw::renderer
 	{
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
 		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
-		UpdateFrameCounter(renderer, renderer.mFrameCounter++);
+		UpdateFrameCounter(renderer, renderer.mFrameCounter % 12);
+		++renderer.mFrameCounter;
 		UpdateLighting(renderer);
 		
 #ifdef R2_DEBUG
