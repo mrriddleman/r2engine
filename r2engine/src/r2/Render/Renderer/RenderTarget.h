@@ -23,7 +23,8 @@ namespace r2::draw::rt
 		COLOR = 0,
 		DEPTH,
 		DEPTH_CUBEMAP,
-		RG32F
+		RG16F,
+		RG32F,
 	};
 
 	struct RenderTargetPageAllocation
@@ -47,6 +48,7 @@ namespace r2::draw
 		RTS_ZPREPASS,
 		RTS_POINTLIGHT_SHADOWS,
 		RTS_AMBIENT_OCCLUSION,
+		RTS_AMBIENT_OCCLUSION_DENOISED,
 		NUM_RENDER_TARGET_SURFACES
 	};
 	

@@ -256,6 +256,7 @@ namespace r2::draw
 		ShaderHandle mPointLightLightMatrixShader;
 
 		ShaderHandle mAmbientOcclusionShader;
+		ShaderHandle mDenoiseShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -295,6 +296,7 @@ namespace r2::draw
 
 
 		CommandBucket<key::DepthKey>* mAmbientOcclusionBucket = nullptr;
+		CommandBucket<key::DepthKey>* mAmbientOcclusionDenoiseBucket = nullptr;
 		r2::mem::StackArena* mAmbientOcclusionArena = nullptr;
 		
 

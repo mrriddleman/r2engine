@@ -166,6 +166,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress zPrePassSurface;
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
+	Tex2DAddress ambientOcclusionDenoiseSurface;
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this
@@ -245,6 +246,7 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv);
 vec4 SampleDetail(uint drawID, vec3 uv);
 vec4 SampleClearCoat(uint drawID, vec3 uv);
 vec4 SampleClearCoatRoughness(uint drawID, vec3 uv);
+float SampleAOSurface(vec2 uv);
 
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
 vec4 SampleLUTDFG(vec2 uv);
@@ -479,6 +481,14 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 	float modifier = GetTextureModifier(addr);
 
 	return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+}
+
+float SampleAOSurface(vec2 uv)
+{
+	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionDenoiseSurface.page);
+
+	return texelFetch(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord, 0).r;
+	//return texture(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord).r;
 }
 
 vec4 SampleDetail(uint drawID, vec3 uv)
@@ -877,7 +887,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float metallic = SampleMaterialMetallic(drawID, uv).r ;
 
-	float ao =  SampleMaterialAO(drawID, uv).r;
+	float ao = min(SampleMaterialAO(drawID, uv).r, SampleAOSurface(gl_FragCoord.xy));
 
 	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 

@@ -17,6 +17,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 5241478346896726316,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Denoise.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Denoise.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 13212531284513343367,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicDepth.fs",
