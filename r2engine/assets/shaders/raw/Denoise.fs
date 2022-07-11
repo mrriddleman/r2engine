@@ -56,7 +56,7 @@ void main(void)
 			//				Instead - we would need to pass a Tex2DAddress uniform 
 			vec2 S = SampleTexture(ambientOcclusionSurface, ivec2(gl_FragCoord.xy), ivec2(i, j));
 
-			float weight = 1.0;//clamp(1.0 - (abs(S.y - center.y) * rampMaxInv), 0.0, 1.0);
+			float weight = clamp(1.0 - (abs(S.y - center.y) * rampMaxInv), 0.0, 1.0);
 			totalAO += S.x * weight;
 			totalWeight += weight;
 		}

@@ -488,7 +488,6 @@ float SampleAOSurface(vec2 uv)
 	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionDenoiseSurface.page);
 
 	return texelFetch(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord, 0).r;
-	//return texture(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord).r;
 }
 
 vec4 SampleDetail(uint drawID, vec3 uv)
