@@ -166,6 +166,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress zPrePassSurface;
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
+	Tex2DAddress ambientOcclusionDenoiseSurface;
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this
