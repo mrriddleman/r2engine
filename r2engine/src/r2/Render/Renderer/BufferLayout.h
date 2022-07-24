@@ -33,7 +33,8 @@ namespace r2::draw
         Bool,
         UInt64,
         Struct,
-        UInt
+        UInt,
+        UInt4,
     };
     
     enum class VertexType
@@ -163,6 +164,8 @@ namespace r2::draw
             SubCommand, //GL_DRAW_INDIRECT_BUFFER
         };
 
+        static const u32 RING_BUFFER_MULTIPLIER;
+
         ConstantBufferLayout();
         ConstantBufferLayout(Type type, ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, const std::initializer_list<ConstantBufferElement>& elements);
 
@@ -178,6 +181,7 @@ namespace r2::draw
 
         void InitForShadowData();
         void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
+        void InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }
@@ -188,6 +192,11 @@ namespace r2::draw
         Type GetType() const { return mType; }
         ConstantBufferFlags GetFlags() const { return mFlags; }
         CreateConstantBufferFlags GetCreateFlags() const { return mCreateFlags; }
+        u32 GetBufferMult() const { return mBufferMult; }
+        void SetBufferMult(u32 mult)
+        {
+            mBufferMult = mult;
+        }
     private:
         void CalculateOffsetAndSize();
         std::vector<ConstantBufferElement> mElements;
@@ -195,12 +204,14 @@ namespace r2::draw
         Type mType;
         ConstantBufferFlags mFlags;
         CreateConstantBufferFlags mCreateFlags;
+        u32 mBufferMult;
     };
 
 	struct ConstantBufferLayoutConfiguration
 	{
         ConstantBufferLayout layout;
         u32 drawType;
+
 	};
 }
 

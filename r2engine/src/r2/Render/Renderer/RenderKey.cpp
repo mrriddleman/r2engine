@@ -10,11 +10,6 @@ namespace r2::draw::key
 	const u8 Basic::FSL_EFFECT = 1;
 	const u8 Basic::FSL_HUD = 2;
 
-	const u8 Basic::VP_DEFAULT = 0;
-	
-
-
-
 	const u8 NUM_MATERIAL_SYSTEM_BITS = 4;
 
 

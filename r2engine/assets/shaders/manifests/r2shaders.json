@@ -121,6 +121,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 12524640358571599268,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\CalculateClusters.cs",
+      binaryPath: ""
+    },
+    {
       shaderName: 3012536493754366699,
       vertexPath: "",
       fragmentPath: "",

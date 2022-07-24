@@ -4,6 +4,7 @@
 
 #include "r2/Render/Backends/SDL_OpenGL/OpenGLRingBuffer.h"
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLGPUBuffer.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
@@ -41,6 +42,7 @@ namespace
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
 		r2::SHashMap<r2::draw::rendererimpl::RingBuffer>* mRingBufferMap = nullptr;
+		r2::SArray<r2::draw::rendererimpl::GPUBuffer>* mGPUBuffers = nullptr;
 		//@TODO(Serge): might be a good idea to have render targets here instead of how we do it now
 	};
 
@@ -144,13 +146,13 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
-	bool RendererImplInit(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numRingBuffers, u64 maxRingLocks, const char* systemName)
+	bool RendererImplInit(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 numConstantBuffers, u64 maxRingLocks, const char* systemName)
 	{
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize(numRingBuffers * HASH_MULT, maxRingLocks * RING_BUFFER_MULT);
+		u64 subAreaSize = MemorySize(numConstantBuffers, maxRingLocks);
 		u64 unallocatedSpace = memoryArea->UnAllocatedSpace();
 		if ( unallocatedSpace < subAreaSize)
 		{
@@ -184,10 +186,12 @@ namespace r2::draw::rendererimpl
 		s_optrRendererImpl->mMemoryAreaHandle = memoryAreaHandle;
 		s_optrRendererImpl->mSubAreaHandle = subAreaHandle;
 		s_optrRendererImpl->mSubAreaArena = linearArena;
-		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numRingBuffers* HASH_MULT);
+		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numConstantBuffers* HASH_MULT);
 	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		return s_optrRendererImpl->mRingBufferMap != nullptr;
+		s_optrRendererImpl->mGPUBuffers = MAKE_SARRAY(*linearArena, GPUBuffer, numConstantBuffers); //+1 I THINK because we will never have a 0 for the constant buffer
+
+		return s_optrRendererImpl->mRingBufferMap != nullptr && s_optrRendererImpl->mGPUBuffers != nullptr;
 	}
 
 	u64 MemorySize(u64 numConstantBuffers, u64 maxNumRingLocks)
@@ -200,11 +204,11 @@ namespace r2::draw::rendererimpl
 
 		u64 memSize1 = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking);
 		u64 memSize2 = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RendererImplState), ALIGNMENT, headerSize, boundsChecking);
-		u64 memSize3 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RingBuffer>::MemorySize(numConstantBuffers), ALIGNMENT, headerSize, boundsChecking);
-		u64 memSize4 = ringbuf::MemorySize(headerSize, boundsChecking, ALIGNMENT, maxNumRingLocks) * numConstantBuffers;
-		u64 memSize5 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ConstantBufferPostRenderUpdate>::MemorySize(numConstantBuffers), ALIGNMENT, headerSize, boundsChecking);
-		
-		return memSize1 + memSize2 + memSize3 + memSize4 + memSize5;
+		u64 memSize3 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RingBuffer>::MemorySize(numConstantBuffers * HASH_MULT), ALIGNMENT, headerSize, boundsChecking);
+		u64 memSize4 = ringbuf::MemorySize(headerSize, boundsChecking, ALIGNMENT, maxNumRingLocks * RING_BUFFER_MULT) * numConstantBuffers * HASH_MULT;
+		u64 memSize5 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ConstantBufferPostRenderUpdate>::MemorySize(numConstantBuffers * HASH_MULT), ALIGNMENT, headerSize, boundsChecking);
+		u64 memSize6 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUBuffer>::MemorySize(numConstantBuffers+1), ALIGNMENT, headerSize, boundsChecking);
+		return memSize1 + memSize2 + memSize3 + memSize4 + memSize5 + memSize6;
 	}
 
 	void* GetRenderContext()
@@ -234,6 +238,8 @@ namespace r2::draw::rendererimpl
 	void Shutdown()
 	{
 		r2::mem::LinearArena* arena = s_optrRendererImpl->mSubAreaArena;
+
+		FREE(s_optrRendererImpl->mGPUBuffers, *arena);
 
 		auto hashMapEntryItr = r2::shashmap::Begin(*s_optrRendererImpl->mRingBufferMap);
 		auto hashMapEnd = r2::shashmap::End(*s_optrRendererImpl->mRingBufferMap);
@@ -512,15 +518,36 @@ namespace r2::draw::rendererimpl
 			
 			if (config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT))
 			{
+
+			//	if (config.layout.GetBufferMult() == 1)
+				{
+					//@TODO(Serge): we need to save the persistent mapped ptr so that we can use it later
+				}
+				//else
+
 			//	if (bufferType == GL_DRAW_INDIRECT_BUFFER)
 				{
 
-					glBufferStorage(bufferType, config.layout.GetSize() * RING_BUFFER_MULT, nullptr, config.layout.GetFlags().GetRawValue() | config.layout.GetCreateFlags().GetRawValue());
-					void* ptr = glMapBufferRange(bufferType, 0, config.layout.GetSize() * RING_BUFFER_MULT, config.layout.GetFlags().GetRawValue());
+					glBufferStorage(bufferType, config.layout.GetSize() * config.layout.GetBufferMult(), nullptr, config.layout.GetFlags().GetRawValue() | config.layout.GetCreateFlags().GetRawValue());
+					void* ptr = glMapBufferRange(bufferType, 0, config.layout.GetSize() * config.layout.GetBufferMult(), config.layout.GetFlags().GetRawValue());
 
-					RingBuffer newRingBuffer;
-					ringbuf::CreateRingBuffer<r2::mem::LinearArena>(*s_optrRendererImpl->mSubAreaArena, newRingBuffer, handles[i], bufferType, config.layout.begin()->elementSize, (*nextIndex)++, config.layout.GetFlags(), ptr, config.layout.begin()->typeCount * RING_BUFFER_MULT);
-					r2::shashmap::Set(*s_optrRendererImpl->mRingBufferMap, handles[i], newRingBuffer);
+					if (config.layout.GetBufferMult() > 1)
+					{
+						RingBuffer newRingBuffer;
+						ringbuf::CreateRingBuffer<r2::mem::LinearArena>(*s_optrRendererImpl->mSubAreaArena, newRingBuffer, handles[i], bufferType, config.layout.begin()->elementSize, (*nextIndex)++, config.layout.GetFlags(), ptr, config.layout.begin()->typeCount * config.layout.GetBufferMult());
+						r2::shashmap::Set(*s_optrRendererImpl->mRingBufferMap, handles[i], newRingBuffer);
+					}
+					else
+					{
+						GPUBuffer newGPUBuffer;
+						newGPUBuffer.bufferName = handles[i];
+						newGPUBuffer.bufferType = bufferType;
+						newGPUBuffer.dataPtr = ptr;
+						newGPUBuffer.flags = config.layout.GetFlags();
+
+						r2::sarr::Push(*s_optrRendererImpl->mGPUBuffers, newGPUBuffer);
+
+					}
 
 					
 				}
@@ -753,24 +780,49 @@ namespace r2::draw::rendererimpl
 				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cBufferHandle);
 			}
 
+
 			RingBuffer theDefault;
 			RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, cBufferHandle, theDefault);
-			R2_CHECK(ringBuffer.dataPtr != theDefault.dataPtr, "Failed to get the ring buffer!");
-
-			u64 count = size / ringBuffer.typeSize;
-
-			void* ptr = ringbuf::Reserve(ringBuffer, count);
-			memcpy(ptr, data, size);
-
-			if (bufferType != GL_DRAW_INDIRECT_BUFFER)
+			
+			if (ringBuffer.dataPtr != theDefault.dataPtr)
 			{
-				ringbuf::BindBufferRange(ringBuffer, cBufferHandle, count);
+				u64 count = size / ringBuffer.typeSize;
+
+				void* ptr = ringbuf::Reserve(ringBuffer, count);
+				memcpy(ptr, data, size);
+
+				if (bufferType != GL_DRAW_INDIRECT_BUFFER)
+				{
+					ringbuf::BindBufferRange(ringBuffer, cBufferHandle, count);
+				}
+
+				if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
+				{
+					//@TODO(Serge): we should only do this once for all of the constant buffers so we'll need to track this
+					glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+				}
 			}
-
-			if (!ringBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
+			else
 			{
-				//@TODO(Serge): we should only do this once for all of the constant buffers so we'll need to track this
-				glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+				for (u32 i = 0; i < r2::sarr::Size(*s_optrRendererImpl->mGPUBuffers); ++i)
+				{
+					GPUBuffer& gpuBuffer = r2::sarr::At(*s_optrRendererImpl->mGPUBuffers, i);
+
+					if (gpuBuffer.bufferName == cBufferHandle)
+					{
+						R2_CHECK(gpuBuffer.dataPtr != nullptr, "This shouldn't be nullptr!");
+
+						void* ptr = gpubuffer::Reserve(gpuBuffer);
+						memcpy((char*)ptr + offset, (char*)data, size);
+
+						if (!gpuBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
+						{
+							glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+						}
+
+						break;
+					}
+				}
 			}
 		}
 		else
@@ -787,6 +839,20 @@ namespace r2::draw::rendererimpl
 		if (ringBuffer.dataPtr != theDefault.dataPtr)
 		{
 			ringbuf::Complete(ringBuffer, count);
+		}
+		else
+		{
+			for (u32 i = 0; i < r2::sarr::Size(*s_optrRendererImpl->mGPUBuffers); ++i)
+			{
+				GPUBuffer& gpuBuffer = r2::sarr::At(*s_optrRendererImpl->mGPUBuffers, i);
+
+				if (gpuBuffer.bufferName == cBufferHandle)
+				{
+					R2_CHECK(gpuBuffer.dataPtr != nullptr, "Shouldn't be nullptr!");
+
+					gpubuffer::Complete(gpuBuffer);
+				}
+			}
 		}
 	}
 

@@ -48,7 +48,7 @@ void main(void)
 	float totalAO = 0.0;
 	float totalWeight = 0.0;
 
-	for(int i = -1; i < 3 ; ++i)
+	for(int i = -2; i < 2 ; ++i)
 	{
 		for(int j = -2; j < 2; ++j)
 		{

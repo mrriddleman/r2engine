@@ -5,23 +5,10 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "glad/glad.h"
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLBufferLock.h"
 
 namespace r2::draw::rendererimpl
 {
-	struct BufferRange
-	{
-		u32 startOffset;
-		u32 length;
-	};
-
-	bool BufferRangeOverlaps(const BufferRange& _lhs, const BufferRange& _rhs);
-
-	struct BufferLock
-	{
-		BufferRange range;
-		GLsync syncObject;
-	};
-
 	struct RingBuffer
 	{
 		r2::SArray<BufferLock>* locks = nullptr;
@@ -38,10 +25,6 @@ namespace r2::draw::rendererimpl
 		static const u32 MAX_SWAP_LOCKS = 100;
 
 	};
-	
-	//private
-	void WaitForLockedRange(r2::SArray<BufferLock>& locks, r2::SArray<BufferLock>& swapLocks, u64 lockBeginBytes, u64 lockLength);
-	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength);
 
 	namespace ringbuf
 	{

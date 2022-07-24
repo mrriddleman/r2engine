@@ -83,6 +83,8 @@ namespace r2::draw
         DL_SKYBOX,
         DL_HUD,
         DL_SCREEN,
+
+        DL_COMPUTE, //should be second to last (or last maybe?)
         DL_DEBUG //should always be last
     };
 

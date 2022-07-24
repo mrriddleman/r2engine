@@ -49,12 +49,6 @@ namespace r2::draw::key
 		static const u8 FSL_EFFECT;
 		static const u8 FSL_HUD;
 
-		static const u8 VP_DEFAULT;
-		
-
-
-
-
 		u64 keyValue = 0;
 
 	};

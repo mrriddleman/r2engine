@@ -36,7 +36,10 @@ layout (std140, binding = 1) uniform Vectors
 	vec4 exposureNearFar;
 	vec4 cascadePlanes;
 	vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
+	vec4 fovAspectResXResY;
+	uint64_t frame;
+	uint64_t unused;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 layout (std140, binding = 2) uniform Surfaces
@@ -127,13 +130,29 @@ layout (std430, binding = 7) buffer MaterialOffsets
     uint32_t materialOffsets[];
 }
 
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+layout (std430, binding=8) buffer Clusters
+{
+	VolumeTileAABB clusters[];
+};
+
 */
 
-
+struct VolumeTileAABB
+{
+	glm::vec4 minPoint;
+	glm::vec4 maxPoint;
+};
 
 namespace r2::draw
 {
-    
+    const u32 ConstantBufferLayout::RING_BUFFER_MULTIPLIER = 3;
+
     u32 ShaderDataTypeSize(ShaderDataType type)
     {
         switch (type)
@@ -174,8 +193,9 @@ namespace r2::draw
 		case ShaderDataType::Int4:    return 4;
 		case ShaderDataType::Bool:    return 1;
         case ShaderDataType::Struct:  return 1;
-        case ShaderDataType::UInt: return 1;
-		case ShaderDataType::None:      break;
+        case ShaderDataType::UInt:    return 1;
+        case ShaderDataType::UInt4:   return 4;
+		case ShaderDataType::None:    break;
 		}
 
 		R2_CHECK(false, "Unknown ShaderDataType!");
@@ -265,6 +285,7 @@ namespace r2::draw
         case ShaderDataType::Struct:   return 4 * 4;
         case ShaderDataType::UInt:      return 4;
         case ShaderDataType::UInt64:    return 8;
+        case ShaderDataType::UInt4:     return 4 * 4;
 		case ShaderDataType::None:
 			break;
 		}
@@ -313,6 +334,7 @@ namespace r2::draw
         , mType(Type::Small)
         , mFlags(0)
         , mCreateFlags(0)
+        , mBufferMult(1)
     {
     }
 
@@ -322,6 +344,7 @@ namespace r2::draw
         , mType(type)
         , mFlags(bufferFlags)
         , mCreateFlags(createFlags)
+        , mBufferMult(1)
     {
         CalculateOffsetAndSize();
     }
@@ -340,6 +363,8 @@ namespace r2::draw
         mType = SubCommand;
         mFlags = flags;
         mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands)
@@ -356,6 +381,8 @@ namespace r2::draw
 		mType = SubCommand;
 		mFlags = flags;
 		mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::InitForMaterials(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numMaterials)
@@ -372,6 +399,8 @@ namespace r2::draw
         mType = Big;
 		mFlags = flags;
 		mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::InitForBoneTransforms(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransforms)
@@ -388,6 +417,8 @@ namespace r2::draw
         mType = Big;
         mFlags = flags;
         mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::InitForBoneTransformOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets)
@@ -404,6 +435,8 @@ namespace r2::draw
 		mType = Big;
 		mFlags = flags;
 		mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::InitForLighting()
@@ -421,8 +454,6 @@ namespace r2::draw
 		mFlags = 0;
 		mCreateFlags = 0;
     }
-
-    
 
     void ConstantBufferLayout::InitForShadowData()
     {
@@ -526,6 +557,28 @@ namespace r2::draw
 		mType = Big;
 		mFlags = flags;
 		mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
+    }
+
+    void ConstantBufferLayout::InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size)
+    {
+        //TODO(Serge): update this to reflect the proper 
+
+		mElements.clear();
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[0].offset = 0;
+		mElements[0].typeCount = size;
+		mElements[0].elementSize = sizeof(VolumeTileAABB); 
+		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
+		mElements[0].type = ShaderDataType::Struct;
+
+		mSize = mElements[0].size;
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+
+        mBufferMult = 1;
     }
 
     void ConstantBufferLayout::InitForSurfaces()
@@ -558,6 +611,8 @@ namespace r2::draw
 		mType = Big;
 		mFlags = flags;
 		mCreateFlags = createFlags;
+
+        mBufferMult = RING_BUFFER_MULTIPLIER;
     }
 
     void ConstantBufferLayout::CalculateOffsetAndSize()

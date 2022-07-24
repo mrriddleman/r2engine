@@ -179,7 +179,8 @@ namespace r2::draw
 
 	enum eRendererFlags : u32
 	{
-		RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH = 1 << 0
+		RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH = 1 << 0,
+		RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE = 1 << 1,
 	};
 
 	using RendererFlags = r2::Flags<u32, u32>;
@@ -234,6 +235,7 @@ namespace r2::draw
 		ConstantConfigHandle mSDSMParamsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mShadowDataConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mMaterialOffsetsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mClusterVolumesConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -257,6 +259,8 @@ namespace r2::draw
 
 		ShaderHandle mAmbientOcclusionShader;
 		ShaderHandle mDenoiseShader;
+
+		ShaderHandle mCreateClusterComputeShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -308,6 +312,16 @@ namespace r2::draw
 
 		//------------END Drawing Stuff--------------
 
+		//------------BEGIN FLAGS------------------
+		RendererFlags mFlags;
+		//-------------END FLAGS-------------------
+
+		u64 mFrameCounter = 0;
+
+		//------------BEGIN Cluster data-----------
+		glm::uvec4 mClusterTileSizes;
+		//------------END Cluster data-------------
+
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
@@ -329,11 +343,6 @@ namespace r2::draw
 #endif
 		//------------END Debug Stuff--------------
 
-		//------------BEGIN FLAGS------------------
-		RendererFlags mFlags;
-		//-------------END FLAGS-------------------
-
-		u64 mFrameCounter = 0;
 
 	};
 }

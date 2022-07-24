@@ -38,7 +38,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 fovAspectResXResY;
     uint64_t frame;
     uint64_t unused;
-    
+    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 

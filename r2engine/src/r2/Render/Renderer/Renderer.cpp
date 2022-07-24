@@ -365,6 +365,7 @@ namespace r2::draw::renderer
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
 	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
 	void UpdateFrameCounter(Renderer& renderer, u64 frame);
+	void UpdateClusterTileSizes(Renderer& renderer);
 
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
@@ -479,6 +480,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer);
 	ConstantConfigHandle AddShadowDataLayout(Renderer& renderer);
 	ConstantConfigHandle AddMaterialOffsetsLayout(Renderer& renderer);
+	ConstantConfigHandle AddClusterVolumesLayout(Renderer& renderer);
 
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 
@@ -965,6 +967,10 @@ namespace r2::draw::renderer
 		newRenderer->mDenoiseShader = shadersystem::FindShaderHandle(STRING_ID("Denoise"));
 		CheckIfValidShader(*newRenderer, newRenderer->mDenoiseShader, "Denoise");
 
+		newRenderer->mCreateClusterComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateClusters"));
+		CheckIfValidShader(*newRenderer, newRenderer->mCreateClusterComputeShader, "CalculateClusters");
+
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1149,6 +1155,11 @@ namespace r2::draw::renderer
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
 		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
 		UpdateFrameCounter(renderer, renderer.mFrameCounter % 12);
+		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
+		{
+			UpdateClusterTileSizes(renderer);
+		}
+
 		++renderer.mFrameCounter;
 		UpdateLighting(renderer);
 		
@@ -1230,6 +1241,9 @@ namespace r2::draw::renderer
 		RESET_ARENA(*renderer.mPrePostRenderCommandArena);
 		RESET_ARENA(*renderer.mShadowArena);
 		RESET_ARENA(*renderer.mAmbientOcclusionArena);
+
+
+		renderer.mFlags.Remove(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -1428,7 +1442,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"},
 			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
 			{r2::draw::ShaderDataType::UInt64, "Frame"},
-			{r2::draw::ShaderDataType::UInt64, "Unused"}
+			{r2::draw::ShaderDataType::UInt64, "Unused"},
+			{r2::draw::ShaderDataType::UInt4, "tileSizes"}
 		});
 
 		AddSurfacesLayout(renderer);
@@ -1477,6 +1492,7 @@ namespace r2::draw::renderer
 		AddShadowDataLayout(renderer);
 
 		AddMaterialOffsetsLayout(renderer);
+		AddClusterVolumesLayout(renderer);
 
 
 		bool success = GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
@@ -1898,6 +1914,8 @@ namespace r2::draw::renderer
 			 r2::draw::VertexDrawTypeDynamic
 		};
 		
+	
+
 		r2::sarr::Push(*renderer.mConstantLayouts, constConfig);
 
 		return r2::sarr::Size(*renderer.mConstantLayouts) - 1;
@@ -1943,6 +1961,8 @@ namespace r2::draw::renderer
 			{
 				r2::draw::ShaderDataType::Mat4, "models", MAX_NUM_DRAWS}
 			});
+
+		r2::sarr::At(*renderer.mConstantLayouts, renderer.mModelConfigHandle).layout.SetBufferMult(ConstantBufferLayout::RING_BUFFER_MULTIPLIER);
 
 		return renderer.mModelConfigHandle;
 	}
@@ -2182,6 +2202,36 @@ namespace r2::draw::renderer
 		renderer.mMaterialOffsetsConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
 
 		return renderer.mMaterialOffsetsConfigHandle;
+	}
+
+	ConstantConfigHandle AddClusterVolumesLayout(Renderer& renderer)
+	{
+		if (renderer.mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration clusterVolumes
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		clusterVolumes.layout.InitForClusterAABBs(
+			r2::draw::CB_FLAG_READ | r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT,
+			0,
+			renderer.mClusterTileSizes.x * renderer.mClusterTileSizes.y * renderer.mClusterTileSizes.z);
+
+		r2::sarr::Push(*renderer.mConstantLayouts, clusterVolumes);
+
+		renderer.mClusterVolumesConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+		return renderer.mClusterVolumesConfigHandle;
 	}
 
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer)
@@ -3251,6 +3301,16 @@ namespace r2::draw::renderer
 
 		subCommandsConstData->AddDataSize(subCommandsMemorySize);
 
+		//check to see if we need to rebuild the cluster volume tiles
+		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
+		{
+			key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 0, renderer.mCreateClusterComputeShader);
+			
+			cmd::DispatchCompute* createClusterTilesCMD = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, clusterKey, 0);
+			createClusterTilesCMD->numGroupsX = renderer.mClusterTileSizes.x;
+			createClusterTilesCMD->numGroupsY = renderer.mClusterTileSizes.y;
+			createClusterTilesCMD->numGroupsZ = renderer.mClusterTileSizes.z;
+		}
 
 		//PostRenderBucket commands
 		{
@@ -3938,6 +3998,13 @@ namespace r2::draw::renderer
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
 			5, &frame);
+	}
+
+	void UpdateClusterTileSizes(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			7, glm::value_ptr(renderer.mClusterTileSizes)); //7 because 6 is currently unused
 	}
 
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
@@ -5254,13 +5321,16 @@ namespace r2::draw::renderer
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
 			rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
+
+			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
+
+			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
 		}
 		
 		renderer.mResolutionSize.width = resolutionX;
 		renderer.mResolutionSize.height = resolutionY;
 		renderer.mCompositeSize.width = windowWidth;
 		renderer.mCompositeSize.height = windowHeight;
-
 	}
 	
 
