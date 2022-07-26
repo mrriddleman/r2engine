@@ -236,6 +236,7 @@ namespace r2::draw
 		ConstantConfigHandle mShadowDataConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mMaterialOffsetsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mClusterVolumesConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mDispatchComputeConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -261,6 +262,7 @@ namespace r2::draw
 		ShaderHandle mDenoiseShader;
 
 		ShaderHandle mCreateClusterComputeShader;
+		ShaderHandle mMarkActiveClusterTilesComputeShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -292,17 +294,17 @@ namespace r2::draw
 
 		CommandBucket<key::Basic>* mCommandBucket = nullptr;
 		CommandBucket<key::Basic>* mFinalBucket = nullptr;
+		CommandBucket<key::Basic>* mClustersBucket = nullptr;
+
 		r2::mem::StackArena* mCommandArena = nullptr;
 
 		CommandBucket<key::ShadowKey>* mShadowBucket = nullptr;
 		CommandBucket<key::DepthKey>* mDepthPrePassBucket = nullptr;
 		r2::mem::StackArena* mShadowArena = nullptr;
 
-
 		CommandBucket<key::DepthKey>* mAmbientOcclusionBucket = nullptr;
 		CommandBucket<key::DepthKey>* mAmbientOcclusionDenoiseBucket = nullptr;
 		r2::mem::StackArena* mAmbientOcclusionArena = nullptr;
-		
 
 		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES
 		r2::SArray<RenderMaterialParams>* mRenderMaterialsToRender = nullptr;

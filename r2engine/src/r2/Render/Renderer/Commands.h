@@ -168,6 +168,7 @@ namespace r2::draw::cmd
 		u32 numGroupsX;
 		u32 numGroupsY;
 		u32 numGroupsZ;
+		u32 pad0; 
 	};
 
 	struct DispatchComputeIndirect

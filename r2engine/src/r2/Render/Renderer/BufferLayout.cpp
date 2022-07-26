@@ -38,7 +38,7 @@ layout (std140, binding = 1) uniform Vectors
 	vec4 shadowMapSizes;
 	vec4 fovAspectResXResY;
 	uint64_t frame;
-	uint64_t unused;
+	vec2 clusterScaleBias;
 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
@@ -136,9 +136,13 @@ struct VolumeTileAABB
 	vec4 maxPoint;
 };
 
+#define MAX_CLUSTERS 4096
+
 layout (std430, binding=8) buffer Clusters
 {
-	VolumeTileAABB clusters[];
+	bool activeClusters[MAX_CLUSTERS];
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list
+	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
 */
@@ -563,13 +567,49 @@ namespace r2::draw
 
     void ConstantBufferLayout::InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size)
     {
-        //TODO(Serge): update this to reflect the proper 
+		mElements.clear();
+		
+        u32 index = 0;
 
+        mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = size;
+		mElements[index].elementSize = sizeof(bool);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		mElements[index].type = ShaderDataType::Bool;
+
+        index++;
+		
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = size;
+		mElements[index].elementSize = sizeof(u32);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		mElements[index].type = ShaderDataType::UInt;
+
+		index++;
+
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = size;
+		mElements[index].elementSize = sizeof(VolumeTileAABB);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		mElements[index].type = ShaderDataType::Struct;
+
+		index++;
+
+		mType = Big;
+		mFlags = flags;
+		mCreateFlags = createFlags;
+        mBufferMult = 1;
+
+        CalculateOffsetAndSize();
+    }
+
+    void ConstantBufferLayout::InitForDispatchComputeIndirect(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 size)
+    {
 		mElements.clear();
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[0].offset = 0;
 		mElements[0].typeCount = size;
-		mElements[0].elementSize = sizeof(VolumeTileAABB); 
+		mElements[0].elementSize = sizeof(cmd::DispatchSubCommand);
 		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
 		mElements[0].type = ShaderDataType::Struct;
 
@@ -578,7 +618,7 @@ namespace r2::draw
 		mFlags = flags;
 		mCreateFlags = createFlags;
 
-        mBufferMult = 1;
+		mBufferMult = 1;
     }
 
     void ConstantBufferLayout::InitForSurfaces()

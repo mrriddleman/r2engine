@@ -2,6 +2,8 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
+layout (local_size_x = 1, local_size_y = 1) in;
+
 #define NUM_FRUSTUM_SPLITS 4
 
 struct Tex2DAddress
@@ -47,11 +49,16 @@ layout (std140, binding = 2) uniform Surfaces
 
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
 layout (std430, binding=8) buffer Clusters
 {
-	uint numUniqueActiveClusters;
 	bool activeClusters[MAX_CLUSTERS];
-	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
@@ -70,7 +77,8 @@ float LinearizeDepth(float depth);
 //We could make this a compute shader instead?
 void main()
 {
-	MarkActiveCluster(uvec2(gl_FragCoord.xy));
+	//assuming that we use the global dispatch to be the screen size
+	MarkActiveCluster(gl_WorkGroupID.xy); 
 }
 
 float LinearizeDepth(float depth) 
@@ -84,7 +92,7 @@ float LinearizeDepth(float depth)
 
 void MarkActiveCluster(uvec2 screenCoord)
 {
-	vec2 texCoord = screenCoord / fovAspectResXResY.zw;
+	vec3 texCoord = vec3(screenCoord / fovAspectResXResY.zw, zPrePassSurface.page);
 
 	float z = texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
 
@@ -95,7 +103,7 @@ void MarkActiveCluster(uvec2 screenCoord)
 
 uint GetDepthSlice(float z)
 {
-	return uint(max(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y, 0.0));
+	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
 }
 
 uint GetClusterIndex(vec3 pixelCoord)

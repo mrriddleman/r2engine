@@ -145,6 +145,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 12611147468943739021,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\MarkActiveClusters.cs",
+      binaryPath: ""
+    },
+    {
       shaderName: 14517215305188057681,
       vertexPath: "",
       fragmentPath: "",

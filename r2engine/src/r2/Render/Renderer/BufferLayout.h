@@ -182,6 +182,7 @@ namespace r2::draw
         void InitForShadowData();
         void InitForMaterialOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numDraws);
         void InitForClusterAABBs(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 size);
+        void InitForDispatchComputeIndirect(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u32 size);
 
         inline const std::vector<ConstantBufferElement>& GetElements() const { return mElements; }
 		std::vector<ConstantBufferElement>::iterator begin() { return mElements.begin(); }

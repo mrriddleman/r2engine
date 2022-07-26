@@ -23,7 +23,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
 	vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+    vec2 clusterScaleBias;
     uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
@@ -37,7 +37,9 @@ struct VolumeTileAABB
 
 layout (std430, binding=8) buffer Clusters
 {
-	VolumeTileAABB clusters[];
+	bool activeClusters[MAX_CLUSTERS];
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
 //Function prototypes

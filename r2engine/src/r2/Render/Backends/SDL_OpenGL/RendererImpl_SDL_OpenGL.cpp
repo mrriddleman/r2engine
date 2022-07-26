@@ -36,6 +36,18 @@ namespace
 		u64 size = 0;
 	};
 
+	struct ImplementationLimits
+	{
+		//Limits
+		GLint mMaxFragmentShaderStorageBlocks = 0;
+		GLint mMaxVertexShaderStorageBlocks = 0;
+		GLint mMaxGeometryShaderStorageBlocks = 0;
+		GLint mMaxComputeShaderStorageBlocks = 0;
+		GLint mMaxComputeWorkGroupCountX = 0;
+		GLint mMaxComputeWorkGroupCountY = 0;
+		GLint mMaxComputeWorkGroupCountZ = 0;
+	};
+
 	struct RendererImplState
 	{
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
@@ -43,6 +55,9 @@ namespace
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
 		r2::SHashMap<r2::draw::rendererimpl::RingBuffer>* mRingBufferMap = nullptr;
 		r2::SArray<r2::draw::rendererimpl::GPUBuffer>* mGPUBuffers = nullptr;
+
+		
+		ImplementationLimits mLimits;
 		//@TODO(Serge): might be a good idea to have render targets here instead of how we do it now
 	};
 
@@ -103,6 +118,9 @@ namespace r2::draw::cmd
 
 namespace r2::draw::rendererimpl
 {
+
+	void SetLimits(RendererImplState* rendererImpl);
+
 	//basic stuff
 	bool PlatformInit(const PlatformRendererSetupParams& params)
 	{
@@ -125,7 +143,7 @@ namespace r2::draw::rendererimpl
 		R2_CHECK(s_glContext != nullptr, "We should have an OpenGL context!");
 
 		gladLoadGLLoader(SDL_GL_GetProcAddress);
-		
+
 		if (params.flags.IsSet(VSYNC))
 		{
 			SDL_GL_SetSwapInterval(1);
@@ -154,7 +172,7 @@ namespace r2::draw::rendererimpl
 
 		u64 subAreaSize = MemorySize(numConstantBuffers, maxRingLocks);
 		u64 unallocatedSpace = memoryArea->UnAllocatedSpace();
-		if ( unallocatedSpace < subAreaSize)
+		if (unallocatedSpace < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enough space to allocate the Impl Renderer! We requested: %llu and we only have %llu left in the memory area. Difference of: %llu", subAreaSize, unallocatedSpace, subAreaSize - unallocatedSpace);
 			return false;
@@ -186,10 +204,14 @@ namespace r2::draw::rendererimpl
 		s_optrRendererImpl->mMemoryAreaHandle = memoryAreaHandle;
 		s_optrRendererImpl->mSubAreaHandle = subAreaHandle;
 		s_optrRendererImpl->mSubAreaArena = linearArena;
-		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numConstantBuffers* HASH_MULT);
-	//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		s_optrRendererImpl->mRingBufferMap = MAKE_SHASHMAP(*linearArena, RingBuffer, numConstantBuffers * HASH_MULT);
+		//	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		s_optrRendererImpl->mGPUBuffers = MAKE_SARRAY(*linearArena, GPUBuffer, numConstantBuffers); //+1 I THINK because we will never have a 0 for the constant buffer
+
+
+		//Limits
+		SetLimits(s_optrRendererImpl);
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr && s_optrRendererImpl->mGPUBuffers != nullptr;
 	}
@@ -207,7 +229,7 @@ namespace r2::draw::rendererimpl
 		u64 memSize3 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RingBuffer>::MemorySize(numConstantBuffers * HASH_MULT), ALIGNMENT, headerSize, boundsChecking);
 		u64 memSize4 = ringbuf::MemorySize(headerSize, boundsChecking, ALIGNMENT, maxNumRingLocks * RING_BUFFER_MULT) * numConstantBuffers * HASH_MULT;
 		u64 memSize5 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ConstantBufferPostRenderUpdate>::MemorySize(numConstantBuffers * HASH_MULT), ALIGNMENT, headerSize, boundsChecking);
-		u64 memSize6 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUBuffer>::MemorySize(numConstantBuffers+1), ALIGNMENT, headerSize, boundsChecking);
+		u64 memSize6 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUBuffer>::MemorySize(numConstantBuffers + 1), ALIGNMENT, headerSize, boundsChecking);
 		return memSize1 + memSize2 + memSize3 + memSize4 + memSize5 + memSize6;
 	}
 
@@ -285,7 +307,7 @@ namespace r2::draw::rendererimpl
 
 		R2_CHECK(numVertexConstantBuffers == numFragmentConstantBuffers, "These aren't the same?");
 
-		return numFragmentConstantBuffers > numVertexConstantBuffers? numVertexConstantBuffers : numFragmentConstantBuffers;
+		return numFragmentConstantBuffers > numVertexConstantBuffers ? numVertexConstantBuffers : numFragmentConstantBuffers;
 	}
 
 	u32 MaxConstantBindings()
@@ -374,7 +396,7 @@ namespace r2::draw::rendererimpl
 
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
-		
+
 		glBindVertexArray(layoutId);
 
 		for (u32 i = 0; i < numVertexBufferHandles; ++i)
@@ -382,7 +404,7 @@ namespace r2::draw::rendererimpl
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId[i]);
 			glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfigs[i].bufferSize, nullptr, config.vertexBufferConfigs[i].drawType);
 		}
-		
+
 		u32 vertexAttribId = 0;
 		for (const auto& element : config.layout)
 		{
@@ -397,9 +419,9 @@ namespace r2::draw::rendererimpl
 				//	element.normalized ? GL_TRUE : GL_FALSE, 
 				//	config.layout.GetStride(), 
 				//	(const void*)element.offset);
-				
+
 				glVertexAttribFormat(vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.normalized ? GL_TRUE : GL_FALSE, element.offset);
-				
+
 			}
 			else if (element.type >= ShaderDataType::Int && element.type <= ShaderDataType::Int4)
 			{
@@ -441,7 +463,7 @@ namespace r2::draw::rendererimpl
 			glEnableVertexAttribArray(vertexAttribId);
 			glVertexAttribIPointer(vertexAttribId, 1, GL_UNSIGNED_INT, sizeof(u32), 0);
 			glVertexAttribDivisor(vertexAttribId, 1);
-			
+
 
 			FREE(drawIdData, *MEM_ENG_SCRATCH_PTR);
 		}
@@ -456,7 +478,7 @@ namespace r2::draw::rendererimpl
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
-		
+
 		if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -476,7 +498,7 @@ namespace r2::draw::rendererimpl
 			R2_CHECK(handles != nullptr, "handles is nullptr!");
 			return;
 		}
-		
+
 		const u64 numConfigs = r2::sarr::Size(*configs);
 		//@TODO(Serge): this is wrong since now we can have multiple types of constant buffers - re-think
 		auto maxBindings = r2::draw::rendererimpl::MaxConstantBindings();
@@ -496,30 +518,34 @@ namespace r2::draw::rendererimpl
 		for (u64 i = 0; i < numConfigs; i++)
 		{
 			const r2::draw::ConstantBufferLayoutConfiguration& config = r2::sarr::At(*configs, i);
-			 
+
 			if (config.layout.GetType() == ConstantBufferLayout::Type::Small)
 			{
 				bufferType = GL_UNIFORM_BUFFER;
 				nextIndex = &uboIndex;
 			}
-			else if(config.layout.GetType() == ConstantBufferLayout::Type::Big)
+			else if (config.layout.GetType() == ConstantBufferLayout::Type::Big)
 			{
 				bufferType = GL_SHADER_STORAGE_BUFFER;
 				nextIndex = &ssboIndex;
 			}
-			else
+			else if (config.layout.GetType() == ConstantBufferLayout::SubCommand)
 			{
 				bufferType = GL_DRAW_INDIRECT_BUFFER;
 				nextIndex = &drawCMDIndex;
 			}
+			else
+			{
+				R2_CHECK(false, "Unsupported buffer type!");
+			}
 
 			GLCall(glBindBuffer(bufferType, handles[i]));
-			
-			
+
+
 			if (config.layout.GetFlags().IsSet(CB_FLAG_MAP_PERSISTENT))
 			{
 
-			//	if (config.layout.GetBufferMult() == 1)
+				//	if (config.layout.GetBufferMult() == 1)
 				{
 					//@TODO(Serge): we need to save the persistent mapped ptr so that we can use it later
 				}
@@ -549,7 +575,7 @@ namespace r2::draw::rendererimpl
 
 					}
 
-					
+
 				}
 				//else
 				//{
@@ -561,20 +587,21 @@ namespace r2::draw::rendererimpl
 				//@NOTE: right now we'll only support a constant buffer with 1 entry
 				//		(could be an array though) for this type
 			//	
-				
+
 			}
 			else
 			{
-				GLCall( glBufferData(bufferType, config.layout.GetSize(), nullptr, config.drawType));
-				GLCall( glBindBufferBase(bufferType, (*nextIndex)++, handles[i]));
+				GLCall(glBufferData(bufferType, config.layout.GetSize(), nullptr, config.drawType));
+				GLCall(glBindBufferBase(bufferType, (*nextIndex)++, handles[i]));
 			}
 		}
 
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+		glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0);
 	}
-	
+
 	void SetViewportKey(u32 viewport)
 	{
 		//@TODO(Serge): implement
@@ -582,9 +609,9 @@ namespace r2::draw::rendererimpl
 
 	void SetViewportLayer(u32 viewportLayer)
 	{
-	//	glEnable(GL_CULL_FACE);
-	//	glFrontFace(GL_CCW);
-	//	glCullFace(GL_BACK);
+		//	glEnable(GL_CULL_FACE);
+		//	glFrontFace(GL_CCW);
+		//	glCullFace(GL_BACK);
 
 		glDepthFunc(GL_LESS);
 
@@ -592,7 +619,7 @@ namespace r2::draw::rendererimpl
 		{
 			//glDisable(GL_CULL_FACE);
 			glDepthFunc(GL_LEQUAL); //@TODO(Serge): put this in the state
-		}		
+		}
 	}
 
 	void SetMaterialID(r2::draw::MaterialHandle materialID)
@@ -608,7 +635,7 @@ namespace r2::draw::rendererimpl
 		ShaderHandle shaderHandle = mat::GetShaderHandle(*matSystem, materialID);
 
 		if (shaderHandle != InvalidShader)
-		{			
+		{
 			const Shader* shader = r2::draw::shadersystem::GetShader(shaderHandle);
 
 			//@TODO(Serge): check current opengl state first
@@ -649,16 +676,16 @@ namespace r2::draw::rendererimpl
 		//We need a system to track all of the state changes!
 		BindVertexArray(layoutId);
 
-	//	glBindBuffer(GL_ARRAY_BUFFER, vBufferHandle);
+		//	glBindBuffer(GL_ARRAY_BUFFER, vBufferHandle);
 
-	//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
+		//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
 
 		glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (const void*)(startingIndex * sizeof(u32)));
 	}
 
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride, PrimitiveType primitivetype)
 	{
-		
+
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, batchHandle);
 
 		RingBuffer theDefault;
@@ -689,7 +716,7 @@ namespace r2::draw::rendererimpl
 		}
 
 		glMultiDrawElementsIndirect(primitiveMode, GL_UNSIGNED_INT, mem::utils::PointerAdd(ringbuf::GetHeadOffset(ringBuffer), sizeof(cmd::DrawBatchSubCommand) * offset), count, stride);
-		
+
 	}
 
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride)
@@ -758,11 +785,11 @@ namespace r2::draw::rendererimpl
 		{
 			bufferType = GL_UNIFORM_BUFFER;
 		}
-		else if(type == ConstantBufferLayout::Big)
+		else if (type == ConstantBufferLayout::Big)
 		{
 			bufferType = GL_SHADER_STORAGE_BUFFER;
 		}
-		else if(type == ConstantBufferLayout::SubCommand)
+		else if (type == ConstantBufferLayout::SubCommand)
 		{
 			bufferType = GL_DRAW_INDIRECT_BUFFER;
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, cBufferHandle);
@@ -783,7 +810,7 @@ namespace r2::draw::rendererimpl
 
 			RingBuffer theDefault;
 			RingBuffer& ringBuffer = r2::shashmap::Get(*s_optrRendererImpl->mRingBufferMap, cBufferHandle, theDefault);
-			
+
 			if (ringBuffer.dataPtr != theDefault.dataPtr)
 			{
 				u64 count = size / ringBuffer.typeSize;
@@ -814,6 +841,11 @@ namespace r2::draw::rendererimpl
 
 						void* ptr = gpubuffer::Reserve(gpuBuffer);
 						memcpy((char*)ptr + offset, (char*)data, size);
+
+						if (bufferType != GL_DRAW_INDIRECT_BUFFER)
+						{
+							gpubuffer::BindBuffer(gpuBuffer);
+						}
 
 						if (!gpuBuffer.flags.IsSet(CB_FLAG_MAP_COHERENT))
 						{
@@ -861,7 +893,7 @@ namespace r2::draw::rendererimpl
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
 		if (numColorAttachments > 0 && fboHandle != 0)
-		{	
+		{
 			R2_CHECK(numColorAttachments <= MAX_NUM_COLOR_ATTACHMENTS, "Can't have more than %lu color buffers for now", MAX_NUM_COLOR_ATTACHMENTS);
 
 			GLenum bufs[MAX_NUM_COLOR_ATTACHMENTS];
@@ -911,6 +943,18 @@ namespace r2::draw::rendererimpl
 	void CenterWindow()
 	{
 		SDL_SetWindowPosition(s_optrWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	}
+
+	void SetLimits(RendererImplState* rendererImpl)
+	{
+		glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxFragmentShaderStorageBlocks);
+		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxVertexShaderStorageBlocks);
+		glGetIntegerv(GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxGeometryShaderStorageBlocks);
+		glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &rendererImpl->mLimits.mMaxComputeShaderStorageBlocks);
+
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &rendererImpl->mLimits.mMaxComputeWorkGroupCountX);
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &rendererImpl->mLimits.mMaxComputeWorkGroupCountY);
+		glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &rendererImpl->mLimits.mMaxComputeWorkGroupCountZ);
 	}
 }
 

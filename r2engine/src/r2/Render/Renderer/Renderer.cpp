@@ -210,6 +210,27 @@ namespace r2::draw::cmd
 
 		return cmd->dataSize + offset;
 	}
+
+	u64 ZeroConstantBufferCommand(FillConstantBuffer* cmd, ConstantBufferHandle handle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 size, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return  0;
+		}
+
+		char* auxMemory = r2::draw::cmdpkt::GetAuxiliaryMemory<FillConstantBuffer>(cmd);
+		memset(auxMemory, 0, size);
+
+		cmd->constantBufferHandle = handle;
+		cmd->data = auxMemory;
+		cmd->dataSize = size;
+		cmd->offset = offset;
+		cmd->type = type;
+		cmd->isPersistent = isPersistent;
+
+		return cmd->dataSize + offset;
+	}
 }
 
 namespace r2::draw
@@ -366,6 +387,7 @@ namespace r2::draw::renderer
 	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
 	void UpdateFrameCounter(Renderer& renderer, u64 frame);
 	void UpdateClusterTileSizes(Renderer& renderer);
+	void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias);
 
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
@@ -385,6 +407,10 @@ namespace r2::draw::renderer
 	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor);
 	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim);
 	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
+
+	//Clusters
+	void ClearActiveClusters(Renderer& renderer);
+
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name);
 
@@ -481,6 +507,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddShadowDataLayout(Renderer& renderer);
 	ConstantConfigHandle AddMaterialOffsetsLayout(Renderer& renderer);
 	ConstantConfigHandle AddClusterVolumesLayout(Renderer& renderer);
+	ConstantConfigHandle AddDispatchComputeIndirectLayout(Renderer& renderer);
 
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 
@@ -501,15 +528,13 @@ namespace r2::draw::renderer
 
 	ModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vHandle);
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data);
-
+	u64 AddZeroConstantBufferCommand(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex);
 
 	RenderTarget* GetRenderTarget(Renderer& renderer, RenderTargetSurface surface);
 	RenderPass* GetRenderPass(Renderer& renderer, RenderPassType renderPassType);
 
 	void CreateRenderPasses(Renderer& renderer);
 	void DestroyRenderPasses(Renderer& renderer);
-
-
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
@@ -970,6 +995,8 @@ namespace r2::draw::renderer
 		newRenderer->mCreateClusterComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateClusters"));
 		CheckIfValidShader(*newRenderer, newRenderer->mCreateClusterComputeShader, "CalculateClusters");
 
+		newRenderer->mMarkActiveClusterTilesComputeShader = shadersystem::FindShaderHandle(STRING_ID("MarkActiveClusters"));
+		CheckIfValidShader(*newRenderer, newRenderer->mMarkActiveClusterTilesComputeShader, "MarkActiveClusters");
 
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
@@ -1004,13 +1031,9 @@ namespace r2::draw::renderer
 #endif
 
 		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
-
-
 		
 		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
 		newRenderer->mModelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
-
-
 		
 		newRenderer->mPreRenderBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mPreRenderBucket != nullptr, "We couldn't create the command bucket!");
@@ -1026,7 +1049,7 @@ namespace r2::draw::renderer
 		newRenderer->mDepthPrePassBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mDepthPrePassBucket != nullptr, "We couldn't create the command bucket!");
 
-		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
+		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 3 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
 		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
 
 
@@ -1039,6 +1062,8 @@ namespace r2::draw::renderer
 		newRenderer->mAmbientOcclusionArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand());
 		R2_CHECK(newRenderer->mAmbientOcclusionArena != nullptr, "We couldn't create the ambient occlusion stack arena");
 
+		newRenderer->mClustersBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mClustersBucket != nullptr, "We couldn't create the clusters bucket");
 
 		auto size = CENG.DisplaySize();
 		
@@ -1157,6 +1182,9 @@ namespace r2::draw::renderer
 		UpdateFrameCounter(renderer, renderer.mFrameCounter % 12);
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
 		{
+			float logFarOverNear = glm::log2(renderer.mnoptrRenderCam->farPlane / renderer.mnoptrRenderCam->nearPlane);
+			float logNear = glm::log2(renderer.mnoptrRenderCam->nearPlane);
+			UpdateClusterScaleBias(renderer, glm::vec2(renderer.mClusterTileSizes.z / logFarOverNear, -(renderer.mClusterTileSizes.z * logNear) / logFarOverNear));
 			UpdateClusterTileSizes(renderer);
 		}
 
@@ -1347,6 +1375,7 @@ namespace r2::draw::renderer
 
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
+		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mClustersBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionDenoiseBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mDepthPrePassBucket);
@@ -1442,7 +1471,7 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float4, "ShadowMapSizes"},
 			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
 			{r2::draw::ShaderDataType::UInt64, "Frame"},
-			{r2::draw::ShaderDataType::UInt64, "Unused"},
+			{r2::draw::ShaderDataType::Float2, "clusterScaleBias"},
 			{r2::draw::ShaderDataType::UInt4, "tileSizes"}
 		});
 
@@ -1493,7 +1522,7 @@ namespace r2::draw::renderer
 
 		AddMaterialOffsetsLayout(renderer);
 		AddClusterVolumesLayout(renderer);
-
+		AddDispatchComputeIndirectLayout(renderer);
 
 		bool success = GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
 		GenerateConstantBuffers(renderer, renderer.mConstantLayouts);
@@ -2223,15 +2252,46 @@ namespace r2::draw::renderer
 		};
 
 		clusterVolumes.layout.InitForClusterAABBs(
-			r2::draw::CB_FLAG_READ | r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_PERSISTENT | CB_FLAG_MAP_COHERENT,
+			r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_COHERENT,
 			0,
-			renderer.mClusterTileSizes.x * renderer.mClusterTileSizes.y * renderer.mClusterTileSizes.z);
+			r2::util::NextPowerOfTwo64Bit(renderer.mClusterTileSizes.x * renderer.mClusterTileSizes.y * renderer.mClusterTileSizes.z));
 
 		r2::sarr::Push(*renderer.mConstantLayouts, clusterVolumes);
 
 		renderer.mClusterVolumesConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
 
 		return renderer.mClusterVolumesConfigHandle;
+	}
+
+	ConstantConfigHandle AddDispatchComputeIndirectLayout(Renderer& renderer)
+	{
+		const u32 MAX_DISPATCH_COMPUTE_INDIRECT_CALLS = 16;
+		if (renderer.mConstantLayouts == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return InvalidConstantConfigHandle;
+		}
+
+		r2::draw::ConstantBufferLayoutConfiguration dispatchComputeConfig
+		{
+			//layout
+			{
+
+			},
+			//drawType
+			r2::draw::VertexDrawTypeDynamic
+		};
+
+		dispatchComputeConfig.layout.InitForDispatchComputeIndirect(
+			r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_COHERENT,
+			0,
+			MAX_DISPATCH_COMPUTE_INDIRECT_CALLS);
+
+		r2::sarr::Push(*renderer.mConstantLayouts, dispatchComputeConfig);
+
+		renderer.mDispatchComputeConfigHandle = r2::sarr::Size(*renderer.mConstantLayouts) - 1;
+
+		return renderer.mDispatchComputeConfigHandle;
 	}
 
 	ConstantConfigHandle AddSurfacesLayout(Renderer& renderer)
@@ -2288,10 +2348,7 @@ namespace r2::draw::renderer
 		u64 memorySize =
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 3 +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS * 2, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -2316,7 +2373,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 3 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -2831,9 +2888,43 @@ namespace r2::draw::renderer
 		
 		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*renderer.mConstantLayouts, constBufferIndex);
 
-		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillConstantBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, config.layout.GetSize());
+		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillConstantBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, config.layout.GetElements().at(elementIndex).size);
 		
 		return r2::draw::cmd::FillConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData->type, constBufferData->isPersistent, data, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
+	}
+
+	u64 AddZeroConstantBufferCommand(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex)
+	{
+		r2::draw::key::Basic fillKey;
+		//@TODO(Serge): fix this or pass it in
+		fillKey.keyValue = 0;
+
+		ConstantBufferData* constBufferData = GetConstData(renderer, handle);
+
+		R2_CHECK(constBufferData != nullptr, "We couldn't find the constant buffer handle!");
+
+		u64 numConstantBufferHandles = r2::sarr::Size(*renderer.mConstantBufferHandles);
+		u64 constBufferIndex = 0;
+		bool found = false;
+		for (; constBufferIndex < numConstantBufferHandles; ++constBufferIndex)
+		{
+			if (handle == r2::sarr::At(*renderer.mConstantBufferHandles, constBufferIndex))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			R2_CHECK(false, "Couldn't find the constant buffer so we can upload the data");
+			return 0;
+		}
+
+		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*renderer.mConstantLayouts, constBufferIndex);
+		r2::draw::cmd::FillConstantBuffer* fillConstantBufferCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillConstantBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, config.layout.GetElements().at(elementIndex).size);
+		return cmd::ZeroConstantBufferCommand(fillConstantBufferCommand, handle, constBufferData->type, constBufferData->isPersistent, config.layout.GetElements().at(elementIndex).size, config.layout.GetElements().at(elementIndex).offset);
+
 	}
 
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem)
@@ -4000,11 +4091,18 @@ namespace r2::draw::renderer
 			5, &frame);
 	}
 
+	void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			6, glm::value_ptr(clusterScaleBias)); 
+	}
+
 	void UpdateClusterTileSizes(Renderer& renderer)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
-			7, glm::value_ptr(renderer.mClusterTileSizes)); //7 because 6 is currently unused
+			7, glm::value_ptr(renderer.mClusterTileSizes)); 
 	}
 
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
@@ -4269,6 +4367,15 @@ namespace r2::draw::renderer
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 5, &reduceTileDim);
+	}
+
+	void ClearActiveClusters(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto clustersConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mClusterVolumesConfigHandle);
+
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 0);
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 1);
 	}
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name)
