@@ -5,6 +5,21 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 #define NUM_FRUSTUM_SPLITS 4
+#define MAX_CLUSTERS 4096
+const uint MAX_NUM_LIGHTS = 50;
+
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+struct LightGrid{
+    uint offset;
+    uint count;
+    uint pad0;
+    uint pad1;
+};
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -27,18 +42,13 @@ layout (std140, binding = 1) uniform Vectors
     uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
-struct VolumeTileAABB
-{
-	vec4 minPoint;
-	vec4 maxPoint;
-};
-
-#define MAX_CLUSTERS 4096
-
 layout (std430, binding=8) buffer Clusters
 {
+	uint globalLightIndexCount;
+	uint globalLightIndexList[MAX_NUM_LIGHTS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	LightGrid lightGrid[MAX_CLUSTERS];
 	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 

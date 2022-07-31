@@ -173,7 +173,7 @@ namespace r2::draw::key
 	//Normal GBUFFER
 	bool CompareBasicKey(const Basic& a, const Basic& b);
 
-	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID);
+	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID, u8 pass = 0);
 	
 	void DecodeBasicKey(const Basic& key);
 

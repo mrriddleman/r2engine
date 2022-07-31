@@ -54,7 +54,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID)
+	Basic GenerateBasicKey(u8 fullscreenLayer, u8 viewport, DrawLayer viewportLayer, u8 translucency, u32 depth, r2::draw::ShaderHandle shaderID, u8 pass)
 	{
 		Basic key;
 
@@ -63,15 +63,8 @@ namespace r2::draw::key
 		key.keyValue |= ENCODE_KEY_VALUE((u64)viewportLayer, Basic::KEY_BITS_VIEWPORT_LAYER, Basic::KEY_VIEWPORT_LAYER_OFFSET);
 		key.keyValue |= ENCODE_KEY_VALUE((u64)translucency, Basic::KEY_BITS_TRANSLUCENCY, Basic::KEY_TRANSLUCENCY_OFFSET);
 		key.keyValue |= ENCODE_KEY_VALUE((u64)depth, Basic::KEY_BITS_DEPTH, Basic::KEY_DEPTH_OFFSET);
-		
-//		u32 materialID = 0;
-
-//		u32 materialSystemOffset = Basic::KEY_BITS_MATERIAL_ID - NUM_MATERIAL_SYSTEM_BITS;
-
-//		materialID |= ENCODE_KEY_VALUE((u64)materialHandle.slot, NUM_MATERIAL_SYSTEM_BITS, materialSystemOffset);
-//		materialID |= ENCODE_KEY_VALUE((u64)materialHandle.handle, materialSystemOffset, 0);
-
 		key.keyValue |= ENCODE_KEY_VALUE((u64)shaderID, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((u64)pass, Basic::KEY_BITS_PASS, Basic::KEY_PASS_OFFSET);
 
 		return key;
 	}
@@ -91,7 +84,7 @@ namespace r2::draw::key
 		u32 translucency = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_TRANSLUCENCY, Basic::KEY_TRANSLUCENCY_OFFSET);
 		u32 depth = static_cast<u32>(DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_DEPTH, Basic::KEY_DEPTH_OFFSET));
 		u32 shaderID = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
-
+		u32 pass = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_PASS, Basic::KEY_PASS_OFFSET);
 
 	/*	MaterialHandle materialHandle;
 

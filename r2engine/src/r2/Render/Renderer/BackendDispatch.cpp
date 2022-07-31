@@ -83,7 +83,7 @@ namespace r2::draw::dispatch
 		const cmd::DispatchComputeIndirect* realData = static_cast<const r2::draw::cmd::DispatchComputeIndirect*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
-		rendererimpl::DispatchComputeIndirect(realData->batchHandle, realData->offset);
+		rendererimpl::DispatchComputeIndirect(realData->dispatchIndirectBuffer, realData->offset);
 	}
 
 	void DispatchCompute(const void* data)

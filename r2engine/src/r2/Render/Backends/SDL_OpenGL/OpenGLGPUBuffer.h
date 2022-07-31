@@ -12,6 +12,7 @@ namespace r2::draw::rendererimpl
 		void* dataPtr = nullptr;
 		GLenum bufferType = 0;
 		GLuint bufferName = 0;
+		GLuint index = 0;
 		CreateConstantBufferFlags flags{ 0 };
 	};
 

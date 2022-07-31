@@ -247,14 +247,12 @@ namespace r2::draw::rendererimpl
 	{
 		SDL_GL_SwapWindow(s_optrWindow);
 
-
 		auto hashMapEntryItr = r2::shashmap::Begin(*s_optrRendererImpl->mRingBufferMap);
 		auto hashMapEnd = r2::shashmap::End(*s_optrRendererImpl->mRingBufferMap);
 		for (; hashMapEntryItr != hashMapEnd; hashMapEntryItr++)
 		{
 			ringbuf::Clear(hashMapEntryItr->value);
 		}
-
 	}
 
 	void Shutdown()
@@ -567,6 +565,7 @@ namespace r2::draw::rendererimpl
 					{
 						GPUBuffer newGPUBuffer;
 						newGPUBuffer.bufferName = handles[i];
+						newGPUBuffer.index = (*nextIndex)++;
 						newGPUBuffer.bufferType = bufferType;
 						newGPUBuffer.dataPtr = ptr;
 						newGPUBuffer.flags = config.layout.GetFlags();
@@ -859,6 +858,7 @@ namespace r2::draw::rendererimpl
 		}
 		else
 		{
+			//glBindBufferBase()
 			glBindBuffer(bufferType, cBufferHandle);
 			glBufferSubData(bufferType, offset, size, data);
 		}

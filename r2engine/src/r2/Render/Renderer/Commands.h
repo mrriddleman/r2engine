@@ -174,7 +174,7 @@ namespace r2::draw::cmd
 	struct DispatchComputeIndirect
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
-		r2::draw::ConstantBufferHandle batchHandle;
+		r2::draw::ConstantBufferHandle dispatchIndirectBuffer;
 		u32 offset;
 	};
 

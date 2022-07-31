@@ -263,6 +263,8 @@ namespace r2::draw
 
 		ShaderHandle mCreateClusterComputeShader;
 		ShaderHandle mMarkActiveClusterTilesComputeShader;
+		ShaderHandle mFindUniqueClustersComputeShader;
+		ShaderHandle mAssignLightsToClustersComputeShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;

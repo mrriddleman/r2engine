@@ -23,7 +23,7 @@ layout (location = 0) out vec4 FragColor;
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-
+#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 
 
 struct Tex2DAddress
@@ -31,6 +31,19 @@ struct Tex2DAddress
 	uint64_t  container;
 	float page;
 	int channel;
+};
+
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+struct LightGrid{
+    uint offset;
+    uint count;
+    uint pad0;
+    uint pad1;
 };
 
 struct LightProperties
@@ -118,9 +131,10 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
+	vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+    vec2 clusterScaleBias;
+    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 
@@ -196,6 +210,16 @@ layout (std430, binding = 6) buffer ShadowData
 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
+};
+
+layout (std430, binding=8) buffer Clusters
+{
+	uint globalLightIndexCount;
+	uint globalLightIndexList[MAX_NUM_LIGHTS];
+	bool activeClusters[MAX_CLUSTERS];
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	LightGrid lightGrid[MAX_CLUSTERS];
+	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
 
@@ -298,7 +322,9 @@ vec3 Eval_BRDF(
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
 
-
+uint GetClusterIndex(vec2 pixelCoord);
+float LinearizeDepth(float depth);
+uint GetDepthSlice(float z);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -367,7 +393,8 @@ void main()
 
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, texCoords);
 
-
+	//if(sampledColor.a < 0.5)
+	//	discard;
 
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
@@ -376,18 +403,15 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
+	//uint tileIndex = GetClusterIndex(vec3(gl_FragCoord.xyz));
 
 
-	
-	
+	//float x = (float)tileIndex / (float)(clusterTileSizes.x * clusterTileSizes.y * clusterTileSizes.z);
 
-	//vec3 fragToLight = (fs_in.fragPos - pointLights[0].position.xyz);
-//	fragToLight = vec3(fragToLight.x, fragToLight.z, -fragToLight.y);
-	//vec4 coord = vec4(fragToLight, gPointLightShadowMapPages[int(pointLights[0].lightProperties.lightID)] );
-
-	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
-	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
+	//FragColor = vec4(x, x, x, 1);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
+
+	
 
 }
 
@@ -903,7 +927,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float clearCoat = materials[texIndex].clearCoat.color.r;
 	vec3 clearCoatNormal = fs_in.normal; //geometric normal
-	float clearCoatPerceptualRoughness = clamp(materials[texIndex].clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	float clearCoatPerceptualRoughness =  clamp(materials[texIndex].clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 	float clearCoatRoughness = CalculateClearCoatRoughness(clearCoatPerceptualRoughness);
 
 	F0 = CalculateClearCoatBaseF0(F0, clearCoat);
@@ -920,7 +944,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec2 dfg = SampleLUTDFG(vec2(NoV, roughness)).rg;
 
 	vec3 energyCompensation = CalcEnergyCompensation(F0, dfg);
-	float specularAO =  SpecularAO_Lagarde(NoV, ao, roughness);
+	float specularAO = SpecularAO_Lagarde(NoV, ao, roughness);
 
 	vec3 E = F_SchlickRoughness(NoV, F0, roughness);
 	vec3 Fr = vec3(0);
@@ -980,15 +1004,21 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 	 	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.lightID, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 	 	}
 
-	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
+	 	vec3 result =  Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
 
 	 	L0 += result * radiance * NoL;
-	 }
+	}
 
-	for(int i = 0; i < numPointLights; ++i)
+	uint tileIndex = GetClusterIndex(vec2(gl_FragCoord.xy));
+	uint pointLightCount = lightGrid[tileIndex].count;
+	uint pointLightIndexOffset = lightGrid[tileIndex].offset;
+
+	for(uint i = 0; i < pointLightCount; ++i)
 	{
-		PointLight pointLight = pointLights[i];
+		uint pointLightIndex = globalLightIndexList[pointLightIndexOffset + i];
 
+		PointLight pointLight = pointLights[pointLightIndex];
+		
 		vec3 posToLight = pointLight.position.xyz - fs_in.fragPos;
 
 		vec3 L = normalize(posToLight);
@@ -1004,9 +1034,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		if(pointLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 		{
 			vec3 fragToPointLight = fs_in.fragPos - pointLight.position.xyz;
-
-			//float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
-			shadow = PointLightShadowCalculation(fragToPointLight, cameraPosTimeW.xyz, pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+		 	shadow = PointLightShadowCalculation(fragToPointLight, cameraPosTimeW.xyz, pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 		}
 
 		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
@@ -1194,7 +1222,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
 	{
-		return 0.0; //or maybe return 1?
+		return 1.0; //or maybe return 1?
 	}
 
 	float NoL = max(dot(-lightDir, normal), 0.0);
@@ -1514,4 +1542,31 @@ float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
 	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
 	penumbra *= penumbra;
 	return clamp(penumbra , 0.0, 1.0);
+}
+
+uint GetClusterIndex(vec2 pixelCoord)
+{
+	vec3 texCoord = vec3(pixelCoord / fovAspectResXResY.zw, zPrePassSurface.page);
+
+	float z = texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
+
+	uint clusterZVal = GetDepthSlice(z);
+
+	uvec3 clusterID = uvec3(uvec2(pixelCoord.xy / clusterTileSizes.w), clusterZVal);
+
+	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
+}
+
+float LinearizeDepth(float depth)
+{
+	float z = depth * 2.0-1.0; // back to NDC 
+    float near = exposureNearFar.y;
+    float far = exposureNearFar.z;
+
+    return (2.0 * near * far) / (far + near - z * (far - near));
+}
+
+uint GetDepthSlice(float z)
+{
+	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
 }

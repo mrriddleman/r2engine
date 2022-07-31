@@ -145,6 +145,22 @@
       binaryPath: ""
     },
     {
+      shaderName: 7092159345246862423,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ClustersCullLights.cs",
+      binaryPath: ""
+    },
+    {
+      shaderName: 9495897517157999738,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\FindUniqueClusters.cs",
+      binaryPath: ""
+    },
+    {
       shaderName: 12611147468943739021,
       vertexPath: "",
       fragmentPath: "",

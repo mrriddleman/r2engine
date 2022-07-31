@@ -7,7 +7,7 @@ namespace r2::draw::rendererimpl::gpubuffer
 {
 	void BindBuffer(GPUBuffer& gpuBuffer)
 	{
-		glBindBuffer(gpuBuffer.bufferType, gpuBuffer.bufferName);
+		glBindBufferBase(gpuBuffer.bufferType, gpuBuffer.index, gpuBuffer.bufferName);
 	}
 
 	void Complete(GPUBuffer& gpuBuffer)

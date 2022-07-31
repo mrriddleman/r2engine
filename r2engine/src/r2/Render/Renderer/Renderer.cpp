@@ -410,7 +410,7 @@ namespace r2::draw::renderer
 
 	//Clusters
 	void ClearActiveClusters(Renderer& renderer);
-
+	void UpdateClusters(Renderer& renderer);
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name);
 
@@ -998,6 +998,12 @@ namespace r2::draw::renderer
 		newRenderer->mMarkActiveClusterTilesComputeShader = shadersystem::FindShaderHandle(STRING_ID("MarkActiveClusters"));
 		CheckIfValidShader(*newRenderer, newRenderer->mMarkActiveClusterTilesComputeShader, "MarkActiveClusters");
 
+		newRenderer->mFindUniqueClustersComputeShader = shadersystem::FindShaderHandle(STRING_ID("FindUniqueClusters"));
+		CheckIfValidShader(*newRenderer, newRenderer->mFindUniqueClustersComputeShader, "FindUniqueClusters");
+
+		newRenderer->mAssignLightsToClustersComputeShader = shadersystem::FindShaderHandle(STRING_ID("ClustersCullLights"));
+		CheckIfValidShader(*newRenderer, newRenderer->mAssignLightsToClustersComputeShader, "ClustersCullLights");
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1194,6 +1200,8 @@ namespace r2::draw::renderer
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
 #endif
+		ClearActiveClusters(renderer);
+	//	UpdateClusters(renderer); //@TODO(Serge): put back
 
 		PreRender(renderer);
 
@@ -1214,6 +1222,7 @@ namespace r2::draw::renderer
 
 		//printf("================================================\n");
 		cmdbkt::Sort(*renderer.mDepthPrePassBucket, key::CompareDepthKey);
+		cmdbkt::Sort(*renderer.mClustersBucket, key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionDenoiseBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mPreRenderBucket, r2::draw::key::CompareBasicKey);
@@ -1234,6 +1243,7 @@ namespace r2::draw::renderer
 
 		cmdbkt::Submit(*renderer.mPreRenderBucket);
 		cmdbkt::Submit(*renderer.mDepthPrePassBucket);
+		cmdbkt::Submit(*renderer.mClustersBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionDenoiseBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
@@ -1257,6 +1267,7 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionDenoiseBucket);
 		cmdbkt::ClearAll(*renderer.mDepthPrePassBucket);
+		cmdbkt::ClearAll(*renderer.mClustersBucket);
 		cmdbkt::ClearAll(*renderer.mCommandBucket);
 		cmdbkt::ClearAll(*renderer.mShadowBucket);
 		cmdbkt::ClearAll(*renderer.mFinalBucket);
@@ -2252,8 +2263,7 @@ namespace r2::draw::renderer
 		};
 
 		clusterVolumes.layout.InitForClusterAABBs(
-			r2::draw::CB_FLAG_WRITE | r2::draw::CB_FLAG_MAP_COHERENT,
-			0,
+			r2::draw::CB_FLAG_WRITE | CB_FLAG_MAP_COHERENT, 0,
 			r2::util::NextPowerOfTwo64Bit(renderer.mClusterTileSizes.x * renderer.mClusterTileSizes.y * renderer.mClusterTileSizes.z));
 
 		r2::sarr::Push(*renderer.mConstantLayouts, clusterVolumes);
@@ -3392,6 +3402,8 @@ namespace r2::draw::renderer
 
 		subCommandsConstData->AddDataSize(subCommandsMemorySize);
 
+
+
 		//check to see if we need to rebuild the cluster volume tiles
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
 		{
@@ -3401,7 +3413,11 @@ namespace r2::draw::renderer
 			createClusterTilesCMD->numGroupsX = renderer.mClusterTileSizes.x;
 			createClusterTilesCMD->numGroupsY = renderer.mClusterTileSizes.y;
 			createClusterTilesCMD->numGroupsZ = renderer.mClusterTileSizes.z;
+
+
 		}
+
+
 
 		//PostRenderBucket commands
 		{
@@ -3818,10 +3834,10 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION, passConfig, { RTS_ZPREPASS }, RTS_AMBIENT_OCCLUSION, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION }, RTS_AMBIENT_OCCLUSION_DENOISED, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -4374,8 +4390,54 @@ namespace r2::draw::renderer
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		auto clustersConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mClusterVolumesConfigHandle);
 
+		auto dispatchComputeConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mDispatchComputeConfigHandle);
+
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 0);
 		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 1);
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 2);
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 3);
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, clustersConstantBufferHandle, 4);
+	
+		r2::draw::renderer::AddZeroConstantBufferCommand(renderer, dispatchComputeConstantBufferHandle, 0);
+	}
+
+	void UpdateClusters(Renderer& renderer)
+	{
+		ClearActiveClusters(renderer);
+
+		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0 ||
+			renderer.mLightSystem->mSceneLighting.mNumSpotLights == 0)
+		{
+			return;
+		}
+
+		key::Basic dispatchMarkActiveClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 0, renderer.mMarkActiveClusterTilesComputeShader, 0);
+		key::Basic dispatchFindUniqueClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 1, renderer.mFindUniqueClustersComputeShader, 1);
+		key::Basic dispatchAssignLightsToClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 2, renderer.mAssignLightsToClustersComputeShader, 2);
+
+		cmd::DispatchCompute* markActiveClusters = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchMarkActiveClustersKey, 0);
+		markActiveClusters->numGroupsX = renderer.mResolutionSize.width;
+		markActiveClusters->numGroupsY = renderer.mResolutionSize.height;
+		markActiveClusters->numGroupsZ = 1;
+
+		cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, markActiveClusters, 0);
+		barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+		cmd::DispatchCompute* findUniqueClusters = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchFindUniqueClustersKey, 0);
+		findUniqueClusters->numGroupsX = renderer.mClusterTileSizes.x;
+		findUniqueClusters->numGroupsY = renderer.mClusterTileSizes.y;
+		findUniqueClusters->numGroupsZ = renderer.mClusterTileSizes.z;
+
+		cmd::Barrier* barrierCMD2 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, findUniqueClusters, 0);
+		barrierCMD2->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		ConstantBufferHandle dispatchComputeConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mDispatchComputeConfigHandle);
+
+		cmd::DispatchComputeIndirect* assignLightsCMD = AddCommand<key::Basic, cmd::DispatchComputeIndirect, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchAssignLightsToClustersKey, 0);
+		assignLightsCMD->dispatchIndirectBuffer = dispatchComputeConstantBufferHandle;
+		assignLightsCMD->offset = 0;
 	}
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name)

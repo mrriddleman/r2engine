@@ -5,12 +5,27 @@
 layout (local_size_x = 1, local_size_y = 1) in;
 
 #define NUM_FRUSTUM_SPLITS 4
+#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
+const uint MAX_NUM_LIGHTS = 50;
 
 struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
 	int channel;
+};
+
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+struct LightGrid{
+    uint offset;
+    uint count;
+    uint pad0;
+    uint pad1;
 };
 
 layout (std140, binding = 0) uniform Matrices
@@ -47,27 +62,15 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionDenoiseSurface;
 };
 
-#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
-
-struct VolumeTileAABB
-{
-	vec4 minPoint;
-	vec4 maxPoint;
-};
-
 layout (std430, binding=8) buffer Clusters
 {
+	uint globalLightIndexCount;
+	uint globalLightIndexList[MAX_NUM_LIGHTS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	LightGrid lightGrid[MAX_CLUSTERS];
 	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
-
-in VS_OUT
-{
-	vec3 normal;
-	vec3 texCoords;
-	flat uint drawID;
-} fs_in;
 
 uint GetClusterIndex(vec3 pixelCoord);
 void MarkActiveCluster(uvec2 screenCoord);
@@ -81,14 +84,6 @@ void main()
 	MarkActiveCluster(gl_WorkGroupID.xy); 
 }
 
-float LinearizeDepth(float depth) 
-{
-    float z = depth * 2.0-1.0; // back to NDC 
-    float near = exposureNearFar.y;
-    float far = exposureNearFar.z;
-
-    return (2.0 * near * far) / (far + near - z * (far - near));	
-}
 
 void MarkActiveCluster(uvec2 screenCoord)
 {
@@ -99,6 +94,15 @@ void MarkActiveCluster(uvec2 screenCoord)
 	uint clusterID = GetClusterIndex(vec3(screenCoord, z));
 
 	activeClusters[clusterID] = true;
+}
+
+float LinearizeDepth(float depth) 
+{
+    float z = depth * 2.0-1.0; // back to NDC 
+    float near = exposureNearFar.y;
+    float far = exposureNearFar.z;
+
+    return (2.0 * near * far) / (far + near - z * (far - near));	
 }
 
 uint GetDepthSlice(float z)

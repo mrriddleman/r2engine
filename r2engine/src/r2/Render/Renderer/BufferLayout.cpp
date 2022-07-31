@@ -130,6 +130,13 @@ layout (std430, binding = 7) buffer MaterialOffsets
     uint32_t materialOffsets[];
 }
 
+struct LightGrid {
+	uint offset;
+	uint count;
+	uint pad0;
+	uint pad1;
+};
+
 struct VolumeTileAABB
 {
 	vec4 minPoint;
@@ -140,12 +147,35 @@ struct VolumeTileAABB
 
 layout (std430, binding=8) buffer Clusters
 {
+	uint globalLightIndexCount;
+	uint globalLightIndexList[MAX_NUM_LIGHTS];
 	bool activeClusters[MAX_CLUSTERS];
-	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	LightGrid lightGrid[MAX_CLUSTERS];
 	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
+struct DispatchIndirectCommand
+{
+	uint numGroupsX;
+	uint numGroupsY;
+	uint numGroupsZ;
+	uint unused;
+};
+
+layout (std430, binding=9) buffer DispatchIndirectCommands
+{
+	DispatchIndirectCommand dispatchCMDs[];
+};
+
 */
+
+struct LightGrid {
+	u32 offset;
+    u32 count;
+    u32 pad0;
+    u32 pad1;
+};
 
 struct VolumeTileAABB
 {
@@ -572,6 +602,22 @@ namespace r2::draw
         u32 index = 0;
 
         mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].elementSize = sizeof(u32);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		mElements[index].type = ShaderDataType::UInt;
+
+        index++;
+
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_LIGHTS;
+		mElements[index].elementSize = sizeof(u32);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		mElements[index].type = ShaderDataType::UInt;
+
+        index++;
+
+        mElements.emplace_back(ConstantBufferElement());
 		mElements[index].typeCount = size;
 		mElements[index].elementSize = sizeof(bool);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
@@ -589,9 +635,18 @@ namespace r2::draw
 
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[index].typeCount = size;
-		mElements[index].elementSize = sizeof(VolumeTileAABB);
+        mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(LightGrid), GetBaseAlignmentSize(mElements[index].type)));
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
-		mElements[index].type = ShaderDataType::Struct;
+		
+
+		index++;
+
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = size;
+        mElements[index].type = ShaderDataType::Struct;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(VolumeTileAABB), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
 		index++;
 

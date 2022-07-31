@@ -1150,7 +1150,7 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, floa
 
 float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, bool softShadows)
 {
-	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
+	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz + vec3(-0.0, 0, 0);
 	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 
 	if(shadowPosition.z > 1.0)
@@ -1188,7 +1188,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	//don't put the shadow on the back of a surface
 	if(dot(viewDir, normal) < 0.0)
 	{
-		return 0.0; //or maybe return 1?
+		return 1.0;
 	}
 
 	float NoL = max(dot(-lightDir, normal), 0.0);
