@@ -23,14 +23,26 @@ layout (location = 0) out vec4 FragColor;
 #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-
-
+#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 
 struct Tex2DAddress
 {
 	uint64_t  container;
 	float page;
 	int channel;
+};
+
+struct VolumeTileAABB
+{
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+struct LightGrid{
+    uint offset;
+    uint count;
+    uint pad0;
+    uint pad1;
 };
 
 struct LightProperties
@@ -118,9 +130,10 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
+	vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+    vec2 clusterScaleBias;
+    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 
@@ -198,6 +211,15 @@ layout (std430, binding = 6) buffer ShadowData
 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
 };
 
+layout (std430, binding=8) buffer Clusters
+{
+	uint globalLightIndexCount;
+	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
+	bool activeClusters[MAX_CLUSTERS];
+	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+	LightGrid lightGrid[MAX_CLUSTERS];
+	VolumeTileAABB clusters[MAX_CLUSTERS];
+};
 
 in VS_OUT
 {
@@ -296,7 +318,9 @@ vec3 Eval_BRDF(
 
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
-
+uint GetClusterIndex(vec2 pixelCoord);
+float LinearizeDepth(float depth);
+uint GetDepthSlice(float z);
 
 
 float GetTextureModifier(Tex2DAddress addr)
@@ -377,8 +401,9 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
+	//float lin = LinearizeDepth(gl_FragDepth);
 
-
+	//FragColor = vec4(lin, lin, lin, 1);
 	
 	
 
@@ -979,9 +1004,15 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 	L0 += result * radiance * NoL;
 	 }
 
-	for(int i = 0; i < numPointLights; ++i)
+	uint tileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)));
+	uint pointLightCount = lightGrid[tileIndex].count;
+	uint pointLightIndexOffset = lightGrid[tileIndex].offset;
+
+	for(int i = 0; i < pointLightCount; ++i)
 	{
-		PointLight pointLight = pointLights[i];
+		uint pointLightIndex = globalLightIndexList[pointLightIndexOffset + i];
+
+		PointLight pointLight = pointLights[pointLightIndex];
 
 		vec3 posToLight = pointLight.position.xyz - fs_in.fragPos;
 
@@ -1509,4 +1540,34 @@ float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
 	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
 	penumbra *= penumbra;
 	return clamp(penumbra , 0.0, 1.0);
+}
+
+uint GetClusterIndex(vec2 pixelCoord)
+{
+	vec3 texCoord = vec3(pixelCoord / fovAspectResXResY.zw, zPrePassSurface.page);
+
+//	vec4 temp = projection * view * vec4(fs_in.fragPos, 1);
+//	vec3 temp2 = temp.xyz / temp.w;
+
+	float z =  texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
+
+	uint clusterZVal = GetDepthSlice(z);
+
+	uvec3 clusterID = uvec3(uvec2(pixelCoord.xy / clusterTileSizes.w), clusterZVal);
+
+	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
+}
+
+float LinearizeDepth(float depth)
+{
+	float z = depth * 2.0-1.0; // back to NDC 
+    float near = exposureNearFar.y;
+    float far = exposureNearFar.z;
+
+    return (2.0 * near * far) / (far + near - z * (far - near));
+}
+
+uint GetDepthSlice(float z)
+{
+	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
 }

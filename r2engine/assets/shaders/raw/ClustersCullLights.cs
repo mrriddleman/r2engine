@@ -107,7 +107,7 @@ layout (std430, binding = 4) buffer Lighting
 layout (std430, binding=8) buffer Clusters
 {
 	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS];
+	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
@@ -123,13 +123,14 @@ float SquareDistPointAABB(vec3 point, uint tile);
 void main()
 {
 	//get the tile index for this global invocation
-	uint tileIndex = uniqueActiveClusters[gl_GlobalInvocationID.x]; //we use a 1d array for the invocations in x
+	uint tileIndex = uniqueActiveClusters[gl_WorkGroupID.x]; //we use a 1d array for the invocations in x
 	uint localThreadCount = gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z;
 	uint numBatches = (numPointLights + localThreadCount - 1) / localThreadCount;
 
 	visibleLightCount = 0;
-	memoryBarrierShared();
 	barrier();
+	memoryBarrierShared();
+	
 
 	for(uint batch = 0; batch < numBatches; ++batch)
 	{
@@ -139,13 +140,12 @@ void main()
 		{
 			uint offset = atomicAdd(visibleLightCount, 1);
 			visibleLightIndices[offset] = lightIndex;
-			
-			memoryBarrierShared();
 		}
 	}
 
-	memoryBarrierShared();
 	barrier();
+	memoryBarrierShared();
+	
 
 	if(gl_LocalInvocationIndex == 0)
 	{

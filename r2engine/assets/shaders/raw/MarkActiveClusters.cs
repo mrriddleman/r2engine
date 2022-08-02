@@ -65,7 +65,7 @@ layout (std140, binding = 2) uniform Surfaces
 layout (std430, binding=8) buffer Clusters
 {
 	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS];
+	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
@@ -83,7 +83,6 @@ void main()
 	//assuming that we use the global dispatch to be the screen size
 	MarkActiveCluster(gl_WorkGroupID.xy); 
 }
-
 
 void MarkActiveCluster(uvec2 screenCoord)
 {

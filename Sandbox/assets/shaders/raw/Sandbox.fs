@@ -215,7 +215,7 @@ layout (std430, binding = 6) buffer ShadowData
 layout (std430, binding=8) buffer Clusters
 {
 	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS];
+	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
@@ -403,10 +403,13 @@ void main()
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
 
-	//uint tileIndex = GetClusterIndex(vec3(gl_FragCoord.xyz));
+	//uint tileIndex = GetClusterIndex(vec2(gl_FragCoord.xy));
+
 
 
 	//float x = (float)tileIndex / (float)(clusterTileSizes.x * clusterTileSizes.y * clusterTileSizes.z);
+
+
 
 	//FragColor = vec4(x, x, x, 1);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
@@ -900,6 +903,7 @@ vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 an
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 {
+
 	vec3 color = vec3(0.0);
 
 	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
@@ -1009,13 +1013,13 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 	L0 += result * radiance * NoL;
 	}
 
-	uint tileIndex = GetClusterIndex(vec2(gl_FragCoord.xy));
-	uint pointLightCount = lightGrid[tileIndex].count;
+	uint tileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)));
+	int pointLightCount = (int)lightGrid[tileIndex].count;
 	uint pointLightIndexOffset = lightGrid[tileIndex].offset;
 
-	for(uint i = 0; i < pointLightCount; ++i)
+	for(int i = 0; i < pointLightCount; ++i)
 	{
-		uint pointLightIndex = globalLightIndexList[pointLightIndexOffset + i];
+		int pointLightIndex = (int)globalLightIndexList[pointLightIndexOffset + i];
 
 		PointLight pointLight = pointLights[pointLightIndex];
 		

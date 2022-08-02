@@ -35,6 +35,7 @@
 #include "r2/Render/Model/ModelSystem.h"
 #include "r2/Render/Model/Material.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Utils/Random.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -727,7 +728,7 @@ public:
 			dirLight.lightProperties.intensity = 2;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+        //    r2::draw::renderer::AddDirectionLight(dirLight);
 
 
 
@@ -753,21 +754,37 @@ public:
    //         spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
 			//r2::draw::renderer::AddSpotLight( spotLight);
-
-     //       r2::draw::PointLight pointLight;
-
-    //        pointLight.position = glm::vec4(0, 0, 5, 1.0);
-    //        pointLight.lightProperties.color = glm::vec4(1.0f);
-
-    //        pointLight.lightProperties.intensity = 100.0;
-    //        pointLight.lightProperties.fallOff = 0.01;
-
-    //        pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
-
-    //        r2::draw::renderer::AddPointLight(pointLight);
+            r2::util::Random randomizer;
 
 
-   //        // r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight);
+            for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
+            {
+				r2::draw::PointLight pointLight;
+
+                auto zPos = (int)randomizer.RandomNum(0, 5);
+                auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+                auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
+
+                auto r = randomizer.RandomNum(0, 255);
+                auto g = randomizer.RandomNum(0, 255);
+                auto b = randomizer.RandomNum(0, 255);
+
+				pointLight.position = glm::vec4(xPos, yPos, zPos, 1.0);
+
+				pointLight.lightProperties.color = glm::vec4((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+
+				pointLight.lightProperties.intensity = 100.0;
+				pointLight.lightProperties.fallOff = 0.1;
+
+				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
+
+				r2::draw::renderer::AddPointLight(pointLight);
+            }
+
+            
+
+
+
    //         
 			//r2::draw::PointLight pointLight2;
 
@@ -778,7 +795,7 @@ public:
 			//pointLight2.lightProperties.fallOff = 0.01;
 
 
-			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight2);
+
 
 			//r2::draw::PointLight pointLight3;
 

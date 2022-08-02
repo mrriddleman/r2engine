@@ -560,7 +560,7 @@ namespace r2::draw::renderer
 #endif
 
 
-	s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat::TextureFormat format, bool isCubemap)
+	s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat:: TextureFormat format, bool isCubemap)
 	{
 		const u64 numFormats = r2::sarr::Size(*formats);
 		for (u64 i = 0; i < numFormats; ++i)
@@ -1200,8 +1200,8 @@ namespace r2::draw::renderer
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
 #endif
-		ClearActiveClusters(renderer);
-	//	UpdateClusters(renderer); //@TODO(Serge): put back
+
+		UpdateClusters(renderer); //@TODO(Serge): put back
 
 		PreRender(renderer);
 
@@ -3413,11 +3413,7 @@ namespace r2::draw::renderer
 			createClusterTilesCMD->numGroupsX = renderer.mClusterTileSizes.x;
 			createClusterTilesCMD->numGroupsY = renderer.mClusterTileSizes.y;
 			createClusterTilesCMD->numGroupsZ = renderer.mClusterTileSizes.z;
-
-
 		}
-
-
 
 		//PostRenderBucket commands
 		{
@@ -3563,28 +3559,28 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 				}
 
-				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
+				//const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, 0);
+				//key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, 0);
 
-				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
-				{
-					cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
-					pointLightBatchIndexUpdateCMD->value = i;
-					pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticPointLightBatchUniformLocation;
+				//for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
+				//{
+				//	cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
+				//	pointLightBatchIndexUpdateCMD->value = i;
+				//	pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticPointLightBatchUniformLocation;
 
-					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
+				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
-					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
-					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				}
+				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				//	shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				//	shadowDrawBatch->subCommands = nullptr;
+				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+				//}
 
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
@@ -3676,41 +3672,41 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
 				}
 
-				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
+				//const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, 0);
+				//key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, 0);
 
-				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
-				{
-					cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
-					pointLightBatchIndexUpdateCMD->value = i;
-					pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicPointLightBatchUniformLocation;
+				//for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
+				//{
+				//	cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
+				//	pointLightBatchIndexUpdateCMD->value = i;
+				//	pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicPointLightBatchUniformLocation;
 
-					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
+				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
-					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
-					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				}
+				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				//	shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				//	shadowDrawBatch->subCommands = nullptr;
+				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+				//}
 
-				//key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
 
-				//cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
-				//zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
-				//zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
-				//zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//zppDrawBatch->subCommands = nullptr;
-				//zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				zppDrawBatch->subCommands = nullptr;
+				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
 
 			}
 
@@ -4405,8 +4401,7 @@ namespace r2::draw::renderer
 	{
 		ClearActiveClusters(renderer);
 
-		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0 ||
-			renderer.mLightSystem->mSceneLighting.mNumSpotLights == 0)
+		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0)
 		{
 			return;
 		}
@@ -4429,7 +4424,7 @@ namespace r2::draw::renderer
 		findUniqueClusters->numGroupsZ = renderer.mClusterTileSizes.z;
 
 		cmd::Barrier* barrierCMD2 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, findUniqueClusters, 0);
-		barrierCMD2->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+		barrierCMD2->flags = cmd::ALL_BARRIER_BITS;
 
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
@@ -4438,6 +4433,9 @@ namespace r2::draw::renderer
 		cmd::DispatchComputeIndirect* assignLightsCMD = AddCommand<key::Basic, cmd::DispatchComputeIndirect, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchAssignLightsToClustersKey, 0);
 		assignLightsCMD->dispatchIndirectBuffer = dispatchComputeConstantBufferHandle;
 		assignLightsCMD->offset = 0;
+
+		cmd::Barrier* barrierCMD3 = AppendCommand<cmd::DispatchComputeIndirect, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, assignLightsCMD, 0);
+		barrierCMD3->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 	}
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name)
@@ -5901,15 +5899,15 @@ namespace r2::draw::renderer
 
 			if (numPointLights > 0)
 			{
-				key::ShadowKey dispatchPointLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mPointLightLightMatrixShader, false, light::LightType::LT_POINT_LIGHT, 0);
+				//key::ShadowKey dispatchPointLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mPointLightLightMatrixShader, false, light::LightType::LT_POINT_LIGHT, 0);
 
-				cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchPointLightShadowMatricesKey, 0);
-				dispatchCMD->numGroupsX = numPointLights;
-				dispatchCMD->numGroupsY = 1;
-				dispatchCMD->numGroupsZ = 1;
-
+				//cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchPointLightShadowMatricesKey, 0);
+				//dispatchCMD->numGroupsX = numPointLights;
+				//dispatchCMD->numGroupsY = 1;
+				//dispatchCMD->numGroupsZ = 1;
+/*
 				cmd::Barrier* pointLightBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
-				pointLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+				pointLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;*/
 			}
 
 		}

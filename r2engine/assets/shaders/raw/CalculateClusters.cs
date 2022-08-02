@@ -45,7 +45,7 @@ layout (std140, binding = 1) uniform Vectors
 layout (std430, binding=8) buffer Clusters
 {
 	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS];
+	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];

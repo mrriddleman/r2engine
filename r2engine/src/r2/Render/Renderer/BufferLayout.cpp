@@ -610,7 +610,7 @@ namespace r2::draw
         index++;
 
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = light::MAX_NUM_LIGHTS;
+		mElements[index].typeCount = light::MAX_NUM_LIGHTS * size; //each cluster could have all of the lights in it I guess?
 		mElements[index].elementSize = sizeof(u32);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 		mElements[index].type = ShaderDataType::UInt;
