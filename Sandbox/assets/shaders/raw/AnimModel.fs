@@ -39,10 +39,10 @@ struct VolumeTileAABB
 };
 
 struct LightGrid{
-    uint offset;
-    uint count;
-    uint pad0;
-    uint pad1;
+    uint pointLightOffset;
+    uint pointLightCount;
+    uint spotLightOffset;
+    uint spotLightCount;
 };
 
 struct LightProperties
@@ -213,8 +213,8 @@ layout (std430, binding = 6) buffer ShadowData
 
 layout (std430, binding=8) buffer Clusters
 {
-	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
+	uvec2 globalLightIndexCount;
+	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
@@ -1005,12 +1005,12 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	 }
 
 	uint tileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)));
-	uint pointLightCount = lightGrid[tileIndex].count;
-	uint pointLightIndexOffset = lightGrid[tileIndex].offset;
+	uint pointLightCount = lightGrid[tileIndex].pointLightCount;
+	uint pointLightIndexOffset = lightGrid[tileIndex].pointLightOffset;
 
 	for(int i = 0; i < pointLightCount; ++i)
 	{
-		uint pointLightIndex = globalLightIndexList[pointLightIndexOffset + i];
+		uint pointLightIndex = globalLightIndexList[pointLightIndexOffset + i].x;
 
 		PointLight pointLight = pointLights[pointLightIndex];
 
@@ -1039,9 +1039,14 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 		L0 += result * radiance * NoL;
 	}
 
-	for(int i = 0; i < numSpotLights; ++i)
+	uint spotLightCount = lightGrid[tileIndex].spotLightCount;
+	uint spotLightIndexOffset = lightGrid[tileIndex].spotLightOffset;
+
+	for(int i = 0; i < spotLightCount; ++i)
 	{
-		SpotLight spotLight = spotLights[i];
+		uint spotLightIndex = globalLightIndexList[spotLightIndexOffset + i].y;
+
+		SpotLight spotLight = spotLights[spotLightIndex];
 
 		vec3 posToLight = spotLight.position.xyz - fs_in.fragPos;
 

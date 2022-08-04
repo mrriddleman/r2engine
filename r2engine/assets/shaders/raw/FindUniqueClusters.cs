@@ -14,10 +14,10 @@ struct VolumeTileAABB
 };
 
 struct LightGrid{
-    uint offset;
-    uint count;
-    uint pad0;
-    uint pad1;
+    uint pointLightOffset;
+    uint pointLightCount;
+    uint spotLightOffset;
+    uint spotLightCount;
 };
 
 struct DispatchIndirectCommand
@@ -43,8 +43,8 @@ layout (std140, binding = 1) uniform Vectors
 
 layout (std430, binding=8) buffer Clusters
 {
-	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
+	uvec2 globalLightIndexCount;
+	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];

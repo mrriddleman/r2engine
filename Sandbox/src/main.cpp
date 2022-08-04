@@ -742,32 +742,44 @@ public:
 
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
-			//r2::draw::SpotLight spotLight;
-			//spotLight.lightProperties.color = glm::vec4(1.0f);
-
-			//spotLight.position = glm::vec4(1.0f, 0.0f, 5.0f, glm::cos(glm::radians(30.f)));
-			//spotLight.direction = glm::vec4(glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - glm::vec3(spotLight.position)), glm::cos(glm::radians(45.f)));
-
-
-			//spotLight.lightProperties.intensity = 100;
-			//spotLight.lightProperties.fallOff = 0.01;
-   //         spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
-
-			//r2::draw::renderer::AddSpotLight( spotLight);
+			
             r2::util::Random randomizer;
 
+			for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
+			{
+				auto zPos = (int)randomizer.RandomNum(2, 3);
+				auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+				auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
 
-            for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
-            {
+				auto r = randomizer.RandomNum(0, 255);
+				auto g = randomizer.RandomNum(0, 255);
+				auto b = randomizer.RandomNum(0, 255);
+
+				r2::draw::SpotLight spotLight;
+				spotLight.lightProperties.color = glm::vec4((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+
+				spotLight.position = glm::vec4(xPos, yPos, zPos, glm::cos(glm::radians(30.f)));
+				spotLight.direction = glm::vec4(glm::vec3(0, 0, -1), glm::cos(glm::radians(45.f)));
+
+				spotLight.lightProperties.intensity = 100;
+				spotLight.lightProperties.fallOff = 0.1;
+				spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
+
+				r2::draw::renderer::AddSpotLight(spotLight);
+			}
+
+
+			for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
+			{
 				r2::draw::PointLight pointLight;
 
-                auto zPos = (int)randomizer.RandomNum(0, 5);
-                auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
-                auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
+				auto zPos = (int)randomizer.RandomNum(0, 5);
+				auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+				auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
 
-                auto r = randomizer.RandomNum(0, 255);
-                auto g = randomizer.RandomNum(0, 255);
-                auto b = randomizer.RandomNum(0, 255);
+				auto r = randomizer.RandomNum(0, 255);
+				auto g = randomizer.RandomNum(0, 255);
+				auto b = randomizer.RandomNum(0, 255);
 
 				pointLight.position = glm::vec4(xPos, yPos, zPos, 1.0);
 
@@ -779,7 +791,7 @@ public:
 				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
 
 				r2::draw::renderer::AddPointLight(pointLight);
-            }
+			}
 
             
 

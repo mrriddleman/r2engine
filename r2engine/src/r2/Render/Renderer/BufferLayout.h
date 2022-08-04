@@ -34,6 +34,8 @@ namespace r2::draw
         UInt64,
         Struct,
         UInt,
+        UInt2,
+        UInt3,
         UInt4,
     };
     

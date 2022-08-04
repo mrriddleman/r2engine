@@ -2,7 +2,7 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 2) in;
 
 #define NUM_FRUSTUM_SPLITS 4
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
@@ -68,12 +68,11 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-
 struct LightGrid{
-    uint offset;
-    uint count;
-    uint pad0;
-    uint pad1;
+    uint pointLightOffset;
+    uint pointLightCount;
+    uint spotLightOffset;
+    uint spotLightCount;
 };
 
 struct VolumeTileAABB{
@@ -106,66 +105,115 @@ layout (std430, binding = 4) buffer Lighting
 
 layout (std430, binding=8) buffer Clusters
 {
-	uint globalLightIndexCount;
-	uint globalLightIndexList[MAX_NUM_LIGHTS * MAX_CLUSTERS];
+	uvec2 globalLightIndexCount;
+	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
 	VolumeTileAABB clusters[MAX_CLUSTERS];
 };
 
-shared uint visibleLightCount;
-shared uint visibleLightIndices[MAX_NUM_LIGHTS];
+shared uint visiblePointLightCount;
+shared uint visibleSpotLightCount;
+shared uint visiblePointLightIndices[MAX_NUM_LIGHTS];
+shared uint visibleSpotLightIndices[MAX_NUM_LIGHTS];
 
-bool TestSphereAABB(uint light, uint tile);
+bool TestPointLightSphereAABB(uint light, uint tile);
+bool TestSpotLightAABB(uint light, uint tile);
 float SquareDistPointAABB(vec3 point, uint tile);
 
 void main()
 {
 	//get the tile index for this global invocation
 	uint tileIndex = uniqueActiveClusters[gl_WorkGroupID.x]; //we use a 1d array for the invocations in x
-	uint localThreadCount = gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z;
-	uint numBatches = (numPointLights + localThreadCount - 1) / localThreadCount;
+	uint localThreadCount = gl_WorkGroupSize.x * gl_WorkGroupSize.y;
+	uint numPointLightBatches = (numPointLights + localThreadCount - 1) / localThreadCount;
+	uint numSpotLightBatches = (numSpotLights + localThreadCount - 1) / localThreadCount;
 
-	visibleLightCount = 0;
+	visiblePointLightCount = 0;
+	visibleSpotLightCount = 0;
+
 	barrier();
 	memoryBarrierShared();
-	
 
-	for(uint batch = 0; batch < numBatches; ++batch)
+	uint localIndex = (gl_LocalInvocationID.x + gl_LocalInvocationID.y * gl_WorkGroupSize.x);
+	
+	if(gl_LocalInvocationID.z == 0)
 	{
-		uint lightIndex = batch * localThreadCount + gl_LocalInvocationIndex;
-		
-		if(lightIndex < numPointLights && TestSphereAABB(lightIndex, tileIndex))
+		for(uint batch = 0; batch < numPointLightBatches; ++batch)
 		{
-			uint offset = atomicAdd(visibleLightCount, 1);
-			visibleLightIndices[offset] = lightIndex;
+			uint lightIndex = batch * localThreadCount + localIndex;
+			
+			if(lightIndex < numPointLights && TestPointLightSphereAABB(lightIndex, tileIndex))
+			{
+				uint offset = atomicAdd(visiblePointLightCount, 1);
+				visiblePointLightIndices[offset] = lightIndex;
+			}
 		}
 	}
 
+	if(gl_LocalInvocationID.z == 1)
+	{
+		for(uint batch = 0; batch < numSpotLightBatches; ++batch)
+		{
+			uint lightIndex = batch * localThreadCount + localIndex;
+
+			if(lightIndex < numSpotLights && TestSpotLightAABB(lightIndex, tileIndex) )
+			{
+				uint offset = atomicAdd(visibleSpotLightCount, 1);
+				visibleSpotLightIndices[offset] = lightIndex;
+			}
+		}
+	}
+	
 	barrier();
 	memoryBarrierShared();
-	
 
 	if(gl_LocalInvocationIndex == 0)
 	{
-		uint offset = atomicAdd(globalLightIndexCount, visibleLightCount);
+		uint offset = atomicAdd(globalLightIndexCount.x, visiblePointLightCount);
 
-		for(uint i = 0; i < visibleLightCount; ++i)
+		for(uint i = 0; i < visiblePointLightCount; ++i)
 		{
-			globalLightIndexList[offset + i] = visibleLightIndices[i];
+			globalLightIndexList[offset + i].x = visiblePointLightIndices[i];
 		}
 
-		lightGrid[tileIndex].offset = offset;
-		lightGrid[tileIndex].count = visibleLightCount;
+		lightGrid[tileIndex].pointLightOffset = offset;
+		lightGrid[tileIndex].pointLightCount = visiblePointLightCount;
+
+
+		uint offset2 = atomicAdd(globalLightIndexCount.y, visibleSpotLightCount);
+
+		for(uint i = 0; i < visibleSpotLightCount; ++i)
+		{
+			globalLightIndexList[offset2 + i].y = visibleSpotLightIndices[i];
+		}
+
+		lightGrid[tileIndex].spotLightOffset = offset2;
+		lightGrid[tileIndex].spotLightCount = visibleSpotLightCount;
 	}
+	
+
 }
 
-bool TestSphereAABB(uint light, uint tile)
+bool TestPointLightSphereAABB(uint light, uint tile)
 {
  	float radiusSq = 1.0 / pointLights[light].lightProperties.fallOffRadius;
+
     vec3 center  = vec3(view * pointLights[light].position);
+
     float squaredDistance = SquareDistPointAABB(center, tile);
+
+    return squaredDistance <= radiusSq;
+}
+
+bool TestSpotLightAABB(uint light, uint tile)
+{
+	float radiusSq = 1.0 / spotLights[light].lightProperties.fallOffRadius;
+
+	vec3 center = vec3(view * vec4(spotLights[light].position.xyz, 1));
+
+	float squaredDistance = SquareDistPointAABB(center, tile);
 
     return squaredDistance <= radiusSq;
 }

@@ -203,6 +203,10 @@ namespace r2::draw
             case ShaderDataType::Int4:     return 4 * 4;
             case ShaderDataType::Bool:     return 1;
             case ShaderDataType::UInt:      return 4;
+            case ShaderDataType::UInt2:     return 4 * 2;
+            case ShaderDataType::UInt3:     return 4 * 3;
+            case ShaderDataType::UInt4:     return 4 * 4;
+            case ShaderDataType::UInt64:    return 8;
             case ShaderDataType::None:
                 break;
         }
@@ -228,6 +232,8 @@ namespace r2::draw
 		case ShaderDataType::Bool:    return 1;
         case ShaderDataType::Struct:  return 1;
         case ShaderDataType::UInt:    return 1;
+        case ShaderDataType::UInt2:   return 2;
+        case ShaderDataType::UInt3:   return 3;
         case ShaderDataType::UInt4:   return 4;
 		case ShaderDataType::None:    break;
 		}
@@ -320,6 +326,8 @@ namespace r2::draw
         case ShaderDataType::UInt:      return 4;
         case ShaderDataType::UInt64:    return 8;
         case ShaderDataType::UInt4:     return 4 * 4;
+        case ShaderDataType::UInt2:     return 4 * 2;
+        case ShaderDataType::UInt3:     return 4 * 3;
 		case ShaderDataType::None:
 			break;
 		}
@@ -603,17 +611,17 @@ namespace r2::draw
 
         mElements.emplace_back(ConstantBufferElement());
 		mElements[index].typeCount = 1;
-		mElements[index].elementSize = sizeof(u32);
+		mElements[index].elementSize = sizeof(glm::uvec2);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
-		mElements[index].type = ShaderDataType::UInt;
+		mElements[index].type = ShaderDataType::UInt2;
 
         index++;
 
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = light::MAX_NUM_LIGHTS * size; //each cluster could have all of the lights in it I guess?
-		mElements[index].elementSize = sizeof(u32);
+		mElements[index].typeCount = (light::MAX_NUM_LIGHTS/2) * size; //each cluster could have all of the lights in it I guess?
+		mElements[index].elementSize = sizeof(glm::uvec2);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
-		mElements[index].type = ShaderDataType::UInt;
+		mElements[index].type = ShaderDataType::UInt2;
 
         index++;
 

@@ -4401,7 +4401,8 @@ namespace r2::draw::renderer
 	{
 		ClearActiveClusters(renderer);
 
-		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0)
+		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0 &&
+			renderer.mLightSystem->mSceneLighting.mNumSpotLights == 0)
 		{
 			return;
 		}
