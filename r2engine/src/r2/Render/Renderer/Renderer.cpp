@@ -3117,9 +3117,6 @@ namespace r2::draw::renderer
 		const s32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
 		const s32 numPointLights = renderer.mLightSystem->mSceneLighting.mNumPointLights;
 
-
-		
-
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
 		const VertexLayoutConfigHandle& animVertexLayoutHandles = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mAnimVertexModelConfigHandle);
 		const VertexLayoutConfigHandle& staticVertexLayoutHandles = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mStaticVertexModelConfigHandle);
@@ -3505,7 +3502,11 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-
+			drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+			if (batchOffset.layer == DL_SKYBOX)
+			{
+				drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
+			}
 
 			if (batchOffset.layer == DL_WORLD)
 			{
@@ -3534,6 +3535,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
 				//const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
@@ -3595,6 +3597,7 @@ namespace r2::draw::renderer
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				zppDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 			}
 
 			//@TODO(Serge): add commands to different buckets
@@ -3617,7 +3620,7 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-
+			drawBatch->state.depthFunction = cmd::DEPTH_LESS;
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
@@ -3647,6 +3650,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
 				//const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
@@ -3707,6 +3711,7 @@ namespace r2::draw::renderer
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				zppDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 
 			}
 
@@ -4987,7 +4992,7 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-
+				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
 			}
 			else
 			{
@@ -5001,6 +5006,7 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
 			}
 		}
 	}

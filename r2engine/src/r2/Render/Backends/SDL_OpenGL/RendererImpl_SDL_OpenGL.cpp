@@ -362,7 +362,10 @@ namespace r2::draw::rendererimpl
 	void SetDepthTest(bool shouldDepthTest)
 	{
 		if (shouldDepthTest)
+		{
 			glEnable(GL_DEPTH_TEST);
+			glDepthMask(GL_TRUE);
+		}
 		else
 			glDisable(GL_DEPTH_TEST);
 	}
@@ -370,6 +373,11 @@ namespace r2::draw::rendererimpl
 	void SetCullFace(u32 cullFace)
 	{
 		glCullFace(cullFace);
+	}
+
+	void SetDepthFunction(u32 depthFunc)
+	{
+		glDepthFunc(depthFunc);
 	}
 
 	void SetDepthClamp(bool shouldDepthClamp)
@@ -616,17 +624,7 @@ namespace r2::draw::rendererimpl
 
 	void SetViewportLayer(u32 viewportLayer)
 	{
-		//	glEnable(GL_CULL_FACE);
-		//	glFrontFace(GL_CCW);
-		//	glCullFace(GL_BACK);
-
-		glDepthFunc(GL_LESS);
-
-		if (viewportLayer == DrawLayer::DL_SKYBOX)
-		{
-			//glDisable(GL_CULL_FACE);
-			glDepthFunc(GL_LEQUAL); //@TODO(Serge): put this in the state
-		}
+		//@TODO(Serge): implement
 	}
 
 	void SetMaterialID(r2::draw::MaterialHandle materialID)
@@ -767,9 +765,9 @@ namespace r2::draw::rendererimpl
 
 	void ApplyDrawState(const cmd::DrawState& state)
 	{
-		//glDepthMask(state.depthEnabled);
 		SetDepthTest(state.depthEnabled);
 		SetCullFace(state.cullState);
+		SetDepthFunction(state.depthFunction);
 	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)

@@ -25,12 +25,16 @@ namespace r2::draw::cmd
 	extern u32 FRAMEBUFFER_BARRIER_BIT;
 	extern u32 ALL_BARRIER_BITS;
 	
+	extern u32 DEPTH_LESS;
+	extern u32 DEPTH_LEQUAL;
+	extern u32 DEPTH_EQUAL;
 
 	struct DrawState
 	{
 		DrawLayer layer;
 		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
 		u32 cullState;
+		u32 depthFunction;
 	};
 
 	struct Clear

@@ -66,6 +66,7 @@ namespace r2::draw::rendererimpl
 	void SetDepthTest(bool shouldDepthTest);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 	void SetCullFace(u32 cullFace);
+	void SetDepthFunction(u32 depthFunc);
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name);
 
 	void SetDepthClamp(bool shouldDepthClamp);
