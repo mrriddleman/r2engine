@@ -114,6 +114,10 @@ namespace r2::draw::cmd
 	u32 SHADER_STORAGE_BARRIER_BIT = GL_SHADER_STORAGE_BARRIER_BIT;
 	u32 FRAMEBUFFER_BARRIER_BIT = GL_FRAMEBUFFER_BARRIER_BIT;
 	u32 ALL_BARRIER_BITS = GL_ALL_BARRIER_BITS;
+
+	u32 DEPTH_LESS = GL_LESS;
+	u32 DEPTH_LEQUAL = GL_LEQUAL;
+	u32 DEPTH_EQUAL = GL_EQUAL;
 }
 
 namespace r2::draw::rendererimpl
@@ -212,6 +216,10 @@ namespace r2::draw::rendererimpl
 
 		//Limits
 		SetLimits(s_optrRendererImpl);
+
+#if defined R2_DEBUG
+		glEnable(GL_DEBUG_OUTPUT);
+#endif
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr && s_optrRendererImpl->mGPUBuffers != nullptr;
 	}

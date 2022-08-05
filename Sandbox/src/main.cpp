@@ -340,7 +340,7 @@ public:
         }
 #endif
 
-        mPersController.Init(3.5f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mPersController.Init(10.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -747,9 +747,9 @@ public:
 
 			for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
 			{
-				auto zPos = (int)randomizer.RandomNum(2, 3);
-				auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
-				auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
+				auto zPos = (int)randomizer.RandomNum(1, 10);
+				auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
+				auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
 
 				auto r = randomizer.RandomNum(0, 255);
 				auto g = randomizer.RandomNum(0, 255);
@@ -773,9 +773,9 @@ public:
 			{
 				r2::draw::PointLight pointLight;
 
-				auto zPos = (int)randomizer.RandomNum(0, 5);
-				auto xPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
-				auto yPos = (int)randomizer.RandomNum(0, 5) - (int)randomizer.RandomNum(0, 5);
+				auto zPos = (int)randomizer.RandomNum(1, 10);
+				auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
+				auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
 
 				auto r = randomizer.RandomNum(0, 255);
 				auto g = randomizer.RandomNum(0, 255);

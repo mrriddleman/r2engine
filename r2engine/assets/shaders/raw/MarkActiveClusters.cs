@@ -2,7 +2,7 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (local_size_x = 1, local_size_y = 1) in;
+layout (local_size_x = 22, local_size_y = 22) in;
 
 #define NUM_FRUSTUM_SPLITS 4
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
@@ -81,7 +81,12 @@ float LinearizeDepth(float depth);
 void main()
 {
 	//assuming that we use the global dispatch to be the screen size
-	MarkActiveCluster(gl_WorkGroupID.xy); 
+
+	uvec2 screenCoord;
+	screenCoord.x = gl_WorkGroupID.x * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
+	screenCoord.y = gl_WorkGroupID.y * gl_WorkGroupSize.y + gl_LocalInvocationID.y;
+
+	MarkActiveCluster(screenCoord); 
 }
 
 void MarkActiveCluster(uvec2 screenCoord)

@@ -947,7 +947,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	vec2 dfg = SampleLUTDFG(vec2(NoV, roughness)).rg;
 
 	vec3 energyCompensation = CalcEnergyCompensation(F0, dfg);
-	float specularAO = SpecularAO_Lagarde(NoV, ao, roughness);
+	float specularAO =  SpecularAO_Lagarde(NoV, ao, roughness);
 
 	vec3 E = F_SchlickRoughness(NoV, F0, roughness);
 	vec3 Fr = vec3(0);

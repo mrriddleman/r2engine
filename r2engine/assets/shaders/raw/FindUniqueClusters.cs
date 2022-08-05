@@ -2,7 +2,7 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 2) in;
 
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 const uint MAX_NUM_LIGHTS = 50;
@@ -56,11 +56,15 @@ layout (std430, binding=9) buffer DispatchIndirectCommands
 	DispatchIndirectCommand dispatchCMDs[];
 };
 
-uint GetClusterIndex(uvec3 tileID);
+//uint GetClusterIndex(uvec3 tileID);
 
 void main()
 {
-	uint clusterIndex = GetClusterIndex(gl_WorkGroupID);
+
+	uint numLocalThreads = (gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z);
+	uint globalIndex = gl_WorkGroupID.x + gl_WorkGroupID.y * (gl_NumWorkGroups.x) + gl_WorkGroupID.z * (gl_NumWorkGroups.x * gl_NumWorkGroups.y);
+	uint clusterIndex = numLocalThreads * globalIndex + gl_LocalInvocationIndex;
+
 	if(activeClusters[clusterIndex])
 	{
 		uint offset = atomicAdd(dispatchCMDs[0].numGroupsX, 1);
@@ -71,7 +75,7 @@ void main()
 	dispatchCMDs[0].numGroupsZ = 1;
 }
 
-uint GetClusterIndex(uvec3 clusterID)
-{
-	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
-}
+// uint GetClusterIndex(uvec3 clusterID)
+// {
+// 	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
+// }

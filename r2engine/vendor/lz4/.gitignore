@@ -1,0 +1,5 @@
+/bin
+*.xcodeproj/
+/bin-int
+*.vcxproj
+*.vcxproj.user

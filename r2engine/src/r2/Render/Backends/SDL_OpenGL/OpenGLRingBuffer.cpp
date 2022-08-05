@@ -39,7 +39,7 @@ namespace r2::draw::rendererimpl
 			r2::SArray<BufferLock>& locks = *ringBuffer.locks;
 			const u64 numLocks = r2::sarr::Size(locks);
 
-			r2::SArray<BufferLock>* swapLocks = ringBuffer.swapLocks;//MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, BufferLock, numLocks);
+			r2::SArray<BufferLock>* swapLocks = ringBuffer.swapLocks;
 
 			for (u64 i = 0; i < numLocks; ++i)
 			{
@@ -65,7 +65,6 @@ namespace r2::draw::rendererimpl
 			r2::sarr::Copy(locks, *swapLocks);
 
 			r2::sarr::Clear(*ringBuffer.swapLocks);
-		//	FREE(swapLocks, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		GLsizeiptr GetHead(RingBuffer& ringBuffer)
