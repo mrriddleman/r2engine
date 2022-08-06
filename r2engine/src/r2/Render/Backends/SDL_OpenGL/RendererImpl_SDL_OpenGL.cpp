@@ -385,7 +385,7 @@ namespace r2::draw::rendererimpl
 		glDepthMask(GL_TRUE);
 		glDepthFunc(depthFunc);
 
-		if (depthFunc == cmd::DEPTH_EQUAL || depthFunc == cmd::DEPTH_LEQUAL)
+		if (depthFunc == cmd::DEPTH_EQUAL)
 		{
 			glDepthMask(GL_FALSE);	
 		}

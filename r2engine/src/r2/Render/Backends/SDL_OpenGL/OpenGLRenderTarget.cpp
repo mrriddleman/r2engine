@@ -43,7 +43,7 @@ namespace r2::draw::rt::impl
 		}
 		else if (type == DEPTH)
 		{
-			format.internalformat = GL_DEPTH_COMPONENT24;
+			format.internalformat = GL_DEPTH_COMPONENT16;
 			format.borderColor = glm::vec4(1.0f);
 		}
 		else if (type == DEPTH_CUBEMAP)

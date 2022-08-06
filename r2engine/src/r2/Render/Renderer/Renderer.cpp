@@ -3436,7 +3436,7 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
+			drawBatch->state.depthFunction = cmd::DEPTH_EQUAL;
 
 			if (batchOffset.layer == DL_SKYBOX)
 			{
@@ -3555,7 +3555,7 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
+			drawBatch->state.depthFunction = cmd::DEPTH_EQUAL;
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
