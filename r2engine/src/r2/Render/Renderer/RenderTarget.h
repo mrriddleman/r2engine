@@ -86,6 +86,8 @@ namespace r2::draw
 
 		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
 
+		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
+
 		//returns the first index of the number of texture pages
 		float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 
@@ -97,6 +99,7 @@ namespace r2::draw
 		namespace impl
 		{
 			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+			void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
 			float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 			void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages);
 			void AddDepthAndStencilAttachment(RenderTarget& rt);
@@ -172,15 +175,15 @@ namespace r2::draw
 			{
 				FREE(rt.renderBufferAttachments, arena);
 			}
+			
+			if (rt.depthAttachments)
+			{
+				FREE(rt.depthAttachments, arena);
+			}
 
 			if (rt.colorAttachments)
 			{
 				FREE(rt.colorAttachments, arena);
-			}
-
-			if (rt.depthAttachments)
-			{
-				FREE(rt.depthAttachments, arena);
 			}
 		}
 

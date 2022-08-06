@@ -43,7 +43,7 @@ namespace r2::draw::rt::impl
 		}
 		else if (type == DEPTH)
 		{
-			format.internalformat = GL_DEPTH_COMPONENT16;
+			format.internalformat = GL_DEPTH_COMPONENT24;
 			format.borderColor = glm::vec4(1.0f);
 		}
 		else if (type == DEPTH_CUBEMAP)
@@ -119,6 +119,25 @@ namespace r2::draw::rt::impl
 
 	}
 
+	void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
+
+		if (type == DEPTH)
+		{
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+			
+			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+			R2_CHECK(result, "Failed to attach texture to frame buffer");
+		}
+		else
+		{
+			R2_CHECK(false, "Unsupported texture attachment type: %d", type);
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
 	float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages)
 	{

@@ -377,7 +377,20 @@ namespace r2::draw::rendererimpl
 
 	void SetDepthFunction(u32 depthFunc)
 	{
+		if (depthFunc != cmd::DEPTH_EQUAL && depthFunc != cmd::DEPTH_LESS && depthFunc != cmd::DEPTH_LEQUAL)
+		{
+			R2_CHECK(false, "depthFunc not supported yet!");
+		}
+
+		glDepthMask(GL_TRUE);
 		glDepthFunc(depthFunc);
+
+		if (depthFunc == cmd::DEPTH_EQUAL || depthFunc == cmd::DEPTH_LEQUAL)
+		{
+			glDepthMask(GL_FALSE);	
+		}
+		
+		
 	}
 
 	void SetDepthClamp(bool shouldDepthClamp)

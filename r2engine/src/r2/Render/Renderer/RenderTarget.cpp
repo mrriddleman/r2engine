@@ -26,6 +26,11 @@ namespace r2::draw
 			impl::AddTextureAttachment(rt, type, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
 		}
 
+		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
+		{
+			impl::SetTextureAttachment(rt, type, textureAttachment);
+		}
+
 		float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages)
 		{
 			float sliceIndex = impl::AddTexturePagesToAttachment(rt, type, pages);

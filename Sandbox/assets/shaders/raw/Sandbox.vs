@@ -53,6 +53,8 @@ out VS_OUT
 
 } vs_out;
 
+invariant gl_Position;
+
 void main()
 {
 	vec4 modelPos = models[DrawID] * vec4(aPos, 1.0);

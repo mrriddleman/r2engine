@@ -43,6 +43,8 @@ layout (std140, binding = 0) uniform Matrices
 };
 
 
+invariant gl_Position;
+
 void main()
 {
 	int boneOffset = boneOffsets[DrawID].x;
@@ -52,6 +54,7 @@ void main()
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
 
 	mat4 vertexTransform = models[DrawID] * finalBoneVertexTransform;
-
-	gl_Position = projection * view * vertexTransform * vec4(aPos, 1.0);
+	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
+	
+	gl_Position = projection * view * modelPos;
 }

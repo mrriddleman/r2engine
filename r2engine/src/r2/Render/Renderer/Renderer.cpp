@@ -836,6 +836,8 @@ namespace r2::draw::renderer
 			return false;
 		}
 
+		SetClearDepth(1.0f);
+
 		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath);
 		if (!shaderSystemIntialized)
 		{
@@ -843,74 +845,13 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-		
-
-		//need to do some processing to figure out all of the initial formats we want to make
-		//For now we'll be dumb and read them all and figure out how many pages etc we need
-
-		//r2::SArray<r2::draw::texsys::InitialTextureFormat>* initialTextureFormats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, texsys::InitialTextureFormat, flat::TextureFormat::TextureFormat_MAX);
-
-		//R2_CHECK(initialTextureFormats != nullptr, "This should exist!");
-
-		//for (const auto& appPathToRead : appTexturePackManifests)
-		//{
-		//	void* ptrToFileMemory = r2::fs::ReadFile<r2::mem::StackArena>(*MEM_ENG_SCRATCH_PTR, appPathToRead.c_str());
-
-		//	const flat::TexturePacksManifest* metaData = flat::GetTexturePacksManifest(ptrToFileMemory);
-
-		//	const auto formats = metaData->formatMetaData();
-
-		//	for (flatbuffers::uoffset_t i = 0; i < formats->size(); ++i)
-		//	{
-		//		const auto format = formats->Get(i);
-
-		//		s64 index = HasFormat(initialTextureFormats, format->format(), format->isCubemap());
-
-		//		if (index < 0)
-		//		{
-		//			//add the format
-		//			texsys::InitialTextureFormat initialTextureFormat;
-		//			initialTextureFormat.textureFormat = format->format();
-		//			initialTextureFormat.isCubemap = format->isCubemap();
-		//			initialTextureFormat.isAnisotropic = format->isAnisotropic();
-		//			initialTextureFormat.numMips = format->maxMips();
-		//			initialTextureFormat.numPages = format->numTextures(); //check for max pages first from the texture system
-		//			initialTextureFormat.width = format->maxWidth();
-		//			initialTextureFormat.height = format->maxHeight();
-
-		//			r2::sarr::Push(*initialTextureFormats, initialTextureFormat);
-		//		}
-		//		else
-		//		{
-		//			//get the format
-		//			//add necessary info
-		//			texsys::InitialTextureFormat& initialFormat = r2::sarr::At(*initialTextureFormats, index);
-
-		//			initialFormat.width = std::max(initialFormat.width, format->maxWidth());
-		//			initialFormat.height = std::max(initialFormat.height, format->maxHeight());
-		//			initialFormat.numMips = std::max(initialFormat.numMips, format->maxMips());
-		//			initialFormat.numPages += format->numTextures();
-		//		}
-		//	}
-
-
-		//	FREE(ptrToFileMemory, *MEM_ENG_SCRATCH_PTR);
-		//}
-
-		////now add in the formats needed for the render surfaces
-		//AddRenderSurfaceTextures(initialTextureFormats);
-
-
 		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, nullptr, "Texture System");
 		if (!textureSystemInitialized)
 		{
 			R2_CHECK(false, "We couldn't initialize the texture system");
-		//	FREE(initialTextureFormats, *MEM_ENG_SCRATCH_PTR);
+		
 			return false;
 		}
-
-		//FREE(initialTextureFormats, *MEM_ENG_SCRATCH_PTR);
-
 
 		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
 		if (!materialSystemInitialized)
@@ -921,20 +862,13 @@ namespace r2::draw::renderer
 		
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
 		
-		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);//r2::draw::matsys::CreateMaterialSystem(boundary, materialPack, texturePacksManifest);
+		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);
 
 		if (!newRenderer->mMaterialSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
 		}
-
-		//FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
-		//FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
-
-
-
-		
 
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
@@ -3457,7 +3391,7 @@ namespace r2::draw::renderer
 
 		ClearSurfaceOptions clearGBufferOptions;
 		clearGBufferOptions.shouldClear = true;
-		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_DEPTH_BUFFER;
+		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 		
 		const u64 numStaticDrawBatches = r2::sarr::Size(*staticRenderBatchesOffsets);
 
@@ -3502,7 +3436,8 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
+
 			if (batchOffset.layer == DL_SKYBOX)
 			{
 				drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
@@ -3620,7 +3555,7 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
@@ -3723,12 +3658,8 @@ namespace r2::draw::renderer
 		EndRenderPass(renderer, RPT_POINTLIGHT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_GBUFFER, *renderer.mCommandBucket);
 
-
-
-
-
 		ClearSurfaceOptions clearCompositeOptions;
-		clearCompositeOptions.shouldClear = false;
+		clearCompositeOptions.shouldClear = true;
 		clearCompositeOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 
@@ -3744,6 +3675,8 @@ namespace r2::draw::renderer
 		aoDrawBatch->subCommands = nullptr;
 		aoDrawBatch->state.depthEnabled = false;
 		aoDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+		aoDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
 		//@TODO(Serge): make denoise ao pass here
@@ -3759,6 +3692,8 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->subCommands = nullptr;
 		aoDenoiseDrawBatch->state.depthEnabled = false;
 		aoDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+		aoDenoiseDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, *renderer.mAmbientOcclusionDenoiseBucket);
 
 		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
@@ -3777,6 +3712,7 @@ namespace r2::draw::renderer
 		finalDrawBatch->subCommands = nullptr;
 		finalDrawBatch->state.depthEnabled = false;
 		finalDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+		finalDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
@@ -5491,10 +5427,11 @@ namespace r2::draw::renderer
 
 			AssignShadowMapPagesForAllLights(renderer);
 
-			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1,0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
-			rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
+		//	rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -5563,7 +5500,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)

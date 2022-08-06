@@ -72,6 +72,8 @@ out VS_OUT
 	flat uint drawID;
 } vs_out;
 
+invariant gl_Position;
+
 void main()
 {
 	int boneOffset = boneOffsets[DrawID].x;

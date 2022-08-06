@@ -22,7 +22,10 @@ layout (std140, binding = 0) uniform Matrices
     mat4 inverseProjection;
 };
 
+invariant gl_Position;
+
 void main()
 {
-	gl_Position = projection * view * models[DrawID] * vec4(aPos, 1.0);
+    vec4 modelPos = models[DrawID] * vec4(aPos, 1.0);
+	gl_Position = projection * view * modelPos;
 }
