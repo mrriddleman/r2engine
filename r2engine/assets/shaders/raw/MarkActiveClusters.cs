@@ -2,11 +2,15 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (local_size_x = 22, local_size_y = 22) in;
+layout (local_size_x = 20, local_size_y = 20) in;
 
 #define NUM_FRUSTUM_SPLITS 4
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
-const uint MAX_NUM_LIGHTS = 50;
+
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
 
 struct Tex2DAddress
 {
@@ -65,7 +69,7 @@ layout (std140, binding = 2) uniform Surfaces
 layout (std430, binding=8) buffer Clusters
 {
 	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
+	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];

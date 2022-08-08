@@ -745,7 +745,7 @@ public:
 			
             r2::util::Random randomizer;
 
-			for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
+			for (int i = 0; i < 10; ++i)
 			{
 				auto zPos = (int)randomizer.RandomNum(1, 10);
 				auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
@@ -769,7 +769,7 @@ public:
 			}
 
 
-			for (int i = 0; i < r2::draw::light::MAX_NUM_LIGHTS; ++i)
+			/*for (int i = 0; i < 600; ++i)
 			{
 				r2::draw::PointLight pointLight;
 
@@ -791,7 +791,7 @@ public:
 				pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
 
 				r2::draw::renderer::AddPointLight(pointLight);
-			}
+			}*/
 
             
 

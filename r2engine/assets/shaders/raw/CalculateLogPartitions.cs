@@ -2,10 +2,11 @@
 #extension GL_NV_gpu_shader5 : enable
 
 #define NUM_FRUSTUM_SPLITS 4
-const uint MAX_NUM_LIGHTS = 50;
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+
+#define MAX_NUM_SHADOW_PAGES 50
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_PAGES
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
@@ -77,10 +78,10 @@ layout (std430, binding = 6) buffer ShadowData
 	Partition gPartitions;
 	UPartition gPartitionsU;
 
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_PAGES];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_PAGES];
 
-	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+	mat4 gShadowMatrix[MAX_NUM_SHADOW_PAGES];
 
 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];

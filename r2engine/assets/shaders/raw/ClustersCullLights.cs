@@ -6,7 +6,13 @@ layout (local_size_x = 16, local_size_y = 16, local_size_z = 2) in;
 
 #define NUM_FRUSTUM_SPLITS 4
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
-const uint MAX_NUM_LIGHTS = 50;
+
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
+
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 struct Tex2DAddress
@@ -89,11 +95,17 @@ layout (std140, binding = 0) uniform Matrices
     mat4 invProjection;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -101,12 +113,16 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
 
 layout (std430, binding=8) buffer Clusters
 {
 	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
+	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];
@@ -115,8 +131,8 @@ layout (std430, binding=8) buffer Clusters
 
 shared uint visiblePointLightCount;
 shared uint visibleSpotLightCount;
-shared uint visiblePointLightIndices[MAX_NUM_LIGHTS];
-shared uint visibleSpotLightIndices[MAX_NUM_LIGHTS];
+shared uint visiblePointLightIndices[MAX_NUM_POINT_LIGHTS];
+shared uint visibleSpotLightIndices[MAX_NUM_SPOT_LIGHTS];
 
 bool TestPointLightSphereAABB(uint light, uint tile);
 bool TestSpotLightAABB(uint light, uint tile);

@@ -3,7 +3,7 @@
 #extension GL_NV_gpu_shader5 : enable
 
 #define NUM_FRUSTUM_SPLITS 4
-const uint MAX_NUM_LIGHTS = 50;
+
 const uint MAX_INVOCATIONS_PER_BATCH = 32; //this is GL_MAX_GEOMETRY_SHADER_INVOCATIONS
 
 const uint NUM_SIDES_FOR_POINTLIGHT =6;
@@ -12,9 +12,14 @@ const uint MAX_POINTLIGHTS_PER_BATCH = MAX_INVOCATIONS_PER_BATCH;
 const uint MAX_VERTICES = NUM_SIDES_FOR_POINTLIGHT * 3;
 
 
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 layout (triangles, invocations = MAX_INVOCATIONS_PER_BATCH) in;
 layout (triangle_strip, max_vertices = MAX_VERTICES) out;
@@ -76,11 +81,17 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -88,6 +99,10 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
 
 struct Partition
@@ -107,10 +122,10 @@ layout (std430, binding = 6) buffer ShadowData
 	Partition gPartitions;
 	UPartition gPartitionsU;
 
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
 
-	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
 
 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
@@ -128,18 +143,21 @@ void main(void)
 {
 	int lightIndex = gl_InvocationID  + int(pointLightBatch) * int(MAX_POINTLIGHTS_PER_BATCH);
 
-	if(lightIndex < numPointLights)
+	if(lightIndex < shadowCastingPointLights.numShadowCastingLights)
 	{
+
+		int pointLightIndex = (int)shadowCastingPointLights.shadowCastingLightIndexes[lightIndex];
+
 		for(int face = 0; face < NUM_SIDES_FOR_POINTLIGHT; ++face)
 		{
-			gl_Layer = face + int(gPointLightShadowMapPages[int(pointLights[lightIndex].lightProperties.lightID)]) * int(NUM_SIDES_FOR_POINTLIGHT);
+			gl_Layer = face + int(gPointLightShadowMapPages[int(pointLights[pointLightIndex].lightProperties.lightID)]) * int(NUM_SIDES_FOR_POINTLIGHT);
 
 			vec4 vertex[3];
 			int outOfBounds[6] = {0,0,0,0,0,0};
 
 			for(int i = 0; i < 3; ++i)
 			{
-				vertex[i] = pointLights[lightIndex].lightSpaceMatrices[face] * gl_in[i].gl_Position;
+				vertex[i] = pointLights[pointLightIndex].lightSpaceMatrices[face] * gl_in[i].gl_Position;
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBounds[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBounds[1];
@@ -161,8 +179,8 @@ void main(void)
 				{
 					gl_Position = vertex[i];
 					FragPos = gl_in[i].gl_Position;
-					LightPos = pointLights[lightIndex].position.xyz;
-					FarPlane = pointLights[lightIndex].lightProperties.intensity; //if we change the compute shader, this needs to change as well
+					LightPos = pointLights[pointLightIndex].position.xyz;
+					FarPlane = pointLights[pointLightIndex].lightProperties.intensity; //if we change the compute shader, this needs to change as well
 					EmitVertex();
 				}
 

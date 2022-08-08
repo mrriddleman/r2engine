@@ -2,14 +2,20 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint MAX_NUM_LIGHTS = 50;
+
 const uint NUM_FRUSTUM_SPLITS = 4;
 const uint NUM_SIDES_FOR_POINTLIGHT =6;
 
 const float PI = 3.141596;
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+
+
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 layout (local_size_x = NUM_SIDES_FOR_POINTLIGHT, local_size_y = 1, local_size_z = 1) in;
 
@@ -92,11 +98,17 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -104,6 +116,10 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
 
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)

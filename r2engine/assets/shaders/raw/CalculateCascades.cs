@@ -5,9 +5,13 @@
 
 
 //@TODO(Serge): make this into a real thing we can pass in
-#define MAX_NUM_LIGHTS 50
 #define NUM_FRUSTUM_SPLITS 4
 #define NUM_FRUSTUM_CORNERS 8
+
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
 
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
@@ -95,11 +99,17 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -107,6 +117,10 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
 
 mat4 MatInverse(mat4 mat)

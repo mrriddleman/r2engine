@@ -2,11 +2,15 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint MAX_NUM_LIGHTS = 50;
+
 #define NUM_FRUSTUM_SPLITS 4
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -91,11 +95,17 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -103,39 +113,11 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
-
-// struct Partition
-// {
-// 	vec4 intervalBegin;
-// 	vec4 intervalEnd;
-// };
-
-// struct UPartition
-// {
-// 	uvec4 intervalBegin;
-// 	uvec4 intervalEnd;
-// };
-
-// layout (std430, binding = 6) buffer ShadowData
-// {
-// 	Partition gPartitions;
-// 	UPartition gPartitionsU;
-
-// 	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-// 	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-
-// 	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
-
-// 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
-// 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
-// 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
-// };
-
-// mat4 MatInverse(mat4 mat)
-// {
-// 	return inverse(mat);
-// }
 
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)
 {
@@ -176,27 +158,12 @@ mat4 Projection(float fov, float aspect, float near, float far)
 	return result;
 }
 
-// vec3 GetCameraRight()
-// {
-// 	vec3 cameraRight;
-
-// 	cameraRight.x = view[0][0];
-// 	cameraRight.y = view[0][1];
-// 	cameraRight.z = view[0][2];
-
-// 	return cameraRight;
-// }
-
 void main(void)
 {
 	int spotLightIndex = int(gl_WorkGroupID.x);
 
 	SpotLight spotLight = spotLights[spotLightIndex];
 
-	//mat4 LookAt(vec3 eye, vec3 center, vec3 up)
-	//vec4 position;//w is radius
-	//vec4 direction;//w is cutoff
-	//mat4 Projection(float fov, float aspect, float near, float far)
 	mat4 lightView = LookAt(spotLight.position.xyz, spotLight.position.xyz + spotLight.direction.xyz, GLOBAL_UP);
 	
 	//@NOTE(Serge): the 1 here is the aspect ratio - since we're using a size of shadowMapSizes.x x shadowMapSizes.x it will be 1. If this changes, we need to change this as well

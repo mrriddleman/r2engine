@@ -21,16 +21,21 @@ namespace r2::draw
 		};
 
 
-		const u32 MAX_NUM_LIGHTS = 50;
-		const u32 SHADOW_MAP_SIZE = 1024;
+		constexpr u32 MAX_NUM_DIRECTIONAL_LIGHTS = 50;
+		constexpr u32 MAX_NUM_POINT_LIGHTS = 4096;
+		constexpr u32 MAX_NUM_SPOT_LIGHTS = MAX_NUM_POINT_LIGHTS;
+		constexpr u32 SHADOW_MAP_SIZE = 1024;
 
-		const u32 NUM_SPOTLIGHT_LAYERS = 1;
-		const u32 NUM_POINTLIGHT_LAYERS = 6;
-		const u32 NUM_DIRECTIONLIGHT_LAYERS = cam::NUM_FRUSTUM_SPLITS;
+		constexpr u32 NUM_SPOTLIGHT_LAYERS = 1;
+		constexpr u32 NUM_POINTLIGHT_LAYERS = 6;
+		constexpr u32 NUM_DIRECTIONLIGHT_LAYERS = cam::NUM_FRUSTUM_SPLITS;
 
-		constexpr u32 NUM_SPOTLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
-		constexpr u32 NUM_POINTLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
-		constexpr u32 NUM_DIRECTIONLIGHT_SHADOW_PAGES = MAX_NUM_LIGHTS ;
+		constexpr u32 MAX_NUMBER_OF_LIGHTS_PER_CLUSTER = 100;
+
+		constexpr u32 MAX_NUM_SHADOW_MAP_PAGES = 50;
+		constexpr u32 NUM_SPOTLIGHT_SHADOW_PAGES = MAX_NUM_SHADOW_MAP_PAGES;
+		constexpr u32 NUM_POINTLIGHT_SHADOW_PAGES = MAX_NUM_SHADOW_MAP_PAGES;
+		constexpr u32 NUM_DIRECTIONLIGHT_SHADOW_PAGES = MAX_NUM_SHADOW_MAP_PAGES;
 	}
 
 	using LightSystemHandle = s64;
@@ -87,9 +92,6 @@ namespace r2::draw
 		LightProperties lightProperties;
 		glm::vec4 position;//@TODO(Serge): make these vec3?
 		glm::vec4 direction;//@TODO(Serge): make these vec3?
-		//float radius; //cosine angle
-		//float cutoff; //cosine angle
-
 		glm::mat4 lightSpaceMatrix;
 	};
 
@@ -104,11 +106,18 @@ namespace r2::draw
 
 	//@NOTE: right now this is the same format as the shaders. If we change the shader layout, we have to change this
 
+
+	struct ShadowCastingLights
+	{
+		s64 shadowCastingLightIndexes[light::MAX_NUM_SHADOW_MAP_PAGES];
+		s32 numShadowCastingLights;
+	};
+
 	struct SceneLighting
 	{
-		PointLight mPointLights[light::MAX_NUM_LIGHTS];
-		DirectionLight mDirectionLights[light::MAX_NUM_LIGHTS];
-		SpotLight mSpotLights[light::MAX_NUM_LIGHTS];
+		PointLight mPointLights[light::MAX_NUM_DIRECTIONAL_LIGHTS];
+		DirectionLight mDirectionLights[light::MAX_NUM_POINT_LIGHTS];
+		SpotLight mSpotLights[light::MAX_NUM_SPOT_LIGHTS];
 		SkyLight mSkyLight;
 
 		s32 mNumPointLights = 0;
@@ -116,6 +125,10 @@ namespace r2::draw
 		s32 mNumSpotLights = 0;
 		s32 numPrefilteredRoughnessMips = 0;
 		s32 useSDSMShadows = 0;
+
+		ShadowCastingLights mShadowCastingDirectionLights;
+		ShadowCastingLights mShadowCastingPointLights;
+		ShadowCastingLights mShadowCastingSpotLights;
 	};
 
 	struct SceneLightMetaData
@@ -131,6 +144,7 @@ namespace r2::draw
 		r2::SQueue<s64>* mPointLightIDs = nullptr;
 		r2::SQueue<s64>* mDirectionlightIDs = nullptr;
 		r2::SQueue<s64>* mSpotlightIDs = nullptr;
+
 
 		b32 mShouldUpdateSkyLight;
 	};
@@ -193,6 +207,8 @@ namespace r2::draw
 
 		LightSystemHandle GenerateNewLightSystemHandle();
 
+		
+
 
 		void ClearAllLighting(LightSystem& system);
 
@@ -210,38 +226,38 @@ namespace r2::draw
 			LightSystem* lightSystem = ALLOC(LightSystem, arena);
 			R2_CHECK(lightSystem != nullptr, "We couldn't create the light system!");
 
-			lightSystem->mMetaData.mPointLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
+			lightSystem->mMetaData.mPointLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_POINT_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
 			R2_CHECK(lightSystem->mMetaData.mPointLightMap != nullptr, "We couldn't create the light system!");
 			
-			lightSystem->mMetaData.mDirectionLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
+			lightSystem->mMetaData.mDirectionLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_DIRECTIONAL_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
 			R2_CHECK(lightSystem->mMetaData.mDirectionLightMap != nullptr, "We couldn't create the light system!");
 			
-			lightSystem->mMetaData.mSpotLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
+			lightSystem->mMetaData.mSpotLightMap = MAKE_SHASHMAP(arena, s64, light::MAX_NUM_SPOT_LIGHTS * r2::SHashMap<s64>::LoadFactorMultiplier());
 			R2_CHECK(lightSystem->mMetaData.mSpotLightMap != nullptr, "We couldn't create the light system!");
 
 
-			lightSystem->mMetaData.mPointLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mPointLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_POINT_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mPointLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
 
-			lightSystem->mMetaData.mDirectionLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mDirectionLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_DIRECTIONAL_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mDirectionLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
 
-			lightSystem->mMetaData.mSpotLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mSpotLightsModifiedList = MAKE_SARRAY(arena, s64, light::MAX_NUM_SPOT_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mSpotLightsModifiedList != nullptr, "We couldn't create the modified list of the lights!");
 
 
-			lightSystem->mMetaData.mPointLightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mPointLightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_POINT_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mPointLightIDs != nullptr, "We couldn't create the mPointLightIDs");
 
-			lightSystem->mMetaData.mDirectionlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mDirectionlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_DIRECTIONAL_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mDirectionlightIDs != nullptr, "We couldn't create the mDirectionlightIDs");
 			
-			lightSystem->mMetaData.mSpotlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_LIGHTS);
+			lightSystem->mMetaData.mSpotlightIDs = MAKE_SQUEUE(arena, s64, light::MAX_NUM_SPOT_LIGHTS);
 
 			R2_CHECK(lightSystem->mMetaData.mSpotlightIDs != nullptr, "We couldn't create the mSpotlightIDs");
 

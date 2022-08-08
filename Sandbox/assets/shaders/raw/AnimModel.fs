@@ -2,7 +2,7 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint MAX_NUM_LIGHTS = 50;
+
 
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
 const float SHADOW_FILTER_MAX_SIZE = 0.0035f;
@@ -20,9 +20,15 @@ layout (location = 0) out vec4 FragColor;
 #define NUM_POINTLIGHT_LAYERS 6
 #define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
 
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
+
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 
 struct Tex2DAddress
@@ -147,11 +153,17 @@ layout (std430, binding = 7) buffer MaterialOffsets
 	uint materialOffsets[];
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -159,6 +171,10 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
 
 layout (std140, binding = 0) uniform Matrices 
@@ -201,10 +217,10 @@ layout (std430, binding = 6) buffer ShadowData
 	Partition gPartitions;
 	UPartition gPartitionsU;
 
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
 
-	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
 
 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
@@ -214,7 +230,7 @@ layout (std430, binding = 6) buffer ShadowData
 layout (std430, binding=8) buffer Clusters
 {
 	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[(MAX_NUM_LIGHTS / 2) * MAX_CLUSTERS];
+	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
 	bool activeClusters[MAX_CLUSTERS];
 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
 	LightGrid lightGrid[MAX_CLUSTERS];

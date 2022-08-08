@@ -483,18 +483,121 @@ namespace r2::draw
 
     void ConstantBufferLayout::InitForLighting()
     {
-		mElements.clear();
-		mElements.emplace_back(ConstantBufferElement());
-		mElements[0].offset = 0;
-		mElements[0].typeCount = 1;
-        mElements[0].elementSize = sizeof(SceneLighting);
-		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
-		mElements[0].type = ShaderDataType::Struct;
+        int index = 0;
 
-		mSize = mElements[0].size;
+		mElements.clear();
+
+        //Point lights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_POINT_LIGHTS;
+        mElements[index].type = ShaderDataType::Struct;
+        mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(PointLight), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        index++;
+
+        //Direction lights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_DIRECTIONAL_LIGHTS;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(DirectionLight), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+        //Spot lights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::MAX_NUM_SPOT_LIGHTS;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(SpotLight), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+        index++;
+
+        //Sky light
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(SkyLight), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+        
+		index++;
+
+        //mNumPointLights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//mNumDirectionLights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//mNumSpotLights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//numPrefilteredRoughnessMips
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+		
+		index++;
+
+		//useSDSMShadows
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//ShadowCastingLights mShadowCastingDirectionLights;
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//ShadowCastingLights mShadowCastingPointLights;
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//ShadowCastingLights mShadowCastingSpotLights;
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Struct;
+		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
 		mType = Big;
 		mFlags = 0;
 		mCreateFlags = 0;
+        
+        CalculateOffsetAndSize();
     }
 
     void ConstantBufferLayout::InitForShadowData()
@@ -523,7 +626,7 @@ namespace r2::draw
 
         //gScale
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = light::MAX_NUM_LIGHTS * cam::NUM_FRUSTUM_SPLITS;
+		mElements[index].typeCount = light::MAX_NUM_SHADOW_MAP_PAGES * cam::NUM_FRUSTUM_SPLITS;
 		mElements[index].type = ShaderDataType::Float4;
 		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::vec4), GetBaseAlignmentSize(mElements[index].type)));
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
@@ -532,7 +635,7 @@ namespace r2::draw
 
         //gBias
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = light::MAX_NUM_LIGHTS * cam::NUM_FRUSTUM_SPLITS;
+		mElements[index].typeCount = light::MAX_NUM_SHADOW_MAP_PAGES * cam::NUM_FRUSTUM_SPLITS;
 		mElements[index].type = ShaderDataType::Float4;
 		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::vec4), GetBaseAlignmentSize(mElements[index].type)));
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
@@ -541,7 +644,7 @@ namespace r2::draw
 
         //gShadowMatrix
         mElements.emplace_back(ConstantBufferElement());
-        mElements[index].typeCount = light::MAX_NUM_LIGHTS;
+        mElements[index].typeCount = light::MAX_NUM_SHADOW_MAP_PAGES;
         mElements[index].type = ShaderDataType::Mat4;
         mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(glm::mat4), GetBaseAlignmentSize(mElements[index].type)));
         mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
@@ -618,7 +721,7 @@ namespace r2::draw
         index++;
 
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = (light::MAX_NUM_LIGHTS/2) * size; //each cluster could have all of the lights in it I guess?
+		mElements[index].typeCount = light::MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * size; //each cluster could have all of the lights in it I guess?
 		mElements[index].elementSize = sizeof(glm::uvec2);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 		mElements[index].type = ShaderDataType::UInt2;

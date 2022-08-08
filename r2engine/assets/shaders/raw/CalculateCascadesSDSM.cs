@@ -5,7 +5,12 @@
 
 
 //@TODO(Serge): make this into a real thing we can pass in
-const uint MAX_NUM_LIGHTS = 50;
+
+#define MAX_NUM_DIRECTIONAL_LIGHTS 50
+#define MAX_NUM_POINT_LIGHTS 4096
+#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
+#define MAX_NUM_SHADOW_MAP_PAGES 50
+
 #define NUM_FRUSTUM_SPLITS 4
 #define NUM_FRUSTUM_CORNERS 8
 
@@ -13,9 +18,9 @@ const uint MAX_NUM_LIGHTS = 50;
 #define NUM_POINTLIGHT_LAYERS 6
 #define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
 
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_LIGHTS
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
@@ -112,11 +117,17 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
-	PointLight pointLights[MAX_NUM_LIGHTS];
-	DirLight dirLights[MAX_NUM_LIGHTS];
-	SpotLight spotLights[MAX_NUM_LIGHTS];
+	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
+	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
+	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
 	SkyLight skylight;
 
 	int numPointLights;
@@ -124,7 +135,12 @@ layout (std430, binding = 4) buffer Lighting
 	int numSpotLights;
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
+
+	ShadowCastingLights shadowCastingDirectionLights;
+	ShadowCastingLights shadowCastingPointLights;
+	ShadowCastingLights shadowCastingSpotLights;
 };
+
 
 struct Partition
 {
@@ -143,10 +159,10 @@ layout (std430, binding = 6) buffer ShadowData
 	Partition gPartitions;
 	UPartition gPartitionsU;
 
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_LIGHTS];
+	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
+	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
 
-	mat4 gShadowMatrix[MAX_NUM_LIGHTS];
+	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
 
 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];

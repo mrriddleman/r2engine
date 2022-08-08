@@ -560,96 +560,96 @@ namespace r2::draw::renderer
 #endif
 
 
-	s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat:: TextureFormat format, bool isCubemap)
-	{
-		const u64 numFormats = r2::sarr::Size(*formats);
-		for (u64 i = 0; i < numFormats; ++i)
-		{
-			const texsys::InitialTextureFormat& initialTextureFormat = r2::sarr::At(*formats, i);
-			if (initialTextureFormat.textureFormat == format && initialTextureFormat.isCubemap == isCubemap)
-				return i;
-		}
+	//s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat:: TextureFormat format, bool isCubemap)
+	//{
+	//	const u64 numFormats = r2::sarr::Size(*formats);
+	//	for (u64 i = 0; i < numFormats; ++i)
+	//	{
+	//		const texsys::InitialTextureFormat& initialTextureFormat = r2::sarr::At(*formats, i);
+	//		if (initialTextureFormat.textureFormat == format && initialTextureFormat.isCubemap == isCubemap)
+	//			return i;
+	//	}
 
-		return -1;
-	}
+	//	return -1;
+	//}
 
-	void AddRenderSurfaceTextures(r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats)
-	{
-		const auto displaySize = CENG.DisplaySize();
+	//void AddRenderSurfaceTextures(r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats)
+	//{
+	//	const auto displaySize = CENG.DisplaySize();
 
-		s64 hasDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, false);
+	//	s64 hasDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, false);
 
-		if (hasDepth < 0)
-		{
-			texsys::InitialTextureFormat depthFormat;
-			depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
-			depthFormat.numMips = 1;
-			depthFormat.isCubemap = false;
-			depthFormat.isAnisotropic = false;
-			depthFormat.numPages = light::MAX_NUM_LIGHTS * 2 + 1; //for shadows -> light::MAX_NUM_LIGHTS*2, for zpp -> 1
-			depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
-			depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
-			
-			r2::sarr::Push(*formats, depthFormat);
-		}
-		else
-		{
-			texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasDepth);
+	//	if (hasDepth < 0)
+	//	{
+	//		texsys::InitialTextureFormat depthFormat;
+	//		depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
+	//		depthFormat.numMips = 1;
+	//		depthFormat.isCubemap = false;
+	//		depthFormat.isAnisotropic = false;
+	//		depthFormat.numPages = light::MAX_NUM_DIRECTIONAL_LIGHTS + light::MAX_NUM_SPOT_LIGHTS + 1; //for shadows -> light::MAX_NUM_LIGHTS*2, for zpp -> 1
+	//		depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
+	//		depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
+	//		
+	//		r2::sarr::Push(*formats, depthFormat);
+	//	}
+	//	else
+	//	{
+	//		texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasDepth);
 
-			depthFormat.numPages += light::MAX_NUM_LIGHTS * 2 + 1;
-			depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
-			depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
+	//		depthFormat.numPages += light::MAX_NUM_DIRECTIONAL_LIGHTS + light::MAX_NUM_SPOT_LIGHTS + 1;
+	//		depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
+	//		depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
 
-		}
+	//	}
 
-		s64 hasCubemapDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, true);
+	//	s64 hasCubemapDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, true);
 
-		if (hasCubemapDepth < 0)
-		{
-			texsys::InitialTextureFormat depthFormat;
-			depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
-			depthFormat.numMips = 1;
-			depthFormat.isCubemap = true;
-			depthFormat.isAnisotropic = false;
-			depthFormat.numPages = light::MAX_NUM_LIGHTS; //for pointligt shadows -> light::MAX_NUM_LIGHTS
-			depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
-			depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
+	//	if (hasCubemapDepth < 0)
+	//	{
+	//		texsys::InitialTextureFormat depthFormat;
+	//		depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
+	//		depthFormat.numMips = 1;
+	//		depthFormat.isCubemap = true;
+	//		depthFormat.isAnisotropic = false;
+	//		depthFormat.numPages = light::MAX_NUM_POINT_LIGHTS; //for pointligt shadows -> light::MAX_NUM_LIGHTS
+	//		depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
+	//		depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
 
-			r2::sarr::Push(*formats, depthFormat);
-		}
-		else
-		{
-			texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasCubemapDepth);
+	//		r2::sarr::Push(*formats, depthFormat);
+	//	}
+	//	else
+	//	{
+	//		texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasCubemapDepth);
 
-			depthFormat.numPages += light::MAX_NUM_LIGHTS;
-			depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
-			depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
-		}
+	//		depthFormat.numPages += light::MAX_NUM_POINT_LIGHTS;
+	//		depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
+	//		depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
+	//	}
 
-		s64 hasGBuffer = HasFormat(formats, flat::TextureFormat_RGB16, false);
-		if (hasGBuffer < 0)
-		{
-			texsys::InitialTextureFormat gbufferFormat;
-			gbufferFormat.textureFormat = flat::TextureFormat_RGB16;
-			gbufferFormat.numMips = 1;
-			gbufferFormat.isCubemap = false;
-			gbufferFormat.isAnisotropic = false;
-			gbufferFormat.numPages = 1; //for pointligt shadows -> light::MAX_NUM_LIGHTS
-			gbufferFormat.width =  displaySize.width;
-			gbufferFormat.height = displaySize.height;
+	//	s64 hasGBuffer = HasFormat(formats, flat::TextureFormat_RGB16, false);
+	//	if (hasGBuffer < 0)
+	//	{
+	//		texsys::InitialTextureFormat gbufferFormat;
+	//		gbufferFormat.textureFormat = flat::TextureFormat_RGB16;
+	//		gbufferFormat.numMips = 1;
+	//		gbufferFormat.isCubemap = false;
+	//		gbufferFormat.isAnisotropic = false;
+	//		gbufferFormat.numPages = 1; //for pointligt shadows -> light::MAX_NUM_LIGHTS
+	//		gbufferFormat.width =  displaySize.width;
+	//		gbufferFormat.height = displaySize.height;
 
-			r2::sarr::Push(*formats, gbufferFormat);
-		}
-		else
-		{
-			texsys::InitialTextureFormat& gbufferFormat = r2::sarr::At(*formats, hasGBuffer);
+	//		r2::sarr::Push(*formats, gbufferFormat);
+	//	}
+	//	else
+	//	{
+	//		texsys::InitialTextureFormat& gbufferFormat = r2::sarr::At(*formats, hasGBuffer);
 
-			gbufferFormat.numPages += 1;
-			gbufferFormat.width = std::max(gbufferFormat.width, displaySize.width);
-			gbufferFormat.height = std::max(gbufferFormat.height, displaySize.height);
-		}
+	//		gbufferFormat.numPages += 1;
+	//		gbufferFormat.width = std::max(gbufferFormat.width, displaySize.width);
+	//		gbufferFormat.height = std::max(gbufferFormat.height, displaySize.height);
+	//	}
 
-	}
+	//}
 
 	//basic stuff
 	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
@@ -1008,9 +1008,9 @@ namespace r2::draw::renderer
 		auto size = CENG.DisplaySize();
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
-			RenderTarget::MemorySize(1, 0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) + 
-			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS*2, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) + 
+			RenderTarget::MemorySize(0, 1, 0, light::NUM_DIRECTIONLIGHT_SHADOW_PAGES + light::NUM_SPOTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			RenderTarget::MemorySize(0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
@@ -2295,9 +2295,9 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 3 +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS * 2, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_LIGHTS, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 0, 1, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::NUM_DIRECTIONLIGHT_SHADOW_PAGES + light::NUM_SPOTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -2873,16 +2873,22 @@ namespace r2::draw::renderer
 
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem)
 	{
-		key::Basic lightKey;
-		lightKey.keyValue = 0;
-
-		cmd::FillConstantBuffer* fillLightsCMD = AddFillConstantBufferCommand(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, lightKey, sizeof(r2::draw::SceneLighting));
-
 		ConstantBufferHandle lightBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mLightingConfigHandle);
 
-		ConstantBufferData* constBufferData = GetConstData(renderer, lightBufferHandle);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 0, &lightSystem.mSceneLighting.mPointLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 1, &lightSystem.mSceneLighting.mDirectionLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 2, &lightSystem.mSceneLighting.mSpotLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 3, &lightSystem.mSceneLighting.mSkyLight);
 
-		r2::draw::cmd::FillConstantBufferCommand(fillLightsCMD, lightBufferHandle, constBufferData->type, constBufferData->isPersistent, &lightSystem.mSceneLighting, sizeof(r2::draw::SceneLighting), 0);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 4, &lightSystem.mSceneLighting.mNumPointLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 5, &lightSystem.mSceneLighting.mNumDirectionLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 6, &lightSystem.mSceneLighting.mNumSpotLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 7, &lightSystem.mSceneLighting.numPrefilteredRoughnessMips);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 8, &lightSystem.mSceneLighting.useSDSMShadows);
+
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.mShadowCastingDirectionLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.mShadowCastingPointLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.mShadowCastingSpotLights);
 	}
 
 	template<class ARENA, typename T>
@@ -4353,8 +4359,8 @@ namespace r2::draw::renderer
 		key::Basic dispatchAssignLightsToClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 2, renderer.mAssignLightsToClustersComputeShader, 2);
 
 		cmd::DispatchCompute* markActiveClusters = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchMarkActiveClustersKey, 0);
-		markActiveClusters->numGroupsX = renderer.mResolutionSize.width / 22;
-		markActiveClusters->numGroupsY = renderer.mResolutionSize.height / 22;
+		markActiveClusters->numGroupsX = renderer.mResolutionSize.width / 20;
+		markActiveClusters->numGroupsY = renderer.mResolutionSize.height / 20;
 		markActiveClusters->numGroupsZ = 1;
 
 		cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, markActiveClusters, 0);
@@ -5427,10 +5433,9 @@ namespace r2::draw::renderer
 
 			AssignShadowMapPagesForAllLights(renderer);
 
-			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 1, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
-		//	rt::AddDepthAndStencilAttachment(renderer.mRenderTargets[RTS_GBUFFER]);
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
@@ -5459,7 +5464,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_LIGHTS*2, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::NUM_SPOTLIGHT_SHADOW_PAGES + light::NUM_DIRECTIONLIGHT_SHADOW_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		//@TODO(Serge): we're effectively burning the first page of this render target. May want to fix that at some point
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
@@ -5479,7 +5484,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_LIGHTS, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS], rt::DEPTH_CUBEMAP, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
 	}

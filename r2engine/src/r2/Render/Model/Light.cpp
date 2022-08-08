@@ -128,7 +128,7 @@ namespace r2::draw::lightsys
 	void ReclaimPointLightHandle(LightSystem& system, PointLightHandle handle)
 	{
 		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a point light handle that doesn't match the light system you passed in");
-		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid point light handle");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_POINT_LIGHTS, "Passed in an invalid point light handle");
 
 		r2::squeue::PushBack(*system.mMetaData.mPointLightIDs, handle.handle);
 	}
@@ -136,7 +136,7 @@ namespace r2::draw::lightsys
 	void ReclaimSpotLightHandle(LightSystem& system, SpotLightHandle handle)
 	{
 		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a spot light handle that doesn't match the light system you passed in");
-		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid spot light handle");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_SPOT_LIGHTS, "Passed in an invalid spot light handle");
 
 		r2::squeue::PushBack(*system.mMetaData.mSpotlightIDs, handle.handle);
 	}
@@ -144,7 +144,7 @@ namespace r2::draw::lightsys
 	void ReclaimDirectionLightHandle(LightSystem& system, DirectionLightHandle handle)
 	{
 		R2_CHECK(system.mSystemHandle == handle.lightSystemHandle, "We're trying to reclaim a direction light handle that doesn't match the light system you passed in");
-		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_LIGHTS, "Passed in an invalid direction light handle");
+		R2_CHECK(handle.handle >= 0 && handle.handle < light::MAX_NUM_DIRECTIONAL_LIGHTS, "Passed in an invalid direction light handle");
 
 		r2::squeue::PushBack(*system.mMetaData.mDirectionlightIDs, handle.handle);
 	}
@@ -200,7 +200,7 @@ namespace r2::draw::lightsys
 
 	PointLightHandle AddPointLight(LightSystem& system, const PointLight& pointLight)
 	{
-		if (system.mSceneLighting.mNumPointLights + 1 > light::MAX_NUM_LIGHTS)
+		if (system.mSceneLighting.mNumPointLights + 1 > light::MAX_NUM_POINT_LIGHTS)
 		{
 			R2_CHECK(false, "We're trying to add more point lights than we have space for");
 			return {};	
@@ -216,6 +216,12 @@ namespace r2::draw::lightsys
 
 		r2::shashmap::Set(*system.mMetaData.mPointLightMap, newPointLightHandle.handle, pointLightIndex);
 
+		R2_CHECK(system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting point lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+		if (pointLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
+		{
+			system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights++] = pointLightIndex;
+		}
+		
 		SetShouldUpdatePointLight(system, pointLightIndex);
 
 		return newPointLightHandle;
@@ -238,32 +244,51 @@ namespace r2::draw::lightsys
 
 		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mPointLightMap, lightHandle.handle, defaultIndex);
 
-		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_LIGHTS)
+		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_POINT_LIGHTS)
 		{
 			R2_CHECK(false, "We couldn't find the light!");
 			return false;
 		}
 
+		if (system.mSceneLighting.mPointLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			s32 shadowIndex = -1;
+
+			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights; ++i)
+			{
+				if (system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[i] == lightIndex)
+				{
+					shadowIndex = i;
+					break;
+				}
+			}
+
+			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
+			
+			if (shadowIndex != (system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights - 1))
+			{
+				auto lastPointLightIndex = system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights - 1];
+			
+				system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[shadowIndex] = lastPointLightIndex;
+			}
+
+			system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights--;
+		}
 
 		r2::shashmap::Set(*system.mMetaData.mPointLightMap, lightHandle.handle, defaultIndex);
 
 		//swap the point light with the last point light
 
-		if (lightIndex == (system.mSceneLighting.mNumPointLights - 1))
-		{
-			system.mSceneLighting.mNumPointLights--;
-		}
-		else
+		if (lightIndex != (system.mSceneLighting.mNumPointLights - 1))
 		{
 			const PointLight& lastPointLight = system.mSceneLighting.mPointLights[system.mSceneLighting.mNumPointLights - 1];
-
+			
 			system.mSceneLighting.mPointLights[lightIndex] = lastPointLight;
 
 			r2::shashmap::Set(*system.mMetaData.mPointLightMap, lastPointLight.lightProperties.lightID, lightIndex);
-
-			system.mSceneLighting.mNumPointLights--;
 		}
 
+		system.mSceneLighting.mNumPointLights--;
 		ReclaimPointLightHandle(system, lightHandle);
 
 		SetShouldUpdatePointLight(system, lightIndex);
@@ -300,7 +325,7 @@ namespace r2::draw::lightsys
 
 	DirectionLightHandle AddDirectionalLight(LightSystem& system, const DirectionLight& dirLight)
 	{
-		if (system.mSceneLighting.mNumDirectionLights + 1 > light::MAX_NUM_LIGHTS)
+		if (system.mSceneLighting.mNumDirectionLights + 1 > light::MAX_NUM_DIRECTIONAL_LIGHTS)
 		{
 			R2_CHECK(false, "We're trying to add more point lights than we have space for");
 			return {};
@@ -315,6 +340,13 @@ namespace r2::draw::lightsys
 		system.mSceneLighting.mDirectionLights[lightIndex].lightProperties.lightID = newDirectionalLightHandle.handle;
 
 		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, newDirectionalLightHandle.handle, lightIndex);
+
+		R2_CHECK(system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting direction lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+		
+		if (dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES)
+		{
+			system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights++] = lightIndex;
+		}
 
 		SetShouldUpdateDirectionLight(system, lightIndex);
 
@@ -338,10 +370,35 @@ namespace r2::draw::lightsys
 
 		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mDirectionLightMap, lightHandle.handle, defaultIndex);
 
-		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_LIGHTS)
+		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_DIRECTIONAL_LIGHTS)
 		{
 			R2_CHECK(false, "We couldn't find the light!");
 			return false;
+		}
+
+		if (system.mSceneLighting.mDirectionLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			s32 shadowIndex = -1;
+
+			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights; ++i)
+			{
+				if (system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[i] == lightIndex)
+				{
+					shadowIndex = i;
+					break;
+				}
+			}
+
+			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
+
+			if (shadowIndex != (system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights - 1))
+			{
+				auto lastDirLightIndex = system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights - 1];
+
+				system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[shadowIndex] = lastDirLightIndex;
+			}
+
+			system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights--;
 		}
 
 		r2::shashmap::Set(*system.mMetaData.mDirectionLightMap, lightHandle.handle, defaultIndex);
@@ -399,7 +456,7 @@ namespace r2::draw::lightsys
 
 	SpotLightHandle AddSpotLight(LightSystem& system, const SpotLight& spotLight)
 	{
-		if (system.mSceneLighting.mNumSpotLights + 1 > light::MAX_NUM_LIGHTS)
+		if (system.mSceneLighting.mNumSpotLights + 1 > light::MAX_NUM_SPOT_LIGHTS)
 		{
 			R2_CHECK(false, "We're trying to add more point lights than we have space for");
 			return {};
@@ -415,6 +472,12 @@ namespace r2::draw::lightsys
 
 		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, newSpotLightHandle.handle, lightIndex);
 
+		R2_CHECK(system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights + 1 <= light::MAX_NUM_SHADOW_MAP_PAGES, "We can only have %lu shadow casting spot lights", light::MAX_NUM_SHADOW_MAP_PAGES);
+
+		if (spotLight.lightProperties.castsShadowsUseSoftShadows.x > 0 && system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights + 1<= light::MAX_NUM_SHADOW_MAP_PAGES)
+		{
+			system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights++] = lightIndex;
+		}
 
 		SetShouldUpdateSpotLight(system, lightIndex);
 
@@ -438,30 +501,51 @@ namespace r2::draw::lightsys
 
 		s64 lightIndex = r2::shashmap::Get(*system.mMetaData.mSpotLightMap, lightHandle.handle, defaultIndex);
 
-		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_LIGHTS)
+		if (lightIndex <= defaultIndex || lightIndex >= light::MAX_NUM_SPOT_LIGHTS)
 		{
 			R2_CHECK(false, "We couldn't find the light!");
 			return false;
 		}
 
+		if (system.mSceneLighting.mSpotLights[lightIndex].lightProperties.castsShadowsUseSoftShadows.x > 0)
+		{
+			s32 shadowIndex = -1;
+
+			for (u32 i = 0; i < system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights; ++i)
+			{
+				if (system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[i] == lightIndex)
+				{
+					shadowIndex = i;
+					break;
+				}
+			}
+
+			R2_CHECK(shadowIndex != -1, "Should have found the light index!");
+
+			if (shadowIndex != (system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights - 1))
+			{
+				auto lastSpotLightIndex = system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights - 1];
+
+				system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[shadowIndex] = lastSpotLightIndex;
+			}
+
+			system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights--;
+		}
+
 		r2::shashmap::Set(*system.mMetaData.mSpotLightMap, lightHandle.handle, defaultIndex);
 
-		//swap the point light with the last point light
+		//swap the spot light with the last spot light
 
-		if (lightIndex == (system.mSceneLighting.mNumSpotLights - 1))
-		{
-			system.mSceneLighting.mNumSpotLights--;
-		}
-		else
+		if (lightIndex != (system.mSceneLighting.mNumSpotLights - 1))
 		{
 			const SpotLight& lastSpotLight = system.mSceneLighting.mSpotLights[system.mSceneLighting.mNumSpotLights - 1];
 
 			system.mSceneLighting.mSpotLights[lightIndex] = lastSpotLight;
 
 			r2::shashmap::Set(*system.mMetaData.mSpotLightMap, lastSpotLight.lightProperties.lightID, lightIndex);
-
-			system.mSceneLighting.mNumSpotLights--;
 		}
+
+		system.mSceneLighting.mNumSpotLights--;
 
 		SetShouldUpdateSpotLight(system, lightIndex);
 
@@ -587,10 +671,18 @@ namespace r2::draw::lightsys
 		r2::squeue::ConsumeAll(*system.mMetaData.mSpotlightIDs);
 		r2::squeue::ConsumeAll(*system.mMetaData.mDirectionlightIDs);
 
-		for (s64 i = 0; i < light::MAX_NUM_LIGHTS; ++i)
+		for (s64 i = 0; i < light::MAX_NUM_POINT_LIGHTS; ++i)
 		{
 			r2::squeue::PushBack(*system.mMetaData.mPointLightIDs, i);
+		}
+		
+		for (s64 i = 0; i < light::MAX_NUM_SPOT_LIGHTS; ++i)
+		{
 			r2::squeue::PushBack(*system.mMetaData.mSpotlightIDs, i);
+		}
+		
+		for (s64 i = 0; i < light::MAX_NUM_DIRECTIONAL_LIGHTS; ++i)
+		{
 			r2::squeue::PushBack(*system.mMetaData.mDirectionlightIDs, i);
 		}
 	}
@@ -620,8 +712,16 @@ namespace r2::draw
 	u64 LightSystem::MemorySize(u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(LightSystem), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) * 3 +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3 +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s64>::MemorySize(light::MAX_NUM_LIGHTS), alignment, headerSize, boundsChecking) * 3;
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_DIRECTIONAL_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_POINT_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s64>::MemorySize(light::MAX_NUM_SPOT_LIGHTS * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_DIRECTIONAL_LIGHTS), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_POINT_LIGHTS), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s64>::MemorySize(light::MAX_NUM_SPOT_LIGHTS), alignment, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s64>::MemorySize(light::MAX_NUM_DIRECTIONAL_LIGHTS), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s64>::MemorySize(light::MAX_NUM_POINT_LIGHTS), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s64>::MemorySize(light::MAX_NUM_SPOT_LIGHTS), alignment, headerSize, boundsChecking);
 	}
 }
