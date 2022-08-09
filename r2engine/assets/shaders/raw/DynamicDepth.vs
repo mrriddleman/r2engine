@@ -45,6 +45,13 @@ layout (std140, binding = 0) uniform Matrices
 
 invariant gl_Position;
 
+out VS_OUT
+{
+	flat uint drawID;
+	vec3 texCoords; 
+} vs_out;
+
+
 void main()
 {
 	int boneOffset = boneOffsets[DrawID].x;
@@ -57,4 +64,7 @@ void main()
 	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
 	
 	gl_Position = projection * view * modelPos;
+
+	vs_out.drawID = DrawID;
+	vs_out.texCoords= aTexCoord;
 }
