@@ -13,8 +13,8 @@ const float PI = 3.141596;
 #define MAX_NUM_POINT_LIGHTS 4096
 #define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
 #define MAX_NUM_SHADOW_MAP_PAGES 50
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 layout (local_size_x = NUM_SIDES_FOR_POINTLIGHT, local_size_y = 1, local_size_z = 1) in;
@@ -98,12 +98,6 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -117,10 +111,15 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
+
 
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)
 {
@@ -179,15 +178,13 @@ const LookAtVectors lookAtVectors[NUM_SIDES_FOR_POINTLIGHT] =
 
 void main(void)
 {
-	int pointLightIndex = int(gl_WorkGroupID.x);
+	int pointLightIndex = (int)shadowCastingPointLights[int(gl_WorkGroupID.x)];
 	int side = int(gl_LocalInvocationID.x);
 
 	mat4 lightView = LookAt(pointLights[pointLightIndex].position.xyz, pointLights[pointLightIndex].position.xyz + lookAtVectors[side].dir, lookAtVectors[side].up);
 
-pointLights[pointLightIndex].lightProperties.intensity = 50;
+	//pointLights[pointLightIndex].lightProperties.intensity = 50;
 	mat4 lightProj = Projection(PI/2.0, 1, exposureNearFar.y, pointLights[pointLightIndex].lightProperties.intensity);
-
-
 
 	pointLights[pointLightIndex].lightSpaceMatrices[side] = lightProj * lightView;
 }

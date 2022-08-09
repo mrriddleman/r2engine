@@ -728,7 +728,7 @@ public:
 			dirLight.lightProperties.intensity = 2;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-        //    r2::draw::renderer::AddDirectionLight(dirLight);
+            r2::draw::renderer::AddDirectionLight(dirLight);
 
 
 
@@ -745,7 +745,7 @@ public:
 			
             r2::util::Random randomizer;
 
-			for (int i = 0; i < 10; ++i)
+			/*for (int i = 0; i < 10; ++i)
 			{
 				auto zPos = (int)randomizer.RandomNum(1, 10);
 				auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
@@ -766,7 +766,7 @@ public:
 				spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(0, 0, 0, 0);
 
 				r2::draw::renderer::AddSpotLight(spotLight);
-			}
+			}*/
 
 
 			/*for (int i = 0; i < 600; ++i)
@@ -793,8 +793,26 @@ public:
 				r2::draw::renderer::AddPointLight(pointLight);
 			}*/
 
-            
+            /*r2::draw::PointLight pointLight;
+            pointLight.position = glm::vec4(0, 1.3, 1, 1.0);
+            pointLight.lightProperties.color = glm::vec4(1.0f);
+            pointLight.lightProperties.intensity = 100.0;
+            pointLight.lightProperties.fallOff = 0.1;
+            pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+            r2::draw::renderer::AddPointLight(pointLight);*/
 
+
+			/*r2::draw::SpotLight spotLight;
+			spotLight.lightProperties.color = glm::vec4(1.0f);
+
+			spotLight.position = glm::vec4(0, 1.3, 1, glm::cos(glm::radians(60.f)));
+			spotLight.direction = glm::vec4(glm::vec3(0, -1, 0), glm::cos(glm::radians(75.f)));
+
+			spotLight.lightProperties.intensity = 100;
+			spotLight.lightProperties.fallOff = 0.01;
+			spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+
+			r2::draw::renderer::AddSpotLight(spotLight);*/
 
 
    //         

@@ -201,6 +201,7 @@ namespace r2::draw
             case ShaderDataType::Int2:     return 4 * 2;
             case ShaderDataType::Int3:     return 4 * 3;
             case ShaderDataType::Int4:     return 4 * 4;
+			case ShaderDataType::Int64:		return 8;
             case ShaderDataType::Bool:     return 1;
             case ShaderDataType::UInt:      return 4;
             case ShaderDataType::UInt2:     return 4 * 2;
@@ -229,6 +230,7 @@ namespace r2::draw
 		case ShaderDataType::Int2:    return 2;
 		case ShaderDataType::Int3:    return 3;
 		case ShaderDataType::Int4:    return 4;
+		case ShaderDataType::Int64:		return 1;
 		case ShaderDataType::Bool:    return 1;
         case ShaderDataType::Struct:  return 1;
         case ShaderDataType::UInt:    return 1;
@@ -321,6 +323,7 @@ namespace r2::draw
 		case ShaderDataType::Int2:     return 4 * 2;
 		case ShaderDataType::Int3:     return 4 * 4;
 		case ShaderDataType::Int4:     return 4 * 4;
+		case ShaderDataType::Int64:		return 8;
 		case ShaderDataType::Bool:     return 4;
         case ShaderDataType::Struct:   return 4 * 4;
         case ShaderDataType::UInt:      return 4;
@@ -568,29 +571,58 @@ namespace r2::draw
 
 		index++;
 
-		//ShadowCastingLights mShadowCastingDirectionLights;
+		
+
+		//numShadowCastingDirectionLights
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[index].typeCount = 1;
-		mElements[index].type = ShaderDataType::Struct;
-		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//numShadowCastingPointLights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//numShadowCastingSpotLights
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = 1;
+		mElements[index].type = ShaderDataType::Int;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
+		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
+
+		index++;
+
+		//ShadowCastingLights mShadowCastingDirectionLights;
+		mElements.emplace_back(ConstantBufferElement());
+		mElements[index].typeCount = light::NUM_DIRECTIONLIGHT_SHADOW_PAGES;
+		mElements[index].type = ShaderDataType::Int64;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
 		index++;
 
 		//ShadowCastingLights mShadowCastingPointLights;
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = 1;
-		mElements[index].type = ShaderDataType::Struct;
-		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].typeCount = light::NUM_POINTLIGHT_SHADOW_PAGES;
+		mElements[index].type = ShaderDataType::Int64;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
 		index++;
 
 		//ShadowCastingLights mShadowCastingSpotLights;
 		mElements.emplace_back(ConstantBufferElement());
-		mElements[index].typeCount = 1;
-		mElements[index].type = ShaderDataType::Struct;
-		mElements[index].elementSize = static_cast<u32>(r2::util::RoundUp(sizeof(ShadowCastingLights), GetBaseAlignmentSize(mElements[index].type)));
+		mElements[index].typeCount = light::NUM_SPOTLIGHT_SHADOW_PAGES;
+		mElements[index].type = ShaderDataType::Int64;
+		mElements[index].elementSize = GetBaseAlignmentSize(mElements[index].type);
 		mElements[index].size = mElements[index].elementSize * mElements[index].typeCount;
 
 		mType = Big;

@@ -24,8 +24,8 @@ layout (location = 0) out vec4 FragColor;
 #define MAX_NUM_POINT_LIGHTS 4096
 #define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
 #define MAX_NUM_SHADOW_MAP_PAGES 50
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 #define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
 
@@ -153,12 +153,6 @@ layout (std430, binding = 7) buffer MaterialOffsets
 	uint materialOffsets[];
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -172,9 +166,13 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
 layout (std140, binding = 0) uniform Matrices 

@@ -95,12 +95,6 @@ layout (std140, binding = 0) uniform Matrices
     mat4 invProjection;
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -114,9 +108,13 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
 layout (std430, binding=8) buffer Clusters

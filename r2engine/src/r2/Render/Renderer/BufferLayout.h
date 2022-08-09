@@ -30,6 +30,7 @@ namespace r2::draw
         Int2,
         Int3,
         Int4,
+        Int64,
         Bool,
         UInt64,
         Struct,

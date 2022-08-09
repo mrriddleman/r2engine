@@ -170,6 +170,8 @@ namespace r2::draw::lightsys
 
 		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0 || system.mMetaData.mShouldUpdateSkyLight;
 
+		//@TODO(Serge): update the shadow casters if we set casts shadows to true
+
 		if(needsUpdate)
 			ClearModifiedLights(system);
 

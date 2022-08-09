@@ -1009,8 +1009,8 @@ namespace r2::draw::renderer
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) + 
-			RenderTarget::MemorySize(0, 1, 0, light::NUM_DIRECTIONLIGHT_SHADOW_PAGES + light::NUM_SPOTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
@@ -2295,8 +2295,8 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 3 +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::NUM_DIRECTIONLIGHT_SHADOW_PAGES + light::NUM_SPOTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -2886,9 +2886,13 @@ namespace r2::draw::renderer
 		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 7, &lightSystem.mSceneLighting.numPrefilteredRoughnessMips);
 		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 8, &lightSystem.mSceneLighting.useSDSMShadows);
 
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.mShadowCastingDirectionLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.mShadowCastingPointLights);
-		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.mShadowCastingSpotLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 9, &lightSystem.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 10, &lightSystem.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 11, &lightSystem.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights);
+
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 12, &lightSystem.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[0]);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 13, &lightSystem.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[0]);
+		AddFillConstantBufferCommandForData(renderer, lightBufferHandle, 14, &lightSystem.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[0]);
 	}
 
 	template<class ARENA, typename T>
@@ -3056,6 +3060,10 @@ namespace r2::draw::renderer
 		const s32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
 		const s32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
 		const s32 numPointLights = renderer.mLightSystem->mSceneLighting.mNumPointLights;
+
+		const auto numShadowCastingDirectionLights = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
+		const auto numShadowCastingPointLights = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
+		const auto numShadowCastingSpotLights = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
 
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
 		const VertexLayoutConfigHandle& animVertexLayoutHandles = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mAnimVertexModelConfigHandle);
@@ -3457,7 +3465,10 @@ namespace r2::draw::renderer
 				//I guess we need to loop here to submit all of the draws for each light...
 
 				//@TODO(Serge): we don't loop over each cascade in the geometry shader for some reason so we have to do this extra divide by NUM_FRUSTUM_SPLITS, we should probably loop in there and update
-				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil( (float)numDirectionLights/ ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS/(float)cam::NUM_FRUSTUM_SPLITS)), numDirectionLights > 0? 1.0f : 0.0f));
+				
+				
+				
+				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil( (float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS/(float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0? 1.0f : 0.0f));
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
@@ -3479,51 +3490,53 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
-				//const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
+				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
 
-				//key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_SPOT_LIGHT, 0);
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_SPOT_LIGHT, 0);
 
-				//for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
-				//{
-				//	cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
-				//	spotLightBatchIndexUpdateCMD->value = i;
-				//	spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticSpotLightBatchUniformLocation;
+				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
+					spotLightBatchIndexUpdateCMD->value = i;
+					spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticSpotLightBatchUniformLocation;
 
-				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
 
-				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//	shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
-				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//	shadowDrawBatch->subCommands = nullptr;
-				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				//}
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				}
 
-				//const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
+				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingPointLights > 0 ? 1.0f : 0.0f));
 
-				//key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, 0);
+				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, 0);
 
-				//for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
-				//{
-				//	cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
-				//	pointLightBatchIndexUpdateCMD->value = i;
-				//	pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticPointLightBatchUniformLocation;
+				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
+					pointLightBatchIndexUpdateCMD->value = i;
+					pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticPointLightBatchUniformLocation;
 
-				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
-				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//	shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
-				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//	shadowDrawBatch->subCommands = nullptr;
-				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				//}
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				}
 
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
@@ -3568,7 +3581,7 @@ namespace r2::draw::renderer
 				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
 				//@TODO(Serge): we don't loop over each cascade in the geometry shader for some reason so we have to do this extra divide by NUM_FRUSTUM_SPLITS, we should probably loop in there and update
-				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS / (float)cam::NUM_FRUSTUM_SPLITS)), numDirectionLights > 0 ? 1.0f : 0.0f));
+				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS / (float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0 ? 1.0f : 0.0f));
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
@@ -3594,51 +3607,53 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
-				//const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numSpotLights > 0 ? 1.0f : 0.0f));
+				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
 
-				//key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_SPOT_LIGHT, 0);
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_SPOT_LIGHT, 0);
 
-				//for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
-				//{
-				//	cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
-				//	spotLightBatchIndexUpdateCMD->value = i;
-				//	spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicSpotLightBatchUniformLocation;
+				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* spotLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, spotLightShadowKey, 0);
+					spotLightBatchIndexUpdateCMD->value = i;
+					spotLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicSpotLightBatchUniformLocation;
 
-				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
 
-				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//	shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
-				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//	shadowDrawBatch->subCommands = nullptr;
-				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				//}
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				}
 
-				//const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numPointLights > 0 ? 1.0f : 0.0f));
+				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingPointLights > 0 ? 1.0f : 0.0f));
 
-				//key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, 0);
+				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, 0);
 
-				//for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
-				//{
-				//	cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
-				//	pointLightBatchIndexUpdateCMD->value = i;
-				//	pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicPointLightBatchUniformLocation;
+				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
+				{
+					cmd::ConstantUint* pointLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, plShadowKey, 0);
+					pointLightBatchIndexUpdateCMD->value = i;
+					pointLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicPointLightBatchUniformLocation;
 
-				//	cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
+					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
-				//	shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				//	shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
-				//	shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				//	R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
-				//	shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				//	shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				//	shadowDrawBatch->subCommands = nullptr;
-				//	shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				//	shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-				//}
+					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
+					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					shadowDrawBatch->subCommands = nullptr;
+					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				}
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
 
@@ -4113,9 +4128,10 @@ namespace r2::draw::renderer
 		R2_CHECK(pointlightShadowRenderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
 		R2_CHECK(pointlightShadowRenderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mNumDirectionLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights; ++i)
 		{
-			const DirectionLight& light = renderer.mLightSystem->mSceneLighting.mDirectionLights[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[i];
+			const DirectionLight& light = renderer.mLightSystem->mSceneLighting.mDirectionLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
 
 			if (light.lightProperties.castsShadowsUseSoftShadows.x > 0)
@@ -4126,9 +4142,11 @@ namespace r2::draw::renderer
 			}
 		}
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mNumSpotLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights; ++i)
 		{
-			const SpotLight& light = renderer.mLightSystem->mSceneLighting.mSpotLights[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[i];
+
+			const SpotLight& light = renderer.mLightSystem->mSceneLighting.mSpotLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
 
 			if (light.lightProperties.castsShadowsUseSoftShadows.x > 0)
@@ -4140,9 +4158,11 @@ namespace r2::draw::renderer
 			
 		}
 
-		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mNumPointLights; ++i)
+		for (u32 i = 0; i < renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights; ++i)
 		{
-			const PointLight& light = renderer.mLightSystem->mSceneLighting.mPointLights[i];
+			u32 lightIndex = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[i];
+
+			const PointLight& light = renderer.mLightSystem->mSceneLighting.mPointLights[lightIndex];
 			R2_CHECK(light.lightProperties.lightID >= 0, "We should have a valid lightID");
 
 			if (light.lightProperties.castsShadowsUseSoftShadows.x > 0)
@@ -4347,7 +4367,7 @@ namespace r2::draw::renderer
 	void UpdateClusters(Renderer& renderer)
 	{
 		ClearActiveClusters(renderer);
-
+		
 		if (renderer.mLightSystem->mSceneLighting.mNumPointLights == 0 &&
 			renderer.mLightSystem->mSceneLighting.mNumSpotLights == 0)
 		{
@@ -5464,7 +5484,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::NUM_SPOTLIGHT_SHADOW_PAGES + light::NUM_DIRECTIONLIGHT_SHADOW_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		//@TODO(Serge): we're effectively burning the first page of this render target. May want to fix that at some point
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
@@ -5484,7 +5504,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::NUM_POINTLIGHT_SHADOW_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS], rt::DEPTH_CUBEMAP, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
 	}
@@ -5784,7 +5804,7 @@ namespace r2::draw::renderer
 			}
 
 
-			const u32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mNumDirectionLights;
+			const u32 numDirectionLights = renderer.mLightSystem->mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
 
 			//Dispatch the compute shaders for SDSM shadows
 			if (numDirectionLights > 0)
@@ -5800,21 +5820,16 @@ namespace r2::draw::renderer
 				dispatchReduceZBoundsCMD->numGroupsY = dispatchHeight;
 				dispatchReduceZBoundsCMD->numGroupsZ = 1;
 
-
 				cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchReduceZBoundsCMD, 0);
 				barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
-
 
 				cmd::DispatchCompute* calculateLogPartitionsCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchCalculateLogPartitionsKey, 0);
 				calculateLogPartitionsCMD->numGroupsX = 1;
 				calculateLogPartitionsCMD->numGroupsY = 1;
 				calculateLogPartitionsCMD->numGroupsZ = 1;
 
-
 				cmd::Barrier* barrierCMD2 = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, calculateLogPartitionsCMD, 0);
 				barrierCMD2->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
-
-				
 				
 				key::ShadowKey dispatchShadowSDSMKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 4, renderer.mShadowSDSMComputeShader, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 
@@ -5829,34 +5844,34 @@ namespace r2::draw::renderer
 				
 			}
 
-			const u32 numSpotLights = renderer.mLightSystem->mSceneLighting.mNumSpotLights;
+			const u32 numSpotLights = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
 
 			if (numSpotLights > 0)
 			{
-				//key::ShadowKey dispatchSpotLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mSpotLightLightMatrixShader, false, light::LightType::LT_SPOT_LIGHT, 0);
+				key::ShadowKey dispatchSpotLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mSpotLightLightMatrixShader, false, light::LightType::LT_SPOT_LIGHT, 0);
 
-				//cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchSpotLightShadowMatricesKey, 0);
-				//dispatchCMD->numGroupsX = numSpotLights;
-				//dispatchCMD->numGroupsY = 1;
-				//dispatchCMD->numGroupsZ = 1;
+				cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchSpotLightShadowMatricesKey, 0);
+				dispatchCMD->numGroupsX = numSpotLights;
+				dispatchCMD->numGroupsY = 1;
+				dispatchCMD->numGroupsZ = 1;
 
-				//cmd::Barrier* spotLightBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
-				//spotLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+				cmd::Barrier* spotLightBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
+				spotLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 			}
 
-			const u32 numPointLights = renderer.mLightSystem->mSceneLighting.mNumPointLights;
+			const u32 numPointLights = renderer.mLightSystem->mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
 
 			if (numPointLights > 0)
 			{
-				//key::ShadowKey dispatchPointLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mPointLightLightMatrixShader, false, light::LightType::LT_POINT_LIGHT, 0);
+				key::ShadowKey dispatchPointLightShadowMatricesKey = key::GenerateShadowKey(key::ShadowKey::COMPUTE, 5, renderer.mPointLightLightMatrixShader, false, light::LightType::LT_POINT_LIGHT, 0);
 
-				//cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchPointLightShadowMatricesKey, 0);
-				//dispatchCMD->numGroupsX = numPointLights;
-				//dispatchCMD->numGroupsY = 1;
-				//dispatchCMD->numGroupsZ = 1;
-/*
+				cmd::DispatchCompute* dispatchCMD = AddCommand<key::ShadowKey, cmd::DispatchCompute, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, dispatchPointLightShadowMatricesKey, 0);
+				dispatchCMD->numGroupsX = numPointLights;
+				dispatchCMD->numGroupsY = 1;
+				dispatchCMD->numGroupsZ = 1;
+
 				cmd::Barrier* pointLightBarrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
-				pointLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;*/
+				pointLightBarrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
 			}
 
 		}

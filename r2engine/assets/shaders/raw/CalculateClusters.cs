@@ -6,10 +6,6 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 #define NUM_FRUSTUM_SPLITS 4
 #define MAX_CLUSTERS 4096
-
-#define MAX_NUM_POINT_LIGHTS 4096
-#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_SHADOW_MAP_PAGES 50
 #define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
 
 struct VolumeTileAABB

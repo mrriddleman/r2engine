@@ -8,8 +8,8 @@
 #define MAX_NUM_POINT_LIGHTS 4096
 #define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
 #define MAX_NUM_SHADOW_MAP_PAGES 50
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
@@ -95,12 +95,6 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -114,9 +108,13 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)
@@ -160,7 +158,7 @@ mat4 Projection(float fov, float aspect, float near, float far)
 
 void main(void)
 {
-	int spotLightIndex = int(gl_WorkGroupID.x);
+	int spotLightIndex = (int)shadowCastingSpotLights[int(gl_WorkGroupID.x)];
 
 	SpotLight spotLight = spotLights[spotLightIndex];
 

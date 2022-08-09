@@ -18,8 +18,8 @@
 #define NUM_POINTLIGHT_LAYERS 6
 #define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
 
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
+#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
 #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
@@ -117,11 +117,6 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
 
 layout (std430, binding = 4) buffer Lighting
 {
@@ -136,9 +131,13 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
 
@@ -363,7 +362,7 @@ int GetCurrentDirectionLightLightID(int dirLightIndex)
 void main(void)
 {
 	uint cascadeIndex = gl_LocalInvocationID.x;
-	int directionLightIndex = int(gl_WorkGroupID.x);
+	int directionLightIndex = (int)shadowCastingDirectionLights[int(gl_WorkGroupID.x)];
 	int directionLightLightID = GetCurrentDirectionLightLightID(directionLightIndex);
 	
 

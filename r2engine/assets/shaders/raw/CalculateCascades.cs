@@ -99,12 +99,6 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-struct ShadowCastingLights
-{
-	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
-	int numShadowCastingLights;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -118,9 +112,13 @@ layout (std430, binding = 4) buffer Lighting
 	int numPrefilteredRoughnessMips;
 	int useSDSMShadows;
 
-	ShadowCastingLights shadowCastingDirectionLights;
-	ShadowCastingLights shadowCastingPointLights;
-	ShadowCastingLights shadowCastingSpotLights;
+	int numShadowCastingDirectionLights;
+	int numShadowCastingPointLights;
+	int numShadowCastingSpotLights;
+
+	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
+	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
 mat4 MatInverse(mat4 mat)
@@ -169,61 +167,61 @@ mat4 Ortho(float left, float right, float bottom, float top, float near, float f
 
 void main(void)
 {
-	uint cascadeIndex = gl_LocalInvocationIndex;
+	// uint cascadeIndex = gl_LocalInvocationIndex;
 
-	mat4 projViewInv = MatInverse(cameraFrustumProjections[cascadeIndex] * view);
+	// mat4 projViewInv = MatInverse(cameraFrustumProjections[cascadeIndex] * view);
 
-	vec3 frustumCorners[NUM_FRUSTUM_CORNERS] =
-	{
-		{-1.0, 1.0, -1.0},
-		{1.0, 1.0, -1.0},
-		{1.0, -1.0, -1.0},
-		{-1.0, -1.0, -1.0},
-		{-1.0, 1.0, 1.0},
-		{1.0, 1.0, 1.0},
-		{1.0, -1.0, 1.0},
-		{-1.0, -1.0, 1.0}
-	};
+	// vec3 frustumCorners[NUM_FRUSTUM_CORNERS] =
+	// {
+	// 	{-1.0, 1.0, -1.0},
+	// 	{1.0, 1.0, -1.0},
+	// 	{1.0, -1.0, -1.0},
+	// 	{-1.0, -1.0, -1.0},
+	// 	{-1.0, 1.0, 1.0},
+	// 	{1.0, 1.0, 1.0},
+	// 	{1.0, -1.0, 1.0},
+	// 	{-1.0, -1.0, 1.0}
+	// };
 
-	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
-	{
-		vec4 pt = projViewInv * vec4(frustumCorners[i], 1.0);
-		frustumCorners[i] = pt.xyz / pt.w;
-	}
+	// for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+	// {
+	// 	vec4 pt = projViewInv * vec4(frustumCorners[i], 1.0);
+	// 	frustumCorners[i] = pt.xyz / pt.w;
+	// }
 
-	vec3 center = vec3(0.0);
-	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
-	{
-		center += frustumCorners[i];
-	}
+	// vec3 center = vec3(0.0);
+	// for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+	// {
+	// 	center += frustumCorners[i];
+	// }
 
-	center *= (1.0 / NUM_FRUSTUM_CORNERS);
+	// center *= (1.0 / NUM_FRUSTUM_CORNERS);
 
-	float diameter = length(frustumCorners[0] - frustumCorners[6]);
-	float radius = diameter / 2.0;
+	// float diameter = length(frustumCorners[0] - frustumCorners[6]);
+	// float radius = diameter / 2.0;
 
-	float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
+	// float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
-	mat4 scalar = mat4(1.0);
-	scalar[0][0] = scalar[0][0] * texelsPerUnit;
-	scalar[1][1] = scalar[1][1] * texelsPerUnit;
-	scalar[2][1] = scalar[2][2] * texelsPerUnit;
+	// mat4 scalar = mat4(1.0);
+	// scalar[0][0] = scalar[0][0] * texelsPerUnit;
+	// scalar[1][1] = scalar[1][1] * texelsPerUnit;
+	// scalar[2][1] = scalar[2][2] * texelsPerUnit;
 
-	vec3 baseLookAt = -dirLights[0].direction.xyz;
-	vec3 ZERO = vec3(0);
+	// vec3 baseLookAt = -dirLights[0].direction.xyz;
+	// vec3 ZERO = vec3(0);
 
-	mat4 lookAtMat = scalar * LookAt(ZERO, baseLookAt, GLOBAL_UP);
-	mat4 lookAtMatInv = MatInverse(lookAtMat);
+	// mat4 lookAtMat = scalar * LookAt(ZERO, baseLookAt, GLOBAL_UP);
+	// mat4 lookAtMatInv = MatInverse(lookAtMat);
 
-	center = vec3(lookAtMat * vec4(center, 1.0));
-	center.x = floor(center.x);
-	center.y = floor(center.y);
-	center = vec3(lookAtMatInv * vec4(center, 1.0));
+	// center = vec3(lookAtMat * vec4(center, 1.0));
+	// center.x = floor(center.x);
+	// center.y = floor(center.y);
+	// center = vec3(lookAtMatInv * vec4(center, 1.0));
 
-	vec3 eye = center - (dirLights[0].direction.xyz * diameter);
+	// vec3 eye = center - (dirLights[0].direction.xyz * diameter);
 
-	dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, GLOBAL_UP);
+	// dirLights[0].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, GLOBAL_UP);
 	
-	dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(-radius * projMult, radius * projMult, -radius * projMult, radius * projMult, -radius * zMult, radius * zMult);
+	// dirLights[0].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] = Ortho(-radius * projMult, radius * projMult, -radius * projMult, radius * projMult, -radius * zMult, radius * zMult);
 	
 }
