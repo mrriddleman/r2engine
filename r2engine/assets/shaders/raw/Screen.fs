@@ -38,6 +38,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
+	Tex2DAddress zPrePassShadowsSurface;
 };
 
 in VS_OUT
@@ -63,9 +64,9 @@ vec3 Uncharted2ToneMapping(vec3 color);
 
 float LinearizeDepth(float depth) 
 {
-	return depth / 100.0;
-   // float z = depth * 2.0 - 1.0; // back to NDC 
-   // return (2 *  near * far) / (far + near - z * (far - near));	
+	
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2 *  near * far) / (far + near - z * (far - near));	
 }
 
 float NormalizeViewDepth(float depth)

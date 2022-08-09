@@ -302,6 +302,7 @@ namespace r2::draw
 
 		CommandBucket<key::ShadowKey>* mShadowBucket = nullptr;
 		CommandBucket<key::DepthKey>* mDepthPrePassBucket = nullptr;
+		CommandBucket<key::DepthKey>* mDepthPrePassShadowBucket = nullptr;
 		r2::mem::StackArena* mShadowArena = nullptr;
 
 		CommandBucket<key::DepthKey>* mAmbientOcclusionBucket = nullptr;

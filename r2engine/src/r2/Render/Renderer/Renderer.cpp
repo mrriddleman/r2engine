@@ -539,6 +539,7 @@ namespace r2::draw::renderer
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
 	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateAmbientOcclusionDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
@@ -989,9 +990,11 @@ namespace r2::draw::renderer
 		newRenderer->mDepthPrePassBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mDepthPrePassBucket != nullptr, "We couldn't create the command bucket!");
 
-		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 3 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
-		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
+		newRenderer->mDepthPrePassShadowBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mDepthPrePassShadowBucket != nullptr, "We couldn't create the command bucket!");
 
+		newRenderer->mShadowArena = MAKE_STACK_ARENA(*rendererArena, 4 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY / 4);
+		R2_CHECK(newRenderer->mShadowArena != nullptr, "We couldn't create the shadow stack arena for commands");
 
 		newRenderer->mAmbientOcclusionBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mAmbientOcclusionBucket != nullptr, "We couldn't create the command bucket!");
@@ -1013,7 +1016,8 @@ namespace r2::draw::renderer
 			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking));
+			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize,boundsChecking));
 
 		// r2::SArray<RenderMaterialParams>*mRenderMaterialsToRender = nullptr;
 		newRenderer->mRenderMaterialsToRender = MAKE_SARRAY(*rendererArena, RenderMaterialParams, NUM_RENDER_MATERIALS_TO_RENDER);
@@ -1156,6 +1160,7 @@ namespace r2::draw::renderer
 
 		//printf("================================================\n");
 		cmdbkt::Sort(*renderer.mDepthPrePassBucket, key::CompareDepthKey);
+		cmdbkt::Sort(*renderer.mDepthPrePassShadowBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mClustersBucket, key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionDenoiseBucket, key::CompareDepthKey);
@@ -1176,7 +1181,9 @@ namespace r2::draw::renderer
 		//}
 
 		cmdbkt::Submit(*renderer.mPreRenderBucket);
+		
 		cmdbkt::Submit(*renderer.mDepthPrePassBucket);
+		cmdbkt::Submit(*renderer.mDepthPrePassShadowBucket);
 		cmdbkt::Submit(*renderer.mClustersBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionDenoiseBucket);
@@ -1201,6 +1208,7 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionDenoiseBucket);
 		cmdbkt::ClearAll(*renderer.mDepthPrePassBucket);
+		cmdbkt::ClearAll(*renderer.mDepthPrePassShadowBucket);
 		cmdbkt::ClearAll(*renderer.mClustersBucket);
 		cmdbkt::ClearAll(*renderer.mCommandBucket);
 		cmdbkt::ClearAll(*renderer.mShadowBucket);
@@ -1323,6 +1331,7 @@ namespace r2::draw::renderer
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mClustersBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionDenoiseBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionBucket);
+		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mDepthPrePassShadowBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mDepthPrePassBucket);
 		FREE_CMD_BUCKET(*arena, key::ShadowKey, renderer->mShadowBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPostRenderBucket);
@@ -2294,10 +2303,11 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 3 +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 4 +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -2317,7 +2327,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 3 +
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 4 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -3426,6 +3436,11 @@ namespace r2::draw::renderer
 		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
+		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS_SHADOWS, clearDepthOptions, *renderer.mDepthPrePassShadowBucket, depthClearKey, *renderer.mShadowArena);
+		
+		key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, 0);
+		BeginRenderPass<key::Basic>(renderer, RPT_CLUSTERS, clearGBufferOptions, *renderer.mClustersBucket, clusterKey, *renderer.mCommandArena);
+
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
 
 		//@NOTE(Serge): directional light here is intentional for sort order
@@ -3465,8 +3480,6 @@ namespace r2::draw::renderer
 				//I guess we need to loop here to submit all of the draws for each light...
 
 				//@TODO(Serge): we don't loop over each cascade in the geometry shader for some reason so we have to do this extra divide by NUM_FRUSTUM_SPLITS, we should probably loop in there and update
-				
-				
 				
 				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil( (float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS/(float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0? 1.0f : 0.0f));
 
@@ -3538,7 +3551,6 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
-
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
@@ -3552,6 +3564,18 @@ namespace r2::draw::renderer
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
 				zppDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+
+				cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
+				zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+				zppShadowsDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
+				zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+				zppShadowsDrawBatch->subCommands = nullptr;
+				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+				zppShadowsDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+				zppShadowsDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 			}
 
 			//@TODO(Serge): add commands to different buckets
@@ -3678,6 +3702,8 @@ namespace r2::draw::renderer
 		EndRenderPass(renderer, RPT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_POINTLIGHT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_GBUFFER, *renderer.mCommandBucket);
+		EndRenderPass(renderer, RPT_ZPREPASS_SHADOWS, *renderer.mDepthPrePassShadowBucket);
+		EndRenderPass(renderer, RPT_CLUSTERS, *renderer.mClustersBucket);
 
 		ClearSurfaceOptions clearCompositeOptions;
 		clearCompositeOptions.shouldClear = true;
@@ -3764,7 +3790,12 @@ namespace r2::draw::renderer
 
 	RenderTarget* GetRenderTarget(Renderer& renderer, RenderTargetSurface surface)
 	{
-		if (surface == RTS_EMPTY || surface == NUM_RENDER_PASSES)
+		if (surface == RTS_EMPTY)
+		{
+			return nullptr;
+		}
+
+		if (surface == NUM_RENDER_PASSES)
 		{
 			R2_CHECK(false, "We should have a render target surface passed in!");
 			return nullptr;
@@ -3790,12 +3821,14 @@ namespace r2::draw::renderer
 		passConfig.primitiveType = PrimitiveType::TRIANGLES;
 		passConfig.flags = 0;
 		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION, passConfig, { RTS_ZPREPASS }, RTS_AMBIENT_OCCLUSION, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_ZPREPASS_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS_SHADOWS, passConfig, { }, RTS_ZPREPASS_SHADOWS, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_CLUSTERS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_CLUSTERS, passConfig, { RTS_ZPREPASS }, RTS_EMPTY, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION, passConfig, { RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION }, RTS_AMBIENT_OCCLUSION_DENOISED, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS}, RTS_SHADOWS, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS, RTS_ZPREPASS_SHADOWS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -3806,6 +3839,8 @@ namespace r2::draw::renderer
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_GBUFFER]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_CLUSTERS]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_ZPREPASS_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_ZPREPASS]);
 	}
 
@@ -3816,97 +3851,109 @@ namespace r2::draw::renderer
 
 		R2_CHECK(renderPass != nullptr, "This should never be null");
 
+		const auto numInputTextures = renderPass->numRenderInputTargets;
+
 		RenderTarget* renderTarget = GetRenderTarget(renderer, renderPass->renderOutputTargetHandle );
 
-		R2_CHECK(renderTarget != nullptr, "We have an null render target!");
-
-		//key::Basic renderKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, shaderHandle);
-
-		cmd::SetRenderTarget* setRenderTargetCMD = AddCommand<T, cmd::SetRenderTarget, mem::StackArena>(arena, commandBucket, key, 0);
-			
-		setRenderTargetCMD->framebufferID = renderTarget->frameBufferID;
-
-		setRenderTargetCMD->numColorAttachments = 0;
-		setRenderTargetCMD->numDepthAttachments = 0;
-
-		if (renderTarget->colorAttachments)
-		{
-			setRenderTargetCMD->numColorAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
-		}
-		if (renderTarget->depthAttachments)
-		{
-			setRenderTargetCMD->numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
-			//@NOTE(Serge): only using the first one right now...
-			setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture.container->texId;
-		}
-		 
-		setRenderTargetCMD->xOffset = renderTarget->xOffset;
-		setRenderTargetCMD->yOffset = renderTarget->yOffset;
-		setRenderTargetCMD->width = renderTarget->width;
-		setRenderTargetCMD->height = renderTarget->height;
-
+		cmd::SetRenderTarget* setRenderTargetCMD = nullptr;
 		cmd::Clear* clearCMD = nullptr;
-		if (clearOptions.shouldClear)
-		{
-			clearCMD = AppendCommand<cmd::SetRenderTarget, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
-			clearCMD->flags = clearOptions.flags;
-		}
-
-		const auto numInputTextures = renderPass->numRenderInputTargets;
-		//renderPass->renderOutputTargetHandle
-
+		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
+		cmd::FillConstantBuffer* prevCommand = nullptr;
+		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES];
+		
 		ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
 
 		ConstantBufferData* constBufferData = GetConstData(renderer, surfaceBufferHandle);
 
-		cmd::FillConstantBuffer* prevCommand = nullptr;
-
-		//@NOTE(Serge): this is set in the order of the render target surfaces
-		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES] = { RTS_GBUFFER, RTS_SHADOWS, RTS_COMPOSITE, RTS_ZPREPASS, RTS_POINTLIGHT_SHADOWS, RTS_AMBIENT_OCCLUSION};
-		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
-
-
-		//Always fill out our own TextureAddress
+		for (int i = RTS_GBUFFER; i < NUM_RENDER_TARGET_SURFACES; i++)
 		{
-			if (clearCMD)
-			{
-				fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
-			}
-			else
-			{
-				fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
-			}
+			renderTargetSurfacesUsed[i] = (RenderTargetSurface)i;
+		}
 
-			tex::TextureAddress surfaceTextureAddress;
+		if (renderTarget)
+		{
+			setRenderTargetCMD = AddCommand<T, cmd::SetRenderTarget, mem::StackArena>(arena, commandBucket, key, 0);
 
-			//@NOTE(Serge): if we want a deferred renderer we need to change this I think
+			setRenderTargetCMD->framebufferID = renderTarget->frameBufferID;
+
+			setRenderTargetCMD->numColorAttachments = 0;
+			setRenderTargetCMD->numDepthAttachments = 0;
+
 			if (renderTarget->colorAttachments)
 			{
-				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture);
+				setRenderTargetCMD->numColorAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
 			}
-			else if (renderTarget->depthAttachments)
+			if (renderTarget->depthAttachments)
 			{
-				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture);
+				setRenderTargetCMD->numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
+				//@NOTE(Serge): only using the first one right now...
+				setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture.container->texId;
 			}
 
-			FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderOutputTargetHandle * sizeof(tex::TextureAddress));
+			setRenderTargetCMD->xOffset = renderTarget->xOffset;
+			setRenderTargetCMD->yOffset = renderTarget->yOffset;
+			setRenderTargetCMD->width = renderTarget->width;
+			setRenderTargetCMD->height = renderTarget->height;
 
-			renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
+			if (clearOptions.shouldClear)
+			{
+				clearCMD = AppendCommand<cmd::SetRenderTarget, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
+				clearCMD->flags = clearOptions.flags;
+			}
 
-			prevCommand = fillSurfaceCMD;
+			
+			//renderPass->renderOutputTargetHandle
+
+
+
+			//@NOTE(Serge): this is set in the order of the render target surfaces
+			
+			//Always fill out our own TextureAddress
+			{
+				if (clearCMD)
+				{
+					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+				}
+				else
+				{
+					fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+				}
+
+				tex::TextureAddress surfaceTextureAddress;
+
+				//@NOTE(Serge): if we want a deferred renderer we need to change this I think
+				if (renderTarget->colorAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture);
+				}
+				else if (renderTarget->depthAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture);
+				}
+
+				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderOutputTargetHandle * sizeof(tex::TextureAddress));
+
+				renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
+
+				prevCommand = fillSurfaceCMD;
+			}
 		}
 		
-
 
 		for (u32 i = 0; i < numInputTextures; ++i)
 		{
 			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
 
 			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
-
 			
-			R2_CHECK(prevCommand != nullptr, "Should never be null here");
-			fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+			if (!renderTarget)
+			{
+				fillSurfaceCMD = AddCommand<T, cmd::FillConstantBuffer, mem::StackArena>(arena, commandBucket, key, sizeof(tex::TextureAddress));
+			}
+			else
+			{
+				fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+			}
 			
 			tex::TextureAddress surfaceTextureAddress;
 
@@ -5446,6 +5493,7 @@ namespace r2::draw::renderer
 		{
 			DestroyRenderSurfaces(renderer);
 			CreateZPrePassRenderSurface(renderer, resolutionX, resolutionY);
+			CreateZPrePassShadowsRenderSurface(renderer, resolutionX, resolutionY);
 			CreateAmbientOcclusionSurface(renderer, resolutionX, resolutionY);
 			CreateAmbientOcclusionDenoiseSurface(renderer, resolutionX, resolutionY);
 			CreateShadowRenderSurface(renderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
@@ -5528,6 +5576,25 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
+	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
+
+		if (resolutionX > MAX_TEXTURE_SIZE)
+		{
+			resolutionX = MAX_TEXTURE_SIZE;
+		}
+
+		if (resolutionY > MAX_TEXTURE_SIZE)
+		{
+			resolutionY = MAX_TEXTURE_SIZE;
+		}
+
+		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+	}
+
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
 		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
@@ -5575,6 +5642,7 @@ namespace r2::draw::renderer
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS]);
 	}
 

@@ -52,6 +52,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
+	Tex2DAddress zPrePassShadowSurface;
 };
 
 in VS_OUT
@@ -67,8 +68,8 @@ vec3 GetViewSpacePos(vec2 uv)
 {
 	uv *= vec2(1.0 / fovAspectResXResY.z, 1.0 / fovAspectResXResY.w);
 
-	vec3 texCoord = vec3(uv.r, uv.g, zPrePassSurface.page);
-	float depth = texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
+	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowSurface.page);
+	float depth = texture(sampler2DArray(zPrePassShadowSurface.container), texCoord).r;
 	vec4 clipSpacePosition = vec4(vec3(uv, depth) * 2.0 - 1.0, 1.0);
 	vec4 viewSpacePosition = invProjection * clipSpacePosition;
 	viewSpacePosition /= viewSpacePosition.w;

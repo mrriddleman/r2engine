@@ -191,6 +191,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
+	Tex2DAddress zPrePassShadowsSurface;
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this
@@ -1212,7 +1213,7 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 	}
 
 	float lightDepth = shadowPosition.z;
-	float bias = max(0.001 * (1.0 - NoL), 0.0005);
+	float bias = max(0.003 * (1.0 - NoL), 0.0005);
 	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
 	{
 		bias *= 1.0 / (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]);

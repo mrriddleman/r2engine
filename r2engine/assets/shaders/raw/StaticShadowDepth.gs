@@ -76,17 +76,6 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-};
-
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];

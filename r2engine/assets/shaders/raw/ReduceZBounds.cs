@@ -56,6 +56,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
+	Tex2DAddress zPrePassShadowsSurface;
 };
 
 
@@ -111,7 +112,7 @@ float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize);
 
 void main(void)
 {
-	ivec3 depthBufferSize = textureSize(sampler2DArray(zPrePassSurface.container), 0);
+	ivec3 depthBufferSize = textureSize(sampler2DArray(zPrePassShadowsSurface.container), 0);
 
 	float minZ = exposureNearFar.z;
 	float maxZ = exposureNearFar.y;
@@ -175,8 +176,8 @@ float LinearizeDepth(float depth)
 
 float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize)
 {
-	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassSurface.page);
+	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassShadowsSurface.page);
 
-	return LinearizeDepth(texture(sampler2DArray(zPrePassSurface.container), texCoords).r);
+	return LinearizeDepth(texture(sampler2DArray(zPrePassShadowsSurface.container), texCoords).r);
 }
 
