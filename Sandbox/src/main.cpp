@@ -340,7 +340,7 @@ public:
         }
 #endif
 
-        mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 1000.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -725,8 +725,8 @@ public:
 			dirLight.lightProperties.color = glm::vec4(1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 20.0f, 100.0f, 0.0f));
-			dirLight.lightProperties.intensity = 10;
-            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+			dirLight.lightProperties.intensity = 2;
+            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
             r2::draw::renderer::AddDirectionLight(dirLight);
 
@@ -769,7 +769,7 @@ public:
 			}*/
 
 
-			/*for (int i = 0; i < 50; ++i)
+			/*for (int i = 0; i < 20; ++i)
 			{
 				r2::draw::PointLight pointLight;
 

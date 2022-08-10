@@ -170,7 +170,44 @@ namespace r2::draw::lightsys
 
 		bool needsUpdate = numDirLightsToUpdate > 0 || numPointLightsToUpdate > 0 || numSpotLightsToUpdate > 0 || system.mMetaData.mShouldUpdateSkyLight;
 
-		//@TODO(Serge): update the shadow casters if we set casts shadows to true
+		if (numDirLightsToUpdate > 0)
+		{
+			system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights = 0;
+			for (s32 i = 0; i < system.mSceneLighting.mNumDirectionLights; ++i)
+			{
+				if (system.mSceneLighting.mDirectionLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
+				{
+					system.mSceneLighting.mShadowCastingDirectionLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights] = i;
+					++system.mSceneLighting.mShadowCastingDirectionLights.numShadowCastingLights;
+				}
+			}
+		}
+
+		if (numPointLightsToUpdate > 0)
+		{
+			system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights = 0;
+			for (s32 i = 0; i < system.mSceneLighting.mNumPointLights; ++i)
+			{
+				if (system.mSceneLighting.mPointLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
+				{
+					system.mSceneLighting.mShadowCastingPointLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights] = i;
+					++system.mSceneLighting.mShadowCastingPointLights.numShadowCastingLights;
+				}
+			}
+		}
+
+		if (numSpotLightsToUpdate > 0)
+		{
+			system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights = 0;
+			for (s32 i = 0; i < system.mSceneLighting.mNumSpotLights; ++i)
+			{
+				if (system.mSceneLighting.mSpotLights[i].lightProperties.castsShadowsUseSoftShadows.x > 0)
+				{
+					system.mSceneLighting.mShadowCastingSpotLights.shadowCastingLightIndexes[system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights] = i;
+					++system.mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
+				}
+			}
+		}
 
 		if(needsUpdate)
 			ClearModifiedLights(system);
