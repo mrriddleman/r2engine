@@ -522,6 +522,11 @@ namespace r2::draw::renderer
 	template <typename T>
 	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<T>& commandBucket);
 
+	void SetupRenderTargetParams(Renderer& renderer);
+	void SwapRenderTargetsHistoryIfNecessary(Renderer& renderer);
+	void UpdateRenderTargetsIfNecessary(Renderer& renderer);
+	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface);
+
 
 	template<class ARENA, typename T>
 	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<T>& bucket, T key, u64 auxMemory);
@@ -1009,15 +1014,18 @@ namespace r2::draw::renderer
 		R2_CHECK(newRenderer->mClustersBucket != nullptr, "We couldn't create the clusters bucket");
 
 		auto size = CENG.DisplaySize();
+
 		
-		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena,
-			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) + 
-			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize,boundsChecking));
+		SetupRenderTargetParams(*newRenderer);
+
+		u64 renderTargetArenaSize = 0;
+
+		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			renderTargetArenaSize += RenderTarget::MemorySize(newRenderer->mRenderTargetParams[i], ALIGNMENT, stackHeaderSize, boundsChecking);
+		}
+		
+		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena, renderTargetArenaSize);
 
 		// r2::SArray<RenderMaterialParams>*mRenderMaterialsToRender = nullptr;
 		newRenderer->mRenderMaterialsToRender = MAKE_SARRAY(*rendererArena, RenderMaterialParams, NUM_RENDER_MATERIALS_TO_RENDER);
@@ -1123,7 +1131,7 @@ namespace r2::draw::renderer
 	{
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We should have a proper camera before we render");
 		UpdateCamera(renderer, *renderer.mnoptrRenderCam);
-		UpdateFrameCounter(renderer, renderer.mFrameCounter % 12);
+		UpdateFrameCounter(renderer, renderer.mFrameCounter);
 		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE))
 		{
 			float logFarOverNear = glm::log2(renderer.mnoptrRenderCam->farPlane / renderer.mnoptrRenderCam->nearPlane);
@@ -1131,6 +1139,8 @@ namespace r2::draw::renderer
 			UpdateClusterScaleBias(renderer, glm::vec2(renderer.mClusterTileSizes.z / logFarOverNear, -(renderer.mClusterTileSizes.z * logNear) / logFarOverNear));
 			UpdateClusterTileSizes(renderer);
 		}
+
+		UpdateRenderTargetsIfNecessary(renderer);
 
 		++renderer.mFrameCounter;
 		UpdateLighting(renderer);
@@ -1140,6 +1150,7 @@ namespace r2::draw::renderer
 #endif
 
 		UpdateClusters(renderer); //@TODO(Serge): put back
+
 
 		PreRender(renderer);
 
@@ -1223,8 +1234,10 @@ namespace r2::draw::renderer
 		RESET_ARENA(*renderer.mShadowArena);
 		RESET_ARENA(*renderer.mAmbientOcclusionArena);
 
-
+		
 		renderer.mFlags.Remove(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
+
+		SwapRenderTargetsHistoryIfNecessary(renderer);
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -2290,6 +2303,9 @@ namespace r2::draw::renderer
 
 	u64 MemorySize(u64 materialSystemMemorySize)
 	{
+
+
+
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
@@ -2304,13 +2320,13 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 4 +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(0, 1, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize(1, 0, 0, 0, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -3824,11 +3840,11 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_ZPREPASS_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS_SHADOWS, passConfig, { }, RTS_ZPREPASS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_CLUSTERS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_CLUSTERS, passConfig, { RTS_ZPREPASS }, RTS_EMPTY, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION, passConfig, { RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION }, RTS_AMBIENT_OCCLUSION_DENOISED, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION, RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION_DENOISED, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS, RTS_ZPREPASS_SHADOWS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS, RTS_ZPREPASS_SHADOWS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -3847,6 +3863,9 @@ namespace r2::draw::renderer
 	template <class T>
 	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena)
 	{
+
+		//@TODO(Serge): implement the new changes for swapping render targets
+
 		RenderPass* renderPass = GetRenderPass(renderer, renderPassType);
 
 		R2_CHECK(renderPass != nullptr, "This should never be null");
@@ -3879,15 +3898,50 @@ namespace r2::draw::renderer
 			setRenderTargetCMD->numColorAttachments = 0;
 			setRenderTargetCMD->numDepthAttachments = 0;
 
+			
+			bool uploadAllTextures = false;
+			u32 numOutputTextures = 1;
+			u32 currentTexture = 0;
+
 			if (renderTarget->colorAttachments)
 			{
 				setRenderTargetCMD->numColorAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
+				
+				if (setRenderTargetCMD->numColorAttachments > 0)
+				{
+					const auto& textureAttachment = r2::sarr::At(*renderTarget->colorAttachments, 0);
+					uploadAllTextures = textureAttachment.uploadAllTextures;
+					
+					numOutputTextures = 1;
+					if (textureAttachment.uploadAllTextures)
+					{
+						numOutputTextures = textureAttachment.numTextures;
+					}
+					
+					currentTexture = textureAttachment.currentTexture;
+				}
+				
 			}
 			if (renderTarget->depthAttachments)
 			{
 				setRenderTargetCMD->numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
+				
+				if (setRenderTargetCMD->numDepthAttachments > 0)
+				{
+					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthAttachments, 0);
+					uploadAllTextures = textureAttachment.uploadAllTextures;
+					numOutputTextures = 1;
+					if (textureAttachment.uploadAllTextures)
+					{
+						numOutputTextures = textureAttachment.numTextures;
+					}
+					currentTexture = textureAttachment.currentTexture;
+				}
+
 				//@NOTE(Serge): only using the first one right now...
-				setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture.container->texId;
+				setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture].container->texId;
+
+				
 			}
 
 			setRenderTargetCMD->xOffset = renderTarget->xOffset;
@@ -3901,78 +3955,111 @@ namespace r2::draw::renderer
 				clearCMD->flags = clearOptions.flags;
 			}
 
-			
-			//renderPass->renderOutputTargetHandle
-
-
-
-			//@NOTE(Serge): this is set in the order of the render target surfaces
-			
-			//Always fill out our own TextureAddress
+			for (u32 i = 0; i < numOutputTextures; ++i)
 			{
-				if (clearCMD)
+				if (prevCommand == nullptr && clearCMD != nullptr)
 				{
 					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
 				}
-				else
+				else if(prevCommand == nullptr && setRenderTargetCMD != nullptr)
 				{
 					fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
 				}
+				else
+				{
+					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+				}
+
+				//@NOTE(Serge): this is set in the order of the render target surfaces
 
 				tex::TextureAddress surfaceTextureAddress;
 
 				//@NOTE(Serge): if we want a deferred renderer we need to change this I think
 				if (renderTarget->colorAttachments)
 				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture);
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture[currentTexture]);
 				}
 				else if (renderTarget->depthAttachments)
 				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture);
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture]);
 				}
 
-				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderOutputTargetHandle * sizeof(tex::TextureAddress));
+				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderOutputTargetHandle) + i * sizeof(tex::TextureAddress));
 
 				renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
 
 				prevCommand = fillSurfaceCMD;
+
+				currentTexture = (currentTexture + 1) % numOutputTextures;
 			}
 		}
 		
 
 		for (u32 i = 0; i < numInputTextures; ++i)
 		{
+
 			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
 
 			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
 			
-			if (!renderTarget)
-			{
-				fillSurfaceCMD = AddCommand<T, cmd::FillConstantBuffer, mem::StackArena>(arena, commandBucket, key, sizeof(tex::TextureAddress));
-			}
-			else
-			{
-				fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
-			}
-			
-			tex::TextureAddress surfaceTextureAddress;
+			u32 numOutputTextures = 1;
+			u32 currentTexture = 0;
 
-			//@TODO(Serge): this is still wrong, we need a way to map the individual textures of the render target to the surface
-			//				but this will do for now
 			if (inputRenderTarget->colorAttachments)
 			{
-				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture);
+				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
+				currentTexture = textureAttachment.currentTexture;
+
+				if (textureAttachment.uploadAllTextures)
+				{
+					numOutputTextures = textureAttachment.numTextures;
+				}
 			}
-			else if(inputRenderTarget->depthAttachments)
+			else if (inputRenderTarget->depthAttachments)
 			{
-				surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture);
+				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
+				currentTexture = textureAttachment.currentTexture;
+
+				if (textureAttachment.uploadAllTextures)
+				{
+					numOutputTextures = textureAttachment.numTextures;
+				}
 			}
 
-			FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), renderPass->renderInputTargetHandles[i] * sizeof(tex::TextureAddress));
+			for (u32 j = 0; j < numOutputTextures; ++j)
+			{
+				if (!renderTarget)
+				{
+					fillSurfaceCMD = AddCommand<T, cmd::FillConstantBuffer, mem::StackArena>(arena, commandBucket, key, sizeof(tex::TextureAddress));
+				}
+				else
+				{
+					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+				}
 
-			renderTargetSurfacesUsed[renderPass->renderInputTargetHandles[i]] = RTS_EMPTY;
+				tex::TextureAddress surfaceTextureAddress;
 
-			prevCommand = fillSurfaceCMD;
+				//@TODO(Serge): this is still wrong, we need a way to map the individual textures of the render target to the surface
+				//				but this will do for now
+				if (inputRenderTarget->colorAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture[currentTexture]);
+				}
+				else if (inputRenderTarget->depthAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture[currentTexture]);
+				}
+
+				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderInputTargetHandles[i]) + j * sizeof(tex::TextureAddress));
+
+				renderTargetSurfacesUsed[renderPass->renderInputTargetHandles[i]] = RTS_EMPTY;
+
+				prevCommand = fillSurfaceCMD;
+
+				currentTexture = (currentTexture + 1) % numOutputTextures;
+			}
+
+			
 		}
 
 
@@ -3981,29 +4068,59 @@ namespace r2::draw::renderer
 		{
 			if (renderTargetSurfacesUsed[i] != RTS_EMPTY)
 			{
-				tex::TextureAddress surfaceTextureAddress;
+				RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderTargetSurfacesUsed[i]);
 
-				if (i == 0 && prevCommand == nullptr)
+				R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
+
+				u32 numOutputTextures = 1;
+				u32 currentTexture = 0;
+
+				if (inputRenderTarget->colorAttachments)
 				{
-					if (clearCMD)
+					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
+					currentTexture = textureAttachment.currentTexture;
+
+					if (textureAttachment.uploadAllTextures)
 					{
-						fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+						numOutputTextures = textureAttachment.numTextures;
+					}
+				}
+				else if (inputRenderTarget->depthAttachments)
+				{
+					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
+					currentTexture = textureAttachment.currentTexture;
+
+					if (textureAttachment.uploadAllTextures)
+					{
+						numOutputTextures = textureAttachment.numTextures;
+					}
+				}
+
+				for (u32 j = 0; j < numOutputTextures; ++j)
+				{
+					tex::TextureAddress surfaceTextureAddress;
+
+					if (i == 0 && prevCommand == nullptr)
+					{
+						if (clearCMD)
+						{
+							fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+						}
+						else
+						{
+							fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+						}
 					}
 					else
 					{
-						fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
-					
+						R2_CHECK(prevCommand != nullptr, "Should never be null here");
+						fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
 					}
-				}
-				else
-				{
-					R2_CHECK(prevCommand != nullptr, "Should never be null here");
-					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
-				}
 
-				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), i * sizeof(tex::TextureAddress));
+					FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderTargetSurfacesUsed[i]) + j * sizeof(tex::TextureAddress));
 
-				prevCommand = fillSurfaceCMD;
+					prevCommand = fillSurfaceCMD;
+				}
 			}
 		}
 		
@@ -4016,6 +4133,21 @@ namespace r2::draw::renderer
 		cmdbkt::Close(commandBucket);
 	}
 
+	void SwapRenderTargetsHistoryIfNecessary(Renderer& renderer)
+	{
+		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			rt::SwapTexturesIfNecessary(renderer.mRenderTargets[i]);
+		}
+	}
+
+	void UpdateRenderTargetsIfNecessary(Renderer& renderer)
+	{
+		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			rt::UpdateRenderTargetIfNecessary(renderer.mRenderTargets[i]);
+		}
+	}
 
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix)
 	{
@@ -5501,7 +5633,7 @@ namespace r2::draw::renderer
 
 			AssignShadowMapPagesForAllLights(renderer);
 
-			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
@@ -5532,7 +5664,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		//@TODO(Serge): we're effectively burning the first page of this render target. May want to fix that at some point
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
@@ -5552,7 +5684,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS], rt::DEPTH_CUBEMAP, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, true);
 	}
@@ -5571,7 +5703,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
@@ -5590,7 +5722,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 0, 1, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
@@ -5609,7 +5741,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION], rt::RG32F, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
 	}
@@ -5628,7 +5760,7 @@ namespace r2::draw::renderer
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
 
-		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, 1, 0, 0, 0, 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], rt::RG32F, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
 	}
@@ -5644,6 +5776,88 @@ namespace r2::draw::renderer
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS]);
+	}
+
+	void SetupRenderTargetParams(Renderer& renderer)
+	{
+		u32 surfaceOffset = 0;
+
+		constexpr auto sizeOfTextureAddress = sizeof(tex::TextureAddress);
+
+		renderer.mRenderTargetParams[RTS_GBUFFER].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_GBUFFER].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_GBUFFER].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_GBUFFER].numAttachmentRefs = 1;
+		renderer.mRenderTargetParams[RTS_GBUFFER].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_SHADOWS].numColorAttachments = 0;
+		renderer.mRenderTargetParams[RTS_SHADOWS].numDepthAttachments = 1;
+		renderer.mRenderTargetParams[RTS_SHADOWS].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES;
+		renderer.mRenderTargetParams[RTS_SHADOWS].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_SHADOWS].surfaceOffset = surfaceOffset;
+		
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].numDepthAttachments = 1;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numColorAttachments = 0;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthAttachments = 1;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].surfaceOffset = surfaceOffset;
+
+		surfaceOffset += sizeOfTextureAddress * 1;
+
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numColorAttachments = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthAttachments = 1;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].surfaceOffset = surfaceOffset;
+	}
+
+	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
+	{
+		return renderer.mRenderTargetParams[surface].surfaceOffset;
 	}
 
 	//events

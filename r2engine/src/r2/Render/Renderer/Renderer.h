@@ -286,6 +286,7 @@ namespace r2::draw
 		util::Size mResolutionSize;
 		util::Size mCompositeSize;
 
+		rt::RenderTargetParams mRenderTargetParams[NUM_RENDER_TARGET_SURFACES];
 		RenderTarget mRenderTargets[NUM_RENDER_TARGET_SURFACES];
 		RenderPass* mRenderPasses[NUM_RENDER_PASSES];
 

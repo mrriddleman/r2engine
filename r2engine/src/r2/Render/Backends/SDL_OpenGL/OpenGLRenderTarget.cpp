@@ -17,11 +17,9 @@ namespace r2::draw::rt
 
 namespace r2::draw::rt::impl
 {
-	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRenderering)
+	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRenderering)
 	{
 		R2_CHECK(layers > 0, "We need at least 1 layer");
-
-		//@TODO(Serge): implement mip map levels?
 
 		TextureAttachment textureAttachment;
 
@@ -70,24 +68,33 @@ namespace r2::draw::rt::impl
 		format.magFilter = filter;
 		format.wrapMode = wrapMode;
 
-		textureAttachment.texture = tex::CreateTexture(format, layers);
+		u32 numTextures = swapping ? MAX_TEXTURE_ATTACHMENT_HISTORY : 1;
+		textureAttachment.numTextures = numTextures;
+		textureAttachment.uploadAllTextures = uploadAllTextures;
+
+		for (u32 index = 0; index < numTextures; ++index)
+		{
+			textureAttachment.texture[index] = tex::CreateTexture(format, layers);
+		}
+
+		u32 currentIndex = textureAttachment.currentTexture;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 		if (type == COLOR || type == RG32F || type == RG16F)
 		{
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
 		}
 		else if (type == DEPTH || type == DEPTH_CUBEMAP)
 		{
 			
 			if (!useLayeredRenderering)
 			{
-				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
 			}
 			else
 			{
 				//Have to do layered rendering with this
-				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0);
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, 0);
 			}
 
 			glDrawBuffer(GL_NONE);
@@ -121,11 +128,21 @@ namespace r2::draw::rt::impl
 
 	void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
 	{
+		int index = textureAttachment.currentTexture;
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 
 		if (type == DEPTH)
 		{
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture.container->texId, 0, textureAttachment.texture.sliceIndex);
+			if (rt.attachmentReferences && r2::sarr::Size(*rt.attachmentReferences) + 1 <= r2::sarr::Capacity(*rt.attachmentReferences))
+			{
+				rt::TextureAttachmentReference ref;
+				ref.attachmentPtr = &textureAttachment;
+				ref.type = type;
+
+				r2::sarr::Push(*rt.attachmentReferences, ref);
+			}
+
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[index].container->texId, 0, textureAttachment.texture[index].sliceIndex);
 			
 			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
@@ -141,6 +158,8 @@ namespace r2::draw::rt::impl
 
 	float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages)
 	{
+		int index = 0;
+
 		r2::SArray<TextureAttachment>* textureAttachmentsToUse = nullptr;
 
 		if (type == COLOR)
@@ -160,7 +179,12 @@ namespace r2::draw::rt::impl
 		//@NOTE(Serge): we only use the first one right now
 		R2_CHECK(r2::sarr::Size(*textureAttachmentsToUse) > 0, "We should have at least one texture here!");
 
-		r2::draw::tex::TextureHandle textureHandle = r2::sarr::At(*textureAttachmentsToUse, 0).texture;
+
+		auto& attachment =  r2::sarr::At(*textureAttachmentsToUse, 0);
+		
+		R2_CHECK(attachment.numTextures == 1, "Right now we only support adding pages to attachments that aren't swappable");
+
+		r2::draw::tex::TextureHandle textureHandle = attachment.texture[index];
 
 		return tex::AddTexturePages(textureHandle, pages).sliceIndex;
 	}
@@ -189,7 +213,8 @@ namespace r2::draw::rt::impl
 
 		R2_CHECK(r2::sarr::Size(*textureAttachmentsToUse) > 0, "We should have at least one texture here!");
 
-		r2::draw::tex::TextureHandle textureHandle = r2::sarr::At(*textureAttachmentsToUse, 0).texture;
+		int textureIndex = 0;
+		r2::draw::tex::TextureHandle textureHandle = r2::sarr::At(*textureAttachmentsToUse, 0).texture[textureIndex];
 		textureHandle.sliceIndex = index;
 		textureHandle.numPages = pages;
 
@@ -228,13 +253,19 @@ namespace r2::draw::rt::impl
 
 	void DestroyFrameBufferID(RenderTarget& renderTarget)
 	{
+
 		if (renderTarget.colorAttachments)
 		{
 			u64 numColorAttachments = r2::sarr::Size(*renderTarget.colorAttachments);
 
 			for (u64 i = 0; i < numColorAttachments; ++i)
 			{
-				tex::UnloadFromGPU(r2::sarr::At(*renderTarget.colorAttachments, i).texture);
+				auto& attachment = r2::sarr::At(*renderTarget.colorAttachments, i);
+
+				for (u32 textureIndex = 0; textureIndex < attachment.numTextures; ++textureIndex)
+				{
+					tex::UnloadFromGPU(attachment.texture[textureIndex]);
+				}
 			}
 		}
 
@@ -244,7 +275,12 @@ namespace r2::draw::rt::impl
 
 			for (u64 i = 0; i < numDepthAttachments; ++i)
 			{
-				tex::UnloadFromGPU(r2::sarr::At(*renderTarget.depthAttachments, i).texture);
+				auto& attachment = r2::sarr::At(*renderTarget.depthAttachments, i);
+
+				for (u32 textureIndex = 0; textureIndex < attachment.numTextures; ++textureIndex)
+				{
+					tex::UnloadFromGPU(attachment.texture[textureIndex]);
+				}
 			}
 		}
 		
@@ -260,6 +296,125 @@ namespace r2::draw::rt::impl
 		if (renderTarget.frameBufferID > 0)
 		{
 			glDeleteFramebuffers(1, &renderTarget.frameBufferID);
+		}
+	}
+
+	void SwapTexturesIfNecessary(RenderTarget& renderTarget)
+	{
+		if (renderTarget.colorAttachments)
+		{
+			for (u32 i = 0; i < r2::sarr::Size(*renderTarget.colorAttachments); ++i)
+			{
+				auto& attachment = r2::sarr::At(*renderTarget.colorAttachments, i);
+
+				if (attachment.numTextures > 1)
+				{
+					attachment.currentTexture = attachment.currentTexture + 1 % MAX_TEXTURE_ATTACHMENT_HISTORY;
+					attachment.needsFramebufferUpdate = true;
+				}
+			}
+		}
+
+		if (renderTarget.depthAttachments)
+		{
+			for (u32 i = 0; i < r2::sarr::Size(*renderTarget.depthAttachments); ++i)
+			{
+				auto& attachment = r2::sarr::At(*renderTarget.depthAttachments, i);
+
+				if (attachment.numTextures > 1)
+				{
+					attachment.currentTexture = attachment.currentTexture + 1 % MAX_TEXTURE_ATTACHMENT_HISTORY;
+					attachment.needsFramebufferUpdate = true;
+				}
+			}
+		}
+	}
+
+	void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget)
+	{
+		if (renderTarget.colorAttachments)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
+
+			const auto numColorAttachments = r2::sarr::Size(*renderTarget.colorAttachments);
+
+			for (u64 i = 0; i < numColorAttachments; ++i)
+			{
+				const auto& attachment = r2::sarr::At(*renderTarget.colorAttachments, i);
+				u32 currentIndex = attachment.currentTexture;
+
+				if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
+				{
+					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
+				}
+			}
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+
+		if (renderTarget.depthAttachments)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
+
+			const auto numDepthAttachments = r2::sarr::Size(*renderTarget.depthAttachments);
+
+			for (u64 i = 0; i < numDepthAttachments; ++i)
+			{
+				const auto& attachment = r2::sarr::At(*renderTarget.depthAttachments, i);
+
+				if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
+				{
+					if (attachment.numLayers == 1)
+					{
+						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, 0, attachment.texture[attachment.currentTexture].sliceIndex);
+					}
+					else
+					{
+						//Have to do layered rendering with this
+						glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, 0);
+					}
+
+					glDrawBuffer(GL_NONE);
+					glReadBuffer(GL_NONE);
+				}
+			}
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+
+		if (renderTarget.attachmentReferences)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
+
+			const auto numReferences = r2::sarr::Size(*renderTarget.attachmentReferences);
+
+			for (u64 i = 0; i < numReferences; ++i)
+			{
+				 const auto& attachmentReference = r2::sarr::At(*renderTarget.attachmentReferences, i);
+
+				 R2_CHECK(attachmentReference.attachmentPtr != nullptr, "attachment ptr is nullptr!");
+
+				 if (attachmentReference.type == DEPTH)
+				 {
+					 if (attachmentReference.attachmentPtr->numTextures > 1 && attachmentReference.attachmentPtr->needsFramebufferUpdate)
+					 {
+						 const auto currentTexture = attachmentReference.attachmentPtr->currentTexture;
+						 const auto* textureAttachmentPtr = attachmentReference.attachmentPtr;
+
+						 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachmentPtr->texture[currentTexture].container->texId, 0, textureAttachmentPtr->texture[currentTexture].sliceIndex);
+
+						 auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+						 R2_CHECK(result, "Failed to attach texture to frame buffer");
+					 }
+				 }
+				 else
+				 {
+					 R2_CHECK(false, "Unsupported attachment reference type");
+				 }
+			}
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 	}
 }

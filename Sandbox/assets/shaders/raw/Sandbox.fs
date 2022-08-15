@@ -335,6 +335,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 uint GetClusterIndex(vec2 pixelCoord);
 float LinearizeDepth(float depth);
 uint GetDepthSlice(float z);
+vec3 GTAOMultiBounce(float visibility, vec3 albedo);
 
 float GetTextureModifier(Tex2DAddress addr)
 {
@@ -934,6 +935,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
+	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
+
 	vec3 anisotropicT = normalize(SampleAnisotropy(drawID, uv));
 	vec3 anisotropicB = normalize(cross(fs_in.normal, anisotropicT));
 
@@ -968,7 +971,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	vec3 Fd = vec3(0);
 
-	Fd += diffuseColor * diffuseIrradiance * (1.0 - E) * ao;
+	Fd += diffuseColor * diffuseIrradiance * (1.0 - E) * multibounceAO;
 
 	if(anisotropy == 0.0)
 	{
@@ -1589,4 +1592,14 @@ float LinearizeDepth(float depth)
 uint GetDepthSlice(float z)
 {
 	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
+}
+
+vec3 GTAOMultiBounce(float visibility, vec3 albedo)
+{
+	vec3 a = 2.0404 * albedo - 0.3324;
+	vec3 b = -4.7951 * albedo + 0.6417;
+	vec3 c = 2.7551 * albedo + 0.6903;
+	float x = visibility;
+
+	return max(vec3(x), ((x * a + b) * x + c) * x);
 }

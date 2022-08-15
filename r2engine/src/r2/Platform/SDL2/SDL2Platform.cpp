@@ -315,15 +315,17 @@ namespace r2
     
     void SDL2Platform::Run()
     {
-        char newTitle[r2::fs::FILE_PATH_LENGTH];
+        char newTitle[2048];
 
         mStartTime = SDL_GetPerformanceCounter();
         u64 currentTime = mStartTime;
         s64 accumulator = 0;
         
+        f64 maxMSPerFrame = 0;
+        f64 minMSPerFrame = std::numeric_limits<double>::max();
 		
-        const u64 k_millisecondsForFPSUpdate = 250;
-        const u64 k_framesForFPSUpdate = 10;
+        const u64 k_millisecondsForFPSUpdate = 100;
+        const u64 k_framesForFPSUpdate = 5;
         const u64 k_frequency = SDL_GetPerformanceFrequency();
         u64 dtUpper = k_frequency / 62; //(1.0 / 61.0) * k_millisecondsToSeconds;
         u64 dtLower = k_frequency / 60;//(1.0 / 59.0) * k_millisecondsToSeconds;
@@ -354,7 +356,9 @@ namespace r2
 
         
         const s64 vsync_maxerror = k_frequency * .0002;
-        const u32 k_ignoreFrames = 60;
+        const u32 k_ignoreFrames = 100;
+
+        u64 totalFrames = 0;
 
         while (mRunning)
         {
@@ -441,6 +445,7 @@ namespace r2
 
 #if defined( R2_DEBUG ) || defined(R2_RELEASE)
             frames++;
+            totalFrames++;
 			//Calculate ms per frame
 			{
 				endTime = SDL_GetPerformanceCounter();
@@ -449,7 +454,16 @@ namespace r2
 				if (msDiff >= k_millisecondsForFPSUpdate &&
 					frames >= k_framesForFPSUpdate)
 				{
-					sprintf(newTitle, "%s - ms per frame: %f", mApplicationName, msDiff / (f64)frames);
+
+                    f64 msPerFrame = msDiff / (f64)frames;
+
+                    if (totalFrames > k_ignoreFrames)
+                    {
+						maxMSPerFrame = glm::max(maxMSPerFrame, msPerFrame);
+						minMSPerFrame = glm::min(minMSPerFrame, glm::max(msPerFrame, 0.0));
+                    }
+
+					sprintf(newTitle, "%s - ms per frame: %f, 1 frame max: %f, 1 frame min: %f", mApplicationName, msPerFrame, maxMSPerFrame, minMSPerFrame);
 					SetWindowTitle(newTitle);
 
 					frames = 0;

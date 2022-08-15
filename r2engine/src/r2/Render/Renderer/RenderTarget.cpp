@@ -5,12 +5,13 @@ namespace r2::draw
 {
 	const u32 RenderTarget::DEFAULT_RENDER_TARGET = 0;
 
-	u64 RenderTarget::MemorySize(u32 numColorAttachments, u32 numDepthAttachments, u32 numRenderBufferAttachments, u32 maxPageAllocations, u64 alignmnet, u32 headerSize, u32 boundsChecking)
+	u64 RenderTarget::MemorySize(const rt::RenderTargetParams& params, u64 alignmnet, u32 headerSize, u32 boundsChecking)
 	{
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(numColorAttachments), alignmnet, headerSize, boundsChecking) +
-			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(numDepthAttachments), alignmnet, headerSize, boundsChecking) +
-			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderBufferAttachment>::MemorySize(numRenderBufferAttachments), alignmnet, headerSize, boundsChecking) +
-			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderTargetPageAllocation>::MemorySize(maxPageAllocations), alignmnet, headerSize, boundsChecking);
+		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numColorAttachments), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numDepthAttachments), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderBufferAttachment>::MemorySize(params.numRenderBufferAttachments), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderTargetPageAllocation>::MemorySize(params.maxPageAllocations), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachmentReference>::MemorySize(params.numAttachmentRefs), alignmnet, headerSize, boundsChecking);
 	}
 
 	namespace rt
@@ -20,10 +21,14 @@ namespace r2::draw
 			return page1.attachmentIndex == page2.attachmentIndex && page1.numPages == page2.numPages && page1.sliceIndex == page2.sliceIndex && page1.type == page2.type;
 		}
 
-
 		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering)
 		{
-			impl::AddTextureAttachment(rt, type, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
+			impl::AddTextureAttachment(rt, type, false, false, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
+		}
+
+		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering)
+		{
+			impl::AddTextureAttachment(rt, type, swapping, uploadAllTextures, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
 		}
 
 		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
@@ -75,6 +80,16 @@ namespace r2::draw
 		void AddDepthAndStencilAttachment(RenderTarget& rt)
 		{
 			impl::AddDepthAndStencilAttachment(rt);
+		}
+
+		void SwapTexturesIfNecessary(RenderTarget& rt)
+		{
+			impl::SwapTexturesIfNecessary(rt);
+		}
+
+		void UpdateRenderTargetIfNecessary(RenderTarget& rt)
+		{
+			impl::UpdateRenderTargetIfNecessary(rt);
 		}
 	}
 

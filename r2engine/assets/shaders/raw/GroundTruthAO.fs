@@ -3,15 +3,14 @@
 #extension GL_NV_gpu_shader5 : enable
 
 #define NUM_FRUSTUM_SPLITS 4
-#define PI 3.141596
+#define PI 3.14159265358979323846
+#define PI_HALF 1.5707963267948966192313216916398
 
 layout (location = 0) out vec2 FragColor;
 
-uniform float uStrength = 1.9;
-uniform float uRadius = 0.3;
+uniform float uRadius = 3;
 uniform float uMaxRadiusPixels = 50.0;
 uniform float uNumSteps = 4;
-
 
 struct Tex2DAddress
 {
@@ -69,8 +68,11 @@ vec3 GetViewSpacePos(vec2 uv)
 	uv *= vec2(1.0 / fovAspectResXResY.z, 1.0 / fovAspectResXResY.w);
 
 	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowSurface.page);
+	//vec4 depth4 = textureGather(sampler2DArray(zPrePassShadowSurface.container), texCoord);
 	float depth = texture(sampler2DArray(zPrePassShadowSurface.container), texCoord).r;
-	vec4 clipSpacePosition = vec4(vec3(uv, depth) * 2.0 - 1.0, 1.0);
+	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
+
+	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth, 1.0);
 	vec4 viewSpacePosition = invProjection * clipSpacePosition;
 	viewSpacePosition /= viewSpacePosition.w;
 
@@ -106,6 +108,13 @@ vec3 MinDiff(vec3 P, vec3 Pr, vec3 Pl)
 	vec3 V1 = Pr - P;
 	vec3 V2 = P - Pl;
 	return (dot(V1, V1) < dot(V2, V2)) ? V1 : V2;
+}
+
+float FastAcos(float x)
+{
+    float res = -0.156583 * abs(x) + PI_HALF;
+    res *= sqrt(1.0 - abs(x));
+    return x >= 0 ? res : PI - res;
 }
 
 float Square(float x)
@@ -154,8 +163,8 @@ void main()
 
 		vec4 noise = GetNoise();
 
-		float theta = (noise.x + noise.y) * PI;
-		float jitter = noise.z + noise.w;
+		float theta = (noise.x + noise.y) * PI * 2.0;
+		float jitter = noise.z;// + noise.w;
 
 		vec2 dir = vec2(cos(theta), sin(theta));
 		vec2 horizons = vec2(-1.0);
@@ -171,6 +180,7 @@ void main()
 			{
 				vec3 S = GetViewSpacePos(gl_FragCoord.xy + offset); 
 				vec3 D = S - P;
+
 				float dist2 = dot(D, D);
 				D *= inversesqrt(dist2);
 				float attenuation = Falloff(dist2);
@@ -181,6 +191,7 @@ void main()
 			{
 				vec3 S = GetViewSpacePos(gl_FragCoord.xy - offset);
 				vec3 D = S - P;
+
 				float dist2 = dot(D, D);
 				D *= inversesqrt(dist2);
 				float attenuation = Falloff(dist2);
@@ -188,7 +199,10 @@ void main()
 			}
 		}
 
-		horizons = acos(horizons);//@TODO(Serge): optimize
+		//horizons = acos(horizons);//@TODO(Serge): optimize
+
+		horizons.x = FastAcos(horizons.x);
+		horizons.y = FastAcos(horizons.y);
 		horizons.x = -horizons.x;
 
 		// project normal onto slice plane
@@ -202,7 +216,7 @@ void main()
 		//calculate gamma
 		vec3 tangent = cross(V, planeN);
 		float cosGamma = dot(projectedN, V);
-		float gamma = acos(cosGamma) * sign(-dot(projectedN, tangent));
+		float gamma = FastAcos(cosGamma) * sign(-dot(projectedN, tangent));
 		float sinGamma2 = 2.0 * sin(gamma);
 
 		//clamp horizons

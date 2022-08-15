@@ -87,16 +87,16 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-
-
-	//vec2 ao = texture(sampler2DArray(ambientOcclusionSurface.container), coord).rg;
+	//vec3 coord = vec3(uv.r, uv.g, ambientOcclusionDenoiseSurface.page );
+	//vec2 ao = texture(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord).rg;
 	//return vec4(ao.rrr, 1);
 
 
+	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
+	return texture(sampler2DArray(gBufferSurface.container), coord) ;
 
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
-	return texture(sampler2DArray(gBufferSurface.container), coord) ;
+	
 	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;
 	// Tex2DAddress addr = materials[texIndex].diffuseTexture1;
 

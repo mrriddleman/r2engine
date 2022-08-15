@@ -6,10 +6,17 @@
 
 namespace r2::draw::rt
 {
+	constexpr u32 MAX_TEXTURE_ATTACHMENT_HISTORY = 2;
+
 	struct TextureAttachment
 	{
-		tex::TextureHandle texture;
+		tex::TextureHandle texture[MAX_TEXTURE_ATTACHMENT_HISTORY];
 		u32 numLayers = 1;
+		u32 numTextures = 1;
+		u32 currentTexture = 0;
+
+		b32 uploadAllTextures = false;
+		b32 needsFramebufferUpdate = false;
 	};
 
 	struct RenderBufferAttachment
@@ -33,6 +40,23 @@ namespace r2::draw::rt
 		u32 attachmentIndex;
 		float sliceIndex;
 		u32 numPages;
+	};
+
+	struct TextureAttachmentReference
+	{
+		TextureAttachmentType type;
+		const TextureAttachment* attachmentPtr;
+	};
+
+	struct RenderTargetParams
+	{
+		u32 numColorAttachments;
+		u32 numDepthAttachments;
+		u32 numRenderBufferAttachments;
+		u32 maxPageAllocations;
+		u32 numAttachmentRefs;
+
+		u32 surfaceOffset;
 	};
 }
 
@@ -64,12 +88,16 @@ namespace r2::draw
 		u32 xOffset = 0, yOffset = 0;
 
 		r2::SArray<rt::TextureAttachment>* colorAttachments = nullptr;
+
 		r2::SArray<rt::TextureAttachment>* depthAttachments = nullptr;
+		
 		r2::SArray<rt::RenderBufferAttachment>* renderBufferAttachments = nullptr;
 
 		r2::SArray<rt::RenderTargetPageAllocation>* pageAllocations = nullptr;
 
-		static u64 RenderTarget::MemorySize(u32 numColorAttachments, u32 numDepthAttachments, u32 numRenderBufferAttachments, u32 maxPageAllocations, u64 alignmnet, u32 headerSize, u32 boundsChecking);
+		r2::SArray<rt::TextureAttachmentReference>* attachmentReferences = nullptr;
+
+		static u64 RenderTarget::MemorySize(const rt::RenderTargetParams& params, u64 alignmnet, u32 headerSize, u32 boundsChecking);
 	};
 
 	namespace rt
@@ -81,12 +109,14 @@ namespace r2::draw
 		extern s32 MSAA_ATTACHMENT;
 
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u32 maxNumColorAttachments, u32 maxNumDepthAttachments, u32 maxNumRenderBufferAttachments, u32 maxPageAllocations, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description);
+		RenderTarget CreateRenderTarget(ARENA& arena, const RenderTargetParams& params, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description);
 
 		template <class ARENA>
 		void DestroyRenderTarget(ARENA& arena, RenderTarget& rt);
 
 		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+
+		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
 
 		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
 
@@ -97,16 +127,22 @@ namespace r2::draw
 
 		void AddDepthAndStencilAttachment(RenderTarget& rt);
 
+		void SwapTexturesIfNecessary(RenderTarget& rt);
+
+		void UpdateRenderTargetIfNecessary(RenderTarget& rt);
+
 		//private
 		namespace impl
 		{
-			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
 			void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
 			float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 			void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages);
 			void AddDepthAndStencilAttachment(RenderTarget& rt);
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
+			void SwapTexturesIfNecessary(RenderTarget& renderTarget);
+			void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget);
 		}
 
 	}
@@ -114,28 +150,33 @@ namespace r2::draw
 	namespace rt
 	{
 		template <class ARENA>
-		RenderTarget CreateRenderTarget(ARENA& arena, u32 maxNumColorAttachments, u32 maxNumDepthAttachments, u32 maxNumRenderBufferAttachments, u32 maxPageAllocations, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description)
+		RenderTarget CreateRenderTarget(ARENA& arena, const RenderTargetParams& params, u32 xOffset, u32 yOffset, u32 width, u32 height, const char* file, s32 line, const char* description)
 		{
 			RenderTarget rt;
 
-			if (maxNumColorAttachments > 0)
+			if (params.numColorAttachments > 0)
 			{
-				rt.colorAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, maxNumColorAttachments, file, line, description);
+				rt.colorAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, params.numColorAttachments, file, line, description);
 			}
 
-			if (maxNumDepthAttachments > 0)
+			if (params.numDepthAttachments > 0)
 			{
-				rt.depthAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, maxNumDepthAttachments, file, line, description);
+				rt.depthAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, params.numDepthAttachments, file, line, description);
 			}
 			
-			if (maxNumRenderBufferAttachments > 0)
+			if (params.numRenderBufferAttachments > 0)
 			{
-				rt.renderBufferAttachments = MAKE_SARRAY_VERBOSE(arena, RenderBufferAttachment, maxNumRenderBufferAttachments, file, line, description);
+				rt.renderBufferAttachments = MAKE_SARRAY_VERBOSE(arena, RenderBufferAttachment, params.numRenderBufferAttachments, file, line, description);
 			}
 			
-			if (maxPageAllocations > 0)
+			if (params.maxPageAllocations > 0)
 			{
-				rt.pageAllocations = MAKE_SARRAY_VERBOSE(arena, RenderTargetPageAllocation, maxPageAllocations, file, line, description);
+				rt.pageAllocations = MAKE_SARRAY_VERBOSE(arena, RenderTargetPageAllocation, params.maxPageAllocations, file, line, description);
+			}
+
+			if (params.numAttachmentRefs > 0)
+			{
+				rt.attachmentReferences = MAKE_SARRAY_VERBOSE(arena, TextureAttachmentReference, params.numAttachmentRefs, file, line, description);
 			}
 
 			rt.width = width;
@@ -166,6 +207,11 @@ namespace r2::draw
 			}
 
 			impl::DestroyFrameBufferID(rt);
+
+			if (rt.attachmentReferences)
+			{
+				FREE(rt.attachmentReferences, arena);
+			}
 
 			if (rt.pageAllocations)
 			{
