@@ -309,7 +309,7 @@ namespace r2::draw::rt::impl
 
 				if (attachment.numTextures > 1)
 				{
-					attachment.currentTexture = attachment.currentTexture + 1 % MAX_TEXTURE_ATTACHMENT_HISTORY;
+					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
 					attachment.needsFramebufferUpdate = true;
 				}
 			}
@@ -323,7 +323,8 @@ namespace r2::draw::rt::impl
 
 				if (attachment.numTextures > 1)
 				{
-					attachment.currentTexture = attachment.currentTexture + 1 % MAX_TEXTURE_ATTACHMENT_HISTORY;
+					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
+					R2_CHECK(attachment.currentTexture != 2, "here");
 					attachment.needsFramebufferUpdate = true;
 				}
 			}
@@ -346,6 +347,12 @@ namespace r2::draw::rt::impl
 				if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
 				{
 					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
+				
+				
+					auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+					R2_CHECK(result, "Failed to attach texture to frame buffer");
+				
 				}
 			}
 
@@ -376,6 +383,10 @@ namespace r2::draw::rt::impl
 
 					glDrawBuffer(GL_NONE);
 					glReadBuffer(GL_NONE);
+
+					auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+					R2_CHECK(result, "Failed to attach texture to frame buffer");
 				}
 			}
 

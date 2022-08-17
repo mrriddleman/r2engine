@@ -5724,7 +5724,9 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		//rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
