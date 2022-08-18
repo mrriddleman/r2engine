@@ -26,6 +26,11 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 invProjection;
+   	mat4 inverseView;
+    mat4 vpMatrix;
+    mat4 prevProjection;
+    mat4 prevView;
+    mat4 prevVPMatrix;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -36,8 +41,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
-    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+   	vec2 clusterScaleBias;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 
@@ -51,7 +56,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface;
+	Tex2DAddress zPrePassShadowSurface[2];
 };
 
 in VS_OUT
@@ -67,9 +72,9 @@ vec3 GetViewSpacePos(vec2 uv)
 {
 	uv *= vec2(1.0 / fovAspectResXResY.z, 1.0 / fovAspectResXResY.w);
 
-	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowSurface.page);
+	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowSurface[0].page);
 	//vec4 depth4 = textureGather(sampler2DArray(zPrePassShadowSurface.container), texCoord);
-	float depth = texture(sampler2DArray(zPrePassShadowSurface.container), texCoord).r;
+	float depth = texture(sampler2DArray(zPrePassShadowSurface[0].container), texCoord).r;
 	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
 
 	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth, 1.0);

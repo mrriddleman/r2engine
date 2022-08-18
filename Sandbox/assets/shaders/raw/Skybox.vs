@@ -15,6 +15,11 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 inverseProjection;
+    mat4 inverseView;
+	mat4 vpMatrix;
+	mat4 prevProjection;
+	mat4 prevView;
+	mat4 prevVPMatrix;
 };
 
 out VS_OUT

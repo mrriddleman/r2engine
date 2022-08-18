@@ -57,6 +57,7 @@ namespace r2::draw::rt
 		u32 numAttachmentRefs;
 
 		u32 surfaceOffset;
+		u32 numSurfacesPerTarget;
 	};
 }
 

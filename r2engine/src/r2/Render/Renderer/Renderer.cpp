@@ -378,6 +378,13 @@ namespace r2::draw::renderer
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
 	void UpdateCameraFrustumProjections(Renderer& renderer, const Camera& camera);
 	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj);
+
+	void UpdateInverseViewMatrix(Renderer& renderer, const glm::mat4& invView);
+	void UpdateViewProjectionMatrix(Renderer& renderer, const glm::mat4& vpMatrix);
+	void UpdatePreviousProjectionMatrix(Renderer& renderer);
+	void UpdatePreviousViewMatrix(Renderer& renderer);
+	void UpdatePreviousVPMatrix(Renderer& renderer);
+
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
 	void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
@@ -1238,6 +1245,11 @@ namespace r2::draw::renderer
 		renderer.mFlags.Remove(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
 		SwapRenderTargetsHistoryIfNecessary(renderer);
+
+		//remember the previous projection/view matrices
+		renderer.prevProj = renderer.mnoptrRenderCam->proj;
+		renderer.prevView = renderer.mnoptrRenderCam->view;
+		renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -1428,7 +1440,12 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Mat4, "view"},
 			{r2::draw::ShaderDataType::Mat4, "skyboxView"},
 			{r2::draw::ShaderDataType::Mat4, "cameraFrustumProjection", cam::NUM_FRUSTUM_SPLITS},
-			{r2::draw::ShaderDataType::Mat4, "InverseProjection"}
+			{r2::draw::ShaderDataType::Mat4, "InverseProjection"},
+			{r2::draw::ShaderDataType::Mat4, "InverseView"},
+			{r2::draw::ShaderDataType::Mat4, "VPMatrix"},
+			{r2::draw::ShaderDataType::Mat4, "prevProjection"},
+			{r2::draw::ShaderDataType::Mat4, "prevView"},
+			{r2::draw::ShaderDataType::Mat4, "prevVPMatrix"}
 		});
 
 		renderer.mVectorsConfigHandle = AddConstantBufferLayout(renderer, r2::draw::ConstantBufferLayout::Type::Small, {
@@ -2278,7 +2295,7 @@ namespace r2::draw::renderer
 			r2::draw::VertexDrawTypeDynamic
 		};
 
-		surfaces.layout.InitForSurfaces();
+		surfaces.layout.InitForSurfaces(renderer.mRenderTargetParams);
 
 		r2::sarr::Push(*renderer.mConstantLayouts, surfaces);
 
@@ -4193,6 +4210,8 @@ namespace r2::draw::renderer
 		}
 	}
 
+
+
 	void UpdateInverseProjectionMatrix(Renderer& renderer, const glm::mat4& invProj)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -4202,6 +4221,62 @@ namespace r2::draw::renderer
 			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
 			4,
 			glm::value_ptr(invProj));
+	}
+
+	void UpdateInverseViewMatrix(Renderer& renderer, const glm::mat4& invView)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			5,
+			glm::value_ptr(invView));
+	}
+
+	void UpdateViewProjectionMatrix(Renderer& renderer, const glm::mat4& vpMatrix)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			6,
+			glm::value_ptr(vpMatrix));
+
+	}
+
+	void UpdatePreviousProjectionMatrix(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			7,
+			glm::value_ptr(renderer.prevProj));
+	}
+
+	void UpdatePreviousViewMatrix(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			8,
+			glm::value_ptr(renderer.prevView));
+	}
+
+	void UpdatePreviousVPMatrix(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		AddFillConstantBufferCommandForData(
+			renderer,
+			r2::sarr::At(*constantBufferHandles, renderer.mVPMatricesConfigHandle),
+			9,
+			glm::value_ptr(renderer.prevVP));
 	}
 
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition)
@@ -4594,10 +4669,19 @@ namespace r2::draw::renderer
 	{
 		UpdatePerspectiveMatrix(renderer, camera.proj);
 		UpdateInverseProjectionMatrix(renderer, camera.invProj);
+
+		UpdateInverseViewMatrix(renderer, camera.invView);
+		UpdateViewProjectionMatrix(renderer, camera.vp);
+		UpdatePreviousProjectionMatrix(renderer);
+		UpdatePreviousViewMatrix(renderer);
+		UpdatePreviousVPMatrix(renderer);
+
 		UpdateViewMatrix(renderer, camera.view);
 		UpdateCameraFrustumProjections(renderer, camera);
 		UpdateCameraPosition(renderer, camera.position);
 		UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
+
+		//TODO(Serge): add in the previous projection/view matrices
 
 		float frustumSplits[cam::NUM_FRUSTUM_SPLITS];
 		cam::GetFrustumSplits(camera, frustumSplits);
@@ -5724,9 +5808,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		//rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
-
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -5792,8 +5874,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_GBUFFER].numAttachmentRefs = 1;
 		renderer.mRenderTargetParams[RTS_GBUFFER].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_GBUFFER].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_GBUFFER].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_SHADOWS].numColorAttachments = 0;
 		renderer.mRenderTargetParams[RTS_SHADOWS].numDepthAttachments = 1;
@@ -5801,8 +5884,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES;
 		renderer.mRenderTargetParams[RTS_SHADOWS].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_SHADOWS].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_SHADOWS].numSurfacesPerTarget = 1;
 		
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SHADOWS].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
 		renderer.mRenderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
@@ -5810,8 +5894,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_COMPOSITE].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_COMPOSITE].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_COMPOSITE].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS].numDepthAttachments = 1;
@@ -5819,8 +5904,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numColorAttachments = 0;
 		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthAttachments = 1;
@@ -5828,8 +5914,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES;
 		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numColorAttachments = 1;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthAttachments = 0;
@@ -5837,8 +5924,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numColorAttachments = 1;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthAttachments = 0;
@@ -5846,8 +5934,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * 1;
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget;
 
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numColorAttachments = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthAttachments = 1;
@@ -5855,6 +5944,9 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
@@ -5894,6 +5986,10 @@ namespace r2::draw::renderer
 	{
 		R2_CHECK(cameraPtr != nullptr, "We should always pass in a valid camera");
 		renderer.mnoptrRenderCam = cameraPtr;
+
+		renderer.prevProj = renderer.mnoptrRenderCam->proj;
+		renderer.prevView = renderer.mnoptrRenderCam->view;
+		renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light)

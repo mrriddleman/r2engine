@@ -27,7 +27,12 @@ layout (std140, binding = 0) uniform Matrices
 	mat4 view;
 	mat4 skyboxView;
 	mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 invProjection;
+	mat4 inverseProjection;
+	mat4 inverseView;
+	mat4 vpMatrix;
+	mat4 prevProjection;
+	mat4 prevView;
+	mat4 prevVPMatrix;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -48,8 +53,10 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress shadowsSurface;
 	Tex2DAddress compositeSurface;
 	Tex2DAddress zPrePassSurface;
-    Tex2DAddress pointLightShadowsSurface;
-    Tex2DAddress ambientOcclusionSurface;
+	Tex2DAddress pointLightShadowsSurface;
+	Tex2DAddress ambientOcclusionSurface;
+	Tex2DAddress ambientOcclusionDenoiseSurface;
+	Tex2DAddress zPrePassShadowsSurface[2];
 };
 
 layout (std140, binding = 3) uniform SDSMParams
@@ -819,12 +826,18 @@ namespace r2::draw
 		mBufferMult = 1;
     }
 
-    void ConstantBufferLayout::InitForSurfaces()
+    void ConstantBufferLayout::InitForSurfaces(const rt::RenderTargetParams rtParams[])
     {
+		u32 numSurfaces = 0;
+		for (u32 i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			numSurfaces += rtParams[i].numSurfacesPerTarget;
+		}
+
 		mElements.clear();
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[0].offset = 0;
-		mElements[0].typeCount = NUM_RENDER_TARGET_SURFACES;
+		mElements[0].typeCount = numSurfaces;
 		mElements[0].elementSize = sizeof(tex::TextureAddress);
 		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
 		mElements[0].type = ShaderDataType::Struct;

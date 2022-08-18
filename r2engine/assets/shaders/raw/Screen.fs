@@ -23,7 +23,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+    vec2 clusterScaleBias;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 
@@ -38,7 +39,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface;
+	Tex2DAddress zPrePassShadowsSurface[2];
 };
 
 in VS_OUT

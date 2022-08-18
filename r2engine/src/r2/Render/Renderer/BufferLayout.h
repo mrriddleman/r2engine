@@ -10,8 +10,14 @@
 
 #include "r2/Render/Renderer/RendererTypes.h"
 
+
 namespace r2::draw
 {
+
+    namespace rt
+    {
+        struct RenderTargetParams;
+    }
 
     extern u32 VertexDrawTypeStatic;
     extern u32 VertexDrawTypeStream;
@@ -179,7 +185,7 @@ namespace r2::draw
         void InitForBoneTransformOffsets(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
         void InitForLighting();
         void InitForDebugSubCommands(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numCommands);
-        void InitForSurfaces();
+        void InitForSurfaces(const rt::RenderTargetParams rtParams[]);
         void InitForDebugRenderConstants(ConstantBufferFlags flags, CreateConstantBufferFlags createFlags, u64 numBoneTransformOffsets);
 
         void InitForShadowData();

@@ -175,14 +175,6 @@ layout (std430, binding = 4) buffer Lighting
 	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
 };
 
-layout (std140, binding = 0) uniform Matrices 
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-};
 
 //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
 layout (std140, binding = 2) uniform Surfaces
@@ -194,7 +186,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface;
+	Tex2DAddress zPrePassShadowsSurface[2];
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this

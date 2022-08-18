@@ -36,7 +36,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface;
+	Tex2DAddress zPrePassShadowSurface[2];
 };
 
 in VS_OUT
@@ -109,10 +109,10 @@ vec2 SpatialDenoise()
 	ao4s[2] = GatherOffset(ambientOcclusionSurface, fs_in.texCoords.xy, ivec2(-2, 0));
 	ao4s[3] = GatherOffset(ambientOcclusionSurface, fs_in.texCoords.xy, ivec2(-2, -2));
 
-	depth4s[0] = GatherOffset(zPrePassShadowSurface, fs_in.texCoords.xy, ivec2(0));
-	depth4s[1] = GatherOffset(zPrePassShadowSurface, fs_in.texCoords.xy, ivec2(0, -2));
-	depth4s[2] = GatherOffset(zPrePassShadowSurface, fs_in.texCoords.xy, ivec2(-2, 0));
-	depth4s[3] = GatherOffset(zPrePassShadowSurface, fs_in.texCoords.xy, ivec2(-2, -2));
+	depth4s[0] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(0));
+	depth4s[1] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(0, -2));
+	depth4s[2] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(-2, 0));
+	depth4s[3] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(-2, -2));
 
 
 	const float near = exposureNearFar.y;

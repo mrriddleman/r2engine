@@ -21,15 +21,6 @@ layout (local_size_x = NUM_SIDES_FOR_POINTLIGHT, local_size_y = 1, local_size_z 
 
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-};
-
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;
@@ -38,7 +29,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+   	vec2 clusterScaleBias;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 struct Tex2DAddress

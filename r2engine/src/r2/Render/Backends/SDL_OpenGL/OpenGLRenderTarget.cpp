@@ -324,7 +324,6 @@ namespace r2::draw::rt::impl
 				if (attachment.numTextures > 1)
 				{
 					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
-					R2_CHECK(attachment.currentTexture != 2, "here");
 					attachment.needsFramebufferUpdate = true;
 				}
 			}

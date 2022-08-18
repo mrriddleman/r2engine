@@ -58,6 +58,8 @@ namespace r2::cam
     glm::vec3 CalculateFacingDirection(float pitch, float yaw, const glm::vec3& upDir);
     
     r2::math::Ray CalculateRayFromMousePosition(const Camera& cam, u32 mouseX, u32 mouseY);
+
+
 }
 
 namespace r2
@@ -67,7 +69,7 @@ namespace r2
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 proj = glm::mat4(1.0f);
 		glm::mat4 vp = glm::mat4(1.0f);
-     //   glm::mat4 invView = glm::mat4(1.0f);
+        glm::mat4 invView = glm::mat4(1.0f);
         glm::mat4 invProj = glm::mat4(1.0f);
 
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);

@@ -36,6 +36,11 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 inverseProjection;
+    mat4 inverseView;
+    mat4 vpMatrix;
+    mat4 prevProjection;
+    mat4 prevView;
+    mat4 prevVPMatrix;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -46,7 +51,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
 	vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+   	vec2 clusterScaleBias;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 layout (std140, binding = 3) uniform SDSMParams

@@ -35,6 +35,11 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 invProjection;
+    mat4 inverseView;
+    mat4 vpMatrix;
+    mat4 prevProjection;
+    mat4 prevView;
+    mat4 prevVPMatrix;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -60,7 +65,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface;
+	Tex2DAddress zPrePassShadowSurface[2];
 };
 
 layout (std430, binding=8) buffer Clusters

@@ -241,6 +241,9 @@ namespace r2::draw
 
 		//------------BEGIN Drawing Stuff--------------
 		const Camera* mnoptrRenderCam = nullptr;
+		glm::mat4 prevProj = glm::mat4(1.0f);
+		glm::mat4 prevView = glm::mat4(1.0f);
+		glm::mat4 prevVP = glm::mat4(1.0f);
 
 
 		//@TODO(Serge): figure out a nicer way to store all this stuff

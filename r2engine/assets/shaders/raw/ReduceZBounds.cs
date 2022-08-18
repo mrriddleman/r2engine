@@ -32,6 +32,11 @@ layout (std140, binding = 0) uniform Matrices
     mat4 skyboxView;
     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
     mat4 inverseProjection;
+    mat4 inverseView;
+    mat4 vpMatrix;
+    mat4 prevProjection;
+    mat4 prevView;
+    mat4 prevVPMatrix;
 };
 
 layout (std140, binding = 1) uniform Vectors
@@ -42,7 +47,8 @@ layout (std140, binding = 1) uniform Vectors
     vec4 shadowMapSizes;
     vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
+    vec2 clusterScaleBias;
+	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
 };
 
 
@@ -56,7 +62,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface;
+	Tex2DAddress zPrePassShadowsSurface[2];
 };
 
 
@@ -112,7 +118,7 @@ float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize);
 
 void main(void)
 {
-	ivec3 depthBufferSize = textureSize(sampler2DArray(zPrePassShadowsSurface.container), 0);
+	ivec3 depthBufferSize = textureSize(sampler2DArray(zPrePassShadowsSurface[0].container), 0);
 
 	float minZ = exposureNearFar.z;
 	float maxZ = exposureNearFar.y;
@@ -176,8 +182,8 @@ float LinearizeDepth(float depth)
 
 float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize)
 {
-	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassShadowsSurface.page);
+	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassShadowsSurface[0].page);
 
-	return LinearizeDepth(texture(sampler2DArray(zPrePassShadowsSurface.container), texCoords).r);
+	return LinearizeDepth(texture(sampler2DArray(zPrePassShadowsSurface[0].container), texCoords).r);
 }
 
