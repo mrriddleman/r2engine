@@ -173,12 +173,12 @@ namespace r2::cam
 
         dispatcher.Dispatch<r2::evt::MouseWheelEvent>([this](const r2::evt::MouseWheelEvent&e){
             
-            if(mFOV >= 1.0f && mFOV <= 45.0f)
+            if(mFOV >= 1.0f && mFOV <= 90.0f)
                 mFOV -= e.YAmount();
             if(mFOV <= 1.0f)
                 mFOV = 1.0f;
-            if(mFOV >= 45.0f)
-                mFOV = 45.0f;
+			if (mFOV >= 90.0f)
+				mFOV = 90.0f;
             
             SetPerspectiveCam(mCamera, mFOV, mAspect, mNear, mFar);
             return true;

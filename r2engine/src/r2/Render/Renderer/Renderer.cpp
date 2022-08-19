@@ -3900,7 +3900,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5835,7 +5835,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -5844,7 +5844,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION], rt::RG32F, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION], rt::RG32F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -5853,7 +5853,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], rt::RG32F, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], rt::RG32F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void CreateAmbientOcclusionTemporalDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -5862,7 +5862,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)

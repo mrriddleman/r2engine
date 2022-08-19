@@ -93,8 +93,9 @@ void main()
 
 	const vec2 uvMinusVel = fs_in.texCoords.xy - velocity;
 
-	const vec4 depthPrev4 = GatherOffset(zPrePassShadowSurface[1], uvMinusVel, ivec2(0));
-	const vec4 aoAcc4 = GatherOffset(ambientOcclusionTemporalDenoiseSurface[1], uvMinusVel, ivec2(0));
+	vec4 depthPrev4 = GatherOffset(zPrePassShadowSurface[1], uvMinusVel, ivec2(0));
+
+	vec4 aoAcc4 = vec4(SampleTextureF(ambientOcclusionTemporalDenoiseSurface[1], uvMinusVel, ivec2(0)));
 
 	const vec2 pixelUVPrev = uvMinusVel * fovAspectResXResY.zw- vec2(0.5) + vec2(1.0 / 512);
 	const float weightX = 1 - fract(pixelUVPrev.x);

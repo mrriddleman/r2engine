@@ -90,13 +90,15 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	//vec3 coord = vec3(uv.r, uv.g, ambientOcclusionTemporalDenoiseSurface[0].page );
-	//vec2 ao = texture(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord).rg;
-	//return vec4(ao.rrr, 1);
+	vec3 coord = vec3(uv.r, uv.g, ambientOcclusionTemporalDenoiseSurface[0].page );
+	vec2 ao = texture(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord).rg;
+	return vec4(ao.rrr, 1);
 
 
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	return texture(sampler2DArray(gBufferSurface.container), coord) ;
+
+
+//	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
+//	return texture(sampler2DArray(gBufferSurface.container), coord) ;
 
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
 	
