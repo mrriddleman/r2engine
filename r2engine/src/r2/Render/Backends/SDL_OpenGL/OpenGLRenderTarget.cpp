@@ -58,6 +58,14 @@ namespace r2::draw::rt::impl
 		{
 			format.internalformat = GL_RG16F;
 		}
+		else if (type == R32F)
+		{
+			format.internalformat = GL_R32F;
+		}
+		else if (type == R16F)
+		{
+			format.internalformat = GL_R16F;
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported TextureAttachmentType!");
@@ -80,7 +88,7 @@ namespace r2::draw::rt::impl
 		u32 currentIndex = textureAttachment.currentTexture;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
-		if (type == COLOR || type == RG32F || type == RG16F)
+		if (type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F)
 		{
 			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + (GLenum)r2::sarr::Size(*rt.colorAttachments), textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
 		}
@@ -109,7 +117,7 @@ namespace r2::draw::rt::impl
 
 		R2_CHECK(result, "Failed to attach texture to frame buffer");
 
-		if (type == COLOR || type == RG32F || type == RG16F)
+		if (type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F)
 		{
 			r2::sarr::Push(*rt.colorAttachments, textureAttachment);
 		}
@@ -346,7 +354,6 @@ namespace r2::draw::rt::impl
 				if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
 				{
 					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
-				
 				
 					auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 

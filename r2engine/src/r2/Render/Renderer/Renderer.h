@@ -263,6 +263,7 @@ namespace r2::draw
 
 		ShaderHandle mAmbientOcclusionShader;
 		ShaderHandle mDenoiseShader;
+		ShaderHandle mAmbientOcclusionTemporalDenoiseShader;
 
 		ShaderHandle mCreateClusterComputeShader;
 		ShaderHandle mMarkActiveClusterTilesComputeShader;
@@ -311,6 +312,7 @@ namespace r2::draw
 
 		CommandBucket<key::DepthKey>* mAmbientOcclusionBucket = nullptr;
 		CommandBucket<key::DepthKey>* mAmbientOcclusionDenoiseBucket = nullptr;
+		CommandBucket<key::DepthKey>* mAmbientOcclusionTemporalDenoiseBucket = nullptr;
 		r2::mem::StackArena* mAmbientOcclusionArena = nullptr;
 
 		r2::SArray<RenderBatch>* mRenderBatches = nullptr; //should be size of NUM_DRAW_TYPES

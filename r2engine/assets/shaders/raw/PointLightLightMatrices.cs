@@ -31,6 +31,7 @@ layout (std140, binding = 1) uniform Vectors
     uint64_t frame;
    	vec2 clusterScaleBias;
 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+	vec4 jitter;
 };
 
 struct Tex2DAddress

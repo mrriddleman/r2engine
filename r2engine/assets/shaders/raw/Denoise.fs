@@ -25,6 +25,7 @@ layout (std140, binding = 1) uniform Vectors
     uint64_t frame;
     uint64_t unused;
     uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
 };
 
 layout (std140, binding = 2) uniform Surfaces
@@ -37,6 +38,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
 	Tex2DAddress zPrePassShadowSurface[2];
+	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
 in VS_OUT

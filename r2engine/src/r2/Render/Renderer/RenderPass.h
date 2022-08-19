@@ -21,22 +21,11 @@ namespace r2::draw
 		RPT_POINTLIGHT_SHADOWS,
 		RPT_AMBIENT_OCCLUSION,
 		RPT_AMBIENT_OCCLUSION_DENOISE,
+		RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE,
 		RPT_ZPREPASS_SHADOWS,
 		RPT_CLUSTERS,
 		NUM_RENDER_PASSES
 	};
-
-	//enum CommandBucketType
-	//{
-	//	CBT_PRE_RENDER = 0,
-
-	//	//@NOTE(Serge): These should mirror RenderPassType
-	//	CBT_GBUFFER,
-	//	CBT_FINAL_COMPOSITE,
-
-	//	CBT_POST_RENDER,
-	//	NUM_COMMAND_BUCKET_TYPES
-	//};
 
 	struct RenderPassConfig
 	{

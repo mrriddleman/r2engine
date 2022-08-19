@@ -32,6 +32,8 @@ namespace r2::draw::rt
 		DEPTH_CUBEMAP,
 		RG16F,
 		RG32F,
+		R32F,
+		R16F,
 	};
 
 	struct RenderTargetPageAllocation
@@ -75,11 +77,9 @@ namespace r2::draw
 		RTS_AMBIENT_OCCLUSION,
 		RTS_AMBIENT_OCCLUSION_DENOISED,
 		RTS_ZPREPASS_SHADOWS,
+		RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED,
 		NUM_RENDER_TARGET_SURFACES,
-		
 	};
-	
-	
 
 	struct RenderTarget
 	{

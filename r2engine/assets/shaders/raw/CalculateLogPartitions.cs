@@ -39,23 +39,11 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
+	vec4 fovAspectResXResY;
     uint64_t frame;
-    uint64_t unused;
-};
-
-
-//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
+    vec2 clusterScaleBias;
+    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
 };
 
 layout (std140, binding = 3) uniform SDSMParams

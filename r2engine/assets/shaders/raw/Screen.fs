@@ -25,6 +25,7 @@ layout (std140, binding = 1) uniform Vectors
     uint64_t frame;
     vec2 clusterScaleBias;
 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+	vec4 jitter;
 };
 
 
@@ -40,6 +41,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
 	Tex2DAddress zPrePassShadowsSurface[2];
+	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
 in VS_OUT
@@ -88,8 +90,8 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	//vec3 coord = vec3(uv.r, uv.g, ambientOcclusionDenoiseSurface.page );
-	//vec2 ao = texture(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord).rg;
+	//vec3 coord = vec3(uv.r, uv.g, ambientOcclusionTemporalDenoiseSurface[0].page );
+	//vec2 ao = texture(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord).rg;
 	//return vec4(ao.rrr, 1);
 
 

@@ -138,6 +138,7 @@ layout (std140, binding = 1) uniform Vectors
     uint64_t frame;
     vec2 clusterScaleBias;
     uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter;
 };
 
 
@@ -185,6 +186,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
 	Tex2DAddress zPrePassShadowsSurface[2];
+	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
 //@NOTE(Serge): we can only have 4 cascades like this
@@ -516,9 +518,9 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 
 float SampleAOSurface(vec2 uv)
 {
-	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionDenoiseSurface.page);
+	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionTemporalDenoiseSurface[0].page);
 
-	return  texelFetch(sampler2DArray(ambientOcclusionDenoiseSurface.container), coord, 0).r;
+	return  texelFetch(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord, 0).r;
 }
 
 vec4 SampleDetail(uint drawID, vec3 uv)

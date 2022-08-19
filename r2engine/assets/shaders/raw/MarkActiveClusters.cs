@@ -52,6 +52,7 @@ layout (std140, binding = 1) uniform Vectors
     uint64_t frame;
     vec2 clusterScaleBias;
     uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter;
 
 };
 
@@ -66,6 +67,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
 	Tex2DAddress zPrePassShadowSurface[2];
+	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
 layout (std430, binding=8) buffer Clusters

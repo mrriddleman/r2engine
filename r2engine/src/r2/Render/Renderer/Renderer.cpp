@@ -395,6 +395,7 @@ namespace r2::draw::renderer
 	void UpdateFrameCounter(Renderer& renderer, u64 frame);
 	void UpdateClusterTileSizes(Renderer& renderer);
 	void UpdateClusterScaleBias(Renderer& renderer, const glm::vec2& clusterScaleBias);
+	void UpdateJitter(Renderer& renderer);
 
 	void ClearShadowData(Renderer& renderer);
 	void UpdateShadowMapPages(Renderer& renderer);
@@ -554,6 +555,7 @@ namespace r2::draw::renderer
 	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateAmbientOcclusionDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateAmbientOcclusionTemporalDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
@@ -561,6 +563,8 @@ namespace r2::draw::renderer
 	void PreRender(Renderer& renderer);
 
 	void ClearRenderBatches(Renderer& renderer);
+
+	glm::vec2 GetJitter(Renderer& renderer, const u64 frameCount, bool isTAA);
 
 #ifdef R2_DEBUG
 	void DebugPreRender(Renderer& renderer);
@@ -939,6 +943,9 @@ namespace r2::draw::renderer
 		newRenderer->mDenoiseShader = shadersystem::FindShaderHandle(STRING_ID("Denoise"));
 		CheckIfValidShader(*newRenderer, newRenderer->mDenoiseShader, "Denoise");
 
+		newRenderer->mAmbientOcclusionTemporalDenoiseShader = shadersystem::FindShaderHandle(STRING_ID("GTAOTemporalDenoise"));
+		CheckIfValidShader(*newRenderer, newRenderer->mAmbientOcclusionTemporalDenoiseShader, "GTAOTemporalDenoise");
+
 		newRenderer->mCreateClusterComputeShader = shadersystem::FindShaderHandle(STRING_ID("CalculateClusters"));
 		CheckIfValidShader(*newRenderer, newRenderer->mCreateClusterComputeShader, "CalculateClusters");
 
@@ -1013,6 +1020,9 @@ namespace r2::draw::renderer
 
 		newRenderer->mAmbientOcclusionDenoiseBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mAmbientOcclusionDenoiseBucket != nullptr, "We couldn't create the command bucket!");
+
+		newRenderer->mAmbientOcclusionTemporalDenoiseBucket = MAKE_CMD_BUCKET(*rendererArena, key::DepthKey, key::DecodeDepthKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mAmbientOcclusionTemporalDenoiseBucket != nullptr, "We couldn't create the command bucket!");
 
 		newRenderer->mAmbientOcclusionArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand());
 		R2_CHECK(newRenderer->mAmbientOcclusionArena != nullptr, "We couldn't create the ambient occlusion stack arena");
@@ -1147,9 +1157,11 @@ namespace r2::draw::renderer
 			UpdateClusterTileSizes(renderer);
 		}
 
+		UpdateJitter(renderer);
+
 		UpdateRenderTargetsIfNecessary(renderer);
 
-		++renderer.mFrameCounter;
+		
 		UpdateLighting(renderer);
 		
 #ifdef R2_DEBUG
@@ -1182,6 +1194,7 @@ namespace r2::draw::renderer
 		cmdbkt::Sort(*renderer.mClustersBucket, key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mAmbientOcclusionDenoiseBucket, key::CompareDepthKey);
+		cmdbkt::Sort(*renderer.mAmbientOcclusionTemporalDenoiseBucket, key::CompareDepthKey);
 		cmdbkt::Sort(*renderer.mPreRenderBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mShadowBucket, key::CompareShadowKey);
 		cmdbkt::Sort(*renderer.mCommandBucket, r2::draw::key::CompareBasicKey);
@@ -1205,6 +1218,7 @@ namespace r2::draw::renderer
 		cmdbkt::Submit(*renderer.mClustersBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionDenoiseBucket);
+		cmdbkt::Submit(*renderer.mAmbientOcclusionTemporalDenoiseBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
 		cmdbkt::Submit(*renderer.mCommandBucket);
 
@@ -1225,6 +1239,7 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*renderer.mPreRenderBucket);
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionBucket);
 		cmdbkt::ClearAll(*renderer.mAmbientOcclusionDenoiseBucket);
+		cmdbkt::ClearAll(*renderer.mAmbientOcclusionTemporalDenoiseBucket);
 		cmdbkt::ClearAll(*renderer.mDepthPrePassBucket);
 		cmdbkt::ClearAll(*renderer.mDepthPrePassShadowBucket);
 		cmdbkt::ClearAll(*renderer.mClustersBucket);
@@ -1250,6 +1265,8 @@ namespace r2::draw::renderer
 		renderer.prevProj = renderer.mnoptrRenderCam->proj;
 		renderer.prevView = renderer.mnoptrRenderCam->view;
 		renderer.prevVP = renderer.mnoptrRenderCam->vp;
+
+		++renderer.mFrameCounter;
 	}
 
 	void Shutdown(Renderer* renderer)
@@ -1354,6 +1371,7 @@ namespace r2::draw::renderer
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mClustersBucket);
+		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionTemporalDenoiseBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionDenoiseBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mDepthPrePassShadowBucket);
@@ -1456,7 +1474,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float4, "fovAspectResolutionXY"},
 			{r2::draw::ShaderDataType::UInt64, "Frame"},
 			{r2::draw::ShaderDataType::Float2, "clusterScaleBias"},
-			{r2::draw::ShaderDataType::UInt4, "tileSizes"}
+			{r2::draw::ShaderDataType::UInt4, "tileSizes"},
+			{r2::draw::ShaderDataType::Float4, "jitter"}
 		});
 
 		AddSurfacesLayout(renderer);
@@ -2336,12 +2355,13 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 4 +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 1 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
@@ -2372,7 +2392,7 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY *2 + //@TODO(Serge): this is a wild over-estimate - only need 2 DrawBatch commands
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY *3 + //@TODO(Serge): this is a wild over-estimate - only need 2 DrawBatch commands
 			//r2::mem::utils::GetMaxMemoryForAllocation(AO_COMMAND_AUX_MEMORY, ALIGNMENT, headerSize, boundsChecking) + //@TODO(Serge): completely uneeded at the moment - could remove
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -3759,7 +3779,6 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
-		//@TODO(Serge): make denoise ao pass here
 		key::DepthKey aoDenoiseKey = key::GenerateDepthKey(false, 0, renderer.mDenoiseShader, false, 0);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, 0);
@@ -3775,6 +3794,25 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, *renderer.mAmbientOcclusionDenoiseBucket);
+
+
+		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(false, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, false, 0);
+
+		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, *renderer.mAmbientOcclusionArena);
+		cmd::DrawBatch* aoTemporalDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, 0);
+		aoTemporalDenoiseDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		aoTemporalDenoiseDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		aoTemporalDenoiseDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
+		R2_CHECK(aoTemporalDenoiseDrawBatch->numSubCommands > 0, "We should have a count!");
+		aoTemporalDenoiseDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
+		aoTemporalDenoiseDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		aoTemporalDenoiseDrawBatch->subCommands = nullptr;
+		aoTemporalDenoiseDrawBatch->state.depthEnabled = false;
+		aoTemporalDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
+		aoTemporalDenoiseDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+
+		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, *renderer.mAmbientOcclusionTemporalDenoiseBucket);
+
 
 		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
 
@@ -3858,10 +3896,11 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_CLUSTERS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_CLUSTERS, passConfig, { RTS_ZPREPASS }, RTS_EMPTY, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION, passConfig, { RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION, RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION_DENOISED, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, passConfig, { RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS }, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_ZPREPASS, RTS_ZPREPASS_SHADOWS, RTS_AMBIENT_OCCLUSION_DENOISED }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -3870,6 +3909,7 @@ namespace r2::draw::renderer
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_GBUFFER]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION_DENOISE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_AMBIENT_OCCLUSION]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_CLUSTERS]);
@@ -4331,6 +4371,15 @@ namespace r2::draw::renderer
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
 			7, glm::value_ptr(renderer.mClusterTileSizes)); 
+	}
+
+	void UpdateJitter(Renderer& renderer)
+	{
+		glm::vec4 jitter = glm::vec4(GetJitter(renderer, renderer.mFrameCounter, false), GetJitter(renderer, renderer.mFrameCounter - 1, false));
+
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, r2::sarr::At(*constantBufferHandles, renderer.mVectorsConfigHandle),
+			8, glm::value_ptr(jitter));
 	}
 
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes)
@@ -5708,10 +5757,14 @@ namespace r2::draw::renderer
 		if (!util::IsSizeEqual(renderer.mResolutionSize, resolutionX, resolutionY))
 		{
 			DestroyRenderSurfaces(renderer);
+			
 			CreateZPrePassRenderSurface(renderer, resolutionX, resolutionY);
 			CreateZPrePassShadowsRenderSurface(renderer, resolutionX, resolutionY);
+			
 			CreateAmbientOcclusionSurface(renderer, resolutionX, resolutionY);
 			CreateAmbientOcclusionDenoiseSurface(renderer, resolutionX, resolutionY);
+			CreateAmbientOcclusionTemporalDenoiseSurface(renderer, resolutionX, resolutionY);
+
 			CreateShadowRenderSurface(renderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 			CreatePointLightShadowRenderSurface(renderer, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE);
 
@@ -5733,8 +5786,7 @@ namespace r2::draw::renderer
 		renderer.mCompositeSize.height = windowHeight;
 	}
 	
-
-	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	void ConstrainResolution(u32& resolutionX, u32& resolutionY)
 	{
 		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
 
@@ -5747,6 +5799,11 @@ namespace r2::draw::renderer
 		{
 			resolutionY = MAX_TEXTURE_SIZE;
 		}
+	}
+
+	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
@@ -5756,17 +5813,7 @@ namespace r2::draw::renderer
 
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
-		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
-
-		if (resolutionX > MAX_TEXTURE_SIZE)
-		{
-			resolutionX = MAX_TEXTURE_SIZE;
-		}
-
-		if (resolutionY > MAX_TEXTURE_SIZE)
-		{
-			resolutionY = MAX_TEXTURE_SIZE;
-		}
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
@@ -5775,17 +5822,7 @@ namespace r2::draw::renderer
 
 	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
-		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
-
-		if (resolutionX > MAX_TEXTURE_SIZE)
-		{
-			resolutionX = MAX_TEXTURE_SIZE;
-		}
-
-		if (resolutionY > MAX_TEXTURE_SIZE)
-		{
-			resolutionY = MAX_TEXTURE_SIZE;
-		}
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
@@ -5794,17 +5831,7 @@ namespace r2::draw::renderer
 
 	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
-		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
-
-		if (resolutionX > MAX_TEXTURE_SIZE)
-		{
-			resolutionX = MAX_TEXTURE_SIZE;
-		}
-
-		if (resolutionY > MAX_TEXTURE_SIZE)
-		{
-			resolutionY = MAX_TEXTURE_SIZE;
-		}
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
@@ -5813,17 +5840,7 @@ namespace r2::draw::renderer
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
-		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
-
-		if (resolutionX > MAX_TEXTURE_SIZE)
-		{
-			resolutionX = MAX_TEXTURE_SIZE;
-		}
-
-		if (resolutionY > MAX_TEXTURE_SIZE)
-		{
-			resolutionY = MAX_TEXTURE_SIZE;
-		}
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
@@ -5832,21 +5849,20 @@ namespace r2::draw::renderer
 
 	void CreateAmbientOcclusionDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
 	{
-		static const s32 MAX_TEXTURE_SIZE = tex::GetMaxTextureSize();
-
-		if (resolutionX > MAX_TEXTURE_SIZE)
-		{
-			resolutionX = MAX_TEXTURE_SIZE;
-		}
-
-		if (resolutionY > MAX_TEXTURE_SIZE)
-		{
-			resolutionY = MAX_TEXTURE_SIZE;
-		}
+		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], rt::RG32F, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+	}
+
+	void CreateAmbientOcclusionTemporalDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)
@@ -5856,6 +5872,7 @@ namespace r2::draw::renderer
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SHADOWS]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS]);
@@ -5944,9 +5961,19 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget = 1;
+		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget;
+
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget = 2;
+
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
@@ -6270,6 +6297,35 @@ namespace r2::draw::renderer
 
 			cmd::Barrier* barrierCMD = AppendCommand<cmd::DispatchCompute, cmd::Barrier, mem::StackArena>(*renderer.mShadowArena, dispatchCMD, 0);
 			barrierCMD->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+		}
+	}
+
+	glm::vec2 GetJitter(Renderer& renderer, const u64 frameCount, bool isTAA)
+	{
+		auto HaltonSeq = [](s32 prime, s32 idx)
+		{
+			f32 r = 0;
+			f32 f = 1;
+
+			while (idx > 0) {
+				f /= prime;
+				f += f * (idx % prime);
+				idx /= prime;
+			}
+
+			return r;
+		};
+
+		if (isTAA)
+		{
+			f32 u = HaltonSeq(2, (frameCount % 8) + 1) - 0.5f;
+			f32 v = HaltonSeq(3, (frameCount % 8) + 1) - 0.5;
+
+			return glm::vec2(u, v) * glm::vec2(1.0f / float(renderer.mResolutionSize.width), 1.0f / float(renderer.mResolutionSize.height)) * 2.0f;
+		}
+		else
+		{
+			return glm::vec2(0);
 		}
 	}
 }
