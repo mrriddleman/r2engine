@@ -356,6 +356,9 @@ namespace r2::draw::renderer
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer);
 	const tex::Texture* GetMissingTexture(Renderer* renderer);
 
+	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer);
+	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer);
+
 	void LoadEngineTexturesFromDisk(Renderer& renderer);
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName);
 	void UploadEngineMaterialTexturesToGPU(Renderer& renderer);
@@ -415,6 +418,8 @@ namespace r2::draw::renderer
 	void UpdateSDSMDialationFactor(Renderer& renderer, float dialationFactor);
 	void UpdateSDSMScatterTileDim(Renderer& renderer, u32 scatterTileDim);
 	void UpdateSDSMReduceTileDim(Renderer& renderer, u32 reduceTileDim);
+	void UpdateSDSMSplitScaleMultFadeFactor(Renderer& renderer, const glm::vec4& splitScaleMultFadeFactor);
+	void UpdateBlueNoiseTexture(Renderer& renderer);
 
 	//Clusters
 	void ClearActiveClusters(Renderer& renderer);
@@ -1487,7 +1492,9 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "dialationFactor"},
 			{r2::draw::ShaderDataType::UInt, "scatterTileDim"},
 			{r2::draw::ShaderDataType::UInt, "reduceTileDim"},
-			{r2::draw::ShaderDataType::UInt, "padding"}
+			{r2::draw::ShaderDataType::UInt, "padding"},
+			{r2::draw::ShaderDataType::Float4, "splitScaleMultFadeFactor"},
+			{r2::draw::ShaderDataType::Struct, "BlueNoiseTexture"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -2507,6 +2514,35 @@ namespace r2::draw::renderer
 		}
 
 		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mMaterialSystem, STRING_ID("StaticMissingTexture"));
+
+		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
+
+		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+	}
+
+	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer)
+	{
+		if (renderer.mMaterialSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet");
+			return {};
+		}
+
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mMaterialSystem, STRING_ID("BlueNoise64"));
+
+		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
+
+		return r2::draw::mat::GetRenderMaterial(*renderer.mMaterialSystem, materialID);
+	}
+
+	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer)
+	{
+		if (renderer == nullptr || renderer->mMaterialSystem == nullptr)
+		{
+			return nullptr;
+		}
+
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mMaterialSystem, STRING_ID("BlueNoise64"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
@@ -4651,6 +4687,22 @@ namespace r2::draw::renderer
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 5, &reduceTileDim);
 	}
 
+	void UpdateSDSMSplitScaleMultFadeFactor(Renderer& renderer, const glm::vec4& splitScaleMultFadeFactor)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 7, glm::value_ptr(splitScaleMultFadeFactor));
+	}
+
+	void UpdateBlueNoiseTexture(Renderer& renderer)
+	{
+		auto blueNoiseMaterialParams = GetBlueNoise64TextureMaterialParam(renderer);
+		
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto sdsmConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSDSMParamsConfigHandle);
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, sdsmConstantBufferHandle, 8, &blueNoiseMaterialParams.albedo.texture);
+	}
+
 	void ClearActiveClusters(Renderer& renderer)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -6201,7 +6253,15 @@ namespace r2::draw::renderer
 				UpdateSDSMDialationFactor(renderer, DILATION_FACTOR);
 				UpdateSDSMReduceTileDim(renderer, REDUCE_TILE_DIM);
 				UpdateSDSMScatterTileDim(renderer, SCATTER_TILE_DIM);
+				UpdateSDSMSplitScaleMultFadeFactor(renderer, glm::vec4(0.5, 2, 0, 0));
 
+				static bool shouldUpdateBlueNoise = true;
+
+				if (shouldUpdateBlueNoise)
+				{
+					UpdateBlueNoiseTexture(renderer);
+					shouldUpdateBlueNoise = false;
+				}
 			}
 
 			if (renderer.mFlags.IsSet(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH))
@@ -6412,6 +6472,16 @@ namespace r2::draw::renderer
 	const tex::Texture* GetMissingTexture()
 	{
 		return GetMissingTexture(MENG.GetCurrentRendererPtr());
+	}
+
+	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam()
+	{
+		return GetBlueNoise64TextureMaterialParam(MENG.GetCurrentRendererRef());
+	}
+
+	const tex::Texture* GetBlueNoise64Texture()
+	{
+		return GetBlueNoise64Texture(MENG.GetCurrentRendererPtr());
 	}
 
 	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)

@@ -1,6 +1,52 @@
 {
   texturePacks: [
     {
+      packName: 13345338042702901259,
+      albedo: [
+        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/BlueNoise64/albedo/BlueNoise64.rtex"
+      ],
+      normal: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      roughness: [
+
+      ],
+      height: [
+
+      ],
+      anisotropy: [
+
+      ],
+      detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
+      packSize: 12596,
+      totalNumberOfTextures: 1,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
+    },
+    {
       packName: 8749292291342238949,
       albedo: [
         "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/DynamicMissingTexture/albedo/DynamicMissingTexture.rtex"
@@ -171,15 +217,15 @@
       }
     }
   ],
-  totalNumberOfTextures: 8,
-  totalTextureSize: 31964499,
+  totalNumberOfTextures: 9,
+  totalTextureSize: 31977095,
   maxTexturesInAPack: 6,
   formatMetaData: [
     {
       format: "SRGBA8",
-      maxWidth: 8,
-      maxHeight: 8,
-      numTextures: 2,
+      maxWidth: 64,
+      maxHeight: 64,
+      numTextures: 3,
       maxMips: 1
     },
     {

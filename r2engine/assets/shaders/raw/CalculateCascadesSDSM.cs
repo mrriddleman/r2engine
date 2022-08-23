@@ -25,9 +25,17 @@
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
 
-const vec3 GLOBAL_UP = vec3(0, 1, 0);
+const vec3 GLOBAL_UP = vec3(0, 0, 1);
 const bool STABALIZE_CASCADES = true;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
+
+
+struct Tex2DAddress
+{
+	uint64_t  container;
+	float page;
+	int channel;
+};
 
 layout (std140, binding = 0) uniform Matrices
 {
@@ -65,14 +73,11 @@ layout (std140, binding = 3) uniform SDSMParams
 	uint scatterTileDim;
 	uint reduceTileDim;
 	uint padding;
+	vec4 splitScaleMultFadeFactor;
+	Tex2DAddress blueNoiseTexture;
 };
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
+
 
 struct LightProperties
 {
@@ -346,7 +351,7 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 //	vec3 lookAt = center - dirLights[0].direction.xyz;
 //	mat4 lightView = LookAt(lightCameraPos, lookAt, GLOBAL_UP);
 
-	mat4 shadowCamera = Ortho_ZO(-0.5, 0.5, -0.5, 0.5, 0, 1);
+	mat4 shadowCamera = Ortho_ZO(-0.5, 0.5, -0.5, 0.5, 0.1, 100);
 
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
@@ -404,17 +409,15 @@ void main(void)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
-
-	float splitScale =  projMultSplitScaleZMultLambda.y;
-	float prevSplitDist = cascadeIndex == 0 ? splitScale * max(exposureNearFar.y, (gPartitions.intervalEnd[0] - gPartitions.intervalEnd[0])) : gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
-	float splitDist =  gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex];
-	
+	float splitScale = projMultSplitScaleZMultLambda.y * splitScaleMultFadeFactor.x;
+	float prevSplitDist = cascadeIndex == 0 ? splitScale * min(exposureNearFar.y, (gPartitions.intervalEnd[0] - gPartitions.intervalBegin[0])) : splitScale *  gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
+	float splitDist =  (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]) * ( splitScaleMultFadeFactor.x / splitScale);	
 
 	for(int i = 0; i < 4; ++i)
     {
          vec3 cornerRay = frustumCorners[i + 4] - frustumCorners[i];
-         vec3 nearCornerRay = cornerRay * prevSplitDist * splitScale;
-         vec3 farCornerRay = cornerRay * splitDist * splitScale;
+         vec3 nearCornerRay = (cornerRay * prevSplitDist) * splitScale;
+         vec3 farCornerRay = (cornerRay * splitDist) * splitScale;
          frustumCorners[i + 4] = frustumCorners[i] + farCornerRay;
          frustumCorners[i] = frustumCorners[i] + nearCornerRay;
     }
@@ -445,7 +448,7 @@ void main(void)
 
 		sphereRadius = ceil(sphereRadius * 16.0) / 16.0;
 
-		float diameter = sphereRadius * 2.0;
+		//float diameter = sphereRadius * 2.0;
 		
 		
 
@@ -488,8 +491,8 @@ void main(void)
 
 	//float texelsPerUnit = shadowMapSizes[cascadeIndex] / diameter;
 
-	float zMult = projMultSplitScaleZMultLambda.z;
-	float projMult = projMultSplitScaleZMultLambda.x;
+	float zMult = projMultSplitScaleZMultLambda.z ;
+	float projMult = projMultSplitScaleZMultLambda.x ;
 	
 
 	dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] = LookAt(eye, center, upDir);
@@ -537,23 +540,16 @@ void main(void)
 	mat4 texScaleBiasInv = MatInverse(texScaleBias);
 
 	mat4 invCascadeMat = shadowViewInv * shadowProjInv * texScaleBiasInv;
-	vec3 cascadeCorner = (invCascadeMat * vec4(0, 0, 0, 1)).xyz;
-	cascadeCorner = (GlobalShadowMatrix * vec4(cascadeCorner, 1)).xyz;
+	vec4 cascadeCorner = GlobalShadowMatrix * (invCascadeMat * vec4(0, 0, 0, 1));
+	
+	cascadeCorner /= cascadeCorner.w;
 
-	vec3 otherCorner = (invCascadeMat * vec4(1, 1, 1, 1)).xyz;
-	otherCorner = (GlobalShadowMatrix * vec4(otherCorner, 1)).xyz;
+	vec4 otherCorner = GlobalShadowMatrix * (invCascadeMat * vec4(1, 1, 1, 1));
+	otherCorner /= otherCorner.w;
 
-	vec3 cascadeScale = 1.0 / (otherCorner - cascadeCorner);
+	vec3 cascadeScale = 1.0 / vec3(otherCorner - cascadeCorner);
 
 
-	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale, 1.0);
-	gBias[cascadeIndex][directionLightLightID] = vec4(-cascadeCorner, 0);
-	//gPartitions[cascadeIndex].intervalBeginScale.y = cascadeScale.x;
-	//gPartitions[cascadeIndex].intervalBeginScale.z = cascadeScale.y;
-	//gPartitions[cascadeIndex].intervalBeginScale.w = cascadeScale.z;
-
-	//gPartitions[cascadeIndex].intervalEndBias.y = -cascadeCorner.x;
-	//gPartitions[cascadeIndex].intervalEndBias.z = -cascadeCorner.y;
-	//gPartitions[cascadeIndex].intervalEndBias.w = -cascadeCorner.z;
-
+	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale.xyz, 1.0);
+	gBias[cascadeIndex][directionLightLightID] = vec4(-cascadeCorner.xyz, 0);
 }

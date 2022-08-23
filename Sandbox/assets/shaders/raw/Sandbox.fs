@@ -9,7 +9,7 @@ const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
 
-#define PI 3.141596
+#define PI 3.14159265358979323846
 #define TWO_PI 2.0 * PI
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
 #define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
@@ -189,6 +189,19 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
+layout (std140, binding = 3) uniform SDSMParams
+{
+	vec4 lightSpaceBorder;
+	vec4 maxScale;
+	vec4 projMultSplitScaleZMultLambda;
+	float dilationFactor;
+	uint scatterTileDim;
+	uint reduceTileDim;
+	uint padding;
+	vec4 splitScaleMultFadeFactor;
+	Tex2DAddress blueNoiseTexture;
+};
+
 //@NOTE(Serge): we can only have 4 cascades like this
 struct Partition
 {
@@ -276,6 +289,8 @@ vec4 SampleDetail(uint drawID, vec3 uv);
 vec4 SampleClearCoat(uint drawID, vec3 uv);
 vec4 SampleClearCoatRoughness(uint drawID, vec3 uv);
 float SampleAOSurface(vec2 uv);
+float SampleBlueNoise(vec2 uv);
+float GetRadRotationTemporal();
 
 vec4 SampleSkylightDiffuseIrradiance(vec3 uv);
 vec4 SampleLUTDFG(vec2 uv);
@@ -521,6 +536,19 @@ float SampleAOSurface(vec2 uv)
 	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionTemporalDenoiseSurface[0].page);
 
 	return  texelFetch(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord, 0).r;
+}
+
+float SampleBlueNoise(vec2 uv)
+{
+	vec3 texCoord = vec3(uv, blueNoiseTexture.page);
+
+	return SampleTexture(blueNoiseTexture, texCoord, 0).r;
+}
+
+float GetRadRotationTemporal()
+{
+	float rotations[] = {60.0, 300.0, 180.0, 240.0, 120.0, 0.0};
+	return rotations[int(frame) % 6] * (1.0 / 360.0) * 2.0 * PI;
 }
 
 vec4 SampleDetail(uint drawID, vec3 uv)
@@ -1277,11 +1305,11 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, softShadows);
 
 	
-	const float BLEND_THRESHOLD = 0.1f;
+	const float BLEND_THRESHOLD = 0.3f;
 
     float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
     float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = (nextSplit - gl_FragDepth) / splitSize;
+    float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z))/splitScaleMultFadeFactor.y);
 
     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
     cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
@@ -1548,11 +1576,9 @@ float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCo
 	if(blockersCount > 0.0)
 	{
 		avgBlockerDepth /= blockersCount;
-		//return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
 	}
 
 	return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
-	//return 0;
 }
 
 float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)

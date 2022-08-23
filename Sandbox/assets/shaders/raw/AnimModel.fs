@@ -191,6 +191,20 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 };
 
+
+layout (std140, binding = 3) uniform SDSMParams
+{
+	vec4 lightSpaceBorder;
+	vec4 maxScale;
+	vec4 projMultSplitScaleZMultLambda;
+	float dilationFactor;
+	uint scatterTileDim;
+	uint reduceTileDim;
+	uint padding;
+	vec4 splitScaleMultFadeFactor;
+	Tex2DAddress blueNoiseTexture;
+};
+
 //@NOTE(Serge): we can only have 4 cascades like this
 struct Partition
 {
@@ -1274,7 +1288,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 
     float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
     float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = (nextSplit - gl_FragDepth) / splitSize;
+    float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z))/splitScaleMultFadeFactor.y) / splitSize;
 
     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
     cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;

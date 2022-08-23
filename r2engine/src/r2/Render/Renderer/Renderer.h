@@ -409,6 +409,9 @@ namespace r2::draw::renderer
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
 	const tex::Texture* GetMissingTexture();
 
+	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam();
+	const tex::Texture* GetBlueNoise64Texture();
+
 	void SetRenderCamera(const Camera* cameraPtr);
 
 	DirectionLightHandle AddDirectionLight(const DirectionLight& light);

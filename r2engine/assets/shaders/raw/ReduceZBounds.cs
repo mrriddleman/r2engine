@@ -77,6 +77,8 @@ layout (std140, binding = 3) uniform SDSMParams
 	uint scatterTileDim;
 	uint reduceTileDim;
 	uint padding;
+	vec4 splitScaleMultFadeFactor;
+	Tex2DAddress blueNoiseTexture;
 };
 
 
