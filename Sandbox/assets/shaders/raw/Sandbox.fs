@@ -1451,7 +1451,7 @@ float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t 
 
 	projCoords = projCoords * 0.5 + 0.5;
 
-	float bias = max(0.005 * (1.0 - NoL), 0.0005);
+	float bias = max(0.005 * (1.0 - NoL), 0.0001);
 
 	float lightDepth = projCoords.z - bias;
 

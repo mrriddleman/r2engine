@@ -139,13 +139,13 @@ mat4 Projection(float fov, float aspect, float near, float far)
 {
 	mat4 result = mat4(0.0);
 
-	float tanHalfFovy = tan(fov / 2.0);
+	float tanHalfFovy = tan(fov*0.5);
 
 	result[0][0] = 1.0 / (aspect * tanHalfFovy);
 	result[1][1] = 1.0 / (tanHalfFovy);
 	result[2][2] = - (far + near) / (far - near);
 	result[2][3] = -1.0;
-	result[3][2] = - (2.0 * far * near) / (far - near);
+	result[3][2] = (-2.0 * far * near) / (far - near);
 
 	return result;
 }
@@ -159,7 +159,7 @@ void main(void)
 	mat4 lightView = LookAt(spotLight.position.xyz, spotLight.position.xyz + spotLight.direction.xyz, GLOBAL_UP);
 	
 	//@NOTE(Serge): the 1 here is the aspect ratio - since we're using a size of shadowMapSizes.x x shadowMapSizes.x it will be 1. If this changes, we need to change this as well
-	mat4 lightProj = Projection(acos(spotLight.direction.w)*2.0, 1, exposureNearFar.y, spotLight.lightProperties.intensity);
+	mat4 lightProj = Projection(acos(spotLight.direction.w), 1, exposureNearFar.y, spotLight.lightProperties.intensity);
 
 	spotLights[spotLightIndex].lightSpaceMatrix = lightProj * lightView;
 }
