@@ -227,4 +227,54 @@ namespace r2::util
     {
         return s1.width == width && s1.height == height;
     }
+
+    u32 AsU32(const f32 x)
+    {
+        return *(u32*)&x;
+    }
+
+    f32 AsF32(const u32 x)
+    {
+        return *(float*)&x;
+    }
+
+    f32 HalfToFloat(const u16 x)
+    {
+		const u32 e = (x & 0x7C00) >> 10; // exponent
+		const u32 m = (x & 0x03FF) << 13; // mantissa
+		const u32 v = AsU32((float)m) >> 23; // evil log2 bit hack to count leading zeros in denormalized format
+		return AsF32((x & 0x8000) << 16 | (e != 0) * ((e + 112) << 23 | m) | ((e == 0) & (m != 0)) * ((v - 37) << 23 | ((m << (150 - v)) & 0x007FE000))); // sign : normalized : denormalized
+	}
+    
+
+    u16 FloatToHalf(const f32 x)
+    {
+		const u32 b = AsU32(x) + 0x00001000; // round-to-nearest-even: add last bit after truncated mantissa
+		const u32 e = (b & 0x7F800000) >> 23; // exponent
+		const u32 m = b & 0x007FFFFF; // mantissa; in line below: 0x007FF000 = 0x00800000-0x00001000 = decimal indicator flag - initial rounding
+		return (b & 0x80000000) >> 16 | (e > 112) * ((((e - 112) << 10) & 0x7C00) | m >> 13) | ((e < 113) & (e > 101)) * ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) | (e > 143) * 0x7FFF; // sign : normalized : denormalized : saturate
+    }
+
+	union IntFloat
+	{
+		uint32_t i;
+		float    f;
+	};
+
+    s32 F32ToS24(float x)
+    {
+		IntFloat n;
+		n.f = x;
+
+		uint8_t  negative = ((n.i >> 31) & 0x1); // 0x10000000
+		uint8_t  exponent = ((n.i >> 23) & 0xFF); // 0x7F800000
+		uint32_t mantissa = ((n.i >> 0) & 0x7FFFFF) | 0x800000; // 0x007FFFFF implicit bit
+		int32_t  i = mantissa >> (22 - (exponent - 0x80));
+		if (!exponent)
+			return 0;
+		if (negative)
+			return -i;
+		else
+			return  i;
+    }
 }

@@ -440,7 +440,6 @@ namespace r2::draw::renderer
 	void RemoveSkyLight(SkyLightHandle skylightHandle);
 	void ClearAllLighting();
 
-
 	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModel(const ModelRefHandle& modelRefHandles, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	

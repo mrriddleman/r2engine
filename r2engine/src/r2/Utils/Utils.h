@@ -87,6 +87,14 @@ namespace r2::util
 
     bool AreSizesEqual(const Size& s1, const Size& s2);
     bool IsSizeEqual(const Size& s1, u32 width, u32 height);
+
+    u32 AsU32(const f32 x);
+    f32 AsF32(const u32 x);
+
+    f32 HalfToFloat(const u16 x);
+    u16 FloatToHalf(const f32 x);
+
+    s32 F32ToS24(float x);
 }
 
 #endif /* Utils_h */

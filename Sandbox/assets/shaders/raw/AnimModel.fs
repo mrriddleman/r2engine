@@ -271,7 +271,7 @@ float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
 float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
 float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, bool softShadows);
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows);
 
 float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
 
@@ -1213,9 +1213,11 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, floa
 
 
 
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, bool softShadows)
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows)
 {
-	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz + vec3(-0.0, 0, 0);
+
+	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
+	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz + (vec3(-viewDir.x, -viewDir.y, 0.0) * (1 - VoL) * 0.45);
 	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 
 	if(shadowPosition.z > 1.0)
@@ -1257,6 +1259,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	}
 
 	float NoL = max(dot(-lightDir, normal), 0.0);
+	float VoL = dot(-lightDir, viewDir);
 
 	vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0));
 
@@ -1287,7 +1290,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 
 	vec3 shadowPosition = (gShadowMatrix[lightIndex] * vec4(samplePos, 1.0)).xyz;
 
-	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, softShadows);
+	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, VoL, softShadows);
 
 	
 	const float BLEND_THRESHOLD = 0.1f;
@@ -1307,7 +1310,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
     	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
     	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, softShadows);
+    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows);
 
     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
