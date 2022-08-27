@@ -728,7 +728,7 @@ public:
 			dirLight.lightProperties.intensity = 3;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-         //   r2::draw::renderer::AddDirectionLight(dirLight);
+            r2::draw::renderer::AddDirectionLight(dirLight);
 
 
 
@@ -802,17 +802,17 @@ public:
             //r2::draw::renderer::AddPointLight(pointLight);
 
 
-			r2::draw::SpotLight spotLight;
-			spotLight.lightProperties.color = glm::vec4(1.0f);
+			//r2::draw::SpotLight spotLight;
+			//spotLight.lightProperties.color = glm::vec4(1.0f);
 
-			spotLight.position = glm::vec4(0, 2, 1, glm::cos(glm::radians(60.f)));
-			spotLight.direction = glm::vec4(glm::vec3(0, -1, 0), glm::cos(glm::radians(75.f)));
+			//spotLight.position = glm::vec4(0, 2, 1, glm::cos(glm::radians(60.f)));
+			//spotLight.direction = glm::vec4(glm::vec3(0, -1, 0), glm::cos(glm::radians(75.f)));
 
-			spotLight.lightProperties.intensity = 100;
-			spotLight.lightProperties.fallOff = 0.01;
-			spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+			//spotLight.lightProperties.intensity = 100;
+			//spotLight.lightProperties.fallOff = 0.01;
+			//spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-			r2::draw::renderer::AddSpotLight(spotLight);
+			//r2::draw::renderer::AddSpotLight(spotLight);
 
 
    //         
