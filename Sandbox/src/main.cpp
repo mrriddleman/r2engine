@@ -793,13 +793,13 @@ public:
 				r2::draw::renderer::AddPointLight(pointLight);
 			}*/
 
-            /*r2::draw::PointLight pointLight;
-            pointLight.position = glm::vec4(0, 1.3, 1, 1.0);
-            pointLight.lightProperties.color = glm::vec4(1.0f);
-            pointLight.lightProperties.intensity = 100.0;
-            pointLight.lightProperties.fallOff = 0.1;
-            pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
-            r2::draw::renderer::AddPointLight(pointLight);*/
+            //r2::draw::PointLight pointLight;
+            //pointLight.position = glm::vec4(0, 1.3, 1, 1.0);
+            //pointLight.lightProperties.color = glm::vec4(1.0f);
+            //pointLight.lightProperties.intensity = 100.0;
+            //pointLight.lightProperties.fallOff = 0.1;
+            //pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+            //r2::draw::renderer::AddPointLight(pointLight);
 
 
 			r2::draw::SpotLight spotLight;
@@ -810,7 +810,7 @@ public:
 
 			spotLight.lightProperties.intensity = 100;
 			spotLight.lightProperties.fallOff = 0.01;
-			spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
+			spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
 			r2::draw::renderer::AddSpotLight(spotLight);
 
