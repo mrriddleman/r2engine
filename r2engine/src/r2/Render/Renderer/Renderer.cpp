@@ -571,7 +571,7 @@ namespace r2::draw::renderer
 
 	glm::vec2 GetJitter(Renderer& renderer, const u64 frameCount, bool isTAA);
 
-	float GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition);
+	f32 GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition);
 
 #ifdef R2_DEBUG
 	void DebugPreRender(Renderer& renderer);
@@ -6391,7 +6391,7 @@ namespace r2::draw::renderer
 		}
 	}
 
-	float GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition)
+	f32 GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition)
 	{
 		R2_CHECK(renderer.mnoptrRenderCam != nullptr, "We need to have the render camera!");
 

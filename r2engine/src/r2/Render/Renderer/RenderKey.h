@@ -57,21 +57,21 @@ namespace r2::draw::key
 	struct DebugKey
 	{
 		/*
-		+--11 bits--+-----4 bits-----+-----1 bit-----+----2 bits----+--14 bits--+
+		+--32 bits--+-----5 bits-----+-----1 bit-----+----2 bits----+--24 bits--+
 		| Shader ID | Primitive Type | Depth Enabled | Translucency |   Depth   |
 		+-----------+----------------+---------------+--------------+-----------+
 		*/
-		u32 keyValue = 0;
+		u64 keyValue = 0;
 
 		enum : u32
 		{
 			DEBUG_KEY_BITS_TOTAL =  BytesToBits(sizeof(keyValue)),
 
-			DEBUG_KEY_BITS_SHADER_ID = 0xB,
-			DEBUG_KEY_BITS_PRIMITIVE_TYPE = 0x4,
+			DEBUG_KEY_BITS_SHADER_ID = 0x20,
+			DEBUG_KEY_BITS_PRIMITIVE_TYPE = 0x5,
 			DEBUG_KEY_BITS_DEPTH_ENABLED = 0x1,
 			DEBUG_KEY_BITS_TRANSLUCENCY = 0x2,
-			DEBUG_KEY_BITS_DEPTH = 0xE,
+			DEBUG_KEY_BITS_DEPTH = 0x18,
 
 			DEBUG_KEY_SHADER_ID_OFFSET = DEBUG_KEY_BITS_TOTAL - DEBUG_KEY_BITS_SHADER_ID,
 			DEBUG_KEY_PRIMITIVE_TYPE_OFFSET = DEBUG_KEY_SHADER_ID_OFFSET - DEBUG_KEY_BITS_PRIMITIVE_TYPE,
@@ -86,21 +86,21 @@ namespace r2::draw::key
 	{
 		/*
 
-		+-----2 bits----+------13 bits----+
+		+-----2 bits----+------30 bits----+
 		|     Type      |    Ignored      | //Clear
 		+---------------+-----------------+
 
-		+----2 bit---+------1 bit-----+----2 bits----+-11 bits-+
+		+----2 bit---+------1 bit-----+----5 bits----+-24 bits-+
 		|    Type    | Static/Dynamic |  Light Type  |  Depth  | //Normal
 		+------------+----------------+--------------+---------+
 
-		+----2 bit---+---3 bits---+--12 bits--+
+		+----2 bit---+---6 bits---+--24 bits--+
 		|     Type   |Shader Order| Shader ID | //compute
 		+------------+------------+-----------+
 
 		*/
 
-		u16 keyValue = 0;
+		u32 keyValue = 0;
 
 		enum Type : u8
 		{
@@ -110,16 +110,16 @@ namespace r2::draw::key
 			POINT_LIGHT
 		};
 
-		enum : u16
+		enum : u32
 		{
 			SHADOW_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
 
 			SHADOW_KEY_BITS_TYPE = 0x2,
 			SHADOW_KEY_BITS_IS_DYNAMIC = 0x1,
-			SHADOW_KEY_BITS_LIGHT_TYPE = 0x2,
-			SHADOW_KEY_BITS_DEPTH = 0xB,
-			SHADOW_KEY_BITS_SHADER_ORDER = 0x3,
-			SHADOW_KEY_BITS_SHADER_ID = 0xB,
+			SHADOW_KEY_BITS_LIGHT_TYPE = 0x5,
+			SHADOW_KEY_BITS_DEPTH = 0x18,
+			SHADOW_KEY_BITS_SHADER_ORDER = 0x6,
+			SHADOW_KEY_BITS_SHADER_ID = 0x18,
 
 			SHADOW_KEY_TYPE_OFFSET = SHADOW_KEY_BITS_TOTAL - SHADOW_KEY_BITS_TYPE,
 			SHADOW_KEY_IS_DYNAMIC_OFFSET = SHADOW_KEY_TYPE_OFFSET - SHADOW_KEY_BITS_IS_DYNAMIC,
@@ -133,27 +133,27 @@ namespace r2::draw::key
 	struct DepthKey
 	{
 		/*
-		+----1 bit-----+------1 bit-----+-14 bits-+
+		+----1 bit-----+------1 bit-----+-30 bits-+
 		|   Normal(1)  | Static/Dynamic |  Depth  |
 		+--------------+----------------+---------+
 
-		+----1 bit-----+--15 bits--+
-		| Normal(0)    | Shader ID | //compute
-		+--------------+-----------+
+		+----1 bit-----+----7 bits----+---24 bits---+
+		| Normal(0)    | Shader Order |  Shader ID  | //compute
+		+--------------+--------------+-------------+
 
 		*/
 
-		u16 keyValue = 0;
+		u32 keyValue = 0;
 
-		enum : u16
+		enum : u32
 		{
 			DEPTH_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
 
 			DEPTH_KEY_BITS_IS_NORMAL_PATH = 0x1,
 			DEPTH_KEY_BITS_IS_DYNAMIC = 0x1,
-			DEPTH_KEY_BITS_DEPTH = 0xE,
-			DEPTH_KEY_BITS_SHADER_ORDER = 0x3,
-			DEPTH_KEY_BITS_SHADER_ID = 0xC,
+			DEPTH_KEY_BITS_DEPTH = 0x1E,
+			DEPTH_KEY_BITS_SHADER_ORDER = 0x7,
+			DEPTH_KEY_BITS_SHADER_ID = 0x18,
 
 			DEPTH_KEY_IS_NORMAL_PATH_OFFSET = DEPTH_KEY_BITS_TOTAL - DEPTH_KEY_BITS_IS_NORMAL_PATH,
 			DEPTH_KEY_IS_DYNAMIC_OFFSET = DEPTH_KEY_IS_NORMAL_PATH_OFFSET - DEPTH_KEY_BITS_IS_DYNAMIC,
@@ -166,7 +166,7 @@ namespace r2::draw::key
 	//DEBUG
 	bool CompareDebugKey(const DebugKey& a, const DebugKey& b);
 
-	DebugKey GenerateDebugKey(u16 shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u16 depth);
+	DebugKey GenerateDebugKey(r2::draw::ShaderHandle shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u32 depth);
 
 	void DecodeDebugKey(const DebugKey& key);
 
@@ -179,12 +179,12 @@ namespace r2::draw::key
 
 	//Shadows
 	bool CompareShadowKey(const ShadowKey& a, const ShadowKey& b);
-	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u16 depth);
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u32 depth);
 	void DecodeShadowKey(const ShadowKey& key);
 
 	//Depth
 	bool CompareDepthKey(const DepthKey& a, const DepthKey& b);
-	DepthKey GenerateDepthKey(bool normalPath, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u16 depth);
+	DepthKey GenerateDepthKey(bool normalPath, u8 shaderOrder, r2::draw::ShaderHandle, bool isDynamic, u32 depth);
 	void DecodeDepthKey(const DepthKey& key);
 }
 

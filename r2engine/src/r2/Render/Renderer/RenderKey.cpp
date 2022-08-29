@@ -19,15 +19,15 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	DebugKey GenerateDebugKey(u16 shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u16 depth)
+	DebugKey GenerateDebugKey(ShaderHandle shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u32 depth)
 	{
 		DebugKey key;
 
-		key.keyValue |= ENCODE_KEY_VALUE((u32)shaderID, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
-		key.keyValue |= ENCODE_KEY_VALUE((u32)primitiveType, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
-		key.keyValue |= ENCODE_KEY_VALUE((u32)(depthTest ? 1 : 0), DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
-		key.keyValue |= ENCODE_KEY_VALUE((u32)(translucency), DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
-		key.keyValue |= ENCODE_KEY_VALUE((u32)depth, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE(shaderID, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE(primitiveType, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE((depthTest ? 1 : 0), DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE(translucency, DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
+		key.keyValue |= ENCODE_KEY_VALUE(depth, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
 
 		return key;
 	}
@@ -37,11 +37,11 @@ namespace r2::draw::key
 		if (key.keyValue == 0)
 			return;
 
-		u32 shaderID = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
-		u32 primitiveType = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
-		u32 depthEnabled = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
-		u32 translucency = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
-		u32 depth = DECODE_KEY_VALUE((u32)key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
+		u32 shaderID = DECODE_KEY_VALUE(key.keyValue, DebugKey::DEBUG_KEY_BITS_SHADER_ID, DebugKey::DEBUG_KEY_SHADER_ID_OFFSET);
+		u32 primitiveType = DECODE_KEY_VALUE(key.keyValue, DebugKey::DEBUG_KEY_BITS_PRIMITIVE_TYPE, DebugKey::DEBUG_KEY_PRIMITIVE_TYPE_OFFSET);
+		u32 depthEnabled = DECODE_KEY_VALUE(key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH_ENABLED, DebugKey::DEBUG_KEY_DEPTH_ENABLED_OFFSET);
+		u32 translucency = DECODE_KEY_VALUE(key.keyValue, DebugKey::DEBUG_KEY_BITS_TRANSLUCENCY, DebugKey::DEBUG_KEY_TRANSLUCENCY_OFFSET);
+		u32 depth = DECODE_KEY_VALUE(key.keyValue, DebugKey::DEBUG_KEY_BITS_DEPTH, DebugKey::DEBUG_KEY_DEPTH_OFFSET);
 
 		r2::draw::rendererimpl::SetViewportKey(0);
 		r2::draw::rendererimpl::SetViewportLayer(DrawLayer::DL_DEBUG);
@@ -107,7 +107,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u16 depth)
+	ShadowKey GenerateShadowKey(ShadowKey::Type type, u8 shaderOrder, r2::draw::ShaderHandle shader, bool isDynamic, light::LightType lightType, u32 depth)
 	{
 		ShadowKey theKey;
 
@@ -175,7 +175,7 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	DepthKey GenerateDepthKey(bool isNormalPath, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u16 depth)
+	DepthKey GenerateDepthKey(bool isNormalPath, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u32 depth)
 	{
 		DepthKey theKey;
 
