@@ -63,14 +63,6 @@ namespace r2::draw
         static u64 MemorySizeNoData(u64 numJoints, u64 alignment, u32 headerSize, u32 boundsChecking);
     };
 
-	struct Bounds
-	{
-		glm::vec3 origin;
-		glm::vec3 extents;
-		float radius;
-	};
-
-
 	struct Model
 	{
 		u64 hash = 0;
@@ -121,8 +113,9 @@ namespace r2::draw
 		u32 baseIndex = 0;
 		u32 numIndices = 0;
 		u32 numVertices = 0;
-
         u32 materialIndex = 0;
+
+        Bounds objectBounds;
     };
 
     struct ModelRef

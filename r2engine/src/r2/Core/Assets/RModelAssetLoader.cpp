@@ -41,6 +41,11 @@ namespace r2::asset
 		return { v->v()->Get(0), v->v()->Get(1), v->v()->Get(2), v->v()->Get(3) };
 	}
 
+	glm::vec3 GetVec3FromFlatVec3(const flat::Vertex3& v)
+	{
+		return { v.x(), v.y(), v.z() };
+	}
+
 	glm::ivec4 GetIVec4FromFlatIVec4(const flat::Vertex4i* v)
 	{
 		return { v->v()->Get(0), v->v()->Get(1), v->v()->Get(2), v->v()->Get(3) };
@@ -371,6 +376,11 @@ namespace r2::asset
 
 				nextMeshPtr->hashName = metaData->meshInfos()->Get(i)->meshName();
 				nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
+				const auto bounds = metaData->meshInfos()->Get(i)->meshBounds();
+
+				nextMeshPtr->objectBounds.radius = bounds->radius();
+				nextMeshPtr->objectBounds.origin = GetVec3FromFlatVec3(bounds->origin());
+				nextMeshPtr->objectBounds.extents = GetVec3FromFlatVec3(bounds->extents());
 
 				r2::sarr::Push(*model->optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
 			}

@@ -86,6 +86,9 @@ namespace r2::draw::key
 		u32 shaderID = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
 		u32 pass = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_PASS, Basic::KEY_PASS_OFFSET);
 
+	//	printf("DecodeBasicKey - shaderID: %zu, depth: %zu\n", shaderID, depth);
+
+
 	/*	MaterialHandle materialHandle;
 
 		u32 materialSystemOffset = Basic::KEY_BITS_MATERIAL_ID - NUM_MATERIAL_SYSTEM_BITS;

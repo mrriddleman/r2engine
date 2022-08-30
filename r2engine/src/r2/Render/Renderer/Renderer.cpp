@@ -571,7 +571,8 @@ namespace r2::draw::renderer
 
 	glm::vec2 GetJitter(Renderer& renderer, const u64 frameCount, bool isTAA);
 
-	f32 GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition);
+	u32 GetCameraDepth(Renderer& renderer, const r2::draw::Bounds& meshBounds, const glm::mat4& modelMat);
+	f32 GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 worldAABBPosition);
 
 #ifdef R2_DEBUG
 	void DebugPreRender(Renderer& renderer);
@@ -2738,7 +2739,7 @@ namespace r2::draw::renderer
 		r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex;// +vOffsets.mIndexBufferOffset.numIndices;
 		r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex;// +vOffsets.mVertexBufferOffset.numVertices;
 		r2::sarr::At(*modelRef.mMeshRefs, 0).materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
-
+		r2::sarr::At(*modelRef.mMeshRefs, 0).objectBounds = r2::sarr::At(*model->optrMeshes, 0)->objectBounds;
 		//modelRef.mNumMeshRefs = numMeshes;
 		//modelRef.mNumMaterialHandles = numMaterals;
 
@@ -2773,6 +2774,7 @@ namespace r2::draw::renderer
 			r2::sarr::At(*modelRef.mMeshRefs, i).numVertices = numMeshVertices;
 			r2::sarr::At(*modelRef.mMeshRefs, i).baseVertex = r2::sarr::At(*modelRef.mMeshRefs, i-1).numVertices + r2::sarr::At(*modelRef.mMeshRefs, i-1).baseVertex;
 			r2::sarr::At(*modelRef.mMeshRefs, i).materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
+			r2::sarr::At(*modelRef.mMeshRefs, i).objectBounds = r2::sarr::At(*model->optrMeshes, i)->objectBounds;
 
 			totalNumVertices += numMeshVertices;
 			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
@@ -3030,6 +3032,7 @@ namespace r2::draw::renderer
 		DrawLayer layer = DL_WORLD;
 		b32 isDynamic = false;
 		r2::SArray<cmd::DrawBatchSubCommand>* subCommands = nullptr;
+		r2::SArray<u32>* cameraDepths = nullptr;
 	};
 
 	struct BatchRenderOffsets
@@ -3040,6 +3043,7 @@ namespace r2::draw::renderer
 		u32 subCommandsOffset = 0;
 		u32 numSubCommands = 0;
 		b32 depthEnabled = false;
+		u32 cameraDepth = 0;
 	};
 
 	//@TODO(Serge): pass in an array of u32 that will act as the material offsets per draw ID
@@ -3052,7 +3056,7 @@ namespace r2::draw::renderer
 		{
 			const ModelRef& modelRef = r2::sarr::At(*renderBatch.modelRefs, modelIndex);
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
-
+			const glm::mat4& modelMatrix = r2::sarr::At(*renderBatch.models, modelIndex);
 			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
 
 			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
@@ -3132,8 +3136,11 @@ namespace r2::draw::renderer
 					drawCommandData->isDynamic = modelRef.mAnimated;
 					drawCommandData->layer = drawState.layer;
 					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
+					drawCommandData->cameraDepths = MAKE_SARRAY(*renderer.mPrePostRenderCommandArena, u32, drawCommandBatchSize);
+					
+					r2::sarr::Push(*tempAllocations, (void*)drawCommandData->cameraDepths);
 					r2::sarr::Push(*tempAllocations, (void*)drawCommandData->subCommands);
-
+					
 					r2::shashmap::Set(*shaderDrawCommandData, commandKey.keyValue, drawCommandData);
 				}
 
@@ -3147,7 +3154,8 @@ namespace r2::draw::renderer
 				subCommand.count = meshRef.numIndices;
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
-				
+				u32 cameraDepth = GetCameraDepth(renderer, meshRef.objectBounds, modelMatrix);
+				r2::sarr::Push(*drawCommandData->cameraDepths, cameraDepth);
 			}
 
 			//FREE(shaders, *MEM_ENG_SCRATCH_PTR);
@@ -3387,25 +3395,34 @@ namespace r2::draw::renderer
 				const u64 batchSubCommandsMemorySize = numSubCommandsInBatch * sizeof(cmd::DrawBatchSubCommand);
 				memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), drawCommandData->subCommands->mData, batchSubCommandsMemorySize);
 
-				BatchRenderOffsets batchOffsets;
-				batchOffsets.shaderId = drawCommandData->shaderId;
-				batchOffsets.subCommandsOffset = subCommandsOffset;
+				R2_CHECK(numSubCommandsInBatch == static_cast<u32>(r2::sarr::Size(*drawCommandData->cameraDepths)), "numSubCommandsInBatch == numCameraDepths");
 
-				batchOffsets.numSubCommands = numSubCommandsInBatch;
-				R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
-				batchOffsets.layer = drawCommandData->layer;
+				for (u32 i = 0; i < numSubCommandsInBatch; ++i)
+				{
+					const auto cameraDepth = r2::sarr::At(*drawCommandData->cameraDepths, i);
 
-				if (drawCommandData->isDynamic)
-				{
-					r2::sarr::Push(*dynamicRenderBatchesOffsets, batchOffsets);
-				}
-				else
-				{
-					r2::sarr::Push(*staticRenderBatchesOffsets, batchOffsets);
+					BatchRenderOffsets batchOffsets;
+					batchOffsets.shaderId = drawCommandData->shaderId;
+					batchOffsets.subCommandsOffset = subCommandsOffset;
+					batchOffsets.numSubCommands = 1;
+					batchOffsets.cameraDepth = cameraDepth;
+
+					R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
+					batchOffsets.layer = drawCommandData->layer;
+
+					if (drawCommandData->isDynamic)
+					{
+						r2::sarr::Push(*dynamicRenderBatchesOffsets, batchOffsets);
+					}
+					else
+					{
+						r2::sarr::Push(*staticRenderBatchesOffsets, batchOffsets);
+					}
+
+					++subCommandsOffset;
 				}
 
 				subCommandsMemoryOffset += batchSubCommandsMemorySize;
-				subCommandsOffset += numSubCommandsInBatch;
 			}
 		}
 
@@ -3544,7 +3561,7 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
+			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, batchOffset.cameraDepth, batchOffset.shaderId);
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3565,7 +3582,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_WORLD)
 			{
-				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
+				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
 
 
 				//I guess we need to loop here to submit all of the draws for each light...
@@ -3596,7 +3613,7 @@ namespace r2::draw::renderer
 
 				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_SPOT_LIGHT, 0);
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_SPOT_LIGHT, batchOffset.cameraDepth);
 
 				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
 				{
@@ -3620,7 +3637,7 @@ namespace r2::draw::renderer
 
 				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingPointLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, 0);
+				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_POINT_LIGHT, batchOffset.cameraDepth);
 
 				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
 				{
@@ -3642,7 +3659,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, batchOffset.cameraDepth);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3677,7 +3694,7 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*dynamicRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, 0, batchOffset.shaderId);
+			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.layer, 0, batchOffset.cameraDepth, batchOffset.shaderId);
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3693,7 +3710,7 @@ namespace r2::draw::renderer
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
-				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
+				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
 
 				//@TODO(Serge): we don't loop over each cascade in the geometry shader for some reason so we have to do this extra divide by NUM_FRUSTUM_SPLITS, we should probably loop in there and update
 				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS / (float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0 ? 1.0f : 0.0f));
@@ -3724,7 +3741,7 @@ namespace r2::draw::renderer
 
 				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_SPOT_LIGHT, 0);
+				key::ShadowKey spotLightShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_SPOT_LIGHT, batchOffset.cameraDepth);
 
 				for (u32 i = 0; i < numSpotLightShadowBatchesNeeded; ++i)
 				{
@@ -3748,7 +3765,7 @@ namespace r2::draw::renderer
 
 				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingPointLights > 0 ? 1.0f : 0.0f));
 
-				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, 0);
+				key::ShadowKey plShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, true, light::LightType::LT_POINT_LIGHT, batchOffset.cameraDepth);
 
 				for (u32 i = 0; i < numPointLightShadowBatchesNeeded; ++i)
 				{
@@ -3770,7 +3787,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, 0);
+				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, batchOffset.cameraDepth);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -6389,6 +6406,18 @@ namespace r2::draw::renderer
 		{
 			return glm::vec2(0);
 		}
+	}
+
+	u32 GetCameraDepth(Renderer& renderer, const r2::draw::Bounds& meshBounds, const glm::mat4& modelMat)
+	{
+		glm::vec3 worldSpacePosition;
+		glm::vec3 origin = meshBounds.origin;
+
+		worldSpacePosition.x = modelMat[0][0] * origin.x + modelMat[1][0] * origin.y + modelMat[2][0] * origin.z + modelMat[3][0];
+		worldSpacePosition.y = modelMat[0][1] * origin.x + modelMat[1][1] * origin.y + modelMat[2][1] * origin.z + modelMat[3][1];
+		worldSpacePosition.z = modelMat[0][2] * origin.x + modelMat[1][2] * origin.y + modelMat[2][2] * origin.z + modelMat[3][2];
+
+		return r2::util::FloatToU24(GetSortKeyCameraDepth(renderer, worldSpacePosition));
 	}
 
 	f32 GetSortKeyCameraDepth(Renderer& renderer, glm::vec3 aabbPosition)

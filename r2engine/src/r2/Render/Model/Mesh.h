@@ -15,20 +15,23 @@
 
 namespace r2::draw
 {
+	struct Bounds
+	{
+		glm::vec3 origin;
+		glm::vec3 extents;
+		float radius;
+	};
+
     struct Mesh
     {
         u64 hashName = 0;
         r2::SArray<r2::draw::Vertex>* optrVertices = nullptr;
         r2::SArray<u32>* optrIndices = nullptr;
         u32 materialIndex = 0;
-        //r2::SArray<glm::vec4>* optrWeights = nullptr;
-        //r2::SArray<glm::ivec4>* optrJoints = nullptr;
-        //r2::SArray<r2::draw::MaterialHandle>* optrMaterials = nullptr;
+        Bounds objectBounds; //in model space
 
         static u64 MemorySize(u64 numVertices, u64 numIndices, u64 alignment, u64 headerSize, u64 boundsChecking);
     };
 }
-
-
 
 #endif /* Mesh_h */
