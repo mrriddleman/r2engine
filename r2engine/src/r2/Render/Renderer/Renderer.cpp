@@ -3025,6 +3025,12 @@ namespace r2::draw::renderer
 
 		return GetConstData(renderer, r2::sarr::At(*constantBufferHandles, handle));
 	}
+	
+	struct CameraDepth
+	{
+		u32 cameraDepth;
+		u32 index;
+	};
 
 	struct DrawCommandData
 	{
@@ -3032,8 +3038,10 @@ namespace r2::draw::renderer
 		DrawLayer layer = DL_WORLD;
 		b32 isDynamic = false;
 		r2::SArray<cmd::DrawBatchSubCommand>* subCommands = nullptr;
-		r2::SArray<u32>* cameraDepths = nullptr;
+		r2::SArray<CameraDepth>* cameraDepths = nullptr;
 	};
+
+	
 
 	struct BatchRenderOffsets
 	{
@@ -3043,7 +3051,7 @@ namespace r2::draw::renderer
 		u32 subCommandsOffset = 0;
 		u32 numSubCommands = 0;
 		b32 depthEnabled = false;
-		u32 cameraDepth = 0;
+		u32 cameraDepth;
 	};
 
 	//@TODO(Serge): pass in an array of u32 that will act as the material offsets per draw ID
@@ -3136,7 +3144,7 @@ namespace r2::draw::renderer
 					drawCommandData->isDynamic = modelRef.mAnimated;
 					drawCommandData->layer = drawState.layer;
 					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
-					drawCommandData->cameraDepths = MAKE_SARRAY(*renderer.mPrePostRenderCommandArena, u32, drawCommandBatchSize);
+					drawCommandData->cameraDepths = MAKE_SARRAY(*renderer.mPrePostRenderCommandArena, CameraDepth, drawCommandBatchSize);
 					
 					r2::sarr::Push(*tempAllocations, (void*)drawCommandData->cameraDepths);
 					r2::sarr::Push(*tempAllocations, (void*)drawCommandData->subCommands);
@@ -3154,12 +3162,17 @@ namespace r2::draw::renderer
 				subCommand.count = meshRef.numIndices;
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
-				u32 cameraDepth = GetCameraDepth(renderer, meshRef.objectBounds, modelMatrix);
+				CameraDepth cameraDepth;
+				cameraDepth.cameraDepth = GetCameraDepth(renderer, meshRef.objectBounds, modelMatrix);
+				cameraDepth.index = r2::sarr::Size(*drawCommandData->cameraDepths);
+
 				r2::sarr::Push(*drawCommandData->cameraDepths, cameraDepth);
 			}
 
 			//FREE(shaders, *MEM_ENG_SCRATCH_PTR);
 		}
+
+
 	}
 
 	void PreRender(Renderer& renderer)
@@ -3390,42 +3403,42 @@ namespace r2::draw::renderer
 			DrawCommandData* drawCommandData = hashIter->value;
 			if (drawCommandData != nullptr)
 			{
-				//drawCommandData
-				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
-				const u64 batchSubCommandsMemorySize = numSubCommandsInBatch * sizeof(cmd::DrawBatchSubCommand);
-				memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), drawCommandData->subCommands->mData, batchSubCommandsMemorySize);
+				//sort the subcommands here by camera depth
+				std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
+					return s1.cameraDepth < s2.cameraDepth;
+				});
 
-				R2_CHECK(numSubCommandsInBatch == static_cast<u32>(r2::sarr::Size(*drawCommandData->cameraDepths)), "numSubCommandsInBatch == numCameraDepths");
+				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 
 				for (u32 i = 0; i < numSubCommandsInBatch; ++i)
 				{
-					const auto cameraDepth = r2::sarr::At(*drawCommandData->cameraDepths, i);
+					u32 index = r2::sarr::At(*drawCommandData->cameraDepths, i).index;
 
-					BatchRenderOffsets batchOffsets;
-					batchOffsets.shaderId = drawCommandData->shaderId;
-					batchOffsets.subCommandsOffset = subCommandsOffset;
-					batchOffsets.numSubCommands = 1;
-					batchOffsets.cameraDepth = cameraDepth;
-
-					R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
-					batchOffsets.layer = drawCommandData->layer;
-
-					if (drawCommandData->isDynamic)
-					{
-						r2::sarr::Push(*dynamicRenderBatchesOffsets, batchOffsets);
-					}
-					else
-					{
-						r2::sarr::Push(*staticRenderBatchesOffsets, batchOffsets);
-					}
-
-					++subCommandsOffset;
+					memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), &r2::sarr::At(*drawCommandData->subCommands, index), sizeof(cmd::DrawBatchSubCommand));
+					subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 				}
 
-				subCommandsMemoryOffset += batchSubCommandsMemorySize;
+				BatchRenderOffsets batchOffsets;
+				batchOffsets.shaderId = drawCommandData->shaderId;
+				batchOffsets.subCommandsOffset = subCommandsOffset;
+				batchOffsets.numSubCommands = numSubCommandsInBatch;
+				batchOffsets.cameraDepth = 0;
+
+				R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
+				batchOffsets.layer = drawCommandData->layer;
+
+				if (drawCommandData->isDynamic)
+				{
+					r2::sarr::Push(*dynamicRenderBatchesOffsets, batchOffsets);
+				}
+				else
+				{
+					r2::sarr::Push(*staticRenderBatchesOffsets, batchOffsets);
+				}
+
+				subCommandsOffset += numSubCommandsInBatch;
 			}
 		}
-
 
 		//Make our final batch data here
 		BatchRenderOffsets finalBatchOffsets;
