@@ -3404,6 +3404,9 @@ namespace r2::draw::renderer
 			if (drawCommandData != nullptr)
 			{
 				//sort the subcommands here by camera depth
+
+				//@TODO(Serge): when we're doing transparency, we'll need to check the DrawCommandData if we're a transparency batch, then we need to use a different
+				//				sorting predicate ( s1.cameraDepth > s2.cameraDepth)
 				std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
 					return s1.cameraDepth < s2.cameraDepth;
 				});
