@@ -94,7 +94,7 @@ namespace r2::draw
 
 		bool IsColorAttachment(TextureAttachmentType type)
 		{
-			return type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F;
+			return type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F || type == RG16;
 		}
 
 		bool IsDepthAttachment(TextureAttachmentType type)

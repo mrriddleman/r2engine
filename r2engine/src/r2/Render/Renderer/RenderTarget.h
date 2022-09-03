@@ -35,6 +35,7 @@ namespace r2::draw::rt
 		RG32F,
 		R32F,
 		R16F,
+		RG16
 	};
 
 	struct RenderTargetPageAllocation

@@ -83,6 +83,19 @@ struct ShadowCastingLights
 	int numShadowCastingLights;
 };
 
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+    vec4 exposureNearFar;
+    vec4 cascadePlanes;
+    vec4 shadowMapSizes;
+	vec4 fovAspectResXResY;
+    uint64_t frame;
+    vec2 clusterScaleBias;
+    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -153,10 +166,10 @@ void main()
 		{
 			vec4 vertex[3];
 			int outOfBound[6] = { 0 , 0 , 0 , 0 , 0 , 0 };
+			
 			for (int i =0; i < 3; ++i )
 			{
 				vertex[i] = dirLights[dirLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[dirLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] * gl_in[i].gl_Position;
-				
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];

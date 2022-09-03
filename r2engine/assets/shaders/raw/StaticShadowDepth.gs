@@ -169,6 +169,7 @@ void main()
 				for(int i = 0; i < 3; ++i)
 				{
 					gl_Position = vertex[i];
+
 					gl_Layer = cascadeIndex + int(gDirectionLightShadowMapPages[int(dirLights[dirLightIndex].lightProperties.lightID)]);
 					EmitVertex();
 				}

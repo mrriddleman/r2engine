@@ -1216,7 +1216,13 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, floa
 float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows)
 {
 
-	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
+	vec3 viewDir = (cameraPosTimeW.xyz - fs_in.fragPos);
+	vec3 viewDirN = normalize(viewDir);
+	float viewDirLen = length(viewDir);
+
+	float xOffset = (viewDir.x / viewDirLen) * (1.0 - VoL);
+	float yOffset = (viewDir.y / viewDirLen) * (1.0 - VoL);
+
 	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
 	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 

@@ -24,7 +24,7 @@ namespace r2::draw
 		constexpr u32 MAX_NUM_DIRECTIONAL_LIGHTS = 50;
 		constexpr u32 MAX_NUM_POINT_LIGHTS = 4096;
 		constexpr u32 MAX_NUM_SPOT_LIGHTS = MAX_NUM_POINT_LIGHTS;
-		constexpr u32 SHADOW_MAP_SIZE = 1024;
+		constexpr u32 SHADOW_MAP_SIZE = 2048;
 
 		constexpr u32 NUM_SPOTLIGHT_LAYERS = 1;
 		constexpr u32 NUM_POINTLIGHT_LAYERS = 6;

@@ -3567,7 +3567,12 @@ namespace r2::draw::renderer
 		key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, 0);
 		BeginRenderPass<key::Basic>(renderer, RPT_CLUSTERS, clearGBufferOptions, *renderer.mClustersBucket, clusterKey, *renderer.mCommandArena);
 
-		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
+		ClearSurfaceOptions shadowClearOptions;
+		shadowClearOptions.shouldClear = true;
+		shadowClearOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
+		
+
+		BeginRenderPass<key::ShadowKey>(renderer, RPT_SHADOWS, shadowClearOptions, *renderer.mShadowBucket, shadowClearKey, *renderer.mShadowArena);
 
 		//@NOTE(Serge): directional light here is intentional for sort order
 		key::ShadowKey pointLightShadowKey = key::GenerateShadowKey(key::ShadowKey::POINT_LIGHT, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
@@ -4499,7 +4504,7 @@ namespace r2::draw::renderer
 		RenderTarget* pointlightShadowRenderTarget = GetRenderTarget(renderer, RTS_POINTLIGHT_SHADOWS);
 
 		R2_CHECK(shadowRenderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
-		R2_CHECK(shadowRenderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
+		R2_CHECK((shadowRenderTarget->depthAttachments != nullptr || shadowRenderTarget->colorAttachments != nullptr), "We should have a depth attachment here");
 
 		R2_CHECK(pointlightShadowRenderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
 		R2_CHECK(pointlightShadowRenderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
@@ -4563,7 +4568,7 @@ namespace r2::draw::renderer
 		RenderTarget* renderTarget = GetRenderTarget(renderer, RTS_SHADOWS);
 
 		R2_CHECK(renderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
-		R2_CHECK(renderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
+		R2_CHECK((renderTarget->depthAttachments != nullptr || renderTarget->colorAttachments != nullptr), "We should have a depth attachment here");
 
 		R2_CHECK(spotLight.lightProperties.lightID >= 0, "We should have a valid lightID");
 
@@ -4584,7 +4589,7 @@ namespace r2::draw::renderer
 		RenderTarget* renderTarget = GetRenderTarget(renderer, RTS_SHADOWS);
 
 		R2_CHECK(renderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
-		R2_CHECK(renderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
+		R2_CHECK((renderTarget->depthAttachments != nullptr || renderTarget->colorAttachments != nullptr), "We should have a depth attachment here");
 
 		R2_CHECK(spotLight.lightProperties.lightID >= 0, "We should have a valid lightID");
 
@@ -4648,7 +4653,7 @@ namespace r2::draw::renderer
 		RenderTarget* renderTarget = GetRenderTarget(renderer, RTS_SHADOWS);
 
 		R2_CHECK(renderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
-		R2_CHECK(renderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
+		R2_CHECK((renderTarget->depthAttachments != nullptr || renderTarget->colorAttachments != nullptr), "We should have a depth attachment here");
 
 		R2_CHECK(directionLight.lightProperties.lightID >= 0, "We should have a valid lightID");
 
@@ -4669,7 +4674,7 @@ namespace r2::draw::renderer
 		RenderTarget* renderTarget = GetRenderTarget(renderer, RTS_SHADOWS);
 
 		R2_CHECK(renderTarget != nullptr, "We should have a valid render target for shadows to do this operation");
-		R2_CHECK(renderTarget->depthAttachments != nullptr, "We should have a depth attachment here");
+		R2_CHECK((renderTarget->depthAttachments != nullptr || renderTarget->colorAttachments != nullptr), "We should have a depth attachment here");
 
 		R2_CHECK(directionLight.lightProperties.lightID >= 0, "We should have a valid lightID");
 

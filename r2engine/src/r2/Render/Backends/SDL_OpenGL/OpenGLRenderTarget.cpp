@@ -58,6 +58,7 @@ namespace r2::draw::rt::impl
 		else if (type == RG16F)
 		{
 			format.internalformat = GL_RG16F;
+			format.borderColor = glm::vec4(1.0f);
 		}
 		else if (type == R32F)
 		{
@@ -66,6 +67,11 @@ namespace r2::draw::rt::impl
 		else if (type == R16F)
 		{
 			format.internalformat = GL_R16F;
+		}
+		else if (type == RG16)
+		{
+			format.internalformat = GL_RG16;
+			format.borderColor = glm::vec4(1.0f);
 		}
 		else
 		{
@@ -91,8 +97,15 @@ namespace r2::draw::rt::impl
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 		if (IsColorAttachment(type))
 		{
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
-		
+			if (!useLayeredRenderering)
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
+			}
+			else
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, 0);
+			}
+
 			rt.numFrameBufferColorAttachments++;
 		}
 		else if (IsDepthAttachment(type))
@@ -142,7 +155,7 @@ namespace r2::draw::rt::impl
 		int index = textureAttachment.currentTexture;
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 
-		if (type == DEPTH)
+		if (IsDepthAttachment(type))
 		{
 			if (rt.attachmentReferences && r2::sarr::Size(*rt.attachmentReferences) + 1 <= r2::sarr::Capacity(*rt.attachmentReferences))
 			{
@@ -376,8 +389,14 @@ namespace r2::draw::rt::impl
 
 				if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
 				{
-					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
-				
+					if (attachment.numLayers == 1)
+					{
+						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
+					}
+					else
+					{
+						glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[attachment.currentTexture].container->texId, 0);
+					}
 					auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
 					R2_CHECK(result, "Failed to attach texture to frame buffer");
@@ -434,7 +453,7 @@ namespace r2::draw::rt::impl
 
 				 R2_CHECK(attachmentReference.attachmentPtr != nullptr, "attachment ptr is nullptr!");
 
-				 if (attachmentReference.type == DEPTH)
+				 if (IsDepthAttachment(attachmentReference.type))
 				 {
 					 if (attachmentReference.attachmentPtr->numTextures > 1 && attachmentReference.attachmentPtr->needsFramebufferUpdate)
 					 {

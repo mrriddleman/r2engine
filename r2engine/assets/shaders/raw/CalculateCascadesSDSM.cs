@@ -25,7 +25,7 @@
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
 
-const vec3 GLOBAL_UP = vec3(0, 0, 1);
+const vec3 GLOBAL_UP = vec3(0, 1, 0);
 const bool STABALIZE_CASCADES = true;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
@@ -332,8 +332,6 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 		frustumCorners[i] = pt.xyz / pt.w;
 	}
 
-	
-
 	vec3 center = vec3(0.0);
 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
 	{
@@ -343,8 +341,9 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 	center *= (1.0 / NUM_FRUSTUM_CORNERS);
 
 
-	vec3 upDir = GLOBAL_UP;
-
+	vec3 upDir = GetCameraRight();
+	if(STABALIZE_CASCADES)
+		upDir = GLOBAL_UP;
 	
 
 //	vec3 lightCameraPos = center;
@@ -356,12 +355,12 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 	mat4 lightView = LookAt(center + dirLights[directionLightIndex].direction.xyz * -0.5, center, upDir);
 
 	mat4 texScaleBias = mat4(1.0);
-	texScaleBias[0][0] = 0.5;
-	texScaleBias[1][1] = 0.5;
-	texScaleBias[2][2] = 0.5;
-	texScaleBias[3][0] = 0.5;
-	texScaleBias[3][1] = 0.5;
-	texScaleBias[3][2] = 0.5;
+	texScaleBias[0][0] = 1;
+	texScaleBias[1][1] = 1;
+	texScaleBias[2][2] = 1;
+	texScaleBias[3][0] = 0;
+	texScaleBias[3][1] = 0;
+	texScaleBias[3][2] = 0;
 
 	return texScaleBias * shadowCamera * lightView;
 }
@@ -410,7 +409,7 @@ void main(void)
 	}
 
 	float splitScale = projMultSplitScaleZMultLambda.y * splitScaleMultFadeFactor.x;
-	float prevSplitDist = cascadeIndex == 0 ? splitScale * min(exposureNearFar.y, (gPartitions.intervalEnd[0] - gPartitions.intervalBegin[0])) : splitScale *  gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
+	float prevSplitDist = cascadeIndex == 0 ? splitScale * min(1, (gPartitions.intervalEnd[0] - gPartitions.intervalBegin[0])) : splitScale *  gPartitions.intervalEnd[cascadeIndex-1] - gPartitions.intervalBegin[cascadeIndex-1];
 	float splitDist =  (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]) * ( splitScaleMultFadeFactor.x / splitScale);	
 
 	for(int i = 0; i < 4; ++i)
@@ -430,13 +429,16 @@ void main(void)
 
 	center *= (1.0 / NUM_FRUSTUM_CORNERS);
 
-	vec3 upDir = GLOBAL_UP;
+	vec3 upDir = GetCameraRight();
+
+	if(STABALIZE_CASCADES)
+		upDir = GLOBAL_UP;
 
 	vec3 minExtents;
 	vec3 maxExtents;
 	
 
-	//if(STABALIZE_CASCADES)
+	if(STABALIZE_CASCADES)
 	{
 		float sphereRadius = 0.0;
 
@@ -456,36 +458,36 @@ void main(void)
 		minExtents = -maxExtents;
 
 	}
-	// else
-	// {
-	// 	vec3 lightCameraPos = center;
+	else
+	{
+		vec3 lightCameraPos = center;
 
 
-	// 	mat4 lightView = LookAt(lightCameraPos + dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
+		mat4 lightView = LookAt(lightCameraPos + dirLights[directionLightIndex].direction.xyz, lightCameraPos, upDir);
 
 
-	// 	const float MAX_FLOAT = 3.402823466e+38F;
-	// 	vec3 mins = vec3(MAX_FLOAT);
-	// 	vec3 maxes = vec3(-MAX_FLOAT);
+		const float MAX_FLOAT = 3.402823466e+38F;
+		vec3 mins = vec3(MAX_FLOAT);
+		vec3 maxes = vec3(-MAX_FLOAT);
 
-	// 	for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
-	// 	{
-	// 		vec3 corner = (lightView * vec4(frustumCorners[i], 1.0)).xyz;
-	// 		mins = min(mins, corner);
-	// 		maxes = max(maxes, corner);
-	// 	}
+		for(int i = 0; i < NUM_FRUSTUM_CORNERS; ++i)
+		{
+			vec3 corner = (lightView * vec4(frustumCorners[i], 1.0)).xyz;
+			mins = min(mins, corner);
+			maxes = max(maxes, corner);
+		}
 
-	// 	minExtents = mins;
-	// 	maxExtents = maxes;
+		minExtents = mins;
+		maxExtents = maxes;
 
-	// 	float scale = (shadowMapSizes[cascadeIndex] + 9.0)/shadowMapSizes[cascadeIndex];
+		float scale = (shadowMapSizes[cascadeIndex] + 9.0)/shadowMapSizes[cascadeIndex];
 
-	// 	minExtents.x *= scale;
-	// 	minExtents.y *= scale;
-	// 	maxExtents.x *= scale;
-	// 	maxExtents.y *= scale;
+		minExtents.x *= scale;
+		minExtents.y *= scale;
+		maxExtents.x *= scale;
+		maxExtents.y *= scale;
 
-	// }
+	}
 	
 	vec3 eye = center + (dirLights[directionLightIndex].direction.xyz) * minExtents.z;
 
@@ -503,8 +505,8 @@ void main(void)
 	
 
 	//Stabalize Cascades
-
-	//if(STABALIZE_CASCADES)
+	
+	if(STABALIZE_CASCADES)
 	{
 		mat4 shadowMatrix = dirLights[directionLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[directionLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex];
 
@@ -547,7 +549,7 @@ void main(void)
 	vec4 otherCorner = GlobalShadowMatrix * (invCascadeMat * vec4(1, 1, 1, 1));
 	otherCorner /= otherCorner.w;
 
-	vec3 cascadeScale = 1.0 / vec3(otherCorner - cascadeCorner);
+	vec3 cascadeScale = 1.0 / (otherCorner.xyz - cascadeCorner.xyz);
 
 
 	gScale[cascadeIndex][directionLightLightID] = vec4(cascadeScale.xyz, 1.0);
