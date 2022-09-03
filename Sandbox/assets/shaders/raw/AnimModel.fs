@@ -1217,7 +1217,7 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 {
 
 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
-	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz + (vec3(-viewDir.x, -viewDir.y, 0.0) * (1 - VoL) * 0.5);
+	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
 	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 
 	if(shadowPosition.z > 1.0)

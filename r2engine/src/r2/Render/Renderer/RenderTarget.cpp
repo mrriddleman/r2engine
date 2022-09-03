@@ -91,6 +91,16 @@ namespace r2::draw
 		{
 			impl::UpdateRenderTargetIfNecessary(rt);
 		}
+
+		bool IsColorAttachment(TextureAttachmentType type)
+		{
+			return type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F;
+		}
+
+		bool IsDepthAttachment(TextureAttachmentType type)
+		{
+			return type == DEPTH || type == DEPTH_CUBEMAP;
+		}
 	}
 
 	

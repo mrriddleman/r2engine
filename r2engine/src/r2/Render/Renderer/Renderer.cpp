@@ -2368,9 +2368,11 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 1 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 3 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
 			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
@@ -3937,7 +3939,7 @@ namespace r2::draw::renderer
 			return nullptr;
 		}
 
-		if (surface == NUM_RENDER_PASSES)
+		if (surface == NUM_RENDER_TARGET_SURFACES)
 		{
 			R2_CHECK(false, "We should have a render target surface passed in!");
 			return nullptr;
@@ -5858,9 +5860,16 @@ namespace r2::draw::renderer
 			AssignShadowMapPagesForAllLights(renderer);
 
 			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_NORMAL] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_NORMAL], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			renderer.mRenderTargets[RTS_SPECULAR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SPECULAR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+			
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -5956,6 +5965,8 @@ namespace r2::draw::renderer
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SPECULAR]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_NORMAL]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SHADOWS]);
@@ -5976,7 +5987,7 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_GBUFFER].numDepthAttachments = 0;
 		renderer.mRenderTargetParams[RTS_GBUFFER].numRenderBufferAttachments = 0;
 		renderer.mRenderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_GBUFFER].numAttachmentRefs = 1;
+		renderer.mRenderTargetParams[RTS_GBUFFER].numAttachmentRefs = 3;
 		renderer.mRenderTargetParams[RTS_GBUFFER].surfaceOffset = surfaceOffset;
 		renderer.mRenderTargetParams[RTS_GBUFFER].numSurfacesPerTarget = 1;
 
@@ -6061,6 +6072,26 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget;
+
+		renderer.mRenderTargetParams[RTS_NORMAL].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_NORMAL].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_NORMAL].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_NORMAL].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_NORMAL].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_NORMAL].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_NORMAL].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_NORMAL].numSurfacesPerTarget;
+
+		renderer.mRenderTargetParams[RTS_SPECULAR].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_SPECULAR].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_SPECULAR].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_SPECULAR].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_SPECULAR].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_SPECULAR].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_SPECULAR].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SPECULAR].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

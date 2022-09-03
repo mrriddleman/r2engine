@@ -17,6 +17,7 @@ namespace r2::draw::rt
 
 		b32 uploadAllTextures = false;
 		b32 needsFramebufferUpdate = false;
+		
 	};
 
 	struct RenderBufferAttachment
@@ -48,6 +49,7 @@ namespace r2::draw::rt
 	{
 		TextureAttachmentType type;
 		const TextureAttachment* attachmentPtr;
+		u32 colorAttachmentNumber = 0;
 	};
 
 	struct RenderTargetParams
@@ -78,6 +80,8 @@ namespace r2::draw
 		RTS_AMBIENT_OCCLUSION_DENOISED,
 		RTS_ZPREPASS_SHADOWS,
 		RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED,
+		RTS_NORMAL,
+		RTS_SPECULAR,
 		NUM_RENDER_TARGET_SURFACES,
 	};
 
@@ -87,6 +91,7 @@ namespace r2::draw
 		u32 frameBufferID = DEFAULT_RENDER_TARGET;
 		u32 width = 0, height = 0;
 		u32 xOffset = 0, yOffset = 0;
+		u32 numFrameBufferColorAttachments = 0;
 
 		r2::SArray<rt::TextureAttachment>* colorAttachments = nullptr;
 
@@ -131,6 +136,10 @@ namespace r2::draw
 		void SwapTexturesIfNecessary(RenderTarget& rt);
 
 		void UpdateRenderTargetIfNecessary(RenderTarget& rt);
+
+		bool IsColorAttachment(TextureAttachmentType type);
+
+		bool IsDepthAttachment(TextureAttachmentType type);
 
 		//private
 		namespace impl
