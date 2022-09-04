@@ -67,6 +67,9 @@ namespace r2::draw::rendererimpl
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 	void SetCullFace(u32 cullFace);
 	void SetDepthFunction(u32 depthFunc);
+	void EnablePolygonOffset(bool enabled);
+	void SetPolygonOffset(const glm::vec2& polygonOffset);
+
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name);
 
 	void SetDepthClamp(bool shouldDepthClamp);

@@ -454,7 +454,7 @@ void main()
 
 	NormalColor = EncodeNormal(norm);
 
-	SpecularColor = vec4(specular, 1-roughness);
+	SpecularColor = vec4(specular, 1.0-roughness);
 
 }
 
@@ -1255,7 +1255,7 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 	vec3 viewDir = (cameraPosTimeW.xyz - fs_in.fragPos);
 	float viewDirLen = length(viewDir);
 
-	vec2 shadowOffset = (viewDir.xy / viewDirLen) * (1.0 - VoL) * 1;
+	vec2 shadowOffset = (viewDir.xy / viewDirLen) * (1.0 - VoL);
 
 	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;// + vec3(shadowOffset, 0);
 

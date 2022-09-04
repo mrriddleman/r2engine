@@ -35,6 +35,8 @@ namespace r2::draw::cmd
 		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
 		u32 cullState;
 		u32 depthFunction;
+		b32 polygonOffsetEnabled;
+		glm::vec2 polygonOffset;
 	};
 
 	struct Clear

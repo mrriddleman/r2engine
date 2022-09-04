@@ -405,6 +405,24 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
+
+	void EnablePolygonOffset(bool enabled)
+	{
+		if (enabled)
+		{
+			glEnable(GL_POLYGON_OFFSET_FILL);
+		}
+		else
+		{
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
+	}
+
+	void SetPolygonOffset(const glm::vec2& polygonOffset)
+	{
+		glPolygonOffset(polygonOffset.x, polygonOffset.y);
+	}
+
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name)
 	{
 		const Shader* shader = shadersystem::GetShader(shaderHandle);
@@ -781,6 +799,8 @@ namespace r2::draw::rendererimpl
 		SetDepthTest(state.depthEnabled);
 		SetCullFace(state.cullState);
 		SetDepthFunction(state.depthFunction);
+		EnablePolygonOffset(state.polygonOffsetEnabled);
+		SetPolygonOffset(state.polygonOffset);
 	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)
