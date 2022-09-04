@@ -8,6 +8,8 @@ const float PENUMBRA_FILTER_SCALE = 2.4f;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec2 NormalColor;
+layout (location = 2) out vec4 SpecularColor;
 
 #define PI 3.14159265358979323846
 #define TWO_PI 2.0 * PI
@@ -340,7 +342,7 @@ vec3 Eval_BRDF(
 	float shadow);
 
 
-vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv, inout vec3 outSpecular, inout float outRoughness);
 
 uint GetClusterIndex(vec2 pixelCoord);
 float LinearizeDepth(float depth);
@@ -396,6 +398,20 @@ vec4 DebugFrustumSplitColor()
 }
 
 
+vec2 EncodeNormal(vec3 normal)
+{
+	return vec2(normal.xy * 0.5 + 0.5);
+}
+
+vec3 DecodeNormal(vec2 enc)
+{
+	vec3 n;
+
+	n.xy = enc * 2 - 1;
+	n.z = sqrt(1 - dot(n.xy, n.xy));
+	return n;
+}
+
 void main()
 {
 
@@ -419,7 +435,11 @@ void main()
 
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
-	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords);
+	vec3 specular = vec3(0);
+	float roughness = 0;
+
+
+	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords, specular, roughness);
 
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
@@ -432,7 +452,9 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	
+	NormalColor = EncodeNormal(norm);
+
+	SpecularColor = vec4(specular, 1-roughness);
 
 }
 
@@ -932,7 +954,7 @@ vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 an
 }
 
 
-vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv, inout vec3 outSpecular, inout float outRoughness )
 {
 
 	vec3 color = vec3(0.0);
@@ -950,9 +972,12 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	float perceptualRoughness = clamp(SampleMaterialRoughness(drawID, uv).r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	float roughness = perceptualRoughness * perceptualRoughness;
+	
+	outRoughness = roughness;
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	
+	outSpecular = F0;
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);

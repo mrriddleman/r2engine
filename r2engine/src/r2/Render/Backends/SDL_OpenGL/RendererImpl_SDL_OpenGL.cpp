@@ -915,6 +915,11 @@ namespace r2::draw::rendererimpl
 		{
 			R2_CHECK(numColorAttachments <= MAX_NUM_COLOR_ATTACHMENTS, "Can't have more than %lu color buffers for now", MAX_NUM_COLOR_ATTACHMENTS);
 
+			if (numColorAttachments > 1)
+			{
+				int k = 0;
+			}
+
 			GLenum bufs[MAX_NUM_COLOR_ATTACHMENTS];
 
 			for (u64 i = 0; i < numColorAttachments; ++i)

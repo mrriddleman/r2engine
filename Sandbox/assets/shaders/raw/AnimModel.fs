@@ -11,6 +11,8 @@ const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
 
 layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec2 NormalColor;
+layout (location = 2) out vec4 SpecularColor;
 
 #define PI 3.141596
 #define TWO_PI 2.0 * PI
@@ -341,7 +343,7 @@ vec3 Eval_BRDF(
 	float shadow);
 
 
-vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv);
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv, inout vec3 specular, inout float roughness);
 uint GetClusterIndex(vec2 pixelCoord);
 float LinearizeDepth(float depth);
 uint GetDepthSlice(float z);
@@ -395,6 +397,19 @@ vec4 DebugFrustumSplitColor()
 	return vec4(1);
 }
 
+vec2 EncodeNormal(vec3 normal)
+{
+	return vec2(normal.xy * 0.5 + 0.5);
+}
+
+vec3 DecodeNormal(vec2 enc)
+{
+	vec3 n;
+
+	n.xy = enc * 2 - 1;
+	n.z = sqrt(1 - dot(n.xy, n.xy));
+	return n;
+}
 
 void main()
 {
@@ -420,7 +435,10 @@ void main()
 
 	vec3 norm = SampleMaterialNormal(fs_in.drawID, texCoords).rgb;
 
-	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords);
+	vec3 specular = vec3(0);
+	float roughness = 0;
+
+	vec3 lightingResult = CalculateLightingBRDF(norm, viewDir, sampledColor.rgb, fs_in.drawID, texCoords, specular, roughness);
 
 
 	vec3 emission = SampleMaterialEmission(fs_in.drawID, texCoords).rgb;
@@ -438,7 +456,9 @@ void main()
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
+	NormalColor = EncodeNormal(norm);
 
+	SpecularColor = vec4(specular, 1.0 - roughness);
 }
 
 vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
@@ -753,7 +773,21 @@ float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float 
 	return Dcc * Vcc * F;
 }
 
-vec3 BRDF(vec3 diffuseColor, vec3 N, vec3 V, vec3 L, vec3 F0, float NoV, float NoL, float ggxVTerm, vec3 energyCompensation, float roughness, float clearCoat, float clearCoatRoughness, vec3 clearCoatNormal, float shadow)
+vec3 BRDF(
+	vec3 diffuseColor,
+	vec3 N,
+	vec3 V,
+	vec3 L,
+	vec3 F0,
+	float NoV,
+	float NoL,
+	float ggxVTerm,
+	vec3 energyCompensation,
+	float roughness,
+	float clearCoat,
+	float clearCoatRoughness,
+	vec3 clearCoatNormal,
+	float shadow)
 {
 	vec3 H = normalize(V + L);
 
@@ -917,7 +951,7 @@ vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 an
 }
 
 
-vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
+vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv, inout vec3 outSpecular, inout float outRoughness)
 {
 	vec3 color = vec3(0.0);
 
@@ -935,7 +969,10 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	float roughness = perceptualRoughness * perceptualRoughness;
 
+	outRoughness = roughness;
+
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
+	outSpecular = F0;
 	
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
@@ -951,6 +988,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 
 	F0 = CalculateClearCoatBaseF0(F0, clearCoat);
 	
+	
+
 
 	float NoV = max(dot(N,V), 0.0);
 	float ToV = dot(anisotropicT, V);
@@ -983,8 +1022,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv)
 	
 
 	color += (Fd + Fr);
-
-
+	
+	
 	//evaluate the lights
 	
 	//for standard model

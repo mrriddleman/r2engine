@@ -3978,7 +3978,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS, RTS_SPECULAR, RTS_NORMAL }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -4040,7 +4040,7 @@ namespace r2::draw::renderer
 
 			if (renderTarget->colorAttachments)
 			{
-				setRenderTargetCMD->numColorAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
+				setRenderTargetCMD->numColorAttachments = renderTarget->numFrameBufferColorAttachments;//static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
 				
 				if (setRenderTargetCMD->numColorAttachments > 0)
 				{
