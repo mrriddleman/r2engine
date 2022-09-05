@@ -248,6 +248,7 @@ in VS_OUT
 	vec3 texCoords; 
 	vec3 fragPos;
 	vec3 normal;
+	vec3 viewNormal;
 	vec3 tangent;
 	vec3 bitangent;
 	mat3 TBN;
@@ -452,7 +453,7 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	NormalColor = EncodeNormal(norm);
+	NormalColor = EncodeNormal(normalize(fs_in.viewNormal));
 
 	SpecularColor = vec4(specular, 1.0-roughness);
 

@@ -258,9 +258,11 @@ in VS_OUT
 
 	vec3 fragPosTangent;
 	vec3 viewPosTangent;
-	vec4 worldNormal;
-	flat uint drawID;
 
+	vec4 worldNormal;
+	vec3 viewNormal;
+
+	flat uint drawID;
 } fs_in;
 
 vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
@@ -456,7 +458,7 @@ void main()
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
-	NormalColor = EncodeNormal(norm);
+	NormalColor = EncodeNormal(normalize(fs_in.viewNormal));
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 }

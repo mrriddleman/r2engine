@@ -177,6 +177,8 @@ void main()
 			{
 				vertex[i] = shadowMatrix * gl_in[i].gl_Position;
 
+				//BEGIN MAJOR HACK TO REDUCE PETER-PANNING
+
 				vec3 cameraVec = gl_in[i].gl_Position.xyz - cameraPosTimeW.xyz;
 				float viewLength = length(cameraVec);
 				vec3 shadowOffset = (cameraVec.xyz / viewLength);// * (1.0 - dot(view, cameraVec));
@@ -186,6 +188,8 @@ void main()
 				vec4 offsetInShadowSpace = shadowMatrix * (vec4(shadowOffset, 0) * (0.14) * clamp((1.0 - VoL), 0.0, 1.0) ) ;
 
 				vertex[i] += vec4(offsetInShadowSpace.xy, 0, 0);
+
+				//END MAJOR HACK TO REDUCE PETER-PANNING
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];

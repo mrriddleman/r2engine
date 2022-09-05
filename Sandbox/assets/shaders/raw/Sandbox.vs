@@ -48,6 +48,7 @@ out VS_OUT
 	vec3 texCoords; 
 	vec3 fragPos;
 	vec3 normal;
+	vec3 viewNormal;
 	vec3 tangent;
 	vec3 bitangent;
 	mat3 TBN;
@@ -68,8 +69,12 @@ void main()
 	gl_Position = projection * view * modelPos;
 
 	mat3 normalMatrix = transpose(inverse(mat3(models[DrawID])));
-
 	vs_out.normal = normalize(normalMatrix * aNormal);
+	mat3 viewNormalMatrix = transpose(inverse(mat3(view * models[DrawID])));
+
+	
+	vs_out.viewNormal = normalize(viewNormalMatrix * aNormal);
+
 	vec3 T = normalize(normalMatrix * aTangent);
 
 	T = normalize(T - (dot(T, vs_out.normal) * vs_out.normal));
@@ -78,7 +83,6 @@ void main()
 
 	vs_out.tangent = T;
 	vs_out.bitangent = B;
-
 
 	vs_out.TBN = mat3(T, B, vs_out.normal);
 	mat3 TBN = transpose(vs_out.TBN);

@@ -53,6 +53,15 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
+vec3 DecodeNormal(vec2 enc)
+{
+	vec3 n;
+
+	n.xy = enc * 2 - 1;
+	n.z = sqrt(1 - dot(n.xy, n.xy));
+	return n;
+}
+
 vec3 GammaCorrect(vec3 color)
 {
     return pow(color, vec3(1.0/2.2));
@@ -92,15 +101,16 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	//vec3 coord = vec3(uv.r, uv.g, specularSurface.page );
-	//vec3 spec = texture(sampler2DArray(specularSurface.container), coord).rgb;
-	//return vec4(spec, 1);
+	vec3 coord = vec3(uv.r, uv.g, normalSurface.page );
+	vec2 normal = texture(sampler2DArray(normalSurface.container), coord).rg;
+
+	return vec4(DecodeNormal(normal), 1);
 
 
 
 
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	return texture(sampler2DArray(gBufferSurface.container), coord) ;
+	//vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
+	//return texture(sampler2DArray(gBufferSurface.container), coord) ;
 
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
 	

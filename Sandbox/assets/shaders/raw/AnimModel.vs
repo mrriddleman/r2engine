@@ -76,6 +76,7 @@ out VS_OUT
 	vec3 viewPosTangent;
 
 	vec4 worldNormal;
+	vec3 viewNormal;
 
 	flat uint drawID;
 } vs_out;
@@ -96,6 +97,9 @@ void main()
 	mat3 normalMatrix = transpose(inverse(mat3(vertexTransform)));
 
 	vs_out.normal = normalize(normalMatrix * aNormal);
+	mat3 viewNormalMatrix = transpose(inverse(mat3(view * models[DrawID])));
+	vs_out.viewNormal = normalize(viewNormalMatrix * aNormal);
+
 	vs_out.worldNormal = (vertexTransform * vec4(aNormal, 0));
 
 	vec3 T = normalize(normalMatrix * aTangent);

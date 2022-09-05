@@ -5390,6 +5390,8 @@ namespace r2::draw::renderer
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
 				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				drawBatch->state.polygonOffsetEnabled = false;
+				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 			}
 			else
 			{
@@ -5404,6 +5406,8 @@ namespace r2::draw::renderer
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
 				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				drawBatch->state.polygonOffsetEnabled = false;
+				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 			}
 		}
 	}
