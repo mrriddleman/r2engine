@@ -97,6 +97,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 5992361627987834083,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SSR.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SSR.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 8833047848476087300,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.fs",

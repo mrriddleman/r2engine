@@ -453,7 +453,7 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	NormalColor = EncodeNormal(normalize(fs_in.viewNormal));
+	NormalColor = EncodeNormal(norm);
 
 	SpecularColor = vec4(specular, 1.0-roughness);
 
@@ -497,7 +497,7 @@ vec4 SampleMaterialNormal(uint drawID, vec3 uv)
 
 	normalMapNormal = normalize(fs_in.TBN * normalMapNormal);
 
-	return  (1.0 - modifier) * vec4(fs_in.normal, 1) +  modifier * vec4(normalMapNormal, 1);
+	return  (1.0 - modifier) * vec4(normalize(fs_in.normal), 1) +  modifier * vec4(normalMapNormal, 1);
 }
 
 vec4 SampleMaterialEmission(uint drawID, vec3 uv)

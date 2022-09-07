@@ -74,6 +74,14 @@ layout (std140, binding = 3) uniform SDSMParams
 	Tex2DAddress blueNoiseTexture;
 };
 
+layout (std140, binding = 4) uniform SSRParams
+{
+	float ssr_maxRayMarchStep;
+	float ssr_ssThickness;
+	int ssr_rayMarchIterations;
+	int ssr_maxBinarySearchSamples;
+};
+
 ssbo buffers:
 
 

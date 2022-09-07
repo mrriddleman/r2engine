@@ -458,7 +458,7 @@ void main()
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
-	NormalColor = EncodeNormal(normalize(fs_in.viewNormal));
+	NormalColor = EncodeNormal(norm);
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 }
