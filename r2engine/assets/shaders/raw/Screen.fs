@@ -102,16 +102,16 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	//vec3 coord = vec3(uv.r, uv.g, ssrSurface.page );
-	//vec4 normal = texture(sampler2DArray(ssrSurface.container), coord).rgba;
+	vec3 coord = vec3(uv.r, uv.g, ssrSurface.page );
+	vec4 normal = texture(sampler2DArray(ssrSurface.container), coord).rgba;
 
-	//return vec4(normal);
-
-
+	return vec4(normal.xyz * (normal.a), 1.0);
 
 
-	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	return texture(sampler2DArray(gBufferSurface.container), coord) ;
+
+
+//	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
+//	return texture(sampler2DArray(gBufferSurface.container), coord) ;
 
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
 	

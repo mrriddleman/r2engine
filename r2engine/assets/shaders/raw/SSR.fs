@@ -110,7 +110,7 @@ bool IsReflectedBackToCamera(vec3 reflection, vec3 fragToCamera, inout float att
     // since we are limited to pixels visible on screen. Attenuate reflections for angles between
     // 60 degrees and 75 degrees, and drop all contribution beyond the (-60,60)  degree range
 
-	attenuationFactor = 1.0f - smoothstep(0.25f, 0.5f, dot(fragToCamera, reflection));
+	attenuationFactor = 1.0f - smoothstep(0.0f, 0.95f, dot(fragToCamera, reflection));
 
 	return attenuationFactor <= 0;
 }
@@ -118,7 +118,7 @@ bool IsReflectedBackToCamera(vec3 reflection, vec3 fragToCamera, inout float att
 bool IsSamplingOutsideViewport(vec3 raySample, inout float attenuationFactor)
 {
 	// Any rays that march outside the screen viewport will not have any valid pixel information. These need to be dropped.
-	vec2 uvSamplingAttenuation = smoothstep(0.0f, 0.05f, raySample.xy) * (1 - smoothstep(0.95f, 1.0f, raySample.xy));
+	vec2 uvSamplingAttenuation = smoothstep(0.0f, 0.05f, raySample.xy) * (1.0f - smoothstep(0.95f, 1.0f, raySample.xy));
 	attenuationFactor = uvSamplingAttenuation.x * uvSamplingAttenuation.y;
 	return attenuationFactor <= 0;
 }
@@ -150,7 +150,7 @@ struct RayHit {
 };
 
 RayHit SSReflection(vec3 worldPosition, vec3 normal);
-bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 screenSpacePos, out RayHit rayHit);
+bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 screenSpacePos, inout RayHit rayHit);
 
 void main()
 {
@@ -186,7 +186,7 @@ RayHit SSReflection(vec3 worldPosition, vec3 normal)
 		return RayHit(0.0, vec3(0.0));
 	}
 
-	vec4 pointAlongReflectionVec = vec4(10.0f * reflectionVector + worldPosition, 1.0);
+	vec4 pointAlongReflectionVec = vec4(1.0f * reflectionVector + worldPosition, 1.0);
 	vec4 screenSpaceReflectionPoint = vpMatrix * pointAlongReflectionVec;
 	screenSpaceReflectionPoint /= screenSpaceReflectionPoint.w;
 	screenSpaceReflectionPoint.xyz = screenSpaceReflectionPoint.xyz * 0.5 + 0.5;
@@ -202,22 +202,23 @@ RayHit SSReflection(vec3 worldPosition, vec3 normal)
 	return rayHit;
 }
 
-bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 screenSpacePos, out RayHit rayHit)
+bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 screenSpacePos, inout RayHit rayHit)
 {
 	bool foundIntersection = false;
 	vec3 minRaySample = vec3(0.0);
 	vec3 maxRaySample = vec3(0.0);
 	
-	float viewportAttenuationFactor = 1.0;
+	float viewportAttenuationFactor = 0.0;
 	rayHit.attenuationFactor = 0.0;
 	float previousRaySampleZ = 0.0;
 
 	for(int rayStepIdx = 0; rayStepIdx < ssr_rayMarchIterations; rayStepIdx++)
 	{
-		vec3 offset = float(rayStepIdx) * ssr_maxRayMarchStep * screenSpaceReflectionVec;
+		vec3 offset = float(rayStepIdx) * ssr_maxRayMarchStep * screenSpaceReflectionVec;// + 0.001;
 		vec3 raySample = screenSpacePos + offset;
 
-		if(raySample.z >= 1.0 || IsSamplingOutsideViewport(raySample, viewportAttenuationFactor))
+		if(raySample.z >= 1.0 ||
+		 IsSamplingOutsideViewport(raySample, viewportAttenuationFactor))
 		{
 			return false;
 		}
@@ -226,9 +227,9 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 
 		maxRaySample = raySample;
 
-	//	float bias = rayStepIdx == 0 ?  0.001 : 0.0;
+		float bias = rayStepIdx == 0 ?  0.001 : 0.001;
 
-		if(raySample.z > zBufferVal)
+		if(raySample.z > zBufferVal + bias)
 		{
 			foundIntersection = true;
 			break;

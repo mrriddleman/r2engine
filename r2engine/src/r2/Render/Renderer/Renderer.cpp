@@ -6068,7 +6068,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SSR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, true, true, false);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)
