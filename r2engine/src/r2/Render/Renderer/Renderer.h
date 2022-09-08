@@ -237,6 +237,7 @@ namespace r2::draw
 		ConstantConfigHandle mMaterialOffsetsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mClusterVolumesConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mDispatchComputeConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mSSRConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -269,6 +270,9 @@ namespace r2::draw
 		ShaderHandle mMarkActiveClusterTilesComputeShader;
 		ShaderHandle mFindUniqueClustersComputeShader;
 		ShaderHandle mAssignLightsToClustersComputeShader;
+
+		ShaderHandle mSSRShader;
+		ShaderHandle mSSRConeTraceShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -303,6 +307,9 @@ namespace r2::draw
 		CommandBucket<key::Basic>* mFinalBucket = nullptr;
 		CommandBucket<key::Basic>* mClustersBucket = nullptr;
 
+		CommandBucket<key::Basic>* mSSRBucket = nullptr;
+		
+
 		r2::mem::StackArena* mCommandArena = nullptr;
 
 		CommandBucket<key::ShadowKey>* mShadowBucket = nullptr;
@@ -332,6 +339,15 @@ namespace r2::draw
 		//------------BEGIN Cluster data-----------
 		glm::uvec4 mClusterTileSizes;
 		//------------END Cluster data-------------
+
+		//------------BEGIN SSR data---------------
+
+		float mSSRMaxRayMarchStep = 0.04f;
+		float mSSRThickness = 0.0f;
+		int mSSRRayMarchIterations = 16;
+		int mSSRMaxBinarySearchSamples = 6;
+		bool mSSRNeedsUpdate = true;
+		//------------END SSR data-----------------
 
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG

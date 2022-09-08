@@ -44,6 +44,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
 	Tex2DAddress normalSurface;
 	Tex2DAddress specularSurface;
+	Tex2DAddress ssrSurface;
 };
 
 in VS_OUT
@@ -101,10 +102,10 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	//vec3 coord = vec3(uv.r, uv.g, normalSurface.page );
-	//vec2 normal = texture(sampler2DArray(normalSurface.container), coord).rg;
+	//vec3 coord = vec3(uv.r, uv.g, ssrSurface.page );
+	//vec4 normal = texture(sampler2DArray(ssrSurface.container), coord).rgba;
 
-	//return vec4(DecodeNormal(normal), 1);
+	//return vec4(normal);
 
 
 

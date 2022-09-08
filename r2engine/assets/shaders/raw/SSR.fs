@@ -228,7 +228,7 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 
 	//	float bias = rayStepIdx == 0 ?  0.001 : 0.0;
 
-		if(abs(raySample.z - zBufferVal) < ssr_ssThickness)
+		if(raySample.z > zBufferVal)
 		{
 			foundIntersection = true;
 			break;
