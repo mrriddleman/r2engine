@@ -183,10 +183,10 @@ namespace r2::draw
 			impl::SwapTexturesIfNecessary(rt);
 		}
 
-		void UpdateRenderTargetIfNecessary(RenderTarget& rt)
-		{
-			impl::UpdateRenderTargetIfNecessary(rt);
-		}
+		//void UpdateRenderTargetIfNecessary(RenderTarget& rt)
+		//{
+		//	impl::UpdateRenderTargetIfNecessary(rt);
+		//}
 
 		bool IsColorAttachment(TextureAttachmentType type)
 		{

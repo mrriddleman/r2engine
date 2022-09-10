@@ -149,7 +149,7 @@ namespace r2::draw
 
 		void SwapTexturesIfNecessary(RenderTarget& rt);
 
-		void UpdateRenderTargetIfNecessary(RenderTarget& rt);
+	//	void UpdateRenderTargetIfNecessary(RenderTarget& rt);
 
 		bool IsColorAttachment(TextureAttachmentType type);
 
@@ -166,7 +166,7 @@ namespace r2::draw
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
 			void SwapTexturesIfNecessary(RenderTarget& renderTarget);
-			void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget);
+		//	void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget);
 		}
 
 	}

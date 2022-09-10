@@ -541,7 +541,7 @@ namespace r2::draw::renderer
 
 	void SetupRenderTargetParams(Renderer& renderer);
 	void SwapRenderTargetsHistoryIfNecessary(Renderer& renderer);
-	void UpdateRenderTargetsIfNecessary(Renderer& renderer);
+	//void UpdateRenderTargetsIfNecessary(Renderer& renderer);
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface);
 
 
@@ -1178,7 +1178,7 @@ namespace r2::draw::renderer
 
 		UpdateJitter(renderer);
 
-		UpdateRenderTargetsIfNecessary(renderer);
+		//UpdateRenderTargetsIfNecessary(renderer);
 
 		
 		UpdateLighting(renderer);
@@ -4340,13 +4340,13 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void UpdateRenderTargetsIfNecessary(Renderer& renderer)
-	{
-		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
-		{
-			rt::UpdateRenderTargetIfNecessary(renderer.mRenderTargets[i]);
-		}
-	}
+	//void UpdateRenderTargetsIfNecessary(Renderer& renderer)
+	//{
+	//	for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+	//	{
+	//		rt::UpdateRenderTargetIfNecessary(renderer.mRenderTargets[i]);
+	//	}
+	//}
 
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix)
 	{
