@@ -153,19 +153,33 @@ namespace r2::draw::cmd
 	};
 	static_assert(std::is_pod<DrawDebugBatch>::value == true, "DrawDebugBatch must be a POD.");
 
-	struct SetRenderTarget
+	//Render target stuff
+
+	struct SetRenderTargetMipLevel
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
-		u32 framebufferID;
-		u32 width;
-		u32 height;
+		static constexpr u32 MAX_NUMBER_OF_TEXTURE_ATTACHMENTS = 4;
+
+		u32 frameBufferID;
+
+		s32 colorTextures[MAX_NUMBER_OF_TEXTURE_ATTACHMENTS];
+		u32 toColorMipLevels[MAX_NUMBER_OF_TEXTURE_ATTACHMENTS];
+		u32 colorTextureLayers[MAX_NUMBER_OF_TEXTURE_ATTACHMENTS];
+		u32 numColorTextures;
+		b32 colorUseLayeredRenderering;
+
+		s32 depthTexture;
+		u32 toDepthMipLevel;
+		u32 depthTextureLayer;
+		b32 depthUseLayeredRenderering;
+
 		u32 xOffset;
 		u32 yOffset;
-		u32 numColorAttachments;
-		u32 numDepthAttachments;
-		u32 depthTexture;
+		u32 width;
+		u32 height;
 	};
-	static_assert(std::is_pod<SetRenderTarget>::value == true, "SetRenderTarget must be a POD.");
+
+	static_assert(std::is_pod<SetRenderTargetMipLevel>::value == true, "SetRenderTarget must be a POD.");
 
 	//Compute stuff
 

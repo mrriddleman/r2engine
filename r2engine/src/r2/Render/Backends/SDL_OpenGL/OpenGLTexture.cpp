@@ -301,6 +301,7 @@ namespace r2::draw::tex
 	s32 FILTER_LINEAR_MIPMAP_NEAREST = GL_LINEAR_MIPMAP_NEAREST;
 	s32 FILTER_LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR;
 	u32 DEPTH_COMPONENT = GL_DEPTH_COMPONENT;
+	u32 COLOR_FORMAT_R8 = GL_R8;
 	
 	void GetOpenGLTextureFormatDataForTextureFormat(const flat::TextureFormat& textureFormat, TextureType type, GLenum& glFormat, GLenum& glInternalFormat, GLenum& imageFormatSize)
 	{
@@ -922,6 +923,24 @@ namespace r2::draw::tex
 	r2::asset::AssetHandle GetCubemapAssetHandle(const CubemapTexture& cubemap)
 	{
 		return cubemap.mips[0].sides[RIGHT].textureAssetHandle;
+	}
+
+	void TexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, int level, int xOffset, int yOffset, const tex::TextureFormat& textureFormat, const void* data)
+	{
+		GLenum format;
+		
+		if (textureFormat.internalformat == GL_R8)
+		{
+			format = GL_RED;
+		}
+		else
+		{
+			R2_CHECK(false, "unsupported format");
+		}
+
+		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+		
+		draw::gl::tex::TexSubImage2D(textureHandle, level, xOffset, yOffset, textureFormat.width, textureFormat.height, format, imageFormatSize, data);
 	}
 }
 

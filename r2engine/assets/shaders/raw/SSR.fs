@@ -2,10 +2,11 @@
 
 #extension GL_NV_gpu_shader5 : enable
 #define NUM_FRUSTUM_SPLITS 4
-
+#define GLOBAL_UP vec3(0, 0, 1)
 //https://sakibsaikia.github.io/graphics/2016/12/26/Screen-Space-Reflection-in-Killing-Floor-2.html
 
 layout(location = 0) out vec4 oRayHitInfo;
+
 
 
 struct Tex2DAddress
@@ -60,9 +61,15 @@ layout (std140, binding = 2) uniform Surfaces
 layout (std140, binding = 4) uniform SSRParams
 {
 	float ssr_maxRayMarchStep;
-	float ssr_ssThickness;
+	float ssr_zThickness;
 	int ssr_rayMarchIterations;
 	int ssr_maxBinarySearchSamples;
+	Tex2DAddress ssr_ditherTexture;
+	float ssr_ditherTilingFactor;
+	// float ssr_strideZCutoff;
+	// float ssr_stride;
+	// float ssr_maxDistance;
+
 };
 
 vec3 DecodeNormal(vec2 enc)
@@ -110,7 +117,7 @@ bool IsReflectedBackToCamera(vec3 reflection, vec3 fragToCamera, inout float att
     // since we are limited to pixels visible on screen. Attenuate reflections for angles between
     // 60 degrees and 75 degrees, and drop all contribution beyond the (-60,60)  degree range
 
-	attenuationFactor = 1.0f - smoothstep(0.0f, 0.95f, dot(fragToCamera, reflection));
+	attenuationFactor = 1.0f - smoothstep(0.05f, 0.95f, dot(fragToCamera, reflection));
 
 	return attenuationFactor <= 0;
 }
@@ -149,8 +156,60 @@ struct RayHit {
     vec3 ssHitPosition;
 };
 
+
 RayHit SSReflection(vec3 worldPosition, vec3 normal);
 bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 screenSpacePos, inout RayHit rayHit);
+
+
+// float DistSq(vec2 a, vec2 b)
+// {
+// 	a -= b;
+// 	return dot(a, a);
+// }
+
+// void swap(inout float a, inout float b)
+// {
+// 	float t = a;
+// 	a = b;
+// 	b = t;
+// }
+
+// float LinearizeDepth(float depth) 
+// {
+//     float z = depth * 2.0-1.0; // back to NDC 
+//     float near = exposureNearFar.y;
+//     float far = exposureNearFar.z;
+
+//     return (2.0 * near * far) / (far + near - z * (far - near));	
+// }
+
+// vec4 ViewToTextureSpace(vec3 viewSpaceVec)
+// {
+// 	vec4 clipSpaceVec = projection * vec4(viewSpaceVec, 1.0);
+// 	//clipSpaceVec.xyz /= clipSpaceVec.w;
+// 	clipSpaceVec.xy = clipSpaceVec.xy * 0.5 + 0.5;
+
+// 	return clipSpaceVec;
+// }
+
+// bool IntersectsDepthBuffer(float z, float minZ, float maxZ)
+// {
+// 	float depthScale = min(1.0f, z * ssr_strideZCutoff);
+// 	z += ssr_zThickness + mix(0.0f, 2.0f, depthScale);
+// 	return (maxZ >= z) && (minZ - ssr_zThickness <= z);
+// }
+
+// vec3 GetViewSpacePos(vec2 uv)
+// {
+// 	vec3 texCoord = vec3(uv.r, uv.g, zPrePassSurface.page);
+// 	float depth = texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
+
+// 	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+// 	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;
+// 	viewSpacePosition /= viewSpacePosition.w;
+
+// 	return viewSpacePosition.xyz;
+// }
 
 void main()
 {
@@ -178,8 +237,11 @@ RayHit SSReflection(vec3 worldPosition, vec3 normal)
 
 	vec4 screenSpacePos = vec4(pixelUV, fragDepth, 1.0);
 
+	
+
 	vec3 reflectionVector = reflect(cameraVec, normal);
 
+	
 	float attenuationFactor;
 	if(IsReflectedBackToCamera(reflectionVector, -cameraVec, attenuationFactor))
 	{
@@ -214,8 +276,9 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 
 	for(int rayStepIdx = 0; rayStepIdx < ssr_rayMarchIterations; rayStepIdx++)
 	{
-		vec3 offset = float(rayStepIdx) * ssr_maxRayMarchStep * screenSpaceReflectionVec;// + 0.001;
-		vec3 raySample = screenSpacePos + offset;
+		float ditherOffset = SampleTextureF(ssr_ditherTexture, fs_in.texCoords.xy * ssr_ditherTilingFactor, vec2(0)) * 0.01  + ssr_zThickness;
+		vec3 raySample = screenSpacePos + float(rayStepIdx) * ssr_maxRayMarchStep * screenSpaceReflectionVec ;
+		raySample += ditherOffset * screenSpaceReflectionVec;
 
 		if(raySample.z >= 1.0 ||
 		 IsSamplingOutsideViewport(raySample, viewportAttenuationFactor))
@@ -227,9 +290,9 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 
 		maxRaySample = raySample;
 
-		float bias = rayStepIdx == 0 ?  0.001 : 0.001;
+		float bias = ssr_zThickness*5;
 
-		if(raySample.z > zBufferVal + bias)
+		if(raySample.z > ( zBufferVal + bias))
 		{
 			foundIntersection = true;
 			break;
@@ -245,9 +308,10 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 		for(int i = 0; i < ssr_maxBinarySearchSamples; ++i)
 		{
 			midRaySample = mix(minRaySample, maxRaySample, 0.5);
+			
 			float zBufferVal = SampleTextureF(zPrePassSurface, midRaySample.xy, vec2(0));
 
-			if(midRaySample.z > zBufferVal)
+			if(midRaySample.z > zBufferVal )
 			{
 				maxRaySample = midRaySample;
 			}

@@ -28,8 +28,6 @@ namespace
 	SDL_Window* s_optrWindow = nullptr;
 	SDL_GLContext s_glContext;
 
-	constexpr u32 MAX_NUM_COLOR_ATTACHMENTS = 4;
-
 	struct ConstantBufferPostRenderUpdate
 	{
 		r2::draw::ConstantBufferHandle handle = 0;
@@ -927,27 +925,76 @@ namespace r2::draw::rendererimpl
 		}
 	}
 
-	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 numDepthAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, u32 depthTexture)
+	void SetRenderTargetMipLevel(
+		u32 fboHandle,
+		const s32 colorTextures[MAX_RENDER_TARGETS],
+		const u32 colorMipLevels[MAX_RENDER_TARGETS],
+		const u32 colorTextureLayers[MAX_RENDER_TARGETS],
+		u32 numColorTextures,
+		s32 depthTexture,
+		u32 depthMipLevel,
+		u32 depthTextureLayer,
+		u32 xOffset,
+		u32 yOffset,
+		u32 width,
+		u32 height,
+		b32 colorUseLayeredRenderering,
+		b32 depthUseLayeredRenderering)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
-		if (numColorAttachments > 0 && fboHandle != 0)
+		if (fboHandle != 0)
 		{
-			R2_CHECK(numColorAttachments <= MAX_NUM_COLOR_ATTACHMENTS, "Can't have more than %lu color buffers for now", MAX_NUM_COLOR_ATTACHMENTS);
+			bool checkStatus = false;
 
-			if (numColorAttachments > 1)
+			if (numColorTextures > 0)
 			{
-				int k = 0;
+				R2_CHECK(numColorTextures <= MAX_RENDER_TARGETS, "Can't have more than %lu color buffers for now", MAX_RENDER_TARGETS);
+
+				GLenum bufs[MAX_RENDER_TARGETS];
+
+				for (u32 i = 0; i < numColorTextures; ++i)
+				{
+					bufs[i] = GL_COLOR_ATTACHMENT0 + i;
+					if (!colorUseLayeredRenderering)
+					{
+						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, colorTextures[i], colorMipLevels[i], colorTextureLayers[i]);
+					}
+					else
+					{
+						glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, colorTextures[i], colorMipLevels[i]);
+					}
+				}
+				checkStatus = true;
+				glDrawBuffers(numColorTextures, &bufs[0]);
+
 			}
 
-			GLenum bufs[MAX_NUM_COLOR_ATTACHMENTS];
-
-			for (u64 i = 0; i < numColorAttachments; ++i)
+			if (depthTexture != -1)
 			{
-				bufs[i] = GL_COLOR_ATTACHMENT0 + i;
+				if (!depthUseLayeredRenderering)
+				{
+					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, depthMipLevel, depthTextureLayer);
+				}
+				else
+				{
+					glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, depthMipLevel);
+				}
+
+				checkStatus = true;
+				if (numColorTextures == 0)
+				{
+					glDrawBuffer(GL_NONE);
+					glReadBuffer(GL_NONE);
+				}
 			}
 
-			glDrawBuffers(numColorAttachments, &bufs[0]);
+			if (checkStatus)
+			{
+				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+				R2_CHECK(result, "Failed to attach texture to frame buffer");
+			}
 		}
 
 		glViewport(xOffset, yOffset, width, height);

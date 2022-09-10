@@ -686,7 +686,7 @@ namespace r2::draw::tex::impl
 			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
 		}
 
-		return maxTextureArrayLevels/8; //should be 256 on dev system
+		return maxTextureArrayLevels/16; //should be 128 on dev system
 	}
 
 	u32 GetNumberOfMipMaps(const TextureHandle& texture)

@@ -17,7 +17,10 @@ namespace r2::draw::rt
 
 		b32 uploadAllTextures = false;
 		b32 needsFramebufferUpdate = false;
-		
+		u32 mipLevelAttached = 0;
+		b32 useLayeredRenderering = false;
+
+		u32 colorAttachmentNumber = 0;
 	};
 
 	struct RenderBufferAttachment
@@ -108,6 +111,12 @@ namespace r2::draw
 		static u64 RenderTarget::MemorySize(const rt::RenderTargetParams& params, u64 alignmnet, u32 headerSize, u32 boundsChecking);
 	};
 
+	namespace cmd
+	{
+		struct SetRenderTargetMipLevel;
+		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd);
+	}
+
 	namespace rt
 	{
 
@@ -124,7 +133,10 @@ namespace r2::draw
 
 		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
 
-		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+		void AddTextureAttachment(RenderTarget& rt,
+			TextureAttachmentType type,
+			bool swapping, bool uploadAllTextures,
+			s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
 
 		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
 
@@ -146,7 +158,7 @@ namespace r2::draw
 		//private
 		namespace impl
 		{
-			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
 			void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
 			float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 			void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages);

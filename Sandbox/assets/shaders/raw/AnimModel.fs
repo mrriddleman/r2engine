@@ -458,7 +458,7 @@ void main()
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
-	NormalColor = EncodeNormal(norm);
+	NormalColor = EncodeNormal(normalize(norm));
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 }
@@ -1310,7 +1310,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 
 	vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0));
 
-	vec3 projectionPos = projectionPosInCSMSplitSpace.xyz;
+	vec3 projectionPos = projectionPosInCSMSplitSpace.xyz / projectionPosInCSMSplitSpace.w;
 
 	uint layer = NUM_FRUSTUM_SPLITS - 1;
 
@@ -1335,7 +1335,8 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 
 	vec3 samplePos = fragPosWorldSpace + offset;
 
-	vec3 shadowPosition = (gShadowMatrix[lightIndex] * vec4(samplePos, 1.0)).xyz;
+	vec4 tempShadowPos = gShadowMatrix[lightIndex] * vec4(samplePos, 1.0);
+	vec3 shadowPosition = (tempShadowPos.xyz/tempShadowPos.w);
 
 	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, VoL, softShadows);
 

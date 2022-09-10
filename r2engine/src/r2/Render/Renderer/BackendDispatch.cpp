@@ -70,14 +70,6 @@ namespace r2::draw::dispatch
 		rendererimpl::DrawDebugCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands, realData->startCommandIndex);
 	}
 
-	void SetRenderTarget(const void* data)
-	{
-		const cmd::SetRenderTarget* realData = static_cast<const cmd::SetRenderTarget*>(data);
-		R2_CHECK(realData != nullptr, "We don't have any real data?");
-
-		rendererimpl::SetRenderTarget(realData->framebufferID, realData->numColorAttachments, realData->numDepthAttachments, realData->xOffset, realData->yOffset, realData->width, realData->height, realData->depthTexture);
-	}
-
 	void DispatchComputeIndirect(const void* data)
 	{
 		const cmd::DispatchComputeIndirect* realData = static_cast<const r2::draw::cmd::DispatchComputeIndirect*>(data);
@@ -108,5 +100,27 @@ namespace r2::draw::dispatch
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
 		rendererimpl::ConstantUint(realData->uniformLocation, realData->value);
+	}
+
+	void SetRenderTargetMipLevel(const void* data)
+	{
+		const cmd::SetRenderTargetMipLevel* realData = static_cast<const r2::draw::cmd::SetRenderTargetMipLevel*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::SetRenderTargetMipLevel(
+			realData->frameBufferID,
+			realData->colorTextures,
+			realData->toColorMipLevels,
+			realData->colorTextureLayers,
+			realData->numColorTextures,
+			realData->depthTexture,
+			realData->toDepthMipLevel,
+			realData->depthTextureLayer,
+			realData->xOffset,
+			realData->yOffset,
+			realData->width,
+			realData->height,
+			realData->colorUseLayeredRenderering,
+			realData->depthUseLayeredRenderering);
 	}
 }

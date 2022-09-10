@@ -19,6 +19,7 @@ namespace r2::draw::tex
 	extern s32 FILTER_NEAREST_MIPMAP_NEAREST;
 	extern s32 FILTER_LINEAR_MIPMAP_NEAREST;
 	extern s32 FILTER_LINEAR_MIPMAP_LINEAR;
+	extern u32 COLOR_FORMAT_R8;
 
 	struct TextureContainer;
 
@@ -141,6 +142,7 @@ namespace r2::draw::tex
 
 	const s32 GetMaxTextureSize();
 
+	void TexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, int level, int xOffset, int yOffset, const tex::TextureFormat& textureFormat, const void* data);
 
 	const char* GetTextureTypeName(TextureType type);
 

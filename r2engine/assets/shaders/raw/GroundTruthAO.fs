@@ -79,7 +79,7 @@ vec3 GetViewSpacePos(vec2 uv)
 	float depth = texture(sampler2DArray(zPrePassShadowSurface[0].container), texCoord).r;
 	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
 
-	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth, 1.0);
+	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
 	vec4 viewSpacePosition = invProjection * clipSpacePosition;
 	viewSpacePosition /= viewSpacePosition.w;
 

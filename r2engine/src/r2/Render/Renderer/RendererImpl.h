@@ -7,6 +7,9 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Commands.h"
 
+
+#define MAX_RENDER_TARGETS r2::draw::cmd::SetRenderTargetMipLevel::MAX_NUMBER_OF_TEXTURE_ATTACHMENTS
+
 namespace r2
 {
 	struct Camera;
@@ -90,12 +93,27 @@ namespace r2::draw::rendererimpl
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0);
 	void ApplyDrawState(const cmd::DrawState& state);
-	void SetRenderTarget(u32 fboHandle, u32 numColorAttachments, u32 numDepthAttachments, u32 xOffset, u32 yOffset, u32 width, u32 height, u32 depthTexture);
 	void DispatchComputeIndirect(ConstantBufferHandle dispatchBufferHandle, u32 offset);
 	void DispatchCompute(u32 numGroupX, u32 numGroupY, u32 numGroupZ);
 	void Barrier(u32 flags);
 	void ConstantUint(u32 uniformLocation, u32 value);
-
+	
+	void SetRenderTargetMipLevel(
+		u32 fboHandle,
+		const s32 colorTextures[MAX_RENDER_TARGETS],
+		const u32 colorMipLevels[MAX_RENDER_TARGETS],
+		const u32 colorTextureLayers[MAX_RENDER_TARGETS],
+		u32 numColorTextures,
+		s32 depthTexture,
+		u32 depthMipLevel,
+		u32 depthTextureLayer,
+		u32 xOffset,
+		u32 yOffset,
+		u32 width,
+		u32 height,
+		b32 colorUseLayeredRenderering,
+		b32 depthUseLayeredRenderering);
+	
 	//events
 	void SetWindowSize(u32 width, u32 height);
 	void SetWindowPosition(s32 xPos, s32 yPos);

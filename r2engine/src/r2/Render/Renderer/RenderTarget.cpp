@@ -1,5 +1,6 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/RenderTarget.h"
+#include "r2/Render/Renderer/Commands.h"
 
 namespace r2::draw
 {
@@ -14,6 +15,101 @@ namespace r2::draw
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachmentReference>::MemorySize(params.numAttachmentRefs), alignmnet, headerSize, boundsChecking);
 	}
 
+
+	namespace cmd
+	{
+		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd)
+		{
+			memset(&cmd, 0, sizeof(SetRenderTargetMipLevel));
+
+			cmd.frameBufferID = rt.frameBufferID;
+			cmd.xOffset = rt.xOffset;
+			cmd.yOffset = rt.yOffset;
+			cmd.colorUseLayeredRenderering = false;
+
+			float scale = glm::pow(2.0f, float(mipLevel));
+			cmd.width = static_cast<u32>(float(rt.width) / scale);
+			cmd.height = static_cast<u32>(float(rt.height) / scale);
+
+			cmd.numColorTextures = 0;
+
+			if (rt.colorAttachments != nullptr)
+			{
+				cmd.numColorTextures = rt.numFrameBufferColorAttachments;
+
+				const auto numColorAttachments = r2::sarr::Size(*rt.colorAttachments);
+				
+				for (u32 i = 0; i < numColorAttachments; ++i)
+				{
+					const auto& colorAttachment = r2::sarr::At(*rt.colorAttachments, i);
+
+					cmd.colorTextures[colorAttachment.colorAttachmentNumber] = colorAttachment.texture[colorAttachment.currentTexture].container->texId;
+					cmd.colorTextureLayers[colorAttachment.colorAttachmentNumber] = colorAttachment.texture[colorAttachment.currentTexture].sliceIndex;
+					cmd.toColorMipLevels[colorAttachment.colorAttachmentNumber] = mipLevel;
+
+					//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+					if (colorAttachment.useLayeredRenderering)
+					{
+						cmd.colorUseLayeredRenderering = true;
+					}
+				}
+			}
+			
+			if (rt.depthAttachments != nullptr)
+			{
+				const auto numDepthAttachments = r2::sarr::Size(*rt.depthAttachments);
+				R2_CHECK(numDepthAttachments == 1, "Should only have 1 here!");
+
+				const auto& depthAttachment = r2::sarr::At(*rt.depthAttachments, 0);
+
+				cmd.depthTexture = depthAttachment.texture[depthAttachment.currentTexture].container->texId;
+				cmd.depthTextureLayer = depthAttachment.texture[depthAttachment.currentTexture].sliceIndex;
+				cmd.toDepthMipLevel = mipLevel;
+
+				//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+				if (depthAttachment.useLayeredRenderering)
+				{
+					cmd.depthUseLayeredRenderering = true;
+				}
+			}
+
+			if (rt.attachmentReferences != nullptr)
+			{
+				const auto numReferences = r2::sarr::Size(*rt.attachmentReferences);
+
+				for (u32 i = 0; i < numReferences; ++i)
+				{
+					const auto& ref = r2::sarr::At(*rt.attachmentReferences, i);
+
+					if (IsColorAttachment(ref.type))
+					{
+						cmd.colorTextures[ref.colorAttachmentNumber] = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
+						cmd.colorTextureLayers[ref.colorAttachmentNumber] = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
+						cmd.toColorMipLevels[ref.colorAttachmentNumber] = mipLevel;
+
+						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.colorUseLayeredRenderering = true;
+						}
+					}
+					else
+					{
+						cmd.depthTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
+						cmd.depthTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
+						cmd.toDepthMipLevel = mipLevel;
+
+						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.depthUseLayeredRenderering = true;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	namespace rt
 	{
 		bool IsPageAllocationEqual(const RenderTargetPageAllocation& page1, const RenderTargetPageAllocation& page2)
@@ -23,12 +119,12 @@ namespace r2::draw
 
 		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering)
 		{
-			impl::AddTextureAttachment(rt, type, false, false, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
+			impl::AddTextureAttachment(rt, type, false, false, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering, 0);
 		}
 
-		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering)
+		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach)
 		{
-			impl::AddTextureAttachment(rt, type, swapping, uploadAllTextures, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering);
+			impl::AddTextureAttachment(rt, type, swapping, uploadAllTextures, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering, mipLevelToAttach);
 		}
 
 		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)

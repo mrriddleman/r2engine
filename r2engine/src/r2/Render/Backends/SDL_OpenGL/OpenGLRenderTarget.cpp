@@ -18,7 +18,7 @@ namespace r2::draw::rt
 namespace r2::draw::rt::impl
 {
 
-	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRenderering)
+	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRenderering, u32 mipLevelToAttach)
 	{
 		R2_CHECK(layers > 0, "We need at least 1 layer");
 
@@ -28,6 +28,8 @@ namespace r2::draw::rt::impl
 		format.width = rt.width;
 		format.height = rt.height;
 		format.mipLevels = mipLevels;
+		textureAttachment.mipLevelAttached = mipLevelToAttach;
+		textureAttachment.useLayeredRenderering = useLayeredRenderering;
 
 		if (type == COLOR)
 		{
@@ -116,13 +118,14 @@ namespace r2::draw::rt::impl
 		{
 			if (!useLayeredRenderering)
 			{
-				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach, textureAttachment.texture[currentIndex].sliceIndex);
 			}
 			else
 			{
-				glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, 0);
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach);
 			}
 
+			textureAttachment.colorAttachmentNumber = rt.numFrameBufferColorAttachments;
 			rt.numFrameBufferColorAttachments++;
 		}
 		else if (IsDepthAttachment(type))
@@ -130,12 +133,12 @@ namespace r2::draw::rt::impl
 			
 			if (!useLayeredRenderering)
 			{
-				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach, textureAttachment.texture[currentIndex].sliceIndex);
 			}
 			else
 			{
 				//Have to do layered rendering with this
-				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, 0);
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach);
 			}
 
 			glDrawBuffer(GL_NONE);
@@ -183,7 +186,7 @@ namespace r2::draw::rt::impl
 				r2::sarr::Push(*rt.attachmentReferences, ref);
 			}
 
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[index].container->texId, 0, textureAttachment.texture[index].sliceIndex);
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachment.texture[index].container->texId, textureAttachment.mipLevelAttached, textureAttachment.texture[index].sliceIndex);
 			
 			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
@@ -201,7 +204,7 @@ namespace r2::draw::rt::impl
 				r2::sarr::Push(*rt.attachmentReferences, ref);
 			}
 
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[index].container->texId, 0, textureAttachment.texture[index].sliceIndex);
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + rt.numFrameBufferColorAttachments, textureAttachment.texture[index].container->texId, textureAttachment.mipLevelAttached, textureAttachment.texture[index].sliceIndex);
 
 			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
@@ -408,11 +411,11 @@ namespace r2::draw::rt::impl
 				{
 					if (attachment.numLayers == 1)
 					{
-						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, 0, attachment.texture[currentIndex].sliceIndex);
+						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, attachment.mipLevelAttached, attachment.texture[currentIndex].sliceIndex);
 					}
 					else
 					{
-						glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[attachment.currentTexture].container->texId, 0);
+						glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached);
 					}
 					auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
@@ -438,12 +441,12 @@ namespace r2::draw::rt::impl
 				{
 					if (attachment.numLayers == 1)
 					{
-						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, 0, attachment.texture[attachment.currentTexture].sliceIndex);
+						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached, attachment.texture[attachment.currentTexture].sliceIndex);
 					}
 					else
 					{
 						//Have to do layered rendering with this
-						glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, 0);
+						glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached);
 					}
 
 					glDrawBuffer(GL_NONE);
@@ -477,7 +480,7 @@ namespace r2::draw::rt::impl
 						 const auto currentTexture = attachmentReference.attachmentPtr->currentTexture;
 						 const auto* textureAttachmentPtr = attachmentReference.attachmentPtr;
 
-						 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachmentPtr->texture[currentTexture].container->texId, 0, textureAttachmentPtr->texture[currentTexture].sliceIndex);
+						 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachmentPtr->texture[currentTexture].container->texId, textureAttachmentPtr->mipLevelAttached, textureAttachmentPtr->texture[currentTexture].sliceIndex);
 
 						 auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
@@ -491,7 +494,7 @@ namespace r2::draw::rt::impl
 						 const auto currentTexture = attachmentReference.attachmentPtr->currentTexture;
 						 const auto* textureAttachmentPtr = attachmentReference.attachmentPtr;
 
-						 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentReference.colorAttachmentNumber, textureAttachmentPtr->texture[currentTexture].container->texId, 0, textureAttachmentPtr->texture[currentTexture].sliceIndex);
+						 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentReference.colorAttachmentNumber, textureAttachmentPtr->texture[currentTexture].container->texId, textureAttachmentPtr->mipLevelAttached, textureAttachmentPtr->texture[currentTexture].sliceIndex);
 					 
 						 auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 

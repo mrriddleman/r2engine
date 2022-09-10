@@ -1408,6 +1408,8 @@ namespace r2::draw::renderer
 
 		r2::mem::utils::MemBoundary materialSystemBoundary = renderer->mMaterialSystem->mMaterialMemBoundary;
 		
+		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
+
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
 		r2::draw::matsys::ShutdownMaterialSystems();
@@ -1518,7 +1520,12 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "ssr_maxRayMarchStep"},
 			{r2::draw::ShaderDataType::Float, "ssr_ssThickness"},
 			{r2::draw::ShaderDataType::Int, "ssr_rayMarchIterations"},
-			{r2::draw::ShaderDataType::Int, "ssr_maxBinarySearchSamples"}
+			{r2::draw::ShaderDataType::Int, "ssr_maxBinarySearchSamples"},
+			{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
+			{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
+			//{r2::draw::ShaderDataType::Float, "ssr_strideZCutoff"},
+			//{r2::draw::ShaderDataType::Float, "ssr_stride"},
+			//{r2::draw::ShaderDataType::Float, "ssr_maxDistance"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -4072,9 +4079,6 @@ namespace r2::draw::renderer
 	template <class T>
 	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena)
 	{
-
-		//@TODO(Serge): implement the new changes for swapping render targets
-
 		RenderPass* renderPass = GetRenderPass(renderer, renderPassType);
 
 		R2_CHECK(renderPass != nullptr, "This should never be null");
@@ -4083,7 +4087,7 @@ namespace r2::draw::renderer
 
 		RenderTarget* renderTarget = GetRenderTarget(renderer, renderPass->renderOutputTargetHandle );
 
-		cmd::SetRenderTarget* setRenderTargetCMD = nullptr;
+		cmd::SetRenderTargetMipLevel* setRenderTargetCMD = nullptr;
 		cmd::Clear* clearCMD = nullptr;
 		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
 		cmd::FillConstantBuffer* prevCommand = nullptr;
@@ -4100,67 +4104,53 @@ namespace r2::draw::renderer
 
 		if (renderTarget)
 		{
-			setRenderTargetCMD = AddCommand<T, cmd::SetRenderTarget, mem::StackArena>(arena, commandBucket, key, 0);
+			setRenderTargetCMD = AddCommand<T, cmd::SetRenderTargetMipLevel, mem::StackArena>(arena, commandBucket, key, 0);
 
-			setRenderTargetCMD->framebufferID = renderTarget->frameBufferID;
+			cmd::FillSetRenderTargetMipLevelCommand(*renderTarget, 0, *setRenderTargetCMD);
 
-			setRenderTargetCMD->numColorAttachments = 0;
-			setRenderTargetCMD->numDepthAttachments = 0;
-
-			
 			bool uploadAllTextures = false;
 			u32 numOutputTextures = 1;
 			u32 currentTexture = 0;
 
 			if (renderTarget->colorAttachments)
 			{
-				setRenderTargetCMD->numColorAttachments = renderTarget->numFrameBufferColorAttachments;//static_cast<u32>(r2::sarr::Size(*renderTarget->colorAttachments));
-				
-				if (setRenderTargetCMD->numColorAttachments > 0)
+				if (setRenderTargetCMD->numColorTextures > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->colorAttachments, 0);
 					uploadAllTextures = textureAttachment.uploadAllTextures;
-					
-					numOutputTextures = 1;
-					if (textureAttachment.uploadAllTextures)
+
+					if (uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
-					
+
 					currentTexture = textureAttachment.currentTexture;
 				}
-				
 			}
+
 			if (renderTarget->depthAttachments)
 			{
-				setRenderTargetCMD->numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
-				
-				if (setRenderTargetCMD->numDepthAttachments > 0)
+				const auto numDepthAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthAttachments));
+
+				R2_CHECK(numDepthAttachments == 1, "should only have 1?");
+
+				if (numDepthAttachments > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthAttachments, 0);
 					uploadAllTextures = textureAttachment.uploadAllTextures;
 					numOutputTextures = 1;
+
 					if (textureAttachment.uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
 					currentTexture = textureAttachment.currentTexture;
 				}
-
-				//@NOTE(Serge): only using the first one right now...
-				setRenderTargetCMD->depthTexture = r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture].container->texId;
-
-				
 			}
-
-			setRenderTargetCMD->xOffset = renderTarget->xOffset;
-			setRenderTargetCMD->yOffset = renderTarget->yOffset;
-			setRenderTargetCMD->width = renderTarget->width;
-			setRenderTargetCMD->height = renderTarget->height;
 
 			if (clearOptions.shouldClear)
 			{
-				clearCMD = AppendCommand<cmd::SetRenderTarget, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
+				clearCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
 				clearCMD->flags = clearOptions.flags;
 			}
 
@@ -4172,7 +4162,7 @@ namespace r2::draw::renderer
 				}
 				else if(prevCommand == nullptr && setRenderTargetCMD != nullptr)
 				{
-					fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+					fillSurfaceCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
 				}
 				else
 				{
@@ -4317,7 +4307,7 @@ namespace r2::draw::renderer
 						}
 						else
 						{
-							fillSurfaceCMD = AppendCommand<cmd::SetRenderTarget, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+							fillSurfaceCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
 						}
 					}
 					else
@@ -4890,6 +4880,23 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 1, &renderer.mSSRThickness);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 2, &renderer.mSSRRayMarchIterations);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRMaxBinarySearchSamples);
+
+			if (renderer.mSSRDitherTexture.container == nullptr)
+			{
+				tex::TextureFormat textureFormat;
+				textureFormat.width = 4;
+				textureFormat.height = 4;
+				textureFormat.mipLevels = 1;
+				textureFormat.internalformat = tex::COLOR_FORMAT_R8;
+
+				renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1);
+				u8 textureData[] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
+
+				tex::TexSubImage2D(renderer.mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
+			}
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 4, &tex::GetTextureAddress(renderer.mSSRDitherTexture));
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
 		}
 	}
 
@@ -6032,7 +6039,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false, 0);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -6059,7 +6066,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false, 0);
 	}
 
 	void CreateSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -6068,7 +6075,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SSR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, true, true, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, true, true, false, 0);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)
