@@ -77,6 +77,7 @@ namespace r2::draw
     enum DrawLayer : u8
     {
         DL_CLEAR = 0,
+        DL_COMPUTE, //should be second to last (or last maybe?)
         DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
         DL_EFFECT,
@@ -84,7 +85,7 @@ namespace r2::draw
         DL_HUD,
         DL_SCREEN,
 
-        DL_COMPUTE, //should be second to last (or last maybe?)
+       
         DL_DEBUG //should always be last
     };
 

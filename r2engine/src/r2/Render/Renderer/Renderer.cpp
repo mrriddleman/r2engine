@@ -4839,6 +4839,9 @@ namespace r2::draw::renderer
 		key::Basic dispatchFindUniqueClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 1, renderer.mFindUniqueClustersComputeShader, 1);
 		key::Basic dispatchAssignLightsToClustersKey = key::GenerateBasicKey(0, 0, DL_COMPUTE, 0, 2, renderer.mAssignLightsToClustersComputeShader, 2);
 
+		R2_CHECK(dispatchMarkActiveClustersKey.keyValue < dispatchFindUniqueClustersKey.keyValue&&
+			dispatchFindUniqueClustersKey.keyValue < dispatchAssignLightsToClustersKey.keyValue, "These should be properly ordered!");
+
 		cmd::DispatchCompute* markActiveClusters = AddCommand<key::Basic, cmd::DispatchCompute, mem::StackArena>(*renderer.mCommandArena, *renderer.mClustersBucket, dispatchMarkActiveClustersKey, 0);
 		markActiveClusters->numGroupsX = renderer.mResolutionSize.width / 20;
 		markActiveClusters->numGroupsY = renderer.mResolutionSize.height / 20;
