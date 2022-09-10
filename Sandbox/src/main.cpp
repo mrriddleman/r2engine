@@ -726,7 +726,7 @@ public:
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(-20.0f, 10.0f, 100.0f, 0.0f));
 			dirLight.lightProperties.intensity = 4;
-            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
+            dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
             r2::draw::renderer::AddDirectionLight(dirLight);
 
@@ -769,7 +769,7 @@ public:
 			}*/
 
 
-		/*	for (int i = 0; i < 40; ++i)
+			/*for (int i = 0; i < 50; ++i)
 			{
 				r2::draw::PointLight pointLight;
 
