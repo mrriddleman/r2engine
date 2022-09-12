@@ -7,6 +7,7 @@
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Render/Backends/SDL_OpenGL/OpenGLTextureSystem.h"
+#include "r2/Render/Renderer/RenderTarget.h"
 #include "stb_image.h"
 #include "glad/glad.h"
 //#include "SDL_image.h"
@@ -941,6 +942,21 @@ namespace r2::draw::tex
 		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
 		
 		draw::gl::tex::TexSubImage2D(textureHandle, level, xOffset, yOffset, textureFormat.width, textureFormat.height, format, imageFormatSize, data);
+	}
+
+	void CopyRenderTargetColorTextureToTexture(
+		const r2::draw::RenderTarget& rt,
+		u32 colorAttachment,
+		const r2::draw::tex::TextureHandle& textureHandle,
+		s32 mipLevel,
+		s32 xOffset,
+		s32 yOffset,
+		s32 zOffset,
+		s32 x, s32 y,
+		u32 width, u32 height)
+	{
+		glNamedFramebufferReadBuffer(rt.frameBufferID, GL_COLOR_ATTACHMENT0 + colorAttachment);
+		glCopyTextureSubImage3D(textureHandle.container->texId, mipLevel, xOffset, yOffset, zOffset, x, y, width, height);
 	}
 }
 

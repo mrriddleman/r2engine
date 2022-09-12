@@ -181,6 +181,24 @@ namespace r2::draw::cmd
 
 	static_assert(std::is_pod<SetRenderTargetMipLevel>::value == true, "SetRenderTarget must be a POD.");
 
+	struct CopyRenderTargetColorTexture
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		u32 frameBufferID;
+		u32 attachment;
+
+		u32 toTextureID;
+		u32 mipLevel;
+		s32 xOffset;
+		s32 yOffset;
+		s32 layer;
+
+		s32 x, y;
+		u32 width, height;
+	};
+
+	static_assert(std::is_pod<CopyRenderTargetColorTexture>::value == true, "SetRenderTarget must be a POD.");
+
 	//Compute stuff
 
 	struct DispatchSubCommand
@@ -229,6 +247,9 @@ namespace r2::draw::cmd
 	};
 
 	static_assert(std::is_pod<ConstantUint>::value == true, "ConstantUint must be a POD.");
+
+
+
 
 
 	u64 LargestCommand();

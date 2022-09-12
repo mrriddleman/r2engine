@@ -86,6 +86,9 @@ namespace r2::draw::key
 		u32 shaderID = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_MATERIAL_ID, Basic::KEY_MATERIAL_ID_OFFSET);
 		u32 pass = DECODE_KEY_VALUE(key.keyValue, Basic::KEY_BITS_PASS, Basic::KEY_PASS_OFFSET);
 
+		if (shaderID == 0)
+			return;
+
 	//	printf("DecodeBasicKey - shaderID: %zu, depth: %zu\n", shaderID, depth);
 
 
@@ -98,9 +101,12 @@ namespace r2::draw::key
 
 		//@TODO(Serge): hmm not sure if this should be here or be in this form
 		r2::draw::rendererimpl::SetViewportKey(viewport);
+		
 		r2::draw::rendererimpl::SetViewportLayer(viewportLayer);
 
 		r2::draw::rendererimpl::SetShaderID(shaderID);
+		
+		
 		//r2::draw::rendererimpl::SetMaterialID(materialHandle);
 	}
 

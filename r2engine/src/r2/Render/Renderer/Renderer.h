@@ -274,6 +274,9 @@ namespace r2::draw
 		ShaderHandle mSSRShader;
 		ShaderHandle mSSRConeTraceShader;
 
+		ShaderHandle mVerticalBlurShader;
+		ShaderHandle mHorizontalBlurShader;
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 

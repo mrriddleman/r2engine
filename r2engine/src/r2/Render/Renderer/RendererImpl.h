@@ -113,6 +113,8 @@ namespace r2::draw::rendererimpl
 		u32 height,
 		b32 colorUseLayeredRenderering,
 		b32 depthUseLayeredRenderering);
+
+	void CopyRenderTargetColorTexture(u32 fboHandle, u32 attachmentIndex, u32 textureID, u32 mipLevel, s32 xOffset, s32 yOffset, s32 layer, s32 x, s32 y, u32 width, u32 height);
 	
 	//events
 	void SetWindowSize(u32 width, u32 height);

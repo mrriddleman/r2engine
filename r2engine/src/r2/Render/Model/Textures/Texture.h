@@ -4,6 +4,11 @@
 #include "r2/Core/Assets/AssetTypes.h"
 #include <glm/vec4.hpp>
 
+namespace r2::draw
+{
+	struct RenderTarget;
+}
+
 namespace r2::draw::tex
 {
 
@@ -143,6 +148,16 @@ namespace r2::draw::tex
 	const s32 GetMaxTextureSize();
 
 	void TexSubImage2D(const r2::draw::tex::TextureHandle& textureHandle, int level, int xOffset, int yOffset, const tex::TextureFormat& textureFormat, const void* data);
+	void CopyRenderTargetColorTextureToTexture(
+		const r2::draw::RenderTarget& rt,
+		u32 colorAttachment,
+		const r2::draw::tex::TextureHandle& textureHandle,
+		s32 mipLevel,
+		s32 xOffset,
+		s32 yOffset,
+		s32 zOffset,
+		s32 x, s32 y,
+		u32 width, u32 height);
 
 	const char* GetTextureTypeName(TextureType type);
 
@@ -155,8 +170,6 @@ namespace r2::draw::tex
 		
 		u64 MemorySize(u32 maxNumTextureContainers, u32 maxTextureContainersPerFormat, u32 maxTextureLayers, u64 alignment, u32 headerSize, u32 boundsChecking);
 		u32 GetMaxTextureLayers(bool sparse);
-
-
 	}
 }
 

@@ -21,6 +21,8 @@ namespace r2::draw::dispatch
 	void Barrier(const void* data);
 	void ConstantUint(const void* data);
 	void SetRenderTargetMipLevel(const void* data);
+	void CopyRenderTargetColorTexture(const void* data);
+
 }
 
 

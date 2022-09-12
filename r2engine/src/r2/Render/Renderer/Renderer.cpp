@@ -974,6 +974,12 @@ namespace r2::draw::renderer
 		newRenderer->mSSRShader = shadersystem::FindShaderHandle(STRING_ID("SSR"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSSRShader, "SSR");
 
+		newRenderer->mVerticalBlurShader = shadersystem::FindShaderHandle(STRING_ID("VerticalBlur"));
+		CheckIfValidShader(*newRenderer, newRenderer->mVerticalBlurShader, "VerticalBlur");
+
+		newRenderer->mHorizontalBlurShader = shadersystem::FindShaderHandle(STRING_ID("HorizontalBlur"));
+		CheckIfValidShader(*newRenderer, newRenderer->mHorizontalBlurShader, "HorizontalBlur");
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -3881,6 +3887,27 @@ namespace r2::draw::renderer
 			//@TODO(Serge): add commands to different buckets
 		}
 
+
+		
+
+		key::Basic copyGBufferKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 0, 0, 0);
+
+		cmd::CopyRenderTargetColorTexture* copyGBufferCMD = AddCommand<key::Basic, cmd::CopyRenderTargetColorTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, copyGBufferKey, 0);
+
+		const auto gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER].colorAttachments, 0);
+
+		copyGBufferCMD->frameBufferID = renderer.mRenderTargets[RTS_GBUFFER].frameBufferID;
+		copyGBufferCMD->attachment = 0;
+		copyGBufferCMD->toTextureID = gbufferColorAttachment.texture[0].container->texId;
+		copyGBufferCMD->xOffset = 0;
+		copyGBufferCMD->yOffset = 0;
+		copyGBufferCMD->layer = gbufferColorAttachment.texture[0].sliceIndex;
+		copyGBufferCMD->mipLevel = 0;
+		copyGBufferCMD->x = 0;
+		copyGBufferCMD->y = 0;
+		copyGBufferCMD->width = renderer.mRenderTargets[RTS_GBUFFER].width;
+		copyGBufferCMD->height = renderer.mRenderTargets[RTS_GBUFFER].height;
+
 		EndRenderPass(renderer, RPT_ZPREPASS, *renderer.mDepthPrePassBucket);
 		EndRenderPass(renderer, RPT_SHADOWS, *renderer.mShadowBucket);
 		EndRenderPass(renderer, RPT_POINTLIGHT_SHADOWS, *renderer.mShadowBucket);
@@ -4022,7 +4049,7 @@ namespace r2::draw::renderer
 			return nullptr;
 		}
 
-		if (surface == NUM_RENDER_TARGET_SURFACES)
+		if (surface >= NUM_RENDER_TARGET_SURFACES)
 		{
 			R2_CHECK(false, "We should have a render target surface passed in!");
 			return nullptr;
@@ -4058,7 +4085,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS }, RTS_SSR, __FILE__, __LINE__, "");
 		
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS, RTS_SPECULAR, RTS_NORMAL, RTS_SSR }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS, RTS_SPECULAR, RTS_NORMAL, RTS_SSR, RTS_CONVOLVED_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5971,11 +5998,15 @@ namespace r2::draw::renderer
 			renderer.mRenderTargets[RTS_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 			renderer.mRenderTargets[RTS_NORMAL] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_NORMAL], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 			renderer.mRenderTargets[RTS_SPECULAR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SPECULAR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+			
+			renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
 			
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
+
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
@@ -6086,6 +6117,7 @@ namespace r2::draw::renderer
 		ClearAllShadowMapPages(renderer);
 
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SPECULAR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_NORMAL]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_GBUFFER]);
@@ -6223,6 +6255,16 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_SSR].numSurfacesPerTarget = 1;
 
 		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SSR].numSurfacesPerTarget;
+
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numColorAttachments = 1;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numDepthAttachments = 0;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numRenderBufferAttachments = 0;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].maxPageAllocations = 0;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numAttachmentRefs = 0;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].surfaceOffset = surfaceOffset;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

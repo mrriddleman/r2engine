@@ -12,6 +12,7 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Render/Renderer/Commands.h"
 
@@ -991,13 +992,21 @@ namespace r2::draw::rendererimpl
 
 			if (checkStatus)
 			{
-				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-				R2_CHECK(result, "Failed to attach texture to frame buffer");
+				//SO SLOW!!
+#ifdef R2_DEBUG
+			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+			R2_CHECK(result, "Failed to attach texture to frame buffer");
+#endif
 			}
 		}
 
 		glViewport(xOffset, yOffset, width, height);
+	}
+
+	void CopyRenderTargetColorTexture(u32 fboHandle, u32 attachmentIndex, u32 textureID, u32 mipLevel, s32 xOffset, s32 yOffset, s32 layer, s32 x, s32 y, u32 width, u32 height)
+	{
+		glNamedFramebufferReadBuffer(fboHandle, GL_COLOR_ATTACHMENT0 + attachmentIndex);
+		glCopyTextureSubImage3D(textureID, mipLevel, xOffset, yOffset, layer, x, y, width, height);
 	}
 
 	//events

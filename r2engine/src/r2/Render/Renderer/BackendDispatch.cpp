@@ -123,4 +123,21 @@ namespace r2::draw::dispatch
 			realData->colorUseLayeredRenderering,
 			realData->depthUseLayeredRenderering);
 	}
+
+	void CopyRenderTargetColorTexture(const void* data)
+	{
+		const cmd::CopyRenderTargetColorTexture* realData = static_cast<const r2::draw::cmd::CopyRenderTargetColorTexture*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::CopyRenderTargetColorTexture(
+			realData->frameBufferID,
+			realData->attachment,
+			realData->toTextureID,
+			realData->mipLevel,
+			realData->xOffset,
+			realData->yOffset,
+			realData->layer,
+			realData->x, realData->y,
+			realData->width, realData->height);
+	}
 }
