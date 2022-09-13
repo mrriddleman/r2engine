@@ -1009,6 +1009,12 @@ namespace r2::draw::rendererimpl
 		glCopyTextureSubImage3D(textureID, mipLevel, xOffset, yOffset, layer, x, y, width, height);
 	}
 
+	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage)
+	{
+		glUniform1i64ARB(textureContainerUniformLocation, textureContainer);
+		glUniform1f(texturePageUniformLocation, texturePage);
+	}
+
 	//events
 	void SetViewport(u32 xOffset, u32 yOffset, u32 width, u32 height)
 	{

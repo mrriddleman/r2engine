@@ -4,14 +4,8 @@
 
 layout(location = 0) out vec4 oBlurColor;
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-uniform Tex2DAddress textureToBlur;
+uniform uint64_t textureContainerToBlur;
+uniform float texturePage;
 
 //vertical offsets
 const ivec2 offsets[7] = {{0, -3}, {0, -2}, {0, -1}, {0, 0}, {0, 1}, {0, 2}, {0, 3}};
@@ -27,12 +21,12 @@ in VS_OUT
 
 void main()
 {
-	vec3 uvPage = vec3(fs_in.texCoords.xy, textureToBlur.page);
+	vec3 uvPage = vec3(fs_in.texCoords.xy, texturePage);
 
 	vec4 color = vec4(0);
 	for(uint i = 0; i < 7; ++i)
 	{
-		color += textureOffset(sampler2DArray(textureToBlur.container), uvPage, offsets[i]) * weights[i];
+		color += textureOffset(sampler2DArray(textureContainerToBlur), uvPage, offsets[i]) * weights[i];
 	}
 
 	oBlurColor = vec4(color.rgb, 1.0);

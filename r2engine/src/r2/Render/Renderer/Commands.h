@@ -179,7 +179,7 @@ namespace r2::draw::cmd
 		u32 height;
 	};
 
-	static_assert(std::is_pod<SetRenderTargetMipLevel>::value == true, "SetRenderTarget must be a POD.");
+	static_assert(std::is_pod<SetRenderTargetMipLevel>::value == true, "SetRenderTargetMipLevel must be a POD.");
 
 	struct CopyRenderTargetColorTexture
 	{
@@ -197,7 +197,7 @@ namespace r2::draw::cmd
 		u32 width, height;
 	};
 
-	static_assert(std::is_pod<CopyRenderTargetColorTexture>::value == true, "SetRenderTarget must be a POD.");
+	static_assert(std::is_pod<CopyRenderTargetColorTexture>::value == true, "CopyRenderTargetColorTexture must be a POD.");
 
 	//Compute stuff
 
@@ -248,9 +248,18 @@ namespace r2::draw::cmd
 
 	static_assert(std::is_pod<ConstantUint>::value == true, "ConstantUint must be a POD.");
 
+	struct SetTexture
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+		
+		u32 textureContainerUniformLocation;
+		u32 texturePageUniformLocation;
 
+		u64 textureContainer;
+		float texturePage;
+	};
 
-
+	static_assert(std::is_pod<SetTexture>::value == true, "BlurTexture must be a POD.");
 
 	u64 LargestCommand();
 }

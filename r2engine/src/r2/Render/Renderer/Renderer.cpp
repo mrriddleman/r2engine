@@ -1004,8 +1004,11 @@ namespace r2::draw::renderer
 		newRenderer->mStaticPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[0], "pointLightBatch");
 		newRenderer->mDynamicPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[1], "pointLightBatch");
 
-		
-		
+		newRenderer->mVerticalBlurTextureContainer = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "textureContainerToBlur");
+		newRenderer->mVerticalBlurTexturePage = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "texturePage");
+
+		newRenderer->mHorizontalBlurTextureContainer = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureContainerToBlur");
+		newRenderer->mHorizontalBlurTexturePage = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
 
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG

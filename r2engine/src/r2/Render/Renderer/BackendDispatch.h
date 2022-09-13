@@ -22,7 +22,7 @@ namespace r2::draw::dispatch
 	void ConstantUint(const void* data);
 	void SetRenderTargetMipLevel(const void* data);
 	void CopyRenderTargetColorTexture(const void* data);
-
+	void SetTexture(const void* data);
 }
 
 
