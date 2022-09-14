@@ -105,6 +105,8 @@ namespace r2::draw::rt::impl
 		u32 numTextures = swapping ? MAX_TEXTURE_ATTACHMENT_HISTORY : 1;
 		textureAttachment.numTextures = numTextures;
 		textureAttachment.uploadAllTextures = uploadAllTextures;
+		textureAttachment.format = format;
+
 
 		for (u32 index = 0; index < numTextures; ++index)
 		{

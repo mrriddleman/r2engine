@@ -1,5 +1,9 @@
 #include "r2pch.h"
 #include "r2/Render/Model/Textures/Texture.h"
+#include "r2/Utils/Utils.h"
+
+#include "glm/glm.hpp"
+
 
 namespace r2::draw::tex
 {
@@ -71,5 +75,23 @@ namespace r2::draw::tex
 	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2)
 	{
 		return t1.textureAssetHandle.assetCache == t2.textureAssetHandle.assetCache && t1.textureAssetHandle.handle == t2.textureAssetHandle.handle;
+	}
+
+	u32 MaxMipsForSparseTextureSize(const r2::draw::tex::TextureHandle& textureHandle)
+	{
+		R2_CHECK(textureHandle.container->isSparse, "Must be sparse for this to work!");
+
+		u32 numMips = 0;
+		u32 minDimension = glm::min(textureHandle.container->format.width, textureHandle.container->format.height);
+		u32 minTileDimension = glm::min(textureHandle.container->xTileSize, textureHandle.container->yTileSize);
+
+		while (minDimension > minTileDimension)
+		{
+			numMips++;
+			
+			minDimension /= 2;
+		} 
+
+		return numMips;
 	}
 }

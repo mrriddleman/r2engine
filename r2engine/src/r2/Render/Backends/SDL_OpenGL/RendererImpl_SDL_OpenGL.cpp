@@ -948,6 +948,11 @@ namespace r2::draw::rendererimpl
 		{
 			bool checkStatus = false;
 
+			if (fboHandle == 11)
+			{
+				int k = 0;
+			}
+
 			if (numColorTextures > 0)
 			{
 				R2_CHECK(numColorTextures <= MAX_RENDER_TARGETS, "Can't have more than %lu color buffers for now", MAX_RENDER_TARGETS);
@@ -1009,10 +1014,11 @@ namespace r2::draw::rendererimpl
 		glCopyTextureSubImage3D(textureID, mipLevel, xOffset, yOffset, layer, x, y, width, height);
 	}
 
-	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage)
+	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage, u32 textureLodUniformLocation, float textureLod)
 	{
-		glUniform1i64ARB(textureContainerUniformLocation, textureContainer);
+		glUniform1ui64ARB(textureContainerUniformLocation, textureContainer);
 		glUniform1f(texturePageUniformLocation, texturePage);
+		glUniform1f(textureLodUniformLocation, textureLod);
 	}
 
 	//events

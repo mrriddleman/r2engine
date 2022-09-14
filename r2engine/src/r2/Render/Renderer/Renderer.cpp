@@ -1004,11 +1004,13 @@ namespace r2::draw::renderer
 		newRenderer->mStaticPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[0], "pointLightBatch");
 		newRenderer->mDynamicPointLightBatchUniformLocation = rendererimpl::GetConstantLocation(newRenderer->mPointLightShadowShaders[1], "pointLightBatch");
 
-		newRenderer->mVerticalBlurTextureContainer = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "textureContainerToBlur");
-		newRenderer->mVerticalBlurTexturePage = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "texturePage");
+		newRenderer->mVerticalBlurTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "textureContainerToBlur");
+		newRenderer->mVerticalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "texturePage");
+		newRenderer->mVerticalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mVerticalBlurShader, "textureLod");
 
-		newRenderer->mHorizontalBlurTextureContainer = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureContainerToBlur");
-		newRenderer->mHorizontalBlurTexturePage = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
+		newRenderer->mHorizontalBlurTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureContainerToBlur");
+		newRenderer->mHorizontalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
+		newRenderer->mHorizontalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureLod");
 
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -3897,19 +3899,95 @@ namespace r2::draw::renderer
 
 		cmd::CopyRenderTargetColorTexture* copyGBufferCMD = AddCommand<key::Basic, cmd::CopyRenderTargetColorTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, copyGBufferKey, 0);
 
-		const auto gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER].colorAttachments, 0);
+		const auto gbufferConvolvedColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER].colorAttachments, 0);
 
 		copyGBufferCMD->frameBufferID = renderer.mRenderTargets[RTS_GBUFFER].frameBufferID;
 		copyGBufferCMD->attachment = 0;
-		copyGBufferCMD->toTextureID = gbufferColorAttachment.texture[0].container->texId;
+		copyGBufferCMD->toTextureID = gbufferConvolvedColorAttachment.texture[gbufferConvolvedColorAttachment.currentTexture].container->texId;
 		copyGBufferCMD->xOffset = 0;
 		copyGBufferCMD->yOffset = 0;
-		copyGBufferCMD->layer = gbufferColorAttachment.texture[0].sliceIndex;
+		copyGBufferCMD->layer = gbufferConvolvedColorAttachment.texture[gbufferConvolvedColorAttachment.currentTexture].sliceIndex;
 		copyGBufferCMD->mipLevel = 0;
 		copyGBufferCMD->x = 0;
 		copyGBufferCMD->y = 0;
 		copyGBufferCMD->width = renderer.mRenderTargets[RTS_GBUFFER].width;
 		copyGBufferCMD->height = renderer.mRenderTargets[RTS_GBUFFER].height;
+
+		//previous texture
+		const auto previousTexture = (gbufferConvolvedColorAttachment.currentTexture + 1) % gbufferConvolvedColorAttachment.numTextures;//@NOTE only works for 2 textures atm
+
+
+//		renderer.mRenderTargets[RTS_GBUFFER]
+
+
+		const auto gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
+
+		//DO THE MIP VERTICAL BLUR HERE 
+		for (u32 mipLevel = 1; mipLevel < gbufferConvolvedColorAttachment.format.mipLevels; ++mipLevel)
+		{
+			key::Basic mipKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 0, renderer.mVerticalBlurShader, mipLevel);
+
+			cmd::SetRenderTargetMipLevel* setRenderTargetMip = AddCommand<key::Basic, cmd::SetRenderTargetMipLevel, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, mipKey, 0);
+
+			cmd::FillSetRenderTargetMipLevelCommandWithTextureIndex(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], mipLevel, previousTexture, *setRenderTargetMip);
+
+			cmd::SetTexture* setColorBufferTexture = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, setRenderTargetMip, 0);
+
+			setColorBufferTexture->textureContainerUniformLocation = renderer.mVerticalBlurTextureContainerLocation;
+			setColorBufferTexture->textureContainer = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture].container->handle;
+			setColorBufferTexture->texturePageUniformLocation = renderer.mVerticalBlurTexturePageLocation;
+			setColorBufferTexture->texturePage = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture].sliceIndex;
+			setColorBufferTexture->textureLodUniformLocation = renderer.mVerticalBlurTextureLodLocation;
+			setColorBufferTexture->textureLod = 0.0f;
+
+			cmd::DrawBatch* drawMipBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setColorBufferTexture, 0);
+			drawMipBatch->batchHandle = subCommandsConstantBufferHandle;
+			drawMipBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+			drawMipBatch->numSubCommands = finalBatchOffsets.numSubCommands;
+			R2_CHECK(drawMipBatch->numSubCommands > 0, "We should have a count!");
+			drawMipBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
+			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
+			drawMipBatch->subCommands = nullptr;
+			drawMipBatch->state.depthEnabled = false;
+			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
+			drawMipBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawMipBatch->state.polygonOffsetEnabled = false;
+			drawMipBatch->state.polygonOffset = glm::vec2(0);
+		}
+
+		//DO THE MIP HORIZONTAL BLUR HERE 
+		for (u32 mipLevel = 1; mipLevel < gbufferConvolvedColorAttachment.format.mipLevels; ++mipLevel)
+		{
+			key::Basic mipKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 1, renderer.mHorizontalBlurShader, mipLevel);
+
+			cmd::SetRenderTargetMipLevel* setRenderTargetMip = AddCommand<key::Basic, cmd::SetRenderTargetMipLevel, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, mipKey, 0);
+
+			cmd::FillSetRenderTargetMipLevelCommandWithTextureIndex(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], mipLevel, gbufferConvolvedColorAttachment.currentTexture, *setRenderTargetMip);
+
+			cmd::SetTexture* setColorBufferTexture = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, setRenderTargetMip, 0);
+
+			setColorBufferTexture->textureContainerUniformLocation = renderer.mVerticalBlurTextureContainerLocation;
+			setColorBufferTexture->textureContainer = gbufferConvolvedColorAttachment.texture[previousTexture].container->handle;
+			setColorBufferTexture->texturePageUniformLocation = renderer.mVerticalBlurTexturePageLocation;
+			setColorBufferTexture->texturePage = gbufferConvolvedColorAttachment.texture[previousTexture].sliceIndex;
+			setColorBufferTexture->textureLodUniformLocation = renderer.mVerticalBlurTextureLodLocation;
+			setColorBufferTexture->textureLod = static_cast<float>(mipLevel);
+
+			cmd::DrawBatch* drawMipBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setColorBufferTexture, 0);
+			drawMipBatch->batchHandle = subCommandsConstantBufferHandle;
+			drawMipBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+			drawMipBatch->numSubCommands = finalBatchOffsets.numSubCommands;
+			R2_CHECK(drawMipBatch->numSubCommands > 0, "We should have a count!");
+			drawMipBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
+			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
+			drawMipBatch->subCommands = nullptr;
+			drawMipBatch->state.depthEnabled = false;
+			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
+			drawMipBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawMipBatch->state.polygonOffsetEnabled = false;
+			drawMipBatch->state.polygonOffset = glm::vec2(0);
+		}
+	
 
 		EndRenderPass(renderer, RPT_ZPREPASS, *renderer.mDepthPrePassBucket);
 		EndRenderPass(renderer, RPT_SHADOWS, *renderer.mShadowBucket);
@@ -6008,7 +6086,10 @@ namespace r2::draw::renderer
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
 			
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
+			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
+			const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
+
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, tex::MaxMipsForSparseTextureSize(gbufferTexture), false, true, false, 0 );
 
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
@@ -6265,7 +6346,7 @@ namespace r2::draw::renderer
 		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].maxPageAllocations = 0;
 		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numAttachmentRefs = 0;
 		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget = 1;
+		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget;
 	}

@@ -286,10 +286,12 @@ namespace r2::draw
 		s32 mStaticPointLightBatchUniformLocation;
 		s32 mDynamicPointLightBatchUniformLocation;
 
-		s32 mVerticalBlurTextureContainer;
-		s32 mVerticalBlurTexturePage;
-		s32 mHorizontalBlurTextureContainer;
-		s32 mHorizontalBlurTexturePage;
+		s32 mVerticalBlurTextureContainerLocation;
+		s32 mVerticalBlurTexturePageLocation;
+		s32 mVerticalBlurTextureLodLocation;
+		s32 mHorizontalBlurTextureContainerLocation;
+		s32 mHorizontalBlurTexturePageLocation;
+		s32 mHorizontalBlurTextureLodLocation;
 
 		//----------------------------------------------------------------
 		r2::mem::StackArena* mModelRefArena = nullptr;

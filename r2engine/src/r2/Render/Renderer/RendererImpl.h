@@ -116,7 +116,7 @@ namespace r2::draw::rendererimpl
 
 	void CopyRenderTargetColorTexture(u32 fboHandle, u32 attachmentIndex, u32 textureID, u32 mipLevel, s32 xOffset, s32 yOffset, s32 layer, s32 x, s32 y, u32 width, u32 height);
 	
-	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage);
+	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage, u32 textureLodUniformLocation, float textureLod);
 
 	//events
 	void SetWindowSize(u32 width, u32 height);

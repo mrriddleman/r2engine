@@ -108,6 +108,101 @@ namespace r2::draw
 				}
 			}
 		}
+
+		void FillSetRenderTargetMipLevelCommandWithTextureIndex(const RenderTarget& rt, u32 mipLevel, u32 textureIndex, SetRenderTargetMipLevel& cmd)
+		{
+			memset(&cmd, 0, sizeof(SetRenderTargetMipLevel));
+
+			cmd.frameBufferID = rt.frameBufferID;
+			cmd.xOffset = rt.xOffset;
+			cmd.yOffset = rt.yOffset;
+			cmd.colorUseLayeredRenderering = false;
+
+			float scale = glm::pow(2.0f, float(mipLevel));
+			cmd.width = static_cast<u32>(float(rt.width) / scale);
+			cmd.height = static_cast<u32>(float(rt.height) / scale);
+
+			cmd.numColorTextures = 0;
+
+			if (rt.colorAttachments != nullptr)
+			{
+				cmd.numColorTextures = rt.numFrameBufferColorAttachments;
+
+				const auto numColorAttachments = r2::sarr::Size(*rt.colorAttachments);
+
+				R2_CHECK(numColorAttachments == 1, "Should be 1");
+
+				for (u32 i = 0; i < numColorAttachments; ++i)
+				{
+					const auto& colorAttachment = r2::sarr::At(*rt.colorAttachments, i);
+
+					cmd.colorTextures[i] = colorAttachment.texture[textureIndex].container->texId;
+					cmd.colorTextureLayers[i] = colorAttachment.texture[textureIndex].sliceIndex;
+					cmd.toColorMipLevels[i] = mipLevel;
+
+					//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+					if (colorAttachment.useLayeredRenderering)
+					{
+						cmd.colorUseLayeredRenderering = true;
+					}
+				}
+			}
+
+			if (rt.depthAttachments != nullptr)
+			{
+				const auto numDepthAttachments = r2::sarr::Size(*rt.depthAttachments);
+				R2_CHECK(numDepthAttachments == 1, "Should only have 1 here!");
+
+				const auto& depthAttachment = r2::sarr::At(*rt.depthAttachments, 0);
+
+				cmd.depthTexture = depthAttachment.texture[textureIndex].container->texId;
+				cmd.depthTextureLayer = depthAttachment.texture[textureIndex].sliceIndex;
+				cmd.toDepthMipLevel = mipLevel;
+
+				//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+				if (depthAttachment.useLayeredRenderering)
+				{
+					cmd.depthUseLayeredRenderering = true;
+				}
+			}
+
+			if (rt.attachmentReferences != nullptr)
+			{
+				const auto numReferences = r2::sarr::Size(*rt.attachmentReferences);
+
+				R2_CHECK(numReferences == 1, "Should be 1");
+
+				for (u32 i = 0; i < numReferences; ++i)
+				{
+					const auto& ref = r2::sarr::At(*rt.attachmentReferences, i);
+
+					if (IsColorAttachment(ref.type))
+					{
+						cmd.colorTextures[textureIndex] = ref.attachmentPtr->texture[textureIndex].container->texId;
+						cmd.colorTextureLayers[textureIndex] = ref.attachmentPtr->texture[textureIndex].sliceIndex;
+						cmd.toColorMipLevels[textureIndex] = mipLevel;
+
+						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.colorUseLayeredRenderering = true;
+						}
+					}
+					else
+					{
+						cmd.depthTexture = ref.attachmentPtr->texture[textureIndex].container->texId;
+						cmd.depthTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
+						cmd.toDepthMipLevel = mipLevel;
+
+						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.depthUseLayeredRenderering = true;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	namespace rt

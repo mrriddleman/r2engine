@@ -4,10 +4,9 @@
 
 layout(location = 0) out vec4 oBlurColor;
 
-
-
 uniform uint64_t textureContainerToBlur;
 uniform float texturePage;
+uniform float textureLod;
 
 //horizontal offsets
 const ivec2 offsets[7] = {{-3, 0}, {-2, 0}, {-1, 0}, {0, 0}, {1, 0}, {2, 0}, {3, 0}};
@@ -28,7 +27,7 @@ vec3 uvPage = vec3(fs_in.texCoords.xy, texturePage);
 	vec4 color = vec4(0);
 	for(uint i = 0; i < 7; ++i)
 	{
-		color += textureOffset(sampler2DArray(textureContainerToBlur), uvPage, offsets[i]) * weights[i];
+		color += textureLodOffset(sampler2DArray(textureContainerToBlur), uvPage, textureLod, offsets[i]) * weights[i];
 	}
 
 	oBlurColor = vec4(color.rgb, 1.0);

@@ -146,6 +146,6 @@ namespace r2::draw::dispatch
 		const cmd::SetTexture* realData = static_cast<const r2::draw::cmd::SetTexture*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
-		rendererimpl::SetTexture(realData->textureContainerUniformLocation, realData->textureContainer, realData->texturePageUniformLocation, realData->texturePage);
+		rendererimpl::SetTexture(realData->textureContainerUniformLocation, realData->textureContainer, realData->texturePageUniformLocation, realData->texturePage, realData->textureLodUniformLocation, realData->textureLod);
 	}
 }

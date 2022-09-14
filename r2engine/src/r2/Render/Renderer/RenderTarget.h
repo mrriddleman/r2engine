@@ -21,6 +21,8 @@ namespace r2::draw::rt
 		b32 useLayeredRenderering = false;
 
 		u32 colorAttachmentNumber = 0;
+
+		tex::TextureFormat format;
 	};
 
 	struct RenderBufferAttachment
@@ -116,6 +118,7 @@ namespace r2::draw
 	{
 		struct SetRenderTargetMipLevel;
 		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd);
+		void FillSetRenderTargetMipLevelCommandWithTextureIndex(const RenderTarget& rt, u32 mipLevel, u32 textureIndex, SetRenderTargetMipLevel& cmd);
 	}
 
 	namespace rt

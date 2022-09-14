@@ -254,9 +254,10 @@ namespace r2::draw::cmd
 		
 		u32 textureContainerUniformLocation;
 		u32 texturePageUniformLocation;
-
+		u32 textureLodUniformLocation;
 		u64 textureContainer;
 		float texturePage;
+		float textureLod;
 	};
 
 	static_assert(std::is_pod<SetTexture>::value == true, "BlurTexture must be a POD.");
