@@ -1,6 +1,14 @@
 {
   manifests: [
     {
+      shaderName: 17476040281227112815,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ConeTracedSSR.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\ConeTracedSSR.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 849706416261927096,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\Debug.fs",

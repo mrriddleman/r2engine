@@ -66,6 +66,8 @@ layout (std140, binding = 4) uniform SSRParams
 	int ssr_maxBinarySearchSamples;
 	Tex2DAddress ssr_ditherTexture;
 	float ssr_ditherTilingFactor;
+	int ssr_roughnessMips;
+	int ssr_coneTracingSteps;
 	// float ssr_strideZCutoff;
 	// float ssr_stride;
 	// float ssr_maxDistance;

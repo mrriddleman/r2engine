@@ -358,6 +358,9 @@ namespace r2::draw
 		int mSSRMaxBinarySearchSamples = 10;
 		tex::TextureHandle mSSRDitherTexture;
 		float mSSRDitherTilingFactor = 1.0f;
+		s32 mSSRRoughnessMips = 0;
+		s32 mSSRConeTracingSteps = 7;
+
 		//float mSSRStrideZCutoff = 50.0f;
 		//float mSSRStride = 2.0f;
 		//float mSSRMaxDistance = 15.0f;

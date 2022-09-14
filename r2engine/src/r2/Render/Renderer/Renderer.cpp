@@ -1534,9 +1534,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Int, "ssr_maxBinarySearchSamples"},
 			{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
 			{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
-			//{r2::draw::ShaderDataType::Float, "ssr_strideZCutoff"},
-			//{r2::draw::ShaderDataType::Float, "ssr_stride"},
-			//{r2::draw::ShaderDataType::Float, "ssr_maxDistance"}
+			{r2::draw::ShaderDataType::Int, "ssr_roughnessMips"},
+			{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -5008,6 +5007,8 @@ namespace r2::draw::renderer
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 4, &tex::GetTextureAddress(renderer.mSSRDitherTexture));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 6, &renderer.mSSRRoughnessMips);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 7, &renderer.mSSRConeTracingSteps);
 		}
 	}
 
@@ -6089,7 +6090,10 @@ namespace r2::draw::renderer
 			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
 			const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, tex::MaxMipsForSparseTextureSize(gbufferTexture), false, true, false, 0 );
+			renderer.mSSRRoughnessMips = tex::MaxMipsForSparseTextureSize(gbufferTexture);
+			renderer.mSSRNeedsUpdate = true;
+
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, renderer.mSSRRoughnessMips, false, true, false, 0 );
 
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
