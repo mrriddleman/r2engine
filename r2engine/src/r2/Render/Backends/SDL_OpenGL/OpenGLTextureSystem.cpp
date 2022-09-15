@@ -394,7 +394,7 @@ namespace r2::draw::gl
 
 	namespace texsys
 	{
-		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
+		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxSlicesIfTextureIsNotCreated)
 		{
 			if (s_glTextureSystem == nullptr)
 			{
@@ -402,7 +402,7 @@ namespace r2::draw::gl
 				return;
 			}
 
-			AllocGLTexture(handle, format, numPages);
+			AllocGLTexture(handle, format, numPages, useMaxSlicesIfTextureIsNotCreated);
 
 			tex::Commit(handle);
 		}
@@ -437,7 +437,7 @@ namespace r2::draw::gl
 		}
 
 		//private
-		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices)
+		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices, bool useMaxSlicesIfTextureIsNotCreated)
 		{
 			if (s_glTextureSystem == nullptr)
 			{
@@ -461,9 +461,6 @@ namespace r2::draw::gl
 
 			const u64 arraySize = r2::sarr::Size(*arrayToUse);
 
-
-			//making new texture container with format : 35907, width : 2048, height : 2048, num mips : 1, is cubemap : 0, anisotropic : 0, numSlices : 2048
-
 			for (u64 i = 0; i < arraySize; ++i)
 			{
 				r2::draw::tex::TextureContainer* container = r2::sarr::At(*arrayToUse, i);
@@ -484,9 +481,15 @@ namespace r2::draw::gl
 					maxSlices /= (r2::draw::tex::NUM_SIDES);
 				}
 
-				u32 numSlicesToAllocate = maxSlices;
+				u32 numSlicesToAllocate = slices;
 
-				printf("making new texture container with format: %lu, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu, numSlices: %lu\n", format.internalformat, format.width, format.height, format.mipLevels, format.isCubemap, format.anisotropy, numSlicesToAllocate);
+				if (useMaxSlicesIfTextureIsNotCreated)
+				{
+					numSlicesToAllocate = maxSlices;
+				}
+				
+
+			//	printf("making new texture container with format: %lu, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu, numSlices: %lu\n", format.internalformat, format.width, format.height, format.mipLevels, format.isCubemap, format.anisotropy, numSlicesToAllocate);
 
 				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlicesToAllocate, format);
 				r2::sarr::Push(*arrayToUse, containerToUse);
@@ -498,7 +501,7 @@ namespace r2::draw::gl
 		}
 
 
-		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages)
+		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxSlicesIfTextureIsNotCreated)
 		{
 			/*if (s_glTextureSystem == nullptr)
 			{
@@ -546,7 +549,7 @@ namespace r2::draw::gl
 				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format);
 				r2::sarr::Push(*arrayToUse, containerToUse);
 			}*/
-			r2::draw::tex::TextureContainer* containerToUse = MakeGLTextureIfNeeded(format, numPages);
+			r2::draw::tex::TextureContainer* containerToUse = MakeGLTextureIfNeeded(format, numPages, useMaxSlicesIfTextureIsNotCreated);
 
 			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse, numPages);
 			handle.container = containerToUse;

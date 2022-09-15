@@ -107,10 +107,17 @@ namespace r2::draw::rt::impl
 		textureAttachment.uploadAllTextures = uploadAllTextures;
 		textureAttachment.format = format;
 
+		bool useMaxPages = true;
+
+		if (format.mipLevels > 1)
+		{
+			useMaxPages = false;
+		}
+
 
 		for (u32 index = 0; index < numTextures; ++index)
 		{
-			textureAttachment.texture[index] = tex::CreateTexture(format, layers);
+			textureAttachment.texture[index] = tex::CreateTexture(format, layers, useMaxPages);
 		}
 
 		u32 currentIndex = textureAttachment.currentTexture;

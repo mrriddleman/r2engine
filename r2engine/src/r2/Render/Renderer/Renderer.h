@@ -403,7 +403,7 @@ namespace r2::draw::renderer
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);
-	u64 MemorySize(u64 materialSystemMemorySize);
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize);
 
 	
 	//events

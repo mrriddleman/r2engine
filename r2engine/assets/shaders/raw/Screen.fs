@@ -103,10 +103,10 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-//	vec3 coord = vec3(uv.r, uv.g, convolvedGBUfferSurface[0].page );
-//	vec4 normal = textureLod(sampler2DArray(convolvedGBUfferSurface[0].container), coord, 0.0).rgba;
+	// vec3 coord = vec3(uv.r, uv.g, convolvedGBUfferSurface[0].page );
+	// vec4 normal = textureLod(sampler2DArray(convolvedGBUfferSurface[0].container), coord, 0.0).rgba;
 
-//	return vec4(normal.xyz , 1.0);
+	// return vec4(normal.xyz , 1.0);
 
 
 

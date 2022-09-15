@@ -107,14 +107,14 @@ namespace r2::draw::gl
 
 	namespace texsys
 	{
-		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages);
+		void MakeNewGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxSlicesIfTextureIsNotCreated);
 		void FreeGLTexture(r2::draw::tex::TextureHandle& handle);
 		void AddTexturePages(r2::draw::tex::TextureHandle& handle, u32 numPages);
 
 
 		//private
-		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices);
-		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages);
+		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices, bool useMaxSlicesIfTextureIsNotCreated);
+		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxSlicesIfTextureIsNotCreated);
 		
 	}
 }

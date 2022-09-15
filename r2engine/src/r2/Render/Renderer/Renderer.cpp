@@ -539,7 +539,7 @@ namespace r2::draw::renderer
 	template <typename T>
 	void EndRenderPass(Renderer& renderer, RenderPassType renderPass, r2::draw::CommandBucket<T>& commandBucket);
 
-	void SetupRenderTargetParams(Renderer& renderer);
+	void SetupRenderTargetParams(rt::RenderTargetParams renderTargetParams[NUM_RENDER_TARGET_SURFACES]);
 	void SwapRenderTargetsHistoryIfNecessary(Renderer& renderer);
 	//void UpdateRenderTargetsIfNecessary(Renderer& renderer);
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface);
@@ -567,6 +567,7 @@ namespace r2::draw::renderer
 	void CreateAmbientOcclusionTemporalDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateConeTracedSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -731,10 +732,25 @@ namespace r2::draw::renderer
 			texturePacksManifest->texturePacks()->size(),
 			texturePacksManifest->maxTexturesInAPack());*/
 
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+
+		rt::RenderTargetParams renderTargetParams[NUM_RENDER_TARGET_SURFACES];
+		SetupRenderTargetParams(renderTargetParams);
+
+		u64 renderTargetArenaSize = 0;
+
+		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		{
+			renderTargetArenaSize += RenderTarget::MemorySize(renderTargetParams[i], ALIGNMENT, stackHeaderSize, boundsChecking);
+		}
 
 		u64 materialMemorySystemSize = mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
 
-		u64 subAreaSize = MemorySize(materialMemorySystemSize);
+		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize);
 
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
@@ -974,6 +990,9 @@ namespace r2::draw::renderer
 		newRenderer->mSSRShader = shadersystem::FindShaderHandle(STRING_ID("SSR"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSSRShader, "SSR");
 
+		newRenderer->mSSRConeTraceShader = shadersystem::FindShaderHandle(STRING_ID("ConeTracedSSR"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSSRConeTraceShader, "ConeTracedSSR");
+
 		newRenderer->mVerticalBlurShader = shadersystem::FindShaderHandle(STRING_ID("VerticalBlur"));
 		CheckIfValidShader(*newRenderer, newRenderer->mVerticalBlurShader, "VerticalBlur");
 
@@ -1012,12 +1031,7 @@ namespace r2::draw::renderer
 		newRenderer->mHorizontalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
 		newRenderer->mHorizontalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureLod");
 
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
 
-		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
 		
 		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
 		newRenderer->mModelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
@@ -1063,14 +1077,11 @@ namespace r2::draw::renderer
 		auto size = CENG.DisplaySize();
 
 		
-		SetupRenderTargetParams(*newRenderer);
+		
 
-		u64 renderTargetArenaSize = 0;
+		memcpy(newRenderer->mRenderTargetParams, renderTargetParams, sizeof(renderTargetParams));
 
-		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
-		{
-			renderTargetArenaSize += RenderTarget::MemorySize(newRenderer->mRenderTargetParams[i], ALIGNMENT, stackHeaderSize, boundsChecking);
-		}
+		
 		
 		newRenderer->mRenderTargetsArena = MAKE_STACK_ARENA(*rendererArena, renderTargetArenaSize);
 
@@ -2385,7 +2396,7 @@ namespace r2::draw::renderer
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
 	}
 
-	u64 MemorySize(u64 materialSystemMemorySize)
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize)
 	{
 
 
@@ -2404,17 +2415,9 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 6 +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, light::MAX_NUM_SHADOW_MAP_PAGES, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 3 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 0, 1, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::draw::RenderTarget::MemorySize({ 1, 0, 0, 0, 0 }, ALIGNMENT, stackHeaderSize, boundsChecking) +
+			
+			renderTargetsMemorySize +
+
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
@@ -4999,7 +5002,7 @@ namespace r2::draw::renderer
 				textureFormat.mipLevels = 1;
 				textureFormat.internalformat = tex::COLOR_FORMAT_R8;
 
-				renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1);
+				renderer.mSSRDitherTexture = tex::CreateTexture(textureFormat, 1, false);
 				u8 textureData[] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
 
 				tex::TexSubImage2D(renderer.mSSRDitherTexture, 0, 0, 0, textureFormat, &textureData[0]);
@@ -6100,6 +6103,7 @@ namespace r2::draw::renderer
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
+		//	CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -6200,10 +6204,20 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, true, true, false, 0);
 	}
 
+	void CreateConeTracedSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+	//	renderer.mRenderTargets[RTS_SSR_CONE_TRACED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR_CONE_TRACED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+	
+		//rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false, 0);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+	//	rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SPECULAR]);
@@ -6218,141 +6232,151 @@ namespace r2::draw::renderer
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_ZPREPASS]);
 	}
 
-	void SetupRenderTargetParams(Renderer& renderer)
+	void SetupRenderTargetParams(rt::RenderTargetParams renderTargetParams[NUM_RENDER_TARGET_SURFACES])
 	{
 		u32 surfaceOffset = 0;
 
 		constexpr auto sizeOfTextureAddress = sizeof(tex::TextureAddress);
 
-		renderer.mRenderTargetParams[RTS_GBUFFER].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_GBUFFER].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_GBUFFER].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_GBUFFER].numAttachmentRefs = 3;
-		renderer.mRenderTargetParams[RTS_GBUFFER].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_GBUFFER].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_GBUFFER].numColorAttachments = 1;
+		renderTargetParams[RTS_GBUFFER].numDepthAttachments = 0;
+		renderTargetParams[RTS_GBUFFER].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
+		renderTargetParams[RTS_GBUFFER].numAttachmentRefs = 3;
+		renderTargetParams[RTS_GBUFFER].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_GBUFFER].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_GBUFFER].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_GBUFFER].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_SHADOWS].numColorAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SHADOWS].numDepthAttachments = 1;
-		renderer.mRenderTargetParams[RTS_SHADOWS].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES;
-		renderer.mRenderTargetParams[RTS_SHADOWS].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_SHADOWS].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_SHADOWS].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_SHADOWS].numColorAttachments = 0;
+		renderTargetParams[RTS_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_SHADOWS].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES;
+		renderTargetParams[RTS_SHADOWS].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SHADOWS].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SHADOWS].numSurfacesPerTarget = 1;
 		
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SHADOWS].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SHADOWS].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].maxPageAllocations = 0;
+		renderTargetParams[RTS_COMPOSITE].numAttachmentRefs = 0;
+		renderTargetParams[RTS_COMPOSITE].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].numDepthAttachments = 1;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS].numDepthAttachments = 1;
+		renderTargetParams[RTS_ZPREPASS].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
+		renderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
+		renderTargetParams[RTS_ZPREPASS].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_ZPREPASS].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numColorAttachments = 0;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthAttachments = 1;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numColorAttachments = 0;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numAttachmentRefs = 0;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_POINTLIGHT_SHADOWS].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numColorAttachments = 1;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].maxPageAllocations = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numAttachmentRefs = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_AMBIENT_OCCLUSION].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numColorAttachments = 1;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].maxPageAllocations = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numAttachmentRefs = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numColorAttachments = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthAttachments = 1;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget = 2;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numColorAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget = 2;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_ZPREPASS_SHADOWS].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget = 2;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numColorAttachments = 1;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].maxPageAllocations = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numAttachmentRefs = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget = 2;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_NORMAL].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_NORMAL].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_NORMAL].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_NORMAL].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_NORMAL].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_NORMAL].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_NORMAL].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_NORMAL].numColorAttachments = 1;
+		renderTargetParams[RTS_NORMAL].numDepthAttachments = 0;
+		renderTargetParams[RTS_NORMAL].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_NORMAL].maxPageAllocations = 0;
+		renderTargetParams[RTS_NORMAL].numAttachmentRefs = 0;
+		renderTargetParams[RTS_NORMAL].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_NORMAL].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_NORMAL].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_NORMAL].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_SPECULAR].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_SPECULAR].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SPECULAR].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SPECULAR].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_SPECULAR].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_SPECULAR].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_SPECULAR].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_SPECULAR].numColorAttachments = 1;
+		renderTargetParams[RTS_SPECULAR].numDepthAttachments = 0;
+		renderTargetParams[RTS_SPECULAR].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SPECULAR].maxPageAllocations = 0;
+		renderTargetParams[RTS_SPECULAR].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SPECULAR].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SPECULAR].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SPECULAR].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SPECULAR].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_SSR].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_SSR].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SSR].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_SSR].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_SSR].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_SSR].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_SSR].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_SSR].numColorAttachments = 1;
+		renderTargetParams[RTS_SSR].numDepthAttachments = 0;
+		renderTargetParams[RTS_SSR].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SSR].maxPageAllocations = 0;
+		renderTargetParams[RTS_SSR].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SSR].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SSR].numSurfacesPerTarget = 1;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_SSR].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SSR].numSurfacesPerTarget;
 
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numColorAttachments = 1;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numDepthAttachments = 0;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numRenderBufferAttachments = 0;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].maxPageAllocations = 0;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numAttachmentRefs = 0;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].surfaceOffset = surfaceOffset;
-		renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget = 2;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numColorAttachments = 1;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numDepthAttachments = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].maxPageAllocations = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numAttachmentRefs = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget = 2;
 
-		surfaceOffset += sizeOfTextureAddress * renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget;
+
+		//renderTargetParams[RTS_SSR_CONE_TRACED].numColorAttachments = 1;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].numDepthAttachments = 0;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].numRenderBufferAttachments = 0;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].maxPageAllocations = 0;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].numAttachmentRefs = 0;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].surfaceOffset = surfaceOffset;
+		//renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget = 1;
+
+		//surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

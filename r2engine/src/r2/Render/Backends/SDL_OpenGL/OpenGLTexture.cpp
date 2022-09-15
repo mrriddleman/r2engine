@@ -389,7 +389,7 @@ namespace r2::draw::tex
 		textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
 		textureFormat.anisotropy = anisotropy;
 
-		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
+		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1, true);
 
 		std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
 
@@ -736,7 +736,7 @@ namespace r2::draw::tex
 					textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
 					textureFormat.anisotropy = anisotropy;
 
-					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
+					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1, true);
 				}
 
 				const auto mip = textureInfo->mips()->Get(0);
@@ -882,15 +882,15 @@ namespace r2::draw::tex
 		return r2::draw::gl::tex::GetAddress(handle);
 	}
 
-	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages)
+	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxPages)
 	{
-		return r2::draw::gl::texsys::MakeGLTextureIfNeeded(format, numPages) != nullptr;
+		return r2::draw::gl::texsys::MakeGLTextureIfNeeded(format, numPages, useMaxPages) != nullptr;
 	}
 
-	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages)
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxPages)
 	{
 		r2::draw::tex::GPUHandle newHandle;
-		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format, numPages);
+		r2::draw::gl::texsys::MakeNewGLTexture(newHandle, format, numPages, useMaxPages);
 		return newHandle;
 	}
 

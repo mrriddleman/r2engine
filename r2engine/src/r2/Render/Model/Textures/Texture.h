@@ -135,8 +135,8 @@ namespace r2::draw::tex
 	bool TexturesEqualExcludeType(const Texture& t1, const Texture& t2);
 
 
-	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
-	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages);
+	bool AllocateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxPages);
+	TextureHandle CreateTexture(const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxPages);
 	TextureHandle AddTexturePages(const TextureHandle& textureHandle, u32 numPages);
 	
 
