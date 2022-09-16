@@ -115,7 +115,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
 
-	return vec4(ssrSurfaceColor.rgb  + gbufferSurfaceColor.rgb * ssrSurfaceColor.a,1.0);
+	return vec4(ssrSurfaceColor.rgb  + gbufferSurfaceColor.rgb,1.0);
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
 	
 	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;

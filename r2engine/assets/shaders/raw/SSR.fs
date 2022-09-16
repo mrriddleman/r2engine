@@ -119,7 +119,7 @@ bool IsReflectedBackToCamera(vec3 reflection, vec3 fragToCamera, inout float att
     // since we are limited to pixels visible on screen. Attenuate reflections for angles between
     // 60 degrees and 75 degrees, and drop all contribution beyond the (-60,60)  degree range
 
-	attenuationFactor = 1.0f - smoothstep(0.05f, 0.95f, dot(fragToCamera, reflection));
+	attenuationFactor = 1.0f - smoothstep(0.25f, 0.5f, dot(fragToCamera, reflection));
 
 	return attenuationFactor <= 0;
 }
@@ -239,10 +239,7 @@ RayHit SSReflection(vec3 worldPosition, vec3 normal)
 
 	vec4 screenSpacePos = vec4(pixelUV, fragDepth, 1.0);
 
-	
-
 	vec3 reflectionVector = reflect(cameraVec, normal);
-
 	
 	float attenuationFactor;
 	if(IsReflectedBackToCamera(reflectionVector, -cameraVec, attenuationFactor))

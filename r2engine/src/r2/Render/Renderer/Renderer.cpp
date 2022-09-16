@@ -5719,6 +5719,15 @@ namespace r2::draw::renderer
 			completeRenderConstantsCMD->count = totalObjectsToDraw;
 		}
 
+		if (modelBatchRenderOffsets || linesBatchRenderOffsets)
+		{
+			key::DebugKey setDebugRenderTargetKey = key::GenerateDebugKey(0, PrimitiveType::POINTS, 0, 0, 0);
+
+			cmd::SetRenderTargetMipLevel* setRenderTarget = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::SetRenderTargetMipLevel>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, setDebugRenderTargetKey, 0);
+
+			cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_GBUFFER], 0, *setRenderTarget);
+		}
+
 		if (modelBatchRenderOffsets)
 		{
 			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelsVertexLayoutConfigHandle, debugModelsSubCommandsBufferHandle, false);
