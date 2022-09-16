@@ -6119,7 +6119,7 @@ namespace r2::draw::renderer
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, false, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, false, false);
 			
 			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
 			const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
@@ -6241,7 +6241,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SSR_CONE_TRACED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR_CONE_TRACED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 	
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false, 0);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, true, false, 0);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)

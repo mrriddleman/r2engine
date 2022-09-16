@@ -247,7 +247,7 @@ RayHit SSReflection(vec3 worldPosition, vec3 normal)
 		return RayHit(0.0, vec3(0.0));
 	}
 
-	vec4 pointAlongReflectionVec = vec4(1.0f * reflectionVector + worldPosition, 1.0);
+	vec4 pointAlongReflectionVec = vec4(10.0f * reflectionVector + worldPosition, 1.0);
 	vec4 screenSpaceReflectionPoint = vpMatrix * pointAlongReflectionVec;
 	screenSpaceReflectionPoint /= screenSpaceReflectionPoint.w;
 	screenSpaceReflectionPoint.xyz = screenSpaceReflectionPoint.xyz * 0.5 + 0.5;
@@ -289,9 +289,9 @@ bool RayMarch(vec3 worldReflectionVec, vec3 screenSpaceReflectionVec, vec3 scree
 
 		maxRaySample = raySample;
 
-		float bias = ssr_zThickness*5;
+		float bias = ssr_zThickness;
 
-		if(raySample.z > ( zBufferVal + bias))
+		if(raySample.z > ( zBufferVal ))
 		{
 			foundIntersection = true;
 			break;

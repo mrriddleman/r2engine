@@ -196,7 +196,7 @@ void main()
 	vec4 specular = texture(sampler2DArray(specularSurface.container), vec3(uv, specularSurface.page));
 	vec3 F0 = specular.rgb;
 
-	vec3 Ks = F_Schlick(F0, 1.0f, max(dot(V, H), 0.0));
+	vec3 Ks = F_Schlick(F0, 0.0f, max(dot(V, H), 0.0));
 
 	vec3 reflectedColor = TraceCones(specular.a, rayHitInfo);
 

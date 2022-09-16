@@ -453,9 +453,9 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	NormalColor = EncodeNormal(normalize(norm));
+	NormalColor = EncodeNormal(normalize(fs_in.normal));
 
-	SpecularColor = vec4(specular, 1.0-roughness);
+	SpecularColor = vec4(specular, 1.0 - roughness);
 
 }
 
@@ -978,8 +978,11 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 
 	vec3 F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	
-	outSpecular = F0;
+	
+
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
+
+	outSpecular = F0;
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
