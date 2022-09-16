@@ -46,6 +46,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress specularSurface;
 	Tex2DAddress ssrSurface;
 	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress ssrConeTracedSurface;
 };
 
 in VS_OUT
@@ -103,17 +104,18 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	// vec3 coord = vec3(uv.r, uv.g, convolvedGBUfferSurface[0].page );
-	// vec4 normal = textureLod(sampler2DArray(convolvedGBUfferSurface[0].container), coord, 0.0).rgba;
+	 vec3 ssrCoord = vec3(uv.r, uv.g, ssrConeTracedSurface.page );
+	 vec4 ssrSurfaceColor = texture(sampler2DArray(ssrConeTracedSurface.container), ssrCoord).rgba;
 
-	// return vec4(normal.xyz , 1.0);
+	 //return vec4(normal.xyz , 1.0);
 
 
 
 
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	return texture(sampler2DArray(gBufferSurface.container), coord) ;
+	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
 
+	return vec4(ssrSurfaceColor.rgb  + gbufferSurfaceColor.rgb * ssrSurfaceColor.a,1.0);
 	//return texture(sampler2DArray(shadowsSurface.container), coord) * 100;
 	
 	// highp uint texIndex = uint(round(uv.z)) + drawID * NUM_TEXTURES_PER_DRAWID;

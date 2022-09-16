@@ -728,7 +728,7 @@ public:
 			dirLight.lightProperties.intensity = 4;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 1, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+         //   r2::draw::renderer::AddDirectionLight(dirLight);
 
             
 

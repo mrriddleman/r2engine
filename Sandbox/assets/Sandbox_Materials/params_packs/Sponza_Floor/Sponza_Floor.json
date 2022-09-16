@@ -15,7 +15,8 @@
       propertyType: "METALLIC"
     },
     {
-      propertyType: "REFLECTANCE"
+      propertyType: "REFLECTANCE",
+      value: 2.0
     },
     {
       propertyType: "AMBIENT_OCCLUSION",

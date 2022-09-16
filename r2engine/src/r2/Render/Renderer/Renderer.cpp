@@ -4075,8 +4075,31 @@ namespace r2::draw::renderer
 		ssrDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
 		ssrDrawBatch->state.polygonOffsetEnabled = false;
 		ssrDrawBatch->state.polygonOffset = glm::vec2(0);
-		EndRenderPass(renderer, RPT_SSR, *renderer.mSSRBucket);
+		
 
+
+		key::Basic ssrConeTracedDrawKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 1, renderer.mSSRConeTraceShader, 0);
+
+		cmd::SetRenderTargetMipLevel* setSSRConeTracedRenderTarget = AddCommand<key::Basic, cmd::SetRenderTargetMipLevel, mem::StackArena>(*renderer.mCommandArena, *renderer.mSSRBucket, ssrConeTracedDrawKey, 0);
+
+		cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], 0, *setSSRConeTracedRenderTarget);
+
+		cmd::DrawBatch* ssrConeTracedBatch = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setSSRConeTracedRenderTarget, 0);
+		ssrConeTracedBatch->batchHandle = subCommandsConstantBufferHandle;
+		ssrConeTracedBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		ssrConeTracedBatch->numSubCommands = finalBatchOffsets.numSubCommands;
+		R2_CHECK(ssrConeTracedBatch->numSubCommands > 0, "We should have a count!");
+		ssrConeTracedBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
+		ssrConeTracedBatch->primitiveType = PrimitiveType::TRIANGLES;
+		ssrConeTracedBatch->subCommands = nullptr;
+		ssrConeTracedBatch->state.depthEnabled = false;
+		ssrConeTracedBatch->state.cullState = cmd::CULL_FACE_BACK;
+		ssrConeTracedBatch->state.depthFunction = cmd::DEPTH_LESS;
+		ssrConeTracedBatch->state.polygonOffsetEnabled = false;
+		ssrConeTracedBatch->state.polygonOffset = glm::vec2(0);
+
+
+		EndRenderPass(renderer, RPT_SSR, *renderer.mSSRBucket);
 
 		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
 
@@ -4166,9 +4189,8 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_GBUFFER] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_GBUFFER, passConfig, {RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS }, RTS_SSR, __FILE__, __LINE__, "");
-		
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED, RTS_AMBIENT_OCCLUSION_DENOISED, RTS_ZPREPASS_SHADOWS, RTS_SPECULAR, RTS_NORMAL, RTS_SSR, RTS_CONVOLVED_GBUFFER }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -6103,7 +6125,7 @@ namespace r2::draw::renderer
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
-		//	CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
+			CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -6208,16 +6230,16 @@ namespace r2::draw::renderer
 	{
 		ConstrainResolution(resolutionX, resolutionY);
 
-	//	renderer.mRenderTargets[RTS_SSR_CONE_TRACED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR_CONE_TRACED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_SSR_CONE_TRACED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR_CONE_TRACED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 	
-		//rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false, 0);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false, 0);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
-	//	rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SPECULAR]);
@@ -6368,15 +6390,15 @@ namespace r2::draw::renderer
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_CONVOLVED_GBUFFER].numSurfacesPerTarget;
 
-		//renderTargetParams[RTS_SSR_CONE_TRACED].numColorAttachments = 1;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].numDepthAttachments = 0;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].numRenderBufferAttachments = 0;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].maxPageAllocations = 0;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].numAttachmentRefs = 0;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].surfaceOffset = surfaceOffset;
-		//renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numColorAttachments = 1;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numDepthAttachments = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].maxPageAllocations = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget = 1;
 
-		//surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget;
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
