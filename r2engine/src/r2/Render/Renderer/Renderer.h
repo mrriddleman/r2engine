@@ -360,6 +360,9 @@ namespace r2::draw
 		float mSSRDitherTilingFactor = 1.0f;
 		s32 mSSRRoughnessMips = 0;
 		s32 mSSRConeTracingSteps = 7;
+		float mSSRMaxFadeDistance = 10;
+		float mSSRFadeScreenStart = 0.1;
+		float mSSRFadeScreenEnd = 0.9;
 
 		//float mSSRStrideZCutoff = 50.0f;
 		//float mSSRStride = 2.0f;

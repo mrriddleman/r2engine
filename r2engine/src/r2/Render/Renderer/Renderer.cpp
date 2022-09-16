@@ -1546,7 +1546,10 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
 			{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
 			{r2::draw::ShaderDataType::Int, "ssr_roughnessMips"},
-			{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"}
+			{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"},
+			{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
+			{r2::draw::ShaderDataType::Float, "ssr_fadeStart"},
+			{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -5034,6 +5037,10 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 5, &renderer.mSSRDitherTilingFactor);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 6, &renderer.mSSRRoughnessMips);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 7, &renderer.mSSRConeTracingSteps);
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
 		}
 	}
 

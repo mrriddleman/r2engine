@@ -71,6 +71,10 @@ layout (std140, binding = 4) uniform SSRParams
 	float ssr_ditherTilingFactor;
 	int ssr_roughnessMips;
 	int ssr_coneTracingSteps;
+
+	float ssr_maxFadeDistance;
+	float ssr_fadeScreenStart;
+	float ssr_fadeScreenEnd;
 };
 
 vec3 F_Schlick(const vec3 F0, float F90, float VoH)
@@ -156,6 +160,31 @@ vec3 GetWorldPosition(vec2 uv)
 	return worldSpacePosition.xyz;
 }
 
+vec3 GetViewPosition(vec2 uv)
+{
+	float depth = SampleTextureF(zPrePassSurface, uv, vec2(0)) * 2.0 - 1.0;
+
+	vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth, 1.0);
+
+	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;
+
+	viewSpacePosition /= viewSpacePosition.w;
+
+	return viewSpacePosition.xyz;
+}
+
+vec3 GetViewPosition(vec2 uv, float depth)
+{
+	vec4 clipSpacePosition = vec4(uv * 2.0 - 1.0, depth, 1.0);
+
+	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;
+
+	viewSpacePosition /= viewSpacePosition.w;
+
+	return viewSpacePosition.xyz;
+}
+
+
 in VS_OUT
 {
 	vec3 normal;
@@ -172,6 +201,7 @@ void main()
 	vec4 rayHitInfo = texture(sampler2DArray(ssrSurface.container), vec3(uv, ssrSurface.page));
 
 	vec3 worldPosition = GetWorldPosition(uv);
+	vec3 viewPosition = GetViewPosition(uv);
 	vec3 reflectedPointWorldPosition = GetWorldPosition(rayHitInfo.xy);
 
 	vec3 normal = LoadNormal(uv);
@@ -199,6 +229,35 @@ void main()
 	vec3 Ks = F_Schlick(F0, 0.0f, max(dot(V, H), 0.0));
 
 	vec3 reflectedColor = TraceCones(specular.a, rayHitInfo);
+
+	vec3 raySS = rayHitInfo.xyz;
+
+
+
+	vec2 boundary = abs(raySS.xy - vec2(0.5f)) * 2.0f;
+	const float fadeDiffRcp = 1.0f / (ssr_fadeScreenEnd - ssr_fadeScreenStart);
+	float fadeOnBorder = 1.0f - clamp((boundary.x - ssr_fadeScreenStart) * fadeDiffRcp, 0.0, 1.0);
+	fadeOnBorder *= 1.0f - clamp((boundary.y - ssr_fadeScreenStart) * fadeDiffRcp, 0.0, 1.0);
+	fadeOnBorder = smoothstep(0.0, 1.0, fadeOnBorder);
+
+	vec3 R = normalize(reflectedPointWorldPosition - worldPosition);
+
+	R = (view * vec4(R, 1.0)).xyz;
+	V = (view * vec4(V, 1.0)).xyz;
+
+	float rdotv = dot(V, R);
+
+	vec3 rayHitViewPosition = GetViewPosition(raySS.xy, raySS.z);
+
+	float fadeOnDistance =  1.0f - clamp(distance(rayHitViewPosition, viewPosition) / ssr_maxFadeDistance, 0.0, 1.0);
+
+	float fadeOnPerpendicular = clamp(mix(0.0, 1.0, clamp(rdotv, 0.0, 1.0) * 4.0), 0.0, 1.0);
+
+	float fadeOnRoughness = clamp(mix(0.0, 1.0, specular.a*4.0), 0.0, 1.0);
+
+	float totalFade = fadeOnBorder * fadeOnDistance * fadeOnPerpendicular * fadeOnRoughness;
+
+	reflectedColor = mix(vec3(0), reflectedColor, totalFade);
 
 	reflectedColor *= Ks;
 
@@ -262,6 +321,10 @@ vec3 TraceCones(float gloss, vec4 rayHitInfo)
 		adjacentLength = IsoscelesTriangleNextAdjacent(adjacentLength, incircleSize);
 		glossMult *= gloss;
 	}
+
+
+
+
 
 	return totalReflectedColor.rgb * rayHitInfo.a;
 }

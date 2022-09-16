@@ -68,10 +68,10 @@ layout (std140, binding = 4) uniform SSRParams
 	float ssr_ditherTilingFactor;
 	int ssr_roughnessMips;
 	int ssr_coneTracingSteps;
-	// float ssr_strideZCutoff;
-	// float ssr_stride;
-	// float ssr_maxDistance;
 
+	float ssr_maxFadeDistance;
+	float ssr_fadeScreenStart;
+	float ssr_fadeScreenEnd;
 };
 
 vec3 DecodeNormal(vec2 enc)
