@@ -264,13 +264,17 @@ vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0
 
 vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
 float InterleavedGradientNoise(vec2 screenPosition);
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID);
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, vec2 receiverPlaneDepthBias);
 float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
 
-float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
+float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias);
+float OptimizedPCF5(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias);
+float OptimizedPCF7(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias);
+
+
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias);
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows);
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows, vec3 shadowPosDDX, vec3 shadowPosDDY);
 
 float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
 
@@ -1177,9 +1181,12 @@ vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
 	return texelSize * OFFSET_SCALE * nmlOffsetScale * normal;
 }
 
-float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth)
+float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth, vec2 receiverPlaneDepthBias)
 {
 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
+
+	depth += dot(uv * shadowMapSizeInv, receiverPlaneDepthBias);
+
 	vec3 coord = vec3(uv, cascadeIndex + gDirectionLightShadowMapPages[int(lightID)]);
 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
 
@@ -1213,7 +1220,129 @@ float SamplePointlightShadowMap(vec3 fragToLight, vec3 offset, int64_t lightID)
 	return shadowSample;
 }
 
-float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+vec2 ComputeReceiverPlaneDepthBias(vec3 texCoordDX, vec3 texCoordDY)
+{
+    vec2 biasUV;
+    biasUV.x = texCoordDY.y * texCoordDX.z - texCoordDX.y * texCoordDY.z;
+    biasUV.y = texCoordDX.x * texCoordDY.z - texCoordDY.x * texCoordDX.z;
+    biasUV *= 1.0f / ((texCoordDX.x * texCoordDY.y) - (texCoordDX.y * texCoordDY.x));
+    return biasUV;
+}
+
+float OptimizedPCF7(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias)
+{
+	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	float s = (uv.x + 0.5 - base_uv.x);
+	float t = (uv.y + 0.5 - base_uv.y);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+	float sum = 0;
+
+	float uw0 = (5 * s - 6);
+    float uw1 = (11 * s - 28);
+    float uw2 = -(11 * s + 17);
+    float uw3 = -(5 * s + 1);
+
+    float u0 = (4 * s - 5) / uw0 - 3;
+    float u1 = (4 * s - 16) / uw1 - 1;
+    float u2 = -(7 * s + 5) / uw2 + 1;
+    float u3 = -s / uw3 + 3;
+
+    float vw0 = (5 * t - 6);
+    float vw1 = (11 * t - 28);
+    float vw2 = -(11 * t + 17);
+    float vw3 = -(5 * t + 1);
+
+    float v0 = (4 * t - 5) / vw0 - 3;
+    float v1 = (4 * t - 16) / vw1 - 1;
+    float v2 = -(7 * t + 5) / vw2 + 1;
+    float v3 = -t / vw3 + 3;
+
+    sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw2 * vw0 * SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw3 * vw0 * SampleDirectionShadowMap(base_uv, u3, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+    sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw2 * vw1 * SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw3 * vw1 * SampleDirectionShadowMap(base_uv, u3, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+    sum += uw0 * vw2 * SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw1 * vw2 * SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw2 * vw2 * SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw3 * vw2 * SampleDirectionShadowMap(base_uv, u3, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+    sum += uw0 * vw3 * SampleDirectionShadowMap(base_uv, u0, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw1 * vw3 * SampleDirectionShadowMap(base_uv, u1, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw2 * vw3 * SampleDirectionShadowMap(base_uv, u2, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+    sum += uw3 * vw3 * SampleDirectionShadowMap(base_uv, u3, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+    return sum * (1.0f / 2704.0f);
+}
+
+
+float OptimizedPCF5(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias)
+{
+	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+	vec2 base_uv;
+	base_uv.x = floor(uv.x + 0.5);
+	base_uv.y = floor(uv.y + 0.5);
+
+	float s = (uv.x + 0.5 - base_uv.x);
+	float t = (uv.y + 0.5 - base_uv.y);
+
+	base_uv -= vec2(0.5, 0.5);
+	base_uv *= shadowMapSizeInv;
+
+	float sum = 0;
+
+	float uw0 = (4 - 3 * s);
+	float uw1 = 7;
+	float uw2 = (1 + 3 * s);
+
+	float u0 = (3 - 2 * s) / uw0 - 2;
+	float u1 = (3 + s) / uw1;
+	float u2 = s / uw2 + 2;
+
+	float vw0 = (4 - 3 * t);
+	float vw1 = 7;
+	float vw2 = (1 + 3 * t);
+
+	float v0 = (3 - 2 * t) / vw0 - 2;
+	float v1 = (3 + t) / vw1;
+	float v2 = t / vw2 + 2;
+
+	sum += uw0 * vw0 *  SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw1 * vw0 *  SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw2 * vw0 *  SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+	sum += uw0 * vw1 *  SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw1 * vw1 *  SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw2 * vw1 *  SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+	sum += uw0 * vw2 *  SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw1 * vw2 *  SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw2 * vw2 *  SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+
+
+	return sum * 0.006944444f; //1 / 144
+}
+
+
+float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias)
 {
 	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
@@ -1244,17 +1373,17 @@ float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, floa
 	float v0 = (2 - t) / vw0 - 1;
 	float v1 = t / vw1 + 1;
 
-	sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+	sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
+	sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
 
 	return sum * 0.0625; //1 / 16
 }
 
 
 
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows)
+float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows, vec3 shadowPosDDX, vec3 shadowPosDDY)
 {
 	vec3 viewDir = (cameraPosTimeW.xyz - fs_in.fragPos);
 	float viewDirLen = length(viewDir);
@@ -1279,14 +1408,20 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 
 	lightDepth -= bias;
 
+	vec2 receiverPlaneDepthBias = vec2(0);//ComputeReceiverPlaneDepthBias(shadowPosDDX, shadowPosDDY);
+	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+	float fractionalSamplerError = 2 * dot(shadowMapSizeInv, receiverPlaneDepthBias);
+	//lightDepth -= min(fractionalSamplerError, 0.01f);
+
 
 	if(softShadows)
 	{
-		return SoftShadow(shadowPosition, cascadeIndex, lightID, lightDepth);
+		return SoftShadow(shadowPosition, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
 	}
 	else
 	{
-		return OptimizedPCF(shadowPosition, cascadeIndex, lightID, lightDepth);
+		return OptimizedPCF7(shadowPosition, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
 	}
 }
 
@@ -1337,8 +1472,11 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	vec4 tempShadowPos = gShadowMatrix[lightIndex] * vec4(samplePos, 1.0);
 	vec3 shadowPosition = (tempShadowPos.xyz/tempShadowPos.w);
 
+	vec3 shadowPosDDX = dFdxFine(shadowPosition);
+	vec3 shadowPosDDY = dFdyFine(shadowPosition);
 
-	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL,VoL, softShadows);
+
+	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL,VoL, softShadows, shadowPosDDX, shadowPosDDY);
 
 	
 	const float BLEND_THRESHOLD = 0.1f; //0.3 or higher causes artifacts?
@@ -1358,7 +1496,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
     	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
     	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows);
+    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows, shadowPosDDX, shadowPosDDY);
 
     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
@@ -1544,7 +1682,7 @@ float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane
 	return shadow / (float)samples;
 }
 
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth, vec2 receiverPlaneDepthBias)
 {
 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
 
@@ -1559,7 +1697,7 @@ float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float 
 
 	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
 
-	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID);
+	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID, receiverPlaneDepthBias);
 
 	float shadow = 0.0;
 	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
@@ -1567,7 +1705,7 @@ float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float 
 		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
 		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
 
-		shadow += SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+		shadow += SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth, receiverPlaneDepthBias);
 	}
 
 	return shadow / NUM_SOFT_SHADOW_SAMPLES;
@@ -1590,7 +1728,7 @@ float InterleavedGradientNoise(vec2 screenPosition)
 }
 
 //float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID)
+float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, vec2 receiverPlaneDepthBias)
 {
 	float avgBlockerDepth = 0.0;
 	float blockersCount = 0.0;
@@ -1600,7 +1738,7 @@ float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCo
 		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
 		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
 
-		float sampleDepth = SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, depth);
+		float sampleDepth = SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, depth, receiverPlaneDepthBias);
 
 		if(sampleDepth < depth)
 		{

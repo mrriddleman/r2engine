@@ -118,7 +118,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	 vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	 vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
 
-	 return vec4( gbufferSurfaceColor.rgb, 1.0);
+	 return vec4(ssrSurfaceColor.rgb + gbufferSurfaceColor.rgb, 1.0);
 
 }
 
