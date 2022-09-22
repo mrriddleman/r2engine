@@ -37,11 +37,14 @@ vec3 PreFilter(vec3 c)
 void main()
 {
 	//gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID
-	ivec2 texCoord = ivec2( gl_GlobalInvocationID.xy );
-	ivec2 outTexCoord = ivec2( floor(vec2(texCoord) * 0.5f) );
+	
+	ivec2 outTexCoord = ivec2( gl_GlobalInvocationID.xy);
 
-	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.y));
+	ivec2 texCoord = ivec2( outTexCoord * 2 );
 
+	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.w));
+	texCoord = clamp(texCoord, ivec2(0), ivec2(bloomResolutions.x, bloomResolutions.y));
+	
 	vec3 a = imageLoad(inputImage, ivec2(texCoord.x - 2, texCoord.y + 2)).rgb;
 	vec3 b = imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + 2)).rgb;
 	vec3 c = imageLoad(inputImage, ivec2(texCoord.x + 2, texCoord.y + 2)).rgb;

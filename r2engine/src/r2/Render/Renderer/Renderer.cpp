@@ -5125,8 +5125,8 @@ namespace r2::draw::renderer
 			imageHeight /= 2;
 		}
 		
-		imageWidth = gbufferColorAttachment.format.width;
-		imageHeight = gbufferColorAttachment.format.height;
+		imageWidth = bloomColorAttachment.format.width;
+		imageHeight = bloomColorAttachment.format.height;
 
 		for (u32 i = 0; i < numMips; ++i)
 		{
@@ -5146,7 +5146,7 @@ namespace r2::draw::renderer
 
 			cmd::FillConstantBuffer* fillResolutionCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, config.layout.GetElements().at(1).size);
 
-			glm::uvec4 bloomResolution = glm::uvec4(imageWidth, imageHeight, imageWidth / 2, imageHeight / 2);
+			glm::uvec4 bloomResolution = glm::uvec4(imageWidth * 2, imageHeight* 2, imageWidth , imageHeight);
 			
 			cmd::FillConstantBufferCommand(fillResolutionCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomResolution), config.layout.GetElements().at(1).size, config.layout.GetElements().at(1).offset);
 
