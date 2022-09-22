@@ -15,6 +15,7 @@ layout (std140, binding = 5) uniform BloomParams
 {
 	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
 	uvec4 bloomResolutions;
+	vec4 filterRadius;
 };
 
 float RGBToLuminance(vec3 rgb)
@@ -37,7 +38,9 @@ void main()
 {
 	//gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID
 	ivec2 texCoord = ivec2( gl_GlobalInvocationID.xy );
-	ivec2 outTexCoord = ivec2( round(vec2(texCoord) * 0.5f) );
+	ivec2 outTexCoord = ivec2( floor(vec2(texCoord) * 0.5f) );
+
+	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.y));
 
 	vec3 a = imageLoad(inputImage, ivec2(texCoord.x - 2, texCoord.y + 2)).rgb;
 	vec3 b = imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + 2)).rgb;

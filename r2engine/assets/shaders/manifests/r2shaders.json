@@ -247,6 +247,14 @@
       geometryPath: "",
       computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\SpotLightLightMatrices.cs",
       binaryPath: ""
+    },
+    {
+      shaderName: 11792107586941331747,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\UpSampleBlur.cs",
+      binaryPath: ""
     }
   ]
 }
