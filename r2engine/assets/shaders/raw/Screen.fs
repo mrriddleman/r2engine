@@ -105,20 +105,20 @@ void main()
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
 
-	vec3 bloomCoord = vec3(uv.r, uv.g, bloomDownSampledSurface.page);
-	vec3 bloomColor = textureLod(sampler2DArray(bloomDownSampledSurface.container), bloomCoord, 0).rgb;
+	// vec3 bloomCoord = vec3(uv.r, uv.g, bloomDownSampledSurface.page);
+	// vec3 bloomColor = textureLod(sampler2DArray(bloomDownSampledSurface.container), bloomCoord, 0).rgb;
 
-	return vec4(bloomColor, 1);
-
-
-	 // vec3 ssrCoord = vec3(uv.r, uv.g, ssrConeTracedSurface.page );
-	 // vec4 ssrSurfaceColor = texture(sampler2DArray(ssrConeTracedSurface.container), ssrCoord).rgba;
+	// return vec4(bloomColor, 1);
 
 
-	 // vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
-	 // vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
+	 vec3 ssrCoord = vec3(uv.r, uv.g, ssrConeTracedSurface.page );
+	 vec4 ssrSurfaceColor = texture(sampler2DArray(ssrConeTracedSurface.container), ssrCoord).rgba;
 
-	 // return vec4(ssrSurfaceColor.rgb + gbufferSurfaceColor.rgb, 1.0);
+
+	 vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
+	 vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
+
+	 return vec4( gbufferSurfaceColor.rgb, 1.0);
 
 }
 

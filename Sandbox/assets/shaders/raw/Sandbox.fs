@@ -1343,9 +1343,9 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	
 	const float BLEND_THRESHOLD = 0.1f; //0.3 or higher causes artifacts?
 
-    float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
-    float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = nextSplit - (LinearizeDepth(gl_FragCoord.z));
+    float nextSplit = gPartitions.intervalEnd[layer] - gPartitions.intervalBegin[layer];//gPartitions[layer].intervalEndBias.x;
+    float splitSize = layer == 0 ?  nextSplit : gPartitions.intervalEnd[layer-1] - gPartitions.intervalBegin[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
+    float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z))) / splitSize;
 
     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
     cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
