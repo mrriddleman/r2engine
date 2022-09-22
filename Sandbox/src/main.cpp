@@ -710,7 +710,7 @@ public:
         FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
 
 
-        r2::draw::renderer::SetClearColor(glm::vec4(1.f, 0.f, 0.f, 1.f));
+        r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
          
@@ -725,7 +725,7 @@ public:
 			dirLight.lightProperties.color = glm::vec4(0.95f, 0.95f, 0.6f, 1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(-20.0f, 10.0f, 100.0f, 0.0f));
-			dirLight.lightProperties.intensity = 2;
+			dirLight.lightProperties.intensity = 200;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
             r2::draw::renderer::AddDirectionLight(dirLight);

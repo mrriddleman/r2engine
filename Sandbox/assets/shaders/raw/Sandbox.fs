@@ -453,7 +453,7 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	NormalColor = EncodeNormal(normalize(norm));
+	NormalColor = EncodeNormal(normalize(fs_in.normal));
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 
@@ -1063,7 +1063,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity * exposureNearFar.x;
 
-	 	float shadow = 0;
+	 	float shadow = 1;
 
 	 	if(dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 	 	{
@@ -1341,7 +1341,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL,VoL, softShadows);
 
 	
-	const float BLEND_THRESHOLD = 0.3f;
+	const float BLEND_THRESHOLD = 0.1f; //0.3 or higher causes artifacts?
 
     float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
     float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;

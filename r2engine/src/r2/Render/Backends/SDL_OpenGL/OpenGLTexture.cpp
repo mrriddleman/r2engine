@@ -303,6 +303,9 @@ namespace r2::draw::tex
 	s32 FILTER_LINEAR_MIPMAP_LINEAR = GL_LINEAR_MIPMAP_LINEAR;
 	u32 DEPTH_COMPONENT = GL_DEPTH_COMPONENT;
 	u32 COLOR_FORMAT_R8 = GL_R8;
+	u32 COLOR_FORMAT_R11F_G11F_B10F = GL_R11F_G11F_B10F;
+	u32 READ_ONLY = GL_READ_ONLY;
+	u32 WRITE_ONLY = GL_WRITE_ONLY;
 	
 	void GetOpenGLTextureFormatDataForTextureFormat(const flat::TextureFormat& textureFormat, TextureType type, GLenum& glFormat, GLenum& glInternalFormat, GLenum& imageFormatSize)
 	{

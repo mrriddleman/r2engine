@@ -428,6 +428,10 @@ namespace r2::draw::renderer
 	//SSR
 	void UpdateSSRDataIfNeeded(Renderer& renderer);
 
+	//Bloom
+	void BloomRenderPass(Renderer& renderer);
+
+	void UpdateBloomDataIfNeeded(Renderer& renderer);
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name);
 
@@ -568,6 +572,7 @@ namespace r2::draw::renderer
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateConeTracedSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateBloomSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -999,6 +1004,9 @@ namespace r2::draw::renderer
 		newRenderer->mHorizontalBlurShader = shadersystem::FindShaderHandle(STRING_ID("HorizontalBlur"));
 		CheckIfValidShader(*newRenderer, newRenderer->mHorizontalBlurShader, "HorizontalBlur");
 
+		newRenderer->mBloomDownSampleShader = shadersystem::FindShaderHandle(STRING_ID("DownSamplePreFilter"));
+		CheckIfValidShader(*newRenderer, newRenderer->mBloomDownSampleShader, "DownSamplePreFilter");
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1031,6 +1039,8 @@ namespace r2::draw::renderer
 		newRenderer->mHorizontalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
 		newRenderer->mHorizontalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureLod");
 
+
+		
 
 		
 		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
@@ -1211,6 +1221,8 @@ namespace r2::draw::renderer
 
 		UpdateClusters(renderer); 
 		UpdateSSRDataIfNeeded(renderer);
+
+		BloomRenderPass(renderer);
 
 		PreRender(renderer);
 
@@ -1550,6 +1562,11 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
 			{r2::draw::ShaderDataType::Float, "ssr_fadeStart"},
 			{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"}
+		});
+
+		renderer.mBloomConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Float4, "bloom_Filter"},
+			{r2::draw::ShaderDataType::UInt4, "bloom_resolutions"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -4104,6 +4121,10 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_SSR, *renderer.mSSRBucket);
 
+		//@NOTE: need to clear the bloom render target
+	//	BeginRenderPass<key::Basic>(renderer, RPT_BLOOM, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
+	//	EndRenderPass<key::Basic>(renderer, RPT_BLOOM, *renderer.mCommandBucket);
+
 		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_FINAL_COMPOSITE, clearCompositeOptions, *renderer.mFinalBucket, finalBatchClearKey, *renderer.mCommandArena);
@@ -4193,12 +4214,14 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_BLOOM] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_BLOOM, passConfig, {}, RTS_BLOOM, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_BLOOM]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SSR]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SHADOWS]);
@@ -5041,6 +5064,138 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
+		}
+	}
+
+	void BloomRenderPass(Renderer& renderer)
+	{
+		UpdateBloomDataIfNeeded(renderer);
+
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+		auto bloomConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mBloomConfigHandle);
+
+		ConstantBufferData* constBufferData = GetConstData(renderer, bloomConstantBufferHandle);
+
+		R2_CHECK(constBufferData != nullptr, "We couldn't find the constant buffer handle!");
+
+		u64 numConstantBufferHandles = r2::sarr::Size(*renderer.mConstantBufferHandles);
+		u64 constBufferIndex = 0;
+		bool found = false;
+		for (; constBufferIndex < numConstantBufferHandles; ++constBufferIndex)
+		{
+			if (bloomConstantBufferHandle == r2::sarr::At(*renderer.mConstantBufferHandles, constBufferIndex))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			R2_CHECK(false, "Couldn't find the constant buffer so we can upload the data");
+			return;
+		}
+
+		const ConstantBufferLayoutConfiguration& config = r2::sarr::At(*renderer.mConstantLayouts, constBufferIndex);
+
+		
+		const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
+		const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
+
+		const auto& bloomColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_BLOOM].colorAttachments, 0);
+		const auto bloomTexture = bloomColorAttachment.texture[bloomColorAttachment.currentTexture];
+		
+		R2_CHECK(gbufferColorAttachment.format.internalformat == bloomColorAttachment.format.internalformat, "These should be the same!");
+
+		u32 imageWidth = gbufferColorAttachment.format.width;
+		u32 imageHeight = gbufferColorAttachment.format.height;
+
+		//figure out how many mips to loop over
+
+		u32 numMips = 0;
+
+		constexpr u32 WARP_SIZE = 32;
+
+		while (imageWidth > WARP_SIZE && imageHeight > WARP_SIZE)
+		{
+			++numMips;
+
+			imageWidth /= 2;
+			imageHeight /= 2;
+		}
+		
+		imageWidth = gbufferColorAttachment.format.width;
+		imageHeight = gbufferColorAttachment.format.height;
+
+		for (u32 i = 0; i < numMips; ++i)
+		{
+			u32 inputTextureID = bloomTexture.container->texId;
+			u32 inputTextureLayer = bloomTexture.sliceIndex;
+			u32 inputTextureFormat = bloomColorAttachment.format.internalformat;
+			u32 inputMipLevel = i == 0 ? 0 : i - 1;
+
+			if (i == 0)
+			{
+				inputTextureID = gbufferTexture.container->texId;
+				inputTextureLayer = gbufferTexture.sliceIndex;
+				inputTextureFormat = gbufferColorAttachment.format.internalformat;
+			}
+
+			key::Basic dispatchBloomDownSampleKey = key::GenerateBasicKey(0, 0, DL_EFFECT, 0, 0, renderer.mBloomDownSampleShader, i);
+
+			cmd::FillConstantBuffer* fillResolutionCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, config.layout.GetElements().at(1).size);
+
+			glm::uvec4 bloomResolution = glm::uvec4(imageWidth, imageHeight, imageWidth / 2, imageHeight / 2);
+			
+			cmd::FillConstantBufferCommand(fillResolutionCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomResolution), config.layout.GetElements().at(1).size, config.layout.GetElements().at(1).offset);
+
+
+			cmd::BindImageTexture* bindInputImageTextureCMD = AppendCommand<cmd::FillConstantBuffer, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, fillResolutionCMD, 0); //<key::Basic, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, 0);
+			bindInputImageTextureCMD->textureUnit = 0;
+			bindInputImageTextureCMD->texture = inputTextureID;
+			bindInputImageTextureCMD->mipLevel = inputMipLevel;
+			bindInputImageTextureCMD->layered = true;
+			bindInputImageTextureCMD->layer = inputTextureLayer;
+			bindInputImageTextureCMD->format = inputTextureFormat;
+			bindInputImageTextureCMD->access = tex::READ_ONLY;
+
+			cmd::BindImageTexture* bindOutputImageTextureCMD = AppendCommand<cmd::BindImageTexture, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, bindInputImageTextureCMD, 0);
+			bindOutputImageTextureCMD->textureUnit = 1;
+			bindOutputImageTextureCMD->texture = bloomTexture.container->texId;
+			bindOutputImageTextureCMD->mipLevel = i;
+			bindOutputImageTextureCMD->layered = true;
+			bindOutputImageTextureCMD->layer = bloomTexture.sliceIndex;
+			bindOutputImageTextureCMD->format = bloomColorAttachment.format.internalformat;
+			bindOutputImageTextureCMD->access = tex::WRITE_ONLY;
+
+			cmd::DispatchCompute* dispatchBloomDownSamplePreFilterCMD = AppendCommand<cmd::BindImageTexture, cmd::DispatchCompute, r2::mem::StackArena>(*renderer.mCommandArena, bindOutputImageTextureCMD, 0);
+
+			dispatchBloomDownSamplePreFilterCMD->numGroupsX = glm::max(static_cast<u32>(glm::ceil(float(imageWidth) / float(WARP_SIZE))), 1u);
+			dispatchBloomDownSamplePreFilterCMD->numGroupsY = glm::max(static_cast<u32>(glm::ceil(float(imageHeight) / float(WARP_SIZE))), 1u);
+			dispatchBloomDownSamplePreFilterCMD->numGroupsZ = 1;
+
+			imageWidth /= 2;
+			imageHeight /= 2;
+		}
+	}
+
+	void UpdateBloomDataIfNeeded(Renderer& renderer)
+	{
+		//@Temporary
+		static bool needsUpdate = true;
+
+		if (needsUpdate)
+		{
+			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+
+			auto bloomConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mBloomConfigHandle);
+
+			glm::vec4 bloomFilterData = glm::vec4(renderer.mBloomThreshold, renderer.mBloomThreshold - renderer.mBloomKnee, 2.0f * renderer.mBloomKnee, 0.25f / (renderer.mBloomKnee + 0.00001f));
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, bloomConstantBufferHandle, 0, glm::value_ptr(bloomFilterData));
+		
+			needsUpdate = false;
 		}
 	}
 
@@ -6124,7 +6279,7 @@ namespace r2::draw::renderer
 			
 			renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, false, false);
 			
@@ -6142,6 +6297,9 @@ namespace r2::draw::renderer
 
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
 			CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
+
+
+			CreateBloomSurface(renderer, resolutionX/2, resolutionY/2, 6); //divided by 2 because we start the downsample at half res
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -6251,10 +6409,20 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, true, false, 0);
 	}
 
+	void CreateBloomSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_BLOOM] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_BLOOM], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER]);
@@ -6415,6 +6583,17 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget = 1;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SSR_CONE_TRACED].numSurfacesPerTarget;
+
+		renderTargetParams[RTS_BLOOM].numColorAttachments = 1;
+		renderTargetParams[RTS_BLOOM].numDepthAttachments = 0;
+		renderTargetParams[RTS_BLOOM].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_BLOOM].maxPageAllocations = 0;
+		renderTargetParams[RTS_BLOOM].numAttachmentRefs = 0;
+		renderTargetParams[RTS_BLOOM].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_BLOOM].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM].numSurfacesPerTarget;
+
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

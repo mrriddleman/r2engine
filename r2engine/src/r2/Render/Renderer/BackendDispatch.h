@@ -23,6 +23,7 @@ namespace r2::draw::dispatch
 	void SetRenderTargetMipLevel(const void* data);
 	void CopyRenderTargetColorTexture(const void* data);
 	void SetTexture(const void* data);
+	void BindImageTexture(const void* data);
 }
 
 

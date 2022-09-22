@@ -193,6 +193,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 15916598719309061090,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DownSamplePreFilter.cs",
+      binaryPath: ""
+    },
+    {
       shaderName: 9495897517157999738,
       vertexPath: "",
       fragmentPath: "",

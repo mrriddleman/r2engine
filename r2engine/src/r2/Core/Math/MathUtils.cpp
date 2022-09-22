@@ -51,7 +51,7 @@ namespace r2::math
         {
             return Lerp(q1, -q2, t);
         }
-
+        
         return glm::normalize(result);
     }
 

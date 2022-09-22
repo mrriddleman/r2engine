@@ -35,7 +35,7 @@ namespace r2::draw::rt::impl
 		{
 			if (isHDR)
 			{
-				format.internalformat = alpha ? GL_RGBA16F : GL_RGB16F;
+				format.internalformat = alpha ? GL_RGBA16F : GL_R11F_G11F_B10F;
 			}
 			else
 			{

@@ -29,6 +29,7 @@ namespace r2::draw::cmd
 	extern u32 DEPTH_LEQUAL;
 	extern u32 DEPTH_EQUAL;
 
+
 	struct DrawState
 	{
 		DrawLayer layer;
@@ -261,6 +262,23 @@ namespace r2::draw::cmd
 	};
 
 	static_assert(std::is_pod<SetTexture>::value == true, "BlurTexture must be a POD.");
+
+	//For reading/writing compute images
+	struct BindImageTexture
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		u32 textureUnit;
+		u32 texture;
+		u32 mipLevel;
+		b32 layered;
+		s32 layer;
+		u32 access;
+		u32 format;
+	};
+
+	static_assert(std::is_pod<BindImageTexture>::value == true, "BindImageTexture must be a POD.");
+
 
 	u64 LargestCommand();
 }

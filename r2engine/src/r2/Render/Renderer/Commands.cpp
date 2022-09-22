@@ -19,6 +19,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction SetRenderTargetMipLevel::DispatchFunc = &r2::draw::dispatch::SetRenderTargetMipLevel;
 	const r2::draw::dispatch::BackendDispatchFunction CopyRenderTargetColorTexture::DispatchFunc = &r2::draw::dispatch::CopyRenderTargetColorTexture;
 	const r2::draw::dispatch::BackendDispatchFunction SetTexture::DispatchFunc = &r2::draw::dispatch::SetTexture;
+	const r2::draw::dispatch::BackendDispatchFunction BindImageTexture::DispatchFunc = &r2::draw::dispatch::BindImageTexture;
 
 	u64 LargestCommand()
 	{
@@ -37,7 +38,8 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::ConstantUint),
 			sizeof(r2::draw::cmd::SetRenderTargetMipLevel),
 			sizeof(r2::draw::cmd::CopyRenderTargetColorTexture),
-			sizeof(r2::draw::cmd::SetTexture)
+			sizeof(r2::draw::cmd::SetTexture),
+			sizeof(r2::draw::cmd::BindImageTexture),
 			});
 	}
 }

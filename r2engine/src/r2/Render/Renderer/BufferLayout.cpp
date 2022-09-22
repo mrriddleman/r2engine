@@ -82,6 +82,11 @@ layout (std140, binding = 4) uniform SSRParams
 	int ssr_maxBinarySearchSamples;
 };
 
+layout (std140, binding = 5) uniform BloomParams
+{
+	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee
+};
+
 ssbo buffers:
 
 

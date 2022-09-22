@@ -118,6 +118,8 @@ namespace r2::draw::rendererimpl
 	
 	void SetTexture(u32 textureContainerUniformLocation, u64 textureContainer, u32 texturePageUniformLocation, float texturePage, u32 textureLodUniformLocation, float textureLod);
 
+	void BindImageTexture(u32 textureUnit, u32 texture, u32 mipLevel, b32 layered, u32 layer, u32 access, u32 format);
+
 	//events
 	void SetWindowSize(u32 width, u32 height);
 	void SetWindowPosition(s32 xPos, s32 yPos);

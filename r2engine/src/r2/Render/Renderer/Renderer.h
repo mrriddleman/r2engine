@@ -238,6 +238,7 @@ namespace r2::draw
 		ConstantConfigHandle mClusterVolumesConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mDispatchComputeConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mSSRConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mBloomConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -276,6 +277,9 @@ namespace r2::draw
 
 		ShaderHandle mVerticalBlurShader;
 		ShaderHandle mHorizontalBlurShader;
+
+		ShaderHandle mBloomDownSampleShader;
+
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -370,6 +374,12 @@ namespace r2::draw
 
 		bool mSSRNeedsUpdate = true;
 		//------------END SSR data-----------------
+
+		//------------BEGIN Bloom data-----------------
+		float mBloomThreshold = 1.0f;
+		float mBloomKnee = 0.1f;
+		float mBloomIntensity = 1.0f;
+		//--------------END Bloom data-----------------
 
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG

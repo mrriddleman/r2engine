@@ -148,4 +148,12 @@ namespace r2::draw::dispatch
 
 		rendererimpl::SetTexture(realData->textureContainerUniformLocation, realData->textureContainer, realData->texturePageUniformLocation, realData->texturePage, realData->textureLodUniformLocation, realData->textureLod);
 	}
+
+	void BindImageTexture(const void* data)
+	{
+		const cmd::BindImageTexture* realData = static_cast<const r2::draw::cmd::BindImageTexture*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+
+		rendererimpl::BindImageTexture(realData->textureUnit, realData->texture, realData->mipLevel, realData->layered, realData->layer, realData->access, realData->format);
+	}
 }

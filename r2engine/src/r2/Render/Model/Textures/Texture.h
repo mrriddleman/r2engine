@@ -24,7 +24,14 @@ namespace r2::draw::tex
 	extern s32 FILTER_NEAREST_MIPMAP_NEAREST;
 	extern s32 FILTER_LINEAR_MIPMAP_NEAREST;
 	extern s32 FILTER_LINEAR_MIPMAP_LINEAR;
+
 	extern u32 COLOR_FORMAT_R8;
+	extern u32 COLOR_FORMAT_R11F_G11F_B10F;
+
+
+	extern u32 READ_ONLY;
+	extern u32 WRITE_ONLY;
+
 
 	struct TextureContainer;
 

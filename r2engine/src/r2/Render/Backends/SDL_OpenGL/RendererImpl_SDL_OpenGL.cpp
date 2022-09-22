@@ -117,6 +117,8 @@ namespace r2::draw::cmd
 	u32 DEPTH_LESS = GL_LESS;
 	u32 DEPTH_LEQUAL = GL_LEQUAL;
 	u32 DEPTH_EQUAL = GL_EQUAL;
+
+
 }
 
 namespace r2::draw::rendererimpl
@@ -1019,6 +1021,11 @@ namespace r2::draw::rendererimpl
 		glUniform1ui64ARB(textureContainerUniformLocation, textureContainer);
 		glUniform1f(texturePageUniformLocation, texturePage);
 		glUniform1f(textureLodUniformLocation, textureLod);
+	}
+
+	void BindImageTexture(u32 textureUnit, u32 texture, u32 mipLevel, b32 layered, u32 layer, u32 access, u32 format)
+	{
+		glBindImageTexture(textureUnit, texture, mipLevel, layered ? GL_TRUE : GL_FALSE, layer, access, format);
 	}
 
 	//events
