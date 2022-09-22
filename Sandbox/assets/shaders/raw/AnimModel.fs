@@ -1343,8 +1343,8 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 	
 	const float BLEND_THRESHOLD = 0.1f;
 
-    float nextSplit = gPartitions.intervalEnd[layer];//gPartitions[layer].intervalEndBias.x;
-    float splitSize = layer == 0 ? nextSplit : nextSplit - gPartitions.intervalEnd[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
+    float nextSplit =  gPartitions.intervalEnd[layer] - gPartitions.intervalBegin[layer];//gPartitions[layer].intervalEndBias.x;
+    float splitSize = layer == 0 ? nextSplit :  gPartitions.intervalEnd[layer-1] - gPartitions.intervalBegin[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
     float fadeFactor = nextSplit - (LinearizeDepth(gl_FragCoord.z));
 
     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
