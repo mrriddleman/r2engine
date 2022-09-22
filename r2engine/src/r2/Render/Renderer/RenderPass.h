@@ -25,7 +25,6 @@ namespace r2::draw
 		RPT_ZPREPASS_SHADOWS,
 		RPT_CLUSTERS,
 		RPT_SSR,
-		RPT_BLOOM,
 		NUM_RENDER_PASSES
 	};
 
