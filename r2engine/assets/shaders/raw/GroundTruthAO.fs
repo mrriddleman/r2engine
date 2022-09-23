@@ -57,9 +57,18 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface[2];
+	Tex2DAddress zPrePassShadowsSurface[2];
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
+	Tex2DAddress normalSurface;
+	Tex2DAddress specularSurface;
+	Tex2DAddress ssrSurface;
+	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress ssrConeTracedSurface;
+	Tex2DAddress bloomDownSampledSurface;
+	Tex2DAddress bloomBlurSurface;
+	Tex2DAddress bloomUpSampledSurface;
 };
+
 
 in VS_OUT
 {
@@ -74,9 +83,9 @@ vec3 GetViewSpacePos(vec2 uv)
 {
 	uv *= vec2(1.0 / fovAspectResXResY.z, 1.0 / fovAspectResXResY.w);
 
-	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowSurface[0].page);
+	vec3 texCoord = vec3(uv.r, uv.g, zPrePassShadowsSurface[0].page);
 	//vec4 depth4 = textureGather(sampler2DArray(zPrePassShadowSurface.container), texCoord);
-	float depth = texture(sampler2DArray(zPrePassShadowSurface[0].container), texCoord).r;
+	float depth = texture(sampler2DArray(zPrePassShadowsSurface[0].container), texCoord).r;
 	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
 
 	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);

@@ -59,9 +59,18 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface[2]; //current in 0
+	Tex2DAddress zPrePassShadowsSurface[2];
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
+	Tex2DAddress normalSurface;
+	Tex2DAddress specularSurface;
+	Tex2DAddress ssrSurface;
+	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress ssrConeTracedSurface;
+	Tex2DAddress bloomDownSampledSurface;
+	Tex2DAddress bloomBlurSurface;
+	Tex2DAddress bloomUpSampledSurface;
 };
+
 
 
 float SampleTextureF(Tex2DAddress tex, vec2 uv, vec2 offset)
@@ -89,11 +98,11 @@ vec2 CalculateVelocity(Tex2DAddress currentDepthTex);
 void main()
 {
 	const float ao = SampleTextureF(ambientOcclusionDenoiseSurface, fs_in.texCoords.xy, vec2(0));
-	const vec2 velocity = CalculateVelocity(zPrePassShadowSurface[0]);
+	const vec2 velocity = CalculateVelocity(zPrePassShadowsSurface[0]);
 
 	const vec2 uvMinusVel = fs_in.texCoords.xy - velocity;
 
-	vec4 depthPrev4 = GatherOffset(zPrePassShadowSurface[1], uvMinusVel, ivec2(0));
+	vec4 depthPrev4 = GatherOffset(zPrePassShadowsSurface[1], uvMinusVel, ivec2(0));
 
 	vec4 aoAcc4 = vec4(SampleTextureF(ambientOcclusionTemporalDenoiseSurface[1], uvMinusVel, ivec2(0)));
 
@@ -108,7 +117,7 @@ void main()
 	bilinearWeights[2] = (1.0 - weightX) * (1.0 - weightY);
 	bilinearWeights[3] = weightX * (1.0 - weightY);
 
-	const float depthCurr = SampleTextureF(zPrePassShadowSurface[0], fs_in.texCoords.xy, vec2(0));
+	const float depthCurr = SampleTextureF(zPrePassShadowsSurface[0], fs_in.texCoords.xy, vec2(0));
 	const float vsDepthCurr = VsDepthFromCsDepth(depthCurr, exposureNearFar.y);
 
 	float weight = 0;

@@ -37,9 +37,18 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress pointLightShadowsSurface;
 	Tex2DAddress ambientOcclusionSurface;
 	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowSurface[2];
+	Tex2DAddress zPrePassShadowsSurface[2];
 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
+	Tex2DAddress normalSurface;
+	Tex2DAddress specularSurface;
+	Tex2DAddress ssrSurface;
+	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress ssrConeTracedSurface;
+	Tex2DAddress bloomDownSampledSurface;
+	Tex2DAddress bloomBlurSurface;
+	Tex2DAddress bloomUpSampledSurface;
 };
+
 
 in VS_OUT
 {
@@ -111,10 +120,10 @@ vec2 SpatialDenoise()
 	ao4s[2] = GatherOffset(ambientOcclusionSurface, fs_in.texCoords.xy, ivec2(-2, 0));
 	ao4s[3] = GatherOffset(ambientOcclusionSurface, fs_in.texCoords.xy, ivec2(-2, -2));
 
-	depth4s[0] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(0));
-	depth4s[1] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(0, -2));
-	depth4s[2] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(-2, 0));
-	depth4s[3] = GatherOffset(zPrePassShadowSurface[0], fs_in.texCoords.xy, ivec2(-2, -2));
+	depth4s[0] = GatherOffset(zPrePassShadowsSurface[0], fs_in.texCoords.xy, ivec2(0));
+	depth4s[1] = GatherOffset(zPrePassShadowsSurface[0], fs_in.texCoords.xy, ivec2(0, -2));
+	depth4s[2] = GatherOffset(zPrePassShadowsSurface[0], fs_in.texCoords.xy, ivec2(-2, 0));
+	depth4s[3] = GatherOffset(zPrePassShadowsSurface[0], fs_in.texCoords.xy, ivec2(-2, -2));
 
 
 	const float near = exposureNearFar.y;
