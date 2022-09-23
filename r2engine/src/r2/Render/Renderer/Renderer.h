@@ -279,6 +279,7 @@ namespace r2::draw
 		ShaderHandle mHorizontalBlurShader;
 
 		ShaderHandle mBloomDownSampleShader;
+		ShaderHandle mBloomBlurPreFilterShader;
 		ShaderHandle mBloomUpSampleShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;

@@ -573,6 +573,7 @@ namespace r2::draw::renderer
 	void CreateSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateConeTracedSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateBloomSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
+	void CreateBloomBlurSurface(Renderer& renderer, u32 resolutionX , u32 resolutionY , u32 numMips);
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
@@ -1007,6 +1008,9 @@ namespace r2::draw::renderer
 
 		newRenderer->mBloomDownSampleShader = shadersystem::FindShaderHandle(STRING_ID("DownSamplePreFilter"));
 		CheckIfValidShader(*newRenderer, newRenderer->mBloomDownSampleShader, "DownSamplePreFilter");
+
+		newRenderer->mBloomBlurPreFilterShader = shadersystem::FindShaderHandle(STRING_ID("BlurPrefilter"));
+		CheckIfValidShader(*newRenderer, newRenderer->mBloomBlurPreFilterShader, "BlurPrefilter");
 
 		newRenderer->mBloomUpSampleShader = shadersystem::FindShaderHandle(STRING_ID("UpSampleBlur"));
 		CheckIfValidShader(*newRenderer, newRenderer->mBloomUpSampleShader, "UpSampleBlur");
@@ -4127,8 +4131,10 @@ namespace r2::draw::renderer
 		EndRenderPass(renderer, RPT_SSR, *renderer.mSSRBucket);
 
 		//@NOTE: need to clear the bloom render target
-	//	BeginRenderPass<key::Basic>(renderer, RPT_BLOOM, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
-	//	EndRenderPass<key::Basic>(renderer, RPT_BLOOM, *renderer.mCommandBucket);
+		//key::Basic clearBloomKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, 0);
+
+		//BeginRenderPass<key::Basic>(renderer, RPT_BLOOM, clearGBufferOptions, *renderer.mCommandBucket, clearBloomKey, *renderer.mCommandArena);
+		//EndRenderPass<key::Basic>(renderer, RPT_BLOOM, *renderer.mCommandBucket);
 
 		key::Basic finalBatchClearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, finalBatchOffsets.shaderId);
 
@@ -4220,7 +4226,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
 		//renderer.mRenderPasses[RPT_BLOOM] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_BLOOM, passConfig, {}, RTS_BLOOM, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_UPSAMPLE }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5111,6 +5117,9 @@ namespace r2::draw::renderer
 		const auto& bloomColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_BLOOM].colorAttachments, 0);
 		const auto bloomTexture = bloomColorAttachment.texture[bloomColorAttachment.currentTexture];
 		
+		const auto& bloomBlurColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_BLOOM_BLUR].colorAttachments, 0);
+		const auto& bloomBlurTexture = bloomBlurColorAttachment.texture[bloomBlurColorAttachment.currentTexture];
+
 		const auto& bloomUpSampleColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE].colorAttachments, 0);
 		const auto bloomUpSampleTexture = bloomUpSampleColorAttachment.texture[bloomUpSampleColorAttachment.currentTexture];
 
@@ -5195,13 +5204,50 @@ namespace r2::draw::renderer
 			dispatchBloomDownSamplePreFilterCMD->numGroupsZ = 1;
 		}
 
+		for (u32 i = 0; i < numMips; ++i)
+		{
+			const MipSize& mipSize = r2::sarr::At(*mipSizes, i);
+
+			key::Basic dispatchBloomDownSampleKey = key::GenerateBasicKey(0, 0, DL_EFFECT, 0, 1, renderer.mBloomBlurPreFilterShader, i);
+
+			cmd::FillConstantBuffer* fillResolutionCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, config.layout.GetElements().at(1).size);
+
+			glm::uvec4 bloomResolution = glm::uvec4(mipSize.imageWidth * 2, mipSize.imageHeight * 2, mipSize.imageWidth, mipSize.imageHeight);
+
+			cmd::FillConstantBufferCommand(fillResolutionCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomResolution), config.layout.GetElements().at(1).size, config.layout.GetElements().at(1).offset);
+
+			cmd::BindImageTexture* bindInputImageTextureCMD = AppendCommand<cmd::FillConstantBuffer, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, fillResolutionCMD, 0); //<key::Basic, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, 0);
+			bindInputImageTextureCMD->textureUnit = 0;
+			bindInputImageTextureCMD->texture = bloomTexture.container->texId;
+			bindInputImageTextureCMD->mipLevel = i;
+			bindInputImageTextureCMD->layered = true;
+			bindInputImageTextureCMD->layer = bloomTexture.sliceIndex;
+			bindInputImageTextureCMD->format = bloomColorAttachment.format.internalformat;
+			bindInputImageTextureCMD->access = tex::READ_ONLY;
+
+			cmd::BindImageTexture* bindOutputImageTextureCMD = AppendCommand<cmd::BindImageTexture, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, bindInputImageTextureCMD, 0);
+			bindOutputImageTextureCMD->textureUnit = 1;
+			bindOutputImageTextureCMD->texture = bloomBlurTexture.container->texId;
+			bindOutputImageTextureCMD->mipLevel = i;
+			bindOutputImageTextureCMD->layered = true;
+			bindOutputImageTextureCMD->layer = bloomBlurTexture.sliceIndex;
+			bindOutputImageTextureCMD->format = bloomBlurColorAttachment.format.internalformat;
+			bindOutputImageTextureCMD->access = tex::WRITE_ONLY;
+
+			cmd::DispatchCompute* dispatchBloomDownSamplePreFilterCMD = AppendCommand<cmd::BindImageTexture, cmd::DispatchCompute, r2::mem::StackArena>(*renderer.mCommandArena, bindOutputImageTextureCMD, 0);
+
+			dispatchBloomDownSamplePreFilterCMD->numGroupsX = glm::max(static_cast<u32>(glm::ceil(float(mipSize.imageWidth) / float(WARP_SIZE))), 1u);
+			dispatchBloomDownSamplePreFilterCMD->numGroupsY = glm::max(static_cast<u32>(glm::ceil(float(mipSize.imageHeight) / float(WARP_SIZE))), 1u);
+			dispatchBloomDownSamplePreFilterCMD->numGroupsZ = 1;
+		}
+
 		u32 pass = 0;
 		for (s32 i = numMips - 1; i > 0; --i)
 		{
 			const MipSize& mipSize = r2::sarr::At(*mipSizes, i);
 			const MipSize& nextMipSize = r2::sarr::At(*mipSizes, i - 1);
 
-			key::Basic dispatchBloomUpSampleKey = key::GenerateBasicKey(0, 0, DL_EFFECT, 0, 1, renderer.mBloomUpSampleShader, pass);
+			key::Basic dispatchBloomUpSampleKey = key::GenerateBasicKey(0, 0, DL_EFFECT, 0, 2, renderer.mBloomUpSampleShader, pass);
 
 			cmd::FillConstantBuffer* fillResolutionCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomUpSampleKey, config.layout.GetElements().at(1).size);
 
@@ -5223,9 +5269,9 @@ namespace r2::draw::renderer
 
 			if (i == numMips - 1)
 			{
-				inputTexture1 = bloomTexture.container->texId;
-				inputTexture1Layer = bloomTexture.sliceIndex;
-				inputTexture1Format = bloomColorAttachment.format.internalformat;
+				inputTexture1 = bloomBlurTexture.container->texId;
+				inputTexture1Layer = bloomBlurTexture.sliceIndex;
+				inputTexture1Format = bloomBlurColorAttachment.format.internalformat;
 			}
 
 			cmd::BindImageTexture* bindInputImageTextureCMD = AppendCommand<cmd::FillConstantBuffer, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, fillFilterCMD, 0); //<key::Basic, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, dispatchBloomDownSampleKey, 0);
@@ -5239,11 +5285,11 @@ namespace r2::draw::renderer
 
 			cmd::BindImageTexture* bindInputImageTexture2CMD = AppendCommand<cmd::BindImageTexture, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, bindInputImageTextureCMD, 0);
 			bindInputImageTexture2CMD->textureUnit = 1;
-			bindInputImageTexture2CMD->texture = bloomTexture.container->texId;
+			bindInputImageTexture2CMD->texture = bloomBlurTexture.container->texId;
 			bindInputImageTexture2CMD->mipLevel = i-1;
 			bindInputImageTexture2CMD->layered = true;
-			bindInputImageTexture2CMD->layer = bloomTexture.sliceIndex;
-			bindInputImageTexture2CMD->format = bloomColorAttachment.format.internalformat;
+			bindInputImageTexture2CMD->layer = bloomBlurTexture.sliceIndex;
+			bindInputImageTexture2CMD->format = bloomBlurColorAttachment.format.internalformat;
 			bindInputImageTexture2CMD->access = tex::READ_ONLY;
 
 			cmd::BindImageTexture* bindOutputImageTextureCMD = AppendCommand<cmd::BindImageTexture, cmd::BindImageTexture, r2::mem::StackArena>(*renderer.mCommandArena, bindInputImageTexture2CMD, 0);
@@ -6387,6 +6433,7 @@ namespace r2::draw::renderer
 
 
 			CreateBloomSurface(renderer, resolutionX/2, resolutionY/2, 6); //divided by 2 because we start the downsample at half res
+			CreateBloomBlurSurface(renderer, resolutionX / 2, resolutionY / 2, 6);
 			CreateBloomSurfaceUpSampled(renderer, resolutionX / 2, resolutionY / 2, 6);
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
@@ -6506,6 +6553,15 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
 	}
 
+	void CreateBloomBlurSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_BLOOM_BLUR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_BLOOM_BLUR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_BLUR], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
+	}
+
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
 	{
 		ConstrainResolution(resolutionX, resolutionY);
@@ -6520,6 +6576,7 @@ namespace r2::draw::renderer
 		ClearAllShadowMapPages(renderer);
 
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_BLUR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
@@ -6691,6 +6748,16 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_BLOOM].numSurfacesPerTarget = 1;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM].numSurfacesPerTarget;
+
+		renderTargetParams[RTS_BLOOM_BLUR].numColorAttachments = 1;
+		renderTargetParams[RTS_BLOOM_BLUR].numDepthAttachments = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].maxPageAllocations = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].numAttachmentRefs = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_BLOOM_BLUR].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM_BLUR].numSurfacesPerTarget;
 
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numColorAttachments = 1;
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numDepthAttachments = 0;

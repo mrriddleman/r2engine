@@ -1410,11 +1410,11 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 
 	lightDepth -= bias;
 
-	vec2 receiverPlaneDepthBias = ComputeReceiverPlaneDepthBias(shadowPosDDX, shadowPosDDY);
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+	vec2 receiverPlaneDepthBias = vec2(0);// ComputeReceiverPlaneDepthBias(shadowPosDDX, shadowPosDDY);
+//	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
 
-	float fractionalSamplerError = 2 * dot(shadowMapSizeInv, receiverPlaneDepthBias);
-	lightDepth -= min(fractionalSamplerError, 0.01f);
+//	float fractionalSamplerError = 2 * dot(shadowMapSizeInv, receiverPlaneDepthBias);
+//	lightDepth -= min(fractionalSamplerError, 0.01f);
 
 
 	if(softShadows)

@@ -48,6 +48,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress convolvedGBUfferSurface[2];
 	Tex2DAddress ssrConeTracedSurface;
 	Tex2DAddress bloomDownSampledSurface;
+	Tex2DAddress bloomBlurSurface;
 	Tex2DAddress bloomUpSampledSurface;
 };
 
@@ -109,8 +110,8 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	// vec3 testCoord = vec3(uv.r, uv.g, bloomDownSampledSurface.page);
-	// vec3 testColor = textureLod(sampler2DArray(bloomDownSampledSurface.container), testCoord, 0).rgb;
+	// vec3 testCoord = vec3(uv.r, uv.g, bloomBlurSurface.page);
+	// vec3 testColor = textureLod(sampler2DArray(bloomBlurSurface.container), testCoord, 0).rgb;
 
 	// return vec4(testColor, 1);
 

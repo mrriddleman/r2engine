@@ -145,6 +145,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 13376651850759134355,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\BlurPrefilter.cs",
+      binaryPath: ""
+    },
+    {
       shaderName: 2323301175361195004,
       vertexPath: "",
       fragmentPath: "",
