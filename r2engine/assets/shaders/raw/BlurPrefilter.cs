@@ -20,22 +20,6 @@ layout (std140, binding = 5) uniform BloomParams
 	float textureLodToSample;	
 };
 
-float RGBToLuminance(vec3 rgb)
-{
-	return dot(rgb, vec3(0.2126, 0.7152, 0.0722));
-}
-
-vec3 PreFilter(vec3 c)
-{
-	float brightness = max(c.r, max(c.g, c.b));
-	float soft = brightness - bloomFilter.y;
-	soft = clamp(soft, 0, bloomFilter.z);
-	soft = soft * soft * bloomFilter.w;
-	float contribution = max(soft, brightness - bloomFilter.x);
-	contribution /= max(brightness, 0.0001);
-	return c * contribution;
-}
-
 void main()
 {
 	ivec2 outTexCoord = ivec2( gl_GlobalInvocationID.xy);
@@ -46,6 +30,7 @@ void main()
 
 	vec3 result = vec3(0);
 
+	//@NOTE(Serge): currently we're using this to offset the blur to shift it back to the left. Not sure why it's pulling right all the time
 	for(int x = -2; x < 6; ++x)
 	{
 	 	for (int y = -2; y < 6; ++y) 

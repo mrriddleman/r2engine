@@ -50,36 +50,30 @@ void main()
 	float x = bloomFilterRadiusIntensity.x;
 	float y = bloomFilterRadiusIntensity.y;
 
-	// ivec2 texCoord = ivec2(round(texCoordf.x  * float(bloomResolutions.x)), round(texCoordf.y  * float(bloomResolutions.y)) );
+	vec3 a = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb; 
+	vec3 b = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb;
+	vec3 c = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb; 
 
-	
-	// texCoord = clamp(texCoord, ivec2(0), ivec2(bloomResolutions.x, bloomResolutions.y));
+	vec3 d = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y, texturePageToSample), textureLodToSample).rgb;
+	vec3 e = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y, texturePageToSample), textureLodToSample).rgb;
+	vec3 f = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y, texturePageToSample), textureLodToSample).rgb;
 
-	vec3 a = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb; //imageLoad(inputImage, ivec2(texCoord.x - 2, texCoord.y + 2)).rgb;
-	vec3 b = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + 2)).rgb;
-	vec3 c = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y + 2 * y, texturePageToSample), textureLodToSample).rgb; //imageLoad(inputImage, ivec2(texCoord.x + 2, texCoord.y + 2)).rgb;
+	vec3 g = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;
+	vec3 h = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;
+	vec3 i = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;
 
-	vec3 d = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - 2, texCoord.y)).rgb;
-	vec3 e = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y)).rgb;
-	vec3 f = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x + 2, texCoord.y)).rgb;
+	vec3 j = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;
+	vec3 k = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;
+	vec3 l = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y - y, texturePageToSample), textureLodToSample).rgb;
+	vec3 m = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + x, texCoordf.y - y, texturePageToSample), textureLodToSample).rgb;
 
-	vec3 g = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - 2 * x, texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - 2, texCoord.y - 2)).rgb;
-	vec3 h = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x        , texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y - 2)).rgb;
-	vec3 i = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + 2 * x, texCoordf.y - 2 * y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x + 2, texCoord.y - 2)).rgb;
-
-	vec3 j = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - 1, texCoord.y + 1)).rgb;
-	vec3 k = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x + 1, texCoord.y + 1)).rgb;
-	vec3 l = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y - y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - 1, texCoord.y - 1)).rgb;
-	vec3 m = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x + x, texCoordf.y - y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x + 1, texCoord.y - 1)).rgb;
-
-	vec3 downSample =  e * 0.125;
+	vec3 downSample = e * 0.125;
 
 	downSample += (a+c+g+i) * 0.03125;
 	downSample += (b+d+f+h) * 0.0625;
 	downSample += (j+k+l+m) * 0.125;
 
 	downSample = PreFilter(downSample);
-
 
 	downSample = max(downSample, 0.0001f);
 
