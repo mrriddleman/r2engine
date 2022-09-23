@@ -5268,7 +5268,7 @@ namespace r2::draw::renderer
 
 			cmd::FillConstantBuffer* fillFilterCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, fillResolutionCMD, config.layout.GetElements().at(2).size);
 
-			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomFilterSize * mipSize.imageWidth, renderer.mBloomFilterSize * mipSize.imageHeight, renderer.mBloomIntensity, 0);
+			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomFilterSize, renderer.mBloomFilterSize, renderer.mBloomIntensity, 0);
 
 			cmd::FillConstantBufferCommand(fillFilterCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomFilterRadius), config.layout.GetElements().at(2).size, config.layout.GetElements().at(2).offset);
 

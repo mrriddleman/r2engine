@@ -46,15 +46,15 @@ void main()
 
 	vec3 result = vec3(0);
 
-	for(int x = -2; x < 2; ++x)
+	for(int x = -2; x < 6; ++x)
 	{
-	 	for (int y = -2; y < 2; ++y) 
+	 	for (int y = -2; y < 6; ++y) 
         {
          	result += textureLodOffset(sampler2DArray(textureContainerToSample), vec3(textureCoord, texturePageToSample), textureLodToSample, ivec2(x,y) ).rgb;
         }
 	}
 
-	result /= 16.0f;
+	result /= 64.0f;
 
 	imageStore(outputImage, outTexCoord, vec4(result, 1));
 }

@@ -28,8 +28,8 @@ void main()
 
 	vec2 texCoordf = vec2(outTexCoord) / vec2(bloomResolutions.z, bloomResolutions.w);
 	
-	float x = 1.0f / float(bloomResolutions.x);
-	float y = 1.0f / float(bloomResolutions.y);
+	float x = bloomFilterRadius.x;
+	float y = bloomFilterRadius.y;
 
 	vec3 a = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - x, texCoord.y + y)).rgb;
 	vec3 b = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x    , texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + y)).rgb;

@@ -47,8 +47,8 @@ void main()
 
 	vec2 texCoordf = (vec2(outTexCoord)) / vec2(bloomResolutions.z, bloomResolutions.w);
 
-	float x = 1.0f / float(bloomResolutions.x);
-	float y = 1.0f / float(bloomResolutions.y);
+	float x = bloomFilterRadiusIntensity.x;
+	float y = bloomFilterRadiusIntensity.y;
 
 	// ivec2 texCoord = ivec2(round(texCoordf.x  * float(bloomResolutions.x)), round(texCoordf.y  * float(bloomResolutions.y)) );
 
