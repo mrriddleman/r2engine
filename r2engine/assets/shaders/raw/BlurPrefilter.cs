@@ -6,9 +6,7 @@
 
 layout (local_size_x = WARP_SIZE, local_size_y = WARP_SIZE, local_size_z = 1) in;
 
-
-layout (binding = 0, r11f_g11f_b10f) uniform image2D inputImage;
-layout (binding = 1, r11f_g11f_b10f) uniform image2D outputImage;
+layout (binding = 0, r11f_g11f_b10f) uniform image2D outputImage;
 
 
 layout (std140, binding = 5) uniform BloomParams
@@ -16,6 +14,10 @@ layout (std140, binding = 5) uniform BloomParams
 	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
 	uvec4 bloomResolutions;
 	vec4 bloomFilterRadiusIntensity;
+
+	uint64_t textureContainerToSample;
+	float texturePageToSample;
+	float textureLodToSample;	
 };
 
 float RGBToLuminance(vec3 rgb)
@@ -40,13 +42,15 @@ void main()
 
 	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.w));
 
+	vec2 textureCoord = vec2(outTexCoord) / vec2(bloomResolutions.z, bloomResolutions.w);
+
 	vec3 result = vec3(0);
 
 	for(int x = -2; x < 2; ++x)
 	{
-		for (int y = -2; y < 2; ++y) 
+	 	for (int y = -2; y < 2; ++y) 
         {
-        	result += imageLoad(inputImage, ivec2(outTexCoord.x + x, outTexCoord.y + y)).rgb;
+         	result += textureLodOffset(sampler2DArray(textureContainerToSample), vec3(textureCoord, texturePageToSample), textureLodToSample, ivec2(x,y) ).rgb;
         }
 	}
 
