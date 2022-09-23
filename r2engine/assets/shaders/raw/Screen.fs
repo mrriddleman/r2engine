@@ -97,9 +97,6 @@ float NormalizeViewDepth(float depth)
 void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
-
-	//vec3 toneMapping = FilmicToneMapping(sampledColor.rgb);
-//	FragColor = vec4(vec3(LinearizeDepth(sampledColor.r)), 1.0);
 	FragColor = vec4(ACESFitted(sampledColor.rgb), 1.0);
 }
 

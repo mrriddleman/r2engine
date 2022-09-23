@@ -19,16 +19,14 @@ layout (std140, binding = 5) uniform BloomParams
 
 void main()
 {
-	float x = bloomFilterRadius.x;
-	float y = bloomFilterRadius.y;
+	float x = max(bloomFilterRadius.x, 1.0f);
+	float y = max(bloomFilterRadius.y, 1.0f);
 
 	ivec2 outTexCoord = ivec2( gl_GlobalInvocationID.xy );
 	ivec2 texCoord = ivec2(vec2(outTexCoord) * 0.5f);
 
 	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.w));
 	texCoord = clamp(texCoord, ivec2(0), ivec2(bloomResolutions.x, bloomResolutions.y));
-	
-
 
 	vec3 a = imageLoad(inputImage, ivec2(texCoord.x - x, texCoord.y + y)).rgb;
 	vec3 b = imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + y)).rgb;
@@ -50,6 +48,5 @@ void main()
 	vec3 curImageColor = imageLoad(inputImage2, outTexCoord).rgb;
 
 	imageStore(outputImage, outTexCoord, vec4(curImageColor + upsample, 1));
-
 }
 

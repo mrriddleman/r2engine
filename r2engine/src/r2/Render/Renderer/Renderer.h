@@ -379,7 +379,7 @@ namespace r2::draw
 		float mBloomThreshold = 1.0f;
 		float mBloomKnee = 0.1f;
 		float mBloomIntensity = 1.0f;
-		float mBloomFilterSize = 0.01f;
+		float mBloomFilterSize = 0.0005f;
 		//--------------END Bloom data-----------------
 
 		//------------BEGIN Debug Stuff--------------
