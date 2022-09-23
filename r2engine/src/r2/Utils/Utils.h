@@ -95,6 +95,8 @@ namespace r2::util
     u16 FloatToHalf(const f32 x);
 
     u32 FloatToU24(const f32 x);
+
+    u32 GetWarpSize();
 }
 
 #endif /* Utils_h */

@@ -94,4 +94,20 @@ namespace r2::draw::tex
 
 		return numMips;
 	}
+
+	u32 MaxMipsForTextureSizeBiggerThan(const r2::draw::tex::TextureHandle& textureHandle, u32 dim)
+	{
+		u32 numMips = 0;
+		u32 minDimension = glm::min(textureHandle.container->format.width, textureHandle.container->format.height);
+		u32 minTileDimension = dim;
+
+		while (minDimension > minTileDimension)
+		{
+			numMips++;
+
+			minDimension /= 2;
+		}
+
+		return numMips;
+	}
 }

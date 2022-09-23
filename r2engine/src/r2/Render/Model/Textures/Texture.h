@@ -169,7 +169,7 @@ namespace r2::draw::tex
 	const char* GetTextureTypeName(TextureType type);
 
 	u32 MaxMipsForSparseTextureSize(const r2::draw::tex::TextureHandle& textureHandle);
-
+	u32 MaxMipsForTextureSizeBiggerThan(const r2::draw::tex::TextureHandle& textureHandle, u32 dim);
 
 	namespace impl
 	{

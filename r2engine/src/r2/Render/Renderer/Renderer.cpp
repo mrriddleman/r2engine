@@ -6442,10 +6442,11 @@ namespace r2::draw::renderer
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
 			CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
 
+			u32 numBloomMips = tex::MaxMipsForTextureSizeBiggerThan(gbufferTexture, util::GetWarpSize());
 
-			CreateBloomSurface(renderer, resolutionX/2, resolutionY/2, 6); //divided by 2 because we start the downsample at half res
-			CreateBloomBlurSurface(renderer, resolutionX / 2, resolutionY / 2, 6);
-			CreateBloomSurfaceUpSampled(renderer, resolutionX / 2, resolutionY / 2, 6);
+			CreateBloomSurface(renderer, resolutionX/2, resolutionY/2, numBloomMips); //divided by 2 because we start the downsample at half res
+			CreateBloomBlurSurface(renderer, resolutionX / 2, resolutionY / 2, numBloomMips);
+			CreateBloomSurfaceUpSampled(renderer, resolutionX / 2, resolutionY / 2, numBloomMips);
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
