@@ -42,7 +42,7 @@ void main()
 
 	vec2 texCoordf = (vec2(outTexCoord)) / vec2(bloomResolutions.z, bloomResolutions.w);
 
-	ivec2 texCoord = ivec2( round((texCoordf.x ) * float(bloomResolutions.x)), floor((texCoordf.y ) * float(bloomResolutions.y)) );
+	ivec2 texCoord = ivec2(round(texCoordf.x  * float(bloomResolutions.x)), round(texCoordf.y  * float(bloomResolutions.y)) );
 
 	outTexCoord = clamp(outTexCoord, ivec2(0), ivec2(bloomResolutions.z, bloomResolutions.w));
 	texCoord = clamp(texCoord, ivec2(0), ivec2(bloomResolutions.x, bloomResolutions.y));

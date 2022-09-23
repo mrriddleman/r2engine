@@ -52,7 +52,5 @@ void main()
 
 	result /= 16.0f;
 
-	//result = imageLoad(inputImage, outTexCoord).rgb;// PreFilter(result);
-
 	imageStore(outputImage, outTexCoord, vec4(result, 1));
 }
