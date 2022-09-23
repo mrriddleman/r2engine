@@ -51,6 +51,13 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress bloomUpSampledSurface;
 };
 
+layout (std140, binding = 5) uniform BloomParams
+{
+	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
+	uvec4 bloomResolutions;
+	vec4 bloomFilterRadiusIntensity;
+};
+
 in VS_OUT
 {
 	vec3 normal;
@@ -102,6 +109,12 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
+	// vec3 testCoord = vec3(uv.r, uv.g, bloomDownSampledSurface.page);
+	// vec3 testColor = textureLod(sampler2DArray(bloomDownSampledSurface.container), testCoord, 0).rgb;
+
+	// return vec4(testColor, 1);
+
+
 	vec3 bloomCoord = vec3(uv.r, uv.g, bloomUpSampledSurface.page);
 	vec3 bloomColor = textureLod(sampler2DArray(bloomUpSampledSurface.container), bloomCoord, 0).rgb;
 
@@ -110,8 +123,8 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
-
-	return vec4(ssrSurfaceColor.rgb + mix(gbufferSurfaceColor.rgb, bloomColor, 0.05), 1.0);
+ 
+	return vec4(ssrSurfaceColor.rgb +  mix(gbufferSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)

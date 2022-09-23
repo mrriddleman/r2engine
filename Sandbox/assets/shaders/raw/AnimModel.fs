@@ -1455,7 +1455,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
 
     float nextSplit =  gPartitions.intervalEnd[layer] - gPartitions.intervalBegin[layer];//gPartitions[layer].intervalEndBias.x;
     float splitSize = layer == 0 ? nextSplit :  gPartitions.intervalEnd[layer-1] - gPartitions.intervalBegin[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = nextSplit - (LinearizeDepth(gl_FragCoord.z));
+    float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z)))/splitSize;
 
     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
     cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
@@ -1471,6 +1471,14 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
     	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows);
 
     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
+
+    	if(layer + 1 >= NUM_FRUSTUM_SPLITS - 1)
+    	{
+			nextSplitVisibility = 0;
+			shadowVisibility = 1;
+			lerpAmt = 1;
+    	}
+
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
     }
 

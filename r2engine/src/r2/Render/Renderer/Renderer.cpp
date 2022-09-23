@@ -1571,7 +1571,7 @@ namespace r2::draw::renderer
 		renderer.mBloomConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
 			{r2::draw::ShaderDataType::Float4, "bloom_Filter"},
 			{r2::draw::ShaderDataType::UInt4, "bloom_resolutions"},
-			{r2::draw::ShaderDataType::Float4, "bloom_filterRadius"}
+			{r2::draw::ShaderDataType::Float4, "bloom_filterRadiusXYIntensity"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -5212,7 +5212,7 @@ namespace r2::draw::renderer
 
 			cmd::FillConstantBuffer* fillFilterCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, r2::mem::StackArena>(*renderer.mCommandArena, fillResolutionCMD, config.layout.GetElements().at(2).size);
 
-			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomFilterSize * mipSize.imageWidth, renderer.mBloomFilterSize * mipSize.imageHeight, 0, 0);
+			glm::vec4 bloomFilterRadius = glm::vec4(renderer.mBloomFilterSize * mipSize.imageWidth, renderer.mBloomFilterSize * mipSize.imageHeight, renderer.mBloomIntensity, 0);
 
 			cmd::FillConstantBufferCommand(fillFilterCMD, bloomConstantBufferHandle, constBufferData->type, constBufferData->isPersistent, glm::value_ptr(bloomFilterRadius), config.layout.GetElements().at(2).size, config.layout.GetElements().at(2).offset);
 
@@ -6366,7 +6366,7 @@ namespace r2::draw::renderer
 			
 			renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, false, false);
 			
@@ -6925,7 +6925,7 @@ namespace r2::draw::renderer
 
 				UpdateSDSMLightSpaceBorder(renderer, partitionBorderLightSpace);
 				UpdateSDSMMaxScale(renderer, glm::vec4(maxPartitionScale, 0.0));
-				UpdateSDSMProjMultSplitScaleZMultLambda(renderer, 1, 1, 8, 1.2);
+				UpdateSDSMProjMultSplitScaleZMultLambda(renderer, 1.5, 1, 9, 1.2);
 				UpdateSDSMDialationFactor(renderer, DILATION_FACTOR);
 				UpdateSDSMReduceTileDim(renderer, REDUCE_TILE_DIM);
 				UpdateSDSMScatterTileDim(renderer, SCATTER_TILE_DIM);

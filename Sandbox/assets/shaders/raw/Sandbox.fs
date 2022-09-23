@@ -1067,7 +1067,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 
 	 	vec3 radiance = dirLight.lightProperties.color.rgb * dirLight.lightProperties.intensity * exposureNearFar.x;
 
-	 	float shadow = 1;
+	 	float shadow = 0;
 
 	 	if(dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 	 	{
@@ -1185,7 +1185,9 @@ float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSiz
 {
 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
 
-	depth += dot(uv * shadowMapSizeInv, receiverPlaneDepthBias);
+	//depth += dot(uv * shadowMapSizeInv, receiverPlaneDepthBias);
+
+	uv = clamp(uv, vec2(0), vec2(1));
 
 	vec3 coord = vec3(uv, cascadeIndex + gDirectionLightShadowMapPages[int(lightID)]);
 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
@@ -1408,11 +1410,11 @@ float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightI
 
 	lightDepth -= bias;
 
-	vec2 receiverPlaneDepthBias = vec2(0);//ComputeReceiverPlaneDepthBias(shadowPosDDX, shadowPosDDY);
+	vec2 receiverPlaneDepthBias = ComputeReceiverPlaneDepthBias(shadowPosDDX, shadowPosDDY);
 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
 
 	float fractionalSamplerError = 2 * dot(shadowMapSizeInv, receiverPlaneDepthBias);
-	//lightDepth -= min(fractionalSamplerError, 0.01f);
+	lightDepth -= min(fractionalSamplerError, 0.01f);
 
 
 	if(softShadows)
@@ -1494,11 +1496,18 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, 
     if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS - 1)
     {
     	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
-    	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
+    	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + 0, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows, shadowPosDDX, shadowPosDDY);
-
-    	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
+		float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows, shadowPosDDX, shadowPosDDY);
+		float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
+    	
+    	if(layer + 1 >= NUM_FRUSTUM_SPLITS - 1)
+    	{
+			nextSplitVisibility = 0;
+			shadowVisibility = 1;
+			lerpAmt = 1;
+    	}
+    	
     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
     }
 
