@@ -240,6 +240,7 @@ namespace r2::draw
 	{
 		u64 totalBytes =
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawState>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numModelRefs * AVG_NUM_OF_MESHES_PER_MODEL), alignment, headerSize, boundsChecking);
@@ -472,7 +473,13 @@ namespace r2::draw::renderer
 	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
+	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+
+
 	///More draw functions...
+
+
 	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic, light::LightType lightType);
 	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic);
 
@@ -1142,6 +1149,7 @@ namespace r2::draw::renderer
 				nextBatch.materialBatch.materialHandles = MAKE_SARRAY(*rendererArena, MaterialHandle, MAX_NUM_DRAWS * AVG_NUM_OF_MESHES_PER_MODEL);
 				nextBatch.models = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				nextBatch.drawState = MAKE_SARRAY(*rendererArena, cmd::DrawState, MAX_NUM_DRAWS);
+				nextBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
 
 				if (i == DrawType::DYNAMIC)
 				{
@@ -1387,6 +1395,7 @@ namespace r2::draw::renderer
 				FREE(nextBatch.boneTransforms, *arena);
 			}
 
+			FREE(nextBatch.numInstances, *arena);
 			FREE(nextBatch.drawState, *arena);
 			FREE(nextBatch.models, *arena);
 
@@ -5395,6 +5404,32 @@ namespace r2::draw::renderer
 
 	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
+		r2::SArray<glm::mat4>* modelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+		
+		r2::sarr::Push(*modelMatrices, modelMatrix);
+		
+		DrawModelOnLayerInstanced(renderer, layer, modelRefHandle, 1, materials, *modelMatrices, flags, boneTransforms);
+		
+		FREE(modelMatrices, *MEM_ENG_SCRATCH_PTR);
+	}
+
+	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	{
+		r2::SArray<u32>* instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
+
+		for (u64 i = 0; i < r2::sarr::Size(modelRefHandles); ++i)
+		{
+			r2::sarr::Push(*instances, 1u);
+		}
+
+		DrawModelsOnLayerInstanced(renderer, layer, modelRefHandles, *instances, materialHandles, modelMatrices, flags, boneTransforms);
+
+		FREE(instances, *MEM_ENG_SCRATCH_PTR);
+	}
+
+
+	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	{
 		if (renderer.mRenderBatches == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
@@ -5407,6 +5442,8 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "We haven't generated the layouts yet!");
 			return;
 		}
+
+		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
 
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
 		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
@@ -5432,7 +5469,9 @@ namespace r2::draw::renderer
 
 		r2::sarr::Push(*batch.modelRefs, modelRef);
 
-		r2::sarr::Push(*batch.models, modelMatrix);
+		r2::sarr::Append(*batch.models, modelMatrices);
+
+		r2::sarr::Push(*batch.numInstances, numInstances);
 
 		cmd::DrawState state;
 		state.depthEnabled = flags.IsSet(DEPTH_TEST);
@@ -5448,7 +5487,7 @@ namespace r2::draw::renderer
 			materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);//modelRef.mNumMaterialHandles;
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
-			
+
 			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
 			{
 				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));//modelRef.mMaterialHandles[i]);
@@ -5477,7 +5516,7 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5485,8 +5524,26 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(r2::sarr::Size(modelRefHandles) == r2::sarr::Size(modelMatrices), "These must be the same!");
+		const auto numInstancesInArray = r2::sarr::Size(numInstances);
+		const auto numModelMatrices = r2::sarr::Size(modelMatrices);
+
+		R2_CHECK(r2::sarr::Size(modelRefHandles) == numModelMatrices, "These must be the same!");
 		R2_CHECK(r2::sarr::Size(modelRefHandles) == r2::sarr::Size(flags), "These must be the same!");
+
+		R2_CHECK(r2::sarr::Size(modelRefHandles) == numInstancesInArray, "We should have the same number of model refs as instances to draw");
+
+#if R2_DEBUG
+		u32 numInstancesInTotal = 0;
+
+		for (u64 i = 0; i < numInstancesInArray; ++i)
+		{
+			numInstancesInTotal += static_cast<u32>(r2::sarr::At(numInstances, i));
+		}
+
+		R2_CHECK(numInstancesInTotal == numModelMatrices, "We should have the same amount of instances as there are model matrices");
+
+#endif
+
 
 		auto numModelRefs = r2::sarr::Size(modelRefHandles);
 
@@ -5530,6 +5587,8 @@ namespace r2::draw::renderer
 		r2::sarr::Append(*batch.modelRefs, modelRefs);
 
 		r2::sarr::Append(*batch.models, modelMatrices);
+
+		r2::sarr::Append(*batch.numInstances, numInstances);
 
 		const u64 numFlags = r2::sarr::Size(flags);
 
@@ -5584,7 +5643,7 @@ namespace r2::draw::renderer
 
 				for (u32 j = 0; j < materialBatchInfo.numMaterials; ++j)
 				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*materialHandles,j + materialOffset));
+					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*materialHandles, j + materialOffset));
 				}
 
 				materialOffset += materialBatchInfo.numMaterials;
@@ -7279,6 +7338,17 @@ namespace r2::draw::renderer
 	{
 		DrawModelsOnLayer(MENG.GetCurrentRendererRef(), layer, modelRefs, materialHandles, modelMatrices, flags, boneTransforms);
 	}
+
+	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	{
+		DrawModelOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandle, numInstances, materials, modelMatrices, flags, boneTransforms);
+	}
+
+	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	{
+		DrawModelsOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandles, numInstances, materialHandles, modelMatrices, flags, boneTransforms);
+	}
+
 
 	///More draw functions...
 	ShaderHandle GetDepthShaderHandle(bool isDynamic)
