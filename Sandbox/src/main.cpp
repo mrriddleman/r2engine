@@ -451,12 +451,23 @@ public:
         microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, microbatMat);
 
+		glm::mat4 microbatMat2 = glm::mat4(1.0f);
+		microbatMat2 = glm::translate(microbatMat2, glm::vec3(0, 1, 0.1));
+		microbatMat2 = glm::rotate(microbatMat2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		microbatMat2 = glm::scale(microbatMat2, glm::vec3(0.01f));
+		r2::sarr::Push(*animModelMats, microbatMat2);
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
         skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 0.1));
         skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, skeletonModel);
+
+		glm::mat4 skeletonModel2 = glm::mat4(1.0f);
+		skeletonModel2 = glm::translate(skeletonModel2, glm::vec3(-3, 1, 0.1));
+		skeletonModel2 = glm::rotate(skeletonModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		skeletonModel2 = glm::scale(skeletonModel2, glm::vec3(0.01f));
+		r2::sarr::Push(*animModelMats, skeletonModel2);
 
 
         glm::mat4 ellenModel = glm::mat4(1.0f);
@@ -1166,20 +1177,31 @@ public:
       //  R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
 
         //Draw the bat
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
+		r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 0));
+		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 1));
+      //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
+		r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 0), 2, nullptr, *microBatModelMats, animDrawFlags, mBatBoneTransforms);
+        FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
+
 
         //Draw the Skeleton
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
+		r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
+		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
+      //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 1), 2, nullptr, *skeletonModelMats, animDrawFlags, mSkeletonBoneTransforms);
+        FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw Ellen
         //r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
         
-        r2::SArray<glm::mat4>* modelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-        r2::sarr::Push(*modelMats, r2::sarr::At(*animModelMats, 2));
-        r2::sarr::Push(*modelMats, r2::sarr::At(*animModelMats, 3));
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *modelMats, animDrawFlags, mEllenBoneTransforms);
+        r2::SArray<glm::mat4>* ellenModelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+        r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
+        r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *ellenModelMats, animDrawFlags, mEllenBoneTransforms);
 
-        FREE(modelMats, *MEM_ENG_SCRATCH_PTR);
+        FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the Skybox
         r2::draw::DrawFlags skyboxDrawFlags;
@@ -1226,8 +1248,8 @@ public:
         {
 
             r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 1), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 4), glm::vec4(1, 1, 0, 1));
           
         }
 
