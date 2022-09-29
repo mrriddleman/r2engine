@@ -377,6 +377,9 @@ public:
         mBatBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mBatDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
         
+        mBat2BoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
+        mBat2DebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
+
 		mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
 		mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
@@ -1129,10 +1132,12 @@ public:
         //r2::sarr::Clear(*mDebugBones);
 
         r2::sarr::Clear(*mBatBoneTransforms);
+        r2::sarr::Clear(*mBat2BoneTransforms);
         r2::sarr::Clear(*mSkeletonBoneTransforms);
         r2::sarr::Clear(*mEllenBoneTransforms);
 
         r2::sarr::Clear(*mBatDebugBones);
+        r2::sarr::Clear(*mBat2DebugBones);
         r2::sarr::Clear(*mSkeletonDebugBones);
         r2::sarr::Clear(*mEllenDebugBones);
 
@@ -1140,10 +1145,14 @@ public:
   //      auto curTime = time;
 
         const r2::draw::Animation* microbatAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
+        const r2::draw::Animation* microbatAnimation3 = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
+
         const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
         const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
         r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
+
+        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
 
         r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
         
@@ -1178,10 +1187,18 @@ public:
 
         //Draw the bat
 		r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+        r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
+
 		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 0));
 		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 1));
+
+        r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
+        r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
+
       //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
-		r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 0), 2, nullptr, *microBatModelMats, animDrawFlags, mBatBoneTransforms);
+		r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 0), 2, nullptr, *microBatModelMats, animDrawFlags, false, allMicroBatBoneTransforms);
+        
+        FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
         FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
 
 
@@ -1190,7 +1207,7 @@ public:
 		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
 		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
       //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 1), 2, nullptr, *skeletonModelMats, animDrawFlags, mSkeletonBoneTransforms);
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 1), 2, nullptr, *skeletonModelMats, animDrawFlags, true, mSkeletonBoneTransforms);
         FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw Ellen
@@ -1199,7 +1216,7 @@ public:
         r2::SArray<glm::mat4>* ellenModelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *ellenModelMats, animDrawFlags, mEllenBoneTransforms);
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *ellenModelMats, animDrawFlags, true, mEllenBoneTransforms);
 
         FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
 
@@ -1279,9 +1296,14 @@ public:
 		FREE(mSkeletonBoneTransforms, *linearArenaPtr);
 		FREE(mSkeletonDebugBones, *linearArenaPtr);
 
+        FREE(mBat2BoneTransforms, *linearArenaPtr);
+        FREE(mBat2DebugBones, *linearArenaPtr);
+
 		FREE(mBatBoneTransforms, *linearArenaPtr);
 		FREE(mBatDebugBones, *linearArenaPtr);
 
+        
+        
         FREE(mSkyboxMaterialHandles, *linearArenaPtr);
 
         FREE(mStaticModelMaterialHandles, *linearArenaPtr);
@@ -1495,7 +1517,9 @@ private:
     r2::SArray<glm::mat4>* animModelMats;
 
     r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;
+    r2::SArray<r2::draw::ShaderBoneTransform>* mBat2BoneTransforms;
     r2::SArray<r2::draw::DebugBone>* mBatDebugBones;
+    r2::SArray<r2::draw::DebugBone>* mBat2DebugBones;
 
 	r2::SArray<r2::draw::ShaderBoneTransform>* mSkeletonBoneTransforms;
 	r2::SArray<r2::draw::DebugBone>* mSkeletonDebugBones;

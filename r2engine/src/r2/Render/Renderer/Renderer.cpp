@@ -252,6 +252,7 @@ namespace r2::draw
 
 		if (numBoneTransforms > 0)
 		{
+			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<b32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking);
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ShaderBoneTransform>::MemorySize(numBoneTransforms), alignment, headerSize, boundsChecking);
 		}
 
@@ -473,8 +474,8 @@ namespace r2::draw::renderer
 	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
-	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 	///More draw functions...
@@ -1154,6 +1155,7 @@ namespace r2::draw::renderer
 				if (i == DrawType::DYNAMIC)
 				{
 					nextBatch.boneTransforms = MAKE_SARRAY(*rendererArena, ShaderBoneTransform, MAX_NUM_BONES);
+					nextBatch.useSameBoneTransformsForInstances = MAKE_SARRAY(*rendererArena, b32, MAX_NUM_DRAWS);
 				}
 				else
 				{
@@ -1392,6 +1394,7 @@ namespace r2::draw::renderer
 			
 			if (i == DrawType::DYNAMIC)
 			{
+				FREE(nextBatch.useSameBoneTransformsForInstances, *arena);
 				FREE(nextBatch.boneTransforms, *arena);
 			}
 
@@ -3316,13 +3319,26 @@ namespace r2::draw::renderer
 			const ModelRef& modelRef = r2::sarr::At(*dynamicRenderBatch.modelRefs, i);
 
 			u32 numInstances = r2::sarr::At(*dynamicRenderBatch.numInstances, i);
+			b32 useSameBoneTransformsForInstances = r2::sarr::At(*dynamicRenderBatch.useSameBoneTransformsForInstances, i);
 
-			for (u32 j = 0; j < numInstances; ++j)
+			if (useSameBoneTransformsForInstances)
 			{
-				r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
+				for (u32 j = 0; j < numInstances; ++j)
+				{
+					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
+				}
+				
+				boneOffset += modelRef.mNumBones;
 			}
+			else
+			{
+				for (u32 j = 0; j < numInstances; ++j)
+				{
+					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 
-			boneOffset += modelRef.mNumBones;
+					boneOffset += modelRef.mNumBones;
+				}
+			}
 		}
 
 		dynamicDrawCommandBatchSize = totalSubCommands - staticDrawCommandBatchSize;
@@ -4194,6 +4210,7 @@ namespace r2::draw::renderer
 			if (batch.boneTransforms)
 			{
 				r2::sarr::Clear(*batch.boneTransforms);
+				r2::sarr::Clear(*batch.useSameBoneTransformsForInstances);
 			}
 		}
 	}
@@ -4240,14 +4257,12 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
-		//renderer.mRenderPasses[RPT_BLOOM] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_BLOOM, passConfig, {}, RTS_BLOOM, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
-	//	rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_BLOOM]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SSR]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SHADOWS]);
@@ -5411,7 +5426,7 @@ namespace r2::draw::renderer
 		
 		r2::sarr::Push(*modelMatrices, modelMatrix);
 		
-		DrawModelOnLayerInstanced(renderer, layer, modelRefHandle, 1, materials, *modelMatrices, flags, boneTransforms);
+		DrawModelOnLayerInstanced(renderer, layer, modelRefHandle, 1, materials, *modelMatrices, flags, true, boneTransforms);
 		
 		FREE(modelMatrices, *MEM_ENG_SCRATCH_PTR);
 	}
@@ -5419,19 +5434,20 @@ namespace r2::draw::renderer
 	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		r2::SArray<u32>* instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
-
+		r2::SArray<b32>* useSameBoneTransformsForInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, b32, r2::sarr::Size(modelRefHandles));
 		for (u64 i = 0; i < r2::sarr::Size(modelRefHandles); ++i)
 		{
 			r2::sarr::Push(*instances, 1u);
+			r2::sarr::Push(*useSameBoneTransformsForInstances, 1u);
 		}
 
-		DrawModelsOnLayerInstanced(renderer, layer, modelRefHandles, *instances, materialHandles, modelMatrices, flags, boneTransforms);
-
+		DrawModelsOnLayerInstanced(renderer, layer, modelRefHandles, *instances, materialHandles, modelMatrices, flags, useSameBoneTransformsForInstances, boneTransforms);
+		
+		FREE(useSameBoneTransformsForInstances, *MEM_ENG_SCRATCH_PTR);
 		FREE(instances, *MEM_ENG_SCRATCH_PTR);
 	}
 
-
-	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5447,7 +5463,7 @@ namespace r2::draw::renderer
 		}
 
 		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
-
+		
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
 		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
 
@@ -5515,11 +5531,12 @@ namespace r2::draw::renderer
 		if (drawType == DYNAMIC)
 		{
 			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
+			r2::sarr::Push(*batch.useSameBoneTransformsForInstances, useSameBoneTransformsForInstances);
 			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
 		}
 	}
 
-	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5653,6 +5670,11 @@ namespace r2::draw::renderer
 		if (drawType == DYNAMIC)
 		{
 			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
+			
+			R2_CHECK(useSameBoneTransformsForInstances != nullptr &&  r2::sarr::Size(*useSameBoneTransformsForInstances) == r2::sarr::Size(numInstances), "These should be the same");
+
+			r2::sarr::Append(*batch.useSameBoneTransformsForInstances, *useSameBoneTransformsForInstances);
+
 			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
 		}
 
@@ -7338,14 +7360,14 @@ namespace r2::draw::renderer
 		DrawModelsOnLayer(MENG.GetCurrentRendererRef(), layer, modelRefs, materialHandles, modelMatrices, flags, boneTransforms);
 	}
 
-	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModelOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandle, numInstances, materials, modelMatrices, flags, boneTransforms);
+		DrawModelOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandle, numInstances, materials, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
 	}
 
-	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModelsOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandles, numInstances, materialHandles, modelMatrices, flags, boneTransforms);
+		DrawModelsOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandles, numInstances, materialHandles, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
 	}
 
 

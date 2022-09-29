@@ -141,7 +141,7 @@ namespace r2::draw
 		r2::SArray<cmd::DrawState>* drawState = nullptr; //stuff to help generate the keys
 
 		r2::SArray<u32>* numInstances = nullptr;
-
+		r2::SArray<b32>* useSameBoneTransformsForInstances = nullptr;
 		PrimitiveType primitiveType = PrimitiveType::TRIANGLES;
 
 		static u64 MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking);
@@ -498,8 +498,8 @@ namespace r2::draw::renderer
 	void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	
-	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 
