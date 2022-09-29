@@ -3139,11 +3139,10 @@ namespace r2::draw::renderer
 		u32 cameraDepth;
 	};
 
-	//@TODO(Serge): pass in an array of u32 that will act as the material offsets per draw ID
-	//				Then make a new big buffer ssbo that will store them and upload them along with the other materials
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<u32>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
+		u32 numModelInstances = 0;
 
 		for (u64 modelIndex = 0; modelIndex < numModels; ++modelIndex)
 		{
@@ -3151,14 +3150,18 @@ namespace r2::draw::renderer
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
 			const glm::mat4& modelMatrix = r2::sarr::At(*renderBatch.models, modelIndex);
 			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
+			const u32 numInstances = r2::sarr::At(*renderBatch.numInstances, modelIndex);
 
 			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
 
 			r2::sarr::Push(*tempAllocations, (void*)shaders);
 
+			for (u32 i = 0; i < numInstances; i++)
+			{
+				r2::sarr::Push(*materialOffsetsPerObject, materialOffset);
+			}
+			
 			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
-
-			r2::sarr::Push(*materialOffsetsPerObject, materialOffset);
 
 			materialOffset += materialBatchInfo.numMaterials;
 
@@ -3174,9 +3177,7 @@ namespace r2::draw::renderer
 
 				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
 
-
 				const RenderMaterialParams& nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
-
 
 				r2::sarr::Push(*renderMaterials, nextRenderMaterial);
 
@@ -3185,18 +3186,11 @@ namespace r2::draw::renderer
 
 			R2_CHECK(numMeshRefs >= materialBatchInfo.numMaterials, "We should always have greater than or equal the amount of meshes to materials for a model");
 
-
-			//if (numMeshRefs != materialBatchInfo.numMaterials)
-			//{
-			//	R2_CHECK(materialBatchInfo.numMaterials == 1, "We should probably only have 1 material in this case");
-			//}
-			
 			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
 			{
 				const MaterialHandle materialHandle = r2::sarr::At(*modelRef.mMaterialHandles, r2::sarr::At(*modelRef.mMeshRefs, meshIndex).materialIndex);
 
 				ShaderHandle materialShaderHandle = mat::GetShaderHandle(materialHandle);
-
 
 				R2_CHECK(materialShaderHandle != InvalidShader, "This shouldn't be invalid!");
 
@@ -3240,10 +3234,10 @@ namespace r2::draw::renderer
 				R2_CHECK(drawCommandData != nullptr, "This shouldn't be nullptr!");
 
 				r2::draw::cmd::DrawBatchSubCommand subCommand;
-				subCommand.baseInstance = baseInstanceOffset + modelIndex;
+				subCommand.baseInstance = baseInstanceOffset + numModelInstances;
 				subCommand.baseVertex = meshRef.baseVertex;
 				subCommand.firstIndex = meshRef.baseIndex;
-				subCommand.instanceCount = 1;
+				subCommand.instanceCount = numInstances;
 				subCommand.count = meshRef.numIndices;
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
@@ -3254,10 +3248,8 @@ namespace r2::draw::renderer
 				r2::sarr::Push(*drawCommandData->cameraDepths, cameraDepth);
 			}
 
-			//FREE(shaders, *MEM_ENG_SCRATCH_PTR);
+			numModelInstances += numInstances;
 		}
-
-
 	}
 
 	void PreRender(Renderer& renderer)
@@ -3287,19 +3279,34 @@ namespace r2::draw::renderer
 		u64 staticDrawCommandBatchSize = 0;
 		u64 dynamicDrawCommandBatchSize = 0;
 
+		u32 numStaticInstances = 0;
+		u32 numDynamicInstances = 0;
+
 		for (u64 i = 0; i < numStaticModels; ++i)
 		{
 			const ModelRef& modelRef = r2::sarr::At(*staticRenderBatch.modelRefs, i);
 
-			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);//modelRef.mNumMeshRefs;
+			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
+
+			numStaticInstances += r2::sarr::At(*staticRenderBatch.numInstances, i);
 		}
 
 		staticDrawCommandBatchSize = totalSubCommands;
 
+		for (u64 i = 0; i < numDynamicModels; ++i)
+		{
+			const ModelRef& modelRef = r2::sarr::At(*dynamicRenderBatch.modelRefs, i);
+
+			R2_CHECK(modelRef.mAnimated, "This should be animated if it's dynamic");
+
+			numDynamicInstances += r2::sarr::At(*dynamicRenderBatch.numInstances, i);
+
+			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
+		}
 
 		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*renderer.mPreRenderStackArena, void*, 100 + numDynamicModels + numStaticModels); //@TODO(Serge): measure how many allocations
 
-		r2::SArray<glm::ivec4>* boneOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, glm::ivec4, numDynamicModels);
+		r2::SArray<glm::ivec4>* boneOffsets = MAKE_SARRAY(*renderer.mPreRenderStackArena, glm::ivec4, numDynamicInstances);
 
 		r2::sarr::Push(*tempAllocations, (void*)boneOffsets);
 		u32 boneOffset = 0;
@@ -3308,13 +3315,14 @@ namespace r2::draw::renderer
 		{
 			const ModelRef& modelRef = r2::sarr::At(*dynamicRenderBatch.modelRefs, i);
 
-			R2_CHECK(modelRef.mAnimated, "This should be animated if it's dynamic");
+			u32 numInstances = r2::sarr::At(*dynamicRenderBatch.numInstances, i);
 
-			r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
+			for (u32 j = 0; j < numInstances; ++j)
+			{
+				r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
+			}
 
 			boneOffset += modelRef.mNumBones;
-
-			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
 		}
 
 		dynamicDrawCommandBatchSize = totalSubCommands - staticDrawCommandBatchSize;
@@ -3324,10 +3332,7 @@ namespace r2::draw::renderer
 
 		r2::SArray<RenderMaterialParams>* renderMaterials = renderer.mRenderMaterialsToRender;//MAKE_SARRAY(*renderer.mPreRenderStackArena, RenderMaterialParams, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
 		
-
-		//r2::sarr::Push(*tempAllocations, (void*)renderMaterials);
-
-		r2::SArray<u32>* materialOffsetsPerObject = MAKE_SARRAY(*renderer.mPreRenderStackArena, u32, numStaticModels + numDynamicModels);
+		r2::SArray<u32>* materialOffsetsPerObject = MAKE_SARRAY(*renderer.mPreRenderStackArena, u32, numDynamicInstances + numStaticInstances);
 		
 		r2::sarr::Push(*tempAllocations, (void*)materialOffsetsPerObject);
 
@@ -3338,14 +3343,14 @@ namespace r2::draw::renderer
 		u32 materialOffset = 0;
 
 		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, 0, dynamicDrawCommandBatchSize);
-		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, numDynamicModels, staticDrawCommandBatchSize);
+		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, numDynamicInstances, staticDrawCommandBatchSize);
 
 
 		key::Basic basicKey;
 		basicKey.keyValue = 0;
 
-		const u64 numModels =  numDynamicModels + numStaticModels + 1; //+1 for the final batch model
-		const u64 finalBatchModelOffset = numDynamicModels + numStaticModels;
+		const u64 numModels =  numDynamicInstances + numStaticInstances + 1; //+1 for the final batch model
+		const u64 finalBatchModelOffset = numModels - 1;
 		const u64 modelsMemorySize = numModels * sizeof(glm::mat4);
 
 		glm::mat4 finalBatchModelMat = glm::mat4(1.0f);
@@ -3354,8 +3359,8 @@ namespace r2::draw::renderer
 
 		char* modelsAuxMemory = cmdpkt::GetAuxiliaryMemory<cmd::FillConstantBuffer>(modelsCmd);
 		 
-		const u64 dynamicModelsMemorySize = numDynamicModels * sizeof(glm::mat4);
-		const u64 staticModelsMemorySize = numStaticModels * sizeof(glm::mat4);
+		const u64 dynamicModelsMemorySize = numDynamicInstances * sizeof(glm::mat4);
+		const u64 staticModelsMemorySize = numStaticInstances * sizeof(glm::mat4);
 
 		memcpy(modelsAuxMemory, dynamicRenderBatch.models->mData, dynamicModelsMemorySize);
 		memcpy(mem::utils::PointerAdd(modelsAuxMemory, dynamicModelsMemorySize), staticRenderBatch.models->mData, staticModelsMemorySize);
@@ -3662,7 +3667,6 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_POINTLIGHT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, pointLightShadowKey, *renderer.mShadowArena);
 		BeginRenderPass<key::Basic>(renderer, RPT_GBUFFER, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
 
-		//@TODO(Serge): figure out how these two for loops will work with different render passes
 		for (u64 i = 0; i < numStaticDrawBatches; ++i)
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
@@ -3842,12 +3846,9 @@ namespace r2::draw::renderer
 					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, directionShadowKey, 0);
 					directionLightBatchIndexUpdateCMD->value = i;
 					directionLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicDirectionLightBatchUniformLocation;
-					//directionLightBatchIndexUpdateCMD->shaderID = GetShadowDepthShaderHandle(renderer, true, light::LightType::LT_DIRECTIONAL_LIGHT);
-					//strcpy(directionLightBatchIndexUpdateCMD->uniformName, "directionLightBatch"); //@TODO(Serge): HACK!!!
 
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
 
-//					cmd::DrawBatch* shadowDrawBatch = AddCommand<key::ShadowKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, shadowKey, 0);
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
 					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -4188,6 +4189,8 @@ namespace r2::draw::renderer
 			r2::sarr::Clear(*batch.materialBatch.materialHandles);
 			r2::sarr::Clear(*batch.models);
 			r2::sarr::Clear(*batch.drawState);
+			r2::sarr::Clear(*batch.numInstances);
+
 			if (batch.boneTransforms)
 			{
 				r2::sarr::Clear(*batch.boneTransforms);
@@ -5526,11 +5529,14 @@ namespace r2::draw::renderer
 
 		const auto numInstancesInArray = r2::sarr::Size(numInstances);
 		const auto numModelMatrices = r2::sarr::Size(modelMatrices);
+		const auto numModelRefs = r2::sarr::Size(modelRefHandles);
 
-		R2_CHECK(r2::sarr::Size(modelRefHandles) == numModelMatrices, "These must be the same!");
-		R2_CHECK(r2::sarr::Size(modelRefHandles) == r2::sarr::Size(flags), "These must be the same!");
+		R2_CHECK(numModelRefs > 0, "We should have model refs here!");
 
-		R2_CHECK(r2::sarr::Size(modelRefHandles) == numInstancesInArray, "We should have the same number of model refs as instances to draw");
+		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
+		R2_CHECK(numModelRefs == r2::sarr::Size(flags), "These must be the same!");
+
+		R2_CHECK(numModelMatrices == numInstancesInArray, "We should have the same number of model matrices as instances to draw");
 
 #if R2_DEBUG
 		u32 numInstancesInTotal = 0;
@@ -5544,11 +5550,6 @@ namespace r2::draw::renderer
 
 #endif
 
-
-		auto numModelRefs = r2::sarr::Size(modelRefHandles);
-
-		R2_CHECK(numModelRefs > 0, "We should have model refs here!");
-
 		r2::SArray<ModelRef>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numModelRefs);
 
 		//get all the model refs
@@ -5557,9 +5558,7 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*modelRefArray, r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, i)));
 		}
 
-
 		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
-
 
 #if defined(R2_DEBUG)
 		//check to see if what we're being given is all one type

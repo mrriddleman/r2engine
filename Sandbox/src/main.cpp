@@ -465,6 +465,13 @@ public:
         ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
         r2::sarr::Push(*animModelMats, ellenModel);
 
+        glm::mat4 ellenModel2 = glm::mat4(1.0);
+        ellenModel2 = glm::translate(ellenModel2, glm::vec3(3, 1, 0.1));
+		ellenModel2 = glm::rotate(ellenModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		ellenModel2 = glm::scale(ellenModel2, glm::vec3(0.01f));
+
+        r2::sarr::Push(*animModelMats, ellenModel2);
+
         mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::AnimationHandle, 20);
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
@@ -1165,7 +1172,14 @@ public:
         r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
 
         //Draw Ellen
-        r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
+        //r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
+        
+        r2::SArray<glm::mat4>* modelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+        r2::sarr::Push(*modelMats, r2::sarr::At(*animModelMats, 2));
+        r2::sarr::Push(*modelMats, r2::sarr::At(*animModelMats, 3));
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *modelMats, animDrawFlags, mEllenBoneTransforms);
+
+        FREE(modelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the Skybox
         r2::draw::DrawFlags skyboxDrawFlags;
