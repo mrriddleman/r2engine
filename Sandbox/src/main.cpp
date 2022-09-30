@@ -347,6 +347,12 @@ public:
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
 
+        mStaticCubeModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        mStaticCubeMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+        mStaticCubesDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
+        mStaticCubeModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::CUBE);
+
+
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
@@ -643,8 +649,43 @@ public:
     //    r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
     //    R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
 
-    //    r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
-    //    R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+        r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
+        R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+
+        r2::util::Random randomizer;
+   //     randomizer.Randomize();
+        r2::sarr::Push(*mStaticCubeMaterials, blueClearCoatMaterialHandle);
+        for (u32 i = 0; i < NUM_DRAWS; ++i)
+        {
+           
+            r2::sarr::Push(*mStaticCubesDrawFlags, drawFlags);
+            
+            //figure out the position
+			auto zPos = (int)randomizer.RandomNum(1, 10);
+			auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
+			auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+
+            glm::vec3 position = glm::vec3(xPos, yPos, zPos);
+
+            glm::mat4 modelMat = glm::mat4(1.0);
+
+            float scale = static_cast<float>(randomizer.RandomNum(2, 7)) / 5.0f;
+
+            float rotationX = static_cast<float>(randomizer.RandomNum(0, 350));
+            float rotationY = static_cast<float>(randomizer.RandomNum(0, 350));
+            float rotationZ = static_cast<float>(randomizer.RandomNum(0, 350));
+
+
+            modelMat = glm::translate(modelMat, position);
+			modelMat = glm::rotate(modelMat, glm::radians(rotationX), glm::vec3(1, 0, 0));
+			modelMat = glm::rotate(modelMat, glm::radians(rotationY), glm::vec3(0, 1, 0));
+			modelMat = glm::rotate(modelMat, glm::radians(rotationZ), glm::vec3(0, 0, 1));
+            modelMat = glm::scale(modelMat, glm::vec3(scale));
+            
+            
+
+            r2::sarr::Push(*mStaticCubeModelMats, modelMat);
+        }
 
     //    r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
     //    R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
@@ -749,7 +790,7 @@ public:
 			dirLight.lightProperties.intensity = 200;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+//            r2::draw::renderer::AddDirectionLight(dirLight);
 
             
 
@@ -764,7 +805,7 @@ public:
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
 
 			
-            r2::util::Random randomizer;
+            
 
 			/*for (int i = 0; i < 10; ++i)
 			{
@@ -1179,9 +1220,10 @@ public:
 
       //  r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
      //   r2::draw::renderer::DrawModelsOnLayer(r2::draw::DL_WORLD, *mStaticModelRefs, mStaticModelMaterialHandles, *modelMats, *mStaticModelDrawFlags, nullptr);
+		r2::draw::DrawFlags animDrawFlags;
+		animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        r2::draw::DrawFlags animDrawFlags;
-        animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_WORLD, mStaticCubeModelRefHandle, NUM_DRAWS, mStaticCubeMaterials, *mStaticCubeModelMats, animDrawFlags, false, nullptr);
 
       //  R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
 
@@ -1313,6 +1355,9 @@ public:
         
         FREE(mStaticModelDrawFlags, *linearArenaPtr);
 
+        FREE(mStaticCubeModelMats, *linearArenaPtr);
+        FREE(mStaticCubeMaterials, *linearArenaPtr);
+        FREE(mStaticCubesDrawFlags, *linearArenaPtr);
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -1527,8 +1572,12 @@ private:
 	r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
 	r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
 
-
     r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
+
+    r2::draw::ModelRefHandle mStaticCubeModelRefHandle;
+    r2::SArray<glm::mat4>* mStaticCubeModelMats;
+    r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
+    r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
 
     r2::draw::ModelSystem* mModelSystem = nullptr;
     r2::draw::AnimationCache* mAnimationCache = nullptr;
