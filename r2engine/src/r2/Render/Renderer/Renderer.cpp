@@ -264,7 +264,8 @@ namespace r2::draw
 	{
 		u64 totalBytes =
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::vec4>::MemorySize(maxDraws), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DrawFlags>::MemorySize(maxDraws), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DrawFlags>::MemorySize(maxDraws), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(maxDraws), alignment, headerSize, boundsChecking);
 
 		if (isDebugLines)
 		{
@@ -284,9 +285,6 @@ namespace r2::draw
 
 namespace
 {
-
-
-
 	u64 DefaultModelsMemorySize()
 	{
 		u32 boundsChecking = 0;
@@ -507,6 +505,54 @@ namespace r2::draw::renderer
 	void DrawLine(Renderer& renderer, const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest);
 
 	void DrawTangentVectors(Renderer& renderer, DefaultModel model, const glm::mat4& transform);
+
+
+	void DrawSphereInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& radii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawCubeInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& scales,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawCylinderInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawConeInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawArrowInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& lengths,
+		const r2::SArray<float>& headBaseRadii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
 #endif
 }
 
@@ -869,6 +915,7 @@ namespace r2::draw::renderer
 			
 			debugRenderBatch.colors = MAKE_SARRAY(*rendererArena, glm::vec4, MAX_NUM_DRAWS);
 			debugRenderBatch.drawFlags = MAKE_SARRAY(*rendererArena, DrawFlags, MAX_NUM_DRAWS);
+			debugRenderBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
 
 			if (debugRenderBatch.debugDrawType == DDT_LINES)
 			{
@@ -1376,6 +1423,7 @@ namespace r2::draw::renderer
 				R2_CHECK(false, "Unsupported");
 			}
 
+			FREE(debugRenderBatch.numInstances, *arena);
 			FREE(debugRenderBatch.drawFlags, *arena);
 			FREE(debugRenderBatch.colors, *arena);
 			
@@ -6471,6 +6519,325 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void DrawSphereInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& radii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(radii) && r2::sarr::Size(centers) == r2::sarr::Size(colors),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(centers);
+
+		for (u64 i = 0; i < numInstances; i++)
+		{
+			const glm::vec3& center = r2::sarr::At(centers, i);
+			float radius = r2::sarr::At(radii, i);
+			const glm::vec4& color = r2::sarr::At(colors, i);
+
+			math::Transform t;
+			t.position = center;
+			t.scale = glm::vec3(radius);
+
+			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
+			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+		}
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_SPHERE);
+		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+	}
+
+	void DrawCubeInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& scales,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(scales) && r2::sarr::Size(centers) == r2::sarr::Size(colors),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(centers);
+
+		for (u64 i = 0; i < numInstances; i++)
+		{
+			const glm::vec3& center = r2::sarr::At(centers, i);
+			float scale = r2::sarr::At(scales, i);
+			const glm::vec4& color = r2::sarr::At(colors, i);
+
+			math::Transform t;
+			t.position = center;
+			t.scale = glm::vec3(scale);
+
+			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
+			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+		}
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CUBE);
+		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+	}
+
+	void DrawCylinderInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		R2_CHECK(
+			r2::sarr::Size(basePositions) == r2::sarr::Size(directions) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(radii) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(heights) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(colors),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(basePositions);
+
+
+		for (u64 i = 0; i < numInstances; i++)
+		{
+			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
+			float radius = r2::sarr::At(radii, i);
+			const glm::vec3& dir = r2::sarr::At(directions, i);
+			float height = r2::sarr::At(heights, i);
+			const glm::vec4& color = r2::sarr::At(colors, i);
+
+			math::Transform t;
+
+			glm::vec3 ndir = glm::normalize(dir);
+			glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+			glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+
+			if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
+			{
+				axis = glm::vec3(1, 0, 0);
+			}
+
+			t.position = initialFacing * 0.5f * height;
+
+			float angle = glm::acos(glm::dot(ndir, initialFacing));
+
+			math::Transform r;
+			r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
+
+			math::Transform s;
+
+			s.scale = glm::vec3(radius, radius, height);
+
+			math::Transform t2;
+			t2.position = -t.position;
+
+			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
+			transformToDraw.position += basePosition;
+
+			r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
+			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+
+		}
+
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
+		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+	}
+
+	void DrawConeInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		R2_CHECK(
+			r2::sarr::Size(basePositions) == r2::sarr::Size(directions) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(radii) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(heights) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(colors),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(basePositions);
+
+		for (u64 i = 0; i < numInstances; i++)
+		{
+			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
+			float radius = r2::sarr::At(radii, i);
+			const glm::vec3& dir = r2::sarr::At(directions, i);
+			float height = r2::sarr::At(heights, i);
+			const glm::vec4& color = r2::sarr::At(colors, i);
+			
+			math::Transform t;
+
+			glm::vec3 ndir = glm::normalize(dir);
+			glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+			glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+
+			if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
+			{
+				axis = glm::vec3(1, 0, 0);
+			}
+
+			t.position = initialFacing * 0.5f * height;
+
+			float angle = glm::acos(glm::dot(ndir, initialFacing));
+
+			math::Transform r;
+			r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
+
+			math::Transform s;
+
+			s.scale = glm::vec3(radius, radius, height);
+
+			math::Transform t2;
+			t2.position = -t.position;
+
+			math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
+			transformToDraw.position += basePosition;
+
+			r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
+			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+		}
+
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
+		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+		
+	}
+
+	void DrawArrowInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& lengths,
+		const r2::SArray<float>& headBaseRadii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		static constexpr float ARROW_CONE_HEIGHT_FRACTION = 0.2;
+		static constexpr float ARROW_BASE_RADIUS_FRACTION = 0.2;
+		
+		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		R2_CHECK(
+			r2::sarr::Size(basePositions) == r2::sarr::Size(directions) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(lengths) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(headBaseRadii) &&
+			r2::sarr::Size(basePositions) == r2::sarr::Size(colors),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(basePositions);
+
+		r2::SArray<glm::vec3>* coneBasePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances);
+		r2::SArray<float>* baseRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+		r2::SArray<float>* baseLengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+		r2::SArray<float>* coneHeights = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+
+		for (u64 i = 0; i < numInstances; i++)
+		{
+
+			float length = r2::sarr::At(lengths, i);
+			const glm::vec3& dir = r2::sarr::At(directions, i);
+			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
+			float headBaseRadius = r2::sarr::At(headBaseRadii, i);
+
+			float baseLength = (length * (1.0f - ARROW_CONE_HEIGHT_FRACTION));
+
+			glm::vec3 ndir = glm::normalize(dir);
+			glm::vec3 coneBasePos = ndir * baseLength + basePosition;
+			float coneHeight = length * ARROW_CONE_HEIGHT_FRACTION;
+			float baseRadius = ARROW_BASE_RADIUS_FRACTION * headBaseRadius;
+
+			r2::sarr::Push(*coneBasePositions, coneBasePos);
+			r2::sarr::Push(*baseRadii, baseRadius);
+			r2::sarr::Push(*coneHeights, coneHeight);
+			r2::sarr::Push(*baseLengths, baseLength);
+		}
+
+		DrawCylinderInstanced(renderer, basePositions, directions, *baseRadii, *baseLengths, colors, filled, depthTest);
+		DrawConeInstanced(renderer, *coneBasePositions, directions, headBaseRadii, *coneHeights, colors, filled, depthTest);
+
+		FREE(coneHeights, *MEM_ENG_SCRATCH_PTR);
+		FREE(baseLengths, *MEM_ENG_SCRATCH_PTR);
+		FREE(baseRadii, *MEM_ENG_SCRATCH_PTR);
+		FREE(coneBasePositions, *MEM_ENG_SCRATCH_PTR);
+	}
+
 #endif //  R2_DEBUG
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
@@ -7538,6 +7905,62 @@ namespace r2::draw::renderer
 		DrawTangentVectors(MENG.GetCurrentRendererRef(), model, transform);
 	}
 
+	//instanced methods
+	void DrawSphereInstanced(
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& radii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		DrawSphereInstanced(MENG.GetCurrentRendererRef(), centers, radii, colors, filled, depthTest);
+	}
+
+	void DrawCubeInstanced(
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& scales,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		DrawCubeInstanced(MENG.GetCurrentRendererRef(), centers, scales, colors, filled, depthTest);
+	}
+
+	void DrawCylinderInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		DrawCylinderInstanced(MENG.GetCurrentRendererRef(), basePositions, directions, radii, heights, colors, filled, depthTest);
+	}
+
+	void DrawConeInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		DrawConeInstanced(MENG.GetCurrentRendererRef(), basePositions, directions, radii, heights, colors, filled, depthTest);
+	}
+
+	void DrawArrowInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& lengths,
+		const r2::SArray<float>& headBaseRadii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		DrawArrowInstanced(MENG.GetCurrentRendererRef(), basePositions, directions, lengths, headBaseRadii, colors, filled, depthTest);
+	}
 
 #endif
 }

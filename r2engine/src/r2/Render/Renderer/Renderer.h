@@ -171,6 +171,7 @@ namespace r2::draw
 		r2::SArray<glm::vec4>* colors = nullptr;
 		r2::SArray<DebugVertex>* vertices = nullptr;
 		r2::SArray<DrawFlags>* drawFlags = nullptr;
+		r2::SArray<u32>* numInstances = nullptr;
 
 		static u64 MemorySize(u32 maxDraws, bool hasDebugLines, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
@@ -518,7 +519,6 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& numModelMats,
 		const glm::vec4& color);
 
-
 	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCylinder(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest = true);
@@ -528,6 +528,47 @@ namespace r2::draw::renderer
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest);
 
 	void DrawTangentVectors(DefaultModel model, const glm::mat4& transform);
+
+	void DrawSphereInstanced(
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& radii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawCubeInstanced(
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<float>& scales,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawCylinderInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawConeInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& radii,
+		const r2::SArray<float>& heights,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
+
+	void DrawArrowInstanced(
+		const r2::SArray<glm::vec3>& basePositions,
+		const r2::SArray<glm::vec3>& directions,
+		const r2::SArray<float>& lengths,
+		const r2::SArray<float>& headBaseRadii,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest);
 #endif
 
 
