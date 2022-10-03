@@ -1269,9 +1269,46 @@ public:
 
 
         //Draw the axis
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), true);
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 1, 0.1, glm::vec4(0, 1, 0, 1), true);
-        r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
+
+        r2::SArray<glm::vec3>* basePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
+        r2::SArray<glm::vec3>* directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
+        r2::SArray<float>* lengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
+        r2::SArray<float>* coneRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
+        r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, 3);
+
+        r2::sarr::Push(*basePositions, glm::vec3(0));
+        r2::sarr::Push(*basePositions, glm::vec3(0));
+        r2::sarr::Push(*basePositions, glm::vec3(0));
+
+        r2::sarr::Push(*directions, glm::vec3(1, 0, 0));
+        r2::sarr::Push(*directions, glm::vec3(0, 1, 0));
+        r2::sarr::Push(*directions, glm::vec3(0, 0, 1));
+
+        r2::sarr::Push(*lengths, 1.0f);
+        r2::sarr::Push(*lengths, 1.0f);
+        r2::sarr::Push(*lengths, 1.0f);
+
+        r2::sarr::Push(*coneRadii, 0.1f);
+        r2::sarr::Push(*coneRadii, 0.1f);
+        r2::sarr::Push(*coneRadii, 0.1f);
+
+        r2::sarr::Push(*colors, glm::vec4(1, 0, 0, 1));
+        r2::sarr::Push(*colors, glm::vec4(0, 1, 0, 1));
+        r2::sarr::Push(*colors, glm::vec4(0, 0, 1, 1));
+
+
+
+        r2::draw::renderer::DrawArrowInstanced(*basePositions, *directions, *lengths, *coneRadii, *colors, true, true);
+
+        FREE(colors, *MEM_ENG_SCRATCH_PTR);
+        FREE(coneRadii, *MEM_ENG_SCRATCH_PTR);
+        FREE(lengths, *MEM_ENG_SCRATCH_PTR);
+        FREE(directions, *MEM_ENG_SCRATCH_PTR);
+        FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
+
+     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), true);
+     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 1, 0.1, glm::vec4(0, 1, 0, 1), true);
+     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
 
 
 		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);

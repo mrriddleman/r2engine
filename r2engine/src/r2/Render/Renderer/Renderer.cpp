@@ -5787,8 +5787,8 @@ namespace r2::draw::renderer
 
 		if (debugRenderBatch.transforms)
 		{
-			R2_CHECK(r2::sarr::Size(*debugRenderBatch.transforms) == r2::sarr::Size(*debugRenderBatch.drawFlags) &&
-				r2::sarr::Size(*debugRenderBatch.drawFlags) == r2::sarr::Size(*debugRenderBatch.colors) &&
+			R2_CHECK(r2::sarr::Size(*debugRenderBatch.transforms) == r2::sarr::Size(*debugRenderBatch.colors) &&
+				r2::sarr::Size(*debugRenderBatch.numInstances) == r2::sarr::Size(*debugRenderBatch.debugModelTypesToDraw) &&
 				r2::sarr::Size(*debugRenderBatch.debugModelTypesToDraw) == r2::sarr::Size(*debugRenderBatch.drawFlags),
 				"These should all be equal");
 		}
@@ -5839,7 +5839,7 @@ namespace r2::draw::renderer
 				r2::sarr::Push(*debugRenderConstants, constants);
 			}
 
-			debugConstantsOffset += numInstances;
+			
 
 			key::DebugKey debugKey = key::GenerateDebugKey(shaderID, flags.IsSet(eDrawFlags::FILL_MODEL) ? PrimitiveType::TRIANGLES : PrimitiveType::LINES, flags.IsSet(eDrawFlags::DEPTH_TEST), 0, 0);//@TODO(Serge): last two params unused - needed for transparency
 
@@ -5879,7 +5879,7 @@ namespace r2::draw::renderer
 				for (u64 j = 0; j < numMeshRefs; ++j)
 				{
 					r2::draw::cmd::DrawBatchSubCommand subCommand;
-					subCommand.baseInstance = i + instanceOffset;
+					subCommand.baseInstance = debugConstantsOffset + instanceOffset;
 					subCommand.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, j).baseVertex;
 					subCommand.firstIndex = r2::sarr::At(*modelRef.mMeshRefs, j).baseIndex;
 					subCommand.instanceCount = numInstances;
@@ -5900,6 +5900,9 @@ namespace r2::draw::renderer
 
 				r2::sarr::Push(*debugDrawCommandData->debugLineDrawBatchCommands, subCommand);
 			}
+
+
+			debugConstantsOffset += numInstances;
 		}
 	}
 
@@ -6920,8 +6923,9 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*baseLengths, baseLength);
 		}
 
-		DrawCylinderInstanced(renderer, basePositions, directions, *baseRadii, *baseLengths, colors, filled, depthTest);
 		DrawConeInstanced(renderer, *coneBasePositions, directions, headBaseRadii, *coneHeights, colors, filled, depthTest);
+		DrawCylinderInstanced(renderer, basePositions, directions, *baseRadii, *baseLengths, colors, filled, depthTest);
+		
 
 		FREE(coneHeights, *MEM_ENG_SCRATCH_PTR);
 		FREE(baseLengths, *MEM_ENG_SCRATCH_PTR);
