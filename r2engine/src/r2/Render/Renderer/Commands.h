@@ -25,10 +25,37 @@ namespace r2::draw::cmd
 	extern u32 FRAMEBUFFER_BARRIER_BIT;
 	extern u32 ALL_BARRIER_BITS;
 	
-	extern u32 DEPTH_LESS;
-	extern u32 DEPTH_LEQUAL;
-	extern u32 DEPTH_EQUAL;
+	extern u32 LESS;
+	extern u32 LEQUAL;
+	extern u32 EQUAL;
 
+	extern u32 KEEP;
+	extern u32 REPLACE;
+	extern u32 ZERO;
+	extern u32 NOTEQUAL;
+	
+	struct StencilOp
+	{
+		u32 stencilFail;
+		u32 depthFail;
+		u32 depthAndStencilPass;
+	};
+
+	struct StencilFunc
+	{
+		u32 func;
+		u32 ref;
+		u32 mask;
+	};
+
+	struct StencilState
+	{
+		b32 stencilEnabled;
+		b32 stencilWriteEnabled;
+
+		StencilOp op;
+		StencilFunc func;
+	};
 
 	struct DrawState
 	{
@@ -38,6 +65,8 @@ namespace r2::draw::cmd
 		u32 depthFunction;
 		b32 polygonOffsetEnabled;
 		glm::vec2 polygonOffset;
+
+		StencilState stencilState;
 	};
 
 	struct Clear
@@ -281,6 +310,8 @@ namespace r2::draw::cmd
 
 
 	u64 LargestCommand();
+
+	void SetDefaultStencilState(StencilState& stencilState);
 }
 
 #endif

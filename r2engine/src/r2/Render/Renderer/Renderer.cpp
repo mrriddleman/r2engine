@@ -3747,13 +3747,14 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_EQUAL;
+			drawBatch->state.depthFunction = cmd::EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
+			cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 
 			if (batchOffset.layer == DL_SKYBOX)
 			{
-				drawBatch->state.depthFunction = cmd::DEPTH_LEQUAL;
+				drawBatch->state.depthFunction = cmd::LEQUAL;
 			}
 
 			if (batchOffset.layer == DL_WORLD)
@@ -3784,9 +3785,11 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
 				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
@@ -3810,9 +3813,11 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
 				}
 
@@ -3837,9 +3842,11 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, batchOffset.cameraDepth);
@@ -3854,9 +3861,11 @@ namespace r2::draw::renderer
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				zppDrawBatch->state.depthFunction = cmd::LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
+
+				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 
 				cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
 				zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3868,9 +3877,11 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->subCommands = nullptr;
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppShadowsDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppShadowsDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				zppShadowsDrawBatch->state.depthFunction = cmd::LESS;
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
+
+				cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
 			}
 
 			//@TODO(Serge): add commands to different buckets
@@ -3893,9 +3904,11 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::DEPTH_EQUAL;
+			drawBatch->state.depthFunction = cmd::EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 
 			if (batchOffset.layer == DL_CHARACTER)
 			{
@@ -3922,9 +3935,10 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
 				const u32 numSpotLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingSpotLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingSpotLights > 0 ? 1.0f : 0.0f));
@@ -3948,9 +3962,11 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
 				const u32 numPointLightShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingPointLights / (float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS), numShadowCastingPointLights > 0 ? 1.0f : 0.0f));
@@ -3974,9 +3990,11 @@ namespace r2::draw::renderer
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+					shadowDrawBatch->state.depthFunction = cmd::LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
 				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, batchOffset.cameraDepth);
@@ -3991,10 +4009,11 @@ namespace r2::draw::renderer
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				zppDrawBatch->state.depthFunction = cmd::LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 
+				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 			}
 
 			//@TODO(Serge): add commands to different buckets
@@ -4058,9 +4077,11 @@ namespace r2::draw::renderer
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
 			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawMipBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawMipBatch->state.depthFunction = cmd::LESS;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultStencilState(drawMipBatch->state.stencilState);
 		}
 
 		//DO THE MIP HORIZONTAL BLUR HERE 
@@ -4091,9 +4112,11 @@ namespace r2::draw::renderer
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
 			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawMipBatch->state.depthFunction = cmd::DEPTH_LESS;
+			drawMipBatch->state.depthFunction = cmd::LESS;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultStencilState(drawMipBatch->state.stencilState);
 		}
 	
 
@@ -4121,9 +4144,11 @@ namespace r2::draw::renderer
 		aoDrawBatch->subCommands = nullptr;
 		aoDrawBatch->state.depthEnabled = false;
 		aoDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+		aoDrawBatch->state.depthFunction = cmd::LESS;
 		aoDrawBatch->state.polygonOffsetEnabled = false;
 		aoDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(aoDrawBatch->state.stencilState);
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
@@ -4139,10 +4164,14 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->subCommands = nullptr;
 		aoDenoiseDrawBatch->state.depthEnabled = false;
 		aoDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoDenoiseDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+		aoDenoiseDrawBatch->state.depthFunction = cmd::LESS;
 		aoDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
+		
+		cmd::SetDefaultStencilState(aoDenoiseDrawBatch->state.stencilState);
+		
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, *renderer.mAmbientOcclusionDenoiseBucket);
+
 
 
 		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(false, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, false, 0);
@@ -4158,9 +4187,12 @@ namespace r2::draw::renderer
 		aoTemporalDenoiseDrawBatch->subCommands = nullptr;
 		aoTemporalDenoiseDrawBatch->state.depthEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoTemporalDenoiseDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+		aoTemporalDenoiseDrawBatch->state.depthFunction = cmd::LESS;
 		aoTemporalDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(aoTemporalDenoiseDrawBatch->state.stencilState);
+
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, *renderer.mAmbientOcclusionTemporalDenoiseBucket);
 
 
@@ -4178,11 +4210,11 @@ namespace r2::draw::renderer
 		ssrDrawBatch->subCommands = nullptr;
 		ssrDrawBatch->state.depthEnabled = false;
 		ssrDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		ssrDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+		ssrDrawBatch->state.depthFunction = cmd::LESS;
 		ssrDrawBatch->state.polygonOffsetEnabled = false;
 		ssrDrawBatch->state.polygonOffset = glm::vec2(0);
 		
-
+		cmd::SetDefaultStencilState(ssrDrawBatch->state.stencilState);
 
 		key::Basic ssrConeTracedDrawKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 1, renderer.mSSRConeTraceShader, 0);
 
@@ -4200,11 +4232,11 @@ namespace r2::draw::renderer
 		ssrConeTracedBatch->subCommands = nullptr;
 		ssrConeTracedBatch->state.depthEnabled = false;
 		ssrConeTracedBatch->state.cullState = cmd::CULL_FACE_BACK;
-		ssrConeTracedBatch->state.depthFunction = cmd::DEPTH_LESS;
+		ssrConeTracedBatch->state.depthFunction = cmd::LESS;
 		ssrConeTracedBatch->state.polygonOffsetEnabled = false;
 		ssrConeTracedBatch->state.polygonOffset = glm::vec2(0);
 
-
+		cmd::SetDefaultStencilState(ssrConeTracedBatch->state.stencilState);
 		EndRenderPass(renderer, RPT_SSR, *renderer.mSSRBucket);
 
 		//@NOTE: need to clear the bloom render target
@@ -4229,9 +4261,11 @@ namespace r2::draw::renderer
 		finalDrawBatch->subCommands = nullptr;
 		finalDrawBatch->state.depthEnabled = false;
 		finalDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		finalDrawBatch->state.depthFunction = cmd::DEPTH_LESS;
+		finalDrawBatch->state.depthFunction = cmd::LESS;
 		finalDrawBatch->state.polygonOffsetEnabled = false;
 		finalDrawBatch->state.polygonOffset = glm::vec2(0);
+		
+		cmd::SetDefaultStencilState(ssrConeTracedBatch->state.stencilState);
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
@@ -6040,9 +6074,11 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				drawBatch->state.depthFunction = cmd::LESS;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
+				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
+
 			}
 			else
 			{
@@ -6056,9 +6092,10 @@ namespace r2::draw::renderer
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
 				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				drawBatch->state.depthFunction = cmd::DEPTH_LESS;
+				drawBatch->state.depthFunction = cmd::LESS;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
+				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 			}
 		}
 	}

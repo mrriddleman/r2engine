@@ -1223,7 +1223,7 @@ public:
 		r2::draw::DrawFlags animDrawFlags;
 		animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_WORLD, mStaticCubeModelRefHandle, NUM_DRAWS, mStaticCubeMaterials, *mStaticCubeModelMats, animDrawFlags, false, nullptr);
+       // r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_WORLD, mStaticCubeModelRefHandle, NUM_DRAWS, mStaticCubeMaterials, *mStaticCubeModelMats, animDrawFlags, false, nullptr);
 
       //  R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
 

@@ -114,11 +114,14 @@ namespace r2::draw::cmd
 	u32 FRAMEBUFFER_BARRIER_BIT = GL_FRAMEBUFFER_BARRIER_BIT;
 	u32 ALL_BARRIER_BITS = GL_ALL_BARRIER_BITS;
 
-	u32 DEPTH_LESS = GL_LESS;
-	u32 DEPTH_LEQUAL = GL_LEQUAL;
-	u32 DEPTH_EQUAL = GL_EQUAL;
+	u32 LESS = GL_LESS;
+	u32 LEQUAL = GL_LEQUAL;
+	u32 EQUAL = GL_EQUAL;
 
-
+	u32 KEEP = GL_KEEP;
+	u32 REPLACE = GL_REPLACE;
+	u32 ZERO = GL_ZERO;
+	u32 NOTEQUAL = GL_NOTEQUAL;
 }
 
 namespace r2::draw::rendererimpl
@@ -378,7 +381,7 @@ namespace r2::draw::rendererimpl
 
 	void SetDepthFunction(u32 depthFunc)
 	{
-		if (depthFunc != cmd::DEPTH_EQUAL && depthFunc != cmd::DEPTH_LESS && depthFunc != cmd::DEPTH_LEQUAL)
+		if (depthFunc != cmd::EQUAL && depthFunc != cmd::LESS && depthFunc != cmd::LEQUAL)
 		{
 			R2_CHECK(false, "depthFunc not supported yet!");
 		}
@@ -386,7 +389,7 @@ namespace r2::draw::rendererimpl
 		glDepthMask(GL_TRUE);
 		glDepthFunc(depthFunc);
 
-		if (depthFunc == cmd::DEPTH_EQUAL)
+		if (depthFunc == cmd::EQUAL)
 		{
 			glDepthMask(GL_FALSE);	
 		}
@@ -422,6 +425,30 @@ namespace r2::draw::rendererimpl
 	void SetPolygonOffset(const glm::vec2& polygonOffset)
 	{
 		glPolygonOffset(polygonOffset.x, polygonOffset.y);
+	}
+
+	void SetStencilState(const cmd::StencilState& stencilState)
+	{
+		if (stencilState.stencilEnabled)
+		{
+			glEnable(GL_STENCIL_TEST);
+		}
+		else
+		{
+			glDisable(GL_STENCIL_TEST);
+		}
+
+		if (stencilState.stencilWriteEnabled)
+		{
+			glStencilMask(0xFF);
+		}
+		else
+		{
+			glStencilMask(0x00);
+		}
+
+		glStencilOp(stencilState.op.stencilFail, stencilState.op.depthFail, stencilState.op.depthAndStencilPass);
+		glStencilFunc(stencilState.func.func, stencilState.func.ref, stencilState.func.mask);
 	}
 
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name)
@@ -802,6 +829,7 @@ namespace r2::draw::rendererimpl
 		SetDepthFunction(state.depthFunction);
 		EnablePolygonOffset(state.polygonOffsetEnabled);
 		SetPolygonOffset(state.polygonOffset);
+		SetStencilState(state.stencilState);
 	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)

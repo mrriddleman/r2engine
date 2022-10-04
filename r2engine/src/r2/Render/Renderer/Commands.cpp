@@ -42,4 +42,18 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::BindImageTexture),
 			});
 	}
+
+	void SetDefaultStencilState(StencilState& stencilState)
+	{
+		stencilState.stencilEnabled = false;
+		stencilState.stencilWriteEnabled = false;
+
+		stencilState.op.stencilFail = KEEP;
+		stencilState.op.depthFail = KEEP;
+		stencilState.op.depthAndStencilPass = KEEP;
+
+		stencilState.func.func = EQUAL;
+		stencilState.func.ref = 0;
+		stencilState.func.mask = 0;
+	}
 }
