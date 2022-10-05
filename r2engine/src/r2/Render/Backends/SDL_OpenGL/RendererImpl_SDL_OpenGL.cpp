@@ -102,17 +102,7 @@ namespace r2::draw
 	const u64 ALIGNMENT = 16;
 	const f64 HASH_MULT = 1.5;
 	const u32 RING_BUFFER_MULT = 3;
-}
 
-namespace r2::draw::cmd
-{
-	u32 CLEAR_COLOR_BUFFER = GL_COLOR_BUFFER_BIT;
-	u32 CLEAR_DEPTH_BUFFER = GL_DEPTH_BUFFER_BIT;
-	u32 CULL_FACE_FRONT = GL_FRONT;
-	u32 CULL_FACE_BACK = GL_BACK;
-	u32 SHADER_STORAGE_BARRIER_BIT = GL_SHADER_STORAGE_BARRIER_BIT;
-	u32 FRAMEBUFFER_BARRIER_BIT = GL_FRAMEBUFFER_BARRIER_BIT;
-	u32 ALL_BARRIER_BITS = GL_ALL_BARRIER_BITS;
 
 	u32 LESS = GL_LESS;
 	u32 LEQUAL = GL_LEQUAL;
@@ -122,6 +112,20 @@ namespace r2::draw::cmd
 	u32 REPLACE = GL_REPLACE;
 	u32 ZERO = GL_ZERO;
 	u32 NOTEQUAL = GL_NOTEQUAL;
+
+	u32 CULL_FACE_FRONT = GL_FRONT;
+	u32 CULL_FACE_BACK = GL_BACK;
+}
+
+namespace r2::draw::cmd
+{
+	u32 CLEAR_COLOR_BUFFER = GL_COLOR_BUFFER_BIT;
+	u32 CLEAR_DEPTH_BUFFER = GL_DEPTH_BUFFER_BIT;
+	u32 CLEAR_STENCIL_BUFFER = GL_STENCIL_BUFFER_BIT;
+
+	u32 SHADER_STORAGE_BARRIER_BIT = GL_SHADER_STORAGE_BARRIER_BIT;
+	u32 FRAMEBUFFER_BARRIER_BIT = GL_FRAMEBUFFER_BARRIER_BIT;
+	u32 ALL_BARRIER_BITS = GL_ALL_BARRIER_BITS;
 }
 
 namespace r2::draw::rendererimpl
@@ -381,7 +385,7 @@ namespace r2::draw::rendererimpl
 
 	void SetDepthFunction(u32 depthFunc)
 	{
-		if (depthFunc != cmd::EQUAL && depthFunc != cmd::LESS && depthFunc != cmd::LEQUAL)
+		if (depthFunc != EQUAL && depthFunc != LESS && depthFunc != LEQUAL)
 		{
 			R2_CHECK(false, "depthFunc not supported yet!");
 		}
@@ -389,7 +393,7 @@ namespace r2::draw::rendererimpl
 		glDepthMask(GL_TRUE);
 		glDepthFunc(depthFunc);
 
-		if (depthFunc == cmd::EQUAL)
+		if (depthFunc == EQUAL)
 		{
 			glDepthMask(GL_FALSE);	
 		}
@@ -427,7 +431,7 @@ namespace r2::draw::rendererimpl
 		glPolygonOffset(polygonOffset.x, polygonOffset.y);
 	}
 
-	void SetStencilState(const cmd::StencilState& stencilState)
+	void SetStencilState(const StencilState& stencilState)
 	{
 		if (stencilState.stencilEnabled)
 		{

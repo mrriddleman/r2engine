@@ -1215,17 +1215,16 @@ public:
 
     virtual void Render(float alpha) override
     {
+        r2::draw::DrawParameters drawWorldParams;
+        drawWorldParams.layer = r2::draw::DL_WORLD;
+        drawWorldParams.flags.Clear();
+        drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-        r2::draw::renderer::DrawModel(mSponzaModelRefHandle, r2::sarr::At(*modelMats, 0), r2::sarr::At(*mStaticModelDrawFlags, 0), nullptr);
+        r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+        r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
 
-      //  r2::draw::renderer::DrawModels(*mStaticModelRefs, *modelMats, *mStaticModelDrawFlags, nullptr);
-     //   r2::draw::renderer::DrawModelsOnLayer(r2::draw::DL_WORLD, *mStaticModelRefs, mStaticModelMaterialHandles, *modelMats, *mStaticModelDrawFlags, nullptr);
-		r2::draw::DrawFlags animDrawFlags;
-		animDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-
-       // r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_WORLD, mStaticCubeModelRefHandle, NUM_DRAWS, mStaticCubeMaterials, *mStaticCubeModelMats, animDrawFlags, false, nullptr);
-
-      //  R2_CHECK(r2::sarr::Size(*mAnimModelRefs) == 3, "Should be 3?");
+        r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
+        FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the bat
 		r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
@@ -1237,9 +1236,13 @@ public:
         r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
         r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
 
-      //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 0), r2::sarr::At(*animModelMats, 0), animDrawFlags, mBatBoneTransforms);
-		r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 0), 2, nullptr, *microBatModelMats, animDrawFlags, false, allMicroBatBoneTransforms);
-        
+        r2::draw::DrawParameters animDrawParams;
+        animDrawParams.layer = r2::draw::DL_CHARACTER;
+        animDrawParams.flags.Clear();
+        animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+
+        r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 0), *microBatModelMats, 2, nullptr, allMicroBatBoneTransforms);
+
         FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
         FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
 
@@ -1248,25 +1251,30 @@ public:
 		r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
 		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
 		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
-      //  r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 1), r2::sarr::At(*animModelMats, 1), animDrawFlags, mSkeletonBoneTransforms);
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 1), 2, nullptr, *skeletonModelMats, animDrawFlags, true, mSkeletonBoneTransforms);
+
+        animDrawParams.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+
+        r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 1), *skeletonModelMats, 2, nullptr, mSkeletonBoneTransforms);
+        
         FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw Ellen
-        //r2::draw::renderer::DrawModel(r2::sarr::At(*mAnimModelRefs, 2), r2::sarr::At(*animModelMats, 2), animDrawFlags, mEllenBoneTransforms);
-        
         r2::SArray<glm::mat4>* ellenModelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
-        r2::draw::renderer::DrawModelOnLayerInstanced(r2::draw::DL_CHARACTER, r2::sarr::At(*mAnimModelRefs, 2), 2, nullptr, *ellenModelMats, animDrawFlags, true, mEllenBoneTransforms);
+
+        r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 2), *ellenModelMats, 2, nullptr, mEllenBoneTransforms);
 
         FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the Skybox
-        r2::draw::DrawFlags skyboxDrawFlags;
-        skyboxDrawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-        r2::draw::renderer::DrawModelOnLayer(r2::draw::DL_SKYBOX, mSkyboxModelRef, mSkyboxMaterialHandles, glm::mat4(1.0f), skyboxDrawFlags, nullptr);
+		r2::SArray<glm::mat4>* skyboxModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+		r2::sarr::Push(*skyboxModelMatrices, glm::mat4(1.0f));
 
+        drawWorldParams.layer = r2::draw::DL_SKYBOX;
+
+        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, mSkyboxMaterialHandles, nullptr);
+        FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the axis
 

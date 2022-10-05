@@ -466,14 +466,17 @@ namespace r2::draw::renderer
 
 	void UpdateLighting(Renderer& renderer);
 
-	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModel(Renderer& renderer, const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModel(Renderer& renderer, const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
-	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
-	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	//void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+
+	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 	///More draw functions...
@@ -3746,15 +3749,15 @@ namespace r2::draw::renderer
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::EQUAL;
+			drawBatch->state.cullState = CULL_FACE_BACK;
+			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 
 			if (batchOffset.layer == DL_SKYBOX)
 			{
-				drawBatch->state.depthFunction = cmd::LEQUAL;
+				drawBatch->state.depthFunction = LEQUAL;
 			}
 
 			if (batchOffset.layer == DL_WORLD)
@@ -3784,8 +3787,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3812,8 +3815,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3841,8 +3844,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3860,8 +3863,8 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppDrawBatch->state.depthFunction = cmd::LESS;
+				zppDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppDrawBatch->state.depthFunction = LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3876,8 +3879,8 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppShadowsDrawBatch->subCommands = nullptr;
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppShadowsDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppShadowsDrawBatch->state.depthFunction = cmd::LESS;
+				zppShadowsDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppShadowsDrawBatch->state.depthFunction = LESS;
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3903,8 +3906,8 @@ namespace r2::draw::renderer
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-			drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawBatch->state.depthFunction = cmd::EQUAL;
+			drawBatch->state.cullState = CULL_FACE_BACK;
+			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3934,8 +3937,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
@@ -3961,8 +3964,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3989,8 +3992,8 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-					shadowDrawBatch->state.cullState = cmd::CULL_FACE_FRONT;
-					shadowDrawBatch->state.depthFunction = cmd::LESS;
+					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4008,8 +4011,8 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				zppDrawBatch->state.depthFunction = cmd::LESS;
+				zppDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppDrawBatch->state.depthFunction = LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4076,8 +4079,8 @@ namespace r2::draw::renderer
 			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
-			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawMipBatch->state.depthFunction = cmd::LESS;
+			drawMipBatch->state.cullState = CULL_FACE_BACK;
+			drawMipBatch->state.depthFunction = LESS;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4111,8 +4114,8 @@ namespace r2::draw::renderer
 			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
-			drawMipBatch->state.cullState = cmd::CULL_FACE_BACK;
-			drawMipBatch->state.depthFunction = cmd::LESS;
+			drawMipBatch->state.cullState = CULL_FACE_BACK;
+			drawMipBatch->state.depthFunction = LESS;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4143,8 +4146,8 @@ namespace r2::draw::renderer
 		aoDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoDrawBatch->subCommands = nullptr;
 		aoDrawBatch->state.depthEnabled = false;
-		aoDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoDrawBatch->state.depthFunction = cmd::LESS;
+		aoDrawBatch->state.cullState = CULL_FACE_BACK;
+		aoDrawBatch->state.depthFunction = LESS;
 		aoDrawBatch->state.polygonOffsetEnabled = false;
 		aoDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4163,8 +4166,8 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoDenoiseDrawBatch->subCommands = nullptr;
 		aoDenoiseDrawBatch->state.depthEnabled = false;
-		aoDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoDenoiseDrawBatch->state.depthFunction = cmd::LESS;
+		aoDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
+		aoDenoiseDrawBatch->state.depthFunction = LESS;
 		aoDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 		
@@ -4186,8 +4189,8 @@ namespace r2::draw::renderer
 		aoTemporalDenoiseDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoTemporalDenoiseDrawBatch->subCommands = nullptr;
 		aoTemporalDenoiseDrawBatch->state.depthEnabled = false;
-		aoTemporalDenoiseDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		aoTemporalDenoiseDrawBatch->state.depthFunction = cmd::LESS;
+		aoTemporalDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
+		aoTemporalDenoiseDrawBatch->state.depthFunction = LESS;
 		aoTemporalDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4209,8 +4212,8 @@ namespace r2::draw::renderer
 		ssrDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		ssrDrawBatch->subCommands = nullptr;
 		ssrDrawBatch->state.depthEnabled = false;
-		ssrDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		ssrDrawBatch->state.depthFunction = cmd::LESS;
+		ssrDrawBatch->state.cullState = CULL_FACE_BACK;
+		ssrDrawBatch->state.depthFunction = LESS;
 		ssrDrawBatch->state.polygonOffsetEnabled = false;
 		ssrDrawBatch->state.polygonOffset = glm::vec2(0);
 		
@@ -4231,8 +4234,8 @@ namespace r2::draw::renderer
 		ssrConeTracedBatch->primitiveType = PrimitiveType::TRIANGLES;
 		ssrConeTracedBatch->subCommands = nullptr;
 		ssrConeTracedBatch->state.depthEnabled = false;
-		ssrConeTracedBatch->state.cullState = cmd::CULL_FACE_BACK;
-		ssrConeTracedBatch->state.depthFunction = cmd::LESS;
+		ssrConeTracedBatch->state.cullState = CULL_FACE_BACK;
+		ssrConeTracedBatch->state.depthFunction = LESS;
 		ssrConeTracedBatch->state.polygonOffsetEnabled = false;
 		ssrConeTracedBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4260,8 +4263,8 @@ namespace r2::draw::renderer
 		finalDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		finalDrawBatch->subCommands = nullptr;
 		finalDrawBatch->state.depthEnabled = false;
-		finalDrawBatch->state.cullState = cmd::CULL_FACE_BACK;
-		finalDrawBatch->state.depthFunction = cmd::LESS;
+		finalDrawBatch->state.cullState = CULL_FACE_BACK;
+		finalDrawBatch->state.depthFunction = LESS;
 		finalDrawBatch->state.polygonOffsetEnabled = false;
 		finalDrawBatch->state.polygonOffset = glm::vec2(0);
 		
@@ -5486,50 +5489,312 @@ namespace r2::draw::renderer
 		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
 	}
 
-	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		R2_CHECK(!r2::sarr::IsEmpty(modelRefHandles), "This should not be empty!");
+//	void DrawModels(Renderer& renderer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//		R2_CHECK(!r2::sarr::IsEmpty(modelRefHandles), "This should not be empty!");
+//
+//		const ModelRef& firstModelRef = r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, 0));
+//
+//		DrawModelsOnLayer(renderer, firstModelRef.mAnimated? DL_CHARACTER : DL_WORLD, modelRefHandles, nullptr, modelMatrices, flags, boneTransforms);
+//	}
+//
+//	void DrawModel(Renderer& renderer, const ModelRefHandle& modelRefHandle, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
+//
+//		DrawModelOnLayer(renderer, modelRef.mAnimated ? DL_CHARACTER : DL_WORLD, modelRefHandle, nullptr, modelMatrix, flags, boneTransforms);
+//	}
+//
+//	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//		r2::SArray<glm::mat4>* modelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+//		
+//		r2::sarr::Push(*modelMatrices, modelMatrix);
+//		
+//		DrawModelOnLayerInstanced(renderer, layer, modelRefHandle, 1, materials, *modelMatrices, flags, true, boneTransforms);
+//		
+//		FREE(modelMatrices, *MEM_ENG_SCRATCH_PTR);
+//	}
+//
+//	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//		r2::SArray<u32>* instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
+//		r2::SArray<b32>* useSameBoneTransformsForInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, b32, r2::sarr::Size(modelRefHandles));
+//		for (u64 i = 0; i < r2::sarr::Size(modelRefHandles); ++i)
+//		{
+//			r2::sarr::Push(*instances, 1u);
+//			r2::sarr::Push(*useSameBoneTransformsForInstances, 1u);
+//		}
+//
+//		DrawModelsOnLayerInstanced(renderer, layer, modelRefHandles, *instances, materialHandles, modelMatrices, flags, useSameBoneTransformsForInstances, boneTransforms);
+//		
+//		FREE(useSameBoneTransformsForInstances, *MEM_ENG_SCRATCH_PTR);
+//		FREE(instances, *MEM_ENG_SCRATCH_PTR);
+//	}
+//
+//	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//		DrawParameters drawParams;
+//
+//		drawParams.layer = layer;
+//
+//		drawParams.flags = flags;
+//
+//		if (useSameBoneTransformsForInstances)
+//		{
+//			drawParams.flags.Set(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+//		}
+//		
+//
+//		DrawModel(renderer, drawParams, modelRefHandle, modelMatrices, numInstances, materials, boneTransforms);
+//
+//		//DrawModel
+//		//if (renderer.mRenderBatches == nullptr)
+//		//{
+//		//	R2_CHECK(false, "We haven't initialized the renderer yet!");
+//		//	return;
+//		//}
+//
+//		//if (renderer.mStaticVertexModelConfigHandle == InvalidVertexConfigHandle ||
+//		//	renderer.mAnimVertexModelConfigHandle == InvalidVertexConfigHandle)
+//		//{
+//		//	R2_CHECK(false, "We haven't generated the layouts yet!");
+//		//	return;
+//		//}
+//
+//		//R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
+//		//
+//		////We're going to copy these into the render batches for easier/less overhead processing in PreRender
+//		//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
+//
+//		//DrawType drawType = STATIC;
+//
+//		//if (modelRef.mAnimated && !boneTransforms)
+//		//{
+//		//	R2_CHECK(false, "Submitted an animated model with no bone transforms!");
+//		//}
+//
+//		//if (modelRef.mAnimated && layer != DL_CHARACTER)
+//		//{
+//		//	R2_CHECK(false, "Submitted an animated model not on the character layer!");
+//		//}
+//
+//		//if (modelRef.mAnimated)
+//		//{
+//		//	drawType = DYNAMIC;
+//		//}
+//
+//		//RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+//
+//		//r2::sarr::Push(*batch.modelRefs, modelRef);
+//
+//		//r2::sarr::Append(*batch.models, modelMatrices);
+//
+//		//r2::sarr::Push(*batch.numInstances, numInstances);
+//
+//		//cmd::DrawState state;
+//		//state.depthEnabled = flags.IsSet(DEPTH_TEST);
+//		//state.layer = layer;
+//
+//		//r2::sarr::Push(*batch.drawState, state);
+//
+//		//if (!materials)
+//		//{
+//		//	MaterialBatch::Info materialBatchInfo;
+//
+//		//	materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
+//		//	materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);//modelRef.mNumMaterialHandles;
+//
+//		//	r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
+//
+//		//	for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
+//		//	{
+//		//		r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));//modelRef.mMaterialHandles[i]);
+//		//	}
+//		//}
+//		//else
+//		//{
+//		//	u64 numMaterials = r2::sarr::Size(*materials);
+//		//	R2_CHECK(numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles), "This should be the same in this case");
+//
+//
+//		//	MaterialBatch::Info materialBatchInfo;
+//
+//		//	materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
+//		//	materialBatchInfo.numMaterials = numMaterials;
+//
+//		//	r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
+//
+//		//	r2::sarr::Append(*batch.materialBatch.materialHandles, *materials);
+//		//}
+//
+//		//if (drawType == DYNAMIC)
+//		//{
+//		//	R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
+//		//	r2::sarr::Push(*batch.useSameBoneTransformsForInstances, useSameBoneTransformsForInstances);
+//		//	r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
+//		//}
+//	}
+//
+//	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+//	{
+//
+//		DrawParameters drawParams;
+//
+//		drawParams.layer = layer;
+//		drawParams.flags = r2::sarr::At(flags, 0);
+//
+//		if (useSameBoneTransformsForInstances)
+//		{
+//			drawParams.flags.Set(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+//		}
+//
+//		DrawModels(renderer, drawParams, modelRefHandles, modelMatrices, numInstances, materialHandles, boneTransforms);
+//
+////		if (renderer.mRenderBatches == nullptr)
+////		{
+////			R2_CHECK(false, "We haven't initialized the renderer yet!");
+////			return;
+////		}
+////
+////		const auto numInstancesInArray = r2::sarr::Size(numInstances);
+////		const auto numModelMatrices = r2::sarr::Size(modelMatrices);
+////		const auto numModelRefs = r2::sarr::Size(modelRefHandles);
+////
+////		R2_CHECK(numModelRefs > 0, "We should have model refs here!");
+////
+////		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
+////		R2_CHECK(numModelRefs == r2::sarr::Size(flags), "These must be the same!");
+////
+////		R2_CHECK(numModelMatrices == numInstancesInArray, "We should have the same number of model matrices as instances to draw");
+////
+////#if R2_DEBUG
+////		u32 numInstancesInTotal = 0;
+////
+////		for (u64 i = 0; i < numInstancesInArray; ++i)
+////		{
+////			numInstancesInTotal += static_cast<u32>(r2::sarr::At(numInstances, i));
+////		}
+////
+////		R2_CHECK(numInstancesInTotal == numModelMatrices, "We should have the same amount of instances as there are model matrices");
+////
+////#endif
+////
+////		r2::SArray<ModelRef>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numModelRefs);
+////
+////		//get all the model refs
+////		for (u64 i = 0; i < numModelRefs; ++i)
+////		{
+////			r2::sarr::Push(*modelRefArray, r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, i)));
+////		}
+////
+////		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
+////
+////#if defined(R2_DEBUG)
+////		//check to see if what we're being given is all one type
+////		if (layer == DrawLayer::DL_WORLD)
+////		{
+////			for (u64 i = 0; i < numModelRefs; ++i)
+////			{
+////				R2_CHECK(r2::sarr::At(modelRefs, i).mAnimated == false, "modelRef at index: %llu should not be animated!", i);
+////			}
+////		}
+////		else if (layer == DrawLayer::DL_CHARACTER)
+////		{
+////			for (u64 i = 0; i < numModelRefs; ++i)
+////			{
+////				R2_CHECK(r2::sarr::At(modelRefs, i).mAnimated == true, "modelRef at index: %llu should be animated!", i);
+////			}
+////		}
+////#endif
+////		R2_CHECK(layer == DrawLayer::DL_WORLD || layer == DrawLayer::DL_SKYBOX || layer == DrawLayer::DL_CHARACTER, "These are the only supported draw layers");
+////
+////		DrawType drawType = (layer == DrawLayer::DL_WORLD || layer == DrawLayer::DL_SKYBOX) ? DrawType::STATIC : DrawType::DYNAMIC;
+////
+////		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
+////
+////		r2::sarr::Append(*batch.modelRefs, modelRefs);
+////
+////		r2::sarr::Append(*batch.models, modelMatrices);
+////
+////		r2::sarr::Append(*batch.numInstances, numInstances);
+////
+////		const u64 numFlags = r2::sarr::Size(flags);
+////
+////		r2::SArray<cmd::DrawState>* tempDrawState = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawState, numFlags);
+////
+////		for (u64 i = 0; i < numFlags; ++i)
+////		{
+////			cmd::DrawState state;
+////			state.depthEnabled = r2::sarr::At(flags, i).IsSet(eDrawFlags::DEPTH_TEST);
+////			state.layer = drawType == STATIC ? DrawLayer::DL_WORLD : DrawLayer::DL_CHARACTER;
+////
+////			r2::sarr::Push(*tempDrawState, state);
+////		}
+////
+////		r2::sarr::Append(*batch.drawState, *tempDrawState);
+////
+////		FREE(tempDrawState, *MEM_ENG_SCRATCH_PTR);
+////
+////		if (!materialHandles)
+////		{
+////			for (u32 i = 0; i < numModelRefs; ++i)
+////			{
+////				const ModelRef& modelRef = r2::sarr::At(modelRefs, i);
+////
+////				MaterialBatch::Info info;
+////				info.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
+////				info.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
+////
+////				r2::sarr::Push(*batch.materialBatch.infos, info);
+////
+////				for (u32 j = 0; j < info.numMaterials; ++j)
+////				{
+////					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, j));//modelRef.mMaterialHandles[j]);
+////				}
+////			}
+////		}
+////		else
+////		{
+////
+////			u32 materialOffset = 0;
+////
+////			for (u32 i = 0; i < numModelRefs; ++i)
+////			{
+////				const ModelRef& modelRef = r2::sarr::At(modelRefs, i);
+////
+////
+////				MaterialBatch::Info materialBatchInfo;
+////				materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
+////				materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
+////
+////				r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
+////
+////				for (u32 j = 0; j < materialBatchInfo.numMaterials; ++j)
+////				{
+////					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*materialHandles, j + materialOffset));
+////				}
+////
+////				materialOffset += materialBatchInfo.numMaterials;
+////
+////			}
+////		}
+////
+////		if (drawType == DYNAMIC)
+////		{
+////			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
+////			
+////			R2_CHECK(useSameBoneTransformsForInstances != nullptr &&  r2::sarr::Size(*useSameBoneTransformsForInstances) == r2::sarr::Size(numInstances), "These should be the same");
+////
+////			r2::sarr::Append(*batch.useSameBoneTransformsForInstances, *useSameBoneTransformsForInstances);
+////
+////			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
+////		}
+////
+////		FREE(modelRefArray, *MEM_ENG_SCRATCH_PTR);
+//	}
 
-		const ModelRef& firstModelRef = r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, 0));
-
-		DrawModelsOnLayer(renderer, firstModelRef.mAnimated? DL_CHARACTER : DL_WORLD, modelRefHandles, nullptr, modelMatrices, flags, boneTransforms);
-	}
-
-	void DrawModel(Renderer& renderer, const ModelRefHandle& modelRefHandle, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
-
-		DrawModelOnLayer(renderer, modelRef.mAnimated ? DL_CHARACTER : DL_WORLD, modelRefHandle, nullptr, modelMatrix, flags, boneTransforms);
-	}
-
-	void DrawModelOnLayer(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		r2::SArray<glm::mat4>* modelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
-		
-		r2::sarr::Push(*modelMatrices, modelMatrix);
-		
-		DrawModelOnLayerInstanced(renderer, layer, modelRefHandle, 1, materials, *modelMatrices, flags, true, boneTransforms);
-		
-		FREE(modelMatrices, *MEM_ENG_SCRATCH_PTR);
-	}
-
-	void DrawModelsOnLayer(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		r2::SArray<u32>* instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, r2::sarr::Size(modelRefHandles));
-		r2::SArray<b32>* useSameBoneTransformsForInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, b32, r2::sarr::Size(modelRefHandles));
-		for (u64 i = 0; i < r2::sarr::Size(modelRefHandles); ++i)
-		{
-			r2::sarr::Push(*instances, 1u);
-			r2::sarr::Push(*useSameBoneTransformsForInstances, 1u);
-		}
-
-		DrawModelsOnLayerInstanced(renderer, layer, modelRefHandles, *instances, materialHandles, modelMatrices, flags, useSameBoneTransformsForInstances, boneTransforms);
-		
-		FREE(useSameBoneTransformsForInstances, *MEM_ENG_SCRATCH_PTR);
-		FREE(instances, *MEM_ENG_SCRATCH_PTR);
-	}
-
-	void DrawModelOnLayerInstanced(Renderer& renderer, DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5545,7 +5810,7 @@ namespace r2::draw::renderer
 		}
 
 		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
-		
+
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
 		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
 
@@ -5556,7 +5821,7 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "Submitted an animated model with no bone transforms!");
 		}
 
-		if (modelRef.mAnimated && layer != DL_CHARACTER)
+		if (modelRef.mAnimated && drawParameters.layer != DL_CHARACTER)
 		{
 			R2_CHECK(false, "Submitted an animated model not on the character layer!");
 		}
@@ -5575,30 +5840,30 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*batch.numInstances, numInstances);
 
 		cmd::DrawState state;
-		state.depthEnabled = flags.IsSet(DEPTH_TEST);
-		state.layer = layer;
+		state.depthEnabled = drawParameters.flags.IsSet(DEPTH_TEST);
+		state.layer = drawParameters.layer;
+		state.stencilState = drawParameters.stencilState;
 
 		r2::sarr::Push(*batch.drawState, state);
 
-		if (!materials)
+		if (!materialHandles)
 		{
 			MaterialBatch::Info materialBatchInfo;
 
 			materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-			materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);//modelRef.mNumMaterialHandles;
+			materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
 			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
 			{
-				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));//modelRef.mMaterialHandles[i]);
+				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));
 			}
 		}
 		else
 		{
-			u64 numMaterials = r2::sarr::Size(*materials);
+			u64 numMaterials = r2::sarr::Size(*materialHandles);
 			R2_CHECK(numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles), "This should be the same in this case");
-
 
 			MaterialBatch::Info materialBatchInfo;
 
@@ -5607,18 +5872,19 @@ namespace r2::draw::renderer
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
-			r2::sarr::Append(*batch.materialBatch.materialHandles, *materials);
+			r2::sarr::Append(*batch.materialBatch.materialHandles, *materialHandles);
 		}
 
 		if (drawType == DYNAMIC)
 		{
+			b32 useSameBoneTransformsForInstances = drawParameters.flags.IsSet(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
 			r2::sarr::Push(*batch.useSameBoneTransformsForInstances, useSameBoneTransformsForInstances);
 			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
 		}
 	}
 
-	void DrawModelsOnLayerInstanced(Renderer& renderer, DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForInstances, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5626,14 +5892,14 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		const auto numInstancesInArray = r2::sarr::Size(numInstances);
+		const auto numInstancesInArray = r2::sarr::Size(numInstancesPerModel);
 		const auto numModelMatrices = r2::sarr::Size(modelMatrices);
 		const auto numModelRefs = r2::sarr::Size(modelRefHandles);
 
 		R2_CHECK(numModelRefs > 0, "We should have model refs here!");
 
 		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
-		R2_CHECK(numModelRefs == r2::sarr::Size(flags), "These must be the same!");
+		R2_CHECK(numModelRefs == numInstancesInArray, "These must be the same!");
 
 		R2_CHECK(numModelMatrices == numInstancesInArray, "We should have the same number of model matrices as instances to draw");
 
@@ -5642,7 +5908,7 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numInstancesInArray; ++i)
 		{
-			numInstancesInTotal += static_cast<u32>(r2::sarr::At(numInstances, i));
+			numInstancesInTotal += static_cast<u32>(r2::sarr::At(numInstancesPerModel, i));
 		}
 
 		R2_CHECK(numInstancesInTotal == numModelMatrices, "We should have the same amount of instances as there are model matrices");
@@ -5661,14 +5927,14 @@ namespace r2::draw::renderer
 
 #if defined(R2_DEBUG)
 		//check to see if what we're being given is all one type
-		if (layer == DrawLayer::DL_WORLD)
+		if (!boneTransforms)
 		{
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
 				R2_CHECK(r2::sarr::At(modelRefs, i).mAnimated == false, "modelRef at index: %llu should not be animated!", i);
 			}
 		}
-		else if (layer == DrawLayer::DL_CHARACTER)
+		else 
 		{
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
@@ -5676,9 +5942,8 @@ namespace r2::draw::renderer
 			}
 		}
 #endif
-		R2_CHECK(layer == DrawLayer::DL_WORLD || layer == DrawLayer::DL_SKYBOX || layer == DrawLayer::DL_CHARACTER, "These are the only supported draw layers");
 
-		DrawType drawType = (layer == DrawLayer::DL_WORLD || layer == DrawLayer::DL_SKYBOX) ? DrawType::STATIC : DrawType::DYNAMIC;
+		DrawType drawType = (!boneTransforms) ? DrawType::STATIC : DrawType::DYNAMIC;
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
 
@@ -5686,18 +5951,18 @@ namespace r2::draw::renderer
 
 		r2::sarr::Append(*batch.models, modelMatrices);
 
-		r2::sarr::Append(*batch.numInstances, numInstances);
+		r2::sarr::Append(*batch.numInstances, numInstancesPerModel);
 
-		const u64 numFlags = r2::sarr::Size(flags);
+		const u64 numFlags = numInstancesInArray;
 
 		r2::SArray<cmd::DrawState>* tempDrawState = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, cmd::DrawState, numFlags);
 
 		for (u64 i = 0; i < numFlags; ++i)
 		{
 			cmd::DrawState state;
-			state.depthEnabled = r2::sarr::At(flags, i).IsSet(eDrawFlags::DEPTH_TEST);
-			state.layer = drawType == STATIC ? DrawLayer::DL_WORLD : DrawLayer::DL_CHARACTER;
-
+			state.depthEnabled = drawParameters.flags.IsSet(eDrawFlags::DEPTH_TEST);
+			state.layer = drawParameters.layer;
+			state.stencilState = drawParameters.stencilState;
 			r2::sarr::Push(*tempDrawState, state);
 		}
 
@@ -5719,19 +5984,17 @@ namespace r2::draw::renderer
 
 				for (u32 j = 0; j < info.numMaterials; ++j)
 				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, j));//modelRef.mMaterialHandles[j]);
+					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, j));
 				}
 			}
 		}
 		else
 		{
-
 			u32 materialOffset = 0;
 
 			for (u32 i = 0; i < numModelRefs; ++i)
 			{
 				const ModelRef& modelRef = r2::sarr::At(modelRefs, i);
-
 
 				MaterialBatch::Info materialBatchInfo;
 				materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
@@ -5745,17 +6008,20 @@ namespace r2::draw::renderer
 				}
 
 				materialOffset += materialBatchInfo.numMaterials;
-
 			}
 		}
 
 		if (drawType == DYNAMIC)
 		{
 			R2_CHECK(boneTransforms != nullptr && r2::sarr::Size(*boneTransforms) > 0, "bone transforms should be valid");
-			
-			R2_CHECK(useSameBoneTransformsForInstances != nullptr &&  r2::sarr::Size(*useSameBoneTransformsForInstances) == r2::sarr::Size(numInstances), "These should be the same");
+
+			r2::SArray<b32>* useSameBoneTransformsForInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, b32, numInstancesInArray);
+
+			r2::sarr::Fill(*useSameBoneTransformsForInstances, static_cast<b32>( drawParameters.flags.IsSet(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES)));
 
 			r2::sarr::Append(*batch.useSameBoneTransformsForInstances, *useSameBoneTransformsForInstances);
+
+			FREE(useSameBoneTransformsForInstances, *MEM_ENG_SCRATCH_PTR);
 
 			r2::sarr::Append(*batch.boneTransforms, *boneTransforms);
 		}
@@ -5872,8 +6138,6 @@ namespace r2::draw::renderer
 
 				r2::sarr::Push(*debugRenderConstants, constants);
 			}
-
-			
 
 			key::DebugKey debugKey = key::GenerateDebugKey(shaderID, flags.IsSet(eDrawFlags::FILL_MODEL) ? PrimitiveType::TRIANGLES : PrimitiveType::LINES, flags.IsSet(eDrawFlags::DEPTH_TEST), 0, 0);//@TODO(Serge): last two params unused - needed for transparency
 
@@ -6073,8 +6337,8 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
-				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				drawBatch->state.depthFunction = cmd::LESS;
+				drawBatch->state.cullState = CULL_FACE_BACK;
+				drawBatch->state.depthFunction = LESS;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
@@ -6091,8 +6355,8 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.depthEnabled;
-				drawBatch->state.cullState = cmd::CULL_FACE_BACK;
-				drawBatch->state.depthFunction = cmd::LESS;
+				drawBatch->state.cullState = CULL_FACE_BACK;
+				drawBatch->state.depthFunction = LESS;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
@@ -7839,36 +8103,45 @@ namespace r2::draw::renderer
 		return GetBlueNoise64Texture(MENG.GetCurrentRendererPtr());
 	}
 
-	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//void DrawModels(const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModels(MENG.GetCurrentRendererRef(), modelRefs, modelMatrices, flags, boneTransforms);
+	//}
+
+	//void DrawModel(const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModel(MENG.GetCurrentRendererRef(), modelRef, modelMatrix, flags, boneTransforms);
+	//}
+
+	//void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModelOnLayer(MENG.GetCurrentRendererRef(), layer, modelRef, materials, modelMatrix, flags, boneTransforms);
+	//}
+
+	//void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModelsOnLayer(MENG.GetCurrentRendererRef(), layer, modelRefs, materialHandles, modelMatrices, flags, boneTransforms);
+	//}
+
+	//void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModelOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandle, numInstances, materials, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
+	//}
+
+	//void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	//{
+	//	DrawModelsOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandles, numInstances, materialHandles, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
+	//}
+
+	void DrawModel(const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModels(MENG.GetCurrentRendererRef(), modelRefs, modelMatrices, flags, boneTransforms);
+		DrawModel(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandle, modelMatrices, numInstances, materialHandles, boneTransforms);
 	}
 
-	void DrawModel(const ModelRefHandle& modelRef, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModel(MENG.GetCurrentRendererRef(), modelRef, modelMatrix, flags, boneTransforms);
+		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialHandles, boneTransforms);
 	}
-
-	void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRef, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		DrawModelOnLayer(MENG.GetCurrentRendererRef(), layer, modelRef, materials, modelMatrix, flags, boneTransforms);
-	}
-
-	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefs, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		DrawModelsOnLayer(MENG.GetCurrentRendererRef(), layer, modelRefs, materialHandles, modelMatrices, flags, boneTransforms);
-	}
-
-	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		DrawModelOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandle, numInstances, materials, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
-	}
-
-	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms)
-	{
-		DrawModelsOnLayerInstanced(MENG.GetCurrentRendererRef(), layer, modelRefHandles, numInstances, materialHandles, modelMatrices, flags, useSameBoneTransformsForEachInstance, boneTransforms);
-	}
-
 
 	///More draw functions...
 	ShaderHandle GetDepthShaderHandle(bool isDynamic)

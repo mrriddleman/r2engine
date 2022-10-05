@@ -18,45 +18,13 @@ namespace r2::draw::cmd
 {
 	extern u32 CLEAR_COLOR_BUFFER;
 	extern u32 CLEAR_DEPTH_BUFFER;
-	extern u32 CULL_FACE_FRONT;
-	extern u32 CULL_FACE_BACK;
+	extern u32 CLEAR_STENCIL_BUFFER;
+
 
 	extern u32 SHADER_STORAGE_BARRIER_BIT;
 	extern u32 FRAMEBUFFER_BARRIER_BIT;
 	extern u32 ALL_BARRIER_BITS;
 	
-	extern u32 LESS;
-	extern u32 LEQUAL;
-	extern u32 EQUAL;
-
-	extern u32 KEEP;
-	extern u32 REPLACE;
-	extern u32 ZERO;
-	extern u32 NOTEQUAL;
-	
-	struct StencilOp
-	{
-		u32 stencilFail;
-		u32 depthFail;
-		u32 depthAndStencilPass;
-	};
-
-	struct StencilFunc
-	{
-		u32 func;
-		u32 ref;
-		u32 mask;
-	};
-
-	struct StencilState
-	{
-		b32 stencilEnabled;
-		b32 stencilWriteEnabled;
-
-		StencilOp op;
-		StencilFunc func;
-	};
-
 	struct DrawState
 	{
 		DrawLayer layer;

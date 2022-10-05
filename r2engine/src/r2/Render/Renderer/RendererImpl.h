@@ -72,7 +72,7 @@ namespace r2::draw::rendererimpl
 	void SetDepthFunction(u32 depthFunc);
 	void EnablePolygonOffset(bool enabled);
 	void SetPolygonOffset(const glm::vec2& polygonOffset);
-	void SetStencilState(const cmd::StencilState& stencilState);
+	void SetStencilState(const StencilState& stencilState);
 
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name);
 

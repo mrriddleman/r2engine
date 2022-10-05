@@ -41,6 +41,8 @@ namespace r2::draw
         u32 vertexBufferIndex = 0;
     };
 
+
+
 	enum class PrimitiveType : u8
 	{
 		POINTS,
@@ -55,7 +57,8 @@ namespace r2::draw
     enum eDrawFlags
     {
         DEPTH_TEST = 1 << 0,
-        FILL_MODEL = 1 << 1 //for debug only I guess...
+        FILL_MODEL = 1 << 1, //for debug only I guess...
+        USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES = 1 << 2
     };
 
     using DrawFlags = r2::Flags<u32, u32>;
@@ -87,6 +90,50 @@ namespace r2::draw
 
        
         DL_DEBUG //should always be last
+    };
+
+	extern u32 LESS;
+	extern u32 LEQUAL;
+	extern u32 EQUAL;
+
+	extern u32 KEEP;
+	extern u32 REPLACE;
+	extern u32 ZERO;
+	extern u32 NOTEQUAL;
+
+	extern u32 CULL_FACE_FRONT;
+	extern u32 CULL_FACE_BACK;
+
+	struct StencilOp
+	{
+		u32 stencilFail;
+		u32 depthFail;
+		u32 depthAndStencilPass;
+	};
+
+	struct StencilFunc
+	{
+		u32 func;
+		u32 ref;
+		u32 mask;
+	};
+
+	struct StencilState
+	{
+		b32 stencilEnabled;
+		b32 stencilWriteEnabled;
+
+		StencilOp op;
+		StencilFunc func;
+	};
+
+    struct DrawParameters
+    {
+        DrawLayer layer;
+
+        DrawFlags flags;
+
+        StencilState stencilState;
     };
 
 	enum RendererBackend : u8

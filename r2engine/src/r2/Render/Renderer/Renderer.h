@@ -493,15 +493,8 @@ namespace r2::draw::renderer
 	void RemoveSkyLight(SkyLightHandle skylightHandle);
 	void ClearAllLighting();
 
-	void DrawModels(const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModel(const ModelRefHandle& modelRefHandles, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	
-	void DrawModelOnLayer(DrawLayer layer, const ModelRefHandle& modelRefHandle, const r2::SArray<MaterialHandle>* materials, const glm::mat4& modelMatrix, const DrawFlags& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayer(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	
-	void DrawModelOnLayerInstanced(DrawLayer layer, const ModelRefHandle& modelRefHandle, u32 numInstances, const r2::SArray<MaterialHandle>* materials, const r2::SArray<glm::mat4>& modelMatrices, const DrawFlags& flags, b32 useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModelsOnLayerInstanced(DrawLayer layer, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<u32>& numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<DrawFlags>& flags, const r2::SArray<b32>* useSameBoneTransformsForEachInstance, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-
+	void DrawModel(const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 	///More draw functions...
