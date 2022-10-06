@@ -3608,7 +3608,7 @@ namespace r2::draw::renderer
 			finalBatchOffsets.numSubCommands = 1;
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
 			finalBatchOffsets.shaderId = materialShaderHandle;
-
+			
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 			subCommandsOffset += 1;
 		}
@@ -3737,8 +3737,8 @@ namespace r2::draw::renderer
 			drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
-			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-			drawBatch->state.cullState = CULL_FACE_BACK;
+			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;//TODO(Serge): fix with proper draw state
+			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
@@ -3775,7 +3775,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3803,7 +3803,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3832,7 +3832,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3851,8 +3851,8 @@ namespace r2::draw::renderer
 				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
-				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppDrawBatch->state.depthEnabled = true;
+				zppDrawBatch->state.cullState = batchOffset.drawState.cullState;
 				zppDrawBatch->state.depthFunction = LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
@@ -3868,7 +3868,7 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppShadowsDrawBatch->subCommands = nullptr;
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppShadowsDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppShadowsDrawBatch->state.cullState = batchOffset.drawState.cullState;
 				zppShadowsDrawBatch->state.depthFunction = LESS;
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
@@ -3894,8 +3894,8 @@ namespace r2::draw::renderer
 			drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
-			drawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-			drawBatch->state.cullState = CULL_FACE_BACK;
+			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
+			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
@@ -3925,7 +3925,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3952,7 +3952,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3980,7 +3980,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
-					shadowDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
@@ -3999,8 +3999,8 @@ namespace r2::draw::renderer
 				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
-				zppDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppDrawBatch->state.cullState = CULL_FACE_BACK;
+				zppDrawBatch->state.depthEnabled = true;
+				zppDrawBatch->state.cullState = batchOffset.drawState.cullState;
 				zppDrawBatch->state.depthFunction = LESS;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
