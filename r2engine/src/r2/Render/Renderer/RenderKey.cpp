@@ -225,4 +225,15 @@ namespace r2::draw::key
 		r2::draw::rendererimpl::SetShaderID(shaderHandle);
 	}
 
+
+	SortBatchKey GenerateSortBatchKey(u8 viewportLayer, r2::draw::ShaderHandle shader, u32 drawState)
+	{
+		key::SortBatchKey sortBatchKey;
+
+		sortBatchKey.keyValue |= ENCODE_KEY_VALUE((u64)viewportLayer, SortBatchKey::SORT_KEY_BITS_LAYER, SortBatchKey::KEY_VIEWPORT_LAYER_OFFSET);
+		sortBatchKey.keyValue |= ENCODE_KEY_VALUE((u64)shader, SortBatchKey::SORT_KEY_BITS_SHADER_ID, SortBatchKey::KEY_SHADER_ID_OFFSET);
+		sortBatchKey.keyValue |= ENCODE_KEY_VALUE((u64)drawState, SortBatchKey::SORT_KEY_BITS_DRAW_STATE, SortBatchKey::KEY_DRAW_STATE_OFFSET);
+
+		return sortBatchKey;
+	}
 }

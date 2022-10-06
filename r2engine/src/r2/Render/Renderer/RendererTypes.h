@@ -134,6 +134,8 @@ namespace r2::draw
         DrawFlags flags;
 
         StencilState stencilState;
+
+        u32 cullState = CULL_FACE_BACK;
     };
 
 	enum RendererBackend : u8

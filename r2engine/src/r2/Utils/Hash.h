@@ -116,7 +116,13 @@ namespace r2::utils
         auto hashfn = fnv1a_t<CHAR_BIT * sizeof(std::size_t)> {};
         hashfn.update(data, size);
         return hashfn.digest();
-        
+    }
+
+    constexpr unsigned int HashBytes32(const void* const data, const std::size_t size)
+    {
+        auto hashfn = fnv1a_t<32>{};
+        hashfn.update(data, size);
+        return hashfn.digest();
     }
 }
 
