@@ -3742,7 +3742,7 @@ namespace r2::draw::renderer
 			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
-			cmd::SetDefaultStencilState(drawBatch->state.stencilState);
+			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
 
 			if (batchOffset.drawState.layer == DL_SKYBOX)
 			{
@@ -3752,7 +3752,6 @@ namespace r2::draw::renderer
 			if (batchOffset.drawState.layer == DL_WORLD)
 			{
 				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
-
 
 				//I guess we need to loop here to submit all of the draws for each light...
 
@@ -3899,8 +3898,7 @@ namespace r2::draw::renderer
 			drawBatch->state.depthFunction = EQUAL;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
-
-			cmd::SetDefaultStencilState(drawBatch->state.stencilState);
+			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
 
 			if (batchOffset.drawState.layer == DL_CHARACTER)
 			{
@@ -7798,6 +7796,11 @@ namespace r2::draw::renderer
 	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialHandles, boneTransforms);
+	}
+
+	void SetDefaultStencilState(DrawParameters& drawParameters)
+	{
+		cmd::SetDefaultStencilState(drawParameters.stencilState);
 	}
 
 	///More draw functions...

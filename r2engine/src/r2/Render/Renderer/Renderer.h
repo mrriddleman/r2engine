@@ -496,6 +496,7 @@ namespace r2::draw::renderer
 	void DrawModel(const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
+	void SetDefaultStencilState(DrawParameters& drawParameters);
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);

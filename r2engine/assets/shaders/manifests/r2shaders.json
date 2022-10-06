@@ -41,6 +41,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 9614133454144883520,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicOutline.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicOutline.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 10231838077290944487,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicShadowDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\DynamicShadowDepth.fs",
@@ -124,6 +132,14 @@
       shaderName: 8833047848476087300,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticDepth.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
+      shaderName: 5332172149138756703,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticOutline.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\StaticOutline.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: ""
