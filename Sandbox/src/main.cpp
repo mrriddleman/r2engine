@@ -790,7 +790,7 @@ public:
 			dirLight.lightProperties.intensity = 200;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-            r2::draw::renderer::AddDirectionLight(dirLight);
+       //     r2::draw::renderer::AddDirectionLight(dirLight);
 
             
 
@@ -1265,6 +1265,9 @@ public:
         r2::SArray<glm::mat4>* ellenModelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
+
+        
+
 
         r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 2), *ellenModelMats, 2, nullptr, mEllenBoneTransforms);
 

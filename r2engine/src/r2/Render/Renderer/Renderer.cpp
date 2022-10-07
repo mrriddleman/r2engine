@@ -376,6 +376,7 @@ namespace r2::draw::renderer
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
+	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(Renderer& renderer, bool isStatic);
 
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix);
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
@@ -980,6 +981,10 @@ namespace r2::draw::renderer
 		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DebugModels"));
 #endif
 		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
+		newRenderer->mDefaultStaticOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticOutline"));
+		newRenderer->mDefaultDynamicOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicOutline"));
+
+
 
 		//Get the depth shader handles
 		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
@@ -2727,6 +2732,16 @@ namespace r2::draw::renderer
 		return materialHandle;
 	}
 
+	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(Renderer& renderer, bool isStatic)
+	{
+		if (isStatic)
+		{
+			return renderer.mDefaultStaticOutlineMaterialHandle;
+		}
+
+		return renderer.mDefaultDynamicOutlineMaterialHandle;
+	}
+
 	void UploadEngineModels(Renderer& renderer, VertexConfigHandle vertexLayoutConfig)
 	{
 		const r2::draw::Model* quadModel = GetDefaultModel(renderer, r2::draw::QUAD);
@@ -4326,7 +4341,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -7766,6 +7781,11 @@ namespace r2::draw::renderer
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel)
 	{
 		return GetMaterialHandleForDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
+	}
+
+	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(bool isStatic)
+	{
+		return GetDefaultOutlineMaterialHandle(MENG.GetCurrentRendererRef(), isStatic);
 	}
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam()

@@ -220,6 +220,8 @@ namespace r2::draw
 		r2::SArray<VertexLayoutUploadOffset>* mVertexLayoutUploadOffsets = nullptr;
 		
 		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
+		r2::draw::MaterialHandle mDefaultStaticOutlineMaterialHandle;
+		r2::draw::MaterialHandle mDefaultDynamicOutlineMaterialHandle;
 
 		VertexConfigHandle mStaticVertexModelConfigHandle = InvalidVertexConfigHandle;
 		VertexConfigHandle mAnimVertexModelConfigHandle = InvalidVertexConfigHandle;
@@ -458,6 +460,8 @@ namespace r2::draw::renderer
 	
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
+
+	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(bool isStatic);
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
 	const tex::Texture* GetMissingTexture();
