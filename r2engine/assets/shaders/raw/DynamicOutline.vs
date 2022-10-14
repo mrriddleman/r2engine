@@ -78,7 +78,7 @@ void main()
 	finalBoneVertexTransform	 += bonesXForms[BoneIDs[3] + boneOffset].globalInv * bonesXForms[BoneIDs[3] + boneOffset].transform * bonesXForms[BoneIDs[3] + boneOffset].invBinPose * BoneWeights[3]; 
 
 	mat4 vertexTransform = models[DrawID] * finalBoneVertexTransform;
-	vec4 modelPos = vertexTransform * vec4(aPos, 1.0);
+	
 
 	mat3 normalMatrix = transpose(inverse(mat3(vertexTransform)));
 
@@ -86,6 +86,7 @@ void main()
 
 	vs_out.texCoords = aTexCoord;
 	vs_out.drawID = DrawID;
-
-	gl_Position = projection * view * (modelPos + worldNormal * 0.0001);
+	vec4 modelPos = vertexTransform * vec4(aPos, 1.0) + (worldNormal * 0.0001);
+	
+	gl_Position = projection * view * modelPos;
 }

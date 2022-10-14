@@ -3700,7 +3700,7 @@ namespace r2::draw::renderer
 
 		ClearSurfaceOptions clearGBufferOptions;
 		clearGBufferOptions.shouldClear = true;
-		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+		clearGBufferOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
 		
 		const u64 numStaticDrawBatches = r2::sarr::Size(*staticRenderBatchesOffsets);
 
@@ -3716,11 +3716,15 @@ namespace r2::draw::renderer
 		clearDepthOptions.shouldClear = true;
 		clearDepthOptions.flags = cmd::CLEAR_DEPTH_BUFFER;
 
+		ClearSurfaceOptions clearDepthStencilOptions;
+		clearDepthStencilOptions.shouldClear = true;
+		clearDepthStencilOptions.flags = cmd::CLEAR_DEPTH_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
+
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
 		key::ShadowKey shadowClearKey = key::GenerateShadowKey(key::ShadowKey::CLEAR, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
 		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, 0, false, 0);
 
-		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
+		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthStencilOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS_SHADOWS, clearDepthOptions, *renderer.mDepthPrePassShadowBucket, depthClearKey, *renderer.mShadowArena);
 		
 		key::Basic clusterKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, 0);
@@ -3755,6 +3759,7 @@ namespace r2::draw::renderer
 			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;//TODO(Serge): fix with proper draw state
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			drawBatch->state.depthFunction = EQUAL;
+			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
@@ -3764,7 +3769,7 @@ namespace r2::draw::renderer
 				drawBatch->state.depthFunction = LEQUAL;
 			}
 
-			if (batchOffset.drawState.layer == DL_WORLD)
+			if (batchOffset.drawState.layer != DL_SKYBOX)
 			{
 				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
 
@@ -3792,6 +3797,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3820,6 +3826,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3849,6 +3856,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3866,8 +3874,9 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;
-				zppDrawBatch->state.cullState = batchOffset.drawState.cullState;
+				zppDrawBatch->state.cullState = CULL_FACE_FRONT;
 				zppDrawBatch->state.depthFunction = LESS;
+				zppDrawBatch->state.depthWriteEnabled = true;
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3882,15 +3891,14 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppShadowsDrawBatch->subCommands = nullptr;
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppShadowsDrawBatch->state.cullState = batchOffset.drawState.cullState;
+				zppShadowsDrawBatch->state.cullState = CULL_FACE_FRONT;
 				zppShadowsDrawBatch->state.depthFunction = LESS;
+				zppShadowsDrawBatch->state.depthWriteEnabled = true;
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
 
 				cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
 			}
-
-			//@TODO(Serge): add commands to different buckets
 		}
 
 		const u64 numDynamicDrawBatches = r2::sarr::Size(*dynamicRenderBatchesOffsets);
@@ -3911,11 +3919,12 @@ namespace r2::draw::renderer
 			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			drawBatch->state.depthFunction = EQUAL;
+			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
 
-			if (batchOffset.drawState.layer == DL_CHARACTER)
+			//if (batchOffset.drawState.layer == DL_CHARACTER)
 			{
 				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
 
@@ -3941,6 +3950,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
@@ -3968,6 +3978,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -3996,6 +4007,7 @@ namespace r2::draw::renderer
 					shadowDrawBatch->state.depthEnabled = true;
 					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
+					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4013,15 +4025,15 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;
-				zppDrawBatch->state.cullState = batchOffset.drawState.cullState;
+				zppDrawBatch->state.depthWriteEnabled = true;
+				zppDrawBatch->state.cullState = CULL_FACE_BACK;
 				zppDrawBatch->state.depthFunction = LESS;
+				
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
-
+				
 				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 			}
-
-			//@TODO(Serge): add commands to different buckets
 		}
 
 		key::Basic copyGBufferKey = key::GenerateBasicKey(0, 0, DL_SCREEN, 0, 0, 0, 0);
@@ -4080,6 +4092,7 @@ namespace r2::draw::renderer
 			drawMipBatch->state.depthEnabled = false;
 			drawMipBatch->state.cullState = CULL_FACE_BACK;
 			drawMipBatch->state.depthFunction = LESS;
+			drawMipBatch->state.depthWriteEnabled = false;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4115,6 +4128,7 @@ namespace r2::draw::renderer
 			drawMipBatch->state.depthEnabled = false;
 			drawMipBatch->state.cullState = CULL_FACE_BACK;
 			drawMipBatch->state.depthFunction = LESS;
+			drawMipBatch->state.depthWriteEnabled = false;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4147,6 +4161,7 @@ namespace r2::draw::renderer
 		aoDrawBatch->state.depthEnabled = false;
 		aoDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoDrawBatch->state.depthFunction = LESS;
+		aoDrawBatch->state.depthWriteEnabled = false;
 		aoDrawBatch->state.polygonOffsetEnabled = false;
 		aoDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4167,6 +4182,7 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->state.depthEnabled = false;
 		aoDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoDenoiseDrawBatch->state.depthFunction = LESS;
+		aoDenoiseDrawBatch->state.depthWriteEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 		
@@ -4190,6 +4206,7 @@ namespace r2::draw::renderer
 		aoTemporalDenoiseDrawBatch->state.depthEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoTemporalDenoiseDrawBatch->state.depthFunction = LESS;
+		aoTemporalDenoiseDrawBatch->state.depthWriteEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4213,6 +4230,7 @@ namespace r2::draw::renderer
 		ssrDrawBatch->state.depthEnabled = false;
 		ssrDrawBatch->state.cullState = CULL_FACE_BACK;
 		ssrDrawBatch->state.depthFunction = LESS;
+		ssrDrawBatch->state.depthWriteEnabled = false;
 		ssrDrawBatch->state.polygonOffsetEnabled = false;
 		ssrDrawBatch->state.polygonOffset = glm::vec2(0);
 		
@@ -4235,6 +4253,7 @@ namespace r2::draw::renderer
 		ssrConeTracedBatch->state.depthEnabled = false;
 		ssrConeTracedBatch->state.cullState = CULL_FACE_BACK;
 		ssrConeTracedBatch->state.depthFunction = LESS;
+		ssrConeTracedBatch->state.depthWriteEnabled = false;
 		ssrConeTracedBatch->state.polygonOffsetEnabled = false;
 		ssrConeTracedBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4264,10 +4283,11 @@ namespace r2::draw::renderer
 		finalDrawBatch->state.depthEnabled = false;
 		finalDrawBatch->state.cullState = CULL_FACE_BACK;
 		finalDrawBatch->state.depthFunction = LESS;
+		finalDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason eventhough depth isn't enabled?
 		finalDrawBatch->state.polygonOffsetEnabled = false;
 		finalDrawBatch->state.polygonOffset = glm::vec2(0);
 		
-		cmd::SetDefaultStencilState(ssrConeTracedBatch->state.stencilState);
+		cmd::SetDefaultStencilState(finalDrawBatch->state.stencilState);
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
@@ -4431,6 +4451,26 @@ namespace r2::draw::renderer
 				}
 			}
 
+			if (renderTarget->depthStencilAttachments)
+			{
+				const auto numDepthStencilAttachments = static_cast<u32>(r2::sarr::Size(*renderTarget->depthStencilAttachments));
+
+				R2_CHECK(numDepthStencilAttachments == 1, "should only have 1?");
+
+				if (numDepthStencilAttachments > 0)
+				{
+					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthStencilAttachments, 0);
+					uploadAllTextures = textureAttachment.uploadAllTextures;
+					numOutputTextures = 1;
+
+					if (textureAttachment.uploadAllTextures)
+					{
+						numOutputTextures = textureAttachment.numTextures;
+					}
+					currentTexture = textureAttachment.currentTexture;
+				}
+			}
+
 			if (clearOptions.shouldClear)
 			{
 				clearCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
@@ -4464,6 +4504,10 @@ namespace r2::draw::renderer
 				else if (renderTarget->depthAttachments)
 				{
 					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture]);
+				}
+				else if (renderTarget->depthStencilAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthStencilAttachments, 0).texture[currentTexture]);
 				}
 
 				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderOutputTargetHandle) + i * sizeof(tex::TextureAddress));
@@ -4507,6 +4551,16 @@ namespace r2::draw::renderer
 					numOutputTextures = textureAttachment.numTextures;
 				}
 			}
+			else if (inputRenderTarget->depthStencilAttachments)
+			{
+				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
+				currentTexture = textureAttachment.currentTexture;
+
+				if (textureAttachment.uploadAllTextures)
+				{
+					numOutputTextures = textureAttachment.numTextures;
+				}
+			}
 
 			for (u32 j = 0; j < numOutputTextures; ++j)
 			{
@@ -4531,6 +4585,10 @@ namespace r2::draw::renderer
 				{
 					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture[currentTexture]);
 				}
+				else if (inputRenderTarget->depthStencilAttachments)
+				{
+					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0).texture[currentTexture]);
+				}
 
 				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderInputTargetHandles[i]) + j * sizeof(tex::TextureAddress));
 
@@ -4540,10 +4598,7 @@ namespace r2::draw::renderer
 
 				currentTexture = (currentTexture + 1) % numOutputTextures;
 			}
-
-			
 		}
-
 
 		//Zero out the other surface handles so we don't leak state
 		for (u32 i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
@@ -4570,6 +4625,16 @@ namespace r2::draw::renderer
 				else if (inputRenderTarget->depthAttachments)
 				{
 					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
+					currentTexture = textureAttachment.currentTexture;
+
+					if (textureAttachment.uploadAllTextures)
+					{
+						numOutputTextures = textureAttachment.numTextures;
+					}
+				}
+				else if (inputRenderTarget->depthStencilAttachments)
+				{
+					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
 					currentTexture = textureAttachment.currentTexture;
 
 					if (textureAttachment.uploadAllTextures)
@@ -5515,11 +5580,6 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "Submitted an animated model with no bone transforms!");
 		}
 
-		if (modelRef.mAnimated && drawParameters.layer != DL_CHARACTER)
-		{
-			R2_CHECK(false, "Submitted an animated model not on the character layer!");
-		}
-
 		if (modelRef.mAnimated)
 		{
 			drawType = DYNAMIC;
@@ -5541,7 +5601,6 @@ namespace r2::draw::renderer
 		state.layer = drawParameters.layer;
 		state.stencilState = drawParameters.stencilState;
 		state.cullState = drawParameters.cullState;
-		
 
 		r2::sarr::Push(*batch.drawState, state);
 
@@ -5562,6 +5621,30 @@ namespace r2::draw::renderer
 		else
 		{
 			u64 numMaterials = r2::sarr::Size(*materialHandles);
+			r2::SArray<MaterialHandle>* materialHandlesToUse = nullptr;
+			
+			bool isMaterialSizesSame = numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles);
+
+			if (!isMaterialSizesSame)
+			{
+				if (numMaterials == 1)
+				{
+					const u64 numMaterialsToFill = r2::sarr::Size(*modelRef.mMaterialHandles);
+
+					materialHandlesToUse = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, MaterialHandle, numMaterialsToFill);
+
+					r2::sarr::Fill(*materialHandlesToUse, r2::sarr::At(*materialHandles, 0));
+				}
+			}
+			else
+			{
+				materialHandlesToUse = const_cast<r2::SArray<MaterialHandle>*>(materialHandles);
+			}
+
+			R2_CHECK(materialHandlesToUse != nullptr, "materialHandlesToUse should exist");
+
+			numMaterials = r2::sarr::Size(*materialHandlesToUse);
+
 			R2_CHECK(numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles), "This should be the same in this case");
 
 			MaterialBatch::Info materialBatchInfo;
@@ -5571,7 +5654,12 @@ namespace r2::draw::renderer
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
-			r2::sarr::Append(*batch.materialBatch.materialHandles, *materialHandles);
+			r2::sarr::Append(*batch.materialBatch.materialHandles, *materialHandlesToUse);
+
+			if (!isMaterialSizesSame && r2::sarr::Size(*materialHandles) == 1)
+			{
+				FREE(materialHandlesToUse, *MEM_ENG_SCRATCH_PTR);
+			}
 		}
 
 		if (drawType == DYNAMIC)
@@ -6039,6 +6127,7 @@ namespace r2::draw::renderer
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 				drawBatch->state.cullState = CULL_FACE_BACK;
 				drawBatch->state.depthFunction = LESS;
+				drawBatch->state.depthWriteEnabled = false;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
@@ -6057,6 +6146,7 @@ namespace r2::draw::renderer
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 				drawBatch->state.cullState = CULL_FACE_BACK;
 				drawBatch->state.depthFunction = LESS;
+				drawBatch->state.depthWriteEnabled = false;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
@@ -6978,7 +7068,7 @@ namespace r2::draw::renderer
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, renderer.mSSRRoughnessMips, false, true, false, 0 );
 
-			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH24_STENCIL8, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
@@ -7042,7 +7132,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH24_STENCIL8, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, false);
 	}
 
 	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7156,6 +7246,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_GBUFFER].numColorAttachments = 1;
 		renderTargetParams[RTS_GBUFFER].numDepthAttachments = 0;
+		renderTargetParams[RTS_GBUFFER].numStencilAttachments = 0;
+		renderTargetParams[RTS_GBUFFER].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_GBUFFER].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_GBUFFER].maxPageAllocations = 0;
 		renderTargetParams[RTS_GBUFFER].numAttachmentRefs = 3;
@@ -7166,6 +7258,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SHADOWS].numColorAttachments = 0;
 		renderTargetParams[RTS_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_SHADOWS].numStencilAttachments = 0;
+		renderTargetParams[RTS_SHADOWS].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SHADOWS].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES + light::MAX_NUM_SHADOW_MAP_PAGES;
 		renderTargetParams[RTS_SHADOWS].numAttachmentRefs = 0;
@@ -7176,6 +7270,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
 		renderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].numStencilAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_COMPOSITE].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_COMPOSITE].maxPageAllocations = 0;
 		renderTargetParams[RTS_COMPOSITE].numAttachmentRefs = 0;
@@ -7185,7 +7281,9 @@ namespace r2::draw::renderer
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_COMPOSITE].numSurfacesPerTarget;
 
 		renderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
-		renderTargetParams[RTS_ZPREPASS].numDepthAttachments = 1;
+		renderTargetParams[RTS_ZPREPASS].numDepthAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS].numStencilAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS].numDepthStencilAttachments = 1; //@TODO(Serge): set this to 1
 		renderTargetParams[RTS_ZPREPASS].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
 		renderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
@@ -7196,6 +7294,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numColorAttachments = 0;
 		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numStencilAttachments = 0;
+		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_POINTLIGHT_SHADOWS].maxPageAllocations = light::MAX_NUM_SHADOW_MAP_PAGES;
 		renderTargetParams[RTS_POINTLIGHT_SHADOWS].numAttachmentRefs = 0;
@@ -7206,6 +7306,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_AMBIENT_OCCLUSION].numColorAttachments = 1;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numStencilAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION].maxPageAllocations = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION].numAttachmentRefs = 0;
@@ -7216,6 +7318,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numColorAttachments = 1;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numStencilAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].maxPageAllocations = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED].numAttachmentRefs = 0;
@@ -7226,6 +7330,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_ZPREPASS_SHADOWS].numColorAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthAttachments = 1;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numStencilAttachments = 0;
+		renderTargetParams[RTS_ZPREPASS_SHADOWS].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS_SHADOWS].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS_SHADOWS].maxPageAllocations = 0;
 		renderTargetParams[RTS_ZPREPASS_SHADOWS].numAttachmentRefs = 0;
@@ -7236,6 +7342,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numColorAttachments = 1;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numDepthAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numStencilAttachments = 0;
+		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].maxPageAllocations = 0;
 		renderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED].numAttachmentRefs = 0;
@@ -7246,6 +7354,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_NORMAL].numColorAttachments = 1;
 		renderTargetParams[RTS_NORMAL].numDepthAttachments = 0;
+		renderTargetParams[RTS_NORMAL].numStencilAttachments = 0;
+		renderTargetParams[RTS_NORMAL].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_NORMAL].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_NORMAL].maxPageAllocations = 0;
 		renderTargetParams[RTS_NORMAL].numAttachmentRefs = 0;
@@ -7256,6 +7366,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SPECULAR].numColorAttachments = 1;
 		renderTargetParams[RTS_SPECULAR].numDepthAttachments = 0;
+		renderTargetParams[RTS_SPECULAR].numStencilAttachments = 0;
+		renderTargetParams[RTS_SPECULAR].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SPECULAR].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SPECULAR].maxPageAllocations = 0;
 		renderTargetParams[RTS_SPECULAR].numAttachmentRefs = 0;
@@ -7266,6 +7378,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SSR].numColorAttachments = 1;
 		renderTargetParams[RTS_SSR].numDepthAttachments = 0;
+		renderTargetParams[RTS_SSR].numStencilAttachments = 0;
+		renderTargetParams[RTS_SSR].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SSR].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SSR].maxPageAllocations = 0;
 		renderTargetParams[RTS_SSR].numAttachmentRefs = 0;
@@ -7276,6 +7390,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_CONVOLVED_GBUFFER].numColorAttachments = 1;
 		renderTargetParams[RTS_CONVOLVED_GBUFFER].numDepthAttachments = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numStencilAttachments = 0;
+		renderTargetParams[RTS_CONVOLVED_GBUFFER].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_CONVOLVED_GBUFFER].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_CONVOLVED_GBUFFER].maxPageAllocations = 0;
 		renderTargetParams[RTS_CONVOLVED_GBUFFER].numAttachmentRefs = 0;
@@ -7286,6 +7402,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SSR_CONE_TRACED].numColorAttachments = 1;
 		renderTargetParams[RTS_SSR_CONE_TRACED].numDepthAttachments = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numStencilAttachments = 0;
+		renderTargetParams[RTS_SSR_CONE_TRACED].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SSR_CONE_TRACED].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SSR_CONE_TRACED].maxPageAllocations = 0;
 		renderTargetParams[RTS_SSR_CONE_TRACED].numAttachmentRefs = 0;
@@ -7296,6 +7414,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_BLOOM].numColorAttachments = 1;
 		renderTargetParams[RTS_BLOOM].numDepthAttachments = 0;
+		renderTargetParams[RTS_BLOOM].numStencilAttachments = 0;
+		renderTargetParams[RTS_BLOOM].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_BLOOM].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_BLOOM].maxPageAllocations = 0;
 		renderTargetParams[RTS_BLOOM].numAttachmentRefs = 0;
@@ -7306,6 +7426,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_BLOOM_BLUR].numColorAttachments = 1;
 		renderTargetParams[RTS_BLOOM_BLUR].numDepthAttachments = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].numStencilAttachments = 0;
+		renderTargetParams[RTS_BLOOM_BLUR].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_BLOOM_BLUR].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_BLOOM_BLUR].maxPageAllocations = 0;
 		renderTargetParams[RTS_BLOOM_BLUR].numAttachmentRefs = 0;
@@ -7316,6 +7438,8 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numColorAttachments = 1;
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numDepthAttachments = 0;
+		renderTargetParams[RTS_BLOOM_UPSAMPLE].numStencilAttachments = 0;
+		renderTargetParams[RTS_BLOOM_UPSAMPLE].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].maxPageAllocations = 0;
 		renderTargetParams[RTS_BLOOM_UPSAMPLE].numAttachmentRefs = 0;

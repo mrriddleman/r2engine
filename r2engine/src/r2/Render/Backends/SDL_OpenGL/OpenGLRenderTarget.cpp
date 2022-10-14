@@ -13,6 +13,7 @@ namespace r2::draw::rt
 	s32 DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
 	s32 DEPTH_STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
 	s32 MSAA_ATTACHMENT = GL_TEXTURE_2D_MULTISAMPLE;
+	s32 STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
 }
 
 namespace r2::draw::rt::impl
@@ -51,7 +52,7 @@ namespace r2::draw::rt::impl
 			}
 			else
 			{
-				format.internalformat = GL_DEPTH_COMPONENT16;
+				format.internalformat = GL_DEPTH_COMPONENT24;
 			}
 			
 			format.borderColor = glm::vec4(1.0f);
@@ -91,6 +92,19 @@ namespace r2::draw::rt::impl
 		{
 			format.internalformat = GL_RG16;
 			format.borderColor = glm::vec4(1.0f);
+		}
+		else if (type == STENCIL8)
+		{
+			format.internalformat = GL_STENCIL_INDEX8;
+
+		}
+		else if (type == DEPTH24_STENCIL8)
+		{
+			format.internalformat = GL_DEPTH24_STENCIL8;
+		}
+		else if (type == DEPTH32F_STENCIL8)
+		{
+			format.internalformat = GL_DEPTH32F_STENCIL8;
 		}
 		else
 		{
@@ -153,6 +167,28 @@ namespace r2::draw::rt::impl
 			glDrawBuffer(GL_NONE);
 			glReadBuffer(GL_NONE);
 		}
+		else if (IsStencilAttachment(type))
+		{
+			if (!useLayeredRenderering)
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach, textureAttachment.texture[currentIndex].sliceIndex);
+			}
+			else
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach);
+			}
+		}
+		else if (IsDepthStencilAttachment(type))
+		{
+			if (!useLayeredRenderering)
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach, textureAttachment.texture[currentIndex].sliceIndex);
+			}
+			else
+			{
+				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, mipLevelToAttach);
+			}
+		}
 		else
 		{
 			R2_CHECK(false, "Unknown texture attachment type");
@@ -169,6 +205,14 @@ namespace r2::draw::rt::impl
 		else if (IsDepthAttachment(type))
 		{
 			r2::sarr::Push(*rt.depthAttachments, textureAttachment);
+		}
+		else if (IsStencilAttachment(type))
+		{
+			r2::sarr::Push(*rt.stencilAttachments, textureAttachment);
+		}
+		else if (IsDepthStencilAttachment(type))
+		{
+			r2::sarr::Push(*rt.depthStencilAttachments, textureAttachment);
 		}
 		else
 		{
@@ -221,6 +265,40 @@ namespace r2::draw::rt::impl
 
 			rt.numFrameBufferColorAttachments++;
 		}
+		else if (IsStencilAttachment(type))
+		{
+			if (rt.attachmentReferences && r2::sarr::Size(*rt.attachmentReferences) + 1 <= r2::sarr::Capacity(*rt.attachmentReferences))
+			{
+				rt::TextureAttachmentReference ref;
+				ref.attachmentPtr = &textureAttachment;
+				ref.type = type;
+
+				r2::sarr::Push(*rt.attachmentReferences, ref);
+			}
+
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, textureAttachment.texture[index].container->texId, textureAttachment.mipLevelAttached, textureAttachment.texture[index].sliceIndex);
+
+			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+			R2_CHECK(result, "Failed to attach texture to frame buffer");
+		}
+		else if (IsDepthStencilAttachment(type))
+		{
+			if (rt.attachmentReferences && r2::sarr::Size(*rt.attachmentReferences) + 1 <= r2::sarr::Capacity(*rt.attachmentReferences))
+			{
+				rt::TextureAttachmentReference ref;
+				ref.attachmentPtr = &textureAttachment;
+				ref.type = type;
+
+				r2::sarr::Push(*rt.attachmentReferences, ref);
+			}
+
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[index].container->texId, textureAttachment.mipLevelAttached, textureAttachment.texture[index].sliceIndex);
+
+			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+
+			R2_CHECK(result, "Failed to attach texture to frame buffer");
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported texture attachment type: %d", type);
@@ -242,6 +320,14 @@ namespace r2::draw::rt::impl
 		else if (IsDepthAttachment(type))
 		{
 			textureAttachmentsToUse = rt.depthAttachments;
+		}
+		else if (IsStencilAttachment(type))
+		{
+			textureAttachmentsToUse = rt.stencilAttachments;
+		}
+		else if (IsDepthStencilAttachment(type))
+		{
+			textureAttachmentsToUse = rt.depthStencilAttachments;
 		}
 		else
 		{
@@ -279,6 +365,14 @@ namespace r2::draw::rt::impl
 		{
 			textureAttachmentsToUse = rt.depthAttachments;
 		}
+		else if (IsStencilAttachment(type))
+		{
+			textureAttachmentsToUse = rt.stencilAttachments;
+		}
+		else if (IsDepthStencilAttachment(type))
+		{
+			textureAttachmentsToUse = rt.depthStencilAttachments;
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported TextureAttachmentType");
@@ -308,7 +402,6 @@ namespace r2::draw::rt::impl
 		auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
 		R2_CHECK(result, "Failed to attach texture to frame buffer");
-
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -353,6 +446,36 @@ namespace r2::draw::rt::impl
 				for (u32 textureIndex = 0; textureIndex < attachment.numTextures; ++textureIndex)
 				{
 					tex::UnloadFromGPU(attachment.texture[textureIndex]);
+				}
+			}
+		}
+
+		if (renderTarget.stencilAttachments)
+		{
+			u64 numStencilAttachments = r2::sarr::Size(*renderTarget.stencilAttachments);
+
+			for (u64 i = 0; i < numStencilAttachments; ++i)
+			{
+				auto& attachments = r2::sarr::At(*renderTarget.stencilAttachments, i);
+
+				for (u32 textureIndex = 0; textureIndex < attachments.numTextures; ++textureIndex)
+				{
+					tex::UnloadFromGPU(attachments.texture[textureIndex]);
+				}
+			}
+		}
+
+		if (renderTarget.depthStencilAttachments)
+		{
+			u64 numDepthStencilAttachments = r2::sarr::Size(*renderTarget.depthStencilAttachments);
+
+			for (u64 i = 0; i < numDepthStencilAttachments; ++i)
+			{
+				auto& attachments = r2::sarr::At(*renderTarget.depthStencilAttachments, i);
+
+				for (u32 textureIndex = 0; textureIndex < attachments.numTextures; ++textureIndex)
+				{
+					tex::UnloadFromGPU(attachments.texture[textureIndex]);
 				}
 			}
 		}
@@ -401,122 +524,32 @@ namespace r2::draw::rt::impl
 				}
 			}
 		}
+
+		if (renderTarget.stencilAttachments)
+		{
+			for (u32 i = 0; i < r2::sarr::Size(*renderTarget.stencilAttachments); ++i)
+			{
+				auto& attachment = r2::sarr::At(*renderTarget.stencilAttachments, i);
+
+				if (attachment.numLayers > 1)
+				{
+					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
+					attachment.needsFramebufferUpdate = true;
+				}
+			}
+		}
+
+		if (renderTarget.depthStencilAttachments)
+		{
+			for (u32 i = 0; i < r2::sarr::Size(*renderTarget.depthStencilAttachments); ++i)
+			{
+				auto& attachment = r2::sarr::At(*renderTarget.depthStencilAttachments, i);
+				if (attachment.numLayers > 1)
+				{
+					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
+					attachment.needsFramebufferUpdate = true;
+				}
+			}
+		}
 	}
-
-	//void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget)
-	//{
-	//	if (renderTarget.colorAttachments)
-	//	{
-	//		glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
-
-	//		const auto numColorAttachments = r2::sarr::Size(*renderTarget.colorAttachments);
-
-	//		for (u64 i = 0; i < numColorAttachments; ++i)
-	//		{
-	//			const auto& attachment = r2::sarr::At(*renderTarget.colorAttachments, i);
-	//			u32 currentIndex = attachment.currentTexture;
-
-	//			if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
-	//			{
-	//				if (attachment.numLayers == 1)
-	//				{
-	//					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[currentIndex].container->texId, attachment.mipLevelAttached, attachment.texture[currentIndex].sliceIndex);
-	//				}
-	//				else
-	//				{
-	//					glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached);
-	//				}
-	//				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-	//				R2_CHECK(result, "Failed to attach texture to frame buffer");
-	//			
-	//			}
-	//		}
-
-	//		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//	}
-
-	//	if (renderTarget.depthAttachments)
-	//	{
-	//		glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
-
-	//		const auto numDepthAttachments = r2::sarr::Size(*renderTarget.depthAttachments);
-
-	//		for (u64 i = 0; i < numDepthAttachments; ++i)
-	//		{
-	//			const auto& attachment = r2::sarr::At(*renderTarget.depthAttachments, i);
-
-	//			if (attachment.numTextures > 1 && attachment.needsFramebufferUpdate)
-	//			{
-	//				if (attachment.numLayers == 1)
-	//				{
-	//					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached, attachment.texture[attachment.currentTexture].sliceIndex);
-	//				}
-	//				else
-	//				{
-	//					//Have to do layered rendering with this
-	//					glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, attachment.texture[attachment.currentTexture].container->texId, attachment.mipLevelAttached);
-	//				}
-
-	//				glDrawBuffer(GL_NONE);
-	//				glReadBuffer(GL_NONE);
-
-	//				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-	//				R2_CHECK(result, "Failed to attach texture to frame buffer");
-	//			}
-	//		}
-
-	//		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//	}
-
-	//	if (renderTarget.attachmentReferences)
-	//	{
-	//		glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.frameBufferID);
-
-	//		const auto numReferences = r2::sarr::Size(*renderTarget.attachmentReferences);
-
-	//		for (u64 i = 0; i < numReferences; ++i)
-	//		{
-	//			 const auto& attachmentReference = r2::sarr::At(*renderTarget.attachmentReferences, i);
-
-	//			 R2_CHECK(attachmentReference.attachmentPtr != nullptr, "attachment ptr is nullptr!");
-
-	//			 if (IsDepthAttachment(attachmentReference.type))
-	//			 {
-	//				 if (attachmentReference.attachmentPtr->numTextures > 1 && attachmentReference.attachmentPtr->needsFramebufferUpdate)
-	//				 {
-	//					 const auto currentTexture = attachmentReference.attachmentPtr->currentTexture;
-	//					 const auto* textureAttachmentPtr = attachmentReference.attachmentPtr;
-
-	//					 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, textureAttachmentPtr->texture[currentTexture].container->texId, textureAttachmentPtr->mipLevelAttached, textureAttachmentPtr->texture[currentTexture].sliceIndex);
-
-	//					 auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-	//					 R2_CHECK(result, "Failed to attach texture to frame buffer");
-	//				 }
-	//			 }
-	//			 else if (IsColorAttachment(attachmentReference.type))
-	//			 {
-	//				 if (attachmentReference.attachmentPtr->numTextures > 1 && attachmentReference.attachmentPtr->needsFramebufferUpdate)
-	//				 {
-	//					 const auto currentTexture = attachmentReference.attachmentPtr->currentTexture;
-	//					 const auto* textureAttachmentPtr = attachmentReference.attachmentPtr;
-
-	//					 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachmentReference.colorAttachmentNumber, textureAttachmentPtr->texture[currentTexture].container->texId, textureAttachmentPtr->mipLevelAttached, textureAttachmentPtr->texture[currentTexture].sliceIndex);
-	//				 
-	//					 auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-	//					 R2_CHECK(result, "Failed to attach texture to frame buffer");
-	//				 }
-	//			 }
-	//			 else
-	//			 {
-	//				 R2_CHECK(false, "Unsupported attachment reference type");
-	//			 }
-	//		}
-
-	//		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//	}
-	//}
 }

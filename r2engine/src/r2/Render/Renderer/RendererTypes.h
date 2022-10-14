@@ -96,13 +96,18 @@ namespace r2::draw
 	extern u32 LEQUAL;
 	extern u32 EQUAL;
 
+    extern u32 GREATER;
+    extern u32 GEQUAL;
+
 	extern u32 KEEP;
 	extern u32 REPLACE;
 	extern u32 ZERO;
 	extern u32 NOTEQUAL;
+    extern u32 ALWAYS;
 
 	extern u32 CULL_FACE_FRONT;
 	extern u32 CULL_FACE_BACK;
+    extern u32 NONE;
 
 	struct StencilOp
 	{

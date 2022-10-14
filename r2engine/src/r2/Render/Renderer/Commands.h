@@ -29,8 +29,11 @@ namespace r2::draw::cmd
 	{
 		DrawLayer layer;
 		b32 depthEnabled; //@TODO(Serge): change this to flags (u32)
-		u32 cullState;
 		u32 depthFunction;
+		b32 depthWriteEnabled;
+
+		u32 cullState;
+		
 		b32 polygonOffsetEnabled;
 		glm::vec2 polygonOffset;
 
@@ -170,6 +173,16 @@ namespace r2::draw::cmd
 		u32 toDepthMipLevel;
 		u32 depthTextureLayer;
 		b32 depthUseLayeredRenderering;
+
+		s32 stencilTexture;
+		u32 toStencilMipLevel;
+		u32 stencilTextureLayer;
+		b32 stencilUseLayeredRendering;
+
+		s32 depthStencilTexture;
+		u32 toDepthStencilMipLevel;
+		u32 depthStencilTextureLayer;
+		b32 depthStencilUseLayeredRenderering;
 
 		u32 xOffset;
 		u32 yOffset;

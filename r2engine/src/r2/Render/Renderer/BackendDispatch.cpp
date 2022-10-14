@@ -116,12 +116,20 @@ namespace r2::draw::dispatch
 			realData->depthTexture,
 			realData->toDepthMipLevel,
 			realData->depthTextureLayer,
+			realData->stencilTexture,
+			realData->toStencilMipLevel,
+			realData->stencilTextureLayer,
+			realData->depthStencilTexture,
+			realData->toDepthStencilMipLevel,
+			realData->depthStencilTextureLayer,
 			realData->xOffset,
 			realData->yOffset,
 			realData->width,
 			realData->height,
 			realData->colorUseLayeredRenderering,
-			realData->depthUseLayeredRenderering);
+			realData->depthUseLayeredRenderering,
+			realData->stencilUseLayeredRendering,
+			realData->depthStencilUseLayeredRenderering);
 	}
 
 	void CopyRenderTargetColorTexture(const void* data)

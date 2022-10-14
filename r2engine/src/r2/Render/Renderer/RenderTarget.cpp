@@ -10,6 +10,8 @@ namespace r2::draw
 	{
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numColorAttachments), alignmnet, headerSize, boundsChecking) +
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numDepthAttachments), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numStencilAttachments), alignmnet, headerSize, boundsChecking) +
+			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachment>::MemorySize(params.numDepthStencilAttachments), alignmnet, headerSize, boundsChecking) +
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderBufferAttachment>::MemorySize(params.numRenderBufferAttachments), alignmnet, headerSize, boundsChecking) +
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::RenderTargetPageAllocation>::MemorySize(params.maxPageAllocations), alignmnet, headerSize, boundsChecking) +
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachmentReference>::MemorySize(params.numAttachmentRefs), alignmnet, headerSize, boundsChecking);
@@ -26,6 +28,9 @@ namespace r2::draw
 			cmd.xOffset = rt.xOffset;
 			cmd.yOffset = rt.yOffset;
 			cmd.colorUseLayeredRenderering = false;
+			cmd.depthTexture = -1;
+			cmd.stencilTexture = -1;
+			cmd.depthStencilTexture = -1;
 
 			float scale = glm::pow(2.0f, float(mipLevel));
 			cmd.width = static_cast<u32>(float(rt.width) / scale);
@@ -73,6 +78,49 @@ namespace r2::draw
 				}
 			}
 
+			if (rt.stencilAttachments != nullptr)
+			{
+				
+				const auto numStencilAttachments = r2::sarr::Size(*rt.stencilAttachments);
+				if (numStencilAttachments > 0)
+				{
+					R2_CHECK(numStencilAttachments == 1, "Should only have 1 here!");
+
+					const auto& stencilAttachment = r2::sarr::At(*rt.stencilAttachments, 0);
+
+					cmd.stencilTexture = stencilAttachment.texture[stencilAttachment.currentTexture].container->texId;
+					cmd.stencilTextureLayer = stencilAttachment.texture[stencilAttachment.currentTexture].sliceIndex;
+					cmd.toStencilMipLevel = mipLevel;
+
+					if (stencilAttachment.useLayeredRenderering)
+					{
+						cmd.stencilUseLayeredRendering = true;
+					}
+				}
+				
+			}
+
+			if (rt.depthStencilAttachments != nullptr)
+			{
+				const auto numDepthStencilAttachments = r2::sarr::Size(*rt.depthStencilAttachments);
+				if (numDepthStencilAttachments > 0)
+				{
+					R2_CHECK(numDepthStencilAttachments == 1, "Should only have 1 here");
+
+					const auto& depthStencilAttachment = r2::sarr::At(*rt.depthStencilAttachments, 0);
+
+					cmd.depthStencilTexture = depthStencilAttachment.texture[depthStencilAttachment.currentTexture].container->texId;
+					cmd.depthStencilTextureLayer = depthStencilAttachment.texture[depthStencilAttachment.currentTexture].sliceIndex;
+					cmd.toDepthStencilMipLevel = mipLevel;
+
+					if (depthStencilAttachment.useLayeredRenderering)
+					{
+						cmd.depthStencilUseLayeredRenderering = true;
+					}
+				}
+				
+			}
+
 			if (rt.attachmentReferences != nullptr)
 			{
 				const auto numReferences = r2::sarr::Size(*rt.attachmentReferences);
@@ -93,7 +141,7 @@ namespace r2::draw
 							cmd.colorUseLayeredRenderering = true;
 						}
 					}
-					else
+					else if(IsDepthAttachment(ref.type))
 					{
 						cmd.depthTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
 						cmd.depthTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
@@ -105,6 +153,32 @@ namespace r2::draw
 							cmd.depthUseLayeredRenderering = true;
 						}
 					}
+					else if (IsStencilAttachment(ref.type))
+					{
+						cmd.stencilTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
+						cmd.stencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
+						cmd.toStencilMipLevel = mipLevel;
+
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.stencilUseLayeredRendering = true;
+						}
+					}
+					else if (IsDepthStencilAttachment(ref.type))
+					{
+						cmd.depthStencilTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
+						cmd.depthStencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
+						cmd.toDepthStencilMipLevel = mipLevel;
+
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.depthStencilUseLayeredRenderering = true;
+						}
+					}
+					else
+					{
+						R2_CHECK(false, "Unsupported reference type!");
+					}
 				}
 			}
 		}
@@ -112,6 +186,10 @@ namespace r2::draw
 		void FillSetRenderTargetMipLevelCommandWithTextureIndex(const RenderTarget& rt, u32 mipLevel, u32 textureIndex, SetRenderTargetMipLevel& cmd)
 		{
 			memset(&cmd, 0, sizeof(SetRenderTargetMipLevel));
+			
+			cmd.depthTexture = -1;
+			cmd.stencilTexture = -1;
+			cmd.depthStencilTexture = -1;
 
 			cmd.frameBufferID = rt.frameBufferID;
 			cmd.xOffset = rt.xOffset;
@@ -166,6 +244,43 @@ namespace r2::draw
 				}
 			}
 
+			if (rt.stencilAttachments != nullptr)
+			{
+				const auto numStencilAttachments = r2::sarr::Size(*rt.stencilAttachments);
+				R2_CHECK(numStencilAttachments == 1, "Should only have 1 here");
+
+				const auto& stencilAttachment = r2::sarr::At(*rt.stencilAttachments, 0);
+
+				cmd.stencilTexture = stencilAttachment.texture[textureIndex].container->texId;
+				cmd.stencilTextureLayer = stencilAttachment.texture[textureIndex].sliceIndex;
+				cmd.toStencilMipLevel = mipLevel;
+
+				if (stencilAttachment.useLayeredRenderering)
+				{
+					cmd.stencilUseLayeredRendering = true;
+				}
+			}
+
+			if (rt.depthStencilAttachments != nullptr)
+			{
+				const auto numDepthStencilAttachments = r2::sarr::Size(*rt.depthStencilAttachments);
+				if (numDepthStencilAttachments > 0)
+				{
+					R2_CHECK(numDepthStencilAttachments == 1, "Should only have 1 here");
+
+					const auto& depthStencilAttachment = r2::sarr::At(*rt.depthStencilAttachments, 0);
+
+					cmd.depthStencilTexture = depthStencilAttachment.texture[textureIndex].container->texId;
+					cmd.depthStencilTextureLayer = depthStencilAttachment.texture[textureIndex].sliceIndex;
+					cmd.toDepthStencilMipLevel = mipLevel;
+
+					if (depthStencilAttachment.useLayeredRenderering)
+					{
+						cmd.depthStencilUseLayeredRenderering = true;
+					}
+				}
+			}
+
 			if (rt.attachmentReferences != nullptr)
 			{
 				const auto numReferences = r2::sarr::Size(*rt.attachmentReferences);
@@ -188,7 +303,7 @@ namespace r2::draw
 							cmd.colorUseLayeredRenderering = true;
 						}
 					}
-					else
+					else if(IsDepthAttachment(ref.type))
 					{
 						cmd.depthTexture = ref.attachmentPtr->texture[textureIndex].container->texId;
 						cmd.depthTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
@@ -199,6 +314,32 @@ namespace r2::draw
 						{
 							cmd.depthUseLayeredRenderering = true;
 						}
+					}
+					else if (IsStencilAttachment(ref.type))
+					{
+						cmd.stencilTexture = ref.attachmentPtr->texture[textureIndex].container->texId;
+						cmd.stencilTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
+						cmd.toStencilMipLevel = mipLevel;
+
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.stencilUseLayeredRendering = true;
+						}
+					}
+					else if (IsDepthStencilAttachment(ref.type))
+					{
+						cmd.depthStencilTexture = ref.attachmentPtr->texture[textureIndex].container->texId;
+						cmd.depthStencilTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
+						cmd.toDepthStencilMipLevel = mipLevel;
+
+						if (ref.attachmentPtr->useLayeredRenderering)
+						{
+							cmd.depthStencilUseLayeredRenderering = true;
+						}
+					}
+					else
+					{
+						R2_CHECK(false, "Unsupported reference type!");
 					}
 				}
 			}
@@ -278,11 +419,6 @@ namespace r2::draw
 			impl::SwapTexturesIfNecessary(rt);
 		}
 
-		//void UpdateRenderTargetIfNecessary(RenderTarget& rt)
-		//{
-		//	impl::UpdateRenderTargetIfNecessary(rt);
-		//}
-
 		bool IsColorAttachment(TextureAttachmentType type)
 		{
 			return type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F || type == RG16;
@@ -291,6 +427,16 @@ namespace r2::draw
 		bool IsDepthAttachment(TextureAttachmentType type)
 		{
 			return type == DEPTH || type == DEPTH_CUBEMAP;
+		}
+
+		bool IsStencilAttachment(TextureAttachmentType type)
+		{
+			return type == STENCIL8;
+		}
+
+		bool IsDepthStencilAttachment(TextureAttachmentType type)
+		{
+			return type == DEPTH24_STENCIL8 || type == DEPTH32F_STENCIL8;
 		}
 	}
 

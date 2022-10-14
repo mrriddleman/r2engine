@@ -1266,10 +1266,32 @@ public:
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
         r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
 
-        
-
+		animDrawParams.stencilState.op.stencilFail = r2::draw::KEEP;
+		animDrawParams.stencilState.op.depthFail = r2::draw::KEEP;
+		animDrawParams.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
+		animDrawParams.stencilState.stencilWriteEnabled = true;
+		animDrawParams.stencilState.stencilEnabled = true;
+		animDrawParams.stencilState.func.func = r2::draw::ALWAYS;
+		animDrawParams.stencilState.func.ref = 1;
+		animDrawParams.stencilState.func.mask = 0xFF;
 
         r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 2), *ellenModelMats, 2, nullptr, mEllenBoneTransforms);
+
+		animDrawParams.flags.Remove(r2::draw::eDrawFlags::DEPTH_TEST);
+		animDrawParams.layer = r2::draw::DL_EFFECT;
+		animDrawParams.stencilState.stencilEnabled = true;
+        animDrawParams.stencilState.stencilWriteEnabled = false;
+		animDrawParams.stencilState.func.func = r2::draw::NOTEQUAL;
+		animDrawParams.stencilState.func.ref = 1;
+		animDrawParams.stencilState.func.mask = 0xFF;
+
+		r2::SArray<r2::draw::MaterialHandle>* outlineMaterialHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::MaterialHandle, 1);
+
+		r2::sarr::Push(*outlineMaterialHandles, r2::draw::renderer::GetDefaultOutlineMaterialHandle(false));
+
+		r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 2), *ellenModelMats, 2, outlineMaterialHandles, mEllenBoneTransforms);
+
+		FREE(outlineMaterialHandles, *MEM_ENG_SCRATCH_PTR);
 
         FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
 

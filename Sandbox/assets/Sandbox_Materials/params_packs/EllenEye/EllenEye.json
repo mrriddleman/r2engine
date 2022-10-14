@@ -3,7 +3,7 @@
   ulongParams: [
     {
       propertyType: "SHADER",
-      value: 7608013471622948757
+      value: "EllenEyeShader"
     }
   ],
   floatParams: [

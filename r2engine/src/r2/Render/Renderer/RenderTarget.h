@@ -40,7 +40,10 @@ namespace r2::draw::rt
 		RG32F,
 		R32F,
 		R16F,
-		RG16
+		RG16,
+		STENCIL8,
+		DEPTH24_STENCIL8,
+		DEPTH32F_STENCIL8
 	};
 
 	struct RenderTargetPageAllocation
@@ -62,6 +65,8 @@ namespace r2::draw::rt
 	{
 		u32 numColorAttachments;
 		u32 numDepthAttachments;
+		u32 numStencilAttachments;
+		u32 numDepthStencilAttachments;
 		u32 numRenderBufferAttachments;
 		u32 maxPageAllocations;
 		u32 numAttachmentRefs;
@@ -108,6 +113,10 @@ namespace r2::draw
 		r2::SArray<rt::TextureAttachment>* colorAttachments = nullptr;
 
 		r2::SArray<rt::TextureAttachment>* depthAttachments = nullptr;
+
+		r2::SArray<rt::TextureAttachment>* stencilAttachments = nullptr;
+
+		r2::SArray<rt::TextureAttachment>* depthStencilAttachments = nullptr;
 		
 		r2::SArray<rt::RenderBufferAttachment>* renderBufferAttachments = nullptr;
 
@@ -131,6 +140,7 @@ namespace r2::draw
 		extern s32 COLOR_ATTACHMENT;
 		extern s32 DEPTH_ATTACHMENT;
 		extern s32 DEPTH_STENCIL_ATTACHMENT;
+		extern s32 STENCIL_ATTACHMENT;
 		extern s32 MSAA_ATTACHMENT;
 
 		template <class ARENA>
@@ -162,6 +172,10 @@ namespace r2::draw
 		bool IsColorAttachment(TextureAttachmentType type);
 
 		bool IsDepthAttachment(TextureAttachmentType type);
+
+		bool IsStencilAttachment(TextureAttachmentType type);
+
+		bool IsDepthStencilAttachment(TextureAttachmentType type);
 
 		//private
 		namespace impl
@@ -211,6 +225,16 @@ namespace r2::draw
 				rt.attachmentReferences = MAKE_SARRAY_VERBOSE(arena, TextureAttachmentReference, params.numAttachmentRefs, file, line, description);
 			}
 
+			if (params.numStencilAttachments > 0)
+			{
+				rt.stencilAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, params.numStencilAttachments, file, line, description);
+			}
+
+			if (params.numDepthStencilAttachments > 0)
+			{
+				rt.depthStencilAttachments = MAKE_SARRAY_VERBOSE(arena, TextureAttachment, params.numDepthStencilAttachments, file, line, description);
+			}
+
 			rt.width = width;
 			rt.height = height;
 			rt.xOffset = xOffset;
@@ -239,6 +263,16 @@ namespace r2::draw
 			}
 
 			impl::DestroyFrameBufferID(rt);
+
+			if (rt.depthStencilAttachments)
+			{
+				FREE(rt.depthStencilAttachments, arena);
+			}
+
+			if (rt.stencilAttachments)
+			{
+				FREE(rt.stencilAttachments, arena);
+			}
 
 			if (rt.attachmentReferences)
 			{

@@ -52,8 +52,8 @@ namespace r2::draw::cmd
 		stencilState.op.depthFail = KEEP;
 		stencilState.op.depthAndStencilPass = KEEP;
 
-		stencilState.func.func = EQUAL;
+		stencilState.func.func = ALWAYS;
 		stencilState.func.ref = 0;
-		stencilState.func.mask = 0;
+		stencilState.func.mask = 0xFF;
 	}
 }

@@ -108,13 +108,19 @@ namespace r2::draw
 	u32 LEQUAL = GL_LEQUAL;
 	u32 EQUAL = GL_EQUAL;
 
+	u32 GREATER = GL_GREATER;
+	u32 GEQUAL = GL_GEQUAL;
+
 	u32 KEEP = GL_KEEP;
 	u32 REPLACE = GL_REPLACE;
 	u32 ZERO = GL_ZERO;
 	u32 NOTEQUAL = GL_NOTEQUAL;
+	u32 ALWAYS = GL_ALWAYS;
 
 	u32 CULL_FACE_FRONT = GL_FRONT;
 	u32 CULL_FACE_BACK = GL_BACK;
+	u32 NONE = GL_NONE;
+	
 }
 
 namespace r2::draw::cmd
@@ -228,6 +234,8 @@ namespace r2::draw::rendererimpl
 #if defined R2_DEBUG
 		glEnable(GL_DEBUG_OUTPUT);
 #endif
+		
+		glClearStencil(0);
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr && s_optrRendererImpl->mGPUBuffers != nullptr;
 	}
@@ -372,10 +380,12 @@ namespace r2::draw::rendererimpl
 		if (shouldDepthTest)
 		{
 			glEnable(GL_DEPTH_TEST);
-			glDepthMask(GL_TRUE);
 		}
 		else
+		{
 			glDisable(GL_DEPTH_TEST);
+		}
+			
 	}
 
 	void SetCullFace(u32 cullFace)
@@ -385,20 +395,25 @@ namespace r2::draw::rendererimpl
 
 	void SetDepthFunction(u32 depthFunc)
 	{
-		if (depthFunc != EQUAL && depthFunc != LESS && depthFunc != LEQUAL)
+		if (depthFunc != EQUAL && depthFunc != LESS && depthFunc != LEQUAL && depthFunc != ALWAYS)
 		{
 			R2_CHECK(false, "depthFunc not supported yet!");
 		}
-
-		glDepthMask(GL_TRUE);
+		
+		
 		glDepthFunc(depthFunc);
+	}
 
-		if (depthFunc == EQUAL)
+	void SetDepthWriteEnabled(bool depthWriteEnabled)
+	{
+		if (depthWriteEnabled)
 		{
-			glDepthMask(GL_FALSE);	
+			glDepthMask(GL_TRUE);
 		}
-		
-		
+		else
+		{
+			glDepthMask(GL_FALSE);
+		}
 	}
 
 	void SetDepthClamp(bool shouldDepthClamp)
@@ -442,17 +457,16 @@ namespace r2::draw::rendererimpl
 			glDisable(GL_STENCIL_TEST);
 		}
 
+		glStencilOpSeparate(GL_FRONT_AND_BACK, stencilState.op.stencilFail, stencilState.op.depthFail, stencilState.op.depthAndStencilPass);
+
+		glStencilFuncSeparate(GL_FRONT_AND_BACK, stencilState.func.func, stencilState.func.ref, stencilState.func.mask);
+
+		glStencilMask(0x00);
+
 		if (stencilState.stencilWriteEnabled)
 		{
 			glStencilMask(0xFF);
 		}
-		else
-		{
-			glStencilMask(0x00);
-		}
-
-		glStencilOp(stencilState.op.stencilFail, stencilState.op.depthFail, stencilState.op.depthAndStencilPass);
-		glStencilFunc(stencilState.func.func, stencilState.func.ref, stencilState.func.mask);
 	}
 
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name)
@@ -729,7 +743,27 @@ namespace r2::draw::rendererimpl
 	//draw functions
 	void Clear(u32 flags)
 	{
+		if ((flags & GL_STENCIL_BUFFER_BIT) == GL_STENCIL_BUFFER_BIT)
+		{
+			glEnable(GL_STENCIL_TEST);
+			glStencilMask(0xFF);
+			glClearStencil(0);
+		}
+
+		if ((flags & GL_DEPTH_BUFFER_BIT) == GL_DEPTH_BUFFER_BIT)
+		{
+			glEnable(GL_DEPTH_TEST);
+			glDepthMask(0xFF);
+			glClearDepth(1.0f);
+		}
+
 		glClear(flags);
+
+		glDisable(GL_STENCIL_TEST);
+		glStencilMask(0x00);
+
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(0x00);
 	}
 
 	void BindVertexArray(BufferLayoutHandle layoutId)
@@ -829,8 +863,11 @@ namespace r2::draw::rendererimpl
 	void ApplyDrawState(const cmd::DrawState& state)
 	{
 		SetDepthTest(state.depthEnabled);
-		SetCullFace(state.cullState);
 		SetDepthFunction(state.depthFunction);
+		SetDepthWriteEnabled(state.depthWriteEnabled);
+		
+		SetCullFace(state.cullState);
+
 		EnablePolygonOffset(state.polygonOffsetEnabled);
 		SetPolygonOffset(state.polygonOffset);
 		SetStencilState(state.stencilState);
@@ -969,23 +1006,26 @@ namespace r2::draw::rendererimpl
 		s32 depthTexture,
 		u32 depthMipLevel,
 		u32 depthTextureLayer,
+		s32 stencilTexture,
+		u32 stencilMipLevel,
+		u32 stencilTextureLayer,
+		s32 depthStencilTexture,
+		u32 depthStencilMipLevel,
+		u32 depthStencilTextureLayer,
 		u32 xOffset,
 		u32 yOffset,
 		u32 width,
 		u32 height,
 		b32 colorUseLayeredRenderering,
-		b32 depthUseLayeredRenderering)
+		b32 depthUseLayeredRenderering,
+		b32 stencilUseLayeredRenderering,
+		b32 depthStencilUseLayeredRenderering)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
 		if (fboHandle != 0)
 		{
 			bool checkStatus = false;
-
-			if (fboHandle == 11)
-			{
-				int k = 0;
-			}
 
 			if (numColorTextures > 0)
 			{
@@ -1029,12 +1069,46 @@ namespace r2::draw::rendererimpl
 				}
 			}
 
+			if (stencilTexture != -1)
+			{
+				if (!stencilUseLayeredRenderering)
+				{
+					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, stencilTexture, stencilMipLevel, stencilTextureLayer);
+				}
+				else
+				{
+					glFramebufferTexture(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, stencilTexture, stencilMipLevel);
+				}
+
+				checkStatus = true;
+			}
+
+			if (depthStencilTexture != -1)
+			{
+				if (!depthStencilUseLayeredRenderering)
+				{
+					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depthStencilTexture, depthStencilMipLevel, depthStencilTextureLayer);
+				}
+				else
+				{
+					glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depthStencilTexture, depthStencilMipLevel);
+				}
+
+				checkStatus = true;
+
+				if (numColorTextures == 0)
+				{
+					glDrawBuffer(GL_NONE);
+					glReadBuffer(GL_NONE);
+				}
+			}
+
 			if (checkStatus)
 			{
 				//SO SLOW!!
 #ifdef R2_DEBUG
-		//	auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-		//	R2_CHECK(result, "Failed to attach texture to frame buffer");
+			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+			R2_CHECK(result, "Failed to attach texture to frame buffer");
 #endif
 			}
 		}

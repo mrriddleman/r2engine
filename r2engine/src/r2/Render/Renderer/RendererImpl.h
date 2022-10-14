@@ -67,6 +67,7 @@ namespace r2::draw::rendererimpl
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
+	void SetDepthWriteEnabled(bool depthWriteEnabled);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
 	void SetCullFace(u32 cullFace);
 	void SetDepthFunction(u32 depthFunc);
@@ -108,12 +109,20 @@ namespace r2::draw::rendererimpl
 		s32 depthTexture,
 		u32 depthMipLevel,
 		u32 depthTextureLayer,
+		s32 stencilTexture,
+		u32 stencilMipLevel,
+		u32 stencilTextureLayer,
+		s32 depthStencilTexture,
+		u32 depthStencilMipLevel,
+		u32 depthStencilTextureLayer,
 		u32 xOffset,
 		u32 yOffset,
 		u32 width,
 		u32 height,
 		b32 colorUseLayeredRenderering,
-		b32 depthUseLayeredRenderering);
+		b32 depthUseLayeredRenderering,
+		b32 stencilUseLayeredRenderering,
+		b32 depthStencilUseLayeredRenderering);
 
 	void CopyRenderTargetColorTexture(u32 fboHandle, u32 attachmentIndex, u32 textureID, u32 mipLevel, s32 xOffset, s32 yOffset, s32 layer, s32 x, s32 y, u32 width, u32 height);
 	
