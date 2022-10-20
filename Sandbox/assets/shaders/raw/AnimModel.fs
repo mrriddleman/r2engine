@@ -11,7 +11,7 @@ const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec2 NormalColor;
+layout (location = 1) out vec3 NormalColor;
 layout (location = 2) out vec4 SpecularColor;
 
 #define PI 3.141596
@@ -467,7 +467,7 @@ void main()
 	//FragColor = vec4(vec3(texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r/25.0), 1);
 	//FragColor = vec4(texCoords.x, texCoords.y, 0, 1.0);
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
-	NormalColor = EncodeNormal(normalize(norm));
+	NormalColor = fs_in.viewNormal;
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 }

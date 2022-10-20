@@ -110,10 +110,10 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	// vec3 testCoord = vec3(uv.r, uv.g, zPrePassSurface.page);
-	// float testColor = textureLod(sampler2DArray(zPrePassSurface.container), testCoord, 0).r;
+	// vec3 testCoord = vec3(uv.r, uv.g, ssrSurface.page);
+	// vec3 testColor = textureLod(sampler2DArray(ssrSurface.container), testCoord, 0).rgb;
 
-	// return vec4(vec3(LinearizeDepth(testColor)), 1);
+	// return vec4(testColor, 1);
 
 
 	vec3 bloomCoord = vec3(uv.r, uv.g, bloomUpSampledSurface.page);

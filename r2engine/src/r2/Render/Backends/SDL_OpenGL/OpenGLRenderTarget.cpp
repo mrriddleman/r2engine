@@ -25,13 +25,15 @@ namespace r2::draw::rt::impl
 
 		TextureAttachment textureAttachment;
 
+		textureAttachment.type = type;
+
 		tex::TextureFormat format;
 		format.width = rt.width;
 		format.height = rt.height;
 		format.mipLevels = mipLevels;
 		textureAttachment.mipLevelAttached = mipLevelToAttach;
 		textureAttachment.useLayeredRenderering = useLayeredRenderering;
-
+		
 		if (type == COLOR)
 		{
 			if (isHDR)
@@ -223,10 +225,12 @@ namespace r2::draw::rt::impl
 
 	}
 
-	void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
+	void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment)
 	{
 		int index = textureAttachment.currentTexture;
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
+
+		TextureAttachmentType type = textureAttachment.type;
 
 		if (IsDepthAttachment(type))
 		{
@@ -386,30 +390,6 @@ namespace r2::draw::rt::impl
 		textureHandle.numPages = pages;
 
 		tex::UnloadFromGPU(textureHandle);
-	}
-
-	void AddDepthAndStencilAttachment(RenderTarget& rt)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
-		u32 rbo;
-		glGenRenderbuffers(1, &rbo);
-		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, rt.width, rt.height);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-		auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-
-		R2_CHECK(result, "Failed to attach texture to frame buffer");
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		RenderBufferAttachment ra;
-		ra.rbo = rbo;
-		ra.attachmentType = DEPTH_STENCIL_ATTACHMENT;
-
-		r2::sarr::Push(*rt.renderBufferAttachments, ra);
 	}
 
 	void CreateFrameBufferID(RenderTarget& renderTarget)

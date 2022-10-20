@@ -3,7 +3,6 @@
 #extension GL_NV_gpu_shader5 : enable
 #define NUM_FRUSTUM_SPLITS 4
 
-
 layout(location = 0) out vec4 oOutputColor;
 
 //https://github.com/man-in-black382/EARenderer/blob/master/EARenderer/Engine/OpenGL/Extensions/Shaders/Postprocessing/Reflections/SSRConeTracing.frag
@@ -43,7 +42,6 @@ layout (std140, binding = 1) uniform Vectors
 	vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
 };
 
-
 layout (std140, binding = 2) uniform Surfaces
 {
 	Tex2DAddress gBufferSurface;
@@ -65,22 +63,25 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress bloomUpSampledSurface;
 };
 
-
 layout (std140, binding = 4) uniform SSRParams
 {
-	float ssr_maxRayMarchStep;
+	float ssr_stride;
 	float ssr_zThickness;
 	int ssr_rayMarchIterations;
-	int ssr_maxBinarySearchSamples;
+	float ssr_strideZCutoff;
+	
 	Tex2DAddress ssr_ditherTexture;
+	
 	float ssr_ditherTilingFactor;
 	int ssr_roughnessMips;
 	int ssr_coneTracingSteps;
-
 	float ssr_maxFadeDistance;
+	
 	float ssr_fadeScreenStart;
 	float ssr_fadeScreenEnd;
+	float ssr_maxDistance;
 };
+
 
 vec3 F_Schlick(const vec3 F0, float F90, float VoH)
 {
@@ -271,7 +272,7 @@ void main()
 
 vec3 TraceCones(float gloss, vec4 rayHitInfo)
 {
-	if(rayHitInfo.a == 0.0)
+	if(rayHitInfo.a <= 0.0)
 	{
 		return vec3(0);
 	}
@@ -326,10 +327,6 @@ vec3 TraceCones(float gloss, vec4 rayHitInfo)
 		adjacentLength = IsoscelesTriangleNextAdjacent(adjacentLength, incircleSize);
 		glossMult *= gloss;
 	}
-
-
-
-
 
 	return totalReflectedColor.rgb * rayHitInfo.a;
 }

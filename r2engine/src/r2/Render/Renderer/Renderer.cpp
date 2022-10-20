@@ -1618,17 +1618,18 @@ namespace r2::draw::renderer
 		});
 
 		renderer.mSSRConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
-			{r2::draw::ShaderDataType::Float, "ssr_maxRayMarchStep"},
+			{r2::draw::ShaderDataType::Float, "ssr_stride"},
 			{r2::draw::ShaderDataType::Float, "ssr_ssThickness"},
 			{r2::draw::ShaderDataType::Int, "ssr_rayMarchIterations"},
-			{r2::draw::ShaderDataType::Int, "ssr_maxBinarySearchSamples"},
+			{r2::draw::ShaderDataType::Float, "ssr_strideZCutoff"},
 			{r2::draw::ShaderDataType::Struct, "ssr_ditherTexture"},
 			{r2::draw::ShaderDataType::Float, "ssr_ditherTilingFactor"},
 			{r2::draw::ShaderDataType::Int, "ssr_roughnessMips"},
 			{r2::draw::ShaderDataType::Int, "ssr_coneTracingSteps"},
-			{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
+			{r2::draw::ShaderDataType::Float, "ssr_maxFadeDistance"},
 			{r2::draw::ShaderDataType::Float, "ssr_fadeStart"},
-			{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"}
+			{r2::draw::ShaderDataType::Float, "ssr_fadeEnd"},
+			{r2::draw::ShaderDataType::Float, "ssr_maxDistance"},
 		});
 
 		renderer.mBloomConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
@@ -4361,7 +4362,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5227,10 +5228,10 @@ namespace r2::draw::renderer
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 			auto ssrConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mSSRConfigHandle);
 
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 0, &renderer.mSSRMaxRayMarchStep);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 0, &renderer.mSSRStride);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 1, &renderer.mSSRThickness);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 2, &renderer.mSSRRayMarchIterations);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRMaxBinarySearchSamples);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 3, &renderer.mSSRStrideZCutoff);
 
 			if (renderer.mSSRDitherTexture.container == nullptr)
 			{
@@ -5254,6 +5255,8 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 8, &renderer.mSSRMaxFadeDistance);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 9, &renderer.mSSRFadeScreenStart);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 10, &renderer.mSSRFadeScreenEnd);
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, ssrConstantBufferHandle, 11, &renderer.mSSRMaxDistance);
 		}
 	}
 
@@ -7057,7 +7060,7 @@ namespace r2::draw::renderer
 			renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::RG16F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, false);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, false, false);
 			
 			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
@@ -7068,9 +7071,9 @@ namespace r2::draw::renderer
 
 			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, renderer.mSSRRoughnessMips, false, true, false, 0 );
 
-			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::DEPTH24_STENCIL8, r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
-			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::RG16F, r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
-			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
+			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
 			CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);

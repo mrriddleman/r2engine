@@ -8,8 +8,25 @@ namespace r2::draw::rt
 {
 	constexpr u32 MAX_TEXTURE_ATTACHMENT_HISTORY = 2;
 
+	enum TextureAttachmentType : u32
+	{
+		COLOR = 0,
+		DEPTH,
+		DEPTH_CUBEMAP,
+		RG16F,
+		RG32F,
+		R32F,
+		R16F,
+		RG16,
+		STENCIL8,
+		DEPTH24_STENCIL8,
+		DEPTH32F_STENCIL8
+	};
+
 	struct TextureAttachment
 	{
+		TextureAttachmentType type;
+
 		tex::TextureHandle texture[MAX_TEXTURE_ATTACHMENT_HISTORY];
 		u32 numLayers = 1;
 		u32 numTextures = 1;
@@ -29,21 +46,6 @@ namespace r2::draw::rt
 	{
 		u32 rbo = 0;
 		s32 attachmentType = -1;
-	};
-
-	enum TextureAttachmentType: u32
-	{
-		COLOR = 0,
-		DEPTH,
-		DEPTH_CUBEMAP,
-		RG16F,
-		RG32F,
-		R32F,
-		R16F,
-		RG16,
-		STENCIL8,
-		DEPTH24_STENCIL8,
-		DEPTH32F_STENCIL8
 	};
 
 	struct RenderTargetPageAllocation
@@ -156,7 +158,7 @@ namespace r2::draw
 			bool swapping, bool uploadAllTextures,
 			s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
 
-		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
+		void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment);
 
 		//returns the first index of the number of texture pages
 		float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
@@ -181,10 +183,9 @@ namespace r2::draw
 		namespace impl
 		{
 			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
-			void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment);
+			void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment);
 			float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 			void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages);
-			void AddDepthAndStencilAttachment(RenderTarget& rt);
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
 			void SwapTexturesIfNecessary(RenderTarget& renderTarget);

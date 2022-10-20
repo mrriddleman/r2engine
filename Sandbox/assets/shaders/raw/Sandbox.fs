@@ -8,7 +8,7 @@ const float PENUMBRA_FILTER_SCALE = 2.4f;
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 
 layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec2 NormalColor;
+layout (location = 1) out vec3 NormalColor;
 layout (location = 2) out vec4 SpecularColor;
 
 #define PI 3.14159265358979323846
@@ -466,7 +466,7 @@ void main()
 
 	FragColor = vec4(lightingResult + emission , 1.0);// * DebugFrustumSplitColor();
 
-	NormalColor = EncodeNormal(normalize(fs_in.normal));
+	NormalColor = fs_in.viewNormal;
 
 	SpecularColor = vec4(specular, 1.0 - roughness);
 

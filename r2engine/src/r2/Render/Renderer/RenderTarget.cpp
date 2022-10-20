@@ -17,7 +17,6 @@ namespace r2::draw
 			   r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<rt::TextureAttachmentReference>::MemorySize(params.numAttachmentRefs), alignmnet, headerSize, boundsChecking);
 	}
 
-
 	namespace cmd
 	{
 		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd)
@@ -363,9 +362,9 @@ namespace r2::draw
 			impl::AddTextureAttachment(rt, type, swapping, uploadAllTextures, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering, mipLevelToAttach);
 		}
 
-		void SetTextureAttachment(RenderTarget& rt, TextureAttachmentType type, const rt::TextureAttachment& textureAttachment)
+		void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment)
 		{
-			impl::SetTextureAttachment(rt, type, textureAttachment);
+			impl::SetTextureAttachment(rt, textureAttachment);
 		}
 
 		float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages)
@@ -407,11 +406,6 @@ namespace r2::draw
 				}
 			}
 
-		}
-
-		void AddDepthAndStencilAttachment(RenderTarget& rt)
-		{
-			impl::AddDepthAndStencilAttachment(rt);
 		}
 
 		void SwapTexturesIfNecessary(RenderTarget& rt)

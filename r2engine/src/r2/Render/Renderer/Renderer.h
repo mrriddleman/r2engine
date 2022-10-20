@@ -362,12 +362,13 @@ namespace r2::draw
 
 		//------------BEGIN SSR data---------------
 
-		float mSSRMaxRayMarchStep = 0.04f;
-		float mSSRThickness = 0.001f;
-		int mSSRRayMarchIterations = 24;
-		int mSSRMaxBinarySearchSamples = 10;
+		float mSSRStride = 10.0f;
+		float mSSRThickness = 0.01f;
+		int mSSRRayMarchIterations = 96;
+		float mSSRStrideZCutoff = 36.0f;
+		float mSSRMaxDistance = 10.0f;
 		tex::TextureHandle mSSRDitherTexture;
-		float mSSRDitherTilingFactor = 1.0f;
+		float mSSRDitherTilingFactor = 7.0f;
 		s32 mSSRRoughnessMips = 0;
 		s32 mSSRConeTracingSteps = 7;
 		float mSSRMaxFadeDistance = 10;
