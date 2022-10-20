@@ -206,6 +206,12 @@ void main()
 	vec2 uv = fs_in.texCoords.xy;
 	vec4 rayHitInfo = texture(sampler2DArray(ssrSurface.container), vec3(uv, ssrSurface.page));
 
+	if(rayHitInfo.a <= 0.0f)
+	{
+		oOutputColor = vec4(0);
+		return;
+	}
+
 	vec3 worldPosition = GetWorldPosition(uv);
 	vec3 viewPosition = GetViewPosition(uv);
 	vec3 reflectedPointWorldPosition = GetWorldPosition(rayHitInfo.xy);
@@ -237,8 +243,6 @@ void main()
 	vec3 reflectedColor = TraceCones(specular.a, rayHitInfo);
 
 	vec3 raySS = rayHitInfo.xyz;
-
-
 
 	vec2 boundary = abs(raySS.xy - vec2(0.5f)) * 2.0f;
 	const float fadeDiffRcp = 1.0f / (ssr_fadeScreenEnd - ssr_fadeScreenStart);

@@ -253,9 +253,9 @@ void main()
     {
         intersection = false;
     }
-
-	oRayHitInfo = vec4(hitPixelUV, depth, rDotV) * (intersection ? 1.0f : 0.0f);
 	
+	oRayHitInfo = intersection ? vec4(hitPixelUV, depth, rDotV) : vec4(0);
+
 	//vec3 worldSpacePosition = GetWorldPosition(fs_in.texCoords.xy);
 	//RayHit ssr = SSReflection(worldSpacePosition, normal);
 

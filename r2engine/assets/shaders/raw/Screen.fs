@@ -125,7 +125,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
  
-	return vec4(ssrSurfaceColor.rgb + mix(gbufferSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
+	return vec4(mix(gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)
