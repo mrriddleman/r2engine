@@ -87,6 +87,16 @@ layout (std140, binding = 5) uniform BloomParams
 	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee
 };
 
+layout (std140, binding=6) uniform FXAAParams
+{
+	Tex2DAddress fxaa_inputTexture;
+	float fxaa_lumaThreshold;
+	float fxaa_lumaMulReduce;
+	float fxaa_lumaMinReduce;
+	float fxaa_maxSpan;
+	vec2 fxaa_texelStep;
+};
+
 ssbo buffers:
 
 

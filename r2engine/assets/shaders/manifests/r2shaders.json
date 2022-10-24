@@ -57,6 +57,14 @@
       binaryPath: ""
     },
     {
+      shaderName: 6304135025036389877,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\FXAA.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\FXAA.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: ""
+    },
+    {
       shaderName: 14268373098985025575,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\GroundTruthAO.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\GroundTruthAO.fs",
