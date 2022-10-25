@@ -153,6 +153,14 @@ namespace r2::draw
 	};
 
     const std::string GetRendererBackendName(r2::draw::RendererBackend backend);
+
+    enum OutputMerger : u8
+    {
+        OUTPUT_NO_AA = 0,
+        OUTPUT_FXAA
+    };
+
+
 }
 
 #endif // !__RENDERER_TYPES_H__

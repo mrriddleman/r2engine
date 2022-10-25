@@ -52,6 +52,7 @@ namespace r2::draw::key
 		static const u8 FSL_GAME;
 		static const u8 FSL_EFFECT;
 		static const u8 FSL_HUD;
+		static const u8 FSL_OUTPUT;
 
 		u64 keyValue = 0;
 

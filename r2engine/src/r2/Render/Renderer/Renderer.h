@@ -244,6 +244,7 @@ namespace r2::draw
 		ConstantConfigHandle mDispatchComputeConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mSSRConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mBloomConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mFXAAConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -287,6 +288,10 @@ namespace r2::draw
 		ShaderHandle mBloomBlurPreFilterShader;
 		ShaderHandle mBloomUpSampleShader;
 
+		//Output merger shaders
+		ShaderHandle mPassThroughShader;
+		ShaderHandle mFXAAShader;
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 
@@ -299,9 +304,15 @@ namespace r2::draw
 		s32 mVerticalBlurTextureContainerLocation;
 		s32 mVerticalBlurTexturePageLocation;
 		s32 mVerticalBlurTextureLodLocation;
+
 		s32 mHorizontalBlurTextureContainerLocation;
 		s32 mHorizontalBlurTexturePageLocation;
 		s32 mHorizontalBlurTextureLodLocation;
+
+		s32 mPassThroughTextureContainerLocation;
+		s32 mPassThroughTexturePageLocation;
+		s32 mPassThroughTextureLodLocation;
+
 
 		//----------------------------------------------------------------
 		r2::mem::StackArena* mModelRefArena = nullptr;
@@ -389,6 +400,15 @@ namespace r2::draw
 		float mBloomFilterSize = 0.005f;
 		//--------------END Bloom data-----------------
 
+		//-------------BEGIN FXAA Data-----------------
+		b32 mFXAANeedsUpdate = true;
+		float mFXAALumaThreshold = 0.5f;
+		float mFXAALumaMulReduce = 1.0f / 8.0f;
+		float mFXAALumaMinReduce = 1.0f / 128.0f;
+		float mFXAAMaxSpan = 8.0f;
+		glm::vec2 mFXAATexelStep;
+		//--------------END FXAA Data------------------
+
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
@@ -410,6 +430,8 @@ namespace r2::draw
 #endif
 		//------------END Debug Stuff--------------
 
+
+		OutputMerger mOutputMerger = OutputMerger::OUTPUT_FXAA;
 
 	};
 }
@@ -471,6 +493,8 @@ namespace r2::draw::renderer
 	const tex::Texture* GetBlueNoise64Texture();
 
 	void SetRenderCamera(const Camera* cameraPtr);
+
+	void SetOutputMergerType(OutputMerger outputMerger);
 
 	DirectionLightHandle AddDirectionLight(const DirectionLight& light);
 	PointLightHandle AddPointLight(const PointLight& pointLight);

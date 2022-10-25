@@ -434,7 +434,18 @@ namespace r2::draw::renderer
 
 	void UpdateBloomDataIfNeeded(Renderer& renderer);
 
+
+	//FXAA
+	void FXAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
+	void UpdateFXAADataIfNeeded(Renderer& renderer);
+
+
+	//NON AA
+	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
+
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name);
+
+	void SetOutputMergerType(Renderer& renderer, OutputMerger outputMerger);
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr);
@@ -624,6 +635,7 @@ namespace r2::draw::renderer
 	void CreateBloomSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
 	void CreateBloomBlurSurface(Renderer& renderer, u32 resolutionX , u32 resolutionY , u32 numMips);
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
+	void CreateCompositeSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -1069,6 +1081,12 @@ namespace r2::draw::renderer
 		newRenderer->mBloomUpSampleShader = shadersystem::FindShaderHandle(STRING_ID("UpSampleBlur"));
 		CheckIfValidShader(*newRenderer, newRenderer->mBloomUpSampleShader, "UpSampleBlur");
 
+		newRenderer->mFXAAShader = shadersystem::FindShaderHandle(STRING_ID("FXAA"));
+		CheckIfValidShader(*newRenderer, newRenderer->mFXAAShader, "FXAA");
+
+		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
+		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1101,7 +1119,9 @@ namespace r2::draw::renderer
 		newRenderer->mHorizontalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
 		newRenderer->mHorizontalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureLod");
 
-
+		newRenderer->mPassThroughTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTextureContainer");
+		newRenderer->mPassThroughTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTexturePage");
+		newRenderer->mPassThroughTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTextureLod");
 		
 
 		
@@ -1273,6 +1293,9 @@ namespace r2::draw::renderer
 		}
 
 		UpdateJitter(renderer);
+
+		UpdateBloomDataIfNeeded(renderer);
+		UpdateFXAADataIfNeeded(renderer);
 
 		//UpdateRenderTargetsIfNecessary(renderer);
 
@@ -1639,6 +1662,15 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::UInt64, "bloomTextureToDownSample"},
 			{r2::draw::ShaderDataType::Float, "bloomTexturePage"},
 			{r2::draw::ShaderDataType::Float, "bloomTextureMipLevel"}
+		});
+
+		renderer.mFXAAConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Struct, "fxaa_inputTexture"},
+			{r2::draw::ShaderDataType::Float, "fxaa_lumaThreshold"},
+			{r2::draw::ShaderDataType::Float, "fxaa_lumaMulReduce"},
+			{r2::draw::ShaderDataType::Float, "fxaa_lumaMinReduce"},
+			{r2::draw::ShaderDataType::Float, "fxaa_maxSpan"},
+			{r2::draw::ShaderDataType::Float2, "fxaa_texelStep"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -4284,13 +4316,27 @@ namespace r2::draw::renderer
 		finalDrawBatch->state.depthEnabled = false;
 		finalDrawBatch->state.cullState = CULL_FACE_BACK;
 		finalDrawBatch->state.depthFunction = LESS;
-		finalDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason eventhough depth isn't enabled?
+		finalDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		finalDrawBatch->state.polygonOffsetEnabled = false;
 		finalDrawBatch->state.polygonOffset = glm::vec2(0);
 		
 		cmd::SetDefaultStencilState(finalDrawBatch->state.stencilState);
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
+
+
+		if (renderer.mOutputMerger == OUTPUT_NO_AA)
+		{
+			NonAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+		}
+		else if (renderer.mOutputMerger == OUTPUT_FXAA)
+		{
+			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+		}
+		else
+		{
+			R2_CHECK(false, "Unsupported output merger type!");
+		}
 
 		r2::sarr::Clear(*renderer.mRenderMaterialsToRender);
 
@@ -4363,10 +4409,12 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE }, RTS_OUTPUT, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SSR]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS]);
@@ -5262,8 +5310,6 @@ namespace r2::draw::renderer
 
 	void BloomRenderPass(Renderer& renderer)
 	{
-		UpdateBloomDataIfNeeded(renderer);
-
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
 
 		auto bloomConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mBloomConfigHandle);
@@ -5520,6 +5566,102 @@ namespace r2::draw::renderer
 		
 			needsUpdate = false;
 		}
+	}
+
+	void FXAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+		
+		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mFXAAShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mFXAAShader);
+
+		cmd::DrawBatch* outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
+		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		outputDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		outputDrawBatch->startCommandIndex = startCommandIndex;
+		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		outputDrawBatch->subCommands = nullptr;
+		outputDrawBatch->state.depthEnabled = false;
+		outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		outputDrawBatch->state.depthFunction = LESS;
+		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		outputDrawBatch->state.polygonOffsetEnabled = false;
+		outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
+	}
+
+	void UpdateFXAADataIfNeeded(Renderer& renderer)
+	{
+		if (renderer.mFXAANeedsUpdate)
+		{
+			renderer.mFXAANeedsUpdate = false;
+
+			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+			auto fxaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mFXAAConfigHandle);
+
+			const auto compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 1, &renderer.mFXAALumaThreshold);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 2, &renderer.mFXAALumaMulReduce);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 3, &renderer.mFXAALumaMinReduce);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAMaxSpan);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAATexelStep);
+		}
+	}
+
+	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+
+		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mPassThroughShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mPassThroughShader);
+
+		const auto compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+
+		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+
+		cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
+		setCompositeTexture->textureContainer = textureAddress.containerHandle;
+		setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
+		setCompositeTexture->texturePage = textureAddress.texPage;
+		setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
+		setCompositeTexture->textureLod = 0;
+
+		cmd::DrawBatch* outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);//AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		outputDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		outputDrawBatch->startCommandIndex = startCommandIndex;
+		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		outputDrawBatch->subCommands = nullptr;
+		outputDrawBatch->state.depthEnabled = false;
+		outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		outputDrawBatch->state.depthFunction = LESS;
+		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		outputDrawBatch->state.polygonOffsetEnabled = false;
+		outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
 	}
 
 	void CheckIfValidShader(Renderer& renderer, ShaderHandle shader, const char* name)
@@ -7032,10 +7174,10 @@ namespace r2::draw::renderer
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		//no need to resize if that's the size we already are
-		renderer.mRenderTargets[RTS_COMPOSITE].xOffset	= round(xOffset);
-		renderer.mRenderTargets[RTS_COMPOSITE].yOffset	= round(yOffset);
-		renderer.mRenderTargets[RTS_COMPOSITE].width	= round(scaleX * resolutionX);
-		renderer.mRenderTargets[RTS_COMPOSITE].height	= round(scaleY * resolutionY);
+		renderer.mRenderTargets[RTS_OUTPUT].xOffset	= round(xOffset);
+		renderer.mRenderTargets[RTS_OUTPUT].yOffset	= round(yOffset);
+		renderer.mRenderTargets[RTS_OUTPUT].width	= round(scaleX * resolutionX);
+		renderer.mRenderTargets[RTS_OUTPUT].height	= round(scaleY * resolutionY);
 
 		if (!util::IsSizeEqual(renderer.mResolutionSize, resolutionX, resolutionY))
 		{
@@ -7084,6 +7226,8 @@ namespace r2::draw::renderer
 			CreateBloomBlurSurface(renderer, resolutionX / 2, resolutionY / 2, numBloomMips);
 			CreateBloomSurfaceUpSampled(renderer, resolutionX / 2, resolutionY / 2, numBloomMips);
 
+			CreateCompositeSurface(renderer, resolutionX, resolutionY);
+
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
@@ -7093,6 +7237,9 @@ namespace r2::draw::renderer
 		renderer.mResolutionSize.height = resolutionY;
 		renderer.mCompositeSize.width = windowWidth;
 		renderer.mCompositeSize.height = windowHeight;
+
+		renderer.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
+		renderer.mFXAANeedsUpdate = true;
 	}
 	
 	void ConstrainResolution(u32& resolutionX, u32& resolutionY)
@@ -7219,10 +7366,20 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
 	}
 
+	void CreateCompositeSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_COMPOSITE] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_COMPOSITE], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+	
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_COMPOSITE], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_COMPOSITE]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_BLUR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM]);
@@ -7271,7 +7428,7 @@ namespace r2::draw::renderer
 		
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SHADOWS].numSurfacesPerTarget;
 
-		renderTargetParams[RTS_COMPOSITE].numColorAttachments = 0;
+		renderTargetParams[RTS_COMPOSITE].numColorAttachments = 1;
 		renderTargetParams[RTS_COMPOSITE].numDepthAttachments = 0;
 		renderTargetParams[RTS_COMPOSITE].numStencilAttachments = 0;
 		renderTargetParams[RTS_COMPOSITE].numDepthStencilAttachments = 0;
@@ -7451,6 +7608,19 @@ namespace r2::draw::renderer
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM_UPSAMPLE].numSurfacesPerTarget;
 
+
+		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numDepthAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numStencilAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].maxPageAllocations = 0;
+		renderTargetParams[RTS_OUTPUT].numAttachmentRefs = 0;
+		renderTargetParams[RTS_OUTPUT].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
+
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
@@ -7484,6 +7654,10 @@ namespace r2::draw::renderer
 		ResizeRenderSurface(renderer, windowWidth, windowHeight, resolutionX, resolutionY, scaleX, scaleY, xOffset, yOffset);
 	}
 
+	void SetOutputMergerType(Renderer& renderer, OutputMerger outputMerger)
+	{
+		renderer.mOutputMerger = outputMerger;
+	}
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr)
@@ -7964,6 +8138,11 @@ namespace r2::draw::renderer
 	void SetRenderCamera(const Camera* cameraPtr)
 	{
 		SetRenderCamera(MENG.GetCurrentRendererRef(), cameraPtr);
+	}
+
+	void SetOutputMergerType(OutputMerger outputMerger)
+	{
+		SetOutputMergerType(MENG.GetCurrentRendererRef(), outputMerger);
 	}
 
 	DirectionLightHandle AddDirectionLight(const DirectionLight& light)

@@ -9,6 +9,7 @@ namespace r2::draw::key
 	const u8 Basic::FSL_GAME = 0;
 	const u8 Basic::FSL_EFFECT = 1;
 	const u8 Basic::FSL_HUD = 2;
+	const u8 Basic::FSL_OUTPUT = 3;
 
 	const u8 NUM_MATERIAL_SYSTEM_BITS = 4;
 

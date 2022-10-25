@@ -86,6 +86,7 @@ void main()
 	float lumaFourTab = dot(rgbFourTab, toLuma);
 
 	FragColor = vec4(rgbFourTab, 1.0);
+	
 	if (lumaFourTab < lumaMin || lumaFourTab > lumaMax)
 	{
 		// ... yes, so use only two samples.
