@@ -2,6 +2,7 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
+
 const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
 const float SHADOW_FILTER_MAX_SIZE = 0.0025f;
 const float PENUMBRA_FILTER_SCALE = 2.4f;

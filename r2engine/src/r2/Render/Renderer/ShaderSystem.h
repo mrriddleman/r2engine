@@ -29,6 +29,8 @@ namespace r2::draw::shadersystem
 
     u64 GetMemorySize(u64 capacity);
 
+    const char* FindShaderPathByName(const char* name);
+
 #ifdef R2_ASSET_PIPELINE
     void ReloadManifestFile(const std::string& manifestFilePath);
     void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);

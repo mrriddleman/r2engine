@@ -24,6 +24,7 @@ namespace r2::asset::pln
     const std::string FRAGMENT_EXT = ".fs";
     const std::string GEOMETRY_EXT = ".gs";
     const std::string COMPUTE_EXT = ".cs";
+    const std::string PART_EXT = ".glsl";
     
     
     bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestFilePath, const std::string& rawPath)
@@ -57,6 +58,19 @@ namespace r2::asset::pln
             newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
             newManifest.computeShaderPath = file.path().string();
             newManifests.push_back(newManifest);
+        }
+
+        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+        {
+			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != PART_EXT))
+			{
+				continue;
+			}
+
+			ShaderManifest newManifest;
+			newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
+			newManifest.partPath = file.path().string();
+			newManifests.push_back(newManifest);
         }
         
         for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
@@ -99,7 +113,8 @@ namespace r2::asset::pln
         
         //remove all degenerate cases
         auto iter = std::remove_if(newManifests.begin(), newManifests.end(), [](const ShaderManifest& manifest){
-            return manifest.computeShaderPath == "" && (manifest.vertexShaderPath == "" || manifest.fragmentShaderPath == "");
+            return
+                manifest.computeShaderPath == "" && manifest.partPath == "" && (manifest.vertexShaderPath == "" || manifest.fragmentShaderPath == "");
         });
         newManifests.erase(iter, newManifests.end());
         
@@ -124,7 +139,8 @@ namespace r2::asset::pln
                                         builder.CreateString(manifest.fragmentShaderPath),
                                         builder.CreateString(manifest.geometryShaderPath),
                                         builder.CreateString(manifest.computeShaderPath),
-                                        builder.CreateString(manifest.binaryPath)));
+                                        builder.CreateString(manifest.binaryPath),
+                                        builder.CreateString(manifest.partPath)));
         }
         
         auto shaders = r2::CreateShaderManifests(builder, builder.CreateVector(flatShaderManifests));
@@ -207,7 +223,8 @@ namespace r2::asset::pln
                 newManifest.geometryShaderPath = shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str();
                 newManifest.computeShaderPath = shaderManifestsBuf->manifests()->Get(i)->computePath()->str();
                 newManifest.binaryPath = shaderManifestsBuf->manifests()->Get(i)->binaryPath()->str();
-                
+                newManifest.partPath = shaderManifestsBuf->manifests()->Get(i)->partPath()->str();
+
                 shaderManifests.push_back(newManifest);
             }
             

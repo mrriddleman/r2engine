@@ -16,9 +16,14 @@
 //For loading shader files
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/File.h"
+#include "r2/Core/File/PathUtils.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Containers/SArray.h"
+
+//Don't love using these...
+#include <string>
+#include <regex>
 
 namespace r2::draw::shader
 {
@@ -105,6 +110,195 @@ namespace r2::draw::shader
         glGetIntegerv(GL_MAX_GEOMETRY_SHADER_INVOCATIONS, &maxInvocations);
 
         return maxInvocations;
+    }
+
+    u32 CreateShaderProgramFromStrings(const r2::SArray<char*>* vertexShaderStrings, const r2::SArray<char*>* fragShaderStrings, const r2::SArray<char*>* geometryShaderStrings, const r2::SArray<char*>* computeShaderStrings)
+    {
+        if (r2::sarr::Size(*computeShaderStrings) == 0)
+        {
+            R2_CHECK(r2::sarr::Size(*vertexShaderStrings) > 0 && r2::sarr::Size(*fragShaderStrings) > 0, "Vertex and/or Fragment shader strings are nullptr");
+        }
+
+		GLuint shaderProgram = glCreateProgram();
+
+		GLuint vertexShaderHandle;
+		if (r2::sarr::Size(*vertexShaderStrings) > 0)
+		{
+			vertexShaderHandle = glCreateShader(GL_VERTEX_SHADER);
+		}
+
+		GLuint fragmentShaderHandle;
+		if (r2::sarr::Size(*fragShaderStrings) > 0)
+		{
+			fragmentShaderHandle = glCreateShader(GL_FRAGMENT_SHADER);
+		}
+
+		GLuint geometryShaderHandle;
+		if (r2::sarr::Size(*geometryShaderStrings) > 0)
+		{
+			geometryShaderHandle = glCreateShader(GL_GEOMETRY_SHADER);
+		}
+
+		GLuint computeShaderHandle;
+		if (r2::sarr::Size(*computeShaderStrings) > 0)
+		{
+			computeShaderHandle = glCreateShader(GL_COMPUTE_SHADER);
+		}
+
+		if (r2::sarr::Size(*vertexShaderStrings) > 0)
+		{ // compile shader and check for errors
+			glShaderSource(vertexShaderHandle, r2::sarr::Size(*vertexShaderStrings), r2::sarr::Begin(*vertexShaderStrings), NULL);
+			glCompileShader(vertexShaderHandle);
+			int lparams = -1;
+			glGetShaderiv(vertexShaderHandle, GL_COMPILE_STATUS, &lparams);
+
+			if (GL_TRUE != lparams) {
+				R2_LOGE("ERROR: vertex shader index %u did not compile\n", vertexShaderHandle);
+
+				const int max_length = 2048;
+				int actual_length = 0;
+				char slog[2048];
+				glGetShaderInfoLog(vertexShaderHandle, max_length, &actual_length, slog);
+				R2_LOGE("Shader info log for GL index %u:\n%s\n", vertexShaderHandle,
+					slog);
+
+				glDeleteShader(vertexShaderHandle);
+				glDeleteShader(fragmentShaderHandle);
+				if (r2::sarr::Size(*geometryShaderStrings) > 0)
+				{
+					glDeleteShader(geometryShaderHandle);
+				}
+				glDeleteProgram(shaderProgram);
+				return 0;
+			}
+		}
+
+		if (r2::sarr::Size(*fragShaderStrings) > 0)
+		{ // compile shader and check for errors
+			glShaderSource(fragmentShaderHandle, r2::sarr::Size(*fragShaderStrings), r2::sarr::Begin(*fragShaderStrings), NULL);
+			glCompileShader(fragmentShaderHandle);
+			int lparams = -1;
+			glGetShaderiv(fragmentShaderHandle, GL_COMPILE_STATUS, &lparams);
+
+			if (GL_TRUE != lparams) {
+				R2_LOGE("ERROR: fragment shader index %u did not compile\n",
+					fragmentShaderHandle);
+
+				const int max_length = 2048;
+				int actual_length = 0;
+				char slog[2048];
+				glGetShaderInfoLog(fragmentShaderHandle, max_length, &actual_length, slog);
+				R2_LOGE("Shader info log for GL index %u:\n%s\n", fragmentShaderHandle,
+					slog);
+
+				glDeleteShader(vertexShaderHandle);
+				glDeleteShader(fragmentShaderHandle);
+
+				if (r2::sarr::Size(*geometryShaderStrings) > 0)
+				{
+					glDeleteShader(geometryShaderHandle);
+				}
+
+				glDeleteProgram(shaderProgram);
+				return 0;
+			}
+		}
+
+		if (r2::sarr::Size(*geometryShaderStrings) > 0)
+		{
+			glShaderSource(geometryShaderHandle, r2::sarr::Size(*geometryShaderStrings), r2::sarr::Begin(*geometryShaderStrings), NULL);
+			glCompileShader(geometryShaderHandle);
+			int lparams = -1;
+			glGetShaderiv(geometryShaderHandle, GL_COMPILE_STATUS, &lparams);
+
+			if (GL_TRUE != lparams) {
+				R2_LOGE("ERROR: geometry shader index %u did not compile\n", geometryShaderHandle);
+
+				const int max_length = 2048;
+				int actual_length = 0;
+				char slog[2048];
+				glGetShaderInfoLog(geometryShaderHandle, max_length, &actual_length, slog);
+				R2_LOGE("Shader info log for GL index %u:\n%s\n", geometryShaderHandle,
+					slog);
+
+				glDeleteShader(vertexShaderHandle);
+				glDeleteShader(fragmentShaderHandle);
+				glDeleteShader(geometryShaderHandle);
+
+				glDeleteProgram(shaderProgram);
+				return 0;
+			}
+		}
+
+		if (r2::sarr::Size(*computeShaderStrings) > 0)
+		{
+			glShaderSource(computeShaderHandle, r2::sarr::Size(*computeShaderStrings), r2::sarr::Begin(*computeShaderStrings), nullptr);
+			glCompileShader(computeShaderHandle);
+			int lparams = -1;
+			glGetShaderiv(computeShaderHandle, GL_COMPILE_STATUS, &lparams);
+
+			if (GL_TRUE != lparams)
+			{
+				R2_LOGE("ERROR: compute shader index %u did not compile\n", computeShaderHandle);
+
+				const int max_length = 2048;
+				int actual_length = 0;
+				char slog[2048];
+				glGetShaderInfoLog(computeShaderHandle, max_length, &actual_length, slog);
+				R2_LOGE("Shader info log for GL index %u:\n%s\n", computeShaderHandle, slog);
+
+				glDeleteShader(computeShaderHandle);
+				glDeleteProgram(shaderProgram);
+
+				return 0;
+			}
+		}
+
+		if (r2::sarr::Size(*computeShaderStrings) == 0)
+		{
+			glAttachShader(shaderProgram, fragmentShaderHandle);
+			glAttachShader(shaderProgram, vertexShaderHandle);
+			if (r2::sarr::Size(*geometryShaderStrings) > 0)
+			{
+				glAttachShader(shaderProgram, geometryShaderHandle);
+			}
+
+			{ // link program and check for errors
+				glLinkProgram(shaderProgram);
+				glDeleteShader(vertexShaderHandle);
+				glDeleteShader(fragmentShaderHandle);
+				if (r2::sarr::Size(*geometryShaderStrings) > 0)
+				{
+					glDeleteShader(geometryShaderHandle);
+				}
+			}
+		}
+		else
+		{
+			glAttachShader(shaderProgram, computeShaderHandle);
+			glLinkProgram(shaderProgram);
+			glDeleteShader(computeShaderHandle);
+		}
+
+		int lparams = -1;
+		glGetProgramiv(shaderProgram, GL_LINK_STATUS, &lparams);
+
+		if (GL_TRUE != lparams)
+		{
+			R2_LOGE("ERROR: could not link shader program GL index %u\n",
+				shaderProgram);
+
+			const int max_length = 2048;
+			int actual_length = 0;
+			char plog[2048];
+			glGetProgramInfoLog(shaderProgram, max_length, &actual_length, plog);
+			R2_LOGE("Program info log for GL index %u:\n%s", shaderProgram, plog);
+
+			glDeleteProgram(shaderProgram);
+			return 0;
+		}
+
+        return shaderProgram;
     }
     
     u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr)
@@ -297,7 +491,6 @@ namespace r2::draw::shader
         return shaderProgram;
     }
 
-
     char* ReadShaderData(const char* shaderFilePath)
     {
 		r2::fs::File* shaderFile = r2::fs::FileSystem::Open(DISK_CONFIG, shaderFilePath, r2::fs::Read | r2::fs::Binary);
@@ -333,6 +526,142 @@ namespace r2::draw::shader
 
         return shaderFileData;
     }
+
+    void FindFullPathForShader(const char* shaderName, char * fullPath)
+    {
+        strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
+    }
+
+    void ReadAndParseShaderData(const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
+	{
+        char* shaderFileData = ReadShaderData(shaderFilePath);
+
+        if (!shaderFileData)
+        {
+            R2_CHECK(false, "Failed to get the shader data for: %s", shaderFilePath);
+            return;
+        }
+        
+        r2::sarr::Push(*tempAllocations, (void*)shaderFileData);
+
+        u32 lengthOfShaderFile = strlen(shaderFileData);
+
+        char* shaderFileDataCopy = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 1, sizeof(char));
+
+        strcpy(shaderFileDataCopy, shaderFileData);
+
+        r2::sarr::Push(*tempAllocations, (void*)shaderFileDataCopy);
+
+		std::regex includeExpression("^#include \".*\"[ \t]*$");
+		std::regex filePathExpression("\".*\"");
+
+        char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 1, sizeof(char));
+        shaderParsedOutIncludes[0] = '\0';
+        u32 lengthOfParsedShaderData = 0;
+
+        r2::sarr::Push(*tempAllocations, (void*)shaderParsedOutIncludes);
+
+        char* pch = strtok(shaderFileDataCopy, "\r\n");
+
+        while (pch != nullptr)
+        {
+            if (!std::regex_match(pch, includeExpression))
+            {
+                u32 strLen = strlen(pch);
+                strcat(shaderParsedOutIncludes, pch);
+
+                strcat(shaderParsedOutIncludes, "\n");
+                lengthOfParsedShaderData += strLen + 1;
+
+                pch = strtok(NULL, "\r\n");
+                continue;
+            }
+
+            std::smatch match;
+            std::string pchString = std::string(pch);
+            if (!std::regex_search(pchString, match, filePathExpression))
+            {
+                u32 strLen = strlen(pch);
+                strcat(shaderParsedOutIncludes, pch);
+
+				strcat(shaderParsedOutIncludes, "\n");
+
+				lengthOfParsedShaderData += strLen + 1;
+
+                pch = strtok(NULL, "\r\n");
+                continue;
+            }
+
+			const char* stringMatch = match[0].str().c_str();
+
+            char quotelessPath[fs::FILE_PATH_LENGTH];
+            strncpy(quotelessPath, stringMatch + 1, strlen(stringMatch) - 2); //make sure not to include the quotes
+
+            char* includedFileName = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, strlen(stringMatch)+1, sizeof(char));
+            
+            r2::sarr::Push(*tempAllocations, (void*)includedFileName);
+
+            bool success = fs::utils::CopyFileNameWithExtension(quotelessPath, includedFileName);
+
+            R2_CHECK(success, "Couldn't copy the filename!");
+
+            const auto numIncludePaths = r2::sarr::Size(includedPaths);
+            bool found = false;
+            for (u64 i = 0; i < numIncludePaths; ++i)
+            {
+                const char* nextIncludePath = r2::sarr::At(includedPaths, i);
+                if (strcmp(includedFileName, nextIncludePath) == 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                pch = strtok(NULL, "\r\n");
+                continue;                
+            }
+
+            r2::sarr::Push(includedPaths, includedFileName);
+
+            char fullIncludePath[fs::FILE_PATH_LENGTH];
+            FindFullPathForShader(includedFileName, fullIncludePath);
+
+            ReadAndParseShaderData(fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
+
+            pch = strtok(NULL, "\r\n");
+        }
+
+        shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
+
+        if (shaderSourceFiles)
+        {
+            r2::sarr::Push(*shaderSourceFiles, shaderParsedOutIncludes);
+        }
+
+       // printf("%s", shaderParsedOutIncludes);
+        
+      //  return shaderFileData;
+        //return shaderParsedOutIncludes;
+	}
+
+
+    void ClearTemporaryAllocations(r2::SArray<void*>* tempAllocations)
+    {
+        if (!tempAllocations)
+            return;
+
+		const auto numAllocations = r2::sarr::Size(*tempAllocations);
+
+		for (s32 i = (s32)numAllocations - 1; i >= 0; i--)
+		{
+			FREE(r2::sarr::At(*tempAllocations, i), *MEM_ENG_SCRATCH_PTR);
+		}
+
+		r2::sarr::Clear(*tempAllocations);
+		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);
+    }
     
     Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, bool assertOnFailure)
     {
@@ -348,48 +677,63 @@ namespace r2::draw::shader
         char* fragmentFileData = nullptr;
         char* geometryFileData = nullptr;
         char* computeFileData = nullptr;
-        
+
+        r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 128);
+
+        r2::SArray<char*>* vertexShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
+
+        r2::sarr::Push(*tempAllocations, (void*) vertexShaderParts);
+
+        r2::SArray<char*>* fragmentShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
+
+        r2::sarr::Push(*tempAllocations, (void*)fragmentShaderParts);
+
+        r2::SArray<char*>* geometryShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
+
+        r2::sarr::Push(*tempAllocations, (void*)geometryShaderParts);
+
+        r2::SArray<char*>* computeShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
+
+        r2::sarr::Push(*tempAllocations, (void*)computeShaderParts);
+
         if(vertexShaderFilePath && strlen(vertexShaderFilePath) > 0)
         {
-            vertexFileData = ReadShaderData(vertexShaderFilePath);
+            r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+            r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+            ReadAndParseShaderData(vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
         }
         
         if(fragmentShaderFilePath && strlen(fragmentShaderFilePath) > 0)
         {
-            fragmentFileData = ReadShaderData(fragmentShaderFilePath);
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+            ReadAndParseShaderData(fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
         }
         
         if(geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
         {
-            geometryFileData = ReadShaderData(geometryShaderFilePath);
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+            ReadAndParseShaderData(geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
+
         }
 
         if (computeShaderFilePath && strlen(computeShaderFilePath) > 0)
         {
-            computeFileData = ReadShaderData(computeShaderFilePath);
-        }
-        
-        u32 shaderProg = CreateShaderProgramFromStrings(vertexFileData, fragmentFileData, geometryFileData, computeFileData);
-        
-        if (computeFileData != nullptr)
-        {
-            FREE(computeFileData, *MEM_ENG_SCRATCH_PTR);
-        }
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
 
-        if (geometryFileData != nullptr)
-        {
-            FREE(geometryFileData, *MEM_ENG_SCRATCH_PTR);
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+			ReadAndParseShaderData(computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
         }
         
-        if (fragmentFileData != nullptr)
-        {
-            FREE(fragmentFileData, *MEM_ENG_SCRATCH_PTR);
-        }
-        
-        if (vertexFileData != nullptr)
-        {
-            FREE(vertexFileData, *MEM_ENG_SCRATCH_PTR);
-        }
+        u32 shaderProg = CreateShaderProgramFromStrings(vertexShaderParts, fragmentShaderParts, geometryShaderParts, computeShaderParts);
         
         if (!shaderProg)
         {
@@ -429,6 +773,8 @@ namespace r2::draw::shader
                 }
                 
             }
+            ClearTemporaryAllocations(tempAllocations);
+			
             
             return newShader;
         }
@@ -442,6 +788,8 @@ namespace r2::draw::shader
         newShader.manifest.geometryShaderPath = geometryShaderFilePath;
         newShader.manifest.computeShaderPath = computeShaderFilePath;
 #endif
+
+        ClearTemporaryAllocations(tempAllocations);
 
         return newShader;
     }

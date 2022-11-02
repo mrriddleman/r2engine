@@ -19,6 +19,7 @@ namespace r2::asset::pln
         std::string geometryShaderPath = "";
         std::string computeShaderPath = "";
         std::string binaryPath = "";
+        std::string partPath = "";
     };
     
     bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestPath, const std::string& rawPath);

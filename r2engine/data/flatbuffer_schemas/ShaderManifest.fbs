@@ -11,7 +11,7 @@ table ShaderManifest
 	geometryPath:string;
 	computePath:string;
 	binaryPath:string;
-
+	partPath:string;
 }
 
 table ShaderManifests
