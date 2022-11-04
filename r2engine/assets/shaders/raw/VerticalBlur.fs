@@ -2,6 +2,10 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
+#define HORIZONTAL_WEIGHTS 0
+
+#include "BlurConstants.glsl"
+
 layout(location = 0) out vec4 oBlurColor;
 
 uniform uint64_t textureContainerToBlur;
@@ -9,9 +13,9 @@ uniform float texturePage;
 uniform float textureLod;
 
 //vertical offsets
-const ivec2 offsets[7] = {{0, -3}, {0, -2}, {0, -1}, {0, 0}, {0, 1}, {0, 2}, {0, 3}};
+// const ivec2 offsets[7] = {{0, -3}, {0, -2}, {0, -1}, {0, 0}, {0, 1}, {0, 2}, {0, 3}};
 
-const float weights[7] = {0.001f, 0.028f, 0.233f, 0.474f, 0.233f, 0.028f, 0.001f};
+// const float weights[7] = {0.001f, 0.028f, 0.233f, 0.474f, 0.233f, 0.028f, 0.001f};
 
 in VS_OUT
 {

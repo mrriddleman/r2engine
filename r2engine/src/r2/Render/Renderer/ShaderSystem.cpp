@@ -44,7 +44,8 @@ namespace
 namespace r2::draw::shadersystem
 {
 
-    void* LoadShadersFromManifestFile(const char* manifestFilePath, bool assertOnFailure);
+    void* LoadShaderManifestBuffer(const char* shaderManifestPath);
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
@@ -127,11 +128,20 @@ namespace r2::draw::shadersystem
 
         constexpr bool assertOnFailure = true;
 
-        s_optrShaderSystem->mAppShaderManifestsData = LoadShadersFromManifestFile(shaderManifestPath, assertOnFailure);
+        s_optrShaderSystem->mAppShaderManifestsData = LoadShaderManifestBuffer(shaderManifestPath);
+        
+        R2_CHECK(s_optrShaderSystem->mAppShaderManifestsData != nullptr, "We couldn't load the manifest file: %s", shaderManifestPath);
+        
         s_optrShaderSystem->mAppShaderManifests = r2::GetShaderManifests(s_optrShaderSystem->mAppShaderManifestsData);
 
-        s_optrShaderSystem->mInternalShaderManifestsData = LoadShadersFromManifestFile(internalShaderManifestPath, assertOnFailure);
+        s_optrShaderSystem->mInternalShaderManifestsData = LoadShaderManifestBuffer(internalShaderManifestPath);
+
+        R2_CHECK(s_optrShaderSystem->mInternalShaderManifestsData != nullptr, "We couldn't load the manifest file: %s", shaderManifestPath);
+
         s_optrShaderSystem->mInternalShaderManifests = r2::GetShaderManifests(s_optrShaderSystem->mInternalShaderManifestsData);
+
+        LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, assertOnFailure);
+        LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, assertOnFailure);
 
         return s_optrShaderSystem->mAppShaderManifestsData && s_optrShaderSystem->mInternalShaderManifestsData;
     }
@@ -151,14 +161,14 @@ namespace r2::draw::shadersystem
         {
             R2_CHECK(false, "Not actually sure if this is correct since we're appending more shaders to the end of the shader array without removing the originals");
 
-            for (u64 i = 0; i < numShaderManifests; ++i)
-            {
-                const std::string& manifestFile = r2::sarr::At(*s_optrShaderSystem->mReloadShaderManifests, i);
-				bool loaded = LoadShadersFromManifestFile(manifestFile.c_str(), false);
+    //        for (u64 i = 0; i < numShaderManifests; ++i)
+    //        {
+    //            const std::string& manifestFile = r2::sarr::At(*s_optrShaderSystem->mReloadShaderManifests, i);
+				//bool loaded = LoadShadersFromManifestFile(manifestFile.c_str(), false);
 
-				R2_CHECK(loaded, "We couldn't load the shaders from the file: %s\n", manifestFile.c_str());
+				//R2_CHECK(loaded, "We couldn't load the shaders from the file: %s\n", manifestFile.c_str());
 
-            }
+    //        }
 
             r2::sarr::Clear(*s_optrShaderSystem->mReloadShaderManifests);
         }
@@ -281,50 +291,85 @@ namespace r2::draw::shadersystem
 		{
 			const auto* manifest = shaderManifest->manifests()->Get(i);
 
-			bool success = fs::utils::CopyFileNameWithExtension(manifest->vertexPath()->c_str(), shaderFileName);
+            if (manifest->vertexPath() && manifest->vertexPath()->size() > 0)
+            {
+                char sanitizedPath[fs::FILE_PATH_LENGTH];
 
-			R2_CHECK(success, "Couldn't copy the filename of the shader!");
+                fs::utils::SanitizeSubPath(manifest->vertexPath()->c_str(), sanitizedPath);
 
-			if (strcmp(shaderFileName, name) == 0)
-			{
-				return manifest->vertexPath()->c_str();
-			}
+				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
 
-			success = fs::utils::CopyFileNameWithExtension(manifest->fragmentPath()->c_str(), shaderFileName);
+				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
-			R2_CHECK(success, "Couldn't copy the filename of the shader!");
+				if (strcmp(shaderFileName, name) == 0)
+				{
+					return manifest->vertexPath()->c_str();
+				}
+            }
 
-			if (strcmp(shaderFileName, name) == 0)
-			{
-				return manifest->fragmentPath()->c_str();
-			}
+            if (manifest->fragmentPath() && manifest->fragmentPath()->size() > 0)
+            {
+				char sanitizedPath[fs::FILE_PATH_LENGTH];
 
-			success = fs::utils::CopyFileNameWithExtension(manifest->geometryPath()->c_str(), shaderFileName);
+				fs::utils::SanitizeSubPath(manifest->fragmentPath()->c_str(), sanitizedPath);
 
-			R2_CHECK(success, "Couldn't copy the filename of the shader!");
+				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
 
-			if (strcmp(shaderFileName, name) == 0)
-			{
-				return manifest->geometryPath()->c_str();
-			}
+				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
-			success = fs::utils::CopyFileNameWithExtension(manifest->computePath()->c_str(), shaderFileName);
+				if (strcmp(shaderFileName, name) == 0)
+				{
+					return manifest->fragmentPath()->c_str();
+				}
+            }
 
-			R2_CHECK(success, "Couldn't copy the filename of the shader!");
+            if (manifest->geometryPath() && manifest->geometryPath()->size() > 0)
+            {
+				char sanitizedPath[fs::FILE_PATH_LENGTH];
 
-			if (strcmp(shaderFileName, name) == 0)
-			{
-				return manifest->computePath()->c_str();
-			}
+				fs::utils::SanitizeSubPath(manifest->geometryPath()->c_str(), sanitizedPath);
 
-            success = fs::utils::CopyFileNameWithExtension(manifest->partPath()->c_str(), shaderFileName);
+				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
 
-            R2_CHECK(success, "Couldn't copy the filename of the shader!");
+				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
-			if (strcmp(shaderFileName, name) == 0)
-			{
-				return manifest->partPath()->c_str();
-			}
+				if (strcmp(shaderFileName, name) == 0)
+				{
+					return manifest->geometryPath()->c_str();
+				}
+            }
+
+            if (manifest->computePath() && manifest->computePath()->size() > 0)
+            {
+				char sanitizedPath[fs::FILE_PATH_LENGTH];
+
+				fs::utils::SanitizeSubPath(manifest->computePath()->c_str(), sanitizedPath);
+
+				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+
+				R2_CHECK(success, "Couldn't copy the filename of the shader!");
+
+				if (strcmp(shaderFileName, name) == 0)
+				{
+					return manifest->computePath()->c_str();
+				}
+            }
+
+            if (manifest->partPath() && manifest->partPath()->size() > 0)
+            {
+				char sanitizedPath[fs::FILE_PATH_LENGTH];
+
+				fs::utils::SanitizeSubPath(manifest->partPath()->c_str(), sanitizedPath);
+
+				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+
+				R2_CHECK(success, "Couldn't copy the filename of the shader!");
+
+				if (strcmp(shaderFileName, name) == 0)
+				{
+					return manifest->partPath()->c_str();
+				}
+            }
 		}
 
         return nullptr;
@@ -419,44 +464,59 @@ namespace r2::draw::shadersystem
 
     }
 
-    void* LoadShadersFromManifestFile(const char* shaderManifestPath, bool assertOnFailure)
+    void* LoadShaderManifestBuffer(const char* shaderManifestPath)
+    {
+		if (s_optrShaderSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the shader system yet!");
+			return nullptr;
+		}
+
+		void* shaderManifestBuffer = r2::fs::ReadFile<r2::mem::StackArena>(*s_optrShaderSystem->mShaderLoadingArena, shaderManifestPath);
+
+		R2_CHECK(shaderManifestBuffer != nullptr, "Shader manifest should not be null! Path: %s", shaderManifestPath);
+
+        return shaderManifestBuffer;
+    }
+
+
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure)
     {
         if (s_optrShaderSystem == nullptr)
         {
             R2_CHECK(false, "We haven't initialized the shader system yet!");
-            return nullptr;
+            return;
         }
 
-        void* shaderManifestBuffer = r2::fs::ReadFile<r2::mem::StackArena>(*s_optrShaderSystem->mShaderLoadingArena, shaderManifestPath);
-
-        R2_CHECK(shaderManifestBuffer != nullptr, "Shader manifest should not be null!");
-
-        auto shaderManifestsBuf = r2::GetShaderManifests(shaderManifestBuffer);
-
-        flatbuffers::uoffset_t numManifests = shaderManifestsBuf->manifests()->size();
+        flatbuffers::uoffset_t numManifests = manifestFileData->manifests()->size();
 
         for (flatbuffers::uoffset_t i = 0; i < numManifests; ++i)
         {
-            ShaderHandle shaderHandle = FindShaderHandle(shaderManifestsBuf->manifests()->Get(i)->shaderName());
+            ShaderHandle shaderHandle = FindShaderHandle(manifestFileData->manifests()->Get(i)->shaderName());
 
             if (shaderHandle == InvalidShader)
             {
+                //ignore part paths
+                if (manifestFileData->manifests()->Get(i)->vertexPath()->str().empty() &&
+                    manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty() &&
+                    manifestFileData->manifests()->Get(i)->geometryPath()->str().empty() &&
+                    manifestFileData->manifests()->Get(i)->computePath()->str().empty())
+                {
+                    continue;
+                }
+
                 //@NOTE: this assumes that we can just compile all the shader programs at startup
                 r2::draw::Shader nextShader = r2::draw::shader::CreateShaderProgramFromRawFiles(
-                    shaderManifestsBuf->manifests()->Get(i)->shaderName(),
-                    shaderManifestsBuf->manifests()->Get(i)->vertexPath()->str().c_str(),
-                    shaderManifestsBuf->manifests()->Get(i)->fragmentPath()->str().c_str(),
-                    shaderManifestsBuf->manifests()->Get(i)->geometryPath()->str().c_str(),
-                    shaderManifestsBuf->manifests()->Get(i)->computePath()->str().c_str(),
+                    manifestFileData->manifests()->Get(i)->shaderName(),
+                    manifestFileData->manifests()->Get(i)->vertexPath()->str().c_str(),
+                    manifestFileData->manifests()->Get(i)->fragmentPath()->str().c_str(),
+                    manifestFileData->manifests()->Get(i)->geometryPath()->str().c_str(),
+                    manifestFileData->manifests()->Get(i)->computePath()->str().c_str(),
                     assertOnFailure);
 
                 r2::sarr::Push(*s_optrShaderSystem->mShaders, nextShader);
             }
         }
-
-        //FREE(shaderManifestBuffer, *s_optrShaderSystem->mShaderLoadingArena);
-
-        return shaderManifestBuffer;
     }
 
 #ifdef R2_ASSET_PIPELINE

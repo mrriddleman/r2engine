@@ -20,6 +20,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Containers/SArray.h"
+#include <string.h>
 
 //Don't love using these...
 #include <string>
@@ -555,25 +556,33 @@ namespace r2::draw::shader
 		std::regex includeExpression("^#include \".*\"[ \t]*$");
 		std::regex filePathExpression("\".*\"");
 
-        char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 1, sizeof(char));
+        char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 32, sizeof(char)); //+32 for each potential '\0' in the file
         shaderParsedOutIncludes[0] = '\0';
         u32 lengthOfParsedShaderData = 0;
 
         r2::sarr::Push(*tempAllocations, (void*)shaderParsedOutIncludes);
-
-        char* pch = strtok(shaderFileDataCopy, "\r\n");
+        
+        char* saveptr1;
+        char* pch = strtok_s(shaderFileDataCopy, "\r\n", &saveptr1);
+       
+        u32 currentOffset = 0;
 
         while (pch != nullptr)
         {
             if (!std::regex_match(pch, includeExpression))
             {
                 u32 strLen = strlen(pch);
-                strcat(shaderParsedOutIncludes, pch);
+                
+                //memcpy(shaderParsedOutIncludes + lengthOfParsedShaderData, pch, sizeof(char) * strLen);
+                strcat(&shaderParsedOutIncludes[currentOffset], pch);
+                
+                //shaderParsedOutIncludes[lengthOfParsedShaderData] = '\n';
 
-                strcat(shaderParsedOutIncludes, "\n");
+                strcat(&shaderParsedOutIncludes[currentOffset], "\n");
+
                 lengthOfParsedShaderData += strLen + 1;
 
-                pch = strtok(NULL, "\r\n");
+                pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
             }
 
@@ -582,22 +591,27 @@ namespace r2::draw::shader
             if (!std::regex_search(pchString, match, filePathExpression))
             {
                 u32 strLen = strlen(pch);
-                strcat(shaderParsedOutIncludes, pch);
+				//memcpy(shaderParsedOutIncludes + lengthOfParsedShaderData, pch, sizeof(char) * strLen);
+				strcat(&shaderParsedOutIncludes[currentOffset], pch);
 
-				strcat(shaderParsedOutIncludes, "\n");
+				//shaderParsedOutIncludes[lengthOfParsedShaderData] = '\n';
+
+				strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
 				lengthOfParsedShaderData += strLen + 1;
 
-                pch = strtok(NULL, "\r\n");
+                pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
             }
 
-			const char* stringMatch = match[0].str().c_str();
+            std::string stringMatch(match[0]);
 
             char quotelessPath[fs::FILE_PATH_LENGTH];
-            strncpy(quotelessPath, stringMatch + 1, strlen(stringMatch) - 2); //make sure not to include the quotes
+            strncpy(quotelessPath, stringMatch.c_str() + 1, stringMatch.size()-2); //make sure not to include the quotes
 
-            char* includedFileName = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, strlen(stringMatch)+1, sizeof(char));
+            quotelessPath[stringMatch.size() - 2] = '\0';
+
+            char* includedFileName = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, strlen(quotelessPath)+1, sizeof(char));
             
             r2::sarr::Push(*tempAllocations, (void*)includedFileName);
 
@@ -619,8 +633,23 @@ namespace r2::draw::shader
 
             if (found)
             {
-                pch = strtok(NULL, "\r\n");
+                pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;                
+            }
+
+
+            char* nextPiece = &shaderParsedOutIncludes[currentOffset];
+
+            shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
+            lengthOfParsedShaderData++;
+            currentOffset = lengthOfParsedShaderData;
+
+            shaderParsedOutIncludes[currentOffset] = '\0';
+
+            if (strlen(nextPiece) > 0)
+            {
+                printf("%s", shaderParsedOutIncludes);
+                r2::sarr::Push(*shaderSourceFiles, nextPiece);
             }
 
             r2::sarr::Push(includedPaths, includedFileName);
@@ -630,18 +659,26 @@ namespace r2::draw::shader
 
             ReadAndParseShaderData(fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
 
-            pch = strtok(NULL, "\r\n");
+            pch = strtok_s(NULL, "\r\n", &saveptr1);
         }
 
         shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
 
         if (shaderSourceFiles)
         {
-            r2::sarr::Push(*shaderSourceFiles, shaderParsedOutIncludes);
+            char* nextPiece = &shaderParsedOutIncludes[currentOffset];
+            r2::sarr::Push(*shaderSourceFiles, nextPiece);
         }
 
-       // printf("%s", shaderParsedOutIncludes);
+        const auto numSourceFiles = r2::sarr::Size(*shaderSourceFiles);
+
+        for (u64 i = 0; i < numSourceFiles; ++i)
+        {
+            printf("%s\n", r2::sarr::At(*shaderSourceFiles, i));
+        }
+        //printf("%s", shaderParsedOutIncludes);
         
+
       //  return shaderFileData;
         //return shaderParsedOutIncludes;
 	}

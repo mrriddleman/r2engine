@@ -332,6 +332,15 @@
       computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\UpSampleBlur.cs",
       binaryPath: "",
       partPath: ""
+    },
+    {
+      shaderName: 16387447680788292285,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw\\BlurConstants.glsl"
     }
   ]
 }
