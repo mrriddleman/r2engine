@@ -21,7 +21,7 @@ namespace r2::draw::shadersystem
 
     ShaderHandle AddShader(const r2::draw::Shader& shader);
     ShaderHandle FindShaderHandle(const r2::draw::Shader& shader);
-    ShaderHandle FindShaderHandle(u64 shaderName);
+    ShaderHandle FindShaderHandle(ShaderName shaderName);
 
     const Shader* GetShader(ShaderHandle handle);
 
@@ -33,7 +33,10 @@ namespace r2::draw::shadersystem
 
 #ifdef R2_ASSET_PIPELINE
     void ReloadManifestFile(const std::string& manifestFilePath);
-    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest);
+    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath );
+
+
+
 #endif
 
 }

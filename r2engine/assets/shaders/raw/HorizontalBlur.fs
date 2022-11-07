@@ -2,7 +2,6 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-
 #define HORIZONTAL_WEIGHTS 1
 
 #include "BlurConstants.glsl"

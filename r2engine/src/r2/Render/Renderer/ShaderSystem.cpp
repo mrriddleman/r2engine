@@ -6,6 +6,7 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Core/Containers/SHashMap.h"
 
 namespace r2::draw
 {
@@ -26,6 +27,10 @@ namespace r2::draw
 #ifdef R2_ASSET_PIPELINE
         r2::SArray<ShaderHandle>* mShadersToReload = nullptr;
         r2::SArray<std::string>* mReloadShaderManifests = nullptr;
+
+        r2::mem::LinearArena* mShaderPartArena = nullptr;
+
+        r2::SHashMap<r2::SArray<ShaderName>*>* mShaderPartMap = nullptr;
 #endif
     };
 }
@@ -39,6 +44,10 @@ namespace
     const u32 SHADER_LOADING_SIZE = Kilobytes(512);
 
     const u32 NUM_MANIFESTS_TO_LOAD = 2;
+
+#ifdef R2_ASSET_PIPELINE
+    const u64 NUM_SHADER_REFERENCES_PER_SHADER_PART = 50;
+#endif
 }
 
 namespace r2::draw::shadersystem
@@ -118,8 +127,21 @@ namespace r2::draw::shadersystem
 #ifdef R2_ASSET_CACHE_DEBUG
         s_optrShaderSystem->mShadersToReload = MAKE_SARRAY(*shaderLinearArena, ShaderHandle, capacity);
         s_optrShaderSystem->mReloadShaderManifests = MAKE_SARRAY(*shaderLinearArena, std::string, capacity);
+
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
-        //r2::util::PathCpy(s_optrShaderSystem->mShaderManifestPath, shaderManifestPath);
+		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
+
+        u64 shaderPartArenaSize = sizeof(r2::mem::LinearArena) +
+            r2::SHashMap<r2::SArray<ShaderName>*>::MemorySize(capacity) * r2::SHashMap<r2::SArray<ShaderName>*>::LoadFactorMultiplier() +
+            r2::SArray<ShaderName>::MemorySize(NUM_SHADER_REFERENCES_PER_SHADER_PART) * capacity;
+
+        s_optrShaderSystem->mShaderPartArena = MAKE_LINEAR_ARENA(*shaderLinearArena, shaderPartArenaSize);
+
+        s_optrShaderSystem->mShaderPartMap = MAKE_SHASHMAP(*s_optrShaderSystem->mShaderPartArena, r2::SArray<ShaderName>*, capacity);
+#endif
 
         s_optrShaderSystem->mShaderLoadingArena = MAKE_STACK_ARENA(*shaderLinearArena, SHADER_LOADING_SIZE * NUM_MANIFESTS_TO_LOAD);
 
@@ -241,7 +263,7 @@ namespace r2::draw::shadersystem
         return InvalidShader;
     }
 
-    ShaderHandle FindShaderHandle(u64 shaderName)
+    ShaderHandle FindShaderHandle(ShaderName shaderName)
     {
         if (s_optrShaderSystem == nullptr)
         {
@@ -406,6 +428,17 @@ namespace r2::draw::shadersystem
         FREE(s_optrShaderSystem->mShaderLoadingArena, *shaderArena);
 
 #ifdef R2_ASSET_PIPELINE
+
+        auto shaderPartIter = r2::shashmap::Begin(*s_optrShaderSystem->mShaderPartMap);
+
+        for (; shaderPartIter != r2::shashmap::End(*s_optrShaderSystem->mShaderPartMap); ++shaderPartIter)
+        {
+            FREE(shaderPartIter->value, *s_optrShaderSystem->mShaderPartArena);
+        }
+        FREE(s_optrShaderSystem->mShaderPartMap, *s_optrShaderSystem->mShaderPartArena);
+
+        FREE(s_optrShaderSystem->mShaderPartArena, *shaderArena);
+
         FREE(s_optrShaderSystem->mShadersToReload, *shaderArena);
         FREE(s_optrShaderSystem->mReloadShaderManifests, *shaderArena);
 #endif
@@ -437,6 +470,9 @@ namespace r2::draw::shadersystem
 #ifdef R2_ASSET_PIPELINE
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<std::string>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<ShaderName>*>::MemorySize(numShaders) * r2::SHashMap<r2::SArray<ShaderName>*>::LoadFactorMultiplier(), ALIGNMENT, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ShaderName>::MemorySize(NUM_SHADER_REFERENCES_PER_SHADER_PART), ALIGNMENT, headerSize, boundsChecking) * numShaders +
 #endif
 
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking);
@@ -533,7 +569,7 @@ namespace r2::draw::shadersystem
         r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
     }
 
-    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest)
+    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath)
     {
         if (s_optrShaderSystem == nullptr)
         {
@@ -548,7 +584,13 @@ namespace r2::draw::shadersystem
 
             if (nextShader.manifest.hashName == manifest.hashName)
             {
-                r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
+
+                if (!isPartPath)
+                {
+                    r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
+                }
+
+                
             }
         }
     }

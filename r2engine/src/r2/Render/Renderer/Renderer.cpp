@@ -40,7 +40,7 @@ namespace
 	//const u64 AO_COMMAND_AUX_MEMORY = Megabytes(4);
 	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
-	const u64 MAX_NUM_SHADERS = 1000;
+	const u64 MAX_NUM_SHADERS = 500;
 	const u64 MAX_DEFAULT_MODELS = 16;
 	const u64 MAX_NUM_TEXTURES = 2048;
 	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting

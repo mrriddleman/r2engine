@@ -92,7 +92,12 @@ namespace r2::asset::pln
 						R2_LOGE("Failed to build shader manifests");
 					}
 
-					r2::draw::shadersystem::ReloadShader(shaderManifest);
+					r2::draw::shadersystem::ReloadShader(shaderManifest, false);
+					break;
+				}
+				else if (changedPath == shaderManifest.partPath)
+				{
+					r2::draw::shadersystem::ReloadShader(shaderManifest, true);
 					break;
 				}
 			}

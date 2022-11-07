@@ -572,11 +572,8 @@ namespace r2::draw::shader
             if (!std::regex_match(pch, includeExpression))
             {
                 u32 strLen = strlen(pch);
-                
-                //memcpy(shaderParsedOutIncludes + lengthOfParsedShaderData, pch, sizeof(char) * strLen);
+
                 strcat(&shaderParsedOutIncludes[currentOffset], pch);
-                
-                //shaderParsedOutIncludes[lengthOfParsedShaderData] = '\n';
 
                 strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
@@ -591,10 +588,8 @@ namespace r2::draw::shader
             if (!std::regex_search(pchString, match, filePathExpression))
             {
                 u32 strLen = strlen(pch);
-				//memcpy(shaderParsedOutIncludes + lengthOfParsedShaderData, pch, sizeof(char) * strLen);
-				strcat(&shaderParsedOutIncludes[currentOffset], pch);
 
-				//shaderParsedOutIncludes[lengthOfParsedShaderData] = '\n';
+				strcat(&shaderParsedOutIncludes[currentOffset], pch);
 
 				strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
@@ -637,7 +632,6 @@ namespace r2::draw::shader
                 continue;                
             }
 
-
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
 
             shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
@@ -648,7 +642,6 @@ namespace r2::draw::shader
 
             if (strlen(nextPiece) > 0)
             {
-                printf("%s", shaderParsedOutIncludes);
                 r2::sarr::Push(*shaderSourceFiles, nextPiece);
             }
 
@@ -669,18 +662,6 @@ namespace r2::draw::shader
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
             r2::sarr::Push(*shaderSourceFiles, nextPiece);
         }
-
-        const auto numSourceFiles = r2::sarr::Size(*shaderSourceFiles);
-
-        for (u64 i = 0; i < numSourceFiles; ++i)
-        {
-            printf("%s\n", r2::sarr::At(*shaderSourceFiles, i));
-        }
-        //printf("%s", shaderParsedOutIncludes);
-        
-
-      //  return shaderFileData;
-        //return shaderParsedOutIncludes;
 	}
 
 

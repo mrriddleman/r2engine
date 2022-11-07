@@ -11,12 +11,13 @@ namespace r2::draw
 {
 
     using ShaderHandle = u32;
+    using ShaderName = u64;
     static const ShaderHandle InvalidShader;
 
     struct Shader
     {
         //maybe have a hash here?
-        u64 shaderID = 0;
+        ShaderName shaderID = 0;
         u32 shaderProg = 0;
         //@TODO(Serge): may have to be moved out of the asset pipeline so that materials can compare
 #ifdef R2_ASSET_PIPELINE
