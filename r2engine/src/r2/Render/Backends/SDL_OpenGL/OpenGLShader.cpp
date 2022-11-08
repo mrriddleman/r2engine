@@ -687,7 +687,7 @@ namespace r2::draw::shader
 		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);
     }
     
-    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, bool assertOnFailure)
+    Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, const char* manifestBasePath, bool assertOnFailure)
     {
         Shader newShader;
 
@@ -818,7 +818,7 @@ namespace r2::draw::shader
         return newShader;
     }
     
-    void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath)
+    void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, const char* basePath)
     {
         R2_CHECK(program != nullptr, "Shader Program is nullptr");
 
@@ -834,7 +834,7 @@ namespace r2::draw::shader
             R2_CHECK(geometryShaderFilePath == nullptr, "geometry shader file path is not nullptr");
         }
 
-        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath, computeShaderFilePath, false);
+        Shader reloadedShaderProgram = CreateShaderProgramFromRawFiles(hashName, vertexShaderFilePath, fragmentShaderFilePath, geometryShaderFilePath, computeShaderFilePath, basePath, false);
         
         if (reloadedShaderProgram.shaderProg)
         {

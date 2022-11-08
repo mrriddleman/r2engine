@@ -46,13 +46,20 @@ namespace r2::draw
 
         u32 GetMaxNumberOfGeometryShaderInvocations();
 
-        u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr);
+        //u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr);
         
         //@TODO(Serge): move this to shader system
-        Shader CreateShaderProgramFromRawFiles(u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, bool assertOnFail);
+        Shader CreateShaderProgramFromRawFiles(
+            u64 hashName,
+            const char* vertexShaderFilePath,
+            const char* fragmentShaderFilePath,
+            const char* geometryShaderFilePath,
+            const char* computeShaderFilePath,
+            const char* manifestBasePath,
+            bool assertOnFail);
         
         //@TODO(Serge): maybe move this to the shader system and load through the shader handle
-        void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath);
+        void ReloadShaderProgramFromRawFiles(u32* program, u64 hashName, const char* vertexShaderFilePath, const char* fragmentShaderFilePath, const char* geometryShaderFilePath, const char* computeShaderFilePath, const char* basePath);
     }
 
 

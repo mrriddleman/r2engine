@@ -20,12 +20,13 @@ namespace r2::asset::pln
         std::string computeShaderPath = "";
         std::string binaryPath = "";
         std::string partPath = "";
+        std::string basePath = "";
     };
     
     bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestPath, const std::string& rawPath);
     std::vector<ShaderManifest> LoadAllShaderManifests(const std::string& shaderManifestPath);
     bool BuildShaderManifestsFromJson(const std::string& manifestDir);
-    bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestsPath);
+    bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestsPath, const std::string& rawPath);
 }
 #endif
 #endif /* ShaderManifest_h */

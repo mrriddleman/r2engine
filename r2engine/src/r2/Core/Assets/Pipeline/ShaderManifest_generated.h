@@ -151,16 +151,22 @@ inline flatbuffers::Offset<ShaderManifest> CreateShaderManifestDirect(
 struct ShaderManifests FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ShaderManifestsBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MANIFESTS = 4
+    VT_MANIFESTS = 4,
+    VT_BASEPATH = 6
   };
   const flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>> *manifests() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>> *>(VT_MANIFESTS);
+  }
+  const flatbuffers::String *basePath() const {
+    return GetPointer<const flatbuffers::String *>(VT_BASEPATH);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_MANIFESTS) &&
            verifier.VerifyVector(manifests()) &&
            verifier.VerifyVectorOfTables(manifests()) &&
+           VerifyOffset(verifier, VT_BASEPATH) &&
+           verifier.VerifyString(basePath()) &&
            verifier.EndTable();
   }
 };
@@ -171,6 +177,9 @@ struct ShaderManifestsBuilder {
   flatbuffers::uoffset_t start_;
   void add_manifests(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>>> manifests) {
     fbb_.AddOffset(ShaderManifests::VT_MANIFESTS, manifests);
+  }
+  void add_basePath(flatbuffers::Offset<flatbuffers::String> basePath) {
+    fbb_.AddOffset(ShaderManifests::VT_BASEPATH, basePath);
   }
   explicit ShaderManifestsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -186,19 +195,24 @@ struct ShaderManifestsBuilder {
 
 inline flatbuffers::Offset<ShaderManifests> CreateShaderManifests(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>>> manifests = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<r2::ShaderManifest>>> manifests = 0,
+    flatbuffers::Offset<flatbuffers::String> basePath = 0) {
   ShaderManifestsBuilder builder_(_fbb);
+  builder_.add_basePath(basePath);
   builder_.add_manifests(manifests);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<ShaderManifests> CreateShaderManifestsDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<flatbuffers::Offset<r2::ShaderManifest>> *manifests = nullptr) {
+    const std::vector<flatbuffers::Offset<r2::ShaderManifest>> *manifests = nullptr,
+    const char *basePath = nullptr) {
   auto manifests__ = manifests ? _fbb.CreateVector<flatbuffers::Offset<r2::ShaderManifest>>(*manifests) : 0;
+  auto basePath__ = basePath ? _fbb.CreateString(basePath) : 0;
   return r2::CreateShaderManifests(
       _fbb,
-      manifests__);
+      manifests__,
+      basePath__);
 }
 
 inline const r2::ShaderManifests *GetShaderManifests(const void *buf) {

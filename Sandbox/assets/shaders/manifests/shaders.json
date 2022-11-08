@@ -36,5 +36,6 @@
       binaryPath: "",
       partPath: ""
     }
-  ]
+  ],
+  basePath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/"
 }

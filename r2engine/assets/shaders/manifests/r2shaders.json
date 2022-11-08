@@ -340,7 +340,8 @@
       geometryPath: "",
       computePath: "",
       binaryPath: "",
-      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/BlurConstants.glsl"
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Blur/BlurConstants.glsl"
     }
-  ]
+  ],
+  basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"
 }

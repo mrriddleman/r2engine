@@ -46,6 +46,7 @@ namespace r2::asset::pln
             fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
             ShaderManifest newManifest;
+            newManifest.basePath = rawPath;
             newManifest.hashName = STRING_ID( file.path().stem().string().c_str() );
             newManifest.vertexShaderPath = std::string(cStringPath);
             newManifests.push_back(newManifest);
@@ -63,6 +64,8 @@ namespace r2::asset::pln
 			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
             ShaderManifest newManifest;
+            newManifest.basePath = rawPath;
+
             newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
             newManifest.computeShaderPath = std::string(cStringPath);
             newManifests.push_back(newManifest);
@@ -79,8 +82,20 @@ namespace r2::asset::pln
 
 			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
+
+
+		//	auto r = file.path().lexically_relative(rawPath);
+
+		//	auto pos = r.string().find('.');
+
+		//	std::string resultString = r.string().substr(0, pos);
+
+		//	printf("%s\n", resultString.c_str());
+
+
 			ShaderManifest newManifest;
-            std::string stringName = file.path().filename().string();
+            newManifest.basePath = rawPath;
+			std::string stringName = file.path().filename().string();
 			newManifest.hashName = STRING_ID(stringName.c_str());
 			newManifest.partPath = std::string(cStringPath);
 			newManifests.push_back(newManifest);
@@ -142,13 +157,13 @@ namespace r2::asset::pln
         if (oldSize != newManifests.size())
         {
             currentManifests = newManifests;
-            return GenerateShaderManifests(currentManifests, manifestFilePath);
+            return GenerateShaderManifests(currentManifests, manifestFilePath, rawPath);
         }
         
         return true;
     }
     
-    bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestFilePath)
+    bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestFilePath, const std::string& rawPath)
     {
         flatbuffers::FlatBufferBuilder builder;
         std::vector<flatbuffers::Offset<r2::ShaderManifest>> flatShaderManifests;
@@ -164,7 +179,7 @@ namespace r2::asset::pln
                                         builder.CreateString(manifest.partPath)));
         }
         
-        auto shaders = r2::CreateShaderManifests(builder, builder.CreateVector(flatShaderManifests));
+        auto shaders = r2::CreateShaderManifests(builder, builder.CreateVector(flatShaderManifests), builder.CreateString(rawPath));
         
         builder.Finish(shaders);
         
@@ -245,7 +260,7 @@ namespace r2::asset::pln
                 newManifest.computeShaderPath = shaderManifestsBuf->manifests()->Get(i)->computePath()->str();
                 newManifest.binaryPath = shaderManifestsBuf->manifests()->Get(i)->binaryPath()->str();
                 newManifest.partPath = shaderManifestsBuf->manifests()->Get(i)->partPath()->str();
-
+                newManifest.basePath = shaderManifestsBuf->basePath()->str();
                 shaderManifests.push_back(newManifest);
             }
             

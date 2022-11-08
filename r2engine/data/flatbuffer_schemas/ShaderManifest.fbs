@@ -17,6 +17,7 @@ table ShaderManifest
 table ShaderManifests
 {
 	manifests:[ShaderManifest];
+	basePath:string;
 }
 
 root_type ShaderManifests;
