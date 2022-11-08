@@ -569,6 +569,24 @@ namespace r2::draw::shadersystem
         r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
     }
 
+    bool HasShaderToReload(ShaderHandle shaderHandle)
+    {
+		bool found = false;
+
+		auto numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
+
+		for (decltype(numShadersToReload) j = 0; j < numShadersToReload; ++j)
+		{
+			if (shaderHandle == r2::sarr::At(*s_optrShaderSystem->mShadersToReload, j))
+			{
+				found = true;
+				break;
+			}
+		}
+
+        return found;
+    }
+
     void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath)
     {
         if (s_optrShaderSystem == nullptr)
@@ -584,16 +602,83 @@ namespace r2::draw::shadersystem
 
             if (nextShader.manifest.hashName == manifest.hashName)
             {
-
                 if (!isPartPath)
                 {
                     r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
                 }
+            }
+        }
 
-                
+        if (isPartPath)
+        {
+			r2::SArray<ShaderName>* defaultShaderPartList = nullptr;
+			r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, manifest.hashName, defaultShaderPartList);
+
+            if (shaderPartList != defaultShaderPartList)
+            {
+                auto numShadersInList = r2::sarr::Size(*shaderPartList);
+
+                for (decltype(numShadersInList) i = 0; i < numShadersInList; ++i)
+                {
+                    const auto shaderHandle = FindShaderHandle(r2::sarr::At(*shaderPartList, i));
+
+                    if (shaderHandle != InvalidShader)
+                    {
+                        if(!HasShaderToReload(shaderHandle))
+                        {
+                            r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, shaderHandle);
+                        }
+                    }
+                    else
+                    {
+                        R2_CHECK(false, "Not sure how this would be invalid?");
+                    }
+                }
+            }
+            else
+            {
+                R2_CHECK(false, "Not sure how we'd get here yet?");
             }
         }
     }
+
+    void AddShaderToShaderPartList(const ShaderName& shaderPartName, const ShaderName& shaderName)
+    {
+        r2::SArray<ShaderName>* defaultList = nullptr;
+        r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, shaderPartName, defaultList);
+
+        if (shaderPartList == defaultList)
+        {
+            //we don't have any entries for this shader part
+            //Create the list and add it at shaderPartList
+            shaderPartList = MAKE_SARRAY(*s_optrShaderSystem->mShaderPartArena, ShaderName, NUM_SHADER_REFERENCES_PER_SHADER_PART);
+
+            r2::sarr::Push(*shaderPartList, shaderName);
+
+            r2::shashmap::Set(*s_optrShaderSystem->mShaderPartMap, shaderPartName, shaderPartList);
+        }
+        else
+        {
+            //make sure we haven't added this part to the list already, if not, then add it
+            auto numShaderPartEntries = r2::sarr::Size(*shaderPartList);
+            bool found = false;
+            for (decltype(numShaderPartEntries) i = 0; i < numShaderPartEntries; ++i)
+            {
+                const ShaderName& name = r2::sarr::At(*shaderPartList, i);
+                if (name == shaderName)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                r2::sarr::Push(*shaderPartList, shaderName);
+            }
+        }
+    }
+
 #endif // R2_ASSET_PIPELINE
 
     ShaderHandle MakeShaderHandleFromIndex(u64 index)

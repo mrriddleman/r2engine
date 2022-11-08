@@ -35,7 +35,7 @@ namespace r2::draw::shadersystem
     void ReloadManifestFile(const std::string& manifestFilePath);
     void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath );
 
-
+    void AddShaderToShaderPartList(const ShaderName& shaderPartName, const ShaderName& shaderName);
 
 #endif
 

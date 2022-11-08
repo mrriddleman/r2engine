@@ -22,6 +22,8 @@
 #include "r2/Core/Containers/SArray.h"
 #include <string.h>
 
+#include "r2/Utils/Hash.h"
+
 //Don't love using these...
 #include <string>
 #include <regex>
@@ -533,7 +535,7 @@ namespace r2::draw::shader
         strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
     }
 
-    void ReadAndParseShaderData(const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
+    void ReadAndParseShaderData(u64 hashName, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
 	{
         char* shaderFileData = ReadShaderData(shaderFilePath);
 
@@ -632,6 +634,10 @@ namespace r2::draw::shader
                 continue;                
             }
 
+#if defined(R2_ASSET_PIPELINE)
+            shadersystem::AddShaderToShaderPartList(STRING_ID(includedFileName), hashName);
+#endif
+
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
 
             shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
@@ -650,7 +656,7 @@ namespace r2::draw::shader
             char fullIncludePath[fs::FILE_PATH_LENGTH];
             FindFullPathForShader(includedFileName, fullIncludePath);
 
-            ReadAndParseShaderData(fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
+            ReadAndParseShaderData(hashName, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
 
             pch = strtok_s(NULL, "\r\n", &saveptr1);
         }
@@ -720,7 +726,7 @@ namespace r2::draw::shader
 
             r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
         }
         
         if(fragmentShaderFilePath && strlen(fragmentShaderFilePath) > 0)
@@ -729,7 +735,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
         }
         
         if(geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
@@ -738,7 +744,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
 
         }
 
@@ -748,7 +754,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-			ReadAndParseShaderData(computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
+			ReadAndParseShaderData(hashName, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
         }
         
         u32 shaderProg = CreateShaderProgramFromStrings(vertexShaderParts, fragmentShaderParts, geometryShaderParts, computeShaderParts);

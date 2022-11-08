@@ -41,9 +41,13 @@ namespace r2::asset::pln
                 continue;
             }
             
+            char cStringPath[fs::FILE_PATH_LENGTH];
+
+            fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
             ShaderManifest newManifest;
             newManifest.hashName = STRING_ID( file.path().stem().string().c_str() );
-            newManifest.vertexShaderPath = file.path().string();
+            newManifest.vertexShaderPath = std::string(cStringPath);
             newManifests.push_back(newManifest);
         }
 
@@ -54,9 +58,13 @@ namespace r2::asset::pln
                 continue;
             }
 
+			char cStringPath[fs::FILE_PATH_LENGTH];
+
+			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
             ShaderManifest newManifest;
             newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
-            newManifest.computeShaderPath = file.path().string();
+            newManifest.computeShaderPath = std::string(cStringPath);
             newManifests.push_back(newManifest);
         }
 
@@ -67,9 +75,14 @@ namespace r2::asset::pln
 				continue;
 			}
 
+			char cStringPath[fs::FILE_PATH_LENGTH];
+
+			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
 			ShaderManifest newManifest;
-			newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
-			newManifest.partPath = file.path().string();
+            std::string stringName = file.path().filename().string();
+			newManifest.hashName = STRING_ID(stringName.c_str());
+			newManifest.partPath = std::string(cStringPath);
 			newManifests.push_back(newManifest);
         }
         
@@ -86,7 +99,11 @@ namespace r2::asset::pln
                 std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
                 if (vertexPath.stem() == file.path().stem())
                 {
-                    shaderManifest.fragmentShaderPath = file.path().string();
+					char cStringPath[fs::FILE_PATH_LENGTH];
+
+					fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+                    shaderManifest.fragmentShaderPath = std::string(cStringPath);
                     break;
                 }
             }
@@ -105,7 +122,11 @@ namespace r2::asset::pln
                 std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
                 if (vertexPath.stem() == file.path().stem())
                 {
-                    shaderManifest.geometryShaderPath = file.path().string();
+					char cStringPath[fs::FILE_PATH_LENGTH];
+
+					fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+                    shaderManifest.geometryShaderPath = std::string(cStringPath);
                     break;
                 }
             }

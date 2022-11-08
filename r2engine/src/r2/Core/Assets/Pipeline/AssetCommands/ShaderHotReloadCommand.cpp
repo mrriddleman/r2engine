@@ -3,6 +3,7 @@
 
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace r2::asset::pln
 {
@@ -75,15 +76,20 @@ namespace r2::asset::pln
 		//look through the manifests and find which need to be re-compiled and linked
 		size_t numShaderManifests = mShaderManifests.size();
 
+		char changedPathSanitizedCString[fs::FILE_PATH_LENGTH];
+		fs::utils::SanitizeSubPath(changedPath.c_str(), changedPathSanitizedCString);
+
+		std::string changedPathSanitized = std::string(changedPathSanitizedCString);
+
 		for (size_t i = 0; i < numShaderManifests; ++i)
 		{
 			auto& shaderManifests = mShaderManifests.at(i);
 			for (const auto& shaderManifest : shaderManifests)
 			{
-				if (changedPath == shaderManifest.vertexShaderPath ||
-					changedPath == shaderManifest.fragmentShaderPath ||
-					changedPath == shaderManifest.geometryShaderPath ||
-					changedPath == shaderManifest.computeShaderPath)
+				if (changedPathSanitized == shaderManifest.vertexShaderPath ||
+					changedPathSanitized == shaderManifest.fragmentShaderPath ||
+					changedPathSanitized == shaderManifest.geometryShaderPath ||
+					changedPathSanitized == shaderManifest.computeShaderPath)
 				{
 					bool success = BuildShaderManifestsIfNeeded(shaderManifests, mManifestFilePaths[i], mWatchPaths[i]);
 
@@ -95,7 +101,7 @@ namespace r2::asset::pln
 					r2::draw::shadersystem::ReloadShader(shaderManifest, false);
 					break;
 				}
-				else if (changedPath == shaderManifest.partPath)
+				else if (changedPathSanitized == shaderManifest.partPath)
 				{
 					r2::draw::shadersystem::ReloadShader(shaderManifest, true);
 					break;
