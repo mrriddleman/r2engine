@@ -384,6 +384,54 @@ namespace r2::fs::utils
         
         return true;
     }
+
+    bool GetRelativePath(const char* basePath, const char* path, char* result, const char delim)
+    {
+        size_t basePathLength = strlen(basePath);
+        size_t pathLength = strlen(path);
+       
+        
+        if (pathLength < basePathLength)
+        {
+            r2::util::PathCpy(result, path);
+            return true;
+        }
+
+        char baseSubPath[r2::fs::FILE_PATH_LENGTH];
+        char nextSubPath[r2::fs::FILE_PATH_LENGTH];
+
+        char* resultBasePath = const_cast<char*>( basePath );
+        char* resultPath = const_cast<char*>(path);
+
+        char* prevResultBasePath = resultBasePath;
+        char* prevResultPath = resultPath;
+
+        while (*resultBasePath && *resultPath)
+        {
+            resultBasePath = GetNextSubPath(resultBasePath, baseSubPath, delim);
+            resultPath = GetNextSubPath(resultPath, nextSubPath, delim);
+
+            if (!(resultBasePath && resultPath &&
+                strcmp(baseSubPath, nextSubPath) == 0))
+            {
+                break;
+            }
+            
+            prevResultBasePath = resultBasePath;
+            prevResultPath = resultPath;
+        } 
+
+
+        int offset = 0;
+        if (prevResultPath[0] == delim)
+        {
+            offset = 1;
+        }
+
+        r2::util::PathCpy(result, prevResultPath + offset);
+
+        return strlen(result) > 0;
+    }
     
     bool GetParentDirectory(const char* path, char* result)
     {

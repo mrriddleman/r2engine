@@ -4,7 +4,7 @@
 
 #define HORIZONTAL_WEIGHTS 1
 
-#include "BlurConstants.glsl"
+#include "Blur/BlurConstants.glsl"
 
 layout(location = 0) out vec4 oBlurColor;
 

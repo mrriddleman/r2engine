@@ -384,7 +384,13 @@ namespace r2::draw::shadersystem
 
 				fs::utils::SanitizeSubPath(manifest->partPath()->c_str(), sanitizedPath);
 
-				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+
+
+                bool success = fs::utils::GetRelativePath(shaderManifest->basePath()->c_str(), sanitizedPath, shaderFileName);
+
+            //    printf("relative path: %s\n", shaderFileName);
+
+			//	bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
 
 				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
@@ -395,7 +401,7 @@ namespace r2::draw::shadersystem
             }
 		}
 
-        return nullptr;
+        return "";
     }
 
 
@@ -403,7 +409,7 @@ namespace r2::draw::shadersystem
     {
         const char* result = FindShaderPathInManifest(s_optrShaderSystem->mAppShaderManifests, name);
 
-        if (result == nullptr)
+        if (strcmp(result, "") == 0)
         {
             result = FindShaderPathInManifest(s_optrShaderSystem->mInternalShaderManifests, name);
         }

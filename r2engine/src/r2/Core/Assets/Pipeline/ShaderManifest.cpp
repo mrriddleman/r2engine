@@ -84,8 +84,13 @@ namespace r2::asset::pln
 
 
 
-		//	auto r = file.path().lexically_relative(rawPath);
+			auto r = file.path().lexically_relative(rawPath);
 
+            char sanitizedCStringName[fs::FILE_PATH_LENGTH];
+
+            fs::utils::SanitizeSubPath(r.string().c_str(), sanitizedCStringName);
+
+            //printf("part name: %s\n", sanitizedCStringName);
 		//	auto pos = r.string().find('.');
 
 		//	std::string resultString = r.string().substr(0, pos);
@@ -95,7 +100,7 @@ namespace r2::asset::pln
 
 			ShaderManifest newManifest;
             newManifest.basePath = rawPath;
-			std::string stringName = file.path().filename().string();
+			std::string stringName = sanitizedCStringName;
 			newManifest.hashName = STRING_ID(stringName.c_str());
 			newManifest.partPath = std::string(cStringPath);
 			newManifests.push_back(newManifest);

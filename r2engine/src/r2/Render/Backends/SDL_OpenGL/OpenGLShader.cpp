@@ -603,25 +603,24 @@ namespace r2::draw::shader
 
             std::string stringMatch(match[0]);
 
-            char quotelessPath[fs::FILE_PATH_LENGTH];
+            char* quotelessPath = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, stringMatch.size() - 1, sizeof(char));
+
             strncpy(quotelessPath, stringMatch.c_str() + 1, stringMatch.size()-2); //make sure not to include the quotes
 
             quotelessPath[stringMatch.size() - 2] = '\0';
-
-            char* includedFileName = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, strlen(quotelessPath)+1, sizeof(char));
             
-            r2::sarr::Push(*tempAllocations, (void*)includedFileName);
+            r2::sarr::Push(*tempAllocations, (void*)quotelessPath);
 
-            bool success = fs::utils::CopyFileNameWithExtension(quotelessPath, includedFileName);
+          //  bool success = fs::utils::CopyFileNameWithExtension(quotelessPath, quotelessPath);
 
-            R2_CHECK(success, "Couldn't copy the filename!");
+       //     R2_CHECK(success, "Couldn't copy the filename!");
 
             const auto numIncludePaths = r2::sarr::Size(includedPaths);
             bool found = false;
             for (u64 i = 0; i < numIncludePaths; ++i)
             {
                 const char* nextIncludePath = r2::sarr::At(includedPaths, i);
-                if (strcmp(includedFileName, nextIncludePath) == 0)
+                if (strcmp(quotelessPath, nextIncludePath) == 0)
                 {
                     found = true;
                     break;
@@ -635,7 +634,7 @@ namespace r2::draw::shader
             }
 
 #if defined(R2_ASSET_PIPELINE)
-            shadersystem::AddShaderToShaderPartList(STRING_ID(includedFileName), hashName);
+            shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), hashName);
 #endif
 
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
@@ -651,10 +650,12 @@ namespace r2::draw::shader
                 r2::sarr::Push(*shaderSourceFiles, nextPiece);
             }
 
-            r2::sarr::Push(includedPaths, includedFileName);
+            r2::sarr::Push(includedPaths, quotelessPath);
 
             char fullIncludePath[fs::FILE_PATH_LENGTH];
-            FindFullPathForShader(includedFileName, fullIncludePath);
+            FindFullPathForShader(quotelessPath, fullIncludePath);
+
+            R2_CHECK(strlen(fullIncludePath) > 0, "We should have a proper path here!");
 
             ReadAndParseShaderData(hashName, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
 

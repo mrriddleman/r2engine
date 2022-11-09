@@ -63,7 +63,7 @@ namespace r2::fs::utils
     
     bool SanitizeSubPath(const char* rawSubPath, char* result);
 
-   
+    bool GetRelativePath(const char* basePath, const char* path, char* result, const char delim = PATH_SEPARATOR);
 
 }
 

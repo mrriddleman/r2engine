@@ -12,4 +12,4 @@ const float weights[7] = {0.001f, 0.028f, 0.233f, 0.474f, 0.233f, 0.028f, 0.001f
 
 #endif
 
-const int TEST_CONST = 5;
+//const int TEST_CONST = 5;
