@@ -1608,7 +1608,7 @@ public:
 
     r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const
     {
-        return nullptr;
+        return r2::asset::pln::BuildShaderManifestsFromJsonIO;
     }
 #endif
     

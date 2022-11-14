@@ -128,7 +128,15 @@ namespace r2::asset::pln
 
 	void ShaderHotReloadCommand::BuildInternalShaderPassesIfNeeded()
 	{
-
+		for (auto& buildDesc : mInternalShaderPassesBuildData)
+		{
+			if (std::filesystem::exists(buildDesc.internalBinShaderManifestPath))
+			{
+				continue;
+			}
+			bool result = buildDesc.func(buildDesc.internalRawShaderManifestPath, std::filesystem::path(buildDesc.internalBinShaderManifestPath).parent_path().string());
+			R2_CHECK(result == true, "Should have built the manifest for: %s\n", buildDesc.internalBinShaderManifestPath.c_str());
+		}
 	}
 
 }

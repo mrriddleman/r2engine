@@ -301,6 +301,31 @@ namespace r2::asset::pln
         
         return true;
     }
+
+    bool BuildShaderManifestsFromJsonIO(const std::string& inputJsonPath, const std::string& outputPath)
+    {
+		const std::string dataPath = R2_ENGINE_DATA_PATH;
+		const std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
+		const std::string assetManifestFbsPath = flatBufferPath + "ShaderManifest.fbs";
+
+        
+
+     //   if(std::filesystem::exists())
+
+		if (std::filesystem::file_size(inputJsonPath) <= 0 || std::filesystem::path(inputJsonPath).extension().string() != JSON_EXT)
+		{
+            R2_CHECK(false, "%s isn't a proper json file!", inputJsonPath.c_str());
+			return false;
+		}
+
+        if (!flathelp::GenerateFlatbufferBinaryFile(outputPath, assetManifestFbsPath, inputJsonPath))
+        {
+			R2_LOGE("Failed to generate asset manifest for json file: %s\n", inputJsonPath.c_str());
+			return false;
+        }
+
+        return true;
+    }
 }
 
 #endif

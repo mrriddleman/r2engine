@@ -27,6 +27,7 @@ namespace r2::asset::pln
     std::vector<ShaderManifest> LoadAllShaderManifests(const std::string& shaderManifestPath);
     bool BuildShaderManifestsFromJson(const std::string& manifestDir);
     bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestsPath, const std::string& rawPath);
+    bool BuildShaderManifestsFromJsonIO(const std::string& inputJsonPath, const std::string& outputPath);
 }
 #endif
 #endif /* ShaderManifest_h */

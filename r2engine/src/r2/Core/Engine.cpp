@@ -315,7 +315,7 @@ namespace r2
 				char internalManifestPathBin[fs::FILE_PATH_LENGTH];
 				r2::fs::utils::SanitizeSubPath(internalShaderPassesBin.c_str(), internalManifestPathBin);
 
-                shaderAssetCommand->AddInternalShaderPassesBuildDescription(internalManifestPathRaw, internalManifestPathBin, r2::asset::pln::BuildShaderManifestsFromJson);
+                shaderAssetCommand->AddInternalShaderPassesBuildDescription(internalManifestPathRaw, internalManifestPathBin, r2::asset::pln::BuildShaderManifestsFromJsonIO);
 
                 std::vector<std::string> appInternalShaderManifestsRawPaths = noptrApp->GetInternalShaderManifestsRawPaths();
                 std::vector<std::string> appInternalShaderManifestsBinPaths = noptrApp->GetInternalShaderManifestsBinaryPaths();

@@ -1,0 +1,23 @@
+{
+	manifests: [
+		{
+			shaderName: "Debug",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug.fs",
+			geometryPath: "",
+		    computePath: "",
+		    binaryPath: "",
+		    partPath: ""
+		},
+		{
+			shaderName: "DebugModel",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DebugModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug.fs",
+			geometryPath: "",
+		    computePath: "",
+		    binaryPath: "",
+		    partPath: ""
+		},
+	],
+  	basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"
+}

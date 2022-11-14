@@ -1,0 +1,14 @@
+{
+	manifests:[
+		{
+			shaderName: "EllenEyeShader",
+			vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.vs",
+		    fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.fs",
+		    geometryPath: "",
+		    computePath: "",
+		    binaryPath: "",
+		    partPath: ""
+		}
+	],
+	basePath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/"
+}

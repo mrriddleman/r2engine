@@ -8,7 +8,7 @@
 
 namespace r2::asset::pln
 {
-	using InternalShaderPassesBuildFunc = std::function<bool(const std::string& outputDir)>;
+	using InternalShaderPassesBuildFunc = std::function<bool(const std::string& inputPath, const std::string& outputDir)>;
 
 	class ShaderHotReloadCommand : public AssetHotReloadCommand
 	{
