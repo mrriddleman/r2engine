@@ -10,6 +10,7 @@ namespace r2::asset::pln
 
 	void ShaderHotReloadCommand::Init(Milliseconds delay)
 	{
+		BuildInternalShaderPassesIfNeeded();
 		ReloadShaderManifests();
 
 		for (const auto& path : mWatchPaths)
@@ -34,7 +35,17 @@ namespace r2::asset::pln
 
 	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> ShaderHotReloadCommand::DirectoriesToCreate() const
 	{
-		return {};
+		AssetHotReloadCommand::CreateDirCmd createDirCmd;
+
+		for (size_t i = 0; i < mInternalShaderPassesBuildData.size(); i++)
+		{
+			createDirCmd.pathsToCreate.push_back(mInternalShaderPassesBuildData[i].internalBinShaderManifestPath);
+		}
+
+		createDirCmd.startAtParent = true;
+		createDirCmd.startAtOne = false;
+
+		return {createDirCmd};
 	}
 
 	void ShaderHotReloadCommand::AddShaderWatchPaths(const std::vector<std::string>& watchPaths)
@@ -45,6 +56,11 @@ namespace r2::asset::pln
 	void ShaderHotReloadCommand::AddManifestFilePaths(const std::vector<std::string>& manifestFilePaths)
 	{
 		mManifestFilePaths.insert(mManifestFilePaths.end(), manifestFilePaths.begin(), manifestFilePaths.end());
+	}
+
+	void ShaderHotReloadCommand::AddInternalShaderPassesBuildDescription(const std::string& rawManifestPath, const std::string& binManifestPath, InternalShaderPassesBuildFunc func)
+	{
+		mInternalShaderPassesBuildData.push_back({ rawManifestPath, binManifestPath, func });
 	}
 
 	void ShaderHotReloadCommand::ReloadShaderManifests()
@@ -108,6 +124,11 @@ namespace r2::asset::pln
 				}
 			}
 		}
+	}
+
+	void ShaderHotReloadCommand::BuildInternalShaderPassesIfNeeded()
+	{
+
 	}
 
 }

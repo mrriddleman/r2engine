@@ -102,7 +102,8 @@ project "r2engine"
 		
 		'R2_ENGINE_INTERNAL_SHADERS_RAW_DIR="'..os.getcwd()..'/r2engine/assets/shaders/raw"',
 		'R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR="'..os.getcwd()..'/r2engine/assets/shaders/manifests"',
-
+		'R2_ENGINE_INTERNAL_SHADER_PASSES_RAW_DIR="'..os.getcwd()..'/r2engine/assets/shaders/manifests/internal_passes"',
+		'R2_ENGINE_INTERNAL_SHADER_PASSES_BIN_DIR="'..os.getcwd()..'/r2engine/assets_bin/shaders/manifests/internal_passes"',
 
 		'R2_ENGINE_INTERNAL_MATERIALS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials"',
 		'R2_ENGINE_INTERNAL_MATERIALS_DIR="'..os.getcwd()..'/r2engine/assets/materials/packs"',
@@ -112,7 +113,6 @@ project "r2engine"
 		
 		'R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR="'..os.getcwd()..'/r2engine/assets/materials/params_packs"',
 		'R2_ENGINE_INTERNAL_MATERIALS_PARAMS_PACKS_DIR_BIN="'..os.getcwd()..'/r2engine/assets_bin/materials/params_packs"',
-
 
 		'R2_ENGINE_INTERNAL_TEXTURES_DIR="'..os.getcwd()..'/r2engine/assets/textures/packs"',
 		'R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS="'..os.getcwd()..'/r2engine/assets/textures/manifests"',
@@ -486,7 +486,13 @@ project "Sandbox"
 		'SANDBOX_MODELS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Models"',
 
 		'SANDBOX_ANIMATIONS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Animations"',
-		'SANDBOX_ANIMATIONS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Animations"'
+		'SANDBOX_ANIMATIONS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Animations"',
+
+		'SANDBOX_SHADERS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Shaders"',
+		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Shaders/manifests/internal_passes"',
+		'SANDBOX_SHADERS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders"',
+		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders/manifests/internal_passes"'
+
 	}
 
 	filter "system:windows"

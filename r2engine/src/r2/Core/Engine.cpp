@@ -305,6 +305,31 @@ namespace r2
             {
 				shaderAssetCommand->AddShaderWatchPaths(shaderWatchDirectories);
 				shaderAssetCommand->AddManifestFilePaths(shaderManifestFilePaths);
+
+                std::string internalShaderPassesRaw = (std::filesystem::path(R2_ENGINE_INTERNAL_SHADER_PASSES_RAW_DIR) / std::filesystem::path("r2InternalShaders.json")).string();
+
+                char internalManifestPathRaw[fs::FILE_PATH_LENGTH];
+                r2::fs::utils::SanitizeSubPath(internalShaderPassesRaw.c_str(), internalManifestPathRaw);
+
+                std::string internalShaderPassesBin = (std::filesystem::path(R2_ENGINE_INTERNAL_SHADER_PASSES_BIN_DIR) / std::filesystem::path("r2InternalShaders.sman")).string();
+				char internalManifestPathBin[fs::FILE_PATH_LENGTH];
+				r2::fs::utils::SanitizeSubPath(internalShaderPassesBin.c_str(), internalManifestPathBin);
+
+                shaderAssetCommand->AddInternalShaderPassesBuildDescription(internalManifestPathRaw, internalManifestPathBin, r2::asset::pln::BuildShaderManifestsFromJson);
+
+                std::vector<std::string> appInternalShaderManifestsRawPaths = noptrApp->GetInternalShaderManifestsRawPaths();
+                std::vector<std::string> appInternalShaderManifestsBinPaths = noptrApp->GetInternalShaderManifestsBinaryPaths();
+
+                const auto appInternalShaderManifestsRawSize = appInternalShaderManifestsRawPaths.size();
+                const auto appInternalShaderManifestsBinSize = appInternalShaderManifestsBinPaths.size();
+                R2_CHECK(appInternalShaderManifestsBinSize == appInternalShaderManifestsRawSize, "These should be the same size");
+
+                r2::asset::pln::InternalShaderPassesBuildFunc appInternalShaderBuildFunc = noptrApp->GetInternalShaderPassesBuildFunc();
+
+                for (size_t i = 0; i < appInternalShaderManifestsBinSize; ++i)
+                {
+                    shaderAssetCommand->AddInternalShaderPassesBuildDescription(appInternalShaderManifestsRawPaths[i], appInternalShaderManifestsBinPaths[i], appInternalShaderBuildFunc);
+                }
             }
 
             std::unique_ptr<r2::asset::pln::SoundHotReloadCommand> soundAssetCommand = std::make_unique<r2::asset::pln::SoundHotReloadCommand>();

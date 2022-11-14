@@ -1526,6 +1526,16 @@ public:
         return { SANDBOX_ANIMATIONS_DIR_RAW };
     }
 
+    std::vector<std::string> GetInternalShaderManifestsBinaryPaths() const
+    {
+        return { SANDBOX_SHADERS_INTERNAL_SHADER_DIR_BIN + std::string("/SandboxInternalShaders.sman")};
+    }
+
+    std::vector<std::string> GetInternalShaderManifestsRawPaths() const
+    {
+        return { SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW + std::string("/SandboxInternalShaders.json")};
+    }
+
     r2::util::Size GetAppResolution() const override
     {
         return g_resolutions[mResolution];
@@ -1596,6 +1606,10 @@ public:
         return { r2::asset::pln::GenerateMaterialParamsPackManifestFromDirectories };
     }
 
+    r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const
+    {
+        return nullptr;
+    }
 #endif
     
     char* GetApplicationName() const

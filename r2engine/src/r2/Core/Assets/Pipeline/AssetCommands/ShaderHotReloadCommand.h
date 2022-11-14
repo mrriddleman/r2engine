@@ -8,6 +8,8 @@
 
 namespace r2::asset::pln
 {
+	using InternalShaderPassesBuildFunc = std::function<bool(const std::string& outputDir)>;
+
 	class ShaderHotReloadCommand : public AssetHotReloadCommand
 	{
 	public:
@@ -20,15 +22,29 @@ namespace r2::asset::pln
 		void AddShaderWatchPaths(const std::vector<std::string>& watchPaths);
 		void AddManifestFilePaths(const std::vector<std::string>& manifestFilePaths);
 
+		void AddInternalShaderPassesBuildDescription(const std::string& rawManifestPath, const std::string& binManifestPath, InternalShaderPassesBuildFunc func);
+
 	private:
+
+		struct InternalShaderPassesBuildData
+		{
+			std::string internalRawShaderManifestPath;
+			std::string internalBinShaderManifestPath;
+			InternalShaderPassesBuildFunc func;
+		};
 
 		void ReloadShaderManifests();
 		void ShaderChangedRequest(const std::string& changedPath);
+		void BuildInternalShaderPassesIfNeeded();
+
 
 		std::vector<std::string> mWatchPaths;
 		std::vector<std::string> mManifestFilePaths;
 
 		std::vector<std::vector<ShaderManifest>> mShaderManifests;
+
+		std::vector<InternalShaderPassesBuildData> mInternalShaderPassesBuildData;
+
 	};
 }
 

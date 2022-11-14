@@ -19,6 +19,7 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
+#include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
 #endif
 
 namespace r2
@@ -72,6 +73,9 @@ namespace r2
         virtual std::vector<std::string> GetAnimationBinaryPaths() const;
         virtual std::vector<std::string> GetAnimationRawPaths() const;
 
+        virtual std::vector<std::string> GetInternalShaderManifestsBinaryPaths() const;
+        virtual std::vector<std::string> GetInternalShaderManifestsRawPaths() const;
+
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;
@@ -84,6 +88,8 @@ namespace r2
 
         virtual std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const = 0;
         virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
+
+        virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
 #endif
     };
     

@@ -154,6 +154,16 @@ namespace r2
         return {};
     }
 
+    std::vector<std::string> Application::GetInternalShaderManifestsBinaryPaths() const
+    {
+        return {};
+    }
+
+    std::vector<std::string> Application::GetInternalShaderManifestsRawPaths() const
+    {
+        return {};
+    }
+
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {
@@ -206,6 +216,13 @@ namespace r2
     {
         return {};
     }
+
+    r2::asset::pln::InternalShaderPassesBuildFunc Application::GetInternalShaderPassesBuildFunc() const
+    {
+        return nullptr;
+    }
+
+
 
 #endif
 }
