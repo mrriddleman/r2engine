@@ -289,15 +289,6 @@
       partPath: ""
     },
     {
-      shaderName: 12353944570042614978,
-      vertexPath: "",
-      fragmentPath: "",
-      geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/ReduceBounds.cs",
-      binaryPath: "",
-      partPath: ""
-    },
-    {
       shaderName: 14883135572630148354,
       vertexPath: "",
       fragmentPath: "",
