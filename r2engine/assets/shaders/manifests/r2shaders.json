@@ -2,7 +2,7 @@
   manifests: [
     {
       shaderName: 17476040281227112815,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/ConeTracedSSR.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/ConeTracedSSR.fs",
       geometryPath: "",
       computePath: "",
@@ -21,7 +21,7 @@
     {
       shaderName: 7633448586416586149,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DebugModel.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DebugModel.fs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Debug.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -29,7 +29,7 @@
     },
     {
       shaderName: 5241478346896726316,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Denoise.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Denoise.fs",
       geometryPath: "",
       computePath: "",
@@ -38,8 +38,8 @@
     },
     {
       shaderName: 13212531284513343367,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicDepth.fs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DepthFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -48,7 +48,7 @@
     {
       shaderName: 9614133454144883520,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicOutline.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicOutline.fs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/OutlineFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -57,15 +57,15 @@
     {
       shaderName: 10231838077290944487,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicShadowDepth.gs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/EmptyDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DirShadowGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 6304135025036389877,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FXAA.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FXAA.fs",
       geometryPath: "",
       computePath: "",
@@ -74,7 +74,7 @@
     },
     {
       shaderName: 14268373098985025575,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/GroundTruthAO.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/GroundTruthAO.fs",
       geometryPath: "",
       computePath: "",
@@ -83,7 +83,7 @@
     },
     {
       shaderName: 4798229760683191323,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/GTAOTemporalDenoise.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/GTAOTemporalDenoise.fs",
       geometryPath: "",
       computePath: "",
@@ -92,7 +92,7 @@
     },
     {
       shaderName: 5677026556387369964,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/HorizontalBlur.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/HorizontalBlur.fs",
       geometryPath: "",
       computePath: "",
@@ -101,7 +101,7 @@
     },
     {
       shaderName: 13169095576407576417,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PassThrough.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PassThrough.fs",
       geometryPath: "",
       computePath: "",
@@ -110,25 +110,25 @@
     },
     {
       shaderName: 8182487414207287337,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightDynamicShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightDynamicShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightDynamicShadowDepth.gs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointShadowDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointShadowGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 14902893998735471386,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightStaticShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightStaticShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointLightStaticShadowDepth.gs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointShadowDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PointShadowGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 8713270253709140657,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Screen.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Screen.fs",
       geometryPath: "",
       computePath: "",
@@ -137,25 +137,25 @@
     },
     {
       shaderName: 12180725488998902253,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightDynamicShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightDynamicShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightDynamicShadowDepth.gs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DynamicShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/EmptyDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotShadowDepthGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 14930033009169502222,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightStaticShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightStaticShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotLightStaticShadowDepth.gs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticShadowDepth.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/EmptyDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SpotShadowDepthGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 5992361627987834083,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SSR.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/SSR.fs",
       geometryPath: "",
       computePath: "",
@@ -164,8 +164,8 @@
     },
     {
       shaderName: 8833047848476087300,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticDepth.fs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DepthFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -174,7 +174,7 @@
     {
       shaderName: 5332172149138756703,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticOutline.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticOutline.fs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/OutlineFrag.fs",
       geometryPath: "",
       computePath: "",
       binaryPath: "",
@@ -183,15 +183,15 @@
     {
       shaderName: 13510344869207716212,
       vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticShadowDepth.vs",
-      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticShadowDepth.fs",
-      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/StaticShadowDepth.gs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/EmptyDepthFrag.fs",
+      geometryPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/DirShadowGeom.gs",
       computePath: "",
       binaryPath: "",
       partPath: ""
     },
     {
       shaderName: 9319379537159030614,
-      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/VerticalBlur.vs",
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/FullScreen.vs",
       fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/VerticalBlur.fs",
       geometryPath: "",
       computePath: "",
@@ -231,15 +231,6 @@
       fragmentPath: "",
       geometryPath: "",
       computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/CalculateClusters.cs",
-      binaryPath: "",
-      partPath: ""
-    },
-    {
-      shaderName: 3012536493754366699,
-      vertexPath: "",
-      fragmentPath: "",
-      geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/CalculateCustomPartitions.cs",
       binaryPath: "",
       partPath: ""
     },

@@ -167,6 +167,63 @@ namespace r2::asset::pln
         
         return true;
     }
+
+    bool GenerateNonInternalShaderManifestsFromDirectories(std::vector<ShaderManifest>& nonInternalShaderManifests, const std::string& manifestPath, const std::string& rawPath)
+    {
+		for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != COMPUTE_EXT))
+			{
+				continue;
+			}
+
+			char cStringPath[fs::FILE_PATH_LENGTH];
+
+			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+			ShaderManifest newManifest;
+			newManifest.basePath = rawPath;
+
+			newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
+			newManifest.computeShaderPath = std::string(cStringPath);
+            nonInternalShaderManifests.push_back(newManifest);
+		}
+
+		for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+		{
+			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != PART_EXT))
+			{
+				continue;
+			}
+
+			char cStringPath[fs::FILE_PATH_LENGTH];
+
+			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+			auto r = file.path().lexically_relative(rawPath);
+
+			char sanitizedCStringName[fs::FILE_PATH_LENGTH];
+
+			fs::utils::SanitizeSubPath(r.string().c_str(), sanitizedCStringName);
+
+			//printf("part name: %s\n", sanitizedCStringName);
+		//	auto pos = r.string().find('.');
+
+		//	std::string resultString = r.string().substr(0, pos);
+
+		//	printf("%s\n", resultString.c_str());
+
+
+			ShaderManifest newManifest;
+			newManifest.basePath = rawPath;
+			std::string stringName = sanitizedCStringName;
+			newManifest.hashName = STRING_ID(stringName.c_str());
+			newManifest.partPath = std::string(cStringPath);
+            nonInternalShaderManifests.push_back(newManifest);
+		}
+
+        return GenerateShaderManifests(nonInternalShaderManifests, manifestPath, rawPath);
+    }
     
     bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestFilePath, const std::string& rawPath)
     {
@@ -215,10 +272,18 @@ namespace r2::asset::pln
         r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), shaderManifestSchemaPath, SHADER_MANIFEST_NAME_FBS.c_str());
         
         std::filesystem::path p = manifestFilePath;
-        ;
-        std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
+    
+        //@NOTE(Serge): the p.parent_path().stem() is a hack to include the manifests directory - should do this in a better way...
+        std::string basePathStr = rawPath;
+        if (rawPath.at(rawPath.size() - 1) == '/')
+        {
+            basePathStr = basePathStr.substr(0, rawPath.size() - 1);
+        }
+
+        std::filesystem::path basePath = std::filesystem::path(basePathStr).parent_path();
+        std::filesystem::path jsonPath = basePath / p.parent_path().stem() / std::filesystem::path(p.stem().string() + JSON_EXT);
         std::filesystem::remove(jsonPath);
-        bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(p.parent_path().string(), shaderManifestSchemaPath, manifestFilePath);
+        bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), shaderManifestSchemaPath, p.string());
         
         bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), shaderManifestSchemaPath, jsonPath.string());
         
@@ -277,40 +342,36 @@ namespace r2::asset::pln
         return shaderManifests;
     }
     
-    bool BuildShaderManifestsFromJson(const std::string& manifestDir)
-    {
-        const std::string dataPath = R2_ENGINE_DATA_PATH;
-        const std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
-        const std::string assetManifestFbsPath = flatBufferPath + "ShaderManifest.fbs";
-        
-        for(const auto& file : std::filesystem::recursive_directory_iterator(manifestDir))
-        {
-            
-            if (std::filesystem::file_size(file.path()) <= 0 || std::filesystem::path(file.path()).extension().string() != JSON_EXT)
-            {
-                continue;
-            }
-            
-            //generate json files
-            if(!flathelp::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
-            {
-                R2_LOGE("Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
-                return false;
-            }
-        }
-        
-        return true;
-    }
+    //bool BuildShaderManifestsFromJson(const std::string& manifestDir)
+    //{
+    //    const std::string dataPath = R2_ENGINE_DATA_PATH;
+    //    const std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
+    //    const std::string assetManifestFbsPath = flatBufferPath + "ShaderManifest.fbs";
+    //    
+    //    for(const auto& file : std::filesystem::recursive_directory_iterator(manifestDir))
+    //    {
+    //        
+    //        if (std::filesystem::file_size(file.path()) <= 0 || std::filesystem::path(file.path()).extension().string() != JSON_EXT)
+    //        {
+    //            continue;
+    //        }
+    //        
+    //        //generate json files
+    //        if(!flathelp::GenerateFlatbufferBinaryFile(manifestDir, assetManifestFbsPath, file.path().string()))
+    //        {
+    //            R2_LOGE("Failed to generate asset manifest for json file: %s\n", file.path().string().c_str());
+    //            return false;
+    //        }
+    //    }
+    //    
+    //    return true;
+    //}
 
     bool BuildShaderManifestsFromJsonIO(const std::string& inputJsonPath, const std::string& outputPath)
     {
 		const std::string dataPath = R2_ENGINE_DATA_PATH;
 		const std::string flatBufferPath = dataPath + "/flatbuffer_schemas/";
 		const std::string assetManifestFbsPath = flatBufferPath + "ShaderManifest.fbs";
-
-        
-
-     //   if(std::filesystem::exists())
 
 		if (std::filesystem::file_size(inputJsonPath) <= 0 || std::filesystem::path(inputJsonPath).extension().string() != JSON_EXT)
 		{

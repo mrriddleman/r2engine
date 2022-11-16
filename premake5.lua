@@ -101,7 +101,7 @@ project "r2engine"
 		'R2_ENGINE_ASSET_BIN_PATH="'..os.getcwd()..'/r2engine/assets_bin"',
 		
 		'R2_ENGINE_INTERNAL_SHADERS_RAW_DIR="'..os.getcwd()..'/r2engine/assets/shaders/raw"',
-		'R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR="'..os.getcwd()..'/r2engine/assets/shaders/manifests"',
+		'R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR="'..os.getcwd()..'/r2engine/assets_bin/shaders/manifests"',
 		'R2_ENGINE_INTERNAL_SHADER_PASSES_RAW_DIR="'..os.getcwd()..'/r2engine/assets/shaders/manifests/internal_passes"',
 		'R2_ENGINE_INTERNAL_SHADER_PASSES_BIN_DIR="'..os.getcwd()..'/r2engine/assets_bin/shaders/manifests/internal_passes"',
 

@@ -787,10 +787,10 @@ public:
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
 
 			dirLight.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(0.0f, 0.0f, 100.0f, 0.0f));
-			dirLight.lightProperties.intensity = 200;
+			dirLight.lightProperties.intensity = 2;
             dirLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
 
-         //   r2::draw::renderer::AddDirectionLight(dirLight);
+            r2::draw::renderer::AddDirectionLight(dirLight);
 
             
 
@@ -1704,16 +1704,16 @@ namespace
                 r2::util::PathCpy(subpath, "assets/sound/music");
                 break;
             case r2::fs::utils::TEXTURES:
-                r2::util::PathCpy(subpath, "assets/Sandbox_Textures/packs");
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Textures/packs");
                 break;
             case r2::fs::utils::SHADERS_BIN:
-                r2::util::PathCpy(subpath, "assets/shaders/bin");
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Shaders");
                 break;
             case r2::fs::utils::SHADERS_RAW:
                 r2::util::PathCpy(subpath, "assets/shaders/raw");
                 break;
             case r2::fs::utils::SHADERS_MANIFEST:
-                r2::util::PathCpy(subpath, "assets/shaders/manifests");
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Shaders/manifests");
                 break;
             case r2::fs::utils::MODELS:
                 r2::util::PathCpy(subpath, "assets_bin/Sandbox_Models");

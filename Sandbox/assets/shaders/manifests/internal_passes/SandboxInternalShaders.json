@@ -1,6 +1,15 @@
 {
 	manifests:[
 		{
+			shaderName: "AnimModel",
+			vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/AnimModel.vs",
+			fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/AnimModel.fs",
+			geometryPath: "",
+			computePath: "",
+			binaryPath: "",
+			partPath: ""
+		},
+		{
 			shaderName: "EllenEyeShader",
 			vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.vs",
 		    fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/EllenEyeShader.fs",
@@ -8,6 +17,24 @@
 		    computePath: "",
 		    binaryPath: "",
 		    partPath: ""
+		},
+		{
+			shaderName: "Sandbox",
+			vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.vs",
+			fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.fs",
+			geometryPath: "",
+			computePath: "",
+			binaryPath: "",
+			partPath: ""
+		},
+		{
+			shaderName: "Skybox",
+			vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.vs",
+			fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Skybox.fs",
+			geometryPath: "",
+			computePath: "",
+			binaryPath: "",
+			partPath: ""
 		}
 	],
 	basePath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/"

@@ -285,24 +285,19 @@ namespace r2
             
             std::vector<std::string> shaderWatchDirectories;
             std::vector<std::string> shaderManifestFilePaths;
-
+            std::unique_ptr<r2::asset::pln::ShaderHotReloadCommand> shaderAssetCommand = std::make_unique<r2::asset::pln::ShaderHotReloadCommand>();
+            
             //shader directories
             {
-				char path[r2::fs::FILE_PATH_LENGTH];
-
-				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_MANIFEST, "", path);
-				shaderManifestFilePaths.push_back(noptrApp->GetShaderManifestsPath());
-
+                char path[r2::fs::FILE_PATH_LENGTH];
 				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SHADERS_RAW, "", path);
+                
+                shaderWatchDirectories.push_back(std::string(R2_ENGINE_INTERNAL_SHADERS_RAW_DIR));
 				shaderWatchDirectories.push_back(std::string(path));
 
 				shaderManifestFilePaths.push_back(std::string(internalShaderManifestPath));
-				shaderWatchDirectories.push_back(std::string(R2_ENGINE_INTERNAL_SHADERS_RAW_DIR));
-            }
-
-            std::unique_ptr<r2::asset::pln::ShaderHotReloadCommand> shaderAssetCommand = std::make_unique<r2::asset::pln::ShaderHotReloadCommand>();
-
-            {
+				shaderManifestFilePaths.push_back(noptrApp->GetShaderManifestsPath());
+            
 				shaderAssetCommand->AddShaderWatchPaths(shaderWatchDirectories);
 				shaderAssetCommand->AddManifestFilePaths(shaderManifestFilePaths);
 

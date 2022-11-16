@@ -24,8 +24,10 @@ namespace r2::asset::pln
     };
     
     bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestPath, const std::string& rawPath);
+    bool GenerateNonInternalShaderManifestsFromDirectories(std::vector<ShaderManifest>& nonInternalShaderManifests, const std::string& manifestPath, const std::string& rawPath);
+
     std::vector<ShaderManifest> LoadAllShaderManifests(const std::string& shaderManifestPath);
-    bool BuildShaderManifestsFromJson(const std::string& manifestDir);
+  //  bool BuildShaderManifestsFromJson(const std::string& manifestDir);
     bool GenerateShaderManifests(const std::vector<ShaderManifest>& manifests, const std::string& manifestsPath, const std::string& rawPath);
     bool BuildShaderManifestsFromJsonIO(const std::string& inputJsonPath, const std::string& outputPath);
 }

@@ -76,6 +76,25 @@ struct SkyLight
 //	int numPrefilteredRoughnessMips;
 };
 
+struct ShadowCastingLights
+{
+	int64_t shadowCastingLightIndexes[MAX_NUM_SHADOW_MAP_PAGES];
+	int numShadowCastingLights;
+};
+
+layout (std140, binding = 1) uniform Vectors
+{
+    vec4 cameraPosTimeW;
+    vec4 exposureNearFar;
+    vec4 cascadePlanes;
+    vec4 shadowMapSizes;
+	vec4 fovAspectResXResY;
+    uint64_t frame;
+    vec2 clusterScaleBias;
+    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+    vec4 jitter;
+};
+
 layout (std430, binding = 4) buffer Lighting
 {
 	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
@@ -109,7 +128,6 @@ struct UPartition
 	uvec4 intervalBegin;
 	uvec4 intervalEnd;
 };
-
 
 layout (std430, binding = 6) buffer ShadowData
 {
@@ -147,10 +165,26 @@ void main()
 		{
 			vec4 vertex[3];
 			int outOfBound[6] = { 0 , 0 , 0 , 0 , 0 , 0 };
+			
+			mat4 shadowMatrix = dirLights[dirLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[dirLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex];
+
 			for (int i =0; i < 3; ++i )
 			{
-				vertex[i] = dirLights[dirLightIndex].lightSpaceMatrixData.lightProjMatrices[cascadeIndex] * dirLights[dirLightIndex].lightSpaceMatrixData.lightViewMatrices[cascadeIndex] * gl_in[i].gl_Position;
-				
+				vertex[i] = shadowMatrix * gl_in[i].gl_Position;
+
+				//BEGIN MAJOR HACK TO REDUCE PETER-PANNING
+
+				vec3 cameraVec = gl_in[i].gl_Position.xyz - cameraPosTimeW.xyz;
+				float viewLength = length(cameraVec);
+				vec3 shadowOffset = (cameraVec.xyz / viewLength);// * (1.0 - dot(view, cameraVec));
+				float VoL = dot(normalize(cameraVec), normalize(view) );
+				float VoN = dot(normalize(cameraVec), normal);
+
+				vec4 offsetInShadowSpace = shadowMatrix * (vec4(shadowOffset, 0) * (0.14) * clamp((1.0 - VoL), 0.0, 1.0) ) ;
+
+				vertex[i] += vec4(offsetInShadowSpace.xy, 0, 0);
+
+				//END MAJOR HACK TO REDUCE PETER-PANNING
 
 				if ( vertex[i].x > +vertex[i].w ) ++outOfBound[0];
 				if ( vertex[i].x < -vertex[i].w ) ++outOfBound[1];
@@ -169,7 +203,6 @@ void main()
 				for(int i = 0; i < 3; ++i)
 				{
 					gl_Position = vertex[i];
-
 					gl_Layer = cascadeIndex + int(gDirectionLightShadowMapPages[int(dirLights[dirLightIndex].lightProperties.lightID)]);
 					EmitVertex();
 				}

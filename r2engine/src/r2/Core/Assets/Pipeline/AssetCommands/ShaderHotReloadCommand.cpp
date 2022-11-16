@@ -68,20 +68,43 @@ namespace r2::asset::pln
 		mShaderManifests.clear();
 
 		size_t numManifestFilePaths = mManifestFilePaths.size();
+
+		size_t numInternalManifestPaths = mInternalShaderPassesBuildData.size();
+
+		R2_CHECK(numInternalManifestPaths == numManifestFilePaths, "?");
+
 		for (size_t i = 0; i < numManifestFilePaths; ++i)
 		{
 			const auto& manifestFilePath = mManifestFilePaths.at(i);
-			std::vector<ShaderManifest> shaderManifests = LoadAllShaderManifests(manifestFilePath);
-			bool success = BuildShaderManifestsIfNeeded(shaderManifests, manifestFilePath, mWatchPaths.at(i));
 
-			if (!success)
+			std::vector<ShaderManifest> shaderManifests = LoadAllShaderManifests(manifestFilePath);
+
+			if (shaderManifests.size() == 0)
 			{
-				R2_LOGE("Failed to build shader manifests");
+				//@NOTE(Serge): this only works because of how we added the paths in Engine.cpp, r2 is first, then the app
+				const auto& internalManifestFilePath = mInternalShaderPassesBuildData.at(i).internalBinShaderManifestPath;
+				
+				shaderManifests = LoadAllShaderManifests(internalManifestFilePath);
+
+				R2_CHECK(shaderManifests.size() > 0, "We don't have any internal shader passes?");
+
+				bool success = GenerateNonInternalShaderManifestsFromDirectories(shaderManifests, manifestFilePath, mWatchPaths.at(i));
+
+				R2_CHECK(success, "We couldn't create the manifest!");
+
+				//if (!success)
+				//{
+				//	R2_LOGE("Failed to build shader manifests");
+				//}
+				//else
+				//{
+				//	//r2::draw::shadersystem::ReloadManifestFile(manifestFilePath);
+				//}
 			}
-			else
-			{
-				r2::draw::shadersystem::ReloadManifestFile(manifestFilePath);
-			}
+
+			//BuildShaderManifestsIfNeeded(shaderManifests, manifestFilePath, mWatchPaths.at(i));
+
+			
 
 			mShaderManifests.push_back(shaderManifests);
 		}
@@ -107,12 +130,12 @@ namespace r2::asset::pln
 					changedPathSanitized == shaderManifest.geometryShaderPath ||
 					changedPathSanitized == shaderManifest.computeShaderPath)
 				{
-					bool success = BuildShaderManifestsIfNeeded(shaderManifests, mManifestFilePaths[i], mWatchPaths[i]);
+					/*bool success = BuildShaderManifestsIfNeeded(shaderManifests, mManifestFilePaths[i], mWatchPaths[i]);
 
 					if (!success)
 					{
 						R2_LOGE("Failed to build shader manifests");
-					}
+					}*/
 
 					r2::draw::shadersystem::ReloadShader(shaderManifest, false);
 					break;
