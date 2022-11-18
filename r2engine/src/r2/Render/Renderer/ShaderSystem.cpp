@@ -8,6 +8,12 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/Containers/SHashMap.h"
 
+#ifdef R2_ASSET_PIPELINE
+#include <unordered_map>
+#include <unordered_set>
+#include "r2/Utils/Hash.h"
+#endif
+
 namespace r2::draw
 {
     struct ShaderSystem
@@ -31,6 +37,8 @@ namespace r2::draw
         r2::mem::LinearArena* mShaderPartArena = nullptr;
 
         r2::SHashMap<r2::SArray<ShaderName>*>* mShaderPartMap = nullptr;
+        std::unordered_map<u64, std::unordered_set<ShaderName>> mShaderMap;
+        std::unordered_map<std::string, const r2::ShaderManifests*> mShaderPathToManifests;
 #endif
     };
 }
@@ -202,7 +210,7 @@ namespace r2::draw::shadersystem
             {
                 ShaderHandle shaderHandle = r2::sarr::At(*s_optrShaderSystem->mShadersToReload, i);
 
-                Shader& shaderToReload = r2::sarr::At(*s_optrShaderSystem->mShaders, shaderHandle);
+                Shader& shaderToReload = r2::sarr::At(*s_optrShaderSystem->mShaders, GetIndexFromShaderHandle(shaderHandle));
 
                 shader::ReloadShaderProgramFromRawFiles(
                     &shaderToReload.shaderProg,
@@ -320,7 +328,8 @@ namespace r2::draw::shadersystem
 
                 fs::utils::SanitizeSubPath(manifest->vertexPath()->c_str(), sanitizedPath);
 
-				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+				//bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+                bool success = fs::utils::GetRelativePath(shaderManifest->basePath()->c_str(), sanitizedPath, shaderFileName);
 
 				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
@@ -336,7 +345,8 @@ namespace r2::draw::shadersystem
 
 				fs::utils::SanitizeSubPath(manifest->fragmentPath()->c_str(), sanitizedPath);
 
-				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+				//bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+                bool success = fs::utils::GetRelativePath(shaderManifest->basePath()->c_str(), sanitizedPath, shaderFileName);
 
 				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
@@ -352,7 +362,9 @@ namespace r2::draw::shadersystem
 
 				fs::utils::SanitizeSubPath(manifest->geometryPath()->c_str(), sanitizedPath);
 
-				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+				//bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+                bool success = fs::utils::GetRelativePath(shaderManifest->basePath()->c_str(), sanitizedPath, shaderFileName);
+
 
 				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
@@ -368,7 +380,9 @@ namespace r2::draw::shadersystem
 
 				fs::utils::SanitizeSubPath(manifest->computePath()->c_str(), sanitizedPath);
 
-				bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+				//bool success = fs::utils::CopyFileNameWithExtension(sanitizedPath, shaderFileName);
+
+                bool success = fs::utils::GetRelativePath(shaderManifest->basePath()->c_str(), sanitizedPath, shaderFileName);
 
 				R2_CHECK(success, "Couldn't copy the filename of the shader!");
 
@@ -539,6 +553,20 @@ namespace r2::draw::shadersystem
 
             if (shaderHandle == InvalidShader)
             {
+
+#ifdef R2_ASSET_PIPELINE
+				if(!manifestFileData->manifests()->Get(i)->partPath()->str().empty())
+                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->partPath()->str()] = manifestFileData;
+                if(!manifestFileData->manifests()->Get(i)->vertexPath()->str().empty())
+                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->vertexPath()->str()] = manifestFileData;
+                if(!manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty())
+                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->fragmentPath()->str()] = manifestFileData;
+                if(!manifestFileData->manifests()->Get(i)->geometryPath()->str().empty())
+                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->geometryPath()->str()] = manifestFileData;
+				if (!manifestFileData->manifests()->Get(i)->computePath()->str().empty())
+					s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->computePath()->str()] = manifestFileData;
+#endif
+
                 //ignore part paths
                 if (manifestFileData->manifests()->Get(i)->vertexPath()->str().empty() &&
                     manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty() &&
@@ -577,83 +605,164 @@ namespace r2::draw::shadersystem
         r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
     }
 
-    bool HasShaderToReload(ShaderHandle shaderHandle)
+  //  bool HasShaderToReload(ShaderHandle shaderHandle)
+  //  {
+		//bool found = false;
+
+		//auto numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
+
+		//for (decltype(numShadersToReload) j = 0; j < numShadersToReload; ++j)
+		//{
+		//	if (shaderHandle == r2::sarr::At(*s_optrShaderSystem->mShadersToReload, j))
+		//	{
+		//		found = true;
+		//		break;
+		//	}
+		//}
+
+  //      return found;
+  //  }
+
+   // void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath)
+   // {
+   //     if (s_optrShaderSystem == nullptr)
+   //     {
+   //         R2_CHECK(false, "We haven't initialized the shader system yet!");
+   //         return;
+   //     }
+
+   //     const u64 numShaders = r2::sarr::Size(*s_optrShaderSystem->mShaders);
+   //     for (u64 i = 0; i < numShaders; ++i)
+   //     {
+   //         const auto& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
+
+   //         if (nextShader.manifest.hashName == manifest.hashName)
+   //         {
+   //             if (!isPartPath)
+   //             {
+   //                 r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
+   //             }
+   //         }
+   //     }
+
+   //     if (isPartPath)
+   //     {
+			//r2::SArray<ShaderName>* defaultShaderPartList = nullptr;
+			//r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, manifest.hashName, defaultShaderPartList);
+
+   //         if (shaderPartList != defaultShaderPartList)
+   //         {
+   //             auto numShadersInList = r2::sarr::Size(*shaderPartList);
+
+   //             for (decltype(numShadersInList) i = 0; i < numShadersInList; ++i)
+   //             {
+   //                 const auto shaderHandle = FindShaderHandle(r2::sarr::At(*shaderPartList, i));
+
+   //                 if (shaderHandle != InvalidShader)
+   //                 {
+   //                     if(!HasShaderToReload(shaderHandle))
+   //                     {
+   //                         r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, shaderHandle);
+   //                     }
+   //                 }
+   //                 else
+   //                 {
+   //                     R2_CHECK(false, "Not sure how this would be invalid?");
+   //                 }
+   //             }
+   //         }
+   //         else
+   //         {
+   //             R2_CHECK(false, "Not sure how we'd get here yet?");
+   //         }
+   //     }
+   // }
+
+    void ReloadShadersFromChangedPath(const std::string& changedPath)
     {
-		bool found = false;
-
-		auto numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
-
-		for (decltype(numShadersToReload) j = 0; j < numShadersToReload; ++j)
+		if (s_optrShaderSystem == nullptr)
 		{
-			if (shaderHandle == r2::sarr::At(*s_optrShaderSystem->mShadersToReload, j))
-			{
-				found = true;
-				break;
-			}
+			R2_CHECK(false, "We haven't initialized the shader system yet!");
+			return;
 		}
+        
+        std::unordered_set<ShaderName> shaderNames;
 
-        return found;
-    }
+        const r2::ShaderManifests* shaderManifests = FindShaderManifestByFullPath(changedPath.c_str());
 
-    void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath)
-    {
-        if (s_optrShaderSystem == nullptr)
+        R2_CHECK(shaderManifests != nullptr, "We should have shader manifests be non-null here!");
+
+        char changedPathFileName[fs::FILE_PATH_LENGTH];
+        fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), changedPath.c_str(), changedPathFileName);
+
+        ShaderName changedPathShaderName = STRING_ID(changedPathFileName);
+
+        //resolve the .glsl parts first
+
+        r2::SArray<ShaderName>* defaultShadersForShaderPart = nullptr;
+
+        r2::SArray<ShaderName>* shadersForShaderPart = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, changedPathShaderName, defaultShadersForShaderPart);
+
+        if (shadersForShaderPart != defaultShadersForShaderPart)
         {
-            R2_CHECK(false, "We haven't initialized the shader system yet!");
-            return;
-        }
+            const auto numShadersForPart = r2::sarr::Size(*shadersForShaderPart);
 
-        const u64 numShaders = r2::sarr::Size(*s_optrShaderSystem->mShaders);
-        for (u64 i = 0; i < numShaders; ++i)
-        {
-            const auto& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
-
-            if (nextShader.manifest.hashName == manifest.hashName)
+            for (u64 i = 0; i < numShadersForPart; ++i)
             {
-                if (!isPartPath)
+                //this is a .vs, .fs, .cs, or .gs
+                const ShaderName& shaderName = r2::sarr::At(*shadersForShaderPart, i);
+
+                //now get the shaders from this shader name
+                auto iter = s_optrShaderSystem->mShaderMap.find(shaderName);
+                if (iter != s_optrShaderSystem->mShaderMap.end())
                 {
-                    r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
+                    shaderNames.insert(iter->second.begin(), iter->second.end());
                 }
             }
         }
-
-        if (isPartPath)
+        else
         {
-			r2::SArray<ShaderName>* defaultShaderPartList = nullptr;
-			r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, manifest.hashName, defaultShaderPartList);
+            auto iter = s_optrShaderSystem->mShaderMap.find(changedPathShaderName);
 
-            if (shaderPartList != defaultShaderPartList)
+            if (iter != s_optrShaderSystem->mShaderMap.end())
             {
-                auto numShadersInList = r2::sarr::Size(*shaderPartList);
-
-                for (decltype(numShadersInList) i = 0; i < numShadersInList; ++i)
-                {
-                    const auto shaderHandle = FindShaderHandle(r2::sarr::At(*shaderPartList, i));
-
-                    if (shaderHandle != InvalidShader)
-                    {
-                        if(!HasShaderToReload(shaderHandle))
-                        {
-                            r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, shaderHandle);
-                        }
-                    }
-                    else
-                    {
-                        R2_CHECK(false, "Not sure how this would be invalid?");
-                    }
-                }
+                shaderNames.insert(iter->second.begin(), iter->second.end());
             }
-            else
-            {
-                R2_CHECK(false, "Not sure how we'd get here yet?");
-            }
+        }
+
+        for (const auto& shaderName : shaderNames)
+        {
+			const auto shaderHandle = FindShaderHandle(shaderName);
+
+			if (shaderHandle != InvalidShader)
+			{
+				r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, shaderHandle);
+			}
+			else
+			{
+				R2_CHECK(false, "Not sure how this would be invalid?");
+			}
         }
     }
 
-    void AddShaderToShaderPartList(const ShaderName& shaderPartName, const ShaderName& shaderName)
+    void AddShaderToShaderPartList(const ShaderName& shaderPartName, const char* pathThatIncludedThePart)
     {
         r2::SArray<ShaderName>* defaultList = nullptr;
         r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, shaderPartName, defaultList);
+
+        const r2::ShaderManifests* shaderManifests = FindShaderManifestByFullPath(pathThatIncludedThePart);
+
+        if (!shaderManifests)
+        {
+            R2_CHECK(false, "We couldn't find the shader manifests for: %s", pathThatIncludedThePart);
+            return;
+        }
+
+        char shaderNameStr[fs::FILE_PATH_LENGTH];
+
+        fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), pathThatIncludedThePart, shaderNameStr);
+
+        const auto shaderNameID = STRING_ID(shaderNameStr);
 
         if (shaderPartList == defaultList)
         {
@@ -661,7 +770,7 @@ namespace r2::draw::shadersystem
             //Create the list and add it at shaderPartList
             shaderPartList = MAKE_SARRAY(*s_optrShaderSystem->mShaderPartArena, ShaderName, NUM_SHADER_REFERENCES_PER_SHADER_PART);
 
-            r2::sarr::Push(*shaderPartList, shaderName);
+            r2::sarr::Push(*shaderPartList, shaderNameID);
 
             r2::shashmap::Set(*s_optrShaderSystem->mShaderPartMap, shaderPartName, shaderPartList);
         }
@@ -673,7 +782,7 @@ namespace r2::draw::shadersystem
             for (decltype(numShaderPartEntries) i = 0; i < numShaderPartEntries; ++i)
             {
                 const ShaderName& name = r2::sarr::At(*shaderPartList, i);
-                if (name == shaderName)
+                if (name == shaderNameID)
                 {
                     found = true;
                     break;
@@ -682,9 +791,44 @@ namespace r2::draw::shadersystem
 
             if (!found)
             {
-                r2::sarr::Push(*shaderPartList, shaderName);
+                r2::sarr::Push(*shaderPartList, shaderNameID);
             }
         }
+    }
+
+    void AddShaderToShaderMap(const ShaderName& shaderNameInMap, const ShaderName& shaderName)
+    {
+        if (shaderNameInMap == 14838497363369575431)
+        {
+            int k = 0;
+        }
+
+        auto& iter = s_optrShaderSystem->mShaderMap.find(shaderNameInMap);
+
+        if (iter != s_optrShaderSystem->mShaderMap.end())
+        {
+            iter->second.insert(shaderName);
+        }
+        else
+        {
+            std::unordered_set<ShaderName> newShaderSet;
+            newShaderSet.insert(shaderName);
+
+            s_optrShaderSystem->mShaderMap[shaderNameInMap] = newShaderSet;
+        }
+    }
+
+    const r2::ShaderManifests* FindShaderManifestByFullPath(const char* path)
+    {
+        auto iter = s_optrShaderSystem->mShaderPathToManifests.find(path);
+
+        if (iter == s_optrShaderSystem->mShaderPathToManifests.end())
+        {
+            R2_CHECK(false, "couldn't find the manifest for %s", path);
+            return nullptr;
+        }
+
+        return iter->second;
     }
 
 #endif // R2_ASSET_PIPELINE

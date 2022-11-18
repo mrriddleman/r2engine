@@ -28,6 +28,10 @@
 #include <string>
 #include <regex>
 
+#ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/Pipeline/ShaderManifest_generated.h"
+#endif
+
 namespace r2::draw::shader
 {
     const ShaderHandle InvalidShader = 0;
@@ -634,7 +638,7 @@ namespace r2::draw::shader
             }
 
 #if defined(R2_ASSET_PIPELINE)
-            shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), hashName);
+            shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), shaderFilePath);
 #endif
 
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
@@ -728,6 +732,18 @@ namespace r2::draw::shader
             r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
             ReadAndParseShaderData(hashName, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
+
+#ifdef R2_ASSET_PIPELINE
+
+            const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(vertexShaderFilePath);
+            char fileNameWithExtension[fs::FILE_PATH_LENGTH];
+            fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), vertexShaderFilePath, fileNameWithExtension);
+
+            
+
+            auto shaderName = STRING_ID(fileNameWithExtension);
+            r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
+#endif
         }
         
         if(fragmentShaderFilePath && strlen(fragmentShaderFilePath) > 0)
@@ -737,6 +753,21 @@ namespace r2::draw::shader
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
             ReadAndParseShaderData(hashName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+
+#ifdef R2_ASSET_PIPELINE
+			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(fragmentShaderFilePath);
+			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
+			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), fragmentShaderFilePath, fileNameWithExtension);
+
+            if (std::string(fileNameWithExtension) == "DepthFrag.fs")
+            {
+                int k = 0;
+            }
+
+
+            auto shaderName = STRING_ID(fileNameWithExtension);
+			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
+#endif
         }
         
         if(geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
@@ -747,6 +778,14 @@ namespace r2::draw::shader
 
             ReadAndParseShaderData(hashName, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
 
+#ifdef R2_ASSET_PIPELINE
+			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(geometryShaderFilePath);
+			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
+			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), geometryShaderFilePath, fileNameWithExtension);
+
+            auto shaderName = STRING_ID(fileNameWithExtension);
+			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
+#endif
         }
 
         if (computeShaderFilePath && strlen(computeShaderFilePath) > 0)
@@ -756,6 +795,15 @@ namespace r2::draw::shader
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
 			ReadAndParseShaderData(hashName, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
+
+#ifdef R2_ASSET_PIPELINE
+			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(computeShaderFilePath);
+			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
+			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), computeShaderFilePath, fileNameWithExtension);
+
+            auto shaderName = STRING_ID(fileNameWithExtension);
+			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
+#endif
         }
         
         u32 shaderProg = CreateShaderProgramFromStrings(vertexShaderParts, fragmentShaderParts, geometryShaderParts, computeShaderParts);

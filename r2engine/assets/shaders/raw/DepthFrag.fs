@@ -83,5 +83,5 @@ void main()
 	//vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
 	//if(sampledColor.a < 0.5)
-	//	discard; 
+	//	discard;
 }

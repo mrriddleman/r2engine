@@ -112,41 +112,40 @@ namespace r2::asset::pln
 
 	void ShaderHotReloadCommand::ShaderChangedRequest(const std::string& changedPath)
 	{
-		//look through the manifests and find which need to be re-compiled and linked
-		size_t numShaderManifests = mShaderManifests.size();
-
 		char changedPathSanitizedCString[fs::FILE_PATH_LENGTH];
 		fs::utils::SanitizeSubPath(changedPath.c_str(), changedPathSanitizedCString);
 
 		std::string changedPathSanitized = std::string(changedPathSanitizedCString);
 
-		for (size_t i = 0; i < numShaderManifests; ++i)
-		{
-			auto& shaderManifests = mShaderManifests.at(i);
-			for (const auto& shaderManifest : shaderManifests)
-			{
-				if (changedPathSanitized == shaderManifest.vertexShaderPath ||
-					changedPathSanitized == shaderManifest.fragmentShaderPath ||
-					changedPathSanitized == shaderManifest.geometryShaderPath ||
-					changedPathSanitized == shaderManifest.computeShaderPath)
-				{
-					/*bool success = BuildShaderManifestsIfNeeded(shaderManifests, mManifestFilePaths[i], mWatchPaths[i]);
+		r2::draw::shadersystem::ReloadShadersFromChangedPath(changedPathSanitized);
 
-					if (!success)
-					{
-						R2_LOGE("Failed to build shader manifests");
-					}*/
+		//for (size_t i = 0; i < numShaderManifests; ++i)
+		//{
+		//	auto& shaderManifests = mShaderManifests.at(i);
+		//	for (const auto& shaderManifest : shaderManifests)
+		//	{
+		//		if (changedPathSanitized == shaderManifest.vertexShaderPath ||
+		//			changedPathSanitized == shaderManifest.fragmentShaderPath ||
+		//			changedPathSanitized == shaderManifest.geometryShaderPath ||
+		//			changedPathSanitized == shaderManifest.computeShaderPath)
+		//		{
+		//			/*bool success = BuildShaderManifestsIfNeeded(shaderManifests, mManifestFilePaths[i], mWatchPaths[i]);
 
-					r2::draw::shadersystem::ReloadShader(shaderManifest, false);
-					break;
-				}
-				else if (changedPathSanitized == shaderManifest.partPath)
-				{
-					r2::draw::shadersystem::ReloadShader(shaderManifest, true);
-					break;
-				}
-			}
-		}
+		//			if (!success)
+		//			{
+		//				R2_LOGE("Failed to build shader manifests");
+		//			}*/
+
+		//			r2::draw::shadersystem::ReloadShader(shaderManifest, false);
+		//			break;
+		//		}
+		//		else if (changedPathSanitized == shaderManifest.partPath)
+		//		{
+		//			r2::draw::shadersystem::ReloadShader(shaderManifest, true);
+		//			break;
+		//		}
+		//	}
+		//}
 	}
 
 	void ShaderHotReloadCommand::BuildInternalShaderPassesIfNeeded()
