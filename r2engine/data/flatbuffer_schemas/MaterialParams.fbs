@@ -34,6 +34,8 @@ enum MaterialPropertyType: uint16
 	SHEEN_ROUGHNESS,
 	DOUBLE_SIDED,
 	SHADER,
+	SHADER_DEFINE,
+	SHADER_MATERIAL_FUNCTION
 }
 
 enum MaterialPropertyPackingType : int8

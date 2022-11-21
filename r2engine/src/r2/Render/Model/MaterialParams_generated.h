@@ -52,11 +52,13 @@ enum MaterialPropertyType {
   MaterialPropertyType_SHEEN_ROUGHNESS = 17,
   MaterialPropertyType_DOUBLE_SIDED = 18,
   MaterialPropertyType_SHADER = 19,
+  MaterialPropertyType_SHADER_DEFINE = 20,
+  MaterialPropertyType_SHADER_MATERIAL_FUNCTION = 21,
   MaterialPropertyType_MIN = MaterialPropertyType_ALBEDO,
-  MaterialPropertyType_MAX = MaterialPropertyType_SHADER
+  MaterialPropertyType_MAX = MaterialPropertyType_SHADER_MATERIAL_FUNCTION
 };
 
-inline const MaterialPropertyType (&EnumValuesMaterialPropertyType())[20] {
+inline const MaterialPropertyType (&EnumValuesMaterialPropertyType())[22] {
   static const MaterialPropertyType values[] = {
     MaterialPropertyType_ALBEDO,
     MaterialPropertyType_NORMAL,
@@ -77,13 +79,15 @@ inline const MaterialPropertyType (&EnumValuesMaterialPropertyType())[20] {
     MaterialPropertyType_SHEEN_COLOR,
     MaterialPropertyType_SHEEN_ROUGHNESS,
     MaterialPropertyType_DOUBLE_SIDED,
-    MaterialPropertyType_SHADER
+    MaterialPropertyType_SHADER,
+    MaterialPropertyType_SHADER_DEFINE,
+    MaterialPropertyType_SHADER_MATERIAL_FUNCTION
   };
   return values;
 }
 
 inline const char * const *EnumNamesMaterialPropertyType() {
-  static const char * const names[21] = {
+  static const char * const names[23] = {
     "ALBEDO",
     "NORMAL",
     "EMISSION",
@@ -104,13 +108,15 @@ inline const char * const *EnumNamesMaterialPropertyType() {
     "SHEEN_ROUGHNESS",
     "DOUBLE_SIDED",
     "SHADER",
+    "SHADER_DEFINE",
+    "SHADER_MATERIAL_FUNCTION",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameMaterialPropertyType(MaterialPropertyType e) {
-  if (flatbuffers::IsOutRange(e, MaterialPropertyType_ALBEDO, MaterialPropertyType_SHADER)) return "";
+  if (flatbuffers::IsOutRange(e, MaterialPropertyType_ALBEDO, MaterialPropertyType_SHADER_MATERIAL_FUNCTION)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesMaterialPropertyType()[index];
 }
