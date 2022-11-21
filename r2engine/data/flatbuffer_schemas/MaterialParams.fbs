@@ -78,6 +78,14 @@ table MaterialStringParam
 	value:string;
 }
 
+table MaterialShaderParam
+{
+	propertyType:MaterialPropertyType;
+	shader:ulong (hash:"fnv1a_64");
+	shaderStageName:ulong (hash:"fnv1a_64");
+	value:string;
+}
+
 enum MinTextureFilter : uint8
 {
 	LINEAR = 0,
@@ -127,6 +135,7 @@ table MaterialParams
 	colorParams:[MaterialColorParam];
 	textureParams:[MaterialTextureParam];
 	stringParams:[MaterialStringParam];
+	shaderParams:[MaterialShaderParam];
 }
 
 root_type MaterialParams;

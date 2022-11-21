@@ -25,6 +25,9 @@ struct MaterialULongParamBuilder;
 struct MaterialStringParam;
 struct MaterialStringParamBuilder;
 
+struct MaterialShaderParam;
+struct MaterialShaderParamBuilder;
+
 struct MaterialTextureParam;
 struct MaterialTextureParamBuilder;
 
@@ -575,6 +578,94 @@ inline flatbuffers::Offset<MaterialStringParam> CreateMaterialStringParamDirect(
       value__);
 }
 
+struct MaterialShaderParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef MaterialShaderParamBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PROPERTYTYPE = 4,
+    VT_SHADER = 6,
+    VT_SHADERSTAGENAME = 8,
+    VT_VALUE = 10
+  };
+  flat::MaterialPropertyType propertyType() const {
+    return static_cast<flat::MaterialPropertyType>(GetField<uint16_t>(VT_PROPERTYTYPE, 0));
+  }
+  uint64_t shader() const {
+    return GetField<uint64_t>(VT_SHADER, 0);
+  }
+  uint64_t shaderStageName() const {
+    return GetField<uint64_t>(VT_SHADERSTAGENAME, 0);
+  }
+  const flatbuffers::String *value() const {
+    return GetPointer<const flatbuffers::String *>(VT_VALUE);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_PROPERTYTYPE) &&
+           VerifyField<uint64_t>(verifier, VT_SHADER) &&
+           VerifyField<uint64_t>(verifier, VT_SHADERSTAGENAME) &&
+           VerifyOffset(verifier, VT_VALUE) &&
+           verifier.VerifyString(value()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MaterialShaderParamBuilder {
+  typedef MaterialShaderParam Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_propertyType(flat::MaterialPropertyType propertyType) {
+    fbb_.AddElement<uint16_t>(MaterialShaderParam::VT_PROPERTYTYPE, static_cast<uint16_t>(propertyType), 0);
+  }
+  void add_shader(uint64_t shader) {
+    fbb_.AddElement<uint64_t>(MaterialShaderParam::VT_SHADER, shader, 0);
+  }
+  void add_shaderStageName(uint64_t shaderStageName) {
+    fbb_.AddElement<uint64_t>(MaterialShaderParam::VT_SHADERSTAGENAME, shaderStageName, 0);
+  }
+  void add_value(flatbuffers::Offset<flatbuffers::String> value) {
+    fbb_.AddOffset(MaterialShaderParam::VT_VALUE, value);
+  }
+  explicit MaterialShaderParamBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MaterialShaderParamBuilder &operator=(const MaterialShaderParamBuilder &);
+  flatbuffers::Offset<MaterialShaderParam> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MaterialShaderParam>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MaterialShaderParam> CreateMaterialShaderParam(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flat::MaterialPropertyType propertyType = flat::MaterialPropertyType_ALBEDO,
+    uint64_t shader = 0,
+    uint64_t shaderStageName = 0,
+    flatbuffers::Offset<flatbuffers::String> value = 0) {
+  MaterialShaderParamBuilder builder_(_fbb);
+  builder_.add_shaderStageName(shaderStageName);
+  builder_.add_shader(shader);
+  builder_.add_value(value);
+  builder_.add_propertyType(propertyType);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<MaterialShaderParam> CreateMaterialShaderParamDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flat::MaterialPropertyType propertyType = flat::MaterialPropertyType_ALBEDO,
+    uint64_t shader = 0,
+    uint64_t shaderStageName = 0,
+    const char *value = nullptr) {
+  auto value__ = value ? _fbb.CreateString(value) : 0;
+  return flat::CreateMaterialShaderParam(
+      _fbb,
+      propertyType,
+      shader,
+      shaderStageName,
+      value__);
+}
+
 struct MaterialTextureParam FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialTextureParamBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -756,7 +847,8 @@ struct MaterialParams FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_FLOATPARAMS = 10,
     VT_COLORPARAMS = 12,
     VT_TEXTUREPARAMS = 14,
-    VT_STRINGPARAMS = 16
+    VT_STRINGPARAMS = 16,
+    VT_SHADERPARAMS = 18
   };
   uint64_t name() const {
     return GetField<uint64_t>(VT_NAME, 0);
@@ -779,6 +871,9 @@ struct MaterialParams FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialStringParam>> *stringParams() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialStringParam>> *>(VT_STRINGPARAMS);
   }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialShaderParam>> *shaderParams() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialShaderParam>> *>(VT_SHADERPARAMS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_NAME) &&
@@ -800,6 +895,9 @@ struct MaterialParams FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_STRINGPARAMS) &&
            verifier.VerifyVector(stringParams()) &&
            verifier.VerifyVectorOfTables(stringParams()) &&
+           VerifyOffset(verifier, VT_SHADERPARAMS) &&
+           verifier.VerifyVector(shaderParams()) &&
+           verifier.VerifyVectorOfTables(shaderParams()) &&
            verifier.EndTable();
   }
 };
@@ -829,6 +927,9 @@ struct MaterialParamsBuilder {
   void add_stringParams(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialStringParam>>> stringParams) {
     fbb_.AddOffset(MaterialParams::VT_STRINGPARAMS, stringParams);
   }
+  void add_shaderParams(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialShaderParam>>> shaderParams) {
+    fbb_.AddOffset(MaterialParams::VT_SHADERPARAMS, shaderParams);
+  }
   explicit MaterialParamsBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -849,9 +950,11 @@ inline flatbuffers::Offset<MaterialParams> CreateMaterialParams(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialFloatParam>>> floatParams = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialColorParam>>> colorParams = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialTextureParam>>> textureParams = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialStringParam>>> stringParams = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialStringParam>>> stringParams = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialShaderParam>>> shaderParams = 0) {
   MaterialParamsBuilder builder_(_fbb);
   builder_.add_name(name);
+  builder_.add_shaderParams(shaderParams);
   builder_.add_stringParams(stringParams);
   builder_.add_textureParams(textureParams);
   builder_.add_colorParams(colorParams);
@@ -869,13 +972,15 @@ inline flatbuffers::Offset<MaterialParams> CreateMaterialParamsDirect(
     const std::vector<flatbuffers::Offset<flat::MaterialFloatParam>> *floatParams = nullptr,
     const std::vector<flatbuffers::Offset<flat::MaterialColorParam>> *colorParams = nullptr,
     const std::vector<flatbuffers::Offset<flat::MaterialTextureParam>> *textureParams = nullptr,
-    const std::vector<flatbuffers::Offset<flat::MaterialStringParam>> *stringParams = nullptr) {
+    const std::vector<flatbuffers::Offset<flat::MaterialStringParam>> *stringParams = nullptr,
+    const std::vector<flatbuffers::Offset<flat::MaterialShaderParam>> *shaderParams = nullptr) {
   auto ulongParams__ = ulongParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialULongParam>>(*ulongParams) : 0;
   auto boolParams__ = boolParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialBoolParam>>(*boolParams) : 0;
   auto floatParams__ = floatParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialFloatParam>>(*floatParams) : 0;
   auto colorParams__ = colorParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialColorParam>>(*colorParams) : 0;
   auto textureParams__ = textureParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialTextureParam>>(*textureParams) : 0;
   auto stringParams__ = stringParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialStringParam>>(*stringParams) : 0;
+  auto shaderParams__ = shaderParams ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialShaderParam>>(*shaderParams) : 0;
   return flat::CreateMaterialParams(
       _fbb,
       name,
@@ -884,7 +989,8 @@ inline flatbuffers::Offset<MaterialParams> CreateMaterialParamsDirect(
       floatParams__,
       colorParams__,
       textureParams__,
-      stringParams__);
+      stringParams__,
+      shaderParams__);
 }
 
 inline const flat::MaterialParams *GetMaterialParams(const void *buf) {
