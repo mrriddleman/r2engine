@@ -47,12 +47,7 @@ namespace r2::assets::assetlib
 			{
 				auto compressSize = info->mips()->Get(pageIndex)->compressedSize();
 				auto originalSize = info->mips()->Get(pageIndex)->originalSize();
-				int r = LZ4_decompress_safe(source, destination, compressSize, originalSize);
-
-				if (r < 0)
-				{
-					int k = 0;
-				}
+				LZ4_decompress_safe(source, destination, compressSize, originalSize);
 			}
 			else
 			{

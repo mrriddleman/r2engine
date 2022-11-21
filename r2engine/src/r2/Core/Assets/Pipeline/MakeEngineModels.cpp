@@ -181,10 +181,6 @@ namespace
 
 			float handedness = (DotProduct(CrossProduct(n, t), tan2[a]) < 0.0) ? -1.0f : 1.0f;
 			
-			if (handedness)
-			{
-				int k = 0;
-			}
 		}
 
 		delete[] tan1;

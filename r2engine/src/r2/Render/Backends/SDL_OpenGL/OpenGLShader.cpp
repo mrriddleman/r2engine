@@ -759,11 +759,6 @@ namespace r2::draw::shader
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), fragmentShaderFilePath, fileNameWithExtension);
 
-            if (std::string(fileNameWithExtension) == "DepthFrag.fs")
-            {
-                int k = 0;
-            }
-
 
             auto shaderName = STRING_ID(fileNameWithExtension);
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);

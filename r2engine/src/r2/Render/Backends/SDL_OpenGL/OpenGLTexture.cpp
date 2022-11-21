@@ -417,12 +417,6 @@ namespace r2::draw::tex
 			{
 				const auto mip = textureMetaData->mips()->Get(m);
 
-				//if ("D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Textures\\packs\\Newport_lutDFG\\albedo\\newport_loft_LutDFG.hdr" == textureMetaData->originalPath()->str())
-				//{
-				//	int k = 0;
-				//}
-			//	printf("Loading: %s\n", textureMetaData->originalPath()->c_str());
-
 				r2::assets::assetlib::unpack_texture_page(textureMetaData, m, memoryAssetFile.binaryBlob.data, data.data());
 
 				draw::gl::tex::TexSubImage2D(newHandle, m, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());

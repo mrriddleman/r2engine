@@ -798,11 +798,6 @@ namespace r2::draw::shadersystem
 
     void AddShaderToShaderMap(const ShaderName& shaderNameInMap, const ShaderName& shaderName)
     {
-        if (shaderNameInMap == 14838497363369575431)
-        {
-            int k = 0;
-        }
-
         auto& iter = s_optrShaderSystem->mShaderMap.find(shaderNameInMap);
 
         if (iter != s_optrShaderSystem->mShaderMap.end())
