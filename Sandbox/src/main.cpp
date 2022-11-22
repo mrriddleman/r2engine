@@ -1536,6 +1536,13 @@ public:
         return { SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW + std::string("/SandboxInternalShaders.json")};
     }
 
+	std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const
+	{
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+		return {std::string( materialsPath )};
+	}
+
     r2::util::Size GetAppResolution() const override
     {
         return g_resolutions[mResolution];

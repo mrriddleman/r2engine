@@ -206,6 +206,7 @@ namespace r2::draw::matsys
 
 	//creating/freeing a new material system
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const char* texturePackManifestPath);
+	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const flat::MaterialParamsPack* materialPack, u64 materialParamsPackSize, const char* texturePackManifestPath);
 	void FreeMaterialSystem(MaterialSystem* system);
 }
 

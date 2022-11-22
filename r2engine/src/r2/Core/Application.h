@@ -76,6 +76,8 @@ namespace r2
         virtual std::vector<std::string> GetInternalShaderManifestsBinaryPaths() const;
         virtual std::vector<std::string> GetInternalShaderManifestsRawPaths() const;
 
+        virtual std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const;
+
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
         virtual std::string GetAssetManifestPath() const = 0;

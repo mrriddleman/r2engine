@@ -3,7 +3,8 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/Shader.h"
-
+#include "r2/Render/Model/MaterialParams_generated.h"
+#include "r2/Render/Model/MaterialParamsPack_generated.h"
 
 #ifdef R2_ASSET_PIPELINE
 namespace r2::asset::pln
@@ -21,7 +22,7 @@ namespace r2
 namespace r2::draw::shadersystem
 {
     
-    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath);
+    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks);
     void Update();
 
     ShaderHandle AddShader(const r2::draw::Shader& shader);

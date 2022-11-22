@@ -67,7 +67,7 @@ namespace r2::draw::shadersystem
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
 
-    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath)
+    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks)
     {
         R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Memory Area handle is invalid");
         R2_CHECK(s_optrShaderSystem == nullptr, "Are you trying to initialize this system more than once?");

@@ -370,12 +370,16 @@ namespace r2
 
             //@TODO(Serge): WAYYY IN THE FUTURE - maybe noptrApp->GetTexturePackManifestsBinaryPaths() should be a specific set just for startup
 
+            auto appMaterialPacksManifests = noptrApp->GetMaterialPackManifestsBinaryPaths();
             auto appInitialTexturePackManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
             std::vector<std::string> initialTexturePackManifests;
             initialTexturePackManifests.insert(initialTexturePackManifests.begin(), appInitialTexturePackManifests.begin(), appInitialTexturePackManifests.end());
             initialTexturePackManifests.push_back(std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman"));
 
-            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialTexturePackManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
+            std::vector<std::string> initialMaterialPacksManifests;
+            initialMaterialPacksManifests.insert(initialMaterialPacksManifests.begin(), appMaterialPacksManifests.begin(), appMaterialPacksManifests.end());
+
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialTexturePackManifests, initialMaterialPacksManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             //@TODO(Serge): don't use make unique!

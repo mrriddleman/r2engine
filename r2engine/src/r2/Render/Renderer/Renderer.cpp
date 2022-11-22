@@ -12,6 +12,8 @@
 #include "r2/Render/Model/Material.h"
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
+#include "r2/Render/Model/MaterialParams_generated.h"
+#include "r2/Render/Model/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
@@ -751,7 +753,7 @@ namespace r2::draw::renderer
 	//}
 
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
 	{
 		//R2_CHECK(s_optrRenderer == nullptr, "We've already create the s_optrRenderer - are you trying to initialize more than once?");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
@@ -953,7 +955,47 @@ namespace r2::draw::renderer
 
 		SetClearDepth(1.0f);
 
-		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath);
+
+		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
+		r2::SArray<void*>* tempMemory = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, appMaterialPacksManifests.size() + 1);
+		r2::SArray<const flat::MaterialParamsPack*>* materialParamPacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
+
+		const char* engineMaterialParamsPackPath = materialsPath;
+		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
+
+		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
+		{
+			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
+		}
+
+		u64 engineMaterialParamsPackSize = 0;
+
+		for (u32 i = 0; i < r2::sarr::Size(*pathsToLoad); ++i)
+		{
+			u64 materialParamsPackSize = 0;
+			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath, materialParamsPackSize);
+
+			if (!materialParamsPackData)
+			{
+				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
+				return nullptr;
+			}
+
+			if (i == 0)
+			{
+				engineMaterialParamsPackSize = materialParamsPackSize;
+			}
+
+			r2::sarr::Push(*tempMemory, materialParamsPackData);
+
+			const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
+			R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
+
+			r2::sarr::Push(*materialParamPacks, materialPack);
+		}
+
+
+		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath, materialParamPacks);
 		if (!shaderSystemIntialized)
 		{
 			R2_CHECK(false, "We couldn't initialize the shader system");
@@ -977,13 +1019,24 @@ namespace r2::draw::renderer
 		
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
 		
-		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);
+		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*materialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
 
 		if (!newRenderer->mMaterialSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
 		}
+
+		//clean up the materials
+		for (s32 i = static_cast<s32>(r2::sarr::Size(*tempMemory)) - 1; i >= 0; --i)
+		{
+			FREE(r2::sarr::At(*tempMemory, i), *MEM_ENG_SCRATCH_PTR);
+		}
+
+		FREE(materialParamPacks, *MEM_ENG_SCRATCH_PTR);
+		FREE(tempMemory, *MEM_ENG_SCRATCH_PTR);
+		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
+
 
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 

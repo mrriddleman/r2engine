@@ -2006,6 +2006,29 @@ namespace r2::draw::matsys
 
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const char* texturePackManifestPath)
 	{
+		u64 materialParamsPackSize = 0;
+		void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialParamsPackPath, materialParamsPackSize);
+
+		if (!materialParamsPackData)
+		{
+			R2_CHECK(false, "Failed to read the material params pack file: %s", materialParamsPackPath);
+			return nullptr;
+		}
+
+		const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
+		R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
+
+
+		MaterialSystem* system = CreateMaterialSystem(boundary, materialParamsPackPath, materialPack, materialParamsPackSize, texturePackManifestPath);
+
+		FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
+
+		return system;
+
+	}
+
+	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const flat::MaterialParamsPack* materialPack, u64 materialParamsPackSize, const char* texturePackManifestPath)
+	{
 		u64 unallocatedSpace = boundary.size;
 
 		R2_CHECK(unallocatedSpace > 0 && boundary.location != nullptr, "We should have a valid boundary");
@@ -2038,14 +2061,14 @@ namespace r2::draw::matsys
 			return 0;
 		}
 
-		u64 materialParamsPackSize = 0;
-		void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialParamsPackPath, materialParamsPackSize);
+	//	u64 materialParamsPackSize = 0;
+	//	void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialParamsPackPath, materialParamsPackSize);
 
-		if (!materialParamsPackData)
+		/*if (!materialParamsPackData)
 		{
 			R2_CHECK(false, "Failed to read the material params pack file: %s", materialParamsPackPath);
 			return nullptr;
-		}
+		}*/
 
 		u64 texturePacksSize = 0;
 		void* texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackManifestPath, texturePacksSize);
@@ -2055,8 +2078,8 @@ namespace r2::draw::matsys
 			return nullptr;
 		}
 
-		const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
-		R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
+	//	const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
+	//	R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
 
 		const flat::TexturePacksManifest* texturePack = flat::GetTexturePacksManifest(texturePacksData);
 		R2_CHECK(texturePack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
@@ -2134,7 +2157,7 @@ namespace r2::draw::matsys
 
 
 		FREE(texturePacksData, *MEM_ENG_SCRATCH_PTR);
-		FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
+	//	FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
 
 		materialPack = nullptr;
 		texturePack = nullptr;
@@ -2172,7 +2195,7 @@ namespace r2::draw::matsys
 		R2_CHECK(system->mMaterialParamsPackData.buffer->IsLoaded(), "We didn't load the material asset record!");
 		R2_CHECK(system->mTexturePackManifestData.buffer->IsLoaded(), "We didn't load the texture packs asset record!");
 
-		materialParamsPackData = (void*)system->mMaterialParamsPackData.buffer->MutableData();
+		void* materialParamsPackData = (void*)system->mMaterialParamsPackData.buffer->MutableData();
 		texturePacksData = (void*)system->mTexturePackManifestData.buffer->MutableData();
 
 		system->mMaterialParamsPack = flat::GetMaterialParamsPack(materialParamsPackData);
