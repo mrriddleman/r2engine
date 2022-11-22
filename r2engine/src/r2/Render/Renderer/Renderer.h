@@ -203,7 +203,9 @@ namespace r2::draw
 		LightSystem* mLightSystem = nullptr;
 		r2::SArray<r2::draw::ModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
-		
+		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
+		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+
 		//--------------END Systems stuff----------------
 
 		//--------------BEGIN Buffer Layout stuff-----------------
@@ -446,7 +448,7 @@ namespace r2::draw::renderer
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize);
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u64 totalMemoryForMaterialParamPacks, u32 numMaterialParamPacks);
 
 	
 	//events

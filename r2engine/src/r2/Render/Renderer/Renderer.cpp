@@ -774,6 +774,41 @@ namespace r2::draw::renderer
 		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
+		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
+
+		const char* engineMaterialParamsPackPath = materialsPath;
+		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
+
+		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
+		{
+			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
+		}
+
+		u64 engineMaterialParamsPackSize = 0;
+
+		u64 totalMaterialParamsPackSize = 0;
+		u32 numMaterialParamsPacks = r2::sarr::Size(*pathsToLoad);
+		for (u32 i = 0; i < numMaterialParamsPacks; ++i)
+		{
+			u64 materialParamsPackSize = 0;
+			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
+
+			if (!materialParamsPackData)
+			{
+				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
+				return nullptr;
+			}
+
+			if (i == 0)
+			{
+				engineMaterialParamsPackSize = materialParamsPackSize;
+			}
+
+			totalMaterialParamsPackSize += materialParamsPackSize;
+
+			FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
+		}
+
 		/*void* materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath);
 		if (!materialPackData)
 		{
@@ -820,7 +855,7 @@ namespace r2::draw::renderer
 
 		u64 materialMemorySystemSize = mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
 
-		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize);
+		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize, totalMaterialParamsPackSize, numMaterialParamsPacks);
 
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
@@ -955,47 +990,31 @@ namespace r2::draw::renderer
 
 		SetClearDepth(1.0f);
 
+		newRenderer->mMaterialParamPacksData = MAKE_SARRAY(*rendererArena, void*, appMaterialPacksManifests.size() + 1);
+		newRenderer->mMaterialParamPacks = MAKE_SARRAY(*rendererArena, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
 
-		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
-		r2::SArray<void*>* tempMemory = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, appMaterialPacksManifests.size() + 1);
-		r2::SArray<const flat::MaterialParamsPack*>* materialParamPacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
-
-		const char* engineMaterialParamsPackPath = materialsPath;
-		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
-
-		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
-		{
-			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
-		}
-
-		u64 engineMaterialParamsPackSize = 0;
-
+		
 		for (u32 i = 0; i < r2::sarr::Size(*pathsToLoad); ++i)
 		{
 			u64 materialParamsPackSize = 0;
-			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialsPath, materialParamsPackSize);
-
+			void* materialParamsPackData = r2::fs::ReadFile(*rendererArena, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
+ 
 			if (!materialParamsPackData)
 			{
 				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
 				return nullptr;
 			}
 
-			if (i == 0)
-			{
-				engineMaterialParamsPackSize = materialParamsPackSize;
-			}
-
-			r2::sarr::Push(*tempMemory, materialParamsPackData);
+			r2::sarr::Push(*newRenderer->mMaterialParamPacksData, materialParamsPackData);
 
 			const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
 			R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
 
-			r2::sarr::Push(*materialParamPacks, materialPack);
+			r2::sarr::Push(*newRenderer->mMaterialParamPacks, materialPack);
 		}
+		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
 
-
-		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath, materialParamPacks);
+		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath, newRenderer->mMaterialParamPacks);
 		if (!shaderSystemIntialized)
 		{
 			R2_CHECK(false, "We couldn't initialize the shader system");
@@ -1019,24 +1038,13 @@ namespace r2::draw::renderer
 		
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
 		
-		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*materialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
+		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*newRenderer->mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
 
 		if (!newRenderer->mMaterialSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
 		}
-
-		//clean up the materials
-		for (s32 i = static_cast<s32>(r2::sarr::Size(*tempMemory)) - 1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*tempMemory, i), *MEM_ENG_SCRATCH_PTR);
-		}
-
-		FREE(materialParamPacks, *MEM_ENG_SCRATCH_PTR);
-		FREE(tempMemory, *MEM_ENG_SCRATCH_PTR);
-		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
-
 
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
@@ -1596,6 +1604,14 @@ namespace r2::draw::renderer
 		renderer->mSubAreaArena = nullptr;
 
 		FREE(materialSystemBoundary.location, *arena);
+
+		const auto numParamPacks = r2::sarr::Size(*renderer->mMaterialParamPacksData);
+		for (s32 i = static_cast<s32>(numParamPacks)-1; i >= 0; --i)
+		{
+			FREE(r2::sarr::At(*renderer->mMaterialParamPacksData, i), *arena);
+		}
+		FREE(renderer->mMaterialParamPacks, *arena);
+		FREE(renderer->mMaterialParamPacksData, *arena);
 
 		//delete the buffer handles
 		r2::draw::rendererimpl::DeleteBuffers(
@@ -2573,7 +2589,7 @@ namespace r2::draw::renderer
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
 	}
 
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize)
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u64 totalMaterialParamPacksSize, u32 numMaterialParamPacks)
 	{
 
 
@@ -2635,10 +2651,19 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutUploadOffset>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
+
+			r2::mem::utils::GetMaxMemoryForAllocation(totalMaterialParamPacksSize, ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
+
 			materialSystemMemorySize +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
+
+			
+
+
 
 #ifdef R2_DEBUG
 			+ r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<DebugRenderBatch>::MemorySize(DebugDrawType::NUM_DEBUG_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) * 2

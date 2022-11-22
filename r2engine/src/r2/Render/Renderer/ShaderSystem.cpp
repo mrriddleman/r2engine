@@ -62,7 +62,7 @@ namespace r2::draw::shadersystem
 {
 
     void* LoadShaderManifestBuffer(const char* shaderManifestPath);
-    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure);
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks, bool assertOnFailure);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
@@ -170,8 +170,10 @@ namespace r2::draw::shadersystem
 
         s_optrShaderSystem->mInternalShaderManifests = r2::GetShaderManifests(s_optrShaderSystem->mInternalShaderManifestsData);
 
-        LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, assertOnFailure);
-        LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, assertOnFailure);
+        R2_CHECK(materialParamsPacks != nullptr, "We should have material params packs");
+
+        LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, materialParamsPacks, assertOnFailure);
+        LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, materialParamsPacks, assertOnFailure);
 
         return s_optrShaderSystem->mAppShaderManifestsData && s_optrShaderSystem->mInternalShaderManifestsData;
     }
@@ -537,7 +539,7 @@ namespace r2::draw::shadersystem
     }
 
 
-    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure)
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks, bool assertOnFailure)
     {
         if (s_optrShaderSystem == nullptr)
         {
@@ -604,79 +606,6 @@ namespace r2::draw::shadersystem
 
         r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
     }
-
-  //  bool HasShaderToReload(ShaderHandle shaderHandle)
-  //  {
-		//bool found = false;
-
-		//auto numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
-
-		//for (decltype(numShadersToReload) j = 0; j < numShadersToReload; ++j)
-		//{
-		//	if (shaderHandle == r2::sarr::At(*s_optrShaderSystem->mShadersToReload, j))
-		//	{
-		//		found = true;
-		//		break;
-		//	}
-		//}
-
-  //      return found;
-  //  }
-
-   // void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath)
-   // {
-   //     if (s_optrShaderSystem == nullptr)
-   //     {
-   //         R2_CHECK(false, "We haven't initialized the shader system yet!");
-   //         return;
-   //     }
-
-   //     const u64 numShaders = r2::sarr::Size(*s_optrShaderSystem->mShaders);
-   //     for (u64 i = 0; i < numShaders; ++i)
-   //     {
-   //         const auto& nextShader = r2::sarr::At(*s_optrShaderSystem->mShaders, i);
-
-   //         if (nextShader.manifest.hashName == manifest.hashName)
-   //         {
-   //             if (!isPartPath)
-   //             {
-   //                 r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, static_cast<ShaderHandle>(i));
-   //             }
-   //         }
-   //     }
-
-   //     if (isPartPath)
-   //     {
-			//r2::SArray<ShaderName>* defaultShaderPartList = nullptr;
-			//r2::SArray<ShaderName>* shaderPartList = r2::shashmap::Get(*s_optrShaderSystem->mShaderPartMap, manifest.hashName, defaultShaderPartList);
-
-   //         if (shaderPartList != defaultShaderPartList)
-   //         {
-   //             auto numShadersInList = r2::sarr::Size(*shaderPartList);
-
-   //             for (decltype(numShadersInList) i = 0; i < numShadersInList; ++i)
-   //             {
-   //                 const auto shaderHandle = FindShaderHandle(r2::sarr::At(*shaderPartList, i));
-
-   //                 if (shaderHandle != InvalidShader)
-   //                 {
-   //                     if(!HasShaderToReload(shaderHandle))
-   //                     {
-   //                         r2::sarr::Push(*s_optrShaderSystem->mShadersToReload, shaderHandle);
-   //                     }
-   //                 }
-   //                 else
-   //                 {
-   //                     R2_CHECK(false, "Not sure how this would be invalid?");
-   //                 }
-   //             }
-   //         }
-   //         else
-   //         {
-   //             R2_CHECK(false, "Not sure how we'd get here yet?");
-   //         }
-   //     }
-   // }
 
     void ReloadShadersFromChangedPath(const std::string& changedPath)
     {
