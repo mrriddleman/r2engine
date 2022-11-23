@@ -37,6 +37,9 @@ namespace r2::draw::shadersystem
 
     const char* FindShaderPathByName(const char* name);
     
+    void GetMaterialShaderPiecesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& materialParts);
+    void GetDefinesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& defines);
+
 #ifdef R2_ASSET_PIPELINE
     void ReloadManifestFile(const std::string& manifestFilePath);
  //   void ReloadShader(const r2::asset::pln::ShaderManifest& manifest, bool isPartPath );

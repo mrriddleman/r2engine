@@ -539,7 +539,7 @@ namespace r2::draw::shader
         strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
     }
 
-    void ReadAndParseShaderData(u64 hashName, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
+    void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
 	{
         char* shaderFileData = ReadShaderData(shaderFilePath);
 
@@ -561,20 +561,72 @@ namespace r2::draw::shader
 
 		std::regex includeExpression("^#include \".*\"[ \t]*$");
 		std::regex filePathExpression("\".*\"");
+        std::regex versionExpression("^#version [0-9][0-9][0-9] core$");
 
-        char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 32, sizeof(char)); //+32 for each potential '\0' in the file
+        char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 32 + 50 * fs::FILE_PATH_LENGTH, sizeof(char)); //+32 for each potential '\0' in the file
         shaderParsedOutIncludes[0] = '\0';
         u32 lengthOfParsedShaderData = 0;
 
         r2::sarr::Push(*tempAllocations, (void*)shaderParsedOutIncludes);
-        
+
         char* saveptr1;
         char* pch = strtok_s(shaderFileDataCopy, "\r\n", &saveptr1);
        
         u32 currentOffset = 0;
+        
+        bool hasPassedVersion = false;
+        bool hasInjectedDefines = false;
 
         while (pch != nullptr)
         {
+            if (!hasPassedVersion && std::regex_match(pch, versionExpression))
+            {
+                u32 strLen = strlen(pch);
+
+                strcat(&shaderParsedOutIncludes[currentOffset], pch);
+                strcat(&shaderParsedOutIncludes[currentOffset], "\n");
+
+                hasPassedVersion = true;
+                lengthOfParsedShaderData += strLen + 1;
+
+
+                pch = strtok_s(NULL, "\r\n", &saveptr1);
+                continue;
+            }
+
+            if (hasPassedVersion && !hasInjectedDefines)
+            {
+				r2::SArray<const flat::MaterialShaderParam*>* materialShaderDefines = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialShaderParam*, 50); //I dunno how many?
+
+                shadersystem::GetDefinesForShader(hashName, shaderStage, *materialShaderDefines);
+
+                auto numDefines = r2::sarr::Size(*materialShaderDefines);
+
+                for (u32 i = 0; i < numDefines; ++i)
+                {
+                    const flat::MaterialShaderParam* shaderDefine = r2::sarr::At(*materialShaderDefines, i);
+                    u32 strLen = strlen(shaderDefine->value()->c_str());
+                    strcat(&shaderParsedOutIncludes[currentOffset], shaderDefine->value()->c_str());
+                    strcat(&shaderParsedOutIncludes[currentOffset], "\n");
+                    lengthOfParsedShaderData += strLen + 1;
+                }
+
+                FREE(materialShaderDefines, *MEM_ENG_SCRATCH_PTR);
+
+                u32 strLen = strlen(pch);
+
+				strcat(&shaderParsedOutIncludes[currentOffset], pch);
+				strcat(&shaderParsedOutIncludes[currentOffset], "\n");
+
+                lengthOfParsedShaderData += strLen + 1;
+
+				hasInjectedDefines = true;
+
+				pch = strtok_s(NULL, "\r\n", &saveptr1);
+				continue;
+            }
+
+
             if (!std::regex_match(pch, includeExpression))
             {
                 u32 strLen = strlen(pch);
@@ -661,7 +713,7 @@ namespace r2::draw::shader
 
             R2_CHECK(strlen(fullIncludePath) > 0, "We should have a proper path here!");
 
-            ReadAndParseShaderData(hashName, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderStage, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
 
             pch = strtok_s(NULL, "\r\n", &saveptr1);
         }
@@ -727,76 +779,77 @@ namespace r2::draw::shader
 
         if(vertexShaderFilePath && strlen(vertexShaderFilePath) > 0)
         {
+
+			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(vertexShaderFilePath);
+			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
+			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), vertexShaderFilePath, fileNameWithExtension);
+
+			auto shaderName = STRING_ID(fileNameWithExtension);
+
             r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
 
             r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderName, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
 
 #ifdef R2_ASSET_PIPELINE
-
-            const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(vertexShaderFilePath);
-            char fileNameWithExtension[fs::FILE_PATH_LENGTH];
-            fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), vertexShaderFilePath, fileNameWithExtension);
-
-            
-
-            auto shaderName = STRING_ID(fileNameWithExtension);
             r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
 #endif
         }
         
         if(fragmentShaderFilePath && strlen(fragmentShaderFilePath) > 0)
         {
-			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
-
-			r2::sarr::Push(*tempAllocations, (void*)includePaths);
-
-            ReadAndParseShaderData(hashName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
-
-#ifdef R2_ASSET_PIPELINE
 			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(fragmentShaderFilePath);
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), fragmentShaderFilePath, fileNameWithExtension);
 
+			auto shaderName = STRING_ID(fileNameWithExtension);
 
-            auto shaderName = STRING_ID(fileNameWithExtension);
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+            ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+
+#ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
 #endif
         }
         
         if(geometryShaderFilePath && strlen(geometryShaderFilePath) > 0)
         {
-			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
-
-			r2::sarr::Push(*tempAllocations, (void*)includePaths);
-
-            ReadAndParseShaderData(hashName, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
-
-#ifdef R2_ASSET_PIPELINE
 			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(geometryShaderFilePath);
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), geometryShaderFilePath, fileNameWithExtension);
 
-            auto shaderName = STRING_ID(fileNameWithExtension);
+			auto shaderName = STRING_ID(fileNameWithExtension);
+
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+            ReadAndParseShaderData(hashName, shaderName, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
+
+#ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
 #endif
         }
 
         if (computeShaderFilePath && strlen(computeShaderFilePath) > 0)
         {
-			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
-
-			r2::sarr::Push(*tempAllocations, (void*)includePaths);
-
-			ReadAndParseShaderData(hashName, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
-
-#ifdef R2_ASSET_PIPELINE
 			const r2::ShaderManifests* shaderManifests = shadersystem::FindShaderManifestByFullPath(computeShaderFilePath);
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), computeShaderFilePath, fileNameWithExtension);
 
-            auto shaderName = STRING_ID(fileNameWithExtension);
+			auto shaderName = STRING_ID(fileNameWithExtension);
+
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+
+			r2::sarr::Push(*tempAllocations, (void*)includePaths);
+
+			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
+			
+#ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
 #endif
         }

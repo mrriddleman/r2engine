@@ -29,6 +29,7 @@ namespace r2::draw
 
         const r2::ShaderManifests* mInternalShaderManifests = nullptr;
         const r2::ShaderManifests* mAppShaderManifests = nullptr;
+        const r2::SArray<const flat::MaterialParamsPack*>* mnoptrMaterialParamPacks = nullptr;
 
 #ifdef R2_ASSET_PIPELINE
         r2::SArray<ShaderHandle>* mShadersToReload = nullptr;
@@ -62,7 +63,7 @@ namespace r2::draw::shadersystem
 {
 
     void* LoadShaderManifestBuffer(const char* shaderManifestPath);
-    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks, bool assertOnFailure);
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
@@ -172,8 +173,10 @@ namespace r2::draw::shadersystem
 
         R2_CHECK(materialParamsPacks != nullptr, "We should have material params packs");
 
-        LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, materialParamsPacks, assertOnFailure);
-        LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, materialParamsPacks, assertOnFailure);
+        s_optrShaderSystem->mnoptrMaterialParamPacks = materialParamsPacks;
+
+        LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, assertOnFailure);
+        LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, assertOnFailure);
 
         return s_optrShaderSystem->mAppShaderManifestsData && s_optrShaderSystem->mInternalShaderManifestsData;
     }
@@ -433,6 +436,72 @@ namespace r2::draw::shadersystem
         return result;
     }
 
+    void FindAllMaterialShaderParamsWithType(const flat::MaterialParamsPack* pack, flat::MaterialPropertyType type, ShaderName shaderName, ShaderName shaderStage, r2::SArray<const flat::MaterialShaderParam*>& properties)
+    {
+        auto numPacks = pack->pack()->size();
+
+        for (decltype(numPacks) i = 0; i < numPacks; ++i)
+        {
+            const auto materialParams = pack->pack()->Get(i);
+            if (materialParams && materialParams->shaderParams())
+            {
+				auto numShaderParams = materialParams->shaderParams()->size();
+
+				for (decltype(numShaderParams) j = 0; j < numShaderParams; ++j)
+				{
+					const auto materialShaderParam = pack->pack()->Get(i)->shaderParams()->Get(j);
+
+					if (materialShaderParam->propertyType() == type &&
+						materialShaderParam->shader() == shaderName &&
+						materialShaderParam->shaderStageName() == shaderStage)
+					{
+						r2::sarr::Push(properties, materialShaderParam);
+					}
+				}
+            }
+        }
+    }
+
+    void GetMaterialShaderPiecesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& materialParts)
+    {
+		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mnoptrMaterialParamPacks == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the shader system yet!");
+			return;
+		}
+
+		//need to find the shader material for this define
+
+		const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mnoptrMaterialParamPacks);
+
+		for (u32 i = 0; i < numMaterialParamPacks; ++i)
+		{
+			const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mnoptrMaterialParamPacks, i);
+
+			FindAllMaterialShaderParamsWithType(materialParamPack, flat::MaterialPropertyType_SHADER_MATERIAL_FUNCTION, shaderName, shaderStageName, materialParts);
+		}
+    }
+
+    void GetDefinesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& defines)
+    {
+		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mnoptrMaterialParamPacks == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the shader system yet!");
+			return;
+		}
+
+        //need to find the shader material for this define
+
+        const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mnoptrMaterialParamPacks);
+
+        for (u32 i = 0; i < numMaterialParamPacks; ++i)
+        {
+            const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mnoptrMaterialParamPacks, i);
+
+            FindAllMaterialShaderParamsWithType(materialParamPack, flat::MaterialPropertyType_SHADER_DEFINE, shaderName, shaderStageName, defines);
+        }
+    }
+
     void Shutdown()
     {
         if (s_optrShaderSystem == nullptr)
@@ -539,7 +608,7 @@ namespace r2::draw::shadersystem
     }
 
 
-    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks, bool assertOnFailure)
+    void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure)
     {
         if (s_optrShaderSystem == nullptr)
         {
