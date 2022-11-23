@@ -80,8 +80,10 @@ in VS_OUT
 
 void main()
 {
-	//vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
+	#ifdef DISCARD_ALPHA
+	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
 
-	//if(sampledColor.a < 0.5)
-	//	discard;
+	if(sampledColor.a < 0.5)
+		discard;
+	#endif
 }

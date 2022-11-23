@@ -246,143 +246,143 @@ namespace r2::asset::pln
 
 
 	//@Temporary
-	bool GenerateMaterialParamsFromOldMaterialPack(const flat::Material* const materialData, const std::string& pathOfSource, const std::string& outputDir)
-	{
-		//create the folder
-		std::filesystem::path sourceFilePath = pathOfSource;
+	//bool GenerateMaterialParamsFromOldMaterialPack(const flat::Material* const materialData, const std::string& pathOfSource, const std::string& outputDir)
+	//{
+	//	//create the folder
+	//	std::filesystem::path sourceFilePath = pathOfSource;
 
-		std::filesystem::path paramsPackDir = outputDir / sourceFilePath.stem();
+	//	std::filesystem::path paramsPackDir = outputDir / sourceFilePath.stem();
 
-		std::filesystem::create_directory(paramsPackDir);
+	//	std::filesystem::create_directory(paramsPackDir);
 
-		//now convert the materialData to MaterialParams
-		flatbuffers::FlatBufferBuilder builder;
+	//	//now convert the materialData to MaterialParams
+	//	flatbuffers::FlatBufferBuilder builder;
 
-		std::vector<flatbuffers::Offset<flat::MaterialULongParam>> ulongParams;
-		std::vector<flatbuffers::Offset<flat::MaterialFloatParam>> floatParams;
-		std::vector<flatbuffers::Offset<flat::MaterialColorParam>> colorParams;
-		std::vector<flatbuffers::Offset<flat::MaterialTextureParam>> textureParams;
+	//	std::vector<flatbuffers::Offset<flat::MaterialULongParam>> ulongParams;
+	//	std::vector<flatbuffers::Offset<flat::MaterialFloatParam>> floatParams;
+	//	std::vector<flatbuffers::Offset<flat::MaterialColorParam>> colorParams;
+	//	std::vector<flatbuffers::Offset<flat::MaterialTextureParam>> textureParams;
 
-		ulongParams.push_back(flat::CreateMaterialULongParam(builder, flat::MaterialPropertyType_SHADER, materialData->shader()));
+	//	ulongParams.push_back(flat::CreateMaterialULongParam(builder, flat::MaterialPropertyType_SHADER, materialData->shader()));
 
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_ROUGHNESS, materialData->roughness()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_METALLIC, materialData->metallic()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_REFLECTANCE, materialData->reflectance()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_AMBIENT_OCCLUSION, materialData->ambientOcclusion()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_CLEAR_COAT, materialData->clearCoat()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS, materialData->clearCoatRoughness()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_HEIGHT_SCALE, materialData->heightScale()));
-		floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_ANISOTROPY, materialData->anisotropy()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_ROUGHNESS, materialData->roughness()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_METALLIC, materialData->metallic()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_REFLECTANCE, materialData->reflectance()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_AMBIENT_OCCLUSION, materialData->ambientOcclusion()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_CLEAR_COAT, materialData->clearCoat()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS, materialData->clearCoatRoughness()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_HEIGHT_SCALE, materialData->heightScale()));
+	//	floatParams.push_back(flat::CreateMaterialFloatParam(builder, flat::MaterialPropertyType_ANISOTROPY, materialData->anisotropy()));
 
-		flat::Colour colour = { materialData->baseColor()->r(), materialData->baseColor()->g(), materialData->baseColor()->b(), materialData->baseColor()->a() };
-		
-		colorParams.push_back(flat::CreateMaterialColorParam(builder, flat::MaterialPropertyType_ALBEDO, &colour));
+	//	flat::Colour colour = { materialData->baseColor()->r(), materialData->baseColor()->g(), materialData->baseColor()->b(), materialData->baseColor()->a() };
+	//	
+	//	colorParams.push_back(flat::CreateMaterialColorParam(builder, flat::MaterialPropertyType_ALBEDO, &colour));
 
-		if (materialData->diffuseTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_ALBEDO,
-				materialData->diffuseTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->diffuseTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_ALBEDO,
+	//			materialData->diffuseTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->normalMapTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_NORMAL,
-				materialData->normalMapTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
-		
-		if (materialData->emissionTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_EMISSION,
-				materialData->emissionTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->normalMapTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_NORMAL,
+	//			materialData->normalMapTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
+	//	
+	//	if (materialData->emissionTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_EMISSION,
+	//			materialData->emissionTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->metallicTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_METALLIC,
-				materialData->metallicTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->metallicTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_METALLIC,
+	//			materialData->metallicTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->roughnessTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_ROUGHNESS,
-				materialData->roughnessTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->roughnessTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_ROUGHNESS,
+	//			materialData->roughnessTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->aoTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_AMBIENT_OCCLUSION,
-				materialData->aoTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->aoTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_AMBIENT_OCCLUSION,
+	//			materialData->aoTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->heightTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_HEIGHT,
-				materialData->heightTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->heightTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_HEIGHT,
+	//			materialData->heightTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		if (materialData->anisotropyTexture())
-		{
-			textureParams.push_back(flat::CreateMaterialTextureParam(
-				builder,
-				flat::MaterialPropertyType_ANISOTROPY,
-				materialData->anisotropyTexture(),
-				flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
-		}
+	//	if (materialData->anisotropyTexture())
+	//	{
+	//		textureParams.push_back(flat::CreateMaterialTextureParam(
+	//			builder,
+	//			flat::MaterialPropertyType_ANISOTROPY,
+	//			materialData->anisotropyTexture(),
+	//			flat::MaterialPropertyPackingType_RGBA, materialData->texturePackName()));
+	//	}
 
-		//create the material params
-		const auto materialParams = flat::CreateMaterialParams(
-			builder,
-			materialData->name(),
-			builder.CreateVector(ulongParams), 0,
-			builder.CreateVector(floatParams),
-			builder.CreateVector(colorParams),
-			builder.CreateVector(textureParams), 0);
+	//	//create the material params
+	//	const auto materialParams = flat::CreateMaterialParams(
+	//		builder,
+	//		materialData->name(),
+	//		builder.CreateVector(ulongParams), 0,
+	//		builder.CreateVector(floatParams),
+	//		builder.CreateVector(colorParams),
+	//		builder.CreateVector(textureParams), 0);
 
-		//Write the temp file
-		builder.Finish(materialParams);
+	//	//Write the temp file
+	//	builder.Finish(materialParams);
 
-		byte* buf = builder.GetBufferPointer();
-		u32 size = builder.GetSize();
+	//	byte* buf = builder.GetBufferPointer();
+	//	u32 size = builder.GetSize();
 
-		std::string tempFile = (paramsPackDir / sourceFilePath.stem()).string() + ".bin";
-		
-		bool wroteTempFile = utils::WriteFile(tempFile, (char*)buf, size);
+	//	std::string tempFile = (paramsPackDir / sourceFilePath.stem()).string() + ".bin";
+	//	
+	//	bool wroteTempFile = utils::WriteFile(tempFile, (char*)buf, size);
 
-		std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
+	//	std::string flatbufferSchemaPath = R2_ENGINE_FLAT_BUFFER_SCHEMA_PATH;
 
-		char materialParamsSchemaPath[r2::fs::FILE_PATH_LENGTH];
+	//	char materialParamsSchemaPath[r2::fs::FILE_PATH_LENGTH];
 
-		r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialParamsSchemaPath, MATERIAL_PARAMS_FBS.c_str());
+	//	r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), materialParamsSchemaPath, MATERIAL_PARAMS_FBS.c_str());
 
-		bool generatedJSON = flathelp::GenerateFlatbufferJSONFile(paramsPackDir.string(), materialParamsSchemaPath, tempFile);
-		
-		R2_CHECK(generatedJSON, "We didn't generate the JSON file from: %s", tempFile);
+	//	bool generatedJSON = flathelp::GenerateFlatbufferJSONFile(paramsPackDir.string(), materialParamsSchemaPath, tempFile);
+	//	
+	//	R2_CHECK(generatedJSON, "We didn't generate the JSON file from: %s", tempFile);
 
-		std::filesystem::remove(tempFile);
+	//	std::filesystem::remove(tempFile);
 
-		return generatedJSON;
-	}
+	//	return generatedJSON;
+	//}
 
 	bool RegenerateMaterialParamsPackManifest(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir)
 	{
@@ -512,6 +512,7 @@ namespace r2::asset::pln
 			std::vector<flatbuffers::Offset<flat::MaterialColorParam>> colorParams;
 			std::vector<flatbuffers::Offset<flat::MaterialTextureParam>> textureParams;
 			std::vector<flatbuffers::Offset<flat::MaterialStringParam>> stringParams;
+			std::vector<flatbuffers::Offset<flat::MaterialShaderParam>> shaderParams;
 
 			if (materialParams->ulongParams())
 			{
@@ -581,6 +582,15 @@ namespace r2::asset::pln
 				}
 			}
 
+			if (materialParams->shaderParams())
+			{
+				for (flatbuffers::uoffset_t i = 0; i < materialParams->shaderParams()->size(); ++i)
+				{
+					const auto shaderParam = materialParams->shaderParams()->Get(i);
+					shaderParams.push_back(flat::CreateMaterialShaderParam(builder, shaderParam->propertyType(), shaderParam->shader(), shaderParam->shaderStageName(), builder.CreateString(shaderParam->value())));
+				}
+			}
+
 			auto pack = flat::CreateMaterialParams(
 				builder,
 				materialParams->name(),
@@ -589,7 +599,8 @@ namespace r2::asset::pln
 				builder.CreateVector(floatParams),
 				builder.CreateVector(colorParams),
 				builder.CreateVector(textureParams),
-				builder.CreateVector(stringParams));
+				builder.CreateVector(stringParams),
+				builder.CreateVector(shaderParams));
 
 			flatMaterialParams.push_back(pack);
 

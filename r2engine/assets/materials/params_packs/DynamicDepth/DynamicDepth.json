@@ -98,5 +98,14 @@
       texturePackName: 14695981039346656837,
       texturePackNameStr:""
     }
+  ],
+  stringParams:[],
+  shaderParams:[
+    {
+      propertyType: "SHADER_DEFINE",
+      shader: 13212531284513343367,
+      shaderStageName: "DepthFrag.fs",
+      value: "#define DISCARD_ALPHA 1"
+    }
   ]
 }
