@@ -27,146 +27,146 @@ namespace r2::asset::pln
     const std::string PART_EXT = ".glsl";
     
     
-    bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestFilePath, const std::string& rawPath)
-    {
-        size_t oldSize = currentManifests.size();
-        //@TODO(Serge): add in support for changes to names of files as well/adding geometry shaders names directly to the manifests
-        
-        std::vector<ShaderManifest> newManifests;
-        
-        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
-        {
-            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != VERTEX_EXT))
-            {
-                continue;
-            }
-            
-            char cStringPath[fs::FILE_PATH_LENGTH];
+  //  bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestFilePath, const std::string& rawPath)
+  //  {
+  //      size_t oldSize = currentManifests.size();
+  //      //@TODO(Serge): add in support for changes to names of files as well/adding geometry shaders names directly to the manifests
+  //      
+  //      std::vector<ShaderManifest> newManifests;
+  //      
+  //      for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+  //      {
+  //          if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != VERTEX_EXT))
+  //          {
+  //              continue;
+  //          }
+  //          
+  //          char cStringPath[fs::FILE_PATH_LENGTH];
 
-            fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+  //          fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
-            ShaderManifest newManifest;
-            newManifest.basePath = rawPath;
-            newManifest.hashName = STRING_ID( file.path().stem().string().c_str() );
-            newManifest.vertexShaderPath = std::string(cStringPath);
-            newManifests.push_back(newManifest);
-        }
+  //          ShaderManifest newManifest;
+  //          newManifest.basePath = rawPath;
+  //          newManifest.hashName = STRING_ID( file.path().stem().string().c_str() );
+  //          newManifest.vertexShaderPath = std::string(cStringPath);
+  //          newManifests.push_back(newManifest);
+  //      }
 
-        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
-        {
-            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != COMPUTE_EXT))
-            {
-                continue;
-            }
+  //      for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+  //      {
+  //          if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != COMPUTE_EXT))
+  //          {
+  //              continue;
+  //          }
 
-			char cStringPath[fs::FILE_PATH_LENGTH];
+		//	char cStringPath[fs::FILE_PATH_LENGTH];
 
-			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+		//	fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
-            ShaderManifest newManifest;
-            newManifest.basePath = rawPath;
+  //          ShaderManifest newManifest;
+  //          newManifest.basePath = rawPath;
 
-            newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
-            newManifest.computeShaderPath = std::string(cStringPath);
-            newManifests.push_back(newManifest);
-        }
+  //          newManifest.hashName = STRING_ID(file.path().stem().string().c_str());
+  //          newManifest.computeShaderPath = std::string(cStringPath);
+  //          newManifests.push_back(newManifest);
+  //      }
 
-        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
-        {
-			if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != PART_EXT))
-			{
-				continue;
-			}
+  //      for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+  //      {
+		//	if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != PART_EXT))
+		//	{
+		//		continue;
+		//	}
 
-			char cStringPath[fs::FILE_PATH_LENGTH];
+		//	char cStringPath[fs::FILE_PATH_LENGTH];
 
-			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
-
-
-
-			auto r = file.path().lexically_relative(rawPath);
-
-            char sanitizedCStringName[fs::FILE_PATH_LENGTH];
-
-            fs::utils::SanitizeSubPath(r.string().c_str(), sanitizedCStringName);
-
-            //printf("part name: %s\n", sanitizedCStringName);
-		//	auto pos = r.string().find('.');
-
-		//	std::string resultString = r.string().substr(0, pos);
-
-		//	printf("%s\n", resultString.c_str());
+		//	fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
 
 
-			ShaderManifest newManifest;
-            newManifest.basePath = rawPath;
-			std::string stringName = sanitizedCStringName;
-			newManifest.hashName = STRING_ID(stringName.c_str());
-			newManifest.partPath = std::string(cStringPath);
-			newManifests.push_back(newManifest);
-        }
-        
-        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
-        {
-            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != FRAGMENT_EXT))
-            {
-                continue;
-            }
-            
-            //find the matching vertex shader
-            for (auto& shaderManifest : newManifests)
-            {
-                std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
-                if (vertexPath.stem() == file.path().stem())
-                {
-					char cStringPath[fs::FILE_PATH_LENGTH];
 
-					fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+		//	auto r = file.path().lexically_relative(rawPath);
 
-                    shaderManifest.fragmentShaderPath = std::string(cStringPath);
-                    break;
-                }
-            }
-        }
-        
-        for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
-        {
-            if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != GEOMETRY_EXT))
-            {
-                continue;
-            }
-            
-            //find the matching vertex shader
-            for (auto& shaderManifest : newManifests)
-            {
-                std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
-                if (vertexPath.stem() == file.path().stem())
-                {
-					char cStringPath[fs::FILE_PATH_LENGTH];
+  //          char sanitizedCStringName[fs::FILE_PATH_LENGTH];
 
-					fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+  //          fs::utils::SanitizeSubPath(r.string().c_str(), sanitizedCStringName);
 
-                    shaderManifest.geometryShaderPath = std::string(cStringPath);
-                    break;
-                }
-            }
-        }
-        
-        //remove all degenerate cases
-        auto iter = std::remove_if(newManifests.begin(), newManifests.end(), [](const ShaderManifest& manifest){
-            return
-                manifest.computeShaderPath == "" && manifest.partPath == "" && (manifest.vertexShaderPath == "" || manifest.fragmentShaderPath == "");
-        });
-        newManifests.erase(iter, newManifests.end());
-        
-        if (oldSize != newManifests.size())
-        {
-            currentManifests = newManifests;
-            return GenerateShaderManifests(currentManifests, manifestFilePath, rawPath);
-        }
-        
-        return true;
-    }
+  //          //printf("part name: %s\n", sanitizedCStringName);
+		////	auto pos = r.string().find('.');
+
+		////	std::string resultString = r.string().substr(0, pos);
+
+		////	printf("%s\n", resultString.c_str());
+
+
+		//	ShaderManifest newManifest;
+  //          newManifest.basePath = rawPath;
+		//	std::string stringName = sanitizedCStringName;
+		//	newManifest.hashName = STRING_ID(stringName.c_str());
+		//	newManifest.partPath = std::string(cStringPath);
+		//	newManifests.push_back(newManifest);
+  //      }
+  //      
+  //      for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+  //      {
+  //          if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != FRAGMENT_EXT))
+  //          {
+  //              continue;
+  //          }
+  //          
+  //          //find the matching vertex shader
+  //          for (auto& shaderManifest : newManifests)
+  //          {
+  //              std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
+  //              if (vertexPath.stem() == file.path().stem())
+  //              {
+		//			char cStringPath[fs::FILE_PATH_LENGTH];
+
+		//			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+  //                  shaderManifest.fragmentShaderPath = std::string(cStringPath);
+  //                  break;
+  //              }
+  //          }
+  //      }
+  //      
+  //      for (const auto& file : std::filesystem::recursive_directory_iterator(rawPath))
+  //      {
+  //          if (std::filesystem::file_size(file.path()) <= 0 || (file.path().extension().string() != GEOMETRY_EXT))
+  //          {
+  //              continue;
+  //          }
+  //          
+  //          //find the matching vertex shader
+  //          for (auto& shaderManifest : newManifests)
+  //          {
+  //              std::filesystem::path vertexPath(shaderManifest.vertexShaderPath);
+  //              if (vertexPath.stem() == file.path().stem())
+  //              {
+		//			char cStringPath[fs::FILE_PATH_LENGTH];
+
+		//			fs::utils::SanitizeSubPath(file.path().string().c_str(), cStringPath);
+
+  //                  shaderManifest.geometryShaderPath = std::string(cStringPath);
+  //                  break;
+  //              }
+  //          }
+  //      }
+  //      
+  //      //remove all degenerate cases
+  //      auto iter = std::remove_if(newManifests.begin(), newManifests.end(), [](const ShaderManifest& manifest){
+  //          return
+  //              manifest.computeShaderPath == "" && manifest.partPath == "" && (manifest.vertexShaderPath == "" || manifest.fragmentShaderPath == "");
+  //      });
+  //      newManifests.erase(iter, newManifests.end());
+  //      
+  //      if (oldSize != newManifests.size())
+  //      {
+  //          currentManifests = newManifests;
+  //          return GenerateShaderManifests(currentManifests, manifestFilePath, rawPath);
+  //      }
+  //      
+  //      return true;
+  //  }
 
     bool GenerateNonInternalShaderManifestsFromDirectories(std::vector<ShaderManifest>& nonInternalShaderManifests, const std::string& manifestPath, const std::string& rawPath)
     {

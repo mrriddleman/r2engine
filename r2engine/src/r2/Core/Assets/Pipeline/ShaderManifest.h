@@ -23,7 +23,7 @@ namespace r2::asset::pln
         std::string basePath = "";
     };
     
-    bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestPath, const std::string& rawPath);
+   // bool BuildShaderManifestsIfNeeded(std::vector<ShaderManifest>& currentManifests, const std::string& manifestPath, const std::string& rawPath);
     bool GenerateNonInternalShaderManifestsFromDirectories(std::vector<ShaderManifest>& nonInternalShaderManifests, const std::string& manifestPath, const std::string& rawPath);
 
     std::vector<ShaderManifest> LoadAllShaderManifests(const std::string& shaderManifestPath);

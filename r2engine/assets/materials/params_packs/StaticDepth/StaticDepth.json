@@ -104,7 +104,7 @@
     {
       propertyType: "SHADER_DEFINE",
       shader: 8833047848476087300,
-      shaderStageName: "DepthFrag.fs",
+      shaderStageName: "Depth/DepthFrag.fs",
       value: "#define DISCARD_ALPHA 0"
     }
   ]

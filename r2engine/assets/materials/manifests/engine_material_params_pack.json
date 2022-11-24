@@ -557,7 +557,7 @@
         {
           propertyType: "SHADER_DEFINE",
           shader: 13212531284513343367,
-          shaderStageName: 14838497363369575431,
+          shaderStageName: 10288666137829920209,
           value: "#define DISCARD_ALPHA 1"
         }
       ]
@@ -1344,7 +1344,7 @@
         {
           propertyType: "SHADER_DEFINE",
           shader: 8833047848476087300,
-          shaderStageName: 14838497363369575431,
+          shaderStageName: 10288666137829920209,
           value: "#define DISCARD_ALPHA 0"
         }
       ]

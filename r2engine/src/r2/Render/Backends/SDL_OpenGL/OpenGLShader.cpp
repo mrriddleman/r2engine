@@ -606,7 +606,8 @@ namespace r2::draw::shader
                 {
                     const flat::MaterialShaderParam* shaderDefine = r2::sarr::At(*materialShaderDefines, i);
                     u32 strLen = strlen(shaderDefine->value()->c_str());
-                    strcat(&shaderParsedOutIncludes[currentOffset], shaderDefine->value()->c_str());
+                    const char* define = shaderDefine->value()->c_str();
+                    strcat(&shaderParsedOutIncludes[currentOffset], define);
                     strcat(&shaderParsedOutIncludes[currentOffset], "\n");
                     lengthOfParsedShaderData += strLen + 1;
                 }
