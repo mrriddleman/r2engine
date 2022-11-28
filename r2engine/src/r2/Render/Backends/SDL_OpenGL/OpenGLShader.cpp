@@ -725,7 +725,11 @@ namespace r2::draw::shader
         {
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
             r2::sarr::Push(*shaderSourceFiles, nextPiece);
+
+         //   printf("%s\n", nextPiece);
         }
+
+
 	}
 
 
@@ -804,6 +808,8 @@ namespace r2::draw::shader
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), fragmentShaderFilePath, fileNameWithExtension);
 
+            
+
 			auto shaderName = STRING_ID(fileNameWithExtension);
 
 			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
@@ -811,6 +817,17 @@ namespace r2::draw::shader
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
             ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+
+			//if (std::string(fileNameWithExtension) == "AnimModel.fs")
+			//{
+   //             const auto numParts =  r2::sarr::Size(*fragmentShaderParts);
+
+   //             for (int i = 0; i < numParts; ++i)
+   //             {
+   //                 printf("%s\n", r2::sarr::At(*fragmentShaderParts, i));
+   //             }
+			//}
+
 
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);

@@ -275,7 +275,7 @@
       vertexPath: "",
       fragmentPath: "",
       geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/CalculateCascadesSDSM.cs",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/SDSM/CalculateCascadesSDSM.cs",
       binaryPath: "",
       partPath: ""
     },
@@ -284,7 +284,7 @@
       vertexPath: "",
       fragmentPath: "",
       geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/CalculateLogPartitions.cs",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/SDSM/CalculateLogPartitions.cs",
       binaryPath: "",
       partPath: ""
     },
@@ -293,7 +293,7 @@
       vertexPath: "",
       fragmentPath: "",
       geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/ReduceZBounds.cs",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/SDSM/ReduceZBounds.cs",
       binaryPath: "",
       partPath: ""
     },
@@ -311,9 +311,63 @@
       vertexPath: "",
       fragmentPath: "",
       geometryPath: "",
-      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Spotlight/SpotLightLightMatrices.cs",
+      computePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/SpotLight/SpotLightLightMatrices.cs",
       binaryPath: "",
       partPath: ""
+    },
+    {
+      shaderName: 7071284666584936570,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Clusters/Clusters.glsl"
+    },
+    {
+      shaderName: 5762959006479727521,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/CommonFunctions.glsl"
+    },
+    {
+      shaderName: 15522919484301207935,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/Defines.glsl"
+    },
+    {
+      shaderName: 8129640347876616382,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/Texture.glsl"
+    },
+    {
+      shaderName: 4718830794729610999,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/Vectors.glsl"
+    },
+    {
+      shaderName: 5070511289368209877,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthUtils.glsl"
     },
     {
       shaderName: 18377631282569405816,
@@ -323,6 +377,69 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/Blur/BlurConstants.glsl"
+    },
+    {
+      shaderName: 18031914109203871503,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/AdaptiveDepthBias.glsl"
+    },
+    {
+      shaderName: 8308635020530014763,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/Directional/DirectionalShadows.glsl"
+    },
+    {
+      shaderName: 12024154783948609209,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/PointLight/PointLightShadows.glsl"
+    },
+    {
+      shaderName: 17648526114376186688,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/ShadowCommon.glsl"
+    },
+    {
+      shaderName: 4936583456438278267,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/ShadowData.glsl"
+    },
+    {
+      shaderName: 3024478782004516216,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/ShadowFilters.glsl"
+    },
+    {
+      shaderName: 5882972953372377739,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/SpotLight/SpotLightShadows.glsl"
     }
   ],
   basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"

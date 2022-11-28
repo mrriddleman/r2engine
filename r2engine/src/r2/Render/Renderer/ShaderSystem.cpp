@@ -61,6 +61,9 @@ namespace
 
 namespace r2::draw::shadersystem
 {
+#ifdef R2_ASSET_PIPELINE
+    void BuildShaderPathToManifests(const r2::ShaderManifests* manifestFileData);
+#endif
 
     void* LoadShaderManifestBuffer(const char* shaderManifestPath);
     void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure);
@@ -174,6 +177,11 @@ namespace r2::draw::shadersystem
         R2_CHECK(materialParamsPacks != nullptr, "We should have material params packs");
 
         s_optrShaderSystem->mnoptrMaterialParamPacks = materialParamsPacks;
+
+#ifdef R2_ASSET_PIPELINE
+        BuildShaderPathToManifests(s_optrShaderSystem->mAppShaderManifests);
+        BuildShaderPathToManifests(s_optrShaderSystem->mInternalShaderManifests);
+#endif
 
         LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, assertOnFailure);
         LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, assertOnFailure);
@@ -624,20 +632,6 @@ namespace r2::draw::shadersystem
 
             if (shaderHandle == InvalidShader)
             {
-
-#ifdef R2_ASSET_PIPELINE
-				if(!manifestFileData->manifests()->Get(i)->partPath()->str().empty())
-                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->partPath()->str()] = manifestFileData;
-                if(!manifestFileData->manifests()->Get(i)->vertexPath()->str().empty())
-                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->vertexPath()->str()] = manifestFileData;
-                if(!manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty())
-                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->fragmentPath()->str()] = manifestFileData;
-                if(!manifestFileData->manifests()->Get(i)->geometryPath()->str().empty())
-                    s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->geometryPath()->str()] = manifestFileData;
-				if (!manifestFileData->manifests()->Get(i)->computePath()->str().empty())
-					s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->computePath()->str()] = manifestFileData;
-#endif
-
                 //ignore part paths
                 if (manifestFileData->manifests()->Get(i)->vertexPath()->str().empty() &&
                     manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty() &&
@@ -823,6 +817,32 @@ namespace r2::draw::shadersystem
 
         return iter->second;
     }
+
+    void BuildShaderPathToManifests(const r2::ShaderManifests* manifestFileData)
+    {
+		if (s_optrShaderSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the shader system yet!");
+			return;
+		}
+
+		flatbuffers::uoffset_t numManifests = manifestFileData->manifests()->size();
+
+        for (flatbuffers::uoffset_t i = 0; i < numManifests; ++i)
+        {
+			if (!manifestFileData->manifests()->Get(i)->partPath()->str().empty())
+				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->partPath()->str()] = manifestFileData;
+			if (!manifestFileData->manifests()->Get(i)->vertexPath()->str().empty())
+				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->vertexPath()->str()] = manifestFileData;
+			if (!manifestFileData->manifests()->Get(i)->fragmentPath()->str().empty())
+				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->fragmentPath()->str()] = manifestFileData;
+			if (!manifestFileData->manifests()->Get(i)->geometryPath()->str().empty())
+				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->geometryPath()->str()] = manifestFileData;
+			if (!manifestFileData->manifests()->Get(i)->computePath()->str().empty())
+				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->computePath()->str()] = manifestFileData;
+        }
+    }
+
 
 #endif // R2_ASSET_PIPELINE
 

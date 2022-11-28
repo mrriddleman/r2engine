@@ -4,55 +4,59 @@
 
 
 
-const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
-const float SHADOW_FILTER_MAX_SIZE = 0.0035f;
-const float PENUMBRA_FILTER_SCALE = 2.4f;
-const uint NUM_SIDES_FOR_POINTLIGHT = 6;
-const vec3 GLOBAL_UP = vec3(0, 0, 1);
+// const float NUM_SOFT_SHADOW_SAMPLES = 16.0;
+// const float SHADOW_FILTER_MAX_SIZE = 0.0035f;
+// const float PENUMBRA_FILTER_SCALE = 2.4f;
+
 
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec3 NormalColor;
 layout (location = 2) out vec4 SpecularColor;
 
-#define PI 3.141596
-#define TWO_PI 2.0 * PI
+
+#include "Common/Defines.glsl"
+#include "Common/CommonFunctions.glsl"
+#include "Common/Vectors.glsl"
+#include "Clusters/Clusters.glsl"
+#include "Shadows/Directional/DirectionalShadows.glsl"
+#include "Shadows/PointLight/PointLightShadows.glsl"
+#include "Shadows/SpotLight/SpotLightShadows.glsl"
+
+
 #define MIN_PERCEPTUAL_ROUGHNESS 0.045
-#define NUM_FRUSTUM_SPLITS 4 //TODO(Serge): pass in
 
 #define NUM_SPOTLIGHT_LAYERS 1
 #define NUM_POINTLIGHT_LAYERS 6
 #define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
 
-#define MAX_NUM_DIRECTIONAL_LIGHTS 50
-#define MAX_NUM_POINT_LIGHTS 4096
-#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_SHADOW_MAP_PAGES 50
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
 
-#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
+// #define MAX_NUM_SHADOW_MAP_PAGES 50
+// #define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
+// #define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
+// #define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+//#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
+//#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 
-struct VolumeTileAABB
-{
-	vec4 minPoint;
-	vec4 maxPoint;
-};
+// struct Tex2DAddress
+// {
+// 	uint64_t  container;
+// 	float page;
+// 	int channel;
+// };
 
-struct LightGrid{
-    uint pointLightOffset;
-    uint pointLightCount;
-    uint spotLightOffset;
-    uint spotLightCount;
-};
+// struct VolumeTileAABB
+// {
+// 	vec4 minPoint;
+// 	vec4 maxPoint;
+// };
+
+// struct LightGrid{
+//     uint pointLightOffset;
+//     uint pointLightCount;
+//     uint spotLightOffset;
+//     uint spotLightCount;
+// };
 
 struct LightProperties
 {
@@ -133,18 +137,18 @@ struct Material
 	int 	padding;
 };
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter;
-};
+// layout (std140, binding = 1) uniform Vectors
+// {
+//     vec4 cameraPosTimeW;
+//     vec4 exposureNearFar;
+//     vec4 cascadePlanes;
+//     vec4 shadowMapSizes;
+// 	vec4 fovAspectResXResY;
+//     uint64_t frame;
+//     vec2 clusterScaleBias;
+//     uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+//     vec4 jitter;
+// };
 
 
 layout (std430, binding = 1) buffer Materials
@@ -204,57 +208,57 @@ layout (std140, binding = 2) uniform Surfaces
 
 
 
-layout (std140, binding = 3) uniform SDSMParams
-{
-	vec4 lightSpaceBorder;
-	vec4 maxScale;
-	vec4 projMultSplitScaleZMultLambda;
-	float dilationFactor;
-	uint scatterTileDim;
-	uint reduceTileDim;
-	uint padding;
-	vec4 splitScaleMultFadeFactor;
-	Tex2DAddress blueNoiseTexture;
-};
+// layout (std140, binding = 3) uniform SDSMParams
+// {
+// 	vec4 lightSpaceBorder;
+// 	vec4 maxScale;
+// 	vec4 projMultSplitScaleZMultLambda;
+// 	float dilationFactor;
+// 	uint scatterTileDim;
+// 	uint reduceTileDim;
+// 	uint padding;
+// 	vec4 splitScaleMultFadeFactor;
+// 	Tex2DAddress blueNoiseTexture;
+// };
 
-//@NOTE(Serge): we can only have 4 cascades like this
-struct Partition
-{
-	vec4 intervalBegin;
-	vec4 intervalEnd;
-};
+// //@NOTE(Serge): we can only have 4 cascades like this
+// struct Partition
+// {
+// 	vec4 intervalBegin;
+// 	vec4 intervalEnd;
+// };
 
-struct UPartition
-{
-	uvec4 intervalBegin;
-	uvec4 intervalEnd;
-};
+// struct UPartition
+// {
+// 	uvec4 intervalBegin;
+// 	uvec4 intervalEnd;
+// };
 
 
-layout (std430, binding = 6) buffer ShadowData
-{
-	Partition gPartitions;
-	UPartition gPartitionsU;
+// layout (std430, binding = 6) buffer ShadowData
+// {
+// 	Partition gPartitions;
+// 	UPartition gPartitionsU;
 
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
+// 	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
+// 	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
 
-	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
+// 	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
 
-	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
-	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
-	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
-};
+// 	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
+// 	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
+// 	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
+// };
 
-layout (std430, binding=8) buffer Clusters
-{
-	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
-	bool activeClusters[MAX_CLUSTERS];
-	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
-	LightGrid lightGrid[MAX_CLUSTERS];
-	VolumeTileAABB clusters[MAX_CLUSTERS];
-};
+// layout (std430, binding=8) buffer Clusters
+// {
+// 	uvec2 globalLightIndexCount;
+// 	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
+// 	bool activeClusters[MAX_CLUSTERS];
+// 	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
+// 	LightGrid lightGrid[MAX_CLUSTERS];
+// 	VolumeTileAABB clusters[MAX_CLUSTERS];
+// };
 
 in VS_OUT
 {
@@ -276,23 +280,23 @@ in VS_OUT
 
 vec4 splitColors[NUM_FRUSTUM_SPLITS] = {vec4(2, 0.0, 0.0, 1.0), vec4(0.0, 2, 0.0, 1.0), vec4(0.0, 0.0, 2, 1.0), vec4(2, 2, 0.0, 1.0)};
 
-vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
-float InterleavedGradientNoise(vec2 screenPosition);
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID);
-float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
+// vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi);
+// float InterleavedGradientNoise(vec2 screenPosition);
+// float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID);
+// float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth);
 
-float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
-float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows);
+// float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
+// float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth);
+// float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows);
+// float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows);
 
-float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
+// float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int lightIndex, bool softShadows);
 
-float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows);
+// float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows);
 
-float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth);
-float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth);
-float SamplePointlightShadowMap(vec3 fragToLight, vec3 offset, int64_t lightID);
+// float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth);
+// float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth);
+// float SamplePointlightShadowMap(vec3 fragToLight, vec3 offset, int64_t lightID);
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat);
 
@@ -355,20 +359,20 @@ vec3 Eval_BRDF(
 
 
 vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv, inout vec3 specular, inout float roughness);
-uint GetClusterIndex(vec2 pixelCoord);
-float LinearizeDepth(float depth);
-uint GetDepthSlice(float z);
+//uint GetClusterIndex(vec2 pixelCoord);
+//float LinearizeDepth(float depth);
+//uint GetDepthSlice(float z);
 
 
-float GetTextureModifier(Tex2DAddress addr)
-{
-	return float( min(max(addr.container, 0), 1) );
-}
+// float GetTextureModifier(Tex2DAddress addr)
+// {
+// 	return float( min(max(addr.container, 0), 1) );
+// }
 
-float Saturate(float x)
-{
-	return clamp(x, 0.0, 1.0);
-}
+// float Saturate(float x)
+// {
+// 	return clamp(x, 0.0, 1.0);
+// }
 
 vec4 DebugFrustumSplitColor()
 {
@@ -1070,7 +1074,10 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 
 	 	if(dirLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 	 	{
-	 	 	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.lightID, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+
+	 		shadow = ShadowCalculation(shadowsSurface, fs_in.fragPos, N, cameraPosTimeW.xyz, dirLight.direction.xyz, dirLight.lightProperties.lightID, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+
+	 	 //	shadow = ShadowCalculation(fs_in.fragPos, dirLight.direction.xyz, dirLight.lightProperties.lightID, dirLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 	 	}
 
 	 	vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
@@ -1078,7 +1085,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 	 	L0 += result * radiance * NoL;
 	 }
 
-	uint tileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)));
+	uint tileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)), fovAspectResXResY.zw, exposureNearFar.yz, clusterScaleBias, clusterTileSizes, zPrePassSurface);
 	uint pointLightCount = lightGrid[tileIndex].pointLightCount;
 	uint pointLightIndexOffset = lightGrid[tileIndex].pointLightOffset;
 
@@ -1105,7 +1112,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 			vec3 fragToPointLight = fs_in.fragPos - pointLight.position.xyz;
 
 			//float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
-			shadow = PointLightShadowCalculation(fragToPointLight, cameraPosTimeW.xyz, pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+			//shadow = PointLightShadowCalculation(fragToPointLight, cameraPosTimeW.xyz, pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+			shadow = PointLightShadowCalculation(pointLightShadowsSurface, fs_in.fragPos, fragToPointLight, cameraPosTimeW.xyz, pointLight.lightProperties.intensity, pointLight.lightProperties.lightID, pointLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 		}
 
 		vec3 result = Eval_BRDF(anisotropy, at, ab, anisotropicT, anisotropicB, diffuseColor, N, V, L, F0, NoV, ToV, BoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, 1.0 - shadow);
@@ -1148,7 +1156,8 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 
 		if(spotLight.lightProperties.castsShadowsUseSoftShadows.x > 0)
 		{
-			shadow = SpotLightShadowCalculation(fs_in.fragPos, spotLight.direction.xyz, spotLight.lightProperties.lightID, i, spotLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+			shadow = SpotLightShadowCalculation(shadowsSurface, fs_in.fragPos, N, spotLight.direction.xyz, spotLight.lightProperties.lightID, spotLights[i].lightSpaceMatrix, spotLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
+			//shadow = SpotLightShadowCalculation(fs_in.fragPos, spotLight.direction.xyz, spotLight.lightProperties.lightID, i, spotLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 		}
 
 
@@ -1172,760 +1181,760 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 	return color;
 }
 
-vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
-{
-	const float OFFSET_SCALE = 0.0f;
-
-	float texelSize = 2.0 / shadowMapSizes[cascadeIndex];
-	float nmlOffsetScale = clamp(1.0 - NoL, 0.0, 1.0);
-	return texelSize * OFFSET_SCALE * nmlOffsetScale * normal;
-}
-
-float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth)
-{
-	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
-	vec3 coord = vec3(uv, cascadeIndex + gDirectionLightShadowMapPages[int(lightID)]);
-	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
-
-	return depth > shadowSample ? 1.0 : 0.0;
-}
-
-float SampleSpotlightShadowMapDepth(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID)
-{
-	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
-	vec3 coord = vec3(uv, gSpotLightShadowMapPages[int(spotlightID)]);
-	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
-	return shadowSample;
-}
-
-float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth)
-{
-	float shadowSample = SampleSpotlightShadowMapDepth(base_uv, u, v, shadowMapSizeInv, spotlightID);
-	return depth > shadowSample ? 1.0 : 0.0;
-}
-
-vec3 sampleOffsetDirections[20] = vec3[]
-(
-   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
-   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
-   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
-   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
-   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
-);   
-
-
-
-float SamplePointlightShadowMap(vec3 fragToLight, vec3 offset, int64_t lightID)
-{
-	vec4 coord = vec4(fragToLight + offset, gPointLightShadowMapPages[int(lightID)]);
-	float shadowSample = texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r;
-	return shadowSample;
-}
-
-float OptimizedPCF7(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
-{
-	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
-
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
-
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
-
-	float s = (uv.x + 0.5 - base_uv.x);
-	float t = (uv.y + 0.5 - base_uv.y);
-
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
-
-	float sum = 0;
-
-	float uw0 = (5 * s - 6);
-    float uw1 = (11 * s - 28);
-    float uw2 = -(11 * s + 17);
-    float uw3 = -(5 * s + 1);
-
-    float u0 = (4 * s - 5) / uw0 - 3;
-    float u1 = (4 * s - 16) / uw1 - 1;
-    float u2 = -(7 * s + 5) / uw2 + 1;
-    float u3 = -s / uw3 + 3;
-
-    float vw0 = (5 * t - 6);
-    float vw1 = (11 * t - 28);
-    float vw2 = -(11 * t + 17);
-    float vw3 = -(5 * t + 1);
+// vec3 GetShadowPosOffset(float NoL, vec3 normal, uint cascadeIndex)
+// {
+// 	const float OFFSET_SCALE = 0.0f;
+
+// 	float texelSize = 2.0 / shadowMapSizes[cascadeIndex];
+// 	float nmlOffsetScale = clamp(1.0 - NoL, 0.0, 1.0);
+// 	return texelSize * OFFSET_SCALE * nmlOffsetScale * normal;
+// }
+
+// float SampleDirectionShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID, float depth)
+// {
+// 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
+// 	vec3 coord = vec3(uv, cascadeIndex + gDirectionLightShadowMapPages[int(lightID)]);
+// 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
+
+// 	return depth > shadowSample ? 1.0 : 0.0;
+// }
+
+// float SampleSpotlightShadowMapDepth(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID)
+// {
+// 	vec2 uv = base_uv + vec2(u, v) * shadowMapSizeInv;
+// 	vec3 coord = vec3(uv, gSpotLightShadowMapPages[int(spotlightID)]);
+// 	float shadowSample = texture(sampler2DArray(shadowsSurface.container), coord).r;
+// 	return shadowSample;
+// }
+
+// float SampleSpotlightShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, int64_t spotlightID, float depth)
+// {
+// 	float shadowSample = SampleSpotlightShadowMapDepth(base_uv, u, v, shadowMapSizeInv, spotlightID);
+// 	return depth > shadowSample ? 1.0 : 0.0;
+// }
+
+// vec3 sampleOffsetDirections[20] = vec3[]
+// (
+//    vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+//    vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+//    vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+//    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+//    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+// );   
+
+
+
+// float SamplePointlightShadowMap(vec3 fragToLight, vec3 offset, int64_t lightID)
+// {
+// 	vec4 coord = vec4(fragToLight + offset, gPointLightShadowMapPages[int(lightID)]);
+// 	float shadowSample = texture(samplerCubeArray(pointLightShadowsSurface.container), coord).r;
+// 	return shadowSample;
+// }
+
+// float OptimizedPCF7(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+// {
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
+
+// 	float s = (uv.x + 0.5 - base_uv.x);
+// 	float t = (uv.y + 0.5 - base_uv.y);
+
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
+
+// 	float sum = 0;
+
+// 	float uw0 = (5 * s - 6);
+//     float uw1 = (11 * s - 28);
+//     float uw2 = -(11 * s + 17);
+//     float uw3 = -(5 * s + 1);
+
+//     float u0 = (4 * s - 5) / uw0 - 3;
+//     float u1 = (4 * s - 16) / uw1 - 1;
+//     float u2 = -(7 * s + 5) / uw2 + 1;
+//     float u3 = -s / uw3 + 3;
+
+//     float vw0 = (5 * t - 6);
+//     float vw1 = (11 * t - 28);
+//     float vw2 = -(11 * t + 17);
+//     float vw3 = -(5 * t + 1);
 
-    float v0 = (4 * t - 5) / vw0 - 3;
-    float v1 = (4 * t - 16) / vw1 - 1;
-    float v2 = -(7 * t + 5) / vw2 + 1;
-    float v3 = -t / vw3 + 3;
+//     float v0 = (4 * t - 5) / vw0 - 3;
+//     float v1 = (4 * t - 16) / vw1 - 1;
+//     float v2 = -(7 * t + 5) / vw2 + 1;
+//     float v3 = -t / vw3 + 3;
 
-    sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw2 * vw0 * SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw3 * vw0 * SampleDirectionShadowMap(base_uv, u3, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw2 * vw0 * SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw3 * vw0 * SampleDirectionShadowMap(base_uv, u3, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-    sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw2 * vw1 * SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw3 * vw1 * SampleDirectionShadowMap(base_uv, u3, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw2 * vw1 * SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw3 * vw1 * SampleDirectionShadowMap(base_uv, u3, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-    sum += uw0 * vw2 * SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw1 * vw2 * SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw2 * vw2 * SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw3 * vw2 * SampleDirectionShadowMap(base_uv, u3, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw0 * vw2 * SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw1 * vw2 * SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw2 * vw2 * SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw3 * vw2 * SampleDirectionShadowMap(base_uv, u3, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-    sum += uw0 * vw3 * SampleDirectionShadowMap(base_uv, u0, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw1 * vw3 * SampleDirectionShadowMap(base_uv, u1, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw2 * vw3 * SampleDirectionShadowMap(base_uv, u2, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-    sum += uw3 * vw3 * SampleDirectionShadowMap(base_uv, u3, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw0 * vw3 * SampleDirectionShadowMap(base_uv, u0, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw1 * vw3 * SampleDirectionShadowMap(base_uv, u1, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw2 * vw3 * SampleDirectionShadowMap(base_uv, u2, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+//     sum += uw3 * vw3 * SampleDirectionShadowMap(base_uv, u3, v3, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-    return sum * (1.0f / 2704.0f);
-}
+//     return sum * (1.0f / 2704.0f);
+// }
 
-float OptimizedPCF5(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
-{
-	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+// float OptimizedPCF5(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+// {
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
 
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
 
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
 
-	float s = (uv.x + 0.5 - base_uv.x);
-	float t = (uv.y + 0.5 - base_uv.y);
+// 	float s = (uv.x + 0.5 - base_uv.x);
+// 	float t = (uv.y + 0.5 - base_uv.y);
 
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
 
-	float sum = 0;
+// 	float sum = 0;
 
-	float uw0 = (4 - 3 * s);
-	float uw1 = 7;
-	float uw2 = (1 + 3 * s);
+// 	float uw0 = (4 - 3 * s);
+// 	float uw1 = 7;
+// 	float uw2 = (1 + 3 * s);
 
-	float u0 = (3 - 2 * s) / uw0 - 2;
-	float u1 = (3 + s) / uw1;
-	float u2 = s / uw2 + 2;
+// 	float u0 = (3 - 2 * s) / uw0 - 2;
+// 	float u1 = (3 + s) / uw1;
+// 	float u2 = s / uw2 + 2;
 
-	float vw0 = (4 - 3 * t);
-	float vw1 = 7;
-	float vw2 = (1 + 3 * t);
+// 	float vw0 = (4 - 3 * t);
+// 	float vw1 = 7;
+// 	float vw2 = (1 + 3 * t);
 
-	float v0 = (3 - 2 * t) / vw0 - 2;
-	float v1 = (3 + t) / vw1;
-	float v2 = t / vw2 + 2;
+// 	float v0 = (3 - 2 * t) / vw0 - 2;
+// 	float v1 = (3 + t) / vw1;
+// 	float v2 = t / vw2 + 2;
 
-	sum += uw0 * vw0 *  SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw0 *  SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw2 * vw0 *  SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw0 * vw0 *  SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw1 * vw0 *  SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw2 * vw0 *  SampleDirectionShadowMap(base_uv, u2, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-	sum += uw0 * vw1 *  SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw1 *  SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw2 * vw1 *  SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw0 * vw1 *  SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw1 * vw1 *  SampleDirectionShadowMap(base_uv, u1, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw2 * vw1 *  SampleDirectionShadowMap(base_uv, u2, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-	sum += uw0 * vw2 *  SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw2 *  SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw2 * vw2 *  SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw0 * vw2 *  SampleDirectionShadowMap(base_uv, u0, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw1 * vw2 *  SampleDirectionShadowMap(base_uv, u1, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw2 * vw2 *  SampleDirectionShadowMap(base_uv, u2, v2, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-	return sum * 0.006944444f; //1 / 144
-}
+// 	return sum * 0.006944444f; //1 / 144
+// }
 
-float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
-{
-	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
-	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+// float OptimizedPCF(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+// {
+// 	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
 
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
 
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
 
-	float s = (uv.x + 0.5 - base_uv.x);
-	float t = (uv.y + 0.5 - base_uv.y);
+// 	float s = (uv.x + 0.5 - base_uv.x);
+// 	float t = (uv.y + 0.5 - base_uv.y);
 
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
 
-	float sum = 0;
+// 	float sum = 0;
 
-	float uw0 = (3 - 2 * s);
-	float uw1 = (1 + 2 * s);
+// 	float uw0 = (3 - 2 * s);
+// 	float uw1 = (1 + 2 * s);
 
-	float u0 = (2 - s) / uw0 - 1;
-	float u1 = s / uw1 + 1;
+// 	float u0 = (2 - s) / uw0 - 1;
+// 	float u1 = s / uw1 + 1;
 
-	float vw0 = (3 - 2 * t);
-	float vw1 = (1 + 2 * t);
+// 	float vw0 = (3 - 2 * t);
+// 	float vw1 = (1 + 2 * t);
 
-	float v0 = (2 - t) / vw0 - 1;
-	float v1 = t / vw1 + 1;
+// 	float v0 = (2 - t) / vw0 - 1;
+// 	float v1 = t / vw1 + 1;
 
-	sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw0 * vw0 * SampleDirectionShadowMap(base_uv, u0, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw1 * vw0 * SampleDirectionShadowMap(base_uv, u1, v0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw0 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	sum += uw1 * vw1 * SampleDirectionShadowMap(base_uv, u0, v1, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
 
-	return sum * 0.0625; //1 / 16
-}
+// 	return sum * 0.0625; //1 / 16
+// }
 
 
 
-float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows)
-{
+// float SampleShadowCascade(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float NoL, float VoL, bool softShadows)
+// {
 
-	vec3 viewDir = (cameraPosTimeW.xyz - fs_in.fragPos);
-	vec3 viewDirN = normalize(viewDir);
-	float viewDirLen = length(viewDir);
+// 	vec3 viewDir = (cameraPosTimeW.xyz - fs_in.fragPos);
+// 	vec3 viewDirN = normalize(viewDir);
+// 	float viewDirLen = length(viewDir);
 
-	float xOffset = (viewDir.x / viewDirLen) * (1.0 - VoL);
-	float yOffset = (viewDir.y / viewDirLen) * (1.0 - VoL);
+// 	float xOffset = (viewDir.x / viewDirLen) * (1.0 - VoL);
+// 	float yOffset = (viewDir.y / viewDirLen) * (1.0 - VoL);
 
-	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
-	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
+// 	shadowPosition += gBias[cascadeIndex][int(lightID)].xyz;
+// 	shadowPosition *= gScale[cascadeIndex][int(lightID)].xyz;
 
-	if(shadowPosition.z > 1.0)
-	{
-		return 0.0;
-	}
+// 	if(shadowPosition.z > 1.0)
+// 	{
+// 		return 0.0;
+// 	}
 
-	float lightDepth = shadowPosition.z;
-	float bias = max(0.001 * (1.0 - NoL), 0.0005);
-	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
-	{
-		bias *= 1.0 / (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]);
-	}
+// 	float lightDepth = shadowPosition.z;
+// 	float bias = max(0.001 * (1.0 - NoL), 0.0005);
+// 	if(cascadeIndex <= NUM_FRUSTUM_SPLITS - 1)
+// 	{
+// 		bias *= 1.0 / (gPartitions.intervalEnd[cascadeIndex] - gPartitions.intervalBegin[cascadeIndex]);
+// 	}
 
-	lightDepth -= bias;
+// 	lightDepth -= bias;
 
 
-	if(softShadows)
-	{
-		return SoftShadow(shadowPosition, cascadeIndex, lightID, lightDepth);
-	}
-	else
-	{
-		return OptimizedPCF(shadowPosition, cascadeIndex, lightID, lightDepth);
-	}
-}
+// 	if(softShadows)
+// 	{
+// 		return SoftShadow(shadowPosition, cascadeIndex, lightID, lightDepth);
+// 	}
+// 	else
+// 	{
+// 		return OptimizedPCF(shadowPosition, cascadeIndex, lightID, lightDepth);
+// 	}
+// }
 
-float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows)
-{
-	vec3 normal = normalize(fs_in.normal);
-	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
+// float ShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, bool softShadows)
+// {
+// 	vec3 normal = normalize(fs_in.normal);
+// 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fs_in.fragPos);
 
-	int lightIndex = int(lightID);
+// 	int lightIndex = int(lightID);
 
-	//don't put the shadow on the back of a surface
-	if(dot(viewDir, normal) < 0.0)
-	{
-		return 1.0;
-	}
+// 	//don't put the shadow on the back of a surface
+// 	if(dot(viewDir, normal) < 0.0)
+// 	{
+// 		return 1.0;
+// 	}
 
-	float NoL = max(dot(-lightDir, normal), 0.0);
-	float VoL = dot(-lightDir, viewDir);
+// 	float NoL = max(dot(-lightDir, normal), 0.0);
+// 	float VoL = dot(-lightDir, viewDir);
 
-	vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0));
+// 	vec4 projectionPosInCSMSplitSpace = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace, 1.0));
 
-	vec3 projectionPos = projectionPosInCSMSplitSpace.xyz / projectionPosInCSMSplitSpace.w;
+// 	vec3 projectionPos = projectionPosInCSMSplitSpace.xyz / projectionPosInCSMSplitSpace.w;
 
-	uint layer = NUM_FRUSTUM_SPLITS - 1;
+// 	uint layer = NUM_FRUSTUM_SPLITS - 1;
 
 
 
-	for(int i = int(layer); i >= 0; --i)
-	{
-		vec3 scale = gScale[i][lightIndex].xyz;
-		vec3 bias = gBias[i][lightIndex].xyz;
+// 	for(int i = int(layer); i >= 0; --i)
+// 	{
+// 		vec3 scale = gScale[i][lightIndex].xyz;
+// 		vec3 bias = gBias[i][lightIndex].xyz;
 
-		vec3 cascadePos = projectionPos + bias;
-		cascadePos *= scale;
-		cascadePos = abs(cascadePos - 0.5f);
-		if(cascadePos.x <= 0.5 && cascadePos.y <= 0.5 && cascadePos.z <= 0.5)
-		{
-			layer = i;
-		}
-	}
+// 		vec3 cascadePos = projectionPos + bias;
+// 		cascadePos *= scale;
+// 		cascadePos = abs(cascadePos - 0.5f);
+// 		if(cascadePos.x <= 0.5 && cascadePos.y <= 0.5 && cascadePos.z <= 0.5)
+// 		{
+// 			layer = i;
+// 		}
+// 	}
 
 
-	vec3 offset = GetShadowPosOffset(NoL, normal, layer);
+// 	vec3 offset = GetShadowPosOffset(NoL, normal, layer);
 
-	vec3 samplePos = fragPosWorldSpace + offset;
+// 	vec3 samplePos = fragPosWorldSpace + offset;
 
-	vec4 tempShadowPos = gShadowMatrix[lightIndex] * vec4(samplePos, 1.0);
-	vec3 shadowPosition = (tempShadowPos.xyz/tempShadowPos.w);
+// 	vec4 tempShadowPos = gShadowMatrix[lightIndex] * vec4(samplePos, 1.0);
+// 	vec3 shadowPosition = (tempShadowPos.xyz/tempShadowPos.w);
 
-	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, VoL, softShadows);
+// 	float shadowVisibility = SampleShadowCascade(shadowPosition, layer, lightID, NoL, VoL, softShadows);
 
 	
-	const float BLEND_THRESHOLD = 0.1f;
+// 	const float BLEND_THRESHOLD = 0.1f;
 
-    float nextSplit =  gPartitions.intervalEnd[layer] - gPartitions.intervalBegin[layer];//gPartitions[layer].intervalEndBias.x;
-    float splitSize = layer == 0 ? nextSplit :  gPartitions.intervalEnd[layer-1] - gPartitions.intervalBegin[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
-    float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z)))/splitSize;
+//     float nextSplit =  gPartitions.intervalEnd[layer] - gPartitions.intervalBegin[layer];//gPartitions[layer].intervalEndBias.x;
+//     float splitSize = layer == 0 ? nextSplit :  gPartitions.intervalEnd[layer-1] - gPartitions.intervalBegin[layer-1];//gPartitions[layer - 1].intervalEndBias.x;
+//     float fadeFactor = (nextSplit - (LinearizeDepth(gl_FragCoord.z, exposureNearFar.y, exposureNearFar.z)))/splitSize;
 
-    vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
-    cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
-    cascadePos = abs(cascadePos * 2.0 - 1.0);
-    float distToEdge = 1.0 - max(max(cascadePos.x, cascadePos.y), cascadePos.z);
-    fadeFactor = max(distToEdge, fadeFactor);
+//     vec3 cascadePos = projectionPos + gBias[layer][lightIndex].xyz;//gPartitions[layer].intervalEndBias.yzw;
+//     cascadePos *= gScale[layer][lightIndex].xyz;//gPartitions[layer].intervalBeginScale.yzw;
+//     cascadePos = abs(cascadePos * 2.0 - 1.0);
+//     float distToEdge = 1.0 - max(max(cascadePos.x, cascadePos.y), cascadePos.z);
+//     fadeFactor = max(distToEdge, fadeFactor);
 
-    if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS - 1)
-    {
-    	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
-    	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
+//     if(fadeFactor <= BLEND_THRESHOLD && layer != NUM_FRUSTUM_SPLITS - 1)
+//     {
+//     	vec3 nextCascadeOffset = GetShadowPosOffset(NoL, normal, layer) / abs(gScale[layer+1][lightIndex].z);
+//     	vec3 nextCascadeShadowPosition = (gShadowMatrix[lightIndex] * vec4(fragPosWorldSpace + nextCascadeOffset, 1.0)).xyz;
 
-    	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows);
+//     	float nextSplitVisibility = SampleShadowCascade(nextCascadeShadowPosition, layer + 1, lightID, NoL, VoL, softShadows);
 
-    	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
+//     	float lerpAmt = smoothstep(0.0, BLEND_THRESHOLD, fadeFactor);
 
-    	if(layer + 1 >= NUM_FRUSTUM_SPLITS - 1)
-    	{
-			nextSplitVisibility = 0;
-			shadowVisibility = 1;
-			lerpAmt = 1;
-    	}
+//     	if(layer + 1 >= NUM_FRUSTUM_SPLITS - 1)
+//     	{
+// 			nextSplitVisibility = 0;
+// 			shadowVisibility = 1;
+// 			lerpAmt = 1;
+//     	}
 
-    	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
-    }
+//     	shadowVisibility = mix(nextSplitVisibility, shadowVisibility, lerpAmt);
+//     }
 
-	return shadowVisibility;
-}
+// 	return shadowVisibility;
+// }
 
-float SpotLightOptimizedPCF(vec3 shadowPosition, int64_t lightID, float lightDepth)
-{
-	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
-	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
+// float SpotLightOptimizedPCF(vec3 shadowPosition, int64_t lightID, float lightDepth)
+// {
+// 	//Using FilterSize_ == 3 from https://github.com/TheRealMJP/Shadows/blob/master/Shadows/Mesh.hlsl - SampleShadowMapOptimizedPCF - from the witness
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
 
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
 
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
 
-	float s = (uv.x + 0.5 - base_uv.x);
-	float t = (uv.y + 0.5 - base_uv.y);
+// 	float s = (uv.x + 0.5 - base_uv.x);
+// 	float t = (uv.y + 0.5 - base_uv.y);
 
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
 
-	float sum = 0;
+// 	float sum = 0;
 
-	float uw0 = (3 - 2 * s);
-	float uw1 = (1 + 2 * s);
+// 	float uw0 = (3 - 2 * s);
+// 	float uw1 = (1 + 2 * s);
 
-	float u0 = (2 - s) / uw0 - 1;
-	float u1 = s / uw1 + 1;
+// 	float u0 = (2 - s) / uw0 - 1;
+// 	float u1 = s / uw1 + 1;
 
-	float vw0 = (3 - 2 * t);
-	float vw1 = (1 + 2 * t);
+// 	float vw0 = (3 - 2 * t);
+// 	float vw1 = (1 + 2 * t);
 
-	float v0 = (2 - t) / vw0 - 1;
-	float v1 = t / vw1 + 1;
+// 	float v0 = (2 - t) / vw0 - 1;
+// 	float v1 = t / vw1 + 1;
 
-	sum += uw0 * vw0 * SampleSpotlightShadowMap(base_uv, u0, v0, shadowMapSizeInv, lightID, lightDepth);
-	sum += uw1 * vw0 * SampleSpotlightShadowMap(base_uv, u1, v0, shadowMapSizeInv, lightID, lightDepth);
-	sum += uw0 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
-	sum += uw1 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
+// 	sum += uw0 * vw0 * SampleSpotlightShadowMap(base_uv, u0, v0, shadowMapSizeInv, lightID, lightDepth);
+// 	sum += uw1 * vw0 * SampleSpotlightShadowMap(base_uv, u1, v0, shadowMapSizeInv, lightID, lightDepth);
+// 	sum += uw0 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
+// 	sum += uw1 * vw1 * SampleSpotlightShadowMap(base_uv, u0, v1, shadowMapSizeInv, lightID, lightDepth);
 
-	return sum * 0.0625; //1 / 16
-}
+// 	return sum * 0.0625; //1 / 16
+// }
 
-float SpotLightPenumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, int64_t lightID)
-{
-	float avgBlockerDepth = 0.0;
-	float blockersCount = 0.0;
-
-
-	for(int i = 0; i < samplesCount; ++i)
-	{
-		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
-		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
-
-		float sampleDepth = SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, depth);
-
-		if(sampleDepth < depth)
-		{
-			avgBlockerDepth += sampleDepth;
-			blockersCount += 1.0;
-		}
-	}
-
-	if(blockersCount > 0.0)
-	{
-		avgBlockerDepth /= blockersCount;
-		return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
-	}
-
-	return 0.0;
-}
-
-float SpotLightSoftShadow(vec3 shadowPosition, int64_t lightID, float lightDepth)
-{
-	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
-
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
-
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
-
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
+// float SpotLightPenumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, int64_t lightID)
+// {
+// 	float avgBlockerDepth = 0.0;
+// 	float blockersCount = 0.0;
 
 
-	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
+// 	for(int i = 0; i < samplesCount; ++i)
+// 	{
+// 		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
+// 		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
 
-	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
-	float penumbra = SpotLightPenumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, lightID);
+// 		float sampleDepth = SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, depth);
 
-	float shadow = 0.0;
-	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
-	{
-		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
-		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
+// 		if(sampleDepth < depth)
+// 		{
+// 			avgBlockerDepth += sampleDepth;
+// 			blockersCount += 1.0;
+// 		}
+// 	}
 
-		shadow += SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, lightDepth);
-	}
+// 	if(blockersCount > 0.0)
+// 	{
+// 		avgBlockerDepth /= blockersCount;
+// 		return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+// 	}
 
-	return shadow / NUM_SOFT_SHADOW_SAMPLES;
-}
+// 	return 0.0;
+// }
+
+// float SpotLightSoftShadow(vec3 shadowPosition, int64_t lightID, float lightDepth)
+// {
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[0];
+
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
+
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
 
 
-mat4 LookAt(vec3 eye, vec3 center, vec3 up)
-{
-	vec3 f = normalize(center - eye);
-	vec3 s = normalize(cross(f, up));
-	vec3 u = cross(s, f);
+// 	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
 
-	mat4 result = mat4(1.0);
+// 	//float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex)
+// 	float penumbra = SpotLightPenumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, lightID);
 
-	result[0][0] = s.x;
-	result[1][0] = s.y;
-	result[2][0] = s.z;
-	result[0][1] = u.x;
-	result[1][1] = u.y;
-	result[2][1] = u.z;
-	result[0][2] = -f.x;
-	result[1][2] = -f.y;
-	result[2][2] = -f.z;
-	result[3][0] = -dot(s, eye);
-	result[3][1] = -dot(u, eye);
-	result[3][2] = 	dot(f, eye);
+// 	float shadow = 0.0;
+// 	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
+// 	{
+// 		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
+// 		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
 
-	return result;
-}
+// 		shadow += SampleSpotlightShadowMap(sampleUV, 0, 0, shadowMapSizeInv, lightID, lightDepth);
+// 	}
 
-mat4 Projection(float fov, float aspect, float near, float far)
-{
-	mat4 result = mat4(0.0);
+// 	return shadow / NUM_SOFT_SHADOW_SAMPLES;
+// }
 
-	float tanHalfFovy = tan(fov*0.5);
 
-	result[0][0] = 1.0 / (aspect * tanHalfFovy);
-	result[1][1] = 1.0 / (tanHalfFovy);
-	result[2][2] = - (far + near) / (far - near);
-	result[2][3] = -1.0;
-	result[3][2] = (-2.0 * far * near) / (far - near);
+// mat4 LookAt(vec3 eye, vec3 center, vec3 up)
+// {
+// 	vec3 f = normalize(center - eye);
+// 	vec3 s = normalize(cross(f, up));
+// 	vec3 u = cross(s, f);
 
-	return result;
-}
+// 	mat4 result = mat4(1.0);
 
-vec4 CalculatePotentialOccluder(vec3 projCoords, vec2 texelOffset, vec4 lsFragPos, vec3 n, float viewBound, mat4 lightProj, float lightNear)
-{
-	float delta = 1.0 / shadowMapSizes.x;
+// 	result[0][0] = s.x;
+// 	result[1][0] = s.y;
+// 	result[2][0] = s.z;
+// 	result[0][1] = u.x;
+// 	result[1][1] = u.y;
+// 	result[2][1] = u.z;
+// 	result[0][2] = -f.x;
+// 	result[1][2] = -f.y;
+// 	result[2][2] = -f.z;
+// 	result[3][0] = -dot(s, eye);
+// 	result[3][1] = -dot(u, eye);
+// 	result[3][2] = 	dot(f, eye);
+
+// 	return result;
+// }
+
+// mat4 Projection(float fov, float aspect, float near, float far)
+// {
+// 	mat4 result = mat4(0.0);
+
+// 	float tanHalfFovy = tan(fov*0.5);
+
+// 	result[0][0] = 1.0 / (aspect * tanHalfFovy);
+// 	result[1][1] = 1.0 / (tanHalfFovy);
+// 	result[2][2] = - (far + near) / (far - near);
+// 	result[2][3] = -1.0;
+// 	result[3][2] = (-2.0 * far * near) / (far - near);
+
+// 	return result;
+// }
+
+// vec4 CalculatePotentialOccluder(vec3 projCoords, vec2 texelOffset, vec4 lsFragPos, vec3 n, float viewBound, mat4 lightProj, float lightNear)
+// {
+// 	float delta = 1.0 / shadowMapSizes.x;
 	
-	vec2 index = floor(vec2((projCoords.xy + delta * texelOffset) * shadowMapSizes.x));
+// 	vec2 index = floor(vec2((projCoords.xy + delta * texelOffset) * shadowMapSizes.x));
 
-	vec2 nlsGridCenter = delta * (index + vec2(0.5));
+// 	vec2 nlsGridCenter = delta * (index + vec2(0.5));
 	
-	vec2 lsGridCenter = viewBound * (2.0 * nlsGridCenter - vec2(1.0)); 
+// 	vec2 lsGridCenter = viewBound * (2.0 * nlsGridCenter - vec2(1.0)); 
 
-	vec3 lsGridLineDir = normalize(vec3(lsGridCenter, -lightNear));
+// 	vec3 lsGridLineDir = normalize(vec3(lsGridCenter, -lightNear));
 
-	float lsTHit = dot(n, lsFragPos.xyz) / dot(n, lsGridLineDir);
+// 	float lsTHit = dot(n, lsFragPos.xyz) / dot(n, lsGridLineDir);
 
-	vec3 lsHitP = lsTHit * lsGridLineDir;
+// 	vec3 lsHitP = lsTHit * lsGridLineDir;
 
-	vec4 lsPotentialOccluder = lightProj * vec4(lsHitP, 1.0);
+// 	vec4 lsPotentialOccluder = lightProj * vec4(lsHitP, 1.0);
 
-	lsPotentialOccluder = lsPotentialOccluder / lsPotentialOccluder.w;
+// 	lsPotentialOccluder = lsPotentialOccluder / lsPotentialOccluder.w;
 
-	lsPotentialOccluder = 0.5 * lsPotentialOccluder + vec4(0.5, 0.5, 0.5, 0.0);
+// 	lsPotentialOccluder = 0.5 * lsPotentialOccluder + vec4(0.5, 0.5, 0.5, 0.0);
 
-	return lsPotentialOccluder;
-}
+// 	return lsPotentialOccluder;
+// }
 
-float CalculateAdaptiveBiasEpsilon(float A, float B, float scaleFactor, float depth, float sceneScale)
-{
-	return 0.5 * pow(1.0 - A - 2.0 * depth, 2) * scaleFactor * sceneScale / B;
-}
+// float CalculateAdaptiveBiasEpsilon(float A, float B, float scaleFactor, float depth, float sceneScale)
+// {
+// 	return 0.5 * pow(1.0 - A - 2.0 * depth, 2) * scaleFactor * sceneScale / B;
+// }
 
-float IsLit(float smDepth, float actualDepth, float adaptiveBias, vec3 projCoords, vec3 n, vec3 lsFragPos)
-{
-	float isLit = smDepth < actualDepth + adaptiveBias ? 1.0 : 0.0;
+// float IsLit(float smDepth, float actualDepth, float adaptiveBias, vec3 projCoords, vec3 n, vec3 lsFragPos)
+// {
+// 	float isLit = smDepth < actualDepth + adaptiveBias ? 1.0 : 0.0;
 
-	isLit = dot(n, lsFragPos) > 0.0001 ? isLit : 0.0;
+// 	isLit = dot(n, lsFragPos) > 0.0001 ? isLit : 0.0;
 
-	isLit = clamp(projCoords.xyz, 0.0, 1.0) != projCoords.xyz ? 0.0 : isLit;
+// 	isLit = clamp(projCoords.xyz, 0.0, 1.0) != projCoords.xyz ? 0.0 : isLit;
 
-	return isLit;
-}
+// 	return isLit;
+// }
 
-float SpotLightPCFAdaptiveDepthBias(vec3 projCoords, vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int index)
-{
-	SpotLight spotLight = spotLights[index];
+// float SpotLightPCFAdaptiveDepthBias(vec3 projCoords, vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int index)
+// {
+// 	SpotLight spotLight = spotLights[index];
 
-	mat4 lightView = LookAt(spotLight.position.xyz, spotLight.position.xyz + spotLight.direction.xyz, GLOBAL_UP);
+// 	mat4 lightView = LookAt(spotLight.position.xyz, spotLight.position.xyz + spotLight.direction.xyz, GLOBAL_UP);
 	
-	//@NOTE(Serge): the 1 here is the aspect ratio - since we're using a size of shadowMapSizes.x x shadowMapSizes.x it will be 1. If this changes, we need to change this as well
-	mat4 lightProj = Projection(acos(spotLight.direction.w), 1, exposureNearFar.y, spotLight.lightProperties.intensity);
+// 	//@NOTE(Serge): the 1 here is the aspect ratio - since we're using a size of shadowMapSizes.x x shadowMapSizes.x it will be 1. If this changes, we need to change this as well
+// 	mat4 lightProj = Projection(acos(spotLight.direction.w), 1, exposureNearFar.y, spotLight.lightProperties.intensity);
 
-	float A = lightProj[2][2];
-    float B = lightProj[3][2]; 
+// 	float A = lightProj[2][2];
+//     float B = lightProj[3][2]; 
 
-	vec3 n = normalize((lightView * vec4(fs_in.worldNormal.xyz, 1.0)).xyz);
+// 	vec3 n = normalize((lightView * vec4(fs_in.worldNormal.xyz, 1.0)).xyz);
 
-	vec3 lsLightDir = (lightView * vec4(lightDir, 0.0)).xyz;
+// 	vec3 lsLightDir = (lightView * vec4(lightDir, 0.0)).xyz;
 
-	float nDotLsLightDir = dot(n, lsLightDir);
-	float nDotLsLightDir2 = nDotLsLightDir * nDotLsLightDir;
+// 	float nDotLsLightDir = dot(n, lsLightDir);
+// 	float nDotLsLightDir2 = nDotLsLightDir * nDotLsLightDir;
 
-	float scaleFactor = min(1.0 / nDotLsLightDir2, 100.0);
+// 	float scaleFactor = min(1.0 / nDotLsLightDir2, 100.0);
 
-	float lightNear = 1;
+// 	float lightNear = 1;
 
-	float viewBound = lightNear;//* tan(acos(spotLight.direction.w) * (PI / 360.0) ) ;
+// 	float viewBound = lightNear;//* tan(acos(spotLight.direction.w) * (PI / 360.0) ) ;
 
-	vec4 lsFragPos = lightView * vec4(fragPosWorldSpace, 1);
+// 	vec4 lsFragPos = lightView * vec4(fragPosWorldSpace, 1);
 
-	vec4 Foriginal = CalculatePotentialOccluder(projCoords, vec2(0), lsFragPos, n, viewBound, lightProj, lightNear);
+// 	vec4 Foriginal = CalculatePotentialOccluder(projCoords, vec2(0), lsFragPos, n, viewBound, lightProj, lightNear);
 
-	vec4 Fxp1 = CalculatePotentialOccluder(projCoords, vec2(2, 0), lsFragPos, n, viewBound, lightProj, lightNear);
+// 	vec4 Fxp1 = CalculatePotentialOccluder(projCoords, vec2(2, 0), lsFragPos, n, viewBound, lightProj, lightNear);
 
-	vec4 Fyp1 = CalculatePotentialOccluder(projCoords, vec2(0, 2), lsFragPos, n, viewBound, lightProj, lightNear);
+// 	vec4 Fyp1 = CalculatePotentialOccluder(projCoords, vec2(0, 2), lsFragPos, n, viewBound, lightProj, lightNear);
 
-	float biasX = Fxp1.z - Foriginal.z;
-	float biasY = Fyp1.z - Foriginal.z;
+// 	float biasX = Fxp1.z - Foriginal.z;
+// 	float biasY = Fyp1.z - Foriginal.z;
 	
-	vec2 texelSize = 1.0 / vec2(shadowMapSizes.x);
-	float shadowTests = 0.0;
-	float shadow = 0.0;
-	float sceneScale = 0.01;
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			float Fo = Foriginal.z + biasX * x + biasY * y;
+// 	vec2 texelSize = 1.0 / vec2(shadowMapSizes.x);
+// 	float shadowTests = 0.0;
+// 	float shadow = 0.0;
+// 	float sceneScale = 0.01;
+// 	for(int x = -1; x <= 1; ++x)
+// 	{
+// 		for(int y = -1; y <= 1; ++y)
+// 		{
+// 			float Fo = Foriginal.z + biasX * x + biasY * y;
 
-			float actualDepth = min(Fo, projCoords.z);
+// 			float actualDepth = min(Fo, projCoords.z);
 
-			float smDepth = SampleSpotlightShadowMapDepth(projCoords.xy, x, y, texelSize, lightID);
+// 			float smDepth = SampleSpotlightShadowMapDepth(projCoords.xy, x, y, texelSize, lightID);
 
-			float adaptiveBias = CalculateAdaptiveBiasEpsilon(A, B, scaleFactor, smDepth, sceneScale);
+// 			float adaptiveBias = CalculateAdaptiveBiasEpsilon(A, B, scaleFactor, smDepth, sceneScale);
 
-			float isLit = IsLit(smDepth, actualDepth, adaptiveBias, projCoords, n, lsFragPos.xyz);
+// 			float isLit = IsLit(smDepth, actualDepth, adaptiveBias, projCoords, n, lsFragPos.xyz);
 
-			shadow += isLit;
+// 			shadow += isLit;
 
-			shadowTests += 1.0;
-		}
-	}
+// 			shadowTests += 1.0;
+// 		}
+// 	}
 
-	return shadow / shadowTests;
-}
-
-
-float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int index, bool softShadows)
-{
-
-	vec3 normal = normalize(fs_in.normal);
-	vec3 viewDir = normalize(cameraPosTimeW.xyz - fragPosWorldSpace);
-
-	//don't put the shadow on the back of a surface
-	if(dot(viewDir, normal) < 0.0)
-	{
-		return 1.0; //or maybe return 1?
-	}
-
-	float NoL = max(dot(-lightDir, normal), 0.0);
-
-	vec4 posLightSpace = spotLights[index].lightSpaceMatrix * vec4(fragPosWorldSpace, 1);
-
-	vec3 projCoords = posLightSpace.xyz / posLightSpace.w;
-
-	projCoords = projCoords * 0.5 + 0.5;
-
-	float bias = max(0.001 * (1.0 - NoL), 0.001);
-
-	float lightDepth = projCoords.z - bias;
-
-	//vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
-
-	if(softShadows)
-	{
-		return SpotLightSoftShadow(projCoords, lightID, lightDepth);
-	}
+// 	return shadow / shadowTests;
+// }
 
 
-	return SpotLightPCFAdaptiveDepthBias(projCoords, fragPosWorldSpace, lightDir, lightID, index);
-//	return SpotLightOptimizedPCF(projCoords, lightID, lightDepth);
-}
+// float SpotLightShadowCalculation(vec3 fragPosWorldSpace, vec3 lightDir, int64_t lightID, int index, bool softShadows)
+// {
+
+// 	vec3 normal = normalize(fs_in.normal);
+// 	vec3 viewDir = normalize(cameraPosTimeW.xyz - fragPosWorldSpace);
+
+// 	//don't put the shadow on the back of a surface
+// 	if(dot(viewDir, normal) < 0.0)
+// 	{
+// 		return 1.0; //or maybe return 1?
+// 	}
+
+// 	float NoL = max(dot(-lightDir, normal), 0.0);
+
+// 	vec4 posLightSpace = spotLights[index].lightSpaceMatrix * vec4(fragPosWorldSpace, 1);
+
+// 	vec3 projCoords = posLightSpace.xyz / posLightSpace.w;
+
+// 	projCoords = projCoords * 0.5 + 0.5;
+
+// 	float bias = max(0.001 * (1.0 - NoL), 0.001);
+
+// 	float lightDepth = projCoords.z - bias;
+
+// 	//vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[0], 1.0 / shadowMapSizes[0] );
+
+// 	if(softShadows)
+// 	{
+// 		return SpotLightSoftShadow(projCoords, lightID, lightDepth);
+// 	}
 
 
-float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
-{
-
-	vec3 V = viewPos - fs_in.fragPos;
-	float viewDistance = length(V);
-	if(dot(V, fragToLight) > 0)
-	{
-		return 0;
-	}
-
-	float bias = 0.05;
-	float lightDepth = length(fragToLight) - bias;
+// 	return SpotLightPCFAdaptiveDepthBias(projCoords, fragPosWorldSpace, lightDir, lightID, index);
+// //	return SpotLightOptimizedPCF(projCoords, lightID, lightDepth);
+// }
 
 
-	if(!softShadows)
-	{
-		float closestDepth = SamplePointlightShadowMap(fragToLight, vec3(0), lightID);
-		closestDepth *= farPlane;
+// float PointLightShadowCalculation(vec3 fragToLight, vec3 viewPos, float farPlane, int64_t lightID, bool softShadows)
+// {
 
-		return lightDepth > closestDepth ? 1.0 : 0.0;
-	}
+// 	vec3 V = viewPos - fs_in.fragPos;
+// 	float viewDistance = length(V);
+// 	if(dot(V, fragToLight) > 0)
+// 	{
+// 		return 0;
+// 	}
+
+// 	float bias = 0.05;
+// 	float lightDepth = length(fragToLight) - bias;
+
+
+// 	if(!softShadows)
+// 	{
+// 		float closestDepth = SamplePointlightShadowMap(fragToLight, vec3(0), lightID);
+// 		closestDepth *= farPlane;
+
+// 		return lightDepth > closestDepth ? 1.0 : 0.0;
+// 	}
 
 	
-	int samples = 20;
-	float shadow = 0.0;
+// 	int samples = 20;
+// 	float shadow = 0.0;
 	
-	float diskRadius = (1.0 + (viewDistance / farPlane)) / 150.0;
+// 	float diskRadius = (1.0 + (viewDistance / farPlane)) / 150.0;
 
-	for(int i = 0; i < samples; ++i)
-	{
-		float closestDepth = SamplePointlightShadowMap(fragToLight, sampleOffsetDirections[i]*diskRadius, lightID);
-		closestDepth *= farPlane;
-		if(lightDepth > closestDepth)
-		{
-			shadow += 1.0;
-		}
+// 	for(int i = 0; i < samples; ++i)
+// 	{
+// 		float closestDepth = SamplePointlightShadowMap(fragToLight, sampleOffsetDirections[i]*diskRadius, lightID);
+// 		closestDepth *= farPlane;
+// 		if(lightDepth > closestDepth)
+// 		{
+// 			shadow += 1.0;
+// 		}
 
-	}
+// 	}
 
-	return shadow / (float)samples;
-}
+// 	return shadow / (float)samples;
+// }
 
-float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
-{
-	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
+// float SoftShadow(vec3 shadowPosition, uint cascadeIndex, int64_t lightID, float lightDepth)
+// {
+// 	vec2 uv = shadowPosition.xy * shadowMapSizes[cascadeIndex];
 
-	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
+// 	vec2 shadowMapSizeInv = vec2( 1.0 / shadowMapSizes[cascadeIndex], 1.0 / shadowMapSizes[cascadeIndex] );
 
-	vec2 base_uv;
-	base_uv.x = floor(uv.x + 0.5);
-	base_uv.y = floor(uv.y + 0.5);
+// 	vec2 base_uv;
+// 	base_uv.x = floor(uv.x + 0.5);
+// 	base_uv.y = floor(uv.y + 0.5);
 
-	base_uv -= vec2(0.5, 0.5);
-	base_uv *= shadowMapSizeInv;
+// 	base_uv -= vec2(0.5, 0.5);
+// 	base_uv *= shadowMapSizeInv;
 
-	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
+// 	float gradientNoise = TWO_PI * InterleavedGradientNoise(gl_FragCoord.xy);
 
-	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID);
+// 	float penumbra = Penumbra(gradientNoise, base_uv, lightDepth, int(NUM_SOFT_SHADOW_SAMPLES), shadowMapSizeInv, cascadeIndex, lightID);
 
-	float shadow = 0.0;
-	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
-	{
-		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
-		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
+// 	float shadow = 0.0;
+// 	for(int i = 0; i < NUM_SOFT_SHADOW_SAMPLES; ++i)
+// 	{
+// 		vec2 sampleUV = VogelDiskSample(i, int(NUM_SOFT_SHADOW_SAMPLES), gradientNoise);
+// 		sampleUV = base_uv + sampleUV * penumbra * SHADOW_FILTER_MAX_SIZE;
 
-		shadow += SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
-	}
+// 		shadow += SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, lightDepth);
+// 	}
 
-	return shadow / NUM_SOFT_SHADOW_SAMPLES;
-}
+// 	return shadow / NUM_SOFT_SHADOW_SAMPLES;
+// }
 
-vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi)
-{
-	float GOLDEN_ANGLE = 2.4;
+// vec2 VogelDiskSample(int sampleIndex, int samplesCount, float phi)
+// {
+// 	float GOLDEN_ANGLE = 2.4;
 
-	float r = sqrt(sampleIndex + 0.5) / sqrt(samplesCount);
-	float theta = sampleIndex * GOLDEN_ANGLE + phi;
+// 	float r = sqrt(sampleIndex + 0.5) / sqrt(samplesCount);
+// 	float theta = sampleIndex * GOLDEN_ANGLE + phi;
 	
-	return vec2(r * cos(theta), r * sin(theta));
-}
+// 	return vec2(r * cos(theta), r * sin(theta));
+// }
 
-float InterleavedGradientNoise(vec2 screenPosition)
-{
-	vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
-  	return fract(magic.z * fract(dot(screenPosition, magic.xy)));
-}
+// float InterleavedGradientNoise(vec2 screenPosition)
+// {
+// 	vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);
+//   	return fract(magic.z * fract(dot(screenPosition, magic.xy)));
+// }
 
-//float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
-float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID)
-{
-	float avgBlockerDepth = 0.0;
-	float blockersCount = 0.0;
+// //float SampleShadowMap(vec2 base_uv, float u, float v, vec2 shadowMapSizeInv, uint cascadeIndex, float depth)
+// float Penumbra(float gradientNoise, vec2 shadowMapUV, float depth, int samplesCount, vec2 shadowMapSizeInv, uint cascadeIndex, int64_t lightID)
+// {
+// 	float avgBlockerDepth = 0.0;
+// 	float blockersCount = 0.0;
 
 
-	for(int i = 0; i < samplesCount; ++i)
-	{
-		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
-		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
+// 	for(int i = 0; i < samplesCount; ++i)
+// 	{
+// 		vec2 sampleUV = VogelDiskSample(i, samplesCount, gradientNoise);
+// 		sampleUV = shadowMapUV + PENUMBRA_FILTER_SCALE * sampleUV;
 
-		float sampleDepth = SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, depth);
+// 		float sampleDepth = SampleDirectionShadowMap(sampleUV, 0, 0, shadowMapSizeInv, cascadeIndex, lightID, depth);
 
-		if(sampleDepth < depth)
-		{
-			avgBlockerDepth += sampleDepth;
-			blockersCount += 1.0;
-		}
-	}
+// 		if(sampleDepth < depth)
+// 		{
+// 			avgBlockerDepth += sampleDepth;
+// 			blockersCount += 1.0;
+// 		}
+// 	}
 
-	if(blockersCount > 0.0)
-	{
-		avgBlockerDepth /= blockersCount;
-		//return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
-	}
+// 	if(blockersCount > 0.0)
+// 	{
+// 		avgBlockerDepth /= blockersCount;
+// 		//return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+// 	}
 
-	return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
-	//return 0;
-}
+// 	return AvgBlockersDepthToPenumbra(depth, avgBlockerDepth);
+// 	//return 0;
+// }
 
-float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
-{
-	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
-	penumbra *= penumbra;
-	return clamp(penumbra , 0.0, 1.0);
-}
+// float AvgBlockersDepthToPenumbra(float depth, float avgBlockersDepth)
+// {
+// 	float penumbra = (depth - avgBlockersDepth) / avgBlockersDepth;
+// 	penumbra *= penumbra;
+// 	return clamp(penumbra , 0.0, 1.0);
+// }
 
-uint GetClusterIndex(vec2 pixelCoord)
-{
-	vec3 texCoord = vec3(pixelCoord / fovAspectResXResY.zw, zPrePassSurface.page);
+// uint GetClusterIndex(vec2 pixelCoord)
+// {
+// 	vec3 texCoord = vec3(pixelCoord / fovAspectResXResY.zw, zPrePassSurface.page);
 
-//	vec4 temp = projection * view * vec4(fs_in.fragPos, 1);
-//	vec3 temp2 = temp.xyz / temp.w;
+// //	vec4 temp = projection * view * vec4(fs_in.fragPos, 1);
+// //	vec3 temp2 = temp.xyz / temp.w;
 
-	float z =  texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
+// 	float z =  texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
 
-	uint clusterZVal = GetDepthSlice(z);
+// 	uint clusterZVal = GetDepthSlice(z);
 
-	uvec3 clusterID = uvec3(uvec2(pixelCoord.xy / clusterTileSizes.w), clusterZVal);
+// 	uvec3 clusterID = uvec3(uvec2(pixelCoord.xy / clusterTileSizes.w), clusterZVal);
 
-	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
-}
+// 	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
+// }
 
-float LinearizeDepth(float depth)
-{
-	float z = depth * 2.0-1.0; // back to NDC 
-    float near = exposureNearFar.y;
-    float far = exposureNearFar.z;
+// float LinearizeDepth(float depth)
+// {
+// 	float z = depth * 2.0-1.0; // back to NDC 
+//     float near = exposureNearFar.y;
+//     float far = exposureNearFar.z;
 
-    return (2.0 * near * far) / (far + near - z * (far - near));
-}
+//     return (2.0 * near * far) / (far + near - z * (far - near));
+// }
 
-uint GetDepthSlice(float z)
-{
-	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
-}
+// uint GetDepthSlice(float z)
+// {
+// 	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
+// }
