@@ -820,12 +820,12 @@ namespace r2::draw::shader
 
 			//if (std::string(fileNameWithExtension) == "AnimModel.fs")
 			//{
-   //             const auto numParts =  r2::sarr::Size(*fragmentShaderParts);
+			//	const auto numParts = r2::sarr::Size(*fragmentShaderParts);
 
-   //             for (int i = 0; i < numParts; ++i)
-   //             {
-   //                 printf("%s\n", r2::sarr::At(*fragmentShaderParts, i));
-   //             }
+			//	for (int i = 0; i < numParts; ++i)
+			//	{
+			//		printf("%s\n", r2::sarr::At(*fragmentShaderParts, i));
+			//	}
 			//}
 
 

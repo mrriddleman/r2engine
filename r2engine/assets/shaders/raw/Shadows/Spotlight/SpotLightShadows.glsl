@@ -1,7 +1,7 @@
 #ifndef GLSL_SPOTLIGHT_SHADOWS
 #define GLSL_SPOTLIGHT_SHADOWS
 
-#include "Common/Vectors.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
 #include "Shadows/ShadowData.glsl"
 #include "Shadows/ShadowCommon.glsl"
 #include "Shadows/ShadowFilters.glsl"

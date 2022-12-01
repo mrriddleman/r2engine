@@ -48,13 +48,14 @@ out VS_OUT
 	vec3 texCoords; 
 	vec3 fragPos;
 	vec3 normal;
-	vec3 viewNormal;
 	vec3 tangent;
 	vec3 bitangent;
 	mat3 TBN;
 
 	vec3 fragPosTangent;
 	vec3 viewPosTangent;
+
+	vec3 viewNormal;
 
 	flat uint drawID;
 
@@ -74,6 +75,9 @@ void main()
 
 	
 	vs_out.viewNormal = normalize(viewNormalMatrix * aNormal);
+
+	//vs_out.worldNormal = vs_out.normal;
+
 
 	vec3 T = normalize(normalMatrix * aTangent);
 

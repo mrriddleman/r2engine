@@ -16,7 +16,7 @@ layout (location = 2) out vec4 SpecularColor;
 
 #include "Common/Defines.glsl"
 #include "Common/CommonFunctions.glsl"
-#include "Common/Vectors.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
 #include "Clusters/Clusters.glsl"
 #include "Shadows/Directional/DirectionalShadows.glsl"
 #include "Shadows/PointLight/PointLightShadows.glsl"
@@ -269,7 +269,6 @@ in VS_OUT
 	vec3 fragPosTangent;
 	vec3 viewPosTangent;
 
-	vec4 worldNormal;
 	vec3 viewNormal;
 
 	flat uint drawID;
@@ -473,11 +472,11 @@ void main()
 	SpecularColor = vec4(specular, 1.0 - roughness);
 }
 
-vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
-{
-	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
-	return addr.channel < 0 ? vec4(textureSample.rgba) : vec4(textureSample[addr.channel]); //no rgb right now
-}
+// vec4 SampleTexture(Tex2DAddress addr, vec3 coord, float mipmapLevel)
+// {
+// 	vec4 textureSample = textureLod(sampler2DArray(addr.container), coord, mipmapLevel);
+// 	return addr.channel < 0 ? vec4(textureSample.rgba) : vec4(textureSample[addr.channel]); //no rgb right now
+// }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
@@ -892,18 +891,18 @@ vec3 Eval_BRDF(
 	return BRDF(diffuseColor, N, V, L, F0, NoV, NoL, ggxVTerm, energyCompensation, roughness, clearCoat, clearCoatRoughness, clearCoatNormal, shadow);
 }
 
-float GetDistanceAttenuation(vec3 posToLight, float falloff)
-{
-	float distanceSquare = dot(posToLight, posToLight);
+// float GetDistanceAttenuation(vec3 posToLight, float falloff)
+// {
+// 	float distanceSquare = dot(posToLight, posToLight);
 
-    float factor = distanceSquare * falloff;
+//     float factor = distanceSquare * falloff;
 
-    float smoothFactor = clamp(1.0 - factor * factor, 0.0, 1.0);
+//     float smoothFactor = clamp(1.0 - factor * factor, 0.0, 1.0);
 
-    float attenuation = smoothFactor * smoothFactor;
+//     float attenuation = smoothFactor * smoothFactor;
 
-    return attenuation * 1.0 / max(distanceSquare, 1e-4);
-}
+//     return attenuation * 1.0 / max(distanceSquare, 1e-4);
+// }
 
 vec3 CalculateClearCoatBaseF0(vec3 F0, float clearCoat)
 {
@@ -1029,7 +1028,7 @@ vec3 CalculateLightingBRDF(vec3 N, vec3 V, vec3 baseColor, uint drawID, vec3 uv,
 	if(anisotropy == 0.0)
 	{
 		vec3 clearCoatR = reflect(-V, clearCoatNormal);
-	//	EvalClearCoatIBL(clearCoatR, clearCoatNoV, clearCoat, clearCoatRoughness, clearCoatPerceptualRoughness, ao, Fd, Fr);
+		EvalClearCoatIBL(clearCoatR, clearCoatNoV, clearCoat, clearCoatRoughness, clearCoatPerceptualRoughness, ao, Fd, Fr);
 	}
 	
 
