@@ -18,6 +18,7 @@ const vec3 GLOBAL_UP = vec3(0, 0, 1);
 
 struct PixelData
 {
+	vec3 worldFragPos;
 	vec3 baseColor;
 	vec3 N; //normal to use
 	vec3 V; //view vector (camera look)
@@ -26,6 +27,7 @@ struct PixelData
 	vec3 R; //reflection vector
 	vec3 F0; //specular reflectance at 0
 	vec3 Fd; //diffuse reflectance
+	vec3 multibounceAO;
 	float reflectance; //reflectance amount
 	float metallic; 
 	float ao; //ambient occlusion amount
@@ -46,7 +48,9 @@ struct PixelData
 	float clearCoat;
 	float clearCoatRoughness;
 	float clearCoatPerceptualRoughness;
+	float clearCoatNoV;
 	vec3 clearCoatNormal;
+
 };
 
 #endif

@@ -28,12 +28,11 @@ vec4 SampleSkylightDiffuseIrradiance(SkyLight theSkylight, vec3 uv)
 void EvalClearCoatIBL(
 	SkyLight theSkylight,
 	vec3 clearCoatReflectionVector,
-	float clearCoatNoV,
 	in PixelData pixel,
 	inout vec3 Fd,
 	inout vec3 Fr)
 {
-	float Fc = F_Schlick(0.04, 1.0, clearCoatNoV) * pixel.clearCoat;
+	float Fc = F_Schlick(0.04, 1.0, pixel.clearCoatNoV) * pixel.clearCoat;
 	float attenuation = 1.0 - Fc;
 	Fd *= attenuation;
 	Fr *= attenuation;

@@ -4,6 +4,8 @@
 #include "Common/Defines.glsl"
 #include "Common/CommonFunctions.glsl"
 
+#define MIN_PERCEPTUAL_ROUGHNESS 0.045
+
 float D_GGX(float NoH, float roughness)
 {
 	float oneMinusNoHSquared = 1.0 - NoH * NoH;
@@ -130,6 +132,16 @@ vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 an
 	}
 
 	return reflect(-V, N);
+}
+
+vec3 GTAOMultiBounce(float visibility, vec3 albedo)
+{
+	vec3 a = 2.0404 * albedo - 0.3324;
+	vec3 b = -4.7951 * albedo + 0.6417;
+	vec3 c = 2.7551 * albedo + 0.6903;
+	float x = visibility;
+
+	return max(vec3(x), ((x * a + b) * x + c) * x);
 }
 
 #endif

@@ -3,9 +3,9 @@
 
 #include "Input/ShaderBufferObjects/MaterialData.glsl"
 
-vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
+vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 	
 	Tex2DAddress addr = m.albedo.texture;
 
@@ -18,9 +18,9 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	return (1.0 - modifier) * vec4(m.albedo.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
-vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, uint drawID, vec3 uv)
+vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+//	Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.normalMap.texture;
 
@@ -39,9 +39,9 @@ vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, uint drawID, vec3 uv)
 	return  (1.0 - modifier) * vec4(normalize(normal), 1) +  modifier * vec4(normalMapNormal, 1);
 }
 
-vec4 SampleMaterialEmission(uint drawID, vec3 uv)
+vec4 SampleMaterialEmission(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+//	Material m = GetMaterial(drawID, uv);
 	
 	Tex2DAddress addr = m.emission.texture;
 
@@ -54,9 +54,9 @@ vec4 SampleMaterialEmission(uint drawID, vec3 uv)
 	return (1.0 - modifier) * vec4(m.emission.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
-vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
+vec4 SampleMaterialMetallic(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+//	Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.metallic.texture;
 
@@ -67,10 +67,10 @@ vec4 SampleMaterialMetallic(uint drawID, vec3 uv)
 	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
+vec4 SampleMaterialRoughness(in Material m, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.roughness.texture;
 
@@ -82,9 +82,9 @@ vec4 SampleMaterialRoughness(uint drawID, vec3 uv)
 	return (1.0 - modifier) * color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleMaterialAO(uint drawID, vec3 uv)
+vec4 SampleMaterialAO(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+//	Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.ao.texture;
 
@@ -93,17 +93,17 @@ vec4 SampleMaterialAO(uint drawID, vec3 uv)
 	return (1.0 - modifier) * vec4(1.0) + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-// float SampleAOSurface(vec2 uv)
-// {
-// 	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionTemporalDenoiseSurface[0].page);
+float SampleAOSurface(vec2 uv)
+{
+	ivec3 coord = ivec3(ivec2(uv), ambientOcclusionTemporalDenoiseSurface[0].page);
 
-// 	return  texelFetch(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord, 0).r;
-// }
+	return  texelFetch(sampler2DArray(ambientOcclusionTemporalDenoiseSurface[0].container), coord, 0).r;
+}
 
-vec4 SampleDetail(uint drawID, vec3 uv)
+vec4 SampleDetail(in Material m, vec3 uv)
 {
 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.detail.texture;
 
@@ -112,10 +112,10 @@ vec4 SampleDetail(uint drawID, vec3 uv)
 	return (1.0 - modifier) * m.detail.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleClearCoat(uint drawID, vec3 uv)
+vec4 SampleClearCoat(in Material m, vec3 uv)
 {
 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.clearCoat.texture;
 
@@ -124,9 +124,9 @@ vec4 SampleClearCoat(uint drawID, vec3 uv)
 	return (1.0 - modifier) * m.clearCoat.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleClearCoatRoughness(uint drawID, vec3 uv)
+vec4 SampleClearCoatRoughness(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.clearCoatRoughness.texture;
 
@@ -143,9 +143,9 @@ vec4 SampleClearCoatRoughness(uint drawID, vec3 uv)
 // }
 
 
-float SampleMaterialHeight(uint drawID, vec3 uv)
+float SampleMaterialHeight(in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = m.height.texture;
 
@@ -154,16 +154,16 @@ float SampleMaterialHeight(uint drawID, vec3 uv)
 	return (1.0 - modifier) * m.height.color.r + modifier * (1.0 - SampleTexture(addr, vec3(uv.rg, addr.page), 0).r);//texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
 }
 
-vec3 SampleAnisotropy(mat3 TBN, vec3 tangent, uint drawID, vec3 uv)
+vec3 SampleAnisotropy(mat3 TBN, vec3 tangent, in Material m, vec3 uv)
 {
-	Material m = GetMaterial(drawID, uv);
+	//Material m = GetMaterial(drawID, uv);
 
 	Tex2DAddress addr = m.anisotropy.texture;
 
 	float modifier = GetTextureModifier(addr);
 
 	vec3 anisotropyDirection = SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
-	
+
 	anisotropyDirection = anisotropyDirection;
 
 	return (1.0 - modifier) * tangent + modifier * TBN * anisotropyDirection;// + modifier * (fs_in.TBN * anisotropyDirection);
