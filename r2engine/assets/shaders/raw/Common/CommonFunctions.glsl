@@ -1,8 +1,6 @@
 #ifndef GLSL_COMMON_FUNCTIONS
 #define GLSL_COMMON_FUNCTIONS
 
-#include "Input/UniformBuffers/Vectors.glsl"
-
 float Saturate(float x)
 {
 	return clamp(x, 0.0, 1.0);
@@ -45,12 +43,6 @@ mat4 Projection(float fov, float aspect, float near, float far)
 	result[3][2] = (-2.0 * far * near) / (far - near);
 
 	return result;
-}
-
-float GetRadRotationTemporal()
-{
-	float rotations[] = {60.0, 300.0, 180.0, 240.0, 120.0, 0.0};
-	return rotations[int(frame) % 6] * (1.0 / 360.0) * 2.0 * PI;
 }
 
 float GetDistanceAttenuation(vec3 posToLight, float falloff)

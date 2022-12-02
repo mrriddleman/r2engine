@@ -51,7 +51,7 @@ void EvalIBL(SkyLight theSkylight, vec3 multibounceAO, inout PixelData pixel, in
 	float specularAO =  SpecularAO_Lagarde(pixel.NoV, pixel.ao, pixel.roughness);
 
 	vec3 E = F_SchlickRoughness(pixel.NoV, pixel.F0, pixel.roughness);
-	Fr += E * prefilteredRadiance * (specularAO * energyCompensation);
+	Fr += E * prefilteredRadiance * (specularAO * pixel.energyCompensation);
 	
 	Fd += pixel.diffuseColor * diffuseIrradiance * (1.0 - E) * multibounceAO;
 }

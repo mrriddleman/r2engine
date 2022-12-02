@@ -51,6 +51,7 @@ struct PixelData
 	float clearCoatNoV;
 	vec3 clearCoatNormal;
 
+	vec3 emission;
 };
 
 #endif

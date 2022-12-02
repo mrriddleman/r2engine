@@ -24,7 +24,7 @@ vec3 CalculateLighting(inout PixelData pixel)
 		EvalClearCoatIBL(skyLight, clearCoatR, pixel, iblFd, iblFr);
 	}
 
-	iblColor = (iblFd + iblFr);
+	iblColor += (iblFd + iblFr);
 
 	//direct lighting
 	vec3 L0 = vec3(0);

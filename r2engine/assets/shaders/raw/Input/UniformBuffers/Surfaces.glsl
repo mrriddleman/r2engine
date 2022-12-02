@@ -17,7 +17,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress normalSurface;
 	Tex2DAddress specularSurface;
 	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress convolvedGBUfferSurface[2]; //@TODO(Serge): fix the name
 	Tex2DAddress ssrConeTracedSurface;
 	Tex2DAddress bloomDownSampledSurface;
 	Tex2DAddress bloomBlurSurface;

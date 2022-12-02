@@ -8,6 +8,7 @@
 
 void DefaultBRDFInput(
 vec3 baseColor,
+vec3 diffuseColor,
 vec3 worldFragPos,
 vec3 materialNormal,
 vec3 worldNormal,
@@ -31,16 +32,16 @@ inout PixelData pixel)
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
 	pixel.uv = uv;
-	pixel.diffuseColor = (1.0f - metallic) * baseColor;
+	pixel.diffuseColor = diffuseColor;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	pixel.F0 = CalculateClearCoatBaseF0(F0, clearCoat);
-	pixel.Fd = pixel.diffuseColor * Fd_Lambert();
+	pixel.Fd = diffuseColor * Fd_Lambert();
 	pixel.multibounceAO = multibounceAO;
 	pixel.reflectance = reflectance;
 	pixel.metallic = metallic;
 	pixel.ao = ao;
 	pixel.roughness = perceptualRoughness * perceptualRoughness;
-	pixel.NoV = float NoV = max(dot(pixel.N, pixel.V), 0.0);
+	pixel.NoV = max(dot(pixel.N, pixel.V), 0.0);
 	
 	//energy compensation is calculated elsewhere in IBL.glsl
 
@@ -64,7 +65,7 @@ inout PixelData pixel)
 		pixel.ggxVTerm = length(vec3(pixel.at * pixel.ToV, pixel.ab * pixel.BoV, pixel.NoV));
 	}
 
-	pixel.R = GetReflectionVector(anisotropy, pixel.anisotropyT, pixel.anisotropyB, perceptualRoughness, pixel.V, materialNormal);
+	pixel.R = GetReflectionVector(anisotropy, pixel.anisotropyT, pixel.anisotropyB, perceptualRoughness, pixel.V, pixel.N);
 
 	pixel.clearCoat = clearCoat;
 	pixel.clearCoatNormal = worldNormal;
@@ -107,8 +108,9 @@ void DefaultWorldMaterialFunction(
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
-	vec3 anisotropyDirection = normalize(SampleAnisotropy(TBN, tangent, material, uv));
+	vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
 
+	//@TODO(Serge): add in the sampling of clear coat materials
 	float clearCoat = material.clearCoat.color.r;
 
 	vec3 clearCoatNormal = worldNormal;
@@ -119,6 +121,7 @@ void DefaultWorldMaterialFunction(
 
 	DefaultBRDFInput(
 		baseColor,
+		diffuseColor,
 		fragPos,
 		materialNormal,
 		normal,
@@ -169,9 +172,9 @@ void DefaultCharacterMaterialFunction(
 	vec3 diffuseColor = (1.0 - metallic) * baseColor;
 
 	//change from the world version
-	vec3 multibounceAO = vec3(1);//GTAOMultiBounce(ao, diffuseColor);
+	vec3 multibounceAO = vec3(ao);
 
-	vec3 anisotropyDirection = normalize(SampleAnisotropy(TBN, tangent, material, uv));
+	vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
 
 	float clearCoat = material.clearCoat.color.r;
 
@@ -183,6 +186,7 @@ void DefaultCharacterMaterialFunction(
 
 	DefaultBRDFInput(
 		baseColor,
+		diffuseColor,
 		fragPos,
 		materialNormal,
 		normal,

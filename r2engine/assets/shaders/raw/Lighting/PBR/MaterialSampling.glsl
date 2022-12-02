@@ -2,6 +2,7 @@
 #define GLSL_MATERIAL_SAMPLING
 
 #include "Input/ShaderBufferObjects/MaterialData.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
 
 vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 {
@@ -112,7 +113,7 @@ vec4 SampleDetail(in Material m, vec3 uv)
 	return (1.0 - modifier) * m.detail.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
 }
 
-vec4 SampleClearCoat(in Material m, vec3 uv)
+float SampleClearCoat(in Material m, vec3 uv)
 {
 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	//Material m = GetMaterial(drawID, uv);
@@ -121,10 +122,19 @@ vec4 SampleClearCoat(in Material m, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.clearCoat.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	return (1.0 - modifier) * m.clearCoat.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
 }
 
-vec4 SampleClearCoatRoughness(in Material m, vec3 uv)
+vec3 SampleClearCoatNormal(in Material m, vec3 uv)
+{
+	Tex2DAddress addr = m.clearCoatNormal.texture;
+
+	float modifier = GetTextureModifier(addr);
+
+	return (1.0 - modifier) * m.clearCoatNormal.color.rgb + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rgb;
+}
+
+float SampleClearCoatRoughness(in Material m, vec3 uv)
 {
 	//Material m = GetMaterial(drawID, uv);
 
@@ -132,7 +142,7 @@ vec4 SampleClearCoatRoughness(in Material m, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * m.clearCoatRoughness.color + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0);
+	return (1.0 - modifier) * m.clearCoatRoughness.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
 }
 
 // vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
@@ -154,7 +164,7 @@ float SampleMaterialHeight(in Material m, vec3 uv)
 	return (1.0 - modifier) * m.height.color.r + modifier * (1.0 - SampleTexture(addr, vec3(uv.rg, addr.page), 0).r);//texture(sampler2DArray(addr.container), vec3(uv.rg, addr.page)).r);
 }
 
-vec3 SampleAnisotropy(mat3 TBN, vec3 tangent, in Material m, vec3 uv)
+vec3 SampleAnisotropyDirection(mat3 TBN, vec3 tangent, in Material m, vec3 uv)
 {
 	//Material m = GetMaterial(drawID, uv);
 
