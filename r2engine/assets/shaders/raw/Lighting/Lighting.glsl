@@ -16,12 +16,12 @@ vec3 CalculateLighting(inout PixelData pixel)
 	vec3 iblFr = vec3(0);
 	vec3 iblFd = vec3(0);
 
-	EvalIBL(skyLight, pixel.multibounceAO, pixel, iblFd, iblFd);
+	EvalIBL(skylight, pixel.multibounceAO, pixel, iblFd, iblFr);
 
 	if(pixel.anisotropy == 0.0)
 	{
 		vec3 clearCoatR = reflect(-pixel.V, pixel.clearCoatNormal);
-		EvalClearCoatIBL(skyLight, clearCoatR, pixel, iblFd, iblFr);
+		EvalClearCoatIBL(skylight, clearCoatR, pixel, iblFd, iblFr);
 	}
 
 	iblColor += (iblFd + iblFr);

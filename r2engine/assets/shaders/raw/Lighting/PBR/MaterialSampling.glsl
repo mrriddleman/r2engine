@@ -174,10 +174,59 @@ vec3 SampleAnisotropyDirection(mat3 TBN, vec3 tangent, in Material m, vec3 uv)
 
 	vec3 anisotropyDirection = SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
 
-	anisotropyDirection = anisotropyDirection;
+	//anisotropyDirection = anisotropyDirection;
 
 	return (1.0 - modifier) * tangent + modifier * TBN * anisotropyDirection;// + modifier * (fs_in.TBN * anisotropyDirection);
 }
+
+vec3 ParallaxMapping(in Material m, vec3 uv, vec3 viewDir)
+{
+	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
+	Tex2DAddress addr = m.height.texture;
+
+	float modifier = GetTextureModifier(addr);
+
+	const float heightScale = m.heightScale;
+
+	if(modifier <= 0.0 || heightScale <= 0.0)
+		return uv;
+
+	float currentLayerDepth = 0.0;
+
+	const float minLayers = 8;
+	const float maxLayers = 32;
+
+	float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0, 0.0, 1.0), viewDir)));
+
+	float layerDepth = 1.0 / numLayers;
+
+	vec2 P = viewDir.xy / viewDir.z * heightScale;
+
+	vec2 deltaTexCoords = P / numLayers;
+
+	vec2 currentTexCoords = uv.rg;
+	float currentDepthMapValue = SampleMaterialHeight(m, uv);
+
+	while(currentLayerDepth < currentDepthMapValue)
+	{
+		currentTexCoords -= deltaTexCoords;
+
+		currentDepthMapValue = SampleMaterialHeight(m, vec3(currentTexCoords, uv.b));
+
+		currentLayerDepth += layerDepth;
+	}
+
+	vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+	float afterDepth = currentDepthMapValue - currentLayerDepth;
+	float beforeDepth = SampleMaterialHeight(m, vec3(prevTexCoords, uv.b)) - currentLayerDepth + layerDepth;
+
+	float weight = afterDepth / (afterDepth - beforeDepth);
+	vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+	
+	return vec3(finalTexCoords, uv.b);
+}
+
 
 
 #endif

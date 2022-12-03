@@ -343,6 +343,15 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/Defines.glsl"
     },
     {
+      shaderName: 7748296201566283854,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/MaterialInput.glsl"
+    },
+    {
       shaderName: 8129640347876616382,
       vertexPath: "",
       fragmentPath: "",
@@ -361,6 +370,24 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthUtils.glsl"
     },
     {
+      shaderName: 15625837078211482584,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/LightingData.glsl"
+    },
+    {
+      shaderName: 5425068323363883543,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/MaterialData.glsl"
+    },
+    {
       shaderName: 13173820576971248858,
       vertexPath: "",
       fragmentPath: "",
@@ -370,6 +397,15 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/Matrices.glsl"
     },
     {
+      shaderName: 10315613655232842446,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/Surfaces.glsl"
+    },
+    {
       shaderName: 16080846719699149122,
       vertexPath: "",
       fragmentPath: "",
@@ -377,6 +413,78 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/Vectors.glsl"
+    },
+    {
+      shaderName: 4133251505605567361,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/Directional/DirectionalLighting.glsl"
+    },
+    {
+      shaderName: 13488166617372057920,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/Lighting.glsl"
+    },
+    {
+      shaderName: 15450814743549871818,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/PBR/IBL.glsl"
+    },
+    {
+      shaderName: 16346373041211428474,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/PBR/MaterialBRDF.glsl"
+    },
+    {
+      shaderName: 804255580740349559,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/PBR/MaterialSampling.glsl"
+    },
+    {
+      shaderName: 8518496432854066157,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/PBR/PBR.glsl"
+    },
+    {
+      shaderName: 9718316995436714221,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/PointLight/PointLighting.glsl"
+    },
+    {
+      shaderName: 18241468796382526811,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Lighting/SpotLight/SpotLighting.glsl"
     },
     {
       shaderName: 18377631282569405816,

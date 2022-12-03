@@ -11,11 +11,11 @@
 
 vec3 EvalPointLight(PointLight pointLight, in PixelData pixel)
 {
-	vec3 posToLight = pointLight.position.xyz - fs_in.fragPos;
+	vec3 posToLight = pointLight.position.xyz - pixel.worldFragPos;
 
 	vec3 L = normalize(posToLight);
 
-	float NoL = Saturate(dot(N, L));
+	float NoL = Saturate(dot(pixel.N, L));
 
 	float attenuation = GetDistanceAttenuation(posToLight, pointLight.lightProperties.fallOffRadius);
 

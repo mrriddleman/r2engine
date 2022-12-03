@@ -3,7 +3,7 @@
 
 #include "Common/Defines.glsl"
 #include "Common/CommonFunctions.glsl"
-#include "Lighting/PBR.glsl"
+#include "Lighting/PBR/PBR.glsl"
 
 float ClearCoatLobe(float clearCoat, float clearCoatRoughness, float NoH, float LoH, out float Fcc)
 {
@@ -43,7 +43,7 @@ vec3 Base_BRDF_Specular(
 	return Fr;
 }
 
-vec3 EvalAnisoBRDF(vec3 L, float NoL, vec3 H, float LoH, float NoH, in PixelData pixel)
+vec3 EvalAnisoBRDF(vec3 L, float NoL, vec3 H, float NoH, float LoH, in PixelData pixel)
 {
 	vec3 T = pixel.anisotropicT ; //TODO(Serge): calculate this by passing in the materials anisotropic direction - probably need to pass in
 	vec3 B = pixel.anisotropicB; //TODO(Serge): calc based on anisotropic direction
@@ -54,7 +54,7 @@ vec3 EvalAnisoBRDF(vec3 L, float NoL, vec3 H, float LoH, float NoH, in PixelData
 	float BoH = dot(B, H);
 
 	float Da = D_GGX_Anisotropic(pixel.at, pixel.ab, ToH, BoH, NoH);
-	float Va = V_SmithGGXCorrelated_Anisotropic(pixel.at, pixel.ab, pixel.ggxVTerm, ToL, BoL, NoV, NoL);	
+	float Va = V_SmithGGXCorrelated_Anisotropic(pixel.at, pixel.ab, pixel.ggxVTerm, ToL, BoL, pixel.NoV, NoL);	
 	vec3 F = Fresnel(pixel.F0, LoH);
 
 	vec3 Fr = (Da * Va) * F;
@@ -84,7 +84,7 @@ vec3 EvalBRDF(vec3 L, float NoL, in PixelData pixel)
 
 	if(pixel.anisotropy != 0.0)
 	{
-		return EvalAnisoBRDF(L, NoL, pixel);
+		return EvalAnisoBRDF(L, NoL, H, NoH, LoH, pixel);
 	}
 
 	return DefaultBRDF(L, NoL, H, NoH, LoH, pixel);

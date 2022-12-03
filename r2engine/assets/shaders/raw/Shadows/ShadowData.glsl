@@ -3,11 +3,6 @@
 
 #include "Common/Defines.glsl"
 
-#define MAX_NUM_SHADOW_MAP_PAGES 50
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-
 //@NOTE(Serge): we can only have 4 cascades like this
 struct Partition
 {

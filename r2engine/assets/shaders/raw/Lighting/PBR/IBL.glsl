@@ -37,7 +37,7 @@ void EvalClearCoatIBL(
 	Fd *= attenuation;
 	Fr *= attenuation;
 
-	float specularAO = SpecularAO_Lagarde(clearCoatNoV, pixel.ao, pixel.clearCoatRoughness);
+	float specularAO = SpecularAO_Lagarde(pixel.clearCoatNoV, pixel.ao, pixel.clearCoatRoughness);
 	Fr += SampleMaterialPrefilteredRoughness(theSkylight, clearCoatReflectionVector, pixel.clearCoatPerceptualRoughness * numPrefilteredRoughnessMips).rgb * (specularAO * Fc);
 }
 

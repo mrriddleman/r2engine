@@ -15,7 +15,7 @@ vec3 EvalSpotLight(SpotLight spotLight, in PixelData pixel)
 
 	vec3 L = normalize(posToLight);
 
-	float NoL = Saturate(dot(N, L));
+	float NoL = Saturate(dot(pixel.N, L));
 
 	float attenuation = GetDistanceAttenuation(posToLight, spotLight.lightProperties.fallOffRadius);
 
@@ -39,7 +39,7 @@ vec3 EvalSpotLight(SpotLight spotLight, in PixelData pixel)
 void EvalAllSpotLights(uint clusterTileIndex, inout vec3 L0, in PixelData pixel)
 {
 	uint spotLightCount = lightGrid[clusterTileIndex].spotLightCount;
-	
+
 	uint spotLightIndexOffset = lightGrid[clusterTileIndex].spotLightOffset;
 
 	for(int i = 0; i < spotLightCount; ++i)
@@ -56,7 +56,7 @@ void EvalAllSpotLights(uint clusterTileIndex, inout vec3 L0, in PixelData pixel)
 		{
 			shadow = SpotLightShadowCalculation(shadowsSurface, pixel.worldFragPos, pixel.N, spotLight.direction.xyz, spotLight.lightProperties.lightID, spotLights[i].lightSpaceMatrix, spotLight.lightProperties.castsShadowsUseSoftShadows.y > 0);
 		}
-		
+
 		L0 += lightingResult * (1.0f - shadow);
 	}
 }

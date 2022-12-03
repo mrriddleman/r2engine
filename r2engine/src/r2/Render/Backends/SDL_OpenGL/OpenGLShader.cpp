@@ -764,13 +764,13 @@ namespace r2::draw::shader
         char* geometryFileData = nullptr;
         char* computeFileData = nullptr;
 
-        r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 128);
+        r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 256);
 
         r2::SArray<char*>* vertexShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
 
         r2::sarr::Push(*tempAllocations, (void*) vertexShaderParts);
 
-        r2::SArray<char*>* fragmentShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
+        r2::SArray<char*>* fragmentShaderParts = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 64);
 
         r2::sarr::Push(*tempAllocations, (void*)fragmentShaderParts);
 
@@ -818,7 +818,7 @@ namespace r2::draw::shader
 
             ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
 
-			//if (std::string(fileNameWithExtension) == "AnimModel.fs")
+			//if (std::string(fileNameWithExtension) == "Sandbox.fs")
 			//{
 			//	const auto numParts = r2::sarr::Size(*fragmentShaderParts);
 

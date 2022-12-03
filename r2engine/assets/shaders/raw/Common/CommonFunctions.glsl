@@ -6,6 +6,11 @@ float Saturate(float x)
 	return clamp(x, 0.0, 1.0);
 }
 
+vec3 Saturate(vec3 x)
+{
+	return clamp(x, 0.0, 1.0);
+}
+
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)
 {
 	vec3 f = normalize(center - eye);
@@ -56,6 +61,20 @@ float GetDistanceAttenuation(vec3 posToLight, float falloff)
     float attenuation = smoothFactor * smoothFactor;
 
     return attenuation * 1.0 / max(distanceSquare, 1e-4);
+}
+
+vec2 EncodeNormal(vec3 normal)
+{
+	return vec2(normal.xy * 0.5 + 0.5);
+}
+
+vec3 DecodeNormal(vec2 enc)
+{
+	vec3 n;
+
+	n.xy = enc * 2 - 1;
+	n.z = sqrt(1 - dot(n.xy, n.xy));
+	return n;
 }
 
 #endif

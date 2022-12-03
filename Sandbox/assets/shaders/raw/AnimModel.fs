@@ -408,19 +408,19 @@ vec4 DebugFrustumSplitColor()
 	return vec4(1);
 }
 
-vec2 EncodeNormal(vec3 normal)
-{
-	return vec2(normal.xy * 0.5 + 0.5);
-}
+// vec2 EncodeNormal(vec3 normal)
+// {
+// 	return vec2(normal.xy * 0.5 + 0.5);
+// }
 
-vec3 DecodeNormal(vec2 enc)
-{
-	vec3 n;
+// vec3 DecodeNormal(vec2 enc)
+// {
+// 	vec3 n;
 
-	n.xy = enc * 2 - 1;
-	n.z = sqrt(1 - dot(n.xy, n.xy));
-	return n;
-}
+// 	n.xy = enc * 2 - 1;
+// 	n.z = sqrt(1 - dot(n.xy, n.xy));
+// 	return n;
+// }
 
 void main()
 {
