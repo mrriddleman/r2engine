@@ -118,19 +118,19 @@ float SpecularAO_Lagarde(float NoV, float visibility, float roughness) {
     return Saturate(pow(NoV + visibility, exp2(-16.0 * roughness - 1.0)) - 1.0 + visibility);
 }
 
-vec3 GetReflectionVector(float anisotropy, const vec3 anisotropyT, const vec3 anisotropyB, float perceptualRoughness, const vec3 V, const vec3 N)
+vec3 GetReflectionVectorAnisotropy(float anisotropy, const vec3 anisotropyT, const vec3 anisotropyB, float perceptualRoughness, const vec3 V, const vec3 N)
 {
-	if(anisotropy != 0.0)
-	{
-		vec3 anisotropyDirection = anisotropy >= 0.0 ? anisotropyB : anisotropyT;
-		vec3 anisotropicTangent = cross(anisotropyDirection, V);
-		vec3 anisotripicNormal = cross(anisotropicTangent, anisotropyDirection);
-		float bendFactor = abs(anisotropy) * Saturate(5.0 * perceptualRoughness);
-		vec3 bentNormal = normalize(mix(N, anisotripicNormal, bendFactor));
+	vec3 anisotropyDirection = anisotropy >= 0.0 ? anisotropyB : anisotropyT;
+	vec3 anisotropicTangent = cross(anisotropyDirection, V);
+	vec3 anisotripicNormal = cross(anisotropicTangent, anisotropyDirection);
+	float bendFactor = abs(anisotropy) * Saturate(5.0 * perceptualRoughness);
+	vec3 bentNormal = normalize(mix(N, anisotripicNormal, bendFactor));
 
-		return reflect(-V, bentNormal);
-	}
+	return reflect(-V, bentNormal);
+}
 
+vec3 GetReflectionVectorNoAnisotropy(const vec3 V, const vec3 N)
+{
 	return reflect(-V, N);
 }
 

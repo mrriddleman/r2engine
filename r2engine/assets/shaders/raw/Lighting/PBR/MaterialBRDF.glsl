@@ -63,7 +63,7 @@ vec3 EvalAnisoBRDF(vec3 L, float NoL, vec3 H, float NoH, float LoH, in PixelData
 	return (kD * pixel.Fd + Fr);
 }
 
-vec3 DefaultBRDF(in vec3 L, in float NoL, in vec3 H, in float NoH, in float LoH, in PixelData pixel)
+vec3 BRDFWithClearCoat(in vec3 L, in float NoL, in vec3 H, in float NoH, in float LoH, in PixelData pixel)
 {
 	vec3 Fr = Base_BRDF_Specular(pixel.N, pixel.V, L, H, pixel.F0, pixel.NoV, NoL, NoH, pixel.ggxVTerm, pixel.energyCompensation, pixel.roughness);
 	
@@ -74,6 +74,13 @@ vec3 DefaultBRDF(in vec3 L, in float NoL, in vec3 H, in float NoH, in float LoH,
 	float attenuation = 1.0 - Fcc;
 
 	return ((pixel.Fd + Fr) * attenuation + clearCoatLobe);
+}
+
+vec3 BRDFDefault(in vec3 L, in float NoL, in vec3 H, in float NoH, in float LoH, in PixelData pixel)
+{
+	vec3 Fr = Base_BRDF_Specular(pixel.N, pixel.V, L, H, pixel.F0, pixel.NoV, NoL, NoH, pixel.ggxVTerm, pixel.energyCompensation, pixel.roughness);
+	
+	return pixel.Fd + Fr;
 }
 
 vec3 EvalBRDF(vec3 L, float NoL, in PixelData pixel)
@@ -87,7 +94,17 @@ vec3 EvalBRDF(vec3 L, float NoL, in PixelData pixel)
 		return EvalAnisoBRDF(L, NoL, H, NoH, LoH, pixel);
 	}
 
-	return DefaultBRDF(L, NoL, H, NoH, LoH, pixel);
+	return BRDFWithClearCoat(L, NoL, H, NoH, LoH, pixel);
 }
+
+vec3 EvalBRDFNoClearCoatNoAnisotropy(vec3 L, float NoL, in PixelData pixel)
+{
+	vec3 H = normalize(pixel.V + L);
+	float NoH = Saturate(dot(pixel.N, H));
+	float LoH = Saturate(dot(L, H));
+
+	return BRDFDefault(L, NoL, H, NoH, LoH, pixel);
+}
+
 
 #endif

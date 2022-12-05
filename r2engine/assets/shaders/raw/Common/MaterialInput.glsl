@@ -6,7 +6,73 @@
 #include "Lighting/PBR/MaterialSampling.glsl"
 #include "Lighting/PBR/PBR.glsl"
 
-void DefaultBRDFInput(
+void DefaultBRDFInputNoClearCoatNoAnisotropy(
+vec3 baseColor,
+vec3 diffuseColor,
+vec3 worldFragPos,
+vec3 materialNormal,
+vec3 worldNormal,
+vec3 viewVector,
+vec3 uv,
+vec3 multibounceAO,
+float reflectance,
+float metallic,
+float ao,
+float perceptualRoughness,
+vec3 emission,
+inout PixelData pixel)
+{
+	pixel.worldFragPos = worldFragPos;
+	pixel.baseColor = baseColor;
+	pixel.N = materialNormal;
+	pixel.V = viewVector;
+	pixel.uv = uv;
+	pixel.diffuseColor = diffuseColor;
+	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
+	//pixel.F0 = CalculateClearCoatBaseF0(pixel.F0, clearCoat);
+	pixel.Fd = diffuseColor * Fd_Lambert();
+	pixel.multibounceAO = multibounceAO;
+	pixel.reflectance = reflectance;
+	pixel.metallic = metallic;
+	pixel.ao = ao;
+	pixel.roughness = perceptualRoughness * perceptualRoughness;
+	pixel.NoV = max(dot(pixel.N, pixel.V), 0.0);
+	
+	//energy compensation is calculated elsewhere in IBL.glsl
+
+	float a2 = pixel.roughness * pixel.roughness;
+	pixel.ggxVTerm = sqrt((pixel.NoV - a2 * pixel.NoV) * pixel.NoV + a2);
+
+	// pixel.anisotropy = 0;
+	// pixel.at = 0;
+	// pixel.ab = 0;
+	// pixel.anisotropicT = anisotropyDirection;
+	// pixel.anisotropicB = normalize(cross(worldNormal, anisotropyDirection));
+	// pixel.ToV = 0;
+	// pixel.BoV = 0;
+
+	// if(abs(anisotropy) < 1e-5)
+	// {
+	// 	/*
+	// 	float ToV = dot(fs_in.tangent, V);
+	// 	float BoV = dot(fs_in.bitangent, V);
+	// 	*/
+	// 	pixel.ggxVTerm = length(vec3(pixel.at * pixel.ToV, pixel.ab * pixel.BoV, pixel.NoV));
+	// }
+
+	pixel.R = GetReflectionVectorNoAnisotropy(pixel.V, pixel.N);
+
+	// pixel.clearCoat = 0;
+	// pixel.clearCoatNormal = worldNormal;
+	// pixel.clearCoatRoughness = 0;
+	// pixel.clearCoatPerceptualRoughness = 0;
+	// pixel.clearCoatNoV = 0;
+
+	pixel.emission = emission;
+
+}
+
+void DefaultBRDFInputWithClearCoatAndAnisotropy(
 vec3 baseColor,
 vec3 diffuseColor,
 vec3 worldFragPos,
@@ -56,7 +122,7 @@ inout PixelData pixel)
 	pixel.ToV = dot(pixel.anisotropicT, pixel.V);
 	pixel.BoV = dot(pixel.anisotropicB, pixel.V);
 
-	if(abs(anisotropy) < 1e-5)
+	if(abs(anisotropy) > 1e-5)
 	{
 		/*
 		float ToV = dot(fs_in.tangent, V);
@@ -65,7 +131,7 @@ inout PixelData pixel)
 		pixel.ggxVTerm = length(vec3(pixel.at * pixel.ToV, pixel.ab * pixel.BoV, pixel.NoV));
 	}
 
-	pixel.R = GetReflectionVector(anisotropy, pixel.anisotropicT, pixel.anisotropicB, perceptualRoughness, pixel.V, pixel.N);
+	pixel.R = GetReflectionVectorAnisotropy(anisotropy, pixel.anisotropicT, pixel.anisotropicB, perceptualRoughness, pixel.V, pixel.N);
 
 	pixel.clearCoat = clearCoat;
 	pixel.clearCoatNormal = worldNormal;
@@ -108,18 +174,18 @@ void DefaultWorldMaterialFunction(
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
-	vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
+	//vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
 
 	//@TODO(Serge): add in the sampling of clear coat materials
-	float clearCoat = material.clearCoat.color.r;
+	//float clearCoat = material.clearCoat.color.r;
 
-	vec3 clearCoatNormal = normal;
+	//vec3 clearCoatNormal = normal;
 
-	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+	//float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 emission = SampleMaterialEmission(material, uv).rgb;
 
-	DefaultBRDFInput(
+	DefaultBRDFInputNoClearCoatNoAnisotropy(
 		baseColor,
 		diffuseColor,
 		fragPos,
@@ -127,16 +193,11 @@ void DefaultWorldMaterialFunction(
 		normal,
 		viewVector,
 		uv,
-		anisotropyDirection,
-		clearCoatNormal,
 		multibounceAO,
 		reflectance,
 		metallic,
 		ao,
 		perceptualRoughness,
-		anisotropy,
-		clearCoat,
-		clearCoatPerceptualRoughness,
 		emission,
 		pixelData);
 }
@@ -160,7 +221,7 @@ void DefaultCharacterMaterialFunction(
 
 	float reflectance = material.reflectance;
 	
-	float anisotropy = material.anisotropy.color.r;
+//	float anisotropy = material.anisotropy.color.r;
 	
 	float metallic = SampleMaterialMetallic(material, uv).r;
 
@@ -174,17 +235,17 @@ void DefaultCharacterMaterialFunction(
 	//change from the world version
 	vec3 multibounceAO = vec3(ao);
 
-	vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
+//	vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
 
-	float clearCoat = material.clearCoat.color.r;
+//	float clearCoat = material.clearCoat.color.r;
 
-	vec3 clearCoatNormal = normal;
+//	vec3 clearCoatNormal = normal;
 
-	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
+//	float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
 
 	vec3 emission = SampleMaterialEmission(material, uv).rgb;
 
-	DefaultBRDFInput(
+	DefaultBRDFInputNoClearCoatNoAnisotropy(
 		baseColor,
 		diffuseColor,
 		fragPos,
@@ -192,16 +253,11 @@ void DefaultCharacterMaterialFunction(
 		normal,
 		viewVector,
 		uv,
-		anisotropyDirection,
-		clearCoatNormal,
 		multibounceAO,
 		reflectance,
 		metallic,
 		ao,
 		perceptualRoughness,
-		anisotropy,
-		clearCoat,
-		clearCoatPerceptualRoughness,
 		emission,
 		pixelData);
 }

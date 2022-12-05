@@ -79,7 +79,7 @@ void main()
 
 	DefaultWorldMaterialFunction(fs_in.fragPos, fs_in.drawID, fs_in.texCoords, fs_in.TBN, fs_in.tangent, fs_in.normal, pixel);
 
-	vec3 lightingResult = CalculateLighting(pixel);
+	vec3 lightingResult = CalculateLightingNoClearCoatNoAnisotropy(pixel);
 
 	FragColor = vec4(lightingResult + pixel.emission , 1.0);// * DebugFrustumSplitColor();
 

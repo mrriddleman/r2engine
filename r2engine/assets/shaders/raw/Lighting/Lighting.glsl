@@ -37,4 +37,26 @@ vec3 CalculateLighting(inout PixelData pixel)
 	return iblColor + L0;
 }
 
+vec3 CalculateLightingNoClearCoatNoAnisotropy(inout PixelData pixel)
+{
+	//IBL
+	vec3 iblColor = vec3(0);
+	vec3 iblFr = vec3(0);
+	vec3 iblFd = vec3(0);
+
+	EvalIBL(skylight, pixel.multibounceAO, pixel, iblFd, iblFr);
+
+	iblColor += (iblFd + iblFr);
+
+	//direct lighting
+	vec3 L0 = vec3(0);
+	uint clusterTileIndex = GetClusterIndex(round(vec2(gl_FragCoord.xy) + vec2(0.01)), fovAspectResXResY.zw, exposureNearFar.yz, clusterScaleBias, clusterTileSizes, zPrePassSurface);
+
+	EvalAllDirectionalLightsNoClearCoatNoAnisotropy(L0, pixel);
+	EvalAllPointLightsNoClearCoatNoAnisotropy(clusterTileIndex, L0, pixel);
+	EvalAllSpotLightsNoClearCoatNoAnisotropy(clusterTileIndex, L0, pixel);
+
+	return iblColor + L0;
+}
+
 #endif
