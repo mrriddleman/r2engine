@@ -55,7 +55,7 @@ namespace
     const u32 NUM_MANIFESTS_TO_LOAD = 2;
 
 #ifdef R2_ASSET_PIPELINE
-    const u64 NUM_SHADER_REFERENCES_PER_SHADER_PART = 50;
+    const u64 NUM_SHADER_REFERENCES_PER_SHADER_PART = 65;
 #endif
 }
 
@@ -217,26 +217,25 @@ namespace r2::draw::shadersystem
         }
 
         const u64 numShadersToReload = r2::sarr::Size(*s_optrShaderSystem->mShadersToReload);
-        if (numShadersToReload > 0)
-        {
-            for (u64 i = 0; i < numShadersToReload; ++i)
-            {
-                ShaderHandle shaderHandle = r2::sarr::At(*s_optrShaderSystem->mShadersToReload, i);
 
-                Shader& shaderToReload = r2::sarr::At(*s_optrShaderSystem->mShaders, GetIndexFromShaderHandle(shaderHandle));
+		for (u64 i = 0; i < numShadersToReload; ++i)
+		{
+			ShaderHandle shaderHandle = r2::sarr::At(*s_optrShaderSystem->mShadersToReload, i);
 
-                shader::ReloadShaderProgramFromRawFiles(
-                    &shaderToReload.shaderProg,
-                    shaderToReload.manifest.hashName,
-                    shaderToReload.manifest.vertexShaderPath.c_str(),
-                    shaderToReload.manifest.fragmentShaderPath.c_str(),
-                    shaderToReload.manifest.geometryShaderPath.c_str(),
-                    shaderToReload.manifest.computeShaderPath.c_str(),
-                    shaderToReload.manifest.basePath.c_str());
-            }
+			Shader& shaderToReload = r2::sarr::At(*s_optrShaderSystem->mShaders, GetIndexFromShaderHandle(shaderHandle));
 
-            r2::sarr::Clear(*s_optrShaderSystem->mShadersToReload);
-        }
+			shader::ReloadShaderProgramFromRawFiles(
+				&shaderToReload.shaderProg,
+				shaderToReload.manifest.hashName,
+				shaderToReload.manifest.vertexShaderPath.c_str(),
+				shaderToReload.manifest.fragmentShaderPath.c_str(),
+				shaderToReload.manifest.geometryShaderPath.c_str(),
+				shaderToReload.manifest.computeShaderPath.c_str(),
+				shaderToReload.manifest.basePath.c_str());
+		}
+
+		r2::sarr::Clear(*s_optrShaderSystem->mShadersToReload);
+        
 #endif
     }
 

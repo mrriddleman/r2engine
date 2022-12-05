@@ -539,7 +539,7 @@ namespace r2::draw::shader
         strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
     }
 
-    void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
+    void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* originalFilePath, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
 	{
         char* shaderFileData = ReadShaderData(shaderFilePath);
 
@@ -691,7 +691,7 @@ namespace r2::draw::shader
             }
 
 #if defined(R2_ASSET_PIPELINE)
-            shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), shaderFilePath);
+            shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), originalFilePath);
 #endif
 
             char* nextPiece = &shaderParsedOutIncludes[currentOffset];
@@ -714,7 +714,7 @@ namespace r2::draw::shader
 
             R2_CHECK(strlen(fullIncludePath) > 0, "We should have a proper path here!");
 
-            ReadAndParseShaderData(hashName, shaderStage, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderStage, originalFilePath, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
 
             pch = strtok_s(NULL, "\r\n", &saveptr1);
         }
@@ -795,7 +795,7 @@ namespace r2::draw::shader
 
             r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, shaderName, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderName, vertexShaderFilePath, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
 
 #ifdef R2_ASSET_PIPELINE
             r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
@@ -816,7 +816,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
 
 			//if (std::string(fileNameWithExtension) == "Sandbox.fs")
 			//{
@@ -846,7 +846,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, shaderName, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
+            ReadAndParseShaderData(hashName, shaderName, geometryShaderFilePath, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
 
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
@@ -865,7 +865,7 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
+			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
 			
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
