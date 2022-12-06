@@ -137,6 +137,7 @@ namespace r2::draw::shader
 
     void ShowOpenGLShaderError(GLuint shaderHandle, size_t debugInfoIndex)
     {
+#ifdef R2_DEBUG
 		const int max_length = 2048;
 		
         int actual_length = 0;
@@ -146,6 +147,95 @@ namespace r2::draw::shader
         glGetShaderInfoLog(shaderHandle, max_length, &actual_length, slog);
 		
         R2_LOGE("Shader info log for GL index %u:\n%s\n", shaderHandle, slog);
+
+        struct ShaderError
+        {
+            std::string lineNumber;
+            std::string errorCode;
+            std::string errorString;
+        };
+
+        std::vector<ShaderError> shaderErrors;
+
+        static std::regex lineExpression("^[0-9]*\\([0-9]+\\)");
+        static std::regex errorCodeExpression("error\\s[A-Za-z]*[0-9]*");
+        static std::regex errorDescExpression("^\\s*:\\s");
+		std::smatch match;
+        std::string slogString = slog;
+        while (std::regex_search(slogString, match, lineExpression))
+        {
+            ShaderError shaderError;
+
+            R2_CHECK(match.size() == 1, "Should only have 1");
+            for (auto x : match)
+            {
+                size_t indexOfOpenParen = x.str().find_first_of('(');
+                size_t indexOfCloseParen = x.str().find_first_of(')');
+
+                shaderError.lineNumber = x.str().substr(indexOfOpenParen + 1, indexOfCloseParen - indexOfOpenParen - 1);
+            }
+
+            std::smatch errorCodeMatch;
+            std::string restOfLine = match.suffix().str();
+            if (std::regex_search(restOfLine, errorCodeMatch, errorCodeExpression))
+            {
+                R2_CHECK(errorCodeMatch.size() == 1, "Should only have 1");
+                for (auto x : errorCodeMatch)
+                {
+                    shaderError.errorCode = x;
+                }
+
+                std::string errorDesc = errorCodeMatch.suffix().str();
+                if (std::regex_search(errorDesc, errorCodeMatch, errorDescExpression))
+                {
+                    R2_CHECK(errorCodeMatch.size() == 1, "Should only have 1");
+					for (auto x : errorCodeMatch)
+					{
+                        size_t newlinePos = errorCodeMatch.suffix().str().find_first_of('\n');
+
+                        if (std::string::npos == newlinePos)
+                        {
+                            shaderError.errorString = errorCodeMatch.suffix();
+                        }
+                        else
+                        {
+                            shaderError.errorString = errorCodeMatch.suffix().str().substr(0, newlinePos - 1);
+                        }
+					}
+                }
+            }
+
+            shaderErrors.push_back(shaderError);
+            slogString = match.suffix().str();
+        }
+
+        for (const auto& shaderError : shaderErrors)
+        {
+            //find the file this shaderError belongs to
+            std::string filePath = "";
+            std::string originalFile = "";
+            size_t shaderLineNumber = 0;
+            for (auto iter = g_shaderDebugInfo[debugInfoIndex].begin(); iter != g_shaderDebugInfo[debugInfoIndex].end(); ++iter)
+            {
+                size_t lineNum = std::stoull(shaderError.lineNumber);
+                if (iter->second.globalLineStart <= lineNum &&
+                    iter->second.globalLineStart + iter->second.numLines >= lineNum)
+                {
+                    filePath = iter->second.shaderPartFilename;
+                    originalFile = iter->second.globalShaderFilename;
+                    shaderLineNumber = lineNum - iter->second.globalLineStart;
+                }
+            }
+
+            R2_LOGE("Original File: %s\nPart File: %s\nLine#: %zu, Error code: %s\nDescription: %s\n",
+                originalFile.c_str(), filePath.c_str(), shaderLineNumber, shaderError.errorCode.c_str(), shaderError.errorString.c_str());
+        }
+
+        if (slog)
+        {
+            int k = 0;
+        }
+#endif
     }
 
     u32 CreateShaderProgramFromStrings(const r2::SArray<char*>* vertexShaderStrings, const r2::SArray<char*>* fragShaderStrings, const r2::SArray<char*>* geometryShaderStrings, const r2::SArray<char*>* computeShaderStrings)
@@ -359,7 +449,7 @@ namespace r2::draw::shader
         strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
     }
 
-    void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* originalFilePath, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations)
+    void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* originalFilePath, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations, size_t debugIndex, size_t& globalLines)
 	{
         char* shaderFileData = ReadShaderData(shaderFilePath);
 
@@ -392,11 +482,30 @@ namespace r2::draw::shader
         char* saveptr1;
         char* pch = strtok_s(shaderFileDataCopy, "\r\n", &saveptr1);
        
+        if (pch != nullptr)
+        {
+            globalLines++;
+        }
+
         u32 currentOffset = 0;
         
         bool hasPassedVersion = false;
         bool hasInjectedDefines = false;
 
+#ifdef R2_DEBUG
+        const auto iter = g_shaderDebugInfo[debugIndex].find(shaderFilePath);
+
+        if (iter == g_shaderDebugInfo[debugIndex].end())
+        {
+            ShaderDebugInfo debugInfo;
+            debugInfo.globalShaderFilename = originalFilePath;
+            debugInfo.shaderPartFilename = shaderFilePath;
+            debugInfo.numLines = 0;
+            debugInfo.globalLineStart = globalLines;
+
+            g_shaderDebugInfo[debugIndex][shaderFilePath] = debugInfo;
+        }
+#endif
         while (pch != nullptr)
         {
             if (!hasPassedVersion && std::regex_match(pch, versionExpression))
@@ -408,8 +517,10 @@ namespace r2::draw::shader
 
                 hasPassedVersion = true;
                 lengthOfParsedShaderData += strLen + 1;
-
-
+#ifdef R2_DEBUG
+                g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+                globalLines++;
+#endif
                 pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
             }
@@ -429,6 +540,12 @@ namespace r2::draw::shader
                     const char* define = shaderDefine->value()->c_str();
                     strcat(&shaderParsedOutIncludes[currentOffset], define);
                     strcat(&shaderParsedOutIncludes[currentOffset], "\n");
+
+#ifdef R2_DEBUG
+					g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+					globalLines++;
+#endif
+
                     lengthOfParsedShaderData += strLen + 1;
                 }
 
@@ -440,6 +557,11 @@ namespace r2::draw::shader
 				strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
                 lengthOfParsedShaderData += strLen + 1;
+
+#ifdef R2_DEBUG
+				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+				globalLines++;
+#endif
 
 				hasInjectedDefines = true;
 
@@ -458,6 +580,11 @@ namespace r2::draw::shader
 
                 lengthOfParsedShaderData += strLen + 1;
 
+#ifdef R2_DEBUG
+				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+				globalLines++;
+#endif
+
                 pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
             }
@@ -473,6 +600,11 @@ namespace r2::draw::shader
 				strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
 				lengthOfParsedShaderData += strLen + 1;
+
+#ifdef R2_DEBUG
+				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+				globalLines++;
+#endif
 
                 pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
@@ -506,6 +638,7 @@ namespace r2::draw::shader
 
             if (found)
             {
+
                 pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;                
             }
@@ -534,7 +667,13 @@ namespace r2::draw::shader
 
             R2_CHECK(strlen(fullIncludePath) > 0, "We should have a proper path here!");
 
-            ReadAndParseShaderData(hashName, shaderStage, originalFilePath, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations);
+#ifdef R2_DEBUG
+            //I think we should include the include directive because that will match with the source file
+			g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
+		//	globalLines++;
+#endif
+
+            ReadAndParseShaderData(hashName, shaderStage, originalFilePath, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations, debugIndex, globalLines);
 
             pch = strtok_s(NULL, "\r\n", &saveptr1);
         }
@@ -615,7 +754,9 @@ namespace r2::draw::shader
 
             r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, shaderName, vertexShaderFilePath, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations);
+            size_t globalLines = 0;
+
+            ReadAndParseShaderData(hashName, shaderName, vertexShaderFilePath, vertexShaderFilePath, vertexShaderParts, *includePaths, tempAllocations, 0, globalLines);
 
 #ifdef R2_ASSET_PIPELINE
             r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
@@ -636,7 +777,10 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-            ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations);
+
+            size_t globalLines = 0;
+
+            ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations, 1, globalLines);
 
 			//if (std::string(fileNameWithExtension) == "Sandbox.fs")
 			//{
@@ -665,8 +809,10 @@ namespace r2::draw::shader
 			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
-
-            ReadAndParseShaderData(hashName, shaderName, geometryShaderFilePath, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations);
+            
+            size_t globalLines = 0;
+            
+            ReadAndParseShaderData(hashName, shaderName, geometryShaderFilePath, geometryShaderFilePath, geometryShaderParts, *includePaths, tempAllocations, 2, globalLines);
 
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
@@ -685,7 +831,9 @@ namespace r2::draw::shader
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations);
+            size_t globalLines = 0;
+
+			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations, 3, globalLines);
 			
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
