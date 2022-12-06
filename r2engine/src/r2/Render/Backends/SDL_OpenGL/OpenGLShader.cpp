@@ -34,6 +34,22 @@
 
 namespace r2::draw::shader
 {
+#ifdef R2_DEBUG
+    struct ShaderDebugInfo
+    {
+        std::string globalShaderFilename = "";
+        std::string shaderPartFilename = "";
+        size_t globalLineStart = 0;
+        size_t numLines = 0;
+    };
+    
+    //0 - vertex
+    //1 - fragment
+    //2 - geometry
+    //3 - compute
+    std::unordered_map<std::string, ShaderDebugInfo> g_shaderDebugInfo[4];
+#endif
+
     const ShaderHandle InvalidShader = 0;
 
     void Use(const Shader& shader)
@@ -119,6 +135,19 @@ namespace r2::draw::shader
         return maxInvocations;
     }
 
+    void ShowOpenGLShaderError(GLuint shaderHandle, size_t debugInfoIndex)
+    {
+		const int max_length = 2048;
+		
+        int actual_length = 0;
+		
+        char slog[2048];
+		
+        glGetShaderInfoLog(shaderHandle, max_length, &actual_length, slog);
+		
+        R2_LOGE("Shader info log for GL index %u:\n%s\n", shaderHandle, slog);
+    }
+
     u32 CreateShaderProgramFromStrings(const r2::SArray<char*>* vertexShaderStrings, const r2::SArray<char*>* fragShaderStrings, const r2::SArray<char*>* geometryShaderStrings, const r2::SArray<char*>* computeShaderStrings)
     {
         if (r2::sarr::Size(*computeShaderStrings) == 0)
@@ -162,12 +191,7 @@ namespace r2::draw::shader
 			if (GL_TRUE != lparams) {
 				R2_LOGE("ERROR: vertex shader index %u did not compile\n", vertexShaderHandle);
 
-				const int max_length = 2048;
-				int actual_length = 0;
-				char slog[2048];
-				glGetShaderInfoLog(vertexShaderHandle, max_length, &actual_length, slog);
-				R2_LOGE("Shader info log for GL index %u:\n%s\n", vertexShaderHandle,
-					slog);
+                ShowOpenGLShaderError(vertexShaderHandle, 0);
 
 				glDeleteShader(vertexShaderHandle);
 				glDeleteShader(fragmentShaderHandle);
@@ -191,12 +215,7 @@ namespace r2::draw::shader
 				R2_LOGE("ERROR: fragment shader index %u did not compile\n",
 					fragmentShaderHandle);
 
-				const int max_length = 2048;
-				int actual_length = 0;
-				char slog[2048];
-				glGetShaderInfoLog(fragmentShaderHandle, max_length, &actual_length, slog);
-				R2_LOGE("Shader info log for GL index %u:\n%s\n", fragmentShaderHandle,
-					slog);
+                ShowOpenGLShaderError(fragmentShaderHandle, 1);
 
 				glDeleteShader(vertexShaderHandle);
 				glDeleteShader(fragmentShaderHandle);
@@ -221,12 +240,7 @@ namespace r2::draw::shader
 			if (GL_TRUE != lparams) {
 				R2_LOGE("ERROR: geometry shader index %u did not compile\n", geometryShaderHandle);
 
-				const int max_length = 2048;
-				int actual_length = 0;
-				char slog[2048];
-				glGetShaderInfoLog(geometryShaderHandle, max_length, &actual_length, slog);
-				R2_LOGE("Shader info log for GL index %u:\n%s\n", geometryShaderHandle,
-					slog);
+                ShowOpenGLShaderError(geometryShaderHandle, 2);
 
 				glDeleteShader(vertexShaderHandle);
 				glDeleteShader(fragmentShaderHandle);
@@ -248,11 +262,7 @@ namespace r2::draw::shader
 			{
 				R2_LOGE("ERROR: compute shader index %u did not compile\n", computeShaderHandle);
 
-				const int max_length = 2048;
-				int actual_length = 0;
-				char slog[2048];
-				glGetShaderInfoLog(computeShaderHandle, max_length, &actual_length, slog);
-				R2_LOGE("Shader info log for GL index %u:\n%s\n", computeShaderHandle, slog);
+                ShowOpenGLShaderError(computeShaderHandle, 3);
 
 				glDeleteShader(computeShaderHandle);
 				glDeleteProgram(shaderProgram);
@@ -305,196 +315,6 @@ namespace r2::draw::shader
 			return 0;
 		}
 
-        return shaderProgram;
-    }
-    
-    u32 CreateShaderProgramFromStrings(const char* vertexShaderStr, const char* fragShaderStr, const char* geometryShaderStr, const char* computeShaderStr)
-    {
-        if (!computeShaderStr)
-        {
-            R2_CHECK(vertexShaderStr != nullptr && fragShaderStr != nullptr, "Vertex and/or Fragment shader are nullptr");
-        }
-        
-        GLuint shaderProgram = glCreateProgram();
-
-        GLuint vertexShaderHandle;
-        if (vertexShaderStr)
-        {
-            vertexShaderHandle = glCreateShader(GL_VERTEX_SHADER);
-        }
-        
-        GLuint fragmentShaderHandle;
-        if (fragShaderStr)
-        {
-            fragmentShaderHandle = glCreateShader(GL_FRAGMENT_SHADER);
-        }
-        
-        GLuint geometryShaderHandle;
-        if (geometryShaderStr)
-        {
-            geometryShaderHandle = glCreateShader(GL_GEOMETRY_SHADER);
-        }
-        
-        GLuint computeShaderHandle;
-        if (computeShaderStr)
-        {
-            computeShaderHandle = glCreateShader(GL_COMPUTE_SHADER);
-        }
-
-        if(vertexShaderStr != nullptr)
-        { // compile shader and check for errors
-            glShaderSource( vertexShaderHandle, 1, &vertexShaderStr, NULL );
-            glCompileShader( vertexShaderHandle );
-            int lparams = -1;
-            glGetShaderiv( vertexShaderHandle, GL_COMPILE_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: vertex shader index %u did not compile\n", vertexShaderHandle);
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char slog[2048];
-                glGetShaderInfoLog( vertexShaderHandle, max_length, &actual_length, slog );
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", vertexShaderHandle,
-                        slog );
-                
-                glDeleteShader( vertexShaderHandle );
-                glDeleteShader( fragmentShaderHandle );
-                if (geometryShaderStr)
-                {
-                    glDeleteShader( geometryShaderHandle );
-                }
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-        }
-        
-        if(fragShaderStr != nullptr)
-        { // compile shader and check for errors
-            glShaderSource( fragmentShaderHandle, 1, &fragShaderStr, NULL );
-            glCompileShader( fragmentShaderHandle );
-            int lparams = -1;
-            glGetShaderiv( fragmentShaderHandle, GL_COMPILE_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: fragment shader index %u did not compile\n",
-                        fragmentShaderHandle );
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char slog[2048];
-                glGetShaderInfoLog( fragmentShaderHandle, max_length, &actual_length, slog );
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", fragmentShaderHandle,
-                        slog );
-                
-                glDeleteShader( vertexShaderHandle );
-                glDeleteShader( fragmentShaderHandle );
-                
-                if (geometryShaderStr)
-                {
-                    glDeleteShader( geometryShaderHandle );
-                }
-                
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-            
-        }
-        
-        if (geometryShaderStr != nullptr)
-        {
-            glShaderSource( geometryShaderHandle, 1, &geometryShaderStr, NULL );
-            glCompileShader( geometryShaderHandle );
-            int lparams = -1;
-            glGetShaderiv( geometryShaderHandle, GL_COMPILE_STATUS, &lparams );
-            
-            if ( GL_TRUE != lparams ) {
-                R2_LOGE("ERROR: geometry shader index %u did not compile\n", geometryShaderHandle);
-                
-                const int max_length = 2048;
-                int actual_length    = 0;
-                char slog[2048];
-                glGetShaderInfoLog( geometryShaderHandle, max_length, &actual_length, slog );
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", geometryShaderHandle,
-                        slog );
-                
-                glDeleteShader( vertexShaderHandle );
-                glDeleteShader( fragmentShaderHandle );
-                glDeleteShader( geometryShaderHandle );
-                
-                glDeleteProgram( shaderProgram );
-                return 0;
-            }
-        }
-
-        if (computeShaderStr != nullptr)
-        {
-            glShaderSource(computeShaderHandle, 1, &computeShaderStr, nullptr);
-            glCompileShader(computeShaderHandle);
-            int lparams = -1;
-            glGetShaderiv(computeShaderHandle, GL_COMPILE_STATUS, &lparams);
-
-            if (GL_TRUE != lparams)
-            {
-                R2_LOGE("ERROR: compute shader index %u did not compile\n", computeShaderHandle);
-
-                const int max_length = 2048;
-                int actual_length = 0;
-                char slog[2048];
-                glGetShaderInfoLog(computeShaderHandle, max_length, &actual_length, slog);
-                R2_LOGE("Shader info log for GL index %u:\n%s\n", computeShaderHandle, slog);
-
-                glDeleteShader(computeShaderHandle);
-                glDeleteProgram(shaderProgram);
-
-                return 0;
-            }
-        }
-
-        if (computeShaderStr == nullptr)
-        {
-			glAttachShader(shaderProgram, fragmentShaderHandle);
-			glAttachShader(shaderProgram, vertexShaderHandle);
-			if (geometryShaderStr)
-			{
-				glAttachShader(shaderProgram, geometryShaderHandle);
-			}
-
-			{ // link program and check for errors
-				glLinkProgram(shaderProgram);
-				glDeleteShader(vertexShaderHandle);
-				glDeleteShader(fragmentShaderHandle);
-				if (geometryShaderStr)
-				{
-					glDeleteShader(geometryShaderHandle);
-				}
-			}
-        }
-        else
-        {
-            glAttachShader(shaderProgram, computeShaderHandle);
-            glLinkProgram(shaderProgram);
-            glDeleteShader(computeShaderHandle);
-        }
-        
-		int lparams = -1;
-		glGetProgramiv(shaderProgram, GL_LINK_STATUS, &lparams);
-
-		if (GL_TRUE != lparams) 
-        {
-			R2_LOGE("ERROR: could not link shader program GL index %u\n",
-				shaderProgram);
-
-			const int max_length = 2048;
-			int actual_length = 0;
-			char plog[2048];
-			glGetProgramInfoLog(shaderProgram, max_length, &actual_length, plog);
-			R2_LOGE("Program info log for GL index %u:\n%s", shaderProgram, plog);
-
-			glDeleteProgram(shaderProgram);
-			return 0;
-		}
-        
         return shaderProgram;
     }
 
@@ -559,9 +379,9 @@ namespace r2::draw::shader
 
         r2::sarr::Push(*tempAllocations, (void*)shaderFileDataCopy);
 
-		std::regex includeExpression("^#include \".*\"[ \t]*$");
-		std::regex filePathExpression("\".*\"");
-        std::regex versionExpression("^#version [0-9][0-9][0-9] core$");
+		static std::regex includeExpression("^#include \".*\"[ \t]*$");
+		static std::regex filePathExpression("\".*\"");
+        static std::regex versionExpression("^#version [0-9][0-9][0-9] core$");
 
         char* shaderParsedOutIncludes = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, lengthOfShaderFile + 32 + 50 * fs::FILE_PATH_LENGTH, sizeof(char)); //+32 for each potential '\0' in the file
         shaderParsedOutIncludes[0] = '\0';
