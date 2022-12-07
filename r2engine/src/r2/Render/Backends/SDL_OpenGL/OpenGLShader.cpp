@@ -35,12 +35,21 @@
 namespace r2::draw::shader
 {
 #ifdef R2_DEBUG
+    struct ShaderLineOffset
+    {
+        size_t shaderLine = 0;
+        size_t offset = 0;
+    };
+
     struct ShaderDebugInfo
     {
         std::string globalShaderFilename = "";
         std::string shaderPartFilename = "";
         size_t globalLineStart = 0;
         size_t numLines = 0;
+        size_t includeLines = 0;
+
+        std::vector<ShaderLineOffset> shaderLineOffsets;
     };
     
     //0 - vertex
@@ -199,7 +208,7 @@ namespace r2::draw::shader
                         }
                         else
                         {
-                            shaderError.errorString = errorCodeMatch.suffix().str().substr(0, newlinePos - 1);
+                            shaderError.errorString = errorCodeMatch.suffix().str().substr(0, newlinePos);
                         }
 					}
                 }
@@ -215,25 +224,34 @@ namespace r2::draw::shader
             std::string filePath = "";
             std::string originalFile = "";
             size_t shaderLineNumber = 0;
+
             for (auto iter = g_shaderDebugInfo[debugInfoIndex].begin(); iter != g_shaderDebugInfo[debugInfoIndex].end(); ++iter)
             {
                 size_t lineNum = std::stoull(shaderError.lineNumber);
                 if (iter->second.globalLineStart <= lineNum &&
                     iter->second.globalLineStart + iter->second.numLines >= lineNum)
                 {
+                    size_t lineOffset = 0;
+                    for (auto searchIter = g_shaderDebugInfo[debugInfoIndex][iter->second.shaderPartFilename].shaderLineOffsets.rbegin();
+                        searchIter != g_shaderDebugInfo[debugInfoIndex][iter->second.shaderPartFilename].shaderLineOffsets.rend();
+                        ++searchIter)
+                    {
+                        if (searchIter->shaderLine < lineNum)
+                        {
+                            lineOffset = searchIter->offset;
+                            break;
+                        }
+                    }
+
                     filePath = iter->second.shaderPartFilename;
                     originalFile = iter->second.globalShaderFilename;
-                    shaderLineNumber = lineNum - iter->second.globalLineStart;
+                    shaderLineNumber = lineNum - iter->second.globalLineStart + 1 + lineOffset;
+
                 }
             }
 
-            R2_LOGE("Original File: %s\nPart File: %s\nLine#: %zu, Error code: %s\nDescription: %s\n",
+            R2_LOGE("\nOriginal File: %s\nPart File: %s\nLine#: %zu\nError code: %s\nDescription: %s\n",
                 originalFile.c_str(), filePath.c_str(), shaderLineNumber, shaderError.errorCode.c_str(), shaderError.errorString.c_str());
-        }
-
-        if (slog)
-        {
-            int k = 0;
         }
 #endif
     }
@@ -448,7 +466,56 @@ namespace r2::draw::shader
     {
         strcpy(fullPath, shadersystem::FindShaderPathByName(shaderName));
     }
+#ifdef R2_DEBUG
+    void UpdateShaderDebugInfo(const char* saveptr1, size_t& numLines, size_t& includeLines, size_t& globalLines, size_t debugIndex, const char* file)
+    {
+		numLines++; //maybe should be +2?
+		globalLines++;
+		size_t lenLength = strlen(saveptr1);
+        bool finished = false;
+		for (int i = 0; !finished && i < lenLength; ++i)
+		{
+			if (saveptr1[i] == '\n')
+			{
+                //skip the first newline
+                for (int j = i + 1;!finished && j < lenLength; ++j)
+                {
+                    if (saveptr1[j] == '\n')
+                    {
+                        includeLines++;
 
+                        auto iter= std::find_if(g_shaderDebugInfo[debugIndex][file].shaderLineOffsets.begin(), g_shaderDebugInfo[debugIndex][file].shaderLineOffsets.end(), [globalLines](const ShaderLineOffset& shaderLineOffset)
+                            {
+                                return shaderLineOffset.shaderLine == globalLines;
+                            });
+                        if (iter == g_shaderDebugInfo[debugIndex][file].shaderLineOffsets.end())
+                        {
+							ShaderLineOffset offset;
+							offset.shaderLine = globalLines;
+							offset.offset = includeLines;
+
+							g_shaderDebugInfo[debugIndex][file].shaderLineOffsets.push_back(offset);
+                        }
+                        else
+                        {
+                            iter->offset = includeLines;
+                        }
+
+                    }
+                    else if(saveptr1[j] != '\n' && saveptr1[j] != '\r' && saveptr1[j] != '\t' && saveptr1[j] != ' ')
+                    {
+
+                        finished = true;
+                    }
+                }
+			}
+			else if (saveptr1[i] != '\n' && saveptr1[i] != '\r' && saveptr1[i] != '\t' && saveptr1[i] != ' ')
+			{
+				break;
+			}
+		}
+    }
+#endif
     void ReadAndParseShaderData(u64 hashName, ShaderName shaderStage, const char* originalFilePath, const char* shaderFilePath, r2::SArray<char*>* shaderSourceFiles, r2::SArray<char*>& includedPaths, r2::SArray<void*>* tempAllocations, size_t debugIndex, size_t& globalLines)
 	{
         char* shaderFileData = ReadShaderData(shaderFilePath);
@@ -479,12 +546,37 @@ namespace r2::draw::shader
 
         r2::sarr::Push(*tempAllocations, (void*)shaderParsedOutIncludes);
 
+
+#ifdef R2_DEBUG
+
+        if (globalLines == 0)
+        {
+            globalLines = 1;
+        }
+		const auto iter = g_shaderDebugInfo[debugIndex].find(shaderFilePath);
+
+		if (iter == g_shaderDebugInfo[debugIndex].end())
+		{
+			ShaderDebugInfo debugInfo;
+			debugInfo.globalShaderFilename = originalFilePath;
+			debugInfo.shaderPartFilename = shaderFilePath;
+			debugInfo.numLines = 0;
+			debugInfo.globalLineStart = globalLines;
+
+			g_shaderDebugInfo[debugIndex][shaderFilePath] = debugInfo;
+		}
+#endif
+
         char* saveptr1;
-        char* pch = strtok_s(shaderFileDataCopy, "\r\n", &saveptr1);
-       
+        char* delimiter = "\r\n";
+        char* pch = strtok_s(shaderFileDataCopy, delimiter, &saveptr1);
+
+
         if (pch != nullptr)
         {
-            globalLines++;
+#ifdef R2_DEBUG
+//			UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines);
+#endif
         }
 
         u32 currentOffset = 0;
@@ -492,22 +584,10 @@ namespace r2::draw::shader
         bool hasPassedVersion = false;
         bool hasInjectedDefines = false;
 
-#ifdef R2_DEBUG
-        const auto iter = g_shaderDebugInfo[debugIndex].find(shaderFilePath);
 
-        if (iter == g_shaderDebugInfo[debugIndex].end())
-        {
-            ShaderDebugInfo debugInfo;
-            debugInfo.globalShaderFilename = originalFilePath;
-            debugInfo.shaderPartFilename = shaderFilePath;
-            debugInfo.numLines = 0;
-            debugInfo.globalLineStart = globalLines;
-
-            g_shaderDebugInfo[debugIndex][shaderFilePath] = debugInfo;
-        }
-#endif
         while (pch != nullptr)
         {
+
             if (!hasPassedVersion && std::regex_match(pch, versionExpression))
             {
                 u32 strLen = strlen(pch);
@@ -517,11 +597,13 @@ namespace r2::draw::shader
 
                 hasPassedVersion = true;
                 lengthOfParsedShaderData += strLen + 1;
+
+                pch = strtok_s(NULL, delimiter, &saveptr1);
+
 #ifdef R2_DEBUG
-                g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-                globalLines++;
+                UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines, debugIndex, shaderFilePath);
 #endif
-                pch = strtok_s(NULL, "\r\n", &saveptr1);
+
                 continue;
             }
 
@@ -542,8 +624,7 @@ namespace r2::draw::shader
                     strcat(&shaderParsedOutIncludes[currentOffset], "\n");
 
 #ifdef R2_DEBUG
-					g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-					globalLines++;
+                    UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines, debugIndex, shaderFilePath);
 #endif
 
                     lengthOfParsedShaderData += strLen + 1;
@@ -558,14 +639,15 @@ namespace r2::draw::shader
 
                 lengthOfParsedShaderData += strLen + 1;
 
-#ifdef R2_DEBUG
-				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-				globalLines++;
-#endif
 
 				hasInjectedDefines = true;
 
-				pch = strtok_s(NULL, "\r\n", &saveptr1);
+				pch = strtok_s(NULL, delimiter, &saveptr1);
+
+#ifdef R2_DEBUG
+				UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines, debugIndex, shaderFilePath);
+#endif
+
 				continue;
             }
 
@@ -580,12 +662,12 @@ namespace r2::draw::shader
 
                 lengthOfParsedShaderData += strLen + 1;
 
+                pch = strtok_s(NULL, delimiter, &saveptr1);
+
 #ifdef R2_DEBUG
-				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-				globalLines++;
+				UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines, debugIndex, shaderFilePath);
 #endif
 
-                pch = strtok_s(NULL, "\r\n", &saveptr1);
                 continue;
             }
 
@@ -601,12 +683,11 @@ namespace r2::draw::shader
 
 				lengthOfParsedShaderData += strLen + 1;
 
-#ifdef R2_DEBUG
-				g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-				globalLines++;
-#endif
+                pch = strtok_s(NULL, delimiter, &saveptr1);
 
-                pch = strtok_s(NULL, "\r\n", &saveptr1);
+#ifdef R2_DEBUG
+				UpdateShaderDebugInfo(saveptr1, g_shaderDebugInfo[debugIndex][shaderFilePath].numLines, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, globalLines, debugIndex, shaderFilePath);
+#endif
                 continue;
             }
 
@@ -639,7 +720,13 @@ namespace r2::draw::shader
             if (found)
             {
 
-                pch = strtok_s(NULL, "\r\n", &saveptr1);
+                size_t dummy = 0;
+                g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines++;
+#ifdef R2_DEBUG
+                UpdateShaderDebugInfo(saveptr1, dummy, g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines, dummy, debugIndex, shaderFilePath);
+               // g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines++;
+#endif
+                pch = strtok_s(NULL, delimiter, &saveptr1);
                 continue;                
             }
 
@@ -669,13 +756,14 @@ namespace r2::draw::shader
 
 #ifdef R2_DEBUG
             //I think we should include the include directive because that will match with the source file
-			g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++; //maybe should be +2?
-		//	globalLines++;
+			g_shaderDebugInfo[debugIndex][shaderFilePath].numLines++;
+            g_shaderDebugInfo[debugIndex][shaderFilePath].includeLines++;
+	//		globalLines++;
 #endif
 
             ReadAndParseShaderData(hashName, shaderStage, originalFilePath, fullIncludePath, shaderSourceFiles, includedPaths, tempAllocations, debugIndex, globalLines);
 
-            pch = strtok_s(NULL, "\r\n", &saveptr1);
+            pch = strtok_s(NULL, delimiter, &saveptr1);
         }
 
         shaderParsedOutIncludes[lengthOfParsedShaderData] = '\0';
@@ -769,26 +857,23 @@ namespace r2::draw::shader
 			char fileNameWithExtension[fs::FILE_PATH_LENGTH];
 			fs::utils::GetRelativePath(shaderManifests->basePath()->c_str(), fragmentShaderFilePath, fileNameWithExtension);
 
-            
-
 			auto shaderName = STRING_ID(fileNameWithExtension);
 
 			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 
-
             size_t globalLines = 0;
 
             ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations, 1, globalLines);
 
-			//if (std::string(fileNameWithExtension) == "Sandbox.fs")
+			//if (std::string(fileNameWithExtension) == "AnimModel.fs")
 			//{
 			//	const auto numParts = r2::sarr::Size(*fragmentShaderParts);
 
 			//	for (int i = 0; i < numParts; ++i)
 			//	{
-			//		printf("%s\n", r2::sarr::At(*fragmentShaderParts, i));
+			//		printf("%s", r2::sarr::At(*fragmentShaderParts, i));
 			//	}
 			//}
 
