@@ -1,7 +1,6 @@
 #ifndef GLSL_VECTORS
 #define GLSL_VECTORS
 
-//good test case
 #include "Common/Defines.glsl"
 
 layout (std140, binding = 1) uniform Vectors
@@ -10,7 +9,7 @@ layout (std140, binding = 1) uniform Vectors
     vec4 exposureNearFar;
     vec4 cascadePlanes;
     vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
+    vec4 fovAspectResXResY;
     uint64_t frame;
     vec2 clusterScaleBias;
     uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}

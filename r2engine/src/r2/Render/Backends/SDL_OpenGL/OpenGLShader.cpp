@@ -780,7 +780,7 @@ namespace r2::draw::shader
 			pch = strtok_s(NULL, delimiter, & saveptr1);
 
 #ifdef R2_DEBUG
-				g_shaderDebugInfo[debugIndex][shaderFilePath].shaderParts.push_back({ globalLines, 1 });
+				g_shaderDebugInfo[debugIndex][shaderFilePath].shaderParts.push_back({ globalLines, 0 });
 #endif
         }
 
@@ -847,6 +847,13 @@ namespace r2::draw::shader
 
         r2::sarr::Push(*tempAllocations, (void*)computeShaderParts);
 
+#ifdef R2_DEBUG
+		for (int i = 0; i < 4; ++i)
+		{
+			g_shaderDebugInfo[i].clear();
+		}
+#endif
+
         if(vertexShaderFilePath && strlen(vertexShaderFilePath) > 0)
         {
 
@@ -888,20 +895,7 @@ namespace r2::draw::shader
 
             ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations, 1, globalLines);
 
-			/*if (std::string(fileNameWithExtension) == "AnimModel.fs")
-			{
-				const auto numParts = r2::sarr::Size(*fragmentShaderParts);
-
-				for (int i = 0; i < numParts; ++i)
-				{
-					printf("%s", r2::sarr::At(*fragmentShaderParts, i));
-				}
-
-				if (numParts > 0)
-				{
-					int k = 0;
-				}
-			}*/
+			
 
 
 #ifdef R2_ASSET_PIPELINE
@@ -944,8 +938,29 @@ namespace r2::draw::shader
 
             size_t globalLines = 0;
 
+            if (std::string(fileNameWithExtension) == "Shadows/Directional/SDSM/CalculateCascadesSDSM.cs")
+            {
+                int k = 0;
+            }
+
 			ReadAndParseShaderData(hashName, shaderName, computeShaderFilePath, computeShaderFilePath, computeShaderParts, *includePaths, tempAllocations, 3, globalLines);
 			
+
+			if (std::string(fileNameWithExtension) == "Shadows/Directional/SDSM/CalculateCascadesSDSM.cs")
+			{
+				const auto numParts = r2::sarr::Size(*computeShaderParts);
+
+				for (int i = 0; i < numParts; ++i)
+				{
+					printf("%s", r2::sarr::At(*computeShaderParts, i));
+				}
+
+				if (numParts > 0)
+				{
+					int k = 0;
+				}
+			}
+
 #ifdef R2_ASSET_PIPELINE
 			r2::draw::shadersystem::AddShaderToShaderMap(shaderName, hashName);
 #endif
@@ -1008,6 +1023,7 @@ namespace r2::draw::shader
 #endif
 
         ClearTemporaryAllocations(tempAllocations);
+
 
         return newShader;
     }
