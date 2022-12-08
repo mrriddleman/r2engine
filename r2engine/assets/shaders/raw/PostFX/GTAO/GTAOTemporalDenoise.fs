@@ -5,14 +5,18 @@
 #extension GL_NV_gpu_shader5 : enable
 
 #define RATE_OF_CHANGE 0.5
-#define NUM_FRUSTUM_SPLITS 4
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+// #define NUM_FRUSTUM_SPLITS 4
+
+// struct Tex2DAddress
+// {
+// 	uint64_t  container;
+// 	float page;
+// 	int channel;
+// };
 
 layout (location = 0) out float FragColor;
 
@@ -23,53 +27,53 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
+// layout (std140, binding = 0) uniform Matrices
+// {
+//     mat4 projection;
+//     mat4 view;
+//     mat4 skyboxView;
+//     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+//     mat4 inverseProjection;
+//     mat4 inverseView;
+//     mat4 vpMatrix;
+//     mat4 prevProjection;
+//     mat4 prevView;
+//     mat4 prevVPMatrix;
+// };
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter;// {currJitterX, currJitterY, prevJitterX, prevJitterY}
-};
+// layout (std140, binding = 1) uniform Vectors
+// {
+//     vec4 cameraPosTimeW;
+//     vec4 exposureNearFar;
+//     vec4 cascadePlanes;
+//     vec4 shadowMapSizes;
+//     vec4 fovAspectResXResY;
+//     uint64_t frame;
+//     vec2 clusterScaleBias;
+//     uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+//     vec4 jitter;// {currJitterX, currJitterY, prevJitterX, prevJitterY}
+// };
 
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
+// layout (std140, binding = 2) uniform Surfaces
+// {
+// 	Tex2DAddress gBufferSurface;
+// 	Tex2DAddress shadowsSurface;
+// 	Tex2DAddress compositeSurface;
+// 	Tex2DAddress zPrePassSurface;
+// 	Tex2DAddress pointLightShadowsSurface;
+// 	Tex2DAddress ambientOcclusionSurface;
+// 	Tex2DAddress ambientOcclusionDenoiseSurface;
+// 	Tex2DAddress zPrePassShadowsSurface[2];
+// 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
+// 	Tex2DAddress normalSurface;
+// 	Tex2DAddress specularSurface;
+// 	Tex2DAddress ssrSurface;
+// 	Tex2DAddress convolvedGBUfferSurface[2];
+// 	Tex2DAddress ssrConeTracedSurface;
+// 	Tex2DAddress bloomDownSampledSurface;
+// 	Tex2DAddress bloomBlurSurface;
+// 	Tex2DAddress bloomUpSampledSurface;
+// };
 
 
 

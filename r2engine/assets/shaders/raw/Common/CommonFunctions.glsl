@@ -11,6 +11,11 @@ vec3 Saturate(vec3 x)
 	return clamp(x, 0.0, 1.0);
 }
 
+mat4 MatInverse(mat4 mat)
+{
+	return inverse(mat);
+}
+
 mat4 LookAt(vec3 eye, vec3 center, vec3 up)
 {
 	vec3 f = normalize(center - eye);
@@ -46,6 +51,50 @@ mat4 Projection(float fov, float aspect, float near, float far)
 	result[2][2] = - (far + near) / (far - near);
 	result[2][3] = -1.0;
 	result[3][2] = (-2.0 * far * near) / (far - near);
+
+	return result;
+}
+
+mat4 Projection_ZO(float fov, float aspect, float near, float far)
+{
+	mat4 result = mat4(0.0);
+
+	float tanHalfFovy = tan(fov / 2.0);
+
+	result[0][0] = 1.0 / (aspect * tanHalfFovy);
+	result[1][1] = 1.0 / (tanHalfFovy);
+	result[2][2] = - far / (far - near);
+	result[2][3] = -1.0;
+	result[3][2] = - (far * near) / (far - near);
+
+
+	return result;
+}
+
+mat4 Ortho(float left, float right, float bottom, float top, float near, float far)
+{
+	mat4 result = mat4(1.0);
+
+	result[0][0] = 2.0 / (right - left);
+	result[1][1] = 2.0 / (top - bottom);
+	result[2][2] = -2.0 / (far - near);
+	result[3][0] = -(right + left) / (right - left);
+	result[3][1] = -(top + bottom) / (top - bottom);
+	result[3][2] = -(far + near) / (far - near);
+
+	return result;
+}
+
+mat4 Ortho_ZO(float left, float right, float bottom, float top, float near, float far)
+{
+	mat4 result = mat4(1.0);
+
+	result[0][0] = 2.0 / (right - left);
+	result[1][1] = 2.0 / (top - bottom);
+	result[2][2] = -1.0 / (far - near);
+	result[3][0] = -(right + left) / (right - left);
+	result[3][1] = -(top + bottom) / (top - bottom);
+	result[3][2] = -near / (far - near);
 
 	return result;
 }

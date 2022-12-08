@@ -7,7 +7,7 @@
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Lighting/PBR/MaterialBRDF.glsl"
 #include "Shadows/SpotLight/SpotLightShadows.glsl"
-#include "Clusters/Clusters.glsl"
+#include "Input/ShaderBufferObjects/ClusterData.glsl"
 
 vec3 EvalSpotLight(SpotLight spotLight, in PixelData pixel)
 {

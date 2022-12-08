@@ -6,23 +6,7 @@
 
 layout (location = 0) out vec4 FragColor;
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-layout (std140, binding=6) uniform FXAAParams
-{
-	Tex2DAddress fxaa_inputTexture;
-	float fxaa_lumaThreshold;
-	float fxaa_lumaMulReduce;
-	float fxaa_lumaMinReduce;
-	float fxaa_maxSpan;
-	vec2 fxaa_texelStep;
-};
-
+#include "Input/UniformBuffers/FXAAParams.glsl"
 
 in VS_OUT
 {

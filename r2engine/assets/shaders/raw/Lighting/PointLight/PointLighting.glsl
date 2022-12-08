@@ -7,7 +7,7 @@
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Lighting/PBR/MaterialBRDF.glsl"
 #include "Shadows/PointLight/PointLightShadows.glsl"
-#include "Clusters/Clusters.glsl"
+#include "Input/ShaderBufferObjects/ClusterData.glsl"
 
 vec3 EvalPointLight(PointLight pointLight, in PixelData pixel)
 {

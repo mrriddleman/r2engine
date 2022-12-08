@@ -1,127 +1,19 @@
 #version 450 core
 #extension GL_NV_gpu_shader5 : enable
 
-#define NUM_FRUSTUM_SPLITS 4
+#include "Common/Defines.glsl"
+#include "Common/Texture.glsl"
+#include "Depth/DepthUtils.glsl"
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/SDSMParams.glsl"
+#include "Input/ShaderBufferObjects/ShadowData.glsl"
+
 #define REDUCE_ZBOUNDS_BLOCK_DIM 16
 #define REDUCE_ZBOUNDS_BLOCK_SIZE (REDUCE_ZBOUNDS_BLOCK_DIM * REDUCE_ZBOUNDS_BLOCK_DIM)
 
-#define MAX_NUM_DIRECTIONAL_LIGHTS 50
-#define MAX_NUM_POINT_LIGHTS 4096
-#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_SHADOW_MAP_PAGES 50
-
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
-
 layout (local_size_x = REDUCE_ZBOUNDS_BLOCK_DIM, local_size_y = REDUCE_ZBOUNDS_BLOCK_DIM, local_size_z = 1) in;
-
-
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-	vec4 jitter;
-};
-
-
-//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
-
-
-
-layout (std140, binding = 3) uniform SDSMParams
-{
-	vec4 lightSpaceBorder;
-	vec4 maxScale;
-	vec4 projMultSplitScaleZMultLambda;
-	float dilationFactor;
-	uint scatterTileDim;
-	uint reduceTileDim;
-	uint padding;
-	vec4 splitScaleMultFadeFactor;
-	Tex2DAddress blueNoiseTexture;
-};
-
-
-//@NOTE(Serge): we can only have 4 cascades like this
-struct Partition
-{
-	vec4 intervalBegin;
-	vec4 intervalEnd;
-};
-
-struct UPartition
-{
-	uvec4 intervalBegin;
-	uvec4 intervalEnd;
-};
-
-
-layout (std430, binding = 6) buffer ShadowData
-{
-	Partition gPartitions;
-	UPartition gPartitionsU;
-
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
-
-	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
-
-	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
-	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
-	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
-};
-
-
-
 
 shared float sMinZ[REDUCE_ZBOUNDS_BLOCK_SIZE];
 shared float sMaxZ[REDUCE_ZBOUNDS_BLOCK_SIZE];
@@ -184,19 +76,10 @@ void main(void)
 	}
 }
 
-float LinearizeDepth(float depth) 
-{
-    float z = depth * 2.0-1.0; // back to NDC 
-    float near = exposureNearFar.y;
-    float far = exposureNearFar.z;
-
-    return (2.0 * near * far) / (far + near - z * (far - near));	
-}
-
 float ComputeSurfaceDataPositionView(uvec2 coords, ivec2 depthBufferSize)
 {
 	vec3 texCoords = vec3(float(coords.x) / float(depthBufferSize.x), float(coords.y)/ float(depthBufferSize.y), zPrePassShadowsSurface[0].page);
 
-	return LinearizeDepth(texture(sampler2DArray(zPrePassShadowsSurface[0].container), texCoords).r);
+	return LinearizeDepth(texture(sampler2DArray(zPrePassShadowsSurface[0].container), texCoords).r, exposureNearFar.y, exposureNearFar.z);
 }
 

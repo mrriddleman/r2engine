@@ -3,32 +3,35 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in uint DrawID;
 
-#define NUM_FRUSTUM_SPLITS 4
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/ShaderBufferObjects/DebugData.glsl"
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
+// #define NUM_FRUSTUM_SPLITS 4
 
-struct DebugRenderConstants
-{
-	vec4 color;
-	mat4 modelMatrix;
-};
+// layout (std140, binding = 0) uniform Matrices
+// {
+//     mat4 projection;
+//     mat4 view;
+//     mat4 skyboxView;
+//     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+//     mat4 inverseProjection;
+//     mat4 inverseView;
+//     mat4 vpMatrix;
+//     mat4 prevProjection;
+//     mat4 prevView;
+//     mat4 prevVPMatrix;
+// };
 
-layout (std430, binding = 5) buffer DebugConstants
-{
-	DebugRenderConstants constants[];
-};
+// struct DebugRenderConstants
+// {
+// 	vec4 color;
+// 	mat4 modelMatrix;
+// };
+
+// layout (std430, binding = 5) buffer DebugConstants
+// {
+// 	DebugRenderConstants constants[];
+// };
 
 out VS_OUT
 {

@@ -8,27 +8,8 @@ layout (location = 4) in vec4 BoneWeights;
 layout (location = 5) in ivec4 BoneIDs;
 layout (location = 6) in uint DrawID;
 
-layout (std140, binding = 0) buffer Models
-{
-	mat4 models[];
-};
-
-struct BoneTransform
-{
-	mat4 globalInv;
-	mat4 transform;
-	mat4 invBinPose;
-};
-
-layout (std430, binding = 2) buffer BoneTransforms
-{
-	BoneTransform bonesXForms[];
-};
-
-layout (std140, binding = 3) buffer BoneTransformOffsets
-{
-	ivec4 boneOffsets[];
-};
+#include "Input/ShaderBufferObjects/ModelData.glsl"
+#include "Input/ShaderBufferObjects/BoneTransformData.glsl"
 
 void main()
 {

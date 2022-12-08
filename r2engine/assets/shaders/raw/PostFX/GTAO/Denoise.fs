@@ -2,53 +2,13 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-#define NUM_FRUSTUM_SPLITS 4
 #define INV_SQRT_OF_2PI 0.39894228040143267793994605993439  // 1.0/SQRT_OF_2PI
 #define INV_PI          0.31830988618379067153776752674503
 
 layout (location = 0) out vec2 FragColor;
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-    uint64_t unused;
-    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
-};
-
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
-
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
 
 in VS_OUT
 {

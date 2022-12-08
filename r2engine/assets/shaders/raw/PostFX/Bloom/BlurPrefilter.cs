@@ -8,17 +8,7 @@ layout (local_size_x = WARP_SIZE, local_size_y = WARP_SIZE, local_size_z = 1) in
 
 layout (binding = 0, r11f_g11f_b10f) uniform image2D outputImage;
 
-
-layout (std140, binding = 5) uniform BloomParams
-{
-	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
-	uvec4 bloomResolutions;
-	vec4 bloomFilterRadiusIntensity;
-
-	uint64_t textureContainerToSample;
-	float texturePageToSample;
-	float textureLodToSample;	
-};
+#include "Input/UniformBuffers/BloomParams.glsl"
 
 void main()
 {

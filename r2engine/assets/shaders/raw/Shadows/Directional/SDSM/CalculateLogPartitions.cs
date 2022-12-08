@@ -1,90 +1,13 @@
 #version 450 core
 #extension GL_NV_gpu_shader5 : enable
 
-#define NUM_FRUSTUM_SPLITS 4
-
-#define MAX_NUM_SHADOW_PAGES 50
-
-
-#define MAX_NUM_DIRECTIONAL_LIGHTS 50
-#define MAX_NUM_POINT_LIGHTS 4096
-#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_SHADOW_MAP_PAGES 50
-
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#include "Common/Defines.glsl"
+#include "Common/Texture.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/SDSMParams.glsl"
+#include "Input/ShaderBufferObjects/ShadowData.glsl"
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
-
-
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-
-
-struct BoundsUint
-{
-    uvec4 minCoord;
-    uvec4 maxCoord;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
-};
-
-layout (std140, binding = 3) uniform SDSMParams
-{
-	vec4 lightSpaceBorder;
-	vec4 maxScale;
-	vec4 projMultSplitScaleZMultLambda;
-	float dilationFactor;
-	uint scatterTileDim;
-	uint reduceTileDim;
-	uint padding;
-	vec4 splitScaleMultFadeFactor;
-	Tex2DAddress blueNoiseTexture;
-};
-
-struct Partition
-{
-	vec4 intervalBegin;
-	vec4 intervalEnd;
-};
-
-struct UPartition
-{
-	uvec4 intervalBegin;
-	uvec4 intervalEnd;
-};
-
-layout (std430, binding = 6) buffer ShadowData
-{
-	Partition gPartitions;
-	UPartition gPartitionsU;
-
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_PAGES];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_PAGES];
-
-	mat4 gShadowMatrix[MAX_NUM_SHADOW_PAGES];
-
-	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
-	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
-	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
-};
 
 
 float LogPartitionFromRange(uint part, float minZ, float maxZ);

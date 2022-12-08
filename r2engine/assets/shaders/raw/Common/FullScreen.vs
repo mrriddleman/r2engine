@@ -6,10 +6,7 @@ layout (location = 2) in vec3 aTexCoord;
 layout (location = 3) in vec3 aTangent; 
 layout (location = 4) in uint DrawID;
 
-layout (std140, binding = 0) buffer Models
-{
-	mat4 models[];	
-};
+#include "Input/ShaderBufferObjects/ModelData.glsl"
 
 out VS_OUT
 {

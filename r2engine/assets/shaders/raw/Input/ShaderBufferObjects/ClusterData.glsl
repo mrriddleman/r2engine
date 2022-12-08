@@ -1,5 +1,5 @@
-#ifndef GLSL_CLUSTERS
-#define GLSL_CLUSTERS
+#ifndef GLSL_CLUSTER_DATA
+#define GLSL_CLUSTER_DATA
 
 #define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
 #define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100

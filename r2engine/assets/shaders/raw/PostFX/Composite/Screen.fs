@@ -2,62 +2,12 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-const uint NUM_TEXTURES_PER_DRAWID = 8;
-const float near = 0.1; 
-const float far  = 100.0; 
-
 layout (location = 0) out vec4 FragColor;
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/UniformBuffers/BloomParams.glsl"
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-	vec4 jitter;
-};
-
-
-
-//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
-
-layout (std140, binding = 5) uniform BloomParams
-{
-	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
-	uvec4 bloomResolutions;
-	vec4 bloomFilterRadiusIntensity;
-};
 
 in VS_OUT
 {
@@ -66,14 +16,6 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-vec3 DecodeNormal(vec2 enc)
-{
-	vec3 n;
-
-	n.xy = enc * 2 - 1;
-	n.z = sqrt(1 - dot(n.xy, n.xy));
-	return n;
-}
 
 vec3 GammaCorrect(vec3 color)
 {
@@ -88,19 +30,6 @@ vec3 FilmicToneMapping(vec3 color);
 vec3 ACESFitted(vec3 color);
 vec3 ACES(vec3 color);
 vec3 Uncharted2ToneMapping(vec3 color);
-
-float LinearizeDepth(float depth) 
-{
-	
-    float z = depth * 2.0 - 1.0; // back to NDC 
-    return (2 *  near * far) / (far + near - z * (far - near));	
-}
-
-float NormalizeViewDepth(float depth)
-{
-	//return depth / 100.0;
-	return (depth - near) / (far - near) * depth;
-}
 
 void main()
 {

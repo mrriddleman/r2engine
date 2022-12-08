@@ -1,6 +1,9 @@
 #ifndef GLSL_VECTORS
 #define GLSL_VECTORS
 
+//good test case
+#include "Common/Defines.glsl"
+
 layout (std140, binding = 1) uniform Vectors
 {
     vec4 cameraPosTimeW;

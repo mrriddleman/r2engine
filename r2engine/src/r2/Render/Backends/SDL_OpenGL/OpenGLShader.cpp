@@ -886,14 +886,9 @@ namespace r2::draw::shader
 
             size_t globalLines = 0;
 
-			if (std::string(fileNameWithExtension) == "AnimModel.fs")
-			{
-				int k = 0;
-			}
-
             ReadAndParseShaderData(hashName, shaderName, fragmentShaderFilePath, fragmentShaderFilePath, fragmentShaderParts, *includePaths, tempAllocations, 1, globalLines);
 
-			if (std::string(fileNameWithExtension) == "AnimModel.fs")
+			/*if (std::string(fileNameWithExtension) == "AnimModel.fs")
 			{
 				const auto numParts = r2::sarr::Size(*fragmentShaderParts);
 
@@ -902,11 +897,11 @@ namespace r2::draw::shader
 					printf("%s", r2::sarr::At(*fragmentShaderParts, i));
 				}
 
-                if (numParts > 0)
-                {
-                    int k = 0;
-                }
-			}
+				if (numParts > 0)
+				{
+					int k = 0;
+				}
+			}*/
 
 
 #ifdef R2_ASSET_PIPELINE

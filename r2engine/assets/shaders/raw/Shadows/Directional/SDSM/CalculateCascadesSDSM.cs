@@ -2,275 +2,20 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
+#include "Common/Defines.glsl"
+#include "Common/Texture.glsl"
+#include "Common/CommonFunctions.glsl"
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/SDSMParams.glsl"
 
-
-//@TODO(Serge): make this into a real thing we can pass in
-
-#define MAX_NUM_DIRECTIONAL_LIGHTS 50
-#define MAX_NUM_POINT_LIGHTS 4096
-#define MAX_NUM_SPOT_LIGHTS MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_SHADOW_MAP_PAGES 50
-
-#define NUM_FRUSTUM_SPLITS 4
-#define NUM_FRUSTUM_CORNERS 8
-
-#define NUM_SPOTLIGHT_LAYERS 1
-#define NUM_POINTLIGHT_LAYERS 6
-#define NUM_DIRECTIONLIGHT_LAYERS NUM_FRUSTUM_SPLITS
-
-#define NUM_SPOTLIGHT_SHADOW_PAGES MAX_NUM_SPOT_LIGHTS
-#define NUM_POINTLIGHT_SHADOW_PAGES MAX_NUM_POINT_LIGHTS
-#define NUM_DIRECTIONLIGHT_SHADOW_PAGES MAX_NUM_SHADOW_MAP_PAGES
+#include "Input/ShaderBufferObjects/LightingData.glsl"
+#include "Input/ShaderBufferObjects/ShadowData.glsl"
 
 layout (local_size_x = NUM_FRUSTUM_SPLITS, local_size_y = 1, local_size_z = 1) in;
 
-
-const vec3 GLOBAL_UP = vec3(0, 1, 0);
+const vec3 SHADOW_GLOBAL_UP = vec3(0, 1, 0);
 const bool STABALIZE_CASCADES = true;
-const uint NUM_SIDES_FOR_POINTLIGHT = 6;
-
-
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
-    uint64_t frame;
-   	vec2 clusterScaleBias;
-	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-	vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
-};
-
-layout (std140, binding = 3) uniform SDSMParams
-{
-	vec4 lightSpaceBorder;
-	vec4 maxScale;
-	vec4 projMultSplitScaleZMultLambda;
-	float dilationFactor;
-	uint scatterTileDim;
-	uint reduceTileDim;
-	uint padding;
-	vec4 splitScaleMultFadeFactor;
-	Tex2DAddress blueNoiseTexture;
-};
-
-
-
-struct LightProperties
-{
-	vec4 color;
-	uvec4 castsShadowsUseSoftShadows;
-	float fallOffRadius;
-	float intensity;
-//	uint32_t castsShadows;
-	int64_t lightID;
-};
-
-struct LightSpaceMatrixData
-{
-	mat4 lightViewMatrices[NUM_FRUSTUM_SPLITS];
-	mat4 lightProjMatrices[NUM_FRUSTUM_SPLITS];
-};
-
-struct PointLight
-{
-	LightProperties lightProperties;
-	vec4 position;
-
-	mat4 lightSpaceMatrices[NUM_SIDES_FOR_POINTLIGHT];
-};
-
-struct DirLight
-{
-	LightProperties lightProperties;
-	vec4 direction;	
-	mat4 cameraViewToLightProj;
-	LightSpaceMatrixData lightSpaceMatrixData;
-};
-
-struct SpotLight
-{
-	LightProperties lightProperties;
-	vec4 position;//w is radius
-	vec4 direction;//w is cutoff
-
-	mat4 lightSpaceMatrix;
-};
-
-struct SkyLight
-{
-	LightProperties lightProperties;
-	Tex2DAddress diffuseIrradianceTexture;
-	Tex2DAddress prefilteredRoughnessTexture;
-	Tex2DAddress lutDFGTexture;
-//	int numPrefilteredRoughnessMips;
-};
-
-
-layout (std430, binding = 4) buffer Lighting
-{
-	PointLight pointLights[MAX_NUM_POINT_LIGHTS];
-	DirLight dirLights[MAX_NUM_DIRECTIONAL_LIGHTS];
-	SpotLight spotLights[MAX_NUM_SPOT_LIGHTS];
-	SkyLight skylight;
-
-	int numPointLights;
-	int numDirectionLights;
-	int numSpotLights;
-	int numPrefilteredRoughnessMips;
-	int useSDSMShadows;
-
-	int numShadowCastingDirectionLights;
-	int numShadowCastingPointLights;
-	int numShadowCastingSpotLights;
-
-	int64_t shadowCastingDirectionLights[MAX_NUM_SHADOW_MAP_PAGES];
-	int64_t shadowCastingPointLights[MAX_NUM_SHADOW_MAP_PAGES];
-	int64_t shadowCastingSpotLights[MAX_NUM_SHADOW_MAP_PAGES];
-};
-
-
-struct Partition
-{
-	vec4 intervalBegin;
-	vec4 intervalEnd;
-};
-
-struct UPartition
-{
-	uvec4 intervalBegin;
-	uvec4 intervalEnd;
-};
-
-layout (std430, binding = 6) buffer ShadowData
-{
-	Partition gPartitions;
-	UPartition gPartitionsU;
-
-	vec4 gScale[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
-	vec4 gBias[NUM_FRUSTUM_SPLITS][MAX_NUM_SHADOW_MAP_PAGES];
-
-	mat4 gShadowMatrix[MAX_NUM_SHADOW_MAP_PAGES];
-
-	float gSpotLightShadowMapPages[NUM_SPOTLIGHT_SHADOW_PAGES];
-	float gPointLightShadowMapPages[NUM_POINTLIGHT_SHADOW_PAGES];
-	float gDirectionLightShadowMapPages[NUM_DIRECTIONLIGHT_SHADOW_PAGES];
-};
-
-mat4 MatInverse(mat4 mat)
-{
-	return inverse(mat);
-}
-
-mat4 LookAt(vec3 eye, vec3 center, vec3 up)
-{
-
-	vec3 f = normalize(center - eye);
-	vec3 s = normalize(cross(f, up));
-	vec3 u = cross(s, f);
-
-	mat4 result = mat4(1.0);
-
-	result[0][0] = s.x;
-	result[1][0] = s.y;
-	result[2][0] = s.z;
-	result[0][1] = u.x;
-	result[1][1] = u.y;
-	result[2][1] = u.z;
-	result[0][2] = -f.x;
-	result[1][2] = -f.y;
-	result[2][2] = -f.z;
-	result[3][0] = -dot(s, eye);
-	result[3][1] = -dot(u, eye);
-	result[3][2] = 	dot(f, eye);
-
-	return result;
-}
-
-mat4 Ortho(float left, float right, float bottom, float top, float near, float far)
-{
-	mat4 result = mat4(1.0);
-
-	result[0][0] = 2.0 / (right - left);
-	result[1][1] = 2.0 / (top - bottom);
-	result[2][2] = -2.0 / (far - near);
-	result[3][0] = -(right + left) / (right - left);
-	result[3][1] = -(top + bottom) / (top - bottom);
-	result[3][2] = -(far + near) / (far - near);
-
-	return result;
-}
-
-mat4 Ortho_ZO(float left, float right, float bottom, float top, float near, float far)
-{
-	mat4 result = mat4(1.0);
-
-	result[0][0] = 2.0 / (right - left);
-	result[1][1] = 2.0 / (top - bottom);
-	result[2][2] = -1.0 / (far - near);
-	result[3][0] = -(right + left) / (right - left);
-	result[3][1] = -(top + bottom) / (top - bottom);
-	result[3][2] = -near / (far - near);
-
-	return result;
-}
-
-mat4 Projection(float fov, float aspect, float near, float far)
-{
-	mat4 result = mat4(0.0);
-
-	float tanHalfFovy = tan(fov / 2.0);
-
-	result[0][0] = 1.0 / (aspect * tanHalfFovy);
-	result[1][1] = 1.0 / (tanHalfFovy);
-	result[2][2] = - (far + near) / (far - near);
-	result[2][3] = -1.0;
-	result[3][2] = - (2.0 * far * near) / (far - near);
-
-
-	return result;
-}
-
-mat4 Projection_ZO(float fov, float aspect, float near, float far)
-{
-	mat4 result = mat4(0.0);
-
-	float tanHalfFovy = tan(fov / 2.0);
-
-	result[0][0] = 1.0 / (aspect * tanHalfFovy);
-	result[1][1] = 1.0 / (tanHalfFovy);
-	result[2][2] = - far / (far - near);
-	result[2][3] = -1.0;
-	result[3][2] = - (far * near) / (far - near);
-
-
-	return result;
-}
-
-
 
 vec3 GetCameraRight()
 {
@@ -343,7 +88,7 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 
 	vec3 upDir = GetCameraRight();
 	if(STABALIZE_CASCADES)
-		upDir = GLOBAL_UP;
+		upDir = SHADOW_GLOBAL_UP;
 	
 
 //	vec3 lightCameraPos = center;
@@ -432,7 +177,7 @@ void main(void)
 	vec3 upDir = GetCameraRight();
 
 	if(STABALIZE_CASCADES)
-		upDir = GLOBAL_UP;
+		upDir = SHADOW_GLOBAL_UP;
 
 	vec3 minExtents;
 	vec3 maxExtents;

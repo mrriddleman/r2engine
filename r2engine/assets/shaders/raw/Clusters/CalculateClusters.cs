@@ -4,60 +4,10 @@
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-#define NUM_FRUSTUM_SPLITS 4
-#define MAX_CLUSTERS 4096
-#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
-
-struct VolumeTileAABB
-{
-	vec4 minPoint;
-	vec4 maxPoint;
-};
-
-struct LightGrid{
-    uint pointLightOffset;
-    uint pointLightCount;
-    uint spotLightOffset;
-    uint spotLightCount;
-};
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-	vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
-};
-
-layout (std430, binding=8) buffer Clusters
-{
-	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
-	bool activeClusters[MAX_CLUSTERS];
-	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
-	LightGrid lightGrid[MAX_CLUSTERS];
-	VolumeTileAABB clusters[MAX_CLUSTERS];
-};
-
+#include "Common/Defines.glsl"
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/ShaderBufferObjects/ClusterData.glsl"
 
 //Function prototypes
 vec4 ClipToView(vec4 clip);
@@ -68,7 +18,7 @@ void main()
 {
 	const vec3 eyePos = vec3(0.0);
 
-	uint tileSizePix = tileSizes[3];
+	uint tileSizePix = clusterTileSizes[3];
 	uint tileIndex   = gl_WorkGroupID.x + 
 					   gl_WorkGroupID.y * gl_NumWorkGroups.x +
 					   gl_WorkGroupID.z * (gl_NumWorkGroups.x * gl_NumWorkGroups.y);

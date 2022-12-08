@@ -316,15 +316,6 @@
       partPath: ""
     },
     {
-      shaderName: 7071284666584936570,
-      vertexPath: "",
-      fragmentPath: "",
-      geometryPath: "",
-      computePath: "",
-      binaryPath: "",
-      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Clusters/Clusters.glsl"
-    },
-    {
       shaderName: 5762959006479727521,
       vertexPath: "",
       fragmentPath: "",
@@ -370,6 +361,42 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Depth/DepthUtils.glsl"
     },
     {
+      shaderName: 4902105870370503534,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/BoneTransformData.glsl"
+    },
+    {
+      shaderName: 3890563352742295178,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/ClusterData.glsl"
+    },
+    {
+      shaderName: 7412952609348773805,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/DebugData.glsl"
+    },
+    {
+      shaderName: 10547327652550253856,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/DispatchIndirectData.glsl"
+    },
+    {
       shaderName: 15625837078211482584,
       vertexPath: "",
       fragmentPath: "",
@@ -388,6 +415,42 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/MaterialData.glsl"
     },
     {
+      shaderName: 13053247283615891087,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/ModelData.glsl"
+    },
+    {
+      shaderName: 5242303981046304632,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/ShadowData.glsl"
+    },
+    {
+      shaderName: 9349983055767249073,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/BloomParams.glsl"
+    },
+    {
+      shaderName: 10040280651593383552,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/FXAAParams.glsl"
+    },
+    {
       shaderName: 13173820576971248858,
       vertexPath: "",
       fragmentPath: "",
@@ -395,6 +458,24 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/Matrices.glsl"
+    },
+    {
+      shaderName: 10578265221047117641,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/SDSMParams.glsl"
+    },
+    {
+      shaderName: 14336286544888368,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/SSRParams.glsl"
     },
     {
       shaderName: 10315613655232842446,
@@ -530,15 +611,6 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/ShadowCommon.glsl"
-    },
-    {
-      shaderName: 4936583456438278267,
-      vertexPath: "",
-      fragmentPath: "",
-      geometryPath: "",
-      computePath: "",
-      binaryPath: "",
-      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Shadows/ShadowData.glsl"
     },
     {
       shaderName: 3024478782004516216,

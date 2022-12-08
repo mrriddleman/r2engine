@@ -1,10 +1,10 @@
-#ifndef GLSL_DIR_SHADOW
-#define GLSL_DIR_SHADOW
+#ifndef GLSL_DIR_SHADOWS
+#define GLSL_DIR_SHADOWS
 
 #include "Common/Defines.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Depth/DepthUtils.glsl"
-#include "Shadows/ShadowData.glsl"
+#include "Input/ShaderBufferObjects/ShadowData.glsl"
 #include "Shadows/ShadowCommon.glsl"
 #include "Shadows/ShadowFilters.glsl"
 

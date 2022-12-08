@@ -1,7 +1,7 @@
 #ifndef GLSL_LIGHTING
 #define GLSL_LIGHTING
 
-#include "Clusters/Clusters.glsl"
+#include "Input/ShaderBufferObjects/ClusterData.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Lighting/Directional/DirectionalLighting.glsl"

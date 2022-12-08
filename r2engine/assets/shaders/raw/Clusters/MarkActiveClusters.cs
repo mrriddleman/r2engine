@@ -4,95 +4,15 @@
 
 layout (local_size_x = 20, local_size_y = 20) in;
 
-#define NUM_FRUSTUM_SPLITS 4
-#define MAX_CLUSTERS 4096 //hmm would like to get rid of this but I don't want to use too many SSBOs
-#define MAX_NUMBER_OF_LIGHTS_PER_CLUSTER 100
+#include "Common/Defines.glsl"
+#include "Common/Texture.glsl"
+#include "Depth/DepthUtils.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/ShaderBufferObjects/ClusterData.glsl"
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
-
-struct VolumeTileAABB
-{
-	vec4 minPoint;
-	vec4 maxPoint;
-};
-
-struct LightGrid{
-    uint pointLightOffset;
-    uint pointLightCount;
-    uint spotLightOffset;
-    uint spotLightCount;
-};
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 invProjection;
-    mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
-
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-    vec2 clusterScaleBias;
-    uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-    vec4 jitter;
-
-};
-
-//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
-
-
-layout (std430, binding=8) buffer Clusters
-{
-	uvec2 globalLightIndexCount;
-	uvec2 globalLightIndexList[MAX_NUMBER_OF_LIGHTS_PER_CLUSTER * MAX_CLUSTERS];
-	bool activeClusters[MAX_CLUSTERS];
-	uint uniqueActiveClusters[MAX_CLUSTERS]; //compacted list of clusterIndices
-	LightGrid lightGrid[MAX_CLUSTERS];
-	VolumeTileAABB clusters[MAX_CLUSTERS];
-};
-
-uint GetClusterIndex(vec3 pixelCoord);
 void MarkActiveCluster(uvec2 screenCoord);
-uint GetDepthSlice(float z);
-float LinearizeDepth(float depth);
 
 //We could make this a compute shader instead?
 void main()
@@ -108,34 +28,7 @@ void main()
 
 void MarkActiveCluster(uvec2 screenCoord)
 {
-	vec3 texCoord = vec3(screenCoord / fovAspectResXResY.zw, zPrePassSurface.page);
-
-	float z = texture(sampler2DArray(zPrePassSurface.container), texCoord).r;
-
-	uint clusterID = GetClusterIndex(vec3(screenCoord, z));
+	uint clusterID = GetClusterIndex(vec2(screenCoord), fovAspectResXResY.zw, exposureNearFar.yz, clusterScaleBias.xy, clusterTileSizes, zPrePassSurface);
 
 	activeClusters[clusterID] = true;
-}
-
-float LinearizeDepth(float depth) 
-{
-    float z = depth * 2.0-1.0; // back to NDC 
-    float near = exposureNearFar.y;
-    float far = exposureNearFar.z;
-
-    return (2.0 * near * far) / (far + near - z * (far - near));	
-}
-
-uint GetDepthSlice(float z)
-{
-	return uint(max(floor(log2(LinearizeDepth(z)) * clusterScaleBias.x + clusterScaleBias.y), 0.0));
-}
-
-uint GetClusterIndex(vec3 pixelCoord)
-{
-	uint clusterZVal = GetDepthSlice(pixelCoord.z);
-
-	uvec3 clusterID = uvec3(uvec2(pixelCoord.xy / clusterTileSizes.w), clusterZVal);
-
-	return clusterID.x + clusterTileSizes.x * clusterID.y + (clusterTileSizes.x * clusterTileSizes.y) * clusterID.z;
 }

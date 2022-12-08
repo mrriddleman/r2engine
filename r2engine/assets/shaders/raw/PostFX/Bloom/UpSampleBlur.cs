@@ -10,16 +10,8 @@ layout (local_size_x = WARP_SIZE, local_size_y = WARP_SIZE, local_size_z = 1) in
 layout (binding = 0, r11f_g11f_b10f) uniform image2D inputImage2;
 layout (binding = 1, r11f_g11f_b10f) uniform image2D outputImage;
 
-layout (std140, binding = 5) uniform BloomParams
-{
-	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee 
-	uvec4 bloomResolutions;
-	vec4 bloomFilterRadius;
+#include "Input/UniformBuffers/BloomParams.glsl"
 
-	uint64_t textureContainerToSample;
-	float texturePageToSample;
-	float textureLodToSample;
-};
 
 void main()
 {
@@ -28,8 +20,8 @@ void main()
 
 	vec2 texCoordf = vec2(outTexCoord) / vec2(bloomResolutions.z, bloomResolutions.w);
 	
-	float x = bloomFilterRadius.x;
-	float y = bloomFilterRadius.y;
+	float x = bloomFilterRadiusIntensity.x;
+	float y = bloomFilterRadiusIntensity.y;
 
 	vec3 a = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x - x, texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x - x, texCoord.y + y)).rgb;
 	vec3 b = textureLod(sampler2DArray(textureContainerToSample), vec3(texCoordf.x    , texCoordf.y + y, texturePageToSample), textureLodToSample).rgb;//imageLoad(inputImage, ivec2(texCoord.x    , texCoord.y + y)).rgb;

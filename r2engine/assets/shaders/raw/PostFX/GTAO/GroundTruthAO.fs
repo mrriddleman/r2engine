@@ -2,9 +2,9 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-#define NUM_FRUSTUM_SPLITS 4
-#define PI 3.14159265358979323846
-#define PI_HALF 1.5707963267948966192313216916398
+// #define NUM_FRUSTUM_SPLITS 4
+// #define PI 3.14159265358979323846
+// #define PI_HALF 1.5707963267948966192313216916398
 
 layout (location = 0) out vec2 FragColor;
 
@@ -12,62 +12,67 @@ uniform float uRadius = 3;
 uniform float uMaxRadiusPixels = 50.0;
 uniform float uNumSteps = 4;
 
-struct Tex2DAddress
-{
-	uint64_t  container;
-	float page;
-	int channel;
-};
+#include "Common/Defines.glsl"
+#include "Input/UniformBuffers/Matrices.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
 
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 invProjection;
-   	mat4 inverseView;
-    mat4 vpMatrix;
-    mat4 prevProjection;
-    mat4 prevView;
-    mat4 prevVPMatrix;
-};
+// struct Tex2DAddress
+// {
+// 	uint64_t  container;
+// 	float page;
+// 	int channel;
+// };
 
-layout (std140, binding = 1) uniform Vectors
-{
-    vec4 cameraPosTimeW;
-    vec4 exposureNearFar;
-    vec4 cascadePlanes;
-    vec4 shadowMapSizes;
-    vec4 fovAspectResXResY;
-    uint64_t frame;
-   	vec2 clusterScaleBias;
-	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-	vec4 jitter;
-};
+// layout (std140, binding = 0) uniform Matrices
+// {
+//     mat4 projection;
+//     mat4 view;
+//     mat4 skyboxView;
+//     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
+//     mat4 invProjection;
+//    	mat4 inverseView;
+//     mat4 vpMatrix;
+//     mat4 prevProjection;
+//     mat4 prevView;
+//     mat4 prevVPMatrix;
+// };
+
+// layout (std140, binding = 1) uniform Vectors
+// {
+//     vec4 cameraPosTimeW;
+//     vec4 exposureNearFar;
+//     vec4 cascadePlanes;
+//     vec4 shadowMapSizes;
+//     vec4 fovAspectResXResY;
+//     uint64_t frame;
+//    	vec2 clusterScaleBias;
+// 	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+// 	vec4 jitter;
+// };
 
 
-//@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
-layout (std140, binding = 2) uniform Surfaces
-{
-	Tex2DAddress gBufferSurface;
-	Tex2DAddress shadowsSurface;
-	Tex2DAddress compositeSurface;
-	Tex2DAddress zPrePassSurface;
-	Tex2DAddress pointLightShadowsSurface;
-	Tex2DAddress ambientOcclusionSurface;
-	Tex2DAddress ambientOcclusionDenoiseSurface;
-	Tex2DAddress zPrePassShadowsSurface[2];
-	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-	Tex2DAddress normalSurface;
-	Tex2DAddress specularSurface;
-	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
-	Tex2DAddress ssrConeTracedSurface;
-	Tex2DAddress bloomDownSampledSurface;
-	Tex2DAddress bloomBlurSurface;
-	Tex2DAddress bloomUpSampledSurface;
-};
+// //@NOTE(Serge): this is in the order of the render target surfaces in RenderTarget.h
+// layout (std140, binding = 2) uniform Surfaces
+// {
+// 	Tex2DAddress gBufferSurface;
+// 	Tex2DAddress shadowsSurface;
+// 	Tex2DAddress compositeSurface;
+// 	Tex2DAddress zPrePassSurface;
+// 	Tex2DAddress pointLightShadowsSurface;
+// 	Tex2DAddress ambientOcclusionSurface;
+// 	Tex2DAddress ambientOcclusionDenoiseSurface;
+// 	Tex2DAddress zPrePassShadowsSurface[2];
+// 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
+// 	Tex2DAddress normalSurface;
+// 	Tex2DAddress specularSurface;
+// 	Tex2DAddress ssrSurface;
+// 	Tex2DAddress convolvedGBUfferSurface[2];
+// 	Tex2DAddress ssrConeTracedSurface;
+// 	Tex2DAddress bloomDownSampledSurface;
+// 	Tex2DAddress bloomBlurSurface;
+// 	Tex2DAddress bloomUpSampledSurface;
+// };
 
 
 in VS_OUT
@@ -89,7 +94,7 @@ vec3 GetViewSpacePos(vec2 uv)
 	//float depth = min(min(depth4.x, depth4.y), min(depth4.z, depth4.w));
 
 	vec4 clipSpacePosition = vec4( uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-	vec4 viewSpacePosition = invProjection * clipSpacePosition;
+	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;
 	viewSpacePosition /= viewSpacePosition.w;
 
 	return viewSpacePosition.xyz;

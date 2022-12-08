@@ -1,7 +1,7 @@
 #ifndef GLSL_POINTLIGHT_SHADOWS
 #define GLSL_POINTLIGHT_SHADOWS
 
-#include "Shadows/ShadowData.glsl"
+#include "Input/ShaderBufferObjects/ShadowData.glsl"
 #include "Shadows/ShadowCommon.glsl"
 
 vec3 sampleOffsetDirections[20] = vec3[]
