@@ -53,4 +53,10 @@ Material GetMaterial(uint drawID, vec3 uv)
 	return materials[materialIndex];
 }
 
+Material GetCubemapMaterial(uint drawID)
+{
+	highp uint texIndex =  materialOffsets[drawID];
+	return materials[texIndex];
+}
+
 #endif

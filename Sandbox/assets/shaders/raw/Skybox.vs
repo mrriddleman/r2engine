@@ -6,21 +6,7 @@ layout (location = 2) in vec3 aTexCoord;
 layout (location = 3) in vec3 aTangent;
 layout (location = 4) in uint DrawID;
 
-#define NUM_FRUSTUM_SPLITS 4
-
-layout (std140, binding = 0) uniform Matrices
-{
-    mat4 projection;
-    mat4 view;
-    mat4 skyboxView;
-    mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-    mat4 inverseProjection;
-    mat4 inverseView;
-	mat4 vpMatrix;
-	mat4 prevProjection;
-	mat4 prevView;
-	mat4 prevVPMatrix;
-};
+#include "Input/UniformBuffers/Matrices.glsl"
 
 out VS_OUT
 {

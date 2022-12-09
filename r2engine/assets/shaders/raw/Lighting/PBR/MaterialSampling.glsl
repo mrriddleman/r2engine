@@ -4,6 +4,12 @@
 #include "Input/ShaderBufferObjects/MaterialData.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 
+vec4 SampleCubemapMaterialDiffuse(in Material m, vec3 uv)
+{
+	Tex2DAddress addr = m.albedo.texture;
+	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.g, uv.b, addr.page), 0);
+}
+
 vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 {
 	//Material m = GetMaterial(drawID, uv);
