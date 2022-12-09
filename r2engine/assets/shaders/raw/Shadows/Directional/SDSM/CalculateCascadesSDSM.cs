@@ -88,8 +88,9 @@ mat4 MakeGlobalShadowMatrix(int directionLightIndex)
 
 	vec3 upDir = GetCameraRight();
 	if(STABALIZE_CASCADES)
+	{
 		upDir = SHADOW_GLOBAL_UP;
-	
+	}
 
 //	vec3 lightCameraPos = center;
 //	vec3 lookAt = center - dirLights[0].direction.xyz;
@@ -120,7 +121,7 @@ void main(void)
 	uint cascadeIndex = gl_LocalInvocationID.x;
 	int directionLightIndex = (int)shadowCastingDirectionLights[int(gl_WorkGroupID.x)];
 	int directionLightLightID = GetCurrentDirectionLightLightID(directionLightIndex);
-	
+
 
 	if(cascadeIndex == 0)
 	{
