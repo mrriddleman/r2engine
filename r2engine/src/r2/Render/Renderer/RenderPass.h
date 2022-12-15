@@ -26,6 +26,7 @@ namespace r2::draw
 		RPT_CLUSTERS,
 		RPT_SSR,
 		RPT_OUTPUT,
+		RPT_SMAA_EDGE_DETECTION,
 		NUM_RENDER_PASSES
 	};
 

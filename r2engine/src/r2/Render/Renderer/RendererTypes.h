@@ -157,7 +157,8 @@ namespace r2::draw
     enum OutputMerger : u8
     {
         OUTPUT_NO_AA = 0,
-        OUTPUT_FXAA
+        OUTPUT_FXAA,
+        OUTPUT_SMAA_X1
     };
 
 

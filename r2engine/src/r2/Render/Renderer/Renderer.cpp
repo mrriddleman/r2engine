@@ -444,6 +444,7 @@ namespace r2::draw::renderer
 	void UpdateFXAADataIfNeeded(Renderer& renderer);
 
 	//SMAA
+	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
 	void UpdateSMAADataIfNeeded(Renderer& renderer);
 
 	//NON AA
@@ -629,6 +630,7 @@ namespace r2::draw::renderer
 	void DestroyRenderPasses(Renderer& renderer);
 
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset);
+	
 	void CreateShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
@@ -642,6 +644,7 @@ namespace r2::draw::renderer
 	void CreateBloomBlurSurface(Renderer& renderer, u32 resolutionX , u32 resolutionY , u32 numMips);
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
 	void CreateCompositeSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateSMAAEdgeDetectionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -1148,6 +1151,9 @@ namespace r2::draw::renderer
 
 		newRenderer->mFXAAShader = shadersystem::FindShaderHandle(STRING_ID("FXAA"));
 		CheckIfValidShader(*newRenderer, newRenderer->mFXAAShader, "FXAA");
+
+		newRenderer->mSMAAEdgeDetectionShader = shadersystem::FindShaderHandle(STRING_ID("SMAAEdgeDetection"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSMAAEdgeDetectionShader, "SMAAEdgeDetection");
 
 		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
 		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
@@ -4419,6 +4425,10 @@ namespace r2::draw::renderer
 		{
 			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 		}
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+		}
 		else
 		{
 			R2_CHECK(false, "Unsupported output merger type!");
@@ -4496,10 +4506,12 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE }, RTS_OUTPUT, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_EDGE_DETECTION, passConfig, { RTS_COMPOSITE }, RTS_SMAA_EDGE_DETECTION, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SSR]);
@@ -5704,6 +5716,38 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAMaxSpan);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAATexelStep);
 		}
+	}
+
+	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+
+		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_EDGE_DETECTION, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mSMAAEdgeDetectionShader);
+
+		cmd::DrawBatch* outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
+		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		outputDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		outputDrawBatch->startCommandIndex = startCommandIndex;
+		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		outputDrawBatch->subCommands = nullptr;
+		outputDrawBatch->state.depthEnabled = false;
+		outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		outputDrawBatch->state.depthFunction = LESS;
+		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		outputDrawBatch->state.polygonOffsetEnabled = false;
+		outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
 	}
 
 	void UpdateSMAADataIfNeeded(Renderer& renderer)
@@ -7360,6 +7404,8 @@ namespace r2::draw::renderer
 
 			CreateCompositeSurface(renderer, resolutionX, resolutionY);
 
+			CreateSMAAEdgeDetectionSurface(renderer, resolutionX, resolutionY);
+
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
@@ -7507,10 +7553,20 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_COMPOSITE], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
 	}
 
+	void CreateSMAAEdgeDetectionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_EDGE_DETECTION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_COMPOSITE]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_BLUR]);
@@ -7753,6 +7809,18 @@ namespace r2::draw::renderer
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
 
+
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numColorAttachments = 1;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthAttachments = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].maxPageAllocations = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_EDGE_DETECTION].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

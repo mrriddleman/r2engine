@@ -293,6 +293,7 @@ namespace r2::draw
 		//Output merger shaders
 		ShaderHandle mPassThroughShader;
 		ShaderHandle mFXAAShader;
+		ShaderHandle mSMAAEdgeDetectionShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
