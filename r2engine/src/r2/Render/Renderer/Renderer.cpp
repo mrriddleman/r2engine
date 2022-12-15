@@ -17,6 +17,8 @@
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
+#include "r2/Render/Model/AreaTex.h"
+#include "r2/Render/Model/SearchTex.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/CommandBucket.h"
@@ -441,6 +443,8 @@ namespace r2::draw::renderer
 	void FXAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
 	void UpdateFXAADataIfNeeded(Renderer& renderer);
 
+	//SMAA
+	void UpdateSMAADataIfNeeded(Renderer& renderer);
 
 	//NON AA
 	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
@@ -1733,13 +1737,17 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "bloomTextureMipLevel"}
 		});
 
-		renderer.mFXAAConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
-			{r2::draw::ShaderDataType::Struct, "fxaa_inputTexture"},
+		renderer.mAAConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Struct, "inputTexture"},
 			{r2::draw::ShaderDataType::Float, "fxaa_lumaThreshold"},
 			{r2::draw::ShaderDataType::Float, "fxaa_lumaMulReduce"},
 			{r2::draw::ShaderDataType::Float, "fxaa_lumaMinReduce"},
 			{r2::draw::ShaderDataType::Float, "fxaa_maxSpan"},
-			{r2::draw::ShaderDataType::Float2, "fxaa_texelStep"}
+			{r2::draw::ShaderDataType::Float2, "fxaa_texelStep"},
+			{r2::draw::ShaderDataType::Float, "smaa_lumaThreshold"},
+			{r2::draw::ShaderDataType::Float, "smaa_padding"},
+			{r2::draw::ShaderDataType::Struct, "areaTexture"},
+			{r2::draw::ShaderDataType::Struct, "searchTexture"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -5685,9 +5693,9 @@ namespace r2::draw::renderer
 			renderer.mFXAANeedsUpdate = false;
 
 			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
-			auto fxaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mFXAAConfigHandle);
+			auto fxaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
 
-			const auto compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 1, &renderer.mFXAALumaThreshold);
@@ -5696,6 +5704,52 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 4, &renderer.mFXAAMaxSpan);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, fxaaConstantBufferHandle, 5, &renderer.mFXAATexelStep);
 		}
+	}
+
+	void UpdateSMAADataIfNeeded(Renderer& renderer)
+	{
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto smaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
+
+		if (renderer.mSMAANeedsUpdate)
+		{
+			renderer.mSMAANeedsUpdate = false;
+
+			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 0, &tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]));
+
+			if (renderer.mSMAAAreaTexture.container == nullptr)
+			{
+				tex::TextureFormat textureFormat;
+				textureFormat.width = AREATEX_WIDTH;
+				textureFormat.height = AREATEX_HEIGHT;
+				textureFormat.mipLevels = 1;
+				textureFormat.internalformat = tex::COLOR_FORMAT_R8G8_UNORM;
+
+				renderer.mSMAAAreaTexture = tex::CreateTexture(textureFormat, 1, false);
+
+				tex::TexSubImage2D(renderer.mSMAAAreaTexture, 0, 0, 0, textureFormat, &areaTexBytes[0]);
+			}
+
+			if (renderer.mSMAASearchTexture.container == nullptr)
+			{
+				tex::TextureFormat textureFormat;
+				textureFormat.width = SEARCHTEX_WIDTH;
+				textureFormat.height = SEARCHTEX_HEIGHT;
+				textureFormat.mipLevels = 1;
+				textureFormat.internalformat = tex::COLOR_FORMAT_R8_UNORM;
+
+				renderer.mSMAASearchTexture = tex::CreateTexture(textureFormat, 1, false);
+
+				tex::TexSubImage2D(renderer.mSMAASearchTexture, 0, 0, 0, textureFormat, &searchTexBytes[0]);
+			}
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
+		}
+
+		
 	}
 
 	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)

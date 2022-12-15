@@ -3,14 +3,18 @@
 
 #include "Common/Texture.glsl"
 
-layout (std140, binding=6) uniform FXAAParams
+layout (std140, binding=6) uniform AAParams
 {
-	Tex2DAddress fxaa_inputTexture;
+	Tex2DAddress inputTexture;
 	float fxaa_lumaThreshold;
 	float fxaa_lumaMulReduce;
 	float fxaa_lumaMinReduce;
 	float fxaa_maxSpan;
 	vec2 fxaa_texelStep;
+	float smaa_threshold;
+	float smaa_padding;
+	Tex2DAddress smaaAreaTexture;
+	Tex2DAddress smaaSearchTexture;
 };
 
 

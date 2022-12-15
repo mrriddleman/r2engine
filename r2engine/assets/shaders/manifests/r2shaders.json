@@ -199,6 +199,15 @@
       partPath: ""
     },
     {
+      shaderName: 10435522966164275157,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAAEdgeDetection.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAALumaEdgeDetection.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",
@@ -433,6 +442,15 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/ShaderBufferObjects/ShadowData.glsl"
     },
     {
+      shaderName: 15353189085745090986,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/AAParams.glsl"
+    },
+    {
       shaderName: 9349983055767249073,
       vertexPath: "",
       fragmentPath: "",
@@ -440,15 +458,6 @@
       computePath: "",
       binaryPath: "",
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/BloomParams.glsl"
-    },
-    {
-      shaderName: 10040280651593383552,
-      vertexPath: "",
-      fragmentPath: "",
-      geometryPath: "",
-      computePath: "",
-      binaryPath: "",
-      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/FXAAParams.glsl"
     },
     {
       shaderName: 13173820576971248858,

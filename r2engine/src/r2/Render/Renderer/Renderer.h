@@ -246,7 +246,7 @@ namespace r2::draw
 		ConstantConfigHandle mDispatchComputeConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mSSRConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mBloomConfigHandle = InvalidConstantConfigHandle;
-		ConstantConfigHandle mFXAAConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mAAConfigHandle = InvalidConstantConfigHandle;
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -409,7 +409,17 @@ namespace r2::draw
 		float mFXAALumaMinReduce = 1.0f / 128.0f;
 		float mFXAAMaxSpan = 8.0f;
 		glm::vec2 mFXAATexelStep;
+		
 		//--------------END FXAA Data------------------
+
+
+		//--------------BEGIN SMAA Data----------------
+		b32 mSMAANeedsUpdate = true;
+		float mSMAAThreshold = 0.1f;
+		tex::TextureHandle mSMAAAreaTexture;
+		tex::TextureHandle mSMAASearchTexture;
+		//--------------END SMAA Data------------------
+
 
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG

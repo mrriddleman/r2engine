@@ -28,6 +28,8 @@ namespace r2::draw::tex
 	extern u32 COLOR_FORMAT_R8;
 	extern u32 COLOR_FORMAT_R11F_G11F_B10F;
 
+	extern u32 COLOR_FORMAT_R8_UNORM;
+	extern u32 COLOR_FORMAT_R8G8_UNORM;
 
 	extern u32 READ_ONLY;
 	extern u32 WRITE_ONLY;

@@ -197,6 +197,15 @@
       		computePath: "",
      		binaryPath: "",
       		partPath: ""
+		},
+		{
+			shaderName: "SMAAEdgeDetection",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAAEdgeDetection.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAALumaEdgeDetection.fs",
+      		geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
 		}
 
 	],

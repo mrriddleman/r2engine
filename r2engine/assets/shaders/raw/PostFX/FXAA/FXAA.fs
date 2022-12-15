@@ -6,7 +6,7 @@
 
 layout (location = 0) out vec4 FragColor;
 
-#include "Input/UniformBuffers/FXAAParams.glsl"
+#include "Input/UniformBuffers/AAParams.glsl"
 
 in VS_OUT
 {
@@ -21,12 +21,12 @@ vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset);
 
 void main()
 {
-	vec3 rgbM = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy, ivec2(0));
+	vec3 rgbM = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2(0));
 
-	vec3 rgbNW = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy, ivec2(-1, 1));
-	vec3 rgbNE = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy, ivec2( 1, 1));
-	vec3 rgbSW = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy, ivec2(-1, -1));
-	vec3 rgbSE = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy, ivec2(1, -1));
+	vec3 rgbNW = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2(-1, 1));
+	vec3 rgbNE = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2( 1, 1));
+	vec3 rgbSW = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2(-1, -1));
+	vec3 rgbSE = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2(1, -1));
 
 	// see http://en.wikipedia.org/wiki/Grayscale
 	const vec3 toLuma = vec3(0.299, 0.587, 0.114);
@@ -57,13 +57,13 @@ void main()
 
 	samplingDirection = clamp(samplingDirection * minSamplingDirectionFactor, vec2(-fxaa_maxSpan), vec2(fxaa_maxSpan)) * fxaa_texelStep;
 
-	vec3 rgbSampleNeg = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy + samplingDirection * (1.0/3.0 - 0.5), ivec2(0));
-	vec3 rgbSamplePos = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy + samplingDirection * (2.0/3.0 - 0.5), ivec2(0));
+	vec3 rgbSampleNeg = SampleTexture(inputTexture, fs_in.texCoords.xy + samplingDirection * (1.0/3.0 - 0.5), ivec2(0));
+	vec3 rgbSamplePos = SampleTexture(inputTexture, fs_in.texCoords.xy + samplingDirection * (2.0/3.0 - 0.5), ivec2(0));
 
 	vec3 rgbTwoTab = (rgbSamplePos + rgbSampleNeg) * 0.5;
 
-	vec3 rgbSampleNegOuter = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy + samplingDirection * (0.0/3.0 - 0.5), ivec2(0));
-	vec3 rgbSamplePosOuter = SampleTexture(fxaa_inputTexture, fs_in.texCoords.xy + samplingDirection * (3.0/3.0 - 0.5), ivec2(0));
+	vec3 rgbSampleNegOuter = SampleTexture(inputTexture, fs_in.texCoords.xy + samplingDirection * (0.0/3.0 - 0.5), ivec2(0));
+	vec3 rgbSamplePosOuter = SampleTexture(inputTexture, fs_in.texCoords.xy + samplingDirection * (3.0/3.0 - 0.5), ivec2(0));
 
 	vec3 rgbFourTab = (rgbSamplePosOuter + rgbSampleNegOuter) * 0.25 + rgbTwoTab * 0.5;
 
