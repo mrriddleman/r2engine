@@ -1366,10 +1366,15 @@ namespace r2::draw::renderer
 		UpdateJitter(renderer);
 
 		UpdateBloomDataIfNeeded(renderer);
-		UpdateFXAADataIfNeeded(renderer);
 
-		//UpdateRenderTargetsIfNecessary(renderer);
-
+		if (renderer.mOutputMerger == OUTPUT_FXAA)
+		{
+			UpdateFXAADataIfNeeded(renderer);
+		}
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			UpdateSMAADataIfNeeded(renderer);
+		}
 		
 		UpdateLighting(renderer);
 		
@@ -1604,6 +1609,8 @@ namespace r2::draw::renderer
 		r2::mem::utils::MemBoundary materialSystemBoundary = renderer->mMaterialSystem->mMaterialMemBoundary;
 		
 		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
+		r2::draw::tex::UnloadFromGPU(renderer->mSMAAAreaTexture);
+		r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
@@ -4416,7 +4423,6 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
-
 		if (renderer.mOutputMerger == OUTPUT_NO_AA)
 		{
 			NonAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
@@ -4505,8 +4511,8 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE }, RTS_OUTPUT, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_EDGE_DETECTION, passConfig, { RTS_COMPOSITE }, RTS_SMAA_EDGE_DETECTION, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE, RTS_SMAA_EDGE_DETECTION }, RTS_OUTPUT, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5718,38 +5724,6 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
-	{
-		ClearSurfaceOptions clearOptions;
-		clearOptions.shouldClear = true;
-		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
-
-		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
-
-		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_EDGE_DETECTION, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
-
-		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mSMAAEdgeDetectionShader);
-
-		cmd::DrawBatch* outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
-		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
-		outputDrawBatch->numSubCommands = numSubCommands;
-		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
-		outputDrawBatch->startCommandIndex = startCommandIndex;
-		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-		outputDrawBatch->subCommands = nullptr;
-		outputDrawBatch->state.depthEnabled = false;
-		outputDrawBatch->state.cullState = CULL_FACE_BACK;
-		outputDrawBatch->state.depthFunction = LESS;
-		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
-		outputDrawBatch->state.polygonOffsetEnabled = false;
-		outputDrawBatch->state.polygonOffset = glm::vec2(0);
-
-		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
-
-		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
-	}
-
 	void UpdateSMAADataIfNeeded(Renderer& renderer)
 	{
 		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
@@ -5789,11 +5763,80 @@ namespace r2::draw::renderer
 			}
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAThreshold);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
 		}
+	}
 
-		
+	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+
+		key::Basic edgeDetectionClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_EDGE_DETECTION, clearOptions, *renderer.mFinalBucket, edgeDetectionClearKey, *renderer.mCommandArena);
+
+		key::Basic edgeDetectionBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mSMAAEdgeDetectionShader);
+
+		cmd::DrawBatch* edgeDetectionDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, edgeDetectionBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
+		edgeDetectionDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		edgeDetectionDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		edgeDetectionDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(edgeDetectionDrawBatch->numSubCommands > 0, "We should have a count!");
+		edgeDetectionDrawBatch->startCommandIndex = startCommandIndex;
+		edgeDetectionDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		edgeDetectionDrawBatch->subCommands = nullptr;
+		edgeDetectionDrawBatch->state.depthEnabled = false;
+		edgeDetectionDrawBatch->state.cullState = CULL_FACE_BACK;
+		edgeDetectionDrawBatch->state.depthFunction = LESS;
+		edgeDetectionDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		edgeDetectionDrawBatch->state.polygonOffsetEnabled = false;
+		edgeDetectionDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(edgeDetectionDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
+
+		////@TEMPORARY
+		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_CLEAR, 0, 1, renderer.mPassThroughShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_SCREEN, 0, 1, renderer.mPassThroughShader);
+
+		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION].colorAttachments, 0);
+
+		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+
+		cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
+		setCompositeTexture->textureContainer = textureAddress.containerHandle;
+		setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
+		setCompositeTexture->texturePage = textureAddress.texPage;
+		setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
+		setCompositeTexture->textureLod = 0;
+
+		cmd::DrawBatch* outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);//AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		outputDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		outputDrawBatch->startCommandIndex = startCommandIndex;
+		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		outputDrawBatch->subCommands = nullptr;
+		outputDrawBatch->state.depthEnabled = false;
+		outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		outputDrawBatch->state.depthFunction = LESS;
+		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		outputDrawBatch->state.polygonOffsetEnabled = false;
+		outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
 	}
 
 	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
@@ -5808,7 +5851,7 @@ namespace r2::draw::renderer
 
 		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mPassThroughShader);
 
-		const auto compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
+		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_COMPOSITE].colorAttachments, 0);
 
 		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 
@@ -7418,6 +7461,7 @@ namespace r2::draw::renderer
 
 		renderer.mFXAATexelStep = glm::vec2(1.0f / static_cast<float>(resolutionX), 1.0f / static_cast<float>(resolutionX));
 		renderer.mFXAANeedsUpdate = true;
+		renderer.mSMAANeedsUpdate = true;
 	}
 	
 	void ConstrainResolution(u32& resolutionX, u32& resolutionY)
@@ -7797,19 +7841,6 @@ namespace r2::draw::renderer
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM_UPSAMPLE].numSurfacesPerTarget;
 
 
-		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;
-		renderTargetParams[RTS_OUTPUT].numDepthAttachments = 0;
-		renderTargetParams[RTS_OUTPUT].numStencilAttachments = 0;
-		renderTargetParams[RTS_OUTPUT].numDepthStencilAttachments = 0;
-		renderTargetParams[RTS_OUTPUT].numRenderBufferAttachments = 0;
-		renderTargetParams[RTS_OUTPUT].maxPageAllocations = 0;
-		renderTargetParams[RTS_OUTPUT].numAttachmentRefs = 0;
-		renderTargetParams[RTS_OUTPUT].surfaceOffset = surfaceOffset;
-		renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget = 1;
-
-		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
-
-
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numColorAttachments = 1;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthAttachments = 0;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numStencilAttachments = 0;
@@ -7821,6 +7852,21 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numSurfacesPerTarget = 1;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_EDGE_DETECTION].numSurfacesPerTarget;
+
+
+
+		//should always be last
+		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numDepthAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numStencilAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_OUTPUT].maxPageAllocations = 0;
+		renderTargetParams[RTS_OUTPUT].numAttachmentRefs = 0;
+		renderTargetParams[RTS_OUTPUT].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
 	}
 
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)

@@ -4,6 +4,8 @@
 
 layout (location = 0) out vec4 FragColor;
 
+#include "Input/UniformBuffers/Surfaces.glsl"
+
 uniform uint64_t inputTextureContainer;
 uniform float inputTexturePage;
 uniform float inputTextureLod;

@@ -444,7 +444,7 @@ namespace r2::draw
 		//------------END Debug Stuff--------------
 
 
-		OutputMerger mOutputMerger = OutputMerger::OUTPUT_FXAA;
+		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_X1;
 
 	};
 }

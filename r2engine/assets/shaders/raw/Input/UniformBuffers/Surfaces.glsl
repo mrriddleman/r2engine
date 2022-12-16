@@ -22,6 +22,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress bloomDownSampledSurface;
 	Tex2DAddress bloomBlurSurface;
 	Tex2DAddress bloomUpSampledSurface;
+	Tex2DAddress smaaEdgeDetectionSurface;
 };
 
 #endif

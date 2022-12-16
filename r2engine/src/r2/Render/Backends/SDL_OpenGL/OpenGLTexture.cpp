@@ -930,9 +930,13 @@ namespace r2::draw::tex
 	{
 		GLenum format;
 		
-		if (textureFormat.internalformat == GL_R8)
+		if (textureFormat.internalformat == GL_R8 || textureFormat.internalformat == GL_R8UI)
 		{
 			format = GL_RED;
+		}
+		else if (textureFormat.internalformat == GL_RG8 || textureFormat.internalformat == GL_RG8UI)
+		{
+			format = GL_RG;
 		}
 		else
 		{
