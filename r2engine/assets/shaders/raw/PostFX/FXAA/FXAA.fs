@@ -16,9 +16,6 @@ in VS_OUT
 } fs_in;
 
 
-vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset);
-
-
 void main()
 {
 	vec3 rgbM = SampleTexture(inputTexture, fs_in.texCoords.xy, ivec2(0));
@@ -76,10 +73,4 @@ void main()
 		// ... yes, so use only two samples.
 		FragColor = vec4(rgbTwoTab, 1.0); 
 	}
-}
-
-vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
-{
-	vec3 coord = vec3(texCoords.x, texCoords.y, tex.page);
-	return textureOffset(sampler2DArray(tex.container), coord, offset).rgb;
 }

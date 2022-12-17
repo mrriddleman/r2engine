@@ -417,8 +417,12 @@ namespace r2::draw
 		//--------------BEGIN SMAA Data----------------
 		b32 mSMAANeedsUpdate = true;
 		float mSMAAThreshold = 0.1f;
+		int mSMAAMaxSearchSteps = 16;
 		tex::TextureHandle mSMAAAreaTexture;
 		tex::TextureHandle mSMAASearchTexture;
+		glm::ivec4 mSMAASubSampleIndices = glm::ivec4(0);
+		int mSMAACornerRounding = 25;
+		int mSMAAMaxSearchStepsDiag = 8;
 		//--------------END SMAA Data------------------
 
 

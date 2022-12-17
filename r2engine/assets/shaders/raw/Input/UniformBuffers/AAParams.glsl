@@ -12,9 +12,12 @@ layout (std140, binding=6) uniform AAParams
 	float fxaa_maxSpan;
 	vec2 fxaa_texelStep;
 	float smaa_threshold;
-	float smaa_padding;
-	Tex2DAddress smaaAreaTexture;
-	Tex2DAddress smaaSearchTexture;
+	int smaa_maxSearchSteps;
+	Tex2DAddress smaa_areaTexture;
+	Tex2DAddress smaa_searchTexture;
+	ivec4 smaa_subSampleIndices;
+	int smaa_cornerRounding;
+	int smaa_maxSearchStepsDiag;
 };
 
 

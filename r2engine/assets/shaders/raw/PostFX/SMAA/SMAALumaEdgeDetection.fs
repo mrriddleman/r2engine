@@ -13,8 +13,6 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset);
-
 void main()
 {
 	vec2 threshold = vec2(smaa_threshold);
@@ -64,10 +62,4 @@ void main()
     edges.xy *= step(0.5 * maxDelta, delta.xy);
 
     FragColor = vec4(edges, 0.0, 0.0);
-}
-
-vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
-{
-	vec3 coord = vec3(texCoords.x, texCoords.y, tex.page);
-	return textureOffset(sampler2DArray(tex.container), coord, offset).rgb;
 }

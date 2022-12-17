@@ -1758,9 +1758,12 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "fxaa_maxSpan"},
 			{r2::draw::ShaderDataType::Float2, "fxaa_texelStep"},
 			{r2::draw::ShaderDataType::Float, "smaa_lumaThreshold"},
-			{r2::draw::ShaderDataType::Float, "smaa_padding"},
-			{r2::draw::ShaderDataType::Struct, "areaTexture"},
-			{r2::draw::ShaderDataType::Struct, "searchTexture"}
+			{r2::draw::ShaderDataType::Int, "smaa_maxSearchSteps"},
+			{r2::draw::ShaderDataType::Struct, "smaUpda_areaTexture"},
+			{r2::draw::ShaderDataType::Struct, "smaa_searchTexture"},
+			{r2::draw::ShaderDataType::Int4, "smaa_subSampleIndices"},
+			{r2::draw::ShaderDataType::Int, "smaa_cornerRounding"},
+			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -5763,9 +5766,12 @@ namespace r2::draw::renderer
 			}
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAThreshold);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAMaxSearchSteps);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 11, &renderer.mSMAACornerRounding);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 12, &renderer.mSMAAMaxSearchStepsDiag);
 		}
 	}
 

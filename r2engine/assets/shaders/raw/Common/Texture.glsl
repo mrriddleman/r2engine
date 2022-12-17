@@ -24,4 +24,28 @@ vec3 MakeTextureCoord(Tex2DAddress addr, vec3 uv)
 	return vec3(uv.rg, addr.page);
 }
 
+vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return textureOffset(sampler2DArray(tex.container), coord, offset).rgb;
+}
+
+vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return texture(sampler2DArray(tex.container), coord).rgb;
+}
+
+vec3 SampleTextureLodZero(Tex2DAddress tex, vec2 texCoords)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return textureLod(sampler2DArray(tex.container), coord, 0.0).rgb;
+}
+
+vec3 SampleTextureLodZeroOffset(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return textureLodOffset(sampler2DArray(tex.container), coord, 0.0, offset).rgb;
+}
+
 #endif

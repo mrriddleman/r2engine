@@ -208,6 +208,15 @@
       partPath: ""
     },
     {
+      shaderName: 7964098779602794367,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAABlendingWeightCalculation.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAABlendingWeightCalculation.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",

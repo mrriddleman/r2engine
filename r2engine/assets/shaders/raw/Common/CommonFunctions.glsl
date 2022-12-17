@@ -11,6 +11,16 @@ vec3 Saturate(vec3 x)
 	return clamp(x, 0.0, 1.0);
 }
 
+vec2 Saturate(vec2 x)
+{
+	return clamp(x, 0.0, 1.0);
+}
+
+vec4 Saturate(vec4 x)
+{
+	return clamp(x, 0.0, 1.0);
+}
+
 mat4 MatInverse(mat4 mat)
 {
 	return inverse(mat);
