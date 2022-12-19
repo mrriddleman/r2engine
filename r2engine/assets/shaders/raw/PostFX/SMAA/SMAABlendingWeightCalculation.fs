@@ -356,7 +356,7 @@ vec4 SMAABlendingWeightCalculationPS(vec2 texcoord,
 
         // Fetch the top crossing edges:
         float e1 = SampleTextureLodZero(edgesTex, coords).g;
-
+ 
         // Find the distance to the bottom:
         coords.y = SMAASearchYDown(edgesTex, searchTex, offset[1].zw, offset[2].w);
         d.y = coords.y;
@@ -390,5 +390,5 @@ void main()
                                     	smaaEdgeDetectionSurface, 
                                     	smaa_areaTexture, 
                                     	smaa_searchTexture,
-                                        smaa_subSampleIndices);
+                                        smaa_subSampleIndices);            
 }

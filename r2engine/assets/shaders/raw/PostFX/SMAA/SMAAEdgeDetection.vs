@@ -11,6 +11,8 @@ layout (location = 4) in uint DrawID;
 #include "Input/ShaderBufferObjects/ModelData.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
 
+#define SMAA_PIXEL_SIZE (1.0 / fovAspectResXResY.zw)
+
 out VS_OUT
 {
 	vec4 offsets[3];
@@ -19,24 +21,21 @@ out VS_OUT
 } vs_out;
 
 
-void SMAAEdgeDetectionVS(vec2 pixelSize,
-                         vec4 texcoord,
+void SMAAEdgeDetectionVS(vec4 texcoord,
                          out vec4 offset[3]) 
 {
-    offset[0] = texcoord.xyxy + pixelSize.xyxy * vec4(-1.0, 0.0, 0.0, -1.0);
-    offset[1] = texcoord.xyxy + pixelSize.xyxy * vec4( 1.0, 0.0, 0.0,  1.0);
-    offset[2] = texcoord.xyxy + pixelSize.xyxy * vec4(-2.0, 0.0, 0.0, -2.0);
+    offset[0] = texcoord.xyxy + SMAA_PIXEL_SIZE.xyxy * vec4(-1.0, 0.0, 0.0, -1.0);
+    offset[1] = texcoord.xyxy + SMAA_PIXEL_SIZE.xyxy * vec4( 1.0, 0.0, 0.0,  1.0);
+    offset[2] = texcoord.xyxy + SMAA_PIXEL_SIZE.xyxy * vec4(-2.0, 0.0, 0.0, -2.0);
 }
 
 void main()
 {
 	vec4 pos = models[DrawID] * vec4(aPosition, 1);
 	
-	vec2 pixelSize = 1.0 / fovAspectResXResY.zw;
-
 	gl_Position = vec4(pos.x, pos.y, 0, 1.0);
 
-	SMAAEdgeDetectionVS(pixelSize, vec4(aTexCoord.xy, 0, 0), vs_out.offsets);
+	SMAAEdgeDetectionVS(vec4(aTexCoord.xy, 0, 0), vs_out.offsets);
 
 	vs_out.texCoords = vec3(aTexCoord.x, aTexCoord.y, 0.0);
 

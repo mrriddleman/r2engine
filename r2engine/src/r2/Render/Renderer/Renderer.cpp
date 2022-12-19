@@ -645,6 +645,7 @@ namespace r2::draw::renderer
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips);
 	void CreateCompositeSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSMAAEdgeDetectionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -1154,6 +1155,9 @@ namespace r2::draw::renderer
 
 		newRenderer->mSMAAEdgeDetectionShader = shadersystem::FindShaderHandle(STRING_ID("SMAAEdgeDetection"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSMAAEdgeDetectionShader, "SMAAEdgeDetection");
+
+		newRenderer->mSMAABlendingWeightShader = shadersystem::FindShaderHandle(STRING_ID("SMAABlendingWeightCalculation"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSMAABlendingWeightShader, "SMAABlendingWeightCalculation");
 
 		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
 		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
@@ -4515,11 +4519,13 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_EDGE_DETECTION, passConfig, { RTS_COMPOSITE }, RTS_SMAA_EDGE_DETECTION, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_BLENDING_WEIGHT, passConfig, { RTS_SMAA_EDGE_DETECTION }, RTS_SMAA_BLENDING_WEIGHT, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE, RTS_SMAA_EDGE_DETECTION }, RTS_OUTPUT, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
@@ -5749,7 +5755,7 @@ namespace r2::draw::renderer
 
 				renderer.mSMAAAreaTexture = tex::CreateTexture(textureFormat, 1, false);
 
-				tex::TexSubImage2D(renderer.mSMAAAreaTexture, 0, 0, 0, textureFormat, &areaTexBytes[0]);
+				tex::TexSubImage2D(renderer.mSMAAAreaTexture, 0, 0, 0, textureFormat, areaTexBytes);
 			}
 
 			if (renderer.mSMAASearchTexture.container == nullptr)
@@ -5762,7 +5768,7 @@ namespace r2::draw::renderer
 
 				renderer.mSMAASearchTexture = tex::CreateTexture(textureFormat, 1, false);
 
-				tex::TexSubImage2D(renderer.mSMAASearchTexture, 0, 0, 0, textureFormat, &searchTexBytes[0]);
+				tex::TexSubImage2D(renderer.mSMAASearchTexture, 0, 0, 0, textureFormat, searchTexBytes);
 			}
 
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 6, &renderer.mSMAAThreshold);
@@ -5806,14 +5812,41 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
 
+
+		key::Basic blendingWeightClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_CLEAR, 0, 1, renderer.mSMAABlendingWeightShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_BLENDING_WEIGHT, clearOptions, *renderer.mFinalBucket, blendingWeightClearKey, *renderer.mCommandArena);
+
+		key::Basic blendingWeightBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_SCREEN, 0, 1, renderer.mSMAABlendingWeightShader);
+
+		cmd::DrawBatch* blendingWeightDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, blendingWeightBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
+		blendingWeightDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		blendingWeightDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		blendingWeightDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(blendingWeightDrawBatch->numSubCommands > 0, "We should have a count!");
+		blendingWeightDrawBatch->startCommandIndex = startCommandIndex;
+		blendingWeightDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		blendingWeightDrawBatch->subCommands = nullptr;
+		blendingWeightDrawBatch->state.depthEnabled = false;
+		blendingWeightDrawBatch->state.cullState = CULL_FACE_BACK;
+		blendingWeightDrawBatch->state.depthFunction = LESS;
+		blendingWeightDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		blendingWeightDrawBatch->state.polygonOffsetEnabled = false;
+		blendingWeightDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(blendingWeightDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_SMAA_BLENDING_WEIGHT, *renderer.mFinalBucket);
+
+
 		////@TEMPORARY
-		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_CLEAR, 0, 1, renderer.mPassThroughShader);
+		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mPassThroughShader);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
 
-		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_SCREEN, 0, 1, renderer.mPassThroughShader);
+		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mPassThroughShader);
 
-		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION].colorAttachments, 0);
+		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT].colorAttachments, 0);
 
 		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 
@@ -7454,6 +7487,7 @@ namespace r2::draw::renderer
 			CreateCompositeSurface(renderer, resolutionX, resolutionY);
 
 			CreateSMAAEdgeDetectionSurface(renderer, resolutionX, resolutionY);
+			CreateSMAABlendingWeightSurface(renderer, resolutionX, resolutionY);
 
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
@@ -7612,10 +7646,20 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
 	}
 
+	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_BLENDING_WEIGHT], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_COMPOSITE]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE]);
@@ -7846,7 +7890,6 @@ namespace r2::draw::renderer
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_BLOOM_UPSAMPLE].numSurfacesPerTarget;
 
-
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numColorAttachments = 1;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthAttachments = 0;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numStencilAttachments = 0;
@@ -7859,7 +7902,17 @@ namespace r2::draw::renderer
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_EDGE_DETECTION].numSurfacesPerTarget;
 
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numColorAttachments = 1;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numDepthAttachments = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].maxPageAllocations = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numSurfacesPerTarget = 1;
 
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numSurfacesPerTarget;
 
 		//should always be last
 		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;
