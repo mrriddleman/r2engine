@@ -36,10 +36,22 @@ vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords)
 	return texture(sampler2DArray(tex.container), coord).rgb;
 }
 
+vec4 SampleTextureRGBA(Tex2DAddress tex, vec2 texCoords)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return texture(sampler2DArray(tex.container), coord);
+}
+
 vec3 SampleTextureLodZero(Tex2DAddress tex, vec2 texCoords)
 {
 	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
 	return textureLod(sampler2DArray(tex.container), coord, 0.0).rgb;
+}
+
+vec4 SampleTextureLodZeroRGBA(Tex2DAddress tex, vec2 texCoords)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return textureLod(sampler2DArray(tex.container), coord, 0.0);
 }
 
 vec3 SampleTextureLodZeroOffset(Tex2DAddress tex, vec2 texCoords, ivec2 offset)

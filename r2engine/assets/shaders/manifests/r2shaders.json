@@ -217,6 +217,15 @@
       partPath: ""
     },
     {
+      shaderName: 17644880181828891226,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAANeighborhoodBlending.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAANeighborhoodBlending.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",
