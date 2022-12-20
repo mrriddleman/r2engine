@@ -211,7 +211,7 @@ bool IntersectsDepthBuffer(float z, float minZ, float maxZ)
 {
 	float depthScale = min(1.0f, z / ssr_strideZCutoff);
 	z += ssr_zThickness + mix(0.0f, 2.0f, depthScale);
-	return (maxZ >= z) && (minZ - ssr_zThickness<= z);
+	return (maxZ >= z) && (minZ - ssr_zThickness <= z);
 }
 
 vec3 GetViewSpacePos(vec2 uv)

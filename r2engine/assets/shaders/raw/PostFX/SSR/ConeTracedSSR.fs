@@ -205,6 +205,11 @@ in VS_OUT
 
 vec3 TraceCones(float gloss, vec4 rayHitInfo);
 
+float LuminanceFromRGB(vec3 rgb) {
+    vec3 factors = vec3(0.2126, 0.7152, 0.0722);
+    return dot(rgb, factors);
+}
+
 void main()
 {
 	vec2 uv = fs_in.texCoords.xy;
@@ -275,7 +280,7 @@ void main()
 
 	reflectedColor *= Ks;
 
-	oOutputColor = vec4(reflectedColor, 1.0);
+	oOutputColor = LuminanceFromRGB(reflectedColor) > 1.0 ? vec4(reflectedColor, 1.0) : vec4(0, 0, 0, 1);//vec4(reflectedColor, 1.0);
 }
 
 vec3 TraceCones(float gloss, vec4 rayHitInfo)
