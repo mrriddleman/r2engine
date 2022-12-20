@@ -8,6 +8,8 @@ layout (location = 0) out float FragColor;
 #include "Depth/DepthUtils.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 
+#define SMAA_REPROJECTION_WEIGHT_SCALE 30
+
 in VS_OUT
 {
 	vec3 normal;
