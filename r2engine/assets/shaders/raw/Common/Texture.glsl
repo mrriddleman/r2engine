@@ -36,6 +36,12 @@ vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords)
 	return texture(sampler2DArray(tex.container), coord).rgb;
 }
 
+float SampleTextureR(Tex2DAddress tex, vec2 texCoords)
+{
+	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
+	return texture(sampler2DArray(tex.container), coord).r;
+}
+
 vec4 SampleTextureRGBA(Tex2DAddress tex, vec2 texCoords)
 {
 	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));

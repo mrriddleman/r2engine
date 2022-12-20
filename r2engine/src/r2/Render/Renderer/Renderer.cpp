@@ -5791,7 +5791,7 @@ namespace r2::draw::renderer
 	{
 		ClearSurfaceOptions clearOptions;
 		clearOptions.shouldClear = true;
-		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
 
 		//edge detection pass
 		key::Basic edgeDetectionClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
@@ -5830,6 +5830,9 @@ namespace r2::draw::renderer
 
 
 		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
+
+
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 		//blending weights pass
 		key::Basic blendingWeightClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_CLEAR, 0, 1, renderer.mSMAABlendingWeightShader);

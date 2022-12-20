@@ -875,7 +875,7 @@ namespace r2::draw::shader
 
 			auto shaderName = STRING_ID(fileNameWithExtension);
 
-			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 24);
+			r2::SArray<char*>* includePaths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, 32);
 
 			r2::sarr::Push(*tempAllocations, (void*)includePaths);
 

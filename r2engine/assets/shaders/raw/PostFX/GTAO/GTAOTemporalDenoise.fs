@@ -9,14 +9,7 @@
 #include "Input/UniformBuffers/Matrices.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
-// #define NUM_FRUSTUM_SPLITS 4
-
-// struct Tex2DAddress
-// {
-// 	uint64_t  container;
-// 	float page;
-// 	int channel;
-// };
+#include "Depth/DepthUtils.glsl"
 
 layout (location = 0) out float FragColor;
 
@@ -26,56 +19,6 @@ in VS_OUT
 	vec3 texCoords;
 	flat uint drawID;
 } fs_in;
-
-// layout (std140, binding = 0) uniform Matrices
-// {
-//     mat4 projection;
-//     mat4 view;
-//     mat4 skyboxView;
-//     mat4 cameraFrustumProjections[NUM_FRUSTUM_SPLITS];
-//     mat4 inverseProjection;
-//     mat4 inverseView;
-//     mat4 vpMatrix;
-//     mat4 prevProjection;
-//     mat4 prevView;
-//     mat4 prevVPMatrix;
-// };
-
-// layout (std140, binding = 1) uniform Vectors
-// {
-//     vec4 cameraPosTimeW;
-//     vec4 exposureNearFar;
-//     vec4 cascadePlanes;
-//     vec4 shadowMapSizes;
-//     vec4 fovAspectResXResY;
-//     uint64_t frame;
-//     vec2 clusterScaleBias;
-//     uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-//     vec4 jitter;// {currJitterX, currJitterY, prevJitterX, prevJitterY}
-// };
-
-// layout (std140, binding = 2) uniform Surfaces
-// {
-// 	Tex2DAddress gBufferSurface;
-// 	Tex2DAddress shadowsSurface;
-// 	Tex2DAddress compositeSurface;
-// 	Tex2DAddress zPrePassSurface;
-// 	Tex2DAddress pointLightShadowsSurface;
-// 	Tex2DAddress ambientOcclusionSurface;
-// 	Tex2DAddress ambientOcclusionDenoiseSurface;
-// 	Tex2DAddress zPrePassShadowsSurface[2];
-// 	Tex2DAddress ambientOcclusionTemporalDenoiseSurface[2]; //current in 0
-// 	Tex2DAddress normalSurface;
-// 	Tex2DAddress specularSurface;
-// 	Tex2DAddress ssrSurface;
-// 	Tex2DAddress convolvedGBUfferSurface[2];
-// 	Tex2DAddress ssrConeTracedSurface;
-// 	Tex2DAddress bloomDownSampledSurface;
-// 	Tex2DAddress bloomBlurSurface;
-// 	Tex2DAddress bloomUpSampledSurface;
-// };
-
-
 
 float SampleTextureF(Tex2DAddress tex, vec2 uv, vec2 offset)
 {
@@ -89,20 +32,14 @@ vec4 GatherOffset(Tex2DAddress tex, vec2 uv, ivec2 offset)
 	return textureGatherOffset(sampler2DArray(tex.container), texCoord, offset);
 }
 
-
 float VsDepthFromCsDepth(float clipSpaceDepth, float near) {
 	return -near / clipSpaceDepth;
 }
 
-
-vec2 CalculateVelocity(Tex2DAddress currentDepthTex);
-
-
-
 void main()
 {
 	const float ao = SampleTextureF(ambientOcclusionDenoiseSurface, fs_in.texCoords.xy, vec2(0));
-	const vec2 velocity = CalculateVelocity(zPrePassShadowsSurface[0]);
+	const vec2 velocity = CalculateVelocity(zPrePassShadowsSurface[0], fs_in.texCoords.xy);
 
 	const vec2 uvMinusVel = fs_in.texCoords.xy - velocity;
 
@@ -167,22 +104,4 @@ void main()
 
 
 	FragColor = mix(aoAccWeighted, ao, rateOfChange);
-}
-
-
-vec2 CalculateVelocity(Tex2DAddress currentDepthTex)
-{
-	float depth = SampleTextureF(currentDepthTex, fs_in.texCoords.xy, vec2(0)) * 2.0 - 1.0;
-
-	vec4 clipSpacePosition = vec4(fs_in.texCoords.xy * 2.0 - 1.0, depth, 1.0);
-	vec4 viewSpacePosition = inverseProjection * clipSpacePosition;
-
-	viewSpacePosition /= viewSpacePosition.w;
-
-	vec4 worldSpacePosition = inverseView * viewSpacePosition;
-
-	vec3 curPos = (vpMatrix * vec4(worldSpacePosition.xyz, 1.0)).xyw;
-	vec3 prevPos = (prevVPMatrix * vec4(worldSpacePosition.xyz, 1.0)).xyw;
-
-	return (((curPos.xy / curPos.z) - jitter.xy) - ((prevPos.xy / prevPos.z) - jitter.zw)) * 0.5;
 }
