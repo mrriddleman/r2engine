@@ -5817,6 +5817,18 @@ namespace r2::draw::renderer
 
 		cmd::SetDefaultStencilState(edgeDetectionDrawBatch->state.stencilState);
 
+		
+		edgeDetectionDrawBatch->state.stencilState.op.stencilFail = r2::draw::KEEP;
+		edgeDetectionDrawBatch->state.stencilState.op.depthFail = r2::draw::KEEP;
+		edgeDetectionDrawBatch->state.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
+		
+		edgeDetectionDrawBatch->state.stencilState.stencilEnabled = true;
+		edgeDetectionDrawBatch->state.stencilState.stencilWriteEnabled = true;
+		edgeDetectionDrawBatch->state.stencilState.func.func = r2::draw::ALWAYS;
+		edgeDetectionDrawBatch->state.stencilState.func.ref = 1;
+		edgeDetectionDrawBatch->state.stencilState.func.mask = 0xFF;
+
+
 		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
 
 		//blending weights pass
@@ -5842,6 +5854,17 @@ namespace r2::draw::renderer
 		blendingWeightDrawBatch->state.polygonOffset = glm::vec2(0);
 
 		cmd::SetDefaultStencilState(blendingWeightDrawBatch->state.stencilState);
+
+		blendingWeightDrawBatch->state.stencilState.op.stencilFail = r2::draw::KEEP;
+		blendingWeightDrawBatch->state.stencilState.op.depthFail = r2::draw::KEEP;
+		blendingWeightDrawBatch->state.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
+
+		blendingWeightDrawBatch->state.stencilState.stencilEnabled = true;
+		blendingWeightDrawBatch->state.stencilState.stencilWriteEnabled = false;
+		blendingWeightDrawBatch->state.stencilState.func.func = r2::draw::EQUAL;
+		blendingWeightDrawBatch->state.stencilState.func.ref = 1;
+		blendingWeightDrawBatch->state.stencilState.func.mask = 0xFF;
+
 
 		EndRenderPass(renderer, RPT_SMAA_BLENDING_WEIGHT, *renderer.mFinalBucket);
 
@@ -7678,6 +7701,8 @@ namespace r2::draw::renderer
 		renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_EDGE_DETECTION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::STENCIL8, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, false, 0);
 	}
 
 	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7687,6 +7712,8 @@ namespace r2::draw::renderer
 		renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_BLENDING_WEIGHT], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+
+		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION].stencilAttachments, 0));
 	}
 
 	void CreateSMAANeighborhoodBlendingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7936,7 +7963,7 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numColorAttachments = 1;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthAttachments = 0;
-		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numStencilAttachments = 1;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SMAA_EDGE_DETECTION].maxPageAllocations = 0;
@@ -7952,7 +7979,7 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].maxPageAllocations = 0;
-		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numAttachmentRefs = 0;
+		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numAttachmentRefs = 1;
 		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].surfaceOffset = surfaceOffset;
 		renderTargetParams[RTS_SMAA_BLENDING_WEIGHT].numSurfacesPerTarget = 1;
 
@@ -7960,7 +7987,7 @@ namespace r2::draw::renderer
 
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numColorAttachments = 1;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numDepthAttachments = 0;
-		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numStencilAttachments = 0;
+		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numStencilAttachments = 1;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numDepthStencilAttachments = 0;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].maxPageAllocations = 0;

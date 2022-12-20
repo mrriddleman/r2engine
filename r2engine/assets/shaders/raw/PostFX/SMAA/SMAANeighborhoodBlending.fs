@@ -98,4 +98,7 @@ void main()
                                   	fs_in.offsets,
                                   	compositeSurface,
                                   	smaaBlendingWeightSurface);
+
+
+//	FragColor = SampleTextureRGBA(smaaBlendingWeightSurface, fs_in.texCoords.xy);
 }
