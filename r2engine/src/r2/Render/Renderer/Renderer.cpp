@@ -6024,18 +6024,11 @@ namespace r2::draw::renderer
 		UpdatePreviousVPMatrix(renderer);
 
 		UpdateViewMatrix(renderer, camera.view);
-		UpdateCameraFrustumProjections(renderer, camera);
 		UpdateCameraPosition(renderer, camera.position);
 		UpdateExposure(renderer, camera.exposure, camera.nearPlane, camera.farPlane);
 
-		//TODO(Serge): add in the previous projection/view matrices
-
-		float frustumSplits[cam::NUM_FRUSTUM_SPLITS];
-		cam::GetFrustumSplits(camera, frustumSplits);
-
 		R2_CHECK(cam::NUM_FRUSTUM_SPLITS == 4, "Change to not be a vec4 if cam::NUM_FRUSTUM_SPLITS is >");
-		UpdateCameraCascades(renderer, glm::vec4(frustumSplits[0], frustumSplits[1], frustumSplits[2], frustumSplits[3]));
-		
+
 		UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
 
 		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));

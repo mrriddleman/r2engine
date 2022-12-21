@@ -65,7 +65,7 @@ namespace r2::cam
         cam.vp = cam.proj * cam.view;
         cam.invProj = glm::inverse(cam.proj);
         cam.isPerspectiveCam = true;
-        CalculateFrustumProjections(cam);
+     //   CalculateFrustumProjections(cam);
     }
 
     void SetCameraJitter(Camera& cam, const glm::vec2& jitter)
