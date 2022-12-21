@@ -37,7 +37,7 @@ namespace r2::cam
         cam.facing = facing;
         cam.view = glm::lookAt(pos, pos + cam.facing, cam.up);
         cam.invView = glm::inverse(cam.view);
-
+        
         SetPerspectiveCam(cam, fovDegrees, aspect, near, far);
     }
     
@@ -61,11 +61,24 @@ namespace r2::cam
         cam.nearPlane = near;
         cam.farPlane = far;
 
-        cam.proj = glm::perspective(cam.fov, aspect, near, far);
+        cam.proj = cam.jitterMat * glm::perspective(cam.fov, aspect, near, far);
         cam.vp = cam.proj * cam.view;
         cam.invProj = glm::inverse(cam.proj);
-
+        cam.isPerspectiveCam = true;
         CalculateFrustumProjections(cam);
+    }
+
+    void SetCameraJitter(Camera& cam, const glm::vec2& jitter)
+    {
+        if (cam.lastJitter != jitter)
+        {
+			cam.jitterMat = glm::mat4(1.0f);
+			cam.jitterMat = glm::translate(cam.jitterMat, glm::vec3(jitter.x, jitter.y, 0));
+
+			R2_CHECK(cam.isPerspectiveCam, "Should be a perspective camera!");
+
+			SetPerspectiveCam(cam, glm::degrees(cam.fov), cam.aspectRatio, cam.nearPlane, cam.farPlane);
+        }
     }
     
     void SetOrthoCam(Camera& cam, float left, float right, float bottom, float top, float near, float far)
@@ -78,6 +91,8 @@ namespace r2::cam
         cam.vp = cam.proj * cam.view;
 
         cam.invProj = glm::inverse(cam.proj);
+
+        cam.isPerspectiveCam = false;
     }
     
     void MoveCameraTo(Camera& cam, const glm::vec3& pos)

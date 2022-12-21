@@ -250,7 +250,7 @@ namespace r2::draw
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
-		const Camera* mnoptrRenderCam = nullptr;
+		Camera* mnoptrRenderCam = nullptr;
 		glm::mat4 prevProj = glm::mat4(1.0f);
 		glm::mat4 prevView = glm::mat4(1.0f);
 		glm::mat4 prevVP = glm::mat4(1.0f);
@@ -515,7 +515,7 @@ namespace r2::draw::renderer
 	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam();
 	const tex::Texture* GetBlueNoise64Texture();
 
-	void SetRenderCamera(const Camera* cameraPtr);
+	void SetRenderCamera(Camera* cameraPtr);
 
 	void SetOutputMergerType(OutputMerger outputMerger);
 

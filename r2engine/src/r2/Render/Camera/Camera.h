@@ -59,6 +59,7 @@ namespace r2::cam
     
     r2::math::Ray CalculateRayFromMousePosition(const Camera& cam, u32 mouseX, u32 mouseY);
 
+    void SetCameraJitter(Camera& cam, const glm::vec2& jitter);
 
 }
 
@@ -71,17 +72,22 @@ namespace r2
 		glm::mat4 vp = glm::mat4(1.0f);
         glm::mat4 invView = glm::mat4(1.0f);
         glm::mat4 invProj = glm::mat4(1.0f);
+        glm::mat4 jitterMat = glm::mat4(1.0f);
+
+        glm::vec2 lastJitter = glm::vec2(0);
 
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 facing = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));
 		glm::vec3 up = math::GLOBAL_UP;
+
+
 
 		float fov = glm::radians(90.f);
 		float nearPlane = 0.0f;
 		float farPlane = 1.0f;
 		float aspectRatio = 16.0f / 9.0f;
         float exposure = 1.0f;
-
+        b32 isPerspectiveCam = false;
         glm::mat4 frustumProjections[cam::NUM_FRUSTUM_SPLITS];
 
 	};

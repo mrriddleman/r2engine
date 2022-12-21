@@ -396,7 +396,7 @@ namespace r2::draw::renderer
 	void UpdateCameraPosition(Renderer& renderer, const glm::vec3& camPosition);
 	void UpdateExposure(Renderer& renderer, float exposure, float near, float far);
 	void UpdateSceneLighting(Renderer& renderer, const r2::draw::LightSystem& lightSystem);
-	void UpdateCamera(Renderer& renderer, const Camera& camera);
+	void UpdateCamera(Renderer& renderer, Camera& camera);
 	void UpdateCameraCascades(Renderer& renderer, const glm::vec4& cascades);
 	void UpdateShadowMapSizes(Renderer& renderer, const glm::vec4& shadowMapSizes);
 	void UpdateCameraFOVAndAspect(Renderer& renderer, const glm::vec4& fovAspect);
@@ -446,6 +446,7 @@ namespace r2::draw::renderer
 	//SMAA
 	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
 	void UpdateSMAADataIfNeeded(Renderer& renderer);
+	glm::vec2 SMAAGetJitter(const Renderer& renderer, u64 frameIndex);
 
 	//NON AA
 	void NonAARenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
@@ -455,7 +456,7 @@ namespace r2::draw::renderer
 	void SetOutputMergerType(Renderer& renderer, OutputMerger outputMerger);
 
 	//Camera and Lighting
-	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr);
+	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light);
 	PointLightHandle AddPointLight(Renderer& renderer, const PointLight& pointLight);
@@ -5787,6 +5788,17 @@ namespace r2::draw::renderer
 		}
 	}
 
+	glm::vec2 SMAAGetJitter(const Renderer& renderer, u64 frameIndex)
+	{
+		if (renderer.mOutputMerger == OUTPUT_SMAA_T2X)
+		{
+			static glm::vec2 jitters[] = { {-0.25, 0.25}, {0.25, -0.25} };
+			return jitters[frameIndex];
+		}
+
+		return glm::vec2(0);
+	}
+
 	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
 	{
 		ClearSurfaceOptions clearOptions;
@@ -5986,8 +5998,22 @@ namespace r2::draw::renderer
 		R2_CHECK(shader != 0, "Shader: %s is invalid!", name);
 	}
 
-	void UpdateCamera(Renderer& renderer, const Camera& camera)
+	void UpdateCamera(Renderer& renderer, Camera& camera)
 	{
+		if (renderer.mOutputMerger == OUTPUT_SMAA_T2X ||
+			renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			u64 frameIndex = (renderer.mFrameCounter % 2);
+
+			glm::vec2 jitter = SMAAGetJitter(renderer, frameIndex);
+
+			cam::SetCameraJitter(camera, jitter);
+		}
+		else
+		{
+			cam::SetCameraJitter(camera, glm::vec2(0));
+		}
+
 		UpdatePerspectiveMatrix(renderer, camera.proj);
 		UpdateInverseProjectionMatrix(renderer, camera.invProj);
 
@@ -8051,7 +8077,7 @@ namespace r2::draw::renderer
 	}
 
 	//Camera and Lighting
-	void SetRenderCamera(Renderer& renderer, const Camera* cameraPtr)
+	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr)
 	{
 		R2_CHECK(cameraPtr != nullptr, "We should always pass in a valid camera");
 		renderer.mnoptrRenderCam = cameraPtr;
@@ -8526,7 +8552,7 @@ namespace r2::draw::renderer
 		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic, lightType);
 	}
 
-	void SetRenderCamera(const Camera* cameraPtr)
+	void SetRenderCamera(Camera* cameraPtr)
 	{
 		SetRenderCamera(MENG.GetCurrentRendererRef(), cameraPtr);
 	}

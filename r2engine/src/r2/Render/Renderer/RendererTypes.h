@@ -158,7 +158,8 @@ namespace r2::draw
     {
         OUTPUT_NO_AA = 0,
         OUTPUT_FXAA,
-        OUTPUT_SMAA_X1
+        OUTPUT_SMAA_X1,
+        OUTPUT_SMAA_T2X,
     };
 
 
