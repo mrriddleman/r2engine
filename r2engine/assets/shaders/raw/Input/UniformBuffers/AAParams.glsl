@@ -18,6 +18,7 @@ layout (std140, binding=6) uniform AAParams
 	ivec4 smaa_subSampleIndices;
 	int smaa_cornerRounding;
 	int smaa_maxSearchStepsDiag;
+	float smaa_cameraMovementWeight;
 };
 
 

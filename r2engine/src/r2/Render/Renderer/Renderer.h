@@ -300,6 +300,8 @@ namespace r2::draw
 		ShaderHandle mSMAAEdgeDetectionShader;
 		ShaderHandle mSMAABlendingWeightShader;
 		ShaderHandle mSMAANeighborhoodBlendingShader;
+		ShaderHandle mSMAANeighborhoodBlendingReprojectionShader;
+		ShaderHandle mSMAAReprojectResolveShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -426,9 +428,11 @@ namespace r2::draw
 		int mSMAAMaxSearchSteps = 32;
 		tex::TextureHandle mSMAAAreaTexture;
 		tex::TextureHandle mSMAASearchTexture;
-		glm::ivec4 mSMAASubSampleIndices = glm::ivec4(0);
+		
 		int mSMAACornerRounding = 25;
 		int mSMAAMaxSearchStepsDiag = 16;
+		glm::vec3 mSMAALastCameraFacingDirection;
+		glm::vec3 mSMAALastCameraPosition;
 		//--------------END SMAA Data------------------
 
 
@@ -454,7 +458,7 @@ namespace r2::draw
 		//------------END Debug Stuff--------------
 
 
-		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_X1;
+		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_T2X;
 
 	};
 }

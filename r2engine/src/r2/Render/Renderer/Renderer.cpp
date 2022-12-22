@@ -1164,6 +1164,12 @@ namespace r2::draw::renderer
 		newRenderer->mSMAANeighborhoodBlendingShader = shadersystem::FindShaderHandle(STRING_ID("SMAANeighborhoodBlending"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSMAANeighborhoodBlendingShader, "SMAANeighborhoodBlending");
 
+		newRenderer->mSMAANeighborhoodBlendingReprojectionShader = shadersystem::FindShaderHandle(STRING_ID("SMAANeighborhoodBlendingReprojection"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSMAANeighborhoodBlendingReprojectionShader, "SMAANeighborhoodBlendingReprojection");
+
+		newRenderer->mSMAAReprojectResolveShader = shadersystem::FindShaderHandle(STRING_ID("SMAAReprojectResolve"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSMAAReprojectResolveShader, "SMAAReprojectResolve");
+
 		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
 		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
 
@@ -1380,7 +1386,8 @@ namespace r2::draw::renderer
 		{
 			UpdateFXAADataIfNeeded(renderer);
 		}
-		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1 ||
+			renderer.mOutputMerger == OUTPUT_SMAA_T2X)
 		{
 			UpdateSMAADataIfNeeded(renderer);
 		}
@@ -1492,6 +1499,9 @@ namespace r2::draw::renderer
 		renderer.prevProj = renderer.mnoptrRenderCam->proj;
 		renderer.prevView = renderer.mnoptrRenderCam->view;
 		renderer.prevVP = renderer.mnoptrRenderCam->vp;
+
+		renderer.mSMAALastCameraFacingDirection = renderer.mnoptrRenderCam->facing;
+		renderer.mSMAALastCameraPosition = renderer.mnoptrRenderCam->position;
 
 		++renderer.mFrameCounter;
 	}
@@ -1772,7 +1782,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Struct, "smaa_searchTexture"},
 			{r2::draw::ShaderDataType::Int4, "smaa_subSampleIndices"},
 			{r2::draw::ShaderDataType::Int, "smaa_cornerRounding"},
-			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"}
+			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"},
+			{r2::draw::ShaderDataType::Float, "smaa_cameraMovementWeight"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -4443,7 +4454,8 @@ namespace r2::draw::renderer
 		{
 			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 		}
-		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1 ||
+				 renderer.mOutputMerger == OUTPUT_SMAA_T2X)
 		{
 			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 		}
@@ -4526,7 +4538,7 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_EDGE_DETECTION, passConfig, { RTS_COMPOSITE }, RTS_SMAA_EDGE_DETECTION, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_BLENDING_WEIGHT, passConfig, { RTS_SMAA_EDGE_DETECTION }, RTS_SMAA_BLENDING_WEIGHT, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_NEIGHBORHOOD_BLENDING] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_NEIGHBORHOOD_BLENDING, passConfig, { RTS_SMAA_BLENDING_WEIGHT, RTS_COMPOSITE }, RTS_SMAA_NEIGHBORHOOD_BLENDING, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { }, RTS_OUTPUT, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE, RTS_SMAA_NEIGHBORHOOD_BLENDING, RTS_ZPREPASS, RTS_SMAA_EDGE_DETECTION, RTS_SMAA_BLENDING_WEIGHT, RTS_ZPREPASS_SHADOWS }, RTS_OUTPUT, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
@@ -5782,7 +5794,7 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 7, &renderer.mSMAAMaxSearchSteps);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 8, &tex::GetTextureAddress(renderer.mSMAAAreaTexture));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 9, &tex::GetTextureAddress(renderer.mSMAASearchTexture));
-			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
+			//r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(renderer.mSMAASubSampleIndices));
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 11, &renderer.mSMAACornerRounding);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 12, &renderer.mSMAAMaxSearchStepsDiag);
 		}
@@ -5799,11 +5811,49 @@ namespace r2::draw::renderer
 		return glm::vec2(0);
 	}
 
+	glm::ivec4 SMAASubSampleIndices(const Renderer& renderer, u64 frameIndex)
+	{
+		if (renderer.mOutputMerger == OUTPUT_SMAA_T2X)
+		{
+			static glm::ivec4 subsampleIndices[] = { {1, 1, 1, 0}, {2, 2, 2, 0} };
+
+			return subsampleIndices[frameIndex];
+		}
+
+		return glm::ivec4(0);
+	}
+
 	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
 	{
 		ClearSurfaceOptions clearOptions;
 		clearOptions.shouldClear = true;
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
+
+		const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+		auto smaaConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mAAConfigHandle);
+
+		float smaaCameraWeight = 1.0f;
+		
+		//@NOTE(Serge): Stupid BS needed to make sure that the Temporal resolve doesn't ghost weirdly when camera moves backwards or faces a different direction
+		{
+			float dotResult = glm::dot(renderer.mSMAALastCameraFacingDirection, renderer.mnoptrRenderCam->facing);
+			glm::vec3 diff = renderer.mnoptrRenderCam->position - renderer.mSMAALastCameraPosition;
+			if (diff != glm::vec3(0))
+			{
+				diff = glm::normalize(diff);
+			}
+			float dotResult2 = glm::dot(diff, renderer.mnoptrRenderCam->facing);
+			if (!math::NearEq(dotResult, 1.0f) ||
+				(diff != glm::vec3(0) && !math::NearEq(dotResult2, 1.0f)))
+			{
+				smaaCameraWeight = 0.0f;
+			}
+		}
+		
+		glm::ivec4 subsampleIndices = SMAASubSampleIndices(renderer, (renderer.mFrameCounter % 2));
+
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
+		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
 
 		//edge detection pass
 		key::Basic edgeDetectionClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
@@ -5829,11 +5879,11 @@ namespace r2::draw::renderer
 
 		cmd::SetDefaultStencilState(edgeDetectionDrawBatch->state.stencilState);
 
-		
+
 		edgeDetectionDrawBatch->state.stencilState.op.stencilFail = r2::draw::KEEP;
 		edgeDetectionDrawBatch->state.stencilState.op.depthFail = r2::draw::KEEP;
 		edgeDetectionDrawBatch->state.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
-		
+
 		edgeDetectionDrawBatch->state.stencilState.stencilEnabled = true;
 		edgeDetectionDrawBatch->state.stencilState.stencilWriteEnabled = true;
 		edgeDetectionDrawBatch->state.stencilState.func.func = r2::draw::ALWAYS;
@@ -5842,6 +5892,8 @@ namespace r2::draw::renderer
 
 
 		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
+
+		//		AppendCommand<cmd::DrawBatch, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mCommandArena, edgeDetectionDrawBatch, )
 
 
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
@@ -5884,11 +5936,21 @@ namespace r2::draw::renderer
 		EndRenderPass(renderer, RPT_SMAA_BLENDING_WEIGHT, *renderer.mFinalBucket);
 
 		//neighborhood blending pass
-		key::Basic neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
+		key::Basic neighborhoodBlendingClearKey;
+		key::Basic neighborhoodBlendingBatchKey;
+
+		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
+			neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
+		}
+		else
+		{
+			neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
+			neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
+		}
 
 		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_NEIGHBORHOOD_BLENDING, clearOptions, *renderer.mFinalBucket, neighborhoodBlendingClearKey, *renderer.mCommandArena);
-
-		key::Basic neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
 
 		cmd::DrawBatch* neighborhoodBlendingDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, neighborhoodBlendingBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		neighborhoodBlendingDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -5911,25 +5973,43 @@ namespace r2::draw::renderer
 
 
 		//Output pass
-		key::Basic outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mPassThroughShader);
+		key::Basic outputClearKey;
+		key::Basic outputBatchKey;
+		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mPassThroughShader);
+			outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mPassThroughShader);
+		}
+		else
+		{
+			outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mSMAAReprojectResolveShader);
+			outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mSMAAReprojectResolveShader);
+		}
 
 		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
 
-		key::Basic outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mPassThroughShader);
+		cmd::DrawBatch* outputDrawBatch = nullptr;
+		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		{
+			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
 
-		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
+			const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 
-		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+			cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+			setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
+			setCompositeTexture->textureContainer = textureAddress.containerHandle;
+			setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
+			setCompositeTexture->texturePage = textureAddress.texPage;
+			setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
+			setCompositeTexture->textureLod = 0;
 
-		cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
-		setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
-		setCompositeTexture->textureContainer = textureAddress.containerHandle;
-		setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
-		setCompositeTexture->texturePage = textureAddress.texPage;
-		setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
-		setCompositeTexture->textureLod = 0;
+			outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);
+		}
+		else
+		{
+			outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		}
 
-		cmd::DrawBatch* outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);//AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
 		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
 		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
 		outputDrawBatch->numSubCommands = numSubCommands;
@@ -6005,7 +6085,8 @@ namespace r2::draw::renderer
 		{
 			u64 frameIndex = (renderer.mFrameCounter % 2);
 
-			glm::vec2 jitter = SMAAGetJitter(renderer, frameIndex);
+			glm::vec2 smaaCameraJitter = SMAAGetJitter(renderer, frameIndex);
+			glm::vec2 jitter = glm::vec2( smaaCameraJitter.x / static_cast<float>(renderer.mCompositeSize.width), smaaCameraJitter.y / static_cast<float>(renderer.mCompositeSize.height));
 
 			cam::SetCameraJitter(camera, jitter);
 		}
@@ -6032,6 +6113,8 @@ namespace r2::draw::renderer
 		UpdateShadowMapSizes(renderer, glm::vec4(light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE, light::SHADOW_MAP_SIZE));
 
 		UpdateCameraFOVAndAspect(renderer, glm::vec4(camera.fov, camera.aspectRatio, renderer.mResolutionSize.width, renderer.mResolutionSize.height));
+
+		
 	}
 
 	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
@@ -7744,7 +7827,7 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)
@@ -8015,7 +8098,7 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].maxPageAllocations = 0;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numAttachmentRefs = 0;
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].surfaceOffset = surfaceOffset;
-		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget = 1;
+		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget;
 

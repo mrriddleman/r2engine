@@ -2,11 +2,13 @@
 
 #extension GL_NV_gpu_shader5 : enable
 
-layout (location = 0) out float FragColor;
+layout (location = 0) out vec4 FragColor;
 
 #include "Common/CommonFunctions.glsl"
 #include "Depth/DepthUtils.glsl"
+#include "Input/UniformBuffers/AAParams.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
+
 
 #define SMAA_REPROJECTION_WEIGHT_SCALE 30
 
@@ -38,14 +40,14 @@ vec4 SMAAResolvePS(vec2 texcoord,
     float weight = 0.5 * Saturate(1.0 - (sqrt(delta) * SMAA_REPROJECTION_WEIGHT_SCALE));
 
     // Blend the pixels according to the calculated weight:
-    return mix(current, previous, weight);
+    return mix(current, previous, weight * smaa_cameraMovementWeight);
 }
 
 void main()
 {
-	FragColor = SMAAResolvePS(
+	FragColor = vec4( SMAAResolvePS(
 		fs_in.texCoords.xy,
 		smaaNeighborhoodBlendingSurface[0],
 		smaaNeighborhoodBlendingSurface[1],
-		zPrePassSurface);
+		zPrePassSurface).rgb, 1.0);
 }

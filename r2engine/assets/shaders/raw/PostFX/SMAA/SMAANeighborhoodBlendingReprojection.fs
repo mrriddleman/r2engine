@@ -4,6 +4,7 @@
 
 layout (location = 0) out vec4 FragColor;
 
+
 #include "Input/UniformBuffers/AAParams.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Input/UniformBuffers/Vectors.glsl"
@@ -20,7 +21,7 @@ in VS_OUT
 
 
 #ifndef SMAA_REPROJECTION
-#define SMAA_REPROJECTION 0
+#define SMAA_REPROJECTION 1
 #endif
 
 //-----------------------------------------------------------------------------
@@ -74,11 +75,6 @@ vec4 SMAANeighborhoodBlendingPS(vec2 texcoord,
         // Unpack velocity and return the resulting value:
         Caa.a = sqrt(Caa.a);
         return Caa;
-        // #elif SMAA_HLSL_4 == 1 || SMAA_DIRECTX9_LINEAR_BLEND == 0
-        // // We exploit bilinear filtering to mix current pixel with the chosen
-        // // neighbor:
-        // texcoord += offset * SMAA_PIXEL_SIZE;
-        // return SampleTextureLodZeroRGBA(colorTex, texcoord);
         #else
         // Fetch the opposite color and lerp by hand:
         vec4 C = SampleTextureLodZeroRGBA(colorTex, texcoord);
@@ -97,7 +93,4 @@ void main()
                                   	fs_in.offsets,
                                   	compositeSurface,
                                   	smaaBlendingWeightSurface);
-
-
-	//  FragColor = SampleTextureRGBA(smaaBlendingWeightSurface, fs_in.texCoords.xy);
 }
