@@ -5834,7 +5834,9 @@ namespace r2::draw::renderer
 
 		float smaaCameraWeight = 1.0f;
 		
-		//@NOTE(Serge): Stupid BS needed to make sure that the Temporal resolve doesn't ghost weirdly when camera moves backwards or faces a different direction
+		//@HACK(Serge): Stupid BS needed to make sure that the Temporal resolve doesn't ghost weirdly when camera moves backwards or faces a different direction
+		//Maybe there's an actual way to fix this but I'm not sure since if we move backwards or turn the camera, we don't have enough info to fill the buffer correctly...
+		//Maybe motion blur could fix this?
 		{
 			float dotResult = glm::dot(renderer.mSMAALastCameraFacingDirection, renderer.mnoptrRenderCam->facing);
 			glm::vec3 diff = renderer.mnoptrRenderCam->position - renderer.mSMAALastCameraPosition;
@@ -5846,6 +5848,7 @@ namespace r2::draw::renderer
 			if (!math::NearEq(dotResult, 1.0f) ||
 				(diff != glm::vec3(0) && !math::NearEq(dotResult2, 1.0f)))
 			{
+				//if camera moved around then turn off the temporal resolve
 				smaaCameraWeight = 0.0f;
 			}
 		}
