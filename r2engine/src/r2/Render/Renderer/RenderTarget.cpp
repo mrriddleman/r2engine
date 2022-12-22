@@ -52,7 +52,7 @@ namespace r2::draw
 					cmd.toColorMipLevels[colorAttachment.colorAttachmentNumber] = mipLevel;
 
 					//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-					if (colorAttachment.useLayeredRenderering)
+					if (colorAttachment.textureAttachmentFormat.usesLayeredRenderering)
 					{
 						cmd.colorUseLayeredRenderering = true;
 					}
@@ -71,7 +71,7 @@ namespace r2::draw
 				cmd.toDepthMipLevel = mipLevel;
 
 				//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-				if (depthAttachment.useLayeredRenderering)
+				if (depthAttachment.textureAttachmentFormat.usesLayeredRenderering)
 				{
 					cmd.depthUseLayeredRenderering = true;
 				}
@@ -91,7 +91,7 @@ namespace r2::draw
 					cmd.stencilTextureLayer = stencilAttachment.texture[stencilAttachment.currentTexture].sliceIndex;
 					cmd.toStencilMipLevel = mipLevel;
 
-					if (stencilAttachment.useLayeredRenderering)
+					if (stencilAttachment.textureAttachmentFormat.usesLayeredRenderering)
 					{
 						cmd.stencilUseLayeredRendering = true;
 					}
@@ -112,7 +112,7 @@ namespace r2::draw
 					cmd.depthStencilTextureLayer = depthStencilAttachment.texture[depthStencilAttachment.currentTexture].sliceIndex;
 					cmd.toDepthStencilMipLevel = mipLevel;
 
-					if (depthStencilAttachment.useLayeredRenderering)
+					if (depthStencilAttachment.textureAttachmentFormat.usesLayeredRenderering)
 					{
 						cmd.depthStencilUseLayeredRenderering = true;
 					}
@@ -135,7 +135,7 @@ namespace r2::draw
 						cmd.toColorMipLevels[ref.colorAttachmentNumber] = mipLevel;
 
 						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.colorUseLayeredRenderering = true;
 						}
@@ -147,7 +147,7 @@ namespace r2::draw
 						cmd.toDepthMipLevel = mipLevel;
 
 						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthUseLayeredRenderering = true;
 						}
@@ -158,7 +158,7 @@ namespace r2::draw
 						cmd.stencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
 						cmd.toStencilMipLevel = mipLevel;
 
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.stencilUseLayeredRendering = true;
 						}
@@ -169,7 +169,7 @@ namespace r2::draw
 						cmd.depthStencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
 						cmd.toDepthStencilMipLevel = mipLevel;
 
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthStencilUseLayeredRenderering = true;
 						}
@@ -218,7 +218,7 @@ namespace r2::draw
 					cmd.toColorMipLevels[i] = mipLevel;
 
 					//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-					if (colorAttachment.useLayeredRenderering)
+					if (colorAttachment.textureAttachmentFormat.usesLayeredRenderering)
 					{
 						cmd.colorUseLayeredRenderering = true;
 					}
@@ -237,7 +237,7 @@ namespace r2::draw
 				cmd.toDepthMipLevel = mipLevel;
 
 				//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-				if (depthAttachment.useLayeredRenderering)
+				if (depthAttachment.textureAttachmentFormat.usesLayeredRenderering)
 				{
 					cmd.depthUseLayeredRenderering = true;
 				}
@@ -254,7 +254,7 @@ namespace r2::draw
 				cmd.stencilTextureLayer = stencilAttachment.texture[textureIndex].sliceIndex;
 				cmd.toStencilMipLevel = mipLevel;
 
-				if (stencilAttachment.useLayeredRenderering)
+				if (stencilAttachment.textureAttachmentFormat.usesLayeredRenderering)
 				{
 					cmd.stencilUseLayeredRendering = true;
 				}
@@ -273,7 +273,7 @@ namespace r2::draw
 					cmd.depthStencilTextureLayer = depthStencilAttachment.texture[textureIndex].sliceIndex;
 					cmd.toDepthStencilMipLevel = mipLevel;
 
-					if (depthStencilAttachment.useLayeredRenderering)
+					if (depthStencilAttachment.textureAttachmentFormat.usesLayeredRenderering)
 					{
 						cmd.depthStencilUseLayeredRenderering = true;
 					}
@@ -297,7 +297,7 @@ namespace r2::draw
 						cmd.toColorMipLevels[textureIndex] = mipLevel;
 
 						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.colorUseLayeredRenderering = true;
 						}
@@ -309,7 +309,7 @@ namespace r2::draw
 						cmd.toDepthMipLevel = mipLevel;
 
 						//@NOTE: wrong if we want each attachment to use different rendering types (ie. layered vs non-layered)
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthUseLayeredRenderering = true;
 						}
@@ -320,7 +320,7 @@ namespace r2::draw
 						cmd.stencilTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
 						cmd.toStencilMipLevel = mipLevel;
 
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.stencilUseLayeredRendering = true;
 						}
@@ -331,7 +331,7 @@ namespace r2::draw
 						cmd.depthStencilTextureLayer = ref.attachmentPtr->texture[textureIndex].sliceIndex;
 						cmd.toDepthStencilMipLevel = mipLevel;
 
-						if (ref.attachmentPtr->useLayeredRenderering)
+						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthStencilUseLayeredRenderering = true;
 						}
@@ -352,14 +352,9 @@ namespace r2::draw
 			return page1.attachmentIndex == page2.attachmentIndex && page1.numPages == page2.numPages && page1.sliceIndex == page2.sliceIndex && page1.type == page2.type;
 		}
 
-		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering)
+		void AddTextureAttachment(RenderTarget& rt, const TextureAttachmentFormat& format)
 		{
-			impl::AddTextureAttachment(rt, type, false, false, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering, 0);
-		}
-
-		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach)
-		{
-			impl::AddTextureAttachment(rt, type, swapping, uploadAllTextures, filter, wrapMode, layers, mipLevels, alpha, isHDR, useLayeredRendering, mipLevelToAttach);
+			impl::AddTextureAttachment(rt, format);
 		}
 
 		void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment)

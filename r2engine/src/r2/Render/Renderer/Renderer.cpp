@@ -4601,7 +4601,7 @@ namespace r2::draw::renderer
 				if (setRenderTargetCMD->numColorTextures > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->colorAttachments, 0);
-					uploadAllTextures = textureAttachment.uploadAllTextures;
+					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
 
 					if (uploadAllTextures)
 					{
@@ -4621,10 +4621,10 @@ namespace r2::draw::renderer
 				if (numDepthAttachments > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthAttachments, 0);
-					uploadAllTextures = textureAttachment.uploadAllTextures;
+					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
 					numOutputTextures = 1;
 
-					if (textureAttachment.uploadAllTextures)
+					if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
@@ -4641,10 +4641,10 @@ namespace r2::draw::renderer
 				if (numDepthStencilAttachments > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthStencilAttachments, 0);
-					uploadAllTextures = textureAttachment.uploadAllTextures;
+					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
 					numOutputTextures = 1;
 
-					if (textureAttachment.uploadAllTextures)
+					if (uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
@@ -4717,7 +4717,7 @@ namespace r2::draw::renderer
 				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
 				currentTexture = textureAttachment.currentTexture;
 
-				if (textureAttachment.uploadAllTextures)
+				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 				{
 					numOutputTextures = textureAttachment.numTextures;
 				}
@@ -4727,7 +4727,7 @@ namespace r2::draw::renderer
 				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
 				currentTexture = textureAttachment.currentTexture;
 
-				if (textureAttachment.uploadAllTextures)
+				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 				{
 					numOutputTextures = textureAttachment.numTextures;
 				}
@@ -4737,7 +4737,7 @@ namespace r2::draw::renderer
 				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
 				currentTexture = textureAttachment.currentTexture;
 
-				if (textureAttachment.uploadAllTextures)
+				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 				{
 					numOutputTextures = textureAttachment.numTextures;
 				}
@@ -4798,7 +4798,7 @@ namespace r2::draw::renderer
 					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
 					currentTexture = textureAttachment.currentTexture;
 
-					if (textureAttachment.uploadAllTextures)
+					if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
@@ -4808,7 +4808,7 @@ namespace r2::draw::renderer
 					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
 					currentTexture = textureAttachment.currentTexture;
 
-					if (textureAttachment.uploadAllTextures)
+					if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
@@ -4818,7 +4818,7 @@ namespace r2::draw::renderer
 					const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
 					currentTexture = textureAttachment.currentTexture;
 
-					if (textureAttachment.uploadAllTextures)
+					if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
 					{
 						numOutputTextures = textureAttachment.numTextures;
 					}
@@ -5395,8 +5395,8 @@ namespace r2::draw::renderer
 		assignLightsCMD->dispatchIndirectBuffer = dispatchComputeConstantBufferHandle;
 		assignLightsCMD->offset = 0;
 
-		cmd::Barrier* barrierCMD3 = AppendCommand<cmd::DispatchComputeIndirect, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, assignLightsCMD, 0);
-		barrierCMD3->flags = cmd::SHADER_STORAGE_BARRIER_BIT;
+		/*cmd::Barrier* barrierCMD3 = AppendCommand<cmd::DispatchComputeIndirect, cmd::Barrier, mem::StackArena>(*renderer.mCommandArena, assignLightsCMD, 0);
+		barrierCMD3->flags = cmd::SHADER_STORAGE_BARRIER_BIT;*/
 	}
 
 	void UpdateSSRDataIfNeeded(Renderer& renderer)
@@ -7623,9 +7623,26 @@ namespace r2::draw::renderer
 			
 			renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_CONVOLVED_GBUFFER], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], rt::COLOR, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, true, false);
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], rt::COLOR, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, false, false);
+
+			rt::TextureAttachmentFormat gbufferFormat = {};
+			gbufferFormat.type = rt::COLOR;
+			gbufferFormat.filter = tex::FILTER_LINEAR;
+			gbufferFormat.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+			gbufferFormat.hasAlpha = false;
+			gbufferFormat.isHDR = true;
+			gbufferFormat.usesLayeredRenderering = false;
+			gbufferFormat.numLayers = 1;
+			gbufferFormat.numMipLevels = 1;
+
+			rt::TextureAttachmentFormat normalFormat = gbufferFormat;
+
+			rt::TextureAttachmentFormat specularFormat = gbufferFormat;
+			specularFormat.hasAlpha = true;
+			specularFormat.isHDR = false;
+
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], gbufferFormat);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_NORMAL], normalFormat);
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SPECULAR], specularFormat);
 			
 			const auto& gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
 			const auto gbufferTexture = gbufferColorAttachment.texture[gbufferColorAttachment.currentTexture];
@@ -7633,7 +7650,19 @@ namespace r2::draw::renderer
 			renderer.mSSRRoughnessMips = tex::MaxMipsForSparseTextureSize(gbufferTexture);
 			renderer.mSSRNeedsUpdate = true;
 
-			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, renderer.mSSRRoughnessMips, false, true, false, 0 );
+			rt::TextureAttachmentFormat convolvedGBufferFormat = {};
+			convolvedGBufferFormat.type = rt::COLOR;
+			convolvedGBufferFormat.swapping = true;
+			convolvedGBufferFormat.uploadAllTextures = true;
+			convolvedGBufferFormat.filter = tex::FILTER_LINEAR;
+			convolvedGBufferFormat.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+			convolvedGBufferFormat.numLayers = 1;
+			convolvedGBufferFormat.numMipLevels = renderer.mSSRRoughnessMips;
+			convolvedGBufferFormat.hasAlpha = false;
+			convolvedGBufferFormat.isHDR = true;
+			convolvedGBufferFormat.usesLayeredRenderering = false;
+
+			rt::AddTextureAttachment(renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER], convolvedGBufferFormat);
 
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
@@ -7690,8 +7719,18 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
+		rt::TextureAttachmentFormat format;
+		format.type = rt::DEPTH;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = true;
+		format.usesLayeredRenderering = true;
+
 		//@TODO(Serge): we're effectively burning the first page of this render target. May want to fix that at some point
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], rt::DEPTH, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, true, true);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], format);
 	}
 
 	void CreatePointLightShadowRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7700,7 +7739,17 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_POINTLIGHT_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS], rt::DEPTH_CUBEMAP, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, true);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::DEPTH_CUBEMAP;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = true;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_POINTLIGHT_SHADOWS], format);
 	}
 
 	void CreateZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7709,7 +7758,17 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], rt::DEPTH24_STENCIL8, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, false);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::DEPTH24_STENCIL8;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS], format);
 	}
 
 	void CreateZPrePassShadowsRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7717,8 +7776,21 @@ namespace r2::draw::renderer
 		ConstrainResolution(resolutionX, resolutionY);
 
 		renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_ZPREPASS_SHADOWS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		
+		rt::TextureAttachmentFormat format;
+		format.type = rt::DEPTH;
+		format.swapping = true;
+		format.uploadAllTextures = true;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], rt::DEPTH, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false, 0);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_ZPREPASS_SHADOWS], format);
 	}
 
 	void CreateAmbientOcclusionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7727,7 +7799,17 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION], rt::RG32F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::RG32F;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION], format);
 	}
 
 	void CreateAmbientOcclusionDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7736,7 +7818,17 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], rt::RG32F, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::RG32F;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_DENOISED], format);
 	}
 
 	void CreateAmbientOcclusionTemporalDenoiseSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7745,7 +7837,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], rt::R32F, true, true, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, false, false, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::RG32F;
+		format.swapping = true;
+		format.uploadAllTextures = true;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED], format);
 	}
 
 	void CreateSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7754,7 +7859,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SSR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_BORDER, 1, 1, true, true, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_BORDER;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR], format);
 	}
 
 	void CreateConeTracedSSRRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7763,7 +7881,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SSR_CONE_TRACED] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SSR_CONE_TRACED], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 	
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_REPEAT, 1, 1, true, true, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = true;
+		format.uploadAllTextures = true;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_REPEAT;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], format);
 	}
 
 	void CreateBloomSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
@@ -7772,7 +7903,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_BLOOM] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_BLOOM], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = numMips;
+		format.hasAlpha = false;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM], format);
 	}
 
 	void CreateBloomBlurSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
@@ -7781,7 +7925,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_BLOOM_BLUR] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_BLOOM_BLUR], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_BLUR], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = numMips;
+		format.hasAlpha = false;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_BLUR], format);
 	}
 
 	void CreateBloomSurfaceUpSampled(Renderer& renderer, u32 resolutionX, u32 resolutionY, u32 numMips)
@@ -7790,7 +7947,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_BLOOM_UPSAMPLE], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, numMips, false, true, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = numMips;
+		format.hasAlpha = false;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_BLOOM_UPSAMPLE], format);
 	}
 
 	void CreateCompositeSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7799,7 +7969,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_COMPOSITE] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_COMPOSITE], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 	
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_COMPOSITE], rt::COLOR, false, false, tex::FILTER_NEAREST, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_COMPOSITE], format);
 	}
 
 	void CreateSMAAEdgeDetectionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7808,9 +7991,25 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_EDGE_DETECTION], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 		
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], rt::STENCIL8, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, false, false, false, 0);
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], format);
+
+		format.type = rt::STENCIL8;
+		format.hasAlpha = false;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION], format);
 	}
 
 	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
@@ -7819,7 +8018,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_BLENDING_WEIGHT], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], rt::COLOR, false, false, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], format);
 
 		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT], r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION].stencilAttachments, 0));
 	}
@@ -7830,7 +8042,20 @@ namespace r2::draw::renderer
 
 		renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
 
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], rt::COLOR, true, true, tex::FILTER_LINEAR, tex::WRAP_MODE_CLAMP_TO_EDGE, 1, 1, true, false, false, 0);
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = true;
+		format.uploadAllTextures = true;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = false;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], format);
 	}
 
 	void DestroyRenderSurfaces(Renderer& renderer)

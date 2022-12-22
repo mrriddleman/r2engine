@@ -115,7 +115,7 @@ namespace r2::draw::gl
 
 		bool CanBeSparse(const r2::draw::tex::TextureFormat& format, const SparseInternalFormatTileSizes& tileSize, u32 smallestMip)
 		{
-			return tileSize.bestXSize <= smallestMip;
+			return tileSize.bestXSize <= smallestMip && !format.isMSAA;
 		}
 
 		SparseInternalFormatTileSizes FindBestTileSize(GLenum target, const r2::draw::tex::TextureFormat& format)
@@ -154,11 +154,14 @@ namespace r2::draw::gl
 
 		bool Init(r2::draw::tex::TextureContainer& container, const r2::draw::tex::TextureFormat& format, GLsizei slices)
 		{
-
 			GLenum target = GL_TEXTURE_2D_ARRAY;
 			if (format.isCubemap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_ARRAY;
+			}
+			else if (format.isMSAA)
+			{
+				target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 			}
 
 			container.format = format;
@@ -214,9 +217,6 @@ namespace r2::draw::gl
 			{
 				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 				glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-				//glTexParameterf(target, GL_TEXTURE_MAX_LOD, 2.0f);
-				//glTexParameterf(target, GL_TEXTURE_LOD_BIAS, -1.4);
 			}
 			else
 			{
@@ -231,10 +231,15 @@ namespace r2::draw::gl
 				float aniso = glm::min(maxAniso, maxAniso);
 				glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY, aniso);
 			}
-
-			glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES) ) * r2::draw::tex::NUM_SIDES : slices);
-
-			glGenerateMipmap(target);
+			
+			if (!format.isMSAA)
+			{
+				glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES)) * r2::draw::tex::NUM_SIDES : slices);
+			}
+			else
+			{
+				glTexStorage3DMultisample(target, format.msaaSamples, format.internalformat, format.width, format.height, slices, format.fixedSamples);
+			}
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
 			{
@@ -247,16 +252,13 @@ namespace r2::draw::gl
 				r2::squeue::PushBack(*container.freeSpace, i);
 			}
 
-		//	if (container.isSparse) 
-		//	{
-				container.handle = glGetTextureHandleARB(container.texId);
-				if (GLenum err = glGetError())
-				{
-					R2_CHECK(false, "Couldn't get the texture handle with error: %lu\n", err);
-				}
-				R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
-				glMakeTextureHandleResidentARB(container.handle);
-		//	}
+			container.handle = glGetTextureHandleARB(container.texId);
+			if (GLenum err = glGetError())
+			{
+				R2_CHECK(false, "Couldn't get the texture handle with error: %lu\n", err);
+			}
+			R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
+			glMakeTextureHandleResidentARB(container.handle);
 
 			return true;
 		}
@@ -312,19 +314,22 @@ namespace r2::draw::gl
 
 		void CompressedTexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
 		{
+			R2_CHECK(!container.format.isMSAA, "MSAA not supported here");
 			glBindTexture(GL_TEXTURE_2D_ARRAY, container.texId);
 			glCompressedTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data);
 		}
 
-		void TexSubImage3D(r2::draw::tex::TextureContainer& constainer, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
+		void TexSubImage3D(r2::draw::tex::TextureContainer& container, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
 		{
-			glBindTexture(GL_TEXTURE_2D_ARRAY, constainer.texId);
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
-			
+			R2_CHECK(!container.format.isMSAA, "MSAA not supported here");
+			GLenum bindTarget = GL_TEXTURE_2D_ARRAY;
+			glBindTexture(bindTarget, container.texId);
+			glTexSubImage3D(bindTarget, level, xOffset, yOffset, zOffset, width, height, depth, format, type, data);
 		}
 
 		void TexSubCubemapImage3D(r2::draw::tex::TextureContainer& container, r2::draw::tex::CubemapSide side, GLint level, GLint xOffset, GLint yOffset, GLint zOffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* data)
 		{
+			R2_CHECK(!container.format.isMSAA, "MSAA not supported here");
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, container.texId);
 			glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, level, xOffset, yOffset, zOffset * r2::draw::tex::CubemapSide::NUM_SIDES + static_cast<GLint>(side), width, height, depth, format, type, data);
 		}

@@ -23,19 +23,39 @@ namespace r2::draw::rt
 		DEPTH32F_STENCIL8
 	};
 
+	struct TextureAttachmentFormat
+	{
+		TextureAttachmentType type = COLOR;
+		b32 swapping = false;
+		b32 uploadAllTextures = false;
+		s32 filter = tex::FILTER_LINEAR;
+		s32 wrapMode = tex::WRAP_MODE_REPEAT;
+		u32 numLayers = 1;
+		u32 numMipLevels = 1;
+		b32 hasAlpha = false;
+		b32 isHDR = false;
+		b32 usesLayeredRenderering = false;
+		u32 mipLevelToAttach = 0;
+		b32 isMSAA = false;
+		u32 numMSAASamples = 0;
+		b32 useFixedMSAASamples = false;
+	};
+
 	struct TextureAttachment
 	{
-		TextureAttachmentType type;
+		TextureAttachmentFormat textureAttachmentFormat;
+
+		//TextureAttachmentType type;
 
 		tex::TextureHandle texture[MAX_TEXTURE_ATTACHMENT_HISTORY];
-		u32 numLayers = 1;
+		//u32 numLayers = 1;
 		u32 numTextures = 1;
 		u32 currentTexture = 0;
 
-		b32 uploadAllTextures = false;
+	//	b32 uploadAllTextures = false;
 		b32 needsFramebufferUpdate = false;
-		u32 mipLevelAttached = 0;
-		b32 useLayeredRenderering = false;
+	//	u32 mipLevelAttached = 0;
+	//	b32 useLayeredRenderering = false;
 
 		u32 colorAttachmentNumber = 0;
 
@@ -76,6 +96,8 @@ namespace r2::draw::rt
 		u32 surfaceOffset;
 		u32 numSurfacesPerTarget;
 	};
+
+	
 }
 
 namespace r2::draw
@@ -156,12 +178,9 @@ namespace r2::draw
 		template <class ARENA>
 		void DestroyRenderTarget(ARENA& arena, RenderTarget& rt);
 
-		void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
+	//	void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering);
 
-		void AddTextureAttachment(RenderTarget& rt,
-			TextureAttachmentType type,
-			bool swapping, bool uploadAllTextures,
-			s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
+		void AddTextureAttachment(RenderTarget& rt, const TextureAttachmentFormat& textureAttachmentFormat);
 
 		void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment);
 
@@ -187,7 +206,7 @@ namespace r2::draw
 		//private
 		namespace impl
 		{
-			void AddTextureAttachment(RenderTarget& rt, TextureAttachmentType type, bool swapping, bool uploadAllTextures, s32 filter, s32 wrapMode, u32 layers, s32 mipLevels, bool alpha, bool isHDR, bool useLayeredRendering, u32 mipLevelToAttach);
+			void AddTextureAttachment(RenderTarget& rt, const TextureAttachmentFormat& format);
 			void SetTextureAttachment(RenderTarget& rt, const rt::TextureAttachment& textureAttachment);
 			float AddTexturePagesToAttachment(RenderTarget& rt, TextureAttachmentType type, u32 pages);
 			void RemoveTexturePagesFromAttachment(RenderTarget& rt, TextureAttachmentType type, float index, u32 pages);

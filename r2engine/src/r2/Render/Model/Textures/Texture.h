@@ -110,14 +110,18 @@ namespace r2::draw::tex
 		s32 height = 0;
 		b32 isCubemap = false;
 		b32 compressed = false;
+		
+		b32 isMSAA = false;
+		u32 msaaSamples = 0;
+		b32 fixedSamples = true;
 
 		s32 minFilter = FILTER_LINEAR;
 		s32 magFilter = FILTER_LINEAR;
 		s32 wrapMode = WRAP_MODE_REPEAT;
 		glm::vec4 borderColor = glm::vec4(0);
+
 		b32 isAnisotropic = false;
 		float anisotropy = 0.0;
-		//u32 numCommitLayers = 1;
 	};
 
 	struct TextureContainer
