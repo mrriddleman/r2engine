@@ -148,8 +148,9 @@ namespace r2::draw::rendererimpl
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
+		
 		SDL_GL_LoadLibrary(nullptr);
 
 		s_optrWindow = SDL_CreateWindow(params.windowName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, params.resolution.width, params.resolution.height, params.platformFlags);
@@ -234,7 +235,7 @@ namespace r2::draw::rendererimpl
 #if defined R2_DEBUG
 		glEnable(GL_DEBUG_OUTPUT);
 #endif
-		
+		glEnable(GL_MULTISAMPLE);
 		glClearStencil(0);
 
 		return s_optrRendererImpl->mRingBufferMap != nullptr && s_optrRendererImpl->mGPUBuffers != nullptr;
@@ -1019,7 +1020,8 @@ namespace r2::draw::rendererimpl
 		b32 colorUseLayeredRenderering,
 		b32 depthUseLayeredRenderering,
 		b32 stencilUseLayeredRenderering,
-		b32 depthStencilUseLayeredRenderering)
+		b32 depthStencilUseLayeredRenderering,
+		b32 colorIsMSAA)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
@@ -1036,9 +1038,13 @@ namespace r2::draw::rendererimpl
 				for (u32 i = 0; i < numColorTextures; ++i)
 				{
 					bufs[i] = GL_COLOR_ATTACHMENT0 + i;
-					if (!colorUseLayeredRenderering)
+					if (!colorUseLayeredRenderering && !colorIsMSAA)
 					{
 						glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, colorTextures[i], colorMipLevels[i], colorTextureLayers[i]);
+					}
+					else if (!colorUseLayeredRenderering && colorIsMSAA)
+					{
+						glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, colorTextures[i], colorMipLevels[i], colorTextureLayers[i]);
 					}
 					else
 					{

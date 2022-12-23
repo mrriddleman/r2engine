@@ -168,6 +168,7 @@ namespace r2::draw::cmd
 		u32 colorTextureLayers[MAX_NUMBER_OF_TEXTURE_ATTACHMENTS];
 		u32 numColorTextures;
 		b32 colorUseLayeredRenderering;
+		b32 colorIsMSAA;
 
 		s32 depthTexture;
 		u32 toDepthMipLevel;

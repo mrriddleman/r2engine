@@ -129,7 +129,8 @@ namespace r2::draw::dispatch
 			realData->colorUseLayeredRenderering,
 			realData->depthUseLayeredRenderering,
 			realData->stencilUseLayeredRendering,
-			realData->depthStencilUseLayeredRenderering);
+			realData->depthStencilUseLayeredRenderering,
+			realData->colorIsMSAA);
 	}
 
 	void CopyRenderTargetColorTexture(const void* data)

@@ -56,6 +56,11 @@ namespace r2::draw
 					{
 						cmd.colorUseLayeredRenderering = true;
 					}
+
+					if (colorAttachment.textureAttachmentFormat.isMSAA)
+					{
+						cmd.colorIsMSAA = true;
+					}
 				}
 			}
 			
@@ -138,6 +143,11 @@ namespace r2::draw
 						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.colorUseLayeredRenderering = true;
+						}
+
+						if (ref.attachmentPtr->textureAttachmentFormat.isMSAA)
+						{
+							cmd.colorIsMSAA = true;
 						}
 					}
 					else if(IsDepthAttachment(ref.type))
@@ -222,6 +232,12 @@ namespace r2::draw
 					{
 						cmd.colorUseLayeredRenderering = true;
 					}
+
+					if (colorAttachment.textureAttachmentFormat.isMSAA)
+					{
+						cmd.colorIsMSAA = true;
+					}
+					
 				}
 			}
 
@@ -300,6 +316,11 @@ namespace r2::draw
 						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.colorUseLayeredRenderering = true;
+						}
+
+						if (ref.attachmentPtr->textureAttachmentFormat.isMSAA)
+						{
+							cmd.colorIsMSAA = true;
 						}
 					}
 					else if(IsDepthAttachment(ref.type))
