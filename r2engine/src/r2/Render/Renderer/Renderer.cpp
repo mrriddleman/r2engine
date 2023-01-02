@@ -444,7 +444,7 @@ namespace r2::draw::renderer
 	void UpdateFXAADataIfNeeded(Renderer& renderer);
 
 	//SMAA
-	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex);
+	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle neighborhoodBlendingShader, ShaderHandle outputShader, u32 pass);
 	void UpdateSMAADataIfNeeded(Renderer& renderer);
 	glm::vec2 SMAAGetJitter(const Renderer& renderer, u64 frameIndex);
 
@@ -4454,10 +4454,13 @@ namespace r2::draw::renderer
 		{
 			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 		}
-		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1 ||
-				 renderer.mOutputMerger == OUTPUT_SMAA_T2X)
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
 		{
-			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingShader, renderer.mPassThroughShader, 0);
+		}
+		else if (renderer.mOutputMerger == OUTPUT_SMAA_T2X)
+		{
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingReprojectionShader, renderer.mSMAAReprojectResolveShader, 0);
 		}
 		else
 		{
@@ -5823,8 +5826,19 @@ namespace r2::draw::renderer
 		return glm::ivec4(0);
 	}
 
-	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex)
+	//@TODO(Serge): refactor so that it only does SMAAx1 (instead of handling both current cases) and takes in which pass/frame buffer it needs, along with proper keys to sort the command bucket
+	void SMAAx1RenderPass(
+		Renderer& renderer,
+		ConstantBufferHandle subCommandsConstantBufferHandle,
+		BufferLayoutHandle bufferLayoutHandle,
+		u32 numSubCommands,
+		u32 startCommandIndex,
+		ShaderHandle neighborhoodBlendingShader,
+		ShaderHandle outputShader,
+		u32 pass)
 	{
+		R2_CHECK(pass >= 0 && pass <= 1, "Pass should be in the range [0,1]");
+
 		ClearSurfaceOptions clearOptions;
 		clearOptions.shouldClear = true;
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER | cmd::CLEAR_STENCIL_BUFFER;
@@ -5858,12 +5872,16 @@ namespace r2::draw::renderer
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 10, glm::value_ptr(subsampleIndices));
 		r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, smaaConstantBufferHandle, 13, &smaaCameraWeight);
 
+		constexpr u32 numberOfStages = 4;
+
+		u32 edgeDetectionPass = pass * numberOfStages + 0;
+
 		//edge detection pass
-		key::Basic edgeDetectionClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_CLEAR, 0, 0, renderer.mSMAAEdgeDetectionShader);
+		key::Basic edgeDetectionClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, edgeDetectionPass, DL_CLEAR, 0, edgeDetectionPass, renderer.mSMAAEdgeDetectionShader);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_EDGE_DETECTION, clearOptions, *renderer.mFinalBucket, edgeDetectionClearKey, *renderer.mCommandArena);
 
-		key::Basic edgeDetectionBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 0, DL_SCREEN, 0, 0, renderer.mSMAAEdgeDetectionShader);
+		key::Basic edgeDetectionBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, edgeDetectionPass, DL_SCREEN, 0, edgeDetectionPass, renderer.mSMAAEdgeDetectionShader);
 
 		cmd::DrawBatch* edgeDetectionDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, edgeDetectionBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		edgeDetectionDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -5902,11 +5920,14 @@ namespace r2::draw::renderer
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 		//blending weights pass
-		key::Basic blendingWeightClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_CLEAR, 0, 1, renderer.mSMAABlendingWeightShader);
+
+		u32 blendingWeightPass = pass * numberOfStages + 1;
+
+		key::Basic blendingWeightClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, blendingWeightPass, DL_CLEAR, 0, blendingWeightPass, renderer.mSMAABlendingWeightShader);
 
 		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_BLENDING_WEIGHT, clearOptions, *renderer.mFinalBucket, blendingWeightClearKey, *renderer.mCommandArena);
 
-		key::Basic blendingWeightBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 1, DL_SCREEN, 0, 1, renderer.mSMAABlendingWeightShader);
+		key::Basic blendingWeightBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, blendingWeightPass, DL_SCREEN, 0, blendingWeightPass, renderer.mSMAABlendingWeightShader);
 
 		cmd::DrawBatch* blendingWeightDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, blendingWeightBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		blendingWeightDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -5942,16 +5963,19 @@ namespace r2::draw::renderer
 		key::Basic neighborhoodBlendingClearKey;
 		key::Basic neighborhoodBlendingBatchKey;
 
-		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		{
-			neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
-			neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingShader);
-		}
-		else
-		{
-			neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
-			neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
-		}
+		u32 neighborhoodBlendingPass = pass * numberOfStages + 2;
+
+
+	//	if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		//{
+		neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, neighborhoodBlendingPass, DL_CLEAR, 0, neighborhoodBlendingPass, neighborhoodBlendingShader);
+		neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, neighborhoodBlendingPass, DL_SCREEN, 0, neighborhoodBlendingPass, neighborhoodBlendingShader);
+			/*}
+			else
+			{
+				neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
+				neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
+			}*/
 
 		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_NEIGHBORHOOD_BLENDING, clearOptions, *renderer.mFinalBucket, neighborhoodBlendingClearKey, *renderer.mCommandArena);
 
@@ -5976,18 +6000,21 @@ namespace r2::draw::renderer
 
 
 		//Output pass
+
+		u32 outputPass = pass * numberOfStages + 3;
+
 		key::Basic outputClearKey;
 		key::Basic outputBatchKey;
-		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		{
-			outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mPassThroughShader);
-			outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mPassThroughShader);
-		}
-		else
-		{
-			outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mSMAAReprojectResolveShader);
-			outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mSMAAReprojectResolveShader);
-		}
+		//if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		//{
+		outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_CLEAR, 0, outputPass, outputShader);
+		outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_SCREEN, 0, outputPass, outputShader);
+		//}
+		//else
+		//{
+		//	outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mSMAAReprojectResolveShader);
+		//	outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mSMAAReprojectResolveShader);
+		//}
 
 		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
 

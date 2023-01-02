@@ -458,7 +458,7 @@ namespace r2::draw
 		//------------END Debug Stuff--------------
 
 
-		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_T2X;
+		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_X1;
 
 	};
 }
