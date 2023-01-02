@@ -444,7 +444,9 @@ namespace r2::draw::renderer
 	void UpdateFXAADataIfNeeded(Renderer& renderer);
 
 	//SMAA
-	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle neighborhoodBlendingShader, ShaderHandle outputShader, u32 pass);
+	void SMAAx1RenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle neighborhoodBlendingShader, u32 pass);
+	void SMAAx1OutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass);
+	void SMAAxT2SOutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass);
 	void UpdateSMAADataIfNeeded(Renderer& renderer);
 	glm::vec2 SMAAGetJitter(const Renderer& renderer, u64 frameIndex);
 
@@ -4446,24 +4448,23 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_FINAL_COMPOSITE, *renderer.mFinalBucket);
 
-		if (renderer.mOutputMerger == OUTPUT_NO_AA)
+		switch (renderer.mOutputMerger)
 		{
+		case OUTPUT_NO_AA:
 			NonAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
-		}
-		else if (renderer.mOutputMerger == OUTPUT_FXAA)
-		{
+			break;
+		case OUTPUT_FXAA:
 			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
-		}
-		else if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		{
-			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingShader, renderer.mPassThroughShader, 0);
-		}
-		else if (renderer.mOutputMerger == OUTPUT_SMAA_T2X)
-		{
-			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingReprojectionShader, renderer.mSMAAReprojectResolveShader, 0);
-		}
-		else
-		{
+			break;
+		case OUTPUT_SMAA_X1:
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingShader, 0);
+			SMAAx1OutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mPassThroughShader, 0);
+			break;
+		case OUTPUT_SMAA_T2X:
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingReprojectionShader, 0);
+			SMAAxT2SOutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAAReprojectResolveShader, 0);
+			break;
+		default:
 			R2_CHECK(false, "Unsupported output merger type!");
 		}
 
@@ -5834,7 +5835,6 @@ namespace r2::draw::renderer
 		u32 numSubCommands,
 		u32 startCommandIndex,
 		ShaderHandle neighborhoodBlendingShader,
-		ShaderHandle outputShader,
 		u32 pass)
 	{
 		R2_CHECK(pass >= 0 && pass <= 1, "Pass should be in the range [0,1]");
@@ -5900,7 +5900,6 @@ namespace r2::draw::renderer
 
 		cmd::SetDefaultStencilState(edgeDetectionDrawBatch->state.stencilState);
 
-
 		edgeDetectionDrawBatch->state.stencilState.op.stencilFail = r2::draw::KEEP;
 		edgeDetectionDrawBatch->state.stencilState.op.depthFail = r2::draw::KEEP;
 		edgeDetectionDrawBatch->state.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
@@ -5911,11 +5910,7 @@ namespace r2::draw::renderer
 		edgeDetectionDrawBatch->state.stencilState.func.ref = 1;
 		edgeDetectionDrawBatch->state.stencilState.func.mask = 0xFF;
 
-
 		EndRenderPass(renderer, RPT_SMAA_EDGE_DETECTION, *renderer.mFinalBucket);
-
-		//		AppendCommand<cmd::DrawBatch, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mCommandArena, edgeDetectionDrawBatch, )
-
 
 		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
@@ -5965,17 +5960,8 @@ namespace r2::draw::renderer
 
 		u32 neighborhoodBlendingPass = pass * numberOfStages + 2;
 
-
-	//	if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		//{
 		neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, neighborhoodBlendingPass, DL_CLEAR, 0, neighborhoodBlendingPass, neighborhoodBlendingShader);
 		neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, neighborhoodBlendingPass, DL_SCREEN, 0, neighborhoodBlendingPass, neighborhoodBlendingShader);
-			/*}
-			else
-			{
-				neighborhoodBlendingClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_CLEAR, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
-				neighborhoodBlendingBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 2, DL_SCREEN, 0, 2, renderer.mSMAANeighborhoodBlendingReprojectionShader);
-			}*/
 
 		BeginRenderPass<key::Basic>(renderer, RPT_SMAA_NEIGHBORHOOD_BLENDING, clearOptions, *renderer.mFinalBucket, neighborhoodBlendingClearKey, *renderer.mCommandArena);
 
@@ -5999,47 +5985,132 @@ namespace r2::draw::renderer
 		EndRenderPass(renderer, RPT_SMAA_NEIGHBORHOOD_BLENDING, *renderer.mFinalBucket);
 
 
-		//Output pass
+		////Output pass
+
+		//u32 outputPass = pass * numberOfStages + 3;
+
+		//key::Basic outputClearKey;
+		//key::Basic outputBatchKey;
+
+		//outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_CLEAR, 0, outputPass, outputShader);
+		//outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_SCREEN, 0, outputPass, outputShader);
+
+		//BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		//cmd::DrawBatch* outputDrawBatch = nullptr;
+		//if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
+		//{
+		//	const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
+
+		//	const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+
+		//	cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		//	setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
+		//	setCompositeTexture->textureContainer = textureAddress.containerHandle;
+		//	setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
+		//	setCompositeTexture->texturePage = textureAddress.texPage;
+		//	setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
+		//	setCompositeTexture->textureLod = 0;
+
+		//	outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);
+		//}
+		//else
+		//{
+		//	outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		//}
+
+		//outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		//outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		//outputDrawBatch->numSubCommands = numSubCommands;
+		//R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		//outputDrawBatch->startCommandIndex = startCommandIndex;
+		//outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		//outputDrawBatch->subCommands = nullptr;
+		//outputDrawBatch->state.depthEnabled = false;
+		//outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		//outputDrawBatch->state.depthFunction = LESS;
+		//outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		//outputDrawBatch->state.polygonOffsetEnabled = false;
+		//outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		//cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		//EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
+	}
+
+	void SMAAx1OutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+
+		constexpr u32 numberOfStages = 4;
 
 		u32 outputPass = pass * numberOfStages + 3;
 
 		key::Basic outputClearKey;
 		key::Basic outputBatchKey;
-		//if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		//{
+
 		outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_CLEAR, 0, outputPass, outputShader);
 		outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_SCREEN, 0, outputPass, outputShader);
-		//}
-		//else
-		//{
-		//	outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_CLEAR, 0, 3, renderer.mSMAAReprojectResolveShader);
-		//	outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, 3, DL_SCREEN, 0, 3, renderer.mSMAAReprojectResolveShader);
-		//}
 
 		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
 
 		cmd::DrawBatch* outputDrawBatch = nullptr;
-		if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		{
-			const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
 
-			const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
+		const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
 
-			cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
-			setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
-			setCompositeTexture->textureContainer = textureAddress.containerHandle;
-			setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
-			setCompositeTexture->texturePage = textureAddress.texPage;
-			setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
-			setCompositeTexture->textureLod = 0;
+		const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
 
-			outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);
-		}
-		else
-		{
-			outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
-		}
+		cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
+		setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
+		setCompositeTexture->textureContainer = textureAddress.containerHandle;
+		setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
+		setCompositeTexture->texturePage = textureAddress.texPage;
+		setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
+		setCompositeTexture->textureLod = 0;
 
+		outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);
+
+		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
+		outputDrawBatch->numSubCommands = numSubCommands;
+		R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
+		outputDrawBatch->startCommandIndex = startCommandIndex;
+		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+		outputDrawBatch->subCommands = nullptr;
+		outputDrawBatch->state.depthEnabled = false;
+		outputDrawBatch->state.cullState = CULL_FACE_BACK;
+		outputDrawBatch->state.depthFunction = LESS;
+		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
+		outputDrawBatch->state.polygonOffsetEnabled = false;
+		outputDrawBatch->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
+
+		EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
+	}
+
+	void SMAAxT2SOutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass)
+	{
+		ClearSurfaceOptions clearOptions;
+		clearOptions.shouldClear = true;
+		clearOptions.flags = cmd::CLEAR_COLOR_BUFFER;
+
+		constexpr u32 numberOfStages = 4;
+
+		u32 outputPass = pass * numberOfStages + 3;
+
+		key::Basic outputClearKey;
+		key::Basic outputBatchKey;
+
+		outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_CLEAR, 0, outputPass, outputShader);
+		outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_SCREEN, 0, outputPass, outputShader);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
+
+		cmd::DrawBatch* outputDrawBatch = nullptr;
+		outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
 		outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
 		outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
 		outputDrawBatch->numSubCommands = numSubCommands;
