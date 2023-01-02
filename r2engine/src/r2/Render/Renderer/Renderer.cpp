@@ -1172,6 +1172,9 @@ namespace r2::draw::renderer
 		newRenderer->mSMAAReprojectResolveShader = shadersystem::FindShaderHandle(STRING_ID("SMAAReprojectResolve"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSMAAReprojectResolveShader, "SMAAReprojectResolve");
 
+		newRenderer->mSMAASeparateShader = shadersystem::FindShaderHandle(STRING_ID("SMAASeparate"));
+		CheckIfValidShader(*newRenderer, newRenderer->mSMAASeparateShader, "SMAASeparate");
+
 		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
 		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
 
@@ -1206,6 +1209,10 @@ namespace r2::draw::renderer
 		newRenderer->mHorizontalBlurTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureContainerToBlur");
 		newRenderer->mHorizontalBlurTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "texturePage");
 		newRenderer->mHorizontalBlurTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mHorizontalBlurShader, "textureLod");
+
+		newRenderer->mSMAASeparateTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mSMAASeparateShader, "inputTextureContainer");
+		newRenderer->mSMAASeparateTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mSMAASeparateShader, "inputTexturePage");
+		newRenderer->mSMAASeparateTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mSMAASeparateShader, "inputTextureLod");
 
 		newRenderer->mPassThroughTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTextureContainer");
 		newRenderer->mPassThroughTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTexturePage");

@@ -242,6 +242,15 @@
       		computePath: "",
      		binaryPath: "",
       		partPath: ""
+		},
+		{
+			shaderName: "SMAASeparate",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAASeparate.fs",
+      		geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
 		}
 
 

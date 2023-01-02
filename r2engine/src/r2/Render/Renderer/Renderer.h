@@ -302,6 +302,7 @@ namespace r2::draw
 		ShaderHandle mSMAANeighborhoodBlendingShader;
 		ShaderHandle mSMAANeighborhoodBlendingReprojectionShader;
 		ShaderHandle mSMAAReprojectResolveShader;
+		ShaderHandle mSMAASeparateShader;
 
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
@@ -323,6 +324,10 @@ namespace r2::draw
 		s32 mPassThroughTextureContainerLocation;
 		s32 mPassThroughTexturePageLocation;
 		s32 mPassThroughTextureLodLocation;
+
+		s32 mSMAASeparateTextureContainerLocation;
+		s32 mSMAASeparateTexturePageLocation;
+		s32 mSMAASeparateTextureLodLocation;
 
 
 		//----------------------------------------------------------------
@@ -462,9 +467,6 @@ namespace r2::draw
 
 	};
 }
-
-
-
 
 namespace r2::draw::renderer
 {

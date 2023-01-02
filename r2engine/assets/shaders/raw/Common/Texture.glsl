@@ -24,6 +24,11 @@ vec3 MakeTextureCoord(Tex2DAddress addr, vec3 uv)
 	return vec3(uv.rg, addr.page);
 }
 
+ivec3 MakeTextureCoord(Tex2DAddress addr, ivec2 texCoords)
+{
+	return ivec3(texCoords, (int)addr.page);
+}
+
 vec3 SampleTexture(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
 {
 	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
@@ -65,5 +70,12 @@ vec3 SampleTextureLodZeroOffset(Tex2DAddress tex, vec2 texCoords, ivec2 offset)
 	vec3 coord = MakeTextureCoord(tex, vec3(texCoords, 0));
 	return textureLodOffset(sampler2DArray(tex.container), coord, 0.0, offset).rgb;
 }
+
+vec4 SampleMSTexel(Tex2DAddress tex, ivec2 texCoords, int sampleCoord)
+{
+	ivec3 coord = MakeTextureCoord(tex, texCoords);
+	return texelFetch(sampler2DMSArray(tex.container), coord, sampleCoord);
+}
+
 
 #endif

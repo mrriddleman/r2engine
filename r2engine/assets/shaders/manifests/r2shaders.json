@@ -244,6 +244,15 @@
       partPath: ""
     },
     {
+      shaderName: 3942539385675287098,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/SMAA/SMAASeparate.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",
