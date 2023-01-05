@@ -20,6 +20,7 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction CopyRenderTargetColorTexture::DispatchFunc = &r2::draw::dispatch::CopyRenderTargetColorTexture;
 	const r2::draw::dispatch::BackendDispatchFunction SetTexture::DispatchFunc = &r2::draw::dispatch::SetTexture;
 	const r2::draw::dispatch::BackendDispatchFunction BindImageTexture::DispatchFunc = &r2::draw::dispatch::BindImageTexture;
+	const r2::draw::dispatch::BackendDispatchFunction BlitFramebuffer::DispatchFunc = &r2::draw::dispatch::BlitFramebuffer;
 
 	u64 LargestCommand()
 	{
@@ -40,6 +41,7 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::CopyRenderTargetColorTexture),
 			sizeof(r2::draw::cmd::SetTexture),
 			sizeof(r2::draw::cmd::BindImageTexture),
+			sizeof(r2::draw::cmd::BlitFramebuffer)
 			});
 	}
 

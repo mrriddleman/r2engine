@@ -132,6 +132,8 @@ namespace r2::draw::rendererimpl
 
 	void BindImageTexture(u32 textureUnit, u32 texture, u32 mipLevel, b32 layered, u32 layer, u32 access, u32 format);
 
+	void BlitFramebuffer(u32 readFramebuffer, u32 drawFramebuffer, s32 srcX0, s32 srcY0, s32 srcX1, s32 srcY1, s32 dstX0, s32 dstY0, s32 dstX1, s32 dstY1, u32 mask, u32 filter);
+
 	//events
 	void SetWindowSize(u32 width, u32 height);
 	void SetWindowPosition(s32 xPos, s32 yPos);

@@ -24,6 +24,8 @@ namespace r2::draw::dispatch
 	void CopyRenderTargetColorTexture(const void* data);
 	void SetTexture(const void* data);
 	void BindImageTexture(const void* data);
+	void BlitFramebuffer(const void* data);
+
 }
 
 

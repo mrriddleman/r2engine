@@ -160,9 +160,9 @@ namespace r2::draw
         OUTPUT_FXAA,
         OUTPUT_SMAA_X1,
         OUTPUT_SMAA_T2X,
+        OUTPUT_SMAA_S2X,
+        OUTPUT_SMAA_4X
     };
-
-
 }
 
 #endif // !__RENDERER_TYPES_H__

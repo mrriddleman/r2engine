@@ -291,6 +291,25 @@ namespace r2::draw::cmd
 
 	static_assert(std::is_pod<BindImageTexture>::value == true, "BindImageTexture must be a POD.");
 
+	struct BlitFramebuffer
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		u32 readFramebuffer;
+		u32 drawFramebuffer;
+		s32 srcX0;
+		s32 srcY0;
+		s32 srcX1;
+		s32 srcY1;
+		s32 dstX0;
+		s32 dstY0;
+		s32 dstX1;
+		s32 dstY1;
+		u32 mask;
+		u32 filter;
+	};
+
+	static_assert(std::is_pod<BlitFramebuffer>::value == true, "BlitFramebuffer must be a POD.");
 
 	u64 LargestCommand();
 

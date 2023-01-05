@@ -1145,6 +1145,11 @@ namespace r2::draw::rendererimpl
 		glBindImageTexture(textureUnit, texture, mipLevel, layered ? GL_TRUE : GL_FALSE, layer, access, format);
 	}
 
+	void BlitFramebuffer(u32 readFramebuffer, u32 drawFramebuffer, s32 srcX0, s32 srcY0, s32 srcX1, s32 srcY1, s32 dstX0, s32 dstY0, s32 dstX1, s32 dstY1, u32 mask, u32 filter)
+	{
+		glBlitNamedFramebuffer(readFramebuffer, drawFramebuffer, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+	}
+
 	//events
 	void SetViewport(u32 xOffset, u32 yOffset, u32 width, u32 height)
 	{

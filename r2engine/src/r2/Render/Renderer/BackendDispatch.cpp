@@ -47,16 +47,16 @@ namespace r2::draw::dispatch
 	{
 		const r2::draw::cmd::CompleteConstantBuffer* realData = static_cast<const r2::draw::cmd::CompleteConstantBuffer*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
-	
+
 		rendererimpl::CompleteConstantBuffer(realData->constantBufferHandle, realData->count);
-	
-	} 
+
+	}
 
 	void DrawBatch(const void* data)
 	{
 		const r2::draw::cmd::DrawBatch* realData = static_cast<const r2::draw::cmd::DrawBatch*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
-		
+
 		rendererimpl::ApplyDrawState(realData->state);
 		rendererimpl::DrawIndexedCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands, realData->startCommandIndex, 0, realData->primitiveType);
 	}
@@ -65,7 +65,7 @@ namespace r2::draw::dispatch
 	{
 		const r2::draw::cmd::DrawDebugBatch* realData = static_cast<const r2::draw::cmd::DrawDebugBatch*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
-		
+
 		rendererimpl::ApplyDrawState(realData->state);
 		rendererimpl::DrawDebugCommands(realData->bufferLayoutHandle, realData->batchHandle, realData->subCommands, realData->numSubCommands, realData->startCommandIndex);
 	}
@@ -166,5 +166,10 @@ namespace r2::draw::dispatch
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
 		rendererimpl::BindImageTexture(realData->textureUnit, realData->texture, realData->mipLevel, realData->layered, realData->layer, realData->access, realData->format);
+	}
+
+	void BlitFramebuffer(const void* data)
+	{
+
 	}
 }
