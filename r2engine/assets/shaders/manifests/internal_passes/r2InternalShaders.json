@@ -251,9 +251,34 @@
       		computePath: "",
      		binaryPath: "",
       		partPath: ""
+		},
+		{
+			shaderName: "MSAAResolveNearest",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/MSAAResolveNearest.fs",
+      		geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
+		},
+		{
+			shaderName: "MSAAResolveLinear",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/MSAAResolveLinear.fs",
+      		geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
+		},
+		{
+			shaderName: "MSAAResolveNormalized",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/MSAAResolveNormalized.fs",
+      		geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
 		}
-
-
 	],
   	basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"
 }
