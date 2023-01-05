@@ -107,6 +107,7 @@ namespace r2::draw::dispatch
 		const cmd::SetRenderTargetMipLevel* realData = static_cast<const r2::draw::cmd::SetRenderTargetMipLevel*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any real data?");
 
+		//@TODO(Serge): have SetRenderTargetMipLevel take in cmd::SetRenderTargetMipLevel command instead, this is getting silly...
 		rendererimpl::SetRenderTargetMipLevel(
 			realData->frameBufferID,
 			realData->colorTextures,
@@ -130,7 +131,8 @@ namespace r2::draw::dispatch
 			realData->depthUseLayeredRenderering,
 			realData->stencilUseLayeredRendering,
 			realData->depthStencilUseLayeredRenderering,
-			realData->colorIsMSAA);
+			realData->colorIsMSAA,
+			realData->depthStencilIsMSAA);
 	}
 
 	void CopyRenderTargetColorTexture(const void* data)

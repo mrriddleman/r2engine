@@ -27,7 +27,7 @@ namespace
 	static GLTextureSystem* s_glTextureSystem = nullptr;
 
 	/* FORMAT KEY
-		1 bit		    32 bits          13       13       5
+		2 bit		    32 bits          13       13       4
 	+--------------+-----------------+-------+--------+------+
 	| Texture Type | Internal Format | Width | Height | Mips |
 	+--------------+-----------------+-------+--------+------+
@@ -37,11 +37,11 @@ namespace
 	{
 		FORMAT_BITS_TOTAL = 0x40ull,
 
-		BITS_TEXTURE_TYPE = 0x1ull,
+		BITS_TEXTURE_TYPE = 0x2ull,
 		BITS_INTERNAL_FORMAT = 0x20ull,
 		BITS_WIDTH = 0xDull,
 		BITS_HEIGHT = 0xDull,
-		BITS_MIPS = 0x5ull,
+		BITS_MIPS = 0x4ull,
 
 		KEY_TEXTURE_TYPE_OFFSET = FORMAT_BITS_TOTAL - BITS_TEXTURE_TYPE,
 		KEY_INTERNAL_FORMAT_OFFSET = KEY_TEXTURE_TYPE_OFFSET - BITS_INTERNAL_FORMAT,
@@ -50,10 +50,32 @@ namespace
 		KEY_MIPS_OFFSET = KEY_HEIGHT_OFFSET - BITS_MIPS,
 	};
 
+	enum : u8
+	{
+		TEXTURE_TYPE_NORMAL = 0,
+		TEXTURE_TYPE_CUBEMAP,
+		TEXTURE_TYPE_MSAA_TEXTURE,
+		TEXTURE_TYPE_UNUSED,
+		NUM_TEXTURE_TYPES
+	};
+
 	u64 ConvertFormat(const r2::draw::tex::TextureFormat& format)
 	{
 		u64 key = 0;
-		key |= ENCODE_KEY_VALUE((u64)format.isCubemap ? 1 : 0, BITS_TEXTURE_TYPE, KEY_TEXTURE_TYPE_OFFSET);
+
+		u8 textureType = TEXTURE_TYPE_NORMAL;
+
+		if (format.isCubemap)
+		{
+			textureType = TEXTURE_TYPE_CUBEMAP;
+		}
+
+		if (format.isMSAA)
+		{
+			textureType = TEXTURE_TYPE_MSAA_TEXTURE;
+		}
+
+		key |= ENCODE_KEY_VALUE((u64)textureType, BITS_TEXTURE_TYPE, KEY_TEXTURE_TYPE_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.internalformat, BITS_INTERNAL_FORMAT, KEY_INTERNAL_FORMAT_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.width, BITS_WIDTH, KEY_WIDTH_OFFSET);
 		key |= ENCODE_KEY_VALUE((u64)format.height, BITS_HEIGHT, KEY_HEIGHT_OFFSET);
@@ -173,8 +195,8 @@ namespace r2::draw::gl
 
 			container.isSparse = CanBeSparse(format, tileSizes, smallestMip);
 
-
 			glGenTextures(1, &container.texId);
+
 			glBindTexture(target, container.texId);
 
 			if (container.isSparse)
@@ -196,8 +218,11 @@ namespace r2::draw::gl
 				glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, tileSizes.bestIndex);
 			}
 
-			glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode);
-			glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode);
+			if (!format.isMSAA)
+			{
+				glTexParameteri(target, GL_TEXTURE_WRAP_S, format.wrapMode);
+				glTexParameteri(target, GL_TEXTURE_WRAP_T, format.wrapMode);
+			}
 
 			if (format.wrapMode == GL_CLAMP_TO_BORDER)
 			{
@@ -211,14 +236,17 @@ namespace r2::draw::gl
 				glTexParameteri(target, GL_TEXTURE_WRAP_R, format.wrapMode);
 			}
 
-			glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter);
+			if (!format.isMSAA)
+			{
+				glTexParameteri(target, GL_TEXTURE_MAG_FILTER, format.magFilter);
+			}
 
 			if (format.mipLevels > 1)
 			{
 				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 				glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			}
-			else
+			else if(!format.isMSAA)
 			{
 				glTexParameteri(target, GL_TEXTURE_MIN_FILTER, format.minFilter);
 			}
@@ -239,6 +267,10 @@ namespace r2::draw::gl
 			else
 			{
 				glTexStorage3DMultisample(target, format.msaaSamples, format.internalformat, format.width, format.height, slices, format.fixedSamples);
+				if (GLenum err = glGetError())
+				{
+					R2_CHECK(false, "Couldn't make storage for multisample texture!");
+				}
 			}
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
@@ -444,6 +476,9 @@ namespace r2::draw::gl
 		//private
 		r2::draw::tex::TextureContainer* MakeGLTextureIfNeeded(const r2::draw::tex::TextureFormat& format, u32 slices, bool useMaxSlicesIfTextureIsNotCreated)
 		{
+
+			R2_CHECK(format.mipLevels <= 15, "We can only support 15 mip levels");
+
 			if (s_glTextureSystem == nullptr)
 			{
 				R2_CHECK(false, "We haven't initialized the GLTextureSystem yet!");
@@ -508,52 +543,6 @@ namespace r2::draw::gl
 
 		void AllocGLTexture(r2::draw::tex::TextureHandle& handle, const r2::draw::tex::TextureFormat& format, u32 numPages, bool useMaxSlicesIfTextureIsNotCreated)
 		{
-			/*if (s_glTextureSystem == nullptr)
-			{
-				R2_CHECK(false, "We haven't initialized the GLTextureSystem yet!");
-				return;
-			}
-
-			r2::draw::tex::TextureContainer* containerToUse = nullptr;
-
-			u64 intFormat = ConvertFormat(format);
-
-			r2::SArray<r2::draw::tex::TextureContainer*>* theDefault = nullptr;
-
-			r2::SArray<r2::draw::tex::TextureContainer*>* arrayToUse = r2::shashmap::Get(*s_glTextureSystem->texArray2Ds, intFormat, theDefault);
-
-			if (arrayToUse == theDefault)
-			{
-				arrayToUse = MAKE_SARRAY(*s_glTextureSystem->arena, r2::draw::tex::TextureContainer*, s_glTextureSystem->numTextureContainersPerFormat);
-				r2::shashmap::Set(*s_glTextureSystem->texArray2Ds, intFormat, arrayToUse);
-			}
-
-			const u64 arraySize = r2::sarr::Size(*arrayToUse);
-
-			for (u64 i = 0; i < arraySize; ++i)
-			{
-				r2::draw::tex::TextureContainer* container = r2::sarr::At(*arrayToUse, i);
-				if (container != nullptr && texcontainer::HasRoom(*container, numPages))
-				{
-					containerToUse = container;
-					break;
-				}
-			}
-
-			if (containerToUse == nullptr)
-			{
-				u64 numSlices = s_glTextureSystem->maxNumTextureContainerLayers;
-				if (format.isCubemap)
-				{
-					numSlices = numSlices / (r2::draw::tex::NUM_SIDES );
-				}
-
-
-				printf("making new texture container with format: %lu, width: %lu, height: %lu, num mips: %lu, is cubemap: %lu, anisotropic: %lu\n", format.internalformat, format.width, format.height, format.mipLevels, format.isCubemap, format.anisotropy);
-
-				containerToUse = texcontainer::MakeGLTextureContainer<r2::mem::LinearArena>(*s_glTextureSystem->arena, numSlices, format);
-				r2::sarr::Push(*arrayToUse, containerToUse);
-			}*/
 			r2::draw::tex::TextureContainer* containerToUse = MakeGLTextureIfNeeded(format, numPages, useMaxSlicesIfTextureIsNotCreated);
 
 			handle.sliceIndex = (f32)texcontainer::VirtualAlloc(*containerToUse, numPages);

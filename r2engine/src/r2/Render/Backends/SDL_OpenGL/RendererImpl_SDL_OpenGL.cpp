@@ -1021,7 +1021,8 @@ namespace r2::draw::rendererimpl
 		b32 depthUseLayeredRenderering,
 		b32 stencilUseLayeredRenderering,
 		b32 depthStencilUseLayeredRenderering,
-		b32 colorIsMSAA)
+		b32 colorIsMSAA,
+		b32 depthStencilIsMSAA)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
 
@@ -1091,9 +1092,13 @@ namespace r2::draw::rendererimpl
 
 			if (depthStencilTexture != -1)
 			{
-				if (!depthStencilUseLayeredRenderering)
+				if (!depthStencilUseLayeredRenderering && !depthStencilIsMSAA)
 				{
 					glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, depthStencilTexture, depthStencilMipLevel, depthStencilTextureLayer);
+				}
+				else if (!depthStencilUseLayeredRenderering && depthStencilIsMSAA)
+				{
+					glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, depthStencilTexture, depthStencilMipLevel, depthStencilTextureLayer);
 				}
 				else
 				{

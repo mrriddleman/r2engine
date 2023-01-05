@@ -121,6 +121,11 @@ namespace r2::draw
 					{
 						cmd.depthStencilUseLayeredRenderering = true;
 					}
+
+					if (depthStencilAttachment.textureAttachmentFormat.isMSAA)
+					{
+						cmd.depthStencilIsMSAA = true;
+					}
 				}
 				
 			}
@@ -182,6 +187,11 @@ namespace r2::draw
 						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthStencilUseLayeredRenderering = true;
+						}
+
+						if (ref.attachmentPtr->textureAttachmentFormat.isMSAA)
+						{
+							cmd.depthStencilIsMSAA = true;
 						}
 					}
 					else
@@ -293,6 +303,11 @@ namespace r2::draw
 					{
 						cmd.depthStencilUseLayeredRenderering = true;
 					}
+
+					if (depthStencilAttachment.textureAttachmentFormat.isMSAA)
+					{
+						cmd.depthStencilIsMSAA = true;
+					}
 				}
 			}
 
@@ -355,6 +370,11 @@ namespace r2::draw
 						if (ref.attachmentPtr->textureAttachmentFormat.usesLayeredRenderering)
 						{
 							cmd.depthStencilUseLayeredRenderering = true;
+						}
+
+						if (ref.attachmentPtr->textureAttachmentFormat.isMSAA)
+						{
+							cmd.depthStencilIsMSAA = true;
 						}
 					}
 					else

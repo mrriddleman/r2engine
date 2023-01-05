@@ -123,7 +123,8 @@ namespace r2::draw::rendererimpl
 		b32 depthUseLayeredRenderering,
 		b32 stencilUseLayeredRenderering,
 		b32 depthStencilUseLayeredRenderering,
-		b32 colorIsMSAA);
+		b32 colorIsMSAA, 
+		b32 depthStencilIsMSAA);
 
 	void CopyRenderTargetColorTexture(u32 fboHandle, u32 attachmentIndex, u32 textureID, u32 mipLevel, s32 xOffset, s32 yOffset, s32 layer, s32 x, s32 y, u32 width, u32 height);
 	

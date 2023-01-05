@@ -184,6 +184,7 @@ namespace r2::draw::cmd
 		u32 toDepthStencilMipLevel;
 		u32 depthStencilTextureLayer;
 		b32 depthStencilUseLayeredRenderering;
+		b32 depthStencilIsMSAA;
 
 		u32 xOffset;
 		u32 yOffset;

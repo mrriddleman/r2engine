@@ -651,6 +651,9 @@ namespace r2::draw::renderer
 	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSMAANeighborhoodBlendingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 
+	void CreateMSAA2XZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+
+
 	void DestroyRenderSurfaces(Renderer& renderer);
 
 	void PreRender(Renderer& renderer);
@@ -5990,59 +5993,6 @@ namespace r2::draw::renderer
 		cmd::SetDefaultStencilState(neighborhoodBlendingDrawBatch->state.stencilState);
 
 		EndRenderPass(renderer, RPT_SMAA_NEIGHBORHOOD_BLENDING, *renderer.mFinalBucket);
-
-
-		////Output pass
-
-		//u32 outputPass = pass * numberOfStages + 3;
-
-		//key::Basic outputClearKey;
-		//key::Basic outputBatchKey;
-
-		//outputClearKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_CLEAR, 0, outputPass, outputShader);
-		//outputBatchKey = key::GenerateBasicKey(key::Basic::FSL_OUTPUT, outputPass, DL_SCREEN, 0, outputPass, outputShader);
-
-		//BeginRenderPass<key::Basic>(renderer, RPT_OUTPUT, clearOptions, *renderer.mFinalBucket, outputClearKey, *renderer.mCommandArena);
-
-		//cmd::DrawBatch* outputDrawBatch = nullptr;
-		//if (renderer.mOutputMerger == OUTPUT_SMAA_X1)
-		//{
-		//	const auto& compositeColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING].colorAttachments, 0);
-
-		//	const auto textureAddress = tex::GetTextureAddress(compositeColorAttachment.texture[compositeColorAttachment.currentTexture]);
-
-		//	cmd::SetTexture* setCompositeTexture = AddCommand<key::Basic, cmd::SetTexture, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
-		//	setCompositeTexture->textureContainerUniformLocation = renderer.mPassThroughTextureContainerLocation;
-		//	setCompositeTexture->textureContainer = textureAddress.containerHandle;
-		//	setCompositeTexture->texturePageUniformLocation = renderer.mPassThroughTexturePageLocation;
-		//	setCompositeTexture->texturePage = textureAddress.texPage;
-		//	setCompositeTexture->textureLodUniformLocation = renderer.mPassThroughTextureLodLocation;
-		//	setCompositeTexture->textureLod = 0;
-
-		//	outputDrawBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setCompositeTexture, 0);
-		//}
-		//else
-		//{
-		//	outputDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, outputBatchKey, 0);
-		//}
-
-		//outputDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		//outputDrawBatch->bufferLayoutHandle = bufferLayoutHandle;
-		//outputDrawBatch->numSubCommands = numSubCommands;
-		//R2_CHECK(outputDrawBatch->numSubCommands > 0, "We should have a count!");
-		//outputDrawBatch->startCommandIndex = startCommandIndex;
-		//outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-		//outputDrawBatch->subCommands = nullptr;
-		//outputDrawBatch->state.depthEnabled = false;
-		//outputDrawBatch->state.cullState = CULL_FACE_BACK;
-		//outputDrawBatch->state.depthFunction = LESS;
-		//outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
-		//outputDrawBatch->state.polygonOffsetEnabled = false;
-		//outputDrawBatch->state.polygonOffset = glm::vec2(0);
-
-		//cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
-
-		//EndRenderPass(renderer, RPT_OUTPUT, *renderer.mFinalBucket);
 	}
 
 	void SMAAx1OutputRenderPass(Renderer& renderer, ConstantBufferHandle subCommandsConstantBufferHandle, BufferLayoutHandle bufferLayoutHandle, u32 numSubCommands, u32 startCommandIndex, ShaderHandle outputShader, u32 pass)
@@ -7788,6 +7738,8 @@ namespace r2::draw::renderer
 			CreateSMAABlendingWeightSurface(renderer, resolutionX, resolutionY);
 			CreateSMAANeighborhoodBlendingSurface(renderer, resolutionX, resolutionY);
 
+			CreateMSAA2XZPrePassRenderSurface(renderer, resolutionX, resolutionY);
+
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
@@ -8163,10 +8115,36 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], format);
 	}
 
+	void CreateMSAA2XZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_MSAA2X_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::TextureAttachmentFormat format;
+		format.type = rt::DEPTH24_STENCIL8;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = false;
+		format.isMSAA = true;
+		format.numMSAASamples = 2;
+		format.useFixedMSAASamples = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS], format);
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
@@ -8234,7 +8212,7 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_ZPREPASS].numColorAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS].numDepthAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS].numStencilAttachments = 0;
-		renderTargetParams[RTS_ZPREPASS].numDepthStencilAttachments = 1; //@TODO(Serge): set this to 1
+		renderTargetParams[RTS_ZPREPASS].numDepthStencilAttachments = 1; 
 		renderTargetParams[RTS_ZPREPASS].numRenderBufferAttachments = 0;
 		renderTargetParams[RTS_ZPREPASS].maxPageAllocations = 0;
 		renderTargetParams[RTS_ZPREPASS].numAttachmentRefs = 0;
@@ -8434,6 +8412,19 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget;
+
+
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numColorAttachments = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numDepthAttachments = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numStencilAttachments = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numDepthStencilAttachments = 1;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].maxPageAllocations = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numAttachmentRefs = 0;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_MSAA2X_ZPREPASS].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_MSAA2X_ZPREPASS].numSurfacesPerTarget;
 
 		//should always be last
 		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;

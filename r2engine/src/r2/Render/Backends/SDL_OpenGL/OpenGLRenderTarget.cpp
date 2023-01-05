@@ -5,7 +5,7 @@
 #include "glad/glad.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-
+#include "r2/Render/Backends/SDL_OpenGL/OpenGLUtils.h"
 
 namespace r2::draw::rt
 {
@@ -137,6 +137,12 @@ namespace r2::draw::rt::impl
 		u32 currentIndex = textureAttachment.currentTexture;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
+
+		if (GLenum err = glGetError())
+		{
+			R2_CHECK(false, "Couldn't make storage for multisample texture!");
+		}
+
 		if (IsColorAttachment(textureAttachmentFormat.type))
 		{
 			if (!textureAttachmentFormat.usesLayeredRenderering && !textureAttachmentFormat.isMSAA)
@@ -187,11 +193,13 @@ namespace r2::draw::rt::impl
 		}
 		else if (IsDepthStencilAttachment(textureAttachmentFormat.type))
 		{
-			R2_CHECK(!textureAttachmentFormat.isMSAA, "Can't be MSAA!");
-
-			if (!textureAttachmentFormat.usesLayeredRenderering)
+			if (!textureAttachmentFormat.usesLayeredRenderering && !textureAttachmentFormat.isMSAA)
 			{
 				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[currentIndex].container->texId, textureAttachmentFormat.mipLevelToAttach, textureAttachment.texture[currentIndex].sliceIndex);
+			}
+			else if (!textureAttachmentFormat.usesLayeredRenderering && textureAttachmentFormat.isMSAA)
+			{
+				glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
 			}
 			else
 			{
@@ -306,7 +314,7 @@ namespace r2::draw::rt::impl
 		}
 		else if (IsDepthStencilAttachment(type))
 		{
-			R2_CHECK(!textureAttachment.textureAttachmentFormat.isMSAA, "Can't be MSAA!");
+		//	R2_CHECK(!textureAttachment.textureAttachmentFormat.isMSAA, "Can't be MSAA!");
 
 			if (rt.attachmentReferences && r2::sarr::Size(*rt.attachmentReferences) + 1 <= r2::sarr::Capacity(*rt.attachmentReferences))
 			{
@@ -317,8 +325,15 @@ namespace r2::draw::rt::impl
 				r2::sarr::Push(*rt.attachmentReferences, ref);
 			}
 
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[index].container->texId, textureAttachment.textureAttachmentFormat.mipLevelToAttach, textureAttachment.texture[index].sliceIndex);
-
+			if (textureAttachment.textureAttachmentFormat.isMSAA)
+			{
+				glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, textureAttachment.texture[index].container->texId, 0, textureAttachment.texture[index].sliceIndex);
+			}
+			else
+			{
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, textureAttachment.texture[index].container->texId, textureAttachment.textureAttachmentFormat.mipLevelToAttach, textureAttachment.texture[index].sliceIndex);
+			}
+			
 			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
 			R2_CHECK(result, "Failed to attach texture to frame buffer");
