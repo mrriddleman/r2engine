@@ -185,13 +185,13 @@ namespace r2::draw::key
 		return a.keyValue < b.keyValue;
 	}
 
-	DepthKey GenerateDepthKey(bool isNormalPath, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u32 depth)
+	DepthKey GenerateDepthKey(DepthKey::DepthType type, u8 shaderOrder, ShaderHandle shader, bool isDynamic, u32 depth)
 	{
 		DepthKey theKey;
 
-		theKey.keyValue |= ENCODE_KEY_VALUE(isNormalPath ? 1 : 0, DepthKey::DEPTH_KEY_BITS_IS_NORMAL_PATH, DepthKey::DEPTH_KEY_IS_NORMAL_PATH_OFFSET);
+		theKey.keyValue |= ENCODE_KEY_VALUE(type, DepthKey::DEPTH_KEY_BITS_DEPTH_TYPE, DepthKey::DEPTH_KEY_DEPTH_TYPE_OFFSET);
 
-		if (isNormalPath)
+		if (type == DepthKey::NORMAL)
 		{
 			theKey.keyValue |= ENCODE_KEY_VALUE(isDynamic ? 1 : 0, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
 			theKey.keyValue |= ENCODE_KEY_VALUE(depth, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
@@ -207,10 +207,10 @@ namespace r2::draw::key
 
 	void DecodeDepthKey(const DepthKey& key)
 	{
-		bool isNormalPath = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_IS_NORMAL_PATH, DepthKey::DEPTH_KEY_IS_NORMAL_PATH_OFFSET);
+		DepthKey::DepthType type = static_cast<DepthKey::DepthType>( DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_DEPTH_TYPE, DepthKey::DEPTH_KEY_DEPTH_TYPE_OFFSET) );
 
 		ShaderHandle shaderHandle = InvalidShader;
-		if (isNormalPath)
+		if (type == DepthKey::NORMAL)
 		{
 			bool isDynamic = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_IS_DYNAMIC, DepthKey::DEPTH_KEY_IS_DYNAMIC_OFFSET);
 			u16 depthValue = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_DEPTH, DepthKey::DEPTH_KEY_DEPTH_OFFSET);
@@ -218,12 +218,15 @@ namespace r2::draw::key
 			r2::draw::rendererimpl::SetViewportLayer(isDynamic ? DrawLayer::DL_CHARACTER : DrawLayer::DL_WORLD);
 			shaderHandle = r2::draw::renderer::GetDepthShaderHandle(isDynamic);
 		}
-		else
+		else if(type == DepthKey::COMPUTE || type == DepthKey::RESOLVE)
 		{
 			shaderHandle = DECODE_KEY_VALUE(key.keyValue, DepthKey::DEPTH_KEY_BITS_SHADER_ID, DepthKey::DEPTH_KEY_SHADER_ID_OFFSET);
 		}
 		
-		r2::draw::rendererimpl::SetShaderID(shaderHandle);
+		if (type != DepthKey::UNUSED)
+		{
+			r2::draw::rendererimpl::SetShaderID(shaderHandle);
+		}
 	}
 
 

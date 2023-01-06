@@ -304,6 +304,11 @@ namespace r2::draw
 		ShaderHandle mSMAAReprojectResolveShader;
 		ShaderHandle mSMAASeparateShader;
 
+		//MSAA
+		ShaderHandle mMSAAResolveNearestShader;
+		ShaderHandle mMSAAResolveLinearShader;
+		ShaderHandle mMSAAResolveNormalizedShader;
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 
@@ -329,6 +334,17 @@ namespace r2::draw
 		s32 mSMAASeparateTexturePageLocation;
 		s32 mSMAASeparateTextureLodLocation;
 
+		s32 mMSAAResolveNearestTextureContainerLocation;
+		s32 mMSAAResolveNearestTexturePageLocation;
+		s32 mMSAAResolveNearestTextureLodLocation;
+
+		s32 mMSAAResolveLinearTextureContainerLocation;
+		s32 mMSAAResolveLinearTexturePageLocation;
+		s32 mMSAAResolveLinearTextureLodLocation;
+
+		s32 mMSAAResolveNormalizedTextureContainerLocation;
+		s32 mMSAAResolveNormalizedTexturePageLocation;
+		s32 mMSAAResolveNormalizedTextureLodLocation;
 
 		//----------------------------------------------------------------
 		r2::mem::StackArena* mModelRefArena = nullptr;
@@ -463,7 +479,7 @@ namespace r2::draw
 		//------------END Debug Stuff--------------
 
 
-		OutputMerger mOutputMerger = OutputMerger::OUTPUT_SMAA_X1;
+		OutputMerger mOutputMerger = OutputMerger::OUTPUT_NO_AA;
 
 	};
 }

@@ -280,7 +280,7 @@ void main()
 
 	reflectedColor *= Ks;
 
-	oOutputColor = LuminanceFromRGB(reflectedColor) > 1.0 ? vec4(reflectedColor, 1.0) : vec4(0, 0, 0, 1);//vec4(reflectedColor, 1.0);
+	oOutputColor = vec4(reflectedColor, 1.0);
 }
 
 vec3 TraceCones(float gloss, vec4 rayHitInfo)

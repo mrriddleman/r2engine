@@ -199,7 +199,7 @@ namespace r2::draw::rt::impl
 			}
 			else if (!textureAttachmentFormat.usesLayeredRenderering && textureAttachmentFormat.isMSAA)
 			{
-				glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex);
+				GLCall(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, textureAttachment.texture[currentIndex].container->texId, 0, textureAttachment.texture[currentIndex].sliceIndex));
 			}
 			else
 			{

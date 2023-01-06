@@ -13,15 +13,9 @@ in VS_OUT
 
 } fs_in;
 
-vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
-
 void main()
 {
-	FragColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
-}
+	Material m = GetMaterial(fs_in.drawID, fs_in.texCoords);
 
-vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
-{
-	highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	return vec4(materials[texIndex].albedo.color.rgb, 1);
+	FragColor = vec4(m.albedo.color.rgb, 1);
 }

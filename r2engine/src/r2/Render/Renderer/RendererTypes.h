@@ -109,6 +109,9 @@ namespace r2::draw
 	extern u32 CULL_FACE_BACK;
     extern u32 NONE;
 
+    extern u32 NEAREST;
+    extern u32 LINEAR;
+
 	struct StencilOp
 	{
 		u32 stencilFail;
@@ -160,8 +163,6 @@ namespace r2::draw
         OUTPUT_FXAA,
         OUTPUT_SMAA_X1,
         OUTPUT_SMAA_T2X,
-        OUTPUT_SMAA_S2X,
-        OUTPUT_SMAA_4X
     };
 }
 

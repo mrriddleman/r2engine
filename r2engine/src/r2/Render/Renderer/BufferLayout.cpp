@@ -769,7 +769,7 @@ namespace r2::draw
 		mElements.emplace_back(ConstantBufferElement());
 		mElements[0].offset = 0;
 		mElements[0].typeCount = numDraws;
-		mElements[0].elementSize = sizeof(u32);
+		mElements[0].elementSize = sizeof(glm::uvec4);
 		mElements[0].size = mElements[0].elementSize * mElements[0].typeCount;
 		mElements[0].type = ShaderDataType::UInt;
 

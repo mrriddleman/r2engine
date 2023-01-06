@@ -50,6 +50,11 @@ namespace r2::draw::rendererimpl
 	
 				GLenum waitRet = glClientWaitSync(*&nextLock.syncObject, waitFlags, waitDuration);
 
+				if (GLenum err = glGetError())
+				{
+					R2_CHECK(false, "glClientWaitSync error: %zu", err);
+				}
+
 				if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED) {
 
 					glDeleteSync(nextLock.syncObject);

@@ -170,6 +170,9 @@ namespace r2::draw::dispatch
 
 	void BlitFramebuffer(const void* data)
 	{
-
+		const cmd::BlitFramebuffer* realData = static_cast<const r2::draw::cmd::BlitFramebuffer*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any real data?");
+		//void BlitFramebuffer(u32 readFramebuffer, u32 drawFramebuffer, s32 srcX0, s32 srcY0, s32 srcX1, s32 srcY1, s32 dstX0, s32 dstY0, s32 dstX1, s32 dstY1, u32 mask, u32 filter);
+		rendererimpl::BlitFramebuffer(realData->readFramebuffer, realData->drawFramebuffer, realData->srcX0, realData->srcY0, realData->srcX1, realData->srcY1, realData->dstX0, realData->dstY0, realData->dstX1, realData->dstY1, realData->mask, realData->filter);
 	}
 }

@@ -38,12 +38,12 @@ layout (std430, binding = 1) buffer Materials
 
 layout (std430, binding = 7) buffer MaterialOffsets
 {
-	uint materialOffsets[];
+	uvec4 materialOffsets[]; //only x has anything in it right now
 };
 
 uint GetMaterialIndex(uint drawID, vec3 uv)
 {
-	highp uint matIndex = uint(round(uv.z)) + materialOffsets[drawID];
+	highp uint matIndex = uint(round(uv.z)) + materialOffsets[drawID].x;
 	return matIndex;
 }
 
@@ -55,7 +55,7 @@ Material GetMaterial(uint drawID, vec3 uv)
 
 Material GetCubemapMaterial(uint drawID)
 {
-	highp uint texIndex =  materialOffsets[drawID];
+	highp uint texIndex =  materialOffsets[drawID].x;
 	return materials[texIndex];
 }
 

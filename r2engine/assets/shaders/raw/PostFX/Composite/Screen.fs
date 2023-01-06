@@ -7,7 +7,7 @@ layout (location = 0) out vec4 FragColor;
 #include "Input/UniformBuffers/Vectors.glsl"
 #include "Input/UniformBuffers/Surfaces.glsl"
 #include "Input/UniformBuffers/BloomParams.glsl"
-
+#include "Depth/DepthUtils.glsl"
 
 in VS_OUT
 {
@@ -39,11 +39,14 @@ void main()
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 {
-	// vec3 testCoord = vec3(uv.r, uv.g, ssrSurface.page);
-	// vec3 testColor = textureLod(sampler2DArray(ssrSurface.container), testCoord, 0).rgb;
+	// vec3 testCoord = vec3(uv.r, uv.g, zPrePassSurface.page);
+	// float testColor = textureLod(sampler2DArray(zPrePassSurface.container), testCoord, 0).r;
 
-	// return vec4(testColor, 1);
+	// //float testColor = SampleMSTexel(msaa2XZPrePassSurface, ivec2(gl_FragCoord.xy), 0).r;
 
+	// return vec4(vec3(LinearizeDepth(testColor, exposureNearFar.y, exposureNearFar.z)), 1);
+
+	
 
 	vec3 bloomCoord = vec3(uv.r, uv.g, bloomUpSampledSurface.page);
 	vec3 bloomColor = textureLod(sampler2DArray(bloomUpSampledSurface.container), bloomCoord, 0).rgb;
@@ -54,7 +57,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
  
-	return vec4(mix(gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
+	return vec4(mix( gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)

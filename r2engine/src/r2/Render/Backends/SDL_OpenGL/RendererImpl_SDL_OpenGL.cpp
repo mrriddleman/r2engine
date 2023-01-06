@@ -121,6 +121,8 @@ namespace r2::draw
 	u32 CULL_FACE_BACK = GL_BACK;
 	u32 NONE = GL_NONE;
 	
+	u32 NEAREST = GL_NEAREST;
+	u32 LINEAR = GL_LINEAR;
 }
 
 namespace r2::draw::cmd
@@ -1098,7 +1100,7 @@ namespace r2::draw::rendererimpl
 				}
 				else if (!depthStencilUseLayeredRenderering && depthStencilIsMSAA)
 				{
-					glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, depthStencilTexture, depthStencilMipLevel, depthStencilTextureLayer);
+					GLCall(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE_ARRAY, depthStencilTexture, depthStencilMipLevel, depthStencilTextureLayer));
 				}
 				else
 				{

@@ -1181,6 +1181,10 @@ namespace r2::draw::renderer
 		newRenderer->mPassThroughShader = shadersystem::FindShaderHandle(STRING_ID("PassThrough"));
 		CheckIfValidShader(*newRenderer, newRenderer->mPassThroughShader, "PassThrough");
 
+		newRenderer->mMSAAResolveNearestShader = shadersystem::FindShaderHandle(STRING_ID("MSAAResolveNearest"));
+		CheckIfValidShader(*newRenderer, newRenderer->mMSAAResolveNearestShader, "MSAAResolveNearest");
+
+
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");
 
@@ -1221,6 +1225,9 @@ namespace r2::draw::renderer
 		newRenderer->mPassThroughTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTexturePage");
 		newRenderer->mPassThroughTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mPassThroughShader, "inputTextureLod");
 		
+		newRenderer->mMSAAResolveNearestTextureContainerLocation = rendererimpl::GetConstantLocation(newRenderer->mMSAAResolveNearestShader, "inputTextureContainer");;
+		newRenderer->mMSAAResolveNearestTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mMSAAResolveNearestShader, "inputTexturePage");
+		newRenderer->mMSAAResolveNearestTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mMSAAResolveNearestShader, "inputTexturePage");
 
 		
 		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
@@ -1638,10 +1645,14 @@ namespace r2::draw::renderer
 		FREE(renderer->mDefaultModelHandles, *arena);
 
 		r2::mem::utils::MemBoundary materialSystemBoundary = renderer->mMaterialSystem->mMaterialMemBoundary;
-		
+
 		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
-		r2::draw::tex::UnloadFromGPU(renderer->mSMAAAreaTexture);
-		r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
+
+		if (renderer->mOutputMerger == OUTPUT_SMAA_X1 || renderer->mOutputMerger == OUTPUT_SMAA_T2X)
+		{
+			r2::draw::tex::UnloadFromGPU(renderer->mSMAAAreaTexture);
+			r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
+		}
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
@@ -3363,7 +3374,7 @@ namespace r2::draw::renderer
 		u32 cameraDepth;
 	};
 
-	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<u32>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
+	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
 		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
 		u32 numModelInstances = 0;
@@ -3382,7 +3393,7 @@ namespace r2::draw::renderer
 
 			for (u32 i = 0; i < numInstances; i++)
 			{
-				r2::sarr::Push(*materialOffsetsPerObject, materialOffset);
+				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, 0, 0, 0));
 			}
 			
 			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
@@ -3571,7 +3582,7 @@ namespace r2::draw::renderer
 
 		r2::SArray<RenderMaterialParams>* renderMaterials = renderer.mRenderMaterialsToRender;//MAKE_SARRAY(*renderer.mPreRenderStackArena, RenderMaterialParams, (numStaticModels + numDynamicModels) * AVG_NUM_OF_MESHES_PER_MODEL);
 		
-		r2::SArray<u32>* materialOffsetsPerObject = MAKE_SARRAY(*renderer.mPreRenderStackArena, u32, numDynamicInstances + numStaticInstances);
+		r2::SArray<glm::uvec4>* materialOffsetsPerObject = MAKE_SARRAY(*renderer.mPreRenderStackArena, glm::uvec4, numDynamicInstances + numStaticInstances);
 		
 		r2::sarr::Push(*tempAllocations, (void*)materialOffsetsPerObject);
 
@@ -3644,7 +3655,7 @@ namespace r2::draw::renderer
 		materialsConstData->AddDataSize(materialsDataSize);
 
 		const u64 numMaterialOffsets = r2::sarr::Size(*materialOffsetsPerObject);
-		const u64 materialOffsetsDataSize = sizeof(u32) * numMaterialOffsets;
+		const u64 materialOffsetsDataSize = sizeof(glm::uvec4) * numMaterialOffsets;
 
 		cmd::FillConstantBuffer* materialOffsetsCMD = nullptr;
 
@@ -3889,7 +3900,7 @@ namespace r2::draw::renderer
 
 		key::Basic clearKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, clearShaderHandle);
 		key::ShadowKey shadowClearKey = key::GenerateShadowKey(key::ShadowKey::CLEAR, 0, 0, false, light::LightType::LT_DIRECTIONAL_LIGHT, 0);
-		key::DepthKey depthClearKey = key::GenerateDepthKey(true, 0, 0, false, 0);
+		key::DepthKey depthClearKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS, clearDepthStencilOptions, *renderer.mDepthPrePassBucket, depthClearKey, *renderer.mShadowArena);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_ZPREPASS_SHADOWS, clearDepthOptions, *renderer.mDepthPrePassShadowBucket, depthClearKey, *renderer.mShadowArena);
@@ -4030,7 +4041,7 @@ namespace r2::draw::renderer
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, false, batchOffset.cameraDepth);
+				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, false, batchOffset.cameraDepth);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4181,7 +4192,7 @@ namespace r2::draw::renderer
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 				}
 
-				key::DepthKey zppKey = key::GenerateDepthKey(true, 0, 0, true, batchOffset.cameraDepth);
+				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, true, batchOffset.cameraDepth);
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4315,7 +4326,7 @@ namespace r2::draw::renderer
 		clearCompositeOptions.flags = cmd::CLEAR_COLOR_BUFFER;
 
 
-		key::DepthKey aoKey = key::GenerateDepthKey(false, 0, renderer.mAmbientOcclusionShader, false, 0);
+		key::DepthKey aoKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionShader, false, 0);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION, clearCompositeOptions, *renderer.mAmbientOcclusionBucket, aoKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionBucket, aoKey, 0);
 		aoDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4336,7 +4347,7 @@ namespace r2::draw::renderer
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
-		key::DepthKey aoDenoiseKey = key::GenerateDepthKey(false, 0, renderer.mDenoiseShader, false, 0);
+		key::DepthKey aoDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mDenoiseShader, false, 0);
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, 0);
 		aoDenoiseDrawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4359,7 +4370,7 @@ namespace r2::draw::renderer
 
 
 
-		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(false, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, false, 0);
+		key::DepthKey aoTemporalDenoiseKey = key::GenerateDepthKey(key::DepthKey::COMPUTE, 0, renderer.mAmbientOcclusionTemporalDenoiseShader, false, 0);
 
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoTemporalDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, 0);
@@ -4538,6 +4549,7 @@ namespace r2::draw::renderer
 		RenderPassConfig passConfig;
 		passConfig.primitiveType = PrimitiveType::TRIANGLES;
 		passConfig.flags = 0;
+
 		renderer.mRenderPasses[RPT_ZPREPASS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS, passConfig, {}, RTS_ZPREPASS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_ZPREPASS_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_ZPREPASS_SHADOWS, passConfig, { }, RTS_ZPREPASS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_CLUSTERS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_CLUSTERS, passConfig, { RTS_ZPREPASS }, RTS_EMPTY, __FILE__, __LINE__, "");
@@ -7738,8 +7750,6 @@ namespace r2::draw::renderer
 			CreateSMAABlendingWeightSurface(renderer, resolutionX, resolutionY);
 			CreateSMAANeighborhoodBlendingSurface(renderer, resolutionX, resolutionY);
 
-			CreateMSAA2XZPrePassRenderSurface(renderer, resolutionX, resolutionY);
-
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
 
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
@@ -8115,36 +8125,10 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], format);
 	}
 
-	void CreateMSAA2XZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
-	{
-		ConstrainResolution(resolutionX, resolutionY);
-
-		renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_MSAA2X_ZPREPASS], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
-
-		rt::TextureAttachmentFormat format;
-		format.type = rt::DEPTH24_STENCIL8;
-		format.swapping = false;
-		format.uploadAllTextures = false;
-		format.filter = tex::FILTER_LINEAR;
-		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
-		format.numLayers = 1;
-		format.numMipLevels = 1;
-		format.hasAlpha = false;
-		format.isHDR = false;
-		format.isMSAA = true;
-		format.numMSAASamples = 2;
-		format.useFixedMSAASamples = true;
-		format.usesLayeredRenderering = false;
-		format.mipLevelToAttach = 0;
-
-		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS], format);
-	}
-
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
 
-		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_MSAA2X_ZPREPASS]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
@@ -8412,19 +8396,6 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget;
-
-
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numColorAttachments = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numDepthAttachments = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numStencilAttachments = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numDepthStencilAttachments = 1;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numRenderBufferAttachments = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].maxPageAllocations = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numAttachmentRefs = 0;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].surfaceOffset = surfaceOffset;
-		renderTargetParams[RTS_MSAA2X_ZPREPASS].numSurfacesPerTarget = 1;
-
-		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_MSAA2X_ZPREPASS].numSurfacesPerTarget;
 
 		//should always be last
 		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;
