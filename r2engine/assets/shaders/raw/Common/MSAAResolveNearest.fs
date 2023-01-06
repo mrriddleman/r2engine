@@ -25,13 +25,6 @@ void main()
 	addr.container = inputTextureContainer;
 	addr.page = inputTexturePage;
 	addr.channel = int(inputTextureLod);
-
-	float result = 1.0f; //for reverse-z set to 0.0f
-
-	//for(int i = 0; i < 2; ++i)
-	{
-		result = Saturate(mix(SampleMSTexel(addr, ivec2(gl_FragCoord.xy), addr.channel).r, SampleMSTexel(addr, ivec2(gl_FragCoord.xy), addr.channel + 1).r, 0.5));
-	}
-
-	gl_FragDepth = result;
+	
+	gl_FragDepth = SampleMSTexel(addr, ivec2(gl_FragCoord.xy), addr.channel).r;
 }
