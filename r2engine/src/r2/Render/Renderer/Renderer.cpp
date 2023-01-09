@@ -3397,7 +3397,7 @@ namespace r2::draw::renderer
 			}
 			
 			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
-
+			
 			materialOffset += materialBatchInfo.numMaterials;
 
 			for (u32 materialIndex = 0; materialIndex < materialBatchInfo.numMaterials; ++materialIndex)
@@ -6277,6 +6277,7 @@ namespace r2::draw::renderer
 		state.layer = drawParameters.layer;
 		state.stencilState = drawParameters.stencilState;
 		state.cullState = drawParameters.cullState;
+		state.blendState = drawParameters.blendState;
 
 		r2::sarr::Push(*batch.drawState, state);
 
@@ -6429,6 +6430,7 @@ namespace r2::draw::renderer
 			state.layer = drawParameters.layer;
 			state.stencilState = drawParameters.stencilState;
 			state.cullState = drawParameters.cullState;
+			state.blendState = drawParameters.blendState;
 			r2::sarr::Push(*tempDrawState, state);
 		}
 
