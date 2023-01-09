@@ -12,8 +12,6 @@ vec4 SampleCubemapMaterialDiffuse(in Material m, vec3 uv)
 
 vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 {
-	//Material m = GetMaterial(drawID, uv);
-	
 	Tex2DAddress addr = m.albedo.texture;
 
 	vec3 coord = MakeTextureCoord(addr, uv);
@@ -22,13 +20,11 @@ vec4 SampleMaterialDiffuse(in Material m, vec3 uv)
 
 	float modifier = GetTextureModifier(addr);
 
-	return (1.0 - modifier) * vec4(m.albedo.color.rgb,1) + modifier * SampleTexture(addr, coord, mipmapLevel);
+	return (1.0 - modifier) * m.albedo.color + modifier * SampleTexture(addr, coord, mipmapLevel);
 }
 
 vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec3 uv)
 {
-//	Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.normalMap.texture;
 
 	vec3 coord = vec3(uv.rg, addr.page);
@@ -48,8 +44,6 @@ vec4 SampleMaterialNormal(mat3 TBN, vec3 normal, in Material m, vec3 uv)
 
 vec4 SampleMaterialEmission(in Material m, vec3 uv)
 {
-//	Material m = GetMaterial(drawID, uv);
-	
 	Tex2DAddress addr = m.emission.texture;
 
 	vec3 coord = vec3(uv.rg,addr.page);
@@ -63,8 +57,6 @@ vec4 SampleMaterialEmission(in Material m, vec3 uv)
 
 vec4 SampleMaterialMetallic(in Material m, vec3 uv)
 {
-//	Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.metallic.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -77,8 +69,6 @@ vec4 SampleMaterialMetallic(in Material m, vec3 uv)
 vec4 SampleMaterialRoughness(in Material m, vec3 uv)
 {
 	//@TODO(Serge): put this back to roughnessTexture1
-	//Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.roughness.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -91,8 +81,6 @@ vec4 SampleMaterialRoughness(in Material m, vec3 uv)
 
 vec4 SampleMaterialAO(in Material m, vec3 uv)
 {
-//	Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.ao.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -110,8 +98,6 @@ float SampleAOSurface(vec2 uv)
 vec4 SampleDetail(in Material m, vec3 uv)
 {
 	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	//Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.detail.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -121,9 +107,6 @@ vec4 SampleDetail(in Material m, vec3 uv)
 
 float SampleClearCoat(in Material m, vec3 uv)
 {
-	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
-	//Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.clearCoat.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -142,8 +125,6 @@ vec3 SampleClearCoatNormal(in Material m, vec3 uv)
 
 float SampleClearCoatRoughness(in Material m, vec3 uv)
 {
-	//Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.clearCoatRoughness.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -151,18 +132,8 @@ float SampleClearCoatRoughness(in Material m, vec3 uv)
 	return (1.0 - modifier) * m.clearCoatRoughness.color.r + modifier * SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).r;
 }
 
-// vec4 SampleMaterialPrefilteredRoughness(vec3 uv, float roughnessValue)
-// {
-// 	Tex2DAddress addr = skylight.prefilteredRoughnessTexture;
-// 	//z is up so we rotate this... not sure if this is right?
-// 	return textureLod(samplerCubeArray(addr.container), vec4(uv.r, uv.b, -uv.g, addr.page), roughnessValue);
-// }
-
-
 float SampleMaterialHeight(in Material m, vec3 uv)
 {
-	//Material m = GetMaterial(drawID, uv);
-	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = m.height.texture;
 
 	float modifier = GetTextureModifier(addr);
@@ -172,22 +143,17 @@ float SampleMaterialHeight(in Material m, vec3 uv)
 
 vec3 SampleAnisotropyDirection(mat3 TBN, vec3 tangent, in Material m, vec3 uv)
 {
-	//Material m = GetMaterial(drawID, uv);
-
 	Tex2DAddress addr = m.anisotropy.texture;
 
 	float modifier = GetTextureModifier(addr);
 
 	vec3 anisotropyDirection = SampleTexture(addr, vec3(uv.r, uv.g, addr.page), 0).rrr; //@TODO(Serge): fix this to be .rgb - won't work at the moment with our content
 
-	//anisotropyDirection = anisotropyDirection;
-
 	return (1.0 - modifier) * tangent + modifier * TBN * anisotropyDirection;// + modifier * (fs_in.TBN * anisotropyDirection);
 }
 
 vec3 ParallaxMapping(in Material m, vec3 uv, vec3 viewDir)
 {
-	//highp uint texIndex = uint(round(uv.z)) + materialOffsets[drawID];
 	Tex2DAddress addr = m.height.texture;
 
 	float modifier = GetTextureModifier(addr);

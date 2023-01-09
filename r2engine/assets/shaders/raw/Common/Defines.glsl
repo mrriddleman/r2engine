@@ -58,6 +58,8 @@ struct PixelData
 	vec3 clearCoatNormal;
 
 	vec3 emission;
+
+	float alpha;
 };
 
 #endif

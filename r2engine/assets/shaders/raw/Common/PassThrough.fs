@@ -18,15 +18,15 @@ in VS_OUT
 	flat uint drawID;
 } fs_in;
 
-vec3 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords);
+vec4 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords);
 
 void main()
 {
-	FragColor = vec4(SampleTexture(inputTextureContainer, inputTexturePage, fs_in.texCoords.xy), 1.0);
+	FragColor = SampleTexture(inputTextureContainer, inputTexturePage, fs_in.texCoords.xy);
 }
 
-vec3 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords)
+vec4 SampleTexture(uint64_t textureContainer, float texturePage, vec2 texCoords)
 {
 	vec3 coord = vec3(texCoords.x, texCoords.y, texturePage);
-	return textureLod(sampler2DArray(textureContainer), coord, inputTextureLod).rgb;
+	return textureLod(sampler2DArray(textureContainer), coord, inputTextureLod);
 }

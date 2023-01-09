@@ -20,6 +20,7 @@ float metallic,
 float ao,
 float perceptualRoughness,
 vec3 emission,
+float alpha,
 inout PixelData pixel)
 {
 	pixel.worldFragPos = worldFragPos;
@@ -28,8 +29,8 @@ inout PixelData pixel)
 	pixel.V = viewVector;
 	pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
+	pixel.alpha = alpha;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
-	//pixel.F0 = CalculateClearCoatBaseF0(pixel.F0, clearCoat);
 	pixel.Fd = diffuseColor * Fd_Lambert();
 	pixel.multibounceAO = multibounceAO;
 	pixel.reflectance = reflectance;
@@ -43,33 +44,9 @@ inout PixelData pixel)
 	float a2 = pixel.roughness * pixel.roughness;
 	pixel.ggxVTerm = sqrt((pixel.NoV - a2 * pixel.NoV) * pixel.NoV + a2);
 
-	// pixel.anisotropy = 0;
-	// pixel.at = 0;
-	// pixel.ab = 0;
-	// pixel.anisotropicT = anisotropyDirection;
-	// pixel.anisotropicB = normalize(cross(worldNormal, anisotropyDirection));
-	// pixel.ToV = 0;
-	// pixel.BoV = 0;
-
-	// if(abs(anisotropy) < 1e-5)
-	// {
-	// 	/*
-	// 	float ToV = dot(fs_in.tangent, V);
-	// 	float BoV = dot(fs_in.bitangent, V);
-	// 	*/
-	// 	pixel.ggxVTerm = length(vec3(pixel.at * pixel.ToV, pixel.ab * pixel.BoV, pixel.NoV));
-	// }
-
 	pixel.R = GetReflectionVectorNoAnisotropy(pixel.V, pixel.N);
 
-	// pixel.clearCoat = 0;
-	// pixel.clearCoatNormal = worldNormal;
-	// pixel.clearCoatRoughness = 0;
-	// pixel.clearCoatPerceptualRoughness = 0;
-	// pixel.clearCoatNoV = 0;
-
 	pixel.emission = emission;
-
 }
 
 void DefaultBRDFInputWithClearCoatAndAnisotropy(
@@ -91,6 +68,7 @@ float anisotropy,
 float clearCoat,
 float clearCoatPerceptualRoughness,
 vec3 emission,
+float alpha,
 inout PixelData pixel)
 {
 	pixel.worldFragPos = worldFragPos;
@@ -99,6 +77,7 @@ inout PixelData pixel)
 	pixel.V = viewVector;
 	pixel.uv = uv;
 	pixel.diffuseColor = diffuseColor;
+	pixel.alpha = alpha;
 	pixel.F0 = 0.16 * reflectance * reflectance * (1.0 - metallic) + baseColor * metallic;
 	pixel.F0 = CalculateClearCoatBaseF0(pixel.F0, clearCoat);
 	pixel.Fd = diffuseColor * Fd_Lambert();
@@ -160,10 +139,12 @@ float perceptualRoughness,
 float clearCoat,
 float clearCoatPerceptualRoughness,
 vec3 emission,
+float alpha,
 inout PixelData pixel)
 {
 	pixel.worldFragPos = worldFragPos;
 	pixel.baseColor = baseColor;
+	pixel.alpha = alpha;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
 	pixel.uv = uv;
@@ -211,10 +192,12 @@ float ao,
 float perceptualRoughness,
 float anisotropy,
 vec3 emission,
+float alpha,
 inout PixelData pixel)
 {
 	pixel.worldFragPos = worldFragPos;
 	pixel.baseColor = baseColor;
+	pixel.alpha = alpha;
 	pixel.N = materialNormal;
 	pixel.V = viewVector;
 	pixel.uv = uv;
@@ -270,7 +253,10 @@ void DefaultWorldMaterialFunction(
 
 	Material material = GetMaterial(drawID, uv);
 
-	vec3 baseColor = SampleMaterialDiffuse(material, uv).rgb;
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+
+	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
 
@@ -300,7 +286,10 @@ void DefaultWorldMaterialFunction(
 	vec3 emission = SampleMaterialEmission(material, uv).rgb;
 
 	DefaultBRDFInputNoClearCoatNoAnisotropy(
+		
+		//use premultiplied alpha
 		baseColor,
+		
 		diffuseColor,
 		fragPos,
 		materialNormal,
@@ -313,6 +302,10 @@ void DefaultWorldMaterialFunction(
 		ao,
 		perceptualRoughness,
 		emission,
+
+		//alpha
+		alpha,
+
 		pixelData);
 }
 
@@ -329,7 +322,11 @@ void DefaultCharacterMaterialFunction(
 
 	Material material = GetMaterial(drawID, uv);
 
-	vec3 baseColor = SampleMaterialDiffuse(material, uv).rgb;
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+
+	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+
+	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
 
@@ -373,6 +370,8 @@ void DefaultCharacterMaterialFunction(
 		ao,
 		perceptualRoughness,
 		emission,
+		//alpha value
+		alpha,
 		pixelData);
 }
 
@@ -389,7 +388,11 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	Material material = GetMaterial(drawID, uv);
 
-	vec3 baseColor = SampleMaterialDiffuse(material, uv).rgb;
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+
+	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+
+	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
 
@@ -435,6 +438,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 		clearCoat,
 		clearCoatPerceptualRoughness,
 		emission,
+		alpha,
 		pixelData);
 }
 
@@ -452,7 +456,10 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	Material material = GetMaterial(drawID, uv);
 
-	vec3 baseColor = SampleMaterialDiffuse(material, uv).rgb;
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+
+	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
 
@@ -498,6 +505,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 		perceptualRoughness,
 		anisotropy,
 		emission,
+		alpha,
 		pixelData);
 }
 
@@ -514,7 +522,10 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 	Material material = GetMaterial(drawID, uv);
 
-	vec3 baseColor = SampleMaterialDiffuse(material, uv).rgb;
+	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
+
+	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
 
@@ -560,6 +571,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 		perceptualRoughness,
 		anisotropy,
 		emission,
+		alpha,
 		pixelData);
 }
 

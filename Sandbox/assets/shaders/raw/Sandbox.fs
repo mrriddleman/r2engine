@@ -81,7 +81,7 @@ void main()
 
 	vec3 lightingResult = CalculateLightingNoClearCoatNoAnisotropy(pixel);
 
-	FragColor = vec4(lightingResult + pixel.emission , 1.0);// * DebugFrustumSplitColor();
+	FragColor = vec4(lightingResult + pixel.emission, pixel.alpha);// * DebugFrustumSplitColor();
 
 	NormalColor = fs_in.viewNormal;
 

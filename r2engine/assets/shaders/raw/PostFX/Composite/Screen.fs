@@ -34,7 +34,7 @@ vec3 Uncharted2ToneMapping(vec3 color);
 void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
-	FragColor = vec4(ACESFitted(sampledColor.rgb), 1.0);
+	FragColor = vec4(ACESFitted(sampledColor.rgb), sampledColor.a);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -57,7 +57,7 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec3 coord = vec3(uv.r, uv.g, gBufferSurface.page );
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
  
-	return vec4(mix( gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), 1.0);
+	return vec4(mix( gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), gbufferSurfaceColor.a);
 }
 
 vec3 ReinhardToneMapping(vec3 hdrColor)
