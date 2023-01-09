@@ -74,6 +74,7 @@ namespace r2::draw::rendererimpl
 	void EnablePolygonOffset(bool enabled);
 	void SetPolygonOffset(const glm::vec2& polygonOffset);
 	void SetStencilState(const StencilState& stencilState);
+	void SetBlendState(const BlendState& blendState);
 
 	s32 GetConstantLocation(ShaderHandle shaderHandle, const char* name);
 

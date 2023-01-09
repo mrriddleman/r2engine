@@ -58,4 +58,11 @@ namespace r2::draw::cmd
 		stencilState.func.ref = 0;
 		stencilState.func.mask = 0xFF;
 	}
+
+	void SetDefaultBlendState(BlendState& blendState)
+	{
+		blendState.blendingEnabled = false;
+		blendState.blendEquation = BLEND_EQUATION_ADD;
+		blendState.numBlendFunctions = 0;
+	}
 }

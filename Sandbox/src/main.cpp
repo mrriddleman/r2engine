@@ -1220,6 +1220,7 @@ public:
         drawWorldParams.flags.Clear();
         drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
+        r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
         r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
         r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
@@ -1243,6 +1244,7 @@ public:
         animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
         r2::draw::renderer::SetDefaultStencilState(animDrawParams);
+        r2::draw::renderer::SetDefaultBlendState(animDrawParams);
 
         r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 0), *microBatModelMats, 2, nullptr, allMicroBatBoneTransforms);
 

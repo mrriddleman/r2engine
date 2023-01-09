@@ -38,6 +38,7 @@ namespace r2::draw::cmd
 		glm::vec2 polygonOffset;
 
 		StencilState stencilState;
+		BlendState blendState;
 	};
 
 	struct Clear
@@ -314,6 +315,8 @@ namespace r2::draw::cmd
 	u64 LargestCommand();
 
 	void SetDefaultStencilState(StencilState& stencilState);
+
+	void SetDefaultBlendState(BlendState& blendState);
 }
 
 #endif

@@ -123,6 +123,11 @@ namespace r2::draw
 	
 	u32 NEAREST = GL_NEAREST;
 	u32 LINEAR = GL_LINEAR;
+
+	u32 ONE = GL_ONE;
+	u32 ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA;
+	u32 BLEND_EQUATION_ADD = GL_FUNC_ADD;
+	u32 BLEND_EQUATION_SUBTRACT = GL_FUNC_SUBTRACT;
 }
 
 namespace r2::draw::cmd
@@ -469,6 +474,25 @@ namespace r2::draw::rendererimpl
 		if (stencilState.stencilWriteEnabled)
 		{
 			glStencilMask(0xFF);
+		}
+	}
+
+	void SetBlendState(const BlendState& blendState)
+	{
+		if (blendState.blendingEnabled)
+		{
+			glEnable(GL_BLEND);
+		}
+		else
+		{
+			glDisable(GL_BLEND);
+		}
+
+		glBlendEquation(blendState.blendEquation);
+
+		for (u32 i = 0; i < blendState.numBlendFunctions; ++i)
+		{
+			glBlendFunci(blendState.blendFunctions[i].blendDrawBuffer, blendState.blendFunctions[i].sfactor, blendState.blendFunctions[i].dfactor);
 		}
 	}
 
@@ -874,6 +898,7 @@ namespace r2::draw::rendererimpl
 		EnablePolygonOffset(state.polygonOffsetEnabled);
 		SetPolygonOffset(state.polygonOffset);
 		SetStencilState(state.stencilState);
+		SetBlendState(state.blendState);
 	}
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)

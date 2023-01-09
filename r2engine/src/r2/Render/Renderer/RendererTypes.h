@@ -20,6 +20,8 @@ namespace r2::draw
     const ConstantConfigHandle InvalidConstantConfigHandle = -1;
 
     static const u32 EMPTY_BUFFER = 0;
+    
+    const u32 MAX_BLEND_TARGETS = 4;
 
     struct VertexBuffer
     {
@@ -40,8 +42,6 @@ namespace r2::draw
         IndexBuffer indexBuffer;
         u32 vertexBufferIndex = 0;
     };
-
-
 
 	enum class PrimitiveType : u8
 	{
@@ -112,6 +112,11 @@ namespace r2::draw
     extern u32 NEAREST;
     extern u32 LINEAR;
 
+    extern u32 ONE;
+    extern u32 ONE_MINUS_SRC_ALPHA;
+    extern u32 BLEND_EQUATION_ADD;
+    extern u32 BLEND_EQUATION_SUBTRACT;
+
 	struct StencilOp
 	{
 		u32 stencilFail;
@@ -135,6 +140,23 @@ namespace r2::draw
 		StencilFunc func;
 	};
 
+    struct BlendFunction
+    {
+        u32 blendDrawBuffer;
+
+        u32 sfactor;
+        u32 dfactor;
+    };
+
+    struct BlendState
+    {
+        b32 blendingEnabled;
+        u32 blendEquation;
+
+        BlendFunction blendFunctions[MAX_BLEND_TARGETS];
+        u32 numBlendFunctions;
+    };
+
     struct DrawParameters
     {
         DrawLayer layer;
@@ -142,6 +164,8 @@ namespace r2::draw
         DrawFlags flags;
 
         StencilState stencilState;
+
+        BlendState blendState;
 
         u32 cullState = CULL_FACE_BACK;
     };
@@ -155,8 +179,6 @@ namespace r2::draw
         NUM_RENDERER_BACKEND_TYPES
 	};
 
-    const std::string GetRendererBackendName(r2::draw::RendererBackend backend);
-
     enum OutputMerger : u8
     {
         OUTPUT_NO_AA = 0,
@@ -164,6 +186,9 @@ namespace r2::draw
         OUTPUT_SMAA_X1,
         OUTPUT_SMAA_T2X,
     };
+
+
+    const std::string GetRendererBackendName(r2::draw::RendererBackend backend);
 }
 
 #endif // !__RENDERER_TYPES_H__
