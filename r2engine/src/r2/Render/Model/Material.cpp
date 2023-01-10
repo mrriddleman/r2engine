@@ -274,7 +274,7 @@ namespace r2::draw::mat
 
 				if (result == defaultTexturePack)
 				{
-					R2_CHECK(false, "We couldn't get the texture pack!");
+					R2_CHECK(false, "We couldn't get the texture pack! %s", texParam->texturePackNameStr()->c_str());
 					return;
 				}
 

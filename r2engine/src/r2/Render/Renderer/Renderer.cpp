@@ -3372,6 +3372,8 @@ namespace r2::draw::renderer
 		u32 subCommandsOffset = 0;
 		u32 numSubCommands = 0;
 		u32 cameraDepth;
+		u8 blendingFunctionKeyValue = key::TR_OPAQUE;
+		u32 depthFunction;
 	};
 
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
@@ -3386,6 +3388,8 @@ namespace r2::draw::renderer
 			const glm::mat4& modelMatrix = r2::sarr::At(*renderBatch.models, modelIndex);
 			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
 			const u32 numInstances = r2::sarr::At(*renderBatch.numInstances, modelIndex);
+			
+			//drawState.
 
 			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
 
@@ -3746,9 +3750,21 @@ namespace r2::draw::renderer
 
 				//@TODO(Serge): when we're doing transparency, we'll need to check the DrawCommandData if we're a transparency batch, then we need to use a different
 				//				sorting predicate ( s1.cameraDepth > s2.cameraDepth)
-				std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
-					return s1.cameraDepth < s2.cameraDepth;
-				});
+
+				if (!drawCommandData->drawState.blendState.blendingEnabled)
+				{
+					//non transparency - sort front to back
+					std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
+						return s1.cameraDepth < s2.cameraDepth;
+						});
+				}
+				else
+				{
+					//transparency - sort back to front
+					std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
+						return s1.cameraDepth > s2.cameraDepth;
+						});
+				}
 
 				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 
@@ -3764,8 +3780,12 @@ namespace r2::draw::renderer
 				batchOffsets.shaderId = drawCommandData->shaderId;
 				batchOffsets.subCommandsOffset = subCommandsOffset;
 				batchOffsets.numSubCommands = numSubCommandsInBatch;
-				batchOffsets.drawState = drawCommandData->drawState;
+				
+				memcpy(&batchOffsets.drawState, &drawCommandData->drawState, sizeof(cmd::DrawState));
+
 				batchOffsets.cameraDepth = 0;
+				batchOffsets.blendingFunctionKeyValue = key::GetBlendingFunctionKeyValue(drawCommandData->drawState.blendState);
+
 
 				R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
 
@@ -3924,7 +3944,7 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, 0, batchOffset.cameraDepth, batchOffset.shaderId);
+			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3934,16 +3954,21 @@ namespace r2::draw::renderer
 			drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
 			drawBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawBatch->subCommands = nullptr;
-			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;//TODO(Serge): fix with proper draw state
+			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
+			
 			drawBatch->state.depthFunction = EQUAL;
+			if (batchOffset.drawState.blendState.blendingEnabled)
+			{
+				drawBatch->state.depthFunction = LESS;
+			}
+			
 			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
-
-			cmd::SetDefaultBlendState(drawBatch->state.blendState);
-
+			memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
+			
 			if (batchOffset.drawState.layer == DL_SKYBOX)
 			{
 				drawBatch->state.depthFunction = LEQUAL;
@@ -4062,7 +4087,13 @@ namespace r2::draw::renderer
 				zppDrawBatch->state.depthEnabled = true;
 				zppDrawBatch->state.cullState = CULL_FACE_FRONT;
 				zppDrawBatch->state.depthFunction = LESS;
+				
 				zppDrawBatch->state.depthWriteEnabled = true;
+				if (batchOffset.drawState.blendState.blendingEnabled)
+				{
+					zppDrawBatch->state.depthWriteEnabled = false;
+				}
+
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4081,7 +4112,13 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
 				zppShadowsDrawBatch->state.cullState = CULL_FACE_FRONT;
 				zppShadowsDrawBatch->state.depthFunction = LESS;
+
 				zppShadowsDrawBatch->state.depthWriteEnabled = true;
+				if (batchOffset.drawState.blendState.blendingEnabled)
+				{
+					zppShadowsDrawBatch->state.depthWriteEnabled = false;
+				}
+
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
 
@@ -4096,7 +4133,7 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*dynamicRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, 0, batchOffset.cameraDepth, batchOffset.shaderId);
+			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4108,13 +4145,21 @@ namespace r2::draw::renderer
 			drawBatch->subCommands = nullptr;
 			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
+
 			drawBatch->state.depthFunction = EQUAL;
+			if (batchOffset.drawState.blendState.blendingEnabled)
+			{
+				drawBatch->state.depthFunction = LESS;
+			}
+
 			drawBatch->state.depthWriteEnabled = false;
+
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
 
-			cmd::SetDefaultBlendState(drawBatch->state.blendState);
+			memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
+		//	cmd::SetDefaultBlendState(drawBatch->state.blendState);
 
 
 			//if (batchOffset.drawState.layer == DL_CHARACTER)
@@ -4224,7 +4269,13 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;
+
 				zppDrawBatch->state.depthWriteEnabled = true;
+				if (batchOffset.drawState.blendState.blendingEnabled)
+				{
+					zppDrawBatch->state.depthWriteEnabled = false;
+				}
+
 				zppDrawBatch->state.cullState = CULL_FACE_BACK;
 				zppDrawBatch->state.depthFunction = LESS;
 				
@@ -6277,7 +6328,7 @@ namespace r2::draw::renderer
 		state.layer = drawParameters.layer;
 		state.stencilState = drawParameters.stencilState;
 		state.cullState = drawParameters.cullState;
-		state.blendState = drawParameters.blendState;
+		memcpy(&state.blendState, &drawParameters.blendState, sizeof(BlendState));
 
 		r2::sarr::Push(*batch.drawState, state);
 
@@ -6430,7 +6481,8 @@ namespace r2::draw::renderer
 			state.layer = drawParameters.layer;
 			state.stencilState = drawParameters.stencilState;
 			state.cullState = drawParameters.cullState;
-			state.blendState = drawParameters.blendState;
+			memcpy(&state.blendState, &drawParameters.blendState, sizeof(BlendState));
+
 			r2::sarr::Push(*tempDrawState, state);
 		}
 

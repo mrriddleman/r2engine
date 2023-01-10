@@ -221,6 +221,9 @@ namespace r2::draw::key
 	//Sort Batch
 	SortBatchKey GenerateSortBatchKey(u8 viewportLayer, r2::draw::ShaderHandle shader, u32 drawState);
 
+
+	//Blending state helper
+	u8 GetBlendingFunctionKeyValue(const BlendState& state);
 }
 
 #endif

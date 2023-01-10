@@ -4318,6 +4318,120 @@
       shaderParams: [
 
       ]
+    },
+    {
+      name: 17743152345863433361,
+      ulongParams: [
+        {
+          propertyType: "SHADER",
+          value: 3292306756035476612
+        }
+      ],
+      boolParams: [
+
+      ],
+      floatParams: [
+        {
+          propertyType: "ROUGHNESS"
+        },
+        {
+          propertyType: "METALLIC",
+          value: 0.2
+        },
+        {
+          propertyType: "REFLECTANCE",
+          value: 0.4
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 1.0
+        },
+        {
+          propertyType: "CLEAR_COAT"
+        },
+        {
+          propertyType: "CLEAR_COAT_ROUGHNESS"
+        },
+        {
+          propertyType: "HEIGHT_SCALE"
+        },
+        {
+          propertyType: "ANISOTROPY"
+        }
+      ],
+      colorParams: [
+        {
+          value: {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0
+          }
+        }
+      ],
+      textureParams: [
+        {
+          value: 12654673806030675710,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "NORMAL",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "EMISSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "METALLIC",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "ROUGHNESS",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "AMBIENT_OCCLUSION",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "HEIGHT",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        },
+        {
+          propertyType: "ANISOTROPY",
+          value: 14695981039346656837,
+          packingType: "RGBA",
+          texturePackName: 17743152345863433361,
+          texturePackNameStr: "TransparentWindow"
+        }
+      ],
+      stringParams: [
+
+      ],
+      shaderParams: [
+
+      ]
     }
   ]
 }

@@ -1,0 +1,108 @@
+{
+  name: "TransparentWindow",
+  ulongParams: [
+    {
+      propertyType: "SHADER",
+      value: "Sandbox"
+    }
+  ],
+  floatParams: [
+    {
+      propertyType: "ROUGHNESS",
+      value: 0.0
+    },
+    {
+      propertyType: "METALLIC",
+      value: 0.2
+    },
+    {
+      propertyType: "REFLECTANCE",
+      value: 0.4
+    },
+    {
+      propertyType: "AMBIENT_OCCLUSION",
+      value: 1.0
+    },
+    {
+      propertyType: "CLEAR_COAT",
+      value: 0.0
+    },
+    {
+      propertyType: "CLEAR_COAT_ROUGHNESS",
+      value: 0.0
+    },
+    {
+      propertyType: "HEIGHT_SCALE"
+    },
+    {
+      propertyType: "ANISOTROPY"
+    }
+  ],
+  colorParams: [
+    {
+      value: {
+        r: 1.0,
+        g: 1.0,
+        b: 1.0,
+        a: 1.0
+      }
+    }
+  ],
+  textureParams: [
+    {
+      value: "transparentwindow/albedo/blending_transparent_window.rtex",
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "NORMAL",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "EMISSION",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "METALLIC",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "ROUGHNESS",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "AMBIENT_OCCLUSION",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "HEIGHT",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    },
+    {
+      propertyType: "ANISOTROPY",
+      value: 14695981039346656837,
+      packingType: "RGBA",
+      texturePackName: "TransparentWindow",
+      texturePackNameStr:"TransparentWindow"
+    }
+  ]
+}

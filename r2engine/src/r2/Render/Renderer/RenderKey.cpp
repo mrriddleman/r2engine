@@ -240,4 +240,20 @@ namespace r2::draw::key
 
 		return sortBatchKey;
 	}
+
+	u8 GetBlendingFunctionKeyValue(const BlendState& state)
+	{
+		u8 blendingFunctionKeyValue = TR_OPAQUE;
+
+		if (state.blendEquation == BLEND_EQUATION_ADD)
+		{
+			blendingFunctionKeyValue = TR_ADDITIVE;
+		}
+		else if (state.blendEquation == BLEND_EQUATION_SUBTRACT)
+		{
+			blendingFunctionKeyValue = TR_SUBTRACTIVE;
+		}
+
+		return blendingFunctionKeyValue;
+	}
 }

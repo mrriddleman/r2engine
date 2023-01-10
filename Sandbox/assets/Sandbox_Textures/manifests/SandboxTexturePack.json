@@ -707,17 +707,63 @@
 
         ]
       }
+    },
+    {
+      packName: 17743152345863433361,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/TransparentWindow/albedo/blending_transparent_window.rtex"
+      ],
+      normal: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      roughness: [
+
+      ],
+      height: [
+
+      ],
+      anisotropy: [
+
+      ],
+      detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
+      packSize: 8479,
+      totalNumberOfTextures: 1,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
     }
   ],
-  totalNumberOfTextures: 135,
-  totalTextureSize: 298680841,
+  totalNumberOfTextures: 136,
+  totalTextureSize: 298689320,
   maxTexturesInAPack: 69,
   formatMetaData: [
     {
       format: "SRGBA8",
       maxWidth: 4096,
       maxHeight: 4096,
-      numTextures: 24,
+      numTextures: 25,
       maxMips: 1
     },
     {
