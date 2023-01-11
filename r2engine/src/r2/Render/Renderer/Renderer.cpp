@@ -3785,7 +3785,7 @@ namespace r2::draw::renderer
 
 				batchOffsets.cameraDepth = 0;
 				batchOffsets.blendingFunctionKeyValue = key::GetBlendingFunctionKeyValue(drawCommandData->drawState.blendState);
-
+				
 
 				R2_CHECK(batchOffsets.numSubCommands > 0, "We should have a count!");
 
@@ -3944,7 +3944,13 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
 
+
+
+
 			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
+
+
+
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;

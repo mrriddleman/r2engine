@@ -83,11 +83,11 @@ namespace r2::draw
         DL_COMPUTE, //should be second to last (or last maybe?)
         DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
+        DL_TRANSPARENT,
         DL_EFFECT,
         DL_SKYBOX,
         DL_HUD,
         DL_SCREEN,
-
        
         DL_DEBUG //should always be last
     };

@@ -352,6 +352,10 @@ public:
         mStaticCubesDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
         mStaticCubeModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::CUBE);
 
+        mTransparentWindowMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+        mTransparentWindowMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+        mTransparentWindowModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
+        mTransparentWindowDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
 
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
@@ -685,6 +689,31 @@ public:
             
 
             r2::sarr::Push(*mStaticCubeModelMats, modelMat);
+        }
+
+        //transparent windows
+
+        r2::draw::MaterialHandle transparentWindowMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("TransparentWindow"));
+        R2_CHECK(r2::draw::mat::IsValid(transparentWindowMaterialHandle), "Failed to get transparent window material handle");
+
+
+        r2::sarr::Push(*mTransparentWindowMaterialHandles, transparentWindowMaterialHandle);
+
+        float startingX = 10.0f;
+
+        for (u32 i = 0; i < NUM_DRAWS; ++i)
+        {
+            r2::sarr::Push(*mTransparentWindowDrawFlags, drawFlags);
+
+            glm::mat4 modelMat = glm::mat4(1.0);
+
+            modelMat = glm::translate(modelMat, glm::vec3(startingX, 0, 1.0f));
+            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
+            modelMat = glm::scale(modelMat, glm::vec3(2));
+
+            r2::sarr::Push(*mTransparentWindowMats, modelMat);
+
+            startingX -= 20.f / static_cast<float>(NUM_DRAWS);
         }
 
     //    r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
@@ -1228,6 +1257,22 @@ public:
         r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
         FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
+
+        r2::draw::DrawParameters drawTransparentWindowParams;
+        drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
+        drawTransparentWindowParams.flags.Clear();
+        drawTransparentWindowParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
+        r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
+        drawTransparentWindowParams.blendState.blendingEnabled = true;
+        drawTransparentWindowParams.blendState.numBlendFunctions = 1;
+        drawTransparentWindowParams.blendState.blendFunctions[0].blendDrawBuffer = 0;
+        drawTransparentWindowParams.blendState.blendFunctions[0].sfactor = r2::draw::ONE;
+        drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
+
+        //draw transparent windows
+        r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
+
         //Draw the bat
 		r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
         r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
@@ -1430,9 +1475,17 @@ public:
         
         FREE(mStaticModelDrawFlags, *linearArenaPtr);
 
+
+        FREE(mTransparentWindowMats, *linearArenaPtr);
+        FREE(mTransparentWindowMaterialHandles, *linearArenaPtr);
+        FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
+
         FREE(mStaticCubeModelMats, *linearArenaPtr);
         FREE(mStaticCubeMaterials, *linearArenaPtr);
         FREE(mStaticCubesDrawFlags, *linearArenaPtr);
+
+        
+
 
         u64 size = r2::sarr::Size(*assetsBuffers);
         
@@ -1656,6 +1709,11 @@ private:
     r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;
     r2::SArray<glm::mat4>* modelMats;
     r2::SArray<glm::mat4>* animModelMats;
+
+    r2::draw::ModelRefHandle mTransparentWindowModelRefHandle;
+    r2::SArray<glm::mat4>* mTransparentWindowMats;
+    r2::SArray<r2::draw::MaterialHandle>* mTransparentWindowMaterialHandles;
+    r2::SArray<r2::draw::DrawFlags>* mTransparentWindowDrawFlags;
 
     r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;
     r2::SArray<r2::draw::ShaderBoneTransform>* mBat2BoneTransforms;
