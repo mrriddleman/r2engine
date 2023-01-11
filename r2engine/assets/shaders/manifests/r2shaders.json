@@ -532,6 +532,15 @@
       partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/BloomParams.glsl"
     },
     {
+      shaderName: 9812336647288078991,
+      vertexPath: "",
+      fragmentPath: "",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Input/UniformBuffers/ColorCorrection.glsl"
+    },
+    {
       shaderName: 13173820576971248858,
       vertexPath: "",
       fragmentPath: "",

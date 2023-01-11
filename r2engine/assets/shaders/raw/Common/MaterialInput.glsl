@@ -255,7 +255,12 @@ void DefaultWorldMaterialFunction(
 
 	float NoV = dot(normal, viewVector);
 	
-	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+	float normalMult = 1.0f;
+
+	if(material.doubleSided > 0 && NoV < 0)
+	{
+		normalMult = -1.0f;
+	}
 
 	normal = normalMult * normal;
 
@@ -323,7 +328,12 @@ void DefaultCharacterMaterialFunction(
 
 	float NoV = dot(normal, viewVector);
 	
-	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+	float normalMult = 1.0f;
+
+	if(material.doubleSided > 0 && NoV > 0)
+	{
+		normalMult = -1.0f;
+	}
 
 	normal = normalMult * normal;
 
@@ -395,7 +405,12 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	float NoV = dot(normal, viewVector);
 	
-	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+	float normalMult = 1.0f;
+
+	if(material.doubleSided > 0 && NoV < 0)
+	{
+		normalMult = -1.0f;
+	}
 
 	normal = normalMult * normal;
 
@@ -469,7 +484,12 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	float NoV = dot(normal, viewVector);
 	
-	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+	float normalMult = 1.0f;
+
+	if(material.doubleSided > 0 && NoV < 0)
+	{
+		normalMult = -1.0f;
+	}
 
 	normal = normalMult * normal;
 
@@ -541,7 +561,12 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 	float NoV = dot(normal, viewVector);
 	
-	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+	float normalMult = 1.0f;
+
+	if(material.doubleSided > 0 && NoV < 0)
+	{
+		normalMult = -1.0f;
+	}
 
 	normal = normalMult * normal;
 

@@ -457,6 +457,11 @@ namespace r2::draw::renderer
 
 	void SetOutputMergerType(Renderer& renderer, OutputMerger outputMerger);
 
+	//Color Correction
+	void SetColorCorrection(Renderer& renderer, const ColorCorrection& cc);
+	void UpdateColorCorrectionIfNeeded(Renderer& renderer);
+
+
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
 
@@ -1413,12 +1418,16 @@ namespace r2::draw::renderer
 		
 		UpdateLighting(renderer);
 		
+		
+
 #ifdef R2_DEBUG
 		DebugPreRender(renderer);
 #endif
 
 		UpdateClusters(renderer); 
 		UpdateSSRDataIfNeeded(renderer);
+
+		UpdateColorCorrectionIfNeeded(renderer);
 
 		BloomRenderPass(renderer);
 
@@ -1807,6 +1816,13 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Int, "smaa_cornerRounding"},
 			{r2::draw::ShaderDataType::Int, "smaa_maxSearchStepsDiag"},
 			{r2::draw::ShaderDataType::Float, "smaa_cameraMovementWeight"}
+		});
+
+		renderer.mColorCorrectionConfigHandle = AddConstantBufferLayout(renderer, ConstantBufferLayout::Type::Small, {
+			{r2::draw::ShaderDataType::Float, "cc_constrast"},
+			{r2::draw::ShaderDataType::Float, "cc_brightness"},
+			{r2::draw::ShaderDataType::Float, "cc_saturation"},
+			{r2::draw::ShaderDataType::Float, "cc_gamma"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -8574,6 +8590,28 @@ namespace r2::draw::renderer
 		renderer.mOutputMerger = outputMerger;
 	}
 
+	void SetColorCorrection(Renderer& renderer, const ColorCorrection& cc)
+	{
+		renderer.mColorCorrectionData = cc;
+		renderer.mColorCorrectionNeedsUpdate = true;
+	}
+
+	void UpdateColorCorrectionIfNeeded(Renderer& renderer)
+	{
+		if (renderer.mColorCorrectionNeedsUpdate)
+		{
+			const r2::SArray<ConstantBufferHandle>* constantBufferHandles = GetConstantBufferHandles(renderer);
+			auto colorCorrectionConstantBufferHandle = r2::sarr::At(*constantBufferHandles, renderer.mColorCorrectionConfigHandle);
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 0, &renderer.mColorCorrectionData.contrast);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 1, &renderer.mColorCorrectionData.brightness);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
+			
+			renderer.mColorCorrectionNeedsUpdate = false;
+		}
+	}
+
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr)
 	{
@@ -9160,6 +9198,11 @@ namespace r2::draw::renderer
 	void ClearAllLighting()
 	{
 		ClearAllLighting(MENG.GetCurrentRendererRef());
+	}
+
+	void SetColorCorrection(const ColorCorrection& cc)
+	{
+		SetColorCorrection(MENG.GetCurrentRendererRef(), cc);
 	}
 
 	//------------------------------------------------------------------------------

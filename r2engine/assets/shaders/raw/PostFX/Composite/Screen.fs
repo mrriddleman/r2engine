@@ -4,10 +4,12 @@
 
 layout (location = 0) out vec4 FragColor;
 
-#include "Input/UniformBuffers/Vectors.glsl"
-#include "Input/UniformBuffers/Surfaces.glsl"
-#include "Input/UniformBuffers/BloomParams.glsl"
+#include "Common/CommonFunctions.glsl"
 #include "Depth/DepthUtils.glsl"
+#include "Input/UniformBuffers/BloomParams.glsl"
+#include "Input/UniformBuffers/ColorCorrection.glsl"
+#include "Input/UniformBuffers/Surfaces.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
 
 in VS_OUT
 {
@@ -15,12 +17,6 @@ in VS_OUT
 	vec3 texCoords;
 	flat uint drawID;
 } fs_in;
-
-
-vec3 GammaCorrect(vec3 color)
-{
-    return pow(color, vec3(1.0/2.2));
-}
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv);
 
@@ -34,7 +30,12 @@ vec3 Uncharted2ToneMapping(vec3 color);
 void main()
 {
 	vec4 sampledColor = SampleMaterialDiffuse(fs_in.drawID, fs_in.texCoords);
-	FragColor = vec4(ACESFitted(sampledColor.rgb), sampledColor.a);
+
+	vec3 colorCorrectedColor = ApplyContrastAndBrightness(sampledColor.rgb, cc_contrast, cc_brightness);
+
+	colorCorrectedColor = ApplySaturation(colorCorrectedColor, cc_saturation);
+
+	FragColor = vec4(ACESFitted(colorCorrectedColor), sampledColor.a);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
@@ -45,8 +46,6 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	// //float testColor = SampleMSTexel(msaa2XZPrePassSurface, ivec2(gl_FragCoord.xy), 0).r;
 
 	// return vec4(vec3(LinearizeDepth(testColor, exposureNearFar.y, exposureNearFar.z)), 1);
-
-	
 
 	vec3 bloomCoord = vec3(uv.r, uv.g, bloomUpSampledSurface.page);
 	vec3 bloomColor = textureLod(sampler2DArray(bloomUpSampledSurface.container), bloomCoord, 0).rgb;
@@ -64,7 +63,6 @@ vec3 ReinhardToneMapping(vec3 hdrColor)
 {
 	hdrColor *= exposureNearFar.x / (1.0 + hdrColor / exposureNearFar.x);
 	return GammaCorrect(hdrColor);
-	//return hdrColor / (hdrColor + vec3(1.0));
 }
 
 vec3 ExposureToneMapping(vec3 hdrColor)

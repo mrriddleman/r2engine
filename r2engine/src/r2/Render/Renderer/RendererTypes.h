@@ -23,26 +23,6 @@ namespace r2::draw
     
     const u32 MAX_BLEND_TARGETS = 4;
 
-    struct VertexBuffer
-    {
-        u32 VBO = EMPTY_BUFFER;
-        u64 size = 0;
-    };
-
-    struct IndexBuffer
-    {
-        u32 IBO = EMPTY_BUFFER;
-        u64 size = 0;
-    };
-
-    struct VertexArrayBuffer
-    {
-        u32 VAO = EMPTY_BUFFER;
-        std::vector<VertexBuffer> vertexBuffers;
-        IndexBuffer indexBuffer;
-        u32 vertexBufferIndex = 0;
-    };
-
 	enum class PrimitiveType : u8
 	{
 		POINTS,

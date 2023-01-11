@@ -39,13 +39,13 @@ layout (std140, binding = 1) uniform Vectors
 {
 	vec4 cameraPosTimeW;
 	vec4 exposureNearFar;
-	vec4 cascadePlanes;
+	vec4 cascadePlanes; //depricated
 	vec4 shadowMapSizes;
 	vec4 fovAspectResXResY;
 	uint64_t frame;
 	vec2 clusterScaleBias;
-	uvec4 tileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
-	vec4 jitter; // {currJitterX, currJitterY, prevJitterX, prevJitterY}
+	uvec4 clusterTileSizes; //{tileSizeX, tileSizeY, tileSizeZ, tileSizePx}
+	vec4 jitter;
 };
 
 layout (std140, binding = 2) uniform Surfaces
@@ -62,11 +62,15 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress normalSurface;
 	Tex2DAddress specularSurface;
 	Tex2DAddress ssrSurface;
-	Tex2DAddress convolvedGBUfferSurface[2];
+	Tex2DAddress convolvedGBUfferSurface[2]; //@TODO(Serge): fix the name
 	Tex2DAddress ssrConeTracedSurface;
 	Tex2DAddress bloomDownSampledSurface;
 	Tex2DAddress bloomBlurSurface;
 	Tex2DAddress bloomUpSampledSurface;
+	Tex2DAddress smaaEdgeDetectionSurface;
+	Tex2DAddress smaaBlendingWeightSurface;
+	Tex2DAddress smaaNeighborhoodBlendingSurface[2];
+	Tex2DAddress msaa2XZPrePassSurface;
 };
 
 layout (std140, binding = 3) uniform SDSMParams
@@ -84,25 +88,58 @@ layout (std140, binding = 3) uniform SDSMParams
 
 layout (std140, binding = 4) uniform SSRParams
 {
-	float ssr_maxRayMarchStep;
-	float ssr_ssThickness;
+	float ssr_stride;
+	float ssr_zThickness;
 	int ssr_rayMarchIterations;
-	int ssr_maxBinarySearchSamples;
+	float ssr_strideZCutoff;
+
+	Tex2DAddress ssr_ditherTexture;
+
+	float ssr_ditherTilingFactor;
+	int ssr_roughnessMips;
+	int ssr_coneTracingSteps;
+	float ssr_maxFadeDistance;
+
+	float ssr_fadeScreenStart;
+	float ssr_fadeScreenEnd;
+	float ssr_maxDistance;
 };
 
 layout (std140, binding = 5) uniform BloomParams
 {
 	vec4 bloomFilter; //x - threshold, y = threshold - knee, z = 2.0f * knee, w = 0.25f / knee
+	uvec4 bloomResolutions;
+	vec4 bloomFilterRadiusIntensity;
+
+	uint64_t textureContainerToSample;
+	float texturePageToSample;
+	float textureLodToSample;
 };
 
-layout (std140, binding=6) uniform FXAAParams
+layout (std140, binding=6) uniform AAParams
 {
-	Tex2DAddress fxaa_inputTexture;
+	Tex2DAddress inputTexture;
 	float fxaa_lumaThreshold;
 	float fxaa_lumaMulReduce;
 	float fxaa_lumaMinReduce;
 	float fxaa_maxSpan;
 	vec2 fxaa_texelStep;
+	float smaa_threshold;
+	int smaa_maxSearchSteps;
+	Tex2DAddress smaa_areaTexture;
+	Tex2DAddress smaa_searchTexture;
+	ivec4 smaa_subSampleIndices;
+	int smaa_cornerRounding;
+	int smaa_maxSearchStepsDiag;
+	float smaa_cameraMovementWeight;
+};
+
+layout (std140, binding = 7) uniform ColorCorrectionValues
+{
+	float cc_contrast;
+	float cc_brightness;
+	float cc_saturation;
+	float cc_gamma;
 };
 
 ssbo buffers:

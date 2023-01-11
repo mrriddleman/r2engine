@@ -22,7 +22,14 @@ namespace r2
 
 namespace r2::draw
 {
-
+	
+	struct ColorCorrection
+	{
+		float contrast = 1.0f;
+		float brightness = 0.0f;
+		float saturation = 1.0f;
+		float gamma = 1.0f / 2.2f;
+	};
 
 	class BufferLayout;
 	struct BufferLayoutConfiguration;
@@ -247,6 +254,8 @@ namespace r2::draw
 		ConstantConfigHandle mSSRConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mBloomConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mAAConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mColorCorrectionConfigHandle = InvalidConstantConfigHandle;
+
 		//--------------END Buffer Layout stuff-----------------
 
 		//------------BEGIN Drawing Stuff--------------
@@ -457,6 +466,14 @@ namespace r2::draw
 		//--------------END SMAA Data------------------
 
 
+		//-------BEGIN COLOR CORRECTION Data-----------
+
+		ColorCorrection mColorCorrectionData;
+		b32 mColorCorrectionNeedsUpdate = true;
+
+		//--------END COLOR CORRECTION Data------------
+
+
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
@@ -573,6 +590,8 @@ namespace r2::draw::renderer
 	void SetDefaultStencilState(DrawParameters& drawParameters);
 	void SetDefaultBlendState(DrawParameters& drawParameters);
 	void SetDefaultCullState(DrawParameters& drawParameters);
+
+	void SetColorCorrection(const ColorCorrection& cc);
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);
