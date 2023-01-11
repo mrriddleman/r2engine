@@ -4328,7 +4328,10 @@
         }
       ],
       boolParams: [
-
+        {
+          propertyType: "DOUBLE_SIDED",
+          value: true
+        }
       ],
       floatParams: [
         {

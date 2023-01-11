@@ -1626,6 +1626,15 @@ namespace r2::draw::mat
 				}
 			}
 
+			for (flatbuffers::uoffset_t i = 0; i < materialParams->boolParams()->size(); ++i)
+			{
+				const flat::MaterialBoolParam* boolParam = materialParams->boolParams()->Get(i);
+
+				if (boolParam->propertyType() == flat::MaterialPropertyType_DOUBLE_SIDED)
+				{
+					internalMaterialData.renderMaterial.doubleSided = boolParam->value();
+				}
+			}
 		}
 		else
 		{

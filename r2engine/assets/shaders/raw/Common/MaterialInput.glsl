@@ -253,6 +253,12 @@ void DefaultWorldMaterialFunction(
 
 	Material material = GetMaterial(drawID, uv);
 
+	float NoV = dot(normal, viewVector);
+	
+	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+
+	normal = normalMult * normal;
+
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
 	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
@@ -274,16 +280,9 @@ void DefaultWorldMaterialFunction(
 
 	vec3 multibounceAO = GTAOMultiBounce(ao, diffuseColor);
 
-	//vec3 anisotropyDirection = normalize(SampleAnisotropyDirection(TBN, tangent, material, uv));
-
-	//@TODO(Serge): add in the sampling of clear coat materials
-	//float clearCoat = material.clearCoat.color.r;
-
-	//vec3 clearCoatNormal = normal;
-
-	//float clearCoatPerceptualRoughness = clamp(material.clearCoatRoughness.color.r, MIN_PERCEPTUAL_ROUGHNESS, 1.0);
-
 	vec3 emission = SampleMaterialEmission(material, uv).rgb;
+
+
 
 	DefaultBRDFInputNoClearCoatNoAnisotropy(
 		
@@ -321,6 +320,12 @@ void DefaultCharacterMaterialFunction(
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
 	Material material = GetMaterial(drawID, uv);
+
+	float NoV = dot(normal, viewVector);
+	
+	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+
+	normal = normalMult * normal;
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
@@ -387,6 +392,12 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
 	Material material = GetMaterial(drawID, uv);
+
+	float NoV = dot(normal, viewVector);
+	
+	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+
+	normal = normalMult * normal;
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
@@ -456,6 +467,12 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	Material material = GetMaterial(drawID, uv);
 
+	float NoV = dot(normal, viewVector);
+	
+	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+
+	normal = normalMult * normal;
+
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
 	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
@@ -521,6 +538,12 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 	vec3 viewVector = normalize(cameraPosTimeW.xyz - fragPos);
 
 	Material material = GetMaterial(drawID, uv);
+
+	float NoV = dot(normal, viewVector);
+	
+	float normalMult = (material.doubleSided > 0 && NoV > 0)? 1.0f : -1.0f;
+
+	normal = normalMult * normal;
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
