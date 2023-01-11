@@ -32,11 +32,10 @@ namespace r2::draw::cmd
 		u32 depthFunction;
 		b32 depthWriteEnabled;
 
-		u32 cullState;
-		
 		b32 polygonOffsetEnabled;
 		glm::vec2 polygonOffset;
 
+		CullState cullState;
 		StencilState stencilState;
 		BlendState blendState;
 	};
@@ -317,6 +316,8 @@ namespace r2::draw::cmd
 	void SetDefaultStencilState(StencilState& stencilState);
 
 	void SetDefaultBlendState(BlendState& blendState);
+
+	void SetDefaultCullState(CullState& cullState);
 }
 
 #endif

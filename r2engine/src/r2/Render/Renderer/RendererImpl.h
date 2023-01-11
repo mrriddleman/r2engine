@@ -69,7 +69,7 @@ namespace r2::draw::rendererimpl
 	void SetDepthTest(bool shouldDepthTest);
 	void SetDepthWriteEnabled(bool depthWriteEnabled);
 	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
-	void SetCullFace(u32 cullFace);
+	void SetCullState(const CullState& cullState);
 	void SetDepthFunction(u32 depthFunc);
 	void EnablePolygonOffset(bool enabled);
 	void SetPolygonOffset(const glm::vec2& polygonOffset);

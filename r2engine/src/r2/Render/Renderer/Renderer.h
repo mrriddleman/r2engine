@@ -572,6 +572,7 @@ namespace r2::draw::renderer
 
 	void SetDefaultStencilState(DrawParameters& drawParameters);
 	void SetDefaultBlendState(DrawParameters& drawParameters);
+	void SetDefaultCullState(DrawParameters& drawParameters);
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);

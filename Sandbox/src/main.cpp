@@ -1248,6 +1248,9 @@ public:
         drawWorldParams.layer = r2::draw::DL_WORLD;
         drawWorldParams.flags.Clear();
         drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+
+
+        r2::draw::renderer::SetDefaultCullState(drawWorldParams);
         r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
         r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
@@ -1262,8 +1265,13 @@ public:
         drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
         drawTransparentWindowParams.flags.Clear();
         drawTransparentWindowParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        
+        r2::draw::renderer::SetDefaultCullState(drawTransparentWindowParams);
+        //drawTransparentWindowParams.cullState.frontFace = r2::draw::FRONT_AND_BACK;
+
         r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
         r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
+
         drawTransparentWindowParams.blendState.blendingEnabled = true;
         drawTransparentWindowParams.blendState.numBlendFunctions = 1;
         drawTransparentWindowParams.blendState.blendFunctions[0].blendDrawBuffer = 0;
@@ -1288,6 +1296,7 @@ public:
         animDrawParams.flags.Clear();
         animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
+        r2::draw::renderer::SetDefaultCullState(animDrawParams);
         r2::draw::renderer::SetDefaultStencilState(animDrawParams);
         r2::draw::renderer::SetDefaultBlendState(animDrawParams);
 

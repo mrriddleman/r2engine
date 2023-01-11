@@ -128,6 +128,9 @@ namespace r2::draw
 	u32 ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA;
 	u32 BLEND_EQUATION_ADD = GL_FUNC_ADD;
 	u32 BLEND_EQUATION_SUBTRACT = GL_FUNC_SUBTRACT;
+
+	u32 CW = GL_CW;
+	u32 CCW = GL_CCW;
 }
 
 namespace r2::draw::cmd
@@ -396,9 +399,15 @@ namespace r2::draw::rendererimpl
 			
 	}
 
-	void SetCullFace(u32 cullFace)
+	void SetCullState(const CullState& cullState)
 	{
-		glCullFace(cullFace);
+		if (cullState.cullingEnabled)
+		{
+			glEnable(GL_CULL_FACE);
+		}
+		
+		glCullFace(cullState.cullFace);
+		glFrontFace(cullState.frontFace);
 	}
 
 	void SetDepthFunction(u32 depthFunc)
@@ -407,7 +416,6 @@ namespace r2::draw::rendererimpl
 		{
 			R2_CHECK(false, "depthFunc not supported yet!");
 		}
-		
 		
 		glDepthFunc(depthFunc);
 	}
@@ -893,7 +901,7 @@ namespace r2::draw::rendererimpl
 		SetDepthFunction(state.depthFunction);
 		SetDepthWriteEnabled(state.depthWriteEnabled);
 		
-		SetCullFace(state.cullState);
+		SetCullState(state.cullState);
 
 		EnablePolygonOffset(state.polygonOffsetEnabled);
 		SetPolygonOffset(state.polygonOffset);

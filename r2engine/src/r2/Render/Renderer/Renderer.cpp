@@ -4006,11 +4006,14 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
+
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
@@ -4037,11 +4040,13 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
@@ -4069,11 +4074,13 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
@@ -4091,7 +4098,6 @@ namespace r2::draw::renderer
 				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppDrawBatch->subCommands = nullptr;
 				zppDrawBatch->state.depthEnabled = true;
-				zppDrawBatch->state.cullState = CULL_FACE_FRONT;
 				zppDrawBatch->state.depthFunction = LESS;
 				
 				zppDrawBatch->state.depthWriteEnabled = true;
@@ -4102,6 +4108,9 @@ namespace r2::draw::renderer
 
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
+
+				cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
+				zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 
@@ -4116,7 +4125,7 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 				zppShadowsDrawBatch->subCommands = nullptr;
 				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-				zppShadowsDrawBatch->state.cullState = CULL_FACE_FRONT;
+
 				zppShadowsDrawBatch->state.depthFunction = LESS;
 
 				zppShadowsDrawBatch->state.depthWriteEnabled = true;
@@ -4127,6 +4136,9 @@ namespace r2::draw::renderer
 
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
+
+				cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
+				zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 				cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
 
@@ -4192,11 +4204,14 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
 					cmd::SetDefaultBlendState(shadowDrawBatch->state.blendState);
@@ -4222,11 +4237,13 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
@@ -4253,11 +4270,13 @@ namespace r2::draw::renderer
 					shadowDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 					shadowDrawBatch->subCommands = nullptr;
 					shadowDrawBatch->state.depthEnabled = true;
-					shadowDrawBatch->state.cullState = CULL_FACE_FRONT;
 					shadowDrawBatch->state.depthFunction = LESS;
 					shadowDrawBatch->state.depthWriteEnabled = true;
 					shadowDrawBatch->state.polygonOffsetEnabled = false;
 					shadowDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(shadowDrawBatch->state.cullState);
+					shadowDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
 
 					cmd::SetDefaultStencilState(shadowDrawBatch->state.stencilState);
 
@@ -4282,12 +4301,14 @@ namespace r2::draw::renderer
 					zppDrawBatch->state.depthWriteEnabled = false;
 				}
 
-				zppDrawBatch->state.cullState = CULL_FACE_BACK;
 				zppDrawBatch->state.depthFunction = LESS;
 				
 				zppDrawBatch->state.polygonOffsetEnabled = false;
 				zppDrawBatch->state.polygonOffset = glm::vec2(0);
 				
+				cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
+				zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
 				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 
 				cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
@@ -4348,11 +4369,12 @@ namespace r2::draw::renderer
 			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
-			drawMipBatch->state.cullState = CULL_FACE_BACK;
 			drawMipBatch->state.depthFunction = LESS;
 			drawMipBatch->state.depthWriteEnabled = false;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultCullState(drawMipBatch->state.cullState);
 
 			cmd::SetDefaultStencilState(drawMipBatch->state.stencilState);
 
@@ -4386,11 +4408,12 @@ namespace r2::draw::renderer
 			drawMipBatch->primitiveType = PrimitiveType::TRIANGLES;
 			drawMipBatch->subCommands = nullptr;
 			drawMipBatch->state.depthEnabled = false;
-			drawMipBatch->state.cullState = CULL_FACE_BACK;
 			drawMipBatch->state.depthFunction = LESS;
 			drawMipBatch->state.depthWriteEnabled = false;
 			drawMipBatch->state.polygonOffsetEnabled = false;
 			drawMipBatch->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultCullState(drawMipBatch->state.cullState);
 
 			cmd::SetDefaultStencilState(drawMipBatch->state.stencilState);
 
@@ -4421,7 +4444,6 @@ namespace r2::draw::renderer
 		aoDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoDrawBatch->subCommands = nullptr;
 		aoDrawBatch->state.depthEnabled = false;
-		aoDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoDrawBatch->state.depthFunction = LESS;
 		aoDrawBatch->state.depthWriteEnabled = false;
 		aoDrawBatch->state.polygonOffsetEnabled = false;
@@ -4429,6 +4451,7 @@ namespace r2::draw::renderer
 
 		cmd::SetDefaultStencilState(aoDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(aoDrawBatch->state.blendState);
+		cmd::SetDefaultCullState(aoDrawBatch->state.cullState);
 
 		EndRenderPass(renderer, RPT_AMBIENT_OCCLUSION, *renderer.mAmbientOcclusionBucket);
 
@@ -4443,12 +4466,13 @@ namespace r2::draw::renderer
 		aoDenoiseDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoDenoiseDrawBatch->subCommands = nullptr;
 		aoDenoiseDrawBatch->state.depthEnabled = false;
-		aoDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoDenoiseDrawBatch->state.depthFunction = LESS;
 		aoDenoiseDrawBatch->state.depthWriteEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 		
+		cmd::SetDefaultCullState(aoDenoiseDrawBatch->state.cullState);
+
 		cmd::SetDefaultStencilState(aoDenoiseDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(aoDenoiseDrawBatch->state.blendState);
 
@@ -4468,12 +4492,12 @@ namespace r2::draw::renderer
 		aoTemporalDenoiseDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		aoTemporalDenoiseDrawBatch->subCommands = nullptr;
 		aoTemporalDenoiseDrawBatch->state.depthEnabled = false;
-		aoTemporalDenoiseDrawBatch->state.cullState = CULL_FACE_BACK;
 		aoTemporalDenoiseDrawBatch->state.depthFunction = LESS;
 		aoTemporalDenoiseDrawBatch->state.depthWriteEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffsetEnabled = false;
 		aoTemporalDenoiseDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(aoTemporalDenoiseDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(aoTemporalDenoiseDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(aoTemporalDenoiseDrawBatch->state.blendState);
 
@@ -4493,12 +4517,12 @@ namespace r2::draw::renderer
 		ssrDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		ssrDrawBatch->subCommands = nullptr;
 		ssrDrawBatch->state.depthEnabled = false;
-		ssrDrawBatch->state.cullState = CULL_FACE_BACK;
 		ssrDrawBatch->state.depthFunction = LESS;
 		ssrDrawBatch->state.depthWriteEnabled = false;
 		ssrDrawBatch->state.polygonOffsetEnabled = false;
 		ssrDrawBatch->state.polygonOffset = glm::vec2(0);
 		
+		cmd::SetDefaultCullState(ssrDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(ssrDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(ssrDrawBatch->state.blendState);
 
@@ -4517,12 +4541,12 @@ namespace r2::draw::renderer
 		ssrConeTracedBatch->primitiveType = PrimitiveType::TRIANGLES;
 		ssrConeTracedBatch->subCommands = nullptr;
 		ssrConeTracedBatch->state.depthEnabled = false;
-		ssrConeTracedBatch->state.cullState = CULL_FACE_BACK;
 		ssrConeTracedBatch->state.depthFunction = LESS;
 		ssrConeTracedBatch->state.depthWriteEnabled = false;
 		ssrConeTracedBatch->state.polygonOffsetEnabled = false;
 		ssrConeTracedBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(ssrConeTracedBatch->state.cullState);
 		cmd::SetDefaultStencilState(ssrConeTracedBatch->state.stencilState);
 		cmd::SetDefaultBlendState(ssrConeTracedBatch->state.blendState);
 
@@ -4549,12 +4573,12 @@ namespace r2::draw::renderer
 		finalDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		finalDrawBatch->subCommands = nullptr;
 		finalDrawBatch->state.depthEnabled = false;
-		finalDrawBatch->state.cullState = CULL_FACE_BACK;
 		finalDrawBatch->state.depthFunction = LESS;
 		finalDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		finalDrawBatch->state.polygonOffsetEnabled = false;
 		finalDrawBatch->state.polygonOffset = glm::vec2(0);
 		
+		cmd::SetDefaultCullState(finalDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(finalDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(finalDrawBatch->state.blendState);
 
@@ -5838,12 +5862,12 @@ namespace r2::draw::renderer
 		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		outputDrawBatch->subCommands = nullptr;
 		outputDrawBatch->state.depthEnabled = false;
-		outputDrawBatch->state.cullState = CULL_FACE_BACK;
 		outputDrawBatch->state.depthFunction = LESS;
 		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		outputDrawBatch->state.polygonOffsetEnabled = false;
 		outputDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(outputDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(outputDrawBatch->state.blendState);
 
@@ -6007,12 +6031,12 @@ namespace r2::draw::renderer
 		edgeDetectionDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		edgeDetectionDrawBatch->subCommands = nullptr;
 		edgeDetectionDrawBatch->state.depthEnabled = false;
-		edgeDetectionDrawBatch->state.cullState = CULL_FACE_BACK;
 		edgeDetectionDrawBatch->state.depthFunction = LESS;
 		edgeDetectionDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		edgeDetectionDrawBatch->state.polygonOffsetEnabled = false;
 		edgeDetectionDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(edgeDetectionDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(edgeDetectionDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(edgeDetectionDrawBatch->state.blendState);
 
@@ -6049,12 +6073,12 @@ namespace r2::draw::renderer
 		blendingWeightDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		blendingWeightDrawBatch->subCommands = nullptr;
 		blendingWeightDrawBatch->state.depthEnabled = false;
-		blendingWeightDrawBatch->state.cullState = CULL_FACE_BACK;
 		blendingWeightDrawBatch->state.depthFunction = LESS;
 		blendingWeightDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		blendingWeightDrawBatch->state.polygonOffsetEnabled = false;
 		blendingWeightDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(blendingWeightDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(blendingWeightDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(blendingWeightDrawBatch->state.blendState);
 
@@ -6091,12 +6115,12 @@ namespace r2::draw::renderer
 		neighborhoodBlendingDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		neighborhoodBlendingDrawBatch->subCommands = nullptr;
 		neighborhoodBlendingDrawBatch->state.depthEnabled = false;
-		neighborhoodBlendingDrawBatch->state.cullState = CULL_FACE_BACK;
 		neighborhoodBlendingDrawBatch->state.depthFunction = LESS;
 		neighborhoodBlendingDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		neighborhoodBlendingDrawBatch->state.polygonOffsetEnabled = false;
 		neighborhoodBlendingDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(neighborhoodBlendingDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(neighborhoodBlendingDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(neighborhoodBlendingDrawBatch->state.blendState);
 
@@ -6145,12 +6169,12 @@ namespace r2::draw::renderer
 		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		outputDrawBatch->subCommands = nullptr;
 		outputDrawBatch->state.depthEnabled = false;
-		outputDrawBatch->state.cullState = CULL_FACE_BACK;
 		outputDrawBatch->state.depthFunction = LESS;
 		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		outputDrawBatch->state.polygonOffsetEnabled = false;
 		outputDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(outputDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(outputDrawBatch->state.blendState);
 
@@ -6185,12 +6209,12 @@ namespace r2::draw::renderer
 		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		outputDrawBatch->subCommands = nullptr;
 		outputDrawBatch->state.depthEnabled = false;
-		outputDrawBatch->state.cullState = CULL_FACE_BACK;
 		outputDrawBatch->state.depthFunction = LESS;
 		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		outputDrawBatch->state.polygonOffsetEnabled = false;
 		outputDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(outputDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(outputDrawBatch->state.blendState);
 
@@ -6230,12 +6254,12 @@ namespace r2::draw::renderer
 		outputDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
 		outputDrawBatch->subCommands = nullptr;
 		outputDrawBatch->state.depthEnabled = false;
-		outputDrawBatch->state.cullState = CULL_FACE_BACK;
 		outputDrawBatch->state.depthFunction = LESS;
 		outputDrawBatch->state.depthWriteEnabled = true; //needs to be set for some reason even though depth isn't enabled?
 		outputDrawBatch->state.polygonOffsetEnabled = false;
 		outputDrawBatch->state.polygonOffset = glm::vec2(0);
 
+		cmd::SetDefaultCullState(outputDrawBatch->state.cullState);
 		cmd::SetDefaultStencilState(outputDrawBatch->state.stencilState);
 		cmd::SetDefaultBlendState(outputDrawBatch->state.blendState);
 
@@ -6861,11 +6885,11 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
-				drawBatch->state.cullState = CULL_FACE_BACK;
 				drawBatch->state.depthFunction = LESS;
 				drawBatch->state.depthWriteEnabled = false;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
+				cmd::SetDefaultCullState(drawBatch->state.cullState);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 				cmd::SetDefaultBlendState(drawBatch->state.blendState);
 			}
@@ -6880,11 +6904,11 @@ namespace r2::draw::renderer
 				drawBatch->primitiveType = batchOffset.primitiveType;
 				drawBatch->subCommands = nullptr;
 				drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
-				drawBatch->state.cullState = CULL_FACE_BACK;
 				drawBatch->state.depthFunction = LESS;
 				drawBatch->state.depthWriteEnabled = false;
 				drawBatch->state.polygonOffsetEnabled = false;
 				drawBatch->state.polygonOffset = glm::vec2(0, 0);
+				cmd::SetDefaultCullState(drawBatch->state.cullState);
 				cmd::SetDefaultStencilState(drawBatch->state.stencilState);
 				cmd::SetDefaultBlendState(drawBatch->state.blendState);
 			}
@@ -9018,6 +9042,11 @@ namespace r2::draw::renderer
 	void SetDefaultBlendState(DrawParameters& drawParameters)
 	{
 		cmd::SetDefaultBlendState(drawParameters.blendState);
+	}
+
+	void SetDefaultCullState(DrawParameters& drawParameters)
+	{
+		cmd::SetDefaultCullState(drawParameters.cullState);
 	}
 
 	///More draw functions...

@@ -65,4 +65,11 @@ namespace r2::draw::cmd
 		blendState.blendEquation = BLEND_EQUATION_ADD;
 		blendState.numBlendFunctions = 0;
 	}
+
+	void SetDefaultCullState(CullState& cullState)
+	{
+		cullState.cullingEnabled = false;
+		cullState.cullFace = CULL_FACE_BACK;
+		cullState.frontFace = CCW;
+	}
 }

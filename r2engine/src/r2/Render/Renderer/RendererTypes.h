@@ -117,6 +117,16 @@ namespace r2::draw
     extern u32 BLEND_EQUATION_ADD;
     extern u32 BLEND_EQUATION_SUBTRACT;
 
+    extern u32 CW;
+    extern u32 CCW;
+
+    struct CullState
+    {
+        b32 cullingEnabled;
+        u32 cullFace;
+        u32 frontFace;
+    };
+
 	struct StencilOp
 	{
 		u32 stencilFail;
@@ -167,7 +177,7 @@ namespace r2::draw
 
         BlendState blendState;
 
-        u32 cullState = CULL_FACE_BACK;
+        CullState cullState;
     };
 
 	enum RendererBackend : u8
