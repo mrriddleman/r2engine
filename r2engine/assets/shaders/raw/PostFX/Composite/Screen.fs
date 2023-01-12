@@ -37,7 +37,7 @@ void main()
 
 	colorCorrectedColor = ACESFitted(colorCorrectedColor);
 
-	colorCorrectedColor = ApplyFilmGrain(colorCorrectedColor, cc_filmGrainStrength);
+	colorCorrectedColor = ApplyFilmGrain(colorCorrectedColor, fs_in.texCoords.xy);
 	
 	FragColor = vec4(colorCorrectedColor, sampledColor.a);
 }

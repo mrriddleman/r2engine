@@ -39,11 +39,23 @@ vec3 GammaCorrect(vec3 color)
 	return pow(color, vec3(cc_gamma));
 }
 
-vec3 ApplyFilmGrain(vec3 color, float strength)
+float FilmGrainRandom(vec2 p)
 {
-	float randomIntensity = fract(10000 * sin(gl_FragCoord.x + gl_FragCoord.y * cameraPosTimeW.w) * PI);
-	strength *= randomIntensity;
-	return color + strength;
+	vec2 K1 = vec2(
+    	23.14069263277926, // e^pi (Gelfond's constant)
+    	2.665144142690225 // 2^sqrt(2) (Gelfond–Schneider constant)
+  	);
+
+	return fract( cos( dot(p,K1) * cameraPosTimeW.w ) * 12345.6789 );
+}
+
+vec3 ApplyFilmGrain(vec3 color, vec2 uv)
+{
+ 	vec2 uvRandom = uv;
+ 	uvRandom.y *= FilmGrainRandom(vec2(uvRandom.y, cc_filmGrainStrength));
+ 	color += FilmGrainRandom(uvRandom) * cc_filmGrainStrength;
+
+ 	return color;
 }
 
 #endif

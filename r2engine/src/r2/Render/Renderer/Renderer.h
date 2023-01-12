@@ -29,7 +29,7 @@ namespace r2::draw
 		float brightness = 0.0f;
 		float saturation = 1.0f;
 		float gamma = 1.0f / 2.2f;
-		float filmGrainStrength = 0.04f;
+		float filmGrainStrength = 0.1f;
 	};
 
 	class BufferLayout;
