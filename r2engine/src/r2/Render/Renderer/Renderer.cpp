@@ -1822,7 +1822,8 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "cc_constrast"},
 			{r2::draw::ShaderDataType::Float, "cc_brightness"},
 			{r2::draw::ShaderDataType::Float, "cc_saturation"},
-			{r2::draw::ShaderDataType::Float, "cc_gamma"}
+			{r2::draw::ShaderDataType::Float, "cc_gamma"},
+			{r2::draw::ShaderDataType::Float, "cc_filmGrainStrength"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -8607,7 +8608,8 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 1, &renderer.mColorCorrectionData.brightness);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
-			
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 4, &renderer.mColorCorrectionData.filmGrainStrength);
+
 			renderer.mColorCorrectionNeedsUpdate = false;
 		}
 	}

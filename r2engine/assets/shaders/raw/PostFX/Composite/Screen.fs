@@ -35,7 +35,11 @@ void main()
 
 	colorCorrectedColor = ApplySaturation(colorCorrectedColor, cc_saturation);
 
-	FragColor = vec4(ACESFitted(colorCorrectedColor), sampledColor.a);
+	colorCorrectedColor = ACESFitted(colorCorrectedColor);
+
+	colorCorrectedColor = ApplyFilmGrain(colorCorrectedColor, cc_filmGrainStrength);
+	
+	FragColor = vec4(colorCorrectedColor, sampledColor.a);
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)

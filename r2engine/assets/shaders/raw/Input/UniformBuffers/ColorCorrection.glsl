@@ -2,6 +2,8 @@
 #define GLSL_COLOR_CORRECTION
 
 #include "Common/CommonFunctions.glsl"
+#include "Input/UniformBuffers/Vectors.glsl"
+
 
 layout (std140, binding = 7) uniform ColorCorrectionValues
 {
@@ -9,6 +11,7 @@ layout (std140, binding = 7) uniform ColorCorrectionValues
 	float cc_brightness;
 	float cc_saturation;
 	float cc_gamma;
+	float cc_filmGrainStrength;
 };
 
 vec3 ToGrayscaleColor(vec3 color)
@@ -36,5 +39,11 @@ vec3 GammaCorrect(vec3 color)
 	return pow(color, vec3(cc_gamma));
 }
 
+vec3 ApplyFilmGrain(vec3 color, float strength)
+{
+	float randomIntensity = fract(10000 * sin(gl_FragCoord.x + gl_FragCoord.y * cameraPosTimeW.w) * PI);
+	strength *= randomIntensity;
+	return color + strength;
+}
 
 #endif

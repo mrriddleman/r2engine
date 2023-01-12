@@ -140,6 +140,7 @@ layout (std140, binding = 7) uniform ColorCorrectionValues
 	float cc_brightness;
 	float cc_saturation;
 	float cc_gamma;
+	float cc_filmGrainStrength;
 };
 
 ssbo buffers:
