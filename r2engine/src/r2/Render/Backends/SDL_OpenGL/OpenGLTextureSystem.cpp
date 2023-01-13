@@ -129,15 +129,21 @@ namespace r2::draw::gl
 
 	namespace texcontainer
 	{
-		u32 SmallestMip(const r2::draw::tex::TextureFormat& format)
+		u32 SmallestMipX(const r2::draw::tex::TextureFormat& format)
 		{
 			double denom = format.mipLevels > 1 ? std::pow(2, format.mipLevels - 1) : 1.0;
 			return format.width / denom;
 		}
 
-		bool CanBeSparse(const r2::draw::tex::TextureFormat& format, const SparseInternalFormatTileSizes& tileSize, u32 smallestMip)
+		u32 SmallestMipY(const r2::draw::tex::TextureFormat& format)
 		{
-			return tileSize.bestXSize <= smallestMip && !format.isMSAA;
+			double denom = format.mipLevels > 1 ? std::pow(2, format.mipLevels - 1) : 1.0;
+			return format.height / denom;
+		}
+
+		bool CanBeSparse(const r2::draw::tex::TextureFormat& format, const SparseInternalFormatTileSizes& tileSize, u32 smallestMipX, u32 smallestMipY)
+		{
+			return (tileSize.bestXSize <= smallestMipX && tileSize.bestYSize <= smallestMipY) && !format.isMSAA;
 		}
 
 		SparseInternalFormatTileSizes FindBestTileSize(GLenum target, const r2::draw::tex::TextureFormat& format)
@@ -191,9 +197,10 @@ namespace r2::draw::gl
 
 			SparseInternalFormatTileSizes tileSizes = FindBestTileSize(target, format);
 			
-			u32 smallestMip = SmallestMip(format);
+			u32 smallestMipX = SmallestMipX(format);
+			u32 smallestMipY = SmallestMipY(format);
 
-			container.isSparse = CanBeSparse(format, tileSizes, smallestMip);
+			container.isSparse = CanBeSparse(format, tileSizes, smallestMipX, smallestMipY);
 
 			glGenTextures(1, &container.texId);
 
@@ -388,8 +395,8 @@ namespace r2::draw::gl
 			
 			GLCall(glBindTexture(target, container.texId));
 
-			GLsizei levelWidth = container.format.width,
-				levelHeight = container.format.height;
+			GLsizei levelWidth = glm::max( container.format.width, container.xTileSize),
+				levelHeight = glm::max(container.format.height, container.yTileSize);
 
 			//const int k_maxLevels = std::min(container.format.mipLevels, 4);
 			const int k_maxLevels = container.format.mipLevels;

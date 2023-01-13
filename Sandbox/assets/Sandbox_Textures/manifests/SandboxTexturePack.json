@@ -1,6 +1,52 @@
 {
   texturePacks: [
     {
+      packName: 13632125256007332093,
+      albedo: [
+        "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/ColorGradingLUT/albedo/test_color_grading_lut.rtex"
+      ],
+      normal: [
+
+      ],
+      emissive: [
+
+      ],
+      metallic: [
+
+      ],
+      occlusion: [
+
+      ],
+      roughness: [
+
+      ],
+      height: [
+
+      ],
+      anisotropy: [
+
+      ],
+      detail: [
+
+      ],
+      clearCoat: [
+
+      ],
+      clearCoatRoughness: [
+
+      ],
+      clearCoatNormal: [
+
+      ],
+      packSize: 131296,
+      totalNumberOfTextures: 1,
+      metaData: {
+        mipLevels: [
+
+        ]
+      }
+    },
+    {
       packName: 18199531748715869547,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.rtex",
@@ -755,15 +801,15 @@
       }
     }
   ],
-  totalNumberOfTextures: 136,
-  totalTextureSize: 298689320,
+  totalNumberOfTextures: 137,
+  totalTextureSize: 298820616,
   maxTexturesInAPack: 69,
   formatMetaData: [
     {
       format: "SRGBA8",
       maxWidth: 4096,
       maxHeight: 4096,
-      numTextures: 25,
+      numTextures: 26,
       maxMips: 1
     },
     {
