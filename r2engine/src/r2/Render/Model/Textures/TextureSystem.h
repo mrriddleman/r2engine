@@ -41,6 +41,8 @@ namespace r2::draw::texsys
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::TextureHandle& textureHandle);
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::CubemapTexture& cubemap);
 
+	const r2::draw::tex::TextureHandle* GetTextureHandle(const r2::draw::tex::Texture& texture);
+
 	u32 GetNumberOfMipMaps(const r2::draw::tex::CubemapTexture& cubemap);
 	
 	

@@ -234,6 +234,19 @@ namespace r2::draw::texsys
 		return GetTextureAddressInternal(GetCubemapAssetHandle(cubemap));
 	}
 
+	const r2::draw::tex::TextureHandle* GetTextureHandle(const r2::draw::tex::Texture& texture)
+	{
+		TextureGPUHandle defaultGPUHandle;
+		const TextureGPUHandle& texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, defaultGPUHandle);
+
+		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, defaultGPUHandle.gpuHandle))
+		{
+			return &texGPUHandle.gpuHandle;
+		}
+
+		return nullptr;
+	}
+
 	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture)
 	{
 		if (s_optrTextureSystem == nullptr)

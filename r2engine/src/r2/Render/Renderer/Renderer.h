@@ -29,7 +29,7 @@ namespace r2::draw
 		float brightness = 0.0f;
 		float saturation = 1.0f;
 		float gamma = 1.0f / 2.2f;
-		float filmGrainStrength = 0.1f;
+		float filmGrainStrength = 0.05f;
 	};
 
 	class BufferLayout;
@@ -472,6 +472,12 @@ namespace r2::draw
 		ColorCorrection mColorCorrectionData;
 		b32 mColorCorrectionNeedsUpdate = true;
 
+		b32 mColorGradingEnabled = false;
+		tex::TextureAddress mColorGradingLUT;
+		float mNumColorGradingSwatches = 1.0f;
+		float mColorGradingHalfColX = 0.0f;
+		float mColorGradingHalfColY = 0.0f;
+		f32 mColorGradingContribution = 0.0f;
 		//--------END COLOR CORRECTION Data------------
 
 
@@ -593,6 +599,10 @@ namespace r2::draw::renderer
 	void SetDefaultCullState(DrawParameters& drawParameters);
 
 	void SetColorCorrection(const ColorCorrection& cc);
+	void SetColorGradingLUT(const tex::Texture* lut, u32 numSwatches);
+	void EnableColorGrading(bool isEnabled);
+	void SetColorGradingContribution(float contribution);
+
 
 	///More draw functions...
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType);

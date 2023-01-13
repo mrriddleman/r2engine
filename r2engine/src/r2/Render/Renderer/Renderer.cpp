@@ -461,6 +461,9 @@ namespace r2::draw::renderer
 	void SetColorCorrection(Renderer& renderer, const ColorCorrection& cc);
 	void UpdateColorCorrectionIfNeeded(Renderer& renderer);
 
+	void SetColorGradingLUT(Renderer& renderer, const tex::TextureAddress& lut, f32 halfColX, f32 halfColY, f32 numSwatches);
+	void EnableColorGrading(Renderer& renderer, bool isEnabled);
+	void SetColorGradingContribution(Renderer& renderer, float contribution);
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
@@ -1823,7 +1826,15 @@ namespace r2::draw::renderer
 			{r2::draw::ShaderDataType::Float, "cc_brightness"},
 			{r2::draw::ShaderDataType::Float, "cc_saturation"},
 			{r2::draw::ShaderDataType::Float, "cc_gamma"},
-			{r2::draw::ShaderDataType::Float, "cc_filmGrainStrength"}
+
+			{r2::draw::ShaderDataType::Float, "cc_filmGrainStrength"},
+			{r2::draw::ShaderDataType::Float, "cg_halfColX"},
+			{r2::draw::ShaderDataType::Float, "cg_halfColY"},
+			{r2::draw::ShaderDataType::Float, "cg_numColors"},
+
+			{r2::draw::ShaderDataType::Struct, "cg_LUTTexture"},
+
+			{r2::draw::ShaderDataType::Float, "cg_contribution"}
 		});
 
 		AddModelsLayout(renderer, r2::draw::ConstantBufferLayout::Type::Big);
@@ -8597,6 +8608,28 @@ namespace r2::draw::renderer
 		renderer.mColorCorrectionNeedsUpdate = true;
 	}
 
+	void SetColorGradingLUT(Renderer& renderer, const tex::TextureAddress& lut, f32 halfColX, f32 halfColY, f32 numSwatches)
+	{
+		renderer.mColorGradingLUT = lut;
+		renderer.mNumColorGradingSwatches = numSwatches;
+		renderer.mColorCorrectionNeedsUpdate = true;
+		renderer.mColorGradingHalfColX = halfColX;
+		renderer.mColorGradingHalfColY = halfColY;
+	}
+
+	void EnableColorGrading(Renderer& renderer, bool isEnabled)
+	{
+		renderer.mColorGradingEnabled = isEnabled;
+		renderer.mColorCorrectionNeedsUpdate = true;
+	}
+
+	void SetColorGradingContribution(Renderer& renderer, float contribution)
+	{
+		renderer.mColorGradingContribution = glm::clamp(contribution, 0.0f, 1.0f);
+		
+		renderer.mColorCorrectionNeedsUpdate = true;
+	}
+
 	void UpdateColorCorrectionIfNeeded(Renderer& renderer)
 	{
 		if (renderer.mColorCorrectionNeedsUpdate)
@@ -8609,6 +8642,19 @@ namespace r2::draw::renderer
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 2, &renderer.mColorCorrectionData.saturation);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 3, &renderer.mColorCorrectionData.gamma);
 			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 4, &renderer.mColorCorrectionData.filmGrainStrength);
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 5, &renderer.mColorGradingHalfColX);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 6, &renderer.mColorGradingHalfColY);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 7, &renderer.mNumColorGradingSwatches);
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 8, &renderer.mColorGradingLUT);
+
+			float contribution = renderer.mColorGradingContribution;
+			if (!renderer.mColorGradingEnabled)
+			{
+				contribution = 0.0f;
+			}
+
+			r2::draw::renderer::AddFillConstantBufferCommandForData(renderer, colorCorrectionConstantBufferHandle, 9, &contribution);
 
 			renderer.mColorCorrectionNeedsUpdate = false;
 		}
@@ -9205,6 +9251,31 @@ namespace r2::draw::renderer
 	void SetColorCorrection(const ColorCorrection& cc)
 	{
 		SetColorCorrection(MENG.GetCurrentRendererRef(), cc);
+	}
+
+	void SetColorGradingLUT(const tex::Texture* lut, u32 numSwatches)
+	{
+		R2_CHECK(numSwatches > 0, "You must have one or more swatches in your texture!");
+		R2_CHECK(lut != nullptr, "Your lut texture is nullptr!");
+
+		const tex::TextureHandle* textureHandle = texsys::GetTextureHandle(*lut);
+
+		R2_CHECK(textureHandle != nullptr, "Texture handle is nullptr!");
+
+		float halfColX = 0.5f / static_cast<f32>(textureHandle->container->format.width);
+		float halfColY = 0.5f / static_cast<f32>(textureHandle->container->format.height);
+
+		SetColorGradingLUT(MENG.GetCurrentRendererRef(), texsys::GetTextureAddress(*lut), halfColX, halfColY, static_cast<f32>( numSwatches));
+	}
+
+	void EnableColorGrading(bool isEnabled)
+	{
+		EnableColorGrading(MENG.GetCurrentRendererRef(), isEnabled);
+	}
+
+	void SetColorGradingContribution(float contribution)
+	{
+		SetColorGradingContribution(MENG.GetCurrentRendererRef(), contribution);
 	}
 
 	//------------------------------------------------------------------------------
