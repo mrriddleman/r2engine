@@ -39,7 +39,7 @@ void main()
 
 	colorCorrectedColor = ApplyFilmGrain(colorCorrectedColor, fs_in.texCoords.xy);
 	
-	FragColor = vec4(colorCorrectedColor, sampledColor.a);
+	FragColor = ApplyColorGrading( vec4(colorCorrectedColor, sampledColor.a) );
 }
 
 vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
