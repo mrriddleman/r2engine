@@ -223,14 +223,12 @@ namespace r2::draw::mat
 	void LoadAllMaterialTexturesForMaterialFromDisk(MaterialSystem& system, const MaterialHandle& materialHandle);
 	//@TODO(Serge): add function to upload only 1 material?
 
-	void UnloadAllMaterialTexturesFromMemory(MaterialSystem& system);
-	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHanle);
+	void UnloadAllMaterialTexturesFromDisk(MaterialSystem& system);
+
 
 	void UploadAllMaterialTexturesToGPU(MaterialSystem& system);
 	void UploadMaterialTexturesToGPUFromMaterialName(MaterialSystem& system, u64 materialName);
 	void UploadMaterialTexturesToGPU(MaterialSystem& system, MaterialHandle matID);
-
-
 	void UnloadAllMaterialTexturesFromGPU(MaterialSystem& system);
 
 

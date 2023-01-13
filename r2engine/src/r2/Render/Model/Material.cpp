@@ -447,15 +447,9 @@ namespace r2::draw::mat
 		}
 	}
 
-	void UnloadAllMaterialTexturesFromMemory(MaterialSystem& system)
+	void UnloadAllMaterialTexturesFromDisk(MaterialSystem& system)
 	{
-		//@TODO(Serge): implement
-	}
-
-	void UnloadMaterialTexturesFromMemory(MaterialSystem& system, const MaterialHandle& materialHandle)
-	{
-		R2_CHECK(system.mSlot == materialHandle.slot, "Mismatching! material handle doesn't belong to the system you passed in!");
-		//@TODO(Serge): implement
+		system.mAssetCache->FlushAll();
 	}
 
 	void UploadAllMaterialTexturesToGPU(MaterialSystem& system)
