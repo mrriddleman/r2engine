@@ -691,13 +691,26 @@ public:
             r2::sarr::Push(*mStaticCubeModelMats, modelMat);
         }
 
-        //transparent windows
 
+        //color grading
+
+        r2::draw::MaterialHandle colorGradingMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("ColorGradingLUT"));
+        R2_CHECK(r2::draw::mat::IsValid(colorGradingMaterialHandle), "Failed to get color grading material handle");
+
+        const r2::draw::tex::Texture& colorGradingLUT = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mMaterialSystem, colorGradingMaterialHandle).normalTextures.materialTexture.diffuseTexture;
+
+        r2::draw::renderer::SetColorGradingLUT(&colorGradingLUT, 32);
+        r2::draw::renderer::SetColorGradingContribution(0.2);
+        r2::draw::renderer::EnableColorGrading(true);
+
+
+        //transparent windows
         r2::draw::MaterialHandle transparentWindowMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("TransparentWindow"));
         R2_CHECK(r2::draw::mat::IsValid(transparentWindowMaterialHandle), "Failed to get transparent window material handle");
 
 
         r2::sarr::Push(*mTransparentWindowMaterialHandles, transparentWindowMaterialHandle);
+
 
         float startingX = 10.0f;
 

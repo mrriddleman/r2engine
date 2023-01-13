@@ -79,7 +79,7 @@ vec4 ApplyColorGrading(vec4 color)
 	vec2 lutPos = vec2(cell / cg_numSwatches + xOffset, yOffset);
 
 	ivec3 lutCoord = ivec3(lutPos.r, lutPos.g, cg_lut.page );
-	vec4 lutColor = (1.0 - cg_contribution) * vec4(1) + cg_contribution * texelFetch(sampler2DArray(cg_lut.container), lutCoord, 0);
+	vec4 lutColor = texture(sampler2DArray(cg_lut.container), lutCoord);
 
 	return mix(color, lutColor, cg_contribution);
 }
