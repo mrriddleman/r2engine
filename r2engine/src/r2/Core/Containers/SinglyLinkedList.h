@@ -23,7 +23,15 @@ namespace r2
         };
         
         Node* head = nullptr;
+
+        static u64 MemorySize(u64 capacity);
     };
+
+    template <class T>
+    u64 SinglyLinkedList<T>::MemorySize(u64 capacity)
+    {
+        return sizeof(SinglyLinkedList<T>) + capacity * sizeof(Node);
+    }
     
     namespace sll
     {

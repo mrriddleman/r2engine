@@ -101,7 +101,7 @@ namespace r2::draw::shadersystem
             return false;
         }
 
-        r2::mem::MemoryArea::SubArea::Handle subAreaHandle = noptrMemArea->AddSubArea(memoryNeeded, "Material System");
+        r2::mem::MemoryArea::SubArea::Handle subAreaHandle = noptrMemArea->AddSubArea(memoryNeeded, "Shader System");
 
         R2_CHECK(subAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "We have an invalid sub area");
 
@@ -129,7 +129,7 @@ namespace r2::draw::shadersystem
         //allocate the MemorySystem
         s_optrShaderSystem = ALLOC(r2::draw::ShaderSystem, *shaderLinearArena);
 
-        R2_CHECK(s_optrShaderSystem != nullptr, "We couldn't allocate the material system!");
+        R2_CHECK(s_optrShaderSystem != nullptr, "We couldn't allocate the shader system!");
 
         s_optrShaderSystem->mMemoryAreaHandle = memoryAreaHandle;
         s_optrShaderSystem->mSubAreaHandle = subAreaHandle;
@@ -158,7 +158,7 @@ namespace r2::draw::shadersystem
         s_optrShaderSystem->mShaderLoadingArena = MAKE_STACK_ARENA(*shaderLinearArena, SHADER_LOADING_SIZE * NUM_MANIFESTS_TO_LOAD);
 
         R2_CHECK(s_optrShaderSystem->mShaderLoadingArena != nullptr, "We couldn't make the loading arena");
-        R2_CHECK(s_optrShaderSystem->mShaders != nullptr, "we couldn't allocate the array for materials?");
+        R2_CHECK(s_optrShaderSystem->mShaders != nullptr, "we couldn't allocate the array for shaders?");
 
         constexpr bool assertOnFailure = true;
 

@@ -22,6 +22,8 @@ namespace r2::draw::vb
 	using VertexBufferLayoutHandle = u32; //this will be the index into the array
 	using GPUModelRefHandle = u64;
 
+	GPUModelRefHandle InvalidModelRefHandle = 0;
+
 	struct GPUBufferEntry
 	{
 		u32 bufferHandle;
@@ -69,7 +71,7 @@ namespace r2::draw::vb
 
 	struct VertexBufferLayoutSize
 	{
-		u32 vertexBufferSize[MAX_VBOS];
+		u32 vertexBufferSizes[MAX_VBOS];
 		u32 indexBufferSize;
 		u32 numVertexBuffers;
 	};
@@ -90,14 +92,17 @@ namespace r2::draw::vb
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 
-		r2::mem::LinearArena* mArena;
+		u32 mMaxModelsLoaded;
+		u32 mAvgNumberOfMeshesPerModel;
+
+		r2::mem::LinearArena* mArena; //if we want more flexibility - make a free list arena instead
 		r2::mem::StackArena* mGPUModelRefHandleArena;
 		r2::SArray<VertexBufferLayout>* mVertexBufferLayouts;
 
 		static u64 MemorySize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel, u64 alignment);
 	};
 
-	vb::VertexBufferLayoutSystem* CreateVertexBufferSystem(const r2::mem::MemoryArea::Handle memoryAreaHandle);
+	vb::VertexBufferLayoutSystem* CreateVertexBufferSystem(const r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel);
 	void FreeVertexBufferSystem(vb::VertexBufferLayoutSystem* system);
 }
 
@@ -117,7 +122,12 @@ namespace r2::draw::vbsys
 	
 	//Somehow the modelRefHandle will be used to figure out which vb::VertexBufferLayoutHandle is being used in
 	bool UnloadModelFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& modelRefHandle);
-	
+
+	bool UnloadAllModelsFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
+
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model);
+
 	bool IsModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
 	bool IsAnimModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model);
 
