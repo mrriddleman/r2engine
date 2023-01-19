@@ -1,7 +1,8 @@
 #include "r2pch.h"
+#include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
 #include "r2/Render/Renderer/RenderKey.h"
-#include "r2/Core/Memory/Memory.h"
+#include "r2/Render/Renderer/RendererImpl.h"
 
 namespace r2::draw::vb
 {
@@ -100,7 +101,7 @@ namespace r2::draw::vb
 		system->mArena = vertexBufferLayoutLinearArena;
 		system->mAvgNumberOfMeshesPerModel = avgNumberOfMeshesPerModel;
 		system->mMaxModelsLoaded = maxModelsLoaded;
-		system->mVertexBufferLayouts = MAKE_SARRAY(*vertexBufferLayoutLinearArena, VertexBufferLayout, numBufferLayouts);
+		system->mVertexBufferLayouts = MAKE_SARRAY(*vertexBufferLayoutLinearArena, VertexBufferLayout*, numBufferLayouts);
 
 		R2_CHECK(system->mVertexBufferLayouts != nullptr, "we couldn't allocate the array for vertex buffer layouts?");
 
@@ -115,13 +116,19 @@ namespace r2::draw::vb
 #ifdef R2_DEBUG
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
+		const u32 freelistHeaderSize = mem::FreeListAllocator::HeaderSize();
+
+		u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
 
 		u64 gpuModelRefArenaSize =
-				(r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef>::MemorySize(maxModelsLoaded), ALIGNMENT, stackHeaderSize, boundsChecking)  +
-				 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				 r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel) * (MAX_VBOS + 1), ALIGNMENT, stackHeaderSize, boundsChecking)
+			(r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef>::MemorySize(maxModelsLoaded), ALIGNMENT, stackHeaderSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel * maxModelsLoaded) * (MAX_VBOS + 1), ALIGNMENT, stackHeaderSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, ALIGNMENT, freelistHeaderSize, boundsChecking) * avgNumberOfMeshesPerModel * maxModelsLoaded * (MAX_VBOS + 1)
 				) * numBufferLayouts;
+
+		R2_CHECK(gpuModelRefArenaSize <= Megabytes(32), "Don't want this to go crazy");
 
 		system->mGPUModelRefHandleArena = MAKE_STACK_ARENA(*vertexBufferLayoutLinearArena, gpuModelRefArenaSize);
 
@@ -153,7 +160,7 @@ namespace r2::draw::vb
 		{
 			auto& vertexBufferLayout = r2::sarr::At(*system->mVertexBufferLayouts, i);
 
-			const s32 numGPUModelRefs = static_cast<s32>( r2::sarr::Size(*vertexBufferLayout.gpuModelRefs) );
+			const s32 numGPUModelRefs = static_cast<s32>( r2::sarr::Size(*vertexBufferLayout->gpuModelRefs) );
 
 			//@NOTE(Serge): maybe we should already have things unloaded by the time we get here?
 			bool success = vbsys::UnloadAllModelsFromVertexBuffer(*system, i);
@@ -164,7 +171,7 @@ namespace r2::draw::vb
 
 			R2_CHECK(success, "Couldn't remove the vertex buffer layout!");
 		}
-
+		
 		FREE(system->mGPUModelRefHandleArena, *linearArena);
 
 		FREE(system->mVertexBufferLayouts, *linearArena);
@@ -183,18 +190,25 @@ namespace r2::draw::vb
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
 		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+		u32 freelistHeaderSize = r2::mem::FreeListAllocator::HeaderSize();
+
+		u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
 
 		u64 gpuModelRefArenaSize =
 			(r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef>::MemorySize(maxModelsLoaded), alignment, stackHeaderSize, boundsChecking) +
 			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), alignment, stackHeaderSize, boundsChecking) +
 			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), alignment, stackHeaderSize, boundsChecking) +
-			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel) * (MAX_VBOS +1), alignment, stackHeaderSize, boundsChecking)
+			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel * maxModelsLoaded) * (MAX_VBOS +1), alignment, stackHeaderSize, boundsChecking) +
+			 r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, freelistHeaderSize, boundsChecking) * avgNumberOfMeshesPerModel * maxModelsLoaded * (MAX_VBOS + 1)
 			) * numBufferLayouts;
+
+		R2_CHECK(gpuModelRefArenaSize <= Megabytes(32), "Don't want this to go crazy");
 
 		u64 memorySize =
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayoutSystem), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexBufferLayout*>::MemorySize(numBufferLayouts), alignment, headerSize, boundsChecking) * numBufferLayouts +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexBufferLayout>::MemorySize(numBufferLayouts), alignment, headerSize, boundsChecking) * numBufferLayouts +
 			gpuModelRefArenaSize;
 
@@ -209,18 +223,18 @@ namespace r2::draw::vb
 
 		auto& vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
-		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout.gpuModelRefs), "Should be empty by the time you free this!");
+		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout->gpuModelRefs), "Should be empty by the time you free this!");
 
-		FREE(vertexBufferLayout.gpuModelRefs, *system.mGPUModelRefHandleArena);
+		FREE(vertexBufferLayout->gpuModelRefs, *system.mGPUModelRefHandleArena);
 
-		if(vertexBufferLayout.indexBuffer.bufferHandle != 0)
+		if(vertexBufferLayout->indexBuffer.bufferHandle != 0)
 		{ 
-			FREE(vertexBufferLayout.indexBuffer.gpuFreeList, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->indexBuffer.freeList, *system.mGPUModelRefHandleArena);
 		}
 
-		for (s32 i = vertexBufferLayout.gpuLayout.numVBOHandles - 1; i >= 0; --i)
+		for (s32 i = vertexBufferLayout->gpuLayout.numVBOHandles - 1; i >= 0; --i)
 		{
-			FREE(vertexBufferLayout.vertexBuffers[i].gpuFreeList, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->vertexBuffers[i].freeList, *system.mGPUModelRefHandleArena);
 		}
 
 		r2::sarr::Pop(*system.mVertexBufferLayouts);
@@ -231,9 +245,90 @@ namespace r2::draw::vb
 
 namespace r2::draw::vbsys
 {
+	using FreeNode = SinglyLinkedList<vb::GPUBufferEntry>::Node;
+
+	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
+	{
+		const auto& numLayouts = r2::sarr::Size(*system.mVertexBufferLayouts);
+
+		if (handle >= 0 && handle < numLayouts)
+			return true;
+
+		return false;
+	}
+
 	vb::VertexBufferLayoutHandle AddVertexBufferLayout(vb::VertexBufferLayoutSystem& system, const r2::draw::BufferLayoutConfiguration& vertexConfig)
 	{
-		return {};
+		vb::VertexBufferLayout* newVertexBufferLayout = ALLOC(vb::VertexBufferLayout, *system.mArena);
+
+		newVertexBufferLayout->layout = vertexConfig;
+
+		static u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
+
+		for (u32 i = 0; i < vertexConfig.numVertexConfigs; ++i)
+		{
+			newVertexBufferLayout->vertexBuffers[i].freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
+			newVertexBufferLayout->vertexBuffers[i].bufferCapacity = vertexConfig.vertexBufferConfigs[i].bufferSize;
+			newVertexBufferLayout->vertexBuffers[i].bufferSize = 0;
+
+			FreeNode* node = ALLOC(FreeNode, *newVertexBufferLayout->vertexBuffers[i].freeList);
+
+			node->data.size = vertexConfig.vertexBufferConfigs[i].bufferSize;
+			node->data.start = 0;
+			node->next = nullptr;
+			newVertexBufferLayout->vertexBuffers[i].gpuFreeList.head = nullptr;
+
+			sll::Insert(newVertexBufferLayout->vertexBuffers[i].gpuFreeList, nullptr, node);
+		}
+
+		newVertexBufferLayout->indexBuffer.freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
+		newVertexBufferLayout->indexBuffer.bufferCapacity = vertexConfig.indexBufferConfig.bufferSize;
+		newVertexBufferLayout->indexBuffer.bufferSize = 0;
+
+		FreeNode* node = ALLOC(FreeNode, *newVertexBufferLayout->indexBuffer.freeList);
+
+		node->data.size = vertexConfig.indexBufferConfig.bufferSize;
+		node->data.start = 0;
+		node->next = nullptr;
+		newVertexBufferLayout->indexBuffer.gpuFreeList.head = nullptr;
+
+		sll::Insert(newVertexBufferLayout->indexBuffer.gpuFreeList, nullptr, node);
+
+
+		newVertexBufferLayout->gpuModelRefs = MAKE_SARRAY(*system.mGPUModelRefHandleArena, vb::GPUModelRef, system.mMaxModelsLoaded);
+
+		//Now do the actual renderimpl setup of the buffers
+
+		//VAOs
+		rendererimpl::GenerateBufferLayouts(1, &newVertexBufferLayout->gpuLayout.vaoHandle);
+
+		//VBOs
+		rendererimpl::GenerateVertexBuffers(vertexConfig.numVertexConfigs, &newVertexBufferLayout->gpuLayout.vboHandles[0]);
+		newVertexBufferLayout->gpuLayout.numVBOHandles = vertexConfig.numVertexConfigs;
+
+		//IBOs
+		if (vertexConfig.indexBufferConfig.bufferSize != EMPTY_BUFFER)
+		{
+			rendererimpl::GenerateIndexBuffers(1, &newVertexBufferLayout->gpuLayout.iboHandle);
+		}
+
+		//Draw IDs
+		if (vertexConfig.useDrawIDs)
+		{
+			rendererimpl::GenerateVertexBuffers(1, &newVertexBufferLayout->gpuLayout.drawIDHandle);
+		}
+
+		rendererimpl::SetupBufferLayoutConfiguration(
+			vertexConfig,
+			newVertexBufferLayout->gpuLayout.vaoHandle,
+			newVertexBufferLayout->gpuLayout.vboHandles, newVertexBufferLayout->gpuLayout.numVBOHandles,
+			newVertexBufferLayout->gpuLayout.iboHandle,
+			newVertexBufferLayout->gpuLayout.drawIDHandle);
+
+
+		r2::sarr::Push(*system.mVertexBufferLayouts, newVertexBufferLayout);
+
+		return r2::sarr::Size(*system.mVertexBufferLayouts) - 1;
 	}
 
 	vb::VertexBufferLayoutSize GetVertexBufferCapacity(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
@@ -242,14 +337,14 @@ namespace r2::draw::vbsys
 
 		const auto& vblayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
-		size.indexBufferSize = vblayout.indexBuffer.bufferCapacity;
+		size.indexBufferSize = vblayout->indexBuffer.bufferCapacity;
 		
-		for (u32 i = 0; i < vblayout.gpuLayout.numVBOHandles; ++i)
+		for (u32 i = 0; i < vblayout->gpuLayout.numVBOHandles; ++i)
 		{
-			size.vertexBufferSizes[i] = vblayout.vertexBuffers[i].bufferCapacity;
+			size.vertexBufferSizes[i] = vblayout->vertexBuffers[i].bufferCapacity;
 		}
 
-		size.numVertexBuffers = vblayout.gpuLayout.numVBOHandles;
+		size.numVertexBuffers = vblayout->gpuLayout.numVBOHandles;
 
 		return size;
 	}
@@ -260,14 +355,14 @@ namespace r2::draw::vbsys
 
 		const auto& vblayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
-		size.indexBufferSize = vblayout.indexBuffer.bufferSize;
+		size.indexBufferSize = vblayout->indexBuffer.bufferSize;
 
-		for (u32 i = 0; i < vblayout.gpuLayout.numVBOHandles; ++i)
+		for (u32 i = 0; i < vblayout->gpuLayout.numVBOHandles; ++i)
 		{
-			size.vertexBufferSizes[i] = vblayout.vertexBuffers[i].bufferSize;
+			size.vertexBufferSizes[i] = vblayout->vertexBuffers[i].bufferSize;
 		}
 
-		size.numVertexBuffers = vblayout.gpuLayout.numVBOHandles;
+		size.numVertexBuffers = vblayout->gpuLayout.numVBOHandles;
 
 		return size;
 	}
@@ -278,14 +373,14 @@ namespace r2::draw::vbsys
 
 		const auto& vblayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
-		size.indexBufferSize = vblayout.indexBuffer.bufferCapacity - vblayout.indexBuffer.bufferSize;
+		size.indexBufferSize = vblayout->indexBuffer.bufferCapacity - vblayout->indexBuffer.bufferSize;
 
-		for (u32 i = 0; i < vblayout.gpuLayout.numVBOHandles; ++i)
+		for (u32 i = 0; i < vblayout->gpuLayout.numVBOHandles; ++i)
 		{
-			size.vertexBufferSizes[i] = vblayout.vertexBuffers[i].bufferCapacity - vblayout.vertexBuffers[i].bufferSize;
+			size.vertexBufferSizes[i] = vblayout->vertexBuffers[i].bufferCapacity - vblayout->vertexBuffers[i].bufferSize;
 		}
 
-		size.numVertexBuffers = vblayout.gpuLayout.numVBOHandles;
+		size.numVertexBuffers = vblayout->gpuLayout.numVBOHandles;
 
 		return size;
 	}
@@ -322,11 +417,11 @@ namespace r2::draw::vbsys
 		{
 			const auto& layout = r2::sarr::At(*system.mVertexBufferLayouts, i);
 
-			const auto& numModelRefs = r2::sarr::Size(*layout.gpuModelRefs);
+			const auto& numModelRefs = r2::sarr::Size(*layout->gpuModelRefs);
 
 			for (u64 j = 0; j < numModelRefs; j++)
 			{
-				const auto& gpuModelRef = r2::sarr::At(*layout.gpuModelRefs, j);
+				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
 				if (gpuModelRef.modelHash == model.hash)
 				{
@@ -346,11 +441,11 @@ namespace r2::draw::vbsys
 		{
 			const auto& layout = r2::sarr::At(*system.mVertexBufferLayouts, i);
 
-			const auto& numModelRefs = r2::sarr::Size(*layout.gpuModelRefs);
+			const auto& numModelRefs = r2::sarr::Size(*layout->gpuModelRefs);
 
 			for (u64 j = 0; j < numModelRefs; j++)
 			{
-				const auto& gpuModelRef = r2::sarr::At(*layout.gpuModelRefs, j);
+				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
 				if (gpuModelRef.modelHash == model.model.hash)
 				{
@@ -360,6 +455,15 @@ namespace r2::draw::vbsys
 		}
 
 		return vb::InvalidModelRefHandle;
+	}
+
+	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
+	{
+		R2_CHECK(IsVertexBufferLayoutHandleValid(system, handle), "Invalid vertex buffer layout handle passed in");
+
+		const vb::VertexBufferLayout* layout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
+
+		return layout->gpuLayout.vaoHandle;
 	}
 
 	bool IsModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model)
@@ -383,12 +487,12 @@ namespace r2::draw::vbsys
 		//@NOTE: this works for now since we don't delete layouts ever - will have to change this if we do.
 		const auto& vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, vblHandle);
 
-		if (!(gpuModelRefIndex >= 0 && gpuModelRefIndex < r2::sarr::Size(*vertexBufferLayout.gpuModelRefs)))
+		if (!(gpuModelRefIndex >= 0 && gpuModelRefIndex < r2::sarr::Size(*vertexBufferLayout->gpuModelRefs)))
 		{
 			return false;
 		}
 
-		const auto& gpuModelRef = r2::sarr::At(*vertexBufferLayout.gpuModelRefs, gpuModelRefIndex);
+		const auto& gpuModelRef = r2::sarr::At(*vertexBufferLayout->gpuModelRefs, gpuModelRefIndex);
 
 		return gpuModelRef.gpuModelRefHandle == handle;
 	}

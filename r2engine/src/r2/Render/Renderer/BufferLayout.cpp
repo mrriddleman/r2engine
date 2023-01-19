@@ -354,6 +354,31 @@ namespace r2::draw
         CalculateOffsetAndStride();
     }
 
+	BufferLayout::BufferLayout(const BufferLayout& otherLayout)
+	{
+		mElements.clear();
+		mElements.insert(mElements.end(), otherLayout.mElements.begin(), otherLayout.mElements.end());
+		mStrides.clear();
+		mStrides.insert(mStrides.end(), otherLayout.mStrides.begin(), otherLayout.mStrides.end());
+		mVertexType = otherLayout.mVertexType;
+	}
+
+	BufferLayout& BufferLayout::operator=(const BufferLayout& otherLayout)
+	{
+		if (this == &otherLayout)
+		{
+			return *this;
+		}
+
+		mElements.clear();
+		mElements.insert(mElements.end(), otherLayout.mElements.begin(), otherLayout.mElements.end());
+		mStrides.clear();
+		mStrides.insert(mStrides.end(), otherLayout.mStrides.begin(), otherLayout.mStrides.end());
+		mVertexType = otherLayout.mVertexType;
+
+		return *this;
+	}
+
     u32 BufferLayout::GetStride(u32 bufferIndex) const
     {
         if (bufferIndex >= mStrides.size())
@@ -950,4 +975,47 @@ namespace r2::draw
             mSize += element.size;
 		}
     }
+
+	BufferLayoutConfiguration::BufferLayoutConfiguration()
+	{
+
+	}
+
+	BufferLayoutConfiguration::BufferLayoutConfiguration(const BufferLayoutConfiguration& otherLayout)
+	{
+		layout = otherLayout.layout;
+
+		for (u32 i = 0; i < otherLayout.numVertexConfigs; ++i)
+		{
+			vertexBufferConfigs[i] = otherLayout.vertexBufferConfigs[i];
+		}
+		
+		indexBufferConfig = otherLayout.indexBufferConfig;
+		useDrawIDs = otherLayout.useDrawIDs;
+		maxDrawCount = otherLayout.maxDrawCount;
+		numVertexConfigs = otherLayout.numVertexConfigs;
+	}
+
+	BufferLayoutConfiguration& BufferLayoutConfiguration::operator=(const BufferLayoutConfiguration& otherLayout)
+	{
+		if (this == &otherLayout)
+		{
+			return *this;
+		}
+
+		layout = otherLayout.layout;
+
+		for (u32 i = 0; i < otherLayout.numVertexConfigs; ++i)
+		{
+			vertexBufferConfigs[i] = otherLayout.vertexBufferConfigs[i];
+		}
+
+		indexBufferConfig = otherLayout.indexBufferConfig;
+		useDrawIDs = otherLayout.useDrawIDs;
+		maxDrawCount = otherLayout.maxDrawCount;
+		numVertexConfigs = otherLayout.numVertexConfigs;
+
+		return *this;
+	}
+
 }

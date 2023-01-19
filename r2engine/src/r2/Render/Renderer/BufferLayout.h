@@ -98,6 +98,9 @@ namespace r2::draw
         BufferLayout();
         BufferLayout(const std::initializer_list<BufferElement>& elements, VertexType vertexType = VertexType::Vertex);
         
+        BufferLayout(const BufferLayout& otherLayout);
+        BufferLayout& operator=(const BufferLayout& otherLayout);
+        
 
         //@TODO(Serge): make these not vectors
         u32 GetStride(u32 bufferIndex) const;
@@ -123,11 +126,13 @@ namespace r2::draw
         u32 drawType;
     };
 
-    
-
     struct BufferLayoutConfiguration
     {
         static const size_t MAX_VERTEX_BUFFER_CONFIGS = 4;
+
+        BufferLayoutConfiguration();
+        BufferLayoutConfiguration(const BufferLayoutConfiguration& otherLayout);
+        BufferLayoutConfiguration& operator=(const BufferLayoutConfiguration& otherLayout);
 
         BufferLayout layout;
         BufferConfig vertexBufferConfigs[MAX_VERTEX_BUFFER_CONFIGS];

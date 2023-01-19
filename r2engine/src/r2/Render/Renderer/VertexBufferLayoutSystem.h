@@ -6,15 +6,11 @@
 #include "r2/Core/Containers/SinglyLinkedList.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 
 namespace r2::draw
 {
 	struct ModelSystem;
-}
-
-namespace r2::mem::utils
-{
-	struct MemBoundary;
 }
 
 namespace r2::draw::vb
@@ -26,9 +22,8 @@ namespace r2::draw::vb
 
 	struct GPUBufferEntry
 	{
-		u32 bufferHandle;
-		u32 startingOffset;
 		u32 size;
+		u32 start;
 	};
 
 	struct MeshEntry
@@ -57,7 +52,7 @@ namespace r2::draw::vb
 		u32 vaoHandle;
 		u32 vboHandles[MAX_VBOS];
 		u32 iboHandle;
-
+		u32 drawIDHandle;
 		u32 numVBOHandles;
 	};
 
@@ -66,7 +61,10 @@ namespace r2::draw::vb
 		u32 bufferHandle;
 		u32 bufferSize;
 		u32 bufferCapacity;
-		r2::SinglyLinkedList<GPUBufferEntry>* gpuFreeList;
+
+		r2::mem::FreeListArena* freeList;
+
+		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
 	};
 
 	struct VertexBufferLayoutSize
@@ -97,7 +95,7 @@ namespace r2::draw::vb
 
 		r2::mem::LinearArena* mArena; //if we want more flexibility - make a free list arena instead
 		r2::mem::StackArena* mGPUModelRefHandleArena;
-		r2::SArray<VertexBufferLayout>* mVertexBufferLayouts;
+		r2::SArray<VertexBufferLayout*>* mVertexBufferLayouts;
 
 		static u64 MemorySize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel, u64 alignment);
 	};
@@ -127,6 +125,8 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model);
+
+	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 
 	bool IsModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
 	bool IsAnimModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model);

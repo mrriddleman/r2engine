@@ -30,7 +30,7 @@ namespace r2
     template <class T>
     u64 SinglyLinkedList<T>::MemorySize(u64 capacity)
     {
-        return sizeof(SinglyLinkedList<T>) + capacity * sizeof(Node);
+        return sizeof(SinglyLinkedList<T>) + capacity * sizeof(Node*);
     }
     
     namespace sll
