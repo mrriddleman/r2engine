@@ -7,6 +7,7 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
+#include "r2/Render/Renderer/GPUBuffer.h"
 
 namespace r2::draw
 {
@@ -20,11 +21,7 @@ namespace r2::draw::vb
 
 	GPUModelRefHandle InvalidModelRefHandle = 0;
 
-	struct GPUBufferEntry
-	{
-		u32 size;
-		u32 start;
-	};
+	
 
 	struct MeshEntry
 	{
@@ -54,17 +51,6 @@ namespace r2::draw::vb
 		u32 iboHandle;
 		u32 drawIDHandle;
 		u32 numVBOHandles;
-	};
-
-	struct GPUBuffer
-	{
-		u32 bufferHandle;
-		u32 bufferSize;
-		u32 bufferCapacity;
-
-		r2::mem::FreeListArena* freeList;
-
-		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
 	};
 
 	struct VertexBufferLayoutSize

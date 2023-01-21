@@ -229,12 +229,12 @@ namespace r2::draw::vb
 
 		if(vertexBufferLayout->indexBuffer.bufferHandle != 0)
 		{ 
-			FREE(vertexBufferLayout->indexBuffer.freeList, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->indexBuffer.freeListArena, *system.mGPUModelRefHandleArena);
 		}
 
 		for (s32 i = vertexBufferLayout->gpuLayout.numVBOHandles - 1; i >= 0; --i)
 		{
-			FREE(vertexBufferLayout->vertexBuffers[i].freeList, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->vertexBuffers[i].freeListArena, *system.mGPUModelRefHandleArena);
 		}
 
 		r2::sarr::Pop(*system.mVertexBufferLayouts);
@@ -267,33 +267,12 @@ namespace r2::draw::vbsys
 
 		for (u32 i = 0; i < vertexConfig.numVertexConfigs; ++i)
 		{
-			newVertexBufferLayout->vertexBuffers[i].freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
-			newVertexBufferLayout->vertexBuffers[i].bufferCapacity = vertexConfig.vertexBufferConfigs[i].bufferSize;
-			newVertexBufferLayout->vertexBuffers[i].bufferSize = 0;
-
-			FreeNode* node = ALLOC(FreeNode, *newVertexBufferLayout->vertexBuffers[i].freeList);
-
-			node->data.size = vertexConfig.vertexBufferConfigs[i].bufferSize;
-			node->data.start = 0;
-			node->next = nullptr;
-			newVertexBufferLayout->vertexBuffers[i].gpuFreeList.head = nullptr;
-
-			sll::Insert(newVertexBufferLayout->vertexBuffers[i].gpuFreeList, nullptr, node);
+			r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
+			vb::gpubuf::Init(newVertexBufferLayout->vertexBuffers[i], freeList, vertexConfig.vertexBufferConfigs[i].bufferSize);
 		}
 
-		newVertexBufferLayout->indexBuffer.freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
-		newVertexBufferLayout->indexBuffer.bufferCapacity = vertexConfig.indexBufferConfig.bufferSize;
-		newVertexBufferLayout->indexBuffer.bufferSize = 0;
-
-		FreeNode* node = ALLOC(FreeNode, *newVertexBufferLayout->indexBuffer.freeList);
-
-		node->data.size = vertexConfig.indexBufferConfig.bufferSize;
-		node->data.start = 0;
-		node->next = nullptr;
-		newVertexBufferLayout->indexBuffer.gpuFreeList.head = nullptr;
-
-		sll::Insert(newVertexBufferLayout->indexBuffer.gpuFreeList, nullptr, node);
-
+		r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
+		vb::gpubuf::Init(newVertexBufferLayout->indexBuffer, freeList, vertexConfig.indexBufferConfig.bufferSize);
 
 		newVertexBufferLayout->gpuModelRefs = MAKE_SARRAY(*system.mGPUModelRefHandleArena, vb::GPUModelRef, system.mMaxModelsLoaded);
 

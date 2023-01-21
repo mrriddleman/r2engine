@@ -212,7 +212,7 @@ namespace r2::mem
             if (it->data.blockSize >= requiredSpace && (it->data.blockSize - requiredSpace < smallestDiff))
             {
                 bestBlock = it;
-                bestBlockPrev = bestBlockPrev;
+                bestBlockPrev = itPrev;
                 smallestDiff = it->data.blockSize - requiredSpace;
             }
             
