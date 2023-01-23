@@ -1,10 +1,27 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/GPUBuffer.h"
+#include "r2/Core/Memory/Memory.h"
 
-namespace r2::draw::vb::gpubuf
+namespace r2::draw::vb
 {
 	using FreeNode = SinglyLinkedList<vb::GPUBufferEntry>::Node;
 	static u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
+
+	u64 GPUBuffer::MemorySize(u32 maxNumberOfEntries, u32 alignment, u32 headerSize, u32 boundsChecking)
+	{
+		u64 size = 0;
+
+		size =
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, headerSize, boundsChecking) * maxNumberOfEntries +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(maxNumberOfEntries), alignment, headerSize, boundsChecking); //overestimate by sizeof(SinglyLinkedList) I think
+
+		return size;
+	}
+}
+
+namespace r2::draw::vb::gpubuf
+{
 	void FindBufferEntry(const GPUBuffer& gpuBuffer, u32 size, FreeNode*& previousNode, FreeNode*& foundNode);
 	void Coalescence(GPUBuffer& gpuBuffer, FreeNode* previousNode, FreeNode* freeNode);
 

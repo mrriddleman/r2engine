@@ -40,6 +40,55 @@ namespace r2::draw::vb
 		salt = DECODE_KEY_VALUE(handle, GPU_MODEL_REF_KEY_BITS_SALT, KEY_SALT_OFFSET);
 	}
 
+	u64 GetGPUModelRefFreeListArenaSize(u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel)
+	{
+		static const u32 ALIGNMENT = 16;
+
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		const u32 freelistHeaderSize = mem::FreeListAllocator::HeaderSize();
+		const u32 stackHeaderSize = mem::StackAllocator::HeaderSize();
+
+		u64 GPUModelRefFreeListArenaSize =
+			(
+				(
+					r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GPUModelRef), ALIGNMENT, freelistHeaderSize, boundsChecking) +
+					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking) +
+					r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, freelistHeaderSize, boundsChecking)
+				) * maxModelsLoaded
+			);
+
+		return GPUModelRefFreeListArenaSize;
+	}
+
+	u64 GetVertexBufferLayoutArenaSize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel)
+	{
+		static const u32 ALIGNMENT = 16;
+
+		const u32 stackHeaderSize = mem::StackAllocator::HeaderSize();
+
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+		const u32 freelistHeaderSize = mem::FreeListAllocator::HeaderSize();
+
+		u64 vertexBufferLayoutArenaSize =
+		(
+			GetGPUModelRefFreeListArenaSize(maxModelsLoaded, avgNumberOfMeshesPerModel) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef*>::MemorySize(maxModelsLoaded), ALIGNMENT, stackHeaderSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(GPUBuffer::MemorySize(avgNumberOfMeshesPerModel*maxModelsLoaded, ALIGNMENT, freelistHeaderSize, boundsChecking), ALIGNMENT, stackHeaderSize, boundsChecking) * (MAX_VBOS + 1) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayout), ALIGNMENT, stackHeaderSize, boundsChecking)
+		) * numBufferLayouts;
+
+		R2_CHECK(vertexBufferLayoutArenaSize <= Megabytes(32), "Don't want this to go crazy");
+
+		return vertexBufferLayoutArenaSize;
+	}
+
 	vb::VertexBufferLayoutSystem* CreateVertexBufferSystem(const r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel)
 	{
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Memory Area handle is invalid");
@@ -110,31 +159,13 @@ namespace r2::draw::vb
 			return nullptr;
 		}
 
-		const u32 stackHeaderSize = mem::StackAllocator::HeaderSize();
+		u64 vertexBufferLayoutArenaSize = GetVertexBufferLayoutArenaSize(numBufferLayouts, maxModelsLoaded, avgNumberOfMeshesPerModel);
 
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-		const u32 freelistHeaderSize = mem::FreeListAllocator::HeaderSize();
+		system->mVertexBufferLayoutArena = MAKE_STACK_ARENA(*vertexBufferLayoutLinearArena, vertexBufferLayoutArenaSize);
 
-		u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
-
-		u64 gpuModelRefArenaSize =
-			(r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef>::MemorySize(maxModelsLoaded), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel * maxModelsLoaded) * (MAX_VBOS + 1), ALIGNMENT, stackHeaderSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, ALIGNMENT, freelistHeaderSize, boundsChecking) * avgNumberOfMeshesPerModel * maxModelsLoaded * (MAX_VBOS + 1)
-				) * numBufferLayouts;
-
-		R2_CHECK(gpuModelRefArenaSize <= Megabytes(32), "Don't want this to go crazy");
-
-		system->mGPUModelRefHandleArena = MAKE_STACK_ARENA(*vertexBufferLayoutLinearArena, gpuModelRefArenaSize);
-
-		R2_CHECK(system->mGPUModelRefHandleArena != nullptr, "We couldn't make the gpu model ref handle area");
+		R2_CHECK(system->mVertexBufferLayoutArena != nullptr, "We couldn't make the gpu model ref handle area");
 		
-		if (system->mGPUModelRefHandleArena)
+		if (system->mVertexBufferLayoutArena)
 		{
 			return nullptr;
 		}
@@ -172,7 +203,7 @@ namespace r2::draw::vb
 			R2_CHECK(success, "Couldn't remove the vertex buffer layout!");
 		}
 		
-		FREE(system->mGPUModelRefHandleArena, *linearArena);
+		FREE(system->mVertexBufferLayoutArena, *linearArena);
 
 		FREE(system->mVertexBufferLayouts, *linearArena);
 
@@ -194,23 +225,14 @@ namespace r2::draw::vb
 
 		u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
 
-		u64 gpuModelRefArenaSize =
-			(r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef>::MemorySize(maxModelsLoaded), alignment, stackHeaderSize, boundsChecking) +
-			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MeshEntry>::MemorySize(avgNumberOfMeshesPerModel), alignment, stackHeaderSize, boundsChecking) +
-			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(avgNumberOfMeshesPerModel), alignment, stackHeaderSize, boundsChecking) +
-			 r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(avgNumberOfMeshesPerModel * maxModelsLoaded) * (MAX_VBOS +1), alignment, stackHeaderSize, boundsChecking) +
-			 r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, freelistHeaderSize, boundsChecking) * avgNumberOfMeshesPerModel * maxModelsLoaded * (MAX_VBOS + 1)
-			) * numBufferLayouts;
-
-		R2_CHECK(gpuModelRefArenaSize <= Megabytes(32), "Don't want this to go crazy");
+		u64 vertexBufferLayoutArenaSize = GetVertexBufferLayoutArenaSize(numBufferLayouts, maxModelsLoaded, avgNumberOfMeshesPerModel);
 
 		u64 memorySize =
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayoutSystem), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexBufferLayout*>::MemorySize(numBufferLayouts), alignment, headerSize, boundsChecking) * numBufferLayouts +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexBufferLayout>::MemorySize(numBufferLayouts), alignment, headerSize, boundsChecking) * numBufferLayouts +
-			gpuModelRefArenaSize;
+			vertexBufferLayoutArenaSize;
 
 		return memorySize;
 	}
@@ -222,22 +244,27 @@ namespace r2::draw::vb
 		R2_CHECK(static_cast<s32>(handle) == static_cast<s32>(r2::sarr::Size(*system.mVertexBufferLayouts)) - 1, "These should be the same");
 
 		auto& vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
-
-		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout->gpuModelRefs), "Should be empty by the time you free this!");
-
-		FREE(vertexBufferLayout->gpuModelRefs, *system.mGPUModelRefHandleArena);
-
+		
 		if(vertexBufferLayout->indexBuffer.bufferHandle != 0)
 		{ 
-			FREE(vertexBufferLayout->indexBuffer.freeListArena, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->indexBuffer.freeListArena, *system.mVertexBufferLayoutArena);
 		}
 
 		for (s32 i = vertexBufferLayout->gpuLayout.numVBOHandles - 1; i >= 0; --i)
 		{
-			FREE(vertexBufferLayout->vertexBuffers[i].freeListArena, *system.mGPUModelRefHandleArena);
+			FREE(vertexBufferLayout->vertexBuffers[i].freeListArena, *system.mVertexBufferLayoutArena);
 		}
 
+		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout->gpuModelRefs), "Should be empty by the time you free this!");
+
+		FREE(vertexBufferLayout->gpuModelRefs, *system.mVertexBufferLayoutArena);
+
+		FREE(vertexBufferLayout, *system.mVertexBufferLayoutArena);
+
 		r2::sarr::Pop(*system.mVertexBufferLayouts);
+
+		//TODO(Serge): need a renderer impl for removing the layout
+
 
 		return true;
 	}
@@ -246,6 +273,8 @@ namespace r2::draw::vb
 namespace r2::draw::vbsys
 {
 	using FreeNode = SinglyLinkedList<vb::GPUBufferEntry>::Node;
+
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo);
 
 	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
 	{
@@ -259,22 +288,28 @@ namespace r2::draw::vbsys
 
 	vb::VertexBufferLayoutHandle AddVertexBufferLayout(vb::VertexBufferLayoutSystem& system, const r2::draw::BufferLayoutConfiguration& vertexConfig)
 	{
-		vb::VertexBufferLayout* newVertexBufferLayout = ALLOC(vb::VertexBufferLayout, *system.mArena);
+		vb::VertexBufferLayout* newVertexBufferLayout = ALLOC(vb::VertexBufferLayout, *system.mVertexBufferLayoutArena);
 
 		newVertexBufferLayout->layout = vertexConfig;
 
 		static u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
 
+		const u64 arenaSize = vb::GetGPUModelRefFreeListArenaSize(system.mMaxModelsLoaded, system.mAvgNumberOfMeshesPerModel);
+		
+		newVertexBufferLayout->gpuModelRefArena = MAKE_FREELIST_ARENA(*system.mVertexBufferLayoutArena, arenaSize, mem::FIND_BEST);
+		newVertexBufferLayout->gpuModelRefs = MAKE_SARRAY(*system.mVertexBufferLayoutArena, vb::GPUModelRef*, system.mMaxModelsLoaded);
+
 		for (u32 i = 0; i < vertexConfig.numVertexConfigs; ++i)
 		{
-			r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
+			r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mVertexBufferLayoutArena, nodeSize * system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded, mem::FIND_BEST);
 			vb::gpubuf::Init(newVertexBufferLayout->vertexBuffers[i], freeList, vertexConfig.vertexBufferConfigs[i].bufferSize);
 		}
 
-		r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mGPUModelRefHandleArena, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded * nodeSize, mem::FIND_BEST);
-		vb::gpubuf::Init(newVertexBufferLayout->indexBuffer, freeList, vertexConfig.indexBufferConfig.bufferSize);
-
-		newVertexBufferLayout->gpuModelRefs = MAKE_SARRAY(*system.mGPUModelRefHandleArena, vb::GPUModelRef, system.mMaxModelsLoaded);
+		if (vertexConfig.indexBufferConfig.bufferSize != EMPTY_BUFFER)
+		{
+			r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mVertexBufferLayoutArena, nodeSize * system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded, mem::FIND_BEST);
+			vb::gpubuf::Init(newVertexBufferLayout->indexBuffer, freeList, vertexConfig.indexBufferConfig.bufferSize);
+		}
 
 		//Now do the actual renderimpl setup of the buffers
 
@@ -369,11 +404,33 @@ namespace r2::draw::vbsys
 	//				Remember the buffer should resize if we're beyond the size
 	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model)
 	{
-		return vb::InvalidModelRefHandle;
+		return UploadModelToVertexBufferInternal(system, handle, model, nullptr, nullptr);
 	}
 
 	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model)
 	{
+		return UploadModelToVertexBufferInternal(system, handle, model.model, model.boneData, model.boneInfo);
+	}
+
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo)
+	{
+		bool isValidHandle = IsVertexBufferLayoutHandleValid(system, handle);
+
+		if (!isValidHandle)
+		{
+			R2_CHECK(false, "Passed in an invalid VertexBufferLayoutHandle: %i", handle);
+			return vb::InvalidModelRefHandle;
+		}
+
+		u64 numMeshes = r2::sarr::Size(*model.optrMeshes);
+		u64 numMaterals = r2::sarr::Size(*model.optrMaterialHandles);
+
+		R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
+		R2_CHECK(numMaterals >= 1, "We should have at least one material");
+
+
+		vb::GPUModelRef modelRef;
+
 		return vb::InvalidModelRefHandle;
 	}
 
@@ -402,9 +459,9 @@ namespace r2::draw::vbsys
 			{
 				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
-				if (gpuModelRef.modelHash == model.hash)
+				if (gpuModelRef->modelHash == model.hash)
 				{
-					return gpuModelRef.gpuModelRefHandle;
+					return gpuModelRef->gpuModelRefHandle;
 				}
 			}
 		}
@@ -414,26 +471,7 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model)
 	{
-		const auto& numLayouts = r2::sarr::Size(*system.mVertexBufferLayouts);
-
-		for (u64 i = 0; i < numLayouts; ++i)
-		{
-			const auto& layout = r2::sarr::At(*system.mVertexBufferLayouts, i);
-
-			const auto& numModelRefs = r2::sarr::Size(*layout->gpuModelRefs);
-
-			for (u64 j = 0; j < numModelRefs; j++)
-			{
-				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
-
-				if (gpuModelRef.modelHash == model.model.hash)
-				{
-					return gpuModelRef.gpuModelRefHandle;
-				}
-			}
-		}
-
-		return vb::InvalidModelRefHandle;
+		return GetModelRefHandle(system, model.model);
 	}
 
 	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
@@ -471,9 +509,9 @@ namespace r2::draw::vbsys
 			return false;
 		}
 
-		const auto& gpuModelRef = r2::sarr::At(*vertexBufferLayout->gpuModelRefs, gpuModelRefIndex);
+		const auto* gpuModelRef = r2::sarr::At(*vertexBufferLayout->gpuModelRefs, gpuModelRefIndex);
 
-		return gpuModelRef.gpuModelRefHandle == handle;
+		return gpuModelRef->gpuModelRefHandle == handle;
 	}
 
 	//Bulk upload options which I think will probably be used for levels/scenes

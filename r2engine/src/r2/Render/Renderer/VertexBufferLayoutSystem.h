@@ -68,7 +68,9 @@ namespace r2::draw::vb
 		GPUBuffer vertexBuffers[MAX_VBOS];
 		GPUBuffer indexBuffer;
 
-		r2::SArray<GPUModelRef>* gpuModelRefs;
+		r2::SArray<GPUModelRef*>* gpuModelRefs;
+
+		r2::mem::FreeListArena* gpuModelRefArena;
 	};
 
 	struct VertexBufferLayoutSystem
@@ -80,7 +82,7 @@ namespace r2::draw::vb
 		u32 mAvgNumberOfMeshesPerModel;
 
 		r2::mem::LinearArena* mArena; //if we want more flexibility - make a free list arena instead
-		r2::mem::StackArena* mGPUModelRefHandleArena;
+		r2::mem::StackArena* mVertexBufferLayoutArena;
 		r2::SArray<VertexBufferLayout*>* mVertexBufferLayouts;
 
 		static u64 MemorySize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel, u64 alignment);

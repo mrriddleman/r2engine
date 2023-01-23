@@ -28,6 +28,9 @@ namespace r2::draw::vb
 		r2::mem::FreeListArena* freeListArena;
 
 		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
+
+
+		static u64 MemorySize(u32 maxNumberOfEntries, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
 }
 
