@@ -43,6 +43,12 @@ namespace r2::draw::vb::gpubuf
 		sll::Insert(gpuBuffer.gpuFreeList, nullptr, node);
 	}
 
+	void Shutdown(GPUBuffer& gpuBuffer)
+	{
+		R2_CHECK(gpuBuffer.bufferSize == 0, "We still have allocated memory in the GPUBuffer!");
+		FREE(gpuBuffer.gpuFreeList.head, *gpuBuffer.freeListArena);
+	}
+
 	bool AllocateEntry(GPUBuffer& gpuBuffer, u32 size, GPUBufferEntry& newEntry)
 	{
 		FreeNode* affectedNode, *previousNode;

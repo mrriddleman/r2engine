@@ -239,21 +239,35 @@ namespace r2::draw::vb
 
 	bool RemoveVertexBufferLayout(VertexBufferLayoutSystem& system, vb::VertexBufferLayoutHandle handle)
 	{
+		R2_CHECK(vbsys::IsVertexBufferLayoutHandleValid(system, handle), "Invalid vertex buffer layout handle!");
+
 		R2_CHECK(!r2::sarr::IsEmpty(*system.mVertexBufferLayouts), "We should have something in here before we remove anything!");
 
 		R2_CHECK(static_cast<s32>(handle) == static_cast<s32>(r2::sarr::Size(*system.mVertexBufferLayouts)) - 1, "These should be the same");
 
 		auto& vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
-		
+
 		if(vertexBufferLayout->indexBuffer.bufferHandle != 0)
 		{ 
+			rendererimpl::DeleteVertexBuffers(1, &vertexBufferLayout->gpuLayout.drawIDHandle);
+
+			gpubuf::Shutdown(vertexBufferLayout->indexBuffer);
+
 			FREE(vertexBufferLayout->indexBuffer.freeListArena, *system.mVertexBufferLayoutArena);
+
+			rendererimpl::DeleteIndexBuffers(1, &vertexBufferLayout->gpuLayout.iboHandle);
 		}
 
 		for (s32 i = vertexBufferLayout->gpuLayout.numVBOHandles - 1; i >= 0; --i)
 		{
+			gpubuf::Shutdown(vertexBufferLayout->vertexBuffers[i]);
+
 			FREE(vertexBufferLayout->vertexBuffers[i].freeListArena, *system.mVertexBufferLayoutArena);
 		}
+
+		rendererimpl::DeleteVertexBuffers(vertexBufferLayout->gpuLayout.numVBOHandles, &vertexBufferLayout->gpuLayout.vboHandles[0]);
+
+		rendererimpl::DeleteBufferLayouts(1, &vertexBufferLayout->gpuLayout.vaoHandle);
 
 		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout->gpuModelRefs), "Should be empty by the time you free this!");
 
@@ -262,9 +276,6 @@ namespace r2::draw::vb
 		FREE(vertexBufferLayout, *system.mVertexBufferLayoutArena);
 
 		r2::sarr::Pop(*system.mVertexBufferLayouts);
-
-		//TODO(Serge): need a renderer impl for removing the layout
-
 
 		return true;
 	}
@@ -299,6 +310,11 @@ namespace r2::draw::vbsys
 		newVertexBufferLayout->gpuModelRefArena = MAKE_FREELIST_ARENA(*system.mVertexBufferLayoutArena, arenaSize, mem::FIND_BEST);
 		newVertexBufferLayout->gpuModelRefs = MAKE_SARRAY(*system.mVertexBufferLayoutArena, vb::GPUModelRef*, system.mMaxModelsLoaded);
 
+		for (u32 i = 0; i < system.mMaxModelsLoaded; ++i)
+		{
+			newVertexBufferLayout->gpuModelRefs->mData[i] = nullptr;
+		}
+
 		for (u32 i = 0; i < vertexConfig.numVertexConfigs; ++i)
 		{
 			r2::mem::FreeListArena* freeList = MAKE_FREELIST_ARENA(*system.mVertexBufferLayoutArena, nodeSize * system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded, mem::FIND_BEST);
@@ -320,13 +336,21 @@ namespace r2::draw::vbsys
 		rendererimpl::GenerateVertexBuffers(vertexConfig.numVertexConfigs, &newVertexBufferLayout->gpuLayout.vboHandles[0]);
 		newVertexBufferLayout->gpuLayout.numVBOHandles = vertexConfig.numVertexConfigs;
 
+		for (size_t i = 0; i < vertexConfig.numVertexConfigs; i++)
+		{
+			vb::gpubuf::SetNewBufferHandle(newVertexBufferLayout->vertexBuffers[i], newVertexBufferLayout->gpuLayout.vboHandles[i]);
+		}
+
 		//IBOs
+		newVertexBufferLayout->gpuLayout.iboHandle = EMPTY_BUFFER;
 		if (vertexConfig.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			rendererimpl::GenerateIndexBuffers(1, &newVertexBufferLayout->gpuLayout.iboHandle);
+			vb::gpubuf::SetNewBufferHandle(newVertexBufferLayout->indexBuffer, newVertexBufferLayout->gpuLayout.iboHandle);
 		}
 
 		//Draw IDs
+		newVertexBufferLayout->gpuLayout.drawIDHandle = EMPTY_BUFFER;
 		if (vertexConfig.useDrawIDs)
 		{
 			rendererimpl::GenerateVertexBuffers(1, &newVertexBufferLayout->gpuLayout.drawIDHandle);
@@ -338,7 +362,6 @@ namespace r2::draw::vbsys
 			newVertexBufferLayout->gpuLayout.vboHandles, newVertexBufferLayout->gpuLayout.numVBOHandles,
 			newVertexBufferLayout->gpuLayout.iboHandle,
 			newVertexBufferLayout->gpuLayout.drawIDHandle);
-
 
 		r2::sarr::Push(*system.mVertexBufferLayouts, newVertexBufferLayout);
 
@@ -453,13 +476,13 @@ namespace r2::draw::vbsys
 		{
 			const auto& layout = r2::sarr::At(*system.mVertexBufferLayouts, i);
 
-			const auto& numModelRefs = r2::sarr::Size(*layout->gpuModelRefs);
+			const auto& numModelRefs = r2::sarr::Capacity(*layout->gpuModelRefs);
 
 			for (u64 j = 0; j < numModelRefs; j++)
 			{
 				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
-				if (gpuModelRef->modelHash == model.hash)
+				if (gpuModelRef && gpuModelRef->modelHash == model.hash)
 				{
 					return gpuModelRef->gpuModelRefHandle;
 				}

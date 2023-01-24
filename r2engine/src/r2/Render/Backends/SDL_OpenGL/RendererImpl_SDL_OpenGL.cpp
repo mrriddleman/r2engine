@@ -376,6 +376,21 @@ namespace r2::draw::rendererimpl
 		glGenBuffers(numIndexBuffers, indexIds);
 	}
 
+	void DeleteBufferLayouts(u32 numBufferLayouts, u32* layoutIds)
+	{
+		glDeleteVertexArrays(numBufferLayouts, layoutIds);
+	}
+
+	void DeleteVertexBuffers(u32 numVertexBuffers, u32* vertexBufferIds)
+	{
+		glDeleteBuffers(numVertexBuffers, vertexBufferIds);
+	}
+
+	void DeleteIndexBuffers(u32 numIndexBuffers, u32* indexIds)
+	{
+		glDeleteBuffers(numIndexBuffers, indexIds);
+	}
+
 	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds)
 	{
 		glGenBuffers(numConstantBuffers, contantBufferIds);

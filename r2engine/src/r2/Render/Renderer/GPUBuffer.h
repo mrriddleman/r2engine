@@ -37,6 +37,7 @@ namespace r2::draw::vb
 namespace r2::draw::vb::gpubuf
 {
 	void Init(GPUBuffer& gpuBuffer, r2::mem::FreeListArena* freeList, u32 gpuBufferCapacity);
+	void Shutdown(GPUBuffer& gpuBuffer);
 	bool AllocateEntry(GPUBuffer& gpuBuffer, u32 size, GPUBufferEntry& newEntry);
 	void DeleteEntry(GPUBuffer& gpuBuffer, const GPUBufferEntry& entry);
 	bool GrowBuffer(GPUBuffer& gpuBuffer, u32 newCapacity);
