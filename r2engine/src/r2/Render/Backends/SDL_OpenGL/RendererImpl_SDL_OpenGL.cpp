@@ -553,94 +553,94 @@ namespace r2::draw::rendererimpl
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, nullptr, drawType);
 	}
 
-	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
+	void AllocateBuffersForLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
-
-		glBindVertexArray(layoutId);
-
+		//Buffer Allocation
 		for (u32 i = 0; i < numVertexBufferHandles; ++i)
 		{
 			AllocateVertexBuffer(vertexBufferId[i], config.vertexBufferConfigs[i].bufferSize, config.vertexBufferConfigs[i].drawType);
-		}
-
-		u32 vertexAttribId = 0;
-		for (const auto& element : config.layout)
-		{
-			glEnableVertexAttribArray(vertexAttribId);
-
-			if (element.type >= ShaderDataType::Float && element.type <= ShaderDataType::Mat4)
-			{
-				//glVertexAttribPointer(
-				//	vertexAttribId, 
-				//	element.GetComponentCount(), 
-				//	ShaderDataTypeToOpenGLBaseType(element.type), 
-				//	element.normalized ? GL_TRUE : GL_FALSE, 
-				//	config.layout.GetStride(), 
-				//	(const void*)element.offset);
-
-				glVertexAttribFormat(vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.normalized ? GL_TRUE : GL_FALSE, element.offset);
-
-			}
-			else if (element.type >= ShaderDataType::Int && element.type <= ShaderDataType::Int4)
-			{
-				glVertexAttribIFormat(vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.offset);
-
-				//glVertexAttribIPointer(
-				//	vertexAttribId,
-				//	element.GetComponentCount(),
-				//	ShaderDataTypeToOpenGLBaseType(element.type),
-				//	config.layout.GetStride(),
-				//	(const void*)element.offset);
-			}
-
-			glVertexAttribBinding(vertexAttribId, element.bufferIndex);
-
-			if (config.layout.GetVertexType() == VertexType::Instanced)
-			{
-				glVertexAttribDivisor(vertexAttribId, 1);
-			}
-
-			//@TODO(Serge): this should be out of the loop?
-			glBindVertexBuffer(element.bufferIndex, vertexBufferId[element.bufferIndex], 0, config.layout.GetStride(element.bufferIndex));
-
-			++vertexAttribId;
 		}
 
 		r2::SArray<u32>* drawIdData = nullptr;
 		if (config.useDrawIDs && drawId != EMPTY_BUFFER)
 		{
 			drawIdData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, config.maxDrawCount);
+
 			for (u32 i = 0; i < config.maxDrawCount; ++i)
 			{
 				r2::sarr::Push(*drawIdData, i);
 			}
 
-			AllocateVertexBufferWithData(drawId, config.maxDrawCount * sizeof(u32),GL_STATIC_DRAW, (void*)(drawIdData->mData));
+			AllocateVertexBufferWithData(drawId, config.maxDrawCount * sizeof(u32), GL_STATIC_DRAW, (void*)(drawIdData->mData));
 
-			//glBindBuffer(GL_ARRAY_BUFFER, drawId);
-			//glBufferData(GL_ARRAY_BUFFER, config.maxDrawCount * sizeof(u32), drawIdData->mData, GL_STATIC_DRAW);
 			FREE(drawIdData, *MEM_ENG_SCRATCH_PTR);
-		}
-
-		if (config.useDrawIDs && drawId != EMPTY_BUFFER)
-		{
-			glEnableVertexAttribArray(vertexAttribId);
-			glVertexAttribIPointer(vertexAttribId, 1, GL_UNSIGNED_INT, sizeof(u32), 0);
-			glVertexAttribDivisor(vertexAttribId, 1);
 		}
 
 		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
 			AllocateIndexBuffer(indexBufferId, config.indexBufferConfig.bufferSize, config.indexBufferConfig.drawType);
 		}
+	}
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	void LayoutBuffersForLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
+	{
+		//Layout setup
+		glBindVertexArray(layoutId);
+
+		u32 vertexAttribId = 0;
+		for (const auto& element : config.layout)
+		{
+			glEnableVertexArrayAttrib(layoutId, vertexAttribId);
+
+			if (element.type >= ShaderDataType::Float && element.type <= ShaderDataType::Mat4)
+			{
+				glVertexArrayAttribFormat(layoutId, vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.normalized ? GL_TRUE : GL_FALSE, element.offset);
+			}
+			else if (element.type >= ShaderDataType::Int && element.type <= ShaderDataType::Int4)
+			{
+				glVertexArrayAttribIFormat(layoutId, vertexAttribId, element.GetComponentCount(), ShaderDataTypeToOpenGLBaseType(element.type), element.offset);
+			}
+
+			glVertexArrayAttribBinding(layoutId, vertexAttribId, element.bufferIndex);
+
+			if (config.layout.GetVertexType() == VertexType::Instanced)
+			{
+				glVertexArrayBindingDivisor(layoutId, vertexAttribId, 1);
+			}
+
+			glVertexArrayVertexBuffer(layoutId, element.bufferIndex, vertexBufferId[element.bufferIndex], 0, config.layout.GetStride(element.bufferIndex));
+
+			++vertexAttribId;
+		}
+
+		if (config.useDrawIDs && drawId != EMPTY_BUFFER)
+		{
+			glEnableVertexArrayAttrib(layoutId, vertexAttribId);
+
+			glVertexArrayAttribIFormat(layoutId, vertexAttribId, 1, GL_UNSIGNED_INT, 0);
+
+			glVertexArrayBindingDivisor(layoutId, vertexAttribId, 1);
+
+			glVertexArrayVertexBuffer(layoutId, vertexAttribId, drawId, 0, sizeof(u32));
+		}
+
+		glVertexArrayElementBuffer(layoutId, indexBufferId);
+
+		//glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 		glBindVertexArray(0);
 
-		if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
-		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		}
+		//if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
+		//{
+		//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		//}
+	}
+
+	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
+	{
+		AllocateBuffersForLayoutConfiguration(config, layoutId, vertexBufferId, numVertexBufferHandles, indexBufferId, drawId);
+
+		LayoutBuffersForLayoutConfiguration(config, layoutId, vertexBufferId, numVertexBufferHandles, indexBufferId, drawId);
 	}
 
 	void SetupConstantBufferConfigs(const r2::SArray<ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles)

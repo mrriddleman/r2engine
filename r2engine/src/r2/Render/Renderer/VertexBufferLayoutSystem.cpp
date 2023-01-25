@@ -620,7 +620,7 @@ namespace r2::draw::vbsys
 
 			
 		}
-		//do the VAO setup again somehow if needed
+		//@TODO(Serge): do the VAO setup again somehow if needed
 
 
 

@@ -72,8 +72,17 @@ namespace r2::draw::rendererimpl
 	void AllocateIndexBuffer(u32 bufferHandle, u32 size, u32 drawType);
 
 	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds);
+	
+	void AllocateBuffersForLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
+	void LayoutBuffersForLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
+
+	//SetupBufferLayoutConfiguration() will do the allocation + the layout
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
+	
+	
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles);
+
+
 	void SetDepthTest(bool shouldDepthTest);
 	void SetDepthWriteEnabled(bool depthWriteEnabled);
 	void DeleteBuffers(u32 numBuffers, const u32* bufferIds);
