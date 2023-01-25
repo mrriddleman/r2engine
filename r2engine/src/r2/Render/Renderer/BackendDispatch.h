@@ -12,6 +12,8 @@ namespace r2::draw::dispatch
 	void DrawIndexed(const void* data);
 	void FillVertexBuffer(const void* data);
 	void FillIndexBuffer(const void* data);
+	void CopyBuffer(const void* data);
+	void DeleteBuffer(const void* data);
 	void FillConstantBuffer(const void* data);
 	void CompleteConstantBuffer(const void* data);
 	void DrawBatch(const void* data);

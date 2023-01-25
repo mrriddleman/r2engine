@@ -66,13 +66,17 @@ namespace r2::draw::rendererimpl
 	void DeleteBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
 	void DeleteVertexBuffers(u32 numVertexBuffers, u32* vertexBufferIds);
 	void DeleteIndexBuffers(u32 numIndexBuffers, u32* indexIds);
+	
+	void AllocateVertexBufferWithData(u32 bufferHandle, u32 size, u32 drawType, void* data);
+	void AllocateVertexBuffer(u32 bufferHandle, u32 size, u32 drawType);
+	void AllocateIndexBuffer(u32 bufferHandle, u32 size, u32 drawType);
 
 	void GenerateContantBuffers(u32 numConstantBuffers, u32* contantBufferIds);
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId);
 	void SetupConstantBufferConfigs(const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* configs, ConstantBufferHandle* handles);
 	void SetDepthTest(bool shouldDepthTest);
 	void SetDepthWriteEnabled(bool depthWriteEnabled);
-	void DeleteBuffers(u32 numBuffers, u32* bufferIds);
+	void DeleteBuffers(u32 numBuffers, const u32* bufferIds);
 	void SetCullState(const CullState& cullState);
 	void SetDepthFunction(u32 depthFunc);
 	void EnablePolygonOffset(bool enabled);
@@ -96,6 +100,7 @@ namespace r2::draw::rendererimpl
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0, PrimitiveType primitivetype = PrimitiveType::TRIANGLES);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
+	void CopyBuffer(u32 readBuffer, u32 writeBuffer, u32 readOffset, u32 writeOffset, u32 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
 	void DrawDebugCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0);

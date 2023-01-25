@@ -8,6 +8,8 @@ namespace r2::draw::cmd
 	const r2::draw::dispatch::BackendDispatchFunction DrawIndexed::DispatchFunc = &r2::draw::dispatch::DrawIndexed;
 	const r2::draw::dispatch::BackendDispatchFunction FillVertexBuffer::DispatchFunc = &r2::draw::dispatch::FillVertexBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction FillIndexBuffer::DispatchFunc = &r2::draw::dispatch::FillIndexBuffer;
+	const r2::draw::dispatch::BackendDispatchFunction CopyBuffer::DispatchFunc = &r2::draw::dispatch::CopyBuffer;
+	const r2::draw::dispatch::BackendDispatchFunction DeleteBuffer::DispatchFunc = &r2::draw::dispatch::DeleteBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction FillConstantBuffer::DispatchFunc = &r2::draw::dispatch::FillConstantBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction CompleteConstantBuffer::DispatchFunc = &r2::draw::dispatch::CompleteConstantBuffer;
 	const r2::draw::dispatch::BackendDispatchFunction DrawBatch::DispatchFunc = &r2::draw::dispatch::DrawBatch;
@@ -29,6 +31,8 @@ namespace r2::draw::cmd
 			sizeof(r2::draw::cmd::DrawIndexed),
 			sizeof(r2::draw::cmd::FillVertexBuffer),
 			sizeof(r2::draw::cmd::FillIndexBuffer),
+			sizeof(r2::draw::cmd::CopyBuffer),
+			sizeof(r2::draw::cmd::DeleteBuffer),
 			sizeof(r2::draw::cmd::FillConstantBuffer),
 			sizeof(r2::draw::cmd::CompleteConstantBuffer),
 			sizeof(r2::draw::cmd::DrawBatch),

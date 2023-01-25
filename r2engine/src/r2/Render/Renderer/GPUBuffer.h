@@ -8,8 +8,8 @@ namespace r2::draw::vb
 {
 	struct GPUBufferEntry
 	{
-		u32 size;
-		u32 start;
+		u32 start; //base vertex/index
+		u32 size; //number of vertices/indices
 	};
 
 	/*

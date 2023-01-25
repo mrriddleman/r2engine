@@ -1,8 +1,9 @@
 #include "r2pch.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
-#include "r2/Render/Renderer/RenderKey.h"
+
 #include "r2/Render/Renderer/RendererImpl.h"
+#include "r2/Render/Renderer/CommandBucket.h"
 
 namespace r2::draw::vb
 {
@@ -273,6 +274,8 @@ namespace r2::draw::vb
 
 		FREE(vertexBufferLayout->gpuModelRefs, *system.mVertexBufferLayoutArena);
 
+		FREE(vertexBufferLayout->gpuModelRefArena, *system.mVertexBufferLayoutArena);
+
 		FREE(vertexBufferLayout, *system.mVertexBufferLayoutArena);
 
 		r2::sarr::Pop(*system.mVertexBufferLayouts);
@@ -285,7 +288,7 @@ namespace r2::draw::vbsys
 {
 	using FreeNode = SinglyLinkedList<vb::GPUBufferEntry>::Node;
 
-	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo);
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 
 	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
 	{
@@ -425,17 +428,80 @@ namespace r2::draw::vbsys
 	//@TODO(Serge): Figure out how this will interact with the renderer - ie. will this generate the command to upload the model data or will this call the renderer to do that etc.
 	//				or will this just update some internal data based on the model data
 	//				Remember the buffer should resize if we're beyond the size
-	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model)
+	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		return UploadModelToVertexBufferInternal(system, handle, model, nullptr, nullptr);
+		return UploadModelToVertexBufferInternal(system, handle, model, nullptr, nullptr, uploadBucket, commandBucketArena);
 	}
 
-	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model)
+	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		return UploadModelToVertexBufferInternal(system, handle, model.model, model.boneData, model.boneInfo);
+		return UploadModelToVertexBufferInternal(system, handle, model.model, model.boneData, model.boneInfo, uploadBucket, commandBucketArena);
 	}
 
-	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo)
+	/*
+	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return 0;
+		}
+
+		const u64 numVertices = r2::sarr::Size(*mesh.optrVertices);
+
+		cmd->vertexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::draw::Vertex) * numVertices;
+		cmd->data = r2::sarr::Begin(*mesh.optrVertices);
+
+		return cmd->dataSize + offset;
+	}
+
+	u64 FillBonesBufferCommand(FillVertexBuffer* cmd, r2::SArray<r2::draw::BoneData>& boneData, VertexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return 0;
+		}
+
+		const u64 numBoneData = r2::sarr::Size(boneData);
+		//for (u64 i = 0; i < numBoneData; ++i)
+		//{
+		//	const r2::draw::BoneData& d = r2::sarr::At(boneData, i);
+
+		//	printf("vertex: %llu - weights: %f, %f, %f, %f, boneIds: %d, %d, %d, %d\n", i, d.boneWeights.x, d.boneWeights.y, d.boneWeights.z, d.boneWeights.w, d.boneIDs.x, d.boneIDs.y, d.boneIDs.z, d.boneIDs.w);
+		//}
+
+		cmd->vertexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::draw::BoneData) * numBoneData;
+		cmd->data = r2::sarr::Begin(boneData);
+
+		return cmd->dataSize + offset;
+	}
+
+	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset)
+	{
+		if (cmd == nullptr)
+		{
+			R2_CHECK(false, "cmd or model is null");
+			return  0;
+		}
+
+		const u64 numIndices = r2::sarr::Size(*mesh.optrIndices);
+
+		cmd->indexBufferHandle = handle;
+		cmd->offset = offset;
+		cmd->dataSize = sizeof(r2::sarr::At(*mesh.optrIndices, 0)) * numIndices;
+		cmd->data = r2::sarr::Begin(*mesh.optrIndices);
+
+		return cmd->dataSize + offset;
+	}
+	
+	*/
+
+	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
 		bool isValidHandle = IsVertexBufferLayoutHandleValid(system, handle);
 
@@ -451,10 +517,160 @@ namespace r2::draw::vbsys
 		R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
 		R2_CHECK(numMaterals >= 1, "We should have at least one material");
 
+		vb::VertexBufferLayout* vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
-		vb::GPUModelRef modelRef;
+		R2_CHECK(vertexBufferLayout != nullptr, "vertexBufferLayout is nullptr!");
 
-		return vb::InvalidModelRefHandle;
+		vb::GPUModelRef* modelRef = ALLOC(vb::GPUModelRef, *vertexBufferLayout->gpuModelRefArena);
+
+		R2_CHECK(modelRef != nullptr, "modelRef is nullptr!");
+
+		modelRef->vertexEntries = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, vb::MeshEntry, numMeshes);
+
+		R2_CHECK(modelRef->vertexEntries != nullptr, "vertexEntries is nullptr!");
+
+		modelRef->materialHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, MaterialHandle, numMaterals);
+
+		R2_CHECK(modelRef->materialHandles != nullptr, "materialHandles is nullptr!");
+
+		for (u32 i = 0; i < numMaterals; ++i)
+		{
+			//@NOTE(Serge): this is the exact ordering of the models that came from the assimpassetloader, and needs to be the same, if you change that, this needs to change
+			r2::sarr::Push(*modelRef->materialHandles, r2::sarr::At(*model.optrMaterialHandles, i));
+		}
+
+		for (u64 i = 0; i < numMeshes; ++i)
+		{
+			r2::sarr::Push(*modelRef->vertexEntries, vb::MeshEntry());
+		}
+
+		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, r2::sarr::Size(*vertexBufferLayout->gpuModelRefs), vb::g_GPUModelSalt++);
+		modelRef->modelHash = model.hash;
+		modelRef->isAnimated = boneData && boneInfo;
+
+		if (boneInfo)
+		{
+			modelRef->numBones = boneInfo->mSize;
+		}
+
+		vb::GPUBufferEntry vertexEntry;
+		vb::GPUBufferEntry indexEntry;
+		u32 numVertices0 = r2::sarr::Size(*model.optrMeshes->mData[0]->optrVertices);
+		u32 numIndices0 = r2::sarr::Size(*model.optrMeshes->mData[0]->optrIndices);
+		
+		u32 totalNumVertices = 0;
+		u32 totalNumIndices = 0;
+
+		for (u32 i = 0; i < r2::sarr::Size(*model.optrMeshes); ++i)
+		{
+			const auto* mesh = r2::sarr::At(*model.optrMeshes, i);
+			totalNumVertices += r2::sarr::Size(*mesh->optrVertices);
+			totalNumIndices += r2::sarr::Size(*mesh->optrIndices);
+		}
+		
+		u32 totalMeshSizeInBytes = totalNumVertices * sizeof(r2::draw::Vertex);
+		u32 totalIndicesSizeInBytes = totalNumIndices * sizeof(u32);
+
+		bool vertexNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[0], totalMeshSizeInBytes, vertexEntry);
+		bool indexNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->indexBuffer, totalIndicesSizeInBytes, indexEntry);
+
+		bool boneVertexBufferNeedsToGrow = false;
+		vb::GPUBufferEntry boneVertexEntry;
+		if (boneData)
+		{
+			u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData);
+			boneVertexBufferNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[1], boneSizeInBytes, boneVertexEntry);
+
+			R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
+		}
+
+		//@TODO(Serge): implement growing here - for now assert...
+		R2_CHECK(vertexNeedsToGrow == false && indexNeedsToGrow == false, "Unsupported for the moment");
+
+		cmd::CopyBuffer* copyBuffer = nullptr;
+
+		if (vertexNeedsToGrow)
+		{
+			//generate new vertex buffer
+			u32 vbo;
+			r2::draw::rendererimpl::GenerateVertexBuffers(1, &vbo);
+			u32 oldSize = vertexBufferLayout->layout.vertexBufferConfigs[0].bufferSize;
+
+			vertexBufferLayout->layout.vertexBufferConfigs[0].bufferSize = vertexBufferLayout->vertexBuffers[0].bufferCapacity;
+
+			//@TODO(Serge): create the buffer for vbo
+
+
+
+			key::Basic uploadKey;
+			uploadKey.keyValue = 0;
+
+			copyBuffer = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::CopyBuffer>(*commandBucketArena, *uploadBucket, uploadKey, 0);
+			copyBuffer->readBuffer = vertexBufferLayout->gpuLayout.vboHandles[0];
+			copyBuffer->writeBuffer = vbo;
+			copyBuffer->readOffset = 0;
+			copyBuffer->writeOffset = 0;
+			copyBuffer->size = oldSize;
+
+
+
+
+			vb::gpubuf::SetNewBufferHandle(vertexBufferLayout->vertexBuffers[0], vbo);
+			vertexBufferLayout->gpuLayout.vboHandles[0] = vbo;
+
+			
+		}
+		//do the VAO setup again somehow if needed
+
+
+
+		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.start = (vertexEntry.start)/sizeof(r2::draw::Vertex); //this is the base vertex
+		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.size = numVertices0;
+		r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.start = (indexEntry.start) / sizeof(u32);
+		r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.size = numIndices0;
+		r2::sarr::At(*modelRef->vertexEntries, 0).meshBounds = r2::sarr::At(*model.optrMeshes, 0)->objectBounds;
+		r2::sarr::At(*modelRef->vertexEntries, 0).materialIndex = r2::sarr::At(*model.optrMeshes, 0)->materialIndex;
+
+		//@TODO(Serge): this is where the upload command is
+
+
+		for (u32 i = 1; i < numMeshes; i++)
+		{
+			u32 numMeshVertices = r2::sarr::Size(*model.optrMeshes->mData[i]->optrVertices);
+
+			r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.size = numMeshVertices;
+			r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.start = r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuVertexEntry.size + r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuVertexEntry.start;
+			r2::sarr::At(*modelRef->vertexEntries, i).materialIndex = r2::sarr::At(*model.optrMeshes, i)->materialIndex;
+			r2::sarr::At(*modelRef->vertexEntries, i).meshBounds = r2::sarr::At(*model.optrMeshes, i)->objectBounds;
+
+			//@TODO(Serge): this is where the upload command is
+		}
+
+		if (boneData)
+		{
+		//	vb::GPUBufferEntry boneVertexEntry;
+
+		//	u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData);
+		//	bool boneVertexBufferNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[1], boneSizeInBytes, boneVertexEntry);
+
+		//	R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
+
+			//@TODO(Serge): this is where the upload command is
+		}
+
+		for (u32 i = 1; i < numMeshes; ++i)
+		{
+			u32 numMeshIndices = r2::sarr::Size(*model.optrMeshes->mData[i]->optrIndices);
+
+			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.size = numMeshIndices;
+			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.start = r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.size + r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.start;
+		
+			//@TODO(Serge): upload command
+		}
+
+		r2::sarr::Push(*vertexBufferLayout->gpuModelRefs, modelRef);
+
+		return modelRef->gpuModelRefHandle;
 	}
 
 	//Somehow the modelRefHandle will be used to figure out which vb::VertexBufferHandle is being used for it

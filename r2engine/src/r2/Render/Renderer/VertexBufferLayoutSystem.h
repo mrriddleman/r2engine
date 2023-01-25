@@ -8,10 +8,13 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #include "r2/Render/Renderer/GPUBuffer.h"
+#include "r2/Render/Renderer/RenderKey.h"
 
 namespace r2::draw
 {
 	struct ModelSystem;
+
+	template <typename T> struct CommandBucket;
 }
 
 namespace r2::draw::vb
@@ -28,11 +31,12 @@ namespace r2::draw::vb
 		GPUBufferEntry gpuVertexEntry;
 		GPUBufferEntry gpuIndexEntry;
 		u32 materialIndex;
+
+		Bounds meshBounds;
 	};
 
 	struct GPUModelRef
 	{
-		VertexBufferLayoutHandle vblHandle;
 		GPUModelRefHandle gpuModelRefHandle;
 		u64 modelHash;
 		b32 isAnimated;
@@ -105,8 +109,8 @@ namespace r2::draw::vbsys
 	//@TODO(Serge): Figure out how this will interact with the renderer - ie. will this generate the command to upload the model data or will this call the renderer to do that etc.
 	//				or will this just update some internal data based on the model data
 	//				Remember the buffer should resize if we're beyond the size
-	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model);
-	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model);
+	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 	
 	//Somehow the modelRefHandle will be used to figure out which vb::VertexBufferLayoutHandle is being used in
 	bool UnloadModelFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& modelRefHandle);

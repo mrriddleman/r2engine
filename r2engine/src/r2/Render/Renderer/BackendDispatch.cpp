@@ -35,6 +35,22 @@ namespace r2::draw::dispatch
 		rendererimpl::UpdateIndexBuffer(realData->indexBufferHandle, realData->offset, realData->data, realData->dataSize);
 	}
 
+	void CopyBuffer(const void* data)
+	{
+		const r2::draw::cmd::CopyBuffer* realData = static_cast<const r2::draw::cmd::CopyBuffer*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+
+		rendererimpl::CopyBuffer(realData->readBuffer, realData->writeBuffer, realData->readOffset, realData->writeOffset, realData->size);
+	}
+
+	void DeleteBuffer(const void* data)
+	{
+		const r2::draw::cmd::DeleteBuffer* realData = static_cast<const r2::draw::cmd::DeleteBuffer*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+
+		rendererimpl::DeleteBuffers(1, &realData->bufferHandle);
+	}
+
 	void FillConstantBuffer(const void* data)
 	{
 		const r2::draw::cmd::FillConstantBuffer* realData = static_cast<const r2::draw::cmd::FillConstantBuffer*>(data);

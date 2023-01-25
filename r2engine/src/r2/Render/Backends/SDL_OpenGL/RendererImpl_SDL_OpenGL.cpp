@@ -396,7 +396,7 @@ namespace r2::draw::rendererimpl
 		glGenBuffers(numConstantBuffers, contantBufferIds);
 	}
 
-	void DeleteBuffers(u32 numBuffers, u32* bufferIds)
+	void DeleteBuffers(u32 numBuffers, const u32* bufferIds)
 	{
 		glDeleteBuffers(numBuffers, bufferIds);
 	}
@@ -535,6 +535,24 @@ namespace r2::draw::rendererimpl
 		return location;
 	}
 
+	void AllocateVertexBufferWithData(u32 bufferHandle, u32 size, u32 drawType, void* data)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, bufferHandle);
+		glBufferData(GL_ARRAY_BUFFER, size, data, drawType);
+	}
+
+	void AllocateVertexBuffer(u32 bufferHandle, u32 size, u32 drawType)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, bufferHandle);
+		glBufferData(GL_ARRAY_BUFFER, size, nullptr, drawType);
+	}
+
+	void AllocateIndexBuffer(u32 bufferHandle, u32 size, u32 drawType)
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufferHandle);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, nullptr, drawType);
+	}
+
 	void SetupBufferLayoutConfiguration(const BufferLayoutConfiguration& config, BufferLayoutHandle layoutId, VertexBufferHandle vertexBufferId[], u32 numVertexBufferHandles, IndexBufferHandle indexBufferId, DrawIDHandle drawId)
 	{
 
@@ -542,8 +560,7 @@ namespace r2::draw::rendererimpl
 
 		for (u32 i = 0; i < numVertexBufferHandles; ++i)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId[i]);
-			glBufferData(GL_ARRAY_BUFFER, config.vertexBufferConfigs[i].bufferSize, nullptr, config.vertexBufferConfigs[i].drawType);
+			AllocateVertexBuffer(vertexBufferId[i], config.vertexBufferConfigs[i].bufferSize, config.vertexBufferConfigs[i].drawType);
 		}
 
 		u32 vertexAttribId = 0;
@@ -589,32 +606,32 @@ namespace r2::draw::rendererimpl
 			++vertexAttribId;
 		}
 
+		r2::SArray<u32>* drawIdData = nullptr;
 		if (config.useDrawIDs && drawId != EMPTY_BUFFER)
 		{
-			r2::SArray<u32>* drawIdData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, config.maxDrawCount);
+			drawIdData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, config.maxDrawCount);
 			for (u32 i = 0; i < config.maxDrawCount; ++i)
 			{
 				r2::sarr::Push(*drawIdData, i);
 			}
 
-			glBindBuffer(GL_ARRAY_BUFFER, drawId);
-			glBufferData(GL_ARRAY_BUFFER, config.maxDrawCount * sizeof(u32), drawIdData->mData, GL_STATIC_DRAW);
+			AllocateVertexBufferWithData(drawId, config.maxDrawCount * sizeof(u32),GL_STATIC_DRAW, (void*)(drawIdData->mData));
 
-
-			glEnableVertexAttribArray(vertexAttribId);
-			glVertexAttribIPointer(vertexAttribId, 1, GL_UNSIGNED_INT, sizeof(u32), 0);
-			glVertexAttribDivisor(vertexAttribId, 1);
-
-
+			//glBindBuffer(GL_ARRAY_BUFFER, drawId);
+			//glBufferData(GL_ARRAY_BUFFER, config.maxDrawCount * sizeof(u32), drawIdData->mData, GL_STATIC_DRAW);
 			FREE(drawIdData, *MEM_ENG_SCRATCH_PTR);
 		}
 
+		if (config.useDrawIDs && drawId != EMPTY_BUFFER)
+		{
+			glEnableVertexAttribArray(vertexAttribId);
+			glVertexAttribIPointer(vertexAttribId, 1, GL_UNSIGNED_INT, sizeof(u32), 0);
+			glVertexAttribDivisor(vertexAttribId, 1);
+		}
 
 		if (indexBufferId != 0 && config.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, config.indexBufferConfig.bufferSize, nullptr, config.indexBufferConfig.drawType);
-
+			AllocateIndexBuffer(indexBufferId, config.indexBufferConfig.bufferSize, config.indexBufferConfig.drawType);
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -934,6 +951,11 @@ namespace r2::draw::rendererimpl
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
+	}
+
+	void CopyBuffer(u32 readBuffer, u32 writeBuffer, u32 readOffset, u32 writeOffset, u32 size)
+	{
+		glCopyNamedBufferSubData(readBuffer, writeBuffer, (GLintptr)readOffset, (GLintptr)writeOffset, (GLsizeiptr)size);
 	}
 
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size)

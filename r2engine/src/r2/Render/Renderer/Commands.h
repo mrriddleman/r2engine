@@ -86,6 +86,29 @@ namespace r2::draw::cmd
 	};
 	static_assert(std::is_pod<FillIndexBuffer>::value == true, "FillIndexBuffer must be a POD.");
 
+	struct CopyBuffer
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		//Maybe this should be a specific buffer handle type (Vertex/Index etc)?
+		u32 readBuffer;
+		u32 writeBuffer;
+
+		u32 readOffset;
+		u32 writeOffset;
+		u32 size;
+	};
+
+	static_assert(std::is_pod<CopyBuffer>::value == true, "CopyBuffer must be a POD.");
+
+	struct DeleteBuffer
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		u32 bufferHandle;
+	};
+
+	static_assert(std::is_pod<DeleteBuffer>::value == true, "DeleteBuffer must be a POD.");
 
 	struct FillConstantBuffer
 	{
@@ -99,7 +122,7 @@ namespace r2::draw::cmd
 		void* data;
 	};
 	static_assert(std::is_pod<FillConstantBuffer>::value == true, "FillContantBuffer must be a POD.");
-	
+
 	struct CompleteConstantBuffer
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
