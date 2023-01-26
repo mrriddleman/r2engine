@@ -25,6 +25,7 @@ namespace r2::draw::vb
 		u32 bufferPeakUsage;
 		u32 numberOfGrows;
 
+		//@TODO(Serge): make this a pool instead!
 		r2::mem::FreeListArena* freeListArena;
 
 		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
