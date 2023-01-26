@@ -336,7 +336,7 @@ namespace r2::draw::vbsys
 		rendererimpl::GenerateBufferLayouts(1, &newVertexBufferLayout->gpuLayout.vaoHandle);
 
 		//VBOs
-		rendererimpl::GenerateVertexBuffers(vertexConfig.numVertexConfigs, &newVertexBufferLayout->gpuLayout.vboHandles[0]);
+		rendererimpl::GenerateBuffers(vertexConfig.numVertexConfigs, &newVertexBufferLayout->gpuLayout.vboHandles[0]);
 		newVertexBufferLayout->gpuLayout.numVBOHandles = vertexConfig.numVertexConfigs;
 
 		for (size_t i = 0; i < vertexConfig.numVertexConfigs; i++)
@@ -348,7 +348,7 @@ namespace r2::draw::vbsys
 		newVertexBufferLayout->gpuLayout.iboHandle = EMPTY_BUFFER;
 		if (vertexConfig.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
-			rendererimpl::GenerateIndexBuffers(1, &newVertexBufferLayout->gpuLayout.iboHandle);
+			rendererimpl::GenerateBuffers(1, &newVertexBufferLayout->gpuLayout.iboHandle);
 			vb::gpubuf::SetNewBufferHandle(newVertexBufferLayout->indexBuffer, newVertexBufferLayout->gpuLayout.iboHandle);
 		}
 
@@ -356,7 +356,7 @@ namespace r2::draw::vbsys
 		newVertexBufferLayout->gpuLayout.drawIDHandle = EMPTY_BUFFER;
 		if (vertexConfig.useDrawIDs)
 		{
-			rendererimpl::GenerateVertexBuffers(1, &newVertexBufferLayout->gpuLayout.drawIDHandle);
+			rendererimpl::GenerateBuffers(1, &newVertexBufferLayout->gpuLayout.drawIDHandle);
 		}
 
 		rendererimpl::SetupBufferLayoutConfiguration(
@@ -438,8 +438,7 @@ namespace r2::draw::vbsys
 		return UploadModelToVertexBufferInternal(system, handle, model.model, model.boneData, model.boneInfo, uploadBucket, commandBucketArena);
 	}
 
-	/*
-	u64 FillVertexBufferCommand(FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
+	u64 FillVertexBufferCommand(cmd::FillVertexBuffer* cmd, const Mesh& mesh, VertexBufferHandle handle, u64 offset)
 	{
 		if (cmd == nullptr)
 		{
@@ -457,7 +456,7 @@ namespace r2::draw::vbsys
 		return cmd->dataSize + offset;
 	}
 
-	u64 FillBonesBufferCommand(FillVertexBuffer* cmd, r2::SArray<r2::draw::BoneData>& boneData, VertexBufferHandle handle, u64 offset)
+	u64 FillBonesBufferCommand(cmd::FillVertexBuffer* cmd, const r2::SArray<r2::draw::BoneData>* boneData, VertexBufferHandle handle, u64 offset)
 	{
 		if (cmd == nullptr)
 		{
@@ -465,23 +464,17 @@ namespace r2::draw::vbsys
 			return 0;
 		}
 
-		const u64 numBoneData = r2::sarr::Size(boneData);
-		//for (u64 i = 0; i < numBoneData; ++i)
-		//{
-		//	const r2::draw::BoneData& d = r2::sarr::At(boneData, i);
-
-		//	printf("vertex: %llu - weights: %f, %f, %f, %f, boneIds: %d, %d, %d, %d\n", i, d.boneWeights.x, d.boneWeights.y, d.boneWeights.z, d.boneWeights.w, d.boneIDs.x, d.boneIDs.y, d.boneIDs.z, d.boneIDs.w);
-		//}
+		const u64 numBoneData = r2::sarr::Size(*boneData);
 
 		cmd->vertexBufferHandle = handle;
 		cmd->offset = offset;
 		cmd->dataSize = sizeof(r2::draw::BoneData) * numBoneData;
-		cmd->data = r2::sarr::Begin(boneData);
+		cmd->data = r2::sarr::Begin(*boneData);
 
 		return cmd->dataSize + offset;
 	}
-
-	u64 FillIndexBufferCommand(FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset)
+	
+	u64 FillIndexBufferCommand(cmd::FillIndexBuffer* cmd, const Mesh& mesh, IndexBufferHandle handle, u64 offset)
 	{
 		if (cmd == nullptr)
 		{
@@ -498,8 +491,82 @@ namespace r2::draw::vbsys
 
 		return cmd->dataSize + offset;
 	}
-	
-	*/
+
+	cmd::CopyBuffer* CopyVertexBuffer(vb::VertexBufferLayoutSystem& system, vb::VertexBufferLayout* vertexBufferLayout, u32 vertexBufferIndex, cmd::CopyBuffer* prevCommand, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
+	{
+		//generate new vertex buffer
+		u32 vbo;
+		r2::draw::rendererimpl::GenerateBuffers(1, &vbo);
+		u32 oldSize = vertexBufferLayout->layout.vertexBufferConfigs[vertexBufferIndex].bufferSize;
+
+		vertexBufferLayout->layout.vertexBufferConfigs[vertexBufferIndex].bufferSize = vertexBufferLayout->vertexBuffers[vertexBufferIndex].bufferCapacity;
+
+		//alloocate the buffer for vbo
+		r2::draw::rendererimpl::AllocateVertexBuffer(vbo, vertexBufferLayout->layout.vertexBufferConfigs[vertexBufferIndex].bufferSize, vertexBufferLayout->layout.vertexBufferConfigs[vertexBufferIndex].drawType);
+
+		key::Basic uploadKey;
+		uploadKey.keyValue = 0;
+
+		cmd::CopyBuffer* copyBuffer = nullptr;
+		
+		if (!prevCommand)
+		{
+			copyBuffer = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::CopyBuffer>(*commandBucketArena, *uploadBucket, uploadKey, 0);
+		}
+		else
+		{
+			copyBuffer = cmdbkt::AppendCommand<cmd::CopyBuffer, cmd::CopyBuffer, mem::StackArena>(*commandBucketArena, prevCommand, 0);
+		}
+		
+		copyBuffer->readBuffer = vertexBufferLayout->gpuLayout.vboHandles[vertexBufferIndex];
+		copyBuffer->writeBuffer = vbo;
+		copyBuffer->readOffset = 0;
+		copyBuffer->writeOffset = 0;
+		copyBuffer->size = oldSize;
+
+		vb::gpubuf::SetNewBufferHandle(vertexBufferLayout->vertexBuffers[vertexBufferIndex], vbo);
+		vertexBufferLayout->gpuLayout.vboHandles[vertexBufferIndex] = vbo;
+
+		return copyBuffer;
+	}
+
+	cmd::CopyBuffer* CopyIndexBuffer(vb::VertexBufferLayoutSystem& system, vb::VertexBufferLayout* vertexBufferLayout, cmd::CopyBuffer* prevCommand, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
+	{
+		//generate new index buffer
+		u32 ibo;
+		r2::draw::rendererimpl::GenerateBuffers(1, &ibo);
+		u32 oldSize = vertexBufferLayout->layout.indexBufferConfig.bufferSize;
+
+		vertexBufferLayout->layout.indexBufferConfig.bufferSize = vertexBufferLayout->indexBuffer.bufferCapacity;
+
+		//alloocate the buffer for vbo
+		r2::draw::rendererimpl::AllocateIndexBuffer(ibo, vertexBufferLayout->layout.indexBufferConfig.bufferSize, vertexBufferLayout->layout.indexBufferConfig.drawType);
+
+		key::Basic uploadKey;
+		uploadKey.keyValue = 0;
+
+		cmd::CopyBuffer* copyBuffer = nullptr;
+
+		if (!prevCommand)
+		{
+			copyBuffer = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::CopyBuffer>(*commandBucketArena, *uploadBucket, uploadKey, 0);
+		}
+		else
+		{
+			copyBuffer = cmdbkt::AppendCommand<cmd::CopyBuffer, cmd::CopyBuffer, mem::StackArena>(*commandBucketArena, prevCommand, 0);
+		}
+
+		copyBuffer->readBuffer = vertexBufferLayout->gpuLayout.iboHandle;
+		copyBuffer->writeBuffer = ibo;
+		copyBuffer->readOffset = 0;
+		copyBuffer->writeOffset = 0;
+		copyBuffer->size = oldSize;
+
+		vb::gpubuf::SetNewBufferHandle(vertexBufferLayout->indexBuffer, ibo);
+		vertexBufferLayout->gpuLayout.iboHandle = ibo;
+
+		return copyBuffer;
+	}
 
 	vb::GPUModelRefHandle UploadModelToVertexBufferInternal(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, const r2::SArray<BoneData>* boneData, const r2::SArray<BoneInfo>* boneInfo, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
@@ -581,48 +648,65 @@ namespace r2::draw::vbsys
 			u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData);
 			boneVertexBufferNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[1], boneSizeInBytes, boneVertexEntry);
 
-			R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
+			//@TODO(Serge): implement growing here - for now assert...
+			//R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
 		}
 
 		//@TODO(Serge): implement growing here - for now assert...
-		R2_CHECK(vertexNeedsToGrow == false && indexNeedsToGrow == false, "Unsupported for the moment");
+		//R2_CHECK(vertexNeedsToGrow == false && indexNeedsToGrow == false, "Unsupported for the moment");
 
-		cmd::CopyBuffer* copyBuffer = nullptr;
+		cmd::CopyBuffer* prevCommand = nullptr;
+
+		r2::SArray<u32>* bufferHandlesToDelete = nullptr;
+		constexpr u32 MAX_NUMBER_OF_BUFFERS_TO_DELETE = 5;
 
 		if (vertexNeedsToGrow)
 		{
-			//generate new vertex buffer
-			u32 vbo;
-			r2::draw::rendererimpl::GenerateVertexBuffers(1, &vbo);
-			u32 oldSize = vertexBufferLayout->layout.vertexBufferConfigs[0].bufferSize;
+			if (!bufferHandlesToDelete)
+			{
+				bufferHandlesToDelete = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, MAX_NUMBER_OF_BUFFERS_TO_DELETE);
+			}
 
-			vertexBufferLayout->layout.vertexBufferConfigs[0].bufferSize = vertexBufferLayout->vertexBuffers[0].bufferCapacity;
+			r2::sarr::Push(*bufferHandlesToDelete, vertexBufferLayout->gpuLayout.vboHandles[0]);
 
-			//@TODO(Serge): create the buffer for vbo
-
-
-
-			key::Basic uploadKey;
-			uploadKey.keyValue = 0;
-
-			copyBuffer = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::CopyBuffer>(*commandBucketArena, *uploadBucket, uploadKey, 0);
-			copyBuffer->readBuffer = vertexBufferLayout->gpuLayout.vboHandles[0];
-			copyBuffer->writeBuffer = vbo;
-			copyBuffer->readOffset = 0;
-			copyBuffer->writeOffset = 0;
-			copyBuffer->size = oldSize;
-
-
-
-
-			vb::gpubuf::SetNewBufferHandle(vertexBufferLayout->vertexBuffers[0], vbo);
-			vertexBufferLayout->gpuLayout.vboHandles[0] = vbo;
-
-			
+			prevCommand = CopyVertexBuffer(system, vertexBufferLayout, 0, nullptr, uploadBucket, commandBucketArena);
 		}
-		//@TODO(Serge): do the VAO setup again somehow if needed
 
+		if (boneVertexBufferNeedsToGrow)
+		{
+			if (!bufferHandlesToDelete)
+			{
+				bufferHandlesToDelete = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, MAX_NUMBER_OF_BUFFERS_TO_DELETE);
+			}
 
+			r2::sarr::Push(*bufferHandlesToDelete, vertexBufferLayout->gpuLayout.vboHandles[1]);
+
+			prevCommand = CopyVertexBuffer(system, vertexBufferLayout, 1, prevCommand, uploadBucket, commandBucketArena);
+		}
+
+		if (indexNeedsToGrow)
+		{
+			if (!bufferHandlesToDelete)
+			{
+				bufferHandlesToDelete = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, MAX_NUMBER_OF_BUFFERS_TO_DELETE);
+			}
+
+			r2::sarr::Push(*bufferHandlesToDelete, vertexBufferLayout->gpuLayout.iboHandle);
+
+			prevCommand = CopyIndexBuffer(system, vertexBufferLayout, prevCommand, uploadBucket, commandBucketArena);
+		}
+
+		//Do the relayout - maybe needs to be a command?
+		if (vertexNeedsToGrow || indexNeedsToGrow || boneVertexBufferNeedsToGrow)
+		{
+			//@NOTE(Serge): I dunno if we would be better off just deleting the VAO and regenerating it?
+			r2::draw::rendererimpl::LayoutBuffersForLayoutConfiguration(
+				vertexBufferLayout->layout,
+				vertexBufferLayout->gpuLayout.vaoHandle,
+				vertexBufferLayout->gpuLayout.vboHandles, vertexBufferLayout->gpuLayout.numVBOHandles,
+				vertexBufferLayout->gpuLayout.iboHandle,
+				vertexBufferLayout->gpuLayout.drawIDHandle);
+		}
 
 		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.start = (vertexEntry.start)/sizeof(r2::draw::Vertex); //this is the base vertex
 		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.size = numVertices0;
@@ -631,8 +715,23 @@ namespace r2::draw::vbsys
 		r2::sarr::At(*modelRef->vertexEntries, 0).meshBounds = r2::sarr::At(*model.optrMeshes, 0)->objectBounds;
 		r2::sarr::At(*modelRef->vertexEntries, 0).materialIndex = r2::sarr::At(*model.optrMeshes, 0)->materialIndex;
 
-		//@TODO(Serge): this is where the upload command is
+		//Upload the first mesh
+		cmd::FillVertexBuffer* fillVertexCommand = nullptr;
 
+		if (!prevCommand)
+		{
+			key::Basic uploadKey;
+			uploadKey.keyValue = 0;
+			fillVertexCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, cmd::FillVertexBuffer>(*commandBucketArena, *uploadBucket, uploadKey, 0);
+		}
+		else
+		{
+			fillVertexCommand = cmdbkt::AppendCommand<cmd::CopyBuffer, cmd::FillVertexBuffer, mem::StackArena>(*commandBucketArena, prevCommand, 0);
+		}
+
+		FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model.optrMeshes, 0), vertexBufferLayout->gpuLayout.vboHandles[0], vertexEntry.start);
+
+		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
 
 		for (u32 i = 1; i < numMeshes; i++)
 		{
@@ -643,20 +742,24 @@ namespace r2::draw::vbsys
 			r2::sarr::At(*modelRef->vertexEntries, i).materialIndex = r2::sarr::At(*model.optrMeshes, i)->materialIndex;
 			r2::sarr::At(*modelRef->vertexEntries, i).meshBounds = r2::sarr::At(*model.optrMeshes, i)->objectBounds;
 
-			//@TODO(Serge): this is where the upload command is
+			u32 vertexOffset = r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.start * sizeof(r2::draw::Vertex);
+
+			nextVertexCmd = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*commandBucketArena, nextVertexCmd, 0);
+			FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model.optrMeshes, i), vertexBufferLayout->gpuLayout.vboHandles[0], vertexOffset);
 		}
 
+		//Upload the bones
 		if (boneData)
 		{
-		//	vb::GPUBufferEntry boneVertexEntry;
-
-		//	u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData);
-		//	bool boneVertexBufferNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[1], boneSizeInBytes, boneVertexEntry);
-
-		//	R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
-
-			//@TODO(Serge): this is where the upload command is
+			nextVertexCmd = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*commandBucketArena, nextVertexCmd, 0);
+			FillBonesBufferCommand(nextVertexCmd, boneData, vertexBufferLayout->gpuLayout.vboHandles[1], boneVertexEntry.start);
 		}
+
+		//Upload all of the indices of the model
+		cmd::FillIndexBuffer* fillIndexCommand = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*commandBucketArena, nextVertexCmd, 0);
+		FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model.optrMeshes, 0), vertexBufferLayout->gpuLayout.iboHandle, indexEntry.start);
+
+		cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
 
 		for (u32 i = 1; i < numMeshes; ++i)
 		{
@@ -665,7 +768,25 @@ namespace r2::draw::vbsys
 			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.size = numMeshIndices;
 			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.start = r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.size + r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.start;
 		
-			//@TODO(Serge): upload command
+			u32 indexOffset = r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.start * sizeof(u32);
+
+			nextIndexCmd = cmdbkt::AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*commandBucketArena, nextIndexCmd, 0);
+			FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model.optrMeshes, 0), vertexBufferLayout->gpuLayout.iboHandle, indexOffset);
+		}
+
+		//Delete the old vbos if needed
+		if (bufferHandlesToDelete)
+		{
+			cmd::DeleteBuffer* deleteBufferCMD = cmdbkt::AppendCommand<cmd::FillIndexBuffer, cmd::DeleteBuffer, mem::StackArena>(*commandBucketArena, nextIndexCmd, sizeof(u32)* r2::sarr::Size(*bufferHandlesToDelete));
+
+			char* auxMemory = cmdpkt::GetAuxiliaryMemory<cmd::DeleteBuffer>(deleteBufferCMD);
+
+			memcpy(auxMemory, bufferHandlesToDelete->mData, sizeof(u32) * r2::sarr::Size(*bufferHandlesToDelete));
+
+			deleteBufferCMD->bufferHandles = (u32*)auxMemory;
+			deleteBufferCMD->numBufferHandles = r2::sarr::Size(*bufferHandlesToDelete);
+
+			FREE(bufferHandlesToDelete, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		r2::sarr::Push(*vertexBufferLayout->gpuModelRefs, modelRef);

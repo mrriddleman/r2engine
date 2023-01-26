@@ -1959,7 +1959,7 @@ namespace r2::draw::renderer
 			numVertexLayouts += layout.numVertexConfigs;
 		}
 
-		rendererimpl::GenerateVertexBuffers((u32)numVertexLayouts, renderer.mBufferHandles.vertexBufferHandles->mData);
+		rendererimpl::GenerateBuffers((u32)numVertexLayouts, renderer.mBufferHandles.vertexBufferHandles->mData);
 		renderer.mBufferHandles.vertexBufferHandles->mSize = numVertexLayouts;
 
 		//IBOs
@@ -1981,7 +1981,7 @@ namespace r2::draw::renderer
 		if (numIBOs > 0)
 		{
 			tempIBOs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, IndexBufferHandle, numIBOs);
-			rendererimpl::GenerateIndexBuffers(numIBOs, tempIBOs->mData);
+			rendererimpl::GenerateBuffers(numIBOs, tempIBOs->mData);
 			tempIBOs->mSize = numIBOs;
 
 			R2_CHECK(tempIBOs != nullptr, "We should have memory for tempIBOs");
@@ -1991,7 +1991,7 @@ namespace r2::draw::renderer
 		if (numDrawIDs > 0)
 		{
 			tempDrawIDs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DrawIDHandle, numDrawIDs);
-			rendererimpl::GenerateVertexBuffers(numDrawIDs, tempDrawIDs->mData);
+			rendererimpl::GenerateBuffers(numDrawIDs, tempDrawIDs->mData);
 			tempDrawIDs->mSize = numDrawIDs;
 
 			R2_CHECK(tempDrawIDs != nullptr, "We should have memory for tempIBOs");

@@ -70,7 +70,7 @@ namespace r2::draw::cmd
 
 		u64 offset;
 		u64 dataSize;
-		void* data;
+		const void* data;
 	};
 	static_assert(std::is_pod<FillVertexBuffer>::value == true, "FillVertexBuffer must be a POD.");
 
@@ -82,7 +82,7 @@ namespace r2::draw::cmd
 
 		u64 offset;
 		u64 dataSize;
-		void* data;
+		const void* data;
 	};
 	static_assert(std::is_pod<FillIndexBuffer>::value == true, "FillIndexBuffer must be a POD.");
 
@@ -105,7 +105,8 @@ namespace r2::draw::cmd
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
 
-		u32 bufferHandle;
+		u32* bufferHandles;
+		u32 numBufferHandles;
 	};
 
 	static_assert(std::is_pod<DeleteBuffer>::value == true, "DeleteBuffer must be a POD.");

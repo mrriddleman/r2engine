@@ -48,7 +48,7 @@ namespace r2::draw::dispatch
 		const r2::draw::cmd::DeleteBuffer* realData = static_cast<const r2::draw::cmd::DeleteBuffer*>(data);
 		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
 
-		rendererimpl::DeleteBuffers(1, &realData->bufferHandle);
+		rendererimpl::DeleteBuffers(realData->numBufferHandles, realData->bufferHandles);
 	}
 
 	void FillConstantBuffer(const void* data)

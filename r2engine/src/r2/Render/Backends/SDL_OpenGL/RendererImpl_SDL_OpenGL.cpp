@@ -366,14 +366,9 @@ namespace r2::draw::rendererimpl
 		glGenVertexArrays(numBufferLayouts, layoutIds);
 	}
 
-	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds)
+	void GenerateBuffers(u32 numBuffers, u32* bufferIds)
 	{
-		glGenBuffers(numVertexBuffers, bufferIds);
-	}
-
-	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds)
-	{
-		glGenBuffers(numIndexBuffers, indexIds);
+		glGenBuffers(numBuffers, bufferIds);
 	}
 
 	void DeleteBufferLayouts(u32 numBufferLayouts, u32* layoutIds)
@@ -941,13 +936,13 @@ namespace r2::draw::rendererimpl
 		SetBlendState(state.blendState);
 	}
 
-	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size)
+	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, const void* data, u64 size)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, vBufferHandle);
 		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	}
 
-	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size)
+	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, const void* data, u64 size)
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);

@@ -60,9 +60,13 @@ namespace r2::draw::rendererimpl
 	//Setup code
 	void SetClearColor(const glm::vec4& color);
 	void SetDepthClearColor(float color);
+
 	void GenerateBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
-	void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
-	void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
+	//void GenerateVertexBuffers(u32 numVertexBuffers, u32* bufferIds);
+	//void GenerateIndexBuffers(u32 numIndexBuffers, u32* indexIds);
+	
+	void GenerateBuffers(u32 numBuffers, u32* bufferIds);
+
 	void DeleteBufferLayouts(u32 numBufferLayouts, u32* layoutIds);
 	void DeleteVertexBuffers(u32 numVertexBuffers, u32* vertexBufferIds);
 	void DeleteIndexBuffers(u32 numIndexBuffers, u32* indexIds);
@@ -107,8 +111,8 @@ namespace r2::draw::rendererimpl
 	void Clear(u32 flags);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0, PrimitiveType primitivetype = PrimitiveType::TRIANGLES);
-	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, void* data, u64 size);
-	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, void* data, u64 size);
+	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, const void* data, u64 size);
+	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, const void* data, u64 size);
 	void CopyBuffer(u32 readBuffer, u32 writeBuffer, u32 readOffset, u32 writeOffset, u32 size);
 	void UpdateConstantBuffer(ConstantBufferHandle cBufferHandle, r2::draw::ConstantBufferLayout::Type type, b32 isPersistent, u64 offset, void* data, u64 size);
 	void CompleteConstantBuffer(ConstantBufferHandle cBufferHandle, u64 totalSize);
