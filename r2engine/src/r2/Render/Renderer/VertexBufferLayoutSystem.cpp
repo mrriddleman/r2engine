@@ -936,7 +936,7 @@ namespace r2::draw::vbsys
 	}
 
 
-	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const Model*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles)
+	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const Model*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
 		if (IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{
@@ -967,13 +967,13 @@ namespace r2::draw::vbsys
 		{
 			const Model* model = r2::sarr::At(*modelsToUpload, i);
 
-			vb::GPUModelRefHandle modelRefHandle = UploadModelToVertexBuffer(system, vblHandle, *model, nullptr, nullptr);
+			vb::GPUModelRefHandle modelRefHandle = UploadModelToVertexBuffer(system, vblHandle, *model, uploadBucket, commandBucketArena);
 
 			r2::sarr::Push(*handles, modelRefHandle);
 		}
 	}
 
-	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const AnimModel*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles)
+	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const AnimModel*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
 		if (IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{
@@ -1004,7 +1004,7 @@ namespace r2::draw::vbsys
 		{
 			const AnimModel* model = r2::sarr::At(*modelsToUpload, i);
 
-			vb::GPUModelRefHandle modelRefHandle = UploadAnimModelToVertexBuffer(system, vblHandle, *model, nullptr, nullptr);
+			vb::GPUModelRefHandle modelRefHandle = UploadAnimModelToVertexBuffer(system, vblHandle, *model, uploadBucket, commandBucketArena);
 
 			r2::sarr::Push(*handles, modelRefHandle);
 		}
