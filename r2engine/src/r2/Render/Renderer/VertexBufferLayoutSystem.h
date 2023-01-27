@@ -24,8 +24,6 @@ namespace r2::draw::vb
 
 	GPUModelRefHandle InvalidModelRefHandle = 0;
 
-	
-
 	struct MeshEntry
 	{
 		GPUBufferEntry gpuVertexEntry;
@@ -123,9 +121,12 @@ namespace r2::draw::vbsys
 	//Should return true if the model is still loaded - false otherwise
 	bool IsModelRefHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle);
 
+	const vb::GPUModelRef* GetGPUModelRef(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle);
+
 	//Bulk upload options which I think will probably be used for levels/scenes
-	bool UploadAllModelsInModelSystem(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::ModelSystem& modelSystem, const r2::SArray<vb::GPUModelRefHandle>* handles);
-	bool UnloadAllModelsInModelSystem(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const ModelSystem& modelSystem);
+	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const Model*>* models, r2::SArray<vb::GPUModelRefHandle>* handles);
+	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const AnimModel*>* models, r2::SArray<vb::GPUModelRefHandle>* handles);
+	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<vb::GPUModelRefHandle>* handles);
 }
 
 #endif

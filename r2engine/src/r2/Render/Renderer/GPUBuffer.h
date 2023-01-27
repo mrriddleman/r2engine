@@ -1,7 +1,7 @@
 #ifndef __GPUBUFFER_H__
 #define __GPUBUFFER_H__
 
-#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
+#include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Containers/SinglyLinkedList.h"
 
 namespace r2::draw::vb
@@ -26,7 +26,7 @@ namespace r2::draw::vb
 		u32 numberOfGrows;
 
 		//@TODO(Serge): make this a pool instead!
-		r2::mem::FreeListArena* freeListArena;
+		r2::mem::PoolArena* freeListArena;
 
 		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
 
@@ -37,7 +37,7 @@ namespace r2::draw::vb
 
 namespace r2::draw::vb::gpubuf
 {
-	void Init(GPUBuffer& gpuBuffer, r2::mem::FreeListArena* freeList, u32 gpuBufferCapacity);
+	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* freeList, u32 gpuBufferCapacity);
 	void Shutdown(GPUBuffer& gpuBuffer);
 	bool AllocateEntry(GPUBuffer& gpuBuffer, u32 size, GPUBufferEntry& newEntry);
 	void DeleteEntry(GPUBuffer& gpuBuffer, const GPUBufferEntry& entry);

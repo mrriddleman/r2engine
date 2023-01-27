@@ -12,7 +12,7 @@ namespace r2::draw::vb
 		u64 size = 0;
 
 		size =
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, headerSize, boundsChecking) * maxNumberOfEntries +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(maxNumberOfEntries), alignment, headerSize, boundsChecking); //overestimate by sizeof(SinglyLinkedList) I think
 
@@ -25,7 +25,7 @@ namespace r2::draw::vb::gpubuf
 	void FindBufferEntry(const GPUBuffer& gpuBuffer, u32 size, FreeNode*& previousNode, FreeNode*& foundNode);
 	void Coalescence(GPUBuffer& gpuBuffer, FreeNode* previousNode, FreeNode* freeNode);
 
-	void Init(GPUBuffer& gpuBuffer, r2::mem::FreeListArena* freeList, u32 gpuBufferCapacity)
+	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* freeList, u32 gpuBufferCapacity)
 	{
 		gpuBuffer.freeListArena = freeList;
 		gpuBuffer.bufferCapacity = gpuBufferCapacity;
