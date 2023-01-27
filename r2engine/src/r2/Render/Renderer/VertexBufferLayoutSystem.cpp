@@ -769,6 +769,7 @@ namespace r2::draw::vbsys
 
 		if (!IsVertexBufferLayoutHandleValid(system, vertexBufferIndex))
 		{
+			R2_CHECK(false, "Invalid vertex buffer layout handle: %lu\n", vertexBufferIndex);
 			return false;
 		}
 
@@ -830,7 +831,25 @@ namespace r2::draw::vbsys
 
 	bool UnloadAllModelsFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle) 
 	{
-		return false;
+		if (!IsVertexBufferLayoutHandleValid(system, handle))
+		{
+			R2_CHECK(false, "Invalid vertex buffer layout handle: %lu\n", handle);
+			return false;
+		}
+
+		vb::VertexBufferLayout* vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
+		R2_CHECK(vertexBufferLayout != nullptr, "The vertex buffer layout at index: %lu is nullptr!", handle);
+
+		vb::gpubuf::FreeAll(vertexBufferLayout->indexBuffer);
+		for (u32 i = 0; i < vertexBufferLayout->gpuLayout.numVBOHandles; ++i)
+		{
+			vb::gpubuf::FreeAll(vertexBufferLayout->vertexBuffers[i]);
+		}
+		
+		r2::sarr::Clear(*vertexBufferLayout->gpuModelRefs);
+		RESET_ARENA(*vertexBufferLayout->gpuModelRefArena);
+
+		return true;
 	}
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model)
