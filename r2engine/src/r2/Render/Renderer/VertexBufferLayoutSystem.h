@@ -13,7 +13,6 @@
 namespace r2::draw
 {
 	struct ModelSystem;
-
 	template <typename T> struct CommandBucket;
 }
 
@@ -87,6 +86,7 @@ namespace r2::draw::vb
 		r2::mem::StackArena* mVertexBufferLayoutArena;
 		r2::SArray<VertexBufferLayout*>* mVertexBufferLayouts;
 
+		static u32 g_GPUModelSalt;
 		static u64 MemorySize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel, u64 alignment);
 	};
 

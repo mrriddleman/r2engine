@@ -8,7 +8,7 @@
 
 namespace r2::draw::vb
 {
-	static u32 g_GPUModelSalt = 0;
+	u32 VertexBufferLayoutSystem::g_GPUModelSalt = 0;
 
 	enum : u32
 	{
@@ -76,13 +76,13 @@ namespace r2::draw::vb
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 
-		const u32 poolArenaHeaderSize = mem::PoolAllocator::HeaderSize();
-
+		const u32 freelistHeaderSize = mem::FreeListAllocator::HeaderSize();
+		
 		u64 vertexBufferLayoutArenaSize =
 		(
 			GetGPUModelRefFreeListArenaSize(maxModelsLoaded, avgNumberOfMeshesPerModel) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPUModelRef*>::MemorySize(maxModelsLoaded), ALIGNMENT, stackHeaderSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(GPUBuffer::MemorySize(avgNumberOfMeshesPerModel*maxModelsLoaded, ALIGNMENT, poolArenaHeaderSize, boundsChecking), ALIGNMENT, stackHeaderSize, boundsChecking) * (MAX_VBOS + 1) +
+			r2::mem::utils::GetMaxMemoryForAllocation(GPUBuffer::MemorySize(avgNumberOfMeshesPerModel*maxModelsLoaded, ALIGNMENT, stackHeaderSize, boundsChecking), ALIGNMENT, stackHeaderSize, boundsChecking) * (MAX_VBOS + 1) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayout), ALIGNMENT, stackHeaderSize, boundsChecking)
 		) * numBufferLayouts;
 
@@ -164,11 +164,10 @@ namespace r2::draw::vb
 		u64 vertexBufferLayoutArenaSize = GetVertexBufferLayoutArenaSize(numBufferLayouts, maxModelsLoaded, avgNumberOfMeshesPerModel);
 
 		system->mVertexBufferLayoutArena = MAKE_STACK_ARENA(*vertexBufferLayoutLinearArena, vertexBufferLayoutArenaSize);
-
-		R2_CHECK(system->mVertexBufferLayoutArena != nullptr, "We couldn't make the gpu model ref handle area");
 		
-		if (system->mVertexBufferLayoutArena)
+		if (!system->mVertexBufferLayoutArena)
 		{
+			R2_CHECK(false, "We couldn't make the gpu model ref handle area");
 			return nullptr;
 		}
 
@@ -185,7 +184,7 @@ namespace r2::draw::vb
 
 		mem::LinearArena* linearArena = system->mArena;
 
-		R2_CHECK(linearArena != nullptr, "The linear arean is nullptr?");
+		R2_CHECK(linearArena != nullptr, "The linear arena is nullptr?");
 
 		const auto& numLayouts = static_cast<s64>( r2::sarr::Size(*system->mVertexBufferLayouts) );
 
@@ -225,8 +224,6 @@ namespace r2::draw::vb
 		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
 		u32 freelistHeaderSize = r2::mem::FreeListAllocator::HeaderSize();
 
-	//	u32 nodeSize = sizeof(SinglyLinkedList<vb::GPUBufferEntry>::Node);
-
 		u64 vertexBufferLayoutArenaSize = GetVertexBufferLayoutArenaSize(numBufferLayouts, maxModelsLoaded, avgNumberOfMeshesPerModel);
 
 		u64 memorySize =
@@ -249,13 +246,17 @@ namespace r2::draw::vb
 
 		auto& vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
+
+		if (vertexBufferLayout->layout.useDrawIDs)
+		{
+			rendererimpl::DeleteVertexBuffers(1, &vertexBufferLayout->gpuLayout.drawIDHandle);
+		}
+
 		if(vertexBufferLayout->indexBuffer.bufferHandle != 0)
 		{ 
-			rendererimpl::DeleteVertexBuffers(1, &vertexBufferLayout->gpuLayout.drawIDHandle);
-
 			gpubuf::Shutdown(vertexBufferLayout->indexBuffer);
 
-			FREE(vertexBufferLayout->indexBuffer.freeListArena, *system.mVertexBufferLayoutArena);
+			FREE(vertexBufferLayout->indexBuffer.poolArena, *system.mVertexBufferLayoutArena);
 
 			rendererimpl::DeleteIndexBuffers(1, &vertexBufferLayout->gpuLayout.iboHandle);
 		}
@@ -264,7 +265,7 @@ namespace r2::draw::vb
 		{
 			gpubuf::Shutdown(vertexBufferLayout->vertexBuffers[i]);
 
-			FREE(vertexBufferLayout->vertexBuffers[i].freeListArena, *system.mVertexBufferLayoutArena);
+			FREE(vertexBufferLayout->vertexBuffers[i].poolArena, *system.mVertexBufferLayoutArena);
 		}
 
 		rendererimpl::DeleteVertexBuffers(vertexBufferLayout->gpuLayout.numVBOHandles, &vertexBufferLayout->gpuLayout.vboHandles[0]);
@@ -429,9 +430,6 @@ namespace r2::draw::vbsys
 		return size;
 	}
 
-	//@TODO(Serge): Figure out how this will interact with the renderer - ie. will this generate the command to upload the model data or will this call the renderer to do that etc.
-	//				or will this just update some internal data based on the model data
-	//				Remember the buffer should resize if we're beyond the size
 	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
 		return UploadModelToVertexBufferInternal(system, handle, model, nullptr, nullptr, uploadBucket, commandBucketArena);
@@ -441,8 +439,6 @@ namespace r2::draw::vbsys
 	{
 		return UploadModelToVertexBufferInternal(system, handle, model.model, model.boneData, model.boneInfo, uploadBucket, commandBucketArena);
 	}
-
-	
 
 	cmd::CopyBuffer* CopyVertexBuffer(vb::VertexBufferLayoutSystem& system, vb::VertexBufferLayout* vertexBufferLayout, u32 vertexBufferIndex, cmd::CopyBuffer* prevCommand, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
@@ -574,7 +570,7 @@ namespace r2::draw::vbsys
 		s32 gpuRefIndex = FindNextAvailableGPUModelRefIndex(system, vertexBufferLayout);
 		R2_CHECK(gpuRefIndex != -1, "We couldn't find a slot to put this gpuref in? We might be out of slots?");
 
-		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::g_GPUModelSalt++);
+		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::VertexBufferLayoutSystem::g_GPUModelSalt++);
 		modelRef->modelHash = model.hash;
 		modelRef->isAnimated = boneData && boneInfo;
 
@@ -831,6 +827,9 @@ namespace r2::draw::vbsys
 		FREE(modelRef->vertexEntries, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef, *vertexBufferLayout->gpuModelRefArena);
 
+		vertexBufferLayout->gpuModelRefs->mData[modelRefIndex] = nullptr;
+
+
 		return true;
 	}
 
@@ -852,7 +851,11 @@ namespace r2::draw::vbsys
 		}
 		
 		r2::sarr::Clear(*vertexBufferLayout->gpuModelRefs);
+
 		RESET_ARENA(*vertexBufferLayout->gpuModelRefArena);
+
+		vb::GPUModelRef* nullModelRef = nullptr;
+		r2::sarr::Fill(*vertexBufferLayout->gpuModelRefs, nullModelRef);
 
 		return true;
 	}

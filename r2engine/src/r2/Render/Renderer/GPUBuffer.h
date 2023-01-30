@@ -25,11 +25,8 @@ namespace r2::draw::vb
 		u32 bufferPeakUsage;
 		u32 numberOfGrows;
 
-		//@TODO(Serge): make this a pool instead!
-		r2::mem::PoolArena* freeListArena;
-
+		r2::mem::PoolArena* poolArena;
 		r2::SinglyLinkedList<GPUBufferEntry> gpuFreeList;
-
 
 		static u64 MemorySize(u32 maxNumberOfEntries, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
@@ -37,7 +34,7 @@ namespace r2::draw::vb
 
 namespace r2::draw::vb::gpubuf
 {
-	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* freeList, u32 gpuBufferCapacity);
+	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* poolArena, u32 gpuBufferCapacity);
 	void Shutdown(GPUBuffer& gpuBuffer);
 	bool AllocateEntry(GPUBuffer& gpuBuffer, u32 size, GPUBufferEntry& newEntry);
 	void DeleteEntry(GPUBuffer& gpuBuffer, const GPUBufferEntry& entry);

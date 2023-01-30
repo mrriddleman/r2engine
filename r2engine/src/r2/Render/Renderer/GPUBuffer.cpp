@@ -11,10 +11,12 @@ namespace r2::draw::vb
 	{
 		u64 size = 0;
 
+		u64 poolHeaderSize = r2::mem::PoolAllocator::HeaderSize();
+
 		size =
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, headerSize, boundsChecking) * maxNumberOfEntries +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(maxNumberOfEntries), alignment, headerSize, boundsChecking); //overestimate by sizeof(SinglyLinkedList) I think
+			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, poolHeaderSize, boundsChecking) * maxNumberOfEntries +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(maxNumberOfEntries), alignment, poolHeaderSize, boundsChecking); //overestimate by sizeof(SinglyLinkedList) I think
 
 		return size;
 	}
@@ -25,15 +27,15 @@ namespace r2::draw::vb::gpubuf
 	void FindBufferEntry(const GPUBuffer& gpuBuffer, u32 size, FreeNode*& previousNode, FreeNode*& foundNode);
 	void Coalescence(GPUBuffer& gpuBuffer, FreeNode* previousNode, FreeNode* freeNode);
 
-	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* freeList, u32 gpuBufferCapacity)
+	void Init(GPUBuffer& gpuBuffer, r2::mem::PoolArena* poolArena, u32 gpuBufferCapacity)
 	{
-		gpuBuffer.freeListArena = freeList;
+		gpuBuffer.poolArena = poolArena;
 		gpuBuffer.bufferCapacity = gpuBufferCapacity;
 		gpuBuffer.bufferSize = 0;
 		gpuBuffer.bufferPeakUsage = 0;
 		gpuBuffer.numberOfGrows = 0;
 
-		FreeNode* node = ALLOC(FreeNode, *freeList);
+		FreeNode* node = ALLOC(FreeNode, *poolArena);
 
 		node->data.size = gpuBufferCapacity;
 		node->data.start = 0;
@@ -46,7 +48,7 @@ namespace r2::draw::vb::gpubuf
 	void Shutdown(GPUBuffer& gpuBuffer)
 	{
 		R2_CHECK(gpuBuffer.bufferSize == 0, "We still have allocated memory in the GPUBuffer!");
-		FREE(gpuBuffer.gpuFreeList.head, *gpuBuffer.freeListArena);
+		FREE(gpuBuffer.gpuFreeList.head, *gpuBuffer.poolArena);
 	}
 
 	bool AllocateEntry(GPUBuffer& gpuBuffer, u32 size, GPUBufferEntry& newEntry)
@@ -61,9 +63,9 @@ namespace r2::draw::vb::gpubuf
 		{
 			R2_LOGI("Attempting to grow the gpu buffer...\n");
 
-			neededToGrow = GrowBuffer(gpuBuffer, gpuBuffer.bufferSize * 2);
+			neededToGrow = GrowBuffer(gpuBuffer, gpuBuffer.bufferCapacity * 2);
 
-			R2_CHECK(neededToGrow, "We couldn't grow the buffer?");
+//			R2_CHECK(neededToGrow, "We couldn't grow the buffer?");
 
 			FindBufferEntry(gpuBuffer, size, previousNode, affectedNode);
 		}
@@ -74,14 +76,14 @@ namespace r2::draw::vb::gpubuf
 
 		if (leftOverAmount.size > 0)
 		{
-			FreeNode* newFreeNode = ALLOC(FreeNode, *gpuBuffer.freeListArena);
+			FreeNode* newFreeNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 			newFreeNode->data = leftOverAmount;
 
 			r2::sll::Insert(gpuBuffer.gpuFreeList, affectedNode, newFreeNode);
 		}
 
 		r2::sll::Remove(gpuBuffer.gpuFreeList, previousNode, affectedNode);
-		FREE(previousNode, *gpuBuffer.freeListArena);
+		FREE(previousNode, *gpuBuffer.poolArena);
 
 		gpuBuffer.bufferSize += size;
 		gpuBuffer.bufferPeakUsage = std::max(gpuBuffer.bufferPeakUsage, gpuBuffer.bufferSize);
@@ -97,7 +99,7 @@ namespace r2::draw::vb::gpubuf
 		FreeNode* it = gpuBuffer.gpuFreeList.head;
 		FreeNode* itPrev = nullptr;
 
-		FreeNode* freeNode = ALLOC(FreeNode, *gpuBuffer.freeListArena);
+		FreeNode* freeNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 		freeNode->next = nullptr;
 		freeNode->data = entry;
 
@@ -146,6 +148,11 @@ namespace r2::draw::vb::gpubuf
 
 	bool GrowBuffer(GPUBuffer& gpuBuffer, u32 newCapacity)
 	{
+		if (newCapacity == 0)
+		{
+			return false;
+		}
+
 		gpuBuffer.numberOfGrows++;
 
 		//find the node that goes to the furthest end of the buffer
@@ -175,7 +182,7 @@ namespace r2::draw::vb::gpubuf
 		else
 		{
 			//make a new one
-			FreeNode* newCapacityNode = ALLOC(FreeNode, *gpuBuffer.freeListArena);
+			FreeNode* newCapacityNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 			newCapacityNode->next = nullptr;
 			newCapacityNode->data.start = gpuBuffer.bufferCapacity;
 			newCapacityNode->data.size = newCapacity - gpuBuffer.bufferCapacity;
@@ -192,9 +199,9 @@ namespace r2::draw::vb::gpubuf
 	{
 		gpuBuffer.bufferSize = 0;
 		
-		RESET_ARENA(*gpuBuffer.freeListArena);
+		RESET_ARENA(*gpuBuffer.poolArena);
 
-		FreeNode* freeNode = ALLOC(FreeNode, *gpuBuffer.freeListArena);
+		FreeNode* freeNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 		freeNode->next = nullptr;
 		freeNode->data.size = gpuBuffer.bufferCapacity;
 		freeNode->data.start = 0;
@@ -216,7 +223,7 @@ namespace r2::draw::vb::gpubuf
 
 			r2::sll::Remove(gpuBuffer.gpuFreeList, freeNode, freeNode->next);
 
-			FREE(freeNode->next, *gpuBuffer.freeListArena);
+			FREE(freeNode->next, *gpuBuffer.poolArena);
 		}
 
 		if (previousNode != nullptr && (previousNode->data.start + previousNode->data.size == freeNode->data.start))
@@ -225,7 +232,7 @@ namespace r2::draw::vb::gpubuf
 
 			r2::sll::Remove(gpuBuffer.gpuFreeList, previousNode, freeNode);
 
-			FREE(freeNode, *gpuBuffer.freeListArena);
+			FREE(freeNode, *gpuBuffer.poolArena);
 		}
 	}
 }
