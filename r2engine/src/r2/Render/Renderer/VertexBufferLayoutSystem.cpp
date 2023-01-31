@@ -872,7 +872,7 @@ namespace r2::draw::vbsys
 
 			for (u64 j = 0; j < numModelRefs; j++)
 			{
-				const auto& gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
+				const auto* gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
 				if (gpuModelRef && gpuModelRef->modelHash == model.hash)
 				{
