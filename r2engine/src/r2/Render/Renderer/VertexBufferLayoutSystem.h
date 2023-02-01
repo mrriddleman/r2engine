@@ -1,5 +1,5 @@
-#ifndef __VERTEX_BUFFER_SYSTEM_H__
-#define __VERTEX_BUFFER_SYSTEM_H__
+#ifndef __VERTEX_BUFFER_LAYOUT_SYSTEM_H__
+#define __VERTEX_BUFFER_LAYOUT_SYSTEM_H__
 
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Containers/SArray.h"
@@ -13,15 +13,17 @@
 namespace r2::draw
 {
 	struct ModelSystem;
-	template <typename T> struct CommandBucket;
+	template<typename T> struct CommandBucket;
 }
 
 namespace r2::draw::vb
 {
-	using VertexBufferLayoutHandle = u32; //this will be the index into the array
+	using VertexBufferLayoutHandle = s32; //this will be the index into the array
 	using GPUModelRefHandle = u64;
 
-	GPUModelRefHandle InvalidModelRefHandle = 0;
+	const VertexBufferLayoutHandle InvalidVertexBufferLayoutHandle = -1;
+
+	const GPUModelRefHandle InvalidModelRefHandle = 0;
 
 	struct MeshEntry
 	{
@@ -47,10 +49,10 @@ namespace r2::draw::vb
 
 	struct GPUVertexLayout
 	{
-		u32 vaoHandle;
-		u32 vboHandles[MAX_VBOS];
-		u32 iboHandle;
-		u32 drawIDHandle;
+		BufferLayoutHandle vaoHandle;
+		VertexBufferHandle vboHandles[MAX_VBOS];
+		IndexBufferHandle iboHandle;
+		DrawIDHandle drawIDHandle;
 		u32 numVBOHandles;
 	};
 
@@ -90,12 +92,14 @@ namespace r2::draw::vb
 		static u64 MemorySize(u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel, u64 alignment);
 	};
 
-	vb::VertexBufferLayoutSystem* CreateVertexBufferSystem(const r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel);
-	void FreeVertexBufferSystem(vb::VertexBufferLayoutSystem* system);
+	vb::VertexBufferLayoutSystem* CreateVertexBufferLayoutSystem(const r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numBufferLayouts, u32 maxModelsLoaded, u32 avgNumberOfMeshesPerModel);
+	void FreeVertexBufferLayoutSystem(vb::VertexBufferLayoutSystem* system);
 }
 
 namespace r2::draw::vbsys
 {
+	BufferLayoutHandle GetBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayout& handle);
+
 	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 
 	vb::VertexBufferLayoutHandle AddVertexBufferLayout(vb::VertexBufferLayoutSystem& system, const r2::draw::BufferLayoutConfiguration& vertexConfig);
@@ -104,8 +108,8 @@ namespace r2::draw::vbsys
 	vb::VertexBufferLayoutSize GetVertexBufferSize(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 	vb::VertexBufferLayoutSize GetVertexBufferRemainingSize(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 
-	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
-	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	vb::GPUModelRefHandle UploadModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::Model& model, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	vb::GPUModelRefHandle UploadAnimModelToVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::draw::AnimModel& model, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 	
 	bool UnloadModelFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& modelRefHandle);
 	bool UnloadAllModelsFromVertexBuffer(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
@@ -124,8 +128,8 @@ namespace r2::draw::vbsys
 	const vb::GPUModelRef* GetGPUModelRef(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle);
 
 	//Bulk upload options which I think will probably be used for levels/scenes
-	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const Model*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
-	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const AnimModel*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const Model*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const AnimModel*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<vb::GPUModelRefHandle>* handles);
 }
 

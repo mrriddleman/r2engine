@@ -1,10 +1,7 @@
 #include "r2pch.h"
-
+#include "r2/Render/Renderer/Renderer.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetCache.h"
-#include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/ModelAssetLoader.h"
 #include "r2/Core/Math/MathUtils.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
@@ -22,10 +19,11 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/CommandBucket.h"
-#include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
+
 #include "r2/Utils/Hash.h"
 #include "glm/gtc/type_ptr.hpp"
 
@@ -35,7 +33,7 @@
 namespace
 {
 	//r2::draw::Renderer* s_optrRenderer = nullptr;
-	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 20;
+	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 32;
 	const u32 MAX_NUM_DRAWS = 2 << 13;
 	const u32 MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME = 512;
 	constexpr u32 MODEL_REF_ARENA_SIZE = sizeof(r2::draw::ModelRef) * MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL * (sizeof(r2::draw::MeshRef) + sizeof(r2::draw::MaterialHandle));
@@ -1052,6 +1050,13 @@ namespace r2::draw::renderer
 			return false;
 		}
 
+		newRenderer->mVertexBufferLayoutSystem = r2::draw::vb::CreateVertexBufferLayoutSystem(memoryAreaHandle, NUM_VERTEX_BUFFER_LAYOUT_TYPES, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME, AVG_NUM_OF_MESHES_PER_MODEL);
+		if (!newRenderer->mVertexBufferLayoutSystem)
+		{
+			R2_CHECK(false, "We couldn't initialize the vertex buffer");
+			return false;
+		}
+
 		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
 		if (!materialSystemInitialized)
 		{
@@ -1376,6 +1381,9 @@ namespace r2::draw::renderer
 		R2_CHECK(loadedModels, "We didn't load the models for the engine!");
 
 
+		//mVertexBufferLayoutSystem
+
+
 		InitializeVertexLayouts(*newRenderer, STATIC_MODELS_VERTEX_LAYOUT_SIZE, ANIM_MODELS_VERTEX_LAYOUT_SIZE);
 
 
@@ -1669,6 +1677,8 @@ namespace r2::draw::renderer
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
 		r2::draw::matsys::ShutdownMaterialSystems();
+
+		r2::draw::vb::FreeVertexBufferLayoutSystem(renderer->mVertexBufferLayoutSystem);
 		r2::draw::texsys::Shutdown();
 		r2::draw::shadersystem::Shutdown();
 

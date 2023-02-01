@@ -1,13 +1,12 @@
 #ifndef __COMMAND_PACKET_H__
 #define __COMMAND_PACKET_H__
 
-#include "r2/Render/Renderer/BackendDispatch.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Render/Renderer/BackendDispatch.h"
 
-using CommandPacket = void*;
-
-namespace r2::draw::cmdpkt
+namespace r2::draw
 {
+	using CommandPacket = void*;
 	/*
 	COMMAND PACKET STRUCTURE
 
@@ -19,94 +18,129 @@ namespace r2::draw::cmdpkt
 
 	*/
 
-	static const size_t OFFSET_NEXT_COMMAND_PACKET = 0u;
-	static const size_t OFFSET_BACKEND_DISPATCH_FUNCTION = OFFSET_NEXT_COMMAND_PACKET + sizeof(CommandPacket);
-	static const size_t OFFSET_COMMAND = OFFSET_BACKEND_DISPATCH_FUNCTION + sizeof(r2::draw::dispatch::BackendDispatchFunction);
-
-	template <typename T, class ARENA>
-	CommandPacket Create(ARENA& arena, u64 auxMemorySize)
+	namespace
 	{
-		void* cmdPacket = ALLOC_BYTESN(arena, GetSize<T>(auxMemorySize), 16);
-
-		u32* auxMemorySizePtr = reinterpret_cast<u32*>(reinterpret_cast<char*>(cmdPacket) + OFFSET_COMMAND + sizeof(T));
-
-		*auxMemorySizePtr = static_cast<u32>(auxMemorySize);
-
-		return cmdPacket;
+		static const size_t OFFSET_NEXT_COMMAND_PACKET = 0u;
+		static const size_t OFFSET_BACKEND_DISPATCH_FUNCTION = OFFSET_NEXT_COMMAND_PACKET + sizeof(r2::draw::CommandPacket);
+		static const size_t OFFSET_COMMAND = OFFSET_BACKEND_DISPATCH_FUNCTION + sizeof(r2::draw::dispatch::BackendDispatchFunction);
 	}
 
-	template <typename T>
-	size_t GetSize(size_t auxMemorySize)
+	namespace cmdpkt
 	{
-		return OFFSET_COMMAND + sizeof(T) + sizeof(u32) + auxMemorySize;
-	};
+		template <typename T, class ARENA> inline CommandPacket Create(ARENA& arena, u64 auxMemorySize);
 
-	CommandPacket* GetNextCommandPacket(CommandPacket packet)
-	{
-		return reinterpret_cast<CommandPacket*>(reinterpret_cast<char*>(packet) + OFFSET_NEXT_COMMAND_PACKET);
+		template <typename T> inline size_t GetSize(size_t auxMemorySize);
+
+		inline CommandPacket* GetNextCommandPacket(CommandPacket packet);
+
+		template <typename T> inline CommandPacket* GetNextCommandPacket(T* command);
+
+		inline r2::draw::dispatch::BackendDispatchFunction* GetBackendDispatchFunction(CommandPacket packet);
+
+		template <typename T> inline T* GetCommand(CommandPacket packet);
+
+		template <typename T> inline char* GetAuxiliaryMemory(T* command);
+
+		inline void StoreNextCommandPacket(CommandPacket packet, CommandPacket nextPacket);
+
+		template <typename T> inline void StoreNextCommandPacket(T* command, CommandPacket nextPacket);
+
+		inline void StoreBackendDispatchFunction(CommandPacket packet, r2::draw::dispatch::BackendDispatchFunction dispatchFunction);
+
+		inline const CommandPacket LoadNextCommandPacket(const CommandPacket packet);
+
+		inline const r2::draw::dispatch::BackendDispatchFunction LoadBackendDispatchFunction(const CommandPacket packet);
+
+		inline const void* LoadCommand(const CommandPacket packet);
 	}
 
-	template <typename T>
-	CommandPacket* GetNextCommandPacket(T* command)
+
+	namespace cmdpkt
 	{
-		return reinterpret_cast<CommandPacket*>(reinterpret_cast<char*>(command) - OFFSET_COMMAND + OFFSET_NEXT_COMMAND_PACKET);
-	}
+		template <typename T, class ARENA>
+		inline CommandPacket Create(ARENA& arena, u64 auxMemorySize)
+		{
+			void* cmdPacket = ALLOC_BYTESN(arena, GetSize<T>(auxMemorySize), 16);
 
-	r2::draw::dispatch::BackendDispatchFunction* GetBackendDispatchFunction(CommandPacket packet)
-	{
-		return reinterpret_cast<r2::draw::dispatch::BackendDispatchFunction*>(reinterpret_cast<char*>(packet) + OFFSET_BACKEND_DISPATCH_FUNCTION);
-	}
+			u32* auxMemorySizePtr = reinterpret_cast<u32*>(reinterpret_cast<char*>(cmdPacket) + OFFSET_COMMAND + sizeof(T));
 
-	template <typename T>
-	T* GetCommand(CommandPacket packet)
-	{
-		return reinterpret_cast<T*>(reinterpret_cast<char*>(packet) + OFFSET_COMMAND);
-	}
+			*auxMemorySizePtr = static_cast<u32>(auxMemorySize);
 
-	template <typename T>
-	char* GetAuxiliaryMemory(T* command)
-	{
-		char* auxMemSizeCharPtr = reinterpret_cast<char*>(command) + sizeof(T);
+			return cmdPacket;
+		}
 
-		u32* auxMemSizePtr = reinterpret_cast<u32*>(auxMemSizeCharPtr);
+		template <typename T>
+		inline size_t GetSize(size_t auxMemorySize)
+		{
+			return OFFSET_COMMAND + sizeof(T) + sizeof(u32) + auxMemorySize;
+		};
 
-		R2_CHECK(auxMemSizePtr != nullptr, "auxMemSizePtr should never be null");
-		R2_CHECK(*auxMemSizePtr > 0, "This must be greater than 0 if you're trying to use aux memory. Otherwise you'll crash the driver if you write to it");
+		inline CommandPacket* GetNextCommandPacket(CommandPacket packet)
+		{
+			return reinterpret_cast<CommandPacket*>(reinterpret_cast<char*>(packet) + OFFSET_NEXT_COMMAND_PACKET);
+		}
 
-		return reinterpret_cast<char*>(command) + sizeof(T) + sizeof(u32);
-	}
+		template <typename T>
+		inline CommandPacket* GetNextCommandPacket(T* command)
+		{
+			return reinterpret_cast<CommandPacket*>(reinterpret_cast<char*>(command) - OFFSET_COMMAND + OFFSET_NEXT_COMMAND_PACKET);
+		}
 
-	void StoreNextCommandPacket(CommandPacket packet, CommandPacket nextPacket)
-	{
-		*cmdpkt::GetNextCommandPacket(packet) = nextPacket;
-	}
+		inline r2::draw::dispatch::BackendDispatchFunction* GetBackendDispatchFunction(CommandPacket packet)
+		{
+			return reinterpret_cast<r2::draw::dispatch::BackendDispatchFunction*>(reinterpret_cast<char*>(packet) + OFFSET_BACKEND_DISPATCH_FUNCTION);
+		}
 
-	template <typename T>
-	void StoreNextCommandPacket(T* command, CommandPacket nextPacket)
-	{
-		*cmdpkt::GetNextCommandPacket<T>(command) = nextPacket;
-	}
+		template <typename T>
+		inline T* GetCommand(CommandPacket packet)
+		{
+			return reinterpret_cast<T*>(reinterpret_cast<char*>(packet) + OFFSET_COMMAND);
+		}
 
-	void StoreBackendDispatchFunction(CommandPacket packet, r2::draw::dispatch::BackendDispatchFunction dispatchFunction)
-	{
-		*cmdpkt::GetBackendDispatchFunction(packet) = dispatchFunction;
-	}
+		template <typename T>
+		inline char* GetAuxiliaryMemory(T* command)
+		{
+			char* auxMemSizeCharPtr = reinterpret_cast<char*>(command) + sizeof(T);
 
-	const CommandPacket LoadNextCommandPacket(const CommandPacket packet)
-	{
-		return *GetNextCommandPacket(packet);
-	}
+			u32* auxMemSizePtr = reinterpret_cast<u32*>(auxMemSizeCharPtr);
 
-	const r2::draw::dispatch::BackendDispatchFunction LoadBackendDispatchFunction(const CommandPacket packet)
-	{
-		return *GetBackendDispatchFunction(packet);
-	}
+			R2_CHECK(auxMemSizePtr != nullptr, "auxMemSizePtr should never be null");
+			R2_CHECK(*auxMemSizePtr > 0, "This must be greater than 0 if you're trying to use aux memory. Otherwise you'll crash the driver if you write to it");
 
-	const void* LoadCommand(const CommandPacket packet)
-	{
-		return reinterpret_cast<char*>(packet) + OFFSET_COMMAND;
+			return reinterpret_cast<char*>(command) + sizeof(T) + sizeof(u32);
+		}
+
+		inline void StoreNextCommandPacket(CommandPacket packet, CommandPacket nextPacket)
+		{
+			*cmdpkt::GetNextCommandPacket(packet) = nextPacket;
+		}
+
+		template <typename T>
+		inline void StoreNextCommandPacket(T* command, CommandPacket nextPacket)
+		{
+			*cmdpkt::GetNextCommandPacket<T>(command) = nextPacket;
+		}
+
+		inline void StoreBackendDispatchFunction(CommandPacket packet, r2::draw::dispatch::BackendDispatchFunction dispatchFunction)
+		{
+			*cmdpkt::GetBackendDispatchFunction(packet) = dispatchFunction;
+		}
+
+		inline const CommandPacket LoadNextCommandPacket(const CommandPacket packet)
+		{
+			return *GetNextCommandPacket(packet);
+		}
+
+		inline const r2::draw::dispatch::BackendDispatchFunction LoadBackendDispatchFunction(const CommandPacket packet)
+		{
+			return *GetBackendDispatchFunction(packet);
+		}
+
+		inline const void* LoadCommand(const CommandPacket packet)
+		{
+			return reinterpret_cast<char*>(packet) + OFFSET_COMMAND;
+		}
 	}
 }
-
 
 #endif // __COMMAND_PACKET_H__

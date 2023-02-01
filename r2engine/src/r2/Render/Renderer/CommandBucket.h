@@ -1,14 +1,17 @@
 #ifndef __COMMAND_BUCKET_H__
-#define __COMMAND_BUCKER_H__
+#define __COMMAND_BUCKET_H__
 
-#include "r2/Render/Renderer/RendererTypes.h"
-#include "r2/Render/Renderer/BackendDispatch.h"
+#include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
-#include "r2/Core/Containers/SArray.h"
-#include "r2/Render/Renderer/RenderTarget.h"
+#include "r2/Render/Renderer/RendererTypes.h"
+#include "r2/Render/Renderer/BackendDispatch.h"
 #include "r2/Render/Renderer/CommandPacket.h"
 #include <algorithm>
+
+
+
+
 
 #define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
 #define FREE_CMD_BUCKET(arena, key, bkt) r2::draw::cmdbkt::DestroyCommandBucket<key>(arena, bkt, __FILE__, __LINE__, "")
@@ -33,7 +36,6 @@ namespace r2::draw
 		r2::SArray<Entry>* entries = nullptr;
 		r2::SArray<Entry*>* sortedEntries = nullptr;
 
-	//	RenderTarget* noptrRenderTarget;
 		KeyDecoderFunc KeyDecoder = nullptr;
 	};
 
@@ -60,7 +62,7 @@ namespace r2::draw
 		template<typename T> inline u64 NumEntries(const CommandBucket<T>& bkt);
 		template<typename T> inline u64 Capacity(const CommandBucket<T>& bkt);
 
-		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, RenderTarget* rt, const char* file, s32 line, const char* description);
+		template<typename T, class ARENA> CommandBucket<T>* CreateCommandBucket(ARENA& arena, u64 capacity, typename CommandBucket<T>::KeyDecoderFunc decoderFunc, const char* file, s32 line, const char* description);
 		template<typename T, class ARENA> void DestroyCommandBucket(ARENA& arena, CommandBucket<T>* cmdBkt, const char* file, s32 line, const char* description);
 	}
 
@@ -116,7 +118,7 @@ namespace r2::draw
 			r2::sarr::Clear(*bkt.entries);
 		}
 
-		void SubmitPacket(CommandPacket packet)
+		inline void SubmitPacket(CommandPacket packet)
 		{
 			const dispatch::BackendDispatchFunction function = cmdpkt::LoadBackendDispatchFunction(packet);
 			const void* command = cmdpkt::LoadCommand(packet);
@@ -125,11 +127,6 @@ namespace r2::draw
 
 		template<typename T> void Submit(CommandBucket<T>& bkt)
 		{
-			//if (bkt.noptrRenderTarget)
-			//{
-			//	rt::SetRenderTarget(*bkt.noptrRenderTarget);
-			//}
-
 			const u64 numEntries = r2::sarr::Size(*bkt.entries);
 
 			for (u64 i = 0; i < numEntries; ++i)
@@ -211,7 +208,6 @@ namespace r2::draw
 			if (cmdBkt)
 			{
 				FREE(cmdBkt, arena);
-
 			}
 		}
 

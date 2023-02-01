@@ -9,15 +9,20 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Renderer/Commands.h"
 #include "r2/Render/Renderer/RenderPass.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelSystem.h"
 #include "r2/Render/Model/Light.h"
 
+
 namespace r2
 {
 	struct Camera;
+}
+
+namespace r2::draw::vb
+{
+	struct VertexBufferLayoutSystem;
 }
 
 namespace r2::draw
@@ -32,16 +37,7 @@ namespace r2::draw
 		float filmGrainStrength = 0.05f;
 	};
 
-	class BufferLayout;
-	struct BufferLayoutConfiguration;
 
-	struct BufferHandles
-	{
-		r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
-		r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
-		r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
-		r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
-	};
 
 	enum DefaultModel
 	{
@@ -92,15 +88,35 @@ namespace r2::draw
 		void AddDataSize(u64 size);
 	};
 
-	
-
 	struct Model;
+
+
+	enum eVertexBufferLayoutTypes
+	{
+		VBL_STATIC = 0,
+		VBL_ANIMATED,
+#if defined R2_DEBUG
+		VBL_DEBUG_MODEL,
+		VBL_DEBUG_LINES,
+#endif
+		NUM_VERTEX_BUFFER_LAYOUT_TYPES,
+		VBL_FINAL = VBL_STATIC
+	};
+
+	struct BufferHandles
+	{
+		r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
+		r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
+		r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
+		r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
+	};
 
 	struct VertexLayoutConfigHandle
 	{
 		BufferLayoutHandle mBufferLayoutHandle;
 		VertexBufferHandle mVertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
 		IndexBufferHandle mIndexBufferHandle;
+		DrawIDHandle mDrawIDHandle;
 		u32 mNumVertexBufferHandles;
 	};
 
@@ -209,10 +225,13 @@ namespace r2::draw
 		ModelSystem* mModelSystem = nullptr;
 		MaterialSystem* mMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
+		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
+
 		r2::SArray<r2::draw::ModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
 		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
 		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+		r2::SArray<s32>* mVertexBufferLayoutHandles = nullptr;
 
 		//--------------END Systems stuff----------------
 
