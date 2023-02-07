@@ -9,10 +9,6 @@
 #include "r2/Render/Renderer/CommandPacket.h"
 #include <algorithm>
 
-
-
-
-
 #define MAKE_CMD_BUCKET(arena, key, keydecoder, capacity) r2::draw::cmdbkt::CreateCommandBucket<key>(arena, capacity, keydecoder, __FILE__, __LINE__, "")
 #define FREE_CMD_BUCKET(arena, key, bkt) r2::draw::cmdbkt::DestroyCommandBucket<key>(arena, bkt, __FILE__, __LINE__, "")
 

@@ -36,7 +36,7 @@ namespace r2
             
             void* Allocate(u64 size, u64 alignment, u64 offset);
             void Free(void* ptr);
-            void Reset() {/*@TODO(Serge): implement*/}
+            void Reset(void);
             u32 GetAllocationSize(void* memoryPtr) const;
             u64 TotalElements() const {return mFreeList.NumElements();}
             u64 NumElementsAllocated() const {return mNumAllocations;}
@@ -54,6 +54,9 @@ namespace r2
                 inline void* Obtain(void);
                 inline void Return(void* memoryPtr);
                 inline u64 NumElements() const {return mNumElements;}
+
+                void Reset(void* start, void* end, u64 elementSize, u64 alignment, u64 offset);
+
             private:
                 Freelist* mNext;
                 u64 mNumElements;
@@ -66,6 +69,7 @@ namespace r2
             const u64 mElementSize;
             const u64 mAlignment;
             u64 mNumAllocations;
+            u64 mOffset;
         };
         
 #if defined(R2_DEBUG) || defined(R2_RELEASE)

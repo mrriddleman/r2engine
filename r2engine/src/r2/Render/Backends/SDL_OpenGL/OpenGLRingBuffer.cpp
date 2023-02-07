@@ -46,11 +46,21 @@ namespace r2::draw::rendererimpl
 				BufferLock& nextLock = r2::sarr::At(locks, i);
 
 				GLbitfield waitFlags = 0;
-				GLuint64 waitDuration = 0;
+				GLuint64 waitDuration = 100;
 	
-				GLenum waitRet = glClientWaitSync(*&nextLock.syncObject, waitFlags, waitDuration);
+				R2_CHECK(glIsSync(nextLock.syncObject), "?");
 
-				if (GLenum err = glGetError())
+				GLenum waitRet = glClientWaitSync(nextLock.syncObject, waitFlags, waitDuration);
+
+				if (waitRet == GL_TIMEOUT_EXPIRED)
+				{
+			//		GLenum err = glGetError();
+		//			R2_LOGE("glClientWaitSync error: %u", err);
+				//	R2_CHECK(false, "waitRet == GL_TIMEOUT_EXPIRED");
+				}
+
+				GLenum err = glGetError();
+				if (err != GL_NO_ERROR)
 				{
 					R2_CHECK(false, "glClientWaitSync error: %zu", err);
 				}

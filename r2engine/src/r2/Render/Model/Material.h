@@ -157,8 +157,9 @@ namespace r2::draw
 
 	struct MaterialHandle
 	{
-		u32 handle = 0;
-		s32 slot = -1;
+		//forcing 8-byte alignment for free lists
+		u64 handle = 0;
+		s64 slot = -1;
 	};
 }
 

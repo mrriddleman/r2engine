@@ -8,8 +8,9 @@ namespace r2::draw::vb
 {
 	struct GPUBufferEntry
 	{
-		u32 start; //base vertex/index
-		u32 size; //number of vertices/indices
+		//forcing 8 byte alignment for freelist
+		u64 start; //base vertex/index
+		u64 size; //number of vertices/indices
 	};
 
 	/*

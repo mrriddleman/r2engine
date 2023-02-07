@@ -374,10 +374,10 @@ public:
 
         r2::sarr::Push(*mStaticModelDrawFlags, drawFlags); //for Sponza
 
-        mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRefHandle, NUM_DRAWS);
+        mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, NUM_DRAWS);
         mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
 
-		mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::ModelRefHandle, 3);
+		mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, 3);
 
         mSkyboxMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, 1);
         
@@ -1719,17 +1719,17 @@ private:
     r2::mem::LinearArena* linearArenaPtr;
 
 
-    r2::SArray<r2::draw::ModelRefHandle>* mAnimModelRefs;
-    r2::SArray<r2::draw::ModelRefHandle>* mStaticModelRefs;
+    r2::SArray<r2::draw::vb::GPUModelRefHandle>* mAnimModelRefs;
+    r2::SArray<r2::draw::vb::GPUModelRefHandle>* mStaticModelRefs;
     r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
-    r2::draw::ModelRefHandle mSkyboxModelRef;
+    r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
     r2::SArray<r2::draw::MaterialHandle>* mSkyboxMaterialHandles;
 
     r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;
     r2::SArray<glm::mat4>* modelMats;
     r2::SArray<glm::mat4>* animModelMats;
 
-    r2::draw::ModelRefHandle mTransparentWindowModelRefHandle;
+    r2::draw::vb::GPUModelRefHandle mTransparentWindowModelRefHandle;
     r2::SArray<glm::mat4>* mTransparentWindowMats;
     r2::SArray<r2::draw::MaterialHandle>* mTransparentWindowMaterialHandles;
     r2::SArray<r2::draw::DrawFlags>* mTransparentWindowDrawFlags;
@@ -1747,7 +1747,7 @@ private:
 
     r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
 
-    r2::draw::ModelRefHandle mStaticCubeModelRefHandle;
+    r2::draw::vb::GPUModelRefHandle mStaticCubeModelRefHandle;
     r2::SArray<glm::mat4>* mStaticCubeModelMats;
     r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
     r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
@@ -1760,7 +1760,7 @@ private:
     const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
     const r2::draw::Model* mSponzaModel = nullptr;
-    r2::draw::ModelRefHandle mSponzaModelRefHandle;
+    r2::draw::vb::GPUModelRefHandle mSponzaModelRefHandle;
 
     s32 mSelectedAnimationID = 0;
     bool mDrawDebugBones = false;

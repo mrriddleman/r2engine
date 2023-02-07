@@ -22,7 +22,7 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
-#include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
+
 
 #include "r2/Utils/Hash.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -33,10 +33,12 @@
 namespace
 {
 	//r2::draw::Renderer* s_optrRenderer = nullptr;
-	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 32;
 	const u32 MAX_NUM_DRAWS = 2 << 13;
+
+	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 32;
 	const u32 MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME = 512;
-	constexpr u32 MODEL_REF_ARENA_SIZE = sizeof(r2::draw::ModelRef) * MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL * (sizeof(r2::draw::MeshRef) + sizeof(r2::draw::MaterialHandle));
+	
+	//constexpr u32 MODEL_REF_ARENA_SIZE = sizeof(r2::draw::ModelRef) * MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL * (sizeof(r2::draw::MeshRef) + sizeof(r2::draw::MaterialHandle));
 	const u64 COMMAND_CAPACITY = 2048;
 	const u64 COMMAND_AUX_MEMORY = Megabytes(16); //I dunno lol
 	//const u64 AO_COMMAND_AUX_MEMORY = Megabytes(4);
@@ -243,7 +245,7 @@ namespace r2::draw
 		u64 totalBytes =
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<cmd::DrawState>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numModelRefs * AVG_NUM_OF_MESHES_PER_MODEL), alignment, headerSize, boundsChecking);
 
@@ -352,8 +354,8 @@ namespace r2::draw::renderer
 	void SetClearColor(const glm::vec4& color);
 
 	const Model* GetDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
-	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs(Renderer& renderer);
-	r2::draw::ModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
+	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs(Renderer& renderer);
+	vb::GPUModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer);
 	const tex::Texture* GetMissingTexture(Renderer* renderer);
@@ -365,15 +367,15 @@ namespace r2::draw::renderer
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName);
 	void UploadEngineMaterialTexturesToGPU(Renderer& renderer);
 
-	ModelRefHandle UploadModel(Renderer& renderer, const Model* model);
-	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs);
+	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model);
+	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	ModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs);
+	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
+	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
-	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle);
-	void ClearAllVertexLayoutOffsets(Renderer& renderer);
+	//void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle);
+	//void ClearAllVertexLayoutOffsets(Renderer& renderer);
 
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
@@ -494,8 +496,8 @@ namespace r2::draw::renderer
 
 	void UpdateLighting(Renderer& renderer);
 
-	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 
 	///More draw functions...
@@ -576,22 +578,19 @@ namespace r2::draw::renderer
 		bool depthTest);
 
 #endif
-}
 
-namespace r2::draw::renderer
-{
+
 	ConstantBufferData* GetConstData(Renderer& renderer, ConstantBufferHandle handle);
 	ConstantBufferData* GetConstDataByConfigHandle(Renderer& renderer, ConstantConfigHandle handle);
 
-	BufferHandles& GetVertexBufferHandles(Renderer& renderer);
 	const r2::SArray<r2::draw::ConstantBufferHandle>* GetConstantBufferHandles(Renderer& renderer);
 
-	void UploadEngineModels(Renderer& renderer, VertexConfigHandle vertexConfigHandle);
+	void UploadEngineModels(Renderer& renderer);
 
 	bool GenerateLayouts(Renderer& renderer);
 
-	VertexConfigHandle AddStaticModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
-	VertexConfigHandle AddAnimatedModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
+	vb::VertexBufferLayoutHandle AddStaticModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
+	vb::VertexBufferLayoutHandle AddAnimatedModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize);
 
 	ConstantConfigHandle AddConstantBufferLayout(Renderer& renderer, ConstantBufferLayout::Type type, const std::initializer_list<ConstantBufferElement>& elements);
 	ConstantConfigHandle AddModelsLayout(Renderer& renderer, ConstantBufferLayout::Type type);
@@ -609,7 +608,7 @@ namespace r2::draw::renderer
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
 
 	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
-	bool GenerateBufferLayouts(Renderer& renderer, const r2::SArray<BufferLayoutConfiguration>* layouts);
+	//bool GenerateBufferLayouts(Renderer& renderer, const r2::SArray<BufferLayoutConfiguration>* layouts);
 	bool GenerateConstantBuffers(Renderer& renderer, const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
 
 
@@ -628,7 +627,7 @@ namespace r2::draw::renderer
 	template<class ARENA, typename T>
 	r2::draw::cmd::FillConstantBuffer* AddFillConstantBufferCommand(ARENA& arena, CommandBucket<T>& bucket, T key, u64 auxMemory);
 
-	ModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vHandle);
+
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data);
 	u64 AddZeroConstantBufferCommand(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex);
 
@@ -675,7 +674,7 @@ namespace r2::draw::renderer
 	void DebugPreRender(Renderer& renderer);
 	void ClearDebugRenderData(Renderer& renderer);
 
-	VertexConfigHandle AddDebugDrawLayout(Renderer& renderer);
+	vb::VertexBufferLayoutHandle AddDebugDrawLayout(Renderer& renderer);
 	ConstantConfigHandle AddDebugLineSubCommandsLayout(Renderer& renderer);
 	ConstantConfigHandle AddDebugModelSubCommandsLayout(Renderer& renderer);
 	ConstantConfigHandle AddDebugColorsLayout(Renderer& renderer);
@@ -910,22 +909,26 @@ namespace r2::draw::renderer
 
 		
 
-		newRenderer->mBufferHandles.bufferLayoutHandles = MAKE_SARRAY(*rendererArena, r2::draw::BufferLayoutHandle, MAX_BUFFER_LAYOUTS);
-		
-		R2_CHECK(newRenderer->mBufferHandles.bufferLayoutHandles != nullptr, "We couldn't create the buffer layout handles!");
-		
-		newRenderer->mBufferHandles.vertexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::VertexBufferHandle, MAX_BUFFER_LAYOUTS * BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS);
-		
-		R2_CHECK(newRenderer->mBufferHandles.vertexBufferHandles != nullptr, "We couldn't create the vertex buffer layout handles!");
-		
-		newRenderer->mBufferHandles.indexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::IndexBufferHandle, MAX_BUFFER_LAYOUTS);
+		//newRenderer->mBufferHandles.bufferLayoutHandles = MAKE_SARRAY(*rendererArena, r2::draw::BufferLayoutHandle, MAX_BUFFER_LAYOUTS);
+		//
+		//R2_CHECK(newRenderer->mBufferHandles.bufferLayoutHandles != nullptr, "We couldn't create the buffer layout handles!");
+		//
+		//newRenderer->mBufferHandles.vertexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::VertexBufferHandle, MAX_BUFFER_LAYOUTS * BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS);
+		//
+		//R2_CHECK(newRenderer->mBufferHandles.vertexBufferHandles != nullptr, "We couldn't create the vertex buffer layout handles!");
+		//
+		//newRenderer->mBufferHandles.indexBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::IndexBufferHandle, MAX_BUFFER_LAYOUTS);
 
-		R2_CHECK(newRenderer->mBufferHandles.indexBufferHandles != nullptr, "We couldn't create the index buffer layout handles!");
+		//R2_CHECK(newRenderer->mBufferHandles.indexBufferHandles != nullptr, "We couldn't create the index buffer layout handles!");
 
-		newRenderer->mBufferHandles.drawIDHandles = MAKE_SARRAY(*rendererArena, r2::draw::DrawIDHandle, MAX_BUFFER_LAYOUTS);
+		//newRenderer->mBufferHandles.drawIDHandles = MAKE_SARRAY(*rendererArena, r2::draw::DrawIDHandle, MAX_BUFFER_LAYOUTS);
 
-		R2_CHECK(newRenderer->mBufferHandles.drawIDHandles != nullptr, "We couldn't create the draw id handles");
+		//R2_CHECK(newRenderer->mBufferHandles.drawIDHandles != nullptr, "We couldn't create the draw id handles");
 		
+		newRenderer->mVertexBufferLayoutHandles = MAKE_SARRAY(*rendererArena, vb::VertexBufferLayoutHandle, NUM_VERTEX_BUFFER_LAYOUT_TYPES);
+
+		R2_CHECK(newRenderer->mVertexBufferLayoutHandles != nullptr, "We couldn't create the newRenderer->mVertexBufferLayoutHandles array");
+
 		newRenderer->mConstantBufferHandles = MAKE_SARRAY(*rendererArena, r2::draw::ConstantBufferHandle, MAX_BUFFER_LAYOUTS);
 		
 		R2_CHECK(newRenderer->mConstantBufferHandles != nullptr, "We couldn't create the constant buffer handles");
@@ -938,23 +941,23 @@ namespace r2::draw::renderer
 
 		R2_CHECK(newRenderer->mDefaultModelHandles != nullptr, "We couldn't create the default model handles");
 
-		newRenderer->mVertexLayoutConfigHandles = MAKE_SARRAY(*rendererArena, VertexLayoutConfigHandle, MAX_BUFFER_LAYOUTS);
+		//newRenderer->mVertexLayoutConfigHandles = MAKE_SARRAY(*rendererArena, VertexLayoutConfigHandle, MAX_BUFFER_LAYOUTS);
 
-		R2_CHECK(newRenderer->mVertexLayoutConfigHandles != nullptr, "We couldn't create the mVertexLayoutConfigHandles");
+		//R2_CHECK(newRenderer->mVertexLayoutConfigHandles != nullptr, "We couldn't create the mVertexLayoutConfigHandles");
 
-		newRenderer->mVertexLayoutUploadOffsets = MAKE_SARRAY(*rendererArena, VertexLayoutUploadOffset, MAX_BUFFER_LAYOUTS);
+		//newRenderer->mVertexLayoutUploadOffsets = MAKE_SARRAY(*rendererArena, VertexLayoutUploadOffset, MAX_BUFFER_LAYOUTS);
 
-		R2_CHECK(newRenderer->mVertexLayoutUploadOffsets != nullptr, "We couldn't create the mVertexLayoutUploadOffsets");
+		//R2_CHECK(newRenderer->mVertexLayoutUploadOffsets != nullptr, "We couldn't create the mVertexLayoutUploadOffsets");
 
-		newRenderer->mVertexLayouts = MAKE_SARRAY(*rendererArena, r2::draw::BufferLayoutConfiguration, MAX_BUFFER_LAYOUTS);
+		//newRenderer->mVertexLayouts = MAKE_SARRAY(*rendererArena, r2::draw::BufferLayoutConfiguration, MAX_BUFFER_LAYOUTS);
 
-		R2_CHECK(newRenderer->mVertexLayouts != nullptr, "We couldn't create the vertex layouts!");
+		//R2_CHECK(newRenderer->mVertexLayouts != nullptr, "We couldn't create the vertex layouts!");
 
 		newRenderer->mConstantLayouts = MAKE_SARRAY(*rendererArena, r2::draw::ConstantBufferLayoutConfiguration, MAX_BUFFER_LAYOUTS);
 
 		R2_CHECK(newRenderer->mConstantLayouts != nullptr, "We couldn't create the constant layouts!");
 
-		newRenderer->mEngineModelRefs = MAKE_SARRAY(*rendererArena, r2::draw::ModelRefHandle, NUM_DEFAULT_MODELS);
+		newRenderer->mEngineModelRefs = MAKE_SARRAY(*rendererArena, vb::GPUModelRefHandle, NUM_DEFAULT_MODELS);
 
 		R2_CHECK(newRenderer->mEngineModelRefs != nullptr, "We couldn't create the engine model refs");
 
@@ -974,7 +977,7 @@ namespace r2::draw::renderer
 			DebugRenderBatch debugRenderBatch;
 
 			debugRenderBatch.debugDrawType = (DebugDrawType)i;
-			debugRenderBatch.vertexConfigHandle = InvalidVertexConfigHandle;
+			debugRenderBatch.vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
 			debugRenderBatch.materialHandle = mat::InvalidMaterial;
 			
 			
@@ -1242,9 +1245,10 @@ namespace r2::draw::renderer
 		newRenderer->mMSAAResolveNearestTexturePageLocation = rendererimpl::GetConstantLocation(newRenderer->mMSAAResolveNearestShader, "inputTexturePage");
 		newRenderer->mMSAAResolveNearestTextureLodLocation = rendererimpl::GetConstantLocation(newRenderer->mMSAAResolveNearestShader, "inputTexturePage");
 
-		
-		newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
-		newRenderer->mModelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+		//newRenderer->mUploadedModels = MAKE_SARRAY(*rendererArena, vb::GPUModelRefHandle, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
+
+	//	newRenderer->mModelRefArena = MAKE_STACK_ARENA(*rendererArena, MODEL_REF_ARENA_SIZE);
+	//	newRenderer->mModelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME);
 		
 		newRenderer->mPreRenderBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mPreRenderBucket != nullptr, "We couldn't create the command bucket!");
@@ -1321,14 +1325,14 @@ namespace r2::draw::renderer
 			{
 				RenderBatch nextBatch;
 
-				nextBatch.vertexLayoutConfigHandle = InvalidVertexConfigHandle;
+				nextBatch.vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
 				nextBatch.subCommandsHandle = InvalidConstantConfigHandle;
 				nextBatch.modelsHandle = InvalidConstantConfigHandle;
 				nextBatch.materialsHandle = InvalidConstantConfigHandle;
 				nextBatch.boneTransformOffsetsHandle = InvalidConstantConfigHandle;
 				nextBatch.boneTransformsHandle = InvalidConstantConfigHandle;
 
-				nextBatch.modelRefs = MAKE_SARRAY(*rendererArena, ModelRef, MAX_NUM_DRAWS);
+				nextBatch.gpuModelRefs = MAKE_SARRAY(*rendererArena, const vb::GPUModelRef*, MAX_NUM_DRAWS);
 
 				nextBatch.materialBatch.infos = MAKE_SARRAY(*rendererArena, MaterialBatch::Info, MAX_NUM_DRAWS);
 				nextBatch.materialBatch.materialHandles = MAKE_SARRAY(*rendererArena, MaterialHandle, MAX_NUM_DRAWS * AVG_NUM_OF_MESHES_PER_MODEL);
@@ -1380,12 +1384,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(loadedModels, "We didn't load the models for the engine!");
 
-
-		//mVertexBufferLayoutSystem
-
-
 		InitializeVertexLayouts(*newRenderer, STATIC_MODELS_VERTEX_LAYOUT_SIZE, ANIM_MODELS_VERTEX_LAYOUT_SIZE);
-
 
 		LoadEngineTexturesFromDisk(*newRenderer);
 		UploadEngineMaterialTexturesToGPU(*newRenderer);
@@ -1608,22 +1607,25 @@ namespace r2::draw::renderer
 
 			FREE(nextBatch.materialBatch.materialHandles, *arena);
 			FREE(nextBatch.materialBatch.infos, *arena);
-			FREE(nextBatch.modelRefs, *arena);
+			FREE(nextBatch.gpuModelRefs, *arena);
 
 		}
+
+
+		//FREE(renderer->mUploadedModels, *arena);
 
 		//FREE(renderer->mRenderMaterialsCache, *arena);
 
-		const auto numModelRefs = r2::sarr::Size(*renderer->mModelRefs);
+		//const auto numModelRefs = r2::sarr::Size(*renderer->mModelRefs);
 
-		for (s32 i = numModelRefs-1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*renderer->mModelRefs, i).mMaterialHandles, *renderer->mModelRefArena);
-			FREE(r2::sarr::At(*renderer->mModelRefs, i).mMeshRefs, *renderer->mModelRefArena);
-		}
+		//for (s32 i = numModelRefs-1; i >= 0; --i)
+		//{
+		//	FREE(r2::sarr::At(*renderer->mModelRefs, i).mMaterialHandles, *renderer->mModelRefArena);
+		//	FREE(r2::sarr::At(*renderer->mModelRefs, i).mMeshRefs, *renderer->mModelRefArena);
+		//}
 
-		FREE(renderer->mModelRefs, *arena);
-		FREE(renderer->mModelRefArena, *arena);
+		//FREE(renderer->mModelRefs, *arena);
+		//FREE(renderer->mModelRefArena, *arena);
 
 		DestroyRenderPasses(*renderer);
 
@@ -1695,35 +1697,36 @@ namespace r2::draw::renderer
 		FREE(renderer->mMaterialParamPacksData, *arena);
 
 		//delete the buffer handles
-		r2::draw::rendererimpl::DeleteBuffers(
-			r2::sarr::Size(*renderer->mBufferHandles.bufferLayoutHandles),
-			renderer->mBufferHandles.bufferLayoutHandles->mData);
+		//r2::draw::rendererimpl::DeleteBuffers(
+		//	r2::sarr::Size(*renderer->mBufferHandles.bufferLayoutHandles),
+		//	renderer->mBufferHandles.bufferLayoutHandles->mData);
 
-		r2::draw::rendererimpl::DeleteBuffers(
-			r2::sarr::Size(*renderer->mBufferHandles.vertexBufferHandles),
-			renderer->mBufferHandles.vertexBufferHandles->mData);
+		//r2::draw::rendererimpl::DeleteBuffers(
+		//	r2::sarr::Size(*renderer->mBufferHandles.vertexBufferHandles),
+		//	renderer->mBufferHandles.vertexBufferHandles->mData);
 
-		r2::draw::rendererimpl::DeleteBuffers(
-			r2::sarr::Size(*renderer->mBufferHandles.indexBufferHandles),
-			renderer->mBufferHandles.indexBufferHandles->mData);
+		//r2::draw::rendererimpl::DeleteBuffers(
+		//	r2::sarr::Size(*renderer->mBufferHandles.indexBufferHandles),
+		//	renderer->mBufferHandles.indexBufferHandles->mData);
 
-		r2::draw::rendererimpl::DeleteBuffers(
-			r2::sarr::Size(*renderer->mBufferHandles.drawIDHandles),
-			renderer->mBufferHandles.drawIDHandles->mData);
+		//r2::draw::rendererimpl::DeleteBuffers(
+		//	r2::sarr::Size(*renderer->mBufferHandles.drawIDHandles),
+		//	renderer->mBufferHandles.drawIDHandles->mData);
 
-		r2::draw::rendererimpl::DeleteBuffers(
-			r2::sarr::Size(*renderer->mConstantBufferHandles),
-			renderer->mConstantBufferHandles->mData);
-		
-		FREE(renderer->mBufferHandles.bufferLayoutHandles, *arena);
-		FREE(renderer->mBufferHandles.vertexBufferHandles, *arena);
-		FREE(renderer->mBufferHandles.indexBufferHandles, *arena);
-		FREE(renderer->mBufferHandles.drawIDHandles, *arena);
+		//r2::draw::rendererimpl::DeleteBuffers(
+		//	r2::sarr::Size(*renderer->mConstantBufferHandles),
+		//	renderer->mConstantBufferHandles->mData);
+		//
+		//FREE(renderer->mBufferHandles.bufferLayoutHandles, *arena);
+		//FREE(renderer->mBufferHandles.vertexBufferHandles, *arena);
+		//FREE(renderer->mBufferHandles.indexBufferHandles, *arena);
+		//FREE(renderer->mBufferHandles.drawIDHandles, *arena);
 		FREE(renderer->mConstantBufferHandles, *arena);
 		FREE(renderer->mConstantBufferData, *arena);
-		FREE(renderer->mVertexLayoutUploadOffsets, *arena);
-		FREE(renderer->mVertexLayoutConfigHandles, *arena);
-		FREE(renderer->mVertexLayouts, *arena);
+		FREE(renderer->mVertexBufferLayoutHandles, *arena);
+		//FREE(renderer->mVertexLayoutUploadOffsets, *arena);
+		//FREE(renderer->mVertexLayoutConfigHandles, *arena);
+		//FREE(renderer->mVertexLayouts, *arena);
 		FREE(renderer->mConstantLayouts, *arena);
 		FREE(renderer->mEngineModelRefs, *arena);
 
@@ -1864,7 +1867,7 @@ namespace r2::draw::renderer
 		bool success = GenerateLayouts(renderer);
 		R2_CHECK(success, "We couldn't create the buffer layouts!");
 
-		UploadEngineModels(renderer, renderer.mStaticVertexModelConfigHandle);//r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
+		UploadEngineModels(renderer);//r2::sarr::At(*mVertexConfigHandles, STATIC_MODELS_CONFIG));
 	}
 
 	bool GenerateLayouts(Renderer& renderer)
@@ -1884,7 +1887,7 @@ namespace r2::draw::renderer
 		AddClusterVolumesLayout(renderer);
 		AddDispatchComputeIndirectLayout(renderer);
 
-		bool success = GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
+		bool success = //GenerateBufferLayouts(renderer, renderer.mVertexLayouts) &&
 		GenerateConstantBuffers(renderer, renderer.mConstantLayouts);
 
 
@@ -1897,13 +1900,13 @@ namespace r2::draw::renderer
 
 #ifdef R2_DEBUG
 			DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
-			debugLinesRenderBatch.vertexConfigHandle = renderer.mDebugLinesVertexConfigHandle;
+			debugLinesRenderBatch.vertexBufferLayoutHandle = renderer.mDebugLinesVertexConfigHandle;
 			debugLinesRenderBatch.materialHandle = renderer.mDebugLinesMaterialHandle;
 			debugLinesRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
 			debugLinesRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugLinesSubCommandsConfigHandle;
 
 			DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-			debugModelRenderBatch.vertexConfigHandle = renderer.mDebugModelVertexConfigHandle;
+			debugModelRenderBatch.vertexBufferLayoutHandle = renderer.mDebugModelVertexConfigHandle;
 			debugModelRenderBatch.materialHandle = renderer.mDebugModelMaterialHandle;
 			debugModelRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
 			debugModelRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugModelSubCommandsConfigHandle;
@@ -1920,11 +1923,11 @@ namespace r2::draw::renderer
 
 				if (i == DrawType::STATIC)
 				{
-					batch.vertexLayoutConfigHandle = renderer.mStaticVertexModelConfigHandle;
+					batch.vertexBufferLayoutHandle = renderer.mStaticVertexModelConfigHandle;
 				}
 				else if (i == DrawType::DYNAMIC)
 				{
-					batch.vertexLayoutConfigHandle = renderer.mAnimVertexModelConfigHandle;
+					batch.vertexBufferLayoutHandle = renderer.mAnimVertexModelConfigHandle;
 					batch.boneTransformsHandle = renderer.mBoneTransformsConfigHandle;
 					batch.boneTransformOffsetsHandle = renderer.mBoneTransformOffsetsConfigHandle;
 				}
@@ -1934,140 +1937,140 @@ namespace r2::draw::renderer
 		return success;
 	}
 
-	bool GenerateBufferLayouts(Renderer& renderer, const r2::SArray<BufferLayoutConfiguration>* layouts)
-	{
-		if (r2::sarr::Size(*renderer.mBufferHandles.bufferLayoutHandles) > 0)
-		{
-			R2_CHECK(false, "We have already generated the buffer layouts!");
-			return false;
-		}
+	//bool GenerateBufferLayouts(Renderer& renderer, const r2::SArray<BufferLayoutConfiguration>* layouts)
+	//{
+	//	if (r2::sarr::Size(*renderer.mBufferHandles.bufferLayoutHandles) > 0)
+	//	{
+	//		R2_CHECK(false, "We have already generated the buffer layouts!");
+	//		return false;
+	//	}
 
-		R2_CHECK(layouts != nullptr, "layouts cannot be null");
+	//	R2_CHECK(layouts != nullptr, "layouts cannot be null");
 
-		if (layouts == nullptr)
-		{
-			return false;
-		}
+	//	if (layouts == nullptr)
+	//	{
+	//		return false;
+	//	}
 
-		if (r2::sarr::Size(*layouts) > MAX_BUFFER_LAYOUTS)
-		{
-			R2_CHECK(false, "Trying to configure more buffer layouts than we have allocated");
-			return false;
-		}
+	//	if (r2::sarr::Size(*layouts) > MAX_BUFFER_LAYOUTS)
+	//	{
+	//		R2_CHECK(false, "Trying to configure more buffer layouts than we have allocated");
+	//		return false;
+	//	}
 
-		const auto numLayouts = r2::sarr::Size(*layouts);
+	//	const auto numLayouts = r2::sarr::Size(*layouts);
 
-		//VAOs
-		rendererimpl::GenerateBufferLayouts((u32)numLayouts, renderer.mBufferHandles.bufferLayoutHandles->mData);
-		renderer.mBufferHandles.bufferLayoutHandles->mSize = numLayouts;
+	//	//VAOs
+	//	rendererimpl::GenerateBufferLayouts((u32)numLayouts, renderer.mBufferHandles.bufferLayoutHandles->mData);
+	//	renderer.mBufferHandles.bufferLayoutHandles->mSize = numLayouts;
 
-		//VBOs
-		u64 numVertexLayouts = 0;
-		for (u64 i = 0; i < numLayouts; ++i)
-		{
-			const auto& layout = r2::sarr::At(*layouts, i);
-			numVertexLayouts += layout.numVertexConfigs;
-		}
+	//	//VBOs
+	//	u64 numVertexLayouts = 0;
+	//	for (u64 i = 0; i < numLayouts; ++i)
+	//	{
+	//		const auto& layout = r2::sarr::At(*layouts, i);
+	//		numVertexLayouts += layout.numVertexConfigs;
+	//	}
 
-		rendererimpl::GenerateBuffers((u32)numVertexLayouts, renderer.mBufferHandles.vertexBufferHandles->mData);
-		renderer.mBufferHandles.vertexBufferHandles->mSize = numVertexLayouts;
+	//	rendererimpl::GenerateBuffers((u32)numVertexLayouts, renderer.mBufferHandles.vertexBufferHandles->mData);
+	//	renderer.mBufferHandles.vertexBufferHandles->mSize = numVertexLayouts;
 
-		//IBOs
-		u32 numIBOs = 0;
-		u32 numDrawIDs = 0;
-		for (u64 i = 0; i < numLayouts; ++i)
-		{
-			if (r2::sarr::At(*layouts, i).indexBufferConfig.bufferSize != EMPTY_BUFFER)
-			{
-				++numIBOs;
-			}
-			if (r2::sarr::At(*layouts, i).useDrawIDs)
-			{
-				++numDrawIDs;
-			}
-		}
+	//	//IBOs
+	//	u32 numIBOs = 0;
+	//	u32 numDrawIDs = 0;
+	//	for (u64 i = 0; i < numLayouts; ++i)
+	//	{
+	//		if (r2::sarr::At(*layouts, i).indexBufferConfig.bufferSize != EMPTY_BUFFER)
+	//		{
+	//			++numIBOs;
+	//		}
+	//		if (r2::sarr::At(*layouts, i).useDrawIDs)
+	//		{
+	//			++numDrawIDs;
+	//		}
+	//	}
 
-		r2::SArray<IndexBufferHandle>* tempIBOs = nullptr;
-		if (numIBOs > 0)
-		{
-			tempIBOs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, IndexBufferHandle, numIBOs);
-			rendererimpl::GenerateBuffers(numIBOs, tempIBOs->mData);
-			tempIBOs->mSize = numIBOs;
+	//	r2::SArray<IndexBufferHandle>* tempIBOs = nullptr;
+	//	if (numIBOs > 0)
+	//	{
+	//		tempIBOs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, IndexBufferHandle, numIBOs);
+	//		rendererimpl::GenerateBuffers(numIBOs, tempIBOs->mData);
+	//		tempIBOs->mSize = numIBOs;
 
-			R2_CHECK(tempIBOs != nullptr, "We should have memory for tempIBOs");
-		}
+	//		R2_CHECK(tempIBOs != nullptr, "We should have memory for tempIBOs");
+	//	}
 
-		r2::SArray<DrawIDHandle>* tempDrawIDs = nullptr;
-		if (numDrawIDs > 0)
-		{
-			tempDrawIDs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DrawIDHandle, numDrawIDs);
-			rendererimpl::GenerateBuffers(numDrawIDs, tempDrawIDs->mData);
-			tempDrawIDs->mSize = numDrawIDs;
+	//	r2::SArray<DrawIDHandle>* tempDrawIDs = nullptr;
+	//	if (numDrawIDs > 0)
+	//	{
+	//		tempDrawIDs = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, DrawIDHandle, numDrawIDs);
+	//		rendererimpl::GenerateBuffers(numDrawIDs, tempDrawIDs->mData);
+	//		tempDrawIDs->mSize = numDrawIDs;
 
-			R2_CHECK(tempDrawIDs != nullptr, "We should have memory for tempIBOs");
-		}
+	//		R2_CHECK(tempDrawIDs != nullptr, "We should have memory for tempIBOs");
+	//	}
 
-		u32 nextIndexBuffer = 0;
-		u32 nextDrawIDBuffer = 0;
-		u32 nextVertexBufferID = 0;
-		//do the actual setup
-		for (size_t i = 0; i < numLayouts; ++i)
-		{
-			const BufferLayoutConfiguration& config = r2::sarr::At(*layouts, i);
-			
-			if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER && tempIBOs)
-			{
-				r2::sarr::Push(*renderer.mBufferHandles.indexBufferHandles, r2::sarr::At(*tempIBOs, nextIndexBuffer++));
-			}
-			else
-			{
-				r2::sarr::Push(*renderer.mBufferHandles.indexBufferHandles, EMPTY_BUFFER);
-			}
+	//	u32 nextIndexBuffer = 0;
+	//	u32 nextDrawIDBuffer = 0;
+	//	u32 nextVertexBufferID = 0;
+	//	//do the actual setup
+	//	for (size_t i = 0; i < numLayouts; ++i)
+	//	{
+	//		const BufferLayoutConfiguration& config = r2::sarr::At(*layouts, i);
+	//		
+	//		if (config.indexBufferConfig.bufferSize != EMPTY_BUFFER && tempIBOs)
+	//		{
+	//			r2::sarr::Push(*renderer.mBufferHandles.indexBufferHandles, r2::sarr::At(*tempIBOs, nextIndexBuffer++));
+	//		}
+	//		else
+	//		{
+	//			r2::sarr::Push(*renderer.mBufferHandles.indexBufferHandles, EMPTY_BUFFER);
+	//		}
 
-			if (config.useDrawIDs)
-			{
-				r2::sarr::Push(*renderer.mBufferHandles.drawIDHandles, r2::sarr::At(*tempDrawIDs, nextDrawIDBuffer++));
-			}
-			else
-			{
-				r2::sarr::Push(*renderer.mBufferHandles.drawIDHandles, EMPTY_BUFFER);
-			}
+	//		if (config.useDrawIDs)
+	//		{
+	//			r2::sarr::Push(*renderer.mBufferHandles.drawIDHandles, r2::sarr::At(*tempDrawIDs, nextDrawIDBuffer++));
+	//		}
+	//		else
+	//		{
+	//			r2::sarr::Push(*renderer.mBufferHandles.drawIDHandles, EMPTY_BUFFER);
+	//		}
 
-			VertexLayoutConfigHandle nextHandle;
-			nextHandle.mBufferLayoutHandle = r2::sarr::At(*renderer.mBufferHandles.bufferLayoutHandles, i);
-			nextHandle.mIndexBufferHandle = r2::sarr::At(*renderer.mBufferHandles.indexBufferHandles, i);
-			
-			u32 vertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
-			nextHandle.mNumVertexBufferHandles = config.numVertexConfigs;
+	//		VertexLayoutConfigHandle nextHandle;
+	//		nextHandle.mBufferLayoutHandle = r2::sarr::At(*renderer.mBufferHandles.bufferLayoutHandles, i);
+	//		nextHandle.mIndexBufferHandle = r2::sarr::At(*renderer.mBufferHandles.indexBufferHandles, i);
+	//		
+	//		u32 vertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
+	//		nextHandle.mNumVertexBufferHandles = config.numVertexConfigs;
 
-			VertexLayoutUploadOffset nextOffset;
+	//		VertexLayoutUploadOffset nextOffset;
 
-			for (size_t k = 0; k < config.numVertexConfigs; ++k)
-			{
-				vertexBufferHandles[k] = r2::sarr::At(*renderer.mBufferHandles.vertexBufferHandles, nextVertexBufferID);
-				nextHandle.mVertexBufferHandles[k] = vertexBufferHandles[k];
-				
-				++nextVertexBufferID;
-			}
+	//		for (size_t k = 0; k < config.numVertexConfigs; ++k)
+	//		{
+	//			vertexBufferHandles[k] = r2::sarr::At(*renderer.mBufferHandles.vertexBufferHandles, nextVertexBufferID);
+	//			nextHandle.mVertexBufferHandles[k] = vertexBufferHandles[k];
+	//			
+	//			++nextVertexBufferID;
+	//		}
 
-			rendererimpl::SetupBufferLayoutConfiguration(config,
-				r2::sarr::At(*renderer.mBufferHandles.bufferLayoutHandles, i),
-				vertexBufferHandles, config.numVertexConfigs,
-				r2::sarr::At(*renderer.mBufferHandles.indexBufferHandles, i),
-				r2::sarr::At(*renderer.mBufferHandles.drawIDHandles, i));
+	//		rendererimpl::SetupBufferLayoutConfiguration(config,
+	//			r2::sarr::At(*renderer.mBufferHandles.bufferLayoutHandles, i),
+	//			vertexBufferHandles, config.numVertexConfigs,
+	//			r2::sarr::At(*renderer.mBufferHandles.indexBufferHandles, i),
+	//			r2::sarr::At(*renderer.mBufferHandles.drawIDHandles, i));
 
-			
-			r2::sarr::Push(*renderer.mVertexLayoutConfigHandles, nextHandle);
-			r2::sarr::Push(*renderer.mVertexLayoutUploadOffsets, nextOffset);
-		}
+	//		
+	//		r2::sarr::Push(*renderer.mVertexLayoutConfigHandles, nextHandle);
+	//		r2::sarr::Push(*renderer.mVertexLayoutUploadOffsets, nextOffset);
+	//	}
 
-		FREE(tempDrawIDs, *MEM_ENG_SCRATCH_PTR);
-		FREE(tempIBOs, *MEM_ENG_SCRATCH_PTR);
+	//	FREE(tempDrawIDs, *MEM_ENG_SCRATCH_PTR);
+	//	FREE(tempIBOs, *MEM_ENG_SCRATCH_PTR);
 
-		
+	//	
 
-		return true;
-	}
+	//	return true;
+	//}
 
 	bool GenerateConstantBuffers(Renderer& renderer, const r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* constantBufferConfigs)
 	{
@@ -2121,12 +2124,12 @@ namespace r2::draw::renderer
 		return true;
 	}
 
-	VertexConfigHandle AddStaticModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
+	vb::VertexBufferLayoutHandle AddStaticModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
 	{
-		if (renderer.mVertexLayouts == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return InvalidVertexConfigHandle;
+			return vb::InvalidVertexBufferLayoutHandle;
 		}
 
 		auto numVertexLayouts = vertexLayoutSizes.size();
@@ -2164,10 +2167,14 @@ namespace r2::draw::renderer
 		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = numVertexLayouts;
 
-		r2::sarr::Push(*renderer.mVertexLayouts, layoutConfig);
+		//r2::sarr::Push(*renderer.mVertexLayouts, layoutConfig);
 
-		renderer.mStaticVertexModelConfigHandle = r2::sarr::Size(*renderer.mVertexLayouts) - 1;
-		renderer.mFinalBatchVertexLayoutConfigHandle = renderer.mStaticVertexModelConfigHandle;
+
+		vb::VertexBufferLayoutHandle staticVertexModelHandle = vbsys::AddVertexBufferLayout(*renderer.mVertexBufferLayoutSystem, layoutConfig);
+
+		r2::sarr::Push(*renderer.mVertexBufferLayoutHandles, staticVertexModelHandle);
+
+		renderer.mStaticVertexModelConfigHandle = staticVertexModelHandle;//r2::sarr::Size(*renderer.mVertexLayouts) - 1;
 
 #ifdef R2_DEBUG
 		renderer.mDebugModelVertexConfigHandle = renderer.mStaticVertexModelConfigHandle;
@@ -2175,13 +2182,13 @@ namespace r2::draw::renderer
 		return renderer.mStaticVertexModelConfigHandle;
 	}
 
-	VertexConfigHandle AddAnimatedModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
+	vb::VertexBufferLayoutHandle AddAnimatedModelLayout(Renderer& renderer, const std::initializer_list<u64>& vertexLayoutSizes, u64 indexSize)
 	{
 
-		if (renderer.mVertexLayouts == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return InvalidVertexConfigHandle;
+			return vb::InvalidVertexBufferLayoutHandle;
 		}
 
 		R2_CHECK(vertexLayoutSizes.size() == 2, "Only support 2 vertex layouts for Animated Models right now");
@@ -2221,27 +2228,28 @@ namespace r2::draw::renderer
 		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = numVertexLayouts;
 
-		r2::sarr::Push(*renderer.mVertexLayouts, layoutConfig);
 
-		renderer.mAnimVertexModelConfigHandle = r2::sarr::Size(*renderer.mVertexLayouts) - 1;
+		vb::VertexBufferLayoutHandle animatedVertexModelHandle = vbsys::AddVertexBufferLayout(*renderer.mVertexBufferLayoutSystem, layoutConfig);
+
+		r2::sarr::Push(*renderer.mVertexBufferLayoutHandles, animatedVertexModelHandle);
+
+		renderer.mAnimVertexModelConfigHandle = animatedVertexModelHandle;
 
 		return renderer.mAnimVertexModelConfigHandle;
 	}
 #ifdef R2_DEBUG
-	VertexConfigHandle AddDebugDrawLayout(Renderer& renderer)
+	vb::VertexBufferLayoutHandle AddDebugDrawLayout(Renderer& renderer)
 	{
-		
-
-		if (renderer.mVertexLayouts == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return InvalidVertexConfigHandle;
+			return vb::InvalidVertexBufferLayoutHandle;
 		}
 
-		if (renderer.mDebugLinesVertexConfigHandle != InvalidVertexConfigHandle)
+		if (renderer.mDebugLinesVertexConfigHandle != vb::InvalidVertexBufferLayoutHandle)
 		{
 			R2_CHECK(false, "We have already added the debug vertex layout!");
-			return InvalidVertexConfigHandle;
+			return vb::InvalidVertexBufferLayoutHandle;
 		}
 
 		r2::draw::BufferLayoutConfiguration layoutConfig;
@@ -2268,9 +2276,12 @@ namespace r2::draw::renderer
 		layoutConfig.maxDrawCount = MAX_NUM_DRAWS;
 		layoutConfig.numVertexConfigs = 1;
 
-		r2::sarr::Push(*renderer.mVertexLayouts, layoutConfig);
 
-		renderer.mDebugLinesVertexConfigHandle = r2::sarr::Size(*renderer.mVertexLayouts) - 1;
+		vb::VertexBufferLayoutHandle debugVertexModelHandle = vbsys::AddVertexBufferLayout(*renderer.mVertexBufferLayoutSystem, layoutConfig);
+
+		r2::sarr::Push(*renderer.mVertexBufferLayoutHandles, debugVertexModelHandle);
+
+		renderer.mDebugLinesVertexConfigHandle = debugVertexModelHandle;
 
 		return renderer.mDebugLinesVertexConfigHandle;
 	}
@@ -2717,18 +2728,21 @@ namespace r2::draw::renderer
 			renderTargetsMemorySize +
 
 			LightSystem::MemorySize(ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::DrawIDHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::VertexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::IndexBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::DrawIDHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray< vb::VertexBufferLayoutHandle>::MemorySize(NUM_VERTEX_BUFFER_LAYOUT_TYPES), ALIGNMENT, headerSize, boundsChecking) +
+		//	r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking) +
+
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::BufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ConstantBufferData>::MemorySize(MAX_BUFFER_LAYOUTS * r2::SHashMap<ConstantBufferData>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderPass), ALIGNMENT, headerSize, boundsChecking) * NUM_RENDER_PASSES +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelRef>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(MODEL_REF_ARENA_SIZE, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelRef>::MemorySize(MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(MODEL_REF_ARENA_SIZE, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
@@ -2753,9 +2767,9 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderMaterialParams>::MemorySize(NUM_RENDER_MATERIALS_TO_RENDER), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutUploadOffset>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ModelRef>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutConfigHandle>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<VertexLayoutUploadOffset>::MemorySize(MAX_BUFFER_LAYOUTS), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(totalMaterialParamPacksSize, ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
@@ -2789,11 +2803,6 @@ namespace r2::draw::renderer
 		return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
 	}
 
-	BufferHandles& GetVertexBufferHandles(Renderer& renderer)
-	{
-		return renderer.mBufferHandles;
-	}
-
 	const r2::SArray<ConstantBufferHandle>* GetConstantBufferHandles(Renderer& renderer)
 	{
 		return renderer.mConstantBufferHandles;
@@ -2823,7 +2832,7 @@ namespace r2::draw::renderer
 		return modlsys::GetModel(renderer.mModelSystem, modelHandle);
 	}
 
-	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs(Renderer& renderer)
+	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs(Renderer& renderer)
 	{
 		if (renderer.mEngineModelRefs == nullptr)
 		{
@@ -2834,12 +2843,12 @@ namespace r2::draw::renderer
 		return renderer.mEngineModelRefs;
 	}
 
-	r2::draw::ModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel)
+	vb::GPUModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel)
 	{
 		if (renderer.mEngineModelRefs == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return InvalidModelRefHandle;
+			return vb::InvalidGPUModelRefHandle;
 		}
 
 		return r2::sarr::At(*renderer.mEngineModelRefs, defaultModel);
@@ -2958,7 +2967,7 @@ namespace r2::draw::renderer
 		return renderer.mDefaultDynamicOutlineMaterialHandle;
 	}
 
-	void UploadEngineModels(Renderer& renderer, VertexConfigHandle vertexLayoutConfig)
+	void UploadEngineModels(Renderer& renderer)
 	{
 		const r2::draw::Model* quadModel = GetDefaultModel(renderer, r2::draw::QUAD);
 		const r2::draw::Model* sphereModel = GetDefaultModel(renderer, r2::draw::SPHERE);
@@ -3006,264 +3015,274 @@ namespace r2::draw::renderer
 		r2::draw::mat::UploadAllMaterialTexturesToGPU(*renderer.mMaterialSystem);
 	}
 
-	ModelRefHandle UploadModel(Renderer& renderer, const Model* model)
+	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model)
 	{
-		return UploadModelInternal(renderer, model, nullptr, nullptr, renderer.mStaticVertexModelConfigHandle);
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return vb::InvalidGPUModelRefHandle;
+		}
+
+		return vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
 	}
 
-	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs)
+	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
 	{
-		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
-		{
-			R2_CHECK(false, "We don't have enough space to put the model refs");
-			return;
-		}
-
-		const u64 numModels = r2::sarr::Size(models);
-
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			r2::sarr::Push(modelRefs, UploadModel(renderer, r2::sarr::At(models, i)));
-		}
-	}
-
-	ModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
-	{
-		return UploadModelInternal(renderer, &model->model, model->boneData, model->boneInfo, renderer.mAnimVertexModelConfigHandle);
-	}
-
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs)
-	{
-		if (r2::sarr::Size(models) + r2::sarr::Size(modelRefs) > r2::sarr::Capacity(modelRefs))
-		{
-			R2_CHECK(false, "We don't have enough space to put the model refs");
-			return;
-		}
-
-		const u64 numModels = r2::sarr::Size(models);
-
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			r2::sarr::Push(modelRefs, UploadAnimModel(renderer, r2::sarr::At(models, i)));
-		}
-	}
-
-
-	ModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, VertexConfigHandle vertexConfigHandle)
-	{
-		ModelRef modelRef;
-
-		if (model == nullptr)
-		{
-			R2_CHECK(false, "We don't have a proper model!");
-			return InvalidModelRefHandle;
-		}
-
-		if (vertexConfigHandle == InvalidVertexConfigHandle)
-		{
-			R2_CHECK(false, "We only should have 2 vHandles, 0 - mesh data, 1 - bone data");
-			return InvalidModelRefHandle;
-		}
-
-		u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
-		u64 numMaterals = r2::sarr::Size(*model->optrMaterialHandles);
-
-		R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
-		R2_CHECK(numMaterals >= 1, "We should have at least one material");
-
-		modelRef.mMeshRefs = MAKE_SARRAY(*renderer.mModelRefArena, MeshRef, numMeshes);
-		modelRef.mMaterialHandles = MAKE_SARRAY(*renderer.mModelRefArena, MaterialHandle, numMaterals);
-
-
-		for (u64 i = 0; i < numMaterals; ++i)
-		{
-			//@NOTE(Serge): this is the exact ordering of the models that came from the assimpassetloader, and needs to be the same, if you change that, this needs to change
-			r2::sarr::Push(*modelRef.mMaterialHandles, r2::sarr::At(*model->optrMaterialHandles, i));
-		}
-
-		for (u64 i = 0; i < numMeshes; ++i)
-		{
-			r2::sarr::Push(*modelRef.mMeshRefs, MeshRef());
-		}
-
-		r2::draw::key::Basic fillKey;
-		//@TODO(Serge): fix this or pass it in
-		fillKey.keyValue = 0;
-
-		const VertexLayoutConfigHandle& vHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, vertexConfigHandle);
-		VertexLayoutUploadOffset& vOffsets = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, vertexConfigHandle);
-		const BufferLayoutConfiguration& layoutConfig = r2::sarr::At(*renderer.mVertexLayouts, vertexConfigHandle);
-
-		modelRef.hash = model->hash;
-		modelRef.indexBufferHandle = vHandle.mIndexBufferHandle;
-		modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
-		r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex;// +vOffsets.mIndexBufferOffset.numIndices;
-		r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex;// +vOffsets.mVertexBufferOffset.numVertices;
-		r2::sarr::At(*modelRef.mMeshRefs, 0).materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
-		r2::sarr::At(*modelRef.mMeshRefs, 0).objectBounds = r2::sarr::At(*model->optrMeshes, 0)->objectBounds;
-		//modelRef.mNumMeshRefs = numMeshes;
-		//modelRef.mNumMaterialHandles = numMaterals;
-
-
-
-		u64 vOffset = sizeof(r2::draw::Vertex) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
-		u64 iOffset = sizeof(u32) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex);
-
-		u64 totalNumVertices = 0;
-		u64 totalNumIndices = 0;
-
-		r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrVertices);
-		totalNumVertices = r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices;
-
-		u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices);
-
-		if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
-		{
-			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-			return InvalidModelRefHandle;
-		}
-
-		//@TODO(Serge): maybe change to the upload command bucket?
-		r2::draw::cmd::FillVertexBuffer* fillVertexCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, r2::draw::cmd::FillVertexBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, 0);
-		vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mVertexBufferHandles[0], vOffset);
-
-		cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
-
-		for (u64 i = 1; i < numMeshes; ++i)
-		{
-			u64 numMeshVertices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrVertices);
-			r2::sarr::At(*modelRef.mMeshRefs, i).numVertices = numMeshVertices;
-			r2::sarr::At(*modelRef.mMeshRefs, i).baseVertex = r2::sarr::At(*modelRef.mMeshRefs, i-1).numVertices + r2::sarr::At(*modelRef.mMeshRefs, i-1).baseVertex;
-			r2::sarr::At(*modelRef.mMeshRefs, i).materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
-			r2::sarr::At(*modelRef.mMeshRefs, i).objectBounds = r2::sarr::At(*model->optrMeshes, i)->objectBounds;
-
-			totalNumVertices += numMeshVertices;
-			resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
-
-			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
-			{
-				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
-				return InvalidModelRefHandle;
-			}
-
-			//@TODO(Serge): maybe change to the upload command bucket?
-			nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
-			vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mVertexBufferHandles[0], vOffset);
-		}
-
-		modelRef.mAnimated = boneData && boneInfo;
-
-		if (boneInfo)
-		{
-			modelRef.mNumBones = boneInfo->mSize;
-		}
-		else
-		{
-			modelRef.mNumBones = 0;
-		}
-
-		if (boneData)
-		{
-			
-			u64 bOffset = sizeof(r2::draw::BoneData) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
-
-			resultingMemorySize = (bOffset + sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData));
-
-			if (resultingMemorySize > layoutConfig.vertexBufferConfigs[1].bufferSize)
-			{
-				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[1].bufferSize);
-				return InvalidModelRefHandle;
-			}
-
-			r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
-			r2::draw::cmd::FillBonesBufferCommand(fillBoneDataCommand, *boneData, vHandle.mVertexBufferHandles[1], bOffset);
-
-			nextVertexCmd = fillBoneDataCommand;
-		}
-		
-		r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrIndices);
-		totalNumIndices = r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices;
-
-		resultingMemorySize = (iOffset + sizeof(u32) * r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices);
-		if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
-		{
-			R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-			return InvalidModelRefHandle;
-		}
-
-		cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
-		iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mIndexBufferHandle, iOffset);
-
-		cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
-
-		for (u64 i = 1; i < numMeshes; ++i)
-		{
-			u64 numMeshIndices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrIndices);
-			r2::sarr::At(*modelRef.mMeshRefs, i).numIndices = numMeshIndices;
-			r2::sarr::At(*modelRef.mMeshRefs, i).baseIndex = r2::sarr::At(*modelRef.mMeshRefs, i-1).baseIndex + r2::sarr::At(*modelRef.mMeshRefs, i-1).numIndices;
-
-			totalNumIndices += numMeshIndices;
-
-			resultingMemorySize = (iOffset + sizeof(u32) * numMeshIndices);
-			if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
-			{
-				R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
-				return InvalidModelRefHandle;
-			}
-
-			nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextIndexCmd, 0);
-			iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
-		}
-
-		vOffsets.mVertexBufferOffset.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex + totalNumVertices;
-		vOffsets.mVertexBufferOffset.numVertices += totalNumVertices;
-
-		vOffsets.mIndexBufferOffset.baseIndex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex + totalNumIndices;
-		vOffsets.mIndexBufferOffset.numIndices += totalNumIndices;
-
-		r2::sarr::Push(*renderer.mModelRefs, modelRef);
-
-		return r2::sarr::Size(*renderer.mModelRefs) - 1;
-	}
-
-	void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle)
-	{
-		if (renderer.mVertexLayoutUploadOffsets == nullptr)
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
 
-		VertexLayoutUploadOffset& offset = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, vHandle);
-
-		offset.mIndexBufferOffset.baseIndex = 0;
-		offset.mIndexBufferOffset.numIndices = 0;
-
-		offset.mVertexBufferOffset.baseVertex = 0;
-		offset.mVertexBufferOffset.numVertices = 0;
+		vbsys::UploadAllModels(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
 	}
 
-	void ClearAllVertexLayoutOffsets(Renderer& renderer)
+	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
 	{
-		if (renderer.mVertexLayoutUploadOffsets == nullptr)
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return vb::InvalidGPUModelRefHandle;
+		}
+
+		return vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+	}
+
+	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
+	{
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
 
-		u64 size = r2::sarr::Size(*renderer.mVertexLayoutUploadOffsets);
-
-		for (u64 i = 0; i < size; ++i)
-		{
-			VertexLayoutUploadOffset& offset = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, i);
-
-			offset.mIndexBufferOffset.baseIndex = 0;
-			offset.mIndexBufferOffset.numIndices = 0;
-			
-			offset.mVertexBufferOffset.baseVertex = 0;
-			offset.mVertexBufferOffset.numVertices = 0;
-		}
+		vbsys::UploadAllAnimModels(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
 	}
+
+
+	//vb::GPUModelRefHandle UploadModelInternal(Renderer& renderer, const Model* model, r2::SArray<BoneData>* boneData, r2::SArray<BoneInfo>* boneInfo, vb::VertexBufferLayoutHandle vbHandle)
+	//{
+	//	if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
+	//		return vb::InvalidGPUModelRefHandle;
+	//	}
+
+	////	vbsys::Upl
+
+	//	//ModelRef modelRef;
+
+	//	//if (model == nullptr)
+	//	//{
+	//	//	R2_CHECK(false, "We don't have a proper model!");
+	//	//	return InvalidModelRefHandle;
+	//	//}
+
+	//	//if (vertexConfigHandle == InvalidVertexConfigHandle)
+	//	//{
+	//	//	R2_CHECK(false, "We only should have 2 vHandles, 0 - mesh data, 1 - bone data");
+	//	//	return InvalidModelRefHandle;
+	//	//}
+
+	//	//u64 numMeshes = r2::sarr::Size(*model->optrMeshes);
+	//	//u64 numMaterals = r2::sarr::Size(*model->optrMaterialHandles);
+
+	//	//R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
+	//	//R2_CHECK(numMaterals >= 1, "We should have at least one material");
+
+	//	//modelRef.mMeshRefs = MAKE_SARRAY(*renderer.mModelRefArena, MeshRef, numMeshes);
+	//	//modelRef.mMaterialHandles = MAKE_SARRAY(*renderer.mModelRefArena, MaterialHandle, numMaterals);
+
+
+	//	//for (u64 i = 0; i < numMaterals; ++i)
+	//	//{
+	//	//	//@NOTE(Serge): this is the exact ordering of the models that came from the assimpassetloader, and needs to be the same, if you change that, this needs to change
+	//	//	r2::sarr::Push(*modelRef.mMaterialHandles, r2::sarr::At(*model->optrMaterialHandles, i));
+	//	//}
+
+	//	//for (u64 i = 0; i < numMeshes; ++i)
+	//	//{
+	//	//	r2::sarr::Push(*modelRef.mMeshRefs, MeshRef());
+	//	//}
+
+	//	//r2::draw::key::Basic fillKey;
+	//	////@TODO(Serge): fix this or pass it in
+	//	//fillKey.keyValue = 0;
+
+	//	//const VertexLayoutConfigHandle& vHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, vertexConfigHandle);
+	//	//VertexLayoutUploadOffset& vOffsets = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, vertexConfigHandle);
+	//	//const BufferLayoutConfiguration& layoutConfig = r2::sarr::At(*renderer.mVertexLayouts, vertexConfigHandle);
+
+	//	//modelRef.hash = model->hash;
+	//	//modelRef.indexBufferHandle = vHandle.mIndexBufferHandle;
+	//	//modelRef.vertexBufferHandle = vHandle.mVertexBufferHandles[0];
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex = vOffsets.mIndexBufferOffset.baseIndex;// +vOffsets.mIndexBufferOffset.numIndices;
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex = vOffsets.mVertexBufferOffset.baseVertex;// +vOffsets.mVertexBufferOffset.numVertices;
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).materialIndex = r2::sarr::At(*model->optrMeshes, 0)->materialIndex;
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).objectBounds = r2::sarr::At(*model->optrMeshes, 0)->objectBounds;
+	//	////modelRef.mNumMeshRefs = numMeshes;
+	//	////modelRef.mNumMaterialHandles = numMaterals;
+
+
+
+	//	//u64 vOffset = sizeof(r2::draw::Vertex) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
+	//	//u64 iOffset = sizeof(u32) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex);
+
+	//	//u64 totalNumVertices = 0;
+	//	//u64 totalNumIndices = 0;
+
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrVertices);
+	//	//totalNumVertices = r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices;
+
+	//	//u64 resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * r2::sarr::At(*modelRef.mMeshRefs, 0).numVertices);
+
+	//	//if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
+	//	//{
+	//	//	R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
+	//	//	return InvalidModelRefHandle;
+	//	//}
+
+	//	////@TODO(Serge): maybe change to the upload command bucket?
+	//	//r2::draw::cmd::FillVertexBuffer* fillVertexCommand = cmdbkt::AddCommand<key::Basic, mem::StackArena, r2::draw::cmd::FillVertexBuffer>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, 0);
+	//	//vOffset = r2::draw::cmd::FillVertexBufferCommand(fillVertexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mVertexBufferHandles[0], vOffset);
+
+	//	//cmd::FillVertexBuffer* nextVertexCmd = fillVertexCommand;
+
+	//	//for (u64 i = 1; i < numMeshes; ++i)
+	//	//{
+	//	//	u64 numMeshVertices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrVertices);
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).numVertices = numMeshVertices;
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).baseVertex = r2::sarr::At(*modelRef.mMeshRefs, i-1).numVertices + r2::sarr::At(*modelRef.mMeshRefs, i-1).baseVertex;
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).materialIndex = r2::sarr::At(*model->optrMeshes, i)->materialIndex;
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).objectBounds = r2::sarr::At(*model->optrMeshes, i)->objectBounds;
+
+	//	//	totalNumVertices += numMeshVertices;
+	//	//	resultingMemorySize = (vOffset + sizeof(r2::draw::Vertex) * numMeshVertices);
+
+	//	//	if (resultingMemorySize > layoutConfig.vertexBufferConfigs[0].bufferSize)
+	//	//	{
+	//	//		R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[0].bufferSize);
+	//	//		return InvalidModelRefHandle;
+	//	//	}
+
+	//	//	//@TODO(Serge): maybe change to the upload command bucket?
+	//	//	nextVertexCmd = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
+	//	//	vOffset = r2::draw::cmd::FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mVertexBufferHandles[0], vOffset);
+	//	//}
+
+	//	//modelRef.mAnimated = boneData && boneInfo;
+
+	//	//if (boneInfo)
+	//	//{
+	//	//	modelRef.mNumBones = boneInfo->mSize;
+	//	//}
+	//	//else
+	//	//{
+	//	//	modelRef.mNumBones = 0;
+	//	//}
+
+	//	//if (boneData)
+	//	//{
+	//	//	
+	//	//	u64 bOffset = sizeof(r2::draw::BoneData) * (r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex);
+
+	//	//	resultingMemorySize = (bOffset + sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData));
+
+	//	//	if (resultingMemorySize > layoutConfig.vertexBufferConfigs[1].bufferSize)
+	//	//	{
+	//	//		R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.vertexBufferConfigs[1].bufferSize);
+	//	//		return InvalidModelRefHandle;
+	//	//	}
+
+	//	//	r2::draw::cmd::FillVertexBuffer* fillBoneDataCommand = AppendCommand<r2::draw::cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
+	//	//	r2::draw::cmd::FillBonesBufferCommand(fillBoneDataCommand, *boneData, vHandle.mVertexBufferHandles[1], bOffset);
+
+	//	//	nextVertexCmd = fillBoneDataCommand;
+	//	//}
+	//	//
+	//	//r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices = r2::sarr::Size(*model->optrMeshes->mData[0]->optrIndices);
+	//	//totalNumIndices = r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices;
+
+	//	//resultingMemorySize = (iOffset + sizeof(u32) * r2::sarr::At(*modelRef.mMeshRefs, 0).numIndices);
+	//	//if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
+	//	//{
+	//	//	R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
+	//	//	return InvalidModelRefHandle;
+	//	//}
+
+	//	//cmd::FillIndexBuffer* fillIndexCommand = AppendCommand<cmd::FillVertexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextVertexCmd, 0);
+	//	//iOffset = r2::draw::cmd::FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model->optrMeshes, 0), vHandle.mIndexBufferHandle, iOffset);
+
+	//	//cmd::FillIndexBuffer* nextIndexCmd = fillIndexCommand;
+
+	//	//for (u64 i = 1; i < numMeshes; ++i)
+	//	//{
+	//	//	u64 numMeshIndices = r2::sarr::Size(*model->optrMeshes->mData[i]->optrIndices);
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).numIndices = numMeshIndices;
+	//	//	r2::sarr::At(*modelRef.mMeshRefs, i).baseIndex = r2::sarr::At(*modelRef.mMeshRefs, i-1).baseIndex + r2::sarr::At(*modelRef.mMeshRefs, i-1).numIndices;
+
+	//	//	totalNumIndices += numMeshIndices;
+
+	//	//	resultingMemorySize = (iOffset + sizeof(u32) * numMeshIndices);
+	//	//	if (resultingMemorySize > layoutConfig.indexBufferConfig.bufferSize)
+	//	//	{
+	//	//		R2_CHECK(false, "We don't have enough room in the buffer for all of these vertices! We're over by %llu", resultingMemorySize - layoutConfig.indexBufferConfig.bufferSize);
+	//	//		return InvalidModelRefHandle;
+	//	//	}
+
+	//	//	nextIndexCmd = AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, nextIndexCmd, 0);
+	//	//	iOffset = r2::draw::cmd::FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model->optrMeshes, i), vHandle.mIndexBufferHandle, iOffset);
+	//	//}
+
+	//	//vOffsets.mVertexBufferOffset.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseVertex + totalNumVertices;
+	//	//vOffsets.mVertexBufferOffset.numVertices += totalNumVertices;
+
+	//	//vOffsets.mIndexBufferOffset.baseIndex = r2::sarr::At(*modelRef.mMeshRefs, 0).baseIndex + totalNumIndices;
+	//	//vOffsets.mIndexBufferOffset.numIndices += totalNumIndices;
+
+	//	//r2::sarr::Push(*renderer.mModelRefs, modelRef);
+
+	//	//return r2::sarr::Size(*renderer.mModelRefs) - 1;
+	//}
+
+	//void ClearVertexLayoutOffsets(Renderer& renderer, VertexConfigHandle vHandle)
+	//{
+	//	if (renderer.mVertexLayoutUploadOffsets == nullptr)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
+	//		return;
+	//	}
+
+	//	VertexLayoutUploadOffset& offset = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, vHandle);
+
+	//	offset.mIndexBufferOffset.baseIndex = 0;
+	//	offset.mIndexBufferOffset.numIndices = 0;
+
+	//	offset.mVertexBufferOffset.baseVertex = 0;
+	//	offset.mVertexBufferOffset.numVertices = 0;
+	//}
+
+	//void ClearAllVertexLayoutOffsets(Renderer& renderer)
+	//{
+	//	if (renderer.mVertexLayoutUploadOffsets == nullptr)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
+	//		return;
+	//	}
+
+	//	u64 size = r2::sarr::Size(*renderer.mVertexLayoutUploadOffsets);
+
+	//	for (u64 i = 0; i < size; ++i)
+	//	{
+	//		VertexLayoutUploadOffset& offset = r2::sarr::At(*renderer.mVertexLayoutUploadOffsets, i);
+
+	//		offset.mIndexBufferOffset.baseIndex = 0;
+	//		offset.mIndexBufferOffset.numIndices = 0;
+	//		
+	//		offset.mVertexBufferOffset.baseVertex = 0;
+	//		offset.mVertexBufferOffset.numVertices = 0;
+	//	}
+	//}
 
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
@@ -3416,19 +3435,17 @@ namespace r2::draw::renderer
 
 	void PopulateRenderDataFromRenderBatch(Renderer& renderer, r2::SArray<void*>* tempAllocations, const RenderBatch& renderBatch, r2::SHashMap<DrawCommandData*>* shaderDrawCommandData, r2::SArray<RenderMaterialParams>* renderMaterials, r2::SArray<glm::uvec4>* materialOffsetsPerObject, u32& materialOffset, u32 baseInstanceOffset, u32 drawCommandBatchSize)
 	{
-		const u64 numModels = r2::sarr::Size(*renderBatch.modelRefs);
+		const u64 numModels = r2::sarr::Size(*renderBatch.gpuModelRefs);
 		u32 numModelInstances = 0;
 
 		for (u64 modelIndex = 0; modelIndex < numModels; ++modelIndex)
 		{
-			const ModelRef& modelRef = r2::sarr::At(*renderBatch.modelRefs, modelIndex);
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*renderBatch.gpuModelRefs, modelIndex);
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
 			const glm::mat4& modelMatrix = r2::sarr::At(*renderBatch.models, modelIndex);
-			const u32 numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
+			const u32 numMeshRefs = r2::sarr::Size(*modelRef->meshEntries);
 			const u32 numInstances = r2::sarr::At(*renderBatch.numInstances, modelIndex);
 			
-			//drawState.
-
 			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
 
 			r2::sarr::Push(*tempAllocations, (void*)shaders);
@@ -3465,7 +3482,7 @@ namespace r2::draw::renderer
 
 			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
 			{
-				const MaterialHandle materialHandle = r2::sarr::At(*modelRef.mMaterialHandles, r2::sarr::At(*modelRef.mMeshRefs, meshIndex).materialIndex);
+				const MaterialHandle materialHandle = r2::sarr::At(*modelRef->materialHandles, r2::sarr::At(*modelRef->meshEntries, meshIndex).materialIndex);
 
 				ShaderHandle materialShaderHandle = mat::GetShaderHandle(materialHandle);
 
@@ -3476,7 +3493,7 @@ namespace r2::draw::renderer
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
 			{
-				const MeshRef& meshRef = r2::sarr::At(*modelRef.mMeshRefs, meshRefIndex);
+				const vb::MeshEntry& meshRef = r2::sarr::At(*modelRef->meshEntries, meshRefIndex);
 
 				ShaderHandle shaderId = r2::sarr::At(*shaders, meshRefIndex);
 
@@ -3499,7 +3516,7 @@ namespace r2::draw::renderer
 					R2_CHECK(drawCommandData != nullptr, "We couldn't allocate a drawCommandData!");
 
 					drawCommandData->shaderId = shaderId;
-					drawCommandData->isDynamic = modelRef.mAnimated;
+					drawCommandData->isDynamic = modelRef->isAnimated;
 					drawCommandData->drawState = drawState;
 					drawCommandData->subCommands = MAKE_SARRAY(*renderer.mPreRenderStackArena, cmd::DrawBatchSubCommand, drawCommandBatchSize);
 					drawCommandData->cameraDepths = MAKE_SARRAY(*renderer.mPrePostRenderCommandArena, CameraDepth, drawCommandBatchSize);
@@ -3514,14 +3531,14 @@ namespace r2::draw::renderer
 
 				r2::draw::cmd::DrawBatchSubCommand subCommand;
 				subCommand.baseInstance = baseInstanceOffset + numModelInstances;
-				subCommand.baseVertex = meshRef.baseVertex;
-				subCommand.firstIndex = meshRef.baseIndex;
+				subCommand.baseVertex = meshRef.gpuVertexEntry.start;//meshRef.baseVertex;
+				subCommand.firstIndex = meshRef.gpuIndexEntry.start;//meshRef.baseIndex;
 				subCommand.instanceCount = numInstances;
-				subCommand.count = meshRef.numIndices;
+				subCommand.count = meshRef.gpuIndexEntry.size;//meshRef.numIndices;
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
 				CameraDepth cameraDepth;
-				cameraDepth.cameraDepth = GetCameraDepth(renderer, meshRef.objectBounds, modelMatrix);
+				cameraDepth.cameraDepth = GetCameraDepth(renderer, meshRef.meshBounds, modelMatrix);
 				cameraDepth.index = r2::sarr::Size(*drawCommandData->cameraDepths);
 
 				r2::sarr::Push(*drawCommandData->cameraDepths, cameraDepth);
@@ -3544,14 +3561,15 @@ namespace r2::draw::renderer
 		const auto numShadowCastingSpotLights = renderer.mLightSystem->mSceneLighting.mShadowCastingSpotLights.numShadowCastingLights;
 
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
-		const VertexLayoutConfigHandle& animVertexLayoutHandles = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mAnimVertexModelConfigHandle);
-		const VertexLayoutConfigHandle& staticVertexLayoutHandles = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mStaticVertexModelConfigHandle);
-		const VertexLayoutConfigHandle& finalBatchVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, renderer.mFinalBatchVertexLayoutConfigHandle);
+
+		BufferLayoutHandle animVertexBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_ANIMATED));
+		BufferLayoutHandle staticVertexBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_STATIC));
+		BufferLayoutHandle finalBatchVertexBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_FINAL));
 
 		const RenderBatch& staticRenderBatch = r2::sarr::At(*renderer.mRenderBatches, DrawType::STATIC);
 		const RenderBatch& dynamicRenderBatch = r2::sarr::At(*renderer.mRenderBatches, DrawType::DYNAMIC);
-		const u64 numStaticModels = r2::sarr::Size(*staticRenderBatch.modelRefs);
-		const u64 numDynamicModels = r2::sarr::Size(*dynamicRenderBatch.modelRefs);
+		const u64 numStaticModels = r2::sarr::Size(*staticRenderBatch.gpuModelRefs);
+		const u64 numDynamicModels = r2::sarr::Size(*dynamicRenderBatch.gpuModelRefs);
 
 		//We can calculate exactly how many materials there are
 		u64 totalSubCommands = 0;
@@ -3563,9 +3581,9 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numStaticModels; ++i)
 		{
-			const ModelRef& modelRef = r2::sarr::At(*staticRenderBatch.modelRefs, i);
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*staticRenderBatch.gpuModelRefs, i);
 
-			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
+			totalSubCommands += r2::sarr::Size(*modelRef->meshEntries);
 
 			numStaticInstances += r2::sarr::At(*staticRenderBatch.numInstances, i);
 		}
@@ -3574,13 +3592,13 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numDynamicModels; ++i)
 		{
-			const ModelRef& modelRef = r2::sarr::At(*dynamicRenderBatch.modelRefs, i);
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*dynamicRenderBatch.gpuModelRefs, i);
 
-			R2_CHECK(modelRef.mAnimated, "This should be animated if it's dynamic");
+			R2_CHECK(modelRef->isAnimated, "This should be animated if it's dynamic");
 
 			numDynamicInstances += r2::sarr::At(*dynamicRenderBatch.numInstances, i);
 
-			totalSubCommands += r2::sarr::Size(*modelRef.mMeshRefs);
+			totalSubCommands += r2::sarr::Size(*modelRef->meshEntries);
 		}
 
 		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*renderer.mPreRenderStackArena, void*, 100 + numDynamicModels + numStaticModels); //@TODO(Serge): measure how many allocations
@@ -3592,7 +3610,7 @@ namespace r2::draw::renderer
 
 		for (u64 i = 0; i < numDynamicModels; ++i)
 		{
-			const ModelRef& modelRef = r2::sarr::At(*dynamicRenderBatch.modelRefs, i);
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*dynamicRenderBatch.gpuModelRefs, i);
 
 			u32 numInstances = r2::sarr::At(*dynamicRenderBatch.numInstances, i);
 			b32 useSameBoneTransformsForInstances = r2::sarr::At(*dynamicRenderBatch.useSameBoneTransformsForInstances, i);
@@ -3604,7 +3622,7 @@ namespace r2::draw::renderer
 					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 				}
 				
-				boneOffset += modelRef.mNumBones;
+				boneOffset += modelRef->boneEntry.size;
 			}
 			else
 			{
@@ -3612,7 +3630,7 @@ namespace r2::draw::renderer
 				{
 					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 
-					boneOffset += modelRef.mNumBones;
+					boneOffset += modelRef->boneEntry.size;
 				}
 			}
 		}
@@ -3843,16 +3861,16 @@ namespace r2::draw::renderer
 		//Make our final batch data here
 		BatchRenderOffsets finalBatchOffsets;
 		{
-			const ModelRef& fullScreenTriangleModelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
+			const vb::GPUModelRef* fullScreenTriangleModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));// r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
 
 			ShaderHandle materialShaderHandle = mat::GetShaderHandle(renderer.mFinalCompositeMaterialHandle);
 
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
-			finalBatchSubcommand.baseVertex = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).baseVertex;
-			finalBatchSubcommand.firstIndex = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).baseIndex;
+			finalBatchSubcommand.baseVertex = r2::sarr::At(*fullScreenTriangleModelRef->meshEntries, 0).gpuVertexEntry.start;
+			finalBatchSubcommand.firstIndex = r2::sarr::At(*fullScreenTriangleModelRef->meshEntries, 0).gpuIndexEntry.start;
 			finalBatchSubcommand.instanceCount = 1;
-			finalBatchSubcommand.count = r2::sarr::At(*fullScreenTriangleModelRef.mMeshRefs, 0).numIndices;
+			finalBatchSubcommand.count = r2::sarr::At(*fullScreenTriangleModelRef->meshEntries, 0).gpuIndexEntry.size;
 			memcpy(mem::utils::PointerAdd(subCommandsAuxMemory, subCommandsMemoryOffset), &finalBatchSubcommand, sizeof(cmd::DrawBatchSubCommand));
 
 			finalBatchOffsets.drawState.layer = DL_SCREEN;
@@ -3992,7 +4010,7 @@ namespace r2::draw::renderer
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
-			drawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+			drawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
 			R2_CHECK(drawBatch->numSubCommands > 0, "We should have a count!");
 			drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4037,7 +4055,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
 					
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4071,7 +4089,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
 
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4105,7 +4123,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4129,7 +4147,7 @@ namespace r2::draw::renderer
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
 				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
 				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4156,7 +4174,7 @@ namespace r2::draw::renderer
 
 				cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
 				zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppShadowsDrawBatch->bufferLayoutHandle = staticVertexLayoutHandles.mBufferLayoutHandle;
+				zppShadowsDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 				zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
 				R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
 				zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4193,7 +4211,7 @@ namespace r2::draw::renderer
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
-			drawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+			drawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
 			R2_CHECK(drawBatch->numSubCommands > 0, "We should have a count!");
 			drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4235,7 +4253,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
 
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4268,7 +4286,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, spotLightBatchIndexUpdateCMD, 0);
 
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4301,7 +4319,7 @@ namespace r2::draw::renderer
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, pointLightBatchIndexUpdateCMD, 0);
 
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					shadowDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+					shadowDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
 					R2_CHECK(shadowDrawBatch->numSubCommands > 0, "We should have a count!");
 					shadowDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4325,7 +4343,7 @@ namespace r2::draw::renderer
 
 				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
 				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppDrawBatch->bufferLayoutHandle = animVertexLayoutHandles.mBufferLayoutHandle;
+				zppDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
 				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
 				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -4400,7 +4418,7 @@ namespace r2::draw::renderer
 
 			cmd::DrawBatch* drawMipBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setColorBufferTexture, 0);
 			drawMipBatch->batchHandle = subCommandsConstantBufferHandle;
-			drawMipBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+			drawMipBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 			drawMipBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 			R2_CHECK(drawMipBatch->numSubCommands > 0, "We should have a count!");
 			drawMipBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4439,7 +4457,7 @@ namespace r2::draw::renderer
 
 			cmd::DrawBatch* drawMipBatch = AppendCommand<cmd::SetTexture, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setColorBufferTexture, 0);
 			drawMipBatch->batchHandle = subCommandsConstantBufferHandle;
-			drawMipBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+			drawMipBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 			drawMipBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 			R2_CHECK(drawMipBatch->numSubCommands > 0, "We should have a count!");
 			drawMipBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4475,7 +4493,7 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION, clearCompositeOptions, *renderer.mAmbientOcclusionBucket, aoKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionBucket, aoKey, 0);
 		aoDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		aoDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		aoDrawBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		aoDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(aoDrawBatch->numSubCommands > 0, "We should have a count!");
 		aoDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4497,7 +4515,7 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionDenoiseBucket, aoDenoiseKey, 0);
 		aoDenoiseDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		aoDenoiseDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		aoDenoiseDrawBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		aoDenoiseDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(aoDenoiseDrawBatch->numSubCommands > 0, "We should have a count!");
 		aoDenoiseDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4523,7 +4541,7 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::DepthKey>(renderer, RPT_AMBIENT_OCCLUSION_TEMPORAL_DENOISE, clearCompositeOptions, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, *renderer.mAmbientOcclusionArena);
 		cmd::DrawBatch* aoTemporalDenoiseDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mAmbientOcclusionArena, *renderer.mAmbientOcclusionTemporalDenoiseBucket, aoTemporalDenoiseKey, 0);
 		aoTemporalDenoiseDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		aoTemporalDenoiseDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		aoTemporalDenoiseDrawBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		aoTemporalDenoiseDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(aoTemporalDenoiseDrawBatch->numSubCommands > 0, "We should have a count!");
 		aoTemporalDenoiseDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4548,7 +4566,7 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::Basic>(renderer, RPT_SSR, clearCompositeOptions, *renderer.mSSRBucket, ssrBatchClearKey, *renderer.mCommandArena);
 		cmd::DrawBatch* ssrDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mSSRBucket, ssrDrawKey, 0);
 		ssrDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		ssrDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		ssrDrawBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		ssrDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(ssrDrawBatch->numSubCommands > 0, "We should have a count!");
 		ssrDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4572,7 +4590,7 @@ namespace r2::draw::renderer
 
 		cmd::DrawBatch* ssrConeTracedBatch = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setSSRConeTracedRenderTarget, 0);
 		ssrConeTracedBatch->batchHandle = subCommandsConstantBufferHandle;
-		ssrConeTracedBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		ssrConeTracedBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		ssrConeTracedBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(ssrConeTracedBatch->numSubCommands > 0, "We should have a count!");
 		ssrConeTracedBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4604,7 +4622,7 @@ namespace r2::draw::renderer
 
 		cmd::DrawBatch* finalDrawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mFinalBucket, finalBatchKey, 0); //@TODO(Serge): we should have mFinalBucket have it's own arena instead of renderer.mCommandArena
 		finalDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-		finalDrawBatch->bufferLayoutHandle = finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle;
+		finalDrawBatch->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
 		finalDrawBatch->numSubCommands = finalBatchOffsets.numSubCommands;
 		R2_CHECK(finalDrawBatch->numSubCommands > 0, "We should have a count!");
 		finalDrawBatch->startCommandIndex = finalBatchOffsets.subCommandsOffset;
@@ -4625,18 +4643,18 @@ namespace r2::draw::renderer
 		switch (renderer.mOutputMerger)
 		{
 		case OUTPUT_NO_AA:
-			NonAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+			NonAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 			break;
 		case OUTPUT_FXAA:
-			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
+			FXAARenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset);
 			break;
 		case OUTPUT_SMAA_X1:
-			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingShader, 0);
-			SMAAx1OutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mPassThroughShader, 0);
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingShader, 0);
+			SMAAx1OutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mPassThroughShader, 0);
 			break;
 		case OUTPUT_SMAA_T2X:
-			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingReprojectionShader, 0);
-			SMAAxT2SOutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexLayoutConfigHandle.mBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAAReprojectResolveShader, 0);
+			SMAAx1RenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAANeighborhoodBlendingReprojectionShader, 0);
+			SMAAxT2SOutputRenderPass(renderer, subCommandsConstantBufferHandle, finalBatchVertexBufferLayoutHandle, finalBatchOffsets.numSubCommands, finalBatchOffsets.subCommandsOffset, renderer.mSMAAReprojectResolveShader, 0);
 			break;
 		default:
 			R2_CHECK(false, "Unsupported output merger type!");
@@ -4655,7 +4673,7 @@ namespace r2::draw::renderer
 		{
 			RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, i);
 
-			r2::sarr::Clear(*batch.modelRefs);
+			r2::sarr::Clear(*batch.gpuModelRefs);
 			r2::sarr::Clear(*batch.materialBatch.infos);
 			r2::sarr::Clear(*batch.materialBatch.materialHandles);
 			r2::sarr::Clear(*batch.models);
@@ -6348,7 +6366,7 @@ namespace r2::draw::renderer
 		
 	}
 
-	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -6356,8 +6374,8 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		if (renderer.mStaticVertexModelConfigHandle == InvalidVertexConfigHandle ||
-			renderer.mAnimVertexModelConfigHandle == InvalidVertexConfigHandle)
+		if (renderer.mStaticVertexModelConfigHandle == vb::InvalidVertexBufferLayoutHandle ||
+			renderer.mAnimVertexModelConfigHandle == vb::InvalidVertexBufferLayoutHandle)
 		{
 			R2_CHECK(false, "We haven't generated the layouts yet!");
 			return;
@@ -6366,23 +6384,26 @@ namespace r2::draw::renderer
 		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
 
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
-		const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
+		//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
+
+		const vb::GPUModelRef* gpuModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
+		R2_CHECK(gpuModelRef != nullptr, "Failed to get the GPUModelRef for handle: %llu", modelRefHandle);
 
 		DrawType drawType = STATIC;
 
-		if (modelRef.mAnimated && !boneTransforms)
+		if (gpuModelRef->isAnimated && !boneTransforms)
 		{
 			R2_CHECK(false, "Submitted an animated model with no bone transforms!");
 		}
 
-		if (modelRef.mAnimated)
+		if (gpuModelRef->isAnimated)
 		{
 			drawType = DYNAMIC;
 		}
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
 
-		r2::sarr::Push(*batch.modelRefs, modelRef);
+		r2::sarr::Push(*batch.gpuModelRefs, gpuModelRef);
 
 		r2::sarr::Append(*batch.models, modelMatrices);
 
@@ -6405,13 +6426,13 @@ namespace r2::draw::renderer
 			MaterialBatch::Info materialBatchInfo;
 
 			materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-			materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
+			materialBatchInfo.numMaterials = r2::sarr::Size(*gpuModelRef->materialHandles);
 
 			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
 			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
 			{
-				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, i));
+				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*gpuModelRef->materialHandles, i));
 			}
 		}
 		else
@@ -6419,13 +6440,13 @@ namespace r2::draw::renderer
 			u64 numMaterials = r2::sarr::Size(*materialHandles);
 			r2::SArray<MaterialHandle>* materialHandlesToUse = nullptr;
 			
-			bool isMaterialSizesSame = numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles);
+			bool isMaterialSizesSame = numMaterials == r2::sarr::Size(*gpuModelRef->materialHandles);
 
 			if (!isMaterialSizesSame)
 			{
 				if (numMaterials == 1)
 				{
-					const u64 numMaterialsToFill = r2::sarr::Size(*modelRef.mMaterialHandles);
+					const u64 numMaterialsToFill = r2::sarr::Size(*gpuModelRef->materialHandles);
 
 					materialHandlesToUse = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, MaterialHandle, numMaterialsToFill);
 
@@ -6441,7 +6462,7 @@ namespace r2::draw::renderer
 
 			numMaterials = r2::sarr::Size(*materialHandlesToUse);
 
-			R2_CHECK(numMaterials == r2::sarr::Size(*modelRef.mMaterialHandles), "This should be the same in this case");
+			R2_CHECK(numMaterials == r2::sarr::Size(*gpuModelRef->materialHandles), "This should be the same in this case");
 
 			MaterialBatch::Info materialBatchInfo;
 
@@ -6467,7 +6488,7 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -6498,15 +6519,17 @@ namespace r2::draw::renderer
 
 #endif
 
-		r2::SArray<ModelRef>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ModelRef, numModelRefs);
+		r2::SArray<const vb::GPUModelRef*>* modelRefArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const vb::GPUModelRef*, numModelRefs);
 
 		//get all the model refs
 		for (u64 i = 0; i < numModelRefs; ++i)
 		{
-			r2::sarr::Push(*modelRefArray, r2::sarr::At(*renderer.mModelRefs, r2::sarr::At(modelRefHandles, i)));
+			const vb::GPUModelRef* gpuModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(modelRefHandles, i));
+
+			r2::sarr::Push(*modelRefArray, gpuModelRef);
 		}
 
-		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
+//		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
 
 #if defined(R2_DEBUG)
 		//check to see if what we're being given is all one type
@@ -6514,14 +6537,14 @@ namespace r2::draw::renderer
 		{
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
-				R2_CHECK(r2::sarr::At(modelRefs, i).mAnimated == false, "modelRef at index: %llu should not be animated!", i);
+				R2_CHECK(r2::sarr::At(*modelRefArray, i)->isAnimated == false, "modelRef at index: %llu should not be animated!", i);
 			}
 		}
 		else 
 		{
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
-				R2_CHECK(r2::sarr::At(modelRefs, i).mAnimated == true, "modelRef at index: %llu should be animated!", i);
+				R2_CHECK(r2::sarr::At(*modelRefArray, i)->isAnimated == true, "modelRef at index: %llu should be animated!", i);
 			}
 		}
 #endif
@@ -6530,7 +6553,7 @@ namespace r2::draw::renderer
 
 		RenderBatch& batch = r2::sarr::At(*renderer.mRenderBatches, drawType);
 
-		r2::sarr::Append(*batch.modelRefs, modelRefs);
+		r2::sarr::Append(*batch.gpuModelRefs, *modelRefArray);
 
 		r2::sarr::Append(*batch.models, modelMatrices);
 
@@ -6562,17 +6585,17 @@ namespace r2::draw::renderer
 		{
 			for (u32 i = 0; i < numModelRefs; ++i)
 			{
-				const ModelRef& modelRef = r2::sarr::At(modelRefs, i);
+				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
 
 				MaterialBatch::Info info;
 				info.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				info.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
+				info.numMaterials = r2::sarr::Size(*modelRef->materialHandles);
 
 				r2::sarr::Push(*batch.materialBatch.infos, info);
 
 				for (u32 j = 0; j < info.numMaterials; ++j)
 				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef.mMaterialHandles, j));
+					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef->materialHandles, j));
 				}
 			}
 		}
@@ -6582,11 +6605,11 @@ namespace r2::draw::renderer
 
 			for (u32 i = 0; i < numModelRefs; ++i)
 			{
-				const ModelRef& modelRef = r2::sarr::At(modelRefs, i);
+				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
 
 				MaterialBatch::Info materialBatchInfo;
 				materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef.mMaterialHandles);
+				materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef->materialHandles);
 
 				r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
 
@@ -6760,16 +6783,21 @@ namespace r2::draw::renderer
 
 			if (modelType != DEBUG_LINE)
 			{
-				const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
-				const auto numMeshRefs = r2::sarr::Size(*modelRef.mMeshRefs);
+
+				const vb::GPUModelRef* modelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
+				//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, static_cast<DefaultModel>(modelType)));
+				const auto numMeshRefs = r2::sarr::Size(*modelRef->meshEntries);
 				for (u64 j = 0; j < numMeshRefs; ++j)
 				{
 					r2::draw::cmd::DrawBatchSubCommand subCommand;
+
+					const vb::MeshEntry& meshEntry = r2::sarr::At(*modelRef->meshEntries, j);
+
 					subCommand.baseInstance = debugConstantsOffset + instanceOffset;
-					subCommand.baseVertex = r2::sarr::At(*modelRef.mMeshRefs, j).baseVertex;
-					subCommand.firstIndex = r2::sarr::At(*modelRef.mMeshRefs, j).baseIndex;
+					subCommand.baseVertex = meshEntry.gpuVertexEntry.start;//r2::sarr::At(*modelRef.mMeshRefs, j).baseVertex;
+					subCommand.firstIndex = meshEntry.gpuIndexEntry.start;//r2::sarr::At(*modelRef.mMeshRefs, j).baseIndex;
 					subCommand.instanceCount = numInstances;
-					subCommand.count = r2::sarr::At(*modelRef.mMeshRefs, j).numIndices;
+					subCommand.count = meshEntry.gpuIndexEntry.size;//r2::sarr::At(*modelRef.mMeshRefs, j).numIndices;
 
 					r2::sarr::Push(*debugDrawCommandData->debugModelDrawBatchCommands, subCommand);
 				}
@@ -6810,12 +6838,15 @@ namespace r2::draw::renderer
 
 		if (debugRenderBatch.vertices)
 		{
-			const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugRenderBatch.vertexConfigHandle);
+
+			VertexBufferHandle vboHandle = vbsys::GetVertexBufferHandle(*renderer.mVertexBufferLayoutSystem, debugRenderBatch.vertexBufferLayoutHandle, 0);
+
+			//const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugRenderBatch.vertexConfigHandle);
 			u64 vOffset = 0;
 
 			fillVertexBufferCMD = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::FillVertexBuffer>(*renderer.mDebugCommandArena, *renderer.mPreDebugCommandBucket, preDrawKey, 0);
 
-			cmd::FillVertexBufferCommand(fillVertexBufferCMD, *debugRenderBatch.vertices, debugLinesVertexLayoutConfigHandle.mVertexBufferHandles[0], vOffset);
+			cmd::FillVertexBufferCommand(fillVertexBufferCMD, *debugRenderBatch.vertices, vboHandle, vOffset);
 		}
 
 		const r2::SArray<r2::draw::ConstantBufferHandle>* constHandles = r2::draw::renderer::GetConstantBufferHandles(renderer);
@@ -6902,7 +6933,7 @@ namespace r2::draw::renderer
 	}
 
 
-	void FillDebugDrawCommands(Renderer& renderer, r2::SArray<BatchRenderOffsets>* debugBatchOffsets, const VertexLayoutConfigHandle& vertexLayoutConfigHandle, ConstantBufferHandle subCommandsBufferHandle, bool debugLines)
+	void FillDebugDrawCommands(Renderer& renderer, r2::SArray<BatchRenderOffsets>* debugBatchOffsets, const BufferLayoutHandle& debugBufferLayoutHandle, ConstantBufferHandle subCommandsBufferHandle, bool debugLines)
 	{
 		const u64 numDebugModelBatchOffsets = r2::sarr::Size(*debugBatchOffsets);
 
@@ -6916,7 +6947,7 @@ namespace r2::draw::renderer
 			{
 				cmd::DrawDebugBatch* drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawDebugBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
 				drawBatch->batchHandle = subCommandsBufferHandle;
-				drawBatch->bufferLayoutHandle = vertexLayoutConfigHandle.mBufferLayoutHandle;
+				drawBatch->bufferLayoutHandle = debugBufferLayoutHandle;
 				drawBatch->numSubCommands = batchOffset.numSubCommands;
 				R2_CHECK(drawBatch->numSubCommands > 0, "We should have a count!");
 				drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -6935,7 +6966,7 @@ namespace r2::draw::renderer
 			{
 				cmd::DrawBatch* drawBatch = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::DrawBatch>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, key, 0);
 				drawBatch->batchHandle = subCommandsBufferHandle;
-				drawBatch->bufferLayoutHandle = vertexLayoutConfigHandle.mBufferLayoutHandle;
+				drawBatch->bufferLayoutHandle = debugBufferLayoutHandle;
 				drawBatch->numSubCommands = batchOffset.numSubCommands;
 				R2_CHECK(drawBatch->numSubCommands > 0, "We should have a count!");
 				drawBatch->startCommandIndex = batchOffset.subCommandsOffset;
@@ -6963,9 +6994,11 @@ namespace r2::draw::renderer
 		ConstantBufferHandle debugModelsSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugModelsRenderBatch.subCommandsConstantConfigHandle);
 		ConstantBufferHandle debugLinesSubCommandsBufferHandle = r2::sarr::At(*constHandles, debugLinesRenderBatch.subCommandsConstantConfigHandle);
 
-		const VertexLayoutConfigHandle& debugModelsVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugModelsRenderBatch.vertexConfigHandle);
-		const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugLinesRenderBatch.vertexConfigHandle);
+		//const VertexLayoutConfigHandle& debugModelsVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugModelsRenderBatch.vertexConfigHandle);
+		//const VertexLayoutConfigHandle& debugLinesVertexLayoutConfigHandle = r2::sarr::At(*renderer.mVertexLayoutConfigHandles, debugLinesRenderBatch.vertexConfigHandle);
 
+		BufferLayoutHandle debugModelBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_DEBUG_MODEL));
+		BufferLayoutHandle debugLinesBufferLayoutHandle = vbsys::GetBufferLayoutHandle(*renderer.mVertexBufferLayoutSystem, r2::sarr::At(*renderer.mVertexBufferLayoutHandles, VBL_DEBUG_LINES));
 
 		const auto numModelsToDraw = r2::sarr::Size(*debugModelsRenderBatch.numInstances);
 		const auto numDebugModelsToDraw  = r2::sarr::Size(*debugModelsRenderBatch.debugModelTypesToDraw);
@@ -7075,12 +7108,12 @@ namespace r2::draw::renderer
 
 		if (modelBatchRenderOffsets)
 		{
-			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelsVertexLayoutConfigHandle, debugModelsSubCommandsBufferHandle, false);
+			FillDebugDrawCommands(renderer, modelBatchRenderOffsets, debugModelBufferLayoutHandle, debugModelsSubCommandsBufferHandle, false);
 		}
 		
 		if (linesBatchRenderOffsets)
 		{
-			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesVertexLayoutConfigHandle, debugLinesSubCommandsBufferHandle, true);
+			FillDebugDrawCommands(renderer, linesBatchRenderOffsets, debugLinesBufferLayoutHandle, debugLinesSubCommandsBufferHandle, true);
 		}
 
 		RESET_ARENA(*renderer.mPreRenderStackArena);
@@ -7152,7 +7185,7 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& modelMats,
 		const glm::vec4& color)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7164,7 +7197,7 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		if (renderer.mDebugLinesVertexConfigHandle == InvalidVertexConfigHandle)
+		if (renderer.mDebugLinesVertexConfigHandle == vb::InvalidVertexBufferLayoutHandle)
 		{
 			R2_CHECK(false, "We haven't setup a debug vertex configuration!");
 			return;
@@ -7205,32 +7238,6 @@ namespace r2::draw::renderer
 		FREE(colors, *MEM_ENG_SCRATCH_PTR);
 		FREE(radii, *MEM_ENG_SCRATCH_PTR);
 		FREE(centers, *MEM_ENG_SCRATCH_PTR);
-
-		/*if (renderer.mVertexLayoutConfigHandles == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-		
-		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-
-		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
-
-		math::Transform t;
-		t.position = center;
-		t.scale = glm::vec3(radius);
-
-		r2::sarr::Push(*debugModelRenderBatch.transforms, t);
-		r2::sarr::Push(*debugModelRenderBatch.colors, color);
-		
-		DrawFlags flags;
-		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
-		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
-
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_SPHERE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, 1u);*/
 	}
 
 	void DrawCube(Renderer& renderer, const glm::vec3& center, float scale, const glm::vec4& color, bool filled, bool depthTest)
@@ -7248,33 +7255,6 @@ namespace r2::draw::renderer
 		FREE(colors, *MEM_ENG_SCRATCH_PTR);
 		FREE(scales, *MEM_ENG_SCRATCH_PTR);
 		FREE(centers, *MEM_ENG_SCRATCH_PTR);
-
-		/*if (renderer.mVertexLayoutConfigHandles == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-
-		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-
-		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
-
-		math::Transform t;
-		t.position = center;
-		t.scale = glm::vec3(scale);
-
-		r2::sarr::Push(*debugModelRenderBatch.transforms, t);
-		r2::sarr::Push(*debugModelRenderBatch.colors, color);
-
-		DrawFlags flags;
-		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
-		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
-
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CUBE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, 1u);*/
 	}
 
 	void DrawCylinder(Renderer& renderer, const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest)
@@ -7299,60 +7279,10 @@ namespace r2::draw::renderer
 		FREE(radii, *MEM_ENG_SCRATCH_PTR);
 		FREE(directions, *MEM_ENG_SCRATCH_PTR);
 		FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
-
-		/*if (renderer.mVertexLayoutConfigHandles == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-
-		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
-
-		DrawFlags flags;
-		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
-		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
-
-		math::Transform t;
-
-		glm::vec3 ndir = glm::normalize(dir);
-		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
-
-		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
-
-		if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
-		{
-			axis = glm::vec3(1, 0, 0);
-		}
-
-		t.position = initialFacing * 0.5f * height;
-
-		float angle = glm::acos(glm::dot(ndir, initialFacing));
-
-		math::Transform r;
-		r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
-
-		math::Transform s;
-
-		s.scale = glm::vec3(radius, radius, height);
-
-		math::Transform t2;
-		t2.position = -t.position;
-
-		math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
-		transformToDraw.position += basePosition;
-
-		r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
-		r2::sarr::Push(*debugModelRenderBatch.colors, color);
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CYLINDER);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, 1u);*/
 	}
 
 	void DrawCone(Renderer& renderer, const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest)
 	{
-
 		r2::SArray<glm::vec3>* basePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 1);
 		r2::SArray<glm::vec3>* directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 1);
 		r2::SArray<float>* radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 1);
@@ -7372,54 +7302,6 @@ namespace r2::draw::renderer
 		FREE(radii, *MEM_ENG_SCRATCH_PTR);
 		FREE(directions, *MEM_ENG_SCRATCH_PTR);
 		FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
-		/*if (renderer.mVertexLayoutConfigHandles == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
-
-		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
-
-		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
-
-		DrawFlags flags;
-		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
-		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
-
-		math::Transform t;
-
-		glm::vec3 ndir = glm::normalize(dir);
-		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
-
-		glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
-
-		if ( math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
-		{
-			axis = glm::vec3(1, 0, 0);
-		}
-
-		t.position = initialFacing * 0.5f * height;
-
-		float angle = glm::acos(glm::dot(ndir, initialFacing));
-
-		math::Transform r;
-		r.rotation = glm::normalize(glm::rotate(r.rotation, angle, axis));
-
-		math::Transform s;
-
-		s.scale = glm::vec3(radius, radius, height);
-
-		math::Transform t2;
-		t2.position = -t.position;
-
-		math::Transform transformToDraw = math::Combine(math::Combine(r, t), s);
-		transformToDraw.position += basePosition;
-
-		r2::sarr::Push(*debugModelRenderBatch.transforms, transformToDraw);
-		r2::sarr::Push(*debugModelRenderBatch.colors, color);
-		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
-		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_CONE);
-		r2::sarr::Push(*debugModelRenderBatch.numInstances, 1u);*/
 	}
 
 	void DrawArrow(Renderer& renderer, const glm::vec3& basePosition, const glm::vec3& dir, float length, float headBaseRadius, const glm::vec4& color, bool filled, bool depthTest)
@@ -7445,7 +7327,7 @@ namespace r2::draw::renderer
 
 	void DrawLine(Renderer& renderer, const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7513,7 +7395,7 @@ namespace r2::draw::renderer
 		bool filled,
 		bool depthTest)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7558,7 +7440,7 @@ namespace r2::draw::renderer
 		bool filled,
 		bool depthTest)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7606,7 +7488,7 @@ namespace r2::draw::renderer
 		bool filled,
 		bool depthTest)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7686,7 +7568,7 @@ namespace r2::draw::renderer
 		bool filled,
 		bool depthTest)
 	{
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -7769,7 +7651,7 @@ namespace r2::draw::renderer
 		static constexpr float ARROW_CONE_HEIGHT_FRACTION = 0.2;
 		static constexpr float ARROW_BASE_RADIUS_FRACTION = 0.2;
 		
-		if (renderer.mVertexLayoutConfigHandles == nullptr)
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
@@ -9029,12 +8911,12 @@ namespace r2::draw::renderer
 		return GetDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs()
+	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs()
 	{
 		return GetDefaultModelRefs(MENG.GetCurrentRendererRef());
 	}
 
-	r2::draw::ModelRefHandle GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
+	vb::GPUModelRefHandle GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
 	{
 		return GetDefaultModelRef(MENG.GetCurrentRendererRef(), defaultModel);
 	}
@@ -9054,36 +8936,36 @@ namespace r2::draw::renderer
 		UploadEngineMaterialTexturesToGPU(MENG.GetCurrentRendererRef());
 	}
 
-	ModelRefHandle UploadModel(const Model* model)
+	vb::GPUModelRefHandle UploadModel(const Model* model)
 	{
 		return UploadModel(MENG.GetCurrentRendererRef(), model);
 	}
 
-	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs)
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
 	{
 		UploadModels(MENG.GetCurrentRendererRef(), models, modelRefs);
 	}
 
-	ModelRefHandle UploadAnimModel(const AnimModel* model)
+	vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model)
 	{
 		return UploadAnimModel(MENG.GetCurrentRendererRef(), model);
 	}
 
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs)
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
 	{
 		UploadAnimModels(MENG.GetCurrentRendererRef(), models, modelRefs);
 	}
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
-	void ClearVertexLayoutOffsets(VertexConfigHandle vHandle)
-	{
-		ClearVertexLayoutOffsets(MENG.GetCurrentRendererRef(), vHandle);
-	}
+	//void ClearVertexLayoutOffsets(VertexConfigHandle vHandle)
+	//{
+	//	ClearVertexLayoutOffsets(MENG.GetCurrentRendererRef(), vHandle);
+	//}
 
-	void ClearAllVertexLayoutOffsets()
-	{
-		ClearAllVertexLayoutOffsets(MENG.GetCurrentRendererRef());
-	}
+	//void ClearAllVertexLayoutOffsets()
+	//{
+	//	ClearAllVertexLayoutOffsets(MENG.GetCurrentRendererRef());
+	//}
 
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
 	{
@@ -9120,12 +9002,12 @@ namespace r2::draw::renderer
 		return GetBlueNoise64Texture(MENG.GetCurrentRendererPtr());
 	}
 
-	void DrawModel(const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModel(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandle, modelMatrices, numInstances, materialHandles, boneTransforms);
 	}
 
-	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialHandles, boneTransforms);
 	}

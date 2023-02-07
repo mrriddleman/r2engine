@@ -33,7 +33,7 @@ namespace r2::draw::rendererimpl
 			}
 
 			if (waitRet == GL_WAIT_FAILED) {
-				R2_CHECK(false, "Not sure what to do here. Probably raise an exception or something.");
+				R2_CHECK(false, "Not sure what to do here. Probably crash.");
 				return;
 			}
 
@@ -79,9 +79,12 @@ namespace r2::draw::rendererimpl
 	void LockRange(r2::SArray<BufferLock>& locks, u64 lockBeginBytes, u64 lockLength)
 	{
 		BufferRange newRange = { lockBeginBytes, lockLength };
+
 		//@Optimization
 		//@TODO(Serge): no clue how to make this fast
 		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+		R2_CHECK(glIsSync(syncName), "?");
 
 		BufferLock lock = { {newRange}, syncName };
 

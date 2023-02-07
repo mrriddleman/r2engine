@@ -19,7 +19,8 @@ namespace r2
         mEnd((byte*)utils::PointerAdd(boundary.location, boundary.size)),
         mElementSize(boundary.elementSize),
         mAlignment(boundary.alignment),
-        mNumAllocations(0)
+        mNumAllocations(0),
+        mOffset(boundary.offset)
         {
             
         }
@@ -58,6 +59,11 @@ namespace r2
             mFreeList.Return(ptr);
             --mNumAllocations;
         }
+
+        void PoolAllocator::Reset(void)
+        {
+            mFreeList.Reset(mStart, mEnd, mElementSize, mAlignment, mOffset);
+        }
         
         u32 PoolAllocator::GetAllocationSize(void* memoryPtr) const
         {
@@ -66,37 +72,42 @@ namespace r2
         
         PoolAllocator::Freelist::Freelist(void* start, void* end, u64 elementSize, u64 alignment, u64 offset)
         {
-            R2_CHECK(elementSize >= sizeof(Freelist), "elementSize must be greater than or equal to a freelist object which is %zu bytes", sizeof(Freelist));
-            void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(start, offset), alignment), offset);
-            
-            union
-            {
-                void* as_void;
-                byte* as_byte;
-                Freelist* as_self;
-            };
-            
-            as_void = utils::PointerAdd(pointer, offset);
-            
-            u64 totalMem = utils::PointerOffset(as_void, end);
-            u64 adjustment = totalMem % elementSize;
-            
-            as_void = utils::PointerAdd(as_void, adjustment);
-            
-            totalMem = utils::PointerOffset(as_void, end);
-            R2_CHECK(totalMem % elementSize == 0, "totalMem should be a multiple of elementSize");
-            mNumElements = totalMem/elementSize;
-            
-            mNext = as_self;
-            as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
-        
-            Freelist* runner = mNext;
-            for (u64 i = 1; i < mNumElements; ++i)
-            {
-                runner->mNext = as_self;
-                runner = as_self;
-                as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
-            }
+            Reset(start, end, elementSize, alignment, offset);
+        }
+
+        void PoolAllocator::Freelist::Reset(void* start, void* end, u64 elementSize, u64 alignment, u64 offset)
+        {
+			R2_CHECK(elementSize >= sizeof(Freelist), "elementSize must be greater than or equal to a freelist object which is %zu bytes", sizeof(Freelist));
+			void* pointer = utils::PointerSubtract(utils::AlignForward(utils::PointerAdd(start, offset), alignment), offset);
+
+			union
+			{
+				void* as_void;
+				byte* as_byte;
+				Freelist* as_self;
+			};
+
+			as_void = utils::PointerAdd(pointer, offset);
+
+			u64 totalMem = utils::PointerOffset(as_void, end);
+			u64 adjustment = totalMem % elementSize;
+
+			as_void = utils::PointerAdd(as_void, adjustment);
+
+			totalMem = utils::PointerOffset(as_void, end);
+			R2_CHECK(totalMem % elementSize == 0, "totalMem should be a multiple of elementSize");
+			mNumElements = totalMem / elementSize;
+
+			mNext = as_self;
+			as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
+
+			Freelist* runner = mNext;
+			for (u64 i = 1; i < mNumElements; ++i)
+			{
+				runner->mNext = as_self;
+				runner = as_self;
+				as_byte = (byte*)utils::PointerAdd(as_byte, elementSize);
+			}
         }
         
         inline void* PoolAllocator::Freelist::Obtain(void)

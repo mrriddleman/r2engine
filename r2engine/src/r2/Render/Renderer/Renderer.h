@@ -13,16 +13,11 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelSystem.h"
 #include "r2/Render/Model/Light.h"
-
+#include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
 
 namespace r2
 {
 	struct Camera;
-}
-
-namespace r2::draw::vb
-{
-	struct VertexBufferLayoutSystem;
 }
 
 namespace r2::draw
@@ -91,52 +86,54 @@ namespace r2::draw
 	struct Model;
 
 
-	enum eVertexBufferLayoutTypes
+	enum eVertexBufferLayoutTypes : u8
 	{
 		VBL_STATIC = 0,
 		VBL_ANIMATED,
 #if defined R2_DEBUG
-		VBL_DEBUG_MODEL,
 		VBL_DEBUG_LINES,
 #endif
 		NUM_VERTEX_BUFFER_LAYOUT_TYPES,
-		VBL_FINAL = VBL_STATIC
+		VBL_FINAL = VBL_STATIC,
+#if defined R2_DEBUG
+		VBL_DEBUG_MODEL = VBL_STATIC,
+#endif
 	};
 
-	struct BufferHandles
-	{
-		r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
-		r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
-		r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
-		r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
-	};
+	//struct BufferHandles
+	//{
+	//	r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
+	//	r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
+	//	r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
+	//	r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
+	//};
 
-	struct VertexLayoutConfigHandle
-	{
-		BufferLayoutHandle mBufferLayoutHandle;
-		VertexBufferHandle mVertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
-		IndexBufferHandle mIndexBufferHandle;
-		DrawIDHandle mDrawIDHandle;
-		u32 mNumVertexBufferHandles;
-	};
+	//struct VertexLayoutConfigHandle
+	//{
+	//	BufferLayoutHandle mBufferLayoutHandle;
+	//	VertexBufferHandle mVertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
+	//	IndexBufferHandle mIndexBufferHandle;
+	//	DrawIDHandle mDrawIDHandle;
+	//	u32 mNumVertexBufferHandles;
+	//};
 
-	struct VertexLayoutVertexOffset
-	{
-		u64 baseVertex = 0;
-		u64 numVertices = 0;
-	};
+	//struct VertexLayoutVertexOffset
+	//{
+	//	u64 baseVertex = 0;
+	//	u64 numVertices = 0;
+	//};
 
-	struct VertexLayoutIndexOffset
-	{
-		u64 baseIndex = 0;
-		u64 numIndices = 0;
-	};
+	//struct VertexLayoutIndexOffset
+	//{
+	//	u64 baseIndex = 0;
+	//	u64 numIndices = 0;
+	//};
 
-	struct VertexLayoutUploadOffset
-	{
-		VertexLayoutVertexOffset mVertexBufferOffset;
-		VertexLayoutIndexOffset mIndexBufferOffset;
-	};
+	//struct VertexLayoutUploadOffset
+	//{
+	//	VertexLayoutVertexOffset mVertexBufferOffset;
+	//	VertexLayoutIndexOffset mIndexBufferOffset;
+	//};
 
 	struct ClearSurfaceOptions
 	{
@@ -146,7 +143,7 @@ namespace r2::draw
 
 	struct RenderBatch
 	{
-		VertexConfigHandle vertexLayoutConfigHandle = InvalidVertexConfigHandle;
+		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
 
 		ConstantBufferHandle subCommandsHandle;
 		ConstantBufferHandle modelsHandle;
@@ -155,7 +152,7 @@ namespace r2::draw
 		ConstantBufferHandle boneTransformOffsetsHandle;
 		ConstantBufferHandle boneTransformsHandle;
 
-		r2::SArray<ModelRef>* modelRefs = nullptr;
+		r2::SArray<const vb::GPUModelRef*>* gpuModelRefs = nullptr;
 		//@TODO(Serge): Might be a good idea to store all of the shaderIDs that the meshrefs use as well so we don't have to dynamically allocate the shaders array in the populate method later on
 
 		MaterialBatch materialBatch;
@@ -183,7 +180,7 @@ namespace r2::draw
 	{
 		DebugDrawType debugDrawType;
 
-		VertexConfigHandle vertexConfigHandle = InvalidVertexConfigHandle;
+		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
 		r2::draw::MaterialHandle materialHandle = mat::InvalidMaterial;
 
 		ConstantConfigHandle subCommandsConstantConfigHandle = InvalidConstantConfigHandle;
@@ -226,12 +223,13 @@ namespace r2::draw
 		MaterialSystem* mMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
+		//r2::SArray<vb::GPUModelRefHandle>* mUploadedModels = nullptr;
 
-		r2::SArray<r2::draw::ModelRefHandle>* mEngineModelRefs = nullptr;
+		r2::SArray<vb::GPUModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
 		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
 		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
-		r2::SArray<s32>* mVertexBufferLayoutHandles = nullptr;
+		r2::SArray<vb::VertexBufferLayoutHandle>* mVertexBufferLayoutHandles = nullptr;
 
 		//--------------END Systems stuff----------------
 
@@ -239,22 +237,21 @@ namespace r2::draw
 
 		//@TODO(Serge): don't expose this to the outside (or figure out how to remove this)
 		//				we should only be exposing/using mVertexLayoutConfigHandles
-		r2::draw::BufferHandles mBufferHandles;
+		//r2::draw::BufferHandles mBufferHandles;
 		r2::SArray<r2::draw::ConstantBufferHandle>* mConstantBufferHandles = nullptr;
 		r2::SHashMap<ConstantBufferData>* mConstantBufferData = nullptr;
 
-		r2::SArray<VertexLayoutConfigHandle>* mVertexLayoutConfigHandles = nullptr;
-		r2::SArray<r2::draw::BufferLayoutConfiguration>* mVertexLayouts = nullptr;
+		//r2::SArray<VertexLayoutConfigHandle>* mVertexLayoutConfigHandles = nullptr;
+		//r2::SArray<r2::draw::BufferLayoutConfiguration>* mVertexLayouts = nullptr;
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
-		r2::SArray<VertexLayoutUploadOffset>* mVertexLayoutUploadOffsets = nullptr;
+		//r2::SArray<VertexLayoutUploadOffset>* mVertexLayoutUploadOffsets = nullptr;
 		
 		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
 		r2::draw::MaterialHandle mDefaultStaticOutlineMaterialHandle;
 		r2::draw::MaterialHandle mDefaultDynamicOutlineMaterialHandle;
 
-		VertexConfigHandle mStaticVertexModelConfigHandle = InvalidVertexConfigHandle;
-		VertexConfigHandle mAnimVertexModelConfigHandle = InvalidVertexConfigHandle;
-		VertexConfigHandle mFinalBatchVertexLayoutConfigHandle = InvalidVertexConfigHandle;
+		vb::VertexBufferLayoutHandle mStaticVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
+		vb::VertexBufferLayoutHandle mAnimVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 
 		ConstantConfigHandle mSurfacesConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mModelConfigHandle = InvalidConstantConfigHandle;
@@ -376,9 +373,9 @@ namespace r2::draw
 		s32 mMSAAResolveNormalizedTextureLodLocation;
 
 		//----------------------------------------------------------------
-		r2::mem::StackArena* mModelRefArena = nullptr;
+	//	r2::mem::StackArena* mModelRefArena = nullptr;
 
-		r2::SArray<ModelRef>* mModelRefs = nullptr;
+	//	r2::SArray<ModelRef>* mModelRefs = nullptr;
 		
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
@@ -505,8 +502,8 @@ namespace r2::draw
 		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
 		r2::draw::MaterialHandle mDebugModelMaterialHandle;
 
-		VertexConfigHandle mDebugLinesVertexConfigHandle = InvalidVertexConfigHandle;
-		VertexConfigHandle mDebugModelVertexConfigHandle = InvalidVertexConfigHandle;
+		vb::VertexBufferLayoutHandle mDebugLinesVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
+		vb::VertexBufferLayoutHandle mDebugModelVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 
 		ConstantConfigHandle mDebugLinesSubCommandsConfigHandle = InvalidConstantConfigHandle;
 		ConstantConfigHandle mDebugModelSubCommandsConfigHandle = InvalidConstantConfigHandle;
@@ -552,22 +549,22 @@ namespace r2::draw::renderer
 	void SetClearDepth(float color);
 
 	const Model* GetDefaultModel( r2::draw::DefaultModel defaultModel);
-	const r2::SArray<r2::draw::ModelRefHandle>* GetDefaultModelRefs();
-	r2::draw::ModelRefHandle GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
+	const r2::SArray<r2::draw::vb::GPUModelRefHandle>* GetDefaultModelRefs();
+	r2::draw::vb::GPUModelRefHandle GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
 
 	/*void LoadEngineTexturesFromDisk();
 	void UploadEngineMaterialTexturesToGPUFromMaterialName( u64 materialName);
 	void UploadEngineMaterialTexturesToGPU();*/
 
-	ModelRefHandle UploadModel(const Model* model);
-	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<ModelRefHandle>& modelRefs);
+	vb::GPUModelRefHandle UploadModel(const Model* model);
+	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	ModelRefHandle UploadAnimModel(const AnimModel* model);
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<ModelRefHandle>& modelRefs);
+	vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model);
+	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
 	//@TODO(Serge): do we want these methods? Maybe at least not public?
-	void ClearVertexLayoutOffsets( VertexConfigHandle vHandle);
-	void ClearAllVertexLayoutOffsets();
+	//void ClearVertexLayoutOffsets( VertexConfigHandle vHandle);
+	//void ClearAllVertexLayoutOffsets();
 	
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
@@ -610,8 +607,8 @@ namespace r2::draw::renderer
 	void RemoveSkyLight(SkyLightHandle skylightHandle);
 	void ClearAllLighting();
 
-	void DrawModel(const DrawParameters& drawParameters, const ModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<ModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	void SetDefaultStencilState(DrawParameters& drawParameters);
 	void SetDefaultBlendState(DrawParameters& drawParameters);

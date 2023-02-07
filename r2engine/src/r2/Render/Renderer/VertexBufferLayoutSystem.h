@@ -19,11 +19,11 @@ namespace r2::draw
 namespace r2::draw::vb
 {
 	using VertexBufferLayoutHandle = s32; //this will be the index into the array
-	using GPUModelRefHandle = u64;
+	using GPUModelRefHandle = s64;
 
 	const VertexBufferLayoutHandle InvalidVertexBufferLayoutHandle = -1;
 
-	const GPUModelRefHandle InvalidModelRefHandle = 0;
+	const GPUModelRefHandle InvalidGPUModelRefHandle = -1;
 
 	struct MeshEntry
 	{
@@ -40,7 +40,7 @@ namespace r2::draw::vb
 		u64 modelHash;
 		b32 isAnimated;
 
-		r2::SArray<MeshEntry>* vertexEntries;
+		r2::SArray<MeshEntry>* meshEntries;
 		r2::SArray<MaterialHandle>* materialHandles;
 		GPUBufferEntry boneEntry;
 	};
@@ -97,12 +97,13 @@ namespace r2::draw::vb
 }
 
 namespace r2::draw::vbsys
-{
-	BufferLayoutHandle GetBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayout& handle);
+{	
+	vb::VertexBufferLayoutHandle AddVertexBufferLayout(vb::VertexBufferLayoutSystem& system, const r2::draw::BufferLayoutConfiguration& vertexConfig);
+	
+	BufferLayoutHandle GetBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
+	VertexBufferHandle GetVertexBufferHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, u32 vboIndex);
 
 	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
-
-	vb::VertexBufferLayoutHandle AddVertexBufferLayout(vb::VertexBufferLayoutSystem& system, const r2::draw::BufferLayoutConfiguration& vertexConfig);
 
 	vb::VertexBufferLayoutSize GetVertexBufferCapacity(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 	vb::VertexBufferLayoutSize GetVertexBufferSize(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
@@ -128,8 +129,8 @@ namespace r2::draw::vbsys
 	const vb::GPUModelRef* GetGPUModelRef(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle);
 
 	//Bulk upload options which I think will probably be used for levels/scenes
-	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const Model*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
-	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<const AnimModel*>* models, r2::SArray<vb::GPUModelRefHandle>* handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
+	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<vb::GPUModelRefHandle>* handles);
 }
 

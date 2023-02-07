@@ -69,27 +69,28 @@ namespace r2::draw::vb::gpubuf
 
 			FindBufferEntry(gpuBuffer, size, previousNode, affectedNode);
 		}
+		
+		newEntry.start = affectedNode->data.start;
+		newEntry.size = size;
+
+		gpuBuffer.bufferSize += size;
+		gpuBuffer.bufferPeakUsage = std::max(gpuBuffer.bufferPeakUsage, gpuBuffer.bufferSize);
 
 		GPUBufferEntry leftOverAmount;
-		leftOverAmount.start = affectedNode->data.start + affectedNode->data.size;
+		leftOverAmount.start = affectedNode->data.start + size;
 		leftOverAmount.size = affectedNode->data.size - size;
 
 		if (leftOverAmount.size > 0)
 		{
 			FreeNode* newFreeNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 			newFreeNode->data = leftOverAmount;
+			newFreeNode->next = nullptr;
 
 			r2::sll::Insert(gpuBuffer.gpuFreeList, affectedNode, newFreeNode);
 		}
 
 		r2::sll::Remove(gpuBuffer.gpuFreeList, previousNode, affectedNode);
-		FREE(previousNode, *gpuBuffer.poolArena);
-
-		gpuBuffer.bufferSize += size;
-		gpuBuffer.bufferPeakUsage = std::max(gpuBuffer.bufferPeakUsage, gpuBuffer.bufferSize);
-		
-		newEntry.start = affectedNode->data.start;
-		newEntry.size = size;
+		FREE(affectedNode, *gpuBuffer.poolArena);
 
 		return neededToGrow;
 	}

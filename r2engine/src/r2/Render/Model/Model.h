@@ -97,43 +97,40 @@ namespace r2::draw
         static u64 MemorySizeNoData(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
-
-    
-
 	struct DebugBone
 	{
 		glm::vec3 p0;
 		glm::vec3 p1;
 	};
 
-	struct MeshRef
-	{
-		//Where the data lives
-		u32 baseVertex = 0;
-		u32 baseIndex = 0;
-		u32 numIndices = 0;
-		u32 numVertices = 0;
-        u32 materialIndex = 0;
+	//struct MeshRef
+	//{
+	//	//Where the data lives
+	//	u32 baseVertex = 0;
+	//	u32 baseIndex = 0;
+	//	u32 numIndices = 0;
+	//	u32 numVertices = 0;
+ //       u32 materialIndex = 0;
 
-        Bounds objectBounds;
-    };
+ //       Bounds objectBounds;
+ //   };
 
-    struct ModelRef
-    {
-        u64 hash;
-        //@NOTE(Serge): I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
-		VertexBufferHandle vertexBufferHandle;
-		IndexBufferHandle indexBufferHandle;
+ //   struct ModelRef
+ //   {
+ //       u64 hash;
+ //       //@NOTE(Serge): I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
+	//	VertexBufferHandle vertexBufferHandle;
+	//	IndexBufferHandle indexBufferHandle;
 
-        r2::SArray<MeshRef>* mMeshRefs;
-        r2::SArray<MaterialHandle>* mMaterialHandles;
+ //       r2::SArray<MeshRef>* mMeshRefs;
+ //       r2::SArray<MaterialHandle>* mMaterialHandles;
 
-        b32 mAnimated;
-        u32 mNumBones;
-    };
+ //       b32 mAnimated;
+ //       u32 mNumBones;
+ //   };
 
-    using ModelRefHandle = s64; //index into the model refs of the renderer currently
-    const ModelRefHandle InvalidModelRefHandle = -1;
+  //  using ModelRefHandle = s64; //index into the model refs of the renderer currently
+  //  const ModelRefHandle InvalidModelRefHandle = -1;
 
     template<class ARENA>
     Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description);

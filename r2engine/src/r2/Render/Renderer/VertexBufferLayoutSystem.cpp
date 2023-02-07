@@ -15,11 +15,13 @@ namespace r2::draw::vb
 	{
 		GPU_MODEL_REF_KEY_BITS_TOTAL = BytesToBits(sizeof(GPUModelRefHandle)),
 
-		GPU_MODEL_REF_KEY_BITS_LAYOUT_INDEX = 0xC,
+		GPU_MODEL_REF_KEY_BITS_UNUSED = 0x1, //burn the first bit so that all the generated GPUModelRefHandle values are positive
+		GPU_MODEL_REF_KEY_BITS_LAYOUT_INDEX = 0xB, //means we can have 2048 layouts
 		GPU_MODEL_REF_KEY_BITS_INDEX = 0x14,
 		GPU_MODEL_REF_KEY_BITS_SALT = 0x20,
 
-		KEY_LAYOUT_INDEX_OFFSET = GPU_MODEL_REF_KEY_BITS_TOTAL - GPU_MODEL_REF_KEY_BITS_LAYOUT_INDEX,
+		KEY_UNUSED_OFFSET = GPU_MODEL_REF_KEY_BITS_TOTAL - GPU_MODEL_REF_KEY_BITS_UNUSED,
+		KEY_LAYOUT_INDEX_OFFSET = KEY_UNUSED_OFFSET - GPU_MODEL_REF_KEY_BITS_LAYOUT_INDEX,
 		KEY_INDEX_OFFSET = KEY_LAYOUT_INDEX_OFFSET - GPU_MODEL_REF_KEY_BITS_INDEX,
 		KEY_SALT_OFFSET = KEY_INDEX_OFFSET - GPU_MODEL_REF_KEY_BITS_SALT
 	};
@@ -273,6 +275,8 @@ namespace r2::draw::vb
 
 		rendererimpl::DeleteBufferLayouts(1, &vertexBufferLayout->gpuLayout.vaoHandle);
 
+		r2::sarr::Clear(*vertexBufferLayout->gpuModelRefs);
+
 		R2_CHECK(r2::sarr::IsEmpty(*vertexBufferLayout->gpuModelRefs), "Should be empty by the time you free this!");
 
 		FREE(vertexBufferLayout->gpuModelRefs, *system.mVertexBufferLayoutArena);
@@ -306,6 +310,17 @@ namespace r2::draw::vbsys
 		const auto& vblayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 
 		return vblayout->gpuLayout.vaoHandle;
+	}
+
+	VertexBufferHandle GetVertexBufferHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, u32 vboIndex)
+	{
+		R2_CHECK(IsVertexBufferLayoutHandleValid(system, vblHandle), "Invalid vertex buffer layout handle: %lu", vblHandle);
+
+		const auto& vblayout = r2::sarr::At(*system.mVertexBufferLayouts, vblHandle);
+
+		R2_CHECK(vboIndex >= 0 && vboIndex < vblayout->gpuLayout.numVBOHandles, "Invalid vboIndex!");
+
+		return vblayout->gpuLayout.vboHandles[vboIndex];
 	}
 
 	bool IsVertexBufferLayoutHandleValid(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)
@@ -537,7 +552,7 @@ namespace r2::draw::vbsys
 	{
 		//maybe we should check to see if we've already uploaded the model?
 		vb::GPUModelRefHandle modelRefHandle = GetModelRefHandle(system, model);
-		if (modelRefHandle != InvalidModelRefHandle)
+		if (modelRefHandle != vb::InvalidGPUModelRefHandle)
 		{
 			return modelRefHandle;
 		}
@@ -547,7 +562,7 @@ namespace r2::draw::vbsys
 		if (!isValidHandle)
 		{
 			R2_CHECK(false, "Passed in an invalid VertexBufferLayoutHandle: %i", handle);
-			return vb::InvalidModelRefHandle;
+			return vb::InvalidGPUModelRefHandle;
 		}
 
 		u64 numMeshes = r2::sarr::Size(*model.optrMeshes);
@@ -564,9 +579,9 @@ namespace r2::draw::vbsys
 
 		R2_CHECK(modelRef != nullptr, "modelRef is nullptr!");
 
-		modelRef->vertexEntries = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, vb::MeshEntry, numMeshes);
+		modelRef->meshEntries = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, vb::MeshEntry, numMeshes);
 
-		R2_CHECK(modelRef->vertexEntries != nullptr, "vertexEntries is nullptr!");
+		R2_CHECK(modelRef->meshEntries != nullptr, "vertexEntries is nullptr!");
 
 		modelRef->materialHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, MaterialHandle, numMaterals);
 
@@ -580,7 +595,7 @@ namespace r2::draw::vbsys
 
 		for (u64 i = 0; i < numMeshes; ++i)
 		{
-			r2::sarr::Push(*modelRef->vertexEntries, vb::MeshEntry());
+			r2::sarr::Push(*modelRef->meshEntries, vb::MeshEntry());
 		}
 
 		//r2::sarr::Size(*vertexBufferLayout->gpuModelRefs)
@@ -591,10 +606,7 @@ namespace r2::draw::vbsys
 		modelRef->modelHash = model.hash;
 		modelRef->isAnimated = boneData && boneInfo;
 
-		if (boneInfo)
-		{
-			modelRef->boneEntry.size = boneInfo->mSize;
-		}
+		
 
 		vb::GPUBufferEntry vertexEntry;
 		vb::GPUBufferEntry indexEntry;
@@ -622,6 +634,11 @@ namespace r2::draw::vbsys
 
 		modelRef->boneEntry.start = 0;
 		modelRef->boneEntry.size = 0;
+
+		if (boneInfo)
+		{
+			modelRef->boneEntry.size = boneInfo->mSize;
+		}
 
 		if (boneData)
 		{
@@ -690,12 +707,12 @@ namespace r2::draw::vbsys
 				vertexBufferLayout->gpuLayout.drawIDHandle);
 		}
 
-		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.start = (vertexEntry.start)/sizeof(r2::draw::Vertex); //this is the base vertex
-		r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.size = numVertices0;
-		r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.start = (indexEntry.start) / sizeof(u32);
-		r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.size = numIndices0;
-		r2::sarr::At(*modelRef->vertexEntries, 0).meshBounds = r2::sarr::At(*model.optrMeshes, 0)->objectBounds;
-		r2::sarr::At(*modelRef->vertexEntries, 0).materialIndex = r2::sarr::At(*model.optrMeshes, 0)->materialIndex;
+		r2::sarr::At(*modelRef->meshEntries, 0).gpuVertexEntry.start = (vertexEntry.start)/sizeof(r2::draw::Vertex); //this is the base vertex
+		r2::sarr::At(*modelRef->meshEntries, 0).gpuVertexEntry.size = numVertices0;
+		r2::sarr::At(*modelRef->meshEntries, 0).gpuIndexEntry.start = (indexEntry.start) / sizeof(u32);
+		r2::sarr::At(*modelRef->meshEntries, 0).gpuIndexEntry.size = numIndices0;
+		r2::sarr::At(*modelRef->meshEntries, 0).meshBounds = r2::sarr::At(*model.optrMeshes, 0)->objectBounds;
+		r2::sarr::At(*modelRef->meshEntries, 0).materialIndex = r2::sarr::At(*model.optrMeshes, 0)->materialIndex;
 
 		//Upload the first mesh
 		cmd::FillVertexBuffer* fillVertexCommand = nullptr;
@@ -719,12 +736,12 @@ namespace r2::draw::vbsys
 		{
 			u32 numMeshVertices = r2::sarr::Size(*model.optrMeshes->mData[i]->optrVertices);
 
-			r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.size = numMeshVertices;
-			r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.start = r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuVertexEntry.size + r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuVertexEntry.start;
-			r2::sarr::At(*modelRef->vertexEntries, i).materialIndex = r2::sarr::At(*model.optrMeshes, i)->materialIndex;
-			r2::sarr::At(*modelRef->vertexEntries, i).meshBounds = r2::sarr::At(*model.optrMeshes, i)->objectBounds;
+			r2::sarr::At(*modelRef->meshEntries, i).gpuVertexEntry.size = numMeshVertices;
+			r2::sarr::At(*modelRef->meshEntries, i).gpuVertexEntry.start = r2::sarr::At(*modelRef->meshEntries, i - 1).gpuVertexEntry.size + r2::sarr::At(*modelRef->meshEntries, i - 1).gpuVertexEntry.start;
+			r2::sarr::At(*modelRef->meshEntries, i).materialIndex = r2::sarr::At(*model.optrMeshes, i)->materialIndex;
+			r2::sarr::At(*modelRef->meshEntries, i).meshBounds = r2::sarr::At(*model.optrMeshes, i)->objectBounds;
 
-			u32 vertexOffset = r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.start * sizeof(r2::draw::Vertex);
+			u32 vertexOffset = r2::sarr::At(*modelRef->meshEntries, i).gpuVertexEntry.start * sizeof(r2::draw::Vertex);
 
 			nextVertexCmd = cmdbkt::AppendCommand<cmd::FillVertexBuffer, cmd::FillVertexBuffer, mem::StackArena>(*commandBucketArena, nextVertexCmd, 0);
 			FillVertexBufferCommand(nextVertexCmd, *r2::sarr::At(*model.optrMeshes, i), vertexBufferLayout->gpuLayout.vboHandles[0], vertexOffset);
@@ -747,13 +764,13 @@ namespace r2::draw::vbsys
 		{
 			u32 numMeshIndices = r2::sarr::Size(*model.optrMeshes->mData[i]->optrIndices);
 
-			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.size = numMeshIndices;
-			r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.start = r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.size + r2::sarr::At(*modelRef->vertexEntries, i - 1).gpuIndexEntry.start;
+			r2::sarr::At(*modelRef->meshEntries, i).gpuIndexEntry.size = numMeshIndices;
+			r2::sarr::At(*modelRef->meshEntries, i).gpuIndexEntry.start = r2::sarr::At(*modelRef->meshEntries, i - 1).gpuIndexEntry.size + r2::sarr::At(*modelRef->meshEntries, i - 1).gpuIndexEntry.start;
 		
-			u32 indexOffset = r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.start * sizeof(u32);
+			u32 indexOffset = r2::sarr::At(*modelRef->meshEntries, i).gpuIndexEntry.start * sizeof(u32);
 
 			nextIndexCmd = cmdbkt::AppendCommand<cmd::FillIndexBuffer, cmd::FillIndexBuffer, mem::StackArena>(*commandBucketArena, nextIndexCmd, 0);
-			FillIndexBufferCommand(fillIndexCommand, *r2::sarr::At(*model.optrMeshes, 0), vertexBufferLayout->gpuLayout.iboHandle, indexOffset);
+			FillIndexBufferCommand(nextIndexCmd, *r2::sarr::At(*model.optrMeshes, i), vertexBufferLayout->gpuLayout.iboHandle, indexOffset);
 		}
 
 		//Delete the old vbos if needed
@@ -805,22 +822,22 @@ namespace r2::draw::vbsys
 			return false;
 		}
 
-		const auto numVertexEntries =  r2::sarr::Size(*modelRef->vertexEntries);
+		const auto numVertexEntries =  r2::sarr::Size(*modelRef->meshEntries);
 
 		R2_CHECK(numVertexEntries > 0, "We should have at least 1");
 
 		vb::GPUBufferEntry vertexEntry;
-		vertexEntry.start = sizeof(r2::draw::Vertex) * r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.start;
-		vertexEntry.size = r2::sarr::At(*modelRef->vertexEntries, 0).gpuVertexEntry.size;
+		vertexEntry.start = sizeof(r2::draw::Vertex) * r2::sarr::At(*modelRef->meshEntries, 0).gpuVertexEntry.start;
+		vertexEntry.size = r2::sarr::At(*modelRef->meshEntries, 0).gpuVertexEntry.size;
 
 		vb::GPUBufferEntry indexEntry;
-		indexEntry.start = sizeof(u32) * r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.start;
-		indexEntry.size = r2::sarr::At(*modelRef->vertexEntries, 0).gpuIndexEntry.size;
+		indexEntry.start = sizeof(u32) * r2::sarr::At(*modelRef->meshEntries, 0).gpuIndexEntry.start;
+		indexEntry.size = r2::sarr::At(*modelRef->meshEntries, 0).gpuIndexEntry.size;
 
 		for (size_t i = 1; i < numVertexEntries; i++)
 		{
-			vertexEntry.size += r2::sarr::At(*modelRef->vertexEntries, i).gpuVertexEntry.size;
-			indexEntry.size += r2::sarr::At(*modelRef->vertexEntries, i).gpuIndexEntry.size;
+			vertexEntry.size += r2::sarr::At(*modelRef->meshEntries, i).gpuVertexEntry.size;
+			indexEntry.size += r2::sarr::At(*modelRef->meshEntries, i).gpuIndexEntry.size;
 		}
 
 		vertexEntry.size *= sizeof(Vertex);
@@ -841,7 +858,7 @@ namespace r2::draw::vbsys
 		vb::gpubuf::DeleteEntry(vertexBufferLayout->vertexBuffers[0], vertexEntry);
 
 		FREE(modelRef->materialHandles, *vertexBufferLayout->gpuModelRefArena);
-		FREE(modelRef->vertexEntries, *vertexBufferLayout->gpuModelRefArena);
+		FREE(modelRef->meshEntries, *vertexBufferLayout->gpuModelRefArena);
 		FREE(modelRef, *vertexBufferLayout->gpuModelRefArena);
 
 		vertexBufferLayout->gpuModelRefs->mData[modelRefIndex] = nullptr;
@@ -861,7 +878,11 @@ namespace r2::draw::vbsys
 		vb::VertexBufferLayout* vertexBufferLayout = r2::sarr::At(*system.mVertexBufferLayouts, handle);
 		R2_CHECK(vertexBufferLayout != nullptr, "The vertex buffer layout at index: %lu is nullptr!", handle);
 
-		vb::gpubuf::FreeAll(vertexBufferLayout->indexBuffer);
+		if (vertexBufferLayout->layout.indexBufferConfig.bufferSize != EMPTY_BUFFER)
+		{
+			vb::gpubuf::FreeAll(vertexBufferLayout->indexBuffer);
+		}
+
 		for (u32 i = 0; i < vertexBufferLayout->gpuLayout.numVBOHandles; ++i)
 		{
 			vb::gpubuf::FreeAll(vertexBufferLayout->vertexBuffers[i]);
@@ -898,7 +919,7 @@ namespace r2::draw::vbsys
 			}
 		}
 
-		return vb::InvalidModelRefHandle;
+		return vb::InvalidGPUModelRefHandle;
 	}
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model)
@@ -917,12 +938,12 @@ namespace r2::draw::vbsys
 
 	bool IsModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model)
 	{
-		return GetModelRefHandle(system, model) != vb::InvalidModelRefHandle;
+		return GetModelRefHandle(system, model) != vb::InvalidGPUModelRefHandle;
 	}
 
 	bool IsAnimModelLoaded(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model)
 	{
-		return GetModelRefHandle(system, model) != vb::InvalidModelRefHandle;
+		return GetModelRefHandle(system, model) != vb::InvalidGPUModelRefHandle;
 	}
 
 	//Should return true if the model is still loaded - false otherwise
@@ -935,6 +956,12 @@ namespace r2::draw::vbsys
 
 	const vb::GPUModelRef* GetGPUModelRef(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle)
 	{
+		if (handle == vb::InvalidGPUModelRefHandle)
+		{
+			R2_CHECK(false, "Passed in an invalid GPUModelRefHandle!");
+			return nullptr;
+		}
+
 		vb::VertexBufferLayoutHandle vblHandle;
 		u32 gpuModelRefIndex;
 		u32 salt;
@@ -956,21 +983,21 @@ namespace r2::draw::vbsys
 	}
 
 
-	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const Model*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
+	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, const r2::SArray<const Model*>& modelsToUpload, r2::SArray<vb::GPUModelRefHandle>& handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		if (IsVertexBufferLayoutHandleValid(system, vblHandle))
+		if (!IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{
 			R2_CHECK(false, "Invalid vertex buffer handle: %lu", vblHandle);
 			return false;
 		}
 
-		if (handles == nullptr || !r2::sarr::IsEmpty(*handles))
+		if (!r2::sarr::IsEmpty(handles))
 		{
 			R2_CHECK(false, "GPUModelRefHandles is either nullptr or not empty");
 			return false;
 		}
 
-		if (modelsToUpload == nullptr || r2::sarr::IsEmpty(*modelsToUpload))
+		if (r2::sarr::IsEmpty(modelsToUpload))
 		{
 			R2_CHECK(false, "modelsToUpload is either nullptr or empty");
 			return false;
@@ -981,35 +1008,35 @@ namespace r2::draw::vbsys
 		R2_CHECK(vertexBufferLayout != nullptr, "The vertexBufferLayout ptr is still nullptr?");
 
 		//normal models
-		const auto numModelsToUpload = r2::sarr::Size(*modelsToUpload);
+		const auto numModelsToUpload = r2::sarr::Size(modelsToUpload);
 
 		for (u32 i = 0; i < numModelsToUpload; ++i)
 		{
-			const Model* model = r2::sarr::At(*modelsToUpload, i);
+			const Model* model = r2::sarr::At(modelsToUpload, i);
 
 			vb::GPUModelRefHandle modelRefHandle = UploadModelToVertexBuffer(system, vblHandle, *model, uploadBucket, commandBucketArena);
 
-			r2::sarr::Push(*handles, modelRefHandle);
+			r2::sarr::Push(handles, modelRefHandle);
 		}
 
 		return true;
 	}
 
-	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<const AnimModel*>* modelsToUpload, r2::SArray<vb::GPUModelRefHandle>* handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
+	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, const r2::SArray<const AnimModel*>& modelsToUpload, r2::SArray<vb::GPUModelRefHandle>& handles, CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena)
 	{
-		if (IsVertexBufferLayoutHandleValid(system, vblHandle))
+		if (!IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{
 			R2_CHECK(false, "Invalid vertex buffer handle: %lu", vblHandle);
 			return false;
 		}
 
-		if (handles == nullptr || !r2::sarr::IsEmpty(*handles))
+		if (!r2::sarr::IsEmpty(handles))
 		{
 			R2_CHECK(false, "GPUModelRefHandles is either nullptr or not empty");
 			return false;
 		}
 
-		if (modelsToUpload == nullptr || r2::sarr::IsEmpty(*modelsToUpload))
+		if (r2::sarr::IsEmpty(modelsToUpload))
 		{
 			R2_CHECK(false, "modelsToUpload is either nullptr or empty");
 			return false;
@@ -1020,15 +1047,15 @@ namespace r2::draw::vbsys
 		R2_CHECK(vertexBufferLayout != nullptr, "The vertexBufferLayout ptr is still nullptr?");
 
 		//anim models
-		const auto numModelsToUpload = r2::sarr::Size(*modelsToUpload);
+		const auto numModelsToUpload = r2::sarr::Size(modelsToUpload);
 
 		for (u32 i = 0; i < numModelsToUpload; ++i)
 		{
-			const AnimModel* model = r2::sarr::At(*modelsToUpload, i);
+			const AnimModel* model = r2::sarr::At(modelsToUpload, i);
 
 			vb::GPUModelRefHandle modelRefHandle = UploadAnimModelToVertexBuffer(system, vblHandle, *model, uploadBucket, commandBucketArena);
 
-			r2::sarr::Push(*handles, modelRefHandle);
+			r2::sarr::Push(handles, modelRefHandle);
 		}
 
 		return true;
@@ -1036,7 +1063,7 @@ namespace r2::draw::vbsys
 
 	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<vb::GPUModelRefHandle>* handles)
 	{
-		if (IsVertexBufferLayoutHandleValid(system, vblHandle))
+		if (!IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{
 			R2_CHECK(false, "Invalid vertex buffer handle: %lu", vblHandle);
 			return false;
