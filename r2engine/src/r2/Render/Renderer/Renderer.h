@@ -223,7 +223,6 @@ namespace r2::draw
 		MaterialSystem* mMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
-		//r2::SArray<vb::GPUModelRefHandle>* mUploadedModels = nullptr;
 
 		r2::SArray<vb::GPUModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
@@ -234,17 +233,9 @@ namespace r2::draw
 		//--------------END Systems stuff----------------
 
 		//--------------BEGIN Buffer Layout stuff-----------------
-
-		//@TODO(Serge): don't expose this to the outside (or figure out how to remove this)
-		//				we should only be exposing/using mVertexLayoutConfigHandles
-		//r2::draw::BufferHandles mBufferHandles;
 		r2::SArray<r2::draw::ConstantBufferHandle>* mConstantBufferHandles = nullptr;
 		r2::SHashMap<ConstantBufferData>* mConstantBufferData = nullptr;
-
-		//r2::SArray<VertexLayoutConfigHandle>* mVertexLayoutConfigHandles = nullptr;
-		//r2::SArray<r2::draw::BufferLayoutConfiguration>* mVertexLayouts = nullptr;
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
-		//r2::SArray<VertexLayoutUploadOffset>* mVertexLayoutUploadOffsets = nullptr;
 		
 		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
 		r2::draw::MaterialHandle mDefaultStaticOutlineMaterialHandle;
@@ -373,10 +364,6 @@ namespace r2::draw
 		s32 mMSAAResolveNormalizedTextureLodLocation;
 
 		//----------------------------------------------------------------
-	//	r2::mem::StackArena* mModelRefArena = nullptr;
-
-	//	r2::SArray<ModelRef>* mModelRefs = nullptr;
-		
 
 		r2::mem::StackArena* mRenderTargetsArena = nullptr;
 
@@ -552,19 +539,17 @@ namespace r2::draw::renderer
 	const r2::SArray<r2::draw::vb::GPUModelRefHandle>* GetDefaultModelRefs();
 	r2::draw::vb::GPUModelRefHandle GetDefaultModelRef( r2::draw::DefaultModel defaultModel);
 
-	/*void LoadEngineTexturesFromDisk();
-	void UploadEngineMaterialTexturesToGPUFromMaterialName( u64 materialName);
-	void UploadEngineMaterialTexturesToGPU();*/
-
 	vb::GPUModelRefHandle UploadModel(const Model* model);
 	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
 	vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model);
 	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	//@TODO(Serge): do we want these methods? Maybe at least not public?
-	//void ClearVertexLayoutOffsets( VertexConfigHandle vHandle);
-	//void ClearAllVertexLayoutOffsets();
+	void UnloadModel(const vb::GPUModelRefHandle& modelRefHandle);
+	void UnloadStaticModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);
+	void UnloadAnimModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);
+	void UnloadAllStaticModels();
+	void UnloadAllAnimModels();
 	
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);

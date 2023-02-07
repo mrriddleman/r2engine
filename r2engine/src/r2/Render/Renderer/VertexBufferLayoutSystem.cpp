@@ -1061,7 +1061,7 @@ namespace r2::draw::vbsys
 		return true;
 	}
 
-	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, r2::SArray<vb::GPUModelRefHandle>* handles)
+	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& vblHandle, const r2::SArray<vb::GPUModelRefHandle>* handles)
 	{
 		if (!IsVertexBufferLayoutHandleValid(system, vblHandle))
 		{

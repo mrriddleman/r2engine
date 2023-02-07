@@ -131,7 +131,7 @@ namespace r2::draw::vbsys
 	//Bulk upload options which I think will probably be used for levels/scenes
 	bool UploadAllModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
 	bool UploadAllAnimModels(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& handles, r2::draw::CommandBucket<key::Basic>* uploadBucket, r2::mem::StackArena* commandBucketArena);
-	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, r2::SArray<vb::GPUModelRefHandle>* handles);
+	bool UnloadAllModelRefHandles(vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle, const r2::SArray<vb::GPUModelRefHandle>* handles);
 }
 
 #endif
