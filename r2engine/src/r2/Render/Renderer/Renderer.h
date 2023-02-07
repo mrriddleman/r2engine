@@ -550,6 +550,9 @@ namespace r2::draw::renderer
 	void UnloadAnimModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);
 	void UnloadAllStaticModels();
 	void UnloadAllAnimModels();
+
+	bool IsModelLoaded(const vb::GPUModelRefHandle& modelRefHandle);
+	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle);
 	
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);

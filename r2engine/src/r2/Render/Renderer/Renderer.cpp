@@ -373,12 +373,14 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
 	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-
 	void UnloadModel(Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
 	void UnloadStaticModelRefHandles(Renderer& renderer, const r2::SArray<vb::GPUModelRefHandle>* handles);
 	void UnloadAnimModelRefHandles(Renderer& renderer, const r2::SArray<vb::GPUModelRefHandle>* handles);
 	void UnloadAllStaticModels(Renderer& renderer);
 	void UnloadAllAnimModels(Renderer& renderer);
+
+	bool IsModelLoaded(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
+	bool IsModelRefHandleValid(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
@@ -2866,6 +2868,28 @@ namespace r2::draw::renderer
 		bool unloaded = vbsys::UnloadAllModelsFromVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle);
 
 		R2_CHECK(unloaded, "Failed to unload model ref handles from static vertex buffer layout");
+	}
+
+	bool IsModelLoaded(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle)
+	{
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		return vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
+	}
+
+	bool IsModelRefHandleValid(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle)
+	{
+		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return false;
+		}
+
+		return vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
 	}
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
@@ -8594,16 +8618,15 @@ namespace r2::draw::renderer
 		UnloadAllAnimModels(MENG.GetCurrentRendererRef());
 	}
 
-	//@TODO(Serge): do we want these methods? Maybe at least not public?
-	//void ClearVertexLayoutOffsets(VertexConfigHandle vHandle)
-	//{
-	//	ClearVertexLayoutOffsets(MENG.GetCurrentRendererRef(), vHandle);
-	//}
+	bool IsModelLoaded(const vb::GPUModelRefHandle& modelRefHandle)
+	{
+		return IsModelLoaded(MENG.GetCurrentRendererRef(), modelRefHandle);
+	}
 
-	//void ClearAllVertexLayoutOffsets()
-	//{
-	//	ClearAllVertexLayoutOffsets(MENG.GetCurrentRendererRef());
-	//}
+	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle)
+	{
+		return IsModelRefHandleValid(MENG.GetCurrentRendererRef(), modelRefHandle);
+	}
 
 	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
 	{
