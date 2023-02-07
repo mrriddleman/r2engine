@@ -625,6 +625,17 @@ namespace r2::draw::renderer
 	ShaderHandle GetDepthShaderHandle(bool isDynamic);
 	//------------------------------------------------------------------------------
 
+
+	//@Temporary
+	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize();
+	vb::VertexBufferLayoutSize GetAnimVertexBufferRemainingSize();
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferSize();
+	vb::VertexBufferLayoutSize GetAnimVertexBufferSize();
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity();
+	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity();
+
 #ifdef R2_DEBUG
 
 	void DrawDebugBones(const r2::SArray<DebugBone>& bones, const glm::mat4& modelMatrix, const glm::vec4& color);

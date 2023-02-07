@@ -53,8 +53,8 @@ namespace
 	const u32 REDUCE_TILE_DIM = 128;
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
 	const float EDGE_SOFTENING_AMOUNT = 0.02f;
-	const u32 STATIC_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(32);
-	const u32 ANIM_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(32);
+	const u32 STATIC_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(16);
+	const u32 ANIM_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(4);
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
 	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS;
@@ -505,6 +505,16 @@ namespace r2::draw::renderer
 
 	ShaderHandle GetShadowDepthShaderHandle(const Renderer& renderer, bool isDynamic, light::LightType lightType);
 	ShaderHandle GetDepthShaderHandle(const Renderer& renderer, bool isDynamic);
+
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize(const Renderer& renderer);
+	vb::VertexBufferLayoutSize GetAnimVertexBufferRemainingSize(const Renderer& renderer);
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferSize(const Renderer& renderer);
+	vb::VertexBufferLayoutSize GetAnimVertexBufferSize(const Renderer& renderer);
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity(const Renderer& renderer);
+	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity(const Renderer& renderer);
 
 	//------------------------------------------------------------------------------
 
@@ -7707,6 +7717,36 @@ namespace r2::draw::renderer
 
 #endif //  R2_DEBUG
 
+	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferRemainingSize(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle);
+	}
+	
+	vb::VertexBufferLayoutSize GetAnimVertexBufferRemainingSize(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferRemainingSize(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle);
+	}
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferSize(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferSize(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle);
+	}
+
+	vb::VertexBufferLayoutSize GetAnimVertexBufferSize(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferSize(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle);
+	}
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferCapacity(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle);
+	}
+
+	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity(const Renderer& renderer)
+	{
+		return vbsys::GetVertexBufferCapacity(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle);
+	}
+
 	void ResizeRenderSurface(Renderer& renderer, u32 windowWidth, u32 windowHeight, u32 resolutionX, u32 resolutionY, float scaleX, float scaleY, float xOffset, float yOffset)
 	{
 		//no need to resize if that's the size we already are
@@ -9036,6 +9076,36 @@ namespace r2::draw::renderer
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType)
 	{
 		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic, lightType);
+	}
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize()
+	{
+		return GetStaticVertexBufferRemainingSize(MENG.GetCurrentRendererRef());
+	}
+
+	vb::VertexBufferLayoutSize GetAnimVertexBufferRemainingSize()
+	{
+		return GetAnimVertexBufferRemainingSize(MENG.GetCurrentRendererRef());
+	}
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferSize()
+	{
+		return GetStaticVertexBufferSize(MENG.GetCurrentRendererRef());
+	}
+
+	vb::VertexBufferLayoutSize GetAnimVertexBufferSize()
+	{
+		return GetAnimVertexBufferSize(MENG.GetCurrentRendererRef());
+	}
+
+	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity()
+	{
+		return GetStaticVertexBufferCapacity(MENG.GetCurrentRendererRef());
+	}
+
+	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity()
+	{
+		return GetAnimVertexBufferCapacity(MENG.GetCurrentRendererRef());
 	}
 
 	void SetRenderCamera(Camera* cameraPtr)

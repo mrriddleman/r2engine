@@ -1052,6 +1052,55 @@ public:
                 MENG.SetFullScreen();
                 return true;
             }
+            else if (e.KeyCode() == r2::io::KEY_i)
+            {
+
+				printf("======================= Capacity =============================\n");
+
+				auto staticVertexBufferCapacity = r2::draw::renderer::GetStaticVertexBufferCapacity();
+				auto animVertexBufferCapacity = r2::draw::renderer::GetAnimVertexBufferCapacity();
+
+				printf("Static Vertex Buffer vbo - capacity: %u\n", staticVertexBufferCapacity.vertexBufferSizes[0]);
+				printf("Static Vertex Buffer ibo - capacity: %u\n", staticVertexBufferCapacity.indexBufferSize);
+
+				for (int i = 0; i < animVertexBufferCapacity.numVertexBuffers; ++i)
+				{
+					printf("Anim Vertex Buffer vbo[%i] - capacity: %u\n", i, animVertexBufferCapacity.vertexBufferSizes[i]);
+				}
+
+				printf("Anim Vertex Buffer ibo - capacity: %u\n", animVertexBufferCapacity.indexBufferSize);
+
+
+                printf("======================= Size =============================\n");
+
+				auto staticVertexBufferSize = r2::draw::renderer::GetStaticVertexBufferSize();
+				auto animVertexBufferSize = r2::draw::renderer::GetAnimVertexBufferSize();
+
+				printf("Static Vertex Buffer vbo - size: %u\n", staticVertexBufferSize.vertexBufferSizes[0]);
+				printf("Static Vertex Buffer ibo - size: %u\n", staticVertexBufferSize.indexBufferSize);
+
+				for (int i = 0; i < animVertexBufferSize.numVertexBuffers; ++i)
+				{
+					printf("Anim Vertex Buffer vbo[%i] - size: %u\n", i, animVertexBufferSize.vertexBufferSizes[i]);
+				}
+
+				printf("Anim Vertex Buffer ibo - size: %u\n", animVertexBufferSize.indexBufferSize);
+
+                printf("======================= Remaining Size =============================\n");
+
+                auto staticVertexBufferRemainingSize = r2::draw::renderer::GetStaticVertexBufferRemainingSize();
+                auto animVertexBufferRemainingSize = r2::draw::renderer::GetAnimVertexBufferRemainingSize();
+
+                printf("Static Vertex Buffer vbo - remaining size: %u\n", staticVertexBufferRemainingSize.vertexBufferSizes[0] );
+                printf("Static Vertex Buffer ibo - remaining size: %u\n", staticVertexBufferRemainingSize.indexBufferSize );
+
+                for (int i = 0; i < animVertexBufferRemainingSize.numVertexBuffers; ++i)
+                {
+                    printf("Anim Vertex Buffer vbo[%i] - remaining size: %u\n", i, animVertexBufferRemainingSize.vertexBufferSizes[i]);
+                }
+
+                printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
+            }
 
 			return false;
 		});
