@@ -32,7 +32,7 @@ namespace r2::draw::rendererimpl
 				return;
 			}
 
-			if (waitRet == GL_WAIT_FAILED) {
+			if (waitRet == GL_WAIT_FAILED || waitRet == GL_TIMEOUT_EXPIRED) {
 				R2_CHECK(false, "Not sure what to do here. Probably crash.");
 				return;
 			}
