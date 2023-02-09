@@ -958,7 +958,6 @@ namespace r2::draw::vbsys
 	{
 		if (handle == vb::InvalidGPUModelRefHandle)
 		{
-			R2_CHECK(false, "Passed in an invalid GPUModelRefHandle!");
 			return nullptr;
 		}
 

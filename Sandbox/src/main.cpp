@@ -1101,6 +1101,56 @@ public:
 
                 printf("Anim Vertex Buffer ibo - remaining size: %u\n", animVertexBufferRemainingSize.indexBufferSize);
             }
+            else if (e.KeyCode() == r2::io::KEY_u)
+            {
+			    if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle) && r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 0)) && r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 1)))
+                {
+                    r2::draw::renderer::UnloadModel(mSponzaModelRefHandle);
+
+                    R2_CHECK(!r2::draw::renderer::IsModelRefHandleValid(mSponzaModelRefHandle), "This handle shouldn't be valid anymore!");
+
+                    mSponzaModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+
+                    r2::SArray<r2::draw::vb::GPUModelRefHandle>* modelRefsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::vb::GPUModelRefHandle, 2);
+
+                    r2::sarr::Push(*modelRefsToUnload, r2::sarr::At(*mAnimModelRefs, 0));
+                    r2::sarr::Push(*modelRefsToUnload, r2::sarr::At(*mAnimModelRefs, 1));
+                    r2::draw::renderer::UnloadAnimModelRefHandles(modelRefsToUnload);
+
+                    for (int i = 0; i < r2::sarr::Size(*modelRefsToUnload); ++i)
+                    {
+                        R2_CHECK(!r2::draw::renderer::IsModelRefHandleValid(r2::sarr::At(*modelRefsToUnload, i)), "This handle shouldn't be valid anymore!");
+
+                        r2::sarr::At(*mAnimModelRefs, i) = r2::draw::vb::InvalidGPUModelRefHandle;
+                    }
+
+                    FREE(modelRefsToUnload, *MEM_ENG_SCRATCH_PTR);
+                }
+                else
+                {
+                    mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
+
+                    r2::SArray<const r2::draw::AnimModel*>* animModelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, 2);
+
+                    r2::sarr::Push(*animModelsToUpload, mMicroBatModel);
+                    r2::sarr::Push(*animModelsToUpload, mSkeletonModel);
+
+                    r2::SArray<r2::draw::vb::GPUModelRefHandle>* animModelRefHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::vb::GPUModelRefHandle, 2);
+
+                    r2::draw::renderer::UploadAnimModels(*animModelsToUpload, *animModelRefHandles);
+
+                    for (int i = 0; i < r2::sarr::Size(*animModelRefHandles); ++i)
+                    {
+                        R2_CHECK(r2::draw::renderer::IsModelRefHandleValid(r2::sarr::At(*animModelRefHandles, i)), "This handle shouldn't be valid anymore!");
+
+                        r2::sarr::At(*mAnimModelRefs, i) = r2::sarr::At(*animModelRefHandles, i);
+                    }
+
+                    FREE(animModelRefHandles, *MEM_ENG_SCRATCH_PTR);
+
+                    FREE(animModelsToUpload, *MEM_ENG_SCRATCH_PTR);
+                }
+            }
 
 			return false;
 		});
@@ -1313,12 +1363,14 @@ public:
         r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
         r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
-        r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
-        r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
+        if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle))
+        {
+			//r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+			//r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
 
-        r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
-        FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
-
+			//r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
+			//FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
+        }
 
         r2::draw::DrawParameters drawTransparentWindowParams;
         drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
@@ -1338,43 +1390,49 @@ public:
         drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
 
         //draw transparent windows
-        r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
+      //  r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
+
+
+		r2::draw::DrawParameters animDrawParams;
+		animDrawParams.layer = r2::draw::DL_CHARACTER;
+		animDrawParams.flags.Clear();
+		animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+		
+        r2::draw::renderer::SetDefaultCullState(animDrawParams);
+		r2::draw::renderer::SetDefaultStencilState(animDrawParams);
+		r2::draw::renderer::SetDefaultBlendState(animDrawParams);
 
         //Draw the bat
-		r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-        r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
+        if (r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 0)))
+        {
+			r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+			r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
 
-		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 0));
-		r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 1));
+			r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 0));
+			r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 1));
 
-        r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
-        r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
+			r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
+			r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
+			
+			r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 0), *microBatModelMats, 2, nullptr, allMicroBatBoneTransforms);
 
-        r2::draw::DrawParameters animDrawParams;
-        animDrawParams.layer = r2::draw::DL_CHARACTER;
-        animDrawParams.flags.Clear();
-        animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-
-        r2::draw::renderer::SetDefaultCullState(animDrawParams);
-        r2::draw::renderer::SetDefaultStencilState(animDrawParams);
-        r2::draw::renderer::SetDefaultBlendState(animDrawParams);
-
-        r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 0), *microBatModelMats, 2, nullptr, allMicroBatBoneTransforms);
-
-        FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
-        FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
-
-
-        //Draw the Skeleton
-		r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
-		r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
+			FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
+			FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
+        }
 
         animDrawParams.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 
-        r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 1), *skeletonModelMats, 2, nullptr, mSkeletonBoneTransforms);
-        
-        FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
+        //Draw the Skeleton
+        if (r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 1)))
+        {
+			r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
+			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
+
+			r2::draw::renderer::DrawModel(animDrawParams, r2::sarr::At(*mAnimModelRefs, 1), *skeletonModelMats, 2, nullptr, mSkeletonBoneTransforms);
+
+			FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
+        }
 
         //Draw Ellen
         r2::SArray<glm::mat4>* ellenModelMats =  MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);

@@ -3607,13 +3607,7 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
 
-
-
-
 			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
-
-
-
 
 			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -3627,12 +3621,14 @@ namespace r2::draw::renderer
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			
 			drawBatch->state.depthFunction = EQUAL;
+			drawBatch->state.depthWriteEnabled = false;
+
 			if (batchOffset.drawState.blendState.blendingEnabled)
 			{
 				drawBatch->state.depthFunction = LESS;
+				drawBatch->state.depthWriteEnabled = true;
 			}
 			
-			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
@@ -3792,10 +3788,6 @@ namespace r2::draw::renderer
 				zppShadowsDrawBatch->state.depthFunction = LESS;
 
 				zppShadowsDrawBatch->state.depthWriteEnabled = true;
-				if (batchOffset.drawState.blendState.blendingEnabled)
-				{
-					zppShadowsDrawBatch->state.depthWriteEnabled = false;
-				}
 
 				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
 				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
@@ -3975,6 +3967,44 @@ namespace r2::draw::renderer
 				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
 
 				cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
+
+
+				//@TODO(Serge): figure out a better way to do this - the issue is the z reduce will screw up if we're not drawing any static meshes (unlikely to happen often but could if we do say an animation tool)
+				bool shouldIncludeAnimatedModelsInZPPShadows = false;
+
+				if (numStaticDrawBatches == 1)
+				{
+					const auto& staticBatchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
+					shouldIncludeAnimatedModelsInZPPShadows = staticBatchOffset.drawState.layer == DL_SKYBOX;
+				}
+				
+				if (shouldIncludeAnimatedModelsInZPPShadows)
+				{
+					cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
+					zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					zppShadowsDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
+					zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
+					zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					zppShadowsDrawBatch->subCommands = nullptr;
+					zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+
+					zppShadowsDrawBatch->state.depthFunction = LESS;
+
+					zppShadowsDrawBatch->state.depthWriteEnabled = true;
+
+					zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
+					zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
+					zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
+					cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
+
+					cmd::SetDefaultBlendState(zppShadowsDrawBatch->state.blendState);
+				}
+				
 			}
 		}
 
@@ -7479,6 +7509,7 @@ namespace r2::draw::renderer
 		format.hasAlpha = false;
 		format.isHDR = true;
 		format.usesLayeredRenderering = true;
+		format.mipLevelToAttach = 0;
 
 		//@TODO(Serge): we're effectively burning the first page of this render target. May want to fix that at some point
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SHADOWS], format);
