@@ -64,8 +64,8 @@ namespace r2::draw
         DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
         DL_TRANSPARENT,
-        DL_EFFECT,
         DL_SKYBOX,
+        DL_EFFECT,
         DL_HUD,
         DL_SCREEN,
        

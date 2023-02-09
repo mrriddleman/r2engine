@@ -3820,12 +3820,13 @@ namespace r2::draw::renderer
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 
 			drawBatch->state.depthFunction = EQUAL;
+			
+			drawBatch->state.depthWriteEnabled = false;
 			if (batchOffset.drawState.blendState.blendingEnabled)
 			{
 				drawBatch->state.depthFunction = LESS;
+				drawBatch->state.depthWriteEnabled = true;
 			}
-
-			drawBatch->state.depthWriteEnabled = false;
 
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
@@ -3844,7 +3845,6 @@ namespace r2::draw::renderer
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
-
 					cmd::ConstantUint* directionLightBatchIndexUpdateCMD = AddCommand<key::ShadowKey, cmd::ConstantUint, mem::StackArena>(*renderer.mShadowArena, *renderer.mShadowBucket, directionShadowKey, 0);
 					directionLightBatchIndexUpdateCMD->value = i;
 					directionLightBatchIndexUpdateCMD->uniformLocation = renderer.mDynamicDirectionLightBatchUniformLocation;
@@ -3970,14 +3970,14 @@ namespace r2::draw::renderer
 
 
 				//@TODO(Serge): figure out a better way to do this - the issue is the z reduce will screw up if we're not drawing any static meshes (unlikely to happen often but could if we do say an animation tool)
-				bool shouldIncludeAnimatedModelsInZPPShadows = false;
+				bool shouldIncludeAnimatedModelsInZPPShadows = (numStaticDrawBatches == 0);
 
 				if (numStaticDrawBatches == 1)
 				{
 					const auto& staticBatchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
 					shouldIncludeAnimatedModelsInZPPShadows = staticBatchOffset.drawState.layer == DL_SKYBOX;
 				}
-				
+
 				if (shouldIncludeAnimatedModelsInZPPShadows)
 				{
 					cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
