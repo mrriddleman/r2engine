@@ -1103,7 +1103,9 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_u)
             {
-			    if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle) && r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 0)) && r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 1)))
+			    if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle) && 
+                    r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 0)) &&
+                    r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 1)))
                 {
                     r2::draw::renderer::UnloadModel(mSponzaModelRefHandle);
 
@@ -1113,8 +1115,10 @@ public:
 
                     r2::SArray<r2::draw::vb::GPUModelRefHandle>* modelRefsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::vb::GPUModelRefHandle, 2);
 
+                    
                     r2::sarr::Push(*modelRefsToUnload, r2::sarr::At(*mAnimModelRefs, 0));
                     r2::sarr::Push(*modelRefsToUnload, r2::sarr::At(*mAnimModelRefs, 1));
+
                     r2::draw::renderer::UnloadAnimModelRefHandles(modelRefsToUnload);
 
                     for (int i = 0; i < r2::sarr::Size(*modelRefsToUnload); ++i)
@@ -1130,25 +1134,25 @@ public:
                 {
                     mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
 
-                    r2::SArray<const r2::draw::AnimModel*>* animModelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, 2);
+					r2::SArray<const r2::draw::AnimModel*>* animModelsToUpload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, 2);
 
-                    r2::sarr::Push(*animModelsToUpload, mMicroBatModel);
-                    r2::sarr::Push(*animModelsToUpload, mSkeletonModel);
+					r2::sarr::Push(*animModelsToUpload, mMicroBatModel);
+					r2::sarr::Push(*animModelsToUpload, mSkeletonModel);
 
-                    r2::SArray<r2::draw::vb::GPUModelRefHandle>* animModelRefHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::vb::GPUModelRefHandle, 2);
+					r2::SArray<r2::draw::vb::GPUModelRefHandle>* animModelRefHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::vb::GPUModelRefHandle, 2);
 
-                    r2::draw::renderer::UploadAnimModels(*animModelsToUpload, *animModelRefHandles);
+					r2::draw::renderer::UploadAnimModels(*animModelsToUpload, *animModelRefHandles);
 
-                    for (int i = 0; i < r2::sarr::Size(*animModelRefHandles); ++i)
-                    {
-                        R2_CHECK(r2::draw::renderer::IsModelRefHandleValid(r2::sarr::At(*animModelRefHandles, i)), "This handle shouldn't be valid anymore!");
+					for (int i = 0; i < r2::sarr::Size(*animModelRefHandles); ++i)
+					{
+						R2_CHECK(r2::draw::renderer::IsModelRefHandleValid(r2::sarr::At(*animModelRefHandles, i)), "This handle shouldn't be valid anymore!");
 
-                        r2::sarr::At(*mAnimModelRefs, i) = r2::sarr::At(*animModelRefHandles, i);
-                    }
+						r2::sarr::At(*mAnimModelRefs, i) = r2::sarr::At(*animModelRefHandles, i);
+					}
 
-                    FREE(animModelRefHandles, *MEM_ENG_SCRATCH_PTR);
+					FREE(animModelRefHandles, *MEM_ENG_SCRATCH_PTR);
 
-                    FREE(animModelsToUpload, *MEM_ENG_SCRATCH_PTR);
+					FREE(animModelsToUpload, *MEM_ENG_SCRATCH_PTR);
                 }
             }
 
@@ -1365,11 +1369,11 @@ public:
 
         if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle))
         {
-			//r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
-			//r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
+			r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
+			r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
 
-			//r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
-			//FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
+			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
+			FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
         }
 
         r2::draw::DrawParameters drawTransparentWindowParams;
@@ -1390,7 +1394,7 @@ public:
         drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
 
         //draw transparent windows
-      //  r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
+        r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
 
 
 		r2::draw::DrawParameters animDrawParams;

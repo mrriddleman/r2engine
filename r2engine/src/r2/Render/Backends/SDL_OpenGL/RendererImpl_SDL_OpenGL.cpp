@@ -938,49 +938,12 @@ namespace r2::draw::rendererimpl
 
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, const void* data, u64 size)
 	{
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateVertexBuffer error before call to bind buffer: %d", err);
-		}
-
-
-		glBindBuffer(GL_ARRAY_BUFFER, vBufferHandle);
-
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateVertexBuffer error after call to bind buffer: %d", err);
-		}
-
-
-		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
-
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateVertexBuffer error after call glBufferSubData: %d", err);
-		}
-
+		glNamedBufferSubData(vBufferHandle, offset, size, data);
 	}
 
 	void UpdateIndexBuffer(IndexBufferHandle iBufferHandle, u64 offset, const void* data, u64 size)
 	{
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateIndexBuffer error before call to bind buffer: %d", err);
-		}
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBufferHandle);
-
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateIndexBuffer error after call to bind buffer: %d", err);
-		}
-
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
-
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "UpdateIndexBuffer error after call glBufferSubData: %d", err);
-		}
+		glNamedBufferSubData(iBufferHandle, offset, size, data);
 	}
 
 	void CopyBuffer(u32 readBuffer, u32 writeBuffer, u32 readOffset, u32 writeOffset, u32 size)

@@ -48,10 +48,12 @@ namespace r2::mem
         
         const u64 rest = affectedNode->data.blockSize - requiredSize;
         
-        if (rest > 0)
+        if (rest >= sizeof(Node))
         {
             Node* newFreeNode = (Node*)((size_t)affectedNode + requiredSize);
+            
             newFreeNode->data.blockSize = rest;
+
             r2::sll::Insert(mFreeList, affectedNode, newFreeNode);
         }
         r2::sll::Remove(mFreeList, previousNode, affectedNode);

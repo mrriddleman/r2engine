@@ -43,6 +43,7 @@ namespace r2::draw::vb
 		r2::SArray<MeshEntry>* meshEntries;
 		r2::SArray<MaterialHandle>* materialHandles;
 		GPUBufferEntry boneEntry;
+		u32 numBones;
 	};
 
 	constexpr size_t MAX_VBOS = BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS;

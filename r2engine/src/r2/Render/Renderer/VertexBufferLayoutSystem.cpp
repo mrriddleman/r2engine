@@ -613,10 +613,10 @@ namespace r2::draw::vbsys
 		u32 numVertices0 = r2::sarr::Size(*model.optrMeshes->mData[0]->optrVertices);
 		u32 numIndices0 = r2::sarr::Size(*model.optrMeshes->mData[0]->optrIndices);
 		
-		u32 totalNumVertices = 0;
-		u32 totalNumIndices = 0;
+		u32 totalNumVertices = numVertices0;
+		u32 totalNumIndices = numIndices0;
 
-		for (u32 i = 0; i < r2::sarr::Size(*model.optrMeshes); ++i)
+		for (u32 i = 1; i < r2::sarr::Size(*model.optrMeshes); ++i)
 		{
 			const auto* mesh = r2::sarr::At(*model.optrMeshes, i);
 			totalNumVertices += r2::sarr::Size(*mesh->optrVertices);
@@ -634,25 +634,22 @@ namespace r2::draw::vbsys
 
 		modelRef->boneEntry.start = 0;
 		modelRef->boneEntry.size = 0;
+		modelRef->numBones = 0;
 
 		if (boneInfo)
 		{
-			modelRef->boneEntry.size = boneInfo->mSize;
+			modelRef->numBones = boneInfo->mSize;
 		}
 
 		if (boneData)
 		{
-			u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * r2::sarr::Size(*boneData);
+			modelRef->boneEntry.size = r2::sarr::Size(*boneData);
+
+			u32 boneSizeInBytes = sizeof(r2::draw::BoneData) * modelRef->boneEntry.size;
 			boneVertexBufferNeedsToGrow = vb::gpubuf::AllocateEntry(vertexBufferLayout->vertexBuffers[1], boneSizeInBytes, boneVertexEntry);
 
 			modelRef->boneEntry.start = (boneVertexEntry.start) / sizeof(BoneData);
-
-			//@TODO(Serge): implement growing here - for now assert...
-			//R2_CHECK(boneVertexBufferNeedsToGrow == false, "Unsupported for the moment");
 		}
-
-		//@TODO(Serge): implement growing here - for now assert...
-		//R2_CHECK(vertexNeedsToGrow == false && indexNeedsToGrow == false, "Unsupported for the moment");
 
 		cmd::CopyBuffer* prevCommand = nullptr;
 

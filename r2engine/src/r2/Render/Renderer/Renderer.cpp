@@ -3229,7 +3229,7 @@ namespace r2::draw::renderer
 					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 				}
 				
-				boneOffset += modelRef->boneEntry.size;
+				boneOffset += modelRef->numBones;
 			}
 			else
 			{
@@ -3237,7 +3237,7 @@ namespace r2::draw::renderer
 				{
 					r2::sarr::Push(*boneOffsets, glm::ivec4(boneOffset, 0, 0, 0));
 
-					boneOffset += modelRef->boneEntry.size;
+					boneOffset += modelRef->numBones;
 				}
 			}
 		}

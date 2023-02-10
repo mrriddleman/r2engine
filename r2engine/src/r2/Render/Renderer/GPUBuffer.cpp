@@ -103,17 +103,23 @@ namespace r2::draw::vb::gpubuf
 		FreeNode* freeNode = ALLOC(FreeNode, *gpuBuffer.poolArena);
 		freeNode->next = nullptr;
 		freeNode->data = entry;
-
+		bool found = false;
 		while (it != nullptr)
 		{
-			if (entry.start + entry.size < it->data.start)
+			if ((entry.start + entry.size) <= it->data.start)
 			{
+				found = true;
 				r2::sll::Insert(gpuBuffer.gpuFreeList, itPrev, freeNode);
 				break;
 			}
 
 			itPrev = it;
 			it = it->next;
+		}
+
+		if (!found && (entry.start + entry.size) <= gpuBuffer.bufferCapacity)
+		{
+			r2::sll::Insert(gpuBuffer.gpuFreeList, itPrev, freeNode);
 		}
 
 		gpuBuffer.bufferSize -= freeNode->data.size;
@@ -222,18 +228,22 @@ namespace r2::draw::vb::gpubuf
 		{
 			freeNode->data.size += freeNode->next->data.size;
 
-			r2::sll::Remove(gpuBuffer.gpuFreeList, freeNode, freeNode->next);
+			FreeNode* next = freeNode->next;
 
-			FREE(freeNode->next, *gpuBuffer.poolArena);
+			r2::sll::Remove(gpuBuffer.gpuFreeList, freeNode, next);
+
+			FREE(next, *gpuBuffer.poolArena);
 		}
 
 		if (previousNode != nullptr && (previousNode->data.start + previousNode->data.size == freeNode->data.start))
 		{
 			previousNode->data.size += freeNode->data.size;
 
-			r2::sll::Remove(gpuBuffer.gpuFreeList, previousNode, freeNode);
+			FreeNode* prev = freeNode;
 
-			FREE(freeNode, *gpuBuffer.poolArena);
+			r2::sll::Remove(gpuBuffer.gpuFreeList, previousNode, prev);
+
+			FREE(prev, *gpuBuffer.poolArena);
 		}
 	}
 }
