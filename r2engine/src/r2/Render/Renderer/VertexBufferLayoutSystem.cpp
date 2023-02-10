@@ -598,15 +598,12 @@ namespace r2::draw::vbsys
 			r2::sarr::Push(*modelRef->meshEntries, vb::MeshEntry());
 		}
 
-		//r2::sarr::Size(*vertexBufferLayout->gpuModelRefs)
 		s32 gpuRefIndex = FindNextAvailableGPUModelRefIndex(system, vertexBufferLayout);
 		R2_CHECK(gpuRefIndex != -1, "We couldn't find a slot to put this gpuref in? We might be out of slots?");
 
 		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::VertexBufferLayoutSystem::g_GPUModelSalt++);
 		modelRef->modelHash = model.hash;
 		modelRef->isAnimated = boneData && boneInfo;
-
-		
 
 		vb::GPUBufferEntry vertexEntry;
 		vb::GPUBufferEntry indexEntry;

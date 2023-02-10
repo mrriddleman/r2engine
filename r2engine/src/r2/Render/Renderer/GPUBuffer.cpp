@@ -61,11 +61,12 @@ namespace r2::draw::vb::gpubuf
 
 		while (!affectedNode)
 		{
-			R2_LOGI("Attempting to grow the gpu buffer...\n");
+			bool growResult = GrowBuffer(gpuBuffer, gpuBuffer.bufferCapacity * 2);
 
-			neededToGrow = GrowBuffer(gpuBuffer, gpuBuffer.bufferCapacity * 2);
-
-//			R2_CHECK(neededToGrow, "We couldn't grow the buffer?");
+			if (growResult)
+			{
+				neededToGrow = true;
+			}
 
 			FindBufferEntry(gpuBuffer, size, previousNode, affectedNode);
 		}

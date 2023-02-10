@@ -54,7 +54,7 @@ namespace
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
 	const float EDGE_SOFTENING_AMOUNT = 0.02f;
 	const u32 STATIC_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(16);
-	const u32 ANIM_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(4);
+	const u32 ANIM_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(16);
 
 	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
 	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS;
