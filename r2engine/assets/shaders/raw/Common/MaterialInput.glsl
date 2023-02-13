@@ -623,4 +623,12 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 		pixelData);
 }
 
+float TransparentWeight(vec3 color, float alpha, float z)
+{
+	return
+    max(min(1.0, max(max(color.r, color.g), color.b) * alpha), alpha) *
+    clamp(0.03 / (1e-5 + pow(z / 200, 4.0)), 1e-2, 3e3);
+}
+
+
 #endif

@@ -35,6 +35,24 @@
       computePath: "",
       binaryPath: "",
       partPath: ""
+    },
+    {
+      shaderName: 12135062320484436070,
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/Sandbox.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/TransparentModel.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
+      shaderName: 7039749134391479097,
+      vertexPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/AnimModel.vs",
+      fragmentPath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/TransparentAnimModel.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
     }
   ],
   basePath: "D:/Projects/r2engine/Sandbox/assets/shaders/raw/"
