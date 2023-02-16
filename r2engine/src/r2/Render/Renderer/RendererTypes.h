@@ -63,8 +63,8 @@ namespace r2::draw
         DL_COMPUTE, //should be second to last (or last maybe?)
         DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
-        DL_TRANSPARENT,
         DL_SKYBOX,
+        DL_TRANSPARENT,
         DL_EFFECT,
         DL_HUD,
         DL_SCREEN,
@@ -94,8 +94,13 @@ namespace r2::draw
 
     extern u32 ONE;
     extern u32 ONE_MINUS_SRC_ALPHA;
+    extern u32 ONE_MINUS_SRC_COLOR;
+    extern u32 SRC_ALPHA;
+    extern u32 DST_ALPHA;
+    extern u32 ONE_MINUS_DST_ALPHA;
     extern u32 BLEND_EQUATION_ADD;
     extern u32 BLEND_EQUATION_SUBTRACT;
+    extern u32 COLOR;
 
     extern u32 CW;
     extern u32 CCW;

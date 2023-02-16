@@ -1,5 +1,6 @@
 #ifndef GLSL_COMMON_FUNCTIONS
 #define GLSL_COMMON_FUNCTIONS
+#include "Common/Defines.glsl"
 
 float Saturate(float x)
 {
@@ -135,5 +136,18 @@ vec3 DecodeNormal(vec2 enc)
 	n.z = sqrt(1 - dot(n.xy, n.xy));
 	return n;
 }
+
+// calculate floating point numbers equality accurately
+bool IsApproximatelyEqual(float a, float b)
+{
+    return abs(a - b) <= (abs(a) < abs(b) ? abs(b) : abs(a)) * EPSILON;
+}
+
+// get the max value between three values
+float Max3(vec3 v)
+{
+    return max(max(v.x, v.y), v.z);
+}
+
 
 #endif

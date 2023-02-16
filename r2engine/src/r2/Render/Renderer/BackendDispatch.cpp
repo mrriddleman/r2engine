@@ -8,7 +8,15 @@ namespace r2::draw::dispatch
 	void Clear(const void* data)
 	{
 		const r2::draw::cmd::Clear* realData = static_cast<const r2::draw::cmd::Clear*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
 		rendererimpl::Clear(realData->flags);
+	}
+
+	void ClearBuffers(const void* data)
+	{
+		const r2::draw::cmd::ClearBuffers* realData = static_cast<const r2::draw::cmd::ClearBuffers*>(data);
+		R2_CHECK(realData != nullptr, "We don't have any of the real data?");
+		rendererimpl::ClearBuffers(realData->renderTargetHandle, realData->numBuffers, realData->clearParams);
 	}
 
 	void DrawIndexed(const void* data)

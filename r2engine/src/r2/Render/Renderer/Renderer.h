@@ -100,46 +100,7 @@ namespace r2::draw
 #endif
 	};
 
-	//struct BufferHandles
-	//{
-	//	r2::SArray<BufferLayoutHandle>* bufferLayoutHandles = nullptr;
-	//	r2::SArray<VertexBufferHandle>* vertexBufferHandles = nullptr;
-	//	r2::SArray<IndexBufferHandle>* indexBufferHandles = nullptr;
-	//	r2::SArray<DrawIDHandle>* drawIDHandles = nullptr;
-	//};
 
-	//struct VertexLayoutConfigHandle
-	//{
-	//	BufferLayoutHandle mBufferLayoutHandle;
-	//	VertexBufferHandle mVertexBufferHandles[BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS];
-	//	IndexBufferHandle mIndexBufferHandle;
-	//	DrawIDHandle mDrawIDHandle;
-	//	u32 mNumVertexBufferHandles;
-	//};
-
-	//struct VertexLayoutVertexOffset
-	//{
-	//	u64 baseVertex = 0;
-	//	u64 numVertices = 0;
-	//};
-
-	//struct VertexLayoutIndexOffset
-	//{
-	//	u64 baseIndex = 0;
-	//	u64 numIndices = 0;
-	//};
-
-	//struct VertexLayoutUploadOffset
-	//{
-	//	VertexLayoutVertexOffset mVertexBufferOffset;
-	//	VertexLayoutIndexOffset mIndexBufferOffset;
-	//};
-
-	struct ClearSurfaceOptions
-	{
-		b32 shouldClear = false;
-		u32 flags = 0;
-	};
 
 	struct RenderBatch
 	{
@@ -296,6 +257,8 @@ namespace r2::draw
 		ShaderHandle mMarkActiveClusterTilesComputeShader;
 		ShaderHandle mFindUniqueClustersComputeShader;
 		ShaderHandle mAssignLightsToClustersComputeShader;
+		
+		ShaderHandle mTransparentCompositeShader;
 
 		ShaderHandle mSSRShader;
 		ShaderHandle mSSRConeTraceShader;
@@ -380,6 +343,7 @@ namespace r2::draw
 		r2::mem::StackArena* mPrePostRenderCommandArena = nullptr;
 
 		CommandBucket<key::Basic>* mCommandBucket = nullptr;
+		CommandBucket<key::Basic>* mTransparentBucket = nullptr;
 		CommandBucket<key::Basic>* mFinalBucket = nullptr;
 		CommandBucket<key::Basic>* mClustersBucket = nullptr;
 

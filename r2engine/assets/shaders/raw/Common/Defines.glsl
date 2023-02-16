@@ -16,6 +16,7 @@
 
 const uint NUM_SIDES_FOR_POINTLIGHT = 6;
 const vec3 GLOBAL_UP = vec3(0, 0, 1);
+const float EPSILON = 0.00001f;
 
 #define NUM_SPOTLIGHT_LAYERS 1
 #define NUM_POINTLIGHT_LAYERS 6

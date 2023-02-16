@@ -126,8 +126,15 @@ namespace r2::draw
 
 	u32 ONE = GL_ONE;
 	u32 ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA;
+	u32 ONE_MINUS_DST_ALPHA = GL_ONE_MINUS_DST_ALPHA;
+
+	u32 ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR;
+	u32 SRC_ALPHA = GL_SRC_ALPHA;
+	u32 DST_ALPHA = GL_DST_ALPHA;
 	u32 BLEND_EQUATION_ADD = GL_FUNC_ADD;
 	u32 BLEND_EQUATION_SUBTRACT = GL_FUNC_SUBTRACT;
+	
+	u32 COLOR = GL_COLOR;
 
 	u32 CW = GL_CW;
 	u32 CCW = GL_CCW;
@@ -828,6 +835,14 @@ namespace r2::draw::rendererimpl
 		glDepthMask(0x00);
 	}
 
+	void ClearBuffers(u32 framebufferHandle, u32 numBuffersToClear, const cmd::ClearBufferParams clearParams[])
+	{
+		for (int i = 0; i < numBuffersToClear; ++i)
+		{
+			glClearNamedFramebufferfv(framebufferHandle, clearParams[i].bufferFlags, clearParams[i].bufferIndex, &clearParams[i].clearValue[0]);
+		}
+	}
+
 	void BindVertexArray(BufferLayoutHandle layoutId)
 	{
 		//@TODO(Serge): check the currently bound layoutId first
@@ -1182,10 +1197,10 @@ namespace r2::draw::rendererimpl
 			if (checkStatus)
 			{
 				//SO SLOW!!
-//#ifdef R2_DEBUG
-//			auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-//			R2_CHECK(result, "Failed to attach texture to frame buffer");
-//#endif
+#ifdef R2_DEBUG
+				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+				R2_CHECK(result, "Failed to attach texture to frame buffer");
+#endif
 			}
 		}
 

@@ -1,6 +1,7 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/RenderTarget.h"
 #include "r2/Render/Renderer/Commands.h"
+#include "r2/Render/Renderer/RenderPass.h"
 
 namespace r2::draw
 {
@@ -19,7 +20,7 @@ namespace r2::draw
 
 	namespace cmd
 	{
-		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd)
+		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd, const RenderPassConfig& passConfig)
 		{
 			memset(&cmd, 0, sizeof(SetRenderTargetMipLevel));
 
@@ -37,12 +38,23 @@ namespace r2::draw
 
 			cmd.numColorTextures = 0;
 
+			bool useOnlyFirstColorAttachment = (passConfig.flags & RPC_OUTPUT_FIRST_COLOR_ONLY) == RPC_OUTPUT_FIRST_COLOR_ONLY;
+			cmd.numColorTextures = rt.numFrameBufferColorAttachments;
+
+			if (useOnlyFirstColorAttachment)
+			{
+				cmd.numColorTextures = 1;
+			}
+
 			if (rt.colorAttachments != nullptr)
 			{
-				cmd.numColorTextures = rt.numFrameBufferColorAttachments;
-
-				const auto numColorAttachments = r2::sarr::Size(*rt.colorAttachments);
+				auto numColorAttachments = r2::sarr::Size(*rt.colorAttachments);
 				
+				if (numColorAttachments > 0 && useOnlyFirstColorAttachment)
+				{
+					numColorAttachments = 1;
+				}
+
 				for (u32 i = 0; i < numColorAttachments; ++i)
 				{
 					const auto& colorAttachment = r2::sarr::At(*rt.colorAttachments, i);
@@ -64,7 +76,7 @@ namespace r2::draw
 				}
 			}
 			
-			if (rt.depthAttachments != nullptr)
+			if (rt.depthAttachments != nullptr && !useOnlyFirstColorAttachment)
 			{
 				const auto numDepthAttachments = r2::sarr::Size(*rt.depthAttachments);
 				R2_CHECK(numDepthAttachments == 1, "Should only have 1 here!");
@@ -82,7 +94,7 @@ namespace r2::draw
 				}
 			}
 
-			if (rt.stencilAttachments != nullptr)
+			if (rt.stencilAttachments != nullptr && !useOnlyFirstColorAttachment)
 			{
 				
 				const auto numStencilAttachments = r2::sarr::Size(*rt.stencilAttachments);
@@ -104,7 +116,7 @@ namespace r2::draw
 				
 			}
 
-			if (rt.depthStencilAttachments != nullptr)
+			if (rt.depthStencilAttachments != nullptr && !useOnlyFirstColorAttachment)
 			{
 				const auto numDepthStencilAttachments = r2::sarr::Size(*rt.depthStencilAttachments);
 				if (numDepthStencilAttachments > 0)
@@ -154,8 +166,13 @@ namespace r2::draw
 						{
 							cmd.colorIsMSAA = true;
 						}
+
+						if (useOnlyFirstColorAttachment)
+						{
+							break;
+						}
 					}
-					else if(IsDepthAttachment(ref.type))
+					else if(IsDepthAttachment(ref.type) && !useOnlyFirstColorAttachment)
 					{
 						cmd.depthTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
 						cmd.depthTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
@@ -167,7 +184,7 @@ namespace r2::draw
 							cmd.depthUseLayeredRenderering = true;
 						}
 					}
-					else if (IsStencilAttachment(ref.type))
+					else if (IsStencilAttachment(ref.type) && !useOnlyFirstColorAttachment)
 					{
 						cmd.stencilTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
 						cmd.stencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
@@ -178,7 +195,7 @@ namespace r2::draw
 							cmd.stencilUseLayeredRendering = true;
 						}
 					}
-					else if (IsDepthStencilAttachment(ref.type))
+					else if (IsDepthStencilAttachment(ref.type) && !useOnlyFirstColorAttachment)
 					{
 						cmd.depthStencilTexture = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].container->texId;
 						cmd.depthStencilTextureLayer = ref.attachmentPtr->texture[ref.attachmentPtr->currentTexture].sliceIndex;
@@ -196,6 +213,11 @@ namespace r2::draw
 					}
 					else
 					{
+						if (useOnlyFirstColorAttachment)
+						{
+							break;
+						}
+
 						R2_CHECK(false, "Unsupported reference type!");
 					}
 				}
@@ -451,7 +473,14 @@ namespace r2::draw
 
 		bool IsColorAttachment(TextureAttachmentType type)
 		{
-			return type == COLOR || type == RG32F || type == RG16F || type == R32F || type == R16F || type == RG16;
+			return 
+				type == COLOR ||
+				type == RG32F ||
+				type == RG16F ||
+				type == R32F  ||
+				type == R16F  ||
+				type == RG16  ||
+				type == R8;
 		}
 
 		bool IsDepthAttachment(TextureAttachmentType type)

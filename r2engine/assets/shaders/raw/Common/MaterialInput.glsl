@@ -266,7 +266,7 @@ void DefaultWorldMaterialFunction(
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
-	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
@@ -339,7 +339,7 @@ void DefaultCharacterMaterialFunction(
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
-	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	vec3 baseColor = materialDiffuseColor.rgb;
 
 	float alpha = materialDiffuseColor.a;
 
@@ -416,7 +416,7 @@ void DefaultWorldMaterialFunctionWithClearCoat(
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
-	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	vec3 baseColor = materialDiffuseColor.rgb;
 
 	float alpha = materialDiffuseColor.a;
 
@@ -495,7 +495,7 @@ void DefaultWorldMaterialFunctionWithAnisotropy(
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
-	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;
@@ -572,7 +572,7 @@ void DefaultCharacterMaterialFunctionWithAnisotropy(
 
 	vec4 materialDiffuseColor = SampleMaterialDiffuse(material, uv);
 
-	vec3 baseColor = materialDiffuseColor.rgb * materialDiffuseColor.a;
+	vec3 baseColor = materialDiffuseColor.rgb;
 	float alpha = materialDiffuseColor.a;
 
 	vec3 materialNormal = SampleMaterialNormal(TBN, normal, material, uv).xyz;

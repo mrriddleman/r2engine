@@ -92,6 +92,11 @@ namespace r2::draw::rt::impl
 			format.internalformat = GL_RG16;
 			format.borderColor = glm::vec4(1.0f);
 		}
+		else if (textureAttachmentFormat.type == R8)
+		{
+			format.internalformat = GL_R8;
+
+		}
 		else if (textureAttachmentFormat.type == STENCIL8)
 		{
 			format.internalformat = GL_STENCIL_INDEX8;

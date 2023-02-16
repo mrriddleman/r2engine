@@ -25,7 +25,8 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress smaaEdgeDetectionSurface;
 	Tex2DAddress smaaBlendingWeightSurface;
 	Tex2DAddress smaaNeighborhoodBlendingSurface[2];
-	Tex2DAddress msaa2XZPrePassSurface;
+	Tex2DAddress transparentAccumSurface;
+	Tex2DAddress transparentRevealSurface;
 };
 
 #endif

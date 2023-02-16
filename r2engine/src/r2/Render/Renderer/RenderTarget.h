@@ -4,6 +4,11 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Render/Model/Textures/Texture.h"
 
+namespace r2::draw
+{
+	struct RenderPassConfig;
+}
+
 namespace r2::draw::rt
 {
 	constexpr u32 MAX_TEXTURE_ATTACHMENT_HISTORY = 2;
@@ -20,7 +25,8 @@ namespace r2::draw::rt
 		RG16,
 		STENCIL8,
 		DEPTH24_STENCIL8,
-		DEPTH32F_STENCIL8
+		DEPTH32F_STENCIL8,
+		R8,
 	};
 
 	struct TextureAttachmentFormat
@@ -126,6 +132,9 @@ namespace r2::draw
 		RTS_SMAA_EDGE_DETECTION,
 		RTS_SMAA_BLENDING_WEIGHT,
 		RTS_SMAA_NEIGHBORHOOD_BLENDING,
+		RTS_TRANSPARENT_ACCUM,
+		RTS_TRANSPARENT_REVEAL,
+		//need more for composite 
 
 		RTS_OUTPUT, //should be last?
 		NUM_RENDER_TARGET_SURFACES,
@@ -159,7 +168,7 @@ namespace r2::draw
 	namespace cmd
 	{
 		struct SetRenderTargetMipLevel;
-		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd);
+		void FillSetRenderTargetMipLevelCommand(const RenderTarget& rt, u32 mipLevel, SetRenderTargetMipLevel& cmd, const RenderPassConfig& passConfig);
 		void FillSetRenderTargetMipLevelCommandWithTextureIndex(const RenderTarget& rt, u32 mipLevel, u32 textureIndex, SetRenderTargetMipLevel& cmd);
 	}
 

@@ -3,7 +3,7 @@
   ulongParams: [
     {
       propertyType: "SHADER",
-      value: "Sandbox"
+      value: "TransparentModel"
     }
   ],
   boolParams:[

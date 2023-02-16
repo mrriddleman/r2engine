@@ -1409,11 +1409,11 @@ public:
         r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
         r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
 
-        drawTransparentWindowParams.blendState.blendingEnabled = true;
-        drawTransparentWindowParams.blendState.numBlendFunctions = 1;
-        drawTransparentWindowParams.blendState.blendFunctions[0].blendDrawBuffer = 0;
-        drawTransparentWindowParams.blendState.blendFunctions[0].sfactor = r2::draw::ONE;
-        drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
+        //drawTransparentWindowParams.blendState.blendingEnabled = true;
+        //drawTransparentWindowParams.blendState.numBlendFunctions = 1;
+        //drawTransparentWindowParams.blendState.blendFunctions[0].blendDrawBuffer = 0;
+        //drawTransparentWindowParams.blendState.blendFunctions[0].sfactor = r2::draw::ONE;
+        //drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
 
         //draw transparent windows
         r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);

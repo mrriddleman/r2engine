@@ -239,6 +239,14 @@ namespace r2::draw::cmd
 
 namespace r2::draw
 {
+	struct ClearSurfaceOptions
+	{
+		b32 shouldClear = false;
+		b32 useNormalClear = true;
+		u32 flags = 0;
+		u32 numClearParams = 0;
+		cmd::ClearBufferParams clearParams[4]={};
+	};
 
 	u64 RenderBatch::MemorySize(u64 numModels, u64 numModelRefs, u64 numBoneTransforms, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
@@ -385,6 +393,9 @@ namespace r2::draw::renderer
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(Renderer& renderer, bool isStatic);
+
+	void SetDefaultTransparencyBlendState(BlendState& blendState);
+	void SetDefaultTransparentCompositeBlendState(BlendState& blendState);
 
 	void UpdatePerspectiveMatrix(Renderer& renderer, const glm::mat4& perspectiveMatrix);
 	void UpdateViewMatrix(Renderer& renderer, const glm::mat4& viewMatrix);
@@ -668,9 +679,8 @@ namespace r2::draw::renderer
 	void CreateSMAAEdgeDetectionSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSMAABlendingWeightSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateSMAANeighborhoodBlendingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
-
-	void CreateMSAA2XZPrePassRenderSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
-
+	void CreateTransparentAccumSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+	
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -1107,6 +1117,9 @@ namespace r2::draw::renderer
 		newRenderer->mAssignLightsToClustersComputeShader = shadersystem::FindShaderHandle(STRING_ID("ClustersCullLights"));
 		CheckIfValidShader(*newRenderer, newRenderer->mAssignLightsToClustersComputeShader, "ClustersCullLights");
 
+		newRenderer->mTransparentCompositeShader = shadersystem::FindShaderHandle(STRING_ID("TransparentComposite"));
+		CheckIfValidShader(*newRenderer, newRenderer->mTransparentCompositeShader, "TransparentComposite");
+
 		newRenderer->mSSRShader = shadersystem::FindShaderHandle(STRING_ID("SSR"));
 		CheckIfValidShader(*newRenderer, newRenderer->mSSRShader, "SSR");
 
@@ -1256,6 +1269,9 @@ namespace r2::draw::renderer
 
 		newRenderer->mCommandBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mCommandBucket != nullptr, "We couldn't create the command bucket!");
+
+		newRenderer->mTransparentBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mTransparentBucket != nullptr, "We couldn't create the command bucket!");
 
 		newRenderer->mFinalBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
@@ -1415,6 +1431,7 @@ namespace r2::draw::renderer
 		cmdbkt::Sort(*renderer.mPreRenderBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mShadowBucket, key::CompareShadowKey);
 		cmdbkt::Sort(*renderer.mCommandBucket, r2::draw::key::CompareBasicKey);
+		cmdbkt::Sort(*renderer.mTransparentBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mSSRBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mFinalBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mPostRenderBucket, r2::draw::key::CompareBasicKey);
@@ -1439,6 +1456,7 @@ namespace r2::draw::renderer
 		cmdbkt::Submit(*renderer.mAmbientOcclusionTemporalDenoiseBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
 		cmdbkt::Submit(*renderer.mCommandBucket);
+		cmdbkt::Submit(*renderer.mTransparentBucket);
 		cmdbkt::Submit(*renderer.mSSRBucket);
 #ifdef R2_DEBUG
 		cmdbkt::Submit(*renderer.mPreDebugCommandBucket);
@@ -1461,6 +1479,7 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*renderer.mDepthPrePassBucket);
 		cmdbkt::ClearAll(*renderer.mDepthPrePassShadowBucket);
 		cmdbkt::ClearAll(*renderer.mClustersBucket);
+		cmdbkt::ClearAll(*renderer.mTransparentBucket);
 		cmdbkt::ClearAll(*renderer.mCommandBucket);
 		cmdbkt::ClearAll(*renderer.mSSRBucket);
 		cmdbkt::ClearAll(*renderer.mShadowBucket);
@@ -1576,6 +1595,7 @@ namespace r2::draw::renderer
 		FREE(renderer->mPrePostRenderCommandArena, *arena);
 
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
+		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mTransparentBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mSSRBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mClustersBucket);
@@ -3414,20 +3434,10 @@ namespace r2::draw::renderer
 				//@TODO(Serge): when we're doing transparency, we'll need to check the DrawCommandData if we're a transparency batch, then we need to use a different
 				//				sorting predicate ( s1.cameraDepth > s2.cameraDepth)
 
-				if (!drawCommandData->drawState.blendState.blendingEnabled)
-				{
 					//non transparency - sort front to back
 					std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
 						return s1.cameraDepth < s2.cameraDepth;
 						});
-				}
-				else
-				{
-					//transparency - sort back to front
-					std::sort(r2::sarr::Begin(*drawCommandData->cameraDepths), r2::sarr::End(*drawCommandData->cameraDepths), [](const CameraDepth& s1, const CameraDepth& s2) {
-						return s1.cameraDepth > s2.cameraDepth;
-						});
-				}
 
 				const u32 numSubCommandsInBatch = static_cast<u32>(r2::sarr::Size(*drawCommandData->subCommands));
 
@@ -3603,13 +3613,54 @@ namespace r2::draw::renderer
 		BeginRenderPass<key::ShadowKey>(renderer, RPT_POINTLIGHT_SHADOWS, clearDepthOptions, *renderer.mShadowBucket, pointLightShadowKey, *renderer.mShadowArena);
 		BeginRenderPass<key::Basic>(renderer, RPT_GBUFFER, clearGBufferOptions, *renderer.mCommandBucket, clearKey, *renderer.mCommandArena);
 
+		ClearSurfaceOptions transparentClearOptions;
+		transparentClearOptions.useNormalClear = false;
+		transparentClearOptions.numClearParams = 2;
+		transparentClearOptions.shouldClear = true;
+		transparentClearOptions.clearParams[0].bufferIndex = 0;
+		transparentClearOptions.clearParams[0].bufferFlags = COLOR;
+		transparentClearOptions.clearParams[0].clearValue[0] = 0.0f;
+		transparentClearOptions.clearParams[0].clearValue[1] = 0.0f;
+		transparentClearOptions.clearParams[0].clearValue[2] = 0.0f;
+		transparentClearOptions.clearParams[0].clearValue[3] = 0.0f;
+
+		//memset(transparentClearOptions.clearParams[0].clearValue, 0, sizeof(float) * 4); 
+		transparentClearOptions.clearParams[1].bufferIndex = 1;
+		transparentClearOptions.clearParams[1].bufferFlags = COLOR;
+		transparentClearOptions.clearParams[1].clearValue[0] = 1.0f;
+		transparentClearOptions.clearParams[1].clearValue[1] = 1.0f;
+		transparentClearOptions.clearParams[1].clearValue[2] = 1.0f;
+		transparentClearOptions.clearParams[1].clearValue[3] = 1.0f;
+		//memset(transparentClearOptions.clearParams[1].clearValue, 1, sizeof(float) * 4);
+
+
+		BeginRenderPass<key::Basic>(renderer, RPT_TRANSPARENT, transparentClearOptions, *renderer.mTransparentBucket, clearKey, *renderer.mCommandArena);
+
+
 		for (u64 i = 0; i < numStaticDrawBatches; ++i)
 		{
 			const auto& batchOffset = r2::sarr::At(*staticRenderBatchesOffsets, i);
+			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
+			cmd::DrawBatch* drawBatch = nullptr;
 
-			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+			if (batchOffset.drawState.layer != DL_TRANSPARENT)
+			{
+				drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+				drawBatch->state.depthFunction = EQUAL;
+				cmd::SetDefaultBlendState(drawBatch->state.blendState);
+			}
+			else
+			{
+				//@TODO(Serge): change to mTransparentBucket
+				drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mTransparentBucket, key, 0);
+				drawBatch->state.depthFunction = LESS;
+				
+				//now setup all of the blend state to make transparency work
+				SetDefaultTransparencyBlendState(drawBatch->state.blendState);
+			}
+
+			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
 			drawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -3620,19 +3671,10 @@ namespace r2::draw::renderer
 			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 			
-			drawBatch->state.depthFunction = EQUAL;
-			drawBatch->state.depthWriteEnabled = false;
-
-			if (batchOffset.drawState.blendState.blendingEnabled)
-			{
-				drawBatch->state.depthFunction = LESS;
-				drawBatch->state.depthWriteEnabled = true;
-			}
-			
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
-			memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
+			
 			
 			if (batchOffset.drawState.layer == DL_SKYBOX)
 			{
@@ -3646,8 +3688,8 @@ namespace r2::draw::renderer
 				//I guess we need to loop here to submit all of the draws for each light...
 
 				//@TODO(Serge): we don't loop over each cascade in the geometry shader for some reason so we have to do this extra divide by NUM_FRUSTUM_SPLITS, we should probably loop in there and update
-				
-				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil( (float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS/(float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0? 1.0f : 0.0f));
+
+				const u32 numDirectionShadowBatchesNeeded = static_cast<u32>(glm::max(glm::ceil((float)numShadowCastingDirectionLights / ((float)MAX_NUM_GEOMETRY_SHADER_INVOCATIONS / (float)cam::NUM_FRUSTUM_SPLITS)), numShadowCastingDirectionLights > 0 ? 1.0f : 0.0f));
 
 				for (u32 i = 0; i < numDirectionShadowBatchesNeeded; ++i)
 				{
@@ -3656,7 +3698,7 @@ namespace r2::draw::renderer
 					directionLightBatchIndexUpdateCMD->uniformLocation = renderer.mStaticDirectionLightBatchUniformLocation;
 
 					cmd::DrawBatch* shadowDrawBatch = AppendCommand<cmd::ConstantUint, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, directionLightBatchIndexUpdateCMD, 0);
-					
+
 					shadowDrawBatch->batchHandle = subCommandsConstantBufferHandle;
 					shadowDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
 					shadowDrawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -3748,56 +3790,59 @@ namespace r2::draw::renderer
 
 				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, false, batchOffset.cameraDepth);
 
-				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
-				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
-				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
-				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				zppDrawBatch->subCommands = nullptr;
-				zppDrawBatch->state.depthEnabled = true;
-				zppDrawBatch->state.depthFunction = LESS;
-				
-				zppDrawBatch->state.depthWriteEnabled = true;
-				if (batchOffset.drawState.blendState.blendingEnabled)
+				if (batchOffset.drawState.layer != DL_TRANSPARENT)
 				{
-					zppDrawBatch->state.depthWriteEnabled = false;
+					cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+					zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					zppDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
+					zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+					zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					zppDrawBatch->subCommands = nullptr;
+					zppDrawBatch->state.depthEnabled = true;
+					zppDrawBatch->state.depthFunction = LESS;
+
+					zppDrawBatch->state.depthWriteEnabled = true;
+					if (batchOffset.drawState.blendState.blendingEnabled)
+					{
+						zppDrawBatch->state.depthWriteEnabled = false;
+					}
+
+					zppDrawBatch->state.polygonOffsetEnabled = false;
+					zppDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
+					zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
+					cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
+
+					cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
+
+					cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
+					zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					zppShadowsDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
+					zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
+					zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					zppShadowsDrawBatch->subCommands = nullptr;
+					zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+
+					zppShadowsDrawBatch->state.depthFunction = LESS;
+
+					zppShadowsDrawBatch->state.depthWriteEnabled = true;
+
+					zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
+					zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
+					zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
+					cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
+
+					cmd::SetDefaultBlendState(zppShadowsDrawBatch->state.blendState);
 				}
-
-				zppDrawBatch->state.polygonOffsetEnabled = false;
-				zppDrawBatch->state.polygonOffset = glm::vec2(0);
-
-				cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
-				zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
-
-				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
-
-				cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
-
-				cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
-				zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppShadowsDrawBatch->bufferLayoutHandle = staticVertexBufferLayoutHandle;
-				zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
-				zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				zppShadowsDrawBatch->subCommands = nullptr;
-				zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-
-				zppShadowsDrawBatch->state.depthFunction = LESS;
-
-				zppShadowsDrawBatch->state.depthWriteEnabled = true;
-
-				zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
-				zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
-
-				cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
-				zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
-
-				cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
-
-				cmd::SetDefaultBlendState(zppShadowsDrawBatch->state.blendState);
 			}
 		}
 
@@ -3806,9 +3851,26 @@ namespace r2::draw::renderer
 		{
 			const auto& batchOffset = r2::sarr::At(*dynamicRenderBatchesOffsets, i);
 
-			key::Basic key = key::GenerateBasicKey(0, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
+			key::Basic key = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, batchOffset.blendingFunctionKeyValue, batchOffset.cameraDepth, batchOffset.shaderId);
 
-			cmd::DrawBatch* drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+			cmd::DrawBatch* drawBatch = nullptr;
+
+			if (batchOffset.drawState.layer != DL_TRANSPARENT)
+			{
+				drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mCommandBucket, key, 0);
+				drawBatch->state.depthFunction = EQUAL;
+				
+				cmd::SetDefaultBlendState(drawBatch->state.blendState);
+			}
+			else
+			{
+				drawBatch = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mTransparentBucket, key, 0);
+				drawBatch->state.depthFunction = LESS;
+				
+				SetDefaultTransparencyBlendState(drawBatch->state.blendState);
+			}
+
+			drawBatch->state.depthWriteEnabled = false;
 			drawBatch->batchHandle = subCommandsConstantBufferHandle;
 			drawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
 			drawBatch->numSubCommands = batchOffset.numSubCommands;
@@ -3819,24 +3881,15 @@ namespace r2::draw::renderer
 			drawBatch->state.depthEnabled = batchOffset.drawState.depthEnabled;
 			drawBatch->state.cullState = batchOffset.drawState.cullState;
 
-			drawBatch->state.depthFunction = EQUAL;
-			
-			drawBatch->state.depthWriteEnabled = false;
-			if (batchOffset.drawState.blendState.blendingEnabled)
-			{
-				drawBatch->state.depthFunction = LESS;
-				drawBatch->state.depthWriteEnabled = true;
-			}
-
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
 
-			memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
+			//memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
 		//	cmd::SetDefaultBlendState(drawBatch->state.blendState);
 
 
-			//if (batchOffset.drawState.layer == DL_CHARACTER)
+			//if (!batchOffset.drawState.blendState.blendingEnabled)
 			{
 				key::ShadowKey directionShadowKey = key::GenerateShadowKey(key::ShadowKey::NORMAL, 0, 0, true, light::LightType::LT_DIRECTIONAL_LIGHT, batchOffset.cameraDepth);
 
@@ -3940,71 +3993,73 @@ namespace r2::draw::renderer
 
 				key::DepthKey zppKey = key::GenerateDepthKey(key::DepthKey::NORMAL, 0, 0, true, batchOffset.cameraDepth);
 
-				cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
-				zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-				zppDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
-				zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
-				R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
-				zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-				zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-				zppDrawBatch->subCommands = nullptr;
-				zppDrawBatch->state.depthEnabled = true;
-
-				zppDrawBatch->state.depthWriteEnabled = true;
-				if (batchOffset.drawState.blendState.blendingEnabled)
+				if (batchOffset.drawState.layer != DL_TRANSPARENT)
 				{
-					zppDrawBatch->state.depthWriteEnabled = false;
+					cmd::DrawBatch* zppDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassBucket, zppKey, 0);
+					zppDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+					zppDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
+					zppDrawBatch->numSubCommands = batchOffset.numSubCommands;
+					R2_CHECK(zppDrawBatch->numSubCommands > 0, "We should have a count!");
+					zppDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+					zppDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+					zppDrawBatch->subCommands = nullptr;
+					zppDrawBatch->state.depthEnabled = true;
+
+					zppDrawBatch->state.depthWriteEnabled = true;
+					if (batchOffset.drawState.blendState.blendingEnabled)
+					{
+						zppDrawBatch->state.depthWriteEnabled = false;
+					}
+
+					zppDrawBatch->state.depthFunction = LESS;
+
+					zppDrawBatch->state.polygonOffsetEnabled = false;
+					zppDrawBatch->state.polygonOffset = glm::vec2(0);
+
+					cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
+					zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
+					cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
+
+					cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
+
+
+					//@TODO(Serge): figure out a better way to do this - the issue is the z reduce will screw up if we're not drawing any static meshes (unlikely to happen often but could if we do say an animation tool)
+					bool shouldIncludeAnimatedModelsInZPPShadows = (numStaticDrawBatches == 0);
+
+					if (numStaticDrawBatches == 1)
+					{
+						const auto& staticBatchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
+						shouldIncludeAnimatedModelsInZPPShadows = staticBatchOffset.drawState.layer == DL_SKYBOX;
+					}
+
+					if (shouldIncludeAnimatedModelsInZPPShadows)
+					{
+						cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
+						zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
+						zppShadowsDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
+						zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
+						R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
+						zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
+						zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
+						zppShadowsDrawBatch->subCommands = nullptr;
+						zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
+
+						zppShadowsDrawBatch->state.depthFunction = LESS;
+
+						zppShadowsDrawBatch->state.depthWriteEnabled = true;
+
+						zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
+						zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
+
+						cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
+						zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
+
+						cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
+
+						cmd::SetDefaultBlendState(zppShadowsDrawBatch->state.blendState);
+					}
 				}
-
-				zppDrawBatch->state.depthFunction = LESS;
-				
-				zppDrawBatch->state.polygonOffsetEnabled = false;
-				zppDrawBatch->state.polygonOffset = glm::vec2(0);
-				
-				cmd::SetDefaultCullState(zppDrawBatch->state.cullState);
-				zppDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
-
-				cmd::SetDefaultStencilState(zppDrawBatch->state.stencilState);
-
-				cmd::SetDefaultBlendState(zppDrawBatch->state.blendState);
-
-
-				//@TODO(Serge): figure out a better way to do this - the issue is the z reduce will screw up if we're not drawing any static meshes (unlikely to happen often but could if we do say an animation tool)
-				bool shouldIncludeAnimatedModelsInZPPShadows = (numStaticDrawBatches == 0);
-
-				if (numStaticDrawBatches == 1)
-				{
-					const auto& staticBatchOffset = r2::sarr::At(*staticRenderBatchesOffsets, 0);
-					shouldIncludeAnimatedModelsInZPPShadows = staticBatchOffset.drawState.layer == DL_SKYBOX;
-				}
-
-				if (shouldIncludeAnimatedModelsInZPPShadows)
-				{
-					cmd::DrawBatch* zppShadowsDrawBatch = AddCommand<key::DepthKey, cmd::DrawBatch, mem::StackArena>(*renderer.mShadowArena, *renderer.mDepthPrePassShadowBucket, zppKey, 0);
-					zppShadowsDrawBatch->batchHandle = subCommandsConstantBufferHandle;
-					zppShadowsDrawBatch->bufferLayoutHandle = animVertexBufferLayoutHandle;
-					zppShadowsDrawBatch->numSubCommands = batchOffset.numSubCommands;
-					R2_CHECK(zppShadowsDrawBatch->numSubCommands > 0, "We should have a count!");
-					zppShadowsDrawBatch->startCommandIndex = batchOffset.subCommandsOffset;
-					zppShadowsDrawBatch->primitiveType = PrimitiveType::TRIANGLES;
-					zppShadowsDrawBatch->subCommands = nullptr;
-					zppShadowsDrawBatch->state.depthEnabled = true;//TODO(Serge): fix with proper draw state
-
-					zppShadowsDrawBatch->state.depthFunction = LESS;
-
-					zppShadowsDrawBatch->state.depthWriteEnabled = true;
-
-					zppShadowsDrawBatch->state.polygonOffsetEnabled = false;
-					zppShadowsDrawBatch->state.polygonOffset = glm::vec2(0);
-
-					cmd::SetDefaultCullState(zppShadowsDrawBatch->state.cullState);
-					zppShadowsDrawBatch->state.cullState.cullFace = CULL_FACE_FRONT;
-
-					cmd::SetDefaultStencilState(zppShadowsDrawBatch->state.stencilState);
-
-					cmd::SetDefaultBlendState(zppShadowsDrawBatch->state.blendState);
-				}
-				
 			}
 		}
 
@@ -4030,7 +4085,37 @@ namespace r2::draw::renderer
 		const auto previousTexture = (gbufferConvolvedColorAttachment.currentTexture + 1) % gbufferConvolvedColorAttachment.numTextures;//@NOTE only works for 2 textures atm
 
 
-//		renderer.mRenderTargets[RTS_GBUFFER]
+		key::Basic transparentCompositeClearKey = key::GenerateBasicKey(key::Basic::FSL_EFFECT, 0, DL_TRANSPARENT, 0, 0, renderer.mTransparentCompositeShader, 0);
+		key::Basic transparentCompositeDrawKey = key::GenerateBasicKey(key::Basic::FSL_EFFECT, 0, DL_TRANSPARENT, 0, 0, renderer.mTransparentCompositeShader, 1);
+
+		ClearSurfaceOptions transparentCompositeClearOptions;
+		transparentCompositeClearOptions.shouldClear = false;
+
+
+		BeginRenderPass<key::Basic>(renderer, RPT_TRANSPARENT_COMPOSITE, transparentCompositeClearOptions, *renderer.mTransparentBucket, transparentCompositeClearKey, *renderer.mCommandArena);
+
+		cmd::DrawBatch* transparentCompositeCMD = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mTransparentBucket, transparentCompositeDrawKey, 0);
+		transparentCompositeCMD->batchHandle = subCommandsConstantBufferHandle;
+		transparentCompositeCMD->bufferLayoutHandle = finalBatchVertexBufferLayoutHandle;
+		transparentCompositeCMD->numSubCommands = finalBatchOffsets.numSubCommands;
+		R2_CHECK(transparentCompositeCMD->numSubCommands > 0, "We should have a count!");
+		transparentCompositeCMD->startCommandIndex = finalBatchOffsets.subCommandsOffset;
+		transparentCompositeCMD->primitiveType = PrimitiveType::TRIANGLES;
+		transparentCompositeCMD->subCommands = nullptr;
+		transparentCompositeCMD->state.depthEnabled = true;
+		transparentCompositeCMD->state.depthFunction = LESS;
+		transparentCompositeCMD->state.depthWriteEnabled = false;
+		transparentCompositeCMD->state.polygonOffsetEnabled = false;
+		transparentCompositeCMD->state.polygonOffset = glm::vec2(0);
+
+		cmd::SetDefaultStencilState(transparentCompositeCMD->state.stencilState);
+		cmd::SetDefaultCullState(transparentCompositeCMD->state.cullState);
+		
+		//cmd::SetDefaultBlendState(transparentCompositeCMD->state)
+		SetDefaultTransparentCompositeBlendState(transparentCompositeCMD->state.blendState);
+
+		EndRenderPass<key::Basic>(renderer, RPT_TRANSPARENT_COMPOSITE, *renderer.mTransparentBucket);
+
 
 
 		const auto gbufferColorAttachment = r2::sarr::At(*renderer.mRenderTargets[RTS_GBUFFER].colorAttachments, 0);
@@ -4223,7 +4308,10 @@ namespace r2::draw::renderer
 
 		cmd::SetRenderTargetMipLevel* setSSRConeTracedRenderTarget = AddCommand<key::Basic, cmd::SetRenderTargetMipLevel, mem::StackArena>(*renderer.mCommandArena, *renderer.mSSRBucket, ssrConeTracedDrawKey, 0);
 
-		cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], 0, *setSSRConeTracedRenderTarget);
+		RenderPass* ssrRenderPass = GetRenderPass(renderer, RPT_SSR);
+		R2_CHECK(ssrRenderPass != nullptr, "Should be not nullptr");
+
+		cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_SSR_CONE_TRACED], 0, *setSSRConeTracedRenderTarget, ssrRenderPass->config);
 
 		cmd::DrawBatch* ssrConeTracedBatch = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, setSSRConeTracedRenderTarget, 0);
 		ssrConeTracedBatch->batchHandle = subCommandsConstantBufferHandle;
@@ -4368,19 +4456,28 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SHADOWS, passConfig, {RTS_ZPREPASS_SHADOWS}, RTS_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_POINTLIGHT_SHADOWS, passConfig, {}, RTS_POINTLIGHT_SHADOWS, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SSR] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SSR, passConfig, { RTS_NORMAL, RTS_ZPREPASS, RTS_SPECULAR, RTS_CONVOLVED_GBUFFER }, RTS_SSR, __FILE__, __LINE__, "");
-		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS }, RTS_COMPOSITE, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_FINAL_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_FINAL_COMPOSITE, passConfig, { RTS_NORMAL, RTS_SPECULAR, RTS_GBUFFER, RTS_SSR, RTS_SSR_CONE_TRACED, RTS_BLOOM, RTS_BLOOM_BLUR, RTS_BLOOM_UPSAMPLE, RTS_ZPREPASS, RTS_TRANSPARENT_ACCUM, RTS_TRANSPARENT_REVEAL }, RTS_COMPOSITE, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_EDGE_DETECTION, passConfig, { RTS_COMPOSITE }, RTS_SMAA_EDGE_DETECTION, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_BLENDING_WEIGHT, passConfig, { RTS_SMAA_EDGE_DETECTION }, RTS_SMAA_BLENDING_WEIGHT, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_NEIGHBORHOOD_BLENDING] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_NEIGHBORHOOD_BLENDING, passConfig, { RTS_SMAA_BLENDING_WEIGHT, RTS_COMPOSITE }, RTS_SMAA_NEIGHBORHOOD_BLENDING, __FILE__, __LINE__, "");
+		renderer.mRenderPasses[RPT_TRANSPARENT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_TRANSPARENT, passConfig, { RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_TRANSPARENT_ACCUM, __FILE__, __LINE__, "");
+		
+		RenderPassConfig transparentCompositePassConfig;
+		transparentCompositePassConfig.primitiveType = PrimitiveType::TRIANGLES;
+		transparentCompositePassConfig.flags = RPC_OUTPUT_FIRST_COLOR_ONLY;
+
+		renderer.mRenderPasses[RPT_TRANSPARENT_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_TRANSPARENT_COMPOSITE, transparentCompositePassConfig, { RTS_TRANSPARENT_ACCUM, RTS_TRANSPARENT_REVEAL }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE, RTS_SMAA_NEIGHBORHOOD_BLENDING, RTS_ZPREPASS, RTS_SMAA_EDGE_DETECTION, RTS_SMAA_BLENDING_WEIGHT, RTS_ZPREPASS_SHADOWS }, RTS_OUTPUT, __FILE__, __LINE__, "");
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_TRANSPARENT_COMPOSITE]);
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_TRANSPARENT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_NEIGHBORHOOD_BLENDING]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SMAA_EDGE_DETECTION]);
-		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_FINAL_COMPOSITE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_SSR]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_POINTLIGHT_SHADOWS]);
@@ -4407,6 +4504,7 @@ namespace r2::draw::renderer
 
 		cmd::SetRenderTargetMipLevel* setRenderTargetCMD = nullptr;
 		cmd::Clear* clearCMD = nullptr;
+		cmd::ClearBuffers* clearBuffersCMD = nullptr;
 		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
 		cmd::FillConstantBuffer* prevCommand = nullptr;
 		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES];
@@ -4424,7 +4522,7 @@ namespace r2::draw::renderer
 		{
 			setRenderTargetCMD = AddCommand<T, cmd::SetRenderTargetMipLevel, mem::StackArena>(arena, commandBucket, key, 0);
 
-			cmd::FillSetRenderTargetMipLevelCommand(*renderTarget, 0, *setRenderTargetCMD);
+			cmd::FillSetRenderTargetMipLevelCommand(*renderTarget, 0, *setRenderTargetCMD, renderPass->config);
 
 			bool uploadAllTextures = false;
 			u32 numOutputTextures = 1;
@@ -4488,8 +4586,19 @@ namespace r2::draw::renderer
 
 			if (clearOptions.shouldClear)
 			{
-				clearCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
-				clearCMD->flags = clearOptions.flags;
+				if (clearOptions.useNormalClear)
+				{
+					clearCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::Clear, mem::StackArena>(arena, setRenderTargetCMD, 0);
+					clearCMD->flags = clearOptions.flags;
+				}
+				else
+				{
+					clearBuffersCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::ClearBuffers, mem::StackArena>(arena, setRenderTargetCMD, 0);
+
+					clearBuffersCMD->renderTargetHandle = renderTarget->frameBufferID;
+					clearBuffersCMD->numBuffers = clearOptions.numClearParams;
+					memcpy(clearBuffersCMD->clearParams, clearOptions.clearParams, sizeof(clearOptions.clearParams));
+				}
 			}
 
 			for (u32 i = 0; i < numOutputTextures; ++i)
@@ -4497,6 +4606,10 @@ namespace r2::draw::renderer
 				if (prevCommand == nullptr && clearCMD != nullptr)
 				{
 					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+				}
+				else if (prevCommand == nullptr && clearBuffersCMD != nullptr)
+				{
+					fillSurfaceCMD = AppendCommand<cmd::ClearBuffers, cmd::FillConstantBuffer, mem::StackArena>(arena, clearBuffersCMD, sizeof(tex::TextureAddress));
 				}
 				else if(prevCommand == nullptr && setRenderTargetCMD != nullptr)
 				{
@@ -4668,6 +4781,10 @@ namespace r2::draw::renderer
 						{
 							fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
 						}
+						else if (clearBuffersCMD)
+						{
+							fillSurfaceCMD = AppendCommand<cmd::ClearBuffers, cmd::FillConstantBuffer, mem::StackArena>(arena, clearBuffersCMD, sizeof(tex::TextureAddress));
+						}
 						else
 						{
 							fillSurfaceCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
@@ -4701,6 +4818,34 @@ namespace r2::draw::renderer
 		{
 			rt::SwapTexturesIfNecessary(renderer.mRenderTargets[i]);
 		}
+	}
+
+	void SetDefaultTransparencyBlendState(BlendState& blendState)
+	{
+		blendState.blendingEnabled = true;
+		blendState.blendEquation = BLEND_EQUATION_ADD;
+		blendState.numBlendFunctions = 2;
+
+		//first one is the accum
+		blendState.blendFunctions[0].blendDrawBuffer = 0;
+		blendState.blendFunctions[0].sfactor = ONE;
+		blendState.blendFunctions[0].dfactor = ONE;
+
+		//next is the reveal
+		blendState.blendFunctions[1].blendDrawBuffer = 1;
+		blendState.blendFunctions[1].sfactor = ZERO;
+		blendState.blendFunctions[1].dfactor = ONE_MINUS_SRC_COLOR;
+	}
+
+	void SetDefaultTransparentCompositeBlendState(BlendState& blendState)
+	{
+		blendState.blendingEnabled = true;
+		blendState.blendEquation = BLEND_EQUATION_ADD;
+		blendState.numBlendFunctions = 1;
+
+		blendState.blendFunctions[0].blendDrawBuffer = 0;
+		blendState.blendFunctions[0].sfactor = SRC_ALPHA;
+		blendState.blendFunctions[0].dfactor = ONE_MINUS_SRC_ALPHA;
 	}
 
 	//void UpdateRenderTargetsIfNecessary(Renderer& renderer)
@@ -6740,7 +6885,9 @@ namespace r2::draw::renderer
 
 			cmd::SetRenderTargetMipLevel* setRenderTarget = cmdbkt::AddCommand<key::DebugKey, mem::StackArena, cmd::SetRenderTargetMipLevel>(*renderer.mDebugCommandArena, *renderer.mDebugCommandBucket, setDebugRenderTargetKey, 0);
 
-			cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_GBUFFER], 0, *setRenderTarget);
+			RenderPass* gbufferRenderPass = GetRenderPass(renderer, RPT_GBUFFER);
+
+			cmd::FillSetRenderTargetMipLevelCommand(renderer.mRenderTargets[RTS_GBUFFER], 0, *setRenderTarget, gbufferRenderPass->config);
 		}
 
 		if (modelBatchRenderOffsets)
@@ -7449,6 +7596,8 @@ namespace r2::draw::renderer
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_NORMAL].colorAttachments, 0));
 			rt::SetTextureAttachment(renderer.mRenderTargets[RTS_GBUFFER], r2::sarr::At(*renderer.mRenderTargets[RTS_SPECULAR].colorAttachments, 0));
 
+			CreateTransparentAccumSurface(renderer, resolutionX, resolutionY);
+
 			CreateSSRRenderSurface(renderer, resolutionX, resolutionY);
 			CreateConeTracedSSRRenderSurface(renderer, resolutionX, resolutionY);
 
@@ -7840,10 +7989,50 @@ namespace r2::draw::renderer
 		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING], format);
 	}
 
+	void CreateTransparentAccumSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_TRANSPARENT_ACCUM], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+		renderer.mRenderTargets[RTS_TRANSPARENT_REVEAL] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_TRANSPARENT_REVEAL], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::TextureAttachmentFormat format;
+		format.type = rt::COLOR;
+		format.swapping = false;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_LINEAR;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = true;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM], format);
+
+		rt::TextureAttachmentFormat revealFormat;
+		revealFormat.type = rt::R8;
+		revealFormat.swapping = false;
+		revealFormat.uploadAllTextures = false;
+		revealFormat.filter = tex::FILTER_LINEAR;
+		revealFormat.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		revealFormat.numLayers = 1;
+		revealFormat.numMipLevels = 1;
+		revealFormat.hasAlpha = false;
+		revealFormat.isHDR = false;
+		revealFormat.usesLayeredRenderering = false;
+		revealFormat.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_TRANSPARENT_REVEAL], revealFormat);
+		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM], r2::sarr::At(*renderer.mRenderTargets[RTS_TRANSPARENT_REVEAL].colorAttachments, 0));
+		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM], r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
+	}
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
-
+		
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
@@ -7853,6 +8042,10 @@ namespace r2::draw::renderer
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_BLOOM]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR_CONE_TRACED]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SSR]);
+
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_TRANSPARENT_REVEAL]);
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM]);
+
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_CONVOLVED_GBUFFER]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SPECULAR]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_NORMAL]);
@@ -8111,6 +8304,31 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget = 2;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_SMAA_NEIGHBORHOOD_BLENDING].numSurfacesPerTarget;
+
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numColorAttachments = 1;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numDepthAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numStencilAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].maxPageAllocations = 0;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numAttachmentRefs = 2; //RTS_REVEAL, RTS_ZPREPASS
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_TRANSPARENT_ACCUM].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_TRANSPARENT_ACCUM].numSurfacesPerTarget;
+
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numColorAttachments = 1;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numDepthAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numStencilAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].maxPageAllocations = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numAttachmentRefs = 0;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_TRANSPARENT_REVEAL].numSurfacesPerTarget = 1;
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_TRANSPARENT_REVEAL].numSurfacesPerTarget;
+
 
 		//should always be last
 		renderTargetParams[RTS_OUTPUT].numColorAttachments = 0;

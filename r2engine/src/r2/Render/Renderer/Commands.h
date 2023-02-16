@@ -47,6 +47,24 @@ namespace r2::draw::cmd
 	};
 	static_assert(std::is_pod<Clear>::value == true, "Clear must be a POD.");
 
+	struct ClearBufferParams
+	{
+		u32 bufferFlags;
+		u32 bufferIndex;
+		f32 clearValue[4];
+	};
+
+	struct ClearBuffers
+	{
+		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;
+
+		u32 renderTargetHandle;
+		u32 numBuffers;
+		ClearBufferParams clearParams[4];
+	};
+
+	static_assert(std::is_pod<ClearBuffers>::value == true, "ClearBuffers must be a POD.");
+
 	struct DrawIndexed
 	{
 		static const r2::draw::dispatch::BackendDispatchFunction DispatchFunc;

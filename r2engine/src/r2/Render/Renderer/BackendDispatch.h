@@ -9,6 +9,7 @@ namespace r2::draw::dispatch
 	static const size_t BACKEND_DISPATCH_OFFSET = 0u;
 
 	void Clear(const void* data);
+	void ClearBuffers(const void* data);
 	void DrawIndexed(const void* data);
 	void FillVertexBuffer(const void* data);
 	void FillIndexBuffer(const void* data);

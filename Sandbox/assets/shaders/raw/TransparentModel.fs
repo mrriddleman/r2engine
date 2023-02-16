@@ -3,9 +3,7 @@
 #extension GL_NV_gpu_shader5 : enable
 
 layout (location = 0) out vec4 Accum;
-layout (location = 1) out vec3 NormalColor;
-layout (location = 2) out vec4 SpecularColor;
-layout (location = 3) out float Reveal;
+layout (location = 1) out float Reveal;
 
 #include "Common/Defines.glsl"
 #include "Common/CommonFunctions.glsl"
@@ -44,12 +42,6 @@ void main()
 	// switch to pre-multiplied alpha and weight
     Accum = vec4(lightingResult * pixel.alpha, pixel.alpha) * weight;
 
-    // blend func: GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
+    // blend func: GL_ZERO, GL_ONE_MINUS_SRC_COLOR
     Reveal = pixel.alpha;
-
-    // blend func: GL_ONE, GL_ONE
-    NormalColor = fs_in.viewNormal;
-
-    // blend func: GL_ONE, GL_ONE
-	SpecularColor = vec4(pixel.F0, 1.0 - pixel.roughness);
 }

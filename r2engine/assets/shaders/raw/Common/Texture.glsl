@@ -77,5 +77,11 @@ vec4 SampleMSTexel(Tex2DAddress tex, ivec2 texCoords, int sampleCoord)
 	return texelFetch(sampler2DMSArray(tex.container), coord, sampleCoord);
 }
 
+vec4 TexelFetch(Tex2DAddress tex, ivec2 texCoords, int lod)
+{
+	ivec3 coord = MakeTextureCoord(tex, texCoords);
+	return texelFetch(sampler2DArray(tex.container), coord, lod);
+}
+
 
 #endif

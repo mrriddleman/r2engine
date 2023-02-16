@@ -109,6 +109,7 @@ namespace r2::draw::rendererimpl
 
 	//Command functions
 	void Clear(u32 flags);
+	void ClearBuffers(u32 framebufferHandle, u32 numBuffersToClear, const cmd::ClearBufferParams []);
 	void DrawIndexed(BufferLayoutHandle layoutId, VertexBufferHandle vBufferHandle, IndexBufferHandle iBufferHandle, u32 numIndices, u32 startingIndex);
 	void DrawIndexedCommands(BufferLayoutHandle layoutId, ConstantBufferHandle batchHandle, void* cmds, u32 count, u32 offset, u32 stride = 0, PrimitiveType primitivetype = PrimitiveType::TRIANGLES);
 	void UpdateVertexBuffer(VertexBufferHandle vBufferHandle, u64 offset, const void* data, u64 size);

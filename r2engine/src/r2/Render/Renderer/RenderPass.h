@@ -28,15 +28,23 @@ namespace r2::draw
 		RPT_SMAA_EDGE_DETECTION,
 		RPT_SMAA_BLENDING_WEIGHT,
 		RPT_SMAA_NEIGHBORHOOD_BLENDING,
-
+		RPT_TRANSPARENT,
+		RPT_TRANSPARENT_COMPOSITE,
 		RPT_OUTPUT,
 		NUM_RENDER_PASSES
+	};
+
+	enum RenderPassFlags : u32
+	{
+		RPC_NONE = 1 << 0,
+		//Used for transparent composite pass
+		RPC_OUTPUT_FIRST_COLOR_ONLY = 1 << 1
 	};
 
 	struct RenderPassConfig
 	{
 		PrimitiveType primitiveType;
-		s32 flags = 0;
+		u32 flags = RPC_NONE;
 	};
 
 	struct RenderPass

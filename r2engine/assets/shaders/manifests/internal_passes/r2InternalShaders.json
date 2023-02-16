@@ -278,7 +278,17 @@
       		computePath: "",
      		binaryPath: "",
       		partPath: ""
+		},
+		{
+			shaderName: "TransparentComposite",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/FullScreen.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/PostFX/Composite/TransparentComposite.fs",
+			geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
 		}
+
 	],
   	basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"
 }
