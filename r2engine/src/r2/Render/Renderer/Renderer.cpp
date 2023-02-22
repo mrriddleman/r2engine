@@ -510,6 +510,7 @@ namespace r2::draw::renderer
 	void ClearAllLighting(Renderer& renderer);
 
 	void UpdateLighting(Renderer& renderer);
+	void UploadAllSurfaces(Renderer& renderer);
 
 	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
 	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
@@ -644,6 +645,8 @@ namespace r2::draw::renderer
 
 	void SetupRenderTargetParams(rt::RenderTargetParams renderTargetParams[NUM_RENDER_TARGET_SURFACES]);
 	void SwapRenderTargetsHistoryIfNecessary(Renderer& renderer);
+	void UploadSwappingSurfaces(Renderer& renderer);
+
 	//void UpdateRenderTargetsIfNecessary(Renderer& renderer);
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface);
 
@@ -1375,6 +1378,15 @@ namespace r2::draw::renderer
 			UpdateClusterTileSizes(renderer);
 		}
 
+		if (renderer.mFlags.IsSet(RENDERER_FLAG_NEEDS_ALL_SURFACES_UPLOAD))
+		{
+			UploadAllSurfaces(renderer);
+		}
+		else
+		{
+			UploadSwappingSurfaces(renderer);
+		}
+
 		UpdateJitter(renderer);
 
 		UpdateBloomDataIfNeeded(renderer);
@@ -1495,7 +1507,7 @@ namespace r2::draw::renderer
 		RESET_ARENA(*renderer.mAmbientOcclusionArena);
 
 		
-		renderer.mFlags.Remove(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
+		renderer.mFlags.Clear();
 
 		SwapRenderTargetsHistoryIfNecessary(renderer);
 
@@ -4494,6 +4506,9 @@ namespace r2::draw::renderer
 	template <class T>
 	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena)
 	{
+		//@TODO(Serge): remove all of the fill constant buffer (surface image) uploads per render pass - completely unneeded and slow
+		//				except if we need them to swap - then we should reupload them
+
 		RenderPass* renderPass = GetRenderPass(renderer, renderPassType);
 
 		R2_CHECK(renderPass != nullptr, "This should never be null");
@@ -4505,18 +4520,18 @@ namespace r2::draw::renderer
 		cmd::SetRenderTargetMipLevel* setRenderTargetCMD = nullptr;
 		cmd::Clear* clearCMD = nullptr;
 		cmd::ClearBuffers* clearBuffersCMD = nullptr;
-		cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
-		cmd::FillConstantBuffer* prevCommand = nullptr;
-		RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES];
+		//cmd::FillConstantBuffer* fillSurfaceCMD = nullptr;
+		//cmd::FillConstantBuffer* prevCommand = nullptr;
+		//RenderTargetSurface renderTargetSurfacesUsed[NUM_RENDER_TARGET_SURFACES];
 		
-		ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
+		//ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
 
-		ConstantBufferData* constBufferData = GetConstData(renderer, surfaceBufferHandle);
+		//ConstantBufferData* constBufferData = GetConstData(renderer, surfaceBufferHandle);
 
-		for (int i = RTS_GBUFFER; i < NUM_RENDER_TARGET_SURFACES; i++)
-		{
-			renderTargetSurfacesUsed[i] = (RenderTargetSurface)i;
-		}
+		//for (int i = RTS_GBUFFER; i < NUM_RENDER_TARGET_SURFACES; i++)
+		//{
+		//	renderTargetSurfacesUsed[i] = (RenderTargetSurface)i;
+		//}
 
 		if (renderTarget)
 		{
@@ -4524,7 +4539,7 @@ namespace r2::draw::renderer
 
 			cmd::FillSetRenderTargetMipLevelCommand(*renderTarget, 0, *setRenderTargetCMD, renderPass->config);
 
-			bool uploadAllTextures = false;
+			/*bool uploadAllTextures = false;
 			u32 numOutputTextures = 1;
 			u32 currentTexture = 0;
 
@@ -4533,12 +4548,8 @@ namespace r2::draw::renderer
 				if (setRenderTargetCMD->numColorTextures > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->colorAttachments, 0);
-					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
-
-					if (uploadAllTextures)
-					{
-						numOutputTextures = textureAttachment.numTextures;
-					}
+					
+					numOutputTextures = textureAttachment.numTextures;
 
 					currentTexture = textureAttachment.currentTexture;
 				}
@@ -4553,13 +4564,9 @@ namespace r2::draw::renderer
 				if (numDepthAttachments > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthAttachments, 0);
-					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
-					numOutputTextures = 1;
-
-					if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
-					{
-						numOutputTextures = textureAttachment.numTextures;
-					}
+					
+					numOutputTextures = textureAttachment.numTextures;
+					
 					currentTexture = textureAttachment.currentTexture;
 				}
 			}
@@ -4573,16 +4580,12 @@ namespace r2::draw::renderer
 				if (numDepthStencilAttachments > 0)
 				{
 					const auto& textureAttachment = r2::sarr::At(*renderTarget->depthStencilAttachments, 0);
-					uploadAllTextures = textureAttachment.textureAttachmentFormat.uploadAllTextures;
-					numOutputTextures = 1;
 
-					if (uploadAllTextures)
-					{
-						numOutputTextures = textureAttachment.numTextures;
-					}
+					numOutputTextures = textureAttachment.numTextures;
+					
 					currentTexture = textureAttachment.currentTexture;
 				}
-			}
+			}*/
 
 			if (clearOptions.shouldClear)
 			{
@@ -4601,135 +4604,136 @@ namespace r2::draw::renderer
 				}
 			}
 
-			for (u32 i = 0; i < numOutputTextures; ++i)
-			{
-				if (prevCommand == nullptr && clearCMD != nullptr)
-				{
-					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
-				}
-				else if (prevCommand == nullptr && clearBuffersCMD != nullptr)
-				{
-					fillSurfaceCMD = AppendCommand<cmd::ClearBuffers, cmd::FillConstantBuffer, mem::StackArena>(arena, clearBuffersCMD, sizeof(tex::TextureAddress));
-				}
-				else if(prevCommand == nullptr && setRenderTargetCMD != nullptr)
-				{
-					fillSurfaceCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
-				}
-				else
-				{
-					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
-				}
-
-				//@NOTE(Serge): this is set in the order of the render target surfaces
-
-				tex::TextureAddress surfaceTextureAddress;
-
-				//@NOTE(Serge): if we want a deferred renderer we need to change this I think
-				if (renderTarget->colorAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture[currentTexture]);
-				}
-				else if (renderTarget->depthAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture]);
-				}
-				else if (renderTarget->depthStencilAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthStencilAttachments, 0).texture[currentTexture]);
-				}
-
-				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderOutputTargetHandle) + i * sizeof(tex::TextureAddress));
-
-				renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
-
-				prevCommand = fillSurfaceCMD;
-
-				currentTexture = (currentTexture + 1) % numOutputTextures;
-			}
+			//for (u32 i = 0; numOutputTextures > 1 && i < numOutputTextures; ++i)
+//			if(numOutputTextures > 1)
+//			{
+//				if (prevCommand == nullptr && clearCMD != nullptr)
+//				{
+//					fillSurfaceCMD = AppendCommand<cmd::Clear, cmd::FillConstantBuffer, mem::StackArena>(arena, clearCMD, sizeof(tex::TextureAddress));
+//				}
+//				else if (prevCommand == nullptr && clearBuffersCMD != nullptr)
+//				{
+//					fillSurfaceCMD = AppendCommand<cmd::ClearBuffers, cmd::FillConstantBuffer, mem::StackArena>(arena, clearBuffersCMD, sizeof(tex::TextureAddress));
+//				}
+//				else if(prevCommand == nullptr && setRenderTargetCMD != nullptr)
+//				{
+//					fillSurfaceCMD = AppendCommand<cmd::SetRenderTargetMipLevel, cmd::FillConstantBuffer, mem::StackArena>(arena, setRenderTargetCMD, sizeof(tex::TextureAddress));
+//				}
+//				else
+//				{
+//					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+//				}
+//
+//				//@NOTE(Serge): this is set in the order of the render target surfaces
+//
+//				tex::TextureAddress surfaceTextureAddress;
+//
+//				//@NOTE(Serge): if we want a deferred renderer we need to change this I think
+//				if (renderTarget->colorAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->colorAttachments, 0).texture[currentTexture]);
+//				}
+//				else if (renderTarget->depthAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthAttachments, 0).texture[currentTexture]);
+//				}
+//				else if (renderTarget->depthStencilAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*renderTarget->depthStencilAttachments, 0).texture[currentTexture]);
+//				}
+//
+//				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderOutputTargetHandle) + i * sizeof(tex::TextureAddress));
+//
+//			//	renderTargetSurfacesUsed[renderPass->renderOutputTargetHandle] = RTS_EMPTY;
+//
+//				prevCommand = fillSurfaceCMD;
+//
+//				currentTexture = (currentTexture + 1) % numOutputTextures;
+//			}
 		}
-		
-
-		for (u32 i = 0; i < numInputTextures; ++i)
-		{
-
-			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
-
-			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
-			
-			u32 numOutputTextures = 1;
-			u32 currentTexture = 0;
-
-			if (inputRenderTarget->colorAttachments)
-			{
-				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
-				currentTexture = textureAttachment.currentTexture;
-
-				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
-				{
-					numOutputTextures = textureAttachment.numTextures;
-				}
-			}
-			else if (inputRenderTarget->depthAttachments)
-			{
-				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
-				currentTexture = textureAttachment.currentTexture;
-
-				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
-				{
-					numOutputTextures = textureAttachment.numTextures;
-				}
-			}
-			else if (inputRenderTarget->depthStencilAttachments)
-			{
-				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
-				currentTexture = textureAttachment.currentTexture;
-
-				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
-				{
-					numOutputTextures = textureAttachment.numTextures;
-				}
-			}
-
-			for (u32 j = 0; j < numOutputTextures; ++j)
-			{
-				if (!renderTarget)
-				{
-					fillSurfaceCMD = AddCommand<T, cmd::FillConstantBuffer, mem::StackArena>(arena, commandBucket, key, sizeof(tex::TextureAddress));
-				}
-				else
-				{
-					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
-				}
-
-				tex::TextureAddress surfaceTextureAddress;
-
-				//@TODO(Serge): this is still wrong, we need a way to map the individual textures of the render target to the surface
-				//				but this will do for now
-				if (inputRenderTarget->colorAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture[currentTexture]);
-				}
-				else if (inputRenderTarget->depthAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture[currentTexture]);
-				}
-				else if (inputRenderTarget->depthStencilAttachments)
-				{
-					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0).texture[currentTexture]);
-				}
-
-				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderInputTargetHandles[i]) + j * sizeof(tex::TextureAddress));
-
-				renderTargetSurfacesUsed[renderPass->renderInputTargetHandles[i]] = RTS_EMPTY;
-
-				prevCommand = fillSurfaceCMD;
-
-				currentTexture = (currentTexture + 1) % numOutputTextures;
-			}
-		}
+//		
+//
+//		for (u32 i = 0; i < numInputTextures; ++i)
+//		{
+//
+//			RenderTarget* inputRenderTarget = GetRenderTarget(renderer, renderPass->renderInputTargetHandles[i]);
+//
+//			R2_CHECK(inputRenderTarget != nullptr, "We should have a render target here!");
+//			
+//			u32 numOutputTextures = 1;
+//			u32 currentTexture = 0;
+//
+//			if (inputRenderTarget->colorAttachments)
+//			{
+//				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->colorAttachments, 0);
+//				currentTexture = textureAttachment.currentTexture;
+//
+//				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
+//				{
+//					numOutputTextures = textureAttachment.numTextures;
+//				}
+//			}
+//			else if (inputRenderTarget->depthAttachments)
+//			{
+//				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthAttachments, 0);
+//				currentTexture = textureAttachment.currentTexture;
+//
+//				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
+//				{
+//					numOutputTextures = textureAttachment.numTextures;
+//				}
+//			}
+//			else if (inputRenderTarget->depthStencilAttachments)
+//			{
+//				const auto& textureAttachment = r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0);
+//				currentTexture = textureAttachment.currentTexture;
+//
+//				if (textureAttachment.textureAttachmentFormat.uploadAllTextures)
+//				{
+//					numOutputTextures = textureAttachment.numTextures;
+//				}
+//			}
+//
+//			for (u32 j = 0; j < numOutputTextures; ++j)
+//			{
+//				if (!renderTarget)
+//				{
+//					fillSurfaceCMD = AddCommand<T, cmd::FillConstantBuffer, mem::StackArena>(arena, commandBucket, key, sizeof(tex::TextureAddress));
+//				}
+//				else
+//				{
+//					fillSurfaceCMD = AppendCommand<cmd::FillConstantBuffer, cmd::FillConstantBuffer, mem::StackArena>(arena, prevCommand, sizeof(tex::TextureAddress));
+//				}
+//
+//				tex::TextureAddress surfaceTextureAddress;
+//
+//				//@TODO(Serge): this is still wrong, we need a way to map the individual textures of the render target to the surface
+//				//				but this will do for now
+//				if (inputRenderTarget->colorAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->colorAttachments, 0).texture[currentTexture]);
+//				}
+//				else if (inputRenderTarget->depthAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthAttachments, 0).texture[currentTexture]);
+//				}
+//				else if (inputRenderTarget->depthStencilAttachments)
+//				{
+//					surfaceTextureAddress = texsys::GetTextureAddress(r2::sarr::At(*inputRenderTarget->depthStencilAttachments, 0).texture[currentTexture]);
+//				}
+//
+//				FillConstantBufferCommand(fillSurfaceCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress, sizeof(tex::TextureAddress), GetRenderPassTargetOffset(renderer, renderPass->renderInputTargetHandles[i]) + j * sizeof(tex::TextureAddress));
+//
+////				renderTargetSurfacesUsed[renderPass->renderInputTargetHandles[i]] = RTS_EMPTY;
+//
+//				prevCommand = fillSurfaceCMD;
+//
+//				currentTexture = (currentTexture + 1) % numOutputTextures;
+//			}
+//		}
 
 		//Zero out the other surface handles so we don't leak state
-		for (u32 i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
+		/*for (u32 i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
 		{
 			if (renderTargetSurfacesUsed[i] != RTS_EMPTY)
 			{
@@ -4801,7 +4805,7 @@ namespace r2::draw::renderer
 					prevCommand = fillSurfaceCMD;
 				}
 			}
-		}
+		}*/
 		
 		
 	}
@@ -4817,6 +4821,112 @@ namespace r2::draw::renderer
 		for (int i = 0; i < NUM_RENDER_TARGET_SURFACES; ++i)
 		{
 			rt::SwapTexturesIfNecessary(renderer.mRenderTargets[i]);
+		}
+	}
+
+	void UploadSwappingSurfaces(Renderer& renderer)
+	{
+		for (u32 i = RTS_GBUFFER; i < RTS_OUTPUT; ++i)
+		{
+			RenderTarget* rt = GetRenderTarget(renderer, (RenderTargetSurface)i);
+			R2_CHECK(rt != nullptr, "Should never be nullptr!");
+
+			u32 offset = GetRenderPassTargetOffset(renderer, (RenderTargetSurface)i);
+
+			int currentTexture = 0;
+
+			tex::TextureAddress surfaceTextureAddress[2];
+			int numTextureToUpload = 1;
+			bool shouldAddFillCommand = false;
+
+			if (rt->colorAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->colorAttachments, 0);
+
+				shouldAddFillCommand = attachment.textureAttachmentFormat.swapping;
+
+				if (shouldAddFillCommand)
+				{
+					currentTexture = attachment.currentTexture;
+
+					surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+					if (attachment.textureAttachmentFormat.uploadAllTextures)
+					{
+						numTextureToUpload++;
+
+						currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+						surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					}
+				}
+				
+			}
+			else if (rt->depthAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->depthAttachments, 0);
+
+				shouldAddFillCommand = attachment.textureAttachmentFormat.swapping;
+
+				if (shouldAddFillCommand)
+				{
+					currentTexture = attachment.currentTexture;
+
+					surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+					if (attachment.textureAttachmentFormat.uploadAllTextures)
+					{
+						numTextureToUpload++;
+
+						currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+						surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					}
+				}
+				
+			}
+			else if (rt->depthStencilAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->depthStencilAttachments, 0);
+
+				shouldAddFillCommand = attachment.textureAttachmentFormat.swapping;
+
+				if (shouldAddFillCommand)
+				{
+					currentTexture = attachment.currentTexture;
+
+					surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+					if (attachment.textureAttachmentFormat.uploadAllTextures)
+					{
+						numTextureToUpload++;
+
+						currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+						surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					}
+				}
+			}
+			else
+			{
+				R2_CHECK(false, "?");
+			}
+			
+			if (shouldAddFillCommand)
+			{
+				key::Basic fillKey;
+				fillKey.keyValue = 0;
+
+				//add new command to upload
+				cmd::FillConstantBuffer* uploadSurfacesCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillKey, sizeof(tex::TextureAddress) * numTextureToUpload);
+
+				ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
+
+				ConstantBufferData* constBufferData = GetConstData(renderer, surfaceBufferHandle);
+
+				FillConstantBufferCommand(uploadSurfacesCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, &surfaceTextureAddress[0], sizeof(tex::TextureAddress) * numTextureToUpload, offset);
+			}
+		
 		}
 	}
 
@@ -7613,9 +7723,10 @@ namespace r2::draw::renderer
 			CreateSMAABlendingWeightSurface(renderer, resolutionX, resolutionY);
 			CreateSMAANeighborhoodBlendingSurface(renderer, resolutionX, resolutionY);
 
-			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
-
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
+			
+			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
+			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_ALL_SURFACES_UPLOAD);
 		}
 		
 		renderer.mResolutionSize.width = resolutionX;
@@ -7815,7 +7926,7 @@ namespace r2::draw::renderer
 		rt::TextureAttachmentFormat format;
 		format.type = rt::COLOR;
 		format.swapping = true;
-		format.uploadAllTextures = true;
+		format.uploadAllTextures = false;
 		format.filter = tex::FILTER_LINEAR;
 		format.wrapMode = tex::WRAP_MODE_REPEAT;
 		format.numLayers = 1;
@@ -8344,6 +8455,98 @@ namespace r2::draw::renderer
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
 	}
 
+	void UploadAllSurfaces(Renderer& renderer)
+	{
+		u32 numSurfaces = 0;
+
+		for (u32 i = RTS_GBUFFER; i < RTS_OUTPUT; ++i)
+		{
+			numSurfaces += renderer.mRenderTargetParams[i].numSurfacesPerTarget;
+		}
+
+		r2::SArray<tex::TextureAddress>* textureAddresses = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, tex::TextureAddress, numSurfaces);
+
+		for (u32 i = RTS_GBUFFER; i < RTS_OUTPUT; ++i)
+		{
+			RenderTarget* rt = GetRenderTarget(renderer, (RenderTargetSurface)i);
+			
+			tex::TextureAddress surfaceTextureAddress[2];
+			u32 numSurfaceTexturesToAdd = 1;
+
+			int currentTexture = 0;
+
+			if (rt->colorAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->colorAttachments, 0);
+
+				currentTexture = attachment.currentTexture;
+
+				surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+				currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+				if (attachment.numTextures > 1 && attachment.textureAttachmentFormat.uploadAllTextures)
+				{
+					surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					numSurfaceTexturesToAdd++;
+				}
+			}
+			else if (rt->depthAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->depthAttachments, 0);
+
+				currentTexture = attachment.currentTexture;
+
+				surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+				currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+				if (attachment.numTextures > 1 && attachment.textureAttachmentFormat.uploadAllTextures)
+				{
+					surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					numSurfaceTexturesToAdd++;
+				}
+			}
+			else if (rt->depthStencilAttachments)
+			{
+				const auto& attachment = r2::sarr::At(*rt->depthStencilAttachments, 0);
+
+				currentTexture = attachment.currentTexture;
+
+				surfaceTextureAddress[0] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+
+				currentTexture = (currentTexture + 1) % attachment.numTextures;
+
+				if (attachment.numTextures > 1 && attachment.textureAttachmentFormat.uploadAllTextures)
+				{
+					surfaceTextureAddress[1] = texsys::GetTextureAddress(attachment.texture[currentTexture]);
+					numSurfaceTexturesToAdd++;
+				}
+			}
+			else
+			{
+				R2_CHECK(false, "?");
+			}
+
+			for (u32 j = 0; j < numSurfaceTexturesToAdd; ++j)
+			{
+				r2::sarr::Push(*textureAddresses, surfaceTextureAddress[j]);
+			}
+		}
+		ConstantBufferHandle surfaceBufferHandle = r2::sarr::At(*renderer.mConstantBufferHandles, renderer.mSurfacesConfigHandle);
+
+		ConstantBufferData* constBufferData = GetConstData(renderer, surfaceBufferHandle);
+
+		key::Basic fillkey;
+		fillkey.keyValue = 0;
+
+		cmd::FillConstantBuffer* fillSurfacesCMD = AddCommand<key::Basic, cmd::FillConstantBuffer, mem::StackArena>(*renderer.mPrePostRenderCommandArena, *renderer.mPreRenderBucket, fillkey, sizeof(tex::TextureAddress) * numSurfaces);
+
+		FillConstantBufferCommand(fillSurfacesCMD, surfaceBufferHandle, constBufferData->type, constBufferData->isPersistent, textureAddresses->mData, sizeof(tex::TextureAddress) * numSurfaces, 0);
+
+		FREE(textureAddresses, *MEM_ENG_SCRATCH_PTR);
+	}
+
 	u32 GetRenderPassTargetOffset(Renderer& renderer, RenderTargetSurface surface)
 	{
 		return renderer.mRenderTargetParams[surface].surfaceOffset;
@@ -8645,7 +8848,6 @@ namespace r2::draw::renderer
 			if (renderer.mFlags.IsSet(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH))
 			{
 				UpdateShadowMapPages(renderer);
-				renderer.mFlags.Remove(eRendererFlags::RENDERER_FLAG_NEEDS_SHADOW_MAPS_REFRESH);
 			}
 
 
@@ -8771,10 +8973,10 @@ namespace r2::draw::renderer
 	{
 		glm::vec3 worldSpacePosition;
 		glm::vec3 origin = meshBounds.origin;
-
-		worldSpacePosition.x = modelMat[0][0] * origin.x + modelMat[1][0] * origin.y + modelMat[2][0] * origin.z + modelMat[3][0];
-		worldSpacePosition.y = modelMat[0][1] * origin.x + modelMat[1][1] * origin.y + modelMat[2][1] * origin.z + modelMat[3][1];
-		worldSpacePosition.z = modelMat[0][2] * origin.x + modelMat[1][2] * origin.y + modelMat[2][2] * origin.z + modelMat[3][2];
+		//@TODO(Serge): need a fast way of doing this properly
+		worldSpacePosition.x = modelMat[3][0];//modelMat[0][0] * origin.x + modelMat[1][0] * origin.y + modelMat[2][0] * origin.z + modelMat[3][0];
+		worldSpacePosition.y = modelMat[3][1];//modelMat[0][1] * origin.x + modelMat[1][1] * origin.y + modelMat[2][1] * origin.z + modelMat[3][1];
+		worldSpacePosition.z = modelMat[3][2];//modelMat[0][2] * origin.x + modelMat[1][2] * origin.y + modelMat[2][2] * origin.z + modelMat[3][2];
 
 		return r2::util::FloatToU24(GetSortKeyCameraDepth(renderer, worldSpacePosition));
 	}
