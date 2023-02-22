@@ -240,8 +240,9 @@ namespace r2
         
         util::Size mDisplaySize;
         LayerStack mLayerStack;
+#ifdef R2_IMGUI
         ImGuiLayer* mImGuiLayer;
-        
+#endif
         draw::Renderer* mRendererBackends[draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES];
         
         draw::RendererBackend mCurrentRendererBackend;

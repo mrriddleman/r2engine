@@ -1012,7 +1012,7 @@ public:
                 
 				return true;
 			}
-            else if (e.KeyCode() == r2::io::KEY_F1)
+            else if (e.KeyCode() == r2::io::KEY_F1 && (e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == 0)
             {
                 mDrawDebugBones = !mDrawDebugBones;
                 return true;

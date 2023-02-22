@@ -268,7 +268,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 		}
 
 	filter "configurations:Debug"
-		defines  {"R2_DEBUG", "R2_ASSET_PIPELINE", "R2_ASSET_CACHE_DEBUG"}
+		defines  {"R2_DEBUG", "R2_ASSET_PIPELINE", "R2_ASSET_CACHE_DEBUG", "R2_EDITOR", "R2_IMGUI"}
 		runtime "Debug"
 		symbols "On"
 		optimize "Off"
@@ -598,7 +598,7 @@ project "Sandbox"
 		}
 
 	filter "configurations:Debug"
-		defines {"R2_DEBUG", "R2_ASSET_PIPELINE", "R2_ASSET_CACHE_DEBUG"}
+		defines {"R2_DEBUG", "R2_ASSET_PIPELINE", "R2_ASSET_CACHE_DEBUG", "R2_EDITOR", "R2_IMGUI"}
 		runtime "Debug"
 		symbols "On"
 		staticruntime "off"

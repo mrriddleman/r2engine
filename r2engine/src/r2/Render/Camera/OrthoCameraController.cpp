@@ -61,21 +61,25 @@ namespace r2::cam
           if(e.KeyCode() == r2::io::KEY_w)
           {
               mDirectionPressed.Set(FORWARD);
+              return true;
           }
           else if(e.KeyCode() == r2::io::KEY_s)
           {
               mDirectionPressed.Set(BACKWARD);
+              return true;
           }
           else if(e.KeyCode() == r2::io::KEY_a)
           {
               mDirectionPressed.Set(LEFT);
+              return true;
           }
           else if(e.KeyCode() == r2::io::KEY_d)
           {
               mDirectionPressed.Set(RIGHT);
+              return true;
           }
           
-          return true;
+          return false;
        });
         
         dispatcher.Dispatch<r2::evt::KeyReleasedEvent>([this](const r2::evt::KeyReleasedEvent& e)
@@ -83,21 +87,25 @@ namespace r2::cam
            if(e.KeyCode() == r2::io::KEY_w)
            {
                mDirectionPressed.Remove(FORWARD);
+               return true;
            }
            else if(e.KeyCode() == r2::io::KEY_s)
            {
                mDirectionPressed.Remove(BACKWARD);
+               return true;
            }
            else if(e.KeyCode() == r2::io::KEY_a)
            {
                mDirectionPressed.Remove(LEFT);
+               return true;
            }
            else if(e.KeyCode() == r2::io::KEY_d)
            {
                mDirectionPressed.Remove(RIGHT);
+               return true;
            }
            
-           return true;
+           return false;
        });
 
         dispatcher.Dispatch<r2::evt::MouseWheelEvent>([this](const r2::evt::MouseWheelEvent&e){

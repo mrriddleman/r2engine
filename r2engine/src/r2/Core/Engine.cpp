@@ -8,8 +8,15 @@
 #include "r2pch.h"
 #include "Engine.h"
 #include "r2/Core/Events/Events.h"
+#ifdef R2_IMGUI
 #include "r2/ImGui/ImGuiLayer.h"
+#endif
 #include "r2/Core/Layer/AppLayer.h"
+
+#ifdef R2_EDITOR
+#include "r2/Core/Layer/EditorLayer.h"
+#endif
+
 #include "r2/Core/Layer/SoundLayer.h"
 #include "r2/Core/Layer/RenderLayer.h"
 #include "r2/Platform/Platform.h"
@@ -386,10 +393,15 @@ namespace r2
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             
+#ifdef R2_EDITOR
+            PushLayer(std::make_unique<EditorLayer>());
+#endif
+
+#ifdef R2_IMGUI
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
             mImGuiLayer = imguiLayer.get();
             PushOverlay(std::move(imguiLayer));
-
+#endif
             //Should be last/ first in the stack
             //@TODO(Serge): should check to see if the app initialized!
             PushAppLayer(std::make_unique<AppLayer>(std::move(app)));
@@ -466,9 +478,11 @@ namespace r2
             mLayerStack.Render(alpha);
         }
         
+#ifdef R2_IMGUI
         mImGuiLayer->Begin();
         mLayerStack.ImGuiRender();
         mImGuiLayer->End();
+#endif
     }
     
     const std::string& Engine::OrganizationName() const

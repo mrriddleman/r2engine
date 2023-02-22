@@ -9,8 +9,6 @@
 #define RenderLayer_h
 
 #include "r2/Core/Layer/Layer.h"
-#include "r2/Render/Camera/PerspectiveCameraController.h"
-#include "r2/Render/Camera/OrthoCameraController.h"
 
 namespace r2
 {

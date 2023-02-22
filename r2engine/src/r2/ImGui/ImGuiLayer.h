@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-16.
 //
 
+#ifdef R2_IMGUI
 #ifndef ImGuiLayer_hpp
 #define ImGuiLayer_hpp
 
@@ -35,3 +36,4 @@ namespace r2
 }
 
 #endif /* ImGuiLayer_hpp */
+#endif

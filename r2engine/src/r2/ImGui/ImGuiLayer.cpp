@@ -5,6 +5,7 @@
 //  Created by Serge Lansiquot on 2019-02-16.
 //
 #include "r2pch.h"
+#ifdef R2_IMGUI
 #include "ImGuiLayer.h"
 #include "r2/Platform/IO.h"
 #include "r2/Platform/Platform.h"
@@ -42,7 +43,6 @@ namespace r2
         
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
         
         // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
         ImGuiStyle& style = ImGui::GetStyle();
@@ -54,7 +54,7 @@ namespace r2
         
         // Setup Platform/Renderer bindings
         ImGui_ImplSDL2_InitForOpenGL((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle(), r2::draw::rendererimpl::GetRenderContext());
-        ImGui_ImplOpenGL3_Init("#version 410");
+        ImGui_ImplOpenGL3_Init("#version 330");
     }
     
     void ImGuiLayer::Shutdown()
@@ -66,32 +66,39 @@ namespace r2
 
     void ImGuiLayer::Begin()
     {
-    //    ImGui_ImplOpenGL3_NewFrame();
-   //     ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
-  //      ImGui::NewFrame();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
+		ImGui::NewFrame();
+
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+		}
     }
     
     void ImGuiLayer::End()
     {
-        //ImGuiIO& io = ImGui::GetIO();
-        //io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
-        //
-        //ImGui::Render();
-        //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        //
-        //if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        //{
-        //    
-        //    ImGui::UpdatePlatformWindows();
-        //    ImGui::RenderPlatformWindowsDefault();
-        //    r2::draw::rendererimpl::MakeCurrent();
-        //}
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+		    ImGui::UpdatePlatformWindows();
+		    ImGui::RenderPlatformWindowsDefault();
+	    	r2::draw::rendererimpl::MakeCurrent();
+    	}
     }
     
     void ImGuiLayer::ImGuiRender()
     {
-        static bool show = false;
-      //  ImGui::ShowDemoWindow(&show);
+
     }
    
 }
+#endif

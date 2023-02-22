@@ -19,16 +19,12 @@ namespace r2
 {
     RenderLayer::RenderLayer()
         : Layer("Render Layer", true)
-		
 	{
-     //   r2::util::PathCpy(mShaderManifestPath, shaderManifestPath);
-      //  r2::util::PathCpy(mInternalShaderManifestPath, internalShaderManifestPath);
+
     }
     
     void RenderLayer::Init()
     {
-      //  r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
-      //  r2::draw::renderer::Init(engineMem.internalEngineMemoryHandle, mShaderManifestPath, mInternalShaderManifestPath);
     }
     
     void RenderLayer::Update()
