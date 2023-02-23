@@ -5,6 +5,8 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorMainMenuBar.h"
 #include "r2/Editor/EditorInspectorPanel.h"
+#include "r2/Editor/EditorAssetPanel.h"
+#include "r2/Editor/EditorScenePanel.h"
 #include "imgui.h"
 
 namespace r2
@@ -22,6 +24,12 @@ namespace r2
 
 		std::unique_ptr<edit::InspectorPanel> inspectorPanel = std::make_unique<edit::InspectorPanel>();
 		mEditorWidgets.push_back(std::move(inspectorPanel));
+
+		std::unique_ptr<edit::AssetPanel> assetPanel = std::make_unique<edit::AssetPanel>();
+		mEditorWidgets.push_back(std::move(assetPanel));
+
+		std::unique_ptr<edit::ScenePanel> scenePanel = std::make_unique<edit::ScenePanel>();
+		mEditorWidgets.push_back(std::move(scenePanel));
 
 		//now init all of the widgets
 		for (const auto& widget : mEditorWidgets)
