@@ -66,20 +66,20 @@ namespace r2
         }
     }
     
-    void LayerStack::ImGuiRender()
+    void LayerStack::ImGuiRender(u32 dockingSpaceID)
     {
         //@TODO(Serge): we may want to re-order these OR iterate backwards in the layer stack
 //              essentially we want to make sure that the render layer is called last!
         for(auto layer = mLayers.rbegin(); layer != mLayers.rend(); ++layer)
         {
             if(!layer->get()->IsDisabled())
-                layer->get()->ImGuiRender();
+                layer->get()->ImGuiRender(dockingSpaceID);
         }
         
         for(auto layer = mOverlays.rbegin(); layer != mOverlays.rend(); ++layer)
         {
             if(!layer->get()->IsDisabled())
-                layer->get()->ImGuiRender();
+                layer->get()->ImGuiRender(dockingSpaceID);
         }
     }
     

@@ -31,7 +31,7 @@ namespace r2
         
         void Update();
         void Render(float alpha);
-        void ImGuiRender();
+        void ImGuiRender(u32 dockingSpaceID);
         void OnEvent(evt::Event& e);
 
 

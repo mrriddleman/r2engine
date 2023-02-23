@@ -2,6 +2,9 @@
 #ifndef __EDITOR_H__
 #define __EDITOR_H__
 
+#include <vector>
+#include "r2/Editor/EditorWidget.h"
+
 namespace r2::evt
 {
 	class Event;
@@ -17,9 +20,12 @@ namespace r2
 		void Shutdown();
 		void OnEvent(evt::Event& e);
 		void Update();
-		void Render();
+		void Render(u32 dockingSpaceID);
 
 	private:
+
+		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
+
 	};
 }
 

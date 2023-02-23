@@ -480,7 +480,7 @@ namespace r2
         
 #ifdef R2_IMGUI
         mImGuiLayer->Begin();
-        mLayerStack.ImGuiRender();
+        mLayerStack.ImGuiRender(mImGuiLayer->GetDockingSpace());
         mImGuiLayer->End();
 #endif
     }

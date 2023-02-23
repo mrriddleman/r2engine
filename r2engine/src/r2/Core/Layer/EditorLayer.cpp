@@ -31,12 +31,12 @@ namespace r2
 		editor.Update();
 	}
 
-	void EditorLayer::ImGuiRender()
+	void EditorLayer::ImGuiRender(u32 dockingSpaceID)
 	{
 		if (!mEnabled)
 			return;
 
-		editor.Render();
+		editor.Render(dockingSpaceID);
 	}
 
 	void EditorLayer::OnEvent(evt::Event& event)

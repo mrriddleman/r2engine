@@ -24,14 +24,15 @@ namespace r2
         virtual void Init() override;
         virtual void Shutdown() override;
 
-        virtual void ImGuiRender() override;
+        virtual void ImGuiRender(u32 dockingSpaceID) override;
         
         void Begin();
         void End();
-        
+        u32 GetDockingSpace();
     private:
         
         u64 mTime = 0;
+        u32 mDockingSpace;
     };
 }
 

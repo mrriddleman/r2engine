@@ -28,6 +28,10 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "SDL_image.h"
 
+#ifdef R2_IMGUI
+#include "backends/imgui_impl_sdl2.h"
+#endif
+
 namespace
 {
     const u32 MAX_NUM_FILES = 1024;
@@ -557,6 +561,11 @@ namespace r2
 
 		while (SDL_PollEvent(&e))
 		{
+#ifdef R2_IMGUI
+            ImGui_ImplSDL2_ProcessEvent(&e);
+            ImGuiIO& io = ImGui::GetIO(); (void)io;
+#endif
+
 			switch (e.type)
 			{
 			case SDL_QUIT:
@@ -588,6 +597,12 @@ namespace r2
 			case SDL_MOUSEBUTTONUP:
 			case SDL_MOUSEBUTTONDOWN:
 			{
+#ifdef R2_IMGUI
+				if (io.WantCaptureMouse)
+				{
+                    break;
+				}
+#endif
 				r2::io::MouseData mouseData;
 
 				mouseData.state = e.button.state;
@@ -602,6 +617,13 @@ namespace r2
 
 			case SDL_MOUSEMOTION:
 			{
+				
+#ifdef R2_IMGUI
+				if (io.WantCaptureMouse)
+				{
+					break;
+				}
+#endif
 				r2::io::MouseData mouseData;
 
 				mouseData.x = e.motion.x;
@@ -616,6 +638,12 @@ namespace r2
 
 			case SDL_MOUSEWHEEL:
 			{
+#ifdef R2_IMGUI
+				if (io.WantCaptureMouse)
+				{
+					break;
+				}
+#endif
 				r2::io::MouseData mouseData;
 
 				mouseData.direction = e.wheel.direction;
@@ -630,6 +658,8 @@ namespace r2
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
+
+
 				r2::io::Key keyData;
 
 				keyData.state = e.key.state;
@@ -652,12 +682,28 @@ namespace r2
 					keyData.modifiers |= io::Key::CONTROL_PRESSED;
 				}
 
+#ifdef R2_IMGUI
+                //HACK for editor
+				if (io.WantCaptureKeyboard &&
+                    !(((keyData.modifiers & io::Key::SHIFT_PRESSED_KEY) == io::Key::SHIFT_PRESSED_KEY) &&
+                    (keyData.code == io::KEY_F1)))
+				{
+					break;
+				}
+#endif
+
 				mEngine.KeyEvent(keyData);
 			}
 			break;
 
 			case SDL_TEXTINPUT:
 			{
+#ifdef R2_IMGUI
+				if (io.WantCaptureKeyboard)
+				{
+					break;
+				}
+#endif
 				mEngine.TextEvent(e.text.text);
 			}
 			break;

@@ -10,8 +10,8 @@
 #include "r2/Platform/IO.h"
 #include "r2/Platform/Platform.h"
 #include "imgui.h"
-#include "examples/imgui_impl_sdl.h"
-#include "examples/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_opengl3.h"
 #include "r2/Core/Engine.h"
 #include "glad/glad.h"
 #include "r2/Render/Renderer/RendererImpl.h"
@@ -54,7 +54,7 @@ namespace r2
         
         // Setup Platform/Renderer bindings
         ImGui_ImplSDL2_InitForOpenGL((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle(), r2::draw::rendererimpl::GetRenderContext());
-        ImGui_ImplOpenGL3_Init("#version 330");
+        ImGui_ImplOpenGL3_Init("#version 410");
     }
     
     void ImGuiLayer::Shutdown()
@@ -75,7 +75,7 @@ namespace r2
 
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 		{
-			ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+			mDockingSpace = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
 		}
     }
     
@@ -94,8 +94,13 @@ namespace r2
 	    	r2::draw::rendererimpl::MakeCurrent();
     	}
     }
+
+    u32 ImGuiLayer::GetDockingSpace()
+    {
+        return mDockingSpace;
+    }
     
-    void ImGuiLayer::ImGuiRender()
+    void ImGuiLayer::ImGuiRender(u32 dockingSpaceID)
     {
 
     }
