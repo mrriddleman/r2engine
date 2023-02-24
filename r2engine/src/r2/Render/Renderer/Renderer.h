@@ -479,11 +479,11 @@ namespace r2::draw
 namespace r2::draw::renderer
 {
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath);
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath);
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u64 totalMemoryForMaterialParamPacks, u32 numMaterialParamPacks);
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u32 numMaterialParamPacks);
 
 	
 	//events

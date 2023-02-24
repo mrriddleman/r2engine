@@ -799,7 +799,7 @@ namespace r2::draw::renderer
 	//}
 
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appTexturePackManifests, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
 	{
 		//R2_CHECK(s_optrRenderer == nullptr, "We've already create the s_optrRenderer - are you trying to initialize more than once?");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
@@ -832,7 +832,6 @@ namespace r2::draw::renderer
 
 		u64 engineMaterialParamsPackSize = 0;
 
-		u64 totalMaterialParamsPackSize = 0;
 		u32 numMaterialParamsPacks = r2::sarr::Size(*pathsToLoad);
 		for (u32 i = 0; i < numMaterialParamsPacks; ++i)
 		{
@@ -849,8 +848,6 @@ namespace r2::draw::renderer
 			{
 				engineMaterialParamsPackSize = materialParamsPackSize;
 			}
-
-			totalMaterialParamsPackSize += materialParamsPackSize;
 
 			FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
 		}
@@ -873,7 +870,7 @@ namespace r2::draw::renderer
 
 		u64 materialMemorySystemSize = mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
 
-		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize, totalMaterialParamsPackSize, numMaterialParamsPacks);
+		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize, numMaterialParamsPacks);
 
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
@@ -2498,7 +2495,7 @@ namespace r2::draw::renderer
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
 	}
 
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u64 totalMaterialParamPacksSize, u32 numMaterialParamPacks)
+	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u32 numMaterialParamPacks)
 	{
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -2550,7 +2547,6 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 
-			r2::mem::utils::GetMaxMemoryForAllocation(totalMaterialParamPacksSize, ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
 

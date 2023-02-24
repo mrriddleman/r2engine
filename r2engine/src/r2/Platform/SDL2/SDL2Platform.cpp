@@ -27,6 +27,7 @@
 
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "SDL_image.h"
+#include "r2/Core/Layer/EditorLayer.h"
 
 #ifdef R2_IMGUI
 #include "backends/imgui_impl_sdl2.h"
@@ -597,11 +598,14 @@ namespace r2
 			case SDL_MOUSEBUTTONUP:
 			case SDL_MOUSEBUTTONDOWN:
 			{
-#ifdef R2_IMGUI
-				if (io.WantCaptureMouse)
-				{
-                    break;
-				}
+#if defined R2_IMGUI && defined R2_EDITOR
+                if (mEngine.mEditorLayer && mEngine.mEditorLayer->IsEnabled())
+                {
+                    if (io.WantCaptureMouse)
+                    {
+                        break;
+                    }
+                }
 #endif
 				r2::io::MouseData mouseData;
 
@@ -618,11 +622,14 @@ namespace r2
 			case SDL_MOUSEMOTION:
 			{
 				
-#ifdef R2_IMGUI
-				if (io.WantCaptureMouse)
-				{
-					break;
-				}
+#if defined R2_IMGUI && defined R2_EDITOR
+                if (mEngine.mEditorLayer && mEngine.mEditorLayer->IsEnabled())
+                {
+                    if (io.WantCaptureMouse)
+                    {
+                        break;
+                    }
+                }
 #endif
 				r2::io::MouseData mouseData;
 
@@ -638,11 +645,14 @@ namespace r2
 
 			case SDL_MOUSEWHEEL:
 			{
-#ifdef R2_IMGUI
-				if (io.WantCaptureMouse)
-				{
-					break;
-				}
+#if defined R2_IMGUI && defined R2_EDITOR
+                if (mEngine.mEditorLayer && mEngine.mEditorLayer->IsEnabled())
+                {
+                    if (io.WantCaptureMouse)
+                    {
+                        break;
+                    }
+                }
 #endif
 				r2::io::MouseData mouseData;
 
@@ -682,14 +692,17 @@ namespace r2
 					keyData.modifiers |= io::Key::CONTROL_PRESSED;
 				}
 
-#ifdef R2_IMGUI
+#if defined R2_IMGUI && defined R2_EDITOR
                 //HACK for editor
-				if (io.WantCaptureKeyboard &&
-                    !(((keyData.modifiers & io::Key::SHIFT_PRESSED_KEY) == io::Key::SHIFT_PRESSED_KEY) &&
-                    (keyData.code == io::KEY_F1)))
-				{
-					break;
-				}
+                if (mEngine.mEditorLayer && mEngine.mEditorLayer->IsEnabled())
+                {
+					if (io.WantCaptureKeyboard &&
+						!(((keyData.modifiers & io::Key::SHIFT_PRESSED_KEY) == io::Key::SHIFT_PRESSED_KEY) &&
+							(keyData.code == io::KEY_F1)))
+					{
+						break;
+					}
+                }
 #endif
 
 				mEngine.KeyEvent(keyData);
@@ -698,11 +711,14 @@ namespace r2
 
 			case SDL_TEXTINPUT:
 			{
-#ifdef R2_IMGUI
-				if (io.WantCaptureKeyboard)
-				{
-					break;
-				}
+#if defined R2_IMGUI && defined R2_EDITOR
+                if (mEngine.mEditorLayer && mEngine.mEditorLayer->IsEnabled())
+                {
+                    if (io.WantTextInput)
+                    {
+                        break;
+                    }
+                }
 #endif
 				mEngine.TextEvent(e.text.text);
 			}

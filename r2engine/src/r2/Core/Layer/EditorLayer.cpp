@@ -59,6 +59,11 @@ namespace r2
 			editor.OnEvent(event);
 		}
 	}
+
+	bool EditorLayer::IsEnabled() const
+	{
+		return mEnabled;
+	}
 }
 
 #endif

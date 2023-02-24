@@ -26,7 +26,8 @@ namespace r2::draw
 namespace r2
 {
     class ImGuiLayer;
-    
+    class EditorLayer;
+
     extern const s32 FULL_SCREEN_WINDOW;
     extern const s32 FULL_SCREEN_DESKTOP;
 
@@ -242,6 +243,10 @@ namespace r2
         LayerStack mLayerStack;
 #ifdef R2_IMGUI
         ImGuiLayer* mImGuiLayer;
+#endif
+
+#ifdef R2_EDITOR
+        EditorLayer* mEditorLayer;
 #endif
         draw::Renderer* mRendererBackends[draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES];
         

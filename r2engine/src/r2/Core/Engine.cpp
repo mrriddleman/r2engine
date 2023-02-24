@@ -386,7 +386,7 @@ namespace r2
             std::vector<std::string> initialMaterialPacksManifests;
             initialMaterialPacksManifests.insert(initialMaterialPacksManifests.begin(), appMaterialPacksManifests.begin(), appMaterialPacksManifests.end());
 
-            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialTexturePackManifests, initialMaterialPacksManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialMaterialPacksManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             //@TODO(Serge): don't use make unique!
@@ -394,7 +394,9 @@ namespace r2
             PushLayer(std::make_unique<SoundLayer>());
             
 #ifdef R2_EDITOR
-            PushLayer(std::make_unique<EditorLayer>());
+            std::unique_ptr<EditorLayer> editorLayer = std::make_unique<EditorLayer>();
+            mEditorLayer = editorLayer.get();
+            PushLayer(std::move(editorLayer));
 #endif
 
 #ifdef R2_IMGUI

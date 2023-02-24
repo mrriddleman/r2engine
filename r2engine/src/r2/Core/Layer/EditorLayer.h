@@ -16,6 +16,8 @@ namespace r2
 		virtual void Update() override;
 		virtual void ImGuiRender(u32 dockingSpaceID) override;
 		virtual void OnEvent(evt::Event& event) override;
+		bool IsEnabled() const;
+
 	private:
 		Editor editor;
 		bool mEnabled;
