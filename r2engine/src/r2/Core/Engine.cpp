@@ -393,11 +393,7 @@ namespace r2
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             
-#ifdef R2_EDITOR
-            std::unique_ptr<EditorLayer> editorLayer = std::make_unique<EditorLayer>();
-            mEditorLayer = editorLayer.get();
-            PushLayer(std::move(editorLayer));
-#endif
+
 
 #ifdef R2_IMGUI
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
@@ -407,6 +403,13 @@ namespace r2
             //Should be last/ first in the stack
             //@TODO(Serge): should check to see if the app initialized!
             PushAppLayer(std::make_unique<AppLayer>(std::move(app)));
+
+
+#ifdef R2_EDITOR
+			std::unique_ptr<EditorLayer> editorLayer = std::make_unique<EditorLayer>();
+			mEditorLayer = editorLayer.get();
+			PushLayer(std::move(editorLayer));
+#endif
 
             DetectGameControllers();
 

@@ -2,6 +2,8 @@
 #if defined(R2_EDITOR) && defined(R2_IMGUI)
 #include "r2/Editor/EditorMainMenuBar.h"
 #include "imgui.h"
+#include "ImGuiFileDialog.h"
+#include <glad/glad.h>
 
 namespace r2::edit 
 {
@@ -16,6 +18,8 @@ namespace r2::edit
 	void MainMenuBar::Init(Editor* noptrEditor) 
 	{
 		mnoptrEditor = noptrEditor;
+
+		
 	}
 
 	void MainMenuBar::Shutdown()
@@ -51,7 +55,7 @@ namespace r2::edit
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
-
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*,.glsl,.fs,.vs,.gs", ".");
 				}
 				if (ImGui::BeginMenu("Open Recent"))
 				{
@@ -112,6 +116,25 @@ namespace r2::edit
 
 			ImGui::EndMainMenuBar();
 		}
+
+
+		// display
+		if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+		{
+			// action if OK
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+				// action
+			}
+
+
+
+			// close
+			ImGuiFileDialog::Instance()->Close();
+		}
+
 	}
 }
 

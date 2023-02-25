@@ -20,7 +20,8 @@ project "assetlib"
 	files
 	{
 		"include/assetlib/*.h",
-		"src/*.cpp"
+		"src/*.cpp",
+		"../../vendor/stb/*.cpp"
 	}
 
 	includedirs

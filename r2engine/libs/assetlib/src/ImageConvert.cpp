@@ -1,6 +1,6 @@
 #include "assetlib/ImageConvert.h"
 
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include "TexturePackMetaData_generated.h"

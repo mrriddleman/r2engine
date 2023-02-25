@@ -26,6 +26,7 @@ includeDirs["stb"] = "r2engine/vendor/stb"
 includeDirs["cgltf"] = "r2engine/vendor/cgltf"
 includeDirs["assetlib"] = "r2engine/libs/assetlib/include"
 includeDirs["texturemetadata"] = "r2engine/libs/assetlib/include/assetlib"
+includeDirs["ImGuiFileDialog"] = "r2engine/vendor/ImGuiFileDialog"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -64,7 +65,9 @@ project "r2engine"
 		"%{prj.name}/vendor/stb/*.h",
 		"%{prj.name}/vendor/stb/*.cpp",
 		"%{prj.name}/vendor/cgltf/*.h",
-		"%{prj.name}/vendor/cgltf/*.cpp"
+		"%{prj.name}/vendor/cgltf/*.cpp",
+		"%{prj.name}/vendor/ImGuiFileDialog/*.h",
+		"%{prj.name}/vendor/ImGuiFileDialog/*.cpp",
 	}
 
 	includedirs
@@ -81,6 +84,7 @@ project "r2engine"
 		"%{includeDirs.cgltf}",
 		"%{includeDirs.assetlib}",
 		"%{includeDirs.texturemetadata}",
+		"%{includeDirs.ImGuiFileDialog}",
 		"%{prj.name}/src/r2/Render/Model"
 	}
 
@@ -252,10 +256,13 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 
 
 
-	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or r2engine/vendor/stb/stb_image_write_impl.cpp or r2engine/vendor/sha256/sha256.cpp"
+	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or files:r2engine/vendor/stb/stb_image_resize_impl.cpp or files:r2engine/vendor/stb/stb_image_write_impl.cpp or files:r2engine/vendor/sha256/sha256.cpp"
 		flags {"NoPCH"}
 
 	filter "files:r2engine/vendor/cgltf/cgltf.cpp or files:r2engine/vendor/cgltf/cgltf_write.cpp"
+		flags {"NoPCH"}
+
+	filter "files:r2engine/vendor/ImGuiFileDialog/ImGuiFileDialog.cpp"
 		flags {"NoPCH"}
 
 
