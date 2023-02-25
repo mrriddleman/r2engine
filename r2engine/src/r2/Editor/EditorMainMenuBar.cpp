@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "ImGuiFileDialog.h"
 #include <glad/glad.h>
+#include "r2/Editor/Editor.h"
 
 namespace r2::edit 
 {
@@ -55,7 +56,7 @@ namespace r2::edit
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*,.glsl,.fs,.vs,.gs", ".");
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*", ".");
 				}
 				if (ImGui::BeginMenu("Open Recent"))
 				{
@@ -69,7 +70,7 @@ namespace r2::edit
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 				{
-
+					mnoptrEditor->Save();
 				}
 				if (ImGui::MenuItem("Save As.."))
 				{
@@ -82,11 +83,11 @@ namespace r2::edit
 			{
 				if (ImGui::MenuItem("Undo", "Ctrl+Z"))
 				{
-
+					mnoptrEditor->UndoLastAction();
 				}
 				if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z"))
 				{
-
+					mnoptrEditor->RedoLastAction();
 				}
 
 				ImGui::EndMenu();

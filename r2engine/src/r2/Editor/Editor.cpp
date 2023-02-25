@@ -58,23 +58,22 @@ namespace r2
 					((e.Modifiers() & r2::io::Key::CONTROL_PRESSED) == r2::io::Key::CONTROL_PRESSED) &&
 					((e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == 0))
 				{
-					printf("Undo\n");
+					UndoLastAction();
 					return true;
 				}
 				else if (e.KeyCode() == r2::io::KEY_z && 
 					((e.Modifiers() & r2::io::Key::CONTROL_PRESSED) == r2::io::Key::CONTROL_PRESSED) &&
 					((e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == r2::io::Key::SHIFT_PRESSED_KEY))
 				{
-					printf("Redo\n");
+					RedoLastAction();
 					return true;
 				}
 				else if (e.KeyCode() == r2::io::KEY_s &&
 					((e.Modifiers() & r2::io::Key::CONTROL_PRESSED) == r2::io::Key::CONTROL_PRESSED))
 				{
-					printf("Save\n");
+					Save();
 					return true;
 				}
-				
 
 				return false;
 			});
@@ -103,6 +102,46 @@ namespace r2
 
 		static bool show = false;
 		ImGui::ShowDemoWindow(&show);
+	}
+
+	void Editor::PostNewEditorAction(std::unique_ptr<edit::EditorAction> action)
+	{
+		//Do the action
+		action->Redo();
+		mUndoStack.push_back(std::move(action));
+	}
+
+	void Editor::UndoLastAction()
+	{
+		if (!mUndoStack.empty())
+		{
+			std::unique_ptr<edit::EditorAction> action = std::move(mUndoStack.back());
+
+			mUndoStack.pop_back();
+
+			action->Undo();
+
+			mRedoStack.push_back(std::move(action));
+		}
+	}
+
+	void Editor::RedoLastAction()
+	{
+		if (!mRedoStack.empty())
+		{
+			std::unique_ptr<edit::EditorAction> action = std::move(mRedoStack.back());
+
+			mRedoStack.pop_back();
+
+			action->Redo();
+
+			mUndoStack.push_back(std::move(action));
+		}
+	}
+
+	void Editor::Save()
+	{
+		printf("Save!\n");
 	}
 
 }
