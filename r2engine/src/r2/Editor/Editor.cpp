@@ -93,7 +93,12 @@ namespace r2
 		}
 	}
 
-	void Editor::Render(u32 dockingSpaceID)
+	void Editor::Render()
+	{
+
+	}
+
+	void Editor::RenderImGui(u32 dockingSpaceID)
 	{
 		for (const auto& widget : mEditorWidgets)
 		{
