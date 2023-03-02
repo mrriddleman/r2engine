@@ -108,6 +108,8 @@ namespace r2::ecs
 		template<typename Component>
 		ComponentType GetComponentType()
 		{
+			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
+
 			R2_CHECK(r2::shashmap::Has(*mComponentTypes, componentTypeHash), "We don't have that type!");
 
 			ComponentType defaultIndex = -1;
@@ -161,7 +163,7 @@ namespace r2::ecs
 			memorySize +=
 				r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ComponentManager), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<IComponentArray*>::MemorySize(maxNumComponents), alignment, headerSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking)
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(static_cast<u32>( maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking)
 				;
 
 			return memorySize;

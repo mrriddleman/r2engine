@@ -82,6 +82,7 @@ namespace r2
         template<typename T, class ARENA> r2::SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description);
         template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity);
     
+        template<typename T> inline s64 IndexOf(SArray<T>& dst, const T& val);
     }
     
     namespace sarr
@@ -212,6 +213,21 @@ namespace r2
                 dst[i] = val;
             }
             dst.mSize = dst.mCapacity;
+        }
+
+        template<typename T> inline s64 IndexOf(SArray<T>& dst, const T& val)
+        {
+            s64 size = static_cast<s64>(r2::sarr::Size(dst));
+
+            for (s64 i = 0; i < size; i++)
+            {
+                if (val == r2::sarr::At(dst, i))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
         
         template<typename T, class ARENA> SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)

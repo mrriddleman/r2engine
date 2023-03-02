@@ -33,6 +33,9 @@
 #include <chrono>
 #endif
 
+#include "r2/Game/ECS/Entity.h"
+#include "r2/Game/ECS/ComponentManager.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetCommands/TexturePackHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"

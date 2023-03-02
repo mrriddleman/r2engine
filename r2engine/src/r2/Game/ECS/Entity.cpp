@@ -6,6 +6,7 @@ namespace r2::ecs
 {
 	EntityManager::EntityManager()
 		: mAvailbleEntities(nullptr)
+		, mEntitySignatures(nullptr)
 	{
 	}
 
@@ -54,6 +55,8 @@ namespace r2::ecs
 
 	}
 
+
+
 	u32 EntityManager::NumLivingEntities() const
 	{
 		if (!mAvailbleEntities)
@@ -62,7 +65,17 @@ namespace r2::ecs
 			return 0;
 		}
 
-		return static_cast<u32>(r2::squeue::Size(*mAvailbleEntities));
+		return static_cast<u32>(r2::squeue::Space(*mAvailbleEntities));
+	}
+
+	void EntityManager::SetSignature(Entity entity, Signature signature)
+	{
+		r2::sarr::At(*mEntitySignatures, entity) = signature;
+	}
+
+	Signature& EntityManager::GetSignature(Entity entity)
+	{
+		return r2::sarr::At(*mEntitySignatures, entity);
 	}
 
 	u64 EntityManager::MemorySize(u32 maxEntities, u32 alignment, u32 headerSize, u32 boundsChecking)
