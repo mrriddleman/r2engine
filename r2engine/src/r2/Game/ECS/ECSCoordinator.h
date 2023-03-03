@@ -117,6 +117,12 @@ namespace r2::ecs
 			mSystemManager->SetSignature<SystemType>(signature);
 		}
 
+		template<typename SystemType>
+		void MoveEntity(u64 fromIndex, u64 toIndex)
+		{
+			mSystemManager->MoveEntity<SystemType>(fromIndex, toIndex);
+		}
+
 		static u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking);
 	private:
 
