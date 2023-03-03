@@ -7,7 +7,8 @@ namespace r2::ecs
 {
 	struct System
 	{
-		r2::SArray<Entity>* mEntities;
+		r2::SArray<Entity>* mEntities = nullptr;
+		bool mKeepSorted = false;
 	};
 }
 

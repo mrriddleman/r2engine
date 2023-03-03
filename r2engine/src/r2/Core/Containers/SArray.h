@@ -83,6 +83,8 @@ namespace r2
         template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity);
     
         template<typename T> inline s64 IndexOf(SArray<T>& dst, const T& val);
+
+        template<typename T> inline void RemoveElementAtIndexShiftLeft(SArray<T>& dst, u64 index);
     }
     
     namespace sarr
@@ -246,6 +248,16 @@ namespace r2
 			array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
 
 			return array;
+        }
+
+        template<typename T> inline void RemoveElementAtIndexShiftLeft(SArray<T>& dst, u64 index)
+        {
+            for (u64 i = index + 1; i < r2::sarr::Size(dst); ++i)
+            {
+                dst.mData[i - 1] = dst.mData[i];
+            }
+
+            --dst.mSize;
         }
         
     }

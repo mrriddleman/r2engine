@@ -22,12 +22,21 @@ namespace r2::ecs
 
 		for (; iter != r2::shashmap::End(*mSystems); ++iter)
 		{
+			const auto& system = iter->value;
+
 			r2::SArray<Entity>* entities = iter->value->mEntities;
 
 			s64 index = r2::sarr::IndexOf(*entities, entity);
-			if (index > 0)
+			
+			R2_CHECK(index != -1, "Index is -1");
+			
+			if (!system->mKeepSorted)
 			{
 				r2::sarr::RemoveAndSwapWithLastElement(*entities, index);
+			}
+			else
+			{
+				RemoveEntityKeepSorted(system, entity, index);
 			}
 		}
 	}
@@ -51,9 +60,16 @@ namespace r2::ecs
 			else
 			{
 				s64 index = r2::sarr::IndexOf(*system->mEntities, entity);
-				if (index > 0)
+				
+				R2_CHECK(index != -1, "Index is -1");
+				
+				if (!system->mKeepSorted)
 				{
 					r2::sarr::RemoveAndSwapWithLastElement(*system->mEntities, index);
+				}
+				else
+				{
+					RemoveEntityKeepSorted(system, entity, index);
 				}
 			}
 		}
@@ -71,5 +87,10 @@ namespace r2::ecs
 			;
 
 		return memorySize;
+	}
+
+	void SystemManager::RemoveEntityKeepSorted(const System* system, Entity entity, s64 index)
+	{
+		r2::sarr::RemoveElementAtIndexShiftLeft(*system->mEntities, index);
 	}
 }

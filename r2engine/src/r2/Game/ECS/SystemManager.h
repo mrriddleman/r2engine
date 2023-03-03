@@ -104,9 +104,44 @@ namespace r2::ecs
 
 		void EntityDestroyed(Entity entity);
 		void EntitySignatureChanged(Entity entity, Signature entitySignature);
+
+		template<typename SystemType>
+		void MoveEntity(u64 fromIndex, u64 toIndex)
+		{
+			auto systemTypeHash = std::type_index(typeid(SystemType)).hash_code();
+			R2_CHECK(r2::shashmap::Has(*mSystems, systemTypeHash), "We've already registered that system!");
+
+			System* nullSystem = nullptr;
+			System* system = r2::shashmap::Get(*mSystems, systemTypeHash, nullSystem);
+			R2_CHECK(system != nullSystem, "We don't have that system?");
+
+			const auto numEntities = r2::sarr::Size(*system->mEntities);
+			R2_CHECK(fromIndex < numEntities, "fromIndex is invalid");
+			R2_CHECK(toIndex < numEntities, "toIndex is invalid");
+			if (fromIndex == toIndex)
+			{
+				return; //nothing to do
+			}
+
+			Entity e = r2::sarr::At(*system->mEntities, fromIndex);
+
+			const int direction = fromIndex < toIndex ? 1 : -1;
+
+			for (u64 i = fromIndex; i != toIndex; i += direction)
+			{
+				const auto next = i + direction;
+				r2::sarr::At(*system->mEntities, i) = r2::sarr::At(*system->mEntities, next);
+			}
+
+			r2::sarr::At(*system->mEntities, toIndex) = e;
+		}
+
 		static u64 MemorySize(u32 maxNumSystems, u32 maxNumEntities, u32 alignment, u32 headerSize, u32 boundsChecking);
 
 	private:
+
+		void RemoveEntityKeepSorted(const System* system, Entity entity, s64 index);
+
 		r2::SHashMap<System*>* mSystems;
 		r2::SHashMap<Signature>* mSignatures;
 	};
