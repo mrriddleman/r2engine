@@ -28,15 +28,16 @@ namespace r2::ecs
 
 			s64 index = r2::sarr::IndexOf(*entities, entity);
 			
-			R2_CHECK(index != -1, "Index is -1");
-			
-			if (!system->mKeepSorted)
+			if (index != -1)
 			{
-				r2::sarr::RemoveAndSwapWithLastElement(*entities, index);
-			}
-			else
-			{
-				RemoveEntityKeepSorted(system, entity, index);
+				if (!system->mKeepSorted)
+				{
+					r2::sarr::RemoveAndSwapWithLastElement(*entities, index);
+				}
+				else
+				{
+					RemoveEntityKeepSorted(system, entity, index);
+				}
 			}
 		}
 	}
@@ -53,23 +54,27 @@ namespace r2::ecs
 			Signature emptySignature = {};
 			const Signature & systemSignature = r2::shashmap::Get(*mSignatures, type, emptySignature);
 
+			s64 index = r2::sarr::IndexOf(*system->mEntities, entity);
+
 			if ((entitySignature & systemSignature) == systemSignature)
 			{
-				r2::sarr::Push(*system->mEntities, entity);
+				if (index == -1)
+				{
+					r2::sarr::Push(*system->mEntities, entity);
+				}
 			}
 			else
 			{
-				s64 index = r2::sarr::IndexOf(*system->mEntities, entity);
-				
-				R2_CHECK(index != -1, "Index is -1");
-				
-				if (!system->mKeepSorted)
+				if (index != -1)
 				{
-					r2::sarr::RemoveAndSwapWithLastElement(*system->mEntities, index);
-				}
-				else
-				{
-					RemoveEntityKeepSorted(system, entity, index);
+					if (!system->mKeepSorted)
+					{
+						r2::sarr::RemoveAndSwapWithLastElement(*system->mEntities, index);
+					}
+					else
+					{
+						RemoveEntityKeepSorted(system, entity, index);
+					}
 				}
 			}
 		}
