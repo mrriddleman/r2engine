@@ -111,6 +111,12 @@ namespace r2::ecs
 			return mSystemManager->RegisterSystem<ARENA, SystemType>(arena);
 		}
 
+		template<class ARENA, typename SystemType>
+		void UnRegisterSystem(ARENA& arena)
+		{
+			mSystemManager->UnRegisterSystem<SystemType>(arena);
+		}
+
 		template<typename SystemType>
 		void SetSystemSignature(Signature signature)
 		{
