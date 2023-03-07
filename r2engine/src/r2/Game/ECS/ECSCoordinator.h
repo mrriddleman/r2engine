@@ -122,9 +122,11 @@ namespace r2::ecs
 		}
 
 		template<class ARENA, typename SystemType>
-		SystemType* RegisterSystem(ARENA& arena)
+		System* RegisterSystem(ARENA& arena)
 		{
-			return mSystemManager->RegisterSystem<ARENA, SystemType>(arena);
+			System* newSystem = mSystemManager->RegisterSystem<ARENA, SystemType>(arena);
+			newSystem->mnoptrCoordinator = this;
+			return newSystem;
 		}
 
 		template<class ARENA, typename SystemType>

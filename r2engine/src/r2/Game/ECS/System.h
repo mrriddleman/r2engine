@@ -5,10 +5,14 @@
 
 namespace r2::ecs
 {
+	class ECSCoordinator;
+
+
 	struct System
 	{
 		r2::SArray<Entity>* mEntities = nullptr;
 		bool mKeepSorted = false;
+		ECSCoordinator* mnoptrCoordinator = nullptr;
 	};
 }
 

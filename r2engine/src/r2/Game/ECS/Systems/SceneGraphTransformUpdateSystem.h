@@ -5,6 +5,9 @@
 
 namespace r2::ecs
 {
+	//The purpose of this system is to update the modelMatrix of each entity if the entity needs it 
+	//ie. if there is a TransformDirtyComponent attached to the entity
+	//this way, we only update modelMatrices when needed instead of every frame
 	class SceneGraphTransformUpdateSystem : public System
 	{
 	public:

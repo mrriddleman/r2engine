@@ -49,8 +49,6 @@ namespace r2
 
 			coordinator->SetSystemSignature<ecs::SceneGraphSystem>(systemSignature);
 
-
-
 			mnoptrSceneGraphTransformUpdateSystem = coordinator->RegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
 
 			if (mnoptrSceneGraphTransformUpdateSystem == nullptr)
@@ -65,7 +63,6 @@ namespace r2
 			systemUpdateSignature.set(coordinator->GetComponentType<ecs::TransformDirtyComponent>());
 
 			coordinator->SetSystemSignature<ecs::SceneGraphTransformUpdateSystem>(systemUpdateSignature);
-			
 
 			return true;
 		}
@@ -80,6 +77,10 @@ namespace r2
 			mnoptrSceneGraphSystem = nullptr;
 			mnoptrECSCoordinator = nullptr;
 		}
+
+		ecs::Entity CreateEntity();
+		ecs::Entity CreateEntity(ecs::Entity parent);
+		void DestroyEntity(ecs::Entity entity);
 
 		void Attach(ecs::Entity entity, ecs::Entity parent);
 		void Detach(ecs::Entity entity);

@@ -9,7 +9,6 @@ namespace r2::ecs
 	struct HeirarchyComponent
 	{
 		Entity parent = INVALID_ENTITY;
-		r2::math::Transform worldParentInverse; //...?
 	};
 }
 

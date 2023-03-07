@@ -7,8 +7,9 @@
 namespace r2
 {
 	SceneGraph::SceneGraph()
-		:mnoptrSceneGraphSystem(nullptr)
-		, mnoptrECSCoordinator(nullptr)
+		:mnoptrECSCoordinator(nullptr)
+		,mnoptrSceneGraphSystem(nullptr) 
+		,mnoptrSceneGraphTransformUpdateSystem(nullptr)
 	{
 
 	}
@@ -17,15 +18,53 @@ namespace r2
 	{
 		R2_CHECK(mnoptrSceneGraphSystem == nullptr, "Did you forget to Shutdown the SceneGraph?");
 		R2_CHECK(mnoptrECSCoordinator == nullptr, "Did you forget to Shutdown the SceneGraph?");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 	}
 
+	ecs::Entity SceneGraph::CreateEntity()
+	{
+		return CreateEntity(ecs::INVALID_ENTITY);
+	}
 
+	ecs::Entity SceneGraph::CreateEntity(ecs::Entity parent)
+	{
+		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+
+		ecs::Entity newEntity = mnoptrECSCoordinator->CreateEntity();
+
+		ecs::HeirarchyComponent heirarchyComponent;
+		heirarchyComponent.parent = parent;
+
+		mnoptrECSCoordinator->AddComponent<ecs::HeirarchyComponent>(newEntity, heirarchyComponent);
+
+		ecs::TransformComponent transformComponent;
+		transformComponent.modelMatrix = glm::mat4(1.0f);
+
+		mnoptrECSCoordinator->AddComponent<ecs::TransformComponent>(newEntity, transformComponent);
+
+		ecs::TransformDirtyComponent dirty;
+		mnoptrECSCoordinator->AddComponent<ecs::TransformDirtyComponent>(newEntity, dirty);
+
+		return newEntity;
+	}
+
+	void SceneGraph::DestroyEntity(ecs::Entity entity)
+	{
+		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+
+		mnoptrECSCoordinator->DestroyEntity(entity);
+	}
 
 	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent)
 	{
 		R2_CHECK(entity != parent, "These shouldn't be the same?");
 		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
 		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 
 		//we should check to see if we already have a heirarchy component for this entity first
 		//if we don't then add one
@@ -51,7 +90,7 @@ namespace r2
 		{
 			r2::SArray<UpdatedEntity>* entitiesToUpdate = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, UpdatedEntity, ecs::MAX_NUM_ENTITIES);
 
-			for (size_t i = numEntities - 1; i >= 0; --i)
+			for (s32 i = static_cast<s32>(numEntities) - 1; i >= 0; --i)
 			{
 				ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
 
@@ -75,12 +114,9 @@ namespace r2
 					updateEntity.e = e;
 					updateEntity.index = parentIndex;
 
-
-					
 					r2::sarr::Push(*entitiesToUpdate, updateEntity);
 				}
 			}
-
 
 			const auto numEntitiesToUpdate = r2::sarr::Size(*entitiesToUpdate);
 
@@ -92,23 +128,61 @@ namespace r2
 				SetDirtyFlagOnHeirarchy(e, index);
 			}
 
-
 			FREE(entitiesToUpdate, *MEM_ENG_SCRATCH_PTR);
 		}
 	}
 
 	void SceneGraph::Detach(ecs::Entity entity)
 	{
+		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 
+		ecs::HeirarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);
+		heirarchyComponent.parent = ecs::INVALID_ENTITY;
+
+		s64 index = r2::sarr::IndexOf(*mnoptrSceneGraphSystem->mEntities, entity);
+
+		SetDirtyFlagOnHeirarchy(entity, index);
 	}
 
 	void SceneGraph::DetachChildren(ecs::Entity parent)
 	{
+		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 
+		r2::SArray<ecs::Entity>* entitiesToUpdate = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);
+
+		const auto numEntities = r2::sarr::Size(*mnoptrSceneGraphSystem->mEntities);
+
+		for (u32 i = 0; i < numEntities; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
+			auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+
+			if (heirarchyComponent.parent == parent)
+			{
+				r2::sarr::Push(*entitiesToUpdate, e);
+			}
+		}
+
+		const auto numChildren = r2::sarr::Size(*entitiesToUpdate);
+
+		for (u32 i = 0; i < numChildren; ++i)
+		{
+			Detach(r2::sarr::At(*entitiesToUpdate, i));
+		}
+
+		FREE(entitiesToUpdate, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void SceneGraph::SetDirtyFlagOnHeirarchy(ecs::Entity entity, u32 startingIndex)
 	{
+		R2_CHECK(mnoptrECSCoordinator != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+
 		if (!mnoptrECSCoordinator->HasComponent<ecs::TransformDirtyComponent>(entity))
 		{
 			ecs::TransformDirtyComponent c;
@@ -129,13 +203,8 @@ namespace r2
 			}
 			else if (heirarchy.parent == entity)
 			{
-				UpdatedEntity updateEntity;
-				updateEntity.e = e;
-				updateEntity.index = i;
-
 				SetDirtyFlagOnHeirarchy(e, i);
 			}
 		}
 	}
-
 }
