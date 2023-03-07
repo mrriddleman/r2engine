@@ -59,7 +59,14 @@ namespace r2::ecs
 			R2_CHECK(mSignatures != nullptr, "We haven't initialized the SystemManager yet!");
 			auto systemTypeHash = std::type_index(typeid(SystemType)).hash_code();
 
-			R2_CHECK(!r2::shashmap::Has(*mSystems, systemTypeHash), "We've already registered that system!");
+			System* nullSystem = nullptr;
+			System* aSystem = r2::shashmap::Get(*mSystems, systemTypeHash, nullSystem);
+			
+			if (aSystem != nullSystem)
+			{
+				//we already have it so just return it
+				return aSystem;
+			}
 
 			SystemType* system = ALLOC(SystemType, arena);
 
@@ -76,13 +83,15 @@ namespace r2::ecs
 		void UnRegisterSystem(ARENA& arena)
 		{
 			auto systemTypeHash = std::type_index(typeid(SystemType)).hash_code();
-			R2_CHECK(r2::shashmap::Has(*mSystems, systemTypeHash), "We've already registered that system!");
 
 			System* nullSystem = nullptr;
 
 			System* system = r2::shashmap::Get(*mSystems, systemTypeHash, nullSystem);
 
-			R2_CHECK(system != nullSystem, "We should have a system here");
+			if (system == nullSystem)
+			{
+				return;
+			}
 
 			r2::shashmap::Remove(*mSystems, systemTypeHash);
 			r2::shashmap::Remove(*mSignatures, systemTypeHash);
@@ -100,6 +109,16 @@ namespace r2::ecs
 			R2_CHECK(r2::shashmap::Has(*mSignatures, systemTypeHash), "We should have a signature already - even if empty");
 
 			r2::shashmap::Set(*mSignatures, systemTypeHash, signature);
+		}
+
+		template<typename SystemType>
+		SystemType* GetSystem()
+		{
+			auto systemTypeHash = std::type_index(typeid(SystemType)).hash_code();
+
+			System* nullSystem = nullptr;
+
+			return r2::shashmap::Get(*mSystems, systemTypeHash, nullSystem);
 		}
 
 		void EntityDestroyed(Entity entity);

@@ -86,7 +86,7 @@ namespace r2::ecs
 			//first check to see if this entity already exists in this component array
 			R2_CHECK(!r2::shashmap::Has(*mEntityToIndexMap, entity), "We already have a component associated with this entity");
 
-			const auto index = r2::sarr::Size(*mComponentArray);
+			const auto index = static_cast<s64>(r2::sarr::Size(*mComponentArray));
 			r2::sarr::Push(*mComponentArray, component);
 			r2::shashmap::Set(*mEntityToIndexMap, entity, index);
 			r2::shashmap::Set(*mIndexToEntityMap, index, entity);
@@ -101,8 +101,11 @@ namespace r2::ecs
 			R2_CHECK(indexOfRemovedEntity != defaultIndex, "This must exist!");
 
 			s32 indexOfLastElement = r2::sarr::Size(*mComponentArray) - 1;
-			const Entity& entityOfLastElement = r2::sarr::At(*mComponentArray, indexOfLastElement);
+
+			const Entity& entityOfLastElement = r2::shashmap::Get(*mIndexToEntityMap, indexOfLastElement, INVALID_ENTITY);//r2::sarr::At(*mComponentArray, indexOfLastElement);
 			
+			R2_CHECK(entityOfLastElement != INVALID_ENTITY, "Should not be invalid");
+
 			r2::sarr::RemoveAndSwapWithLastElement(*mComponentArray, indexOfRemovedEntity);
 			
 			r2::shashmap::Set(*mEntityToIndexMap, entityOfLastElement, indexOfRemovedEntity);
@@ -121,11 +124,6 @@ namespace r2::ecs
 			R2_CHECK(index != defaultIndex, "Should never happen!");
 
 			return r2::sarr::At(*mComponentArray, index);
-		}
-
-		const Component& GetComponent(Entity entity)
-		{
-			return GetComponent(entity);
 		}
 
 		void EntityDestroyed(Entity entity) override

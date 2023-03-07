@@ -63,10 +63,26 @@ namespace r2::ecs
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
 
+		template<typename Component>
+		bool HasComponent(Entity entity)
+		{
+			const auto signature = mEntityManager->GetSignature(entity);
+
+			ComponentType componentType = GetComponentType<Component>();
+
+			return signature.test(componentType);
+		}
+
 		template<class ARENA, typename Component>
 		void RegisterComponent(ARENA& arena)
 		{
 			mComponentManager->RegisterComponentType<ARENA, Component>(arena);
+		}
+
+		template<class ARENA, typename Component>
+		void UnRegisterComponent(ARENA& arena)
+		{
+			mComponentManager->UnRegisterComponentType<ARENA, Component>(arena);
 		}
 
 		template<typename Component>

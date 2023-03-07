@@ -30,7 +30,10 @@ namespace r2::ecs
 			
 			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
 
-			R2_CHECK(!r2::shashmap::Has(*mComponentTypes, componentTypeHash), "We've already registered this component!");
+			if (r2::shashmap::Has(*mComponentTypes, componentTypeHash))
+			{
+				return;
+			}
 
 			ComponentArray<Component>* componentArray = ALLOC(ComponentArray<Component>, arena);
 
@@ -50,7 +53,10 @@ namespace r2::ecs
 		{
 			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
 
-			R2_CHECK(r2::shashmap::Has(*mComponentTypes, componentTypeHash), "We don't have that component type!");
+			if (!r2::shashmap::Has(*mComponentTypes, componentTypeHash))
+			{
+				return;
+			}
 
 			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
 
@@ -177,7 +183,13 @@ namespace r2::ecs
 		ComponentArray<Component>* GetComponentArray()
 		{
 			ComponentType index = GetComponentType<Component>();
-			return std::static_pointer_cast<ComponentArray<Component>>(r2::sarr::Get(*mComponentArrays, index));
+
+			IComponentArray* componentArrayI = r2::sarr::At(*mComponentArrays, index);
+
+
+			return static_cast<ComponentArray<Component>*>(componentArrayI);
+
+			//return std::static_pointer_cast<ComponentArray<Component>>(r2::sarr::At(*mComponentArrays, index));
 		}
 	};
 }

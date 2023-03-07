@@ -8,6 +8,7 @@ namespace r2::ecs
 	struct TransformComponent
 	{
 		r2::math::Transform transform;
+		glm::mat4 modelMatrix;
 	};
 }
 
