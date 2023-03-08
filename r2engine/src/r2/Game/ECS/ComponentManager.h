@@ -26,8 +26,6 @@ namespace r2::ecs
 		template<class ARENA, typename Component>
 		void RegisterComponentType(ARENA& arena)
 		{
-			R2_CHECK(componentArray != nullptr, "We couldn't create the new componentArray!");
-			
 			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
 
 			if (r2::shashmap::Has(*mComponentTypes, componentTypeHash))
@@ -43,9 +41,9 @@ namespace r2::ecs
 
 			R2_CHECK(isInitialized, "Couldn't initialize the componentArray!");
 
-			r2::shashmap::Set(*mComponentTypes,static_cast<ComponentType>( r2::sarr::Size(*mComponentArrays)) );
+			r2::shashmap::Set(*mComponentTypes, componentTypeHash, static_cast<ComponentType>(r2::sarr::Size(*mComponentArrays)) );
 
-			r2::sarr::Push(*mComponentArrays, componentArray);
+			r2::sarr::Push(*mComponentArrays, (IComponentArray*)componentArray);
 		}
 
 		template<class ARENA, typename Component>

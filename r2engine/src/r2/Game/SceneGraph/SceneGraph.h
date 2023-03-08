@@ -32,7 +32,7 @@ namespace r2
 			coordinator->RegisterComponent<ARENA, ecs::TransformComponent>(arena);
 			coordinator->RegisterComponent<ARENA, ecs::TransformDirtyComponent>(arena);
 
-			mnoptrSceneGraphSystem = coordinator->RegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
+			mnoptrSceneGraphSystem = (ecs::SceneGraphSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
 
 			if (mnoptrSceneGraphSystem == nullptr)
 			{
@@ -49,7 +49,7 @@ namespace r2
 
 			coordinator->SetSystemSignature<ecs::SceneGraphSystem>(systemSignature);
 
-			mnoptrSceneGraphTransformUpdateSystem = coordinator->RegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
+			mnoptrSceneGraphTransformUpdateSystem = (ecs::SceneGraphTransformUpdateSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
 
 			if (mnoptrSceneGraphTransformUpdateSystem == nullptr)
 			{
@@ -70,7 +70,9 @@ namespace r2
 		template <class ARENA>
 		void Shutdown(ARENA& arena)
 		{
-			mnoptrECSCoordinator->UnRegisterSystem<ecs::SceneGraphSystem>(arena);
+
+			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
+			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
 			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::TransformDirtyComponent>(arena);
 			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::TransformComponent>(arena);
 			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::HeirarchyComponent>(arena);

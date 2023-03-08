@@ -65,14 +65,14 @@ namespace r2::ecs
 			if (aSystem != nullSystem)
 			{
 				//we already have it so just return it
-				return aSystem;
+				return static_cast<SystemType*>(aSystem);
 			}
 
 			SystemType* system = ALLOC(SystemType, arena);
 
 			system->mEntities = MAKE_SARRAY(arena, Entity, MAX_NUM_ENTITIES);
 
-			r2::shashmap::Set(*mSystems, systemTypeHash, system);
+			r2::shashmap::Set(*mSystems, systemTypeHash, (System*)system);
 
 			r2::shashmap::Set(*mSignatures, systemTypeHash, Signature{});
 

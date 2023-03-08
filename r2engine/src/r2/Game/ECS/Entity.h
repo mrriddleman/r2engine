@@ -40,7 +40,7 @@ namespace r2::ecs
 
 			if (!mEntitySignatures)
 			{
-				FREE(mAvailbleEntities, mEntitySignatures);
+				FREE(mAvailbleEntities, arena);
 				R2_CHECK(false, "We couldn't allocate the mEntitySignatures!");
 				return false;
 			}

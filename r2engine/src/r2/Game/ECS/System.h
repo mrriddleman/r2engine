@@ -6,7 +6,7 @@
 namespace r2::ecs
 {
 	class ECSCoordinator;
-
+	static const u32 MAX_NUM_SYSTEMS = 128;
 
 	struct System
 	{

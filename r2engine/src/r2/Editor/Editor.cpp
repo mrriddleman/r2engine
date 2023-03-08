@@ -12,12 +12,17 @@
 namespace r2
 {
 	Editor::Editor()
+		:mMallocArena(r2::mem::utils::MemBoundary())
 	{
 
 	}
 
 	void Editor::Init()
 	{
+		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
+		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 0, ecs::MAX_NUM_SYSTEMS);
+		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
+
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
 		mEditorWidgets.push_back(std::move(mainMenuBar));
@@ -46,6 +51,11 @@ namespace r2
 		}
 
 		mEditorWidgets.clear();
+
+		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
+		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);
+
+		FREE(mCoordinator, mMallocArena);
 	}
 
 	void Editor::OnEvent(evt::Event& e)
@@ -109,7 +119,7 @@ namespace r2
 		ImGui::ShowDemoWindow(&show);
 	}
 
-	void Editor::PostNewEditorAction(std::unique_ptr<edit::EditorAction> action)
+	void Editor::PostNewAction(std::unique_ptr<edit::EditorAction> action)
 	{
 		//Do the action
 		action->Redo();

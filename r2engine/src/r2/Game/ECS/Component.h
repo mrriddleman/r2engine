@@ -5,7 +5,7 @@
 
 namespace r2::ecs
 {
-	static const u32 MAX_NUM_COMPONENTS = 64;
+	static const u32 MAX_NUM_COMPONENTS = 128;
 	using Signature = std::bitset<MAX_NUM_COMPONENTS>;
 }
 

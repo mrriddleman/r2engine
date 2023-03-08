@@ -5,6 +5,9 @@
 #include <vector>
 #include "r2/Editor/EditorWidget.h"
 #include "r2/Editor/EditorActions/EditorAction.h"
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
 namespace r2::evt
 {
@@ -23,17 +26,20 @@ namespace r2
 		void Update();
 		void Render();
 		void RenderImGui(u32 dockingSpaceID);
-		void PostNewEditorAction(std::unique_ptr<edit::EditorAction> action);
+		void PostNewAction(std::unique_ptr<edit::EditorAction> action);
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
 
 	private:
 
+		r2::mem::MallocArena mMallocArena;
+		ecs::ECSCoordinator* mCoordinator;
+		SceneGraph mSceneGraph;
+
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;
 		std::vector<std::unique_ptr<edit::EditorAction>> mRedoStack;
-
 	};
 }
 
