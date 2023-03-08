@@ -13,6 +13,7 @@ namespace r2
 {
 	Editor::Editor()
 		:mMallocArena(r2::mem::utils::MemBoundary())
+		,mCoordinator(nullptr)
 	{
 
 	}
@@ -157,6 +158,16 @@ namespace r2
 	void Editor::Save()
 	{
 		printf("Save!\n");
+	}
+
+	SceneGraph& Editor::GetSceneGraph()
+	{
+		return mSceneGraph;
+	}
+
+	ecs::ECSCoordinator* Editor::GetECSCoordinator()
+	{
+		return mCoordinator;
 	}
 
 }

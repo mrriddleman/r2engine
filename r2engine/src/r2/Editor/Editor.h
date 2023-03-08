@@ -31,6 +31,9 @@ namespace r2
 		void RedoLastAction();
 		void Save();
 
+		SceneGraph& GetSceneGraph();
+		ecs::ECSCoordinator* GetECSCoordinator();
+
 	private:
 
 		r2::mem::MallocArena mMallocArena;
