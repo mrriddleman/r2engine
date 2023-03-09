@@ -7,7 +7,7 @@
 
 namespace r2::ecs
 {
-	struct EditorName
+	struct EditorNameComponent
 	{
 		std::string editorName;
 	};

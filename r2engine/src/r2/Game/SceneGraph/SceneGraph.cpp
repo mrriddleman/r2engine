@@ -207,4 +207,64 @@ namespace r2
 			}
 		}
 	}
+
+	void SceneGraph::GetAllChildrenForEntity(ecs::Entity parent, r2::SArray<ecs::Entity>& children)
+	{
+		r2::sarr::Clear(children);
+		const auto numEntitiesInScene = r2::sarr::Size(*mnoptrSceneGraphSystem->mEntities);
+		for (u32 i = 0; i < numEntitiesInScene; i++)
+		{
+			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
+
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+
+			if (heirarchyComponent.parent == parent)
+			{
+				r2::sarr::Push(children, e);
+			}
+		}
+	}
+
+	void SceneGraph::GetAllEntitiesInSubTree(ecs::Entity parent, u32 parentIndex, r2::SArray<ecs::Entity>& entities)
+	{
+		const auto numEntitiesInScene = r2::sarr::Size(*mnoptrSceneGraphSystem->mEntities);
+
+		for (u32 i = parentIndex+1; i < numEntitiesInScene; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+
+			if (heirarchyComponent.parent == parent)
+			{
+				r2::sarr::Push(entities, e);
+
+				GetAllEntitiesInSubTree(e, i, entities);
+			}
+		}
+	}
+
+	void SceneGraph::GetAllTopLevelEntities(r2::SArray<ecs::Entity>& entities, r2::SArray<u32>& indices)
+	{
+		r2::sarr::Clear(entities);
+		r2::sarr::Clear(indices);
+		const auto numEntitiesInScene = r2::sarr::Size(*mnoptrSceneGraphSystem->mEntities);
+		for (u32 i = 0; i < numEntitiesInScene; i++)
+		{
+			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
+
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+
+			if (heirarchyComponent.parent == ecs::INVALID_ENTITY)
+			{
+				r2::sarr::Push(entities, e);
+				r2::sarr::Push(indices, i);
+			}
+		}
+	}
+
+	void SceneGraph::GetAllEntitiesInScene(r2::SArray<ecs::Entity>& entities)
+	{
+		r2::sarr::Clear(entities);
+		r2::sarr::Copy(entities, *mnoptrSceneGraphSystem->mEntities);
+	}
 }

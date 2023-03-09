@@ -88,6 +88,11 @@ namespace r2
 		void Detach(ecs::Entity entity);
 		void DetachChildren(ecs::Entity parent);
 
+		void GetAllChildrenForEntity(ecs::Entity parent, r2::SArray<ecs::Entity>& children);
+		void GetAllEntitiesInSubTree(ecs::Entity parent, u32 parentIndex, r2::SArray<ecs::Entity>& entities);
+		void GetAllTopLevelEntities(r2::SArray<ecs::Entity>& entities, r2::SArray<u32>& indices);
+		void GetAllEntitiesInScene(r2::SArray<ecs::Entity>& entities);
+
 	private:
 
 		struct UpdatedEntity

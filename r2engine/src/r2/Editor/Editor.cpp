@@ -115,9 +115,6 @@ namespace r2
 		{
 			widget->Render(dockingSpaceID);
 		}
-
-		static bool show = false;
-		ImGui::ShowDemoWindow(&show);
 	}
 
 	void Editor::PostNewAction(std::unique_ptr<edit::EditorAction> action)
@@ -170,6 +167,10 @@ namespace r2
 		return mCoordinator;
 	}
 
+	r2::mem::MallocArena& Editor::GetMemoryArena()
+	{
+		return mMallocArena;
+	}
 }
 
 #endif

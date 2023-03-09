@@ -3,6 +3,7 @@
 #define __EDITOR_SCENE_PANEL_H__
 
 #include "r2/Editor/EditorWidget.h"
+#include "r2/Game/ECS/Entity.h"
 
 namespace r2::edit
 {
@@ -19,6 +20,24 @@ namespace r2::edit
 		virtual void Render(u32 dockingSpaceID) override;
 
 	private:
+
+		struct SceneTreeNode
+		{
+			ecs::Entity entity;
+			size_t numChildren;
+			std::vector<SceneTreeNode> children;
+			bool enabled = true;
+			bool show = true;
+		};
+
+		std::vector<SceneTreeNode> mSceneGraphData;
+
+		bool mSceneGraphDataNeedsUpdate;
+
+
+		void AddAllChildrenForEntity(SceneTreeNode& parent);
+		void DisplayNode(SceneTreeNode& node);
+		void AddNewEntity(ecs::Entity parent);
 	};
 }
 

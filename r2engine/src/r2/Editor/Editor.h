@@ -33,6 +33,7 @@ namespace r2
 
 		SceneGraph& GetSceneGraph();
 		ecs::ECSCoordinator* GetECSCoordinator();
+		r2::mem::MallocArena& GetMemoryArena();
 
 	private:
 
