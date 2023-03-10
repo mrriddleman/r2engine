@@ -5,8 +5,6 @@
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Game/ECS/Component.h"
 
-
-
 namespace r2::ecs
 {
 	using Entity = u32;

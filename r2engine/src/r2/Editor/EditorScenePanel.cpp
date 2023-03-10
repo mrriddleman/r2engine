@@ -7,6 +7,8 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
+
 #include "imgui.h"
 
 
@@ -139,7 +141,7 @@ namespace r2::edit
 		ImGui::TableNextColumn();
 		if (ImGui::Button("Add Entity"))
 		{
-			//@TODO(Serge): implement - we need to make a new EditorAction for Creating Entities and ensure that Undo/Redo works with it
+			mnoptrEditor->PostNewAction(std::make_unique<edit::CreateEntityEditorAction>(mnoptrEditor->GetSceneGraphPtr(), parent));
 		}
 		ImGui::TableNextColumn();
 		ImGui::TableNextColumn();

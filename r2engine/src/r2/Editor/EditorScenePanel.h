@@ -37,7 +37,7 @@ namespace r2::edit
 
 		void AddAllChildrenForEntity(SceneTreeNode& parent);
 		void DisplayNode(SceneTreeNode& node);
-		void AddNewEntity(ecs::Entity parent);
+		void AddNewEntityToTable(ecs::Entity parent);
 	};
 }
 

@@ -55,8 +55,6 @@ namespace r2::ecs
 
 	}
 
-
-
 	u32 EntityManager::NumLivingEntities() const
 	{
 		if (!mAvailbleEntities)

@@ -32,6 +32,7 @@ namespace r2
 		void Save();
 
 		SceneGraph& GetSceneGraph();
+		SceneGraph* GetSceneGraphPtr();
 		ecs::ECSCoordinator* GetECSCoordinator();
 		r2::mem::MallocArena& GetMemoryArena();
 

@@ -267,4 +267,10 @@ namespace r2
 		r2::sarr::Clear(entities);
 		r2::sarr::Copy(entities, *mnoptrSceneGraphSystem->mEntities);
 	}
+
+	r2::ecs::ECSCoordinator* SceneGraph::GetECSCoordinator() const
+	{
+		return mnoptrECSCoordinator;
+	}
+
 }

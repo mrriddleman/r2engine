@@ -7,6 +7,7 @@
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/EditorAssetPanel.h"
 #include "r2/Editor/EditorScenePanel.h"
+#include "r2/Game/ECS/Components/EditorNameComponent.h"
 #include "imgui.h"
 
 namespace r2
@@ -23,6 +24,10 @@ namespace r2
 		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
 		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 0, ecs::MAX_NUM_SYSTEMS);
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
+
+		//add some more components to the coordinator for the editor to use
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorNameComponent>(mMallocArena);
+
 
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
@@ -160,6 +165,11 @@ namespace r2
 	SceneGraph& Editor::GetSceneGraph()
 	{
 		return mSceneGraph;
+	}
+
+	SceneGraph* Editor::GetSceneGraphPtr()
+	{
+		return &mSceneGraph;
 	}
 
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()
