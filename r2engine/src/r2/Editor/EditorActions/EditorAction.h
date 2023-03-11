@@ -1,6 +1,7 @@
 #ifndef __EDITOR_ACTION_H__
 #define __EDITOR_ACTION_H__
 
+#ifdef R2_EDITOR
 namespace r2::edit
 {
 	class EditorAction
@@ -16,6 +17,6 @@ namespace r2::edit
 
 	};
 }
-
+#endif
 
 #endif // __EDITOR_ACTION_H__

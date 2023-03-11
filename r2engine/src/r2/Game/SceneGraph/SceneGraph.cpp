@@ -268,6 +268,12 @@ namespace r2
 		r2::sarr::Copy(entities, *mnoptrSceneGraphSystem->mEntities);
 	}
 
+	ecs::Entity SceneGraph::GetParent(ecs::Entity entity)
+	{
+		const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);
+		return heirarchyComponent.parent;
+	}
+
 	r2::ecs::ECSCoordinator* SceneGraph::GetECSCoordinator() const
 	{
 		return mnoptrECSCoordinator;

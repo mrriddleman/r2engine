@@ -8,7 +8,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/ECS/Components/EditorNameComponent.h"
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
-
+#include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
 
@@ -38,7 +38,19 @@ namespace r2::edit
 
 	void ScenePanel::OnEvent(evt::Event& e)
 	{
+		r2::evt::EventDispatcher dispatcher(e);
 
+		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
+		{
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
+
+		dispatcher.Dispatch<r2::evt::EditorEntityDestroyedEvent>([this](const r2::evt::EditorEntityDestroyedEvent& e)
+		{
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
 	}
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
@@ -114,24 +126,33 @@ namespace r2::edit
 			ImGui::Checkbox("", &node.enabled);
 			ImGui::TableNextColumn();
 			ImGui::Checkbox("", &node.show);
+			ImGui::TableNextColumn();
+			RemoveEntity(node.entity);
+
 			if (open)
 			{
 				for (SceneTreeNode& childNode : node.children)
 				{
 					DisplayNode(childNode);
 				}
-
-				AddNewEntityToTable(node.entity);
 				ImGui::TreePop();
 			}
 		}
 		else
 		{
-			ImGui::TreeNodeEx(editorNameComponent.editorName.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanFullWidth);
+			bool open = ImGui::TreeNodeEx(editorNameComponent.editorName.c_str(),  ImGuiTreeNodeFlags_SpanFullWidth );
 			ImGui::TableNextColumn();
 			ImGui::Checkbox("", &node.enabled);
 			ImGui::TableNextColumn();
 			ImGui::Checkbox("", &node.show);
+			ImGui::TableNextColumn();
+			RemoveEntity(node.entity);
+
+			if (open)
+			{
+				AddNewEntityToTable(node.entity);
+				ImGui::TreePop();
+			}	
 		}
 	}
 
@@ -139,12 +160,21 @@ namespace r2::edit
 	{
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
-		if (ImGui::Button("Add Entity"))
+		if (ImGui::Button("Add New Entity"))
 		{
-			mnoptrEditor->PostNewAction(std::make_unique<edit::CreateEntityEditorAction>(mnoptrEditor->GetSceneGraphPtr(), parent));
+			mnoptrEditor->PostNewAction(std::make_unique<edit::CreateEntityEditorAction>(mnoptrEditor, parent));
 		}
 		ImGui::TableNextColumn();
 		ImGui::TableNextColumn();
+		ImGui::TableNextColumn();
+	}
+
+	void ScenePanel::RemoveEntity(ecs::Entity entity)
+	{
+		if (ImGui::Button(" - "))
+		{
+
+		}
 	}
 
 	void ScenePanel::Render(u32 dockingSpaceID)
@@ -170,17 +200,19 @@ namespace r2::edit
 		{
 			static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
 
-			if (ImGui::BeginTable("EntityTable", 3, flags))
+			if (ImGui::BeginTable("EntityTable", 4, flags))
 			{
 				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_NoHide);
-				ImGui::TableSetupColumn("Enable", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 6.0f);
-				ImGui::TableSetupColumn("Show", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 5.0f);
+				ImGui::TableSetupColumn("Enable", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 4.0f);
+				ImGui::TableSetupColumn("Show", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 4.0f);
+				ImGui::TableSetupColumn("Delete", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 5.0f);
 				ImGui::TableHeadersRow();
 
 				for (SceneTreeNode& node : mSceneGraphData)
 				{
 					DisplayNode(node);
 				}
+
 				AddNewEntityToTable(ecs::INVALID_ENTITY);
 
 				ImGui::EndTable();

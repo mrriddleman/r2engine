@@ -1,8 +1,13 @@
 #ifndef __CREATE_ENTITY_EDITOR_ACTION_H__
 #define __CREATE_ENTITY_EDITOR_ACTION_H__
 
+#ifdef R2_EDITOR
 #include "r2/Editor/EditorActions/EditorAction.h"
-#include "r2/Game/SceneGraph/SceneGraph.h"
+
+namespace r2
+{
+	class Editor;
+}
 
 namespace r2::edit
 {
@@ -10,16 +15,17 @@ namespace r2::edit
 	{
 	public:
 
-		CreateEntityEditorAction(SceneGraph* sceneGraph, ecs::Entity parent = ecs::INVALID_ENTITY);
+		CreateEntityEditorAction(Editor* editor, ecs::Entity parent = ecs::INVALID_ENTITY);
 
 		virtual void Undo() override;
 		virtual void Redo() override;
 
 	private:
-		SceneGraph* mnoptrSceneGraph;
+		Editor* mnoptrEditor;
 		ecs::Entity mCreatedEntity;
 		ecs::Entity mParentEntity;
 	};
 }
 
+#endif
 #endif // __CREATE_ENTITY_EDITOR_ACTION_H__

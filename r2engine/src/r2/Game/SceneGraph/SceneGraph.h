@@ -93,6 +93,8 @@ namespace r2
 		void GetAllTopLevelEntities(r2::SArray<ecs::Entity>& entities, r2::SArray<u32>& indices);
 		void GetAllEntitiesInScene(r2::SArray<ecs::Entity>& entities);
 
+		ecs::Entity GetParent(ecs::Entity entity);
+
 
 		ecs::ECSCoordinator* GetECSCoordinator() const;
 

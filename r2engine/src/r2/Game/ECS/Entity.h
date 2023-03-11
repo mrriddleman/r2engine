@@ -21,6 +21,8 @@ namespace r2::ecs
 		template<class ARENA>
 		bool Init(ARENA& arena, u32 maxNumEntities, Entity startingEntity)
 		{
+			R2_CHECK(startingEntity > 0, "We can't use 0 as our starting entity since 0 means INVALID_ENTITY currently");
+
 			mAvailbleEntities = MAKE_SQUEUE(arena, Entity, maxNumEntities);
 
 			if (!mAvailbleEntities)
@@ -29,7 +31,7 @@ namespace r2::ecs
 				return false;
 			}
 
-			for (Entity i = startingEntity; i < maxNumEntities; ++i)
+			for (Entity i = startingEntity; i < (maxNumEntities + 1); ++i) //@NOTE(Serge): adding one here to offset the fact that 0 isn't possible
 			{
 				r2::squeue::PushBack(*mAvailbleEntities, i);
 			}

@@ -20,7 +20,11 @@ namespace r2
             EVT_MOUSE_BUTTON_PRESSED, EVT_MOUSE_BUTTON_RELEASED, EVT_MOUSE_MOVED, EVT_MOUSE_WHEEL,
             EVT_CONTROLLER_CONNECTED, EVT_CONTROLLER_DISCONNECTED, EVT_CONTROLLER_AXIS, EVT_CONTROLLER_BUTTON, EVT_CONTROLLER_DETECTED, EVT_CONTROLLER_REMAPPED,
             EVT_RESOLUTION_CHANGED,
-            EVT_RENDERER_BACKEND_CHANGED
+            EVT_RENDERER_BACKEND_CHANGED,
+#ifdef R2_EDITOR
+            EVT_EDITOR_CREATED_NEW_ENTITY,
+            EVT_EDITOR_DESTROYED_ENTITY,
+#endif
         };
         
         enum EventCategory
@@ -32,6 +36,9 @@ namespace r2
             ECAT_MOUSE        = BIT(3),
             ECAT_MOUSE_BUTTON = BIT(4),
             ECAT_CONTROLLER   = BIT(5),
+#ifdef R2_EDITOR
+            ECAT_EDITOR       = BIT(6),
+#endif
         };
         
 #define EVENT_CLASS_TYPE(type) static EventType GetStaticType() { return type; }\

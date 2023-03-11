@@ -12,6 +12,7 @@
 namespace r2::evt
 {
 	class Event;
+	class EditorEvent;
 }
 
 namespace r2
@@ -30,6 +31,9 @@ namespace r2
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
+
+		void PostEditorEvent(r2::evt::EditorEvent& e);
+
 
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();

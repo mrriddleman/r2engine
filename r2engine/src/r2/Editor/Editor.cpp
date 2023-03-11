@@ -7,8 +7,10 @@
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/EditorAssetPanel.h"
 #include "r2/Editor/EditorScenePanel.h"
+#include "r2/Editor/EditorEvents/EditorEvent.h"
 #include "r2/Game/ECS/Components/EditorNameComponent.h"
 #include "imgui.h"
+
 
 namespace r2
 {
@@ -22,7 +24,8 @@ namespace r2
 	void Editor::Init()
 	{
 		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
-		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 0, ecs::MAX_NUM_SYSTEMS);
+
+		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 1, ecs::MAX_NUM_SYSTEMS);
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
 		//add some more components to the coordinator for the editor to use
@@ -57,6 +60,8 @@ namespace r2
 		}
 
 		mEditorWidgets.clear();
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorNameComponent>(mMallocArena);
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);
@@ -160,6 +165,14 @@ namespace r2
 	void Editor::Save()
 	{
 		printf("Save!\n");
+	}
+
+	void Editor::PostEditorEvent(r2::evt::EditorEvent& e)
+	{
+		for (const auto& widget : mEditorWidgets)
+		{
+			widget->OnEvent(e);
+		}
 	}
 
 	SceneGraph& Editor::GetSceneGraph()
