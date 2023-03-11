@@ -16,14 +16,15 @@ namespace r2::edit
 	{
 	public:
 
-		DestroyEntityEditorAction(Editor* editor, ecs::Entity entityToDestroy);
+		DestroyEntityEditorAction(Editor* editor, ecs::Entity entityToDestroy, ecs::Entity parentOfEntityToDestroy);
 
 		virtual void Undo() override;
 		virtual void Redo() override;
 
 	private:
 		Editor* mnoptrEditor;
-		ecs::Entity mEditorToDestroy;
+		ecs::Entity mEntityToDestroy;
+		ecs::Entity mParentOfEntityToDestory;
 	};
 }
 

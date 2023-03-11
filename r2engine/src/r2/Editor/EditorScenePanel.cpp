@@ -8,6 +8,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/ECS/Components/EditorNameComponent.h"
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
+#include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
@@ -173,7 +174,7 @@ namespace r2::edit
 	{
 		if (ImGui::Button(" - "))
 		{
-
+			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
 		}
 	}
 
