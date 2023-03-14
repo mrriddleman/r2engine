@@ -25,6 +25,7 @@ namespace r2
             EVT_EDITOR_CREATED_NEW_ENTITY,
             EVT_EDITOR_DESTROYED_ENTITY,
             EVT_EDITOR_DESTROYED_ENTITY_TREE,
+            EVT_EDITOR_ENTITY_SELECTED,
 #endif
         };
         
@@ -39,6 +40,7 @@ namespace r2
             ECAT_CONTROLLER   = BIT(5),
 #ifdef R2_EDITOR
             ECAT_EDITOR       = BIT(6),
+            ECAT_EDITOR_ENTITY = BIT(7),
 #endif
         };
         

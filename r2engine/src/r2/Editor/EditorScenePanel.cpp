@@ -19,6 +19,8 @@ namespace r2::edit
 
 	ScenePanel::ScenePanel()
 		:mSceneGraphDataNeedsUpdate(true)
+		,mSelectedEntity(ecs::INVALID_ENTITY)
+		,mPrevSelectedEntity(ecs::INVALID_ENTITY)
 	{
 
 	}
@@ -55,10 +57,17 @@ namespace r2::edit
 		});
 
 		dispatcher.Dispatch<r2::evt::EditorEntityTreeDestroyedEvent>([this](const r2::evt::EditorEntityTreeDestroyedEvent& e)
-			{
-				mSceneGraphDataNeedsUpdate = true;
-				return e.ShouldConsume();
-			});
+		{
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
+
+		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
+		{
+			printf("%s\n", e.ToString().c_str());
+
+			return e.ShouldConsume();
+		});
 	}
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
@@ -133,17 +142,31 @@ namespace r2::edit
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
-		if (hasChildren)
-		{
-			bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
-			ImGui::TableNextColumn();
-			ImGui::Checkbox("", &node.enabled);
-			ImGui::TableNextColumn();
-			ImGui::Checkbox("", &node.show);
-			ImGui::TableNextColumn();
-			RemoveEntity(node.entity);
+		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth;
 
-			if (open)
+		bool isSelected = mSelectedEntity == node.entity;
+		if (isSelected)
+		{
+			nodeFlags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(), nodeFlags);
+
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+		{
+			mSelectedEntity = node.entity;
+		}
+
+		ImGui::TableNextColumn();
+		ImGui::Checkbox("", &node.enabled);
+		ImGui::TableNextColumn();
+		ImGui::Checkbox("", &node.show);
+		ImGui::TableNextColumn();
+		RemoveEntity(node.entity);
+
+		if (open)
+		{
+			if (hasChildren)
 			{
 				for (SceneTreeNode& childNode : node.children)
 				{
@@ -151,24 +174,11 @@ namespace r2::edit
 				}
 				ImGui::TreePop();
 			}
-		}
-		else
-		{
-			bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(),  ImGuiTreeNodeFlags_SpanFullWidth );
-			ImGui::TableNextColumn();
-			ImGui::Checkbox("", &node.enabled);
-			ImGui::TableNextColumn();
-			ImGui::Checkbox("", &node.show);
-			ImGui::TableNextColumn();
-			RemoveEntity(node.entity);
-
-			if (open)
+			else
 			{
 				AddNewEntityToTable(node.entity);
 				ImGui::TreePop();
-			}	
-			//Add the AddNewEntityToTable here
-
+			}
 		}
 	}
 
@@ -245,8 +255,16 @@ namespace r2::edit
 
 		ImGui::End();
 
-		//static bool show = false;
-		//ImGui::ShowDemoWindow(&show);
+		if (mPrevSelectedEntity != mSelectedEntity)
+		{
+			evt::EditorEntitySelectedEvent e(mSelectedEntity);
+			mnoptrEditor->PostEditorEvent(e);
+
+			mPrevSelectedEntity = mSelectedEntity;
+		}
+
+		static bool show = false;
+		ImGui::ShowDemoWindow(&show);
 	}
 
 }

@@ -4,61 +4,65 @@
 
 namespace r2::evt
 {
+	r2::ecs::Entity EditorEntityEvent::GetEntity() const
+	{
+		return mEntity;
+	}
+
+	EditorEntityEvent::EditorEntityEvent(ecs::Entity entity, bool shouldConsume)
+		:EditorEvent(shouldConsume)
+		,mEntity(entity)
+	{
+	}
+
 	EditorEntityCreatedEvent::EditorEntityCreatedEvent(ecs::Entity newEntity)
-		: EditorEvent(false)
-		,mNewEntity(newEntity)
+		: EditorEntityEvent(newEntity, false)
 	{
 	}
 
 	std::string EditorEntityCreatedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorEntityCreatedEvent new entity: " << mNewEntity;
+		ss << "EditorEntityCreatedEvent new entity: " << GetEntity();
 		return ss.str();
 	}
 
-	ecs::Entity EditorEntityCreatedEvent::GetNewEntity() const
-	{
-		return mNewEntity;
-	}
 
 	EditorEntityDestroyedEvent::EditorEntityDestroyedEvent(ecs::Entity destroyedEntity)
-		: EditorEvent(false)
-		, mDestroyedEntity(destroyedEntity)
+		: EditorEntityEvent(destroyedEntity, false)
 	{
 	}
 
 	std::string EditorEntityDestroyedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorEntityDestroyedEvent new entity: " << mDestroyedEntity;
+		ss << "EditorEntityDestroyedEvent new entity: " << GetEntity();
 		return ss.str();
 	}
 
-	ecs::Entity EditorEntityDestroyedEvent::GetDestroyedEntity() const
-	{
-		return mDestroyedEntity;
-	}
-
 	EditorEntityTreeDestroyedEvent::EditorEntityTreeDestroyedEvent(ecs::Entity destroyedEntity)
-		: EditorEvent(false)
-		,mDestroyedParentEntity(destroyedEntity)
+		: EditorEntityEvent(destroyedEntity, false)
 	{
-
 	}
 
 	std::string EditorEntityTreeDestroyedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorEntityTreeDestroyedEvent parent entity: " << mDestroyedParentEntity;
+		ss << "EditorEntityTreeDestroyedEvent parent entity: " << GetEntity();
 		return ss.str();
 	}
 
-	r2::ecs::Entity EditorEntityTreeDestroyedEvent::GetDestroyedParentEntity() const
+	EditorEntitySelectedEvent::EditorEntitySelectedEvent(ecs::Entity entitySelected)
+		:EditorEntityEvent(entitySelected, false)
 	{
-		return mDestroyedParentEntity;
 	}
 
+	std::string EditorEntitySelectedEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntitySelectedEvent entity: " << GetEntity();
+		return ss.str();
+	}
 }
 
 

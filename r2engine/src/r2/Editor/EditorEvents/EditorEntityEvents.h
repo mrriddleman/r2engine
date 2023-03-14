@@ -9,43 +9,51 @@
 
 namespace r2::evt
 {
-	class EditorEntityCreatedEvent : public EditorEvent
+	class EditorEntityEvent : public EditorEvent 
+	{
+	public:
+		ecs::Entity GetEntity() const;
+		EVENT_CLASS_CATEGORY(ECAT_EDITOR | ECAT_EDITOR_ENTITY)
+	protected:
+
+		EditorEntityEvent(ecs::Entity entity, bool shouldConsume);
+		ecs::Entity mEntity;
+	};
+
+	class EditorEntityCreatedEvent : public EditorEntityEvent
 	{
 	public:
 		EditorEntityCreatedEvent(ecs::Entity newEntity);
 		std::string ToString() const override;
-		ecs::Entity GetNewEntity() const;
-
 		EVENT_CLASS_TYPE(EVT_EDITOR_CREATED_NEW_ENTITY)
-	private:
-		ecs::Entity mNewEntity;
+
 	};
 
-	class EditorEntityDestroyedEvent : public EditorEvent
+	class EditorEntityDestroyedEvent : public EditorEntityEvent
 	{
 	public:
 		EditorEntityDestroyedEvent(ecs::Entity destroyedEntity);
 		std::string ToString() const override;
-		ecs::Entity GetDestroyedEntity() const;
-
 		EVENT_CLASS_TYPE(EVT_EDITOR_DESTROYED_ENTITY)
-	private:
-		ecs::Entity mDestroyedEntity;
+
 	};
 
-	class EditorEntityTreeDestroyedEvent : public EditorEvent
+	class EditorEntityTreeDestroyedEvent : public EditorEntityEvent
 	{
 	public:
 		EditorEntityTreeDestroyedEvent(ecs::Entity destroyedEntityParent);
 		std::string ToString() const override;
-		ecs::Entity GetDestroyedParentEntity() const;
-
 		EVENT_CLASS_TYPE(EVT_EDITOR_DESTROYED_ENTITY_TREE)
-	private:
 
-		ecs::Entity mDestroyedParentEntity;
 	};
 
+	class EditorEntitySelectedEvent : public EditorEntityEvent
+	{
+	public:
+		EditorEntitySelectedEvent(ecs::Entity entitySelected);
+		std::string ToString() const override;
+		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_SELECTED)
+	};
 }
 
 #endif
