@@ -50,9 +50,15 @@ namespace r2::evt
 	class EditorEntitySelectedEvent : public EditorEntityEvent
 	{
 	public:
-		EditorEntitySelectedEvent(ecs::Entity entitySelected);
+		EditorEntitySelectedEvent(ecs::Entity entitySelected, ecs::Entity prevSelectedEntity);
 		std::string ToString() const override;
+		ecs::Entity GetPreviouslySelectedEntity() const;
+
 		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_SELECTED)
+
+
+	private:
+		ecs::Entity mPrevSelectedEntity;
 	};
 }
 

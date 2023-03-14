@@ -52,16 +52,22 @@ namespace r2::evt
 		return ss.str();
 	}
 
-	EditorEntitySelectedEvent::EditorEntitySelectedEvent(ecs::Entity entitySelected)
+	EditorEntitySelectedEvent::EditorEntitySelectedEvent(ecs::Entity entitySelected, ecs::Entity prevSelectedEntity)
 		:EditorEntityEvent(entitySelected, false)
+		,mPrevSelectedEntity(prevSelectedEntity)
 	{
 	}
 
 	std::string EditorEntitySelectedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorEntitySelectedEvent entity: " << GetEntity();
+		ss << "EditorEntitySelectedEvent selected entity: " << GetEntity() << ", previously selected entity: " << mPrevSelectedEntity;
 		return ss.str();
+	}
+
+	ecs::Entity EditorEntitySelectedEvent::GetPreviouslySelectedEntity() const
+	{
+		return mPrevSelectedEntity;
 	}
 }
 

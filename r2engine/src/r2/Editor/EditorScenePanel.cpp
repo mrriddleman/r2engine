@@ -10,6 +10,7 @@
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
+#include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
@@ -64,6 +65,9 @@ namespace r2::edit
 
 		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
 		{
+			mSelectedEntity = e.GetEntity();
+			mPrevSelectedEntity = mSelectedEntity;
+
 			printf("%s\n", e.ToString().c_str());
 
 			return e.ShouldConsume();
@@ -257,10 +261,7 @@ namespace r2::edit
 
 		if (mPrevSelectedEntity != mSelectedEntity)
 		{
-			evt::EditorEntitySelectedEvent e(mSelectedEntity);
-			mnoptrEditor->PostEditorEvent(e);
-
-			mPrevSelectedEntity = mSelectedEntity;
+			mnoptrEditor->PostNewAction(std::make_unique<edit::SelectedEntityEditorAction>(mnoptrEditor, mSelectedEntity, mPrevSelectedEntity));
 		}
 
 		static bool show = false;
