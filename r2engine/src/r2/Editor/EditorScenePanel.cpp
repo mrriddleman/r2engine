@@ -9,6 +9,7 @@
 #include "r2/Game/ECS/Components/EditorNameComponent.h"
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
+#include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
@@ -121,14 +122,20 @@ namespace r2::edit
 
 	void ScenePanel::DisplayNode(SceneTreeNode& node)
 	{
+		const bool hasChildren = (node.numChildren > 0);
+		const ecs::EditorNameComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorNameComponent>(node.entity);
+		//HACK! Currently I don't know a good way to delete a whole subtree of the scene graph (while in the actual imgui render) without doing this
+		if (!editorNameComponent)
+		{
+			return;
+		}
+
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
-		const bool hasChildren = (node.numChildren > 0);
-		const ecs::EditorNameComponent& editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorNameComponent>(node.entity);
 
 		if (hasChildren)
 		{
-			bool open = ImGui::TreeNodeEx(editorNameComponent.editorName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
+			bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
 			ImGui::TableNextColumn();
 			ImGui::Checkbox("", &node.enabled);
 			ImGui::TableNextColumn();
@@ -147,7 +154,7 @@ namespace r2::edit
 		}
 		else
 		{
-			bool open = ImGui::TreeNodeEx(editorNameComponent.editorName.c_str(),  ImGuiTreeNodeFlags_SpanFullWidth );
+			bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(),  ImGuiTreeNodeFlags_SpanFullWidth );
 			ImGui::TableNextColumn();
 			ImGui::Checkbox("", &node.enabled);
 			ImGui::TableNextColumn();
@@ -160,7 +167,7 @@ namespace r2::edit
 				AddNewEntityToTable(node.entity);
 				ImGui::TreePop();
 			}	
-
+			//Add the AddNewEntityToTable here
 
 		}
 	}
@@ -184,6 +191,13 @@ namespace r2::edit
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
 		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button(">"))
+		{
+			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityTreeEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
+		}
 	}
 
 	void ScenePanel::Render(u32 dockingSpaceID)
@@ -197,7 +211,6 @@ namespace r2::edit
 		bool open = true;
 
 		r2::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
-
 
 		if (!ImGui::Begin("ScenePanel", &open))
 		{

@@ -147,6 +147,13 @@ namespace r2::ecs
 		}
 
 		template<typename Component>
+		Component* GetComponentPtr(Entity entity)
+		{
+			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
+			return componentArray->GetComponentPtr(entity);
+		}
+
+		template<typename Component>
 		void SetComponent(Entity entity, const Component& component)
 		{
 			ComponentArray<Component>* componentArray = GetComponentArray<Component>();

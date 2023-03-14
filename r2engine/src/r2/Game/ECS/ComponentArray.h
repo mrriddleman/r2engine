@@ -126,6 +126,19 @@ namespace r2::ecs
 			return r2::sarr::At(*mComponentArray, index);
 		}
 
+		Component* GetComponentPtr(Entity entity)
+		{
+			s64 defaultIndex = -1;
+			s64 index = r2::shashmap::Get(*mEntityToIndexMap, entity, defaultIndex);
+
+			if (defaultIndex == index)
+			{
+				return nullptr;
+			}
+
+			return &r2::sarr::At(*mComponentArray, index);
+		}
+
 		void SetComponent(Entity entity, const Component& component)
 		{
 			R2_CHECK(r2::shashmap::Has(*mEntityToIndexMap, entity), "We should already have this entity in the component array");
