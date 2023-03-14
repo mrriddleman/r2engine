@@ -52,6 +52,12 @@ namespace r2::edit
 			mSceneGraphDataNeedsUpdate = true;
 			return e.ShouldConsume();
 		});
+
+		dispatcher.Dispatch<r2::evt::EditorEntityTreeDestroyedEvent>([this](const r2::evt::EditorEntityTreeDestroyedEvent& e)
+			{
+				mSceneGraphDataNeedsUpdate = true;
+				return e.ShouldConsume();
+			});
 	}
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
@@ -154,6 +160,8 @@ namespace r2::edit
 				AddNewEntityToTable(node.entity);
 				ImGui::TreePop();
 			}	
+
+
 		}
 	}
 
@@ -172,7 +180,7 @@ namespace r2::edit
 
 	void ScenePanel::RemoveEntity(ecs::Entity entity)
 	{
-		if (ImGui::Button(" - "))
+		if (ImGui::Button("-"))
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
 		}

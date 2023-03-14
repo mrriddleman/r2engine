@@ -126,6 +126,18 @@ namespace r2::ecs
 			return r2::sarr::At(*mComponentArray, index);
 		}
 
+		void SetComponent(Entity entity, const Component& component)
+		{
+			R2_CHECK(r2::shashmap::Has(*mEntityToIndexMap, entity), "We should already have this entity in the component array");
+
+			s64 defaultIndex = -1;
+			s64 index = r2::shashmap::Get(*mEntityToIndexMap, entity, defaultIndex);
+			R2_CHECK(index != defaultIndex, "Should never happen!");
+
+
+			r2::sarr::At(*mComponentArray, index) = component;
+		}
+
 		void EntityDestroyed(Entity entity) override
 		{
 			if (r2::shashmap::Has(*mEntityToIndexMap, entity))

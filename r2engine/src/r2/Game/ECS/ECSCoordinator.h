@@ -116,6 +116,12 @@ namespace r2::ecs
 		}
 
 		template<typename Component>
+		void SetComponent(Entity entity, const Component& component)
+		{
+			mComponentManager->SetComponent(entity, component);
+		}
+
+		template<typename Component>
 		ComponentType GetComponentType()
 		{
 			return mComponentManager->GetComponentType<Component>();

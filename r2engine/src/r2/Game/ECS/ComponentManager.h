@@ -146,6 +146,13 @@ namespace r2::ecs
 			return componentArray->GetComponent(entity);
 		}
 
+		template<typename Component>
+		void SetComponent(Entity entity, const Component& component)
+		{
+			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
+			componentArray->SetComponent(entity, component);
+		}
+
 		void EntityDestroyed(Entity entity)
 		{
 			// Notify each component array that an entity has been destroyed

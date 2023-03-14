@@ -24,6 +24,7 @@ namespace r2
 #ifdef R2_EDITOR
             EVT_EDITOR_CREATED_NEW_ENTITY,
             EVT_EDITOR_DESTROYED_ENTITY,
+            EVT_EDITOR_DESTROYED_ENTITY_TREE,
 #endif
         };
         

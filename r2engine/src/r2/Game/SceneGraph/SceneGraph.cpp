@@ -268,6 +268,23 @@ namespace r2
 		r2::sarr::Copy(entities, *mnoptrSceneGraphSystem->mEntities);
 	}
 
+	s32 SceneGraph::GetEntityIndex(ecs::Entity entity)
+	{
+		s32 numEntities = r2::sarr::Size(*mnoptrSceneGraphSystem->mEntities);
+
+		for (s32 i = 0; i < numEntities; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
+
+			if (e == entity)
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
 	ecs::Entity SceneGraph::GetParent(ecs::Entity entity)
 	{
 		const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);

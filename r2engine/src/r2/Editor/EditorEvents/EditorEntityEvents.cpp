@@ -6,7 +6,7 @@ namespace r2::evt
 {
 	EditorEntityCreatedEvent::EditorEntityCreatedEvent(ecs::Entity newEntity)
 		: EditorEvent(false)
-		, mNewEntity(newEntity)
+		,mNewEntity(newEntity)
 	{
 	}
 
@@ -39,6 +39,26 @@ namespace r2::evt
 	{
 		return mDestroyedEntity;
 	}
+
+	EditorEntityTreeDestroyedEvent::EditorEntityTreeDestroyedEvent(ecs::Entity destroyedEntity)
+		: EditorEvent(false)
+		,mDestroyedParentEntity(destroyedEntity)
+	{
+
+	}
+
+	std::string EditorEntityTreeDestroyedEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntityTreeDestroyedEvent parent entity: " << mDestroyedParentEntity;
+		return ss.str();
+	}
+
+	r2::ecs::Entity EditorEntityTreeDestroyedEvent::GetDestroyedParentEntity() const
+	{
+		return mDestroyedParentEntity;
+	}
+
 }
 
 

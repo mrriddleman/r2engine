@@ -33,6 +33,19 @@ namespace r2::evt
 		ecs::Entity mDestroyedEntity;
 	};
 
+	class EditorEntityTreeDestroyedEvent : public EditorEvent
+	{
+	public:
+		EditorEntityTreeDestroyedEvent(ecs::Entity destroyedEntityParent);
+		std::string ToString() const override;
+		ecs::Entity GetDestroyedParentEntity() const;
+
+		EVENT_CLASS_TYPE(EVT_EDITOR_DESTROYED_ENTITY_TREE)
+	private:
+
+		ecs::Entity mDestroyedParentEntity;
+	};
+
 }
 
 #endif

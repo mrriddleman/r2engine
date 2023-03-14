@@ -4,6 +4,9 @@
 #ifdef R2_EDITOR
 
 #include "r2/Editor/EditorActions/EditorAction.h"
+#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/TransformComponent.h"
 
 namespace
 {
@@ -25,6 +28,12 @@ namespace r2::edit
 		Editor* mnoptrEditor;
 		ecs::Entity mEntityToDestroy;
 		ecs::Entity mParentOfEntityToDestory;
+		std::vector<ecs::Entity> mChildren; 
+
+		ecs::EditorNameComponent mEntityEditorNameComponent;
+		ecs::HeirarchyComponent mEntityHeirarchyComponent;
+		ecs::TransformComponent mEntityTransformComponent;
+
 	};
 }
 
