@@ -20,7 +20,6 @@ namespace r2::edit
 		virtual void Undo() override;
 		virtual void Redo() override;
 	private:
-		Editor* mnoptrEditor;
 		ecs::Entity mEntity;
 		std::string mNewName;
 		std::string mPreviousName;

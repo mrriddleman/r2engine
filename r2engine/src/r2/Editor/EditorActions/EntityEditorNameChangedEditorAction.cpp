@@ -10,7 +10,7 @@ namespace r2::edit
 {
 
 	EntityEditorNameChangedEditorAction::EntityEditorNameChangedEditorAction(Editor* editor, ecs::Entity entity, const std::string& newName, const std::string& prevName)
-		:mnoptrEditor(editor)
+		:EditorAction(editor)
 		,mEntity(entity)
 		,mNewName(newName)
 		,mPreviousName(prevName)

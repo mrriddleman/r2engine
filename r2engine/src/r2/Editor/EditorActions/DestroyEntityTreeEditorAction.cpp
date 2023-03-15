@@ -14,7 +14,7 @@ namespace r2::edit
 {
 
 	DestroyEntityTreeEditorAction::DestroyEntityTreeEditorAction(Editor* editor, ecs::Entity entityToDestroy, ecs::Entity parentOfEntityToDestroy)
-		:mnoptrEditor(editor)
+		:EditorAction(editor)
 		,mEntityTree{}
 	{
 		r2::SArray<ecs::Entity>* children = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);

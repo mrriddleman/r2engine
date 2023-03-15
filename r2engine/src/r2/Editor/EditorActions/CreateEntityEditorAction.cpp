@@ -10,7 +10,7 @@
 namespace r2::edit
 {
 	CreateEntityEditorAction::CreateEntityEditorAction(Editor* editor, ecs::Entity parent /*= ecs::INVALID_ENTITY*/)
-		:mnoptrEditor(editor)
+		:EditorAction(editor)
 		,mCreatedEntity(ecs::INVALID_ENTITY)
 		,mParentEntity(parent)
 	{

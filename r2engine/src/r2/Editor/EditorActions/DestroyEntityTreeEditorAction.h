@@ -26,7 +26,6 @@ namespace r2::edit
 		virtual void Redo() override;
 
 	private:
-		Editor* mnoptrEditor;
 		std::vector<ecs::Entity> mEntityTree;
 
 		//@TODO(Serge): This is completely unsustainable since we don't usually know how many

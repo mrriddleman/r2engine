@@ -25,7 +25,6 @@ namespace r2::edit
 		virtual void Redo() override;
 
 	private:
-		Editor* mnoptrEditor;
 		ecs::Entity mEntityToDestroy;
 		ecs::Entity mParentOfEntityToDestory;
 		std::vector<ecs::Entity> mChildren; 

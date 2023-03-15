@@ -9,7 +9,7 @@
 namespace r2::edit
 {
 	SelectedEntityEditorAction::SelectedEntityEditorAction(Editor* editor, ecs::Entity entitySelected, ecs::Entity prevEntitySelected)
-		:mnoptrEditor(editor)
+		:EditorAction(editor)
 		,mSelectedEntity(entitySelected)
 		,mPrevSelectedEntity(prevEntitySelected)
 	{

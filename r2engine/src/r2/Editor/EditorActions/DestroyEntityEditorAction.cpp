@@ -11,7 +11,7 @@
 namespace r2::edit
 {
 	DestroyEntityEditorAction::DestroyEntityEditorAction(Editor* editor, ecs::Entity entityToDestroy, ecs::Entity parentOfEntityToDestroy)
-		:mnoptrEditor(editor)
+		:EditorAction(editor)
 		,mEntityToDestroy(entityToDestroy)
 		,mParentOfEntityToDestory(parentOfEntityToDestroy)
 	{

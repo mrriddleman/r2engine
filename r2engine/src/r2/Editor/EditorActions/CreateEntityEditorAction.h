@@ -21,7 +21,6 @@ namespace r2::edit
 		virtual void Redo() override;
 
 	private:
-		Editor* mnoptrEditor;
 		ecs::Entity mCreatedEntity;
 		ecs::Entity mParentEntity;
 	};

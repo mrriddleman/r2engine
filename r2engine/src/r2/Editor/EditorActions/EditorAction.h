@@ -2,6 +2,14 @@
 #define __EDITOR_ACTION_H__
 
 #ifdef R2_EDITOR
+
+
+namespace r2
+{
+	class Editor;
+}
+
+
 namespace r2::edit
 {
 	class EditorAction
@@ -9,12 +17,13 @@ namespace r2::edit
 	public:
 
 		virtual ~EditorAction() {}
-		virtual void Undo() = 0;
-		virtual void Redo() = 0;
-
+		virtual void Undo() {};
+		virtual void Redo() {};
 
 	protected:
-
+		EditorAction(r2::Editor* editor)
+			:mnoptrEditor(editor) {}
+		r2::Editor* mnoptrEditor;
 	};
 }
 #endif
