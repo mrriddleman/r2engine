@@ -11,6 +11,7 @@
 #include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
+#include "r2/Editor/EditorActions/EntityEditorNameChangedEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
@@ -22,6 +23,7 @@ namespace r2::edit
 		:mSceneGraphDataNeedsUpdate(true)
 		,mSelectedEntity(ecs::INVALID_ENTITY)
 		,mPrevSelectedEntity(ecs::INVALID_ENTITY)
+		,mRenameEntity(ecs::INVALID_ENTITY)
 	{
 
 	}
@@ -70,6 +72,11 @@ namespace r2::edit
 
 			printf("%s\n", e.ToString().c_str());
 
+			return e.ShouldConsume();
+		});
+
+		dispatcher.Dispatch<r2::evt::EditorEntityNameChangedEvent>([this](const r2::evt::EditorEntityNameChangedEvent& e) {
+			mSceneGraphDataNeedsUpdate = true;
 			return e.ShouldConsume();
 		});
 	}
@@ -136,7 +143,7 @@ namespace r2::edit
 	void ScenePanel::DisplayNode(SceneTreeNode& node)
 	{
 		const bool hasChildren = (node.numChildren > 0);
-		const ecs::EditorNameComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorNameComponent>(node.entity);
+		ecs::EditorNameComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorNameComponent>(node.entity);
 		//HACK! Currently I don't know a good way to delete a whole subtree of the scene graph (while in the actual imgui render) without doing this
 		if (!editorNameComponent)
 		{
@@ -146,15 +153,58 @@ namespace r2::edit
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
-		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth;
+		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
 
 		bool isSelected = mSelectedEntity == node.entity;
 		if (isSelected)
 		{
 			nodeFlags |= ImGuiTreeNodeFlags_Selected;
 		}
+		
+		const char* nodeName = editorNameComponent->editorName.c_str();
 
-		bool open = ImGui::TreeNodeEx(editorNameComponent->editorName.c_str(), nodeFlags);
+		if (mRenameEntity == node.entity)
+		{
+			nodeName = "";
+		}
+
+		bool open = ImGui::TreeNodeEx(std::to_string(node.entity).c_str(), nodeFlags, "%s", "");
+		ImGui::SameLine();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+		if (ImGui::Selectable(nodeName, &node.selected, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowItemOverlap))
+		{
+			mRenameEntity = ecs::INVALID_ENTITY;
+
+			if (ImGui::IsMouseDoubleClicked(0))
+			{
+				mRenameEntity = node.entity;
+			}
+		}
+		ImGui::PopStyleVar();
+
+		if (node.entity == mRenameEntity)
+		{
+			char strName[1024];
+			strName[0] = '\0';
+
+			std::string editorName = editorNameComponent->editorName;
+
+			strcpy(strName, editorName.c_str());
+			float spacing = ImGui::GetTreeNodeToLabelSpacing();
+
+			ImGui::SameLine();
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+			if (ImGui::InputText("##rename", strName, IM_ARRAYSIZE(strName), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				mnoptrEditor->PostNewAction(std::make_unique<edit::EntityEditorNameChangedEditorAction>(mnoptrEditor, node.entity, std::string(strName), editorName));
+
+				mRenameEntity = ecs::INVALID_ENTITY;
+			}
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar();
+		}
 
 		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
 		{
@@ -162,9 +212,20 @@ namespace r2::edit
 		}
 
 		ImGui::TableNextColumn();
+
+		std::string enabledStrId = std::to_string(node.entity) + "enabledcheckbox";
+
+		ImGui::PushID(enabledStrId.c_str());
 		ImGui::Checkbox("", &node.enabled);
+		ImGui::PopID();
 		ImGui::TableNextColumn();
+
+		std::string showStrId = std::to_string(node.entity) + "showcheckbox";
+
+		ImGui::PushID(showStrId.c_str());
 		ImGui::Checkbox("", &node.show);
+
+		ImGui::PopID();
 		ImGui::TableNextColumn();
 		RemoveEntity(node.entity);
 
@@ -176,13 +237,10 @@ namespace r2::edit
 				{
 					DisplayNode(childNode);
 				}
-				ImGui::TreePop();
 			}
-			else
-			{
-				AddNewEntityToTable(node.entity);
-				ImGui::TreePop();
-			}
+
+			AddNewEntityToTable(node.entity);
+			ImGui::TreePop();
 		}
 	}
 
@@ -190,10 +248,13 @@ namespace r2::edit
 	{
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
+
+		ImGui::PushID(parent);
 		if (ImGui::Button("Add New Entity"))
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<edit::CreateEntityEditorAction>(mnoptrEditor, parent));
 		}
+		ImGui::PopID();
 		ImGui::TableNextColumn();
 		ImGui::TableNextColumn();
 		ImGui::TableNextColumn();
@@ -201,6 +262,7 @@ namespace r2::edit
 
 	void ScenePanel::RemoveEntity(ecs::Entity entity)
 	{
+		ImGui::PushID(entity);
 		if (ImGui::Button("-"))
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
@@ -212,6 +274,7 @@ namespace r2::edit
 		{
 			mnoptrEditor->PostNewAction(std::make_unique<edit::DestroyEntityTreeEditorAction>(mnoptrEditor, entity, mnoptrEditor->GetSceneGraph().GetParent(entity)));
 		}
+		ImGui::PopID();
 	}
 
 	void ScenePanel::Render(u32 dockingSpaceID)

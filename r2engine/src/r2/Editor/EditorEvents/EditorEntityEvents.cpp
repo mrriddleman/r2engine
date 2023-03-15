@@ -69,6 +69,24 @@ namespace r2::evt
 	{
 		return mPrevSelectedEntity;
 	}
+
+	EditorEntityNameChangedEvent::EditorEntityNameChangedEvent(ecs::Entity entity, const std::string& newName)
+		:EditorEntityEvent(entity, false)
+		,mNewName(newName)
+	{
+	}
+
+	std::string EditorEntityNameChangedEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntityNameChangedEvent entity: " << GetEntity() << ", to new name: " << mNewName;
+		return ss.str();
+	}
+
+	std::string EditorEntityNameChangedEvent::GetNewName() const
+	{
+		return mNewName;
+	}
 }
 
 

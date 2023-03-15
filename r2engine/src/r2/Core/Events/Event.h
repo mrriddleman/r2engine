@@ -26,6 +26,7 @@ namespace r2
             EVT_EDITOR_DESTROYED_ENTITY,
             EVT_EDITOR_DESTROYED_ENTITY_TREE,
             EVT_EDITOR_ENTITY_SELECTED,
+            EVT_EDITOR_ENTITY_NAME_CHANGED,
 #endif
         };
         

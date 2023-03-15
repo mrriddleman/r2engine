@@ -28,6 +28,7 @@ namespace r2::edit
 			std::vector<SceneTreeNode> children;
 			bool enabled = true;
 			bool show = true;
+			bool selected = false;
 		};
 
 		std::vector<SceneTreeNode> mSceneGraphData;
@@ -42,6 +43,7 @@ namespace r2::edit
 
 		ecs::Entity mSelectedEntity;
 		ecs::Entity mPrevSelectedEntity;
+		ecs::Entity mRenameEntity;
 	};
 }
 

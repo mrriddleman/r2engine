@@ -60,6 +60,20 @@ namespace r2::evt
 	private:
 		ecs::Entity mPrevSelectedEntity;
 	};
+
+	class EditorEntityNameChangedEvent : public EditorEntityEvent
+	{
+	public:
+		EditorEntityNameChangedEvent(ecs::Entity entity, const std::string& newName);
+		std::string ToString() const override;
+
+		std::string GetNewName() const;
+
+		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_NAME_CHANGED)
+	private:
+		std::string mNewName;
+	};
+
 }
 
 #endif
