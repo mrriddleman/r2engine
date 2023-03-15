@@ -60,7 +60,16 @@ namespace r2::ecs
 			{
 				if (index == -1)
 				{
-					r2::sarr::Push(*system->mEntities, entity);
+					s32 placement = system->FindSortedPlacement(entity);
+
+					if (system->mKeepSorted && placement != -1)
+					{
+						r2::sarr::Insert(*system->mEntities, placement, entity);
+					}
+					else
+					{
+						r2::sarr::Push(*system->mEntities, entity);
+					}
 				}
 			}
 			else

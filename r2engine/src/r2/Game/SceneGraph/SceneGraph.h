@@ -33,6 +33,7 @@ namespace r2
 			coordinator->RegisterComponent<ARENA, ecs::TransformDirtyComponent>(arena);
 
 			mnoptrSceneGraphSystem = (ecs::SceneGraphSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
+			mnoptrSceneGraphSystem->SetSceneGraph(this);
 
 			if (mnoptrSceneGraphSystem == nullptr)
 			{

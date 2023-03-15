@@ -295,5 +295,4 @@ namespace r2
 	{
 		return mnoptrECSCoordinator;
 	}
-
 }

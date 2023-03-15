@@ -3,6 +3,11 @@
 
 #include "r2/Game/ECS/System.h"
 
+namespace r2
+{
+	class SceneGraph;
+}
+
 namespace r2::ecs
 {
 	class SceneGraphSystem : public System
@@ -11,6 +16,13 @@ namespace r2::ecs
 		
 		SceneGraphSystem();
 		~SceneGraphSystem();
+
+		virtual s32 FindSortedPlacement(Entity e) override;
+
+		void SetSceneGraph(SceneGraph* sceneGraph);
+
+	private:
+		SceneGraph* mnoptrSceneGraph;
 	};
 }
 

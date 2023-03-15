@@ -85,6 +85,8 @@ namespace r2
         template<typename T> inline s64 IndexOf(SArray<T>& dst, const T& val);
 
         template<typename T> inline void RemoveElementAtIndexShiftLeft(SArray<T>& dst, u64 index);
+
+        template<typename T> inline bool Insert(SArray<T>& arr, s64 index, const T& val);
     }
     
     namespace sarr
@@ -93,70 +95,70 @@ namespace r2
         {
             return arr.mSize;
         }
-        
+
         template<typename T> inline bool IsEmpty(const SArray<T>& arr)
         {
             return arr.mSize == 0;
         }
-        
+
         template<typename T> inline u64 Capacity(const SArray<T>& arr)
         {
             return arr.mCapacity;
         }
-        
+
         template<typename T> inline T* Begin(SArray<T>& arr)
         {
             return arr.mData;
         }
-        
+
         template<typename T> inline const T* Begin(const SArray<T>& arr)
         {
             return arr.mData;
         }
-        
+
         template<typename T> inline T* End(SArray<T>& arr)
         {
             return arr.mData + arr.mSize;
         }
-        
+
         template<typename T> inline const T* End(const SArray<T>& arr)
         {
             return arr.mData + arr.mSize;
         }
-        
+
         template<typename T> inline T& First(SArray<T>& arr)
         {
             R2_CHECK(arr.mSize > 0, "The SArray is empty thus we don't have a first element!");
             return arr.mData[0];
         }
-        
+
         template<typename T> inline const T& First(const SArray<T>& arr)
         {
             R2_CHECK(arr.mSize > 0, "The SArray is empty thus we don't have a first element!");
             return arr.mData[0];
         }
-        
+
         template<typename T> inline T& Last(SArray<T>& arr)
         {
             R2_CHECK(arr.mSize > 0, "The SArray is empty thus we don't have a last element!");
-            return arr.mData[arr.mSize-1];
+            return arr.mData[arr.mSize - 1];
         }
-        
+
         template<typename T> inline const T& Last(const SArray<T>& arr)
         {
             R2_CHECK(arr.mSize > 0, "The SArray is empty thus we don't have a last element!");
-            return arr.mData[arr.mSize-1];
+            return arr.mData[arr.mSize - 1];
         }
-        
+
         template<typename T> inline void Push(SArray<T>& arr, const T& item)
         {
             R2_CHECK(arr.mSize + 1 <= arr.mCapacity, "We're at capacity!");
             arr.mData[arr.mSize++] = item;
         }
-        
+
         template<typename T> inline void Pop(SArray<T>& arr)
         {
-            if(arr.mSize > 0)
+            if (arr.mSize > 0)
             {
                 --arr.mSize;
             }
@@ -178,17 +180,17 @@ namespace r2
             arr.mData[index] = arr.mData[arr.mSize - 1];
             --arr.mSize;
         }
-        
+
         template<typename T> inline T& At(SArray<T>& arr, u64 index)
         {
             return arr[index];
         }
-        
+
         template<typename T> inline const T& At(const SArray<T>& arr, u64 index)
         {
             return arr[index];
         }
-        
+
         template<typename T> inline void Clear(SArray<T>& arr)
         {
             arr.mSize = 0;
@@ -231,23 +233,38 @@ namespace r2
 
             return -1;
         }
-        
+
         template<typename T, class ARENA> SArray<T>* CreateSArray(ARENA& arena, u64 capacity, const char* file, s32 line, const char* description)
         {
             SArray<T>* array = new (ALLOC_BYTES(arena, SArray<T>::MemorySize(capacity), alignof(T), file, line, description)) SArray<T>();
-            
+
             array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
-            
+
             return array;
         }
 
         template<typename T> r2::SArray<T>* EmplaceSArray(void* dataPtr, u64 capacity)
         {
-			SArray<T>* array = new (dataPtr) SArray<T>();
+            SArray<T>* array = new (dataPtr) SArray<T>();
 
-			array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
+            array->Create((T*)mem::utils::PointerAdd(array, sizeof(SArray<T>)), capacity);
 
-			return array;
+            return array;
+        }
+
+        template<typename T> inline bool Insert(SArray<T>& arr, s64 index, const T& val)
+        {
+            R2_CHECK(arr.mSize + 1 <= arr.mCapacity, "We're at capacity!");
+            R2_CHECK(index >= 0 && index <= arr.mSize, "Index is out of range: %ill", index);
+
+            for (s64 i = arr.mSize - 1; i >= index; --i)
+            {
+                arr.mData[i + 1] = arr.mData[i];
+            }
+
+            arr.mData[index] = val;
+            arr.mSize++;
+            return true;
         }
 
         template<typename T> inline void RemoveElementAtIndexShiftLeft(SArray<T>& dst, u64 index)

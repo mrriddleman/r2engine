@@ -13,6 +13,8 @@ namespace r2::ecs
 		r2::SArray<Entity>* mEntities = nullptr;
 		bool mKeepSorted = false;
 		ECSCoordinator* mnoptrCoordinator = nullptr;
+
+		virtual s32 FindSortedPlacement(Entity e) { return -1; }
 	};
 }
 
