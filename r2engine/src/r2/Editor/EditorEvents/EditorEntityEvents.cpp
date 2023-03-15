@@ -87,6 +87,32 @@ namespace r2::evt
 	{
 		return mNewName;
 	}
+
+	EditorEntityAttachedToNewParentEvent::EditorEntityAttachedToNewParentEvent(ecs::Entity entity, ecs::Entity oldParent, ecs::Entity newParent)
+		:EditorEntityEvent(entity, false)
+		,mOldParent(oldParent)
+		,mNewParent(newParent)
+	{
+
+	}
+
+	std::string EditorEntityAttachedToNewParentEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntityAttachedToNewParentEvent entity: " << GetEntity() << ", attached from: " << mOldParent << " to new parent: " << mNewParent;
+		return ss.str();
+	}
+
+	r2::ecs::Entity EditorEntityAttachedToNewParentEvent::GetOldParent() const
+	{
+		return mOldParent;
+	}
+
+	r2::ecs::Entity EditorEntityAttachedToNewParentEvent::GetNewParent() const
+	{
+		return mNewParent;
+	}
+
 }
 
 

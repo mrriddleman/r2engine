@@ -12,12 +12,15 @@
 #include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Editor/EditorActions/EntityEditorNameChangedEditorAction.h"
+#include "r2/Editor/EditorActions/AttachEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
 
 
 namespace r2::edit
 {
+
+	constexpr const char* DND_PAYLOAD_NAME = "SCENE_GRAPH_DND";
 
 	ScenePanel::ScenePanel()
 		:mSceneGraphDataNeedsUpdate(true)
@@ -76,6 +79,12 @@ namespace r2::edit
 		});
 
 		dispatcher.Dispatch<r2::evt::EditorEntityNameChangedEvent>([this](const r2::evt::EditorEntityNameChangedEvent& e) {
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
+
+		dispatcher.Dispatch<r2::evt::EditorEntityAttachedToNewParentEvent>([this](const r2::evt::EditorEntityAttachedToNewParentEvent& e)
+		{
 			mSceneGraphDataNeedsUpdate = true;
 			return e.ShouldConsume();
 		});
@@ -150,6 +159,8 @@ namespace r2::edit
 			return;
 		}
 
+		std::string editorName = editorNameComponent->editorName;
+
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
@@ -188,8 +199,6 @@ namespace r2::edit
 			char strName[1024];
 			strName[0] = '\0';
 
-			std::string editorName = editorNameComponent->editorName;
-
 			strcpy(strName, editorName.c_str());
 			float spacing = ImGui::GetTreeNodeToLabelSpacing();
 
@@ -210,6 +219,17 @@ namespace r2::edit
 		{
 			mSelectedEntity = node.entity;
 		}
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+		{
+			ImGui::SetDragDropPayload(DND_PAYLOAD_NAME, &node, sizeof(SceneTreeNode));
+
+			ImGui::Text("Attach %s", editorName.c_str());
+
+			ImGui::EndDragDropSource();
+		}
+
+		DropSceneNode(&node);
 
 		ImGui::TableNextColumn();
 
@@ -277,6 +297,33 @@ namespace r2::edit
 		ImGui::PopID();
 	}
 
+	void ScenePanel::DropSceneNode(SceneTreeNode* node)
+	{
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(DND_PAYLOAD_NAME))
+			{
+				IM_ASSERT(payload->DataSize == sizeof(SceneTreeNode));
+				SceneTreeNode* payload_n = (SceneTreeNode*)payload->Data;
+
+				ecs::Entity newParent = ecs::INVALID_ENTITY;
+
+				if (node)
+				{
+					newParent = node->entity;
+				}
+
+				//get the current parent of the entity
+				ecs::Entity oldParent = mnoptrEditor->GetSceneGraph().GetParent(payload_n->entity);
+
+				//post the action
+				mnoptrEditor->PostNewAction(std::make_unique<edit::AttachEntityEditorAction>(mnoptrEditor, payload_n->entity, oldParent, newParent));
+
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+
 	void ScenePanel::Render(u32 dockingSpaceID)
 	{
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -299,6 +346,7 @@ namespace r2::edit
 		{
 			static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
 
+			DropSceneNode(nullptr);
 			if (ImGui::BeginTable("EntityTable", 4, flags))
 			{
 				ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_NoHide);
@@ -313,6 +361,7 @@ namespace r2::edit
 				}
 
 				AddNewEntityToTable(ecs::INVALID_ENTITY);
+				DropSceneNode(nullptr);
 
 				ImGui::EndTable();
 			}

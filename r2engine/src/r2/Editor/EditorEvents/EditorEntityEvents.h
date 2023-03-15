@@ -74,6 +74,20 @@ namespace r2::evt
 		std::string mNewName;
 	};
 
+	class EditorEntityAttachedToNewParentEvent : public EditorEntityEvent
+	{
+	public:
+		EditorEntityAttachedToNewParentEvent(ecs::Entity entity, ecs::Entity oldParent, ecs::Entity newParent);
+		std::string ToString() const override;
+
+		ecs::Entity GetOldParent() const;
+		ecs::Entity GetNewParent() const;
+
+		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_ATTACHED_TO_NEW_PARENT)
+	private:
+		ecs::Entity mOldParent;
+		ecs::Entity mNewParent;
+	};
 }
 
 #endif

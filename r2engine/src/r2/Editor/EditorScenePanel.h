@@ -40,6 +40,7 @@ namespace r2::edit
 		void DisplayNode(SceneTreeNode& node);
 		void AddNewEntityToTable(ecs::Entity parent);
 		void RemoveEntity(ecs::Entity entity);
+		void DropSceneNode(SceneTreeNode* node);
 
 		ecs::Entity mSelectedEntity;
 		ecs::Entity mPrevSelectedEntity;
