@@ -8,7 +8,7 @@
 #include "r2/Editor/EditorAssetPanel.h"
 #include "r2/Editor/EditorScenePanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "imgui.h"
 
 
@@ -29,7 +29,7 @@ namespace r2
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
 		//add some more components to the coordinator for the editor to use
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorNameComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
 
 
 		//Do all of the panels/widgets setup here
@@ -61,7 +61,7 @@ namespace r2
 
 		mEditorWidgets.clear();
 
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorNameComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);

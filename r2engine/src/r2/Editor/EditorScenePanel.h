@@ -26,15 +26,11 @@ namespace r2::edit
 			ecs::Entity entity;
 			size_t numChildren;
 			std::vector<SceneTreeNode> children;
-			bool enabled = true;
-			bool show = true;
-			bool selected = false;
 		};
 
 		std::vector<SceneTreeNode> mSceneGraphData;
 
 		bool mSceneGraphDataNeedsUpdate;
-
 
 		void AddAllChildrenForEntity(SceneTreeNode& parent);
 		void DisplayNode(SceneTreeNode& node);

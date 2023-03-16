@@ -113,6 +113,31 @@ namespace r2::evt
 		return mNewParent;
 	}
 
+	EditorEntityEditorFlagChangedEvent::EditorEntityEditorFlagChangedEvent(ecs::Entity entity, u32 flag, bool enabled)
+		:EditorEntityEvent(entity, false)
+		,mFlag(flag)
+		,mEnabled(enabled)
+	{
+
+	}
+
+	std::string EditorEntityEditorFlagChangedEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorEntityEditorFlagChangedEvent entity: " << GetEntity() << ", changed flag: " << mFlag << " to: " << mEnabled;
+		return ss.str();
+	}
+
+	u32 EditorEntityEditorFlagChangedEvent::GetFlag() const
+	{
+		return mFlag;
+	}
+
+	bool EditorEntityEditorFlagChangedEvent::GetEnabled() const
+	{
+		return mEnabled;
+	}
+
 }
 
 

@@ -88,6 +88,22 @@ namespace r2::evt
 		ecs::Entity mOldParent;
 		ecs::Entity mNewParent;
 	};
+
+	class EditorEntityEditorFlagChangedEvent : public EditorEntityEvent
+	{
+	public:
+		EditorEntityEditorFlagChangedEvent(ecs::Entity entity, u32 flag, bool enabled);
+		std::string ToString() const override;
+
+		u32 GetFlag() const;
+		bool GetEnabled() const;
+
+		EVENT_CLASS_TYPE(EVT_EDITOR_ENTITY_FLAG_CHANGED)
+	private:
+		u32 mFlag;
+		bool mEnabled;
+	};
+
 }
 
 #endif

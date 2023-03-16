@@ -4,7 +4,7 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 
 namespace r2::edit
@@ -32,11 +32,15 @@ namespace r2::edit
 
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 
-		ecs::EditorNameComponent nameComponent;
+		ecs::EditorComponent nameComponent;
 
 		nameComponent.editorName = std::string("Entity - ") + std::to_string(mCreatedEntity);
 		
-		coordinator->AddComponent<ecs::EditorNameComponent>(mCreatedEntity, nameComponent);
+		nameComponent.flags.Set(ecs::EDITOR_FLAG_SHOW_ENTITY);
+		
+		nameComponent.flags.Set(ecs::EDITOR_FLAG_ENABLE_ENTITY);
+
+		coordinator->AddComponent<ecs::EditorComponent>(mCreatedEntity, nameComponent);
 
 		r2::evt::EditorEntityCreatedEvent e(mCreatedEntity);
 

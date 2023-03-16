@@ -4,7 +4,7 @@
 #ifdef R2_EDITOR
 
 #include "r2/Editor/EditorActions/EditorAction.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/HeirarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 
@@ -29,7 +29,7 @@ namespace r2::edit
 		ecs::Entity mParentOfEntityToDestory;
 		std::vector<ecs::Entity> mChildren; 
 
-		ecs::EditorNameComponent mEntityEditorNameComponent;
+		ecs::EditorComponent mEntityEditorNameComponent;
 		ecs::HeirarchyComponent mEntityHeirarchyComponent;
 		ecs::TransformComponent mEntityTransformComponent;
 

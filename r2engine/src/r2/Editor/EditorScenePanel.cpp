@@ -6,12 +6,13 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Editor/EditorActions/CreateEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
 #include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Editor/EditorActions/EntityEditorNameChangedEditorAction.h"
+#include "r2/Editor/EditorActions/EntityEditorFlagChangedEditorAction.h"
 #include "r2/Editor/EditorActions/AttachEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
@@ -152,7 +153,7 @@ namespace r2::edit
 	void ScenePanel::DisplayNode(SceneTreeNode& node)
 	{
 		const bool hasChildren = (node.numChildren > 0);
-		ecs::EditorNameComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorNameComponent>(node.entity);
+		ecs::EditorComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorComponent>(node.entity);
 		//HACK! Currently I don't know a good way to delete a whole subtree of the scene graph (while in the actual imgui render) without doing this
 		if (!editorNameComponent)
 		{
@@ -183,7 +184,12 @@ namespace r2::edit
 		ImGui::SameLine();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-		if (ImGui::Selectable(nodeName, &node.selected, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowItemOverlap))
+
+
+		bool originalSelected = editorNameComponent->flags.IsSet(ecs::EDITOR_FLAG_SELECTED_ENTITY);
+		bool selected = originalSelected;
+
+		if (ImGui::Selectable(nodeName, &selected, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowItemOverlap))
 		{
 			mRenameEntity = ecs::INVALID_ENTITY;
 
@@ -193,6 +199,11 @@ namespace r2::edit
 			}
 		}
 		ImGui::PopStyleVar();
+
+		if (selected != originalSelected)
+		{
+			mnoptrEditor->PostNewAction(std::make_unique<edit::EntityEditorFlagChangedEditorAction>(mnoptrEditor, node.entity, ecs::EDITOR_FLAG_SELECTED_ENTITY, selected));
+		}
 
 		if (node.entity == mRenameEntity)
 		{
@@ -236,14 +247,28 @@ namespace r2::edit
 		std::string enabledStrId = std::to_string(node.entity) + "enabledcheckbox";
 
 		ImGui::PushID(enabledStrId.c_str());
-		ImGui::Checkbox("", &node.enabled);
+
+
+		bool nodeEnabled = editorNameComponent->flags.IsSet(ecs::EDITOR_FLAG_ENABLE_ENTITY);
+
+		if (ImGui::Checkbox("", &nodeEnabled))
+		{
+			mnoptrEditor->PostNewAction(std::make_unique<edit::EntityEditorFlagChangedEditorAction>(mnoptrEditor, node.entity, ecs::EDITOR_FLAG_ENABLE_ENTITY, nodeEnabled));
+		}
+
 		ImGui::PopID();
 		ImGui::TableNextColumn();
 
 		std::string showStrId = std::to_string(node.entity) + "showcheckbox";
 
 		ImGui::PushID(showStrId.c_str());
-		ImGui::Checkbox("", &node.show);
+
+		bool nodeShow = editorNameComponent->flags.IsSet(ecs::EDITOR_FLAG_SHOW_ENTITY);
+
+		if (ImGui::Checkbox("", &nodeShow))
+		{
+			mnoptrEditor->PostNewAction(std::make_unique<edit::EntityEditorFlagChangedEditorAction>(mnoptrEditor, node.entity, ecs::EDITOR_FLAG_SHOW_ENTITY, nodeShow));
+		}
 
 		ImGui::PopID();
 		ImGui::TableNextColumn();

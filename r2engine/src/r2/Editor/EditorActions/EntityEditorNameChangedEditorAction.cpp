@@ -4,7 +4,7 @@
 #include "r2/Editor/EditorActions/EntityEditorNameChangedEditorAction.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 
 namespace r2::edit
 {
@@ -20,7 +20,7 @@ namespace r2::edit
 
 	void EntityEditorNameChangedEditorAction::Undo()
 	{
-		ecs::EditorNameComponent& editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorNameComponent>(mEntity);
+		ecs::EditorComponent& editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorComponent>(mEntity);
 
 		editorNameComponent.editorName = mPreviousName;
 
@@ -31,7 +31,7 @@ namespace r2::edit
 
 	void EntityEditorNameChangedEditorAction::Redo()
 	{
-		ecs::EditorNameComponent& editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorNameComponent>(mEntity);
+		ecs::EditorComponent& editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorComponent>(mEntity);
 
 		editorNameComponent.editorName = mNewName;
 

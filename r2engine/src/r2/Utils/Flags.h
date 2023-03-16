@@ -29,6 +29,11 @@ namespace r2
 
         }
 
+        inline Flags(Flags&& flags)
+            : mFlags(flags.mFlags)
+        {
+        }
+
         Flags& operator=(const Flags& flags)
         {
             if (this == &flags)
@@ -37,6 +42,18 @@ namespace r2
             }
 
             mFlags = flags.mFlags;
+
+            return *this;
+        }
+
+        Flags& operator=(Flags&& flags)
+        {
+			if (this == &flags)
+			{
+				return *this;
+			}
+
+			mFlags = flags.mFlags;
 
             return *this;
         }

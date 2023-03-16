@@ -5,7 +5,7 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorActions/DestroyEntityTreeEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
-#include "r2/Game/ECS/Components/EditorNameComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
@@ -32,7 +32,7 @@ namespace r2::edit
 		mEntityTreeTransformComponents.reserve(numChildren+1);
 
 		mEntityTree.push_back(entityToDestroy);
-		mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorNameComponent>(entityToDestroy));
+		mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorComponent>(entityToDestroy));
 		mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HeirarchyComponent>(entityToDestroy));
 		mEntityTreeTransformComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(entityToDestroy));
 
@@ -42,7 +42,7 @@ namespace r2::edit
 			
 			mEntityTree.push_back(e);
 
-			mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorNameComponent>(e));
+			mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorComponent>(e));
 			mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HeirarchyComponent>(e));
 			mEntityTreeTransformComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(e));
 		}
@@ -57,7 +57,7 @@ namespace r2::edit
 		{
 			mEntityTree[i] = mnoptrEditor->GetSceneGraph().CreateEntity(mEntityTreeHeirarchyComponents[i].parent);
 
-			mnoptrEditor->GetECSCoordinator()->AddComponent<ecs::EditorNameComponent>(mEntityTree[i], mEntityTreeEditorNameComponents[i]);
+			mnoptrEditor->GetECSCoordinator()->AddComponent<ecs::EditorComponent>(mEntityTree[i], mEntityTreeEditorNameComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::HeirarchyComponent>(mEntityTree[i], mEntityTreeHeirarchyComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::TransformComponent>(mEntityTree[i], mEntityTreeTransformComponents[i]);
 		}
