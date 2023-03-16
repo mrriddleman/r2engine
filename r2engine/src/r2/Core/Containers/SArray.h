@@ -255,7 +255,7 @@ namespace r2
         template<typename T> inline bool Insert(SArray<T>& arr, s64 index, const T& val)
         {
             R2_CHECK(arr.mSize + 1 <= arr.mCapacity, "We're at capacity!");
-            R2_CHECK(index >= 0 && index <= arr.mSize, "Index is out of range: %ill", index);
+            R2_CHECK(index >= 0 && index <= static_cast<s64>(arr.mSize), "Index is out of range: %ill", index);
 
             for (s64 i = arr.mSize - 1; i >= index; --i)
             {

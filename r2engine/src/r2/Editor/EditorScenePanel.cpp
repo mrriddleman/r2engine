@@ -74,8 +74,6 @@ namespace r2::edit
 			mSelectedEntity = e.GetEntity();
 			mPrevSelectedEntity = mSelectedEntity;
 
-			printf("%s\n", e.ToString().c_str());
-
 			return e.ShouldConsume();
 		});
 
