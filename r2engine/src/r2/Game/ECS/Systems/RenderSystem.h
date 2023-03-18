@@ -33,7 +33,7 @@ namespace r2::ecs
 		~RenderSystem();
 
 		template<class ARENA>
-		bool Init(ARENA& arena, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel)
+		bool Init(ARENA& arena, u32 maxNumberOfStaticBatches, u32 maxNumberOfDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel)
 		{
 			r2::mem::utils::MemorySizeStruct memorySizeStruct;
 			memorySizeStruct.headerSize = arena.HeaderSize();
@@ -44,7 +44,7 @@ namespace r2::ecs
 			memorySizeStruct.boundsChecking = = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 			
-			u64 memorySize = MemorySize(maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
+			u64 memorySize = MemorySize(maxNumberOfStaticBatches, maxNumberOfDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
 
 			mMemoryBoundary = MAKE_BOUNDARY(arena, memorySize, memorySizeStruct.alignment);
 			
@@ -54,15 +54,20 @@ namespace r2::ecs
 
 			R2_CHECK(mArena != nullptr, "We couldn't emplace the stack arena");
 
-			mStaticBatches = MAKE_SHASHMAP(*mArena, r2::SArray<RenderSystemGatherBatch>*, maxNumStaticModelsToDraw * r2::SHashMap<RenderSystemGatherBatch>::LoadFactorMultiplier());
+			mStaticBatches = MAKE_SHASHMAP(*mArena, r2::SArray<RenderSystemGatherBatch>*, maxNumberOfStaticBatches * r2::SHashMap<RenderSystemGatherBatch>::LoadFactorMultiplier());
 
 			R2_CHECK(mStaticBatches != nullptr, "We couldn't create the mStaticBatches");
 
-			mDynamicBatches = MAKE_SHASHMAP(*mArena, r2::SArray<RenderSystemGatherBatch>*, maxNumAnimModelsToDraw * r2::SHashMap<RenderSystemGatherBatch>::LoadFactorMultiplier());
+			mDynamicBatches = MAKE_SHASHMAP(*mArena, r2::SArray<RenderSystemGatherBatch>*, maxNumberOfDynamicBatches * r2::SHashMap<RenderSystemGatherBatch>::LoadFactorMultiplier());
 
 			R2_CHECK(mDynamicBatches != nullptr, "We couldn't create the mDynamicBatches");
 
 			mResetPointPtr = mArena->StartPtr() + mArena->TotalBytesAllocated();
+
+			mMaxNumStaticModelsToDraw = maxNumStaticModelsToDraw;
+			mMaxNumAnimModelsToDraw = maxNumAnimModelsToDraw;
+			mMaxNumMaterialsPerModel = maxNumMaterialsPerModel;
+			mMaxNumBoneTransformsPerAnimModel = maxNumBoneTransformsPerAnimModel;
 
 			return true;
 		}
@@ -77,7 +82,7 @@ namespace r2::ecs
 			FREE(mMemoryBoundary.location, arena);
 		}
 
-		static u64 MemorySize(u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySize);
+		static u64 MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySize);
 	private:
 
 		using GatherBatchPtr = r2::SHashMap<r2::SArray<RenderSystemGatherBatch>*>*;
@@ -85,6 +90,11 @@ namespace r2::ecs
 		r2::mem::utils::MemBoundary mMemoryBoundary;
 		r2::mem::StackArena* mArena;
 		void* mResetPointPtr;
+
+		u32 mMaxNumStaticModelsToDraw;
+		u32 mMaxNumAnimModelsToDraw;
+		u32 mMaxNumMaterialsPerModel;
+		u32 mMaxNumBoneTransformsPerAnimModel;
 
 		GatherBatchPtr mStaticBatches;
 		GatherBatchPtr mDynamicBatches;

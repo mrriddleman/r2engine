@@ -13,6 +13,15 @@ namespace r2::ecs
 
 
 	RenderSystem::RenderSystem()
+		: mMemoryBoundary{}
+		, mArena(nullptr)
+		, mResetPointPtr(nullptr)
+		, mMaxNumStaticModelsToDraw(0)
+		, mMaxNumAnimModelsToDraw(0)
+		, mMaxNumMaterialsPerModel(0)
+		, mMaxNumBoneTransformsPerAnimModel(0)
+		, mStaticBatches(nullptr)
+		, mDynamicBatches(nullptr)
 	{
 		mKeepSorted = false;
 	}
@@ -56,25 +65,30 @@ namespace r2::ecs
 
 		}
 
+		//@TODO(Serge): submit the batches to the renderer
+
+
+		r2::shashmap::Clear(*mStaticBatches);
+		r2::shashmap::Clear(*mDynamicBatches);
+
+		//@TODO(Serge): Reset the mArena to mResetPointPtr somehow
 	}
 
-	u64 RenderSystem::MemorySize(u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySizeStruct)
+	u64 RenderSystem::MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 		
 		memorySize +=
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystem), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<RenderSystemGatherBatch>*>::MemorySize(maxNumStaticModelsToDraw * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<RenderSystemGatherBatch>*>::MemorySize(maxNumAnimModelsToDraw * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderSystemGatherBatch>::MemorySize(maxNumStaticModelsToDraw), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticModelsToDraw +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderSystemGatherBatch>::MemorySize(maxNumAnimModelsToDraw), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumAnimModelsToDraw +
-			//pretty sure this is a wild overestimate since we're multiplying by the maxNumStaticModelsToDraw and maxNumAnimModelsToDraw
-			//could be better if we just set RenderSystemGatherBatch::MemorySize(1, maxNumMaterialsPerModel, etc)
-			//that way we're preserving the max amount of models but I dunno yet...
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumStaticModelsToDraw, maxNumMaterialsPerModel, 0, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticModelsToDraw +
-			r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumAnimModelsToDraw, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumAnimModelsToDraw;
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<RenderSystemGatherBatch>*>::MemorySize(maxNumStaticBatches * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<RenderSystemGatherBatch>*>::MemorySize(maxNumDynamicBatches * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderSystemGatherBatch>::MemorySize(maxNumStaticModelsToDraw), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticBatches +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderSystemGatherBatch>::MemorySize(maxNumAnimModelsToDraw), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumDynamicBatches +
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumStaticModelsToDraw, maxNumMaterialsPerModel, 0, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticBatches +
+			r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumAnimModelsToDraw, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumDynamicBatches;
 
+		//@TODO(Serge): check how much memory this is - seems like a lot
 
 		return memorySize;
 	}
