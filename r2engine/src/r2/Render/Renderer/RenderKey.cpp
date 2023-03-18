@@ -241,6 +241,17 @@ namespace r2::draw::key
 		return sortBatchKey;
 	}
 
+	RenderSystemKey GenerateRenderSystemKey(bool hasMaterialOverrides, PrimitiveType primitiveType, u32 drawParamaters)
+	{
+		key::RenderSystemKey renderSystemKey;
+
+		renderSystemKey.keyValue |= ENCODE_KEY_VALUE((u64)(hasMaterialOverrides ? 1 : 0), RenderSystemKey::RENDER_SYSTEM_KEY_BITS_HAS_MATERIAL_OVERRIDES, RenderSystemKey::RENDER_SYSTEM_KEY_HAS_MATERIAL_OVERRIDES_OFFSET);
+		renderSystemKey.keyValue |= ENCODE_KEY_VALUE((u64)primitiveType, RenderSystemKey::RENDER_SYSTEM_KEY_BITS_PRIMITIVE_TYPE, RenderSystemKey::RENDER_SYSTEM_KEY_PRIMITIVE_TYPE_OFFSET);
+		renderSystemKey.keyValue |= ENCODE_KEY_VALUE((u64)drawParamaters, RenderSystemKey::RENDER_SYSTEM_KEY_BITS_DRAW_PARAMETERS, RenderSystemKey::RENDER_SYSTEM_KEY_HAS_MATERIAL_OVERRIDES_OFFSET);
+
+		return renderSystemKey;
+	}
+
 	u8 GetBlendingFunctionKeyValue(const BlendState& state)
 	{
 		u8 blendingFunctionKeyValue = TR_OPAQUE;

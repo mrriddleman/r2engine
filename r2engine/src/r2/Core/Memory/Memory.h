@@ -63,6 +63,13 @@ namespace r2
         
         namespace utils
         {
+            struct MemorySizeStruct
+            {
+                u32 alignment;
+                u32 headerSize;
+                u32 boundsChecking;
+            };
+
             struct MemBoundary
             {
                 u64 size = 0;

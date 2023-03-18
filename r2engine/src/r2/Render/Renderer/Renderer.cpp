@@ -6073,6 +6073,10 @@ namespace r2::draw::renderer
 
 					r2::sarr::Fill(*materialHandlesToUse, r2::sarr::At(*materialHandles, 0));
 				}
+				else
+				{
+					R2_CHECK(false, "Mismatch on the number of materials being used for the model. Num Override materials: %ull is not equal to num materials of the model: %ull", numMaterials, r2::sarr::Size(*gpuModelRef->materialHandles));
+				}
 			}
 			else
 			{
@@ -6150,8 +6154,6 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*modelRefArray, gpuModelRef);
 		}
 
-//		r2::SArray<ModelRef>& modelRefs = *modelRefArray;
-
 #if defined(R2_DEBUG)
 		//check to see if what we're being given is all one type
 		if (!boneTransforms)
@@ -6167,6 +6169,18 @@ namespace r2::draw::renderer
 			{
 				R2_CHECK(r2::sarr::At(*modelRefArray, i)->isAnimated == true, "modelRef at index: %llu should be animated!", i);
 			}
+		}
+
+		if (materialHandles)
+		{
+			u64 numMaterialsForGPUModelRefs = 0;
+			for (u64 i = 0; i < numModelRefs; ++i)
+			{
+				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
+				numMaterialsForGPUModelRefs += r2::sarr::Size(*modelRef->materialHandles);
+			}
+
+			R2_CHECK(r2::sarr::Size(*materialHandles) == numMaterialsForGPUModelRefs, "These should be the same in this case");
 		}
 #endif
 

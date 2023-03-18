@@ -9,6 +9,7 @@ namespace r2::ecs
 {
 	struct RenderComponent
 	{
+		r2::draw::PrimitiveType primitiveType;
 		r2::draw::DrawParameters drawParameters;
 		r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
 		r2::SArray<r2::draw::MaterialHandle>* optrOverrideMaterials;

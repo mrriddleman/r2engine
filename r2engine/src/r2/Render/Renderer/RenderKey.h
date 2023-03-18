@@ -198,6 +198,25 @@ namespace r2::draw::key
 		};
 	};
 
+	struct RenderSystemKey
+	{
+		u64 keyValue = 0;
+		enum : u32
+		{
+			RENDER_SYSTEM_KEY_BITS_TOTAL = BytesToBits(sizeof(keyValue)),
+
+			RENDER_SYSTEM_KEY_BITS_HAS_MATERIAL_OVERRIDES = 0x1,
+			RENDER_SYSTEM_KEY_BITS_PRIMITIVE_TYPE = 0x8,
+			RENDER_SYSTEM_KEY_BITS_DRAW_PARAMETERS = 0x20,
+
+			RENDER_SYSTEM_KEY_HAS_MATERIAL_OVERRIDES_OFFSET = RENDER_SYSTEM_KEY_BITS_TOTAL - RENDER_SYSTEM_KEY_BITS_HAS_MATERIAL_OVERRIDES,
+			RENDER_SYSTEM_KEY_PRIMITIVE_TYPE_OFFSET = RENDER_SYSTEM_KEY_HAS_MATERIAL_OVERRIDES_OFFSET - RENDER_SYSTEM_KEY_BITS_PRIMITIVE_TYPE,
+			RENDER_SYSTEM_KEY_DRAW_PARAMATERS_OFFSET = RENDER_SYSTEM_KEY_PRIMITIVE_TYPE_OFFSET - RENDER_SYSTEM_KEY_BITS_DRAW_PARAMETERS,
+
+
+		};
+	};
+
 	//DEBUG
 	bool CompareDebugKey(const DebugKey& a, const DebugKey& b);
 	DebugKey GenerateDebugKey(r2::draw::ShaderHandle shaderID, PrimitiveType primitiveType, bool depthTest, u8 translucency, u32 depth);
@@ -221,6 +240,8 @@ namespace r2::draw::key
 	//Sort Batch
 	SortBatchKey GenerateSortBatchKey(u8 viewportLayer, r2::draw::ShaderHandle shader, u32 drawState);
 
+	//Render System Key
+	RenderSystemKey GenerateRenderSystemKey(bool hasMaterialOverrides, PrimitiveType primitiveType, u32 drawParamaters);
 
 	//Blending state helper
 	u8 GetBlendingFunctionKeyValue(const BlendState& state);
