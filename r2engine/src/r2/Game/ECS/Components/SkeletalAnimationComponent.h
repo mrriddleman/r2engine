@@ -13,8 +13,11 @@ namespace r2::ecs
 	{
 		u32 startTime;
 		b32 loop;
+		b32 shouldUseSameTransformsForAllInstances;
 		const r2::draw::AnimModel* animModel;
-		const r2::draw::Animation* animation;
+
+		r2::SArray<r2::draw::Animation*>* animationsPerInstance;
+
 		r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 		r2::SArray<r2::draw::DebugBone>* debugBones;
 	};
