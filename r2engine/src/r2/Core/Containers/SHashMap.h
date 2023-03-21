@@ -86,6 +86,8 @@ namespace r2
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description);
     
         template<typename T> SHashMap<T>* CreateHashMapInPlace(void* hashMapPlacement, u64 capacity);
+
+        template<typename T> bool IsFull(SHashMap<T>& h);
     
     }
     
@@ -387,6 +389,11 @@ namespace r2
 			h->Create(startOfHashArray, hashArrayDataStart, startOfDataArray, dataStart, capacity);
 
 			return h;
+        }
+
+        template<typename T> bool IsFull(SHashMap<T>& h)
+        {
+            return hashmap_internal::IsFull(h);
         }
     }
     

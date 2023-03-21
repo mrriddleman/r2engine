@@ -6160,15 +6160,36 @@ namespace r2::draw::renderer
 		{
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
-				R2_CHECK(r2::sarr::At(*modelRefArray, i)->isAnimated == false, "modelRef at index: %llu should not be animated!", i);
+				const auto modelRef = r2::sarr::At(*modelRefArray, i);
+
+				R2_CHECK(modelRef->isAnimated == false, "modelRef at index: %llu should not be animated!", i);
 			}
 		}
 		else 
 		{
+			const auto numBoneTransforms = r2::sarr::Size(*boneTransforms);
+			u32 numBonesInTotal = 0;
+			bool useSameBoneTransformsForInstances = drawParameters.flags.IsSet(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+
 			for (u64 i = 0; i < numModelRefs; ++i)
 			{
-				R2_CHECK(r2::sarr::At(*modelRefArray, i)->isAnimated == true, "modelRef at index: %llu should be animated!", i);
+				const auto modelRef = r2::sarr::At(*modelRefArray, i);
+
+				R2_CHECK(modelRef->isAnimated == true, "modelRef at index: %llu should be animated!", i);
+
+				u32 numInstancesForModel = r2::sarr::At(numInstancesPerModel, i);
+
+				if (useSameBoneTransformsForInstances)
+				{
+					numBonesInTotal += modelRef->numBones;
+				}
+				else
+				{
+					numBonesInTotal += (modelRef->numBones * numInstancesForModel);
+				}
 			}
+
+			R2_CHECK(numBonesInTotal == numBoneTransforms, "These should match!");
 		}
 
 		if (materialHandles)
