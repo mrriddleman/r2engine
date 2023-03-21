@@ -8,6 +8,7 @@
 
 #include "r2/Game/ECS/Components/HeirarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
+#include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 
@@ -53,6 +54,25 @@ namespace r2::ecs
 			//@TODO(Serge): Need to figure out a way to optimize this - very slow at the moment
 			entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
 			entityTransformComponent.modelMatrix = math::ToMatrix(entityTransformComponent.accumTransform);
+
+			InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(entity);
+			if (instanceComponent)
+			{
+				const auto numInstances = r2::sarr::Size(*instanceComponent->offsets);
+
+				r2::sarr::Clear(*instanceComponent->instanceModels);
+				r2::sarr::Fill(*instanceComponent->instanceModels, entityTransformComponent.modelMatrix);
+
+				for (u64 i = 0; i < numInstances; ++i)
+				{
+				 	const glm::vec3& offset = r2::sarr::At(*instanceComponent->offsets, i);
+
+					glm::mat4& modelMat = r2::sarr::At(*instanceComponent->instanceModels, i);
+
+					modelMat[3] += glm::vec4(offset, 0);
+				}
+			}
+
 		}
 
 		//We need to make a copy here because we're changing the signature of the entities such that they won't belong 

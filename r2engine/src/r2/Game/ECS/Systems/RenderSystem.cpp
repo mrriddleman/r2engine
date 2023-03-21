@@ -5,6 +5,7 @@
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+#include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Utils/Hash.h"
@@ -45,6 +46,7 @@ namespace r2::ecs
 			const TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(e);
 			const RenderComponent& renderComponent = mnoptrCoordinator->GetComponent<RenderComponent>(e);
 			const SkeletalAnimationComponent* animationComponent = mnoptrCoordinator->GetComponentPtr<SkeletalAnimationComponent>(e);
+			const InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
 
 			GatherBatchPtr gatherBatchToUse = mStaticBatches;
 			u32 maxNumModels = mMaxNumStaticModelsToDraw;
@@ -54,19 +56,17 @@ namespace r2::ecs
 				maxNumModels = mMaxNumAnimModelsToDraw;
 			}
 
-			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent);
+			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instanceComponent);
 		}
 
 		SubmitBatch(mStaticBatches);
 		SubmitBatch(mDynamicBatches);
 
-
 		//Do the simple thing to start
 		FreeAllPerFrameData();
-
 	}
 
-	void RenderSystem::AddComponentsToGatherBatch(GatherBatchPtr gatherBatchPtr, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent)
+	void RenderSystem::AddComponentsToGatherBatch(GatherBatchPtr gatherBatchPtr, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent, const InstanceComponent* instanceComponent)
 	{
 		//I think the idea here is to gather all of the similar state together and only call the necessary amount of DrawModel/DrawModels of the renderer
 		//We have to break things up on certain criteria:
@@ -114,8 +114,18 @@ namespace r2::ecs
 
 		//now add in the data to gatherBatch
 		r2::sarr::Push(*gatherBatch->modelRefHandles, renderComponent.gpuModelRefHandle);
+		
 		r2::sarr::Push(*gatherBatch->transforms, transform.modelMatrix);
-		r2::sarr::Push(*gatherBatch->instances, 1u);
+		u32 numInstances = 1;
+
+		if (instanceComponent)
+		{
+			numInstances += r2::sarr::Size(*instanceComponent->offsets);
+			r2::sarr::Append(*gatherBatch->transforms, *instanceComponent->instanceModels);
+		}
+
+		r2::sarr::Push(*gatherBatch->instances, numInstances);
+		
 		if (hasMaterialOverrides)
 		{
 			r2::sarr::Append(*gatherBatch->materialHandles, *renderComponent.optrOverrideMaterials);

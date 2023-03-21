@@ -13,7 +13,7 @@ namespace r2::ecs
 	class TransformComponent;
 	class RenderComponent;
 	class SkeletalAnimationComponent;
-
+	class InstanceComponent;
 
 	class RenderSystem : public System
 	{
@@ -100,7 +100,7 @@ namespace r2::ecs
 
 		using GatherBatchPtr = r2::SHashMap<RenderSystemGatherBatch*>*;
 
-		void AddComponentsToGatherBatch(GatherBatchPtr gatherBatch, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent);
+		void AddComponentsToGatherBatch(GatherBatchPtr gatherBatch, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent, const InstanceComponent* instanceComponent);
 		void SubmitBatch(GatherBatchPtr gatherBatch);
 		void FreeAllPerFrameData();
 		void ClearPerFrameData(GatherBatchPtr gatherBatch);
