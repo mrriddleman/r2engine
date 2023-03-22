@@ -10,10 +10,10 @@
 
 namespace r2::ecs
 {
-	class TransformComponent;
-	class RenderComponent;
-	class SkeletalAnimationComponent;
-	class InstanceComponent;
+	struct TransformComponent;
+	struct RenderComponent;
+	struct SkeletalAnimationComponent;
+	struct InstanceComponent;
 
 	class RenderSystem : public System
 	{

@@ -9,6 +9,18 @@
 #include "r2/Editor/EditorScenePanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Game/ECS/Components/RenderComponent.h"
+#include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+#include "r2/Game/ECS/Systems/RenderSystem.h"
+#include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
+
+#ifdef R2_DEBUG
+#include "r2/Game/ECS/Components/DebugRenderComponent.h"
+#include "r2/Game/ECS/Components/DebugBoneComponent.h"
+#include "r2/Game/ECS/Systems/DebugBonesRenderSystem.h"
+#include "r2/Game/ECS/Systems/DebugRenderSystem.h"
+#endif
 #include "imgui.h"
 
 
@@ -17,6 +29,12 @@ namespace r2
 	Editor::Editor()
 		:mMallocArena(r2::mem::utils::MemBoundary())
 		,mCoordinator(nullptr)
+		,mnoptrRenderSystem(nullptr)
+		,mnoptrSkeletalAnimationSystem(nullptr)
+#ifdef R2_DEBUG
+		,mnoptrDebugBonesRenderSystem(nullptr)
+		,mnoptrDebugRenderSystem(nullptr)
+#endif // DEBUG
 	{
 
 	}
@@ -26,11 +44,11 @@ namespace r2
 		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
 
 		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 1, ecs::MAX_NUM_SYSTEMS);
+
+		RegisterComponents();
+		RegisterSystems();
+
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
-
-		//add some more components to the coordinator for the editor to use
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
-
 
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
@@ -61,9 +79,14 @@ namespace r2
 
 		mEditorWidgets.clear();
 
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
+		
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
+
+
+		UnRegisterSystems();
+		UnRegisterComponents();
+
 		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);
 
 		FREE(mCoordinator, mMallocArena);
@@ -108,6 +131,9 @@ namespace r2
 
 	void Editor::Update()
 	{
+		mSceneGraph.Update();
+		mnoptrSkeletalAnimationSystem->Update();
+
 		for (const auto& widget : mEditorWidgets)
 		{
 			widget->Update();
@@ -116,7 +142,12 @@ namespace r2
 
 	void Editor::Render()
 	{
+		mnoptrRenderSystem->Render();
 
+#ifdef R2_DEBUG
+		mnoptrDebugRenderSystem->Render();
+		mnoptrDebugBonesRenderSystem->Render();
+#endif
 	}
 
 	void Editor::RenderImGui(u32 dockingSpaceID)
@@ -193,6 +224,96 @@ namespace r2
 	r2::mem::MallocArena& Editor::GetMemoryArena()
 	{
 		return mMallocArena;
+	}
+
+	void Editor::RegisterComponents()
+	{
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
+
+		//add some more components to the coordinator for the editor to use
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
+
+#ifdef R2_DEBUG
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
+#endif
+	}
+
+	void Editor::RegisterSystems()
+	{
+		mnoptrRenderSystem = (ecs::RenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
+
+		const auto transformComponentType = mCoordinator->GetComponentType<ecs::TransformComponent>();
+		const auto renderComponentType = mCoordinator->GetComponentType<ecs::RenderComponent>();
+		const auto skeletalAnimationComponentType = mCoordinator->GetComponentType<ecs::SkeletalAnimationComponent>();
+#ifdef R2_DEBUG
+		const auto debugRenderComponentType = mCoordinator->GetComponentType<ecs::DebugRenderComponent>();
+		const auto debugBoneComponentType = mCoordinator->GetComponentType<ecs::DebugBoneComponent>();
+#endif
+
+		ecs::Signature renderSystemSignature;
+		renderSystemSignature.set(transformComponentType);
+		renderSystemSignature.set(renderComponentType);
+		mCoordinator->SetSystemSignature<ecs::RenderSystem>(renderSystemSignature);
+
+		mnoptrSkeletalAnimationSystem = (ecs::SkeletalAnimationSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
+
+		ecs::Signature skeletalAnimationSystemSignature;
+		skeletalAnimationSystemSignature.set(skeletalAnimationComponentType);
+#ifdef R2_DEBUG
+		skeletalAnimationSystemSignature.set(debugBoneComponentType);
+#endif
+		mCoordinator->SetSystemSignature<ecs::SkeletalAnimationSystem>(skeletalAnimationSystemSignature);
+
+#ifdef R2_DEBUG
+		mnoptrDebugBonesRenderSystem = (ecs::DebugBonesRenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::DebugBonesRenderSystem>(mMallocArena);
+		ecs::Signature debugBonesSystemSignature;
+		debugBonesSystemSignature.set(debugBoneComponentType);
+		debugBonesSystemSignature.set(transformComponentType);
+
+		mCoordinator->SetSystemSignature<ecs::DebugBonesRenderSystem>(debugBonesSystemSignature);
+
+		mnoptrDebugRenderSystem = (ecs::DebugRenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::DebugRenderSystem>(mMallocArena);
+		ecs::Signature debugRenderSystemSignature;
+
+		debugRenderSystemSignature.set(debugRenderComponentType);
+		debugRenderSystemSignature.set(transformComponentType);
+
+		mCoordinator->SetSystemSignature<ecs::DebugRenderSystem>(debugRenderSystemSignature);
+#endif
+
+	}
+
+	void Editor::UnRegisterComponents()
+	{
+#ifdef R2_DEBUG
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
+#endif
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
+	}
+
+	void Editor::UnRegisterSystems()
+	{
+#ifdef R2_DEBUG
+		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::DebugRenderSystem>(mMallocArena);
+		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::DebugBonesRenderSystem>(mMallocArena);
+#endif
+		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
+		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
 	}
 }
 

@@ -28,18 +28,15 @@ namespace r2
 
 			mnoptrECSCoordinator = coordinator;
 
-			coordinator->RegisterComponent<ARENA, ecs::HeirarchyComponent>(arena);
-			coordinator->RegisterComponent<ARENA, ecs::TransformComponent>(arena);
-			coordinator->RegisterComponent<ARENA, ecs::TransformDirtyComponent>(arena);
-
 			mnoptrSceneGraphSystem = (ecs::SceneGraphSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
-			mnoptrSceneGraphSystem->SetSceneGraph(this);
-
+			
 			if (mnoptrSceneGraphSystem == nullptr)
 			{
 				R2_CHECK(false, "Couldn't register the SceneGraphSystem");
 				return false;
 			}
+
+			mnoptrSceneGraphSystem->SetSceneGraph(this);
 
 			ecs::Signature systemSignature;
 
@@ -71,15 +68,13 @@ namespace r2
 		template <class ARENA>
 		void Shutdown(ARENA& arena)
 		{
-
 			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
 			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
-			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::TransformDirtyComponent>(arena);
-			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::TransformComponent>(arena);
-			mnoptrECSCoordinator->UnRegisterComponent<ARENA, ecs::HeirarchyComponent>(arena);
 			mnoptrSceneGraphSystem = nullptr;
 			mnoptrECSCoordinator = nullptr;
 		}
+
+		void Update();
 
 		ecs::Entity CreateEntity();
 		ecs::Entity CreateEntity(ecs::Entity parent);

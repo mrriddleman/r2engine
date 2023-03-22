@@ -59,8 +59,10 @@ namespace r2::ecs
 			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instanceComponent);
 		}
 
+
 		SubmitBatch(mStaticBatches);
 		SubmitBatch(mDynamicBatches);
+		
 
 		//Do the simple thing to start
 		FreeAllPerFrameData();
@@ -154,7 +156,6 @@ namespace r2::ecs
 
 		RESET_ARENA(*mPerFrameArena);
 	}
-
 
 	void RenderSystem::ClearPerFrameData(GatherBatchPtr gatherBatch)
 	{

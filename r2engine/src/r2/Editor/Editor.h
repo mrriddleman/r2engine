@@ -15,6 +15,16 @@ namespace r2::evt
 	class EditorEvent;
 }
 
+namespace r2::ecs
+{
+	class RenderSystem;
+	class SkeletalAnimationSystem;
+#ifdef R2_DEBUG
+	class DebugBonesRenderSystem;
+	class DebugRenderSystem;
+#endif
+}
+
 namespace r2
 {
 	class Editor
@@ -42,9 +52,22 @@ namespace r2
 
 	private:
 
+		void RegisterComponents();
+		void RegisterSystems();
+		void UnRegisterComponents();
+		void UnRegisterSystems();
+
+
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;
 		SceneGraph mSceneGraph;
+
+		r2::ecs::RenderSystem* mnoptrRenderSystem;
+		r2::ecs::SkeletalAnimationSystem* mnoptrSkeletalAnimationSystem;
+#ifdef R2_DEBUG
+		r2::ecs::DebugBonesRenderSystem* mnoptrDebugBonesRenderSystem;
+		r2::ecs::DebugRenderSystem* mnoptrDebugRenderSystem;
+#endif
 
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;

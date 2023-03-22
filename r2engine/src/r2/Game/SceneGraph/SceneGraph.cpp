@@ -21,6 +21,11 @@ namespace r2
 		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 	}
 
+	void SceneGraph::Update()
+	{
+		mnoptrSceneGraphTransformUpdateSystem->Update();
+	}
+
 	ecs::Entity SceneGraph::CreateEntity()
 	{
 		return CreateEntity(ecs::INVALID_ENTITY);
