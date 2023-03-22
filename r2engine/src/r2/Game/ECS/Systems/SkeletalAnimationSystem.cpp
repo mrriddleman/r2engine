@@ -3,8 +3,10 @@
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Render/Animation/AnimationPlayer.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/ECS/Components/DebugBoneComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+
 
 
 namespace r2::ecs
@@ -33,8 +35,15 @@ namespace r2::ecs
 			SkeletalAnimationComponent& animationComponent = mnoptrCoordinator->GetComponent<SkeletalAnimationComponent>(e);
 			InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
 
+			//@TODO(Serge): right now the Animation Player requires debug bones to play the animation
+			//				we should refactor this in order to remove that requirement
+#ifdef R2_DEBUG
+			DebugBoneComponent* debugBoneComponent = mnoptrCoordinator->GetComponentPtr<DebugBoneComponent>(e);
+			R2_CHECK(debugBoneComponent != nullptr, "Should not be nullptr right now");
+			R2_CHECK(debugBoneComponent->debugBones != nullptr, "These should not be null");
+#endif
+
 			R2_CHECK(animationComponent.shaderBones != nullptr, "These should not be null");
-			R2_CHECK(animationComponent.debugBones != nullptr, "These should not be null");
 			R2_CHECK(animationComponent.animationsPerInstance != nullptr, "This should be not null");
 
 			u32 numInstancesToAnimate = 1;
@@ -58,7 +67,7 @@ namespace r2::ecs
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
 #ifdef R2_DEBUG
-			r2::sarr::Clear(*animationComponent.debugBones);
+			r2::sarr::Clear(*debugBoneComponent->debugBones);
 #endif
 
 			u32 offset = 0;
@@ -70,7 +79,7 @@ namespace r2::ecs
 					r2::sarr::At(*animationComponent.loopPerInstance, j),
 					*animationComponent.animModel,
 					r2::sarr::At(*animationComponent.animationsPerInstance, j),
-					*animationComponent.shaderBones, *animationComponent.debugBones, offset);
+					*animationComponent.shaderBones, *debugBoneComponent->debugBones, offset);
 
 				offset += numShaderBones;
 			}
