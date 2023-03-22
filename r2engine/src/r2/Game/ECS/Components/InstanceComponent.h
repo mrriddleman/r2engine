@@ -6,6 +6,7 @@
 
 namespace r2::ecs
 {
+	//@IDEA: ugly, but, we could make this a template given another component...
 	struct InstanceComponent
 	{
 		//@TODO(Serge): right now this doesn't do any rotation or scales for the instances which we should probably have at some point

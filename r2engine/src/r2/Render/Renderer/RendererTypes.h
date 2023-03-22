@@ -105,6 +105,33 @@ namespace r2::draw
     extern u32 CW;
     extern u32 CCW;
 
+	enum DefaultModel
+	{
+		QUAD = 0,
+		CUBE,
+		SPHERE,
+		CONE,
+		CYLINDER,
+		FULLSCREEN_TRIANGLE,
+		SKYBOX,
+		NUM_DEFAULT_MODELS,
+	};
+
+	enum DebugModelType : u32
+	{
+		DEBUG_QUAD = 0,
+		DEBUG_CUBE,
+		DEBUG_SPHERE,
+		DEBUG_CONE,
+		DEBUG_CYLINDER,
+
+		DEBUG_ARROW,
+		DEBUG_LINE,
+
+		NUM_DEBUG_MODELS
+	};
+
+
     struct CullState
     {
         b32 cullingEnabled;

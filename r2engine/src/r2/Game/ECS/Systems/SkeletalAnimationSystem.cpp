@@ -53,14 +53,21 @@ namespace r2::ecs
 
 			R2_CHECK(r2::sarr::Capacity(*animationComponent.shaderBones) >= totalNumShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
 			R2_CHECK(r2::sarr::Size(*animationComponent.animationsPerInstance) == numInstancesToAnimate, "These should be the same");
+			R2_CHECK(r2::sarr::Size(*animationComponent.loopPerInstance) == numInstancesToAnimate, "These should be the same");
+			R2_CHECK(r2::sarr::Size(*animationComponent.startTimePerInstance) == numInstancesToAnimate, "These should be the same");
+
+			r2::sarr::Clear(*animationComponent.shaderBones);
+#ifdef R2_DEBUG
+			r2::sarr::Clear(*animationComponent.debugBones);
+#endif
 
 			u32 offset = 0;
 			for (u32 j = 0; j < numInstancesToAnimate; ++j)
 			{
 				r2::draw::PlayAnimationForAnimModel(
 					CENG.GetTicks(),
-					animationComponent.startTime,
-					animationComponent.loop,
+					r2::sarr::At(*animationComponent.startTimePerInstance, j),
+					r2::sarr::At(*animationComponent.loopPerInstance, j),
 					*animationComponent.animModel,
 					r2::sarr::At(*animationComponent.animationsPerInstance, j),
 					*animationComponent.shaderBones, *animationComponent.debugBones, offset);

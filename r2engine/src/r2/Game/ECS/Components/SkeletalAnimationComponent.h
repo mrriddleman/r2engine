@@ -11,11 +11,11 @@ namespace r2::ecs
 {
 	struct SkeletalAnimationComponent
 	{
-		u32 startTime;
-		b32 loop;
 		b32 shouldUseSameTransformsForAllInstances;
 		const r2::draw::AnimModel* animModel;
 
+		r2::SArray<u32>* startTimePerInstance;
+		r2::SArray<b32>* loopPerInstance;
 		r2::SArray<r2::draw::Animation*>* animationsPerInstance;
 
 		r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
