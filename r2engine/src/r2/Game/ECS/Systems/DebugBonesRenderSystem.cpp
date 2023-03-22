@@ -17,7 +17,7 @@ namespace r2::ecs
 	
 	DebugBonesRenderSystem::DebugBonesRenderSystem()
 	{
-
+		mKeepSorted = false;
 	}
 
 	DebugBonesRenderSystem::~DebugBonesRenderSystem()

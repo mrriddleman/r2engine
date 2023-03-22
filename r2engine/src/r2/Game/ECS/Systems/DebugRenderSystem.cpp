@@ -17,7 +17,7 @@ namespace r2::ecs
 
 	DebugRenderSystem::DebugRenderSystem()
 	{
-
+		mKeepSorted = false;
 	}
 
 	DebugRenderSystem::~DebugRenderSystem()
