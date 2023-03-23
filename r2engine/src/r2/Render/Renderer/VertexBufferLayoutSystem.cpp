@@ -89,7 +89,7 @@ namespace r2::draw::vb
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(VertexBufferLayout), ALIGNMENT, stackHeaderSize, boundsChecking)
 		) * numBufferLayouts;
 
-		R2_CHECK(vertexBufferLayoutArenaSize <= Megabytes(32), "Don't want this to go crazy");
+		R2_CHECK(vertexBufferLayoutArenaSize <= Megabytes(64), "Don't want this to go crazy");
 
 		return vertexBufferLayoutArenaSize;
 	}
@@ -116,7 +116,7 @@ namespace r2::draw::vb
 		u64 memoryNeeded = VertexBufferLayoutSystem::MemorySize(numBufferLayouts, maxModelsLoaded, avgNumberOfMeshesPerModel, ALIGNMENT);
 		if (memoryNeeded > unallocatedSpace)
 		{
-			R2_CHECK(false, "We don't have enough space to allocate a new sub area for this system");
+			R2_CHECK(false, "We don't have enough space to allocate a new sub area for the VertexBufferLayoutSystem - have: %zu bytes, need: %zu, difference: %zu", unallocatedSpace, memoryNeeded, memoryNeeded - unallocatedSpace);
 			return nullptr;
 		}
 

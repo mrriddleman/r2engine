@@ -9,6 +9,8 @@
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
 
+#include "r2/Utils/Random.h"
+
 namespace r2::evt
 {
 	class Event;
@@ -57,6 +59,9 @@ namespace r2
 		void UnRegisterComponents();
 		void UnRegisterSystems();
 
+
+		//@TEST CODE:
+		r2::util::Random mRandom;
 
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;

@@ -32,23 +32,20 @@
 
 namespace
 {
-	//r2::draw::Renderer* s_optrRenderer = nullptr;
-	const u32 MAX_NUM_DRAWS = 2 << 13;
-
-	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 32;
-	const u32 MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME = 512;
+	const u32 MAX_NUM_DRAWS = 2 << 15;
 	
-	//constexpr u32 MODEL_REF_ARENA_SIZE = sizeof(r2::draw::ModelRef) * MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME * AVG_NUM_OF_MESHES_PER_MODEL * (sizeof(r2::draw::MeshRef) + sizeof(r2::draw::MaterialHandle));
+	const u32 AVG_NUM_OF_MESHES_PER_MODEL = 64;
+	const u32 MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME = 1024;
+	
 	const u64 COMMAND_CAPACITY = 2048;
 	const u64 COMMAND_AUX_MEMORY = Megabytes(16); //I dunno lol
-	//const u64 AO_COMMAND_AUX_MEMORY = Megabytes(4);
 	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
-	const u64 MAX_NUM_SHADERS = 500;
-	const u64 MAX_DEFAULT_MODELS = 16;
-	const u64 MAX_NUM_TEXTURES = 2048;
-	const u64 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
-	const u64 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
+	const u32 MAX_NUM_SHADERS = 512;
+	const u32 MAX_DEFAULT_MODELS = 16;
+	const u32 MAX_NUM_TEXTURES = 2048;
+	const u32 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
+	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
 	const u32 SCATTER_TILE_DIM = 64;
 	const u32 REDUCE_TILE_DIM = 128;
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
@@ -56,21 +53,21 @@ namespace
 	const u32 STATIC_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(16);
 	const u32 ANIM_MODELS_VERTEX_LAYOUT_SIZE = Megabytes(16);
 
-	const u64 MAX_NUM_CONSTANT_BUFFERS = 16; //?
-	const u64 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS;
+	const u32 MAX_NUM_CONSTANT_BUFFERS = 16; //?
+	const u32 MAX_NUM_CONSTANT_BUFFER_LOCKS = MAX_NUM_DRAWS;
 
-	const u64 MAX_NUM_BONES = MAX_NUM_DRAWS;
+	const u32 MAX_NUM_BONES = MAX_NUM_DRAWS;
 
 	const bool USE_SDSM_SHADOWS = true;
 
-	const u64 PRE_RENDER_STACK_ARENA_SIZE = Megabytes(4);
+	const u32 PRE_RENDER_STACK_ARENA_SIZE = Megabytes(4);
 	const u32 NUM_RENDER_MATERIALS_TO_RENDER = 2048;
 
 #ifdef R2_DEBUG
 	const u32 MAX_NUM_DEBUG_DRAW_COMMANDS = MAX_NUM_DRAWS;//Megabytes(4) / sizeof(InternalDebugRenderCommand);
 	const u32 MAX_NUM_DEBUG_LINES = MAX_NUM_DRAWS;// Megabytes(8) / (2 * sizeof(DebugVertex));
 	const u32 MAX_NUM_DEBUG_MODELS = 5;
-	const u64 DEBUG_COMMAND_AUX_MEMORY = Megabytes(4);
+	const u32 DEBUG_COMMAND_AUX_MEMORY = Megabytes(4);
 #endif
 
 	const std::string MODL_EXT = ".modl";
@@ -8942,6 +8939,26 @@ namespace r2::draw::renderer
 	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity()
 	{
 		return GetAnimVertexBufferCapacity(MENG.GetCurrentRendererRef());
+	}
+
+	u32 GetMaxNumModelsLoadedAtOneTimePerLayout()
+	{
+		return MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME;
+	}
+
+	u32 GetAVGMaxNumMeshesPerModel()
+	{
+		return AVG_NUM_OF_MESHES_PER_MODEL;
+	}
+
+	u32 GetMaxNumInstancesPerModel()
+	{
+		return MAX_NUM_DRAWS / MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME;
+	}
+
+	u32 GetAVGMaxNumBonesPerModel()
+	{
+		return MAX_NUM_BONES / MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME;
 	}
 
 	void SetRenderCamera(Camera* cameraPtr)

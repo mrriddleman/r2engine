@@ -8,13 +8,14 @@
 #include "r2/Editor/EditorAssetPanel.h"
 #include "r2/Editor/EditorScenePanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
+#include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Systems/RenderSystem.h"
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
-
+#include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
@@ -23,6 +24,16 @@
 #endif
 #include "imgui.h"
 
+//@TEST: for test code only - REMOVE!
+#include "r2/Render/Renderer/Renderer.h"
+#include "r2/Utils/Random.h"
+
+namespace 
+{
+	//Figure out render system defaults
+	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
+	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
+}
 
 namespace r2
 {
@@ -47,6 +58,8 @@ namespace r2
 
 		RegisterComponents();
 		RegisterSystems();
+		
+		mRandom.Randomize();
 
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
@@ -200,6 +213,39 @@ namespace r2
 
 	void Editor::PostEditorEvent(r2::evt::EditorEvent& e)
 	{
+		//@TODO(Serge): listen to the entity creation event and add in the appropriate components for testing
+		//@NOTE: all test code!				
+		r2::evt::EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
+			{
+				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
+
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetDefaultModelRef(modelType);
+
+				ecs::RenderComponent renderComponent;
+				renderComponent.optrOverrideMaterials = nullptr;
+				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
+				renderComponent.primitiveType = draw::PrimitiveType::TRIANGLES;
+				renderComponent.drawParameters.layer = r2::draw::DL_WORLD;
+				renderComponent.drawParameters.flags.Clear();
+				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+
+				r2::draw::renderer::SetDefaultCullState(renderComponent.drawParameters);
+				r2::draw::renderer::SetDefaultStencilState(renderComponent.drawParameters);
+				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);
+
+				ecs::Entity theNewEntity = e.GetEntity();
+
+				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
+
+				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
+				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
+
+
+			return e.ShouldConsume();
+		});
+
+
 		for (const auto& widget : mEditorWidgets)
 		{
 			widget->OnEvent(e);
@@ -246,7 +292,7 @@ namespace r2
 
 	void Editor::RegisterSystems()
 	{
-		mnoptrRenderSystem = (ecs::RenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
+		
 
 		const auto transformComponentType = mCoordinator->GetComponentType<ecs::TransformComponent>();
 		const auto renderComponentType = mCoordinator->GetComponentType<ecs::RenderComponent>();
@@ -256,10 +302,28 @@ namespace r2
 		const auto debugBoneComponentType = mCoordinator->GetComponentType<ecs::DebugBoneComponent>();
 #endif
 
+		mnoptrRenderSystem = (ecs::RenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
 		ecs::Signature renderSystemSignature;
 		renderSystemSignature.set(transformComponentType);
 		renderSystemSignature.set(renderComponentType);
 		mCoordinator->SetSystemSignature<ecs::RenderSystem>(renderSystemSignature);
+
+		//@TODO(Serge): Init render system here
+		u32 maxNumModels = r2::draw::renderer::GetMaxNumModelsLoadedAtOneTimePerLayout();
+		u32 avgMaxNumMeshesPerModel = r2::draw::renderer::GetAVGMaxNumMeshesPerModel();
+		u32 avgMaxNumInstancesPerModel = r2::draw::renderer::GetMaxNumInstancesPerModel();
+		u32 avgMaxNumBonesPerModel = r2::draw::renderer::GetAVGMaxNumBonesPerModel();
+
+		r2::mem::utils::MemorySizeStruct memSizeStruct;
+		memSizeStruct.alignment = 16;
+		memSizeStruct.headerSize = mMallocArena.HeaderSize();
+
+		memSizeStruct.boundsChecking = 0;
+#ifdef R2_DEBUG
+		memSizeStruct.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+		mnoptrRenderSystem->Init<mem::MallocArena>(mMallocArena, MAX_NUM_STATIC_BATCHES, MAX_NUM_DYNAMIC_BATCHES, maxNumModels, maxNumModels, avgMaxNumInstancesPerModel, avgMaxNumMeshesPerModel, avgMaxNumBonesPerModel);
 
 		mnoptrSkeletalAnimationSystem = (ecs::SkeletalAnimationSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
 
@@ -313,6 +377,10 @@ namespace r2
 		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::DebugBonesRenderSystem>(mMallocArena);
 #endif
 		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
+
+		//@TODO(Serge): shutdown render system here
+		mnoptrRenderSystem->Shutdown<mem::MallocArena>(mMallocArena);
+
 		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
 	}
 }

@@ -44,9 +44,9 @@ namespace r2::ecs
 			memorySizeStruct.headerSize = arena.HeaderSize();
 			memorySizeStruct.alignment = 16;
 
-			memorySizeStruct.boundsChecking = = 0;
+			memorySizeStruct.boundsChecking = 0;
 #ifdef R2_DEBUG
-			memorySizeStruct.boundsChecking = = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+			memorySizeStruct.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 			
 			u64 memorySize = MemorySize(maxNumberOfStaticBatches, maxNumberOfDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
@@ -69,7 +69,7 @@ namespace r2::ecs
 
 			u64 perFrameMemorySize = MemorySizeForPerFrameArena(maxNumberOfStaticBatches, maxNumberOfDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
 			
-			mPerFrameArena = MAKE_STACK_ARENA(mArena, perFrameMemorySize);
+			mPerFrameArena = MAKE_STACK_ARENA(*mArena, perFrameMemorySize);
 
 			R2_CHECK(mPerFrameArena != nullptr, "We couldn't create the per frame arena!");
 

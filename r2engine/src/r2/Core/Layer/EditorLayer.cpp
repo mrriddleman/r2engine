@@ -7,7 +7,7 @@
 namespace r2
 {
 	EditorLayer::EditorLayer()
-		:Layer("Editor", false)
+		:Layer("Editor", true)
 		,mEnabled(false)
 	{
 

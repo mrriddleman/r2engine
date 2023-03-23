@@ -559,6 +559,11 @@ namespace r2::draw::renderer
 	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity();
 	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity();
 
+	u32 GetMaxNumModelsLoadedAtOneTimePerLayout();
+	u32 GetAVGMaxNumMeshesPerModel();
+	u32 GetMaxNumInstancesPerModel();
+	u32 GetAVGMaxNumBonesPerModel();
+
 #ifdef R2_DEBUG
 
 	void DrawDebugBones(const r2::SArray<DebugBone>& bones, const glm::mat4& modelMatrix, const glm::vec4& color);
