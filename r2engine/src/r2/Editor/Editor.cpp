@@ -220,7 +220,7 @@ namespace r2
 			{
 				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetDefaultModelRef(modelType);
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.optrOverrideMaterials = nullptr;
@@ -240,7 +240,7 @@ namespace r2
 
 				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
-
+				//transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(1, 0, 0));
 
 			return e.ShouldConsume();
 		});

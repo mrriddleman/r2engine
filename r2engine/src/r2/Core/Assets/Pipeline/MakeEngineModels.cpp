@@ -333,9 +333,6 @@ namespace r2::asset::pln
 		positions.push_back(p4);
 
 		flat::Vertex3 n1 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-	//	flat::Vertex3 n2 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-	//	flat::Vertex3 n3 = flat::Vertex3(0.0f, 0.0f, 1.0f);
-	//	flat::Vertex3 n4 = flat::Vertex3(0.0f, 0.0f, 1.0f);
 
 		normals.push_back(n1);
 		normals.push_back(n1);
@@ -352,50 +349,12 @@ namespace r2::asset::pln
 		texCoords.push_back(t3);
 		texCoords.push_back(t4);
 
-
-		//flat::Vertex3 tangent1;
-		//flat::Vertex3 tangent2;
-
-
-		//
-
-		//flat::Vertex3 tri1Edge1 = Subtract(positions[1], positions[0]);
-		//flat::Vertex3 tri1Edge2 = Subtract(positions[2], positions[0]);
-		//flat::Vertex2 deltaUV1 = Subtract(t2, t1);
-		//flat::Vertex2 deltaUV2 = Subtract(t3, t1);
-
-		//CalculateTangent(tri1Edge1, tri1Edge2, deltaUV1, deltaUV2, tangent1);
-
-		//flat::Vertex3 tri2Edge1 = Subtract(positions[2], positions[0]);
-		//flat::Vertex3 tri2Edge2 = Subtract(positions[3], positions[0]);
-		//deltaUV1 = Subtract(t3, t1);
-		//deltaUV2 = Subtract(t4, t1);
-
-		//CalculateTangent(tri2Edge1, tri2Edge2, deltaUV1, deltaUV2, tangent2);
-
-
-		////tangent1 = Multiply(tangent1, -1.0f);
-		////tangent2 = Multiply(tangent2, -1.0f);
-
-		//std::vector<flat::Vertex3> temp{ tangent1, tangent2 };
-
-		//flat::Vertex3 averagedTangent = Average(temp);
-
-		//
-
-
-		//tangents.push_back(tangent1);
-		//tangents.push_back(averagedTangent);
-		//tangents.push_back(averagedTangent);
-		//tangents.push_back(tangent2);
-
-
 		std::vector<flatbuffers::Offset<flat::Face>> faces;
 
 		std::vector<uint32_t> indices;
 
 		indices.push_back(2);
-		indices.push_back(1);
+		indices.push_back(3);
 		indices.push_back(0);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)) );
@@ -403,7 +362,7 @@ namespace r2::asset::pln
 		indices.clear();
 		
 		indices.push_back(0);
-		indices.push_back(3);
+		indices.push_back(1);
 		indices.push_back(2);
 
 		faces.push_back(flat::CreateFace(fbb, 3, fbb.CreateVector(indices)));
@@ -413,12 +372,12 @@ namespace r2::asset::pln
 
 		Triangle tri1;
 		tri1.index[0] = 2;
-		tri1.index[1] = 1;
+		tri1.index[1] = 3;
 		tri1.index[2] = 0;
 
 		Triangle tri2;
 		tri2.index[0] = 0;
-		tri2.index[1] = 3;
+		tri2.index[1] = 1;
 		tri2.index[2] = 2;
 
 		triangles.push_back(tri1);
