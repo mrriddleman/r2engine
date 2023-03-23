@@ -74,6 +74,8 @@ namespace r2
 		r2::ecs::DebugRenderSystem* mnoptrDebugRenderSystem;
 #endif
 
+		std::vector<void*> mComponentAllocations;
+
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;
 		std::vector<std::unique_ptr<edit::EditorAction>> mRedoStack;

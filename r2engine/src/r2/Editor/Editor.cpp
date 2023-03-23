@@ -100,6 +100,11 @@ namespace r2
 		UnRegisterSystems();
 		UnRegisterComponents();
 
+		for (auto iter = mComponentAllocations.rbegin(); iter != mComponentAllocations.rend(); ++iter)
+		{
+			FREE(*iter, mMallocArena);
+		}
+
 		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);
 
 		FREE(mCoordinator, mMallocArena);
@@ -218,7 +223,7 @@ namespace r2
 		r2::evt::EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
 			{
-				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
+				/*r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
 
 				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
@@ -232,11 +237,62 @@ namespace r2
 
 				r2::draw::renderer::SetDefaultCullState(renderComponent.drawParameters);
 				r2::draw::renderer::SetDefaultStencilState(renderComponent.drawParameters);
-				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);
+				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);*/
+
+				//r2::draw::DebugModelType debugModelType;
+
+				/*
+				r2::draw::DebugModelType debugModelType;
+
+				//for Arrow this is headBaseRadius
+				r2::SArray<float>* radii;
+
+				//for Arrow this is length
+				//for Cone and Cylinder - this is height
+				//for a line - this is length of the line
+				r2::SArray<float>* scales;
+
+				//For Lines, this is used for the direction of p1
+				//we use the scale to determine the p1 of the line
+				r2::SArray<glm::vec3>* directions;
+
+				r2::SArray<glm::vec4>* colors;
+				b32 filled;
+				b32 depthTest;
+				*/
+
+				ecs::DebugRenderComponent debugRenderComponent;
+				debugRenderComponent.colors = nullptr;
+				debugRenderComponent.directions = nullptr;
+				debugRenderComponent.radii = nullptr;
+				debugRenderComponent.scales = nullptr;
+
+				debugRenderComponent.debugModelType = draw::DEBUG_LINE;
+
+				//don't love this
+				debugRenderComponent.radii = MAKE_SARRAY(mMallocArena, float, 1);
+				r2::sarr::Push(*debugRenderComponent.radii, 0.1f);
+				mComponentAllocations.push_back(debugRenderComponent.radii);
+
+				debugRenderComponent.scales = MAKE_SARRAY(mMallocArena, float, 1);
+				r2::sarr::Push(*debugRenderComponent.scales, 1.0f);
+				mComponentAllocations.push_back(debugRenderComponent.scales);
+
+				debugRenderComponent.directions = MAKE_SARRAY(mMallocArena, glm::vec3, 1);
+				r2::sarr::Push(*debugRenderComponent.directions, glm::vec3(1, 1, 1));
+				mComponentAllocations.push_back(debugRenderComponent.directions);
+
+				debugRenderComponent.colors = MAKE_SARRAY(mMallocArena, glm::vec4, 1);
+				r2::sarr::Push(*debugRenderComponent.colors, glm::vec4(0, 1, 0, 1));
+				mComponentAllocations.push_back(debugRenderComponent.colors);
+
+				debugRenderComponent.depthTest = true;
+				debugRenderComponent.filled = true;
+
 
 				ecs::Entity theNewEntity = e.GetEntity();
 
-				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
+				mCoordinator->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
 
 				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
@@ -378,7 +434,6 @@ namespace r2
 #endif
 		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
 
-		//@TODO(Serge): shutdown render system here
 		mnoptrRenderSystem->Shutdown<mem::MallocArena>(mMallocArena);
 
 		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
