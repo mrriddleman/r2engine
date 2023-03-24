@@ -169,6 +169,24 @@ namespace r2
         return {};
     }
 
+#ifdef R2_EDITOR
+    const r2::draw::Animation* Application::GetEditorAnimation() const
+    {
+        return nullptr;
+    }
+
+    const r2::draw::AnimModel* Application::GetEditorAnimModel() const
+    {
+        return nullptr;
+    }
+
+	const s64 Application::GetEditorAnimGPUModelRefHandle() const
+	{
+        return -1;
+	}
+
+#endif
+
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {

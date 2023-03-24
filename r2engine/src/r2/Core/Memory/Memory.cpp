@@ -18,7 +18,7 @@ namespace r2
         std::vector<MemoryArea> GlobalMemory::mMemoryAreas;
         InternalEngineMemory GlobalMemory::mEngineMemory;
         
-        bool GlobalMemory::Init(u64 numMemoryAreas, u64 internalEngineMemory, u64 permanentStorageSize, u64 singleFrameStorageSize)
+        bool GlobalMemory::Init(u32 numMemoryAreas, u64 internalEngineMemory, u64 permanentStorageSize, u64 singleFrameStorageSize)
         {
             R2_CHECK(numMemoryAreas > 0, "You can't have 0 memory areas!");
             R2_CHECK(internalEngineMemory >= permanentStorageSize, "internalEngineMemory(%llu) < permanentStorageSize(%llu", internalEngineMemory, permanentStorageSize);

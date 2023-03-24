@@ -76,7 +76,7 @@ namespace r2::ecs
 				r2::draw::PlayAnimationForAnimModel(
 					CENG.GetTicks(),
 					r2::sarr::At(*animationComponent.startTimePerInstance, j),
-					r2::sarr::At(*animationComponent.loopPerInstance, j),
+					(bool)r2::sarr::At(*animationComponent.loopPerInstance, j),
 					*animationComponent.animModel,
 					r2::sarr::At(*animationComponent.animationsPerInstance, j),
 					*animationComponent.shaderBones, *debugBoneComponent->debugBones, offset);

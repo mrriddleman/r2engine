@@ -27,7 +27,7 @@ namespace r2::draw::modlsys
 		u64 subAreaSize = MemorySize(r2::sarr::Size(*files), modelCacheSize);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
-			R2_CHECK(false, "We don't have enought space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes",
+			R2_CHECK(false, "We don't have enough space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes",
 				memoryArea->UnAllocatedSpace(), subAreaSize);
 			return false;
 		}

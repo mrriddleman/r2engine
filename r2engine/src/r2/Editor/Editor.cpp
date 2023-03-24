@@ -27,6 +27,8 @@
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Utils/Random.h"
+#include "r2/Platform/Platform.h"
+#include "r2/Core/Application.h"
 
 namespace 
 {
@@ -223,21 +225,21 @@ namespace r2
 		r2::evt::EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
 			{
-				/*r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
+				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = CENG.GetApplication().GetEditorAnimGPUModelRefHandle();//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.optrOverrideMaterials = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = draw::PrimitiveType::TRIANGLES;
-				renderComponent.drawParameters.layer = r2::draw::DL_WORLD;
+				renderComponent.drawParameters.layer = r2::draw::DL_CHARACTER;
 				renderComponent.drawParameters.flags.Clear();
 				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
 				r2::draw::renderer::SetDefaultCullState(renderComponent.drawParameters);
 				r2::draw::renderer::SetDefaultStencilState(renderComponent.drawParameters);
-				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);*/
+				r2::draw::renderer::SetDefaultBlendState(renderComponent.drawParameters);
 
 				//r2::draw::DebugModelType debugModelType;
 
@@ -261,42 +263,85 @@ namespace r2
 				b32 depthTest;
 				*/
 
-				ecs::DebugRenderComponent debugRenderComponent;
-				debugRenderComponent.colors = nullptr;
-				debugRenderComponent.directions = nullptr;
-				debugRenderComponent.radii = nullptr;
-				debugRenderComponent.scales = nullptr;
+				//ecs::DebugRenderComponent debugRenderComponent;
+				//debugRenderComponent.colors = nullptr;
+				//debugRenderComponent.directions = nullptr;
+				//debugRenderComponent.radii = nullptr;
+				//debugRenderComponent.scales = nullptr;
 
-				debugRenderComponent.debugModelType = draw::DEBUG_LINE;
+				//debugRenderComponent.debugModelType = draw::DEBUG_LINE;
 
-				//don't love this
-				debugRenderComponent.radii = MAKE_SARRAY(mMallocArena, float, 1);
-				r2::sarr::Push(*debugRenderComponent.radii, 0.1f);
-				mComponentAllocations.push_back(debugRenderComponent.radii);
+				////don't love this
+				//debugRenderComponent.radii = MAKE_SARRAY(mMallocArena, float, 1);
+				//r2::sarr::Push(*debugRenderComponent.radii, 0.1f);
+				//mComponentAllocations.push_back(debugRenderComponent.radii);
 
-				debugRenderComponent.scales = MAKE_SARRAY(mMallocArena, float, 1);
-				r2::sarr::Push(*debugRenderComponent.scales, 1.0f);
-				mComponentAllocations.push_back(debugRenderComponent.scales);
+				//debugRenderComponent.scales = MAKE_SARRAY(mMallocArena, float, 1);
+				//r2::sarr::Push(*debugRenderComponent.scales, 1.0f);
+				//mComponentAllocations.push_back(debugRenderComponent.scales);
 
-				debugRenderComponent.directions = MAKE_SARRAY(mMallocArena, glm::vec3, 1);
-				r2::sarr::Push(*debugRenderComponent.directions, glm::vec3(1, 1, 1));
-				mComponentAllocations.push_back(debugRenderComponent.directions);
+				//debugRenderComponent.directions = MAKE_SARRAY(mMallocArena, glm::vec3, 1);
+				//r2::sarr::Push(*debugRenderComponent.directions, glm::vec3(1, 1, 1));
+				//mComponentAllocations.push_back(debugRenderComponent.directions);
 
-				debugRenderComponent.colors = MAKE_SARRAY(mMallocArena, glm::vec4, 1);
-				r2::sarr::Push(*debugRenderComponent.colors, glm::vec4(0, 1, 0, 1));
-				mComponentAllocations.push_back(debugRenderComponent.colors);
+				//debugRenderComponent.colors = MAKE_SARRAY(mMallocArena, glm::vec4, 1);
+				//r2::sarr::Push(*debugRenderComponent.colors, glm::vec4(0, 1, 0, 1));
+				//mComponentAllocations.push_back(debugRenderComponent.colors);
 
-				debugRenderComponent.depthTest = true;
-				debugRenderComponent.filled = true;
+				//debugRenderComponent.depthTest = true;
+				//debugRenderComponent.filled = true;
+				//// CENG.GetApplication().GetEditorAnimModel();
 
+				
+
+				//mCoordinator->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
+
+				/*
+				r2::SArray<u32>* startTimePerInstance;
+				r2::SArray<b32>* loopPerInstance;
+				r2::SArray<const r2::draw::Animation*>* animationsPerInstance;
+
+				r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
+				*/
+				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
+				skeletalAnimationComponent.animModel = CENG.GetApplication().GetEditorAnimModel();
+				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
+
+				skeletalAnimationComponent.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
+				r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
+				mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
+
+				skeletalAnimationComponent.loopPerInstance = MAKE_SARRAY(mMallocArena, b32, 1);
+				r2::sarr::Push(*skeletalAnimationComponent.loopPerInstance, 1u);
+				mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
+
+				skeletalAnimationComponent.animationsPerInstance = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
+				r2::sarr::Push(*skeletalAnimationComponent.animationsPerInstance, CENG.GetApplication().GetEditorAnimation());
+				mComponentAllocations.push_back(skeletalAnimationComponent.animationsPerInstance);
+
+				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
+
+				ecs::DebugBoneComponent debugBoneComponent;
+				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
+				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				r2::sarr::Clear(*debugBoneComponent.debugBones);
+				mComponentAllocations.push_back(debugBoneComponent.debugBones);
 
 				ecs::Entity theNewEntity = e.GetEntity();
 
-				mCoordinator->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
+				mCoordinator->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
+				mCoordinator->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
+				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
 
 				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
-				//transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(1, 0, 0));
+				transformComponent.localTransform.scale = glm::vec3(0.01f);
+				
+				
+				transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
+				
 
 			return e.ShouldConsume();
 		});

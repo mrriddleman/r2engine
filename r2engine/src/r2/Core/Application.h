@@ -22,6 +22,21 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/ShaderHotReloadCommand.h"
 #endif
 
+#ifdef R2_EDITOR
+
+
+namespace r2::draw
+{
+    class AnimModel;
+    class Animation;
+
+    
+}
+
+
+#endif // R2_EDITOR
+
+
 namespace r2
 {
     namespace evt
@@ -77,6 +92,14 @@ namespace r2
         virtual std::vector<std::string> GetInternalShaderManifestsRawPaths() const;
 
         virtual std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const;
+
+        //@SO TEMPORARY!!!
+#ifdef R2_EDITOR
+        virtual const r2::draw::Animation* GetEditorAnimation() const;
+		virtual const r2::draw::AnimModel* GetEditorAnimModel() const;
+        virtual const s64 GetEditorAnimGPUModelRefHandle() const;
+#endif
+        
 
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;

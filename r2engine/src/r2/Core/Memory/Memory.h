@@ -370,7 +370,7 @@ namespace r2
         {
         public:
             //Internal to r2
-            static bool Init(u64 numMemoryAreas, u64 internalEngineMemory = 0, u64 permanentStorageSize = 0, u64 singleFrameStorageSize = 0);
+            static bool Init(u32 numMemoryAreas, u64 internalEngineMemory = 0, u64 permanentStorageSize = 0, u64 singleFrameStorageSize = 0);
             static void Shutdown();
             static InternalEngineMemory& EngineMemory() {return mEngineMemory;}
             

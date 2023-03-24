@@ -1355,13 +1355,13 @@ public:
         const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
         const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
 
-        r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
-        
-        r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+
+		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
 
 	//	r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
@@ -1759,6 +1759,25 @@ public:
     {
         return g_resolutions[mResolution];
     }
+
+	//@SO TEMPORARY!!!
+#ifdef R2_EDITOR
+    virtual const r2::draw::Animation* GetEditorAnimation() const override
+    {
+        return r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 0));
+    }
+
+    virtual const r2::draw::AnimModel* GetEditorAnimModel()const override
+    {
+        return mMicroBatModel;
+    }
+
+    virtual const s64 GetEditorAnimGPUModelRefHandle() const override
+    {
+        return mMicroBatModelRefHandle;
+    }
+#endif
+
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override

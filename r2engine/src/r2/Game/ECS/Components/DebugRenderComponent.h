@@ -12,6 +12,8 @@ namespace r2::ecs
 	{
 		r2::draw::DebugModelType debugModelType;
 
+		//@TODO(Serge): remove the SArrays here, this won't be the normal case
+
 		//for Arrow this is headBaseRadius
 		r2::SArray<float>* radii;
 		

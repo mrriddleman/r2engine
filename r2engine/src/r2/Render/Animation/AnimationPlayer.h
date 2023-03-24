@@ -9,7 +9,7 @@
 #define AnimationPlayer_h
 
 #include "glm/glm.hpp"
-#include "r2/Render/Animation/AnimationCache.h"
+#include "r2/Render/Model/Model.h"
 
 namespace r2::draw
 {

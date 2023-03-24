@@ -145,7 +145,13 @@ namespace r2
 
         //Global memory setup for the engine
         {
-            r2::mem::GlobalMemory::Init(MAX_NUM_MEMORY_AREAS,
+            u32 maxNumMemoryAreas = MAX_NUM_MEMORY_AREAS;
+#ifdef R2_EDITOR
+            //@NOTE: need one more for the editor
+            maxNumMemoryAreas++;
+#endif
+
+            r2::mem::GlobalMemory::Init(maxNumMemoryAreas,
                                         TOTAL_INTERNAL_ENGINE_MEMORY,
                                         TOTAL_INTERNAL_PERMANENT_MEMORY,
                                         TOTAL_SCRATCH_MEMORY);

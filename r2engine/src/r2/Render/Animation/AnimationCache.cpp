@@ -11,7 +11,7 @@ namespace r2::draw
 {
 	namespace animcache
 	{
-		const u64 ALIGNMENT = 64;
+		const u64 ALIGNMENT = 16;
 
 		AnimationCache* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, r2::asset::FileList files, const char* areaName)
 		{
