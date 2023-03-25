@@ -6964,15 +6964,15 @@ namespace r2::draw::renderer
 		constexpr float ARROW_CONE_HEIGHT_FRACTION = 0.2;
 		constexpr float ARROW_BASE_RADIUS_FRACTION = 0.2;
 
-		float baseLength = (length * (1.0f - ARROW_CONE_HEIGHT_FRACTION));
+		float baseLength = (length - ARROW_CONE_HEIGHT_FRACTION);
 
 		glm::vec3 ndir = glm::normalize(dir);
 		glm::vec3 coneBasePos = ndir * baseLength + basePosition;
-		float coneHeight = length * ARROW_CONE_HEIGHT_FRACTION;
-		float baseRadius = ARROW_BASE_RADIUS_FRACTION * headBaseRadius;
+		float coneHeight = ARROW_CONE_HEIGHT_FRACTION;
+		float baseRadius = ARROW_BASE_RADIUS_FRACTION * coneHeight/2.0f;
 
 		DrawCylinder(renderer, basePosition, dir, baseRadius, baseLength, color, filled, depthTest);
-		DrawCone(renderer, coneBasePos, dir, headBaseRadius, coneHeight, color, filled, depthTest);
+		DrawCone(renderer, coneBasePos, dir, coneHeight/2.0f, coneHeight, color, filled, depthTest);
 	}
 
 	void DrawLine(Renderer& renderer, const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color, bool depthTest)
@@ -7179,7 +7179,7 @@ namespace r2::draw::renderer
 			glm::vec3 ndir = glm::normalize(dir);
 			glm::vec3 initialFacing = glm::vec3(0, 0, 1);
 
-			glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+			glm::vec3 axis = glm::normalize(glm::cross(initialFacing, ndir));
 
 			if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
 			{
@@ -7259,7 +7259,7 @@ namespace r2::draw::renderer
 			glm::vec3 ndir = glm::normalize(dir);
 			glm::vec3 initialFacing = glm::vec3(0, 0, 1);
 
-			glm::vec3 axis = glm::normalize(glm::cross(ndir, initialFacing));
+			glm::vec3 axis = glm::normalize(glm::cross(initialFacing, ndir));
 
 			if (math::NearEq(glm::abs(glm::dot(ndir, initialFacing)), 1.0f))
 			{
@@ -7329,6 +7329,7 @@ namespace r2::draw::renderer
 		r2::SArray<float>* baseRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
 		r2::SArray<float>* baseLengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
 		r2::SArray<float>* coneHeights = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+		r2::SArray<float>* newConeRadii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
 
 		for (u64 i = 0; i < numInstances; i++)
 		{
@@ -7337,23 +7338,24 @@ namespace r2::draw::renderer
 			const glm::vec3& basePosition = r2::sarr::At(basePositions, i);
 			float headBaseRadius = r2::sarr::At(headBaseRadii, i);
 
-			float baseLength = (length * (1.0f - ARROW_CONE_HEIGHT_FRACTION));
+			float baseLength = length - ARROW_CONE_HEIGHT_FRACTION;
 
 			glm::vec3 ndir = glm::normalize(dir);
 			glm::vec3 coneBasePos = ndir * baseLength + basePosition;
-			float coneHeight = length * ARROW_CONE_HEIGHT_FRACTION;
-			float baseRadius = ARROW_BASE_RADIUS_FRACTION * headBaseRadius;
+			float coneHeight = ARROW_CONE_HEIGHT_FRACTION;
+			float baseRadius = ARROW_BASE_RADIUS_FRACTION * coneHeight/2.0f;
 
 			r2::sarr::Push(*coneBasePositions, coneBasePos);
 			r2::sarr::Push(*baseRadii, baseRadius);
 			r2::sarr::Push(*coneHeights, coneHeight);
 			r2::sarr::Push(*baseLengths, baseLength);
+			r2::sarr::Push(*newConeRadii, coneHeight / 2.0f);
 		}
 
-		DrawConeInstanced(renderer, *coneBasePositions, directions, headBaseRadii, *coneHeights, colors, filled, depthTest);
+		DrawConeInstanced(renderer, *coneBasePositions, directions, *newConeRadii, *coneHeights, colors, filled, depthTest);
 		DrawCylinderInstanced(renderer, basePositions, directions, *baseRadii, *baseLengths, colors, filled, depthTest);
 		
-
+		FREE(newConeRadii, *MEM_ENG_SCRATCH_PTR);
 		FREE(coneHeights, *MEM_ENG_SCRATCH_PTR);
 		FREE(baseLengths, *MEM_ENG_SCRATCH_PTR);
 		FREE(baseRadii, *MEM_ENG_SCRATCH_PTR);

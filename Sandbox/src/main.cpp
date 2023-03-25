@@ -1524,13 +1524,13 @@ public:
         r2::sarr::Push(*directions, glm::vec3(0, 1, 0));
         r2::sarr::Push(*directions, glm::vec3(0, 0, 1));
 
-        r2::sarr::Push(*lengths, 1.0f);
-        r2::sarr::Push(*lengths, 1.0f);
-        r2::sarr::Push(*lengths, 1.0f);
+        r2::sarr::Push(*lengths, 2.0f);
+        r2::sarr::Push(*lengths, 2.0f);
+        r2::sarr::Push(*lengths, 2.0f);
 
-        r2::sarr::Push(*coneRadii, 0.1f);
-        r2::sarr::Push(*coneRadii, 0.1f);
-        r2::sarr::Push(*coneRadii, 0.1f);
+        r2::sarr::Push(*coneRadii, 0.3f);
+        r2::sarr::Push(*coneRadii, 0.3f);
+        r2::sarr::Push(*coneRadii, 0.3f);
 
         r2::sarr::Push(*colors, glm::vec4(1, 0, 0, 1));
         r2::sarr::Push(*colors, glm::vec4(0, 1, 0, 1));
