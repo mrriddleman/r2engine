@@ -13,7 +13,9 @@ namespace r2::ecs
 	struct TransformComponent;
 	struct RenderComponent;
 	struct SkeletalAnimationComponent;
-	struct InstanceComponent;
+
+	template <typename T> struct InstanceComponentT;
+
 
 	class RenderSystem : public System
 	{
@@ -100,7 +102,15 @@ namespace r2::ecs
 
 		using GatherBatchPtr = r2::SHashMap<RenderSystemGatherBatch*>*;
 
-		void AddComponentsToGatherBatch(GatherBatchPtr gatherBatch, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent, const InstanceComponent* instanceComponent);
+		void AddComponentsToGatherBatch(
+			GatherBatchPtr gatherBatch,
+			u32 maxNumModelsToCreate,
+			const TransformComponent& transform,
+			const RenderComponent& renderComponent,
+			const SkeletalAnimationComponent* animationComponent,
+			const InstanceComponentT<TransformComponent>* instancedTransformComponent,
+			const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent);
+		
 		void SubmitBatch(GatherBatchPtr gatherBatch);
 		void FreeAllPerFrameData();
 		void ClearPerFrameData(GatherBatchPtr gatherBatch);

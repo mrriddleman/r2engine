@@ -46,7 +46,10 @@ namespace r2::ecs
 			const TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(e);
 			const RenderComponent& renderComponent = mnoptrCoordinator->GetComponent<RenderComponent>(e);
 			const SkeletalAnimationComponent* animationComponent = mnoptrCoordinator->GetComponentPtr<SkeletalAnimationComponent>(e);
-			const InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
+
+			const InstanceComponentT<TransformComponent>* instancedTransformsComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
+			const InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
+			//const InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
 
 			GatherBatchPtr gatherBatchToUse = mStaticBatches;
 			u32 maxNumModels = mMaxNumStaticModelsToDraw;
@@ -56,7 +59,7 @@ namespace r2::ecs
 				maxNumModels = mMaxNumAnimModelsToDraw;
 			}
 
-			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instanceComponent);
+			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
 		}
 
 
@@ -68,7 +71,14 @@ namespace r2::ecs
 		FreeAllPerFrameData();
 	}
 
-	void RenderSystem::AddComponentsToGatherBatch(GatherBatchPtr gatherBatchPtr, u32 maxNumModelsToCreate, const TransformComponent& transform, const RenderComponent& renderComponent, const SkeletalAnimationComponent* animationComponent, const InstanceComponent* instanceComponent)
+	void RenderSystem::AddComponentsToGatherBatch(
+		GatherBatchPtr gatherBatchPtr,
+		u32 maxNumModelsToCreate,
+		const TransformComponent& transform,
+		const RenderComponent& renderComponent,
+		const SkeletalAnimationComponent* animationComponent,
+		const InstanceComponentT<TransformComponent>* instancedTransformComponent,
+		const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent)
 	{
 		//I think the idea here is to gather all of the similar state together and only call the necessary amount of DrawModel/DrawModels of the renderer
 		//We have to break things up on certain criteria:
@@ -120,10 +130,13 @@ namespace r2::ecs
 		r2::sarr::Push(*gatherBatch->transforms, transform.modelMatrix);
 		u32 numInstances = 1;
 
-		if (instanceComponent)
+		if (instancedTransformComponent)
 		{
-			numInstances += r2::sarr::Size(*instanceComponent->offsets);
-			r2::sarr::Append(*gatherBatch->transforms, *instanceComponent->instanceModels);
+			numInstances += instancedTransformComponent->numInstances;
+			for (size_t i = 0; i < instancedTransformComponent->numInstances; i++)
+			{
+				r2::sarr::Push(*gatherBatch->transforms, r2::sarr::At(*instancedTransformComponent->instances, i).modelMatrix);
+			}
 		}
 
 		r2::sarr::Push(*gatherBatch->instances, numInstances);
@@ -135,6 +148,15 @@ namespace r2::ecs
 		if (isAnimated)
 		{
 			r2::sarr::Append(*gatherBatch->boneTransforms, *animationComponent->shaderBones);
+
+			if (instancedSkeletalAnimationComponent && !animationComponent->shouldUseSameTransformsForAllInstances)
+			{
+				for (u32 i = 0; i < instancedSkeletalAnimationComponent->numInstances; i++)
+				{
+					SkeletalAnimationComponent& nextAnimationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent->instances, i);
+					r2::sarr::Append(*gatherBatch->boneTransforms, *nextAnimationComponent.shaderBones);
+				}
+			}
 		}
 	}
 

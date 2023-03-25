@@ -13,12 +13,9 @@ namespace r2::ecs
 	{
 		b32 shouldUseSameTransformsForAllInstances;
 		const r2::draw::AnimModel* animModel;
-
-		//@TODO(Serge): remove the SArrays here, this won't be the normal case
-
-		r2::SArray<u32>* startTimePerInstance;
-		r2::SArray<b32>* loopPerInstance;
-		r2::SArray<const r2::draw::Animation*>* animationsPerInstance;
+		u32 startTime;
+		b32 shouldLoop;
+		const r2::draw::Animation* animation;
 
 		r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 	};

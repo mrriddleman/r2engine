@@ -7,8 +7,6 @@
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 
-
-
 namespace r2::ecs
 {
 
@@ -33,7 +31,7 @@ namespace r2::ecs
 		{
 			Entity e = r2::sarr::At(*mEntities, i);
 			SkeletalAnimationComponent& animationComponent = mnoptrCoordinator->GetComponent<SkeletalAnimationComponent>(e);
-			InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
+			InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
 
 			//@TODO(Serge): right now the Animation Player requires debug bones to play the animation
 			//				we should refactor this in order to remove that requirement
@@ -41,18 +39,24 @@ namespace r2::ecs
 			DebugBoneComponent* debugBoneComponent = mnoptrCoordinator->GetComponentPtr<DebugBoneComponent>(e);
 			R2_CHECK(debugBoneComponent != nullptr, "Should not be nullptr right now");
 			R2_CHECK(debugBoneComponent->debugBones != nullptr, "These should not be null");
+
+			InstanceComponentT<DebugBoneComponent>* instancedDebugBoneComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<DebugBoneComponent>>(e);
+
+			if (instancedAnimationComponent)
+			{
+				R2_CHECK(instancedDebugBoneComponent != nullptr, "This needs to exist in this case");
+			}
 #endif
 
 			R2_CHECK(animationComponent.shaderBones != nullptr, "These should not be null");
-			R2_CHECK(animationComponent.animationsPerInstance != nullptr, "This should be not null");
 
 			u32 numInstancesToAnimate = 1;
 			const u32 numShaderBones = r2::sarr::Size(*animationComponent.animModel->boneInfo);
 			u32 totalNumShaderBones = numShaderBones;
 
-			if (instanceComponent)
+			if (instancedAnimationComponent)
 			{
-				const u32 numInstances = r2::sarr::Size(*instanceComponent->offsets);
+				const u32 numInstances = instancedAnimationComponent->numInstances;
 				if (!animationComponent.shouldUseSameTransformsForAllInstances)
 				{
 					numInstancesToAnimate += numInstances;
@@ -61,30 +65,43 @@ namespace r2::ecs
 			}
 
 			R2_CHECK(r2::sarr::Capacity(*animationComponent.shaderBones) >= totalNumShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
-			R2_CHECK(r2::sarr::Size(*animationComponent.animationsPerInstance) == numInstancesToAnimate, "These should be the same");
-			R2_CHECK(r2::sarr::Size(*animationComponent.loopPerInstance) == numInstancesToAnimate, "These should be the same");
-			R2_CHECK(r2::sarr::Size(*animationComponent.startTimePerInstance) == numInstancesToAnimate, "These should be the same");
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
 #ifdef R2_DEBUG
 			r2::sarr::Clear(*debugBoneComponent->debugBones);
 #endif
-
+			const auto ticks = CENG.GetTicks();
+			
 			u32 offset = 0;
-			for (u32 j = 0; j < numInstancesToAnimate; ++j)
-			{
-				r2::draw::PlayAnimationForAnimModel(
-					CENG.GetTicks(),
-					r2::sarr::At(*animationComponent.startTimePerInstance, j),
-					(bool)r2::sarr::At(*animationComponent.loopPerInstance, j),
-					*animationComponent.animModel,
-					r2::sarr::At(*animationComponent.animationsPerInstance, j),
-					*animationComponent.shaderBones, *debugBoneComponent->debugBones, offset);
 
-				offset += numShaderBones;
+			r2::draw::PlayAnimationForAnimModel(
+				ticks,
+				animationComponent.startTime,
+				(bool)animationComponent.shouldLoop,
+				*animationComponent.animModel,
+				animationComponent.animation,
+				*animationComponent.shaderBones, *debugBoneComponent->debugBones, 0);
+
+			if (instancedAnimationComponent && !animationComponent.shouldUseSameTransformsForAllInstances)
+			{
+				for (u32 j = 0; j < instancedAnimationComponent->numInstances; ++j)
+				{
+					SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedAnimationComponent->instances, j);
+#ifdef R2_DEBUG
+					DebugBoneComponent& debugBonesComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, j);
+					r2::sarr::Clear(*debugBonesComponent.debugBones);
+#endif
+					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
+					r2::draw::PlayAnimationForAnimModel(
+						ticks,
+						skeletalAnimationComponent.startTime,
+						(bool)skeletalAnimationComponent.shouldLoop,
+						*skeletalAnimationComponent.animModel,
+						skeletalAnimationComponent.animation,
+						*skeletalAnimationComponent.shaderBones, *debugBonesComponent.debugBones, 0);
+				}
 			}
 		}
-		
 	}
-
 }

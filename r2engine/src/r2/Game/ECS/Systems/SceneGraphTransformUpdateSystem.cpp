@@ -55,24 +55,16 @@ namespace r2::ecs
 			entityTransformComponent.accumTransform = math::Combine(parentTransform, entityTransformComponent.localTransform);
 			entityTransformComponent.modelMatrix = math::ToMatrix(entityTransformComponent.accumTransform);
 
-			InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(entity);
+			InstanceComponentT<TransformComponent>* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(entity);
 			if (instanceComponent)
 			{
-				const auto numInstances = r2::sarr::Size(*instanceComponent->offsets);
-
-				r2::sarr::Clear(*instanceComponent->instanceModels);
-				r2::sarr::Fill(*instanceComponent->instanceModels, entityTransformComponent.modelMatrix);
-
-				for (u64 i = 0; i < numInstances; ++i)
+				for (u32 j = 0; j < instanceComponent->numInstances; j++)
 				{
-				 	const glm::vec3& offset = r2::sarr::At(*instanceComponent->offsets, i);
-
-					glm::mat4& modelMat = r2::sarr::At(*instanceComponent->instanceModels, i);
-
-					modelMat[3] += glm::vec4(offset, 0);
+					TransformComponent& tranformComponent = r2::sarr::At(*instanceComponent->instances, j);
+					tranformComponent.accumTransform = math::Combine(parentTransform, tranformComponent.localTransform);
+					tranformComponent.modelMatrix = math::ToMatrix(tranformComponent.accumTransform);
 				}
 			}
-
 		}
 
 		//We need to make a copy here because we're changing the signature of the entities such that they won't belong 

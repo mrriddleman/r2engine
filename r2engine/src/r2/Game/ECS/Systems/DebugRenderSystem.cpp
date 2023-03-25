@@ -38,9 +38,10 @@ namespace r2::ecs
 
 			const DebugRenderComponent& debugRenderComponent = mnoptrCoordinator->GetComponent<DebugRenderComponent>(e);
 			const TransformComponent& transformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(e);
-			const InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
+			const InstanceComponentT<DebugRenderComponent>* instanceDebugRenderComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<DebugRenderComponent>>(e);
+			const InstanceComponentT<TransformComponent>* instanceTransformComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
 
-			bool useInstancing = instanceComponent != nullptr;
+			bool useInstancing = instanceDebugRenderComponent != nullptr && instanceTransformComponent != nullptr;
 
 			if (!useInstancing)
 			{
@@ -48,7 +49,7 @@ namespace r2::ecs
 			}
 			else
 			{
-				RenderDebugInstanced(debugRenderComponent, transformComponent, *instanceComponent);
+				RenderDebugInstanced(debugRenderComponent, transformComponent, *instanceDebugRenderComponent, *instanceTransformComponent);
 			}
 		}
 	}
@@ -56,25 +57,10 @@ namespace r2::ecs
 	void DebugRenderSystem::RenderDebug(const DebugRenderComponent& c, const TransformComponent& t)
 	{
 		glm::vec3 position = t.accumTransform.position;
-		float radius = 1.0f;
-		if (c.radii)
-		{
-			radius = r2::sarr::At(*c.radii, 0);
-		}
-
-		glm::vec4 color = r2::sarr::At(*c.colors, 0);
-
-		float scale = 1.0f;
-		if (c.scales)
-		{
-			scale = r2::sarr::At(*c.scales, 0);
-		}
-
-		glm::vec3 dir = glm::vec3(0);
-		if (c.directions)
-		{
-			dir = r2::sarr::At(*c.directions, 0);
-		}
+		float radius = c.radius;
+		glm::vec4 color = c.color;
+		float scale = c.scale;
+		glm::vec3 dir = c.direction;
 
 		switch (c.debugModelType)
 		{
@@ -109,20 +95,97 @@ namespace r2::ecs
 		}
 	}
 
-	void DebugRenderSystem::RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponent& instanceComponent)
+	void DebugRenderSystem::RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
+		const InstanceComponentT<TransformComponent>& instancedTransformComponent)
 	{
+		R2_CHECK(instancedTransformComponent.numInstances == instancedDebugRenderComponent.numInstances, "We have mismatching transform and debug render instances");
+
 		//need to make the positions
-		u32 numInstances = r2::sarr::Size(*instanceComponent.offsets);
+		const auto numInstances = instancedTransformComponent.numInstances;
 		r2::SArray<glm::vec3>* positions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
 
 		//calculate the positions
-		glm::vec3 basePosition = t.accumTransform.position;
-
-		r2::sarr::Push(*positions, basePosition);
-
+		r2::sarr::Push(*positions, t.accumTransform.position);
 		for (u32 i = 0; i < numInstances; ++i)
 		{
-			r2::sarr::Push(*positions, basePosition + r2::sarr::At(*instanceComponent.offsets, i));
+			r2::sarr::Push(*positions, r2::sarr::At(*instancedTransformComponent.instances, i).accumTransform.position);
+		}
+
+		//make the colors
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numInstances + 1);
+
+		r2::sarr::Push(*colors, c.color);
+		for (u32 i = 0; i < numInstances; ++i)
+		{
+			r2::sarr::Push(*colors, r2::sarr::At(*instancedDebugRenderComponent.instances, i).color);
+		}
+
+		r2::SArray<glm::vec3>* directions = nullptr;
+		r2::SArray<float>* radii = nullptr;
+		r2::SArray<float>* scales = nullptr;
+
+		if (c.debugModelType == draw::DEBUG_ARROW ||
+			c.debugModelType == draw::DEBUG_CYLINDER ||
+			c.debugModelType == draw::DEBUG_CONE)
+		{
+			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
+			r2::sarr::Push(*radii, c.radius);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*radii, r2::sarr::At(*instancedDebugRenderComponent.instances, i).radius);
+			}
+
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
+			r2::sarr::Push(*scales, c.scale);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+			}
+
+			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
+			r2::sarr::Push(*directions, c.direction);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
+			}
+		}
+
+
+		if (draw::DEBUG_SPHERE)
+		{
+			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
+			r2::sarr::Push(*radii, c.radius);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*radii, r2::sarr::At(*instancedDebugRenderComponent.instances, i).radius);
+			}
+		}
+
+		if (draw::DEBUG_CUBE)
+		{
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
+			r2::sarr::Push(*scales, c.scale);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+			}
+		}
+
+		if (draw::DEBUG_LINE)
+		{
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
+			r2::sarr::Push(*scales, c.scale);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+			}
+
+			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
+			r2::sarr::Push(*directions, c.direction);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
+			}
 		}
 
 		switch (c.debugModelType)
@@ -131,19 +194,19 @@ namespace r2::ecs
 			R2_CHECK(false, "Unsupported ATM");
 			break;
 		case draw::DEBUG_SPHERE:
-			r2::draw::renderer::DrawSphereInstanced(*positions, *c.radii, *c.colors, c.filled, c.depthTest);
+			r2::draw::renderer::DrawSphereInstanced(*positions, *radii, *colors, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CUBE:
-			r2::draw::renderer::DrawCubeInstanced(*positions, *c.scales, *c.colors, c.filled, c.depthTest);
+			r2::draw::renderer::DrawCubeInstanced(*positions, *scales, *colors, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CYLINDER:
-			r2::draw::renderer::DrawCylinderInstanced(*positions, *c.directions, *c.radii, *c.scales, *c.colors, c.filled, c.depthTest);
+			r2::draw::renderer::DrawCylinderInstanced(*positions, *directions, *radii, *scales, *colors, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CONE:
-			r2::draw::renderer::DrawConeInstanced(*positions, *c.directions, *c.radii, *c.scales, *c.colors, c.filled, c.depthTest);
+			r2::draw::renderer::DrawConeInstanced(*positions, *directions, *radii, *scales, *colors, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_ARROW:
-			r2::draw::renderer::DrawArrowInstanced(*positions, *c.directions, *c.scales, *c.radii, *c.colors, c.filled, c.depthTest);
+			r2::draw::renderer::DrawArrowInstanced(*positions, *directions, *scales, *radii, *colors, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_LINE:
 		{
@@ -151,9 +214,9 @@ namespace r2::ecs
 			for (size_t i = 0; i <= numInstances; i++)
 			{
 				glm::vec3 p0 = r2::sarr::At(*positions, i);
-				glm::vec3 p1 = p0 + r2::sarr::At(*c.scales, i) * r2::sarr::At(*c.directions, i);
+				glm::vec3 p1 = p0 + r2::sarr::At(*scales, i) * r2::sarr::At(*directions, i);
 
-				r2::draw::renderer::DrawLine(p0, p1, r2::sarr::At(*c.colors, i), !c.depthTest);
+				r2::draw::renderer::DrawLine(p0, p1, r2::sarr::At(*colors, i), !c.depthTest);
 			}
 		}
 		break;
@@ -162,9 +225,24 @@ namespace r2::ecs
 			break;
 		}
 
+		if (directions)
+		{
+			FREE(directions, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		if (scales)
+		{
+			FREE(scales, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		if (radii)
+		{
+			FREE(radii, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		FREE(colors, *MEM_ENG_SCRATCH_PTR);
 		FREE(positions, *MEM_ENG_SCRATCH_PTR);
 	}
-
 }
 
 #endif

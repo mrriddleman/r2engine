@@ -11,6 +11,9 @@ namespace r2::ecs
 	struct TransformComponent;
 	struct InstanceComponent;
 
+	template<typename T> struct InstanceComponentT;
+
+
 	class DebugRenderSystem : public System
 	{
 	public:
@@ -20,7 +23,11 @@ namespace r2::ecs
 
 	private:
 		void RenderDebug(const DebugRenderComponent& c, const TransformComponent& t);
-		void RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponent& instanceComponent);
+		void RenderDebugInstanced(
+			const DebugRenderComponent& c,
+			const TransformComponent& t,
+			const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
+			const InstanceComponentT<TransformComponent>& instancedTransformComponent);
 	};
 }
 

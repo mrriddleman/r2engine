@@ -307,17 +307,17 @@ namespace r2
 				skeletalAnimationComponent.animModel = CENG.GetApplication().GetEditorAnimModel();
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 
-				skeletalAnimationComponent.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
-				r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
-				mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
+				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
+			//	r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
+			//	mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
 
-				skeletalAnimationComponent.loopPerInstance = MAKE_SARRAY(mMallocArena, b32, 1);
-				r2::sarr::Push(*skeletalAnimationComponent.loopPerInstance, 1u);
-				mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
+				skeletalAnimationComponent.shouldLoop = true;// = MAKE_SARRAY(mMallocArena, b32, 1);
+			//	r2::sarr::Push(*skeletalAnimationComponent.loopPerInstance, 1u);
+			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
 
-				skeletalAnimationComponent.animationsPerInstance = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
-				r2::sarr::Push(*skeletalAnimationComponent.animationsPerInstance, CENG.GetApplication().GetEditorAnimation());
-				mComponentAllocations.push_back(skeletalAnimationComponent.animationsPerInstance);
+				skeletalAnimationComponent.animation = CENG.GetApplication().GetEditorAnimation();// = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
+				//r2::sarr::Push(*skeletalAnimationComponent.animationsPerInstance, CENG.GetApplication().GetEditorAnimation());
+				//mComponentAllocations.push_back(skeletalAnimationComponent.animationsPerInstance);
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
@@ -378,23 +378,52 @@ namespace r2
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponent>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
-
+		
 		//add some more components to the coordinator for the editor to use
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
+
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena);
+		//mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::RenderComponent>>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena);
+		
 
 #ifdef R2_DEBUG
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
+
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena);
+
 #endif
+	}
+
+	void Editor::UnRegisterComponents()
+	{
+#ifdef R2_DEBUG
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena);
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
+#endif
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena);
+	//	mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::RenderComponent>>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena);
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
+
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
+		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
 	}
 
 	void Editor::RegisterSystems()
 	{
-		
-
 		const auto transformComponentType = mCoordinator->GetComponentType<ecs::TransformComponent>();
 		const auto renderComponentType = mCoordinator->GetComponentType<ecs::RenderComponent>();
 		const auto skeletalAnimationComponentType = mCoordinator->GetComponentType<ecs::SkeletalAnimationComponent>();
@@ -452,23 +481,6 @@ namespace r2
 		mCoordinator->SetSystemSignature<ecs::DebugRenderSystem>(debugRenderSystemSignature);
 #endif
 
-	}
-
-	void Editor::UnRegisterComponents()
-	{
-#ifdef R2_DEBUG
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
-#endif
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
 	}
 
 	void Editor::UnRegisterSystems()
