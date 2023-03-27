@@ -95,7 +95,7 @@ namespace r2
 
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-        virtual const r2::draw::Animation* GetEditorAnimation() const;
+        virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const;
 		virtual const r2::draw::AnimModel* GetEditorAnimModel() const;
         virtual const s64 GetEditorAnimGPUModelRefHandle() const;
 #endif

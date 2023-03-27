@@ -236,6 +236,7 @@ namespace r2
 				renderComponent.drawParameters.layer = r2::draw::DL_CHARACTER;
 				renderComponent.drawParameters.flags.Clear();
 				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+				//renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 
 				r2::draw::renderer::SetDefaultCullState(renderComponent.drawParameters);
 				r2::draw::renderer::SetDefaultStencilState(renderComponent.drawParameters);
@@ -305,7 +306,7 @@ namespace r2
 				*/
 				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
 				skeletalAnimationComponent.animModel = CENG.GetApplication().GetEditorAnimModel();
-				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
+				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 
 				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
@@ -314,8 +315,8 @@ namespace r2
 				skeletalAnimationComponent.shouldLoop = true;// = MAKE_SARRAY(mMallocArena, b32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.loopPerInstance, 1u);
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
-
-				skeletalAnimationComponent.animation = CENG.GetApplication().GetEditorAnimation();// = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
+				std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
+				skeletalAnimationComponent.animation = animations[0];// = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
 				//r2::sarr::Push(*skeletalAnimationComponent.animationsPerInstance, CENG.GetApplication().GetEditorAnimation());
 				//mComponentAllocations.push_back(skeletalAnimationComponent.animationsPerInstance);
 
@@ -335,10 +336,96 @@ namespace r2
 				mCoordinator->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
 				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
 
+				//transform instance
+				{
+					ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
+					instancedTransformComponent.numInstances = 2;
+					instancedTransformComponent.instances = MAKE_SARRAY(mMallocArena, ecs::TransformComponent, 2);
+					mComponentAllocations.push_back(instancedTransformComponent.instances);
+
+					ecs::TransformComponent transformInstance1;
+					transformInstance1.localTransform.position = glm::vec3(2, 1, 2);
+					transformInstance1.localTransform.scale = glm::vec3(0.01f);
+					transformInstance1.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
+
+					r2::sarr::Push(*instancedTransformComponent.instances, transformInstance1);
+
+					ecs::TransformComponent transformInstance2;
+					transformInstance2.localTransform.position = glm::vec3(-2, 1, 2);
+					transformInstance2.localTransform.scale = glm::vec3(0.01f);
+					transformInstance2.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
+
+					r2::sarr::Push(*instancedTransformComponent.instances, transformInstance2);
+
+					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theNewEntity, instancedTransformComponent);
+				}
+				
+				//debug bone instance
+				{
+					ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
+					instancedDebugBoneComponent.numInstances = 2;
+					instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, 2);
+					mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
+
+					ecs::DebugBoneComponent debugBoneInstance1;
+					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
+					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					r2::sarr::Clear(*debugBoneInstance1.debugBones);
+					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
+
+					ecs::DebugBoneComponent debugBoneInstance2;
+					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
+					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					r2::sarr::Clear(*debugBoneInstance2.debugBones);
+					mComponentAllocations.push_back(debugBoneInstance2.debugBones);
+
+					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
+					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
+
+					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
+				}
+
+				//Skeletal animation instance component
+				{
+					ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
+					instancedSkeletalAnimationComponent.numInstances = 2;
+					instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, 2);
+					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
+
+					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
+					skeletalAnimationInstance1.animModel = CENG.GetApplication().GetEditorAnimModel();
+					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = true;
+
+					skeletalAnimationInstance1.startTime = 0; 
+					skeletalAnimationInstance1.shouldLoop = true;
+					skeletalAnimationInstance1.animation = animations[1];
+
+					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->boneInfo));
+					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
+					mComponentAllocations.push_back(skeletalAnimationInstance1.shaderBones);
+
+
+					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
+					skeletalAnimationInstance2.animModel = CENG.GetApplication().GetEditorAnimModel();
+					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = true;
+
+					skeletalAnimationInstance2.startTime = 0;
+					skeletalAnimationInstance2.shouldLoop = true;
+					skeletalAnimationInstance2.animation = animations[2];
+
+					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->boneInfo));
+					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
+					mComponentAllocations.push_back(skeletalAnimationInstance2.shaderBones);
+
+					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance1);
+					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance2);
+
+					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theNewEntity, instancedSkeletalAnimationComponent);
+				}
+
 				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
 				transformComponent.localTransform.scale = glm::vec3(0.01f);
-				
 				
 				transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
 				
@@ -385,9 +472,7 @@ namespace r2
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
 
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena);
-		//mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::RenderComponent>>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena);
-		
 
 #ifdef R2_DEBUG
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
@@ -395,7 +480,6 @@ namespace r2
 
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena);
-
 #endif
 	}
 
@@ -410,7 +494,6 @@ namespace r2
 #endif
 
 		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena);
-	//	mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::RenderComponent>>(mMallocArena);
 		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena);
 
 		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);

@@ -49,7 +49,6 @@ namespace r2::ecs
 
 			const InstanceComponentT<TransformComponent>* instancedTransformsComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
 			const InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
-			//const InstanceComponent* instanceComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponent>(e);
 
 			GatherBatchPtr gatherBatchToUse = mStaticBatches;
 			u32 maxNumModels = mMaxNumStaticModelsToDraw;
@@ -62,10 +61,8 @@ namespace r2::ecs
 			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
 		}
 
-
 		SubmitBatch(mStaticBatches);
 		SubmitBatch(mDynamicBatches);
-		
 
 		//Do the simple thing to start
 		FreeAllPerFrameData();
@@ -91,7 +88,7 @@ namespace r2::ecs
 		bool hasMaterialOverrides = renderComponent.optrOverrideMaterials != nullptr;
 		bool isAnimated = animationComponent != nullptr;
 
-		draw::key::RenderSystemKey renderKey = r2::draw::key::GenerateRenderSystemKey(hasMaterialOverrides, renderComponent.primitiveType, utils::HashBytes32(&renderComponent, sizeof(renderComponent.drawParameters)));
+		draw::key::RenderSystemKey renderKey = r2::draw::key::GenerateRenderSystemKey(hasMaterialOverrides, renderComponent.primitiveType, utils::HashBytes32(&renderComponent.drawParameters, sizeof(renderComponent.drawParameters)));
 
 		//now find or create the RenderSystemGatherBatch that we should add to 
 
@@ -243,5 +240,4 @@ namespace r2::ecs
 
 		return memorySize;
 	}
-
 }

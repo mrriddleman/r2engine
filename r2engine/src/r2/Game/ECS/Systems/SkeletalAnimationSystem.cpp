@@ -64,7 +64,7 @@ namespace r2::ecs
 				}
 			}
 
-			R2_CHECK(r2::sarr::Capacity(*animationComponent.shaderBones) >= totalNumShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
+			R2_CHECK(r2::sarr::Capacity(*animationComponent.shaderBones) == numShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
 #ifdef R2_DEBUG
@@ -93,6 +93,9 @@ namespace r2::ecs
 #endif
 					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
 
+					R2_CHECK(r2::sarr::Capacity(*skeletalAnimationComponent.shaderBones) == numShaderBones, "We don't have enough space in order to animate all of the instances of this anim model");
+
+
 					r2::draw::PlayAnimationForAnimModel(
 						ticks,
 						skeletalAnimationComponent.startTime,
@@ -102,6 +105,19 @@ namespace r2::ecs
 						*skeletalAnimationComponent.shaderBones, *debugBonesComponent.debugBones, 0);
 				}
 			}
+
+#ifdef R2_DEBUG
+			if (instancedDebugBoneComponent && animationComponent.shouldUseSameTransformsForAllInstances)
+			{
+				//copy all of the bone data into the instances
+				for (u32 i = 0; i < instancedDebugBoneComponent->numInstances; ++i)
+				{
+					DebugBoneComponent& nextDebugBoneComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, i);
+					r2::sarr::Copy(*nextDebugBoneComponent.debugBones, *debugBoneComponent->debugBones);
+				}
+			}
+#endif
+			
 		}
 	}
 }

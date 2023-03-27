@@ -9,8 +9,6 @@ namespace r2::ecs
 {
 	struct DebugRenderComponent;
 	struct TransformComponent;
-	struct InstanceComponent;
-
 	template<typename T> struct InstanceComponentT;
 
 

@@ -1007,6 +1007,23 @@ namespace r2::draw::renderer
 			return false;
 		}
 
+		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
+		if (!materialSystemInitialized)
+		{
+			R2_CHECK(false, "We couldn't initialize the material systems");
+			return false;
+		}
+
+		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
+
+		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*newRenderer->mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
+
+		if (!newRenderer->mMaterialSystem)
+		{
+			R2_CHECK(false, "We couldn't initialize the material system");
+			return false;
+		}
+
 		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, nullptr, "Texture System");
 		if (!textureSystemInitialized)
 		{
@@ -1019,23 +1036,6 @@ namespace r2::draw::renderer
 		if (!newRenderer->mVertexBufferLayoutSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the vertex buffer");
-			return false;
-		}
-
-		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
-		if (!materialSystemInitialized)
-		{
-			R2_CHECK(false, "We couldn't initialize the material systems");
-			return false;
-		}
-		
-		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
-		
-		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*newRenderer->mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
-
-		if (!newRenderer->mMaterialSystem)
-		{
-			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
 		}
 
@@ -6126,8 +6126,6 @@ namespace r2::draw::renderer
 
 		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
 		R2_CHECK(numModelRefs == numInstancesInArray, "These must be the same!");
-
-		R2_CHECK(numModelMatrices == numInstancesInArray, "We should have the same number of model matrices as instances to draw");
 
 #if R2_DEBUG
 		u32 numInstancesInTotal = 0;

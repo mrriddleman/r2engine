@@ -170,9 +170,9 @@ namespace r2
     }
 
 #ifdef R2_EDITOR
-    const r2::draw::Animation* Application::GetEditorAnimation() const
+    std::vector<const r2::draw::Animation*> Application::GetEditorAnimation() const
     {
-        return nullptr;
+        return {};
     }
 
     const r2::draw::AnimModel* Application::GetEditorAnimModel() const

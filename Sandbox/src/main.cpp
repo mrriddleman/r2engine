@@ -1762,9 +1762,14 @@ public:
 
 	//@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-    virtual const r2::draw::Animation* GetEditorAnimation() const override
+    virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const override
     {
-        return r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 0));
+        std::vector<const r2::draw::Animation*> animations;
+        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 0)));
+        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 1)));
+        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 2)));
+
+        return animations;
     }
 
     virtual const r2::draw::AnimModel* GetEditorAnimModel()const override
