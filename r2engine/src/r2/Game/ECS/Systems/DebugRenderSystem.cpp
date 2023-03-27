@@ -151,7 +151,7 @@ namespace r2::ecs
 		}
 
 
-		if (draw::DEBUG_SPHERE)
+		if (c.debugModelType == draw::DEBUG_SPHERE)
 		{
 			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
 			r2::sarr::Push(*radii, c.radius);
@@ -161,7 +161,7 @@ namespace r2::ecs
 			}
 		}
 
-		if (draw::DEBUG_CUBE)
+		if (c.debugModelType == draw::DEBUG_CUBE)
 		{
 			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
 			r2::sarr::Push(*scales, c.scale);
@@ -171,7 +171,7 @@ namespace r2::ecs
 			}
 		}
 
-		if (draw::DEBUG_LINE)
+		if (c.debugModelType == draw::DEBUG_LINE)
 		{
 			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
 			r2::sarr::Push(*scales, c.scale);

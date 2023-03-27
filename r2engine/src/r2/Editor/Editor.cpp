@@ -423,6 +423,41 @@ namespace r2
 					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theNewEntity, instancedSkeletalAnimationComponent);
 				}
 
+				//debug render component + instances
+				{
+					ecs::DebugRenderComponent debugRenderComponent;
+					debugRenderComponent.debugModelType = draw::DEBUG_SPHERE;
+					debugRenderComponent.radius = 1.0f;
+					debugRenderComponent.depthTest = true;
+					debugRenderComponent.filled = false;
+					debugRenderComponent.color = glm::vec4(1, 1, 0, 1);
+
+					ecs::InstanceComponentT<ecs::DebugRenderComponent> instancedDebugRenderComponent;
+					instancedDebugRenderComponent.numInstances = 2;
+					instancedDebugRenderComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugRenderComponent, 2);
+					mComponentAllocations.push_back(instancedDebugRenderComponent.instances);
+
+					ecs::DebugRenderComponent debugRenderComponent1;
+					debugRenderComponent1.color = glm::vec4(1, 0, 0, 1);
+					debugRenderComponent1.debugModelType = draw::DEBUG_SPHERE;
+					debugRenderComponent1.radius = 1.0f;
+					debugRenderComponent1.depthTest = true;
+					debugRenderComponent1.filled = false;
+					
+					ecs::DebugRenderComponent debugRenderComponent2;
+					debugRenderComponent2.color = glm::vec4(1, 0, 1, 1);
+					debugRenderComponent2.debugModelType = draw::DEBUG_SPHERE;
+					debugRenderComponent2.radius = 1.0f;
+					debugRenderComponent2.depthTest = true;
+					debugRenderComponent2.filled = false;
+
+					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent1);
+					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent2);
+
+					mCoordinator->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
+					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugRenderComponent>>(theNewEntity, instancedDebugRenderComponent);
+				}
+
 				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
 				transformComponent.localTransform.scale = glm::vec3(0.01f);
