@@ -404,7 +404,7 @@ namespace r2
             initialMaterialPacksManifests.insert(initialMaterialPacksManifests.begin(), appMaterialPacksManifests.begin(), appMaterialPacksManifests.end());
 
 
-            //@TODO(Serge): here we're going to move the shader system init and material system init from the renderer BEFORE the renderer is initialized
+            //Do all the material setup 
 			char materialsPath[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
 

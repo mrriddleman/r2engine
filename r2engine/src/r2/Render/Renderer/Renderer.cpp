@@ -628,10 +628,7 @@ namespace r2::draw::renderer
 	ConstantConfigHandle AddDispatchComputeIndirectLayout(Renderer& renderer);
 
 	void InitializeVertexLayouts(Renderer& renderer, u32 staticVertexLayoutSizeInBytes, u32 animVertexLayoutSizeInBytes);
-
-	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack);
 	bool GenerateConstantBuffers(Renderer& renderer, const r2::SArray<ConstantBufferLayoutConfiguration>* constantBufferConfigs);
-
 
 	template <class T>
 	void BeginRenderPass(Renderer& renderer, RenderPassType renderPassType, const ClearSurfaceOptions& clearOptions, r2::draw::CommandBucket<T>& commandBucket, T key, mem::StackArena& arena);
@@ -958,7 +955,6 @@ namespace r2::draw::renderer
 
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
-
 #ifdef R2_DEBUG
 		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines"));
 		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels"));
@@ -966,8 +962,6 @@ namespace r2::draw::renderer
 		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite"));
 		newRenderer->mDefaultStaticOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline"));
 		newRenderer->mDefaultDynamicOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline"));
-
-
 
 		//Get the depth shader handles
 		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
@@ -1549,19 +1543,8 @@ namespace r2::draw::renderer
 	
 		r2::draw::vb::FreeVertexBufferLayoutSystem(renderer->mVertexBufferLayoutSystem);
 		r2::draw::texsys::Shutdown();
-		
 
 		renderer->mSubAreaArena = nullptr;
-
-	//	FREE(materialSystemBoundary.location, *arena);
-
-		//const auto numParamPacks = r2::sarr::Size(*renderer->mMaterialParamPacksData);
-		//for (s32 i = static_cast<s32>(numParamPacks)-1; i >= 0; --i)
-		//{
-		//	FREE(r2::sarr::At(*renderer->mMaterialParamPacksData, i), *arena);
-		//}
-		//FREE(renderer->mMaterialParamPacks, *arena);
-		//FREE(renderer->mMaterialParamPacksData, *arena);
 
 		FREE(renderer->mConstantBufferHandles, *arena);
 		FREE(renderer->mConstantBufferData, *arena);
@@ -2394,19 +2377,6 @@ namespace r2::draw::renderer
 
 	}
 
-	u64 MaterialSystemMemorySize(u64 numMaterials, u64 textureCacheInBytes, u64 totalNumberOfTextures, u64 numPacks, u64 maxTexturesInAPack)
-	{
-		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
-
-		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
-
-		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
-	}
-
 	u64 MemorySize(u64 renderTargetsMemorySize)
 	{
 		u32 boundsChecking = 0;
@@ -2458,9 +2428,6 @@ namespace r2::draw::renderer
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
-
-			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
-			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
 
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
