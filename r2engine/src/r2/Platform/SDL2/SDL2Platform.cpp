@@ -60,7 +60,7 @@ namespace r2
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
     //@NOTE: Increase as needed for dev
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(340);
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(308);
     
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);

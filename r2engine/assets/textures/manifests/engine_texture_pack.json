@@ -93,84 +93,6 @@
       }
     },
     {
-      packName: 6031424017685759555,
-      albedo: [
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/back.rtex",
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/bottom.rtex",
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/front.rtex",
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/left.rtex",
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/right.rtex",
-        "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/top.rtex"
-      ],
-      normal: [
-
-      ],
-      emissive: [
-
-      ],
-      metallic: [
-
-      ],
-      occlusion: [
-
-      ],
-      roughness: [
-
-      ],
-      height: [
-
-      ],
-      anisotropy: [
-
-      ],
-      detail: [
-
-      ],
-      clearCoat: [
-
-      ],
-      clearCoatRoughness: [
-
-      ],
-      clearCoatNormal: [
-
-      ],
-      packSize: 31964039,
-      totalNumberOfTextures: 6,
-      metaData: {
-        type: "CUBEMAP",
-        mipLevels: [
-          {
-            sides: [
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/left.rtex",
-                side: "LEFT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/right.rtex"
-              },
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/top.rtex",
-                side: "TOP"
-              },
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/bottom.rtex",
-                side: "BOTTOM"
-              },
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/front.rtex",
-                side: "FRONT"
-              },
-              {
-                textureName: "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/Skybox/albedo/back.rtex",
-                side: "BACK"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       packName: 11826259269100960472,
       albedo: [
         "D:/Projects/r2engine/r2engine/assets_bin/textures/packs/StaticMissingTexture/albedo/StaticMissingTexture.rtex"
@@ -217,9 +139,9 @@
       }
     }
   ],
-  totalNumberOfTextures: 9,
-  totalTextureSize: 31977095,
-  maxTexturesInAPack: 6,
+  totalNumberOfTextures: 3,
+  totalTextureSize: 13056,
+  maxTexturesInAPack: 1,
   formatMetaData: [
     {
       format: "SRGBA8",
@@ -227,14 +149,6 @@
       maxHeight: 64,
       numTextures: 3,
       maxMips: 1
-    },
-    {
-      format: "SRGBA8",
-      maxWidth: 2048,
-      maxHeight: 2048,
-      numTextures: 1,
-      maxMips: 1,
-      isCubemap: true
     }
   ]
 }

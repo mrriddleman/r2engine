@@ -1,6 +1,5 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Core/File/FileSystem.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Math/MathUtils.h"
 #include "r2/Core/Memory/Memory.h"
@@ -42,11 +41,9 @@ namespace
 	const u64 COMMAND_AUX_MEMORY = Megabytes(16); //I dunno lol
 	const u64 ALIGNMENT = 16;
 	const u32 MAX_BUFFER_LAYOUTS = 32;
-	const u32 MAX_NUM_SHADERS = 512;
+	
 	const u32 MAX_DEFAULT_MODELS = 16;
 	const u32 MAX_NUM_TEXTURES = 2048;
-	const u32 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
-	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
 	const u32 SCATTER_TILE_DIM = 64;
 	const u32 REDUCE_TILE_DIM = 128;
 	const float DILATION_FACTOR = 10.0f / float(r2::draw::light::SHADOW_MAP_SIZE);
@@ -798,9 +795,8 @@ namespace r2::draw::renderer
 	//}
 
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath)
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, MaterialSystem* noptrInternalMaterialSystem)
 	{
-		//R2_CHECK(s_optrRenderer == nullptr, "We've already create the s_optrRenderer - are you trying to initialize more than once?");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
 
 		if (memoryAreaHandle == r2::mem::MemoryArea::Invalid)
@@ -811,45 +807,6 @@ namespace r2::draw::renderer
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
-
-		//@Temporary
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
-
-		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
-
-		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
-
-		const char* engineMaterialParamsPackPath = materialsPath;
-		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
-
-		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
-		{
-			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
-		}
-
-		u64 engineMaterialParamsPackSize = 0;
-
-		u32 numMaterialParamsPacks = r2::sarr::Size(*pathsToLoad);
-		for (u32 i = 0; i < numMaterialParamsPacks; ++i)
-		{
-			u64 materialParamsPackSize = 0;
-			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
-
-			if (!materialParamsPackData)
-			{
-				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
-				return nullptr;
-			}
-
-			if (i == 0)
-			{
-				engineMaterialParamsPackSize = materialParamsPackSize;
-			}
-
-			FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
-		}
 
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -867,9 +824,7 @@ namespace r2::draw::renderer
 			renderTargetArenaSize += RenderTarget::MemorySize(renderTargetParams[i], ALIGNMENT, stackHeaderSize, boundsChecking);
 		}
 
-		u64 materialMemorySystemSize = mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
-
-		u64 subAreaSize = MemorySize(materialMemorySystemSize, renderTargetArenaSize, numMaterialParamsPacks);
+		u64 subAreaSize = MemorySize(renderTargetArenaSize);
 
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
@@ -978,49 +933,9 @@ namespace r2::draw::renderer
 
 		SetClearDepth(1.0f);
 
-		newRenderer->mMaterialParamPacksData = MAKE_SARRAY(*rendererArena, void*, appMaterialPacksManifests.size() + 1);
-		newRenderer->mMaterialParamPacks = MAKE_SARRAY(*rendererArena, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
-
+		newRenderer->mnoptrMaterialSystem = noptrInternalMaterialSystem;
 		
-		for (u32 i = 0; i < r2::sarr::Size(*pathsToLoad); ++i)
-		{
-			u64 materialParamsPackSize = 0;
-			void* materialParamsPackData = r2::fs::ReadFile(*rendererArena, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
- 
-			if (!materialParamsPackData)
-			{
-				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
-				return nullptr;
-			}
-
-			r2::sarr::Push(*newRenderer->mMaterialParamPacksData, materialParamsPackData);
-
-			const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
-			R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
-
-			r2::sarr::Push(*newRenderer->mMaterialParamPacks, materialPack);
-		}
-		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
-
-		bool shaderSystemIntialized = r2::draw::shadersystem::Init(memoryAreaHandle, MAX_NUM_SHADERS, shaderManifestPath, internalShaderManifestPath, newRenderer->mMaterialParamPacks);
-		if (!shaderSystemIntialized)
-		{
-			R2_CHECK(false, "We couldn't initialize the shader system");
-			return false;
-		}
-
-		bool materialSystemInitialized = r2::draw::matsys::Init(memoryAreaHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
-		if (!materialSystemInitialized)
-		{
-			R2_CHECK(false, "We couldn't initialize the material systems");
-			return false;
-		}
-
-		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*newRenderer->mSubAreaArena, materialMemorySystemSize, ALIGNMENT);
-
-		newRenderer->mMaterialSystem = matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*newRenderer->mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
-
-		if (!newRenderer->mMaterialSystem)
+		if (!newRenderer->mnoptrMaterialSystem)
 		{
 			R2_CHECK(false, "We couldn't initialize the material system");
 			return false;
@@ -1045,12 +960,12 @@ namespace r2::draw::renderer
 
 
 #ifdef R2_DEBUG
-		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DebugLines"));
-		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DebugModels"));
+		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines"));
+		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels"));
 #endif
-		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("FinalComposite"));
-		newRenderer->mDefaultStaticOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("StaticOutline"));
-		newRenderer->mDefaultDynamicOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mMaterialSystem, STRING_ID("DynamicOutline"));
+		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite"));
+		newRenderer->mDefaultStaticOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline"));
+		newRenderer->mDefaultDynamicOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline"));
 
 
 
@@ -1620,8 +1535,6 @@ namespace r2::draw::renderer
 		modlsys::Shutdown(renderer->mModelSystem);
 		FREE(renderer->mDefaultModelHandles, *arena);
 
-		r2::mem::utils::MemBoundary materialSystemBoundary = renderer->mMaterialSystem->mMaterialMemBoundary;
-
 		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
 
 		if (renderer->mOutputMerger == OUTPUT_SMAA_X1 || renderer->mOutputMerger == OUTPUT_SMAA_T2X)
@@ -1630,25 +1543,25 @@ namespace r2::draw::renderer
 			r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
 		}
 
-		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
-		r2::draw::matsys::FreeMaterialSystem(renderer->mMaterialSystem);
-		r2::draw::matsys::ShutdownMaterialSystems();
+		mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
 
+		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
+	
 		r2::draw::vb::FreeVertexBufferLayoutSystem(renderer->mVertexBufferLayoutSystem);
 		r2::draw::texsys::Shutdown();
-		r2::draw::shadersystem::Shutdown();
+		
 
 		renderer->mSubAreaArena = nullptr;
 
-		FREE(materialSystemBoundary.location, *arena);
+	//	FREE(materialSystemBoundary.location, *arena);
 
-		const auto numParamPacks = r2::sarr::Size(*renderer->mMaterialParamPacksData);
-		for (s32 i = static_cast<s32>(numParamPacks)-1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*renderer->mMaterialParamPacksData, i), *arena);
-		}
-		FREE(renderer->mMaterialParamPacks, *arena);
-		FREE(renderer->mMaterialParamPacksData, *arena);
+		//const auto numParamPacks = r2::sarr::Size(*renderer->mMaterialParamPacksData);
+		//for (s32 i = static_cast<s32>(numParamPacks)-1; i >= 0; --i)
+		//{
+		//	FREE(r2::sarr::At(*renderer->mMaterialParamPacksData, i), *arena);
+		//}
+		//FREE(renderer->mMaterialParamPacks, *arena);
+		//FREE(renderer->mMaterialParamPacksData, *arena);
 
 		FREE(renderer->mConstantBufferHandles, *arena);
 		FREE(renderer->mConstantBufferData, *arena);
@@ -2494,7 +2407,7 @@ namespace r2::draw::renderer
 		return r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::mat::MemorySize(ALIGNMENT, numMaterials, textureCacheInBytes, totalNumberOfTextures, numPacks, maxTexturesInAPack), ALIGNMENT, headerSize, boundsChecking);
 	}
 
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u32 numMaterialParamPacks)
+	u64 MemorySize(u64 renderTargetsMemorySize)
 	{
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -2546,10 +2459,9 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelHandle>::MemorySize(MAX_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRefHandle>::MemorySize(NUM_DEFAULT_MODELS), ALIGNMENT, headerSize, boundsChecking) +
 
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<void*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
+			//r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialParamPacks), ALIGNMENT, headerSize, boundsChecking) +
 
-			materialSystemMemorySize +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderBatch>::MemorySize(DrawType::NUM_DRAW_TYPES), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, MAX_NUM_BONES, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(RenderBatch::MemorySize(MAX_NUM_DRAWS, MAX_NUM_DRAWS, 0, ALIGNMENT, headerSize, boundsChecking), ALIGNMENT, headerSize, boundsChecking) * (NUM_DRAW_TYPES - 1)
@@ -2621,60 +2533,60 @@ namespace r2::draw::renderer
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer)
 	{
-		if (renderer.mMaterialSystem == nullptr)
+		if (renderer.mnoptrMaterialSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet");
 			return {};
 		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mMaterialSystem, STRING_ID("StaticMissingTexture"));
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return r2::draw::mat::GetRenderMaterial(*renderer.mMaterialSystem, materialID);
+		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
 	}
 
 	const tex::Texture* GetMissingTexture(Renderer* renderer)
 	{
-		if (renderer == nullptr || renderer->mMaterialSystem == nullptr)
+		if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
 		{
 			return nullptr;
 		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mMaterialSystem, STRING_ID("StaticMissingTexture"));
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
 	}
 
 	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer)
 	{
-		if (renderer.mMaterialSystem == nullptr)
+		if (renderer.mnoptrMaterialSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet");
 			return {};
 		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mMaterialSystem, STRING_ID("BlueNoise64"));
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("BlueNoise64"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return r2::draw::mat::GetRenderMaterial(*renderer.mMaterialSystem, materialID);
+		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
 	}
 
 	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer)
 	{
-		if (renderer == nullptr || renderer->mMaterialSystem == nullptr)
+		if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
 		{
 			return nullptr;
 		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mMaterialSystem, STRING_ID("BlueNoise64"));
+		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("BlueNoise64"));
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
 	}
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
@@ -2767,17 +2679,17 @@ namespace r2::draw::renderer
 
 	void LoadEngineTexturesFromDisk(Renderer& renderer)
 	{
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*renderer.mMaterialSystem);
+		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*renderer.mnoptrMaterialSystem);
 	}
 
 	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName)
 	{
-		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(*renderer.mMaterialSystem, materialName);
+		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(*renderer.mnoptrMaterialSystem, materialName);
 	}
 
 	void UploadEngineMaterialTexturesToGPU(Renderer& renderer)
 	{
-		r2::draw::mat::UploadAllMaterialTexturesToGPU(*renderer.mMaterialSystem);
+		r2::draw::mat::UploadAllMaterialTexturesToGPU(*renderer.mnoptrMaterialSystem);
 	}
 
 	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model)

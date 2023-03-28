@@ -29,6 +29,11 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Renderer/Renderer.h"
+#include "r2/Render/Model/Material.h"
+#include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Core/File/FileSystem.h"
+#include "r2/Render/Model/MaterialParamsPack_generated.h"
+
 #ifdef R2_DEBUG
 #include <chrono>
 #endif
@@ -45,6 +50,15 @@
 #include "r2/Core/Assets/Pipeline/AssetCommands/ModelHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/AnimationHotReloadCommand.h"
 #endif
+
+
+namespace
+{
+	const u32 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
+	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
+    const u32 MAX_NUM_SHADERS = 512;
+    const u32 ALIGNMENT = 16;
+}
 
 namespace r2
 {
@@ -389,15 +403,43 @@ namespace r2
             std::vector<std::string> initialMaterialPacksManifests;
             initialMaterialPacksManifests.insert(initialMaterialPacksManifests.begin(), appMaterialPacksManifests.begin(), appMaterialPacksManifests.end());
 
-            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, initialMaterialPacksManifests, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath);
+
+            //@TODO(Serge): here we're going to move the shader system init and material system init from the renderer BEFORE the renderer is initialized
+			char materialsPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+
+			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
+
+            const auto engineMaterialParamsPackSize = SetupMaterialPacks(materialsPath, appMaterialPacksManifests);
+
+			bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
+			if (!materialSystemInitialized)
+			{
+				R2_CHECK(false, "We couldn't initialize the material systems");
+				return false;
+			}
+
+			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, mMaterialParamPacks);
+			if (!shaderSystemIntialized)
+			{
+				R2_CHECK(false, "We couldn't initialize the shader system");
+				return false;
+			}
+
+			u32 materialMemorySystemSize = r2::draw::mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
+
+			r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*MEM_ENG_PERMANENT_PTR, materialMemorySystemSize, ALIGNMENT);
+
+			mEngineMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
+
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, mEngineMaterialSystem);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             //@TODO(Serge): don't use make unique!
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
             
-
-
 #ifdef R2_IMGUI
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
             mImGuiLayer = imguiLayer.get();
@@ -470,6 +512,21 @@ namespace r2
             }
         }
         
+        r2::mem::utils::MemBoundary materialSystemBoundary = mEngineMaterialSystem->mMaterialMemBoundary;
+        r2::draw::matsys::FreeMaterialSystem(mEngineMaterialSystem);
+        FREE(materialSystemBoundary.location, *MEM_ENG_PERMANENT_PTR);
+
+        r2::draw::shadersystem::Shutdown();
+        r2::draw::matsys::ShutdownMaterialSystems();
+		
+		const auto numParamPacks = r2::sarr::Size(*mMaterialParamPacksData);
+		for (s32 i = static_cast<s32>(numParamPacks) - 1; i >= 0; --i)
+		{
+			FREE(r2::sarr::At(*mMaterialParamPacksData, i), *MEM_ENG_PERMANENT_PTR);
+		}
+		FREE(mMaterialParamPacks, *MEM_ENG_PERMANENT_PTR);
+		FREE(mMaterialParamPacksData, *MEM_ENG_PERMANENT_PTR);
+
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
         mAssetCommandHandler.Shutdown();
@@ -991,6 +1048,67 @@ namespace r2
                 ControllerDetectedEvent(i);
             }
         }
+    }
+
+    u64 Engine::SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
+    {
+		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
+
+		const char* engineMaterialParamsPackPath = materialsPath;
+		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
+
+		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
+		{
+			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
+		}
+
+		u64 engineMaterialParamsPackSize = 0;
+
+		u32 numMaterialParamsPacks = r2::sarr::Size(*pathsToLoad);
+		for (u32 i = 0; i < numMaterialParamsPacks; ++i)
+		{
+			u64 materialParamsPackSize = 0;
+			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
+
+			if (!materialParamsPackData)
+			{
+				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
+				return 0 ;
+			}
+
+			if (i == 0)
+			{
+				engineMaterialParamsPackSize = materialParamsPackSize;
+			}
+
+			FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		mMaterialParamPacksData = MAKE_SARRAY(*MEM_ENG_PERMANENT_PTR, void*, appMaterialPacksManifests.size() + 1);
+
+		mMaterialParamPacks = MAKE_SARRAY(*MEM_ENG_PERMANENT_PTR, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
+
+		for (u32 i = 0; i < r2::sarr::Size(*pathsToLoad); ++i)
+		{
+			u64 materialParamsPackSize = 0;
+			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_PERMANENT_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
+
+			if (!materialParamsPackData)
+			{
+				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
+				return  0;
+			}
+
+			r2::sarr::Push(*mMaterialParamPacksData, materialParamsPackData);
+
+			const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
+			R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
+
+			r2::sarr::Push(*mMaterialParamPacks, materialPack);
+		}
+		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
+
+        return engineMaterialParamsPackSize;
     }
     
     void Engine::OnEvent(evt::Event& e)

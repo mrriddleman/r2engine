@@ -21,6 +21,12 @@
 namespace r2::draw
 {
     struct Renderer;
+    struct MaterialSystem;
+}
+
+namespace flat
+{
+    struct MaterialParamsPack;
 }
 
 namespace r2
@@ -219,6 +225,9 @@ namespace r2
         void ControllerButtonEvent(io::ControllerID controllerID, io::ControllerButtonName buttonName, u8 state);
         void ControllerRemappedEvent(io::ControllerID controllerID);
         
+        //Materials Setup
+        u64 SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests);
+
         SetVSyncFunc mSetVSyncFunc = nullptr;
         SetFullScreenFunc mFullScreenFunc = nullptr;
         SetWindowSizeFunc mWindowSizeFunc = nullptr;
@@ -248,6 +257,11 @@ namespace r2
 #ifdef R2_EDITOR
         EditorLayer* mEditorLayer;
 #endif
+
+		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
+		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+        draw::MaterialSystem* mEngineMaterialSystem = nullptr;
+
         draw::Renderer* mRendererBackends[draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES];
         
         draw::RendererBackend mCurrentRendererBackend;

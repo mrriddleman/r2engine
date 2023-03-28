@@ -729,7 +729,6 @@ namespace r2::draw::mat
 		}
 
 		ClearRenderMaterialData(system);
-
 	}
 
 	const r2::draw::tex::CubemapTexture* GetCubemapTexture(const MaterialSystem& system, MaterialHandle matID)
@@ -1859,6 +1858,8 @@ namespace r2::draw::mat
 			InternalMaterialData& internalMaterialData = r2::sarr::At(*system.mInternalData, i);
 			internalMaterialData.renderMaterial = {};
 		}
+
+		r2::shashmap::Clear(*system.mTexturePacks);
 	}
 
 #ifdef R2_ASSET_PIPELINE

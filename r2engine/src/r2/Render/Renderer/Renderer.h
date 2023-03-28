@@ -152,14 +152,16 @@ namespace r2::draw
 
 		//--------------BEGIN Systems stuff----------------
 		ModelSystem* mModelSystem = nullptr;
-		MaterialSystem* mMaterialSystem = nullptr;
+		MaterialSystem* mnoptrMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
 
 		r2::SArray<vb::GPUModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
-		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
-		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+		
+	//	r2::SArray<void*>* mMaterialParamPacksData = nullptr;
+	//	r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+
 		r2::SArray<vb::VertexBufferLayoutHandle>* mVertexBufferLayoutHandles = nullptr;
 
 		//--------------END Systems stuff----------------
@@ -449,11 +451,11 @@ namespace r2::draw
 namespace r2::draw::renderer
 {
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, const std::vector<std::string>& appMaterialPacksManifests, const char* shaderManifestPath, const char* internalShaderManifestPath);
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, MaterialSystem* noptrInternalMaterialSystem);
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);
-	u64 MemorySize(u64 materialSystemMemorySize, u64 renderTargetsMemorySize, u32 numMaterialParamPacks);
+	u64 MemorySize(u64 renderTargetsMemorySize);
 
 	
 	//events
