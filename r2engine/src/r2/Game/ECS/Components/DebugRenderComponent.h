@@ -12,18 +12,17 @@ namespace r2::ecs
 	{
 		r2::draw::DebugModelType debugModelType;
 
-		//@TODO(Serge): remove the SArrays here, this won't be the normal case
-
 		//for Arrow this is headBaseRadius
 		float radius;
 		
 		//for Arrow this is length
 		//for Cone and Cylinder - this is height
 		//for a line - this is length of the line
-		float scale;
+		glm::vec3 scale;
 		
 		//For Lines, this is used for the direction of p1 
 		//we use the scale to determine the p1 of the line
+		//for Quads, this will be the normal
 		glm::vec3 direction;
 
 		glm::vec4 color;

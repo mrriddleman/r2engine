@@ -426,11 +426,12 @@ namespace r2
 				//debug render component + instances
 				{
 					ecs::DebugRenderComponent debugRenderComponent;
-					debugRenderComponent.debugModelType = draw::DEBUG_SPHERE;
-					debugRenderComponent.radius = 1.0f;
+					debugRenderComponent.debugModelType = draw::DEBUG_QUAD;
+					debugRenderComponent.direction = glm::normalize(glm::vec3(1, 1, 0.5));
 					debugRenderComponent.depthTest = true;
-					debugRenderComponent.filled = false;
+					debugRenderComponent.filled = true;
 					debugRenderComponent.color = glm::vec4(1, 1, 0, 1);
+					debugRenderComponent.scale = glm::vec3(2, 2, 1);
 
 					ecs::InstanceComponentT<ecs::DebugRenderComponent> instancedDebugRenderComponent;
 					instancedDebugRenderComponent.numInstances = 2;
@@ -439,17 +440,20 @@ namespace r2
 
 					ecs::DebugRenderComponent debugRenderComponent1;
 					debugRenderComponent1.color = glm::vec4(1, 0, 0, 1);
-					debugRenderComponent1.debugModelType = draw::DEBUG_SPHERE;
-					debugRenderComponent1.radius = 1.0f;
+					debugRenderComponent1.debugModelType = draw::DEBUG_QUAD;
+					debugRenderComponent1.direction = glm::normalize(glm::vec3(-1, 1, 0.5));
 					debugRenderComponent1.depthTest = true;
-					debugRenderComponent1.filled = false;
+					debugRenderComponent1.filled = true;
+					debugRenderComponent1.scale = glm::vec3(1, 2, 1);
 					
 					ecs::DebugRenderComponent debugRenderComponent2;
 					debugRenderComponent2.color = glm::vec4(1, 0, 1, 1);
-					debugRenderComponent2.debugModelType = draw::DEBUG_SPHERE;
-					debugRenderComponent2.radius = 1.0f;
+					debugRenderComponent2.debugModelType = draw::DEBUG_QUAD;
+					debugRenderComponent2.direction = glm::normalize(glm::vec3(1, -1, -0.5));
 					debugRenderComponent2.depthTest = true;
-					debugRenderComponent2.filled = false;
+					debugRenderComponent2.filled = true;
+					debugRenderComponent2.scale = glm::vec3(2, 1, 1);
+
 
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent1);
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent2);

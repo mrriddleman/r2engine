@@ -26,6 +26,7 @@
 
 #include "r2/Utils/Hash.h"
 #include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/vector_angle.hpp"
 
 #include <filesystem>
 
@@ -542,7 +543,7 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& numModelMats,
 		const glm::vec4& color);
 
-
+	void DrawQuad(Renderer& renderer, const glm::vec3& center, float scale, const glm::vec3& normal,const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawSphere(Renderer& renderer, const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCube(Renderer& renderer, const glm::vec3& center, float scale, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCylinder(Renderer& renderer, const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest = true);
@@ -553,6 +554,7 @@ namespace r2::draw::renderer
 
 	void DrawTangentVectors(Renderer& renderer, DefaultModel model, const glm::mat4& transform);
 
+	void DrawQuadInstanced(Renderer& renderer, const r2::SArray<glm::vec3>& centers, const r2::SArray<glm::vec2>& scales, const r2::SArray<glm::vec3>& normals, const r2::SArray<glm::vec4>& colors, bool filled, bool depthTest);
 
 	void DrawSphereInstanced(
 		Renderer& renderer,
@@ -6876,6 +6878,26 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void DrawQuad(Renderer& renderer, const glm::vec3& center, glm::vec2 scale, const glm::vec3& normal, const glm::vec4& color, bool filled, bool depthTest)
+	{
+		r2::SArray<glm::vec3>* centers = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 1);
+		r2::SArray<glm::vec2>* scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec2, 1);
+		r2::SArray<glm::vec3>* normals = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 1);
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, 1);
+
+		r2::sarr::Push(*centers, center);
+		r2::sarr::Push(*scales, scale);
+		r2::sarr::Push(*normals, normal);
+		r2::sarr::Push(*colors, color);
+
+		DrawQuadInstanced(*centers, *scales, *normals, *colors, filled, depthTest);
+
+		FREE(colors, *MEM_ENG_SCRATCH_PTR);
+		FREE(normals, *MEM_ENG_SCRATCH_PTR);
+		FREE(scales, *MEM_ENG_SCRATCH_PTR);
+		FREE(centers, *MEM_ENG_SCRATCH_PTR);
+	}
+
 	void DrawSphere(Renderer& renderer, const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest)
 	{
 		r2::SArray<glm::vec3>* centers = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 1);
@@ -6886,7 +6908,7 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*radii, radius);
 		r2::sarr::Push(*colors, color);
 
-		DrawSphereInstanced(*centers, *radii, *colors, filled, depthTest);
+		DrawSphereInstanced(renderer, *centers, *radii, *colors, filled, depthTest);
 
 		FREE(colors, *MEM_ENG_SCRATCH_PTR);
 		FREE(radii, *MEM_ENG_SCRATCH_PTR);
@@ -7040,6 +7062,65 @@ namespace r2::draw::renderer
 		}
 	}
 
+	void DrawQuadInstanced(
+		Renderer& renderer,
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<glm::vec2>& scales,
+		const r2::SArray<glm::vec3>& normals,
+		const r2::SArray<glm::vec4>& colors,
+		bool filled,
+		bool depthTest)
+	{
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return;
+		}
+
+		DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
+		R2_CHECK(debugModelRenderBatch.debugModelTypesToDraw != nullptr, "We haven't properly initialized the debug render batches!");
+
+		R2_CHECK(r2::sarr::Size(centers) == r2::sarr::Size(scales) && r2::sarr::Size(centers) == r2::sarr::Size(colors) && r2::sarr::Size(centers) == r2::sarr::Size(normals),
+			"There should be the same amount of elements in all arrays");
+
+		const auto numInstances = r2::sarr::Size(centers);
+		glm::vec3 initialFacing = glm::vec3(0, 0, 1);
+
+		for (u32 i = 0; i < numInstances; i++)
+		{
+			glm::vec3 position = r2::sarr::At(centers, i);
+			glm::vec2 scale = r2::sarr::At(scales, i);
+			glm::vec3 normal = glm::normalize(r2::sarr::At(normals, i));
+			glm::vec4 color = r2::sarr::At(colors, i);
+
+			math::Transform t;
+			t.position = position;
+			t.scale = glm::vec3(scale.x, scale.y, 1.0f);
+
+			const auto angleBetween = glm::angle(normal,initialFacing);
+			
+			glm::vec3 axis = glm::cross(glm::vec3(0, 0, 1), normal);
+
+			if (math::NearEq(glm::abs(glm::dot(normal, initialFacing)), 1.0f))
+			{
+				axis = glm::vec3(1, 0, 0);
+			}
+
+			t.rotation = glm::angleAxis(angleBetween, axis);
+
+			r2::sarr::Push(*debugModelRenderBatch.transforms, t);
+			r2::sarr::Push(*debugModelRenderBatch.colors, color);
+		}
+
+		DrawFlags flags;
+		filled ? flags.Set(eDrawFlags::FILL_MODEL) : flags.Remove(eDrawFlags::FILL_MODEL);
+		depthTest ? flags.Set(eDrawFlags::DEPTH_TEST) : flags.Remove(eDrawFlags::DEPTH_TEST);
+
+		r2::sarr::Push(*debugModelRenderBatch.drawFlags, flags);
+		r2::sarr::Push(*debugModelRenderBatch.debugModelTypesToDraw, DEBUG_QUAD);
+		r2::sarr::Push(*debugModelRenderBatch.numInstances, static_cast<u32>(numInstances));
+	}
+
 	void DrawSphereInstanced(
 		Renderer& renderer,
 		const r2::SArray<glm::vec3>& centers,
@@ -7062,7 +7143,7 @@ namespace r2::draw::renderer
 
 		const auto numInstances = r2::sarr::Size(centers);
 
-		for (u64 i = 0; i < numInstances; i++)
+		for (u32 i = 0; i < numInstances; i++)
 		{
 			const glm::vec3& center = r2::sarr::At(centers, i);
 			float radius = r2::sarr::At(radii, i);
@@ -9111,6 +9192,10 @@ namespace r2::draw::renderer
 		DrawDebugBones(MENG.GetCurrentRendererRef(), bones, numBonesPerModel, numModelMats, color);
 	}
 
+	void DrawQuad(const glm::vec3& center, glm::vec2 scale, const glm::vec3& normal, const glm::vec4& color, bool filled, bool depthTest)
+	{
+		DrawQuad(MENG.GetCurrentRendererRef(), center, scale, normal, color, filled, depthTest);
+	}
 
 	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest)
 	{
@@ -9153,6 +9238,18 @@ namespace r2::draw::renderer
 	}
 
 	//instanced methods
+
+	void DrawQuadInstanced(
+		const r2::SArray<glm::vec3>& centers,
+		const r2::SArray<glm::vec2>& scales,
+		const r2::SArray<glm::vec3>& normals,
+		const r2::SArray<glm::vec4>& colors, 
+		bool filled,
+		bool depthTest)
+	{
+		DrawQuadInstanced(MENG.GetCurrentRendererRef(), centers, scales, normals, colors, filled, depthTest);
+	}
+
 	void DrawSphereInstanced(
 		const r2::SArray<glm::vec3>& centers,
 		const r2::SArray<float>& radii,

@@ -59,28 +59,28 @@ namespace r2::ecs
 		glm::vec3 position = t.accumTransform.position;
 		float radius = c.radius;
 		glm::vec4 color = c.color;
-		float scale = c.scale;
+		glm::vec3 scale = c.scale;
 		glm::vec3 dir = c.direction;
 
 		switch (c.debugModelType)
 		{
 		case draw::DEBUG_QUAD:
-			R2_CHECK(false, "Unsupported ATM");
+			r2::draw::renderer::DrawQuad(position, glm::vec2(scale.x, scale.y), dir, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_SPHERE:
 			r2::draw::renderer::DrawSphere(position, radius, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CUBE:
-			r2::draw::renderer::DrawCube(position, scale, color, c.filled, c.depthTest);
+			r2::draw::renderer::DrawCube(position, scale.x, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CYLINDER:
-			r2::draw::renderer::DrawCylinder(position, dir, radius, scale, color, c.filled, c.depthTest);
+			r2::draw::renderer::DrawCylinder(position, dir, radius, scale.x, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_CONE:
-			r2::draw::renderer::DrawCone(position, dir, radius, scale, color, c.filled, c.depthTest);
+			r2::draw::renderer::DrawCone(position, dir, radius, scale.x, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_ARROW:
-			r2::draw::renderer::DrawArrow(position, dir, scale, radius, color, c.filled, c.depthTest);
+			r2::draw::renderer::DrawArrow(position, dir, scale.x, radius, color, c.filled, c.depthTest);
 			break;
 		case draw::DEBUG_LINE:
 		{
@@ -136,10 +136,10 @@ namespace r2::ecs
 			}
 
 			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale);
+			r2::sarr::Push(*scales, c.scale.x);
 			for (u32 i = 0; i < numInstances; ++i)
 			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
 			}
 
 			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
@@ -164,22 +164,32 @@ namespace r2::ecs
 		if (c.debugModelType == draw::DEBUG_CUBE)
 		{
 			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale);
+			r2::sarr::Push(*scales, c.scale.x);
 			for (u32 i = 0; i < numInstances; ++i)
 			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
 			}
 		}
 
 		if (c.debugModelType == draw::DEBUG_LINE)
 		{
 			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale);
+			r2::sarr::Push(*scales, c.scale.x);
 			for (u32 i = 0; i < numInstances; ++i)
 			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale);
+				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
 			}
 
+			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
+			r2::sarr::Push(*directions, c.direction);
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
+			}
+		}
+
+		if (c.debugModelType == draw::DEBUG_QUAD)
+		{
 			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
 			r2::sarr::Push(*directions, c.direction);
 			for (u32 i = 0; i < numInstances; ++i)
@@ -191,7 +201,20 @@ namespace r2::ecs
 		switch (c.debugModelType)
 		{
 		case draw::DEBUG_QUAD:
-			R2_CHECK(false, "Unsupported ATM");
+		{
+			r2::SArray<glm::vec2>* quadScales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec2, numInstances + 1);
+
+			r2::sarr::Push(*quadScales, glm::vec2(c.scale.x, c.scale.y));
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				glm::vec3 scale = r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale;
+
+				r2::sarr::Push(*quadScales, glm::vec2(scale.x, scale.y));
+			}
+			r2::draw::renderer::DrawQuadInstanced(*positions, *quadScales, *directions, *colors, c.filled, c.depthTest);
+
+			FREE(quadScales, *MEM_ENG_SCRATCH_PTR);
+		}
 			break;
 		case draw::DEBUG_SPHERE:
 			r2::draw::renderer::DrawSphereInstanced(*positions, *radii, *colors, c.filled, c.depthTest);

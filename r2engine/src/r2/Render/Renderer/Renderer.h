@@ -574,6 +574,7 @@ namespace r2::draw::renderer
 		const r2::SArray<glm::mat4>& numModelMats,
 		const glm::vec4& color);
 
+	void DrawQuad(const glm::vec3& center, glm::vec2 scale, const glm::vec3& normal, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawSphere(const glm::vec3& center, float radius, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCube(const glm::vec3& center, float scale, const glm::vec4& color, bool filled, bool depthTest = true);
 	void DrawCylinder(const glm::vec3& basePosition, const glm::vec3& dir, float radius, float height, const glm::vec4& color, bool filled, bool depthTest = true);
@@ -583,6 +584,9 @@ namespace r2::draw::renderer
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest);
 
 	void DrawTangentVectors(DefaultModel model, const glm::mat4& transform);
+
+
+	void DrawQuadInstanced(const r2::SArray<glm::vec3>& centers, const r2::SArray<glm::vec2>& scales, const r2::SArray<glm::vec3>& normals, const r2::SArray<glm::vec4>& colors, bool filled, bool depthTest = true);
 
 	void DrawSphereInstanced(
 		const r2::SArray<glm::vec3>& centers,
