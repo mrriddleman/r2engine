@@ -901,6 +901,20 @@ namespace r2::audio
         CheckFMODResult(sound.fmodSound->release());
         sound.fmodSound = nullptr;
     }
+
+    void AudioEngine::UnloadSound(const char* soundName)
+    {
+		SoundID defaultID = AudioEngine::InvalidSoundID;
+		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+
+		if (theSoundID == defaultID)
+		{
+			R2_CHECK(false, "AudioEngine::UnLoadSound - Couldn't find sound: %s", soundName);
+			return;
+		}
+
+        UnloadSound(theSoundID);
+    }
     
     void AudioEngine::Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up)
     {

@@ -82,6 +82,11 @@ namespace r2::audio
         bool LoadSound(const char* soundName);
         bool LoadSound(SoundID soundID);
         void UnloadSound(SoundID handle);
+        void UnloadSound(const char* soundName);
+
+
+
+
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
         ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
         
