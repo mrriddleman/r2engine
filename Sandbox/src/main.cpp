@@ -1974,6 +1974,9 @@ namespace
             case r2::fs::utils::ANIMATIONS:
                 r2::util::PathCpy(subpath, "assets_bin/Sandbox_Animations");
                 break;
+            case r2::fs::utils::LEVELS:
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Levels");
+                break;
             default:
                 result = false;
                 break;

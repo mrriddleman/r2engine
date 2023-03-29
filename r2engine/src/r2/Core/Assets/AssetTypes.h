@@ -36,6 +36,7 @@ namespace r2::asset
 		TEXTURE_PACK_MANIFEST,
 		RMODEL,
 		RANIMATION,
+		LEVEL,
 		NUM_ENGINE_ASSET_TYPES
 	};
 

@@ -1,0 +1,23 @@
+namespace flat;
+
+file_identifier "rlpk";
+file_extension "rlpk";
+
+table LevelRef
+{
+	levelName:string;
+	levelPath:string;
+}
+
+table LevelGroup
+{
+	groupName:string;
+	levels:[LevelRef];
+}
+
+table LevelPack
+{
+	allLevels:[LevelGroup];
+}
+
+root_type LevelPack;

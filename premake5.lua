@@ -498,8 +498,10 @@ project "Sandbox"
 		'SANDBOX_SHADERS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Shaders"',
 		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Shaders/manifests/internal_passes"',
 		'SANDBOX_SHADERS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders"',
-		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders/manifests/internal_passes"'
+		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders/manifests/internal_passes"',
 
+		'SANDBOX_LEVELS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Levels"',
+		'SANDBOX_LEVELS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Levels"'
 	}
 
 	filter "system:windows"

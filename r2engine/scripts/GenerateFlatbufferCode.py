@@ -36,7 +36,11 @@ fbsCodeOutputMap = {
 "RModelMetaData.fbs": "/../libs/assetlib/include/assetlib/",
 "RModel.fbs":"/../libs/assetlib/include/assetlib/",
 "RAnimationMetaData.fbs":"/../libs/assetlib/include/assetlib/",
-"RAnimation.fbs":"/../libs/assetlib/include/assetlib/"
+"RAnimation.fbs":"/../libs/assetlib/include/assetlib/",
+"EntityData.fbs":"/r2/Game/ECS/",
+"ComponentArrayData.fbs":"/r2/Game/ECS/",
+"LevelData.fbs":"/r2/Game/Level/",
+"LevelPack.fbs":"/r2/Game/Level/"
 }
 
 extraParams = {
@@ -56,7 +60,11 @@ extraParams = {
 "RModelMetaData.fbs":"--gen-mutable",
 "RModel.fbs":"--gen-mutable",
 "RAnimationMetaData.fbs":"--gen-mutable",
-"RAnimation.fbs":"--gen-mutable"
+"RAnimation.fbs":"--gen-mutable",
+"EntityData.fbs":"",
+"ComponentArrayData.fbs":"",
+"LevelData.fbs": "",
+"LevelPack.fbs": ""
 }
 
 for filename in os.listdir(dataPath):

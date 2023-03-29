@@ -198,10 +198,7 @@ namespace r2::ecs
 
 			IComponentArray* componentArrayI = r2::sarr::At(*mComponentArrays, index);
 
-
 			return static_cast<ComponentArray<Component>*>(componentArrayI);
-
-			//return std::static_pointer_cast<ComponentArray<Component>>(r2::sarr::At(*mComponentArrays, index));
 		}
 	};
 }

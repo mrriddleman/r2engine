@@ -1,0 +1,10 @@
+namespace flat;
+
+table ComponentArrayData
+{
+	componentType:ulong (hash:"fnv1a_64");
+	entityToIndexMap:[uint];
+	componentArray:[ubyte] (flexbuffer);
+}
+
+root_type ComponentArrayData;

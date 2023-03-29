@@ -1,0 +1,43 @@
+include "EntityData.fbs";
+include "ComponentArrayData.fbs";
+
+namespace flat;
+
+file_identifier "rlvl";
+file_extension "rlvl";
+
+table PackReference
+{
+	hashName:ulong (hash:"fnv1a_64");
+	rawPath:string;
+	binPath:string;
+}
+
+table LevelData
+{
+	version:uint;
+	hash:ulong (hash:"fnv1a_64");
+	name:string;
+	path:string;
+
+	totalMemoryNeeded:uint;
+	materialMemoryNeeded:uint;
+	staticModelMemoryNeeded:uint;
+	animatedModelMemoryNeeded:uint;
+	textureMemoryNeeded:uint;
+	soundMemoryNeeded:uint;
+	musicMemoryNeeded:uint;
+
+	materialPackReferences:PackReference;
+	staticModelsReferences:PackReference;
+	animatedModelsReferences:PackReference;
+	texturePacksReferences:PackReference;
+	soundReferences:PackReference;
+	musicReferences:PackReference;
+
+	numEntities:uint;
+	entities:[EntityData];
+	componentArrays:[ComponentArrayData];
+}
+
+root_type LevelData;

@@ -1,0 +1,8 @@
+namespace flat;
+
+table EntityData
+{
+	entityID:uint;
+}
+
+root_type EntityData;
