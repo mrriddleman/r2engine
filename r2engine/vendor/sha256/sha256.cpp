@@ -130,11 +130,14 @@ std::string sha256(std::string input)
     for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
     {
 #ifdef R2_PLATFORM_WINDOWS
-        sprintf_s(buf + i * 2, BUF_SIZE+1, "%02x", digest[i]);
+        sprintf(buf + i * 2, "%02x", digest[i]);
+      //  sprintf_s(buf + i * 2, BUF_SIZE, "%02x", digest[i]);
 #else
         sprintf(buf + i * 2, "%02x", digest[i]);
 #endif
     }
-        
-    return std::string(buf);
+
+    buf[BUF_SIZE] = '\0';
+    std::string strBuf = std::string(buf);
+    return strBuf;
 }

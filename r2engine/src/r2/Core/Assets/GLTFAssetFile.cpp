@@ -44,7 +44,7 @@ namespace r2::asset
 		return strcmp(mPath, "") != 0;
 	}
 
-	bool GLTFAssetFile::Open()
+	bool GLTFAssetFile::Open(bool writable)
 	{
 		//@NOTE(Serge): We don't open the file ourselves right now, we let assimp do that for us
 		return true;
@@ -90,6 +90,11 @@ namespace r2::asset
 	u64 GLTFAssetFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
 	{
 		return mSize;
+	}
+
+	u64 GLTFAssetFile::WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize)
+	{
+		return 0;
 	}
 
 	u64 GLTFAssetFile::NumAssets() const

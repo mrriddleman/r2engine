@@ -60,6 +60,7 @@ namespace r2::fs
         
         SafeFile* safeFile = ALLOC_PARAMS(SafeFile, *moptrFilePool, mStorageDevice);
         R2_CHECK(safeFile != nullptr, "We couldn't allocate a safe file!");
+
         if (safeFile != nullptr && safeFile->Open(file))
         {
             safeFile->SetFileDevice(this);

@@ -26,9 +26,13 @@ namespace r2::fs
     
     const u8 SafeFile::NUM_CHARS_FOR_HASH;
     
-    SafeFile::SafeFile(DiskFileStorageDevice& storageDevice):mnoptrFile(nullptr), mStorageDevice(storageDevice), mVerifyFunc(DefaultVerifyFunction), mVerifyFailedFunc(DefaultVerifyFailedFunction)
+    SafeFile::SafeFile(DiskFileStorageDevice& storageDevice)
+        :mnoptrFile(nullptr)
+        ,mStorageDevice(storageDevice)
+        ,mVerifyFunc(DefaultVerifyFunction)
+        ,mVerifyFailedFunc(DefaultVerifyFailedFunction)
     {
-        r2::util::PathCpy(mSha, "");
+        r2::util::PathCpy(mSha, "", sizeof(mSha));
     }
     
     SafeFile::SafeFile(DiskFileStorageDevice& storageDevice, SafeFileVerifyFunc fun, SafeFileVerifyFailedFunc failedFunc)
@@ -37,7 +41,7 @@ namespace r2::fs
         , mVerifyFunc(fun)
         , mVerifyFailedFunc(failedFunc)
     {
-        r2::util::PathCpy(mSha, "");
+        r2::util::PathCpy(mSha, "", sizeof(mSha));
     }
     
     SafeFile::~SafeFile()
@@ -275,6 +279,7 @@ namespace r2::fs
     {
         const auto fileSize = noptrFile->Size();
         
+        //@TODO(Serge): do this some other way - problem is if the file is bigger than the size of the scratch area!
         char* fileBuf = (char*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize+1, alignof(char));
         
         bool result = noptrFile->ReadAll(fileBuf);

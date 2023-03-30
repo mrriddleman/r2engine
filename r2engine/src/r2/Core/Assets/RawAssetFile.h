@@ -18,11 +18,12 @@ namespace r2::asset
         RawAssetFile();
         ~RawAssetFile();
         bool Init(const char* path, u32 numDirectoriesToIncludeInAssetHandle = 0);
-        virtual bool Open() override;
+        virtual bool Open(bool writable = false) override;
         virtual bool Close() override;
         virtual bool IsOpen() const override;
         virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;
         virtual u64 LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;
+        virtual u64 WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize) override;
         virtual u64 NumAssets() const override;
         virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) const override;
         virtual u64 GetAssetHandle(u64 index) const override;

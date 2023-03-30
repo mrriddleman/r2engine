@@ -43,7 +43,7 @@ namespace r2::asset
         return strcmp(mPath, "") != 0;
     }
     
-    bool ZipAssetFile::Open()
+    bool ZipAssetFile::Open(bool writable)
     {
         r2::fs::DeviceConfig zipConfig;
         zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
@@ -105,6 +105,12 @@ namespace r2::asset
         return mZipFile->ReadUncompressedFileDataByHash(data, dataBufSize, asset.HashID());
     }
     
+    u64 ZipAssetFile::WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize)
+    {
+        //@TODO(Serge): implement
+        return 0;
+    }
+
     u64 ZipAssetFile::NumAssets() const
     {
         if (!(mZipFile && mZipFile->IsOpen()))

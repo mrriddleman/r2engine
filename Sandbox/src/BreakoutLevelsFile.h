@@ -18,7 +18,7 @@ public:
     BreakoutLevelsFile();
     ~BreakoutLevelsFile();
     bool Init(const char* path);
-    virtual bool Open() override;
+    virtual bool Open(bool writable = false) override;
     virtual bool Close() override;
     virtual bool IsOpen() const override;
     virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;

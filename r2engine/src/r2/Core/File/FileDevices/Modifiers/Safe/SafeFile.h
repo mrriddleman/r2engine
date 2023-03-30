@@ -13,8 +13,6 @@
 
 namespace r2::fs
 {
-    
-    
     class R2_API SafeFile final: public File
     {
     public:

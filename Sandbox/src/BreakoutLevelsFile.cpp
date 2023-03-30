@@ -34,7 +34,7 @@ bool BreakoutLevelsFile::Init(const char* path)
     return strcmp(mPath, "") != 0;
 }
 
-bool BreakoutLevelsFile::Open()
+bool BreakoutLevelsFile::Open(bool writable)
 {
     r2::fs::DeviceConfig config;
     r2::fs::FileMode mode;

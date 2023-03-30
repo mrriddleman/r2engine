@@ -46,12 +46,16 @@ namespace r2::asset
         return strcmp(mPath, "") != 0;
     }
     
-    bool RawAssetFile::Open()
+    bool RawAssetFile::Open(bool writable)
     {
         r2::fs::DeviceConfig config;
         r2::fs::FileMode mode;
         mode = r2::fs::Mode::Read;
         mode |= r2::fs::Mode::Binary;
+        if (writable)
+        {
+            mode |= r2::fs::Mode::Write;
+        }
         
         mFile = r2::fs::FileSystem::Open(config, mPath, mode);
         
@@ -78,6 +82,11 @@ namespace r2::asset
     u64 RawAssetFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize)
     {
         return mFile->ReadAll(data);
+    }
+
+    u64 RawAssetFile::WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize)
+    {
+        return mFile->Write(data, dataBufferSize);
     }
     
     u64 RawAssetFile::NumAssets() const
