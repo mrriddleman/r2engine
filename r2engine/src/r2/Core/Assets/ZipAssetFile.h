@@ -25,14 +25,15 @@ namespace r2::asset
         ~ZipAssetFile();
         bool Init(const char* assetPath, r2::mem::AllocateFunc alloc, r2::mem::FreeFunc free);
         virtual bool Open(bool writable = false) override;
+        virtual bool Open(r2::fs::FileMode mode) override;
         virtual bool Close() override;
         virtual bool IsOpen() const override;
         virtual u64 RawAssetSize(const Asset& asset) override;
         virtual u64 LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize) override;
         virtual u64 WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize) override;
-        virtual u64 NumAssets() const override;
-        virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) const override;
-        virtual u64 GetAssetHandle(u64 index) const override;
+        virtual u64 NumAssets() override;
+        virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) override;
+        virtual u64 GetAssetHandle(u64 index) override;
         
         virtual const char* FilePath() const override {return mPath;}
     private:

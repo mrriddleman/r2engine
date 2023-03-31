@@ -50,6 +50,11 @@ namespace r2::asset
 		return true;
 	}
 
+	bool GLTFAssetFile::Open(r2::fs::FileMode mode)
+	{
+		return false;
+	}
+
 	bool GLTFAssetFile::Close()
 	{
 		return true;
@@ -97,17 +102,17 @@ namespace r2::asset
 		return 0;
 	}
 
-	u64 GLTFAssetFile::NumAssets() const
+	u64 GLTFAssetFile::NumAssets()
 	{
 		return 1;
 	}
 
-	void GLTFAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
+	void GLTFAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
 	{
 		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
 	}
 
-	u64 GLTFAssetFile::GetAssetHandle(u64 index) const
+	u64 GLTFAssetFile::GetAssetHandle(u64 index)
 	{
 		return mAssetHandle;
 	}

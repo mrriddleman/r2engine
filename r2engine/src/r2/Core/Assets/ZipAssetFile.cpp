@@ -45,18 +45,29 @@ namespace r2::asset
     
     bool ZipAssetFile::Open(bool writable)
     {
-        r2::fs::DeviceConfig zipConfig;
-        zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
-        
-        mZipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, mPath, r2::fs::Mode::Read | r2::fs::Mode::Binary);
-        
-        R2_CHECK(mZipFile != nullptr, "We should have a zip file!");
-        
-        bool result = mZipFile->InitArchive(mAlloc, mFree);
-        
-        R2_CHECK(result, "We should be able to initialize the archive!");
-        
-        return result;
+        r2::fs::FileMode mode = r2::fs::Mode::Read | r2::fs::Mode::Binary;
+        if (writable)
+        {
+            mode |= r2::fs::Mode::Write;
+        }
+
+        return Open(mode);
+    }
+
+    bool ZipAssetFile::Open(r2::fs::FileMode mode)
+    {
+		r2::fs::DeviceConfig zipConfig;
+		zipConfig.AddModifier(r2::fs::DeviceModifier::Zip);
+
+		mZipFile = (r2::fs::ZipFile*)r2::fs::FileSystem::Open(zipConfig, mPath, mode);
+
+		R2_CHECK(mZipFile != nullptr, "We should have a zip file!");
+
+		bool result = mZipFile->InitArchive(mAlloc, mFree);
+
+		R2_CHECK(result, "We should be able to initialize the archive!");
+
+		return result;
     }
     
     bool ZipAssetFile::Close()
@@ -111,27 +122,43 @@ namespace r2::asset
         return 0;
     }
 
-    u64 ZipAssetFile::NumAssets() const
+    u64 ZipAssetFile::NumAssets() 
     {
-        if (!(mZipFile && mZipFile->IsOpen()))
+        bool opened = false;
+        if (!mZipFile || !mZipFile->IsOpen())
         {
-            return 0;
+			opened = Open();
+			R2_CHECK(opened, "We couldn't open the zip file: %s\n", mPath);
         }
-        return mZipFile->GetNumberOfFiles();
+
+        auto numFiles =  mZipFile->GetNumberOfFiles();
+
+        if (opened)
+        {
+            Close();
+        }
+
+        return numFiles;
     }
     
-    void ZipAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
+    void ZipAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
     {
-		if (!(mZipFile && mZipFile->IsOpen()))
+		bool opened = false;
+		if (!mZipFile || !mZipFile->IsOpen())
 		{
-            name = "";
-            return;
+			opened = Open();
+			R2_CHECK(opened, "We couldn't open the zip file: %s\n", mPath);
 		}
 
         mZipFile->GetFilename(static_cast<u32>( index), name, nameBuferSize);
+
+		if (opened)
+		{
+			Close();
+		}
     }
     
-    u64 ZipAssetFile::GetAssetHandle(u64 index) const
+    u64 ZipAssetFile::GetAssetHandle(u64 index)
     {
         char fileName[r2::fs::FILE_PATH_LENGTH];
         GetAssetName(index, fileName, r2::fs::FILE_PATH_LENGTH);

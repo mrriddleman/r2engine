@@ -125,7 +125,7 @@ namespace r2::draw::mat
 		return nullptr;
 	}
 
-	void AddTextureNameToMap(const MaterialSystem& system, MaterialHandle materialHandle, const r2::asset::AssetFile* file, tex::TextureType type)
+	void AddTextureNameToMap(const MaterialSystem& system, MaterialHandle materialHandle, r2::asset::AssetFile* file, tex::TextureType type)
 	{
 		if (file)
 		{
@@ -156,8 +156,6 @@ namespace r2::draw::mat
 			r2::shashmap::Set(*s_optrMaterialSystems->mTextureNamesToMaterialHandles, filenameID, entry);
 		}
 	}
-
-
 
 	MaterialHandle MakeMaterialHandleFromIndex(const MaterialSystem& system, u64 index)
 	{

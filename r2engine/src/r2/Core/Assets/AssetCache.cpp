@@ -10,6 +10,7 @@
 #include "r2/Core/Assets/AssetFile.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Assets/AssetLoader.h"
+#include "r2/Core/Assets/AssetWriter.h"
 #include "r2/Core/Assets/DefaultAssetLoader.h"
 #include "assetlib/AssetFile.h"
 
@@ -40,10 +41,10 @@ namespace r2::asset
         , mAssetLRU(nullptr)
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
+        , mAssetWriters(nullptr)
         , mAssetNameMap(nullptr)
         , mDefaultLoader(nullptr)
         , mSlot(slot)
-    //    , mAssetFileMap(nullptr)
         , mAssetCacheArena(boundary)
         , mAssetBufferPoolPtr(nullptr)
         , mMemoryHighWaterMark(0)
@@ -68,6 +69,7 @@ namespace r2::asset
             mDefaultLoader = ALLOC(DefaultAssetLoader, mAssetCacheArena);
             
             mAssetLoaders = MAKE_SARRAY(mAssetCacheArena, AssetLoader*, lruCapacity);
+            mAssetWriters = MAKE_SARRAY(mAssetCacheArena, AssetWriter*, lruCapacity);
             mAssetBufferPoolPtr = MAKE_POOL_ARENA(mAssetCacheArena, sizeof(AssetBuffer), lruCapacity);
         }
         
@@ -117,9 +119,16 @@ namespace r2::asset
 #endif
         
         FlushAll();
+
+        s32 numWriters = r2::sarr::Size(*mAssetWriters);
+        for (s32 i = numWriters - 1; i >= 0; --i)
+        {
+            AssetWriter* writer = r2::sarr::At(*mAssetWriters, i);
+            FREE(writer, mAssetCacheArena);
+        }
         
-        u64 numLoaders = r2::sarr::Size(*mAssetLoaders);
-        for (u64 i = 0; i < numLoaders; ++i)
+        s32 numLoaders = r2::sarr::Size(*mAssetLoaders);
+        for (s32 i = numLoaders-1; i >=0; --i)
         {
             AssetLoader* loader = r2::sarr::At(*mAssetLoaders, i);
             FREE(loader, mAssetCacheArena);
@@ -139,6 +148,7 @@ namespace r2::asset
         FREE(mAssetLRU, mAssetCacheArena);
         FREE(mAssetMap, mAssetCacheArena);
         FREE(mAssetNameMap, mAssetCacheArena);
+        FREE(mAssetWriters, mAssetCacheArena);
         FREE(mAssetLoaders, mAssetCacheArena);
         FREE(mAssetBufferPoolPtr, mAssetCacheArena);
         
@@ -146,6 +156,7 @@ namespace r2::asset
         mAssetMap = nullptr;
         mAssetNameMap = nullptr;
         mAssetLoaders = nullptr;
+        mAssetWriters = nullptr;
         mnoptrFiles = nullptr;
         mDefaultLoader = nullptr;
         mAssetBufferPoolPtr = nullptr;
@@ -234,6 +245,31 @@ namespace r2::asset
     void AssetCache::FreeAsset(const AssetHandle& handle)
     {
         Free(handle, false);
+    }
+
+    void AssetCache::WriteAssetFile(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode)
+    {
+		if (!mnoptrFiles)
+			return;
+
+		u64 numFiles = r2::sarr::Size(*mnoptrFiles);
+
+        for (u64 i = 0; i < numFiles; ++i)
+        {
+            auto file = r2::sarr::At(*mnoptrFiles, i);
+
+            auto numAssets = file->NumAssets();
+            for (u64 a = 0; a < numAssets; ++a)
+            {
+                if (file->GetAssetHandle(a) == asset.HashID())
+                {
+
+                    Write(asset, data, size, offset, mode);
+
+                    break;
+                }
+            }
+        }
     }
 
     AssetCacheRecord AssetCache::GetAssetBuffer(AssetHandle handle)
@@ -338,9 +374,26 @@ namespace r2::asset
         r2::sarr::Push(*mAssetLoaders, optrAssetLoader);
     }
 
+    void AssetCache::RegisterAssetWriter(AssetWriter* optrAssetWriter)
+    {
+		R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
+		if (NOT_INITIALIZED)
+		{
+			return;
+		}
+
+        r2::sarr::Push(*mAssetWriters, optrAssetWriter);
+    }
+
     //Private
     AssetBuffer* AssetCache::Load(const Asset& asset, bool startCountAtOne)
     {
+
+        if (!mnoptrFiles || r2::sarr::Size(*mnoptrFiles) == 0)
+        {
+            return nullptr;
+        }
+
         u64 numAssetLoaders = r2::sarr::Size(*mAssetLoaders);
         AssetLoader* loader = nullptr;
 		for (u64 i = 0; i < numAssetLoaders; ++i)
@@ -497,6 +550,51 @@ namespace r2::asset
 
         return assetBuffer;
     }
+
+    void AssetCache::Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode)
+    {
+        if (!mnoptrFiles)
+        {
+            return;
+        }
+
+		u32 numAssetWriters = r2::sarr::Size(*mAssetWriters);
+		AssetWriter* writer = nullptr;
+		for (u64 i = 0; i < numAssetWriters; ++i)
+		{
+			AssetWriter* nextWriter = r2::sarr::At(*mAssetWriters, i);
+			if (nextWriter->GetType() == asset.GetType())
+			{
+				writer = nextWriter;
+				break;
+			}
+		}
+
+		R2_CHECK(writer != nullptr, "Couldn't find an asset Writer for asset: %s\n", asset.Name());
+        if (!writer)
+        {
+            return;
+        }
+
+		FileHandle fileIndex = FindInFiles(asset);
+		if (fileIndex == INVALID_FILE_INDEX)
+		{
+			R2_CHECK(false, "We failed to find the asset in any of our asset files");
+			return;
+		}
+
+		AssetFile* theAssetFile = r2::sarr::At(*mnoptrFiles, fileIndex);
+		R2_CHECK(theAssetFile != nullptr, "We have a null asset file?");
+
+        if (theAssetFile->IsOpen())
+        {
+            theAssetFile->Close();
+        }
+
+        bool writeSuccess = writer->WriteAsset(theAssetFile->FilePath(), data, size, offset, mode);
+
+        R2_CHECK(writeSuccess, "Failed to write to file path: %s\n", theAssetFile->FilePath());
+    }
     
     void AssetCache::UpdateLRU(AssetHandle handle)
     {
@@ -526,6 +624,11 @@ namespace r2::asset
     
     FileHandle AssetCache::FindInFiles(const Asset& asset)
     {
+        if (!mnoptrFiles)
+        {
+            return INVALID_FILE_INDEX;
+        }
+
         const AssetHandle handle = { asset.HashID(), mSlot };
         
         const u64 numnoptrFiles = r2::sarr::Size(*mnoptrFiles);
@@ -534,10 +637,10 @@ namespace r2::asset
         {
             AssetFile* file = r2::sarr::At(*mnoptrFiles, i);
             
-            if (!file->IsOpen())
-            {
-                file->Open();
-            }
+            //if (!file->IsOpen())
+            //{
+            //    file->Open();
+            //}
 
             const u64 numAssets = file->NumAssets();
             
@@ -674,6 +777,7 @@ namespace r2::asset
             alignof(AssetHandle),
             alignof(DefaultAssetLoader),
             alignof(r2::SArray<AssetLoader*>),
+            alignof(r2::SArray<AssetWriter*>),
             alignof(AssetLoader*),
             alignof(Asset),
             alignof(r2::SHashMap<Asset>),
@@ -685,6 +789,7 @@ namespace r2::asset
             r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AssetBufferRef>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(DefaultAssetLoader), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetLoader*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetWriter*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Asset>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +

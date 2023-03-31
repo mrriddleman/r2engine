@@ -13,7 +13,7 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Assets/AssetTypes.h"
-
+#include "r2/Core/File/FileTypes.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
@@ -25,6 +25,7 @@ namespace r2::asset
 {
     class AssetFile;
     class AssetLoader;
+    class AssetWriter;
     class AssetBuffer;
     class Asset;
     class DefaultAssetLoader;
@@ -55,13 +56,16 @@ namespace r2::asset
         void Shutdown();
         
         void RegisterAssetLoader(AssetLoader* assetLoader);
-        
+        void RegisterAssetWriter(AssetWriter* assetWriter);
+
         //The handle should remain valid across the run of the game
         AssetHandle LoadAsset(const Asset& asset);
         bool HasAsset(const Asset& asset);
 
         AssetHandle ReloadAsset(const Asset& asset);
         void FreeAsset(const AssetHandle& handle);
+
+        void WriteAssetFile(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         //Should not keep this pointer around for longer than necessary to use it as it can change in debug
         AssetCacheRecord GetAssetBuffer(AssetHandle handle);
@@ -81,6 +85,12 @@ namespace r2::asset
             return ALLOC(T, mAssetCacheArena);
         }
         
+        template<class T>
+        AssetWriter* MakeAssetWriter()
+        {
+            return ALLOC(T, mAssetCacheArena);
+        }
+
         u64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
@@ -105,11 +115,13 @@ namespace r2::asset
         
         using AssetList = r2::SQueue<AssetHandle>*;
         using AssetMap = r2::SHashMap<AssetBufferRef>*;
-        //using AssetFileMap = r2::SHashMap<FileHandle>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
+        using AssetWriterList = r2::SArray<AssetWriter*>*;
         using AssetNameMap = r2::SHashMap<Asset>*;
        
         AssetBuffer* Load(const Asset& asset, bool startCountAtOne = false);
+        void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
+
         void UpdateLRU(AssetHandle handle);
         FileHandle FindInFiles(const Asset& asset);
         AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
@@ -127,6 +139,7 @@ namespace r2::asset
         AssetList mAssetLRU;
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
+        AssetWriterList mAssetWriters;
         AssetNameMap mAssetNameMap;
 
         DefaultAssetLoader* mDefaultLoader;

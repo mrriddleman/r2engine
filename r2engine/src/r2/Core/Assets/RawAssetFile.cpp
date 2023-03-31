@@ -48,7 +48,6 @@ namespace r2::asset
     
     bool RawAssetFile::Open(bool writable)
     {
-        r2::fs::DeviceConfig config;
         r2::fs::FileMode mode;
         mode = r2::fs::Mode::Read;
         mode |= r2::fs::Mode::Binary;
@@ -57,9 +56,14 @@ namespace r2::asset
             mode |= r2::fs::Mode::Write;
         }
         
-        mFile = r2::fs::FileSystem::Open(config, mPath, mode);
-        
-        return mFile != nullptr;
+        return Open(mode);
+    }
+
+    bool RawAssetFile::Open(r2::fs::FileMode mode)
+    {
+        r2::fs::DeviceConfig config;
+		mFile = r2::fs::FileSystem::Open(config, mPath, mode);
+		return mFile != nullptr;
     }
     
     bool RawAssetFile::Close()
@@ -89,17 +93,17 @@ namespace r2::asset
         return mFile->Write(data, dataBufferSize);
     }
     
-    u64 RawAssetFile::NumAssets() const
+    u64 RawAssetFile::NumAssets()
     {
         return 1;
     }
     
-    void RawAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize) const
+    void RawAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
     {
         r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
     }
     
-    u64 RawAssetFile::GetAssetHandle(u64 index) const
+    u64 RawAssetFile::GetAssetHandle(u64 index)
     {
         return mAssetHandle;
     }
