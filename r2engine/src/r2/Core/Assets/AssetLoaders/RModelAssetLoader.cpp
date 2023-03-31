@@ -1,10 +1,10 @@
 #include "r2pch.h"
 
-#include "r2/Core/Assets/RModelAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 #include "assetlib/RModel_generated.h"
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/ModelAsset.h"
-#include "r2/Core/Assets/MemoryAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 #include "r2/Render/Model/Model.h"
 #include <glm/glm.hpp>
 

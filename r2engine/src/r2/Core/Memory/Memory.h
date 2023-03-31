@@ -63,7 +63,7 @@ namespace r2
         
         namespace utils
         {
-            struct MemorySizeStruct
+            struct MemoryProperties
             {
                 u32 alignment;
                 u32 headerSize;

@@ -97,7 +97,7 @@ namespace r2::asset
 		return mSize;
 	}
 
-	u64 GLTFAssetFile::WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize)
+	u64 GLTFAssetFile::WriteRawAsset(const Asset& asset, const  byte* data, u32 dataBufferSize, u32 offset)
 	{
 		return 0;
 	}

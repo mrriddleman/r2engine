@@ -5,7 +5,7 @@
 //  Created by Serge Lansiquot on 2019-07-31.
 //
 #include "r2pch.h"
-#include "r2/Core/Assets/ZipAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/PathUtils.h"
@@ -116,7 +116,7 @@ namespace r2::asset
         return mZipFile->ReadUncompressedFileDataByHash(data, dataBufSize, asset.HashID());
     }
     
-    u64 ZipAssetFile::WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize)
+    u64 ZipAssetFile::WriteRawAsset(const Asset& asset, const  byte* data, u32 dataBufferSize, u32 offset)
     {
         //@TODO(Serge): implement
         return 0;

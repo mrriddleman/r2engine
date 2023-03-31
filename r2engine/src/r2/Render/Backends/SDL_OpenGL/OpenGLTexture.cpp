@@ -15,7 +15,7 @@
 #include "r2/Core/Math/MathUtils.h"
 
 #include <errno.h>
-#include "r2/Core/Assets/MemoryAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 #include "assetlib/TextureAsset.h"
 
 

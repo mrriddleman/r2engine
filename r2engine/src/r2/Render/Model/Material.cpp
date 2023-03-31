@@ -3,7 +3,7 @@
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetFile.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/File/FileSystem.h"
 
 #include "r2/Render/Model/Material_generated.h"

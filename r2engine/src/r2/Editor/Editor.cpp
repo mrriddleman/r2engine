@@ -566,7 +566,7 @@ namespace r2
 		u32 avgMaxNumInstancesPerModel = r2::draw::renderer::GetMaxNumInstancesPerModel();
 		u32 avgMaxNumBonesPerModel = r2::draw::renderer::GetAVGMaxNumBonesPerModel();
 
-		r2::mem::utils::MemorySizeStruct memSizeStruct;
+		r2::mem::utils::MemoryProperties memSizeStruct;
 		memSizeStruct.alignment = 16;
 		memSizeStruct.headerSize = mMallocArena.HeaderSize();
 

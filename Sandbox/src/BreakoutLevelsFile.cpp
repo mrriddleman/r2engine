@@ -76,6 +76,11 @@ u64 BreakoutLevelsFile::LoadRawAsset(const r2::asset::Asset& asset, byte* data, 
     return mFile->ReadAll(data);
 }
 
+u64 BreakoutLevelsFile::WriteRawAsset(const r2::asset::Asset& asset, const byte* data, u32 dataBufferSize, u32 offset)
+{
+    return 0;
+}
+
 u64 BreakoutLevelsFile::NumAssets()
 {
     return 1;

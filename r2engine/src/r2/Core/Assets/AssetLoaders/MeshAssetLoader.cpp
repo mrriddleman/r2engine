@@ -1,7 +1,7 @@
 #include "r2pch.h"
 
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/MeshAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
 #include "r2/Render/Model/Mesh_generated.h"
 #include "r2/Render//Model/Mesh.h"
 

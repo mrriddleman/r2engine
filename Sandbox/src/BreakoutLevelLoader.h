@@ -9,7 +9,7 @@
 #define BreakoutLevelLoader_h
 
 #include "r2.h"
-#include "r2/Core/Assets/AssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
 
 namespace r2::asset
 {

@@ -85,7 +85,8 @@ project "r2engine"
 		"%{includeDirs.assetlib}",
 		"%{includeDirs.texturemetadata}",
 		"%{includeDirs.ImGuiFileDialog}",
-		"%{prj.name}/src/r2/Render/Model"
+		"%{prj.name}/src/r2/Render/Model",
+		"%{prj.name}/src/r2/Game/ECS"
 	}
 
 	links

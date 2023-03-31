@@ -1,6 +1,6 @@
 #include "r2pch.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/ModelAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
 
 #include "r2/Render/Model/Model_generated.h"
 #include "r2/Render/Model/Mesh.h"

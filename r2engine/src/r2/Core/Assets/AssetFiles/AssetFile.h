@@ -22,7 +22,7 @@ namespace r2::asset
         virtual bool IsOpen() const = 0;
         virtual u64 RawAssetSize(const Asset& asset) = 0;
         virtual u64 LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize) = 0;
-        virtual u64 WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize) = 0;
+        virtual u64 WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset) = 0;
         virtual u64 NumAssets() = 0;
         virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) = 0;
         virtual u64 GetAssetHandle(u64 index) = 0;

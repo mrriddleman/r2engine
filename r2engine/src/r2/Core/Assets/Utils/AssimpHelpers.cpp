@@ -1,5 +1,5 @@
 #include "r2pch.h"
-#include "r2/Core/Assets/AssimpHelpers.h"
+#include "r2/Core/Assets/Utils/AssimpHelpers.h"
 
 
 glm::mat4 AssimpMat4ToGLMMat4(const aiMatrix4x4& mat)

@@ -8,7 +8,7 @@
 #ifndef RawAssetFile_h
 #define RawAssetFile_h
 
-#include "r2/Core/Assets/AssetFile.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/File/File.h"
 
 namespace r2::asset
@@ -24,7 +24,7 @@ namespace r2::asset
         virtual bool IsOpen() const override;
         virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;
         virtual u64 LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;
-        virtual u64 WriteRawAsset(const Asset& asset, byte* data, u32 dataBufferSize) override;
+        virtual u64 WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset) override;
         virtual u64 NumAssets() override;
         virtual void GetAssetName(u64 index, char* name, u32 nameBuferSize) override;
         virtual u64 GetAssetHandle(u64 index) override;

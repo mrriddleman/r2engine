@@ -1,8 +1,8 @@
 #include "r2pch.h"
 
-#include "r2/Core/Assets/AssimpAnimationAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssimpAnimationAssetLoader.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssimpHelpers.h"
+#include "r2/Core/Assets/Utils/AssimpHelpers.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
 

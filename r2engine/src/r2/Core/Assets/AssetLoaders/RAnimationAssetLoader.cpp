@@ -1,7 +1,7 @@
 #include "r2pch.h"
 
-#include "r2/Core/Assets/RAnimationAssetLoader.h"
-#include "r2/Core/Assets/MemoryAssetFile.h"
+#include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
+#include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 #include "assetlib/AnimationAsset.h"
 #include "assetlib/RAnimationMetaData_generated.h"
 #include "assetlib/RAnimation_generated.h"

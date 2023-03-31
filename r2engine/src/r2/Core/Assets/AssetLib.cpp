@@ -7,12 +7,12 @@
 #include "r2pch.h"
 #include "AssetLib.h"
 #include "r2/Core/Assets/AssetCache.h"
-#include "r2/Core/Assets/AssetFile.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 
 #include "r2/Utils/Hash.h"
-#include "r2/Core/Assets/GLTFAssetFile.h"
-#include "r2/Core/Assets/RawAssetFile.h"
-#include "r2/Core/Assets/ZipAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/GLTFAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
 #ifdef R2_ASSET_PIPELINE

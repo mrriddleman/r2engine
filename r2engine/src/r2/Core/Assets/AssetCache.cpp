@@ -7,11 +7,11 @@
 #include "r2pch.h"
 #include "AssetCache.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssetFile.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/Assets/Asset.h"
-#include "r2/Core/Assets/AssetLoader.h"
-#include "r2/Core/Assets/AssetWriter.h"
-#include "r2/Core/Assets/DefaultAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
+#include "r2/Core/Assets/AssetWriters/AssetWriter.h"
+#include "r2/Core/Assets/AssetLoaders/DefaultAssetLoader.h"
 #include "assetlib/AssetFile.h"
 
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
@@ -591,7 +591,17 @@ namespace r2::asset
             theAssetFile->Close();
         }
 
-        bool writeSuccess = writer->WriteAsset(theAssetFile->FilePath(), data, size, offset, mode);
+        R2_CHECK(mode.IsSet(fs::Mode::Write), "Write should be enabled for the file: %s\n", theAssetFile->FilePath());
+
+        bool isOpened = theAssetFile->Open(mode);
+        
+        if (!isOpened)
+        {
+            R2_CHECK(false, "We couldn't open the file: %s\n", theAssetFile->FilePath());
+            return;
+        }
+
+        bool writeSuccess = writer->WriteAsset(*theAssetFile, asset, data, size, offset);
 
         R2_CHECK(writeSuccess, "Failed to write to file path: %s\n", theAssetFile->FilePath());
     }

@@ -9,7 +9,7 @@
 #define BreakoutLevelsFile_h
 
 #include "r2.h"
-#include "r2/Core/Assets/AssetFile.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/File/File.h"
 
 
@@ -23,7 +23,7 @@ public:
     virtual bool Close() override;
     virtual bool IsOpen() const override;
     virtual u64 RawAssetSize(const r2::asset::Asset& asset) override;
-    
+    virtual u64 WriteRawAsset(const r2::asset::Asset& asset, const  byte* data, u32 dataBufferSize, u32 offset) override;
     virtual u64 LoadRawAsset(const r2::asset::Asset& asset, byte* data, u32 dataBufSize) override;
     
     virtual u64 NumAssets() override;

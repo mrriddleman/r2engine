@@ -197,7 +197,7 @@ namespace r2::ecs
 		}
 	}
 
-	u64 RenderSystem::MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySizeStruct)
+	u64 RenderSystem::MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 		
@@ -213,7 +213,7 @@ namespace r2::ecs
 		return memorySize;
 	}
 
-	u64 RenderSystem::MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySizeStruct)
+	u64 RenderSystem::MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 
@@ -225,7 +225,7 @@ namespace r2::ecs
 		return memorySize;
 	}
 
-	u64 RenderSystem::RenderSystemGatherBatch::MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel , u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemorySizeStruct& memorySizeStruct)
+	u64 RenderSystem::RenderSystemGatherBatch::MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel , u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 

@@ -1,6 +1,6 @@
 #include "r2pch.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssimpAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssimpAssetLoader.h"
 #include "r2/Core/Math/MathUtils.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Model/Model.h"
@@ -9,7 +9,7 @@
 #include <assimp/Importer.hpp>
 
 #include <assimp/postprocess.h>
-#include "r2/Core/Assets/AssimpHelpers.h"
+#include "r2/Core/Assets/Utils/AssimpHelpers.h"
 #include "glm/gtx/string_cast.hpp"
 
 

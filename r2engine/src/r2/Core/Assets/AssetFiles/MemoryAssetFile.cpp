@@ -1,5 +1,5 @@
 #include "r2pch.h"
-#include "r2/Core/Assets/MemoryAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 
 namespace r2::asset
 {

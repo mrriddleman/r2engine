@@ -32,7 +32,7 @@ namespace r2::ecs
 			r2::SArray<r2::draw::MaterialHandle>* materialHandles;
 			r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms;
 
-			static u64 MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemorySizeStruct& memorySizeStruct);
+			static u64 MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct);
 
 		};
 
@@ -42,7 +42,7 @@ namespace r2::ecs
 		template<class ARENA>
 		bool Init(ARENA& arena, u32 maxNumberOfStaticBatches, u32 maxNumberOfDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel)
 		{
-			r2::mem::utils::MemorySizeStruct memorySizeStruct;
+			r2::mem::utils::MemoryProperties memorySizeStruct;
 			memorySizeStruct.headerSize = arena.HeaderSize();
 			memorySizeStruct.alignment = 16;
 
@@ -95,10 +95,10 @@ namespace r2::ecs
 			FREE(mMemoryBoundary.location, arena);
 		}
 
-		static u64 MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySize);
+		static u64 MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySize);
 	private:
 
-		static u64 MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemorySizeStruct& memorySize);
+		static u64 MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySize);
 
 		using GatherBatchPtr = r2::SHashMap<RenderSystemGatherBatch*>*;
 

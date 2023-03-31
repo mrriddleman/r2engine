@@ -4,8 +4,8 @@
 #include "r2/Render/Animation/Animation.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssimpAnimationAssetLoader.h"
-#include "r2/Core/Assets/RAnimationAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssimpAnimationAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
 
 namespace r2::draw
 {

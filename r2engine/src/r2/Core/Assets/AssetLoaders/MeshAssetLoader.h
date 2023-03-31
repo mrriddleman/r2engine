@@ -1,7 +1,7 @@
 #ifndef __MESH_ASSET_LOADER_H__
 #define __MESH_ASSET_LOADER_H__
 
-#include "r2/Core/Assets/AssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
 
 namespace r2::asset
 {

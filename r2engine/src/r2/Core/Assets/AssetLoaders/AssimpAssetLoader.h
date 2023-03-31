@@ -1,7 +1,7 @@
 #ifndef __ASSIMP_ASSET_LOADER_H__
 #define __ASSIMP_ASSET_LOADER_H__
 
-#include "r2/Core/Assets/AssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
 #include <glm/glm.hpp>
 #include <string>
 #include <unordered_map>
