@@ -15,8 +15,8 @@ namespace r2::ecs
 	public:
 		virtual ~IComponentArray() = default;
 		virtual void EntityDestroyed(Entity entity) = 0;
+		virtual void DestoryAllEntities() = 0;
 	};
-
 
 	template <typename Component>
 	class ComponentArray : public IComponentArray
@@ -157,6 +157,13 @@ namespace r2::ecs
 			{
 				RemoveComponent(entity);
 			}
+		}
+
+		void DestoryAllEntities() override
+		{
+			r2::sarr::Clear(*mComponentArray);
+			r2::shashmap::Clear(*mEntityToIndexMap);
+			r2::shashmap::Clear(*mIndexToEntityMap);
 		}
 
 		static u64 MemorySize(u32 maxNumEntities, u64 alignment, u32 headerSize, u32 boundsChecking)

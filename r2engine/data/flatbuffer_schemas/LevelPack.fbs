@@ -12,11 +12,15 @@ table LevelRef
 table LevelGroup
 {
 	groupName:string;
+	gourpHash:ulong(hash:"fnv1a_64");
+	maxLevelsInAGroup:uint;
+	maxLevelSizeInGroup:uint;
 	levels:[LevelRef];
 }
 
 table LevelPack
 {
+	maxLevelSize:uint;
 	allLevels:[LevelGroup];
 }
 

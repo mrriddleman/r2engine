@@ -63,6 +63,8 @@ namespace r2::ecs
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
 
+		void DestoryAllEntities();
+
 		template<typename Component>
 		bool HasComponent(Entity entity)
 		{

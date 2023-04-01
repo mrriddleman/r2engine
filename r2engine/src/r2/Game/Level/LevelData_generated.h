@@ -101,30 +101,38 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
     VT_HASH = 6,
-    VT_NAME = 8,
-    VT_PATH = 10,
-    VT_TOTALMEMORYNEEDED = 12,
-    VT_MATERIALMEMORYNEEDED = 14,
-    VT_STATICMODELMEMORYNEEDED = 16,
-    VT_ANIMATEDMODELMEMORYNEEDED = 18,
-    VT_TEXTUREMEMORYNEEDED = 20,
-    VT_SOUNDMEMORYNEEDED = 22,
-    VT_MUSICMEMORYNEEDED = 24,
-    VT_MATERIALPACKREFERENCES = 26,
-    VT_STATICMODELSREFERENCES = 28,
-    VT_ANIMATEDMODELSREFERENCES = 30,
-    VT_TEXTUREPACKSREFERENCES = 32,
-    VT_SOUNDREFERENCES = 34,
-    VT_MUSICREFERENCES = 36,
-    VT_NUMENTITIES = 38,
-    VT_ENTITIES = 40,
-    VT_COMPONENTARRAYS = 42
+    VT_GROUPHASH = 8,
+    VT_GROUPNAME = 10,
+    VT_NAME = 12,
+    VT_PATH = 14,
+    VT_TOTALMEMORYNEEDED = 16,
+    VT_MATERIALMEMORYNEEDED = 18,
+    VT_STATICMODELMEMORYNEEDED = 20,
+    VT_ANIMATEDMODELMEMORYNEEDED = 22,
+    VT_TEXTUREMEMORYNEEDED = 24,
+    VT_SOUNDMEMORYNEEDED = 26,
+    VT_MUSICMEMORYNEEDED = 28,
+    VT_MATERIALPACKREFERENCES = 30,
+    VT_STATICMODELSREFERENCES = 32,
+    VT_ANIMATEDMODELSREFERENCES = 34,
+    VT_TEXTUREPACKSREFERENCES = 36,
+    VT_SOUNDREFERENCES = 38,
+    VT_MUSICREFERENCES = 40,
+    VT_NUMENTITIES = 42,
+    VT_ENTITIES = 44,
+    VT_COMPONENTARRAYS = 46
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
   uint64_t hash() const {
     return GetField<uint64_t>(VT_HASH, 0);
+  }
+  uint64_t groupHash() const {
+    return GetField<uint64_t>(VT_GROUPHASH, 0);
+  }
+  const flatbuffers::String *groupName() const {
+    return GetPointer<const flatbuffers::String *>(VT_GROUPNAME);
   }
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
@@ -184,6 +192,9 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION) &&
            VerifyField<uint64_t>(verifier, VT_HASH) &&
+           VerifyField<uint64_t>(verifier, VT_GROUPHASH) &&
+           VerifyOffset(verifier, VT_GROUPNAME) &&
+           verifier.VerifyString(groupName()) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_PATH) &&
@@ -227,6 +238,12 @@ struct LevelDataBuilder {
   }
   void add_hash(uint64_t hash) {
     fbb_.AddElement<uint64_t>(LevelData::VT_HASH, hash, 0);
+  }
+  void add_groupHash(uint64_t groupHash) {
+    fbb_.AddElement<uint64_t>(LevelData::VT_GROUPHASH, groupHash, 0);
+  }
+  void add_groupName(flatbuffers::Offset<flatbuffers::String> groupName) {
+    fbb_.AddOffset(LevelData::VT_GROUPNAME, groupName);
   }
   void add_name(flatbuffers::Offset<flatbuffers::String> name) {
     fbb_.AddOffset(LevelData::VT_NAME, name);
@@ -298,6 +315,8 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
     uint64_t hash = 0,
+    uint64_t groupHash = 0,
+    flatbuffers::Offset<flatbuffers::String> groupName = 0,
     flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::String> path = 0,
     uint32_t totalMemoryNeeded = 0,
@@ -317,6 +336,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::EntityData>>> entities = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>> componentArrays = 0) {
   LevelDataBuilder builder_(_fbb);
+  builder_.add_groupHash(groupHash);
   builder_.add_hash(hash);
   builder_.add_componentArrays(componentArrays);
   builder_.add_entities(entities);
@@ -336,6 +356,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
   builder_.add_totalMemoryNeeded(totalMemoryNeeded);
   builder_.add_path(path);
   builder_.add_name(name);
+  builder_.add_groupName(groupName);
   builder_.add_version(version);
   return builder_.Finish();
 }
@@ -344,6 +365,8 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
     uint64_t hash = 0,
+    uint64_t groupHash = 0,
+    const char *groupName = nullptr,
     const char *name = nullptr,
     const char *path = nullptr,
     uint32_t totalMemoryNeeded = 0,
@@ -362,6 +385,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     uint32_t numEntities = 0,
     const std::vector<flatbuffers::Offset<flat::EntityData>> *entities = nullptr,
     const std::vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays = nullptr) {
+  auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto path__ = path ? _fbb.CreateString(path) : 0;
   auto entities__ = entities ? _fbb.CreateVector<flatbuffers::Offset<flat::EntityData>>(*entities) : 0;
@@ -370,6 +394,8 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
       _fbb,
       version,
       hash,
+      groupHash,
+      groupName__,
       name__,
       path__,
       totalMemoryNeeded,

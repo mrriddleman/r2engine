@@ -155,6 +155,8 @@ namespace r2::ecs
 			r2::sarr::At(*system->mEntities, toIndex) = e;
 		}
 
+		void DestoryAllEntities();
+
 		static u64 MemorySize(u32 maxNumSystems, u32 maxNumEntities, u32 alignment, u32 headerSize, u32 boundsChecking);
 
 	private:

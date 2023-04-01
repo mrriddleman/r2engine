@@ -62,6 +62,8 @@ namespace r2::ecs
 
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
+		void DestoryAllEntities();
+
 
 		u32 NumLivingEntities() const;
 		

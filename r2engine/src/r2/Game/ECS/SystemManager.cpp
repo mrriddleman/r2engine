@@ -107,4 +107,15 @@ namespace r2::ecs
 	{
 		r2::sarr::RemoveElementAtIndexShiftLeft(*system->mEntities, index);
 	}
+
+	void SystemManager::DestoryAllEntities()
+	{
+		auto iter = r2::shashmap::Begin(*mSystems);
+
+		for (iter; iter != r2::shashmap::End(*mSystems); ++iter)
+		{
+			r2::sarr::Clear(*iter->value->mEntities);
+		}
+	}
+
 }

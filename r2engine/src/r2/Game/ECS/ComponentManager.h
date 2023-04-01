@@ -168,9 +168,21 @@ namespace r2::ecs
 			
 			for (size_t i = 0; i < numComponentArrays; i++)
 			{
-				auto const& component = r2::sarr::At(*mComponentArrays, i);
+				auto const& componentArray = r2::sarr::At(*mComponentArrays, i);
 
-				component->EntityDestroyed(entity);
+				componentArray->EntityDestroyed(entity);
+			}
+		}
+
+		void DestroyAllEntities()
+		{
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
+
+			for (size_t i = 0; i < numComponentArrays; i++)
+			{
+				auto const& componentArray = r2::sarr::At(*mComponentArrays, i);
+
+				componentArray->DestoryAllEntities();
 			}
 		}
 

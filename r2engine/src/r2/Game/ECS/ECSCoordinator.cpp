@@ -31,6 +31,13 @@ namespace r2::ecs
 		mSystemManager->EntityDestroyed(entity);
 	}
 
+	void ECSCoordinator::DestoryAllEntities()
+	{
+		mEntityManager->DestoryAllEntities();
+		mComponentManager->DestroyAllEntities();
+		mSystemManager->DestoryAllEntities();
+	}
+
 	u64 ECSCoordinator::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 memorySize = 0;

@@ -55,6 +55,11 @@ namespace r2::ecs
 
 	}
 
+	void EntityManager::DestoryAllEntities()
+	{
+
+	}
+
 	u32 EntityManager::NumLivingEntities() const
 	{
 		if (!mAvailbleEntities)

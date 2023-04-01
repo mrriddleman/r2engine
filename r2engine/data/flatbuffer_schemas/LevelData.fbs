@@ -16,7 +16,10 @@ table PackReference
 table LevelData
 {
 	version:uint;
+
 	hash:ulong (hash:"fnv1a_64");
+	groupHash:ulong(hash:"fnv1a_64");
+	groupName:string;
 	name:string;
 	path:string;
 
