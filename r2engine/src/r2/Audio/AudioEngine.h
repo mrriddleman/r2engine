@@ -46,7 +46,9 @@ namespace r2::audio
         static void PushNewlyBuiltSoundDefinitions(std::vector<std::string> paths);
 #endif
         static void ReloadSoundDefinitions(const char* path);
-        
+        static void AddSoundDefinitions(const char* path);
+        static void RemoveSoundDefinitions(const char* path);
+
         enum _SoundFlags
         {
             NONE = 0,

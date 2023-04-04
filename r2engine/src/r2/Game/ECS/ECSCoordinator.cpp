@@ -38,6 +38,16 @@ namespace r2::ecs
 		mSystemManager->DestoryAllEntities();
 	}
 
+	void ECSCoordinator::LoadAllECSDataFromLevel(Level* level)
+	{
+		R2_CHECK(false, "Not implemented yet!");
+	}
+
+	void ECSCoordinator::UnloadAllECSDataFromLevel(Level* level)
+	{
+		R2_CHECK(false, "Not implemented yet!");
+	}
+
 	u64 ECSCoordinator::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 memorySize = 0;

@@ -7,9 +7,9 @@
 namespace r2
 {
 	Level::Level()
-		:mnoptrCoordinator(nullptr)
+		:mnoptrLevelData(nullptr)
+		,mnoptrEntitiesForLevel(nullptr)
 	{
-
 	}
 
 	Level::~Level()
@@ -17,15 +17,85 @@ namespace r2
 
 	}
 
-	bool Level::Init(flat::LevelData* levelData, ecs::ECSCoordinator* coordinator)
+	bool Level::Init(flat::LevelData* levelData, r2::SArray<ecs::Entity>* entityArray)
 	{
-		mnoptrCoordinator = coordinator;
-		return 0;
+		R2_CHECK(levelData != nullptr, "levelData is nullptr");
+		mnoptrLevelData = levelData;
+		R2_CHECK(entityArray != nullptr, "entityArray is nullptr");
+		mnoptrEntitiesForLevel = entityArray;
+
+		return true;
 	}
 
-	u64 Level::MemorySize(flat::LevelData* levelData, const r2::mem::utils::MemoryProperties& memoryProperties)
+	void Level::Shutdown()
 	{
-		return 0;
+		mnoptrEntitiesForLevel = nullptr;
+		mnoptrLevelData = nullptr;
+	}
+
+	flat::LevelData* Level::GetLevelData() const
+	{
+		return mnoptrLevelData;
+	}
+
+	r2::SArray<ecs::Entity>* Level::GetLevelEntities()
+	{
+		return mnoptrEntitiesForLevel;
+	}
+
+	const char* Level::GetLevelName() const
+	{
+		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
+
+		if (!mnoptrLevelData)
+		{
+			return "";
+		}
+
+		return mnoptrLevelData->name()->c_str();
+	}
+
+	r2::LevelName Level::GetLevelHashName() const
+	{
+		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
+
+		if (!mnoptrLevelData)
+		{
+			return 0;
+		}
+
+		return mnoptrLevelData->hash();
+	}
+
+	const char* Level::GetGroupName() const
+	{
+		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
+
+		if (!mnoptrLevelData)
+		{
+			return "";
+		}
+
+		return mnoptrLevelData->groupName()->c_str();
+	}
+
+	LevelName Level::GetGroupHashName() const
+	{
+		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
+
+		if (!mnoptrLevelData)
+		{
+			return 0;
+		}
+
+		return mnoptrLevelData->groupHash();
+	}
+
+	u64 Level::MemorySize(u32 numEntitiesInLevel, const r2::mem::utils::MemoryProperties& memoryProperties)
+	{
+		return
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntitiesInLevel), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
 	}
 
 }

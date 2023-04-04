@@ -757,6 +757,18 @@ namespace r2::audio
             }
         }
     }
+
+    void AudioEngine::AddSoundDefinitions(const char* path)
+    {
+        //@TODO(Serge):
+        R2_CHECK(false, "We haven't implemented this yet!");
+    }
+
+    void AudioEngine::RemoveSoundDefinitions(const char* path)
+    {
+		//@TODO(Serge):
+		R2_CHECK(false, "We haven't implemented this yet!");
+    }
     
     AudioEngine::SoundID AudioEngine::RegisterSound(const SoundDefinition& soundDef)
     {

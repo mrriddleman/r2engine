@@ -11,11 +11,11 @@ namespace flat {
 struct LevelRef;
 struct LevelRefBuilder;
 
-struct LevelGroup;
-struct LevelGroupBuilder;
+struct LevelGroupData;
+struct LevelGroupDataBuilder;
 
-struct LevelPack;
-struct LevelPackBuilder;
+struct LevelPackData;
+struct LevelPackDataBuilder;
 
 struct LevelRef FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelRefBuilder Builder;
@@ -83,23 +83,19 @@ inline flatbuffers::Offset<LevelRef> CreateLevelRefDirect(
       levelPath__);
 }
 
-struct LevelGroup FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef LevelGroupBuilder Builder;
+struct LevelGroupData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef LevelGroupDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_GROUPNAME = 4,
-    VT_GOURPHASH = 6,
-    VT_MAXLEVELSINAGROUP = 8,
-    VT_MAXLEVELSIZEINGROUP = 10,
-    VT_LEVELS = 12
+    VT_GROUPHASH = 6,
+    VT_MAXLEVELSIZEINGROUP = 8,
+    VT_LEVELS = 10
   };
   const flatbuffers::String *groupName() const {
     return GetPointer<const flatbuffers::String *>(VT_GROUPNAME);
   }
-  uint64_t gourpHash() const {
-    return GetField<uint64_t>(VT_GOURPHASH, 0);
-  }
-  uint32_t maxLevelsInAGroup() const {
-    return GetField<uint32_t>(VT_MAXLEVELSINAGROUP, 0);
+  uint64_t groupHash() const {
+    return GetField<uint64_t>(VT_GROUPHASH, 0);
   }
   uint32_t maxLevelSizeInGroup() const {
     return GetField<uint32_t>(VT_MAXLEVELSIZEINGROUP, 0);
@@ -111,8 +107,7 @@ struct LevelGroup FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_GROUPNAME) &&
            verifier.VerifyString(groupName()) &&
-           VerifyField<uint64_t>(verifier, VT_GOURPHASH) &&
-           VerifyField<uint32_t>(verifier, VT_MAXLEVELSINAGROUP) &&
+           VerifyField<uint64_t>(verifier, VT_GROUPHASH) &&
            VerifyField<uint32_t>(verifier, VT_MAXLEVELSIZEINGROUP) &&
            VerifyOffset(verifier, VT_LEVELS) &&
            verifier.VerifyVector(levels()) &&
@@ -121,85 +116,83 @@ struct LevelGroup FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct LevelGroupBuilder {
-  typedef LevelGroup Table;
+struct LevelGroupDataBuilder {
+  typedef LevelGroupData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_groupName(flatbuffers::Offset<flatbuffers::String> groupName) {
-    fbb_.AddOffset(LevelGroup::VT_GROUPNAME, groupName);
+    fbb_.AddOffset(LevelGroupData::VT_GROUPNAME, groupName);
   }
-  void add_gourpHash(uint64_t gourpHash) {
-    fbb_.AddElement<uint64_t>(LevelGroup::VT_GOURPHASH, gourpHash, 0);
-  }
-  void add_maxLevelsInAGroup(uint32_t maxLevelsInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelGroup::VT_MAXLEVELSINAGROUP, maxLevelsInAGroup, 0);
+  void add_groupHash(uint64_t groupHash) {
+    fbb_.AddElement<uint64_t>(LevelGroupData::VT_GROUPHASH, groupHash, 0);
   }
   void add_maxLevelSizeInGroup(uint32_t maxLevelSizeInGroup) {
-    fbb_.AddElement<uint32_t>(LevelGroup::VT_MAXLEVELSIZEINGROUP, maxLevelSizeInGroup, 0);
+    fbb_.AddElement<uint32_t>(LevelGroupData::VT_MAXLEVELSIZEINGROUP, maxLevelSizeInGroup, 0);
   }
   void add_levels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>>> levels) {
-    fbb_.AddOffset(LevelGroup::VT_LEVELS, levels);
+    fbb_.AddOffset(LevelGroupData::VT_LEVELS, levels);
   }
-  explicit LevelGroupBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit LevelGroupDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  LevelGroupBuilder &operator=(const LevelGroupBuilder &);
-  flatbuffers::Offset<LevelGroup> Finish() {
+  LevelGroupDataBuilder &operator=(const LevelGroupDataBuilder &);
+  flatbuffers::Offset<LevelGroupData> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<LevelGroup>(end);
+    auto o = flatbuffers::Offset<LevelGroupData>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<LevelGroup> CreateLevelGroup(
+inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> groupName = 0,
-    uint64_t gourpHash = 0,
-    uint32_t maxLevelsInAGroup = 0,
+    uint64_t groupHash = 0,
     uint32_t maxLevelSizeInGroup = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>>> levels = 0) {
-  LevelGroupBuilder builder_(_fbb);
-  builder_.add_gourpHash(gourpHash);
+  LevelGroupDataBuilder builder_(_fbb);
+  builder_.add_groupHash(groupHash);
   builder_.add_levels(levels);
   builder_.add_maxLevelSizeInGroup(maxLevelSizeInGroup);
-  builder_.add_maxLevelsInAGroup(maxLevelsInAGroup);
   builder_.add_groupName(groupName);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<LevelGroup> CreateLevelGroupDirect(
+inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *groupName = nullptr,
-    uint64_t gourpHash = 0,
-    uint32_t maxLevelsInAGroup = 0,
+    uint64_t groupHash = 0,
     uint32_t maxLevelSizeInGroup = 0,
     const std::vector<flatbuffers::Offset<flat::LevelRef>> *levels = nullptr) {
   auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto levels__ = levels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelRef>>(*levels) : 0;
-  return flat::CreateLevelGroup(
+  return flat::CreateLevelGroupData(
       _fbb,
       groupName__,
-      gourpHash,
-      maxLevelsInAGroup,
+      groupHash,
       maxLevelSizeInGroup,
       levels__);
 }
 
-struct LevelPack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef LevelPackBuilder Builder;
+struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef LevelPackDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MAXLEVELSIZE = 4,
-    VT_ALLLEVELS = 6
+    VT_MAXLEVELSINAGROUP = 4,
+    VT_MAXLEVELSIZE = 6,
+    VT_ALLLEVELS = 8
   };
+  uint32_t maxLevelsInAGroup() const {
+    return GetField<uint32_t>(VT_MAXLEVELSINAGROUP, 0);
+  }
   uint32_t maxLevelSize() const {
     return GetField<uint32_t>(VT_MAXLEVELSIZE, 0);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroup>> *allLevels() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroup>> *>(VT_ALLLEVELS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *>(VT_ALLLEVELS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_MAXLEVELSINAGROUP) &&
            VerifyField<uint32_t>(verifier, VT_MAXLEVELSIZE) &&
            VerifyOffset(verifier, VT_ALLLEVELS) &&
            verifier.VerifyVector(allLevels()) &&
@@ -208,90 +201,97 @@ struct LevelPack FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct LevelPackBuilder {
-  typedef LevelPack Table;
+struct LevelPackDataBuilder {
+  typedef LevelPackData Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_maxLevelsInAGroup(uint32_t maxLevelsInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXLEVELSINAGROUP, maxLevelsInAGroup, 0);
+  }
   void add_maxLevelSize(uint32_t maxLevelSize) {
-    fbb_.AddElement<uint32_t>(LevelPack::VT_MAXLEVELSIZE, maxLevelSize, 0);
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXLEVELSIZE, maxLevelSize, 0);
   }
-  void add_allLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroup>>> allLevels) {
-    fbb_.AddOffset(LevelPack::VT_ALLLEVELS, allLevels);
+  void add_allLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels) {
+    fbb_.AddOffset(LevelPackData::VT_ALLLEVELS, allLevels);
   }
-  explicit LevelPackBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit LevelPackDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  LevelPackBuilder &operator=(const LevelPackBuilder &);
-  flatbuffers::Offset<LevelPack> Finish() {
+  LevelPackDataBuilder &operator=(const LevelPackDataBuilder &);
+  flatbuffers::Offset<LevelPackData> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<LevelPack>(end);
+    auto o = flatbuffers::Offset<LevelPackData>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<LevelPack> CreateLevelPack(
+inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t maxLevelsInAGroup = 0,
     uint32_t maxLevelSize = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroup>>> allLevels = 0) {
-  LevelPackBuilder builder_(_fbb);
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels = 0) {
+  LevelPackDataBuilder builder_(_fbb);
   builder_.add_allLevels(allLevels);
   builder_.add_maxLevelSize(maxLevelSize);
+  builder_.add_maxLevelsInAGroup(maxLevelsInAGroup);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<LevelPack> CreateLevelPackDirect(
+inline flatbuffers::Offset<LevelPackData> CreateLevelPackDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t maxLevelsInAGroup = 0,
     uint32_t maxLevelSize = 0,
-    const std::vector<flatbuffers::Offset<flat::LevelGroup>> *allLevels = nullptr) {
-  auto allLevels__ = allLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroup>>(*allLevels) : 0;
-  return flat::CreateLevelPack(
+    const std::vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels = nullptr) {
+  auto allLevels__ = allLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroupData>>(*allLevels) : 0;
+  return flat::CreateLevelPackData(
       _fbb,
+      maxLevelsInAGroup,
       maxLevelSize,
       allLevels__);
 }
 
-inline const flat::LevelPack *GetLevelPack(const void *buf) {
-  return flatbuffers::GetRoot<flat::LevelPack>(buf);
+inline const flat::LevelPackData *GetLevelPackData(const void *buf) {
+  return flatbuffers::GetRoot<flat::LevelPackData>(buf);
 }
 
-inline const flat::LevelPack *GetSizePrefixedLevelPack(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<flat::LevelPack>(buf);
+inline const flat::LevelPackData *GetSizePrefixedLevelPackData(const void *buf) {
+  return flatbuffers::GetSizePrefixedRoot<flat::LevelPackData>(buf);
 }
 
-inline const char *LevelPackIdentifier() {
+inline const char *LevelPackDataIdentifier() {
   return "rlpk";
 }
 
-inline bool LevelPackBufferHasIdentifier(const void *buf) {
+inline bool LevelPackDataBufferHasIdentifier(const void *buf) {
   return flatbuffers::BufferHasIdentifier(
-      buf, LevelPackIdentifier());
+      buf, LevelPackDataIdentifier());
 }
 
-inline bool VerifyLevelPackBuffer(
+inline bool VerifyLevelPackDataBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<flat::LevelPack>(LevelPackIdentifier());
+  return verifier.VerifyBuffer<flat::LevelPackData>(LevelPackDataIdentifier());
 }
 
-inline bool VerifySizePrefixedLevelPackBuffer(
+inline bool VerifySizePrefixedLevelPackDataBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<flat::LevelPack>(LevelPackIdentifier());
+  return verifier.VerifySizePrefixedBuffer<flat::LevelPackData>(LevelPackDataIdentifier());
 }
 
-inline const char *LevelPackExtension() {
+inline const char *LevelPackDataExtension() {
   return "rlpk";
 }
 
-inline void FinishLevelPackBuffer(
+inline void FinishLevelPackDataBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<flat::LevelPack> root) {
-  fbb.Finish(root, LevelPackIdentifier());
+    flatbuffers::Offset<flat::LevelPackData> root) {
+  fbb.Finish(root, LevelPackDataIdentifier());
 }
 
-inline void FinishSizePrefixedLevelPackBuffer(
+inline void FinishSizePrefixedLevelPackDataBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<flat::LevelPack> root) {
-  fbb.FinishSizePrefixed(root, LevelPackIdentifier());
+    flatbuffers::Offset<flat::LevelPackData> root) {
+  fbb.FinishSizePrefixed(root, LevelPackDataIdentifier());
 }
 
 }  // namespace flat

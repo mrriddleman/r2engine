@@ -31,12 +31,12 @@ table LevelData
 	soundMemoryNeeded:uint;
 	musicMemoryNeeded:uint;
 
-	materialPackReferences:PackReference;
-	staticModelsReferences:PackReference;
-	animatedModelsReferences:PackReference;
-	texturePacksReferences:PackReference;
-	soundReferences:PackReference;
-	musicReferences:PackReference;
+	materialPackReferences:[PackReference];
+	staticModelsReferences:[PackReference];
+	animatedModelsReferences:[PackReference];
+	texturePacksReferences:[PackReference];
+	soundReferences:[PackReference];
+	musicReferences:[PackReference];
 
 	numEntities:uint;
 	entities:[EntityData];

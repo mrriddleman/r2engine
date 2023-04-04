@@ -9,19 +9,19 @@ table LevelRef
 	levelPath:string;
 }
 
-table LevelGroup
+table LevelGroupData
 {
 	groupName:string;
-	gourpHash:ulong(hash:"fnv1a_64");
-	maxLevelsInAGroup:uint;
+	groupHash:ulong(hash:"fnv1a_64");
 	maxLevelSizeInGroup:uint;
 	levels:[LevelRef];
 }
 
-table LevelPack
-{
+table LevelPackData
+{	
+	maxLevelsInAGroup:uint;
 	maxLevelSize:uint;
-	allLevels:[LevelGroup];
+	allLevels:[LevelGroupData];
 }
 
-root_type LevelPack;
+root_type LevelPackData;

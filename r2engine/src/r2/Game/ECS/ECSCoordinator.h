@@ -7,6 +7,11 @@
 #include "r2/Game/ECS/ComponentManager.h"
 #include "r2/Game/ECS/SystemManager.h"
 
+namespace r2
+{
+	class Level;
+}
+
 namespace r2::ecs
 {
 	class ECSCoordinator
@@ -62,8 +67,10 @@ namespace r2::ecs
 
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
-
 		void DestoryAllEntities();
+
+		void LoadAllECSDataFromLevel(Level* level);
+		void UnloadAllECSDataFromLevel(Level* level);
 
 		template<typename Component>
 		bool HasComponent(Entity entity)
