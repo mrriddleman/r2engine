@@ -1853,6 +1853,17 @@ public:
     {
         return r2::asset::pln::BuildShaderManifestsFromJsonIO;
     }
+
+    std::string GetLevelPackDataBinPath() const
+    {
+        return SANDBOX_LEVELS_DIR_BIN;
+    }
+
+    std::string GetLevelPackDataJSONPath() const
+    {
+        return SANDBOX_LEVELS_DIR_RAW;
+    }
+
 #endif
     
     char* GetApplicationName() const

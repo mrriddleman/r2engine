@@ -7,6 +7,7 @@ table LevelRef
 {
 	levelName:string;
 	levelPath:string;
+	levelFileSize:uint;
 }
 
 table LevelGroupData
@@ -14,13 +15,15 @@ table LevelGroupData
 	groupName:string;
 	groupHash:ulong(hash:"fnv1a_64");
 	maxLevelSizeInGroup:uint;
+	groupSizeInBytes:uint;
 	levels:[LevelRef];
 }
 
 table LevelPackData
 {	
 	maxLevelsInAGroup:uint;
-	maxLevelSize:uint;
+	maxLevelSizeInBytes:uint;
+	maxGroupSizeInBytes:uint;
 	allLevels:[LevelGroupData];
 }
 

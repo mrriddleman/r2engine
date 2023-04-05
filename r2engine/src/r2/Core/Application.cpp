@@ -245,7 +245,15 @@ namespace r2
         return nullptr;
     }
 
+    std::string Application::GetLevelPackDataBinPath() const
+    {
+        return "";
+    }
 
+    std::string Application::GetLevelPackDataJSONPath() const
+    {
+        return "";
+    }
 
 #endif
 }

@@ -114,6 +114,9 @@ namespace r2
         virtual std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const = 0;
         virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
 
+        virtual std::string GetLevelPackDataBinPath() const = 0;
+        virtual std::string GetLevelPackDataJSONPath() const = 0;
+
         virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
 #endif
     };

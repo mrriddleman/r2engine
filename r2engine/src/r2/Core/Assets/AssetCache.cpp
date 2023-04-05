@@ -43,6 +43,7 @@ namespace r2::asset
         , mAssetLoaders(nullptr)
         , mAssetWriters(nullptr)
         , mAssetNameMap(nullptr)
+        , mAssetFreedCallbackList(nullptr)
         , mDefaultLoader(nullptr)
         , mSlot(slot)
         , mAssetCacheArena(boundary)
@@ -71,6 +72,7 @@ namespace r2::asset
             mAssetLoaders = MAKE_SARRAY(mAssetCacheArena, AssetLoader*, lruCapacity);
             mAssetWriters = MAKE_SARRAY(mAssetCacheArena, AssetWriter*, lruCapacity);
             mAssetBufferPoolPtr = MAKE_POOL_ARENA(mAssetCacheArena, sizeof(AssetBuffer), lruCapacity);
+            mAssetFreedCallbackList = MAKE_SARRAY(mAssetCacheArena, AssetFreedCallback, lruCapacity);
         }
         
 #ifdef R2_ASSET_PIPELINE
@@ -151,7 +153,8 @@ namespace r2::asset
         FREE(mAssetWriters, mAssetCacheArena);
         FREE(mAssetLoaders, mAssetCacheArena);
         FREE(mAssetBufferPoolPtr, mAssetCacheArena);
-        
+        FREE(mAssetFreedCallbackList, mAssetCacheArena);
+
         mAssetLRU = nullptr;
         mAssetMap = nullptr;
         mAssetNameMap = nullptr;
@@ -160,6 +163,7 @@ namespace r2::asset
         mnoptrFiles = nullptr;
         mDefaultLoader = nullptr;
         mAssetBufferPoolPtr = nullptr;
+        mAssetFreedCallbackList = nullptr;
      //   mAssetFileMap = nullptr;
     }
     
@@ -702,6 +706,14 @@ namespace r2::asset
 #ifdef R2_ASSET_PIPELINE
                 RemoveAssetFromAssetForFileList(handle);
 #endif
+
+                const auto numFreedCallbacks = r2::sarr::Size(*mAssetFreedCallbackList);
+
+                for (u32 i = 0; i < numFreedCallbacks; ++i)
+                {
+                    auto callback = r2::sarr::At(*mAssetFreedCallbackList, i);
+                    callback(handle);
+                }
             }
         }
     }
@@ -738,7 +750,7 @@ namespace r2::asset
             AssetHandle handle = r2::squeue::Last(*mAssetLRU);
             Free(handle, forceFree);
             
-            RemoveFromLRU(handle);
+          //  RemoveFromLRU(handle);
         }
     }
     
@@ -791,7 +803,8 @@ namespace r2::asset
             alignof(AssetLoader*),
             alignof(Asset),
             alignof(r2::SHashMap<Asset>),
-            alignof(r2::mem::PoolArena)
+            alignof(r2::mem::PoolArena),
+            alignof(r2::SArray<AssetFreedCallback>),
             });
 
         return 
@@ -801,6 +814,7 @@ namespace r2::asset
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetLoader*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetWriter*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Asset>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetFreedCallback>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(poolSizeInBytes, alignment, headerSize, boundsChecking) +
             CalculateCacheSizeNeeded(assetCapacity, numAssets, alignment);
@@ -946,6 +960,11 @@ namespace r2::asset
         mnoptrFiles = fileList;
     }
 #endif
+
+    void AssetCache::RegisterAssetFreedCallback(AssetFreedCallback func)
+    {
+        r2::sarr::Push(*mAssetFreedCallbackList, func);
+    }
     
 #if R2_ASSET_CACHE_DEBUG
     //Debug stuff

@@ -7,11 +7,11 @@
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Core/Containers/SHashMap.h"
+#include "r2/Utils/Hash.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include <unordered_map>
 #include <unordered_set>
-#include "r2/Utils/Hash.h"
 #endif
 
 namespace r2::draw

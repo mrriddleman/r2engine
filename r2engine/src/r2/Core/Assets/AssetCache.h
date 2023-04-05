@@ -31,7 +31,7 @@ namespace r2::asset
     class DefaultAssetLoader;
     
     using AssetLoadProgressCallback = std::function<void(int, bool&)>;
-
+    using AssetFreedCallback = std::function<void(const r2::asset::AssetHandle& handle)>;
     
     struct AssetCacheRecord
     {
@@ -97,6 +97,8 @@ namespace r2::asset
 
         void ResetFileList(FileList fileList);
 #endif
+
+        void RegisterAssetFreedCallback(AssetFreedCallback func);
         
         const FileList GetFileList() const { return mnoptrFiles; }
 
@@ -118,6 +120,8 @@ namespace r2::asset
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
         using AssetWriterList = r2::SArray<AssetWriter*>*;
         using AssetNameMap = r2::SHashMap<Asset>*;
+        using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
+
        
         AssetBuffer* Load(const Asset& asset, bool startCountAtOne = false);
         void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
@@ -141,6 +145,7 @@ namespace r2::asset
         AssetLoaderList mAssetLoaders;
         AssetWriterList mAssetWriters;
         AssetNameMap mAssetNameMap;
+        AssetFreedCallbackList mAssetFreedCallbackList;
 
         DefaultAssetLoader* mDefaultLoader;
         s64 mSlot;

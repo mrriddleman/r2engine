@@ -37,10 +37,12 @@ namespace r2::asset
 		RMODEL,
 		RANIMATION,
 		LEVEL,
+		LEVEL_PACK,
 		NUM_ENGINE_ASSET_TYPES
 	};
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
+	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);
 }
 
 #endif // 

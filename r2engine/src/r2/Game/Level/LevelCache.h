@@ -6,6 +6,7 @@
 #include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
 #include "r2/Game/Level/Level.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Memory/Allocators/StackAllocator.h"
 
 namespace flat
 {
@@ -16,7 +17,6 @@ namespace flat
 
 namespace r2::mem
 {
-	class StackArena;
 	namespace utils
 	{
 		struct MemoryProperties;
@@ -35,18 +35,21 @@ namespace r2
 		r2::mem::StackArena* mArena;
 		r2::asset::AssetCache* mLevelCache;
 
+		r2::asset::AssetHandle mLevelPackDataAssetHandle;
 		r2::asset::AssetCacheRecord mLevelPackCacheRecord;
-		const flat::LevelPackData* mLevelPack;
+		const flat::LevelPackData* mLevelPackData;
 
-		r2::SArray<r2::asset::AssetCacheRecord>* mLevels = nullptr;
-		r2::SArray<LevelHandle>* mLevelHandles = nullptr;
+		r2::SArray<r2::asset::AssetCacheRecord>* mLevels;
 
-		b32 mCacheLevelReferences;
+		u32 mMaxNumLevelsInGroup;
+		u32 mMaxLevelSizeInBytes;
+		u32 mMaxGroupSizeInBytes;
+		u32 mTotalNumberOfLevels;
 	};
 
 	namespace lvlche
 	{
-		LevelCache* Init(const r2::mem::utils::MemBoundary& levelCacheBoundary, b32 cacheLevelReferences, const r2::asset::RawAssetFile* levelPackFile);
+		LevelCache* Init(const r2::mem::utils::MemBoundary& levelCacheBoundary, const char* levelPackDataFilePath);
 		void Shutdown(LevelCache* levelCache);
 		u64 MemorySize(u32 maxNumLevels, u32 cacheSizeInBytes, const r2::mem::utils::MemoryProperties& memProperties);
 
@@ -54,23 +57,24 @@ namespace r2
 		LevelHandle LoadLevelData(LevelCache& levelCache, LevelName name);
 		LevelHandle LoadLevelData(LevelCache& levelCache, const r2::asset::Asset& levelAsset);
 
-		flat::LevelData* GetLevelData(LevelCache& levelCache, const LevelHandle& handle);
+		const flat::LevelData* GetLevelData(LevelCache& levelCache, const LevelHandle& handle);
 		void UnloadLevelData(LevelCache& levelCache, const LevelHandle& handle);
 
 		u32 GetNumLevelsInLevelGroup(LevelCache& levelCache, LevelName groupName);
-
+		u32 GetMaxGroupSizeInBytes(LevelCache& levelCache);
 		u32 GetMaxLevelSizeInBytes(LevelCache& levelCache);
 		u32 GetMaxNumLevelsInAGroup(LevelCache& levelCache);
+		u32 TotalNumberOfLevels(LevelCache& levelCache);
 
 		void LoadLevelGroup(LevelCache& levelCache, LevelName groupName, r2::SArray<LevelHandle>& levelHandles);
-		void GetLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles, r2::SArray<flat::LevelGroupData*>& levelGroupData);
+		void GetLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles, r2::SArray<const flat::LevelData*>& levelGroupData);
 
 		void UnloadLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles);
 
 		void FlushAll(LevelCache& levelCache);
 
-#if defined R2_ASSET_PIPELINE && R2_EDITOR
-		void SaveNewLevelFile(LevelCache& levelCache, LevelName group, const char* levelURI, flat::LevelData* levelData);
+#if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
+		void SaveNewLevelFile(LevelCache& levelCache, LevelName group, const char* levelURI, const void* data, u32 dataSize);
 #endif
 
 	}

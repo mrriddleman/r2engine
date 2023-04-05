@@ -40,11 +40,13 @@ namespace r2::ecs
 
 	void ECSCoordinator::LoadAllECSDataFromLevel(Level* level)
 	{
+		//@TODO(Serge):
 		R2_CHECK(false, "Not implemented yet!");
 	}
 
 	void ECSCoordinator::UnloadAllECSDataFromLevel(Level* level)
 	{
+		//@TODO(Serge):
 		R2_CHECK(false, "Not implemented yet!");
 	}
 
