@@ -44,12 +44,21 @@ namespace r2
 		u32 mMaxNumLevelsInGroup;
 		u32 mMaxLevelSizeInBytes;
 		u32 mMaxGroupSizeInBytes;
-		u32 mTotalNumberOfLevels;
+		
 	};
 
 	namespace lvlche
 	{
-		LevelCache* Init(const r2::mem::utils::MemBoundary& levelCacheBoundary, const char* levelPackDataFilePath);
+		LevelCache* CreateLevelCache(
+			const r2::mem::utils::MemBoundary& levelCacheBoundary,
+			const char* levelPackDataFilePath,
+			const flat::LevelPackData* initialLevelPackData,
+			u32 totalNumberOfLevels,
+			u32 maxGroupFileSize,
+			u32 maxNumLevelsInGroup,
+			u32 maxLevelSizeInBytes,
+			u32 maxGroupSizeInBytes);
+		
 		void Shutdown(LevelCache* levelCache);
 		u64 MemorySize(u32 maxNumLevels, u32 cacheSizeInBytes, const r2::mem::utils::MemoryProperties& memProperties);
 
@@ -64,7 +73,8 @@ namespace r2
 		u32 GetMaxGroupSizeInBytes(LevelCache& levelCache);
 		u32 GetMaxLevelSizeInBytes(LevelCache& levelCache);
 		u32 GetMaxNumLevelsInAGroup(LevelCache& levelCache);
-		u32 TotalNumberOfLevels(LevelCache& levelCache);
+		u32 GetNumberOfLevelFiles(LevelCache& levelCache);
+		u32 GetLevelCapacity(LevelCache& levelCache);
 
 		void LoadLevelGroup(LevelCache& levelCache, LevelName groupName, r2::SArray<LevelHandle>& levelHandles);
 		void GetLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles, r2::SArray<const flat::LevelData*>& levelGroupData);

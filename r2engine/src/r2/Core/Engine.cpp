@@ -54,8 +54,8 @@
 
 namespace
 {
-	const u32 MAX_NUM_MATERIAL_SYSTEMS = 16; //@TODO(Serge): change this - very limiting
-	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 128; //@TODO(Serge): change this - very limiting
+	const u32 MAX_NUM_MATERIAL_SYSTEMS = 32; //@TODO(Serge): change this - very limiting
+	const u32 MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM = 256; //@TODO(Serge): change this - very limiting
     const u32 MAX_NUM_SHADERS = 512;
     const u32 ALIGNMENT = 16;
 }

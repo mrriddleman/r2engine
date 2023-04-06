@@ -3,11 +3,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/Level/Level.h"
-
-namespace r2::mem
-{
-	class StackArena;
-}
+#include "r2/Core/Memory/Allocators/StackAllocator.h"
 
 namespace flat
 {
@@ -37,7 +33,7 @@ namespace r2
 		LevelManager();
 		~LevelManager();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* levelPackPath, u32 numLevelsLoadedAtOneTime = 1, u32 numGroupLevelsLoadedAtOneTime = 1);
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, const char* levelPackPath, const char* areaName, u32 numLevelGroupsLoadedAtOneTime = 1, u32 numLevelsPerGroupLoadedAtOneTime = 1);
 		void Shutdown();
 
 		Level* LoadLevel(const char* level);
@@ -54,24 +50,41 @@ namespace r2
 		bool IsLevelGroupLoaded(LevelName groupName);
 		bool IsLevelGroupLoaded(const char* levelGroup);
 
-#if defined R2_ASSET_PIPELINE && R2_EDITOR
-		void SaveNewLevelFile(LevelName group, const char* levelURI, flat::LevelData* levelData);
+#if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
+		void SaveNewLevelFile(LevelName group, const char* levelURI, const void* data, u32 dataSize);
 #endif
+		static u64 MemorySize(
+			u32 numGroupsLoadedAtOneTime,
+			u32 maxNumLevelsInAGroup,
+			u32 levelCacheSize,
+			u32 numModelsSystems,
+			u32 numMaterialSystems,
+			u32 numSoundDefinitionFiles,
+
+			u32 maxNumMaterialsInALevel,
+			u32 maxNumTexturesInAPackForALevel,
+			u32 maxTexturePackSizeForALevel,
+			u32 maxNumTexturePacksForAMaterialForALevel,
+			u32 maxTotalNumberOfTextures,
+			u32 maxTexturePackFileSize,
+			u32 maxMaterialPackFileSize,
+
+			const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
-		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle;
-		r2::mem::StackArena* mSubAreaArena;
-		LevelCache* mLevelCache;
-
+		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
+		u32 mNumLevelsPerGroupLoadedAtOneTime;
+		u32 mNumLevelGroupsLoadedAtOneTime;
+		
+		r2::mem::StackArena* mArena;
+		
 		r2::SArray<r2::draw::MaterialSystem*>* mMaterialSystems;
 		r2::SArray<r2::draw::ModelSystem*>* mModelSystems;
 		r2::SArray<const char*>* mSoundDefinitionFilePaths;
-
 		r2::SArray<LevelGroup>* mLoadedLevels;
-
-		u32 mNumLevelsLoadedAtOneTime;
-		u32 mNumLevelGroupsLoadedAtOneTime;
+		
+		LevelCache* mLevelCache;
 	};
 }
 

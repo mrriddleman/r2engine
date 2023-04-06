@@ -150,7 +150,8 @@ namespace r2::asset
         DefaultAssetLoader* mDefaultLoader;
         s64 mSlot;
         u64 mMemoryHighWaterMark;
-        
+        r2::mem::utils::MemBoundary mMemoryBoundary;
+
         r2::mem::PoolArena* mAssetBufferPoolPtr;
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
 #ifdef R2_ASSET_PIPELINE
@@ -181,6 +182,7 @@ namespace r2::asset
         void InvalidateAssetsForFile(FileHandle fileHandle);
 
         std::vector<AssetsToFile> mAssetsForFiles;
+
 #endif
         //Debug stuff
 #if R2_ASSET_CACHE_DEBUG 

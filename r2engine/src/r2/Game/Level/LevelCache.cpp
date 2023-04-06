@@ -20,77 +20,45 @@ namespace r2::lvlche
 {
 	constexpr u32 NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME = 1; //we want the group name as well
 
-	LevelCache* Init(const r2::mem::utils::MemBoundary& levelCacheBoundary, const char* levelPackDataFilePath)
+	LevelCache* CreateLevelCache(
+		const r2::mem::utils::MemBoundary& levelCacheBoundary,
+		const char* levelPackDataFilePath,
+		const flat::LevelPackData* initialLevelPackData,
+		u32 capacityOfLevels,
+		u32 maxGroupFileSize,
+		u32 maxNumLevelsInGroup,
+		u32 maxLevelSizeInBytes,
+		u32 maxGroupSizeInBytes) 
 	{
-		u32 totalNumberOfLevels = 0;
-		u32 maxNumLevelsInGroup = 0;
-		u32 maxLevelSizeInBytes = 0;
-		u32 maxGroupSize = 0;
+		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(capacityOfLevels + 1u);
 
-		u64 levelPackDataFileSize = 0;
-		void* levelPackDataFile = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, levelPackDataFilePath, levelPackDataFileSize);
-
-		const flat::LevelPackData* levelPackData = flat::GetLevelPackData(levelPackDataFile);
-
-		maxNumLevelsInGroup = levelPackData->maxLevelsInAGroup();
-		maxLevelSizeInBytes = levelPackData->maxLevelSizeInBytes();
-		maxGroupSize = levelPackData->maxGroupSizeInBytes();
-
-		u32 maxGroupFileSize = 0;
-		//now figure out how many files to make
-		for (flatbuffers::uoffset_t i = 0; i < levelPackData->allLevels()->size(); ++i)
+		if (initialLevelPackData)
 		{
-			auto numLevelsInGroup = levelPackData->allLevels()->Get(i)->levels()->size();
-			totalNumberOfLevels += numLevelsInGroup;
-			u32 groupFileSize = 0;
-			for (flatbuffers::uoffset_t j = 0; j < numLevelsInGroup; j++)
-			{
-				groupFileSize += levelPackData->allLevels()->Get(i)->levels()->Get(j)->levelFileSize();
-			}
+			r2::asset::RawAssetFile* levelPackRawFile = r2::asset::lib::MakeRawAssetFile(levelPackDataFilePath);
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelPackRawFile);
 
-			if (groupFileSize > maxGroupFileSize)
+			for (flatbuffers::uoffset_t i = 0; i < initialLevelPackData->allLevels()->size(); ++i)
 			{
-				maxGroupFileSize = groupFileSize;
+				auto numLevelsInGroup = initialLevelPackData->allLevels()->Get(i)->levels()->size();
+				for (flatbuffers::uoffset_t j = 0; j < numLevelsInGroup; j++)
+				{
+					const char* levelRelPath = initialLevelPackData->allLevels()->Get(i)->levels()->Get(j)->levelPath()->c_str();
+
+					char levelPath[r2::fs::FILE_PATH_LENGTH];
+					r2::fs::utils::BuildPathFromCategory(fs::utils::LEVELS, levelRelPath, levelPath);
+
+					r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(levelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
+
+					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
+				}
 			}
 		}
-
-#ifdef R2_ASSET_PIPELINE
-		//We want to be able to add more levels to the list through the editor
-
-		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(1u + std::max(totalNumberOfLevels, 1000u));
-#else
-		//Probably just for the game
-		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(totalNumberOfLevels+1u);
-#endif
-
-		r2::asset::RawAssetFile* levelPackRawFile = r2::asset::lib::MakeRawAssetFile(levelPackDataFilePath);
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelPackRawFile);
-
-		for (flatbuffers::uoffset_t i = 0; i < levelPackData->allLevels()->size(); ++i)
-		{
-			auto numLevelsInGroup = levelPackData->allLevels()->Get(i)->levels()->size();
-			for (flatbuffers::uoffset_t j = 0; j < numLevelsInGroup; j++)
-			{
-				 const char* levelRelPath = levelPackData->allLevels()->Get(i)->levels()->Get(j)->levelPath()->c_str();
-
-				 char levelPath[r2::fs::FILE_PATH_LENGTH];
-				 r2::fs::utils::BuildPathFromCategory(fs::utils::LEVELS, levelRelPath, levelPath);
-
-				 r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(levelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
-
-				 r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
-			}
-		}
-
-		FREE(levelPackDataFile, *MEM_ENG_SCRATCH_PTR);
-
 
 		R2_CHECK(levelCacheBoundary.location != nullptr, "Passed in an invalid level cache boundary");
 
 		LevelCache* newLevelCache = new (levelCacheBoundary.location) LevelCache();
 
 		R2_CHECK(newLevelCache != nullptr, "Couldn't create the new level cache?");
-
 
 		newLevelCache->mLevelCacheBoundary = levelCacheBoundary;
 
@@ -100,21 +68,13 @@ namespace r2::lvlche
 
 		newLevelCache->mArena = EMPLACE_STACK_ARENA_IN_BOUNDARY(stackArenaBoundary);
 
-		newLevelCache->mMaxGroupSizeInBytes = maxGroupSize;
+		newLevelCache->mMaxGroupSizeInBytes = maxGroupSizeInBytes;
 		newLevelCache->mMaxLevelSizeInBytes = maxLevelSizeInBytes;
 		newLevelCache->mMaxNumLevelsInGroup = maxNumLevelsInGroup;
 
 		newLevelCache->mLevels = MAKE_SARRAY(*newLevelCache->mArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*fileList));
 
-#ifdef R2_ASSET_PIPELINE
-		
-		maxGroupFileSize *= 10;
 
-		if (maxGroupFileSize == 0)
-		{
-			maxGroupFileSize = Megabytes(1);
-		}
-#endif
 		constexpr u32 ALIGNMENT = 16;
 
 		maxGroupFileSize += maxNumLevelsInGroup * ALIGNMENT;
@@ -318,9 +278,14 @@ namespace r2::lvlche
 		return levelCache.mMaxGroupSizeInBytes;
 	}
 
-	u32 TotalNumberOfLevels(LevelCache& levelCache)
+	u32 GetNumberOfLevelFiles(LevelCache& levelCache)
 	{
-		return levelCache.mTotalNumberOfLevels;
+		return r2::sarr::Size(*levelCache.mLevels);
+	}
+
+	u32 GetLevelCapacity(LevelCache& levelCache)
+	{
+		return r2::sarr::Capacity(*levelCache.mLevels);
 	}
 
 	void LoadLevelGroup(LevelCache& levelCache, LevelName groupName, r2::SArray<LevelHandle>& levelHandles)
@@ -482,6 +447,12 @@ namespace r2::lvlche
 		R2_CHECK(levelCache.mLevelPackCacheRecord.buffer != nullptr, "We couldn't get the asset buffer");
 
 		levelCache.mLevelPackData = flat::GetLevelPackData(levelCache.mLevelPackCacheRecord.buffer->Data());
+
+		R2_CHECK(levelCache.mLevelPackData != nullptr, "We don't have the level pack!");
+
+		levelCache.mMaxGroupSizeInBytes = levelCache.mLevelPackData->maxGroupSizeInBytes();
+		levelCache.mMaxLevelSizeInBytes = levelCache.mLevelPackData->maxLevelSizeInBytes();
+		levelCache.mMaxNumLevelsInGroup = levelCache.mLevelPackData->maxLevelsInAGroup();
 	}
 #endif
 }

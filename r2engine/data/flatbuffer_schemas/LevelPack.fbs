@@ -8,6 +8,7 @@ table LevelRef
 	levelName:string;
 	levelPath:string;
 	levelFileSize:uint;
+
 }
 
 table LevelGroupData
@@ -21,9 +22,25 @@ table LevelGroupData
 
 table LevelPackData
 {	
+	version:uint;
 	maxLevelsInAGroup:uint;
 	maxLevelSizeInBytes:uint;
 	maxGroupSizeInBytes:uint;
+	maxNumMaterialPackReferencesInALevel:uint;
+	maxNumStaticModelPackReferencesInALevel:uint;
+	maxNumAnimModelPackReferencesInALevel:uint;
+	maxNumTexturePackReferencesInALevel:uint;
+	maxNumSoundReferencesInALevel:uint;
+	maxNumMusicReferencesInALevel:uint;
+
+	maxNumMaterialsInALevel:uint;
+	maxNumTexturesInAPackForALevel:uint;
+	maxTextureSizeInAPackForALevel:uint;
+	maxNumTexturePacksForAMaterialForALevel:uint;
+	maxTotalNumberOfTextures:uint;
+	maxTexturePackFileSize:uint;
+	maxMaterialPackFileSize:uint;
+
 	allLevels:[LevelGroupData];
 }
 

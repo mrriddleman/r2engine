@@ -49,6 +49,7 @@ namespace r2::asset
         , mAssetCacheArena(boundary)
         , mAssetBufferPoolPtr(nullptr)
         , mMemoryHighWaterMark(0)
+        , mMemoryBoundary(boundary)
     {
         
     }
@@ -971,7 +972,7 @@ namespace r2::asset
     void AssetCache::PrintLRU()
     {
         printf("==========================PrintLRU==========================\n");
-        
+        printf("Asset Cache: %llu\n", mSlot);
         u64 size = r2::squeue::Size(*mAssetLRU);
         
         AssetBufferRef defaultRef;
@@ -997,7 +998,7 @@ namespace r2::asset
     void AssetCache::PrintAssetMap()
     {
         printf("==========================PrintAssetMap==========================\n");
-
+        printf("Asset Cache: %llu\n", mSlot);
         
         u64 size = r2::squeue::Size(*mAssetLRU);
         
@@ -1041,8 +1042,11 @@ namespace r2::asset
 
     void AssetCache::PrintHighWaterMark()
     {
+        const auto totalMemorySize = mMemoryBoundary.size;
+
 		printf("===============================================PrintHighWaterMark====================================================\n");
 		printf("Asset Cache: %llu - memory high water mark: %llu bytes, %f Kilobytes, %f Megabytes\n", mSlot, mMemoryHighWaterMark, BytesToKilobytes(mMemoryHighWaterMark), BytesToMegabytes(mMemoryHighWaterMark));
+        printf("Asset Cache: %llu - utilization: %llu / %llu, %f percent\n", mSlot, mMemoryHighWaterMark, totalMemorySize, (double(mMemoryHighWaterMark) / double(totalMemorySize)) * 100.0);
 		printf("=====================================================================================================================\n");
     }
     

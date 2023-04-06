@@ -69,8 +69,8 @@ namespace r2::ecs
 		void DestroyEntity(Entity entity);
 		void DestoryAllEntities();
 
-		void LoadAllECSDataFromLevel(Level* level);
-		void UnloadAllECSDataFromLevel(Level* level);
+		void LoadAllECSDataFromLevel(Level& level);
+		void UnloadAllECSDataFromLevel(Level& level);
 
 		template<typename Component>
 		bool HasComponent(Entity entity)

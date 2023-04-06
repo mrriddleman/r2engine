@@ -31,6 +31,13 @@ table LevelData
 	soundMemoryNeeded:uint;
 	musicMemoryNeeded:uint;
 
+	numMaterialsPerMaterialPack:[uint];
+	numStaticModelsPerModelPack:[uint];
+	numAnimatedModelsPerModelPack:[uint];
+	numTexturesPerTexturePack:[uint];
+	numSoundReferencesPerSoundDefinitionPack:[uint];
+	numMusicReferencesPerSoundDefinitionPack:[uint];
+
 	materialPackReferences:[PackReference];
 	staticModelsReferences:[PackReference];
 	animatedModelsReferences:[PackReference];

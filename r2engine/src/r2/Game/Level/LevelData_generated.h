@@ -112,15 +112,21 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_TEXTUREMEMORYNEEDED = 24,
     VT_SOUNDMEMORYNEEDED = 26,
     VT_MUSICMEMORYNEEDED = 28,
-    VT_MATERIALPACKREFERENCES = 30,
-    VT_STATICMODELSREFERENCES = 32,
-    VT_ANIMATEDMODELSREFERENCES = 34,
-    VT_TEXTUREPACKSREFERENCES = 36,
-    VT_SOUNDREFERENCES = 38,
-    VT_MUSICREFERENCES = 40,
-    VT_NUMENTITIES = 42,
-    VT_ENTITIES = 44,
-    VT_COMPONENTARRAYS = 46
+    VT_NUMMATERIALSPERMATERIALPACK = 30,
+    VT_NUMSTATICMODELSPERMODELPACK = 32,
+    VT_NUMANIMATEDMODELSPERMODELPACK = 34,
+    VT_NUMTEXTURESPERTEXTUREPACK = 36,
+    VT_NUMSOUNDREFERENCESPERSOUNDDEFINITIONPACK = 38,
+    VT_NUMMUSICREFERENCESPERSOUNDDEFINITIONPACK = 40,
+    VT_MATERIALPACKREFERENCES = 42,
+    VT_STATICMODELSREFERENCES = 44,
+    VT_ANIMATEDMODELSREFERENCES = 46,
+    VT_TEXTUREPACKSREFERENCES = 48,
+    VT_SOUNDREFERENCES = 50,
+    VT_MUSICREFERENCES = 52,
+    VT_NUMENTITIES = 54,
+    VT_ENTITIES = 56,
+    VT_COMPONENTARRAYS = 58
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -160,6 +166,24 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   uint32_t musicMemoryNeeded() const {
     return GetField<uint32_t>(VT_MUSICMEMORYNEEDED, 0);
+  }
+  const flatbuffers::Vector<uint32_t> *numMaterialsPerMaterialPack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMMATERIALSPERMATERIALPACK);
+  }
+  const flatbuffers::Vector<uint32_t> *numStaticModelsPerModelPack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMSTATICMODELSPERMODELPACK);
+  }
+  const flatbuffers::Vector<uint32_t> *numAnimatedModelsPerModelPack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMANIMATEDMODELSPERMODELPACK);
+  }
+  const flatbuffers::Vector<uint32_t> *numTexturesPerTexturePack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMTEXTURESPERTEXTUREPACK);
+  }
+  const flatbuffers::Vector<uint32_t> *numSoundReferencesPerSoundDefinitionPack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMSOUNDREFERENCESPERSOUNDDEFINITIONPACK);
+  }
+  const flatbuffers::Vector<uint32_t> *numMusicReferencesPerSoundDefinitionPack() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_NUMMUSICREFERENCESPERSOUNDDEFINITIONPACK);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *materialPackReferences() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_MATERIALPACKREFERENCES);
@@ -206,6 +230,18 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_TEXTUREMEMORYNEEDED) &&
            VerifyField<uint32_t>(verifier, VT_SOUNDMEMORYNEEDED) &&
            VerifyField<uint32_t>(verifier, VT_MUSICMEMORYNEEDED) &&
+           VerifyOffset(verifier, VT_NUMMATERIALSPERMATERIALPACK) &&
+           verifier.VerifyVector(numMaterialsPerMaterialPack()) &&
+           VerifyOffset(verifier, VT_NUMSTATICMODELSPERMODELPACK) &&
+           verifier.VerifyVector(numStaticModelsPerModelPack()) &&
+           VerifyOffset(verifier, VT_NUMANIMATEDMODELSPERMODELPACK) &&
+           verifier.VerifyVector(numAnimatedModelsPerModelPack()) &&
+           VerifyOffset(verifier, VT_NUMTEXTURESPERTEXTUREPACK) &&
+           verifier.VerifyVector(numTexturesPerTexturePack()) &&
+           VerifyOffset(verifier, VT_NUMSOUNDREFERENCESPERSOUNDDEFINITIONPACK) &&
+           verifier.VerifyVector(numSoundReferencesPerSoundDefinitionPack()) &&
+           VerifyOffset(verifier, VT_NUMMUSICREFERENCESPERSOUNDDEFINITIONPACK) &&
+           verifier.VerifyVector(numMusicReferencesPerSoundDefinitionPack()) &&
            VerifyOffset(verifier, VT_MATERIALPACKREFERENCES) &&
            verifier.VerifyVector(materialPackReferences()) &&
            verifier.VerifyVectorOfTables(materialPackReferences()) &&
@@ -278,6 +314,24 @@ struct LevelDataBuilder {
   void add_musicMemoryNeeded(uint32_t musicMemoryNeeded) {
     fbb_.AddElement<uint32_t>(LevelData::VT_MUSICMEMORYNEEDED, musicMemoryNeeded, 0);
   }
+  void add_numMaterialsPerMaterialPack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numMaterialsPerMaterialPack) {
+    fbb_.AddOffset(LevelData::VT_NUMMATERIALSPERMATERIALPACK, numMaterialsPerMaterialPack);
+  }
+  void add_numStaticModelsPerModelPack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numStaticModelsPerModelPack) {
+    fbb_.AddOffset(LevelData::VT_NUMSTATICMODELSPERMODELPACK, numStaticModelsPerModelPack);
+  }
+  void add_numAnimatedModelsPerModelPack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numAnimatedModelsPerModelPack) {
+    fbb_.AddOffset(LevelData::VT_NUMANIMATEDMODELSPERMODELPACK, numAnimatedModelsPerModelPack);
+  }
+  void add_numTexturesPerTexturePack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numTexturesPerTexturePack) {
+    fbb_.AddOffset(LevelData::VT_NUMTEXTURESPERTEXTUREPACK, numTexturesPerTexturePack);
+  }
+  void add_numSoundReferencesPerSoundDefinitionPack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numSoundReferencesPerSoundDefinitionPack) {
+    fbb_.AddOffset(LevelData::VT_NUMSOUNDREFERENCESPERSOUNDDEFINITIONPACK, numSoundReferencesPerSoundDefinitionPack);
+  }
+  void add_numMusicReferencesPerSoundDefinitionPack(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numMusicReferencesPerSoundDefinitionPack) {
+    fbb_.AddOffset(LevelData::VT_NUMMUSICREFERENCESPERSOUNDDEFINITIONPACK, numMusicReferencesPerSoundDefinitionPack);
+  }
   void add_materialPackReferences(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> materialPackReferences) {
     fbb_.AddOffset(LevelData::VT_MATERIALPACKREFERENCES, materialPackReferences);
   }
@@ -332,6 +386,12 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     uint32_t textureMemoryNeeded = 0,
     uint32_t soundMemoryNeeded = 0,
     uint32_t musicMemoryNeeded = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numMaterialsPerMaterialPack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numStaticModelsPerModelPack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numAnimatedModelsPerModelPack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numTexturesPerTexturePack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numSoundReferencesPerSoundDefinitionPack = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> numMusicReferencesPerSoundDefinitionPack = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> materialPackReferences = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> staticModelsReferences = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> animatedModelsReferences = 0,
@@ -353,6 +413,12 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
   builder_.add_animatedModelsReferences(animatedModelsReferences);
   builder_.add_staticModelsReferences(staticModelsReferences);
   builder_.add_materialPackReferences(materialPackReferences);
+  builder_.add_numMusicReferencesPerSoundDefinitionPack(numMusicReferencesPerSoundDefinitionPack);
+  builder_.add_numSoundReferencesPerSoundDefinitionPack(numSoundReferencesPerSoundDefinitionPack);
+  builder_.add_numTexturesPerTexturePack(numTexturesPerTexturePack);
+  builder_.add_numAnimatedModelsPerModelPack(numAnimatedModelsPerModelPack);
+  builder_.add_numStaticModelsPerModelPack(numStaticModelsPerModelPack);
+  builder_.add_numMaterialsPerMaterialPack(numMaterialsPerMaterialPack);
   builder_.add_musicMemoryNeeded(musicMemoryNeeded);
   builder_.add_soundMemoryNeeded(soundMemoryNeeded);
   builder_.add_textureMemoryNeeded(textureMemoryNeeded);
@@ -382,6 +448,12 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     uint32_t textureMemoryNeeded = 0,
     uint32_t soundMemoryNeeded = 0,
     uint32_t musicMemoryNeeded = 0,
+    const std::vector<uint32_t> *numMaterialsPerMaterialPack = nullptr,
+    const std::vector<uint32_t> *numStaticModelsPerModelPack = nullptr,
+    const std::vector<uint32_t> *numAnimatedModelsPerModelPack = nullptr,
+    const std::vector<uint32_t> *numTexturesPerTexturePack = nullptr,
+    const std::vector<uint32_t> *numSoundReferencesPerSoundDefinitionPack = nullptr,
+    const std::vector<uint32_t> *numMusicReferencesPerSoundDefinitionPack = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *materialPackReferences = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *staticModelsReferences = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *animatedModelsReferences = nullptr,
@@ -394,6 +466,12 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
   auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto path__ = path ? _fbb.CreateString(path) : 0;
+  auto numMaterialsPerMaterialPack__ = numMaterialsPerMaterialPack ? _fbb.CreateVector<uint32_t>(*numMaterialsPerMaterialPack) : 0;
+  auto numStaticModelsPerModelPack__ = numStaticModelsPerModelPack ? _fbb.CreateVector<uint32_t>(*numStaticModelsPerModelPack) : 0;
+  auto numAnimatedModelsPerModelPack__ = numAnimatedModelsPerModelPack ? _fbb.CreateVector<uint32_t>(*numAnimatedModelsPerModelPack) : 0;
+  auto numTexturesPerTexturePack__ = numTexturesPerTexturePack ? _fbb.CreateVector<uint32_t>(*numTexturesPerTexturePack) : 0;
+  auto numSoundReferencesPerSoundDefinitionPack__ = numSoundReferencesPerSoundDefinitionPack ? _fbb.CreateVector<uint32_t>(*numSoundReferencesPerSoundDefinitionPack) : 0;
+  auto numMusicReferencesPerSoundDefinitionPack__ = numMusicReferencesPerSoundDefinitionPack ? _fbb.CreateVector<uint32_t>(*numMusicReferencesPerSoundDefinitionPack) : 0;
   auto materialPackReferences__ = materialPackReferences ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*materialPackReferences) : 0;
   auto staticModelsReferences__ = staticModelsReferences ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*staticModelsReferences) : 0;
   auto animatedModelsReferences__ = animatedModelsReferences ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*animatedModelsReferences) : 0;
@@ -417,6 +495,12 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
       textureMemoryNeeded,
       soundMemoryNeeded,
       musicMemoryNeeded,
+      numMaterialsPerMaterialPack__,
+      numStaticModelsPerModelPack__,
+      numAnimatedModelsPerModelPack__,
+      numTexturesPerTexturePack__,
+      numSoundReferencesPerSoundDefinitionPack__,
+      numMusicReferencesPerSoundDefinitionPack__,
       materialPackReferences__,
       staticModelsReferences__,
       animatedModelsReferences__,

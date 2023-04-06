@@ -253,7 +253,7 @@ namespace r2::draw::mat
 
 	const MaterialTextureAssets& GetMaterialTextureAssetsForMaterial(const MaterialSystem& system, MaterialHandle materialHandle);
 
-	u64 MemorySize(u64 alignment, u64 capacity, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);
+	u64 MemorySize(u64 alignment, u64 numMaterials, u64 textureCacheInBytes, u64 numTextures, u64 numPacks, u64 maxTexturesInAPack, u32 materialParamsFileSize = 0, u32 texturePacksManifestFileSize = 0);
 
 	u64 LoadMaterialAndTextureManifests(const char* materialManifestPath, const char* textureManifestPath, void** materialPack, void** texturePacks);
 

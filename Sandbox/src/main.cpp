@@ -279,7 +279,7 @@ public:
 		
         R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(16) + materialMemorySystemSize, 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(128) + materialMemorySystemSize, 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
         subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4) + materialMemorySystemSize);
@@ -550,7 +550,7 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
-        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Kilobytes(750), false, modelFiles, "Sandbox Model System");
+        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Megabytes(64), false, modelFiles, "Sandbox Model System");
 
         if (!mModelSystem)
         {
@@ -618,7 +618,7 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);
 
 
-        mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(1), animationFiles, "Sandbox Animation Cache");
+        mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(16), animationFiles, "Sandbox Animation Cache");
 
         if (!mAnimationCache)
         {
