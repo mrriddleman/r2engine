@@ -83,9 +83,9 @@ namespace r2::ecs
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponent(ARENA& arena)
+		void RegisterComponent(ARENA& arena, const char* componentName)
 		{
-			mComponentManager->RegisterComponentType<ARENA, Component>(arena);
+			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName);
 		}
 
 		template<class ARENA, typename Component>

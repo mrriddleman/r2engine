@@ -3,7 +3,7 @@ namespace flat;
 table ComponentArrayData
 {
 	componentType:ulong (hash:"fnv1a_64");
-	entityToIndexMap:[uint];
+	entityToIndexMap:[int];
 	componentArray:[ubyte] (flexbuffer);
 }
 

@@ -22,8 +22,8 @@ struct ComponentArrayData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t componentType() const {
     return GetField<uint64_t>(VT_COMPONENTTYPE, 0);
   }
-  const flatbuffers::Vector<uint32_t> *entityToIndexMap() const {
-    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_ENTITYTOINDEXMAP);
+  const flatbuffers::Vector<int32_t> *entityToIndexMap() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ENTITYTOINDEXMAP);
   }
   const flatbuffers::Vector<uint8_t> *componentArray() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_COMPONENTARRAY);
@@ -49,7 +49,7 @@ struct ComponentArrayDataBuilder {
   void add_componentType(uint64_t componentType) {
     fbb_.AddElement<uint64_t>(ComponentArrayData::VT_COMPONENTTYPE, componentType, 0);
   }
-  void add_entityToIndexMap(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> entityToIndexMap) {
+  void add_entityToIndexMap(flatbuffers::Offset<flatbuffers::Vector<int32_t>> entityToIndexMap) {
     fbb_.AddOffset(ComponentArrayData::VT_ENTITYTOINDEXMAP, entityToIndexMap);
   }
   void add_componentArray(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> componentArray) {
@@ -70,7 +70,7 @@ struct ComponentArrayDataBuilder {
 inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t componentType = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> entityToIndexMap = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> entityToIndexMap = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> componentArray = 0) {
   ComponentArrayDataBuilder builder_(_fbb);
   builder_.add_componentType(componentType);
@@ -82,9 +82,9 @@ inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayData(
 inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t componentType = 0,
-    const std::vector<uint32_t> *entityToIndexMap = nullptr,
+    const std::vector<int32_t> *entityToIndexMap = nullptr,
     const std::vector<uint8_t> *componentArray = nullptr) {
-  auto entityToIndexMap__ = entityToIndexMap ? _fbb.CreateVector<uint32_t>(*entityToIndexMap) : 0;
+  auto entityToIndexMap__ = entityToIndexMap ? _fbb.CreateVector<int32_t>(*entityToIndexMap) : 0;
   auto componentArray__ = componentArray ? _fbb.CreateVector<uint8_t>(*componentArray) : 0;
   return flat::CreateComponentArrayData(
       _fbb,

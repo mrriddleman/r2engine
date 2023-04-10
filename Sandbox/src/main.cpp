@@ -42,10 +42,26 @@
 #include "r2/Render/Model/Material_generated.h"
 #include "r2/Render/Model/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+#include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
+
+struct DummyComponent
+{
+
+};
+
+namespace r2::ecs
+{
+	template<>
+	void SerializeComponentArray<DummyComponent>(flexbuffers::Builder& builder, const r2::SArray<DummyComponent>& components)
+	{
+		R2_CHECK(false, "You need to implement a serializer for this type");
+	}
+}
+
 
 namespace
 {

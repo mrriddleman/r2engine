@@ -3,16 +3,17 @@
 
 //https://austinmorlan.com/posts/entity_component_system/#further-readings
 
-#include <typeindex>
-#include "r2/Utils/Utils.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Game/ECS/ComponentArray.h"
 #include "r2/Game/ECS/Entity.h"
+#include "r2/Utils/Hash.h"
+#include "r2/Utils/Utils.h"
 
 namespace r2::ecs
 {
 	using ComponentType = s32;
+	const u64 EMPTY_COMPONENT_HASH = STRING_ID("");
 
 	class ComponentManager
 	{
@@ -20,16 +21,18 @@ namespace r2::ecs
 		ComponentManager()
 			: mComponentArrays(nullptr)
 			, mComponentTypes(nullptr)
+			,mComponentHashNameMap(nullptr)
 		{
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponentType(ARENA& arena)
+		void RegisterComponentType(ARENA& arena, const char* componentName)
 		{
-			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
+			auto componentTypeHash = STRING_ID(componentName);
 
 			if (r2::shashmap::Has(*mComponentTypes, componentTypeHash))
 			{
+				R2_CHECK(false, "You're trying to register the same component twice");
 				return;
 			}
 
@@ -37,9 +40,11 @@ namespace r2::ecs
 
 			R2_CHECK(componentArray != nullptr, "componentArray is nullptr");
 
-			bool isInitialized = componentArray->Init(arena, MAX_NUM_ENTITIES);
+			bool isInitialized = componentArray->Init(arena, MAX_NUM_ENTITIES, componentTypeHash);
 
 			R2_CHECK(isInitialized, "Couldn't initialize the componentArray!");
+
+			r2::shashmap::Set(*mComponentHashNameMap, typeid(Component).hash_code(), componentTypeHash);
 
 			r2::shashmap::Set(*mComponentTypes, componentTypeHash, static_cast<ComponentType>(r2::sarr::Size(*mComponentArrays)) );
 
@@ -49,10 +54,15 @@ namespace r2::ecs
 		template<class ARENA, typename Component>
 		void UnRegisterComponentType(ARENA& arena)
 		{
-			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
+			u64 defaultComponentHashName = EMPTY_COMPONENT_HASH;
 
+			u64 componentTypeHash = r2::shashmap::Get(*mComponentHashNameMap, typeid(Component).hash_code(), defaultComponentHashName);
+
+			R2_CHECK(componentTypeHash != defaultComponentHashName, "Should never happen");
+			
 			if (!r2::shashmap::Has(*mComponentTypes, componentTypeHash))
 			{
+				R2_CHECK(false, "Trying to unregister a component that we never registered");
 				return;
 			}
 
@@ -67,6 +77,8 @@ namespace r2::ecs
 			R2_CHECK(defaultType != componentType, "These shouldn't be the same");
 
 			r2::shashmap::Remove(*mComponentTypes, componentTypeHash);
+
+			r2::shashmap::Remove(*mComponentHashNameMap, typeid(Component).hash_code());
 
 			FREE(componentArray, arena);
 
@@ -94,6 +106,14 @@ namespace r2::ecs
 				return false;
 			}
 
+			mComponentHashNameMap = MAKE_SHASHMAP(arena, u64, maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier());
+
+			if (!mComponentHashNameMap)
+			{
+				R2_CHECK(false, "We couldn't create the component hash name map");
+				return false;
+			}
+
 			return true;
 		}
 
@@ -104,7 +124,9 @@ namespace r2::ecs
 
 			r2::sarr::Clear(*mComponentArrays);
 			r2::shashmap::Clear(*mComponentTypes);
+			r2::shashmap::Clear(*mComponentHashNameMap);
 
+			FREE(mComponentHashNameMap, arena);
 			FREE(mComponentTypes, arena);
 			FREE(mComponentArrays, arena);
 		}
@@ -112,9 +134,13 @@ namespace r2::ecs
 		template<typename Component>
 		ComponentType GetComponentType()
 		{
-			auto componentTypeHash = std::type_index(typeid(Component)).hash_code();
+			R2_CHECK(r2::shashmap::Has(*mComponentHashNameMap, typeid(Component).hash_code()), "We don't have that type!");
 
-			R2_CHECK(r2::shashmap::Has(*mComponentTypes, componentTypeHash), "We don't have that type!");
+			u64 defaultComponentHashName = EMPTY_COMPONENT_HASH;
+
+			u64 componentTypeHash = r2::shashmap::Get(*mComponentHashNameMap, typeid(Component).hash_code(), defaultComponentHashName);
+
+			R2_CHECK(componentTypeHash != EMPTY_COMPONENT_HASH, "Should not happen");
 
 			ComponentType defaultIndex = -1;
 
@@ -193,8 +219,8 @@ namespace r2::ecs
 			memorySize +=
 				r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ComponentManager), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<IComponentArray*>::MemorySize(maxNumComponents), alignment, headerSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(static_cast<u32>( maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking)
-				;
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(static_cast<u32>( maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<u64>::MemorySize(static_cast<u32>(maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking);
 
 			return memorySize;
 		}
@@ -202,6 +228,7 @@ namespace r2::ecs
 	private:
 		r2::SArray<IComponentArray*>* mComponentArrays;
 		r2::SHashMap<ComponentType>* mComponentTypes; //I guess these are the indices of the component arrays?
+		r2::SHashMap<u64>* mComponentHashNameMap;
 
 		template<typename Component>
 		ComponentArray<Component>* GetComponentArray()

@@ -4,6 +4,7 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Game/ECS/Entity.h"
 #include "r2/Game/ECS/Component.h"
+#include <typeindex>
 
 namespace r2::ecs
 {
