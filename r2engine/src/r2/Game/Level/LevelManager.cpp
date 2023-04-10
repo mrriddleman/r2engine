@@ -3,12 +3,14 @@
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Game/Level/LevelPack_generated.h"
+#include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Game/Level/LevelCache.h"
 #include "r2/Render/Model/Material.h"
-
-#ifdef R2_ASSET_PIPELINE
+#include "r2/Render/Model/ModelSystem.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Utils/Hash.h"
+#ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #endif // R2_ASSET_PIPELINE
 
@@ -19,6 +21,7 @@ namespace r2
 		:mMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mSubAreaHandle(r2::mem::MemoryArea::SubArea::Invalid)
 		,mArena(nullptr)
+		,mLevelArena(nullptr)
 		,mLevelCache(nullptr)
 		,mMaterialSystems(nullptr)
 		,mModelSystems(nullptr)
@@ -61,7 +64,6 @@ namespace r2
 		u32 numMaterialSystems = 0;
 		u32 numSoundDefinitionFiles = 0;
 
-
 		u32 maxNumMaterialsInALevel = 0;
 		u32 maxNumTexturesInAPackForALevel = 0;
 		u32 maxTextureSizeInAPackForALevel = 0;
@@ -69,6 +71,9 @@ namespace r2
 		u32 maxTotalNumberOfTextures = 0;
 		u32 maxTexturePackFileSize = 0;
 		u32 maxMaterialPackFileSize = 0;
+
+		u32 maxNumModelsInAPackInALevel = 0;
+		u32 maxModelPackSizeInALevel = 0;
 
 		void* levelPackDataFile = nullptr;
 		const flat::LevelPackData* levelPackData = nullptr;
@@ -93,6 +98,9 @@ namespace r2
 			maxTotalNumberOfTextures = levelPackData->maxTotalNumberOfTextures();
 			maxTexturePackFileSize = levelPackData->maxTexturePackFileSize();
 			maxMaterialPackFileSize = levelPackData->maxMaterialPackFileSize();
+
+			maxNumModelsInAPackInALevel = levelPackData->maxNumModelsInALevel();
+			maxModelPackSizeInALevel = levelPackData->maxModelPackSize();
 
 			//now figure out how many files to make
 			for (flatbuffers::uoffset_t i = 0; i < levelPackData->allLevels()->size(); ++i)
@@ -141,6 +149,9 @@ namespace r2
 			maxTotalNumberOfTextures = 256;
 			maxTexturePackFileSize = Kilobytes(64);
 			maxMaterialPackFileSize = Kilobytes(64);
+
+			maxNumModelsInAPackInALevel = 20;
+			maxModelPackSizeInALevel = Megabytes(64);
 			
 			char levelPackDataName[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::CopyFileName(levelPackPath, levelPackDataName);
@@ -155,10 +166,6 @@ namespace r2
 			
 			r2::asset::pln::GenerateEmptyLevelPackFile(levelPackPath, levelPackRawPath);
 #endif
-			
-
-
-			
 		}
 
 #ifdef R2_ASSET_PIPELINE
@@ -197,6 +204,9 @@ namespace r2
 			maxTexturePackFileSize,
 			maxMaterialPackFileSize,
 
+			maxNumModelsInAPackInALevel,
+			maxModelPackSizeInALevel,
+
 			memProperties);
 
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
@@ -217,6 +227,10 @@ namespace r2
 
 		R2_CHECK(mArena != nullptr, "We couldn't emplace the stack arena!");
 
+
+		u32 numPoolElements = numLevelGroupsLoadedAtOneTime * numLevelsPerGroupLoadedAtOneTime;
+		mLevelArena = MAKE_POOL_ARENA(*mArena, sizeof(Level), numPoolElements);
+
 		mMemoryAreaHandle = memoryAreaHandle;
 		mSubAreaHandle = subAreaHandle;
 		mNumLevelsPerGroupLoadedAtOneTime = numLevelsPerGroupLoadedAtOneTime;
@@ -226,17 +240,17 @@ namespace r2
 		mModelSystems = MAKE_SARRAY(*mArena, r2::draw::ModelSystem*, numModelSystems);
 
 		//Might be a problem to have const char* as the type here
-		r2::SArray<const char*>* mSoundDefinitionFilePaths = MAKE_SARRAY(*mArena, const char*, numSoundDefinitionFiles);
+		mSoundDefinitionFilePaths = MAKE_SARRAY(*mArena, const char*, numSoundDefinitionFiles);
 
-		r2::SArray<LevelGroup>* mLoadedLevels = MAKE_SARRAY(*mArena, LevelGroup, numLevelGroupsLoadedAtOneTime);
+		mLoadedLevels = MAKE_SARRAY(*mArena, LevelGroup, numLevelGroupsLoadedAtOneTime);
 
-		for (u32 i = 0; i < numLevelGroupsLoadedAtOneTime; ++i)
+		/*for (u32 i = 0; i < numLevelGroupsLoadedAtOneTime; ++i)
 		{
 			LevelGroup levelGroup = MAKE_SARRAY(*mArena, Level*, mNumLevelsPerGroupLoadedAtOneTime);
 			r2::sarr::Push(*mLoadedLevels, levelGroup);
-		}
+		}*/
 
-
+		mGroupMap = MAKE_SARRAY(*mArena, LevelName, numLevelGroupsLoadedAtOneTime);
 
 		u32 levelCacheMemorySizeNeededInBytes = lvlche::MemorySize(totalNumberOfLevels, levelCacheMemoryNeededInBytes, memProperties);
 
@@ -293,19 +307,97 @@ namespace r2
 
 		FREE(mMaterialSystems, *mArena);
 
+		FREE(mLevelArena, *mArena);
+
 		FREE_EMPLACED_ARENA(mArena);
 
 		//@TODO(Serge): should we have to remove the sub areas?
 	}
 
-	r2::Level* LevelManager::LoadLevel(const char* level)
+	r2::Level* LevelManager::LoadLevel(const char* levelURI)
 	{
-		return nullptr;
+		char levelName[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::CopyFileNameWithParentDirectories(levelURI, levelName, 1); //include the group name
+		char groupName[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::GetParentDirectory(levelName, groupName);
+		return LoadLevel(STRING_ID(groupName), STRING_ID(levelName));
 	}
 
-	r2::Level* LevelManager::LoadLevel(LevelName levelName)
+	r2::Level* LevelManager::LoadLevel(LevelName groupName, LevelName levelName)
 	{
-		return nullptr;
+		if (!mLevelCache || !mLoadedLevels)
+		{
+			R2_CHECK(false, "We haven't initialized the level manager yet");
+			return nullptr;
+		}
+
+		s32 groupIndex = GetGroupIndex(groupName);
+
+		if (groupIndex == -1 && !r2::sarr::HasRoom(*mLoadedLevels))
+		{
+			//we don't have any room left in the mLoadedLevels
+			R2_CHECK(false, "we don't have any room left in the mLoadedLevels");
+			return nullptr;
+		}
+		else if (groupIndex == -1 && r2::sarr::HasRoom(*mLoadedLevels))
+		{
+			//make a new entry for the group
+			groupIndex = AddNewGroupToLoadedLevels(groupName);
+		}
+
+		//now check to see if we have room in the level array of the group
+		if (!(groupName >= 0))
+		{
+			R2_CHECK(false, "?");
+			return nullptr;
+		}
+
+		LevelGroup levelGroupToAddTo = r2::sarr::At(*mLoadedLevels, groupIndex);
+		
+		if (!r2::sarr::HasRoom(*levelGroupToAddTo))
+		{
+			R2_CHECK(false, "the level group doesn't have any room for the level to be loaded - need to unload first");
+			return nullptr;
+		}
+
+		LevelHandle levelHandle = r2::lvlche::LoadLevelData(*mLevelCache, levelName);
+
+		if (r2::asset::IsInvalidAssetHandle(levelHandle))
+		{
+			R2_CHECK(false, "Failed to load the level: %llu", levelName);
+			return nullptr;
+		}
+
+		const flat::LevelData* levelData = r2::lvlche::GetLevelData(*mLevelCache, levelHandle);
+
+		if (levelData == nullptr)
+		{
+			R2_CHECK(false, "Failed to get the level data for: %llu", levelData);
+			r2::lvlche::UnloadLevelData(*mLevelCache, levelHandle);
+			return nullptr;
+		}
+
+		if (levelData->groupHash() != groupName || levelData->hash() != levelName)
+		{
+			R2_CHECK(false, "These should be equal - probably an issue with content or how we generate the names");
+			r2::lvlche::UnloadLevelData(*mLevelCache, levelHandle);
+			return nullptr;
+		}
+
+		//now we need to go through all of the material, texture, sound, model references and see which ones we need/have already
+		//Also shaders need to be loaded as well if they are not already...
+		R2_CHECK(false, "@TODO(Serge): implement");
+
+
+
+
+		Level* newLevel = ALLOC(Level, *mLevelArena);
+		newLevel->Init(levelData, levelHandle);
+		r2::sarr::Push(*levelGroupToAddTo, newLevel);
+
+		return newLevel;
 	}
 
 	void LevelManager::UnloadLevel(Level* level)
@@ -349,6 +441,46 @@ namespace r2
 
 	}
 
+	s32 LevelManager::GetGroupIndex(LevelName groupName)
+	{
+		if (!mGroupMap)
+		{
+			R2_CHECK(false, "We haven't initialized the level manager");
+			return -1;
+		}
+
+		s32 index = static_cast<s32>(r2::sarr::IndexOf(*mGroupMap, groupName));
+
+		return index;
+	}
+
+	s32 LevelManager::AddNewGroupToLoadedLevels(LevelName groupName)
+	{
+		if (!mGroupMap || !mLoadedLevels)
+		{
+			R2_CHECK(false, "We haven't initialized the level manager");
+			return -1;
+		}
+
+		if (!r2::sarr::HasRoom(*mLoadedLevels))
+		{
+			R2_CHECK(false, "We don't have room for the new group");
+			return -1;
+		}
+
+		LevelGroup levelGroup = MAKE_SARRAY(*mArena, Level*, mNumLevelsPerGroupLoadedAtOneTime);
+
+		s32 index = r2::sarr::Size(*mLoadedLevels);
+		
+		R2_CHECK(index == r2::sarr::Size(*mGroupMap), "Should be the same");
+
+		r2::sarr::Push(*mLoadedLevels, levelGroup);
+
+		r2::sarr::Push(*mGroupMap, groupName);
+
+		return index;
+	}
+
 	u64 LevelManager::MemorySize(
 		u32 numGroupsLoadedAtOneTime,
 		u32 maxNumLevelsInAGroup,
@@ -365,25 +497,19 @@ namespace r2
 		u32 maxTexturePackFileSize,
 		u32 maxMaterialPackFileSize,
 
+		u32 maxNumModelsInAPackInALevel,
+		u32 maxModelPackSizeInALevel,
+
 		const r2::mem::utils::MemoryProperties& memProperties)
 	{
-		/*
-		r2::mem::StackArena* mArena;
-		r2::SArray<r2::draw::MaterialSystem*>* mMaterialSystems;
-		r2::SArray<r2::draw::ModelSystem*>* mModelSystems;
-		r2::SArray<const char*>* mSoundDefinitionFilePaths;
-		r2::SArray<LevelGroup>* mLoadedLevels;
-
-		LevelCache* mLevelCache;
-		*/
-
 		u64 memorySize = 0;
-
 		//max number of materials in a material pack for 1 level
+		u64 poolHeaderSize = r2::mem::PoolAllocator::HeaderSize();
 
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), alignof(Level), poolHeaderSize, memProperties.boundsChecking) * maxNumLevelsInAGroup * numGroupsLoadedAtOneTime;
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::MaterialSystem*>::MemorySize(numMaterialSystems), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
-		//@TODO(Serge): figure out the memory needed for the material systems
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(
 			r2::draw::mat::MemorySize(
 				memProperties.alignment,
@@ -394,18 +520,15 @@ namespace r2
 				maxNumTexturesInAPackForALevel, maxMaterialPackFileSize, maxTexturePackFileSize),
 			memProperties.alignment,
 			memProperties.headerSize,
-			memProperties.boundsChecking);
+			memProperties.boundsChecking) * numMaterialSystems;
 		
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ModelSystem*>::MemorySize(numModelsSystems), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
-		//@TODO(Serge): figure out the memory needed for the model systems
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::modlsys::MemorySize(maxNumModelsInAPackInALevel, maxModelPackSizeInALevel), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const char*>::MemorySize(numSoundDefinitionFiles), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<LevelGroup>::MemorySize(numGroupsLoadedAtOneTime), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Level*>::MemorySize(maxNumLevelsInAGroup), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking) * numGroupsLoadedAtOneTime;
-
-
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<LevelName>::MemorySize(numGroupsLoadedAtOneTime), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += lvlche::MemorySize(maxNumLevelsInAGroup * numGroupsLoadedAtOneTime, levelCacheSize, memProperties);
-
-
 
 		return memorySize;
 	}

@@ -55,6 +55,7 @@ namespace r2
         template<typename T> inline u64 Size(const SArray<T>& arr);
         template<typename T> inline bool IsEmpty(const SArray<T>& arr);
         template<typename T> inline u64 Capacity(const SArray<T>& arr);
+        template<typename T> inline bool HasRoom(const SArray<T>& arr);
         
         template<typename T> inline T* Begin(SArray<T>& arr);
         template<typename T> inline const T* Begin(const SArray<T>& arr);
@@ -104,6 +105,11 @@ namespace r2
         template<typename T> inline u64 Capacity(const SArray<T>& arr)
         {
             return arr.mCapacity;
+        }
+
+        template<typename T> inline bool HasRoom(const SArray<T>& arr)
+        {
+            return (static_cast<s64>(arr.mCapacity) - static_cast<s64>(arr.mSize)) > 0;
         }
 
         template<typename T> inline T* Begin(SArray<T>& arr)

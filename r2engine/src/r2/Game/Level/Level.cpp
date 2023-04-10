@@ -8,7 +8,7 @@ namespace r2
 {
 	Level::Level()
 		:mnoptrLevelData(nullptr)
-		,mnoptrEntitiesForLevel(nullptr)
+		,mLevelHandle{}
 	{
 	}
 
@@ -17,30 +17,28 @@ namespace r2
 
 	}
 
-	bool Level::Init(flat::LevelData* levelData, r2::SArray<ecs::Entity>* entityArray)
+	bool Level::Init(const flat::LevelData* levelData, LevelHandle levelHandle)
 	{
 		R2_CHECK(levelData != nullptr, "levelData is nullptr");
 		mnoptrLevelData = levelData;
-		R2_CHECK(entityArray != nullptr, "entityArray is nullptr");
-		mnoptrEntitiesForLevel = entityArray;
-
+		mLevelHandle = levelHandle;
 		return true;
 	}
 
 	void Level::Shutdown()
 	{
-		mnoptrEntitiesForLevel = nullptr;
 		mnoptrLevelData = nullptr;
+		mLevelHandle = {};
 	}
 
-	flat::LevelData* Level::GetLevelData() const
+	const flat::LevelData* Level::GetLevelData() const
 	{
 		return mnoptrLevelData;
 	}
 
-	r2::SArray<ecs::Entity>* Level::GetLevelEntities()
+	LevelHandle Level::GetLevelHandle() const
 	{
-		return mnoptrEntitiesForLevel;
+		return mLevelHandle;
 	}
 
 	const char* Level::GetLevelName() const
@@ -91,11 +89,10 @@ namespace r2
 		return mnoptrLevelData->groupHash();
 	}
 
-	u64 Level::MemorySize(u32 numEntitiesInLevel, const r2::mem::utils::MemoryProperties& memoryProperties)
+	u64 Level::MemorySize(const r2::mem::utils::MemoryProperties& memoryProperties)
 	{
 		return
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntitiesInLevel), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
 	}
 
 }

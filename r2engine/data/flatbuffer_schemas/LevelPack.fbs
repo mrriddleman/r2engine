@@ -40,7 +40,8 @@ table LevelPackData
 	maxTotalNumberOfTextures:uint;
 	maxTexturePackFileSize:uint;
 	maxMaterialPackFileSize:uint;
-
+	maxModelPackSize:uint;
+	maxNumModelsInALevel:uint;
 	allLevels:[LevelGroupData];
 }
 

@@ -25,7 +25,7 @@ namespace r2::mem
 
 namespace r2
 {
-	using LevelHandle = r2::asset::AssetHandle;
+	
 	
 	struct LevelCache
 	{

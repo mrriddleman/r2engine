@@ -23,28 +23,6 @@ table LevelData
 	name:string;
 	path:string;
 
-	totalMemoryNeeded:uint;
-	materialMemoryNeeded:uint;
-	staticModelMemoryNeeded:uint;
-	animatedModelMemoryNeeded:uint;
-	textureMemoryNeeded:uint;
-	soundMemoryNeeded:uint;
-	musicMemoryNeeded:uint;
-
-	numMaterialsPerMaterialPack:[uint];
-	numStaticModelsPerModelPack:[uint];
-	numAnimatedModelsPerModelPack:[uint];
-	numTexturesPerTexturePack:[uint];
-	numSoundReferencesPerSoundDefinitionPack:[uint];
-	numMusicReferencesPerSoundDefinitionPack:[uint];
-
-	materialPackReferences:[PackReference];
-	staticModelsReferences:[PackReference];
-	animatedModelsReferences:[PackReference];
-	texturePacksReferences:[PackReference];
-	soundReferences:[PackReference];
-	musicReferences:[PackReference];
-
 	numEntities:uint;
 	entities:[EntityData];
 	componentArrays:[ComponentArrayData];

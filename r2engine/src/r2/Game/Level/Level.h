@@ -4,6 +4,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/ECS/Entity.h"
+#include "r2/Core/Assets/AssetTypes.h"
 
 namespace flat
 {
@@ -13,7 +14,7 @@ namespace flat
 namespace r2
 {
 	using LevelName = u64;
-
+	using LevelHandle = r2::asset::AssetHandle;
 	const LevelName INVALID_LEVEL = 0;
 
 	class Level
@@ -22,11 +23,12 @@ namespace r2
 		Level();
 		~Level();
 
-		bool Init(flat::LevelData* levelData, r2::SArray<ecs::Entity>* entityArray);
+		bool Init(const flat::LevelData* levelData, LevelHandle levelHandle);
 		void Shutdown();
 
-		flat::LevelData* GetLevelData() const;
-		r2::SArray<ecs::Entity>* GetLevelEntities();
+		const flat::LevelData* GetLevelData() const;
+
+		LevelHandle GetLevelHandle() const;
 
 		const char* GetLevelName() const;
 		LevelName GetLevelHashName() const;
@@ -34,11 +36,11 @@ namespace r2
 		const char* GetGroupName() const;
 		LevelName GetGroupHashName() const;
 
-		static u64 MemorySize(u32 numEntitiesInLevel, const r2::mem::utils::MemoryProperties& memoryProperties);
+		static u64 MemorySize(const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
-		flat::LevelData* mnoptrLevelData;
-		r2::SArray<ecs::Entity>* mnoptrEntitiesForLevel;
+		const flat::LevelData* mnoptrLevelData;
+		LevelHandle mLevelHandle;
 	};
 }
 

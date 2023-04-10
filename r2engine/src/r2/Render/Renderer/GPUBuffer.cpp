@@ -15,7 +15,7 @@ namespace r2::draw::vb
 
 		size =
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignment, poolHeaderSize, boundsChecking) * maxNumberOfEntries +
+			r2::mem::utils::GetMaxMemoryForAllocation(nodeSize, alignof(SinglyLinkedList<vb::GPUBufferEntry>::Node), poolHeaderSize, boundsChecking) * maxNumberOfEntries +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SinglyLinkedList<GPUBufferEntry>::MemorySize(maxNumberOfEntries), alignment, poolHeaderSize, boundsChecking); //overestimate by sizeof(SinglyLinkedList) I think
 
 		return size;

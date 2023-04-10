@@ -218,7 +218,9 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_MAXTOTALNUMBEROFTEXTURES = 32,
     VT_MAXTEXTUREPACKFILESIZE = 34,
     VT_MAXMATERIALPACKFILESIZE = 36,
-    VT_ALLLEVELS = 38
+    VT_MAXMODELPACKSIZE = 38,
+    VT_MAXNUMMODELSINALEVEL = 40,
+    VT_ALLLEVELS = 42
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -271,6 +273,12 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint32_t maxMaterialPackFileSize() const {
     return GetField<uint32_t>(VT_MAXMATERIALPACKFILESIZE, 0);
   }
+  uint32_t maxModelPackSize() const {
+    return GetField<uint32_t>(VT_MAXMODELPACKSIZE, 0);
+  }
+  uint32_t maxNumModelsInALevel() const {
+    return GetField<uint32_t>(VT_MAXNUMMODELSINALEVEL, 0);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *>(VT_ALLLEVELS);
   }
@@ -293,6 +301,8 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_MAXTOTALNUMBEROFTEXTURES) &&
            VerifyField<uint32_t>(verifier, VT_MAXTEXTUREPACKFILESIZE) &&
            VerifyField<uint32_t>(verifier, VT_MAXMATERIALPACKFILESIZE) &&
+           VerifyField<uint32_t>(verifier, VT_MAXMODELPACKSIZE) &&
+           VerifyField<uint32_t>(verifier, VT_MAXNUMMODELSINALEVEL) &&
            VerifyOffset(verifier, VT_ALLLEVELS) &&
            verifier.VerifyVector(allLevels()) &&
            verifier.VerifyVectorOfTables(allLevels()) &&
@@ -355,6 +365,12 @@ struct LevelPackDataBuilder {
   void add_maxMaterialPackFileSize(uint32_t maxMaterialPackFileSize) {
     fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMATERIALPACKFILESIZE, maxMaterialPackFileSize, 0);
   }
+  void add_maxModelPackSize(uint32_t maxModelPackSize) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMODELPACKSIZE, maxModelPackSize, 0);
+  }
+  void add_maxNumModelsInALevel(uint32_t maxNumModelsInALevel) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMODELSINALEVEL, maxNumModelsInALevel, 0);
+  }
   void add_allLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels) {
     fbb_.AddOffset(LevelPackData::VT_ALLLEVELS, allLevels);
   }
@@ -389,9 +405,13 @@ inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
     uint32_t maxTotalNumberOfTextures = 0,
     uint32_t maxTexturePackFileSize = 0,
     uint32_t maxMaterialPackFileSize = 0,
+    uint32_t maxModelPackSize = 0,
+    uint32_t maxNumModelsInALevel = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels = 0) {
   LevelPackDataBuilder builder_(_fbb);
   builder_.add_allLevels(allLevels);
+  builder_.add_maxNumModelsInALevel(maxNumModelsInALevel);
+  builder_.add_maxModelPackSize(maxModelPackSize);
   builder_.add_maxMaterialPackFileSize(maxMaterialPackFileSize);
   builder_.add_maxTexturePackFileSize(maxTexturePackFileSize);
   builder_.add_maxTotalNumberOfTextures(maxTotalNumberOfTextures);
@@ -431,6 +451,8 @@ inline flatbuffers::Offset<LevelPackData> CreateLevelPackDataDirect(
     uint32_t maxTotalNumberOfTextures = 0,
     uint32_t maxTexturePackFileSize = 0,
     uint32_t maxMaterialPackFileSize = 0,
+    uint32_t maxModelPackSize = 0,
+    uint32_t maxNumModelsInALevel = 0,
     const std::vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels = nullptr) {
   auto allLevels__ = allLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroupData>>(*allLevels) : 0;
   return flat::CreateLevelPackData(
@@ -452,6 +474,8 @@ inline flatbuffers::Offset<LevelPackData> CreateLevelPackDataDirect(
       maxTotalNumberOfTextures,
       maxTexturePackFileSize,
       maxMaterialPackFileSize,
+      maxModelPackSize,
+      maxNumModelsInALevel,
       allLevels__);
 }
 
