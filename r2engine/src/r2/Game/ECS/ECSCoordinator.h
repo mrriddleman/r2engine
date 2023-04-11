@@ -69,6 +69,8 @@ namespace r2::ecs
 		void DestroyEntity(Entity entity);
 		void DestoryAllEntities();
 
+		u32 NumLivingEntities() const;
+
 		void LoadAllECSDataFromLevel(Level& level);
 		void UnloadAllECSDataFromLevel(Level& level);
 
@@ -102,7 +104,7 @@ namespace r2::ecs
 			auto signature = mEntityManager->GetSignature(entity);
 			signature.set(mComponentManager->GetComponentType<Component>(), true);
 			mEntityManager->SetSignature(entity, signature);
-
+			
 			mSystemManager->EntitySignatureChanged(entity, signature);
 		}
 
@@ -167,6 +169,11 @@ namespace r2::ecs
 		{
 			mSystemManager->MoveEntity<SystemType>(fromIndex, toIndex);
 		}
+
+		void SerializeECS (
+			flatbuffers::FlatBufferBuilder& builder,
+			std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec,
+			std::vector<flatbuffers::Offset<flat::ComponentArrayData>>& componentData) const;
 
 		static u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking);
 	private:

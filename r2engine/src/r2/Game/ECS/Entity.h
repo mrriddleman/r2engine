@@ -4,6 +4,8 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Game/ECS/Component.h"
+#include "flatbuffers/flatbuffers.h"
+#include "r2/Game/Level/LevelData_generated.h"
 
 namespace r2::ecs
 {
@@ -36,10 +38,20 @@ namespace r2::ecs
 				r2::squeue::PushBack(*mAvailbleEntities, i);
 			}
 
+			mCreatedEntities = MAKE_SARRAY(arena, Entity, maxNumEntities);
+
+			if (!mCreatedEntities)
+			{
+				FREE(mAvailbleEntities, arena);
+				R2_CHECK(false, "We couldn't allocate the created entities");
+				return false;
+			}
+
 			mEntitySignatures = MAKE_SARRAY(arena, Signature, maxNumEntities);
 
-			if (!mEntitySignatures)
+			if ( !mEntitySignatures)
 			{
+				FREE(mAvailbleEntities, arena);
 				FREE(mAvailbleEntities, arena);
 				R2_CHECK(false, "We couldn't allocate the mEntitySignatures!");
 				return false;
@@ -56,6 +68,9 @@ namespace r2::ecs
 			FREE(mEntitySignatures, arena);
 			mEntitySignatures = nullptr;
 
+			FREE(mCreatedEntities, arena);
+			mCreatedEntities = nullptr;
+
 			FREE(mAvailbleEntities, arena);
 			mAvailbleEntities = nullptr;
 		}
@@ -64,16 +79,18 @@ namespace r2::ecs
 		void DestroyEntity(Entity entity);
 		void DestoryAllEntities();
 
-
 		u32 NumLivingEntities() const;
 		
 		void SetSignature(Entity entity, Signature signature);
 		Signature& GetSignature(Entity entity);
 
+		void Serialize(flatbuffers::FlatBufferBuilder& builder, std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec) const;
+
 		static u64 MemorySize(u32 maxEntities, u32 alignment, u32 headerSize, u32 boundsChecking);
 		static bool IsValidEntity(const Entity& entity);
 	private:
 		r2::SQueue<Entity>* mAvailbleEntities;
+		r2::SArray<Entity>* mCreatedEntities;
 		r2::SArray<Signature>* mEntitySignatures;
 	};
 }

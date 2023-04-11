@@ -101,9 +101,9 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
     VT_HASH = 6,
-    VT_GROUPHASH = 8,
-    VT_GROUPNAME = 10,
-    VT_NAME = 12,
+    VT_NAME = 8,
+    VT_GROUPHASH = 10,
+    VT_GROUPNAME = 12,
     VT_PATH = 14,
     VT_NUMENTITIES = 16,
     VT_ENTITIES = 18,
@@ -115,14 +115,14 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t hash() const {
     return GetField<uint64_t>(VT_HASH, 0);
   }
+  const flatbuffers::String *name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
   uint64_t groupHash() const {
     return GetField<uint64_t>(VT_GROUPHASH, 0);
   }
   const flatbuffers::String *groupName() const {
     return GetPointer<const flatbuffers::String *>(VT_GROUPNAME);
-  }
-  const flatbuffers::String *name() const {
-    return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
   const flatbuffers::String *path() const {
     return GetPointer<const flatbuffers::String *>(VT_PATH);
@@ -140,11 +140,11 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION) &&
            VerifyField<uint64_t>(verifier, VT_HASH) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(name()) &&
            VerifyField<uint64_t>(verifier, VT_GROUPHASH) &&
            VerifyOffset(verifier, VT_GROUPNAME) &&
            verifier.VerifyString(groupName()) &&
-           VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_PATH) &&
            verifier.VerifyString(path()) &&
            VerifyField<uint32_t>(verifier, VT_NUMENTITIES) &&
@@ -168,14 +168,14 @@ struct LevelDataBuilder {
   void add_hash(uint64_t hash) {
     fbb_.AddElement<uint64_t>(LevelData::VT_HASH, hash, 0);
   }
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+    fbb_.AddOffset(LevelData::VT_NAME, name);
+  }
   void add_groupHash(uint64_t groupHash) {
     fbb_.AddElement<uint64_t>(LevelData::VT_GROUPHASH, groupHash, 0);
   }
   void add_groupName(flatbuffers::Offset<flatbuffers::String> groupName) {
     fbb_.AddOffset(LevelData::VT_GROUPNAME, groupName);
-  }
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
-    fbb_.AddOffset(LevelData::VT_NAME, name);
   }
   void add_path(flatbuffers::Offset<flatbuffers::String> path) {
     fbb_.AddOffset(LevelData::VT_PATH, path);
@@ -205,9 +205,9 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
     uint64_t hash = 0,
+    flatbuffers::Offset<flatbuffers::String> name = 0,
     uint64_t groupHash = 0,
     flatbuffers::Offset<flatbuffers::String> groupName = 0,
-    flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::String> path = 0,
     uint32_t numEntities = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::EntityData>>> entities = 0,
@@ -219,8 +219,8 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
   builder_.add_entities(entities);
   builder_.add_numEntities(numEntities);
   builder_.add_path(path);
-  builder_.add_name(name);
   builder_.add_groupName(groupName);
+  builder_.add_name(name);
   builder_.add_version(version);
   return builder_.Finish();
 }
@@ -229,15 +229,15 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
     uint64_t hash = 0,
+    const char *name = nullptr,
     uint64_t groupHash = 0,
     const char *groupName = nullptr,
-    const char *name = nullptr,
     const char *path = nullptr,
     uint32_t numEntities = 0,
     const std::vector<flatbuffers::Offset<flat::EntityData>> *entities = nullptr,
     const std::vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays = nullptr) {
-  auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
+  auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto path__ = path ? _fbb.CreateString(path) : 0;
   auto entities__ = entities ? _fbb.CreateVector<flatbuffers::Offset<flat::EntityData>>(*entities) : 0;
   auto componentArrays__ = componentArrays ? _fbb.CreateVector<flatbuffers::Offset<flat::ComponentArrayData>>(*componentArrays) : 0;
@@ -245,9 +245,9 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
       _fbb,
       version,
       hash,
+      name__,
       groupHash,
       groupName__,
-      name__,
       path__,
       numEntities,
       entities__,

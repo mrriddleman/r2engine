@@ -212,6 +212,17 @@ namespace r2::ecs
 			}
 		}
 
+		void Serialize(flatbuffers::FlatBufferBuilder& builder, std::vector<flatbuffers::Offset<flat::ComponentArrayData>>& componentArraysData) const
+		{
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
+			componentArraysData.reserve(numComponentArrays);
+
+			for (u32 i = 0; i < numComponentArrays; ++i)
+			{
+				componentArraysData.push_back( r2::sarr::At(*mComponentArrays, i)->Serialize(builder) );
+			}
+		}
+
 		static u64 MemorySize(u32 maxNumComponents, u32 alignment, u32 headerSize, u32 boundsChecking)
 		{
 			u64 memorySize = 0;

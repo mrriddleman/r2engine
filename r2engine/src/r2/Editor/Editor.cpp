@@ -30,6 +30,8 @@
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
 
+#include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
+
 namespace 
 {
 	//Figure out render system defaults
@@ -215,7 +217,14 @@ namespace r2
 
 	void Editor::Save()
 	{
-		printf("Save!\n");
+		//@Test - very temporary
+		std::filesystem::path levelBinURI = "testGroup/Level1.rlvl";
+		std::filesystem::path levelRawURI = "testGroup/Level1.json";
+
+		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
+		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
+
+		r2::asset::pln::SaveLevelData(mCoordinator, 1, (levelDataBinPath / levelBinURI).string(), (levelDataRawPath / levelRawURI).string());
 	}
 
 	void Editor::PostEditorEvent(r2::evt::EditorEvent& e)

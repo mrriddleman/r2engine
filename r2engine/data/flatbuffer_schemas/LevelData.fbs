@@ -18,11 +18,10 @@ table LevelData
 	version:uint;
 
 	hash:ulong (hash:"fnv1a_64");
+	name:string;
 	groupHash:ulong(hash:"fnv1a_64");
 	groupName:string;
-	name:string;
 	path:string;
-
 	numEntities:uint;
 	entities:[EntityData];
 	componentArrays:[ComponentArrayData];

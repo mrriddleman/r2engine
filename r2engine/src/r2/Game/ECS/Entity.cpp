@@ -2,10 +2,12 @@
 
 #include "r2/Game/ECS/Entity.h"
 
+
 namespace r2::ecs
 {
 	EntityManager::EntityManager()
 		: mAvailbleEntities(nullptr)
+		, mCreatedEntities(nullptr)
 		, mEntitySignatures(nullptr)
 	{
 	}
@@ -33,13 +35,14 @@ namespace r2::ecs
 
 		r2::squeue::PopFront(*mAvailbleEntities);
 
-		return e;
+		r2::sarr::Push(*mCreatedEntities, e);
 
+		return e;
 	}
 
 	void EntityManager::DestroyEntity(Entity entity)
 	{
-		if (!mAvailbleEntities)
+		if (!mAvailbleEntities || !mCreatedEntities)
 		{
 			R2_CHECK(false, "We haven't initialized the EntityManager!");
 			return;
@@ -51,24 +54,40 @@ namespace r2::ecs
 			return;
 		}
 
-		r2::squeue::PushFront(*mAvailbleEntities, entity);
 
+		s64 index = r2::sarr::IndexOf(*mCreatedEntities, entity);
+
+		R2_CHECK(index != -1, "Shouldn't ever happen");
+
+		r2::sarr::At(*mEntitySignatures, entity) = {};
+
+		r2::sarr::RemoveAndSwapWithLastElement(*mCreatedEntities, index);
+
+		r2::squeue::PushFront(*mAvailbleEntities, entity);
 	}
 
 	void EntityManager::DestoryAllEntities()
 	{
+		r2::sarr::Clear(*mEntitySignatures);
+		r2::sarr::Fill(*mEntitySignatures, Signature{});
 
+		for (u32 i = 0; i < r2::sarr::Size(*mCreatedEntities); ++i)
+		{
+			r2::squeue::PushFront(*mAvailbleEntities, r2::sarr::At(*mCreatedEntities, i));
+		}
+
+		r2::sarr::Clear(*mCreatedEntities);
 	}
 
 	u32 EntityManager::NumLivingEntities() const
 	{
-		if (!mAvailbleEntities)
+		if (!mCreatedEntities)
 		{
 			R2_CHECK(false, "We haven't initialized the EntityManager!");
 			return 0;
 		}
 
-		return static_cast<u32>(r2::squeue::Space(*mAvailbleEntities));
+		return r2::sarr::Size(*mCreatedEntities);
 	}
 
 	void EntityManager::SetSignature(Entity entity, Signature signature)
@@ -81,10 +100,30 @@ namespace r2::ecs
 		return r2::sarr::At(*mEntitySignatures, entity);
 	}
 
+	void EntityManager::Serialize(flatbuffers::FlatBufferBuilder& builder, std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec) const
+	{
+		const auto numCreatedEntities = r2::sarr::Size(*mCreatedEntities);
+
+		for (u32 i = 0; i <numCreatedEntities; ++i)
+		{
+			Entity e = r2::sarr::At(*mCreatedEntities, i);
+			auto entityData = flat::CreateEntityData(builder, e, r2::sarr::At(*mEntitySignatures, e).to_ullong());
+			entityVec.push_back(entityData);
+		}
+		
+		for (u32 i = 0; i < (MAX_NUM_ENTITIES - numCreatedEntities); ++i)
+		{
+			auto entityData = flat::CreateEntityData(builder, INVALID_ENTITY, 0);
+			entityVec.push_back(entityData);
+		}
+	}
+
 	u64 EntityManager::MemorySize(u32 maxEntities, u32 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(EntityManager), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Entity>::MemorySize(maxEntities), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Signature>::MemorySize(maxEntities), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<Entity>::MemorySize(maxEntities), alignment, headerSize, boundsChecking);
 	}
 

@@ -14,14 +14,19 @@ struct EntityDataBuilder;
 struct EntityData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef EntityDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_ENTITYID = 4
+    VT_ENTITYID = 4,
+    VT_SIGNATURE = 6
   };
   uint32_t entityID() const {
     return GetField<uint32_t>(VT_ENTITYID, 0);
   }
+  uint64_t signature() const {
+    return GetField<uint64_t>(VT_SIGNATURE, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_ENTITYID) &&
+           VerifyField<uint64_t>(verifier, VT_SIGNATURE) &&
            verifier.EndTable();
   }
 };
@@ -32,6 +37,9 @@ struct EntityDataBuilder {
   flatbuffers::uoffset_t start_;
   void add_entityID(uint32_t entityID) {
     fbb_.AddElement<uint32_t>(EntityData::VT_ENTITYID, entityID, 0);
+  }
+  void add_signature(uint64_t signature) {
+    fbb_.AddElement<uint64_t>(EntityData::VT_SIGNATURE, signature, 0);
   }
   explicit EntityDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -47,8 +55,10 @@ struct EntityDataBuilder {
 
 inline flatbuffers::Offset<EntityData> CreateEntityData(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t entityID = 0) {
+    uint32_t entityID = 0,
+    uint64_t signature = 0) {
   EntityDataBuilder builder_(_fbb);
+  builder_.add_signature(signature);
   builder_.add_entityID(entityID);
   return builder_.Finish();
 }

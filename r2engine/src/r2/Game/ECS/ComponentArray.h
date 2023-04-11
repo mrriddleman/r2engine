@@ -18,7 +18,8 @@ namespace r2::ecs
 		virtual ~IComponentArray() = default;
 		virtual void EntityDestroyed(Entity entity) = 0;
 		virtual void DestoryAllEntities() = 0;
-		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) = 0;
+		virtual u64 GetHashName() = 0;
+		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const = 0;
 	};
 
 	template <typename Component>
@@ -177,7 +178,7 @@ namespace r2::ecs
 			r2::shashmap::Clear(*mIndexToEntityMap);
 		}
 
-		flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) override
+		flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const override
 		{
 			flat::ComponentArrayDataBuilder componentArrayDataBuilder(builder);
 			flexbuffers::Builder flexbufferBuilder;
@@ -189,6 +190,11 @@ namespace r2::ecs
 			componentArrayDataBuilder.add_componentArray(builder.CreateVector(flexbufferBuilder.GetBuffer()));
 			componentArrayDataBuilder.add_entityToIndexMap(builder.CreateVector(mEntityToIndexMap->mData,(size_t)mEntityToIndexMap->mCapacity));
 			return componentArrayDataBuilder.Finish();
+		}
+
+		u64 GetHashName() override
+		{
+			return mHashName;
 		}
 
 		static u64 MemorySize(u32 maxNumEntities, u64 alignment, u32 headerSize, u32 boundsChecking)

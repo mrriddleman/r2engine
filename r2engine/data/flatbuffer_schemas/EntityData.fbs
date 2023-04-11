@@ -3,6 +3,7 @@ namespace flat;
 table EntityData
 {
 	entityID:uint;
+	signature:ulong;
 }
 
 root_type EntityData;

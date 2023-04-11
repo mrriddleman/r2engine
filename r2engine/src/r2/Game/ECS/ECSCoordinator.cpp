@@ -38,6 +38,11 @@ namespace r2::ecs
 		mSystemManager->DestoryAllEntities();
 	}
 
+	u32 ECSCoordinator::NumLivingEntities() const
+	{
+		return mEntityManager->NumLivingEntities();
+	}
+
 	void ECSCoordinator::LoadAllECSDataFromLevel(Level& level)
 	{
 		//@TODO(Serge):
@@ -48,6 +53,15 @@ namespace r2::ecs
 	{
 		//@TODO(Serge):
 		R2_CHECK(false, "Not implemented yet!");
+	}
+
+	void ECSCoordinator::SerializeECS (
+		flatbuffers::FlatBufferBuilder& builder,
+		std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec,
+		std::vector<flatbuffers::Offset<flat::ComponentArrayData>>& componentData) const
+	{
+		mEntityManager->Serialize(builder, entityVec);
+		mComponentManager->Serialize(builder, componentData);
 	}
 
 	u64 ECSCoordinator::MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking)
