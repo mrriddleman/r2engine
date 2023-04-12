@@ -29,10 +29,9 @@ namespace r2::draw
 {
     class AnimModel;
     class Animation;
-
-    
+    struct ModelSystem;
+    struct MaterialSystem;
 }
-
 
 #endif // R2_EDITOR
 
@@ -96,8 +95,8 @@ namespace r2
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
         virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const;
-		virtual const r2::draw::AnimModel* GetEditorAnimModel() const;
-        virtual const s64 GetEditorAnimGPUModelRefHandle() const;
+        virtual r2::draw::ModelSystem* GetEditorModelSystem() const;
+        virtual r2::draw::MaterialSystem* GetEditorMaterialSystem() const;
 #endif
         
 

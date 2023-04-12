@@ -11,6 +11,8 @@ namespace r2::ecs
 {
 	struct SkeletalAnimationComponent
 	{
+		u64 animModelAssetName;
+
 		b32 shouldUseSameTransformsForAllInstances;
 		const r2::draw::AnimModel* animModel;
 		u32 startTime;

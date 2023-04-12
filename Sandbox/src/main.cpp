@@ -1788,17 +1788,17 @@ public:
         return animations;
     }
 
-    virtual const r2::draw::AnimModel* GetEditorAnimModel()const override
-    {
-        return mMicroBatModel;
-    }
 
-    virtual const s64 GetEditorAnimGPUModelRefHandle() const override
-    {
-        return mMicroBatModelRefHandle;
-    }
+	r2::draw::ModelSystem* GetEditorModelSystem() const
+	{
+		return mModelSystem;
+	}
+
+	r2::draw::MaterialSystem* GetEditorMaterialSystem() const
+	{
+		return mMaterialSystem;
+	}
 #endif
-
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override

@@ -27,6 +27,11 @@ namespace r2::ecs
 #endif
 }
 
+namespace r2::draw
+{
+	struct AnimModel;
+}
+
 namespace r2
 {
 	class Editor
@@ -62,6 +67,7 @@ namespace r2
 
 		//@TEST CODE:
 		r2::util::Random mRandom;
+		const r2::draw::AnimModel* microbatAnimModel;
 
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;

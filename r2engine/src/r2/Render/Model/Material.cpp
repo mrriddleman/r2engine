@@ -2031,6 +2031,11 @@ namespace r2::draw::matsys
 
 	MaterialSystem* CreateMaterialSystem(const r2::mem::utils::MemBoundary& boundary, const char* materialParamsPackPath, const flat::MaterialParamsPack* materialPack, u64 materialParamsPackSize, const char* texturePackManifestPath)
 	{
+		char materialSystemNameStr[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::CopyFileName(materialParamsPackPath, materialSystemNameStr);
+
+		const auto materialSystemName = STRING_ID(materialSystemNameStr);
+
 		u64 unallocatedSpace = boundary.size;
 
 		R2_CHECK(unallocatedSpace > 0 && boundary.location != nullptr, "We should have a valid boundary");
@@ -2205,6 +2210,8 @@ namespace r2::draw::matsys
 
 
 		system->mDefaultRenderMaterialParams.albedo.color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+
+		system->mMaterialSystemName = materialSystemName;
 
 		return system;
 	}

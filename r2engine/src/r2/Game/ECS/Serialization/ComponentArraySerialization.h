@@ -8,7 +8,7 @@
 namespace r2::ecs
 {
 	template<typename Component>
-	void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<Component>& components)
+	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<Component>& components)
 	{
 		R2_CHECK(false, "You need to implement a serializer for this type");
 	}

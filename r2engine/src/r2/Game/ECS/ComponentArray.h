@@ -7,8 +7,19 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Memory.h"
-#include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
+
+#include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
+#ifdef R2_DEBUG
+#include "r2/Game/ECS/Serialization/DebugBoneComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/DebugRenderComponentSerialization.h"
+#endif
+#include "r2/Game/ECS/Serialization/EditorComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/HeirarchyComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/RenderComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/SkeletalAnimationComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/TransformDirtyComponentSerialization.h"
 
 namespace r2::ecs
 {

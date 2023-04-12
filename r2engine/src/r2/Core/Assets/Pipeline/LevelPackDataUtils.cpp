@@ -57,12 +57,18 @@ namespace r2::asset::pln
 			builder.CreateString(levelName),
 			STRING_ID(groupName.c_str()),
 			builder.CreateString(groupName.c_str()),
-			builder.CreateString(binLevelPath), numEntities, builder.CreateVector(entityVec), builder.CreateVector(componentDataArray));
+			builder.CreateString(binLevelPath), 
+			numEntities,
+			builder.CreateVector(entityVec),
+			builder.CreateVector(componentDataArray));
 
 		builder.Finish(levelData);
 
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
+
+		flexbuffers::Builder fbb;
+		
 
 		return WriteNewLevelDataFromBinary(binLevelPath, rawJSONPath, buf, size);
 	}

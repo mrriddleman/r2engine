@@ -85,6 +85,8 @@ namespace r2
 		{
 			widget->Init(this);
 		}
+
+		microbatAnimModel = nullptr;
 	}
 
 	void Editor::Shutdown()
@@ -96,7 +98,13 @@ namespace r2
 
 		mEditorWidgets.clear();
 
-		
+		//@TEMPORARY!!!
+		if (microbatAnimModel)
+		{
+			r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+			r2::draw::modlsys::ReturnAnimModel(editorModelSystem, microbatAnimModel);
+
+		}
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 
@@ -236,9 +244,19 @@ namespace r2
 			{
 				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = CENG.GetApplication().GetEditorAnimGPUModelRefHandle();//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
+				r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+
+
+				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
+
+				r2::draw::ModelHandle microbatModelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, microbatAsset);
+
+				microbatAnimModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, microbatModelHandle);
+
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
 				ecs::RenderComponent renderComponent;
+				renderComponent.assetModelHash = microbatAsset.HashID();
 				renderComponent.optrOverrideMaterials = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = draw::PrimitiveType::TRIANGLES;
@@ -314,7 +332,8 @@ namespace r2
 				r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 				*/
 				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
-				skeletalAnimationComponent.animModel = CENG.GetApplication().GetEditorAnimModel();
+				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
+				skeletalAnimationComponent.animModel = microbatAnimModel;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 
 				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
@@ -402,7 +421,7 @@ namespace r2
 					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
-					skeletalAnimationInstance1.animModel = CENG.GetApplication().GetEditorAnimModel();
+					skeletalAnimationInstance1.animModel = microbatAnimModel;
 					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = true;
 
 					skeletalAnimationInstance1.startTime = 0; 
@@ -415,7 +434,7 @@ namespace r2
 
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
-					skeletalAnimationInstance2.animModel = CENG.GetApplication().GetEditorAnimModel();
+					skeletalAnimationInstance2.animModel = microbatAnimModel;
 					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = true;
 
 					skeletalAnimationInstance2.startTime = 0;

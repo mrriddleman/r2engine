@@ -128,7 +128,8 @@ namespace r2::draw
 	struct MaterialSystem
 	{
 		r2::mem::utils::MemBoundary mMaterialMemBoundary = {};
-		
+		u64 mMaterialSystemName = 0;
+
 #ifdef R2_ASSET_PIPELINE
 		r2::mem::MallocArena* mLinearArena = nullptr;
 #else

@@ -60,7 +60,7 @@ namespace r2::draw
     enum DrawLayer : u8
     {
         DL_CLEAR = 0,
-        DL_COMPUTE, //should be second to last (or last maybe?)
+        DL_COMPUTE, 
         DL_WORLD, //static models
         DL_CHARACTER, //dynamic models
         DL_SKYBOX,

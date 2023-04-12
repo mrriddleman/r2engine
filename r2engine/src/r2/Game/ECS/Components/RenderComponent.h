@@ -7,15 +7,20 @@
 
 namespace r2::ecs
 {
+	struct RenderMaterialOverride
+	{
+		u64 materialSystemName;
+		u64 materialName;
+	};
+
 	struct RenderComponent
 	{
+		u64 assetModelHash;
 		r2::draw::PrimitiveType primitiveType;
 		r2::draw::DrawParameters drawParameters;
 		r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
 		r2::SArray<r2::draw::MaterialHandle>* optrOverrideMaterials;
-
-		//@TODO(Serge): we actually want the ability to render multiple models/meshes per entity
-		//				for example: if we have a terrain that consists of multiple cubes - we only want that to be 1 entity and not 100
+		r2::SArray<RenderMaterialOverride>* optrMaterialOverrideNames;
 	};
 }
 

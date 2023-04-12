@@ -175,16 +175,15 @@ namespace r2
         return {};
     }
 
-    const r2::draw::AnimModel* Application::GetEditorAnimModel() const
+    r2::draw::ModelSystem* Application::GetEditorModelSystem() const
     {
         return nullptr;
     }
 
-	const s64 Application::GetEditorAnimGPUModelRefHandle() const
-	{
-        return -1;
-	}
-
+    r2::draw::MaterialSystem* Application::GetEditorMaterialSystem() const
+    {
+        return nullptr;
+    }
 #endif
 
 #ifdef R2_ASSET_PIPELINE
