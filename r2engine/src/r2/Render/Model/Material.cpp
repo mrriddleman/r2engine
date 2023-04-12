@@ -2273,6 +2273,28 @@ namespace r2::draw::matsys
 		return nullptr;
 	}
 
+	MaterialSystem* GetMaterialSystemBySystemName(u64 materialSystemName)
+	{
+		if (!s_optrMaterialSystems || !s_optrMaterialSystems->mMaterialSystems)
+		{
+			return nullptr;
+		}
+
+		u32 numSystems = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);
+
+		for (u32 i = 0; i < numSystems; ++i)
+		{
+			MaterialSystem* system = s_optrMaterialSystems->mMaterialSystems->mData[i];
+
+			if (system && system->mMaterialSystemName == materialSystemName)
+			{
+				return system;
+			}
+		}
+
+		return nullptr;
+	}
+
 	MaterialSystem* FindMaterialSystem(u64 materialName)
 	{
 		u64 capacity = r2::sarr::Capacity(*s_optrMaterialSystems->mMaterialSystems);

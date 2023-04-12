@@ -173,6 +173,9 @@ namespace r2::draw::matsys
 	u64 MemorySize(u64 numSystems, u64 maxNumMaterialsPerSystem, u64 alignment);
 	r2::draw::MaterialSystem* GetMaterialSystem(s32 slot);
 
+
+	MaterialSystem* GetMaterialSystemBySystemName(u64 materialSystemName);
+
 	MaterialSystem* FindMaterialSystem(u64 materialName);
 	MaterialHandle FindMaterialHandle(u64 materialName);
 	
