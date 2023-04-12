@@ -3,6 +3,7 @@
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+#include "r2/Game/ECS/Components/InstanceComponent.h"
 
 namespace r2::ecs
 {
@@ -21,6 +22,16 @@ namespace r2::ecs
 		};
 	*/
 
+	void SerializeSkeletalAnimationComponent(flexbuffers::Builder& builder, const SkeletalAnimationComponent& skeletalAnimationComponent)
+	{
+		builder.Vector("skeletalAnimationComponent", [&]() {
+			builder.UInt(skeletalAnimationComponent.animModelAssetName);
+			builder.UInt(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
+			builder.UInt(skeletalAnimationComponent.startTime);
+			builder.UInt(skeletalAnimationComponent.shouldLoop);
+			});
+	}
+
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<SkeletalAnimationComponent>& components)
 	{
@@ -30,12 +41,25 @@ namespace r2::ecs
 			for (u32 i = 0; i < numComponents; ++i)
 			{
 				const auto& skeletalAnimationComponent = r2::sarr::At(components, i);
-				builder.Vector("skeletalAnimationComponent", [&]() {
-					builder.UInt(skeletalAnimationComponent.animModelAssetName);
-					builder.UInt(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
-					builder.UInt(skeletalAnimationComponent.startTime);
-					builder.UInt(skeletalAnimationComponent.shouldLoop);
-				});
+				SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
+			}
+		});
+	}
+
+	template<>
+	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
+	{
+		builder.Vector("skeletalAnimationInstances", [&]() {
+			const auto numComponents = r2::sarr::Size(components);
+			for (u32 i = 0; i < numComponents; ++i)
+			{
+				const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimation = r2::sarr::At(components, i);
+
+				for (u32 j = 0; j < instancedSkeletalAnimation.numInstances; ++j)
+				{
+					const auto& skeletalAnimationComponent = r2::sarr::At(*instancedSkeletalAnimation.instances, j);
+					SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
+				}
 			}
 		});
 	}
