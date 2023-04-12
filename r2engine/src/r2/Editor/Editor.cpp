@@ -364,6 +364,7 @@ namespace r2
 				mCoordinator->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
 				mCoordinator->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
 				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
+				CENG.GetApplication().AddComponentsToEntity(mCoordinator, theNewEntity);
 
 				//transform instance
 				{
@@ -549,10 +550,14 @@ namespace r2
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent", false);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent", false);
 #endif
+
+		CENG.GetApplication().RegisterComponents(mCoordinator);
 	}
 
 	void Editor::UnRegisterComponents()
 	{
+		CENG.GetApplication().UnRegisterComponents(mCoordinator);
+
 #ifdef R2_DEBUG
 		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena);
 		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena);

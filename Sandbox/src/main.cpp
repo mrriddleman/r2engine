@@ -44,13 +44,15 @@
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 
+#include "r2/Game/ECS/ECSCoordinator.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
 
 struct DummyComponent
 {
-
+    int dummy;
 };
 
 namespace r2::ecs
@@ -1798,6 +1800,25 @@ public:
 	{
 		return mMaterialSystem;
 	}
+
+    virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    {
+        /*coordinator->RegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr, "DummyComponent", true);*/
+    }
+	
+    virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    {
+        /*coordinator->UnRegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr);*/
+    }
+
+    virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const
+    {
+        //DummyComponent d;
+        //d.dummy = 42;
+
+        //coordinator->AddComponent<DummyComponent>(e, d);
+    }
+
 #endif
     
 #ifdef R2_ASSET_PIPELINE

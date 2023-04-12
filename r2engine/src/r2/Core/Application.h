@@ -23,7 +23,7 @@
 #endif
 
 #ifdef R2_EDITOR
-
+#include "r2/Game/ECS/Entity.h"
 
 namespace r2::draw
 {
@@ -31,6 +31,11 @@ namespace r2::draw
     class Animation;
     struct ModelSystem;
     struct MaterialSystem;
+}
+
+namespace r2::ecs
+{
+    class ECSCoordinator;
 }
 
 #endif // R2_EDITOR
@@ -97,6 +102,9 @@ namespace r2
         virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const;
         virtual r2::draw::ModelSystem* GetEditorModelSystem() const;
         virtual r2::draw::MaterialSystem* GetEditorMaterialSystem() const;
+        virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
+        virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
+        virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const;
 #endif
         
 

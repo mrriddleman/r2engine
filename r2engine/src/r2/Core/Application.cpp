@@ -184,6 +184,20 @@ namespace r2
     {
         return nullptr;
     }
+
+    void Application::RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    {
+
+    }
+
+    void Application::UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    {
+
+    }
+    void Application::AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const
+    {
+
+    }
 #endif
 
 #ifdef R2_ASSET_PIPELINE
