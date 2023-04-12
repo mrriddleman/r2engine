@@ -1,9 +1,15 @@
 namespace flat;
 
+table EntityToIndexMapEntry
+{
+	entity:uint;
+	index:int;		
+}
+
 table ComponentArrayData
 {
 	componentType:ulong (hash:"fnv1a_64");
-	entityToIndexMap:[int];
+	entityToIndexMap:[EntityToIndexMapEntry];
 	componentArray:[ubyte] (flexbuffer);
 }
 

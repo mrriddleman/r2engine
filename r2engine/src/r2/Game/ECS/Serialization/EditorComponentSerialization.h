@@ -16,12 +16,12 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<EditorComponent>& components)
 	{
-		builder.Vector("editor_components", [&]() {
+		builder.Vector([&]() {
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
 			{
 				const auto& c = r2::sarr::At(components, i);
-				builder.Vector("component", [&]() {
+				builder.Vector([&]() {
 					builder.String(c.editorName);
 					builder.UInt(c.flags.GetRawValue());
 				});

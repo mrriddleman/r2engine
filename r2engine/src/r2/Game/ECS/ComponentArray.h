@@ -10,16 +10,6 @@
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
-#ifdef R2_DEBUG
-#include "r2/Game/ECS/Serialization/DebugBoneComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/DebugRenderComponentSerialization.h"
-#endif
-#include "r2/Game/ECS/Serialization/EditorComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/HeirarchyComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/RenderComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/SkeletalAnimationComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
-#include "r2/Game/ECS/Serialization/TransformDirtyComponentSerialization.h"
 
 namespace r2::ecs
 {
@@ -31,6 +21,7 @@ namespace r2::ecs
 		virtual void DestoryAllEntities() = 0;
 		virtual u64 GetHashName() = 0;
 		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const = 0;
+		b32 mShouldSerialize;
 	};
 
 	template <typename Component>
@@ -191,15 +182,30 @@ namespace r2::ecs
 
 		flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const override
 		{
-			flat::ComponentArrayDataBuilder componentArrayDataBuilder(builder);
 			flexbuffers::Builder flexbufferBuilder;
-
 			SerializeComponentArray(flexbufferBuilder, *mComponentArray);
 			flexbufferBuilder.Finish();
 
+			auto flexBufferData = builder.CreateVector(flexbufferBuilder.GetBuffer());
+			std::vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> entityToIndexEntries;
+
+			for (u32 i = 0; i < r2::sarr::Capacity(*mEntityToIndexMap); ++i)
+			{
+				auto index = r2::sarr::At(*mEntityToIndexMap, i);
+				if (index != -1)
+				{
+					auto entry = flat::CreateEntityToIndexMapEntry(builder, i, index);
+					entityToIndexEntries.push_back(entry);
+				}
+			}
+
+			auto entityToIndexMapVec = builder.CreateVector(entityToIndexEntries);
+
+			flat::ComponentArrayDataBuilder componentArrayDataBuilder(builder);
 			componentArrayDataBuilder.add_componentType(mHashName);
-			componentArrayDataBuilder.add_componentArray(builder.CreateVector(flexbufferBuilder.GetBuffer()));
-			componentArrayDataBuilder.add_entityToIndexMap(builder.CreateVector(mEntityToIndexMap->mData,(size_t)mEntityToIndexMap->mCapacity));
+			componentArrayDataBuilder.add_componentArray(flexBufferData);
+			componentArrayDataBuilder.add_entityToIndexMap(entityToIndexMapVec);
+
 			return componentArrayDataBuilder.Finish();
 		}
 

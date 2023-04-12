@@ -9,8 +9,63 @@
 
 namespace flat {
 
+struct EntityToIndexMapEntry;
+struct EntityToIndexMapEntryBuilder;
+
 struct ComponentArrayData;
 struct ComponentArrayDataBuilder;
+
+struct EntityToIndexMapEntry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef EntityToIndexMapEntryBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ENTITY = 4,
+    VT_INDEX = 6
+  };
+  uint32_t entity() const {
+    return GetField<uint32_t>(VT_ENTITY, 0);
+  }
+  int32_t index() const {
+    return GetField<int32_t>(VT_INDEX, 0);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_ENTITY) &&
+           VerifyField<int32_t>(verifier, VT_INDEX) &&
+           verifier.EndTable();
+  }
+};
+
+struct EntityToIndexMapEntryBuilder {
+  typedef EntityToIndexMapEntry Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_entity(uint32_t entity) {
+    fbb_.AddElement<uint32_t>(EntityToIndexMapEntry::VT_ENTITY, entity, 0);
+  }
+  void add_index(int32_t index) {
+    fbb_.AddElement<int32_t>(EntityToIndexMapEntry::VT_INDEX, index, 0);
+  }
+  explicit EntityToIndexMapEntryBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  EntityToIndexMapEntryBuilder &operator=(const EntityToIndexMapEntryBuilder &);
+  flatbuffers::Offset<EntityToIndexMapEntry> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<EntityToIndexMapEntry>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<EntityToIndexMapEntry> CreateEntityToIndexMapEntry(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t entity = 0,
+    int32_t index = 0) {
+  EntityToIndexMapEntryBuilder builder_(_fbb);
+  builder_.add_index(index);
+  builder_.add_entity(entity);
+  return builder_.Finish();
+}
 
 struct ComponentArrayData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ComponentArrayDataBuilder Builder;
@@ -22,8 +77,8 @@ struct ComponentArrayData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint64_t componentType() const {
     return GetField<uint64_t>(VT_COMPONENTTYPE, 0);
   }
-  const flatbuffers::Vector<int32_t> *entityToIndexMap() const {
-    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_ENTITYTOINDEXMAP);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> *entityToIndexMap() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> *>(VT_ENTITYTOINDEXMAP);
   }
   const flatbuffers::Vector<uint8_t> *componentArray() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_COMPONENTARRAY);
@@ -36,6 +91,7 @@ struct ComponentArrayData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<uint64_t>(verifier, VT_COMPONENTTYPE) &&
            VerifyOffset(verifier, VT_ENTITYTOINDEXMAP) &&
            verifier.VerifyVector(entityToIndexMap()) &&
+           verifier.VerifyVectorOfTables(entityToIndexMap()) &&
            VerifyOffset(verifier, VT_COMPONENTARRAY) &&
            verifier.VerifyVector(componentArray()) &&
            verifier.EndTable();
@@ -49,7 +105,7 @@ struct ComponentArrayDataBuilder {
   void add_componentType(uint64_t componentType) {
     fbb_.AddElement<uint64_t>(ComponentArrayData::VT_COMPONENTTYPE, componentType, 0);
   }
-  void add_entityToIndexMap(flatbuffers::Offset<flatbuffers::Vector<int32_t>> entityToIndexMap) {
+  void add_entityToIndexMap(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>>> entityToIndexMap) {
     fbb_.AddOffset(ComponentArrayData::VT_ENTITYTOINDEXMAP, entityToIndexMap);
   }
   void add_componentArray(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> componentArray) {
@@ -70,7 +126,7 @@ struct ComponentArrayDataBuilder {
 inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t componentType = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int32_t>> entityToIndexMap = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>>> entityToIndexMap = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> componentArray = 0) {
   ComponentArrayDataBuilder builder_(_fbb);
   builder_.add_componentType(componentType);
@@ -82,9 +138,9 @@ inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayData(
 inline flatbuffers::Offset<ComponentArrayData> CreateComponentArrayDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t componentType = 0,
-    const std::vector<int32_t> *entityToIndexMap = nullptr,
+    const std::vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> *entityToIndexMap = nullptr,
     const std::vector<uint8_t> *componentArray = nullptr) {
-  auto entityToIndexMap__ = entityToIndexMap ? _fbb.CreateVector<int32_t>(*entityToIndexMap) : 0;
+  auto entityToIndexMap__ = entityToIndexMap ? _fbb.CreateVector<flatbuffers::Offset<flat::EntityToIndexMapEntry>>(*entityToIndexMap) : 0;
   auto componentArray__ = componentArray ? _fbb.CreateVector<uint8_t>(*componentArray) : 0;
   return flat::CreateComponentArrayData(
       _fbb,

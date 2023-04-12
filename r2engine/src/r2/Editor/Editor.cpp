@@ -258,6 +258,7 @@ namespace r2
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelHash = microbatAsset.HashID();
 				renderComponent.optrOverrideMaterials = nullptr;
+				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = draw::PrimitiveType::TRIANGLES;
 				renderComponent.drawParameters.layer = r2::draw::DL_CHARACTER;
@@ -529,24 +530,24 @@ namespace r2
 
 	void Editor::RegisterComponents()
 	{
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent");
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent",true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent", false);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true);
 		
 		//add some more components to the coordinator for the editor to use
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent");
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent", true);
 
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent");
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true);
 
 #ifdef R2_DEBUG
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena, "DebugBoneComponent");
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent", false);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena, "DebugBoneComponent", false);
 
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent");
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent");
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent", false);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent", false);
 #endif
 	}
 

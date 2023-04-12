@@ -22,9 +22,9 @@ namespace r2::ecs
 		};
 	*/
 
-	void SerializeSkeletalAnimationComponent(flexbuffers::Builder& builder, const SkeletalAnimationComponent& skeletalAnimationComponent)
+	inline void SerializeSkeletalAnimationComponent(flexbuffers::Builder& builder, const SkeletalAnimationComponent& skeletalAnimationComponent)
 	{
-		builder.Vector("skeletalAnimationComponent", [&]() {
+		builder.Vector([&]() {
 			builder.UInt(skeletalAnimationComponent.animModelAssetName);
 			builder.UInt(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
 			builder.UInt(skeletalAnimationComponent.startTime);
@@ -35,7 +35,7 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<SkeletalAnimationComponent>& components)
 	{
-		builder.Vector("skeletalAnimationComponents", [&]() {
+		builder.Vector([&]() {
 
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
@@ -49,7 +49,7 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
 	{
-		builder.Vector("skeletalAnimationInstances", [&]() {
+		builder.Vector([&]() {
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
 			{

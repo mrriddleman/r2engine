@@ -10,6 +10,14 @@
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Utils.h"
 
+#include "r2/Game/ECS/Serialization/EditorComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/HeirarchyComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/RenderComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/SkeletalAnimationComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
+
+
+
 namespace r2::ecs
 {
 	using ComponentType = s32;
@@ -26,7 +34,7 @@ namespace r2::ecs
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponentType(ARENA& arena, const char* componentName)
+		void RegisterComponentType(ARENA& arena, const char* componentName, bool shouldSerialize)
 		{
 			auto componentTypeHash = STRING_ID(componentName);
 
@@ -39,6 +47,7 @@ namespace r2::ecs
 			ComponentArray<Component>* componentArray = ALLOC(ComponentArray<Component>, arena);
 
 			R2_CHECK(componentArray != nullptr, "componentArray is nullptr");
+			componentArray->mShouldSerialize = shouldSerialize;
 
 			bool isInitialized = componentArray->Init(arena, MAX_NUM_ENTITIES, componentTypeHash);
 
@@ -219,7 +228,12 @@ namespace r2::ecs
 
 			for (u32 i = 0; i < numComponentArrays; ++i)
 			{
-				componentArraysData.push_back( r2::sarr::At(*mComponentArrays, i)->Serialize(builder) );
+				IComponentArray* componentArray = r2::sarr::At(*mComponentArrays, i);
+
+				if (componentArray->mShouldSerialize)
+				{
+					componentArraysData.push_back(componentArray->Serialize(builder));
+				}
 			}
 		}
 

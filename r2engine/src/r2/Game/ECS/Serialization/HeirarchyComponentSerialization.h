@@ -15,13 +15,13 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<HeirarchyComponent>& components)
 	{
-		builder.TypedVector("heirarchy", [&]() {
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
-			{
-				builder.UInt(static_cast<u32>(r2::sarr::At(components, i).parent));
-			}
-		});
+		auto start = builder.StartVector();
+		const auto numComponents = r2::sarr::Size(components);
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			builder.UInt(static_cast<u32>(r2::sarr::At(components, i).parent));
+		}
+		builder.EndVector(start, false, false);
 	}
 }
 

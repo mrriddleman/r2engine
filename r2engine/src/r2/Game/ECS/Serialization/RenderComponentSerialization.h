@@ -27,15 +27,15 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<RenderComponent>& components)
 	{
-		builder.Vector("render_components", [&]() {
+		builder.Vector([&]() {
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
 			{
 				const auto& renderComponent = r2::sarr::At(components, i);
-				builder.Vector("renderComponent", [&]() {
+				builder.Vector([&]() {
 					builder.UInt(renderComponent.assetModelHash);
 					builder.UInt(static_cast<u32>(renderComponent.primitiveType));
-					builder.Vector("drawParameters", [&]() {
+					builder.Vector([&]() {
 						builder.UInt(renderComponent.drawParameters.layer);
 						builder.UInt(renderComponent.drawParameters.flags.GetRawValue());
 
@@ -54,7 +54,7 @@ namespace r2::ecs
 						
 						for (u32 j = 0; j < 4; ++j)
 						{
-							builder.Vector("blendFunctions", [&]() {
+							builder.Vector([&]() {
 								builder.UInt(renderComponent.drawParameters.blendState.blendFunctions[j].blendDrawBuffer);
 								builder.UInt(renderComponent.drawParameters.blendState.blendFunctions[j].sfactor);
 								builder.UInt(renderComponent.drawParameters.blendState.blendFunctions[j].dfactor);
@@ -67,14 +67,14 @@ namespace r2::ecs
 
 					});
 
-					builder.Vector("materialOverrideNames", [&]() {
+					builder.Vector([&]() {
 						if (renderComponent.optrMaterialOverrideNames)
 						{
 							const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
 							for (u32 j = 0; j < numMaterialOverrides; ++j)
 							{
 								const auto& materialOverrideName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
-								builder.TypedVector("materialOverrideName", [&]() {
+								builder.TypedVector([&]() {
 									builder.UInt(materialOverrideName.materialSystemName);
 									builder.UInt(materialOverrideName.materialName);
 								});

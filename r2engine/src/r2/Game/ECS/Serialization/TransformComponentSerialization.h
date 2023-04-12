@@ -23,9 +23,9 @@ namespace r2::ecs
 	};
 	*/
 
-	void SerializeTransform(flexbuffers::Builder& builder, const TransformComponent& transform)
+	inline void SerializeTransform(flexbuffers::Builder& builder, const TransformComponent& transform)
 	{
-		builder.Vector("localTransform", [&]() {
+		builder.Vector([&]() {
 			builder.IndirectFloat(transform.localTransform.position.x);
 			builder.IndirectFloat(transform.localTransform.position.y);
 			builder.IndirectFloat(transform.localTransform.position.z);
@@ -42,7 +42,7 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<TransformComponent>& components)
 	{
-		builder.Vector("transforms", [&]() {
+		builder.Vector([&]() {
 
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
@@ -57,7 +57,7 @@ namespace r2::ecs
 	template<>
 	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<InstanceComponentT<TransformComponent>>& components)
 	{
-		builder.Vector("transformInstances", [&]() {
+		builder.Vector([&]() {
 			const auto numComponents = r2::sarr::Size(components);
 			for (u32 i = 0; i < numComponents; ++i)
 			{

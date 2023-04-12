@@ -1,0 +1,80 @@
+{
+  version: 1,
+  hash: 1897356855647976964,
+  name: "Level1",
+  groupHash: 7526172994748386252,
+  groupName: "testGroup",
+  path: "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Levels\\testGroup/Level1.rlvl",
+  numEntities: 1,
+  entities: [
+    {
+      entityID: 1,
+      signature: 4091
+    }
+  ],
+  componentArrays: [
+    {
+      componentType: 12124429527405931799,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ 0 ]
+    },
+    {
+      componentType: 11150338268235026998,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ 0.0, 0.0, 2.0, 0.009999999776, 0.009999999776, 0.009999999776, 0.707106769085, 0.0, 0.0, 0.707106769085 ] ]
+    },
+    {
+      componentType: 12780481829726829064,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ 15871276176210789330, 4, [ 3, 1, 0, 0, 7680, 7680, 7680, 519, 0, 255, 0, 32774, [ 3435973836, 3435973836, 3435973836 ], [ 3435973836, 3435973836, 3435973836 ], [ 3435973836, 3435973836, 3435973836 ], [ 3435973836, 3435973836, 3435973836 ], 0, 0, 1029, 2305 ], [  ] ] ]
+    },
+    {
+      componentType: 516545838611945723,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ 15871276176210789330, 0, 0, 1 ] ]
+    },
+    {
+      componentType: 11857778454362276551,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ "Entity - 1", 3 ] ]
+    },
+    {
+      componentType: 14794516900338641318,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ 2.0, 1.0, 2.0, 0.009999999776, 0.009999999776, 0.009999999776, 0.707106769085, 0.0, 0.0, 0.707106769085 ], [ -2.0, 1.0, 2.0, 0.009999999776, 0.009999999776, 0.009999999776, 0.707106769085, 0.0, 0.0, 0.707106769085 ] ]
+    },
+    {
+      componentType: 8131669392371809032,
+      entityToIndexMap: [
+        {
+          entity: 1
+        }
+      ],
+      componentArray: [ [ 14757395258967641292, 1, 0, 1 ], [ 14757395258967641292, 1, 0, 1 ] ]
+    }
+  ]
+}

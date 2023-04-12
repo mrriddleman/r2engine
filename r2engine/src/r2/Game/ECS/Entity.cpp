@@ -110,12 +110,6 @@ namespace r2::ecs
 			auto entityData = flat::CreateEntityData(builder, e, r2::sarr::At(*mEntitySignatures, e).to_ullong());
 			entityVec.push_back(entityData);
 		}
-		
-		for (u32 i = 0; i < (MAX_NUM_ENTITIES - numCreatedEntities); ++i)
-		{
-			auto entityData = flat::CreateEntityData(builder, INVALID_ENTITY, 0);
-			entityVec.push_back(entityData);
-		}
 	}
 
 	u64 EntityManager::MemorySize(u32 maxEntities, u32 alignment, u32 headerSize, u32 boundsChecking)

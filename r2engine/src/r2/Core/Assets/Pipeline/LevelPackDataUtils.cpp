@@ -41,6 +41,20 @@ namespace r2::asset::pln
 		std::string groupName = fsBinLevelPath.parent_path().stem().string();
 		std::string levelName = fsBinLevelPath.stem().string();
 
+		if (!std::filesystem::exists(fsBinLevelPath.parent_path()))
+		{
+			std::error_code err;
+			std::filesystem::create_directories(fsBinLevelPath.parent_path(),err);
+			printf("Error creating directories for path: %s, with error: %s\n", fsBinLevelPath.parent_path().string().c_str(), err.message().c_str());
+		}
+
+		if (!std::filesystem::exists(fsRawLevelPath.parent_path()))
+		{
+			std::error_code err;
+			std::filesystem::create_directories(fsRawLevelPath.parent_path(), err);
+			printf("Error creating directories for path: %s, with error: %s\n", fsRawLevelPath.parent_path().string().c_str(), err.message().c_str());
+		}
+
 		flatbuffers::FlatBufferBuilder builder;
 
 		u32 numEntities = coordinator->NumLivingEntities();
@@ -66,9 +80,6 @@ namespace r2::asset::pln
 
 		byte* buf = builder.GetBufferPointer();
 		u32 size = builder.GetSize();
-
-		flexbuffers::Builder fbb;
-		
 
 		return WriteNewLevelDataFromBinary(binLevelPath, rawJSONPath, buf, size);
 	}
