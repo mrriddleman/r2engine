@@ -235,6 +235,17 @@ namespace r2
 		r2::asset::pln::SaveLevelData(mCoordinator, 1, (levelDataBinPath / levelBinURI).string(), (levelDataRawPath / levelRawURI).string());
 	}
 
+	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)
+	{
+		printf("FilePathName: %s\n", filePathName.c_str());
+		printf("FilePath: %s\n", parentDirectory.c_str());
+	}
+
+	std::string Editor::GetAppLevelPath() const
+	{
+		return CENG.GetApplication().GetLevelPackDataBinPath();
+	}
+
 	void Editor::PostEditorEvent(r2::evt::EditorEvent& e)
 	{
 		//@TODO(Serge): listen to the entity creation event and add in the appropriate components for testing

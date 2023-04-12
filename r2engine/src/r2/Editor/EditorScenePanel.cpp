@@ -399,8 +399,8 @@ namespace r2::edit
 			mnoptrEditor->PostNewAction(std::make_unique<edit::SelectedEntityEditorAction>(mnoptrEditor, mSelectedEntity, mPrevSelectedEntity));
 		}
 
-		static bool show = false;
-		ImGui::ShowDemoWindow(&show);
+		//static bool show = false;
+		//ImGui::ShowDemoWindow(&show);
 	}
 
 }

@@ -48,6 +48,9 @@ namespace r2
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
+		void LoadLevel(const std::string& filePathName, const std::string& parentDirectory);
+
+		std::string GetAppLevelPath() const;
 
 		void PostEditorEvent(r2::evt::EditorEvent& e);
 

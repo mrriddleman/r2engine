@@ -56,7 +56,7 @@ namespace r2::edit
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
-					ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".*", ".");
+					ImGuiFileDialog::Instance()->OpenDialog("ChooseLevelFileDlgKey", "Choose File", ".rlvl", mnoptrEditor->GetAppLevelPath());
 				}
 				if (ImGui::BeginMenu("Open Recent"))
 				{
@@ -70,6 +70,7 @@ namespace r2::edit
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 				{
+					//@TODO(Serge): maybe should be an action
 					mnoptrEditor->Save();
 				}
 				if (ImGui::MenuItem("Save As.."))
@@ -118,9 +119,9 @@ namespace r2::edit
 			ImGui::EndMainMenuBar();
 		}
 
-
+		
 		// display
-		if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+		if (ImGuiFileDialog::Instance()->Display("ChooseLevelFileDlgKey"))
 		{
 			// action if OK
 			if (ImGuiFileDialog::Instance()->IsOk())
@@ -128,9 +129,9 @@ namespace r2::edit
 				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
 				// action
+
+				mnoptrEditor->LoadLevel(filePathName, filePath);
 			}
-
-
 
 			// close
 			ImGuiFileDialog::Instance()->Close();
