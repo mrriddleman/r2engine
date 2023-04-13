@@ -263,7 +263,7 @@ namespace r2
 
 		r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_BOUNDARY(*mArena, levelCacheMemorySizeNeededInBytes, memProperties.alignment);
 
-		mLevelCache = lvlche::CreateLevelCache(levelCacheBoundary, levelPackPath, levelPackData, totalNumberOfLevels, maxGroupFileSize, maxNumLevelsInGroup, maxLevelSizeInBytes, maxGroupSizeInBytes);
+		mLevelCache = nullptr;//lvlche::CreateLevelCache(levelCacheBoundary, levelPackPath, levelPackData, totalNumberOfLevels, maxGroupFileSize, maxNumLevelsInGroup, maxLevelSizeInBytes, maxGroupSizeInBytes);
 
 		R2_CHECK(mLevelCache != nullptr, "We couldn't create the level cache correctly");
 
@@ -543,7 +543,7 @@ namespace r2
 			return;
 		}
 
-		lvlche::SaveNewLevelFile(*mLevelCache, group, levelURI, data, dataSize);
+		//lvlche::SaveNewLevelFile(*mLevelCache, group, levelURI, data, dataSize);
 	}
 #endif
 }

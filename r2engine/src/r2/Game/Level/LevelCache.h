@@ -25,8 +25,6 @@ namespace r2::mem
 
 namespace r2
 {
-	
-	
 	struct LevelCache
 	{
 		r2::mem::utils::MemBoundary mLevelCacheBoundary;
@@ -35,29 +33,15 @@ namespace r2
 		r2::mem::StackArena* mArena;
 		r2::asset::AssetCache* mLevelCache;
 
-		r2::asset::AssetHandle mLevelPackDataAssetHandle;
-		r2::asset::AssetCacheRecord mLevelPackCacheRecord;
-		const flat::LevelPackData* mLevelPackData;
+		r2::SArray<r2::asset::AssetCacheRecord>* mLevels;	
 
-		r2::SArray<r2::asset::AssetCacheRecord>* mLevels;
-
-		u32 mMaxNumLevelsInGroup;
-		u32 mMaxLevelSizeInBytes;
-		u32 mMaxGroupSizeInBytes;
-		
+		u32 mLevelCapacity;
 	};
 
 	namespace lvlche
 	{
-		LevelCache* CreateLevelCache(
-			const r2::mem::utils::MemBoundary& levelCacheBoundary,
-			const char* levelPackDataFilePath,
-			const flat::LevelPackData* initialLevelPackData,
-			u32 totalNumberOfLevels,
-			u32 maxGroupFileSize,
-			u32 maxNumLevelsInGroup,
-			u32 maxLevelSizeInBytes,
-			u32 maxGroupSizeInBytes);
+		//@TODO(Serge): we should change the level directory out of the levelPackData file
+		LevelCache* CreateLevelCache(const r2::mem::utils::MemBoundary& levelCacheBoundary, const char* levelDirectory, u32 levelCapacity, u32 cacheSize);
 		
 		void Shutdown(LevelCache* levelCache);
 		u64 MemorySize(u32 maxNumLevels, u32 cacheSizeInBytes, const r2::mem::utils::MemoryProperties& memProperties);
@@ -69,24 +53,16 @@ namespace r2
 		const flat::LevelData* GetLevelData(LevelCache& levelCache, const LevelHandle& handle);
 		void UnloadLevelData(LevelCache& levelCache, const LevelHandle& handle);
 
-		u32 GetNumLevelsInLevelGroup(LevelCache& levelCache, LevelName groupName);
-		u32 GetMaxGroupSizeInBytes(LevelCache& levelCache);
-		u32 GetMaxLevelSizeInBytes(LevelCache& levelCache);
-		u32 GetMaxNumLevelsInAGroup(LevelCache& levelCache);
-		u32 GetNumberOfLevelFiles(LevelCache& levelCache);
 		u32 GetLevelCapacity(LevelCache& levelCache);
 
-		void LoadLevelGroup(LevelCache& levelCache, LevelName groupName, r2::SArray<LevelHandle>& levelHandles);
-		void GetLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles, r2::SArray<const flat::LevelData*>& levelGroupData);
-
-		void UnloadLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles);
+		bool HasLevel(LevelCache& levelCache, const char* levelURI);
+		bool HasLevel(LevelCache& levelCache, const LevelName name);
+		bool HasLevel(LevelCache& levelCache, const r2::asset::Asset& levelAsset);
 
 		void FlushAll(LevelCache& levelCache);
-
 #if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
-		void SaveNewLevelFile(LevelCache& levelCache, LevelName group, const char* levelURI, const void* data, u32 dataSize);
+		bool SaveNewLevelFile(LevelCache& levelCache, const char* levelPath, const void* data, u32 dataSize);
 #endif
-
 	}
 }
 
