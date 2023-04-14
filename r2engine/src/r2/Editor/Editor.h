@@ -8,7 +8,7 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
-
+#include "r2/Game/Level/Level.h"
 #include "r2/Utils/Random.h"
 
 namespace r2::evt
@@ -75,6 +75,8 @@ namespace r2
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;
 		LevelCache* moptrLevelCache;
+		r2::LevelHandle mLevelHandle;
+		const flat::LevelData* mLevelData;
 
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;

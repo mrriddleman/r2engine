@@ -31,9 +31,12 @@ namespace r2::asset
         {
             return false;
         }
-        mNumDirectoriesToIncludeInAssetHandle = numDirectoriesToIncludeInAssetHandle;
-        r2::util::PathCpy(mPath, path);
 
+        char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::SanitizeSubPath(path, sanitizedPath);
+
+        mNumDirectoriesToIncludeInAssetHandle = numDirectoriesToIncludeInAssetHandle;
+        r2::util::PathCpy(mPath, sanitizedPath);
 
 		char fileName[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, fileName, mNumDirectoriesToIncludeInAssetHandle);

@@ -90,7 +90,7 @@ namespace r2::lvlche
 			return nullptr;
 		}
 
-		newLevelCache->mAssetBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*newLevelCache->mArena, levelCacheSize, ALIGNMENT, "");
+		newLevelCache->mAssetBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*newLevelCache->mArena, levelCacheSize, ALIGNMENT, "Level Cache Asset Boundary");
 
 		newLevelCache->mLevelCache = r2::asset::lib::CreateAssetCache(newLevelCache->mAssetBoundary, fileList);
 

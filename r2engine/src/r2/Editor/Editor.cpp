@@ -31,6 +31,7 @@
 #include "r2/Core/Application.h"
 #include "r2/Game/Level/LevelCache.h"
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace 
 {
@@ -53,6 +54,9 @@ namespace r2
 		,mnoptrDebugBonesRenderSystem(nullptr)
 		,mnoptrDebugRenderSystem(nullptr)
 #endif // DEBUG
+		,moptrLevelCache(nullptr)
+		,mLevelData(nullptr)
+		, mLevelHandle{}
 	{
 
 	}
@@ -123,6 +127,8 @@ namespace r2
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 
+
+		r2::lvlche::UnloadLevelData(*moptrLevelCache, mLevelHandle);
 		r2::mem::utils::MemBoundary boundary = moptrLevelCache->mLevelCacheBoundary;
 		r2::lvlche::Shutdown(moptrLevelCache);
 
@@ -258,8 +264,22 @@ namespace r2
 
 	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)
 	{
-		printf("FilePathName: %s\n", filePathName.c_str());
-		printf("FilePath: %s\n", parentDirectory.c_str());
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(filePathName.c_str(), sanitizedPath);
+
+		char levelAssetName[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, levelAssetName, 1);
+
+		mLevelHandle = r2::lvlche::LoadLevelData(*moptrLevelCache, levelAssetName);
+
+		mLevelData = r2::lvlche::GetLevelData(*moptrLevelCache, mLevelHandle);
+
+		if (mLevelData)
+		{
+			int k = 0;
+		}
+		//printf("FilePathName: %s\n", filePathName.c_str());
+		//printf("FilePath: %s\n", parentDirectory.c_str());
 	}
 
 	std::string Editor::GetAppLevelPath() const
