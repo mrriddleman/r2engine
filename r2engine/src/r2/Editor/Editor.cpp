@@ -29,7 +29,7 @@
 #include "r2/Utils/Random.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
-
+#include "r2/Game/Level/LevelCache.h"
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 
 namespace 
@@ -37,6 +37,9 @@ namespace
 	//Figure out render system defaults
 	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
 	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
+	constexpr u32 MAX_LEVELS = 1000;
+	constexpr u32 LEVEL_CACHE_SIZE = Megabytes(1);
+
 }
 
 namespace r2
@@ -64,6 +67,18 @@ namespace r2
 		RegisterSystems();
 		
 		mRandom.Randomize();
+
+		//@Temporary
+		r2::mem::utils::MemoryProperties memProps;
+		memProps.alignment = 16;
+		memProps.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+		memProps.headerSize = r2::mem::MallocAllocator::HeaderSize();
+
+		const auto size = r2::lvlche::MemorySize(MAX_LEVELS, LEVEL_CACHE_SIZE, memProps);
+		r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(mMallocArena, size, memProps.alignment, "Level Cache Memory Boundary");
+		moptrLevelCache = r2::lvlche::CreateLevelCache(levelCacheBoundary, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), MAX_LEVELS, LEVEL_CACHE_SIZE);
+
+
 
 		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
@@ -108,6 +123,10 @@ namespace r2
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 
+		r2::mem::utils::MemBoundary boundary = moptrLevelCache->mLevelCacheBoundary;
+		r2::lvlche::Shutdown(moptrLevelCache);
+
+		FREE(boundary.location, mMallocArena);
 
 		UnRegisterSystems();
 		UnRegisterComponents();

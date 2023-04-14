@@ -90,7 +90,7 @@ namespace r2::lvlche
 			return nullptr;
 		}
 
-		newLevelCache->mAssetBoundary = MAKE_BOUNDARY(*newLevelCache->mArena, newLevelCache->mArena->UnallocatedBytes(), ALIGNMENT);
+		newLevelCache->mAssetBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*newLevelCache->mArena, levelCacheSize, ALIGNMENT, "");
 
 		newLevelCache->mLevelCache = r2::asset::lib::CreateAssetCache(newLevelCache->mAssetBoundary, fileList);
 
@@ -161,7 +161,8 @@ namespace r2::lvlche
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(LevelCache), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetCacheRecord>::MemorySize(maxNumLevels), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
-		memorySize += r2::asset::AssetCache::TotalMemoryNeeded(memProperties.headerSize, memProperties.boundsChecking, maxNumLevels, cacheSizeInBytes, memProperties.alignment);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::asset::AssetCache), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::asset::AssetCache::TotalMemoryNeeded(memProperties.headerSize, memProperties.boundsChecking, maxNumLevels, cacheSizeInBytes, memProperties.alignment), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
 
 		return memorySize;
 	}
@@ -379,10 +380,10 @@ namespace r2::lvlche
 	}
 
 #if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
-	bool SaveNewLevelFile(LevelCache& levelCache, const char* levelPath, const void* levelData, u32 dataSize)
+	bool SaveNewLevelFile(LevelCache& levelCache, const r2::ecs::ECSCoordinator* coordinator, u32 version, const char* binLevelPath, const char* rawJSONPath)
 	{
 		char levelURI[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::CopyFileNameWithParentDirectories(levelPath, levelURI, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
+		r2::fs::utils::CopyFileNameWithParentDirectories(binLevelPath, levelURI, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
 
 		r2::asset::Asset newLevelAsset(levelURI, r2::asset::LEVEL);
 		
@@ -392,33 +393,19 @@ namespace r2::lvlche
 		if (!levelCache.mLevelCache->HasAsset(newLevelAsset))
 		{
 			//make a new asset file for the asset cache
-			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(levelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
+			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
 		}
 
 		//Write out the new level file
-		{
-			char rawLevelName[r2::fs::FILE_PATH_LENGTH];
-			char rawLevelParentDir[r2::fs::FILE_PATH_LENGTH];
-
-			r2::fs::utils::CopyDirectoryOfFile(levelURI, rawLevelParentDir);
-			r2::fs::utils::CopyFileName(levelURI, rawLevelName);
-
-			r2::fs::utils::AppendExt(rawLevelName, ".json");
-
-			char rawLevelURI[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(rawLevelParentDir, rawLevelURI, rawLevelName);
-
-			char rawLevelPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::AppendSubPath(CENG.GetApplication().GetLevelPackDataJSONPath().c_str(), rawLevelPath, rawLevelURI);
-
-			return r2::asset::pln::WriteNewLevelDataFromBinary(levelPath, rawLevelPath, levelData, dataSize);
-		}
+		bool saved = r2::asset::pln::SaveLevelData(coordinator, version, binLevelPath, rawJSONPath);
 		
-
+		R2_CHECK(saved, "We couldn't save the file: %s\n", binLevelPath);
 		//now we have to update the LevelGroupData and LevelPackData
 
+
+		return saved;
 		////first return the cache record
 		//levelCache.mLevelCache->ReturnAssetBuffer(levelCache.mLevelPackCacheRecord);
 		////force free the asset since we'll still hold onto it even though there are no references

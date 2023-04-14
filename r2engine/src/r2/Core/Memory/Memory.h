@@ -43,6 +43,8 @@
 #define STACK_BOUNDARY(array) r2::mem::utils::GetBoundary(&array, sizeof(array))
 
 #define MAKE_BOUNDARY(arena, size, alignment) r2::mem::utils::MakeMemBoundary(arena, size, alignment)
+#define MAKE_MEMORY_BOUNDARY_VERBOSE(arena, size, alignment, description) r2::mem::utils::MakeMemBoundary(arena, size, alignment, __FILE__, __LINE__, description)
+
 
 #ifndef R2_CHECK_ALLOCATIONS_ON_DESTRUCTION
     #define R2_CHECK_ALLOCATIONS_ON_DESTRUCTION 0
@@ -93,9 +95,10 @@ namespace r2
                 u64 requestedSize = 0;
                 s32 line = -1;
                 void* memPtr = nullptr;
-                
+                std::string description;
+
                 MemoryTag(){}
-                MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line);
+                MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line, const std::string& description);
                 MemoryTag(const MemoryTag& tag);
                 MemoryTag& operator=(const MemoryTag& tag);
                 ~MemoryTag() = default;
@@ -114,6 +117,9 @@ namespace r2
             template<typename ARENA>
             MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u32 alignment, u32 elementSize = 0, u32 offset = 0, PlacementPolicy policy = FIND_FIRST);
             
+            template<typename ARENA>
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u32 alignment, const char* file, s32 line, const char* description,  u32 elementSize = 0, u32 offset = 0, PlacementPolicy policy = FIND_FIRST);
+
             template <class T>
             struct TypeAndCount
             {
@@ -262,7 +268,7 @@ namespace r2
                 mMemoryTagger.TagAllocation(plainMemory + BoundsCheckingPolicy::SIZE_FRONT, originalSize);
                 mBoundsChecker.GuardBack(plainMemory + BoundsCheckingPolicy::SIZE_FRONT + originalSize);
                 
-                utils::MemoryTag tag(plainMemory, file, alignment, newSize, line);
+                utils::MemoryTag tag(plainMemory, file, alignment, newSize, line, description);
                 tag.requestedSize = originalSize;
                 
                 mMemoryTracker.OnAllocation(tag);
@@ -582,6 +588,20 @@ namespace r2
                 boundary.policy = policy;
                 
                 return boundary;
+            }
+
+			template<typename ARENA>
+            MemBoundary MakeMemBoundary(ARENA& arena, u64 size, u32 alignment, const char* file, s32 line, const char* description, u32 elementSize, u32 offset, PlacementPolicy policy)
+            {
+				MemBoundary boundary;
+				boundary.location = ALLOC_BYTES(arena, size, alignment, file, line, description);
+				boundary.size = size;
+				boundary.elementSize = elementSize;
+				boundary.alignment = alignment;
+				boundary.offset = offset;
+				boundary.policy = policy;
+
+				return boundary;
             }
         }
     }

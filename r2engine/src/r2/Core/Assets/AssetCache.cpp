@@ -794,7 +794,7 @@ namespace r2::asset
 #endif
         u64 poolSizeInBytes = lruCapacity * elementSize;
         
-        alignment = std::max({
+        /*alignment = std::max({
             alignment,
             alignof(r2::SQueue<AssetHandle>),
             alignof(AssetHandle),
@@ -806,7 +806,7 @@ namespace r2::asset
             alignof(r2::SHashMap<Asset>),
             alignof(r2::mem::PoolArena),
             alignof(r2::SArray<AssetFreedCallback>),
-            });
+            });*/
 
         return 
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<AssetHandle>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking)  +

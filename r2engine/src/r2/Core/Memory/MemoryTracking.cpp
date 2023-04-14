@@ -42,9 +42,7 @@ namespace r2
             {
                 u64 totalAskedForSize = 0;
                 u64 totalAllocatedSize = 0;
-                
-                //@TODO(Serge): figure out a way to make loguru do just printf (without the ugly timestamp etc. log
-                
+
                 printf("=================================================================\n");
                 printf("Arena Dump for: %s\n", mName.c_str());
                 printf("=================================================================\n\n");
@@ -56,7 +54,7 @@ namespace r2
                     totalAskedForSize += tag.requestedSize;
                     totalAllocatedSize += tag.size;
                     
-                    printf("Allocation: Memory address: %p, requested size: %llu, total allocated: %llu, file: %s, line: %i\n", tag.memPtr, tag.requestedSize, tag.size, tag.fileName, tag.line);
+                    printf("Allocation: Memory address: %p, requested size: %llu, total allocated: %llu, file: %s, line: %i, description: %s\n", tag.memPtr, tag.requestedSize, tag.size, tag.fileName, tag.line, tag.description.c_str());
                     printf("-----------------------------------------------------------------\n");
                 }
                 

@@ -61,7 +61,7 @@ namespace r2
 
 		void FlushAll(LevelCache& levelCache);
 #if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
-		bool SaveNewLevelFile(LevelCache& levelCache, const char* levelPath, const void* data, u32 dataSize);
+		bool SaveNewLevelFile(LevelCache& levelCache, const r2::ecs::ECSCoordinator* coordinator, u32 version, const char* binLevelPath, const char* rawJSONPath);
 #endif
 	}
 }

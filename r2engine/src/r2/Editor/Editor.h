@@ -34,6 +34,9 @@ namespace r2::draw
 
 namespace r2
 {
+	struct LevelCache;
+
+
 	class Editor
 	{
 	public:
@@ -68,9 +71,10 @@ namespace r2
 		void UnRegisterSystems();
 
 
-		//@TEST CODE:
+		//@TEST CODE: REMOVE!
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;
+		LevelCache* moptrLevelCache;
 
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;

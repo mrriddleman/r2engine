@@ -10,7 +10,6 @@ namespace r2::ecs
 	class ECSCoordinator;
 }
 
-
 namespace r2::asset::pln
 {
 	bool WriteNewLevelDataFromBinary(const std::string& binLevelPath, const std::string& rawJSONPath, const void* data, u32 dataSize);
