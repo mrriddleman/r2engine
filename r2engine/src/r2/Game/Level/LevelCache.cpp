@@ -382,8 +382,15 @@ namespace r2::lvlche
 #if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
 	bool SaveNewLevelFile(LevelCache& levelCache, const r2::ecs::ECSCoordinator* coordinator, u32 version, const char* binLevelPath, const char* rawJSONPath)
 	{
+
+		char sanitizedBinLevelPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(binLevelPath, sanitizedBinLevelPath);
+
+		char sanitizedRawLevelPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(rawJSONPath, sanitizedRawLevelPath);
+
 		char levelURI[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::CopyFileNameWithParentDirectories(binLevelPath, levelURI, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
+		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedBinLevelPath, levelURI, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
 
 		r2::asset::Asset newLevelAsset(levelURI, r2::asset::LEVEL);
 		
@@ -393,15 +400,15 @@ namespace r2::lvlche
 		if (!levelCache.mLevelCache->HasAsset(newLevelAsset))
 		{
 			//make a new asset file for the asset cache
-			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
+			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(sanitizedBinLevelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
 		}
 
 		//Write out the new level file
-		bool saved = r2::asset::pln::SaveLevelData(coordinator, version, binLevelPath, rawJSONPath);
+		bool saved = r2::asset::pln::SaveLevelData(coordinator, version, sanitizedBinLevelPath, sanitizedRawLevelPath);
 		
-		R2_CHECK(saved, "We couldn't save the file: %s\n", binLevelPath);
+		R2_CHECK(saved, "We couldn't save the file: %s\n", sanitizedBinLevelPath);
 		//now we have to update the LevelGroupData and LevelPackData
 
 
