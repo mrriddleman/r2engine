@@ -2,7 +2,7 @@
 #include "r2/Game/Level/Level.h"
 
 #include "r2/Game/ECS/ECSCoordinator.h"
-#include "R2/Game/Level/LevelData_generated.h"
+
 
 namespace r2
 {
@@ -14,7 +14,7 @@ namespace r2
 
 	Level::~Level()
 	{
-
+		Shutdown();
 	}
 
 	bool Level::Init(const flat::LevelData* levelData, LevelHandle levelHandle)

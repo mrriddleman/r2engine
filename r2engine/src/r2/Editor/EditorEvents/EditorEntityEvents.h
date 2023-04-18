@@ -5,7 +5,7 @@
 
 #include "r2/Game/ECS/Entity.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
-#include <sstream>
+
 
 namespace r2::evt
 {

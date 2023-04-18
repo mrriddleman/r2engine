@@ -89,6 +89,17 @@ namespace r2::ecs
 		}
 	}
 
+	void SystemManager::DeSerializeEntitySignatures(const r2::SArray<Entity>* entities, const r2::SArray<Signature>* entitySignatures)
+	{
+		const u32 numEntities = r2::sarr::Size(*entities);
+		for (u32 i = 0; i < numEntities; ++i)
+		{
+			Entity e = r2::sarr::At(*entities, i);
+
+			EntitySignatureChanged(e, r2::sarr::At(*entitySignatures, i));
+		}
+	}
+
 	u64 SystemManager::MemorySize(u32 maxNumSystems, u32 maxNumEntities, u32 alignment, u32 headerSize, u32 boundsChecking)
 	{
 		u64 memorySize = 0;

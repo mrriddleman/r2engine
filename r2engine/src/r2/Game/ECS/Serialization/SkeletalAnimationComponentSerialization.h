@@ -55,14 +55,100 @@ namespace r2::ecs
 			{
 				const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimation = r2::sarr::At(components, i);
 
-				for (u32 j = 0; j < instancedSkeletalAnimation.numInstances; ++j)
-				{
-					const auto& skeletalAnimationComponent = r2::sarr::At(*instancedSkeletalAnimation.instances, j);
-					SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
-				}
+				builder.Vector([&]() {
+					for (u32 j = 0; j < instancedSkeletalAnimation.numInstances; ++j)
+					{
+						const auto& skeletalAnimationComponent = r2::sarr::At(*instancedSkeletalAnimation.instances, j);
+						SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
+					}
+				});
 			}
 		});
 	}
+
+	inline void DeSerializeSkeletalAnimationComponent(SkeletalAnimationComponent& skeletalAnimationComponent, flexbuffers::Reference flexSkeletalAnimationRef)
+	{
+		auto flexSkeletalAnimationVector = flexSkeletalAnimationRef.AsVector();
+
+		skeletalAnimationComponent.animModelAssetName = flexSkeletalAnimationVector[0].AsUInt64();
+		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flexSkeletalAnimationVector[1].AsBool();
+		skeletalAnimationComponent.startTime = flexSkeletalAnimationVector[2].AsUInt32();
+		skeletalAnimationComponent.shouldLoop = flexSkeletalAnimationVector[3].AsBool();
+	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<SkeletalAnimationComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			SkeletalAnimationComponent skeletalAnimationComponent;
+			skeletalAnimationComponent.animModelAssetName = 0;
+			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
+			skeletalAnimationComponent.animModel = nullptr;
+			skeletalAnimationComponent.shaderBones = nullptr;
+			skeletalAnimationComponent.animation = nullptr;
+			skeletalAnimationComponent.shouldLoop = false;
+			skeletalAnimationComponent.startTime = 0;
+
+			DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, componentVector[i]);
+
+			r2::sarr::Push(components, skeletalAnimationComponent);
+		}
+	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			InstanceComponentT<SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
+
+			auto flexInstancedSkeletalAnimationComponent = componentVector[i].AsVector();
+
+			size_t numInstances = flexInstancedSkeletalAnimationComponent.size();
+
+			instancedSkeletalAnimationComponent.numInstances = numInstances;
+
+			//this is a problem right here - how do we free this?
+			instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, SkeletalAnimationComponent, numInstances);
+
+			for (size_t j = 0; j < numInstances; ++j)
+			{
+				SkeletalAnimationComponent skeletalAnimationComponent;
+				skeletalAnimationComponent.animModelAssetName = 0;
+				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
+				skeletalAnimationComponent.animModel = nullptr;
+				skeletalAnimationComponent.shaderBones = nullptr;
+				skeletalAnimationComponent.animation = nullptr;
+				skeletalAnimationComponent.shouldLoop = false;
+				skeletalAnimationComponent.startTime = 0;
+
+				DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flexInstancedSkeletalAnimationComponent[j]);
+
+				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
+			}
+
+			r2::sarr::Push(components, instancedSkeletalAnimationComponent);
+		}
+	}
+
+	template<>
+	inline void CleanupDeserializeComponentArray(r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
+	{
+		s32 size = r2::sarr::Size(components);
+
+		for (s32 i = size - 1; i >= 0; --i)
+		{
+			const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = r2::sarr::At(components, i);
+			FREE(instancedSkeletalAnimationComponent.instances, *MEM_ENG_SCRATCH_PTR);
+		}
+	}
+
+
 }
 
 #endif // __SKELETAL_ANIMATION_COMPONENT_SERIALIZATION_H__

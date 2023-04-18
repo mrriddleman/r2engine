@@ -1,6 +1,8 @@
 #include "r2pch.h"
 
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/Level/Level.h"
+#include "r2/Game/Level/LevelData_generated.h"
 
 namespace r2::ecs
 {
@@ -43,16 +45,50 @@ namespace r2::ecs
 		return mEntityManager->NumLivingEntities();
 	}
 
-	void ECSCoordinator::LoadAllECSDataFromLevel(Level& level)
+	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level)
 	{
 		//@TODO(Serge):
 		R2_CHECK(false, "Not implemented yet!");
-	}
 
-	void ECSCoordinator::UnloadAllECSDataFromLevel(Level& level)
-	{
-		//@TODO(Serge):
-		R2_CHECK(false, "Not implemented yet!");
+		const flat::LevelData* flatLevelData = level.GetLevelData();
+
+		DestoryAllEntities();
+
+		u32 numLiveEntities = flatLevelData->numEntities();
+
+		const auto& levelEntities = flatLevelData->entities();
+
+		R2_CHECK(numLiveEntities == levelEntities->size(), "These should be the same");
+
+		r2::SArray<Entity>* newlyCreatedEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Entity, numLiveEntities);
+		r2::SArray<const flat::EntityData*>* flatEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::EntityData*, numLiveEntities);
+		r2::SArray<Signature>* entitySignatures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Signature, numLiveEntities);
+
+		for (flatbuffers::uoffset_t i = 0; i < numLiveEntities; ++i)
+		{
+			//not sure how this should work - currently the entities might not match up perfectly (in terms of their values)
+			//but they should match in the sense that the entities will effectively be the same
+			Entity nextECSEntity = CreateEntity();
+			const flat::EntityData* nextFlatEntity = levelEntities->Get(i);
+
+			r2::sarr::Push(*newlyCreatedEntities, nextECSEntity);
+			r2::sarr::Push(*flatEntities, nextFlatEntity);	
+			r2::sarr::Push(*entitySignatures, {});
+		}
+
+		mComponentManager->DeSerialize(newlyCreatedEntities, flatEntities, entitySignatures, flatLevelData->componentArrays());
+
+		//now set the entity signatures
+		for (u32 i = 0; i < numLiveEntities; ++i)
+		{
+			mEntityManager->SetSignature(r2::sarr::At(*newlyCreatedEntities, i), r2::sarr::At(*entitySignatures, i));
+		}
+
+		mSystemManager->DeSerializeEntitySignatures(newlyCreatedEntities, entitySignatures);
+
+		FREE(entitySignatures, *MEM_ENG_SCRATCH_PTR);
+		FREE(flatEntities, *MEM_ENG_SCRATCH_PTR);
+		FREE(newlyCreatedEntities, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void ECSCoordinator::SerializeECS (

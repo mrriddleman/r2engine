@@ -12,6 +12,21 @@ namespace r2::ecs
 	{
 		R2_CHECK(false, "You need to implement a serializer for this type");
 	}
+
+	template<typename Component>
+	inline void DeSerializeComponentArray(r2::SArray<Component>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		R2_CHECK(false, "You need to implement a deserializer for this type");
+	}
+
+
+	template<typename Component>
+	inline void CleanupDeserializeComponentArray(r2::SArray<Component>& components)
+	{
+
+	}
+
+
 }
 
 

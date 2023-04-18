@@ -63,14 +63,90 @@ namespace r2::ecs
 			{
 				const InstanceComponentT<TransformComponent>& instancedTransform = r2::sarr::At(components, i);
 
-				for (u32 j = 0; j < instancedTransform.numInstances; ++j)
-				{
-					const auto& transform = r2::sarr::At(*instancedTransform.instances, j);
+				builder.Vector([&]() {
+					for (u32 j = 0; j < instancedTransform.numInstances; ++j)
+					{
+						const auto& transform = r2::sarr::At(*instancedTransform.instances, j);
 
-					SerializeTransform(builder, transform);
-				}
+						SerializeTransform(builder, transform);
+					}
+				});
 			}
 		});
+	}
+
+	inline void DeSerializeTransform(TransformComponent& transformComponent, flexbuffers::Reference flexTransformRef)
+	{
+		auto flexTransformVector = flexTransformRef.AsVector();
+
+		transformComponent.localTransform.position.x = flexTransformVector[0].AsFloat();
+		transformComponent.localTransform.position.y = flexTransformVector[1].AsFloat();
+		transformComponent.localTransform.position.z = flexTransformVector[2].AsFloat();
+		transformComponent.localTransform.scale.x = flexTransformVector[3].AsFloat();
+		transformComponent.localTransform.scale.y = flexTransformVector[4].AsFloat();
+		transformComponent.localTransform.scale.z = flexTransformVector[5].AsFloat();
+		transformComponent.localTransform.rotation.x = flexTransformVector[6].AsFloat();
+		transformComponent.localTransform.rotation.y = flexTransformVector[7].AsFloat();
+		transformComponent.localTransform.rotation.z = flexTransformVector[8].AsFloat();
+		transformComponent.localTransform.rotation.w = flexTransformVector[9].AsFloat();
+	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<TransformComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			TransformComponent transformComponent;
+			auto temp = componentVector[i];
+			DeSerializeTransform(transformComponent, temp);
+
+			r2::sarr::Push(components, transformComponent);
+		}
+	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<TransformComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			InstanceComponentT<TransformComponent> instancedTransformComponent;
+			
+			auto flexInstancedTransformComponent = componentVector[i].AsVector();
+
+			size_t numInstances = flexInstancedTransformComponent.size();
+
+			instancedTransformComponent.numInstances = numInstances;
+
+			//this is a problem right here - how do we free this?
+			instancedTransformComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, TransformComponent, numInstances);
+
+			for (size_t j = 0; j < flexInstancedTransformComponent.size(); ++j)
+			{
+				TransformComponent nextTransformComponent;
+				DeSerializeTransform(nextTransformComponent, flexInstancedTransformComponent[j]);
+
+				r2::sarr::Push(*instancedTransformComponent.instances, nextTransformComponent);
+			}
+
+			r2::sarr::Push(components, instancedTransformComponent);
+		}
+
+	}
+
+	template<>
+	inline void CleanupDeserializeComponentArray(r2::SArray<InstanceComponentT<TransformComponent>>& components)
+	{
+		s32 size = r2::sarr::Size(components);
+
+		for (s32 i = size - 1; i >= 0; --i)
+		{
+			const InstanceComponentT<TransformComponent>& instancedTransformComponent = r2::sarr::At(components, i);
+			FREE(instancedTransformComponent.instances, *MEM_ENG_SCRATCH_PTR);
+		}
 	}
 }
 

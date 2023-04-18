@@ -33,7 +33,7 @@ namespace r2::edit
 		bool mSceneGraphDataNeedsUpdate;
 
 		void AddAllChildrenForEntity(SceneTreeNode& parent);
-		void DisplayNode(SceneTreeNode& node);
+		void DisplayNode(SceneTreeNode& node, bool open);
 		void AddNewEntityToTable(ecs::Entity parent);
 		void RemoveEntity(ecs::Entity entity);
 		void DropSceneNode(SceneTreeNode* node);

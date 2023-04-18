@@ -15,6 +15,7 @@
 #include "r2/Editor/EditorActions/EntityEditorFlagChangedEditorAction.h"
 #include "r2/Editor/EditorActions/AttachEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 #include "imgui.h"
 
 
@@ -87,6 +88,11 @@ namespace r2::edit
 			mSceneGraphDataNeedsUpdate = true;
 			return e.ShouldConsume();
 		});
+
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e) {
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
 	}
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
@@ -148,7 +154,7 @@ namespace r2::edit
 		}
 	}
 
-	void ScenePanel::DisplayNode(SceneTreeNode& node)
+	void ScenePanel::DisplayNode(SceneTreeNode& node, bool createOpen)
 	{
 		const bool hasChildren = (node.numChildren > 0);
 		ecs::EditorComponent* editorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponentPtr<ecs::EditorComponent>(node.entity);
@@ -163,7 +169,12 @@ namespace r2::edit
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
 
-		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap;
+		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_AllowItemOverlap ;
+
+		if (createOpen)
+		{
+			nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
+		}
 
 		bool isSelected = mSelectedEntity == node.entity;
 		if (isSelected)
@@ -278,7 +289,7 @@ namespace r2::edit
 			{
 				for (SceneTreeNode& childNode : node.children)
 				{
-					DisplayNode(childNode);
+					DisplayNode(childNode, false);
 				}
 			}
 
@@ -380,7 +391,7 @@ namespace r2::edit
 
 				for (SceneTreeNode& node : mSceneGraphData)
 				{
-					DisplayNode(node);
+					DisplayNode(node, true);
 				}
 
 				AddNewEntityToTable(ecs::INVALID_ENTITY);

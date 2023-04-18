@@ -13,6 +13,24 @@
 
 namespace r2::ecs
 {
+
+	//https://stackoverflow.com/questions/14727313/c-how-to-reference-templated-functions-using-stdbind-stdfunction
+	//class ComponentArrayHydration
+	//{
+	//public:
+	//	template <typename Component>
+	//	struct HydrateFunction
+	//	{
+	//		static std::function<void(r2::SArray<Component>&)> Function = nullptr;
+	//	};
+	//};
+
+	//template<typename Component>
+	//std::function<void(r2::SArray<Component>&)> ComponentArrayHydration::HydrateFunction<Component>::Function = nullptr;
+
+	using ComponentType = s32;
+	using ComponentArrayHydrationFunction = std::function<void*(const void*)>;
+
 	class IComponentArray
 	{
 	public:
@@ -21,6 +39,14 @@ namespace r2::ecs
 		virtual void DestoryAllEntities() = 0;
 		virtual u64 GetHashName() = 0;
 		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const = 0;
+		virtual void DeSerializeForEntities(
+			const r2::SArray<Entity>* entitiesToAddComponentsTo,
+			const r2::SArray<const flat::EntityData*>* refEntityData,
+			r2::SArray<Signature>* entitySignatures,
+			ComponentType componentType,
+			const flat::ComponentArrayData* componentArrayData,
+			ComponentArrayHydrationFunction hydrateFunction) = 0;
+
 		b32 mShouldSerialize;
 	};
 
@@ -207,6 +233,73 @@ namespace r2::ecs
 			componentArrayDataBuilder.add_entityToIndexMap(entityToIndexMapVec);
 
 			return componentArrayDataBuilder.Finish();
+		}
+
+		void DeSerializeForEntities(
+			const r2::SArray<Entity>* entitiesToAddComponentsTo,
+			const r2::SArray<const flat::EntityData*>* refEntityData,
+			r2::SArray<Signature>* entitySignatures,
+			ComponentType componentType,
+			const flat::ComponentArrayData* componentArrayData,
+			ComponentArrayHydrationFunction hydrateFunction) override
+		{
+			R2_CHECK(componentArrayData != nullptr, "Can't be nullptr");
+			R2_CHECK(entitiesToAddComponentsTo != nullptr, "Can't be nullptr");
+			R2_CHECK(refEntityData != nullptr, "Can't be nullptr");
+			const auto numEntitiesToAddComponentsTo = r2::sarr::Size(*entitiesToAddComponentsTo);
+			const auto numRefEntities = r2::sarr::Size(*refEntityData);
+
+			R2_CHECK(numEntitiesToAddComponentsTo == numRefEntities, "These should be the same");
+
+			r2::SArray<Component>* tempComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Component, MAX_NUM_ENTITIES);
+
+			mHashName = componentArrayData->componentType();
+
+			DeSerializeComponentArray(*tempComponents, entitiesToAddComponentsTo, refEntityData, componentArrayData);
+
+			r2::SArray<Component>* realComponents = tempComponents;
+
+			if (hydrateFunction)
+			{
+				realComponents = static_cast<r2::SArray<Component>*>( hydrateFunction(static_cast<void*>(tempComponents)) );
+			}
+
+			const auto* entityToIndexMap = componentArrayData->entityToIndexMap();
+
+			for (u32 i = 0; i < numRefEntities; ++i)
+			{
+				const flat::EntityData* entityData = r2::sarr::At(*refEntityData, i);
+
+				s32 componentIndex = -1;
+
+				for (flatbuffers::uoffset_t j = 0; j < entityToIndexMap->size(); ++j)
+				{
+					const auto* entry = entityToIndexMap->Get(j);
+
+					if (entry->entity() == entityData->entityID())
+					{
+						componentIndex = entry->index();
+						break;
+					}
+				}
+				
+				R2_CHECK(componentIndex != -1, "Should never happen");
+
+				Entity e = r2::sarr::At(*entitiesToAddComponentsTo, i);
+
+				const auto& component = r2::sarr::At(*realComponents, componentIndex);
+
+				AddComponent(e, component);
+
+				auto& signature = r2::sarr::At(*entitySignatures, i);
+
+				signature.set(componentType, true);
+			}
+			
+
+			CleanupDeserializeComponentArray(*tempComponents);
+
+			FREE(tempComponents, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		u64 GetHashName() override

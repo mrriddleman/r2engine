@@ -16,6 +16,7 @@
 #include "r2/Game/ECS/Systems/RenderSystem.h"
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
@@ -274,10 +275,20 @@ namespace r2
 
 		mLevelData = r2::lvlche::GetLevelData(*moptrLevelCache, mLevelHandle);
 
-		if (mLevelData)
-		{
-			int k = 0;
-		}
+		R2_CHECK(mLevelData != nullptr, "Level Data is nullptr");
+
+		r2::Level newLevel;
+		newLevel.Init(mLevelData, mLevelHandle);
+
+		mCoordinator->LoadAllECSDataFromLevel(newLevel);
+
+		R2_CHECK(false, "Currently this is not enough - we need to actually load/get the data needed from each type of component, example: Render component needs to be filled out with the gpu handle");
+		//@TODO(Serge): figure out how to do this in a nice way
+
+		evt::EditorLevelLoadedEvent e(newLevel);
+
+		PostEditorEvent(e);
+
 		//printf("FilePathName: %s\n", filePathName.c_str());
 		//printf("FilePath: %s\n", parentDirectory.c_str());
 	}
@@ -581,26 +592,33 @@ namespace r2
 		return mMallocArena;
 	}
 
+	
+
+	void Editor::HydrateRenderComponents(r2::SArray<ecs::RenderComponent>& renderComponents)
+	{
+
+	}
+
 	void Editor::RegisterComponents()
 	{
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent",true);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent", true);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent", false);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent",true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent", true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent", false, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true, nullptr);
 		
 		//add some more components to the coordinator for the editor to use
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent", true, nullptr);
 
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true, nullptr);
 
 #ifdef R2_DEBUG
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent", false);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena, "DebugBoneComponent", false);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent", false, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena, "DebugBoneComponent", false, nullptr);
 
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent", false);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent", false);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent", false, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent", false, nullptr);
 #endif
 
 		CENG.GetApplication().RegisterComponents(mCoordinator);

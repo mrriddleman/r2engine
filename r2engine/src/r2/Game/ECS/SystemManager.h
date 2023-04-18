@@ -125,6 +125,9 @@ namespace r2::ecs
 		void EntityDestroyed(Entity entity);
 		void EntitySignatureChanged(Entity entity, Signature entitySignature);
 
+		void DeSerializeEntitySignatures(const r2::SArray<Entity>* entities, const r2::SArray<Signature>* entitySignatures);
+
+
 		template<typename SystemType>
 		void MoveEntity(u64 fromIndex, u64 toIndex)
 		{

@@ -70,6 +70,7 @@ namespace r2
 		void UnRegisterComponents();
 		void UnRegisterSystems();
 
+		void HydrateRenderComponents(r2::SArray<ecs::RenderComponent>& renderComponents);
 
 		//@TEST CODE: REMOVE!
 		r2::util::Random mRandom;

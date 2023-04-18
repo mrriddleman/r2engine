@@ -23,6 +23,39 @@ namespace r2::ecs
 		}
 		builder.EndVector(start, false, false);
 	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<HeirarchyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
+		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
+
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			u32 savedEntity = componentVector[i].AsUInt32();
+
+
+			//We can't just map the entity directly since we don't guarantee the same entity values
+			s32 entityIndex = -1;
+			for (u32 j= 0; j < r2::sarr::Size(*refEntities); ++j)
+			{
+				if (r2::sarr::At(*refEntities, j)->entityID() == savedEntity)
+				{
+					entityIndex = j;
+					break;
+				}
+			}
+
+			R2_CHECK(entityIndex != -1, "Should never be -1");
+
+			HeirarchyComponent heirarchyComponent;
+			heirarchyComponent.parent = r2::sarr::At(*entities, entityIndex);
+
+			r2::sarr::Push(components, heirarchyComponent);
+		}
+	}
 }
 
 #endif

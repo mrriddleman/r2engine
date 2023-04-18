@@ -28,7 +28,10 @@ namespace r2
             EVT_EDITOR_ENTITY_SELECTED,
             EVT_EDITOR_ENTITY_NAME_CHANGED,
             EVT_EDITOR_ENTITY_ATTACHED_TO_NEW_PARENT,
-            EVT_EDITOR_ENTITY_FLAG_CHANGED
+            EVT_EDITOR_ENTITY_FLAG_CHANGED,
+
+            EVT_EDITOR_LEVEL_LOADED,
+
 #endif
         };
         
@@ -44,6 +47,7 @@ namespace r2
 #ifdef R2_EDITOR
             ECAT_EDITOR       = BIT(6),
             ECAT_EDITOR_ENTITY = BIT(7),
+            ECAT_EDITOR_LEVEL = BIT(8),
 #endif
         };
         

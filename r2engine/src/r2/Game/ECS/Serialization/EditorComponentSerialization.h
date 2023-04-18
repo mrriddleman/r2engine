@@ -28,6 +28,28 @@ namespace r2::ecs
 			}
 		});
 	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<EditorComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
+		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
+
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			const auto& component = componentVector[i].AsVector();
+
+			EditorComponent editorComponent;
+
+			editorComponent.editorName = component[0].AsString().str();
+			editorComponent.flags = { component[1].AsUInt32() };
+
+			r2::sarr::Push(components, editorComponent);
+		}
+	}
+
 }
 
 #endif // __EDITOR_COMPONENT_H__

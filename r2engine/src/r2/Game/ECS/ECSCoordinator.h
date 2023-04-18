@@ -71,8 +71,7 @@ namespace r2::ecs
 
 		u32 NumLivingEntities() const;
 
-		void LoadAllECSDataFromLevel(Level& level);
-		void UnloadAllECSDataFromLevel(Level& level);
+		void LoadAllECSDataFromLevel(const Level& level);
 
 		template<typename Component>
 		bool HasComponent(Entity entity)
@@ -85,9 +84,9 @@ namespace r2::ecs
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize)
+		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize, ComponentArrayHydrationFunction hydrationFunction)
 		{
-			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize);
+			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize, hydrationFunction);
 		}
 
 		template<class ARENA, typename Component>

@@ -1,6 +1,7 @@
 #include "r2pch.h"
 #ifdef R2_EDITOR
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include <sstream>
 
 namespace r2::evt
 {
