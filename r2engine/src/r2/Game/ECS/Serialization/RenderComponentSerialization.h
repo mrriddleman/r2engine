@@ -85,6 +85,83 @@ namespace r2::ecs
 			}
 		});
 	}
+
+	template<>
+	inline void DeSerializeComponentArray(r2::SArray<RenderComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	{
+		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+
+		for (size_t i = 0; i < componentVector.size(); ++i)
+		{
+			auto flexRenderComponent = componentVector[i].AsVector();
+			RenderComponent renderComponent;
+			renderComponent.optrOverrideMaterials = nullptr;
+			renderComponent.optrMaterialOverrideNames = nullptr;
+			renderComponent.gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+
+			renderComponent.assetModelHash = flexRenderComponent[0].AsUInt64();
+			renderComponent.primitiveType = static_cast<r2::draw::PrimitiveType>(flexRenderComponent[1].AsUInt32());
+
+			auto flexDrawParams = flexRenderComponent[2].AsVector();
+
+			renderComponent.drawParameters.layer = (r2::draw::DrawLayer)flexDrawParams[0].AsUInt32();
+			renderComponent.drawParameters.flags = {flexDrawParams[1].AsUInt32()};
+			renderComponent.drawParameters.stencilState.stencilEnabled = flexDrawParams[2].AsUInt32();
+			renderComponent.drawParameters.stencilState.stencilWriteEnabled = flexDrawParams[3].AsUInt32();
+			renderComponent.drawParameters.stencilState.op.stencilFail = flexDrawParams[4].AsUInt32();
+			renderComponent.drawParameters.stencilState.op.depthFail = flexDrawParams[5].AsUInt32();
+			renderComponent.drawParameters.stencilState.op.depthAndStencilPass = flexDrawParams[6].AsUInt32();
+			renderComponent.drawParameters.stencilState.func.func = flexDrawParams[7].AsUInt32();
+			renderComponent.drawParameters.stencilState.func.ref = flexDrawParams[8].AsUInt32();
+			renderComponent.drawParameters.stencilState.func.mask = flexDrawParams[9].AsUInt32();
+			renderComponent.drawParameters.blendState.blendingEnabled = flexDrawParams[10].AsUInt32();
+			renderComponent.drawParameters.blendState.blendEquation = flexDrawParams[11].AsUInt32();
+			
+			for (u32 j = 0; j < 4; ++j)
+			{
+				auto flexBlendFunction = flexDrawParams[12 + j].AsVector();
+				renderComponent.drawParameters.blendState.blendFunctions[j].blendDrawBuffer = flexBlendFunction[0].AsUInt32();
+				renderComponent.drawParameters.blendState.blendFunctions[j].sfactor = flexBlendFunction[1].AsUInt32();
+				renderComponent.drawParameters.blendState.blendFunctions[j].dfactor = flexBlendFunction[2].AsUInt32();
+			}
+
+			renderComponent.drawParameters.blendState.numBlendFunctions = flexDrawParams[16].AsUInt32();
+			renderComponent.drawParameters.cullState.cullingEnabled = flexDrawParams[17].AsUInt32();
+			renderComponent.drawParameters.cullState.cullFace = flexDrawParams[18].AsUInt32();
+			renderComponent.drawParameters.cullState.frontFace = flexDrawParams[19].AsUInt32();
+
+			auto flexMaterialOverrideNames = flexRenderComponent[3].AsVector();
+
+			u32 numMaterialOverrides = flexMaterialOverrideNames.size();
+
+			renderComponent.optrMaterialOverrideNames = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::RenderMaterialOverride, numMaterialOverrides);
+
+			for (u32 j = 0; j < numMaterialOverrides; ++j)
+			{
+				auto flexMaterialOverride = flexMaterialOverrideNames[j].AsVector();
+
+				ecs::RenderMaterialOverride renderMaterialOverride;
+				renderMaterialOverride.materialSystemName = flexMaterialOverride[0].AsUInt64();
+				renderMaterialOverride.materialName = flexMaterialOverride[1].AsUInt64();
+
+				r2::sarr::Push(*renderComponent.optrMaterialOverrideNames, renderMaterialOverride);
+			}
+
+			r2::sarr::Push(components, renderComponent);
+		}
+	}
+
+	template<>
+	inline void CleanupDeserializeComponentArray(r2::SArray<RenderComponent>& components)
+	{
+		s32 size = r2::sarr::Size(components);
+
+		for (s32 i = size - 1; i >= 0; --i)
+		{
+			const RenderComponent& renderComponent = r2::sarr::At(components, i);
+			FREE(renderComponent.optrMaterialOverrideNames, *MEM_ENG_SCRATCH_PTR);
+		}
+	}
 }
 
 #endif

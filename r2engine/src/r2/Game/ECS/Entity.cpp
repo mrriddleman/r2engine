@@ -107,7 +107,7 @@ namespace r2::ecs
 		for (u32 i = 0; i <numCreatedEntities; ++i)
 		{
 			Entity e = r2::sarr::At(*mCreatedEntities, i);
-			auto entityData = flat::CreateEntityData(builder, e, r2::sarr::At(*mEntitySignatures, e).to_ullong());
+			auto entityData = flat::CreateEntityData(builder, e);
 			entityVec.push_back(entityData);
 		}
 	}
