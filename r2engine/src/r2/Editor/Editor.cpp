@@ -323,7 +323,8 @@ namespace r2
 				renderComponent.optrOverrideMaterials = nullptr;
 				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-				renderComponent.primitiveType = draw::PrimitiveType::TRIANGLES;
+				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;
+				renderComponent.isAnimated = true;
 				renderComponent.drawParameters.layer = r2::draw::DL_CHARACTER;
 				renderComponent.drawParameters.flags.Clear();
 				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
@@ -592,11 +593,192 @@ namespace r2
 		return mMallocArena;
 	}
 
-	
-
-	void Editor::HydrateRenderComponents(r2::SArray<ecs::RenderComponent>& renderComponents)
+	r2::SArray<ecs::RenderComponent>* Editor::HydrateRenderComponents(r2::SArray<ecs::RenderComponent>* tempRenderComponents)
 	{
+		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
+		
+		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
 
+		for (u32 i = 0; i < numRenderComponents; ++i)
+		{
+			ecs::RenderComponent& renderComponent = r2::sarr::At(*tempRenderComponents, i);
+
+			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
+
+			r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+
+			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+			if (renderComponent.isAnimated)
+			{
+				const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
+				r2::draw::modlsys::ReturnAnimModel(editorModelSystem, animModel);
+			}
+			else
+			{
+				const r2::draw::Model* model = r2::draw::modlsys::GetModel(editorModelSystem, modelHandle);
+				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
+				r2::draw::modlsys::ReturnModel(editorModelSystem, model);
+			}
+
+			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
+			const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
+			
+			if (numMaterialOverrides > 0)
+			{
+				renderComponent.optrOverrideMaterials = MAKE_SARRAY(mMallocArena, r2::draw::MaterialHandle, numMaterialOverrides);
+				mComponentAllocations.push_back(renderComponent.optrMaterialOverrideNames);
+
+				for (u32 j = 0; j < numMaterialOverrides; ++j)
+				{
+					const ecs::RenderMaterialOverride& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
+
+					const r2::draw::MaterialSystem* materialSystem = r2::draw::matsys::GetMaterialSystemBySystemName(materialOverride.materialSystemName);
+
+					R2_CHECK(materialSystem == editorMaterialSystem, "Just a check to make sure these are the same");
+
+					r2::draw::MaterialHandle nextOverrideMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*materialSystem, materialOverride.materialName);
+
+					r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
+				}
+			}
+		}
+
+		return tempRenderComponents;
+	}
+
+	r2::SArray<ecs::SkeletalAnimationComponent>* Editor::HydrateSkeletalAnimationComponents(r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents)
+	{
+		if (!tempSkeletalAnimationComponents)
+		{
+			return nullptr;
+		}
+
+		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+
+		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
+
+		for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
+		{
+			ecs::SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*tempSkeletalAnimationComponents, i);
+
+			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
+
+			r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+
+			const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+
+			skeletalAnimationComponent.animModel = animModel;
+
+			//@TODO(Serge): this isn't right, we should look up the animation name in some kind of cache that we have access to
+			std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
+			skeletalAnimationComponent.animation = animations[0];
+
+			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
+			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
+
+			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+		}
+
+		return tempSkeletalAnimationComponents;
+	}
+
+	r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* Editor::HydrateInstancedSkeletalAnimationComponents(r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents)
+	{
+		if (!tempInstancedSkeletalAnimationComponents)
+		{
+			return nullptr;
+		}
+
+		//@TODO(Serge): technically, we don't need to allocate this at all since the component array has the memory for it - figure out a way to not allocate the array again
+		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* instancedSkeletalAnimationComponents = nullptr;
+
+		instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
+		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
+
+		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+
+		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
+
+		for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
+		{
+			const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& tempInstancedSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponents, i);
+
+			ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
+			instancedSkeletalAnimationComponent.numInstances = tempInstancedSkeletalAnimationComponent.numInstances;
+
+			instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, tempInstancedSkeletalAnimationComponent.numInstances);
+			mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
+
+
+			for (u32 j = 0; j < tempInstancedSkeletalAnimationComponent.numInstances; ++j)
+			{
+				const ecs::SkeletalAnimationComponent& tempSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponent.instances, j);
+
+				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
+				skeletalAnimationComponent.animModelAssetName = tempSkeletalAnimationComponent.animModelAssetName;
+				skeletalAnimationComponent.shouldLoop = tempSkeletalAnimationComponent.shouldLoop;
+				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = tempSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
+				skeletalAnimationComponent.startingAnimationAssetName = tempSkeletalAnimationComponent.startingAnimationAssetName;
+				skeletalAnimationComponent.startTime = tempSkeletalAnimationComponent.startTime;
+
+
+				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
+
+				r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+
+				const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+
+				skeletalAnimationComponent.animModel = animModel;
+
+				//@TODO(Serge): this isn't right, we should look up the animation name in some kind of cache that we have access to
+				std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
+				skeletalAnimationComponent.animation = animations[0];
+
+				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
+				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
+
+				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
+				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
+			}
+
+			r2::sarr::Push(*instancedSkeletalAnimationComponents, instancedSkeletalAnimationComponent);
+
+		}
+
+		return instancedSkeletalAnimationComponents;
+	}
+
+	r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* Editor::HydrateInstancedTransformComponents(r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents)
+	{
+		if (!tempInstancedTransformComponents)
+		{
+			return nullptr;
+		}
+
+		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* instancedTransformComponents = nullptr;
+
+		instancedTransformComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::TransformComponent> , r2::sarr::Size(*tempInstancedTransformComponents));
+		mComponentAllocations.push_back(instancedTransformComponents);
+
+		for (u32 i = 0; i < r2::sarr::Size(*tempInstancedTransformComponents); ++i)
+		{
+			const ecs::InstanceComponentT<ecs::TransformComponent>& tempInstancedTransformComponent = r2::sarr::At(*tempInstancedTransformComponents, i);
+
+			ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
+
+			instancedTransformComponent.numInstances = tempInstancedTransformComponent.numInstances;
+			instancedTransformComponent.instances = MAKE_SARRAY(mMallocArena, ecs::TransformComponent, tempInstancedTransformComponent.numInstances);
+			mComponentAllocations.push_back(instancedTransformComponent.instances);
+
+			r2::sarr::Copy(*instancedTransformComponent.instances, *tempInstancedTransformComponent.instances);
+
+			r2::sarr::Push(*instancedTransformComponents, instancedTransformComponent);
+		}
+
+		return instancedTransformComponents;
 	}
 
 	void Editor::RegisterComponents()

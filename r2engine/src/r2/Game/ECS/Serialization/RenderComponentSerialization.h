@@ -35,10 +35,11 @@ namespace r2::ecs
 				builder.Vector([&]() {
 					builder.UInt(renderComponent.assetModelHash);
 					builder.UInt(static_cast<u32>(renderComponent.primitiveType));
+					builder.UInt(renderComponent.isAnimated);
 					builder.Vector([&]() {
 						builder.UInt(renderComponent.drawParameters.layer);
 						builder.UInt(renderComponent.drawParameters.flags.GetRawValue());
-
+						
 						//@TODO(Serge): these will have to change when we switch to Vulkan - make the values completely agnostic
 						builder.UInt(renderComponent.drawParameters.stencilState.stencilEnabled);
 						builder.UInt(renderComponent.drawParameters.stencilState.stencilWriteEnabled);
@@ -100,9 +101,10 @@ namespace r2::ecs
 			renderComponent.gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 
 			renderComponent.assetModelHash = flexRenderComponent[0].AsUInt64();
-			renderComponent.primitiveType = static_cast<r2::draw::PrimitiveType>(flexRenderComponent[1].AsUInt32());
+			renderComponent.primitiveType = flexRenderComponent[1].AsUInt32();
+			renderComponent.isAnimated = flexRenderComponent[2].AsUInt32();
 
-			auto flexDrawParams = flexRenderComponent[2].AsVector();
+			auto flexDrawParams = flexRenderComponent[3].AsVector();
 
 			renderComponent.drawParameters.layer = (r2::draw::DrawLayer)flexDrawParams[0].AsUInt32();
 			renderComponent.drawParameters.flags = {flexDrawParams[1].AsUInt32()};
@@ -119,7 +121,7 @@ namespace r2::ecs
 			
 			for (u32 j = 0; j < 4; ++j)
 			{
-				auto flexBlendFunction = flexDrawParams[12 + j].AsVector();
+				auto flexBlendFunction = flexDrawParams[12u + j].AsVector();
 				renderComponent.drawParameters.blendState.blendFunctions[j].blendDrawBuffer = flexBlendFunction[0].AsUInt32();
 				renderComponent.drawParameters.blendState.blendFunctions[j].sfactor = flexBlendFunction[1].AsUInt32();
 				renderComponent.drawParameters.blendState.blendFunctions[j].dfactor = flexBlendFunction[2].AsUInt32();
@@ -130,7 +132,7 @@ namespace r2::ecs
 			renderComponent.drawParameters.cullState.cullFace = flexDrawParams[18].AsUInt32();
 			renderComponent.drawParameters.cullState.frontFace = flexDrawParams[19].AsUInt32();
 
-			auto flexMaterialOverrideNames = flexRenderComponent[3].AsVector();
+			auto flexMaterialOverrideNames = flexRenderComponent[4].AsVector();
 
 			u32 numMaterialOverrides = flexMaterialOverrideNames.size();
 
@@ -158,8 +160,9 @@ namespace r2::ecs
 
 		for (s32 i = size - 1; i >= 0; --i)
 		{
-			const RenderComponent& renderComponent = r2::sarr::At(components, i);
+			RenderComponent& renderComponent = r2::sarr::At(components, i);
 			FREE(renderComponent.optrMaterialOverrideNames, *MEM_ENG_SCRATCH_PTR);
+			renderComponent.optrMaterialOverrideNames = nullptr;
 		}
 	}
 }

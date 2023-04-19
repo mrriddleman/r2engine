@@ -70,9 +70,12 @@ namespace r2
 		void UnRegisterComponents();
 		void UnRegisterSystems();
 
-		void HydrateRenderComponents(r2::SArray<ecs::RenderComponent>& renderComponents);
-
 		//@TEST CODE: REMOVE!
+		r2::SArray<ecs::RenderComponent>* HydrateRenderComponents(r2::SArray<ecs::RenderComponent>* tempRenderComponents);
+		r2::SArray<ecs::SkeletalAnimationComponent>* HydrateSkeletalAnimationComponents(r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents);
+		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* HydrateInstancedSkeletalAnimationComponents(r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents);
+		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* HydrateInstancedTransformComponents(r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents);
+		
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;
 		LevelCache* moptrLevelCache;

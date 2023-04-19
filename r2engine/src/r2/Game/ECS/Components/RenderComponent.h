@@ -16,7 +16,8 @@ namespace r2::ecs
 	struct RenderComponent
 	{
 		u64 assetModelHash;
-		r2::draw::PrimitiveType primitiveType;
+		u32 primitiveType;
+		b32 isAnimated;
 		r2::draw::DrawParameters drawParameters;
 		r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
 		r2::SArray<r2::draw::MaterialHandle>* optrOverrideMaterials;

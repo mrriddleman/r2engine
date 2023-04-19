@@ -12,13 +12,13 @@ namespace r2::ecs
 	struct SkeletalAnimationComponent
 	{
 		u64 animModelAssetName;
-
+		u64 startingAnimationAssetName;
 		b32 shouldUseSameTransformsForAllInstances;
-		const r2::draw::AnimModel* animModel;
 		u32 startTime;
 		b32 shouldLoop;
-		const r2::draw::Animation* animation;
 
+		const r2::draw::AnimModel* animModel;
+		const r2::draw::Animation* animation;
 		r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 	};
 }

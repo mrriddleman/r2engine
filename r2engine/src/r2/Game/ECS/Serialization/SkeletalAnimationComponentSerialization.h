@@ -26,6 +26,7 @@ namespace r2::ecs
 	{
 		builder.Vector([&]() {
 			builder.UInt(skeletalAnimationComponent.animModelAssetName);
+			builder.UInt(skeletalAnimationComponent.startingAnimationAssetName);
 			builder.UInt(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
 			builder.UInt(skeletalAnimationComponent.startTime);
 			builder.UInt(skeletalAnimationComponent.shouldLoop);
@@ -71,9 +72,10 @@ namespace r2::ecs
 		auto flexSkeletalAnimationVector = flexSkeletalAnimationRef.AsVector();
 
 		skeletalAnimationComponent.animModelAssetName = flexSkeletalAnimationVector[0].AsUInt64();
-		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flexSkeletalAnimationVector[1].AsBool();
-		skeletalAnimationComponent.startTime = flexSkeletalAnimationVector[2].AsUInt32();
-		skeletalAnimationComponent.shouldLoop = flexSkeletalAnimationVector[3].AsBool();
+		skeletalAnimationComponent.startingAnimationAssetName = flexSkeletalAnimationVector[1].AsUInt64();
+		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flexSkeletalAnimationVector[2].AsBool();
+		skeletalAnimationComponent.startTime = flexSkeletalAnimationVector[3].AsUInt32();
+		skeletalAnimationComponent.shouldLoop = flexSkeletalAnimationVector[4].AsBool();
 	}
 
 	template<>
@@ -85,6 +87,7 @@ namespace r2::ecs
 		{
 			SkeletalAnimationComponent skeletalAnimationComponent;
 			skeletalAnimationComponent.animModelAssetName = 0;
+			skeletalAnimationComponent.startingAnimationAssetName = 0;
 			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 			skeletalAnimationComponent.animModel = nullptr;
 			skeletalAnimationComponent.shaderBones = nullptr;
@@ -120,6 +123,7 @@ namespace r2::ecs
 			{
 				SkeletalAnimationComponent skeletalAnimationComponent;
 				skeletalAnimationComponent.animModelAssetName = 0;
+				skeletalAnimationComponent.startingAnimationAssetName = 0;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 				skeletalAnimationComponent.animModel = nullptr;
 				skeletalAnimationComponent.shaderBones = nullptr;
