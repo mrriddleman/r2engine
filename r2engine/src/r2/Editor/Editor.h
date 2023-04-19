@@ -71,10 +71,10 @@ namespace r2
 		void UnRegisterSystems();
 
 		//@TEST CODE: REMOVE!
-		r2::SArray<ecs::RenderComponent>* HydrateRenderComponents(r2::SArray<ecs::RenderComponent>* tempRenderComponents);
-		r2::SArray<ecs::SkeletalAnimationComponent>* HydrateSkeletalAnimationComponents(r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents);
-		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* HydrateInstancedSkeletalAnimationComponents(r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents);
-		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* HydrateInstancedTransformComponents(r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents);
+		void* HydrateRenderComponents(void* tempRenderComponents);
+		void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
+		void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
+		void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 		
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;

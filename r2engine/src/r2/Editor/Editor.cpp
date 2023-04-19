@@ -593,8 +593,10 @@ namespace r2
 		return mMallocArena;
 	}
 
-	r2::SArray<ecs::RenderComponent>* Editor::HydrateRenderComponents(r2::SArray<ecs::RenderComponent>* tempRenderComponents)
+	void* Editor::HydrateRenderComponents(void* data)
 	{
+		r2::SArray<ecs::RenderComponent>* tempRenderComponents = static_cast<r2::SArray<ecs::RenderComponent>*>(data);
+
 		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
 		
 		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
@@ -648,8 +650,10 @@ namespace r2
 		return tempRenderComponents;
 	}
 
-	r2::SArray<ecs::SkeletalAnimationComponent>* Editor::HydrateSkeletalAnimationComponents(r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents)
+	void* Editor::HydrateSkeletalAnimationComponents(void* data)
 	{
+		r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents = static_cast<r2::SArray<ecs::SkeletalAnimationComponent>*>(data);
+
 		if (!tempSkeletalAnimationComponents)
 		{
 			return nullptr;
@@ -684,8 +688,9 @@ namespace r2
 		return tempSkeletalAnimationComponents;
 	}
 
-	r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* Editor::HydrateInstancedSkeletalAnimationComponents(r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents)
+	void* Editor::HydrateInstancedSkeletalAnimationComponents(void* data)
 	{
+		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>*>(data);
 		if (!tempInstancedSkeletalAnimationComponents)
 		{
 			return nullptr;
@@ -751,8 +756,9 @@ namespace r2
 		return instancedSkeletalAnimationComponents;
 	}
 
-	r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* Editor::HydrateInstancedTransformComponents(r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents)
+	void* Editor::HydrateInstancedTransformComponents(void* data)
 	{
+		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>*>(data);
 		if (!tempInstancedTransformComponents)
 		{
 			return nullptr;
@@ -783,17 +789,22 @@ namespace r2
 
 	void Editor::RegisterComponents()
 	{
+		ecs::ComponentArrayHydrationFunction renderComponentHydrationFunc = std::bind(&Editor::HydrateRenderComponents, this, std::placeholders::_1);
+		ecs::ComponentArrayHydrationFunction skeletalAnimationComponentHydrationFunc = std::bind(&Editor::HydrateSkeletalAnimationComponents, this, std::placeholders::_1);
+		ecs::ComponentArrayHydrationFunction instancedTransformComponentHydrationFunc = std::bind(&Editor::HydrateInstancedTransformComponents, this, std::placeholders::_1);
+		ecs::ComponentArrayHydrationFunction instancedSkeletalAnimationComponentHydrationFunc = std::bind(&Editor::HydrateInstancedSkeletalAnimationComponents, this, std::placeholders::_1);
+
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent",true, nullptr);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent", true, nullptr);
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent", false, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true, renderComponentHydrationFunc);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true, skeletalAnimationComponentHydrationFunc);
 		
 		//add some more components to the coordinator for the editor to use
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent", true, nullptr);
 
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true, nullptr);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true, instancedTransformComponentHydrationFunc);
+		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true, instancedSkeletalAnimationComponentHydrationFunc);
 
 #ifdef R2_DEBUG
 		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent", false, nullptr);

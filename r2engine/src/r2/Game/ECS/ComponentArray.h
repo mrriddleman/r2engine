@@ -29,7 +29,7 @@ namespace r2::ecs
 	//std::function<void(r2::SArray<Component>&)> ComponentArrayHydration::HydrateFunction<Component>::Function = nullptr;
 
 	using ComponentType = s32;
-	using ComponentArrayHydrationFunction = std::function<void*(const void*)>;
+	using ComponentArrayHydrationFunction = std::function<void*(void*)>;
 
 	class IComponentArray
 	{
