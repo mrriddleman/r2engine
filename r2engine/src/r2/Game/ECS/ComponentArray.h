@@ -253,7 +253,7 @@ namespace r2::ecs
 
 			r2::SArray<Component>* tempComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Component, MAX_NUM_ENTITIES);
 
-			mHashName = componentArrayData->componentType();
+			R2_CHECK(mHashName == componentArrayData->componentType(), "These should be the same");
 
 			DeSerializeComponentArray(*tempComponents, entitiesToAddComponentsTo, refEntityData, componentArrayData);
 
@@ -295,7 +295,6 @@ namespace r2::ecs
 
 				signature.set(componentType, true);
 			}
-			
 
 			CleanupDeserializeComponentArray(*tempComponents);
 

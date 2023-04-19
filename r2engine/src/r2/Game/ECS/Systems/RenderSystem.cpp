@@ -88,7 +88,7 @@ namespace r2::ecs
 		bool hasMaterialOverrides = renderComponent.optrOverrideMaterials != nullptr;
 		bool isAnimated = animationComponent != nullptr;
 
-		draw::key::RenderSystemKey renderKey = r2::draw::key::GenerateRenderSystemKey(hasMaterialOverrides, renderComponent.primitiveType, utils::HashBytes32(&renderComponent.drawParameters, sizeof(renderComponent.drawParameters)));
+		draw::key::RenderSystemKey renderKey = r2::draw::key::GenerateRenderSystemKey(hasMaterialOverrides, (r2::draw::PrimitiveType)renderComponent.primitiveType, utils::HashBytes32(&renderComponent.drawParameters, sizeof(renderComponent.drawParameters)));
 
 		//now find or create the RenderSystemGatherBatch that we should add to 
 
@@ -116,7 +116,7 @@ namespace r2::ecs
 			}
 			
 			gatherBatch->drawParams = renderComponent.drawParameters;
-			gatherBatch->primitiveType = renderComponent.primitiveType;
+			gatherBatch->primitiveType = (r2::draw::PrimitiveType) renderComponent.primitiveType;
 
 			r2::shashmap::Set(*gatherBatchPtr, renderKey.keyValue, gatherBatch);
 		}

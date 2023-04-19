@@ -4,8 +4,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Containers/SQueue.h"
 #include "r2/Game/ECS/Component.h"
-#include "flatbuffers/flatbuffers.h"
-#include "r2/Game/Level/LevelData_generated.h"
+#include "r2/Game/ECS/EntityData_generated.h"
 
 namespace r2::ecs
 {

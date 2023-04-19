@@ -3,7 +3,17 @@
 
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Logging/Log.h"
-#include "flatbuffers/flexbuffers.h"
+#include "r2/Game/ECS/Entity.h"
+
+namespace flat
+{
+	class ComponentArrayData;
+}
+
+namespace flexbuffers
+{
+	class Builder;
+}
 
 namespace r2::ecs
 {

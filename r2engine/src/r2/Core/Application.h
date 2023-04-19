@@ -27,8 +27,8 @@
 
 namespace r2::draw
 {
-    class AnimModel;
-    class Animation;
+    struct AnimModel;
+    struct Animation;
     struct ModelSystem;
     struct MaterialSystem;
 }

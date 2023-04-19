@@ -44,7 +44,7 @@
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 
-#include "r2/Game/ECS/ECSCoordinator.h"
+
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -57,6 +57,8 @@ struct DummyComponent
 
 namespace r2::ecs
 {
+    class ECSCoordinator;
+
 	template<>
 	void SerializeComponentArray<DummyComponent>(flexbuffers::Builder& builder, const r2::SArray<DummyComponent>& components)
 	{

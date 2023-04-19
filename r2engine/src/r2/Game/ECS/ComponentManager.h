@@ -16,13 +16,8 @@
 #include "r2/Game/ECS/Serialization/SkeletalAnimationComponentSerialization.h"
 #include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
 
-
-
 namespace r2::ecs
 {
-
-
-	
 	const u64 EMPTY_COMPONENT_HASH = STRING_ID("");
 
 	class ComponentManager

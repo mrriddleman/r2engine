@@ -1,6 +1,5 @@
 #include "r2pch.h"
 #if defined(R2_EDITOR) && defined(R2_IMGUI)
-
 #include "r2/Core/Events/Events.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorMainMenuBar.h"
@@ -31,7 +30,6 @@
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
 #include "r2/Game/Level/LevelCache.h"
-#include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #include "r2/Core/File/PathUtils.h"
 
 namespace 
@@ -58,6 +56,7 @@ namespace r2
 		,moptrLevelCache(nullptr)
 		,mLevelData(nullptr)
 		, mLevelHandle{}
+		, microbatAnimModel(nullptr)
 	{
 
 	}
@@ -128,8 +127,11 @@ namespace r2
 
 		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 
-
-		r2::lvlche::UnloadLevelData(*moptrLevelCache, mLevelHandle);
+		if (!r2::asset::IsInvalidAssetHandle(mLevelHandle))
+		{
+			r2::lvlche::UnloadLevelData(*moptrLevelCache, mLevelHandle);
+		}
+		
 		r2::mem::utils::MemBoundary boundary = moptrLevelCache->mLevelCacheBoundary;
 		r2::lvlche::Shutdown(moptrLevelCache);
 

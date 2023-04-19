@@ -248,7 +248,8 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			"SDL2",
 			"SDL2main",
 			"glad",
-			"SDL2_image"
+			"SDL2_image",
+			"flatbuffers"
 		}
 
 		postbuildcommands
@@ -256,6 +257,23 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
 		}
 
+	filter {"system:windows", "configurations:Release"}
+		libdirs
+		{
+			"%{prj.name}/vendor/flatbuffers/lib/Windows/Release/x64",
+		}
+
+	filter {"system:windows", "configurations:Publish"}
+		libdirs
+		{
+			"%{prj.name}/vendor/flatbuffers/lib/Windows/Release/x64",
+		}
+
+	filter {"system:windows", "configurations:Debug"}
+		libdirs
+		{
+			"%{prj.name}/vendor/flatbuffers/lib/Windows/Debug/x64"
+		}
 
 
 	filter "files:r2engine/vendor/stb/stb_image_impl.cpp or files:r2engine/vendor/stb/stb_image_resize_impl.cpp or files:r2engine/vendor/stb/stb_image_write_impl.cpp or files:r2engine/vendor/sha256/sha256.cpp"

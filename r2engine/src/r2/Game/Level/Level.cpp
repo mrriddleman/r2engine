@@ -1,7 +1,6 @@
 #include "r2pch.h"
 #include "r2/Game/Level/Level.h"
-
-#include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/Level/LevelData_generated.h"
 
 
 namespace r2

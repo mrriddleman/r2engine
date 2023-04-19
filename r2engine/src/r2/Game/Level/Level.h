@@ -3,7 +3,6 @@
 
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Memory/Memory.h"
-#include "r2/Game/ECS/Entity.h"
 #include "r2/Core/Assets/AssetTypes.h"
 
 namespace flat
