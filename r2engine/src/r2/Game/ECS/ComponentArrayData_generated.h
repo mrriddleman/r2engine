@@ -5,7 +5,6 @@
 #define FLATBUFFERS_GENERATED_COMPONENTARRAYDATA_FLAT_H_
 
 #include "flatbuffers/flatbuffers.h"
-#include "flatbuffers/flexbuffers.h"
 
 namespace flat {
 
@@ -82,9 +81,6 @@ struct ComponentArrayData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   const flatbuffers::Vector<uint8_t> *componentArray() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_COMPONENTARRAY);
-  }
-  flexbuffers::Reference componentArray_flexbuffer_root() const {
-    return flexbuffers::GetRoot(componentArray()->Data(), componentArray()->size());
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&

@@ -1,0 +1,37 @@
+namespace flat;
+
+table TransformComponentPosition
+{
+	x:float;
+	y:float;
+	z:float;
+}
+
+table TransformComponentScale
+{
+	x:float;
+	y:float;
+	z:float;
+}
+
+table TransformComponentRotation
+{
+	x:float;
+	y:float;
+	z:float;
+	w:float;
+}
+
+table TransformComponentData
+{
+	position:TransformComponentPosition;
+	scale:TransformComponentScale;
+	rotation:TransformComponentRotation;
+}
+
+table TransformComponentArrayData
+{
+	transformComponentArray:[TransformComponentData];
+}
+
+root_type TransformComponentArrayData;

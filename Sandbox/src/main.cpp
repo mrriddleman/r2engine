@@ -60,7 +60,7 @@ namespace r2::ecs
     class ECSCoordinator;
 
 	template<>
-	void SerializeComponentArray<DummyComponent>(flexbuffers::Builder& builder, const r2::SArray<DummyComponent>& components)
+	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
 	{
 		R2_CHECK(false, "You need to implement a serializer for this type");
 	}

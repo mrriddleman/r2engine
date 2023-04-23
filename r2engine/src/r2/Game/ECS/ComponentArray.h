@@ -208,11 +208,10 @@ namespace r2::ecs
 
 		flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const override
 		{
-			flexbuffers::Builder flexbufferBuilder;
-			SerializeComponentArray(flexbufferBuilder, *mComponentArray);
-			flexbufferBuilder.Finish();
-
-			auto flexBufferData = builder.CreateVector(flexbufferBuilder.GetBuffer());
+			flatbuffers::FlatBufferBuilder subFlatBufferBuilder;
+			SerializeComponentArray(subFlatBufferBuilder, *mComponentArray);
+			
+			auto componentArrayData = builder.CreateVector(subFlatBufferBuilder.GetBufferPointer(), subFlatBufferBuilder.GetSize());
 			std::vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> entityToIndexEntries;
 
 			for (u32 i = 0; i < r2::sarr::Capacity(*mEntityToIndexMap); ++i)
@@ -229,7 +228,7 @@ namespace r2::ecs
 
 			flat::ComponentArrayDataBuilder componentArrayDataBuilder(builder);
 			componentArrayDataBuilder.add_componentType(mHashName);
-			componentArrayDataBuilder.add_componentArray(flexBufferData);
+			componentArrayDataBuilder.add_componentArray(componentArrayData);
 			componentArrayDataBuilder.add_entityToIndexMap(entityToIndexMapVec);
 
 			return componentArrayDataBuilder.Finish();

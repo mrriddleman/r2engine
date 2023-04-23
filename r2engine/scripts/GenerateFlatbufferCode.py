@@ -3,6 +3,7 @@ import platform
 
 def GeneratedCode(flatcPath, codeOutputDir, flatbufferPath, fbsName, extraParam):
 	osCall = flatcPath + " -c -o " + codeOutputDir + " " + flatbufferPath + fbsName + " " + extraParam
+	print(osCall)
 	os.system(osCall)
 	return
 
@@ -40,7 +41,15 @@ fbsCodeOutputMap = {
 "EntityData.fbs":"/r2/Game/ECS/",
 "ComponentArrayData.fbs":"/r2/Game/ECS/",
 "LevelData.fbs":"/r2/Game/Level/",
-"LevelPack.fbs":"/r2/Game/Level/"
+"LevelPack.fbs":"/r2/Game/Level/",
+"ComponentArraySchemas/EditorComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/HeirarchyComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/InstancedSkeletalAnimationComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/InstancedTransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/RenderComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/SkeletalAnimationComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/TransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/"
+
 }
 
 extraParams = {
@@ -64,7 +73,14 @@ extraParams = {
 "EntityData.fbs":"",
 "ComponentArrayData.fbs":"",
 "LevelData.fbs": "",
-"LevelPack.fbs": ""
+"LevelPack.fbs": "",
+"ComponentArraySchemas/EditorComponentArrayData.fbs":"",
+"ComponentArraySchemas/HeirarchyComponentArrayData.fbs":"",
+"ComponentArraySchemas/InstancedSkeletalAnimationComponentArrayData.fbs":"",
+"ComponentArraySchemas/InstancedTransformComponentArrayData.fbs":"",
+"ComponentArraySchemas/RenderComponentArrayData.fbs":"",
+"ComponentArraySchemas/SkeletalAnimationComponentArrayData.fbs":"",
+"ComponentArraySchemas/TransformComponentArrayData.fbs":""
 }
 
 for filename in os.listdir(dataPath):
@@ -73,3 +89,12 @@ for filename in os.listdir(dataPath):
 		extraParam = extraParams[filename]
 		if os.path.exists(outputPath):
 			GeneratedCode(flatcPath, outputPath, dataPath, filename, extraParam)
+	if(os.path.isdir(dataPath + filename)):
+		dirname = filename
+		for subfilename in os.listdir(dataPath + dirname):
+			fbsFileURI = (dirname +"/"+ subfilename)
+			if(fbsFileURI in fbsCodeOutputMap):
+				outputPath = srcPath + fbsCodeOutputMap[fbsFileURI]
+				extraParam = extraParams[fbsFileURI]
+				if os.path.exists(outputPath):
+					GeneratedCode(flatcPath, outputPath, dataPath, fbsFileURI, extraParam)

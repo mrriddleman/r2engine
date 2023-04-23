@@ -47,11 +47,9 @@ namespace r2::ecs
 
 	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level)
 	{
-		//@TODO(Serge):
-		R2_CHECK(false, "Not implemented yet!");
-
 		const flat::LevelData* flatLevelData = level.GetLevelData();
 
+		//@TODO(Serge): Not sure if we want to destroy all entities - maybe not, for now we are
 		DestoryAllEntities();
 
 		u32 numLiveEntities = flatLevelData->numEntities();

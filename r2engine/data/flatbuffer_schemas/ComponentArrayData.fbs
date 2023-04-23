@@ -10,7 +10,7 @@ table ComponentArrayData
 {
 	componentType:ulong (hash:"fnv1a_64");
 	entityToIndexMap:[EntityToIndexMapEntry];
-	componentArray:[ubyte] (flexbuffer);
+	componentArray:[ubyte];
 }
 
 root_type ComponentArrayData;

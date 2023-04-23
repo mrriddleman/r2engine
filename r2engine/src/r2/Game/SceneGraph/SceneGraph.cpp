@@ -64,6 +64,15 @@ namespace r2
 		mnoptrECSCoordinator->DestroyEntity(entity);
 	}
 
+	void SceneGraph::LoadedNewLevel(const Level& level)
+	{
+		mnoptrECSCoordinator->LoadAllECSDataFromLevel(level);
+
+		ecs::TransformDirtyComponent dirty;
+
+		mnoptrECSCoordinator->AddComponentToAllEntities<ecs::TransformDirtyComponent>(dirty);
+	}
+
 	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent)
 	{
 		R2_CHECK(entity != parent, "These shouldn't be the same?");

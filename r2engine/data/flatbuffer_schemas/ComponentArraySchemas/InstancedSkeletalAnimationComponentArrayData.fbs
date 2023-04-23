@@ -1,0 +1,10 @@
+include "SkeletalAnimationComponentArrayData.fbs";
+
+namespace flat;
+
+table InstancedSkeletalAnimationComponentArrayData
+{
+	instancedSkeletalAnimationComponentArray:[SkeletalAnimationComponentArrayData];
+}
+
+root_type InstancedSkeletalAnimationComponentArrayData;

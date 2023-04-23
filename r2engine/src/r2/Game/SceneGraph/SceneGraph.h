@@ -11,6 +11,8 @@
 
 namespace r2
 {
+	class Level;
+
 	class SceneGraph
 	{
 	public:
@@ -79,6 +81,8 @@ namespace r2
 		ecs::Entity CreateEntity();
 		ecs::Entity CreateEntity(ecs::Entity parent);
 		void DestroyEntity(ecs::Entity entity);
+
+		void LoadedNewLevel(const Level& level);
 
 		void Attach(ecs::Entity entity, ecs::Entity parent);
 		void Detach(ecs::Entity entity);

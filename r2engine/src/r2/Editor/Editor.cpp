@@ -260,7 +260,7 @@ namespace r2
 		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
 		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
-		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mCoordinator, 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
+		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
 
 		//r2::asset::pln::SaveLevelData(mCoordinator, 1, (levelDataBinPath / levelBinURI).string(), (levelDataRawPath / levelRawURI).string());
 	}
@@ -282,9 +282,9 @@ namespace r2
 		r2::Level newLevel;
 		newLevel.Init(mLevelData, mLevelHandle);
 
-		mCoordinator->LoadAllECSDataFromLevel(newLevel);
+		mSceneGraph.LoadedNewLevel(newLevel);
 
-		R2_CHECK(false, "Currently this is not enough - we need to actually load/get the data needed from each type of component, example: Render component needs to be filled out with the gpu handle");
+	//	R2_CHECK(false, "Currently this is not enough - we need to actually load/get the data needed from each type of component, example: Render component needs to be filled out with the gpu handle");
 		//@TODO(Serge): figure out how to do this in a nice way
 
 		evt::EditorLevelLoadedEvent e(newLevel);

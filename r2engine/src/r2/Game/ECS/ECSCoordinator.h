@@ -120,6 +120,19 @@ namespace r2::ecs
 		}
 
 		template<typename Component>
+		void AddComponentToAllEntities(Component component)
+		{
+			const r2::SArray<Entity>& entities = mEntityManager->GetCreatedEntities();
+
+			const auto numLivingEntities = r2::sarr::Size(entities);
+
+			for (u32 i = 0; i < numLivingEntities; ++i)
+			{
+				AddComponent(r2::sarr::At(entities, i), component);
+			}
+		}
+
+		template<typename Component>
 		Component& GetComponent(Entity entity)
 		{
 			return mComponentManager->GetComponent<Component>(entity);

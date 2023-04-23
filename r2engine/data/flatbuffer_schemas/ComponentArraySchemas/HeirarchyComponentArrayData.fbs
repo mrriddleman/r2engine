@@ -1,0 +1,13 @@
+namespace flat;
+
+table HeirarchyComponentData
+{
+	parent:uint;
+}
+
+table HeirarchyComponentArrayData
+{
+	heirarchyComponentArray:[HeirarchyComponentData];
+}
+
+root_type HeirarchyComponentArrayData;

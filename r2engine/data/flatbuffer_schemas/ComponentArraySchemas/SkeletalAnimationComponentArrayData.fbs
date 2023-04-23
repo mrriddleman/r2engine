@@ -1,0 +1,17 @@
+namespace flat;
+
+table SkeletalAnimationComponentData
+{
+	animModelAssetName:ulong(hash:"fnv1a_64");
+	startingAnimationAssetName:ulong(hash:"fnv1a_64");
+	shouldUseSameTransformForAllInstances:bool;
+	startTime:uint;
+	shouldLoop:bool;
+}
+
+table SkeletalAnimationComponentArrayData
+{
+	skeletalAnimationComponentArray:[SkeletalAnimationComponentData];
+}
+
+root_type SkeletalAnimationComponentArrayData;

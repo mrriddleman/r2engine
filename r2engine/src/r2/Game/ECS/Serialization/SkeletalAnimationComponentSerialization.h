@@ -4,6 +4,11 @@
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Game/ECS/Serialization/SkeletalAnimationComponentArrayData_generated.h"
+#include "r2/Game/ECS/Serialization/InstancedSkeletalAnimationComponentArrayData_generated.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2::ecs
 {
@@ -22,69 +27,102 @@ namespace r2::ecs
 		};
 	*/
 
-	inline void SerializeSkeletalAnimationComponent(flexbuffers::Builder& builder, const SkeletalAnimationComponent& skeletalAnimationComponent)
+	inline void SerializeSkeletalAnimationComponent(flatbuffers::FlatBufferBuilder& fbb,
+		r2::SArray<flatbuffers::Offset<flat::SkeletalAnimationComponentData>>* skeletalAnimationComponents,
+		const SkeletalAnimationComponent& skeletalAnimationComponent)
 	{
-		builder.Vector([&]() {
-			builder.UInt(skeletalAnimationComponent.animModelAssetName);
-			builder.UInt(skeletalAnimationComponent.startingAnimationAssetName);
-			builder.UInt(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
-			builder.UInt(skeletalAnimationComponent.startTime);
-			builder.UInt(skeletalAnimationComponent.shouldLoop);
-			});
+		flat::SkeletalAnimationComponentDataBuilder skeletalAnimationComponentBuilder(fbb);
+
+		skeletalAnimationComponentBuilder.add_animModelAssetName(skeletalAnimationComponent.animModelAssetName);
+		skeletalAnimationComponentBuilder.add_shouldLoop(skeletalAnimationComponent.shouldLoop);
+		skeletalAnimationComponentBuilder.add_shouldUseSameTransformForAllInstances(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
+		skeletalAnimationComponentBuilder.add_startingAnimationAssetName(skeletalAnimationComponent.startingAnimationAssetName);
+		skeletalAnimationComponentBuilder.add_startTime(skeletalAnimationComponent.startTime);
+
+		r2::sarr::Push(*skeletalAnimationComponents, skeletalAnimationComponentBuilder.Finish());
 	}
 
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<SkeletalAnimationComponent>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<SkeletalAnimationComponent>& components)
 	{
-		builder.Vector([&]() {
+		const auto numComponents = r2::sarr::Size(components);
 
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
-			{
-				const auto& skeletalAnimationComponent = r2::sarr::At(components, i);
-				SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
-			}
-		});
+		r2::SArray<flatbuffers::Offset<flat::SkeletalAnimationComponentData>>* skelatalAnimationComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::SkeletalAnimationComponentData>, numComponents);
+
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			const SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(components, i);
+
+			SerializeSkeletalAnimationComponent(fbb, skelatalAnimationComponents, skeletalAnimationComponent);
+		}
+
+		flat::SkeletalAnimationComponentArrayDataBuilder skeletalAnimationComponentArrayDataBuilder(fbb);
+
+		skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(fbb.CreateVector(skelatalAnimationComponents->mData, skelatalAnimationComponents->mSize));
+
+		fbb.Finish(skeletalAnimationComponentArrayDataBuilder.Finish());
+
+		FREE(skelatalAnimationComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
 	{
-		builder.Vector([&]() {
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
-			{
-				const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimation = r2::sarr::At(components, i);
+		const auto numComponents = r2::sarr::Size(components);
 
-				builder.Vector([&]() {
-					for (u32 j = 0; j < instancedSkeletalAnimation.numInstances; ++j)
-					{
-						const auto& skeletalAnimationComponent = r2::sarr::At(*instancedSkeletalAnimation.instances, j);
-						SerializeSkeletalAnimationComponent(builder, skeletalAnimationComponent);
-					}
-				});
+		r2::SArray<flatbuffers::Offset<flat::SkeletalAnimationComponentArrayData>>* instancedSkeletalAnimationComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::SkeletalAnimationComponentArrayData>, numComponents);
+
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = r2::sarr::At(components, i);
+
+			r2::SArray< flatbuffers::Offset<flat::SkeletalAnimationComponentData>>* skeletalAnimationComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::SkeletalAnimationComponentData>, instancedSkeletalAnimationComponent.numInstances);
+
+			for (u32 j = 0; j < instancedSkeletalAnimationComponent.numInstances; ++j)
+			{
+				const SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j);
+
+				SerializeSkeletalAnimationComponent(fbb, skeletalAnimationComponents, skeletalAnimationComponent);
 			}
-		});
+
+			flat::SkeletalAnimationComponentArrayDataBuilder skeletalAnimationComponentArrayDataBuilder(fbb);
+
+			skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(fbb.CreateVector(skeletalAnimationComponents->mData, skeletalAnimationComponents->mSize));
+
+			r2::sarr::Push(*instancedSkeletalAnimationComponents, skeletalAnimationComponentArrayDataBuilder.Finish());
+
+			FREE(skeletalAnimationComponents, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		flat::InstancedSkeletalAnimationComponentArrayDataBuilder instancedSkeletalAnimationComponentArrayDataBuilder(fbb);
+
+		instancedSkeletalAnimationComponentArrayDataBuilder.add_instancedSkeletalAnimationComponentArray(fbb.CreateVector(instancedSkeletalAnimationComponents->mData, instancedSkeletalAnimationComponents->mSize));
+
+		fbb.Finish(instancedSkeletalAnimationComponentArrayDataBuilder.Finish());
+
+		FREE(instancedSkeletalAnimationComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
-	inline void DeSerializeSkeletalAnimationComponent(SkeletalAnimationComponent& skeletalAnimationComponent, flexbuffers::Reference flexSkeletalAnimationRef)
+	inline void DeSerializeSkeletalAnimationComponent(SkeletalAnimationComponent& skeletalAnimationComponent, const flat::SkeletalAnimationComponentData* flatSkeletalAnimationComponent)
 	{
-		auto flexSkeletalAnimationVector = flexSkeletalAnimationRef.AsVector();
-
-		skeletalAnimationComponent.animModelAssetName = flexSkeletalAnimationVector[0].AsUInt64();
-		skeletalAnimationComponent.startingAnimationAssetName = flexSkeletalAnimationVector[1].AsUInt64();
-		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flexSkeletalAnimationVector[2].AsBool();
-		skeletalAnimationComponent.startTime = flexSkeletalAnimationVector[3].AsUInt32();
-		skeletalAnimationComponent.shouldLoop = flexSkeletalAnimationVector[4].AsBool();
+		skeletalAnimationComponent.animModelAssetName = flatSkeletalAnimationComponent->animModelAssetName();
+		skeletalAnimationComponent.startingAnimationAssetName = flatSkeletalAnimationComponent->startingAnimationAssetName();
+		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flatSkeletalAnimationComponent->shouldUseSameTransformForAllInstances();
+		skeletalAnimationComponent.startTime = flatSkeletalAnimationComponent->startTime();
+		skeletalAnimationComponent.shouldLoop = flatSkeletalAnimationComponent->shouldLoop();
 	}
 
 	template<>
 	inline void DeSerializeComponentArray(r2::SArray<SkeletalAnimationComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::SkeletalAnimationComponentArrayData* skeletalAnimationComponentArrayData = flatbuffers::GetRoot<flat::SkeletalAnimationComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = skeletalAnimationComponentArrayData->skeletalAnimationComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
+			const flat::SkeletalAnimationComponentData* flatSkeletalAnimationComponent = componentVector->Get(i);
+
 			SkeletalAnimationComponent skeletalAnimationComponent;
 			skeletalAnimationComponent.animModelAssetName = 0;
 			skeletalAnimationComponent.startingAnimationAssetName = 0;
@@ -95,7 +133,7 @@ namespace r2::ecs
 			skeletalAnimationComponent.shouldLoop = false;
 			skeletalAnimationComponent.startTime = 0;
 
-			DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, componentVector[i]);
+			DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatSkeletalAnimationComponent);
 
 			r2::sarr::Push(components, skeletalAnimationComponent);
 		}
@@ -104,15 +142,17 @@ namespace r2::ecs
 	template<>
 	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::InstancedSkeletalAnimationComponentArrayData* instancedSkeletalAnimationComponentArrayData = flatbuffers::GetRoot<flat::InstancedSkeletalAnimationComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = instancedSkeletalAnimationComponentArrayData->instancedSkeletalAnimationComponentArray();
+
+		for (size_t i = 0; i < componentVector->size(); ++i)
 		{
 			InstanceComponentT<SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
 
-			auto flexInstancedSkeletalAnimationComponent = componentVector[i].AsVector();
+			auto flatInstancedSkeletalAnimationComponent = componentVector->Get(i);
 
-			size_t numInstances = flexInstancedSkeletalAnimationComponent.size();
+			size_t numInstances = flatInstancedSkeletalAnimationComponent->skeletalAnimationComponentArray()->size();
 
 			instancedSkeletalAnimationComponent.numInstances = numInstances;
 
@@ -131,7 +171,7 @@ namespace r2::ecs
 				skeletalAnimationComponent.shouldLoop = false;
 				skeletalAnimationComponent.startTime = 0;
 
-				DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flexInstancedSkeletalAnimationComponent[j]);
+				DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatInstancedSkeletalAnimationComponent->skeletalAnimationComponentArray()->Get(j));
 
 				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
 			}

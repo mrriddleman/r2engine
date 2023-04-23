@@ -1,0 +1,75 @@
+namespace flat;
+
+table StencilOp
+{
+	stencilFail:uint;
+	depthFail:uint;
+	depthAndStencilPass:uint;
+}
+
+table StencilFunc
+{
+	func:uint;
+	ref:uint;
+	mask:uint;
+}
+
+table StencilState
+{
+	stencilEnabled:bool;
+	stencilWriteEnabled:bool;
+	stencilOp:StencilOp;
+	stencilFunc:StencilFunc;
+}
+
+table BlendFunc
+{
+	blendDrawBuffer:uint;
+	sfactor:uint;
+	dfactor:uint;
+}
+
+table BlendState
+{
+	blendingEnabled:bool;
+	blendEquation:uint;
+	blendFunctions:[BlendFunc];
+}
+
+table CullState
+{
+	cullingEnabled:bool;
+	cullFace:uint;
+	frontFace:uint;
+}
+
+table DrawParameters
+{
+	layer:uint;
+	flags:uint;
+	stencilState:StencilState;
+	blendState:BlendState;
+	cullState:CullState;
+}
+
+table OverrideMaterial
+{
+	materialSystem:ulong(hash:"fnv1a_64");
+	materialName:ulong(hash:"fnv1a_64");
+}
+
+table RenderComponentData
+{
+	assetModelHash:ulong(hash:"fnv1a_64");
+	primitiveType:uint;
+	isAnimated:bool;
+	drawParams:DrawParameters;
+	overrideMaterials:[OverrideMaterial];
+}
+
+table RenderComponentArrayData
+{
+	renderComponentArray:[RenderComponentData];
+}
+
+root_type RenderComponentArrayData;

@@ -1,0 +1,10 @@
+include "TransformComponentArrayData.fbs";
+
+namespace flat;
+
+table InstancedTransformComponentArrayData
+{
+	instancedTransformComponentArray:[TransformComponentArrayData];
+}
+
+root_type InstancedTransformComponentArrayData;

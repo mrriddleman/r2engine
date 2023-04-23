@@ -5,20 +5,17 @@
 #include "r2/Core/Logging/Log.h"
 #include "r2/Game/ECS/Entity.h"
 
+#include "flatbuffers/flatbuffers.h"
+
 namespace flat
 {
 	class ComponentArrayData;
 }
 
-namespace flexbuffers
-{
-	class Builder;
-}
-
 namespace r2::ecs
 {
 	template<typename Component>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<Component>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<Component>& components)
 	{
 		R2_CHECK(false, "You need to implement a serializer for this type");
 	}

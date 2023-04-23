@@ -3,6 +3,10 @@
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Serialization/HeirarchyComponentArrayData_generated.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2::ecs
 {
@@ -13,15 +17,30 @@ namespace r2::ecs
 	};
 */
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<HeirarchyComponent>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<HeirarchyComponent>& components)
 	{
-		auto start = builder.StartVector();
 		const auto numComponents = r2::sarr::Size(components);
+
+		r2::SArray<flatbuffers::Offset<flat::HeirarchyComponentData>>* heirarchyComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::HeirarchyComponentData>, numComponents);
+
 		for (u32 i = 0; i < numComponents; ++i)
 		{
-			builder.UInt(static_cast<u32>(r2::sarr::At(components, i).parent));
+			const HeirarchyComponent& heirarchyComponent = r2::sarr::At(components, i);
+
+			flat::HeirarchyComponentDataBuilder heirarchyComponentBuilder(fbb);
+
+			heirarchyComponentBuilder.add_parent(heirarchyComponent.parent);
+
+			r2::sarr::Push(*heirarchyComponents, heirarchyComponentBuilder.Finish());
 		}
-		builder.EndVector(start, false, false);
+
+		flat::HeirarchyComponentArrayDataBuilder heirarchyComponentArrayDataBuilder(fbb);
+
+		heirarchyComponentArrayDataBuilder.add_heirarchyComponentArray(fbb.CreateVector(heirarchyComponents->mData, heirarchyComponents->mSize));
+
+		fbb.Finish(heirarchyComponentArrayDataBuilder.Finish());
+
+		FREE(heirarchyComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	template<>
@@ -30,28 +49,33 @@ namespace r2::ecs
 		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
 		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
 
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::HeirarchyComponentArrayData* heirarchyComponentArrayData = flatbuffers::GetRoot<flat::HeirarchyComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = heirarchyComponentArrayData->heirarchyComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
-			u32 savedEntity = componentVector[i].AsUInt32();
-
+			const flat::HeirarchyComponentData* flatHeirarchyComponent = componentVector->Get(i);
 
 			//We can't just map the entity directly since we don't guarantee the same entity values
 			s32 entityIndex = -1;
 			for (u32 j= 0; j < r2::sarr::Size(*refEntities); ++j)
 			{
-				if (r2::sarr::At(*refEntities, j)->entityID() == savedEntity)
+				if (r2::sarr::At(*refEntities, j)->entityID() == flatHeirarchyComponent->parent())
 				{
 					entityIndex = j;
 					break;
 				}
 			}
 
-			R2_CHECK(entityIndex != -1, "Should never be -1");
+			Entity parent = 0;
+			if (entityIndex != -1)
+			{
+				parent = r2::sarr::At(*entities, entityIndex);
+			}
 
 			HeirarchyComponent heirarchyComponent;
-			heirarchyComponent.parent = r2::sarr::At(*entities, entityIndex);
+			heirarchyComponent.parent = parent;
 
 			r2::sarr::Push(components, heirarchyComponent);
 		}

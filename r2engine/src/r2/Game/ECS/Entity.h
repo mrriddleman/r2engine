@@ -83,10 +83,14 @@ namespace r2::ecs
 		void SetSignature(Entity entity, Signature signature);
 		Signature& GetSignature(Entity entity);
 
+		const r2::SArray<Entity>& GetCreatedEntities() const;
+
 		void Serialize(flatbuffers::FlatBufferBuilder& builder, std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec) const;
 
 		static u64 MemorySize(u32 maxEntities, u32 alignment, u32 headerSize, u32 boundsChecking);
 		static bool IsValidEntity(const Entity& entity);
+
+
 	private:
 		r2::SQueue<Entity>* mAvailbleEntities;
 		r2::SArray<Entity>* mCreatedEntities;

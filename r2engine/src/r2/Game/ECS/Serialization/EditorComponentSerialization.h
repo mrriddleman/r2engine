@@ -3,6 +3,10 @@
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/Serialization/EditorComponentArrayData_generated.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2::ecs
 {
@@ -14,19 +18,31 @@ namespace r2::ecs
 		};
 	*/
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<EditorComponent>& components)
-	{
-		builder.Vector([&]() {
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
-			{
-				const auto& c = r2::sarr::At(components, i);
-				builder.Vector([&]() {
-					builder.String(c.editorName);
-					builder.UInt(c.flags.GetRawValue());
-				});
-			}
-		});
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<EditorComponent>& components)
+	{	
+		const auto numComponents = r2::sarr::Size(components);
+
+		r2::SArray<flatbuffers::Offset<flat::EditorComponentData>>* editorComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::EditorComponentData>, numComponents);
+
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			const EditorComponent& editorComponent = r2::sarr::At(components, i);
+
+			flat::EditorComponentDataBuilder editorComponentBuilder(fbb);
+
+			editorComponentBuilder.add_editorName(fbb.CreateString(editorComponent.editorName));
+			editorComponentBuilder.add_flags(editorComponent.flags.GetRawValue());
+
+			r2::sarr::Push(*editorComponents, editorComponentBuilder.Finish());
+		}
+
+		flat::EditorComponentArrayDataBuilder editorComponentArrayDataBuilder(fbb);
+
+		editorComponentArrayDataBuilder.add_editorComponentArray(fbb.CreateVector(editorComponents->mData, editorComponents->mSize));
+
+		fbb.Finish(editorComponentArrayDataBuilder.Finish());
+
+		FREE(editorComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	template<>
@@ -35,21 +51,21 @@ namespace r2::ecs
 		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
 		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
 
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::EditorComponentArrayData* editorComponentArrayData = flatbuffers::GetRoot<flat::EditorComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = editorComponentArrayData->editorComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
-			const auto& component = componentVector[i].AsVector();
+			const flat::EditorComponentData* flatEditorComponent = componentVector->Get(i);
 
 			EditorComponent editorComponent;
-
-			editorComponent.editorName = component[0].AsString().str();
-			editorComponent.flags = { component[1].AsUInt32() };
+			editorComponent.editorName = flatEditorComponent->editorName()->str();
+			editorComponent.flags = { flatEditorComponent->flags() };
 
 			r2::sarr::Push(components, editorComponent);
 		}
 	}
-
 }
 
 #endif // __EDITOR_COMPONENT_H__

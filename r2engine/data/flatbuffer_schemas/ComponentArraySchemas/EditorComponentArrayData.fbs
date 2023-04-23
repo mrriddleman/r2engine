@@ -1,0 +1,14 @@
+namespace flat;
+
+table EditorComponentData
+{
+	editorName:string;
+	flags:uint;
+}
+
+table EditorComponentArrayData
+{
+	editorComponentArray:[EditorComponentData];
+}
+
+root_type EditorComponentArrayData;

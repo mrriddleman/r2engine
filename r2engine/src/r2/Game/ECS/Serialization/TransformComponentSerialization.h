@@ -4,6 +4,11 @@
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Game/ECS/Serialization/TransformComponentArrayData_generated.h"
+#include "r2/Game/ECS/Serialization/InstancedTransformComponentArrayData_generated.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
+#include "r2/Core/Containers/SArray.h"
 
 namespace r2::ecs
 {
@@ -23,84 +28,128 @@ namespace r2::ecs
 	};
 	*/
 
-	inline void SerializeTransform(flexbuffers::Builder& builder, const TransformComponent& transform)
+	inline void SerializeTransform(flatbuffers::FlatBufferBuilder& fbb,
+		r2::SArray<flatbuffers::Offset<flat::TransformComponentData>>* transformComponents,
+		const TransformComponent& transformComponent)
 	{
-		builder.Vector([&]() {
-			builder.IndirectFloat(transform.localTransform.position.x);
-			builder.IndirectFloat(transform.localTransform.position.y);
-			builder.IndirectFloat(transform.localTransform.position.z);
-			builder.IndirectFloat(transform.localTransform.scale.x);
-			builder.IndirectFloat(transform.localTransform.scale.y);
-			builder.IndirectFloat(transform.localTransform.scale.z);
-			builder.IndirectFloat(transform.localTransform.rotation.x);
-			builder.IndirectFloat(transform.localTransform.rotation.y);
-			builder.IndirectFloat(transform.localTransform.rotation.z);
-			builder.IndirectFloat(transform.localTransform.rotation.w);
-			});
+		auto positionData = flat::CreateTransformComponentPosition(
+			fbb,
+			transformComponent.localTransform.position.x,
+			transformComponent.localTransform.position.y,
+			transformComponent.localTransform.position.z);
+
+		auto rotationData = flat::CreateTransformComponentRotation(
+			fbb,
+			transformComponent.localTransform.rotation.x,
+			transformComponent.localTransform.rotation.y,
+			transformComponent.localTransform.rotation.z,
+			transformComponent.localTransform.rotation.w);
+
+		auto scaleData = flat::CreateTransformComponentScale(
+			fbb,
+			transformComponent.localTransform.scale.x,
+			transformComponent.localTransform.scale.y,
+			transformComponent.localTransform.scale.z);
+
+		flat::TransformComponentDataBuilder transformComponentBuilder(fbb);
+
+		transformComponentBuilder.add_position(positionData);
+		transformComponentBuilder.add_rotation(rotationData);
+		transformComponentBuilder.add_scale(scaleData);
+
+		r2::sarr::Push(*transformComponents, transformComponentBuilder.Finish());
 	}
 
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<TransformComponent>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<TransformComponent>& components)
 	{
-		builder.Vector([&]() {
+		const auto numComponents = r2::sarr::Size(components);
 
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
-			{
-				const auto& transform = r2::sarr::At(components, i);
-		
-				SerializeTransform(builder, transform);
-			}
-		});
+		r2::SArray<flatbuffers::Offset<flat::TransformComponentData>>* transformComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::TransformComponentData>, numComponents);
+
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			const TransformComponent& transformComponent = r2::sarr::At(components, i);
+
+			SerializeTransform(fbb, transformComponents, transformComponent);
+		}
+
+		flat::TransformComponentArrayDataBuilder transformComponentArrayDataBuilder(fbb);
+
+		transformComponentArrayDataBuilder.add_transformComponentArray(fbb.CreateVector(transformComponents->mData, transformComponents->mSize));
+
+		fbb.Finish(transformComponentArrayDataBuilder.Finish());
+
+		FREE(transformComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	template<>
-	inline void SerializeComponentArray(flexbuffers::Builder& builder, const r2::SArray<InstanceComponentT<TransformComponent>>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<InstanceComponentT<TransformComponent>>& components)
 	{
-		builder.Vector([&]() {
-			const auto numComponents = r2::sarr::Size(components);
-			for (u32 i = 0; i < numComponents; ++i)
+		const auto numInstancedComponents = r2::sarr::Size(components);
+
+		r2::SArray<flatbuffers::Offset<flat::TransformComponentArrayData>>* instancedTransformComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::TransformComponentArrayData>, numInstancedComponents);
+
+		for (u32 i = 0; i < numInstancedComponents; ++i)
+		{
+			const InstanceComponentT<TransformComponent>& instancedTransformComponent = r2::sarr::At(components, i);
+
+			const auto numInstances = r2::sarr::Size(*instancedTransformComponent.instances);
+
+			r2::SArray<flatbuffers::Offset<flat::TransformComponentData>>* transformComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::TransformComponentData>, numInstances);
+
+			for (u32 j = 0; j < numInstances; ++j)
 			{
-				const InstanceComponentT<TransformComponent>& instancedTransform = r2::sarr::At(components, i);
+				const TransformComponent& transformComponent = r2::sarr::At(*instancedTransformComponent.instances, j);
 
-				builder.Vector([&]() {
-					for (u32 j = 0; j < instancedTransform.numInstances; ++j)
-					{
-						const auto& transform = r2::sarr::At(*instancedTransform.instances, j);
-
-						SerializeTransform(builder, transform);
-					}
-				});
+				SerializeTransform(fbb, transformComponents, transformComponent);
 			}
-		});
+
+			flat::TransformComponentArrayDataBuilder transformComponentArrayDataBuilder(fbb);
+
+			transformComponentArrayDataBuilder.add_transformComponentArray(fbb.CreateVector(transformComponents->mData, transformComponents->mSize));
+
+			r2::sarr::Push(*instancedTransformComponents, transformComponentArrayDataBuilder.Finish());
+
+			FREE(transformComponents, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		flat::InstancedTransformComponentArrayDataBuilder instancedTransformComponentArrayDataBuilder(fbb);
+		instancedTransformComponentArrayDataBuilder.add_instancedTransformComponentArray(fbb.CreateVector(instancedTransformComponents->mData, instancedTransformComponents->mSize));
+		fbb.Finish(instancedTransformComponentArrayDataBuilder.Finish());
+		FREE(instancedTransformComponents, *MEM_ENG_SCRATCH_PTR);
 	}
 
-	inline void DeSerializeTransform(TransformComponent& transformComponent, flexbuffers::Reference flexTransformRef)
+	inline void DeSerializeTransform(const flat::TransformComponentData* flatTransformComponentData, TransformComponent& transformComponent)
 	{
-		auto flexTransformVector = flexTransformRef.AsVector();
+		transformComponent.localTransform.position.x = flatTransformComponentData->position()->x();
+		transformComponent.localTransform.position.y = flatTransformComponentData->position()->y();
+		transformComponent.localTransform.position.z = flatTransformComponentData->position()->z();
 
-		transformComponent.localTransform.position.x = flexTransformVector[0].AsFloat();
-		transformComponent.localTransform.position.y = flexTransformVector[1].AsFloat();
-		transformComponent.localTransform.position.z = flexTransformVector[2].AsFloat();
-		transformComponent.localTransform.scale.x = flexTransformVector[3].AsFloat();
-		transformComponent.localTransform.scale.y = flexTransformVector[4].AsFloat();
-		transformComponent.localTransform.scale.z = flexTransformVector[5].AsFloat();
-		transformComponent.localTransform.rotation.x = flexTransformVector[6].AsFloat();
-		transformComponent.localTransform.rotation.y = flexTransformVector[7].AsFloat();
-		transformComponent.localTransform.rotation.z = flexTransformVector[8].AsFloat();
-		transformComponent.localTransform.rotation.w = flexTransformVector[9].AsFloat();
+		transformComponent.localTransform.rotation.x = flatTransformComponentData->rotation()->x();
+		transformComponent.localTransform.rotation.y = flatTransformComponentData->rotation()->y();
+		transformComponent.localTransform.rotation.z = flatTransformComponentData->rotation()->z();
+		transformComponent.localTransform.rotation.w = flatTransformComponentData->rotation()->w();
+
+		transformComponent.localTransform.scale.x = flatTransformComponentData->scale()->x();
+		transformComponent.localTransform.scale.y = flatTransformComponentData->scale()->y();
+		transformComponent.localTransform.scale.z = flatTransformComponentData->scale()->z();
 	}
 
 	template<>
 	inline void DeSerializeComponentArray(r2::SArray<TransformComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::TransformComponentArrayData* transformComponentArrayData = flatbuffers::GetRoot<flat::TransformComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = transformComponentArrayData->transformComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
+			const flat::TransformComponentData* flatTransformComponent = componentVector->Get(i);
+
 			TransformComponent transformComponent;
-			auto temp = componentVector[i];
-			DeSerializeTransform(transformComponent, temp);
+
+			DeSerializeTransform(flatTransformComponent, transformComponent);
 
 			r2::sarr::Push(components, transformComponent);
 		}
@@ -109,32 +158,31 @@ namespace r2::ecs
 	template<>
 	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<TransformComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
-		auto componentVector = componentArrayData->componentArray_flexbuffer_root().AsVector();
+		const flat::InstancedTransformComponentArrayData* instancedTransformComponentArrayData = flatbuffers::GetRoot<flat::InstancedTransformComponentArrayData>(componentArrayData->componentArray()->data());
 
-		for (size_t i = 0; i < componentVector.size(); ++i)
+		const auto* componentVector = instancedTransformComponentArrayData->instancedTransformComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
+			const flat::TransformComponentArrayData* flatInstancedTransformComponent = componentVector->Get(i);
+
 			InstanceComponentT<TransformComponent> instancedTransformComponent;
-			
-			auto flexInstancedTransformComponent = componentVector[i].AsVector();
 
-			size_t numInstances = flexInstancedTransformComponent.size();
+			instancedTransformComponent.numInstances = flatInstancedTransformComponent->transformComponentArray()->size();
 
-			instancedTransformComponent.numInstances = numInstances;
+			instancedTransformComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, TransformComponent, instancedTransformComponent.numInstances);
 
-			//this is a problem right here - how do we free this?
-			instancedTransformComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, TransformComponent, numInstances);
-
-			for (size_t j = 0; j < flexInstancedTransformComponent.size(); ++j)
+			for (flatbuffers::uoffset_t j = 0; j < instancedTransformComponent.numInstances; ++j)
 			{
 				TransformComponent nextTransformComponent;
-				DeSerializeTransform(nextTransformComponent, flexInstancedTransformComponent[j]);
+
+				DeSerializeTransform(flatInstancedTransformComponent->transformComponentArray()->Get(j), nextTransformComponent);
 
 				r2::sarr::Push(*instancedTransformComponent.instances, nextTransformComponent);
 			}
 
 			r2::sarr::Push(components, instancedTransformComponent);
 		}
-
 	}
 
 	template<>

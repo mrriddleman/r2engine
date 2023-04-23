@@ -5,7 +5,6 @@
 #define FLATBUFFERS_GENERATED_LEVELDATA_FLAT_H_
 
 #include "flatbuffers/flatbuffers.h"
-#include "flatbuffers/flexbuffers.h"
 
 #include "ComponentArrayData_generated.h"
 #include "EntityData_generated.h"

@@ -100,6 +100,11 @@ namespace r2::ecs
 		return r2::sarr::At(*mEntitySignatures, entity);
 	}
 
+	const r2::SArray<Entity>& EntityManager::GetCreatedEntities() const
+	{
+		return *mCreatedEntities;
+	}
+
 	void EntityManager::Serialize(flatbuffers::FlatBufferBuilder& builder, std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec) const
 	{
 		const auto numCreatedEntities = r2::sarr::Size(*mCreatedEntities);
