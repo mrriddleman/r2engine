@@ -56,9 +56,11 @@ namespace r2::ecs
 			SerializeSkeletalAnimationComponent(fbb, skelatalAnimationComponents, skeletalAnimationComponent);
 		}
 
+		auto vec = fbb.CreateVector(skelatalAnimationComponents->mData, skelatalAnimationComponents->mSize);
+
 		flat::SkeletalAnimationComponentArrayDataBuilder skeletalAnimationComponentArrayDataBuilder(fbb);
 
-		skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(fbb.CreateVector(skelatalAnimationComponents->mData, skelatalAnimationComponents->mSize));
+		skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(vec);
 
 		fbb.Finish(skeletalAnimationComponentArrayDataBuilder.Finish());
 
@@ -85,18 +87,22 @@ namespace r2::ecs
 				SerializeSkeletalAnimationComponent(fbb, skeletalAnimationComponents, skeletalAnimationComponent);
 			}
 
+			auto vec = fbb.CreateVector(skeletalAnimationComponents->mData, skeletalAnimationComponents->mSize);
+
 			flat::SkeletalAnimationComponentArrayDataBuilder skeletalAnimationComponentArrayDataBuilder(fbb);
 
-			skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(fbb.CreateVector(skeletalAnimationComponents->mData, skeletalAnimationComponents->mSize));
+			skeletalAnimationComponentArrayDataBuilder.add_skeletalAnimationComponentArray(vec);
 
 			r2::sarr::Push(*instancedSkeletalAnimationComponents, skeletalAnimationComponentArrayDataBuilder.Finish());
 
 			FREE(skeletalAnimationComponents, *MEM_ENG_SCRATCH_PTR);
 		}
 
+		auto vec = fbb.CreateVector(instancedSkeletalAnimationComponents->mData, instancedSkeletalAnimationComponents->mSize);
+
 		flat::InstancedSkeletalAnimationComponentArrayDataBuilder instancedSkeletalAnimationComponentArrayDataBuilder(fbb);
 
-		instancedSkeletalAnimationComponentArrayDataBuilder.add_instancedSkeletalAnimationComponentArray(fbb.CreateVector(instancedSkeletalAnimationComponents->mData, instancedSkeletalAnimationComponents->mSize));
+		instancedSkeletalAnimationComponentArrayDataBuilder.add_instancedSkeletalAnimationComponentArray(vec);
 
 		fbb.Finish(instancedSkeletalAnimationComponentArrayDataBuilder.Finish());
 

@@ -27,18 +27,21 @@ namespace r2::ecs
 		for (u32 i = 0; i < numComponents; ++i)
 		{
 			const EditorComponent& editorComponent = r2::sarr::At(components, i);
+			auto flatEditorName = fbb.CreateString(editorComponent.editorName);
 
 			flat::EditorComponentDataBuilder editorComponentBuilder(fbb);
 
-			editorComponentBuilder.add_editorName(fbb.CreateString(editorComponent.editorName));
+			editorComponentBuilder.add_editorName(flatEditorName);
 			editorComponentBuilder.add_flags(editorComponent.flags.GetRawValue());
 
 			r2::sarr::Push(*editorComponents, editorComponentBuilder.Finish());
 		}
 
+		auto vec = fbb.CreateVector(editorComponents->mData, editorComponents->mSize);
+
 		flat::EditorComponentArrayDataBuilder editorComponentArrayDataBuilder(fbb);
 
-		editorComponentArrayDataBuilder.add_editorComponentArray(fbb.CreateVector(editorComponents->mData, editorComponents->mSize));
+		editorComponentArrayDataBuilder.add_editorComponentArray(vec);
 
 		fbb.Finish(editorComponentArrayDataBuilder.Finish());
 

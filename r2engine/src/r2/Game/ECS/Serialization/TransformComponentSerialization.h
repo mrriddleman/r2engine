@@ -74,9 +74,11 @@ namespace r2::ecs
 			SerializeTransform(fbb, transformComponents, transformComponent);
 		}
 
+		auto vec = fbb.CreateVector(transformComponents->mData, transformComponents->mSize);
+
 		flat::TransformComponentArrayDataBuilder transformComponentArrayDataBuilder(fbb);
 
-		transformComponentArrayDataBuilder.add_transformComponentArray(fbb.CreateVector(transformComponents->mData, transformComponents->mSize));
+		transformComponentArrayDataBuilder.add_transformComponentArray(vec);
 
 		fbb.Finish(transformComponentArrayDataBuilder.Finish());
 
@@ -105,17 +107,20 @@ namespace r2::ecs
 				SerializeTransform(fbb, transformComponents, transformComponent);
 			}
 
+			auto vec = fbb.CreateVector(transformComponents->mData, transformComponents->mSize);
+
 			flat::TransformComponentArrayDataBuilder transformComponentArrayDataBuilder(fbb);
 
-			transformComponentArrayDataBuilder.add_transformComponentArray(fbb.CreateVector(transformComponents->mData, transformComponents->mSize));
+			transformComponentArrayDataBuilder.add_transformComponentArray(vec);
 
 			r2::sarr::Push(*instancedTransformComponents, transformComponentArrayDataBuilder.Finish());
 
 			FREE(transformComponents, *MEM_ENG_SCRATCH_PTR);
 		}
 
+		auto vec = fbb.CreateVector(instancedTransformComponents->mData, instancedTransformComponents->mSize);
 		flat::InstancedTransformComponentArrayDataBuilder instancedTransformComponentArrayDataBuilder(fbb);
-		instancedTransformComponentArrayDataBuilder.add_instancedTransformComponentArray(fbb.CreateVector(instancedTransformComponents->mData, instancedTransformComponents->mSize));
+		instancedTransformComponentArrayDataBuilder.add_instancedTransformComponentArray(vec);
 		fbb.Finish(instancedTransformComponentArrayDataBuilder.Finish());
 		FREE(instancedTransformComponents, *MEM_ENG_SCRATCH_PTR);
 	}

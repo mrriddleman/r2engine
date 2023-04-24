@@ -212,7 +212,8 @@ namespace r2::ecs
 			SerializeComponentArray(subFlatBufferBuilder, *mComponentArray);
 			
 			auto componentArrayData = builder.CreateVector(subFlatBufferBuilder.GetBufferPointer(), subFlatBufferBuilder.GetSize());
-			std::vector<flatbuffers::Offset<flat::EntityToIndexMapEntry>> entityToIndexEntries;
+
+			r2::SArray<flatbuffers::Offset<flat::EntityToIndexMapEntry>>* entityToIndexEntries = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::EntityToIndexMapEntry>, r2::sarr::Capacity(*mEntityToIndexMap));
 
 			for (u32 i = 0; i < r2::sarr::Capacity(*mEntityToIndexMap); ++i)
 			{
@@ -220,18 +221,22 @@ namespace r2::ecs
 				if (index != -1)
 				{
 					auto entry = flat::CreateEntityToIndexMapEntry(builder, i, index);
-					entityToIndexEntries.push_back(entry);
+					r2::sarr::Push(*entityToIndexEntries, entry);
 				}
 			}
 
-			auto entityToIndexMapVec = builder.CreateVector(entityToIndexEntries);
+			auto entityToIndexMapVec = builder.CreateVector(entityToIndexEntries->mData, entityToIndexEntries->mSize);
 
 			flat::ComponentArrayDataBuilder componentArrayDataBuilder(builder);
 			componentArrayDataBuilder.add_componentType(mHashName);
 			componentArrayDataBuilder.add_componentArray(componentArrayData);
 			componentArrayDataBuilder.add_entityToIndexMap(entityToIndexMapVec);
 
-			return componentArrayDataBuilder.Finish();
+			auto flatComponentArray = componentArrayDataBuilder.Finish();
+
+			FREE(entityToIndexEntries, *MEM_ENG_SCRATCH_PTR);
+
+			return flatComponentArray;
 		}
 
 		void DeSerializeForEntities(

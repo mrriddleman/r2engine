@@ -34,9 +34,11 @@ namespace r2::ecs
 			r2::sarr::Push(*heirarchyComponents, heirarchyComponentBuilder.Finish());
 		}
 
+		auto vec = fbb.CreateVector(heirarchyComponents->mData, heirarchyComponents->mSize);
+		
 		flat::HeirarchyComponentArrayDataBuilder heirarchyComponentArrayDataBuilder(fbb);
 
-		heirarchyComponentArrayDataBuilder.add_heirarchyComponentArray(fbb.CreateVector(heirarchyComponents->mData, heirarchyComponents->mSize));
+		heirarchyComponentArrayDataBuilder.add_heirarchyComponentArray(vec);
 
 		fbb.Finish(heirarchyComponentArrayDataBuilder.Finish());
 
