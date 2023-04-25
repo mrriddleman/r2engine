@@ -170,10 +170,6 @@ namespace r2
     }
 
 #ifdef R2_EDITOR
-    std::vector<const r2::draw::Animation*> Application::GetEditorAnimation() const
-    {
-        return {};
-    }
 
     r2::draw::ModelSystem* Application::GetEditorModelSystem() const
     {
@@ -181,6 +177,11 @@ namespace r2
     }
 
     r2::draw::MaterialSystem* Application::GetEditorMaterialSystem() const
+    {
+        return nullptr;
+    }
+
+    r2::draw::AnimationCache* Application::GetEditorAnimationCache() const
     {
         return nullptr;
     }

@@ -1782,17 +1782,6 @@ public:
 
 	//@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-    virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const override
-    {
-        std::vector<const r2::draw::Animation*> animations;
-        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 0)));
-        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 1)));
-        animations.push_back(r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, 2)));
-
-        return animations;
-    }
-
-
 	r2::draw::ModelSystem* GetEditorModelSystem() const
 	{
 		return mModelSystem;
@@ -1802,6 +1791,11 @@ public:
 	{
 		return mMaterialSystem;
 	}
+
+    r2::draw::AnimationCache* GetEditorAnimationCache() const
+    {
+        return mAnimationCache;
+    }
 
     virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
     {

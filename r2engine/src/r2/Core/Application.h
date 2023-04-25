@@ -31,6 +31,7 @@ namespace r2::draw
     struct Animation;
     struct ModelSystem;
     struct MaterialSystem;
+    struct AnimationCache;
 }
 
 namespace r2::ecs
@@ -99,9 +100,9 @@ namespace r2
 
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-        virtual std::vector<const r2::draw::Animation*> GetEditorAnimation() const;
         virtual r2::draw::ModelSystem* GetEditorModelSystem() const;
         virtual r2::draw::MaterialSystem* GetEditorMaterialSystem() const;
+        virtual r2::draw::AnimationCache* GetEditorAnimationCache() const;
         virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
         virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
         virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const;

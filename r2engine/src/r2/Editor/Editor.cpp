@@ -31,6 +31,7 @@
 #include "r2/Core/Application.h"
 #include "r2/Game/Level/LevelCache.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Render/Animation/AnimationCache.h"
 
 namespace 
 {
@@ -311,6 +312,7 @@ namespace r2
 
 				r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
 
+				r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
@@ -398,11 +400,14 @@ namespace r2
 
 				r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 				*/
+				r2::asset::Asset animationAsset0 = r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION);
+
+
 				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
 				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
 				skeletalAnimationComponent.animModel = microbatAnimModel;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
-				skeletalAnimationComponent.startingAnimationAssetName = 0;
+				skeletalAnimationComponent.startingAnimationAssetName = animationAsset0.HashID();
 				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
@@ -410,10 +415,12 @@ namespace r2
 				skeletalAnimationComponent.shouldLoop = true;// = MAKE_SARRAY(mMallocArena, b32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.loopPerInstance, 1u);
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
-				std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
-				skeletalAnimationComponent.animation = animations[0];// = MAKE_SARRAY(mMallocArena, const r2::draw::Animation*, 1);
-				//r2::sarr::Push(*skeletalAnimationComponent.animationsPerInstance, CENG.GetApplication().GetEditorAnimation());
-				//mComponentAllocations.push_back(skeletalAnimationComponent.animationsPerInstance);
+	
+
+				r2::draw::AnimationHandle animationHandle0 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
+
+				skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
+
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
@@ -488,14 +495,20 @@ namespace r2
 					instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, 2);
 					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
 
+
+					r2::asset::Asset animationAsset1 = r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION);
+					r2::asset::Asset animationAsset2 = r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION);
+
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
 					skeletalAnimationInstance1.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance1.animModel = microbatAnimModel;
 					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-					skeletalAnimationInstance1.startingAnimationAssetName = 0;
+					skeletalAnimationInstance1.startingAnimationAssetName = animationAsset1.HashID();
 					skeletalAnimationInstance1.startTime = 0; 
 					skeletalAnimationInstance1.shouldLoop = true;
-					skeletalAnimationInstance1.animation = animations[1];
+
+					r2::draw::AnimationHandle animationHandle1 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
+					skeletalAnimationInstance1.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
 
 					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->boneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
@@ -506,10 +519,13 @@ namespace r2
 					skeletalAnimationInstance2.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance2.animModel = microbatAnimModel;
 					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-					skeletalAnimationInstance2.startingAnimationAssetName = 0;
+					skeletalAnimationInstance2.startingAnimationAssetName = animationAsset2.HashID();
 					skeletalAnimationInstance2.startTime = 0;
 					skeletalAnimationInstance2.shouldLoop = true;
-					skeletalAnimationInstance2.animation = animations[2];
+
+					r2::draw::AnimationHandle animationHandle2 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
+					skeletalAnimationInstance2.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
+
 
 					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->boneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
@@ -632,29 +648,6 @@ namespace r2
 						mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
 #endif
 					}
-					/*
-					ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
-					instancedDebugBoneComponent.numInstances = 2;
-					instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, 2);
-					mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
-
-					ecs::DebugBoneComponent debugBoneInstance1;
-					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
-					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
-					r2::sarr::Clear(*debugBoneInstance1.debugBones);
-					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
-
-					ecs::DebugBoneComponent debugBoneInstance2;
-					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
-					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
-					r2::sarr::Clear(*debugBoneInstance2.debugBones);
-					mComponentAllocations.push_back(debugBoneInstance2.debugBones);
-
-					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
-					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
-
-					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
-					*/
 
 				}
 
@@ -760,6 +753,7 @@ namespace r2
 		}
 
 		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
 
@@ -775,9 +769,12 @@ namespace r2
 
 			skeletalAnimationComponent.animModel = animModel;
 
-			//@TODO(Serge): this isn't right, we should look up the animation name in some kind of cache that we have access to
-			std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
-			skeletalAnimationComponent.animation = animations[0];
+
+			r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
+
+			r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
+			
+			skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
 
 			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
 			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
@@ -803,6 +800,7 @@ namespace r2
 		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
 
 		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
 
@@ -837,9 +835,12 @@ namespace r2
 
 				skeletalAnimationComponent.animModel = animModel;
 
-				//@TODO(Serge): this isn't right, we should look up the animation name in some kind of cache that we have access to
-				std::vector<const r2::draw::Animation*> animations = CENG.GetApplication().GetEditorAnimation();
-				skeletalAnimationComponent.animation = animations[0];
+				r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
+
+				r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
+
+				skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
+
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
 				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
