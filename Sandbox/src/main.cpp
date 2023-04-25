@@ -570,7 +570,7 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
-        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Megabytes(64), false, modelFiles, "Sandbox Model System");
+        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
 
         if (!mModelSystem)
         {

@@ -40,6 +40,11 @@ namespace r2::ecs
 		mSystemManager->DestoryAllEntities();
 	}
 
+	const r2::SArray<Entity>& ECSCoordinator::GetAllLivingEntities()
+	{
+		return mEntityManager->GetCreatedEntities();
+	}
+
 	u32 ECSCoordinator::NumLivingEntities() const
 	{
 		return mEntityManager->NumLivingEntities();

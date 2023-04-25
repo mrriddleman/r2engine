@@ -402,7 +402,7 @@ namespace r2
 				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
 				skeletalAnimationComponent.animModel = microbatAnimModel;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
-
+				skeletalAnimationComponent.startingAnimationAssetName = 0;
 				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
@@ -489,9 +489,10 @@ namespace r2
 					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
+					skeletalAnimationInstance1.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance1.animModel = microbatAnimModel;
-					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = true;
-
+					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
+					skeletalAnimationInstance1.startingAnimationAssetName = 0;
 					skeletalAnimationInstance1.startTime = 0; 
 					skeletalAnimationInstance1.shouldLoop = true;
 					skeletalAnimationInstance1.animation = animations[1];
@@ -502,9 +503,10 @@ namespace r2
 
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
+					skeletalAnimationInstance2.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance2.animModel = microbatAnimModel;
-					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = true;
-
+					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
+					skeletalAnimationInstance2.startingAnimationAssetName = 0;
 					skeletalAnimationInstance2.startTime = 0;
 					skeletalAnimationInstance2.shouldLoop = true;
 					skeletalAnimationInstance2.animation = animations[2];
@@ -568,6 +570,98 @@ namespace r2
 			return e.ShouldConsume();
 		});
 
+		//@TODO(Serge): remove when DebugBoneComponent no long necessary for Skeletal Animation
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e)
+			{
+				const r2::SArray<ecs::Entity>& allEntities = mCoordinator->GetAllLivingEntities();
+
+				const auto numEntities = r2::sarr::Size(allEntities);
+
+				for (u64 i = 0; i < numEntities; ++i)
+				{
+					ecs::Entity e = r2::sarr::At(allEntities, i);
+
+					if (mCoordinator->HasComponent<ecs::SkeletalAnimationComponent>(e) 
+#ifdef R2_DEBUG
+						&& !mCoordinator->HasComponent<ecs::DebugBoneComponent>(e)
+#endif		
+						)
+					{
+#ifdef R2_DEBUG
+						const ecs::SkeletalAnimationComponent& skeletalAnimationComponent = mCoordinator->GetComponent<ecs::SkeletalAnimationComponent>(e);
+
+						ecs::DebugBoneComponent debugBoneComponent;
+						debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
+						debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+						r2::sarr::Clear(*debugBoneComponent.debugBones);
+						mComponentAllocations.push_back(debugBoneComponent.debugBones);
+
+						mCoordinator->AddComponent<ecs::DebugBoneComponent>(e, debugBoneComponent);
+#endif
+					}
+
+					if (mCoordinator->HasComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e) 
+#ifdef R2_DEBUG
+						&& !mCoordinator->HasComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e)
+#endif
+						)
+					{
+#ifdef R2_DEBUG
+						const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = mCoordinator->GetComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e);
+
+						const auto numInstances = instancedSkeletalAnimationComponent.numInstances;
+
+						ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
+						instancedDebugBoneComponent.numInstances = numInstances;
+						instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, numInstances);
+						mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
+
+						for (u32 j = 0; j < numInstances; ++j)
+						{
+							const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->boneInfo);
+
+							ecs::DebugBoneComponent debugBoneInstance1;
+							debugBoneInstance1.color = glm::vec4(1, 1, 0, 1);
+							debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, numDebugBones);
+							r2::sarr::Clear(*debugBoneInstance1.debugBones);
+							mComponentAllocations.push_back(debugBoneInstance1.debugBones);
+
+							r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
+						}
+
+						mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
+#endif
+					}
+					/*
+					ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
+					instancedDebugBoneComponent.numInstances = 2;
+					instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, 2);
+					mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
+
+					ecs::DebugBoneComponent debugBoneInstance1;
+					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
+					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					r2::sarr::Clear(*debugBoneInstance1.debugBones);
+					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
+
+					ecs::DebugBoneComponent debugBoneInstance2;
+					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
+					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					r2::sarr::Clear(*debugBoneInstance2.debugBones);
+					mComponentAllocations.push_back(debugBoneInstance2.debugBones);
+
+					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
+					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
+
+					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
+					*/
+
+				}
+
+
+				return e.ShouldConsume();
+			});
+
 
 		for (const auto& widget : mEditorWidgets)
 		{
@@ -627,24 +721,28 @@ namespace r2
 			}
 
 			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-			const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
-			
-			if (numMaterialOverrides > 0)
+
+			if (renderComponent.optrMaterialOverrideNames)
 			{
-				renderComponent.optrOverrideMaterials = MAKE_SARRAY(mMallocArena, r2::draw::MaterialHandle, numMaterialOverrides);
-				mComponentAllocations.push_back(renderComponent.optrMaterialOverrideNames);
+				const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
 
-				for (u32 j = 0; j < numMaterialOverrides; ++j)
+				if (numMaterialOverrides > 0)
 				{
-					const ecs::RenderMaterialOverride& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
+					renderComponent.optrOverrideMaterials = MAKE_SARRAY(mMallocArena, r2::draw::MaterialHandle, numMaterialOverrides);
+					mComponentAllocations.push_back(renderComponent.optrMaterialOverrideNames);
 
-					const r2::draw::MaterialSystem* materialSystem = r2::draw::matsys::GetMaterialSystemBySystemName(materialOverride.materialSystemName);
+					for (u32 j = 0; j < numMaterialOverrides; ++j)
+					{
+						const ecs::RenderMaterialOverride& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
 
-					R2_CHECK(materialSystem == editorMaterialSystem, "Just a check to make sure these are the same");
+						const r2::draw::MaterialSystem* materialSystem = r2::draw::matsys::GetMaterialSystemBySystemName(materialOverride.materialSystemName);
 
-					r2::draw::MaterialHandle nextOverrideMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*materialSystem, materialOverride.materialName);
+						R2_CHECK(materialSystem == editorMaterialSystem, "Just a check to make sure these are the same");
 
-					r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
+						r2::draw::MaterialHandle nextOverrideMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*materialSystem, materialOverride.materialName);
+
+						r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
+					}
 				}
 			}
 		}

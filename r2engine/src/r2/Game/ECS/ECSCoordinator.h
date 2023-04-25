@@ -68,6 +68,7 @@ namespace r2::ecs
 		Entity CreateEntity();
 		void DestroyEntity(Entity entity);
 		void DestoryAllEntities();
+		const r2::SArray<Entity>& GetAllLivingEntities();
 
 		u32 NumLivingEntities() const;
 
