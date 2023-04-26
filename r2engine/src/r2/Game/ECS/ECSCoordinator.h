@@ -189,6 +189,13 @@ namespace r2::ecs
 			std::vector<flatbuffers::Offset<flat::ComponentArrayData>>& componentData) const;
 
 		static u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems, u64 alignment, u32 headerSize, u32 boundsChecking);
+
+		template <typename SystemType>
+		static u64 MemorySizeOfSystemType(const r2::mem::utils::MemoryProperties& memProperties)
+		{
+			return SystemManager::MemorySizeOfSystemType<SystemType>(memProperties);
+		}
+
 	private:
 
 		EntityManager* mEntityManager;

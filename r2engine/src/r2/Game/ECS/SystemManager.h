@@ -163,6 +163,17 @@ namespace r2::ecs
 
 		static u64 MemorySize(u32 maxNumSystems, u32 maxNumEntities, u32 alignment, u32 headerSize, u32 boundsChecking);
 
+		template<typename SystemType>
+		static u64 MemorySizeOfSystemType(const r2::mem::utils::MemoryProperties& memProperties)
+		{
+			u64 memorySize = 0;
+
+			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(SystemType), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+			memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Entity>::MemorySize(MAX_NUM_ENTITIES), memProperties.alignment, memProperties.headerSize, memProperties.boundsChecking);
+
+			return memorySize;
+		}
+
 	private:
 
 		void RemoveEntityKeepSorted(const System* system, Entity entity, s64 index);

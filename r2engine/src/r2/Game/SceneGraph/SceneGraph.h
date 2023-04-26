@@ -97,6 +97,9 @@ namespace r2
 
 		ecs::ECSCoordinator* GetECSCoordinator() const;
 
+
+		static u64 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
+
 	private:
 
 		struct UpdatedEntity

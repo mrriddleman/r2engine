@@ -309,4 +309,14 @@ namespace r2
 	{
 		return mnoptrECSCoordinator;
 	}
+
+	u64 SceneGraph::MemorySize(const r2::mem::utils::MemoryProperties& memProperties)
+	{
+		u64 memorySize = 0;
+
+		memorySize += ecs::ECSCoordinator::MemorySizeOfSystemType<ecs::SceneGraphSystem>(memProperties);
+		memorySize += ecs::ECSCoordinator::MemorySizeOfSystemType<ecs::SceneGraphTransformUpdateSystem>(memProperties);
+
+		return memorySize;
+	}
 }
