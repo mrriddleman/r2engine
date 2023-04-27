@@ -129,6 +129,8 @@ namespace r2::mem::utils
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
         elementSize = elementSize + BasicBoundsChecking::SIZE_BACK + BasicBoundsChecking::SIZE_FRONT;
 #endif
+        R2_CHECK(capacity > 0, "We should actually have some elements in the pool!");
+
         u64 poolSizeInBytes = capacity * elementSize;
         
         void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, alignof(elementSize), file, line, description);

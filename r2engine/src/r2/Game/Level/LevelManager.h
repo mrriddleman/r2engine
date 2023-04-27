@@ -36,17 +36,26 @@ namespace r2
 		LevelManager();
 		~LevelManager();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels, u32 numLevelsLoadedAtOneTime);
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
 		void Shutdown();
+
+		void Update();
 
 		const Level* LoadLevel(const char* levelURI);
 		const Level* LoadLevel(LevelName levelName);
+
+		const Level* GetLevel(const char* levelURI);
+		const Level* GetLevel(LevelName levelName);
+
 		void UnloadLevel(const Level* level);
 
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
 		SceneGraph& GetSceneGraph();
+		SceneGraph* GetSceneGraphPtr();
+
+		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
 		void SaveNewLevelFile(u32 version, const char* binLevelPath, const char* rawJSONPath);
@@ -60,7 +69,7 @@ namespace r2
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
 		u32 mMaxNumLevels;
-		u32 mMaxNumLevelsLoadedAtOneTime;
+		//u32 mMaxNumLevelsLoadedAtOneTime;
 		
 		r2::mem::StackArena* mArena;
 		r2::mem::PoolArena* mLevelArena;

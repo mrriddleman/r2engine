@@ -8,8 +8,9 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
-#include "r2/Game/Level/Level.h"
+#include "r2/Game/Level/LevelManager.h"
 #include "r2/Utils/Random.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 
 namespace r2::evt
 {
@@ -76,15 +77,19 @@ namespace r2
 		void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
 		void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 		
+		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
+
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;
-		LevelCache* moptrLevelCache;
+		/*LevelCache* moptrLevelCache;
 		r2::LevelHandle mLevelHandle;
-		const flat::LevelData* mLevelData;
+		const flat::LevelData* mLevelData;*/
 
 		r2::mem::MallocArena mMallocArena;
 		ecs::ECSCoordinator* mCoordinator;
-		SceneGraph mSceneGraph;
+		//SceneGraph mSceneGraph;
+		LevelManager mLevelManager;
+
 
 		r2::ecs::RenderSystem* mnoptrRenderSystem;
 		r2::ecs::SkeletalAnimationSystem* mnoptrSkeletalAnimationSystem;

@@ -18,9 +18,6 @@
 namespace
 {
 	constexpr u32 AVG_LEVEL_SIZE = Kilobytes(10);
-#ifdef R2_DEBUG
-	constexpr u32 MAX_NUM_LEVELS_FOR_CACHE = 1000;
-#endif
 }
 
 namespace r2
@@ -29,7 +26,7 @@ namespace r2
 		:mMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mSubAreaHandle(r2::mem::MemoryArea::SubArea::Invalid)
 		, mMaxNumLevels(0)
-		, mMaxNumLevelsLoadedAtOneTime(0)
+	//	, mMaxNumLevelsLoadedAtOneTime(0)
 		,mArena(nullptr)
 		,mLevelArena(nullptr)
 		, mLoadedLevels(nullptr)
@@ -43,7 +40,7 @@ namespace r2
 	{
 	}
 
-	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels, u32 numLevelsLoadedAtOneTime)
+	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
 	{
 		R2_CHECK(levelPackPath != nullptr, "We should have a proper path");
 		R2_CHECK(strlen(levelPackPath) > 0, "We should have path that's more than 0");
@@ -82,21 +79,19 @@ namespace r2
 
 		R2_CHECK(mArena != nullptr, "We couldn't emplace the stack arena!");
 
+		mMaxNumLevels = maxNumLevels;
 
 		u32 numPoolElements = mMaxNumLevels;
 		mLevelArena = MAKE_POOL_ARENA(*mArena, sizeof(Level), numPoolElements);
 
 		mMemoryAreaHandle = memoryAreaHandle;
 		mSubAreaHandle = subAreaHandle;
-		
-
-		mMaxNumLevels = maxNumLevels;
 
 		mLoadedLevels = MAKE_SHASHMAP(*mArena, Level, maxNumLevels * r2::SHashMap<Level>::LoadFactorMultiplier());
 		
 		mSceneGraph.Init<r2::mem::StackArena>(*mArena, ecsCoordinator);
 
-		mMaxNumLevelsLoadedAtOneTime = numLevelsLoadedAtOneTime;
+		//mMaxNumLevelsLoadedAtOneTime = numLevelsLoadedAtOneTime;
 
 		u32 levelCacheMemoryNeededInBytes = maxNumLevels * AVG_LEVEL_SIZE;
 
@@ -111,7 +106,7 @@ namespace r2
 
 		r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_BOUNDARY(*mArena, levelCacheMemorySizeNeededInBytes, memProperties.alignment);
 
-		mLevelCache = lvlche::CreateLevelCache(levelCacheBoundary, levelPackPath, mMaxNumLevels, levelCacheMemorySizeNeededInBytes);
+		mLevelCache = lvlche::CreateLevelCache(levelCacheBoundary, levelPackPath, mMaxNumLevels, levelCacheMemoryNeededInBytes);
 
 		R2_CHECK(mLevelCache != nullptr, "We couldn't create the level cache correctly");
 
@@ -332,6 +327,11 @@ namespace r2
 		//@TODO(Serge): should we have to remove the sub areas?
 	}
 
+	void LevelManager::Update()
+	{
+		mSceneGraph.Update();
+	}
+
 	const r2::Level* LevelManager::LoadLevel(const char* levelURI)
 	{
 		//char levelName[r2::fs::FILE_PATH_LENGTH];
@@ -445,6 +445,25 @@ namespace r2
 		//return newLevel;
 	}
 
+	const Level* LevelManager::GetLevel(const char* levelURI)
+	{
+		return GetLevel(STRING_ID(levelURI));
+	}
+
+	const Level* LevelManager::GetLevel(LevelName levelName)
+	{
+		Level defaultLevel = {};
+
+		Level& theLevel = r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
+
+		if (!r2::asset::AreAssetHandlesEqual(theLevel.GetLevelHandle(), defaultLevel.GetLevelHandle()))
+		{
+			return &theLevel;
+		}
+
+		return nullptr;
+	}
+
 	void LevelManager::UnloadLevel(const Level* level)
 	{
 		if (!mLevelCache || !mLoadedLevels)
@@ -496,6 +515,25 @@ namespace r2
 	SceneGraph& LevelManager::GetSceneGraph()
 	{
 		return mSceneGraph;
+	}
+
+	SceneGraph* LevelManager::GetSceneGraphPtr()
+	{
+		return &mSceneGraph;
+	}
+
+	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
+	{
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(levelPath, sanitizedPath);
+
+		char levelAssetName[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, levelAssetName, 1);
+
+		std::string fileName = levelAssetName;
+		std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
+
+		return STRING_ID(fileName.c_str());
 	}
 
 	u64 LevelManager::MemorySize(
@@ -551,7 +589,7 @@ namespace r2
 			return;
 		}
 
-		lvlche::SaveNewLevelFile(*mLevelCache, nullptr, version, binLevelPath, rawJSONPath);
+		lvlche::SaveNewLevelFile(*mLevelCache, mSceneGraph.GetECSCoordinator(), version, binLevelPath, rawJSONPath);
 	}
 #endif
 }

@@ -40,6 +40,9 @@ namespace r2::asset
         : mHashedPathID(hash)
         , mType(type)
     {
+#ifdef R2_ASSET_CACHE_DEBUG
+        mName[0] = '\0';
+#endif
     }
     
     Asset::Asset(const Asset& asset)

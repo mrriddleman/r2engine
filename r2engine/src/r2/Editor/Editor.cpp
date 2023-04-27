@@ -33,20 +33,22 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Animation/AnimationCache.h"
 
+
 namespace 
 {
 	//Figure out render system defaults
 	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
 	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
-	constexpr u32 MAX_LEVELS = 1000;
-	constexpr u32 LEVEL_CACHE_SIZE = Megabytes(1);
-
+	constexpr u32 MAX_LEVELS = 500;
+	//constexpr u32 LEVEL_CACHE_SIZE = Megabytes(1);
+	constexpr u32 EDITOR_MEMORY_AREA_SIZE = Megabytes(8);
 }
 
 namespace r2
 {
 	Editor::Editor()
-		:mMallocArena(r2::mem::utils::MemBoundary())
+		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
+		,mMallocArena(r2::mem::utils::MemBoundary())
 		,mCoordinator(nullptr)
 		,mnoptrRenderSystem(nullptr)
 		,mnoptrSkeletalAnimationSystem(nullptr)
@@ -54,9 +56,9 @@ namespace r2
 		,mnoptrDebugBonesRenderSystem(nullptr)
 		,mnoptrDebugRenderSystem(nullptr)
 #endif // DEBUG
-		,moptrLevelCache(nullptr)
-		,mLevelData(nullptr)
-		, mLevelHandle{}
+		//,moptrLevelCache(nullptr)
+		//,mLevelData(nullptr)
+		//, mLevelHandle{}
 		, microbatAnimModel(nullptr)
 	{
 
@@ -64,6 +66,28 @@ namespace r2
 
 	void Editor::Init()
 	{
+		mEditorMemoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("EditorMemoryArea");
+
+		R2_CHECK(mEditorMemoryAreaHandle != r2::mem::MemoryArea::Invalid, "Invalid memory area");
+
+		r2::mem::MemoryArea* editorMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(mEditorMemoryAreaHandle);
+		R2_CHECK(editorMemoryArea != nullptr, "Failed to get the memory area!");
+
+		//@Temporary
+		r2::mem::utils::MemoryProperties memProps;
+		memProps.alignment = 16;
+		memProps.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+		memProps.headerSize = r2::mem::MallocAllocator::HeaderSize();
+
+		u64 levelManagerMemorySize = LevelManager::MemorySize(MAX_LEVELS, memProps);
+
+
+
+		auto result = editorMemoryArea->Init(EDITOR_MEMORY_AREA_SIZE, 0);
+		R2_CHECK(result == true, "Failed to initialize memory area");
+
+
+
 		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
 
 		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 1, ecs::MAX_NUM_SYSTEMS);
@@ -73,19 +97,19 @@ namespace r2
 		
 		mRandom.Randomize();
 
-		//@Temporary
-		r2::mem::utils::MemoryProperties memProps;
-		memProps.alignment = 16;
-		memProps.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-		memProps.headerSize = r2::mem::MallocAllocator::HeaderSize();
 
-		const auto size = r2::lvlche::MemorySize(MAX_LEVELS, LEVEL_CACHE_SIZE, memProps);
-		r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(mMallocArena, size, memProps.alignment, "Level Cache Memory Boundary");
-		moptrLevelCache = r2::lvlche::CreateLevelCache(levelCacheBoundary, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), MAX_LEVELS, LEVEL_CACHE_SIZE);
+
+		//const auto size = r2::lvlche::MemorySize(MAX_LEVELS, LEVEL_CACHE_SIZE, memProps);
+		//r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(mMallocArena, size, memProps.alignment, "Level Cache Memory Boundary");
+		//moptrLevelCache = r2::lvlche::CreateLevelCache(levelCacheBoundary, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), MAX_LEVELS, LEVEL_CACHE_SIZE);
 
 
 
-		mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
+
+		mLevelManager.Init(mEditorMemoryAreaHandle, mCoordinator, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), "Level Manager", MAX_LEVELS);
+
+
+		//mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
@@ -126,7 +150,7 @@ namespace r2
 
 		}
 
-		mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
+		/*mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
 
 		if (!r2::asset::IsInvalidAssetHandle(mLevelHandle))
 		{
@@ -136,7 +160,9 @@ namespace r2
 		r2::mem::utils::MemBoundary boundary = moptrLevelCache->mLevelCacheBoundary;
 		r2::lvlche::Shutdown(moptrLevelCache);
 
-		FREE(boundary.location, mMallocArena);
+		FREE(boundary.location, mMallocArena);*/
+
+		mLevelManager.Shutdown();
 
 		UnRegisterSystems();
 		UnRegisterComponents();
@@ -190,7 +216,8 @@ namespace r2
 
 	void Editor::Update()
 	{
-		mSceneGraph.Update();
+		mLevelManager.Update();
+		//mSceneGraph.Update();
 		mnoptrSkeletalAnimationSystem->Update();
 
 		for (const auto& widget : mEditorWidgets)
@@ -261,20 +288,20 @@ namespace r2
 		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
 		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
-		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
+		mLevelManager.SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
+
+//		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
 
 		//r2::asset::pln::SaveLevelData(mCoordinator, 1, (levelDataBinPath / levelBinURI).string(), (levelDataRawPath / levelRawURI).string());
 	}
 
 	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)
 	{
-		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::SanitizeSubPath(filePathName.c_str(), sanitizedPath);
+		LevelName levelAssetName = LevelManager::MakeLevelNameFromPath(filePathName.c_str());
 
-		char levelAssetName[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, levelAssetName, 1);
+		const Level* newLevel = mLevelManager.LoadLevel(levelAssetName);
 
-		mLevelHandle = r2::lvlche::LoadLevelData(*moptrLevelCache, levelAssetName);
+		/*mLevelHandle = r2::lvlche::LoadLevelData(*moptrLevelCache, levelAssetName);
 
 		mLevelData = r2::lvlche::GetLevelData(*moptrLevelCache, mLevelHandle);
 
@@ -283,12 +310,9 @@ namespace r2
 		r2::Level newLevel;
 		newLevel.Init(mLevelData, mLevelHandle);
 
-		mSceneGraph.LoadedNewLevel(newLevel);
+		mSceneGraph.LoadedNewLevel(newLevel);*/
 
-	//	R2_CHECK(false, "Currently this is not enough - we need to actually load/get the data needed from each type of component, example: Render component needs to be filled out with the gpu handle");
-		//@TODO(Serge): figure out how to do this in a nice way
-
-		evt::EditorLevelLoadedEvent e(newLevel);
+		evt::EditorLevelLoadedEvent e(*newLevel);
 
 		PostEditorEvent(e);
 
@@ -664,12 +688,12 @@ namespace r2
 
 	SceneGraph& Editor::GetSceneGraph()
 	{
-		return mSceneGraph;
+		return mLevelManager.GetSceneGraph();
 	}
 
 	SceneGraph* Editor::GetSceneGraphPtr()
 	{
-		return &mSceneGraph;
+		return mLevelManager.GetSceneGraphPtr();
 	}
 
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()
