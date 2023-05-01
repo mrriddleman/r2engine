@@ -51,7 +51,7 @@ namespace r2::draw
 			newAnimationCache->mMemoryAreaHandle = memoryAreaHandle;
 			newAnimationCache->mSubAreaHandle = subAreaHandle;
 			newAnimationCache->mSubAreaArena = animationCacheArena;
-			newAnimationCache->mAnimationRecords = MAKE_SHASHMAP(*animationCacheArena, r2::asset::AssetCacheRecord, r2::sarr::Size(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+			newAnimationCache->mAnimationRecords = MAKE_SHASHMAP(*animationCacheArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 
 			newAnimationCache->mAssetBoundary = MAKE_BOUNDARY(*animationCacheArena, modelCacheSize, ALIGNMENT);
 

@@ -24,7 +24,7 @@ namespace r2::draw::modlsys
 
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = MemorySize(r2::sarr::Size(*files), modelCacheSize);
+		u64 subAreaSize = MemorySize(r2::sarr::Capacity(*files), modelCacheSize);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
 			R2_CHECK(false, "We don't have enough space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes",
@@ -50,8 +50,8 @@ namespace r2::draw::modlsys
 		newModelSystem->mMemoryAreaHandle = memoryAreaHandle;
 		newModelSystem->mSubAreaHandle = subAreaHandle;
 		newModelSystem->mSubAreaArena = modelArena;
-		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Size(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Size(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mCacheModelReferences = cacheModelReferences;
 		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, modelCacheSize, ALIGNMENT);
 

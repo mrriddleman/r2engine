@@ -198,17 +198,18 @@ namespace r2
 
 		const flat::LevelData* flatLevelData = lvlche::GetLevelData(*mLevelCache, levelHandle);
 
+		//now add the files to the file lists
+		//these need to be before the scene graph load level
+		AddModelFilesToModelSystem(flatLevelData);
+		AddAnimationFilesToAnimationCache(flatLevelData);
+
+
 		Level newLevel;
 		newLevel.Init(flatLevelData, levelHandle);
 
 		mSceneGraph.LoadedNewLevel(newLevel);
 
 		r2::shashmap::Set(*mLoadedLevels, levelName, newLevel);
-
-
-
-
-
 
 		return &r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
 	}
@@ -290,6 +291,16 @@ namespace r2
 		return &mSceneGraph;
 	}
 
+	r2::draw::ModelSystem* LevelManager::GetModelSystem()
+	{
+		return mModelSystem;
+	}
+
+	r2::draw::AnimationCache* LevelManager::GetAnimationCache()
+	{
+		return mAnimationCache;
+	}
+
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
 	{
 		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
@@ -302,6 +313,34 @@ namespace r2
 		std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
 
 		return STRING_ID(fileName.c_str());
+	}
+
+	void LevelManager::AddModelFilesToModelSystem(const flat::LevelData* levelData)
+	{
+		const auto numModels = levelData->modelFilePaths()->size();
+
+		const r2::asset::FileList fileList = r2::draw::modlsys::GetFileList(*mModelSystem);
+
+		for (flatbuffers::uoffset_t i = 0; i < numModels; ++i)
+		{
+			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->modelFilePaths()->Get(i)->binPath()->c_str());
+
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+		}
+	}
+
+	void LevelManager::AddAnimationFilesToAnimationCache(const flat::LevelData* levelData)
+	{
+		const auto numAnimations = levelData->animationFilePaths()->size();
+
+		const r2::asset::FileList fileList = r2::draw::animcache::GetFileList(*mAnimationCache);
+
+		for (flatbuffers::uoffset_t i = 0; i < numAnimations; ++i)
+		{
+			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->animationFilePaths()->Get(i)->binPath()->c_str());
+
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+		}
 	}
 
 	u64 LevelManager::MemorySize(

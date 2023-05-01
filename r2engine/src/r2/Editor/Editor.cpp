@@ -711,7 +711,7 @@ namespace r2
 
 		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
 		
-		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
 		r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
 
 		for (u32 i = 0; i < numRenderComponents; ++i)
@@ -775,8 +775,8 @@ namespace r2
 			return nullptr;
 		}
 
-		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
+		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
+		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
 
@@ -822,8 +822,8 @@ namespace r2
 		instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
 		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
 
-		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
+		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
+		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
 

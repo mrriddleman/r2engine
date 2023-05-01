@@ -62,6 +62,9 @@ namespace r2
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
 
+		r2::draw::ModelSystem* GetModelSystem();
+		r2::draw::AnimationCache* GetAnimationCache();
+
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
@@ -81,6 +84,9 @@ namespace r2
 	private:
 
 		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, const r2::mem::utils::MemoryProperties& memProperties) const;
+
+		void AddModelFilesToModelSystem(const flat::LevelData* levelData);
+		void AddAnimationFilesToAnimationCache(const flat::LevelData* levelData);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
