@@ -13,7 +13,7 @@ namespace r2::draw
 	{
 		const u64 ALIGNMENT = 16;
 
-		AnimationCache* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, r2::asset::FileList files, const char* areaName)
+		AnimationCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, r2::asset::FileList files, const char* areaName)
 		{
 			if (!files)
 			{
@@ -72,14 +72,7 @@ namespace r2::draw
 
 			//return all of the models back to the cache
 
-			auto beginHash = r2::shashmap::Begin(*system.mAnimationRecords);
-
-			auto iter = beginHash;
-			for (; iter != r2::shashmap::End(*system.mAnimationRecords); ++iter)
-			{
-				system.mAnimationCache->ReturnAssetBuffer(iter->value);
-			}
-
+			r2::draw::animcache::FlushAll(system);
 
 			r2::asset::lib::DestroyCache(system.mAnimationCache);
 			FREE(system.mAssetBoundary.location, *arena);
@@ -162,11 +155,6 @@ namespace r2::draw
 			system.mAnimationCache->ReturnAssetBuffer(theRecord);
 		}
 
-		void FreeAnimation(AnimationCache& system, const AnimationHandle& handle)
-		{
-			system.mAnimationCache->FreeAsset(handle);
-		}
-
 		void LoadAnimations(AnimationCache& system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<AnimationHandle>& handles)
 		{
 			const u64 numAssetsToLoad = r2::sarr::Size(assets);
@@ -200,19 +188,29 @@ namespace r2::draw
 			r2::sarr::Clear(animations);
 		}
 
-		void FreeAnimations(AnimationCache& system, const r2::SArray<AnimationHandle>& handles)
-		{
-			const u64 numAnimationHandles = r2::sarr::Size(handles);
-
-			for (u64 i = 0; i < numAnimationHandles; ++i)
-			{
-				FreeAnimation(system, r2::sarr::At(handles, i));
-			}
-		}
-
 		void FlushAll(AnimationCache& system)
 		{
+			auto beginHash = r2::shashmap::Begin(*system.mAnimationRecords);
+
+			auto iter = beginHash;
+			for (; iter != r2::shashmap::End(*system.mAnimationRecords); ++iter)
+			{
+				system.mAnimationCache->ReturnAssetBuffer(iter->value);
+			}
+			
+			r2::shashmap::Clear(*system.mAnimationRecords);
+
 			system.mAnimationCache->FlushAll();
+		}
+
+		const r2::asset::FileList GetFileList(const AnimationCache& animationCache)
+		{
+			return animationCache.mAnimationCache->GetFileList();
+		}
+
+		void ClearFileList(AnimationCache& animationCache)
+		{
+			animationCache.mAnimationCache->ClearFileList();
 		}
 	}
 }

@@ -570,7 +570,7 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
-        mModelSystem = r2::draw::modlsys::Init(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
+        mModelSystem = r2::draw::modlsys::Create(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
 
         if (!mModelSystem)
         {
@@ -638,7 +638,7 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);
 
 
-        mAnimationCache = r2::draw::animcache::Init(memoryAreaHandle, Megabytes(16), animationFiles, "Sandbox Animation Cache");
+        mAnimationCache = r2::draw::animcache::Create(memoryAreaHandle, Megabytes(16), animationFiles, "Sandbox Animation Cache");
 
         if (!mAnimationCache)
         {

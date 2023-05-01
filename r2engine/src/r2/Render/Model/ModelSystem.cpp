@@ -12,7 +12,7 @@ namespace r2::draw::modlsys
 {
 	const u64 ALIGNMENT = 16;
 
-	ModelSystem* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
+	ModelSystem* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
 	{
 		if (!files)
 		{
@@ -86,22 +86,7 @@ namespace r2::draw::modlsys
 		r2::mem::LinearArena* arena = system->mSubAreaArena;
 
 		//return all of the models back to the cache
-		auto beginMeshHash = r2::shashmap::Begin(*system->mMeshes);
-
-		auto meshIter = beginMeshHash;
-
-		for (; meshIter != r2::shashmap::End(*system->mMeshes); ++meshIter)
-		{
-			system->mModelCache->ReturnAssetBuffer(meshIter->value);
-		}
-
-		auto beginHash = r2::shashmap::Begin(*system->mModels);
-
-		auto iter = beginHash;
-		for (; iter != r2::shashmap::End(*system->mModels); ++iter)
-		{
-			system->mModelCache->ReturnAssetBuffer(iter->value);
-		}
+		r2::draw::modlsys::FlushAll(system);
 
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
@@ -370,6 +355,9 @@ namespace r2::draw::modlsys
 		}
 
 		system->mModelCache->ReturnAssetBuffer(theRecord);
+
+		
+
 	}
 
 	void ReturnAnimModel(ModelSystem* system, const AnimModel* model)
@@ -437,7 +425,42 @@ namespace r2::draw::modlsys
 	{
 		if (system)
 		{
+			auto beginMeshHash = r2::shashmap::Begin(*system->mMeshes);
+
+			auto meshIter = beginMeshHash;
+
+			for (; meshIter != r2::shashmap::End(*system->mMeshes); ++meshIter)
+			{
+				system->mModelCache->ReturnAssetBuffer(meshIter->value);
+			}
+
+			auto beginHash = r2::shashmap::Begin(*system->mModels);
+
+			auto iter = beginHash;
+			for (; iter != r2::shashmap::End(*system->mModels); ++iter)
+			{
+				system->mModelCache->ReturnAssetBuffer(iter->value);
+			}
+
+			r2::shashmap::Clear(*system->mMeshes);
+			r2::shashmap::Clear(*system->mModels);
+
 			system->mModelCache->FlushAll();
 		}
+	}
+
+	const r2::asset::AssetFile* GetAssetFileForName(const ModelSystem& modelSystem, u64 assetName)
+	{
+		return modelSystem.mModelCache->GetAssetFile(r2::asset::Asset(assetName, r2::asset::RMODEL));
+	}
+
+	const r2::asset::FileList GetFileList(const ModelSystem& modelSystem)
+	{
+		return modelSystem.mModelCache->GetFileList();
+	}
+
+	void ClearFileList(ModelSystem& modelSystem)
+	{
+		modelSystem.mModelCache->ClearFileList();
 	}
 }

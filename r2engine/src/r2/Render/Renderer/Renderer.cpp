@@ -1245,7 +1245,7 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*files, (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(filePath));
 		}
 
-		newRenderer->mModelSystem = modlsys::Init(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
+		newRenderer->mModelSystem = modlsys::Create(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
 		if (!newRenderer->mModelSystem)
 		{
 			R2_CHECK(false, "We couldn't init the default engine models");

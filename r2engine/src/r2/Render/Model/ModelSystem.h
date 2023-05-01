@@ -30,7 +30,7 @@ namespace r2::draw
 
 	namespace modlsys
 	{
-		ModelSystem* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName);
+		ModelSystem* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName);
 		void Shutdown(ModelSystem* system);
 		u64 MemorySize(u64 numAssets, u64 assetCapacityInBytes);
 
@@ -53,6 +53,10 @@ namespace r2::draw
 		void LoadModels(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles);
 		void LoadMeshes(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles);
 		void FlushAll(ModelSystem* system);
+
+		const r2::asset::AssetFile* GetAssetFileForName(const ModelSystem& modelSystem, u64 assetName);
+		const r2::asset::FileList GetFileList(const ModelSystem& modelSystem);
+		void ClearFileList(ModelSystem& modelSystem);
 	}
 }
 

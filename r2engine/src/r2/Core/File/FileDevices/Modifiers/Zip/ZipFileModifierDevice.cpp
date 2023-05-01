@@ -28,7 +28,7 @@ namespace r2::fs
             return true;
         }
         
-        moptrFilePool = MAKE_POOL_ARENA(permanentStorage, sizeof(ZipFile), numFiles);
+        moptrFilePool = MAKE_POOL_ARENA(permanentStorage, sizeof(ZipFile), alignof(ZipFile), numFiles);
         R2_CHECK(moptrFilePool != nullptr, "We couldn't allocate a pool of size: %llu\n", sizeof(ZipFile)*numFiles);
         
         return moptrFilePool != nullptr;

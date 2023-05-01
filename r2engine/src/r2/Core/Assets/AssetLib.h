@@ -10,12 +10,13 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Assets/AssetTypes.h"
 
 namespace r2::asset
 {
     class AssetCache;
     class AssetFile;
-    using FileList = r2::SArray<AssetFile*>*;
+   // using FileList = r2::SArray<AssetFile*>*;
     class RawAssetFile;
     class ZipAssetFile;
     class GLTFAssetFile;

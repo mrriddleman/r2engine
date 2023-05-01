@@ -97,11 +97,13 @@ namespace r2::asset
 
         void ResetFileList(FileList fileList);
 #endif
+        void ClearFileList();
 
         void RegisterAssetFreedCallback(AssetFreedCallback func);
         
         const FileList GetFileList() const { return mnoptrFiles; }
 
+        const AssetFile* GetAssetFile(const Asset& asset) const;
 
         static u64 TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
@@ -127,7 +129,7 @@ namespace r2::asset
         void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         void UpdateLRU(AssetHandle handle);
-        FileHandle FindInFiles(const Asset& asset);
+        FileHandle FindInFiles(const Asset& asset) const;
         AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
         
         void Free(AssetHandle handle, bool forceFree);

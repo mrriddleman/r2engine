@@ -4,6 +4,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include <string>
+#include "r2/Core/Assets/AssetTypes.h"
 
 namespace r2::ecs
 {
@@ -14,7 +15,13 @@ namespace r2::asset::pln
 {
 	bool WriteNewLevelDataFromBinary(const std::string& binLevelPath, const std::string& rawJSONPath, const void* data, u32 dataSize);
 	
-	bool SaveLevelData(const r2::ecs::ECSCoordinator* coordinator, u32 version, const std::string& binLevelPath, const std::string& rawJSONPath);
+	bool SaveLevelData(
+		const r2::ecs::ECSCoordinator* coordinator,
+		u32 version,
+		const std::string& binLevelPath,
+		const std::string& rawJSONPath,
+		const r2::asset::FileList modelFiles, 
+		const r2::asset::FileList animationFiles);
 	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 }

@@ -369,7 +369,8 @@ namespace r2
 
         template<typename T, class ARENA> SHashMap<T>* CreateSHashMap(ARENA& a, u64 capacity, const char* file, s32 line, const char* description)
         {
-            void* hashMapPlacement = ALLOC_BYTES(a, SHashMap<T>::MemorySize(capacity), alignof(u64), file, line, description);
+            const auto memSize = SHashMap<T>::MemorySize(capacity);
+            void* hashMapPlacement = ALLOC_BYTES(a, memSize, alignof(T), file, line, description);
 
             return CreateHashMapInPlace<T>(hashMapPlacement, capacity);
         }

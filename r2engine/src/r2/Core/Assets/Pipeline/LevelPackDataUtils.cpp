@@ -8,6 +8,7 @@
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/Level/LevelData_generated.h"
 #include <filesystem>
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
 
 namespace r2::asset::pln
 {
@@ -34,7 +35,39 @@ namespace r2::asset::pln
 		return generatedJSON && generatedBinary;
 	}
 
-	bool SaveLevelData(const r2::ecs::ECSCoordinator* coordinator, u32 version, const std::string& binLevelPath, const std::string& rawJSONPath)
+	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, const FileList fileList)
+	{
+		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences;
+
+		u32 numFiles = r2::sarr::Size(*fileList);
+
+		for (u32 i = 0; i < numFiles; ++i)
+		{
+			AssetFile* assetFile = r2::sarr::At(*fileList, i);
+
+			R2_CHECK(assetFile != nullptr, "asset file is null?");
+
+			const char* filePath = assetFile->FilePath();
+
+			char filePathURI[r2::fs::FILE_PATH_LENGTH];
+			//@TODO(Serge): we may want to figure out a way to include parent directories - right now just filename + ext
+			r2::fs::utils::CopyFileNameWithExtension(filePath, filePathURI);
+
+			auto packReference = flat::CreatePackReference(builder, STRING_ID(filePathURI), builder.CreateString(filePath));
+
+			packReferences.push_back(packReference);
+		}
+
+		return packReferences;
+	}
+
+	bool SaveLevelData(
+		const r2::ecs::ECSCoordinator* coordinator,
+		u32 version,
+		const std::string& binLevelPath,
+		const std::string& rawJSONPath,
+		const FileList modelFiles,
+		const FileList animationFiles)
 	{
 		std::filesystem::path fsBinLevelPath = binLevelPath;
 		std::filesystem::path fsRawLevelPath = rawJSONPath;
@@ -62,6 +95,9 @@ namespace r2::asset::pln
 
 		std::vector<flatbuffers::Offset<flat::EntityData>> entityVec;
 		std::vector<flatbuffers::Offset<flat::ComponentArrayData>> componentDataArray;
+		
+		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, modelFiles);
+		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, animationFiles);
 
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
 
@@ -75,7 +111,9 @@ namespace r2::asset::pln
 			builder.CreateString(binLevelPath), 
 			numEntities,
 			builder.CreateVector(entityVec),
-			builder.CreateVector(componentDataArray));
+			builder.CreateVector(componentDataArray),
+			builder.CreateVector(modelPackReferences),
+			builder.CreateVector(animationPackReferences));
 
 		builder.Finish(levelData);
 

@@ -380,7 +380,14 @@ namespace r2::lvlche
 	}
 
 #if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
-	bool SaveNewLevelFile(LevelCache& levelCache, const r2::ecs::ECSCoordinator* coordinator, u32 version, const char* binLevelPath, const char* rawJSONPath)
+	bool SaveNewLevelFile(
+		LevelCache& levelCache,
+		const r2::ecs::ECSCoordinator* coordinator,
+		u32 version,
+		const char* binLevelPath,
+		const char* rawJSONPath,
+		const r2::asset::FileList modelFiles,
+		const r2::asset::FileList animationFiles)
 	{
 
 		char sanitizedBinLevelPath[r2::fs::FILE_PATH_LENGTH];
@@ -406,7 +413,7 @@ namespace r2::lvlche
 		}
 
 		//Write out the new level file
-		bool saved = r2::asset::pln::SaveLevelData(coordinator, version, sanitizedBinLevelPath, sanitizedRawLevelPath);
+		bool saved = r2::asset::pln::SaveLevelData(coordinator, version, sanitizedBinLevelPath, sanitizedRawLevelPath, modelFiles, animationFiles);
 		
 		R2_CHECK(saved, "We couldn't save the file: %s\n", sanitizedBinLevelPath);
 		//now we have to update the LevelGroupData and LevelPackData

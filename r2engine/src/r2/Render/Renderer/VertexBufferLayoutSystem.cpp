@@ -351,13 +351,13 @@ namespace r2::draw::vbsys
 
 		for (u32 i = 0; i < vertexConfig.numVertexConfigs; ++i)
 		{
-			r2::mem::PoolArena* freeList = MAKE_POOL_ARENA(*system.mVertexBufferLayoutArena, nodeSize, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded);
+			r2::mem::PoolArena* freeList = MAKE_POOL_ARENA(*system.mVertexBufferLayoutArena, nodeSize, alignof(SinglyLinkedList<vb::GPUBufferEntry>::Node), system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded);
 			vb::gpubuf::Init(newVertexBufferLayout->vertexBuffers[i], freeList, vertexConfig.vertexBufferConfigs[i].bufferSize);
 		}
 		//#define MAKE_POOL_ARENA(arena, elementSize, capacity)
 		if (vertexConfig.indexBufferConfig.bufferSize != EMPTY_BUFFER)
 		{
-			r2::mem::PoolArena* freeList = MAKE_POOL_ARENA(*system.mVertexBufferLayoutArena, nodeSize, system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded);
+			r2::mem::PoolArena* freeList = MAKE_POOL_ARENA(*system.mVertexBufferLayoutArena, nodeSize, alignof(SinglyLinkedList<vb::GPUBufferEntry>::Node), system.mAvgNumberOfMeshesPerModel * system.mMaxModelsLoaded);
 			vb::gpubuf::Init(newVertexBufferLayout->indexBuffer, freeList, vertexConfig.indexBufferConfig.bufferSize);
 		}
 

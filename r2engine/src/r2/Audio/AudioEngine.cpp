@@ -225,7 +225,7 @@ namespace r2::audio
             r2::sarr::At(*mChannels, i) = nullptr;
         }
         
-        mChannelPool = MAKE_POOL_ARENA(allocator, sizeof(Channel), MAX_NUM_CHANNELS);
+        mChannelPool = MAKE_POOL_ARENA(allocator, sizeof(Channel), alignof(Channel), MAX_NUM_CHANNELS);
  
         mFMODMemory = ALLOC_BYTESN(allocator, FMODMemorySize(), SOUND_ALIGNMENT);
         

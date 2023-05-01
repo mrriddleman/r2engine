@@ -39,7 +39,7 @@ namespace
 	//Figure out render system defaults
 	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
 	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
-	constexpr u32 MAX_LEVELS = 500;
+	constexpr u32 MAX_LEVELS = 100;
 	//constexpr u32 LEVEL_CACHE_SIZE = Megabytes(1);
 	constexpr u32 EDITOR_MEMORY_AREA_SIZE = Megabytes(8);
 }
@@ -79,14 +79,10 @@ namespace r2
 		memProps.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 		memProps.headerSize = r2::mem::MallocAllocator::HeaderSize();
 
-		u64 levelManagerMemorySize = LevelManager::MemorySize(MAX_LEVELS, memProps);
+		u64 levelManagerMemorySize = LevelManager::MemorySize(MAX_LEVELS, LevelManager::MAX_NUM_MODELS, LevelManager::MAX_NUM_ANIMATIONS, memProps);
 
-
-
-		auto result = editorMemoryArea->Init(EDITOR_MEMORY_AREA_SIZE, 0);
+		auto result = editorMemoryArea->Init(levelManagerMemorySize, 0);
 		R2_CHECK(result == true, "Failed to initialize memory area");
-
-
 
 		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
 
@@ -288,7 +284,10 @@ namespace r2
 		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
 		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
-		mLevelManager.SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
+		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
+
+		mLevelManager.SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
 
 //		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
 

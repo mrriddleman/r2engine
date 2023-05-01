@@ -22,6 +22,7 @@ namespace r2::draw
 {
 	struct MaterialSystem;
 	struct ModelSystem;
+	struct AnimationCache;
 }
 
 namespace r2
@@ -33,6 +34,12 @@ namespace r2
 	class LevelManager
 	{
 	public:
+
+		static const u32 MODEL_SYSTEM_SIZE;
+		static const u32 ANIMATION_CACHE_SIZE;
+		static const u32 MAX_NUM_MODELS;
+		static const u32 MAX_NUM_ANIMATIONS;
+
 		LevelManager();
 		~LevelManager();
 
@@ -58,13 +65,22 @@ namespace r2
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-		void SaveNewLevelFile(u32 version, const char* binLevelPath, const char* rawJSONPath);
+		void SaveNewLevelFile(
+			u32 version,
+			const char* binLevelPath,
+			const char* rawJSONPath,
+			const r2::draw::ModelSystem& modelSystem,
+			const r2::draw::AnimationCache& animationCache);
 #endif
 		static u64 MemorySize(
 			u32 maxNumLevels,
+			u32 maxNumModels,
+			u32 maxNumAnimations,
 			const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
+
+		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, const r2::mem::utils::MemoryProperties& memProperties) const;
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
@@ -80,6 +96,8 @@ namespace r2
 
 		SceneGraph mSceneGraph;
 		
+		r2::draw::ModelSystem* mModelSystem;
+		r2::draw::AnimationCache* mAnimationCache;
 	};
 }
 

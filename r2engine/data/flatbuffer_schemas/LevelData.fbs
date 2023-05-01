@@ -9,7 +9,6 @@ file_extension "rlvl";
 table PackReference
 {
 	hashName:ulong (hash:"fnv1a_64");
-	rawPath:string;
 	binPath:string;
 }
 
@@ -25,6 +24,10 @@ table LevelData
 	numEntities:uint;
 	entities:[EntityData];
 	componentArrays:[ComponentArrayData];
+
+	modelFilePaths:[PackReference];
+	animationFilePaths:[PackReference];
+
 }
 
 root_type LevelData;

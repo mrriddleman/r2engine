@@ -21,14 +21,10 @@ struct PackReference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef PackReferenceBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_HASHNAME = 4,
-    VT_RAWPATH = 6,
-    VT_BINPATH = 8
+    VT_BINPATH = 6
   };
   uint64_t hashName() const {
     return GetField<uint64_t>(VT_HASHNAME, 0);
-  }
-  const flatbuffers::String *rawPath() const {
-    return GetPointer<const flatbuffers::String *>(VT_RAWPATH);
   }
   const flatbuffers::String *binPath() const {
     return GetPointer<const flatbuffers::String *>(VT_BINPATH);
@@ -36,8 +32,6 @@ struct PackReference FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_HASHNAME) &&
-           VerifyOffset(verifier, VT_RAWPATH) &&
-           verifier.VerifyString(rawPath()) &&
            VerifyOffset(verifier, VT_BINPATH) &&
            verifier.VerifyString(binPath()) &&
            verifier.EndTable();
@@ -50,9 +44,6 @@ struct PackReferenceBuilder {
   flatbuffers::uoffset_t start_;
   void add_hashName(uint64_t hashName) {
     fbb_.AddElement<uint64_t>(PackReference::VT_HASHNAME, hashName, 0);
-  }
-  void add_rawPath(flatbuffers::Offset<flatbuffers::String> rawPath) {
-    fbb_.AddOffset(PackReference::VT_RAWPATH, rawPath);
   }
   void add_binPath(flatbuffers::Offset<flatbuffers::String> binPath) {
     fbb_.AddOffset(PackReference::VT_BINPATH, binPath);
@@ -72,26 +63,21 @@ struct PackReferenceBuilder {
 inline flatbuffers::Offset<PackReference> CreatePackReference(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t hashName = 0,
-    flatbuffers::Offset<flatbuffers::String> rawPath = 0,
     flatbuffers::Offset<flatbuffers::String> binPath = 0) {
   PackReferenceBuilder builder_(_fbb);
   builder_.add_hashName(hashName);
   builder_.add_binPath(binPath);
-  builder_.add_rawPath(rawPath);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<PackReference> CreatePackReferenceDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t hashName = 0,
-    const char *rawPath = nullptr,
     const char *binPath = nullptr) {
-  auto rawPath__ = rawPath ? _fbb.CreateString(rawPath) : 0;
   auto binPath__ = binPath ? _fbb.CreateString(binPath) : 0;
   return flat::CreatePackReference(
       _fbb,
       hashName,
-      rawPath__,
       binPath__);
 }
 
@@ -106,7 +92,9 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PATH = 14,
     VT_NUMENTITIES = 16,
     VT_ENTITIES = 18,
-    VT_COMPONENTARRAYS = 20
+    VT_COMPONENTARRAYS = 20,
+    VT_MODELFILEPATHS = 22,
+    VT_ANIMATIONFILEPATHS = 24
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -135,6 +123,12 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>> *>(VT_COMPONENTARRAYS);
   }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *modelFilePaths() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_MODELFILEPATHS);
+  }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *animationFilePaths() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_ANIMATIONFILEPATHS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION) &&
@@ -153,6 +147,12 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_COMPONENTARRAYS) &&
            verifier.VerifyVector(componentArrays()) &&
            verifier.VerifyVectorOfTables(componentArrays()) &&
+           VerifyOffset(verifier, VT_MODELFILEPATHS) &&
+           verifier.VerifyVector(modelFilePaths()) &&
+           verifier.VerifyVectorOfTables(modelFilePaths()) &&
+           VerifyOffset(verifier, VT_ANIMATIONFILEPATHS) &&
+           verifier.VerifyVector(animationFilePaths()) &&
+           verifier.VerifyVectorOfTables(animationFilePaths()) &&
            verifier.EndTable();
   }
 };
@@ -188,6 +188,12 @@ struct LevelDataBuilder {
   void add_componentArrays(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>> componentArrays) {
     fbb_.AddOffset(LevelData::VT_COMPONENTARRAYS, componentArrays);
   }
+  void add_modelFilePaths(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> modelFilePaths) {
+    fbb_.AddOffset(LevelData::VT_MODELFILEPATHS, modelFilePaths);
+  }
+  void add_animationFilePaths(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> animationFilePaths) {
+    fbb_.AddOffset(LevelData::VT_ANIMATIONFILEPATHS, animationFilePaths);
+  }
   explicit LevelDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -210,10 +216,14 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     flatbuffers::Offset<flatbuffers::String> path = 0,
     uint32_t numEntities = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::EntityData>>> entities = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>> componentArrays = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>> componentArrays = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> modelFilePaths = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> animationFilePaths = 0) {
   LevelDataBuilder builder_(_fbb);
   builder_.add_groupHash(groupHash);
   builder_.add_hash(hash);
+  builder_.add_animationFilePaths(animationFilePaths);
+  builder_.add_modelFilePaths(modelFilePaths);
   builder_.add_componentArrays(componentArrays);
   builder_.add_entities(entities);
   builder_.add_numEntities(numEntities);
@@ -234,12 +244,16 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     const char *path = nullptr,
     uint32_t numEntities = 0,
     const std::vector<flatbuffers::Offset<flat::EntityData>> *entities = nullptr,
-    const std::vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays = nullptr) {
+    const std::vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays = nullptr,
+    const std::vector<flatbuffers::Offset<flat::PackReference>> *modelFilePaths = nullptr,
+    const std::vector<flatbuffers::Offset<flat::PackReference>> *animationFilePaths = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
   auto path__ = path ? _fbb.CreateString(path) : 0;
   auto entities__ = entities ? _fbb.CreateVector<flatbuffers::Offset<flat::EntityData>>(*entities) : 0;
   auto componentArrays__ = componentArrays ? _fbb.CreateVector<flatbuffers::Offset<flat::ComponentArrayData>>(*componentArrays) : 0;
+  auto modelFilePaths__ = modelFilePaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*modelFilePaths) : 0;
+  auto animationFilePaths__ = animationFilePaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*animationFilePaths) : 0;
   return flat::CreateLevelData(
       _fbb,
       version,
@@ -250,7 +264,9 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
       path__,
       numEntities,
       entities__,
-      componentArrays__);
+      componentArrays__,
+      modelFilePaths__,
+      animationFilePaths__);
 }
 
 inline const flat::LevelData *GetLevelData(const void *buf) {

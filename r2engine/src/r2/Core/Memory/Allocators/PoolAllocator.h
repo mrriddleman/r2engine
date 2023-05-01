@@ -15,7 +15,7 @@
 
 #define MAKE_POOLA(arena, elementSize, capacity) r2::mem::utils::CreatePoolAllocator(arena, elementSize, capacity, __FILE__, __LINE__, "")
 
-#define MAKE_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreatePoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
+#define MAKE_POOL_ARENA(arena, elementSize, alignment, capacity) r2::mem::utils::CreatePoolArena(arena, elementSize, alignment, capacity, __FILE__, __LINE__, "")
 
 #define MAKE_NO_CHECK_POOL_ARENA(arena, elementSize, capacity) r2::mem::utils::CreateNoCheckPoolArena(arena, elementSize, capacity, __FILE__, __LINE__, "")
 
@@ -88,7 +88,7 @@ namespace r2::mem::utils
 {
     template<class ARENA> r2::mem::PoolAllocator* CreatePoolAllocator(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
-    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u32 alignment, u64 capacity, const char* file, s32 line, const char* description);
     
     template<class ARENA> r2::mem::NoCheckPoolArena* CreateNoCheckPoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description);
     
@@ -123,7 +123,7 @@ namespace r2::mem::utils
         return pool;
     }
     
-    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u64 capacity, const char* file, s32 line, const char* description)
+    template<class ARENA> r2::mem::PoolArena* CreatePoolArena(ARENA& arena, u32 elementSize, u32 alignment, u64 capacity, const char* file, s32 line, const char* description)
     {
         
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
@@ -132,8 +132,8 @@ namespace r2::mem::utils
         R2_CHECK(capacity > 0, "We should actually have some elements in the pool!");
 
         u64 poolSizeInBytes = capacity * elementSize;
-        
-        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, alignof(elementSize), file, line, description);
+
+        void* poolArenaStartPtr = ALLOC_BYTES(arena, sizeof(PoolArena) + poolSizeInBytes, alignment, file, line, description);
         
         R2_CHECK(poolArenaStartPtr != nullptr, "We shouldn't have null pool!");
         
@@ -143,7 +143,7 @@ namespace r2::mem::utils
         poolBoundary.location = boundaryStart;
         poolBoundary.size = poolSizeInBytes;
         poolBoundary.elementSize = elementSize;
-        poolBoundary.alignment = elementSize;
+        poolBoundary.alignment = alignment;
         poolBoundary.offset = 0; //?
 
         PoolArena* pool = new (poolArenaStartPtr) PoolArena(poolBoundary);

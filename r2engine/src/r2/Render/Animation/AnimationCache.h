@@ -23,21 +23,22 @@ namespace r2::draw
 
 	namespace animcache
 	{
-		AnimationCache* Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, r2::asset::FileList files, const char* areaName);
+		AnimationCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, r2::asset::FileList files, const char* areaName);
 		void Shutdown(AnimationCache& system);
 		u64 MemorySize(u64 numAssets, u64 assetCapacityInBytes);
 
 		AnimationHandle LoadAnimation(AnimationCache& system, const r2::asset::Asset& model);
 		const Animation* GetAnimation(AnimationCache& system, const AnimationHandle& handle);
 		void ReturnAnimation(AnimationCache& system, const Animation* animation);
-		void FreeAnimation(AnimationCache& system, const AnimationHandle& handle);
 
 		void LoadAnimations(AnimationCache& system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<AnimationHandle>& handles);
 		void GetAnimations(AnimationCache& system, const SArray<AnimationHandle>& handles, r2::SArray<const Animation*>& outAnimations);
 		void ReturnAnimations(AnimationCache& system, r2::SArray<const Animation*>& animations);
-		void FreeAnimations(AnimationCache& system, const r2::SArray<AnimationHandle>& handles);
-		
+	
 		void FlushAll(AnimationCache& system);
+
+		const r2::asset::FileList GetFileList(const AnimationCache& animationCache);
+		void ClearFileList(AnimationCache& animationCache);
 	}
 }
 

@@ -72,7 +72,7 @@ namespace r2::asset
             
             mAssetLoaders = MAKE_SARRAY(mAssetCacheArena, AssetLoader*, lruCapacity);
             mAssetWriters = MAKE_SARRAY(mAssetCacheArena, AssetWriter*, lruCapacity);
-            mAssetBufferPoolPtr = MAKE_POOL_ARENA(mAssetCacheArena, sizeof(AssetBuffer), lruCapacity);
+            mAssetBufferPoolPtr = MAKE_POOL_ARENA(mAssetCacheArena, sizeof(AssetBuffer), alignof(AssetBuffer), lruCapacity);
             mAssetFreedCallbackList = MAKE_SARRAY(mAssetCacheArena, AssetFreedCallback, lruCapacity);
         }
         
@@ -123,14 +123,14 @@ namespace r2::asset
         
         FlushAll();
 
-        s32 numWriters = r2::sarr::Size(*mAssetWriters);
+        s32 numWriters = static_cast<s32>( r2::sarr::Size(*mAssetWriters) );
         for (s32 i = numWriters - 1; i >= 0; --i)
         {
             AssetWriter* writer = r2::sarr::At(*mAssetWriters, i);
             FREE(writer, mAssetCacheArena);
         }
         
-        s32 numLoaders = r2::sarr::Size(*mAssetLoaders);
+        s32 numLoaders = static_cast<s32>(r2::sarr::Size(*mAssetLoaders) );
         for (s32 i = numLoaders-1; i >=0; --i)
         {
             AssetLoader* loader = r2::sarr::At(*mAssetLoaders, i);
@@ -367,7 +367,26 @@ namespace r2::asset
         
         return 0;
     }
-    
+
+    const AssetFile* AssetCache::GetAssetFile(const Asset& asset) const
+    {
+		R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
+		if (NOT_INITIALIZED)
+		{
+			return nullptr;
+		}
+
+        FileHandle fileIndex = FindInFiles(asset);
+
+        if (fileIndex == -1)
+        {
+            R2_CHECK(false, "Couldn't find the asset file for the asset");
+            return nullptr;
+        }
+
+        return r2::sarr::At(*mnoptrFiles, fileIndex);
+    }
+
     void AssetCache::RegisterAssetLoader(AssetLoader* optrAssetLoader)
     {
         R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
@@ -563,7 +582,7 @@ namespace r2::asset
             return;
         }
 
-		u32 numAssetWriters = r2::sarr::Size(*mAssetWriters);
+		u32 numAssetWriters = static_cast<u32>(r2::sarr::Size(*mAssetWriters));
 		AssetWriter* writer = nullptr;
 		for (u64 i = 0; i < numAssetWriters; ++i)
 		{
@@ -637,7 +656,7 @@ namespace r2::asset
 #endif
     }
     
-    FileHandle AssetCache::FindInFiles(const Asset& asset)
+    FileHandle AssetCache::FindInFiles(const Asset& asset) const
     {
         if (!mnoptrFiles)
         {
@@ -961,6 +980,11 @@ namespace r2::asset
         mnoptrFiles = fileList;
     }
 #endif
+
+    void AssetCache::ClearFileList()
+    {
+        r2::sarr::Clear(*mnoptrFiles);
+    }
 
     void AssetCache::RegisterAssetFreedCallback(AssetFreedCallback func)
     {
