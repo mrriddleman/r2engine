@@ -2,8 +2,6 @@
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
-#include "r2/Render/Model/Materials/MaterialPack_generated.h"
-#include "r2/Render/Model/Materials/Material_generated.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Core/File/PathUtils.h"

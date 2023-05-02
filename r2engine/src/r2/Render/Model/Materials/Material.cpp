@@ -5,9 +5,6 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/File/FileSystem.h"
-
-#include "r2/Render/Model/Materials/Material_generated.h"
-#include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
@@ -854,57 +851,6 @@ namespace r2::draw::mat
 		}
 
 		return r2::sarr::At(*system.mInternalData, materialIndex).textureAssets;
-	}
-
-
-	u64 LoadMaterialAndTextureManifests(const char* materialManifestPath, const char* textureManifestPath, void** materialPackData, void** texturePacksData)
-	{
-		if (!materialManifestPath || strcmp(materialManifestPath, "") == 0)
-		{
-			R2_CHECK(false, "materialManifestPath is null or empty");
-			return 0;
-		}
-
-		if (!textureManifestPath || strcmp(textureManifestPath, "") == 0)
-		{
-			R2_CHECK(false, "textureManifestPath is null or empty");
-			return 0;
-		}
-
-		if (materialPackData == nullptr || texturePacksData == nullptr)
-		{
-
-			return 0;
-		}
-
-
-		*materialPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, materialManifestPath);
-		if (!(*materialPackData))
-		{
-			R2_CHECK(false, "Failed to read the material pack file: %s", materialManifestPath);
-			return false;
-		}
-
-		const flat::MaterialPack* materialPack = flat::GetMaterialPack(*materialPackData);
-
-		R2_CHECK(materialPack != nullptr, "Failed to get the material pack from the data!");
-
-		*texturePacksData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, textureManifestPath);
-		if (!(*texturePacksData))
-		{
-			R2_CHECK(false, "Failed to read the texture packs file: %s", textureManifestPath);
-			return false;
-		}
-
-		const flat::TexturePacksManifest* texturePacks = flat::GetTexturePacksManifest(*texturePacksData);
-
-		R2_CHECK(texturePacks != nullptr, "Failed to get the material pack from the data!");
-
-		return r2::draw::mat::MemorySize(64, materialPack->materials()->size(),
-			texturePacks->totalTextureSize(),
-			texturePacks->totalNumberOfTextures(),
-			texturePacks->texturePacks()->size(),
-			texturePacks->maxTexturesInAPack());
 	}
 
 	u64 GetMaterialBoundarySize(const char* materialManifestPath, const char* textureManifestPath)

@@ -6,8 +6,6 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Model/Materials/Material.h"
-#include "r2/Render/Model/Materials/Material_generated.h"
-#include "r2/Render/Model/Materials/MaterialPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/Texture.h"
