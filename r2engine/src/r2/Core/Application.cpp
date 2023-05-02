@@ -171,7 +171,7 @@ namespace r2
 
 #ifdef R2_EDITOR
 
-    r2::draw::ModelSystem* Application::GetEditorModelSystem() const
+    r2::draw::ModelCache* Application::GetEditorModelSystem() const
     {
         return nullptr;
     }

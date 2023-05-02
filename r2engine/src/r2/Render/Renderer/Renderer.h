@@ -11,7 +11,7 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/RenderPass.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/ModelCache.h"
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
 
@@ -151,7 +151,7 @@ namespace r2::draw
 		//--------------END Memory stuff-----------------
 
 		//--------------BEGIN Systems stuff----------------
-		ModelSystem* mModelSystem = nullptr;
+		ModelCache* mModelCache = nullptr;
 		MaterialSystem* mnoptrMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;

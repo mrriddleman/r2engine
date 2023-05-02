@@ -29,7 +29,7 @@
 #include "r2/Render/Animation/AnimationCache.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/ModelCache.h"
 #include "r2/Render/Model/Material.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Random.h"
@@ -570,7 +570,7 @@ public:
 
         r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
 
-        mModelSystem = r2::draw::modlsys::Create(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
+        mModelSystem = r2::draw::modlche::Create(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
 
         if (!mModelSystem)
         {
@@ -646,19 +646,19 @@ public:
             return false;
         }
 
-        auto microbatHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
-        mMicroBatModel = r2::draw::modlsys::GetAnimModel(mModelSystem, microbatHandle);
+        auto microbatHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
+        mMicroBatModel = r2::draw::modlche::GetAnimModel(mModelSystem, microbatHandle);
 
-        auto skeletonHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
-        mSkeletonModel = r2::draw::modlsys::GetAnimModel(mModelSystem, skeletonHandle);
+        auto skeletonHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
+        mSkeletonModel = r2::draw::modlche::GetAnimModel(mModelSystem, skeletonHandle);
 
-        auto ellenHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
-        mEllenModel = r2::draw::modlsys::GetAnimModel(mModelSystem, ellenHandle);
+        auto ellenHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
+        mEllenModel = r2::draw::modlche::GetAnimModel(mModelSystem, ellenHandle);
 
         mSelectedAnimModel = mMicroBatModel;
 
-        auto sponzaHandle = r2::draw::modlsys::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
-        mSponzaModel = r2::draw::modlsys::GetModel(mModelSystem, sponzaHandle);
+        auto sponzaHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
+        mSponzaModel = r2::draw::modlche::GetModel(mModelSystem, sponzaHandle);
 
         glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
 
@@ -1617,7 +1617,7 @@ public:
     {
 
         r2::draw::animcache::Shutdown(*mAnimationCache);
-        r2::draw::modlsys::Shutdown(mModelSystem);
+        r2::draw::modlche::Shutdown(mModelSystem);
         
         void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
@@ -1782,7 +1782,7 @@ public:
 
 	//@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-	r2::draw::ModelSystem* GetEditorModelSystem() const
+	r2::draw::ModelCache* GetEditorModelSystem() const
 	{
 		return mModelSystem;
 	}
@@ -1963,7 +1963,7 @@ private:
     r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
     r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
 
-    r2::draw::ModelSystem* mModelSystem = nullptr;
+    r2::draw::ModelCache* mModelSystem = nullptr;
     r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
     const r2::draw::AnimModel* mMicroBatModel = nullptr;

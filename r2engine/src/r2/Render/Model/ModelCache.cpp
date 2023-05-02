@@ -1,6 +1,6 @@
 #include "r2pch.h"
 
-#include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/ModelCache.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
@@ -8,11 +8,11 @@
 #include "r2/Core/Assets/AssetLoaders/AssimpAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 
-namespace r2::draw::modlsys
+namespace r2::draw::modlche
 {
 	const u64 ALIGNMENT = 16;
 
-	ModelSystem* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
+	ModelCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u64 modelCacheSize, b32 cacheModelReferences, r2::asset::FileList files, const char* areaName)
 	{
 		if (!files)
 		{
@@ -45,7 +45,7 @@ namespace r2::draw::modlsys
 
 		R2_CHECK(modelArena != nullptr, "We couldn't emplace the linear arena - no way to recover!");
 
-		ModelSystem* newModelSystem = ALLOC(ModelSystem, *modelArena);
+		ModelCache* newModelSystem = ALLOC(ModelCache, *modelArena);
 
 		newModelSystem->mMemoryAreaHandle = memoryAreaHandle;
 		newModelSystem->mSubAreaHandle = subAreaHandle;
@@ -75,7 +75,7 @@ namespace r2::draw::modlsys
 		return newModelSystem;
 	}
 
-	void Shutdown(ModelSystem* system)
+	void Shutdown(ModelCache* system)
 	{
 		if (!system)
 		{
@@ -86,7 +86,7 @@ namespace r2::draw::modlsys
 		r2::mem::LinearArena* arena = system->mSubAreaArena;
 
 		//return all of the models back to the cache
-		r2::draw::modlsys::FlushAll(system);
+		r2::draw::modlche::FlushAll(system);
 
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
@@ -106,14 +106,14 @@ namespace r2::draw::modlsys
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
-		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ModelSystem), ALIGNMENT, headerSize, boundsChecking) +
+		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ModelCache), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacityInBytes, ALIGNMENT);
 	}
 
-	bool HasMesh(ModelSystem* system, const r2::asset::Asset& mesh)
+	bool HasMesh(ModelCache* system, const r2::asset::Asset& mesh)
 	{
 		if (!system)
 		{
@@ -130,7 +130,7 @@ namespace r2::draw::modlsys
 		return  r2::shashmap::Has(*system->mMeshes, mesh.HashID());
 	}
 
-	MeshHandle GetMeshHandle(ModelSystem* system, const r2::asset::Asset& mesh)
+	MeshHandle GetMeshHandle(ModelCache* system, const r2::asset::Asset& mesh)
 	{
 		if (HasMesh(system, mesh))
 		{
@@ -140,7 +140,7 @@ namespace r2::draw::modlsys
 		return MeshHandle{};
 	}
 
-	MeshHandle LoadMesh(ModelSystem* system, const r2::asset::Asset& mesh)
+	MeshHandle LoadMesh(ModelCache* system, const r2::asset::Asset& mesh)
 	{
 		if (!system)
 		{
@@ -151,7 +151,7 @@ namespace r2::draw::modlsys
 		return system->mModelCache->LoadAsset(mesh);
 	}
 
-	const Mesh* GetMesh(ModelSystem* system, const MeshHandle& handle)
+	const Mesh* GetMesh(ModelCache* system, const MeshHandle& handle)
 	{
 		if (!system)
 		{
@@ -198,7 +198,7 @@ namespace r2::draw::modlsys
 		return mesh;
 	}
 
-	void ReturnMesh(ModelSystem* system, const Mesh* mesh)
+	void ReturnMesh(ModelCache* system, const Mesh* mesh)
 	{
 		if (!system)
 		{
@@ -225,7 +225,7 @@ namespace r2::draw::modlsys
 		system->mModelCache->ReturnAssetBuffer(theRecord);
 	}
 
-	ModelHandle LoadModel(ModelSystem* system, const r2::asset::Asset& model)
+	ModelHandle LoadModel(ModelCache* system, const r2::asset::Asset& model)
 	{
 		if (!system)
 		{
@@ -236,7 +236,7 @@ namespace r2::draw::modlsys
 		return system->mModelCache->LoadAsset(model);
 	}
 
-	const Model* GetModel(ModelSystem* system, const ModelHandle& handle)
+	const Model* GetModel(ModelCache* system, const ModelHandle& handle)
 	{
 		if (!system)
 		{
@@ -283,7 +283,7 @@ namespace r2::draw::modlsys
 		return model;
 	}
 
-	const AnimModel* GetAnimModel(ModelSystem* system, const ModelHandle& handle)
+	const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle)
 	{
 		if (!system)
 		{
@@ -330,7 +330,7 @@ namespace r2::draw::modlsys
 		return model;
 	}
 
-	void ReturnModel(ModelSystem* system, const Model* model)
+	void ReturnModel(ModelCache* system, const Model* model)
 	{
 		if (!system)
 		{
@@ -360,7 +360,7 @@ namespace r2::draw::modlsys
 
 	}
 
-	void ReturnAnimModel(ModelSystem* system, const AnimModel* model)
+	void ReturnAnimModel(ModelCache* system, const AnimModel* model)
 	{
 		if (!system)
 		{
@@ -387,7 +387,7 @@ namespace r2::draw::modlsys
 		system->mModelCache->ReturnAssetBuffer(theRecord);
 	}
 
-	void LoadModels(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles)
+	void LoadModels(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles)
 	{
 		if (!system)
 		{
@@ -404,7 +404,7 @@ namespace r2::draw::modlsys
 		}
 	}
 
-	void LoadMeshes(ModelSystem* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles)
+	void LoadMeshes(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles)
 	{
 		if (!system)
 		{
@@ -421,7 +421,7 @@ namespace r2::draw::modlsys
 		}
 	}
 
-	void FlushAll(ModelSystem* system)
+	void FlushAll(ModelCache* system)
 	{
 		if (system)
 		{
@@ -449,17 +449,17 @@ namespace r2::draw::modlsys
 		}
 	}
 
-	const r2::asset::AssetFile* GetAssetFileForName(const ModelSystem& modelSystem, u64 assetName)
+	const r2::asset::AssetFile* GetAssetFileForName(const ModelCache& modelSystem, u64 assetName)
 	{
 		return modelSystem.mModelCache->GetAssetFile(r2::asset::Asset(assetName, r2::asset::RMODEL));
 	}
 
-	const r2::asset::FileList GetFileList(const ModelSystem& modelSystem)
+	const r2::asset::FileList GetFileList(const ModelCache& modelSystem)
 	{
 		return modelSystem.mModelCache->GetFileList();
 	}
 
-	void ClearFileList(ModelSystem& modelSystem)
+	void ClearFileList(ModelCache& modelSystem)
 	{
 		modelSystem.mModelCache->ClearFileList();
 	}

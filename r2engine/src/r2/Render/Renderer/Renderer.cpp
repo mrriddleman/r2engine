@@ -315,7 +315,7 @@ namespace
 
 	bool LoadEngineModels(r2::draw::Renderer& renderer)
 	{
-		if (renderer.mModelSystem == nullptr)
+		if (renderer.mModelCache == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return false;
@@ -343,7 +343,7 @@ namespace
 		r2::sarr::Push(*defaultModels, r2::asset::Asset("Skybox.modl", r2::asset::MODEL));
 		
 
-		r2::draw::modlsys::LoadMeshes(renderer.mModelSystem, *defaultModels, *renderer.mDefaultModelHandles);
+		r2::draw::modlche::LoadMeshes(renderer.mModelCache, *defaultModels, *renderer.mDefaultModelHandles);
 
 		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
 
@@ -1245,8 +1245,8 @@ namespace r2::draw::renderer
 			r2::sarr::Push(*files, (r2::asset::AssetFile*)r2::asset::lib::MakeRawAssetFile(filePath));
 		}
 
-		newRenderer->mModelSystem = modlsys::Create(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
-		if (!newRenderer->mModelSystem)
+		newRenderer->mModelCache = modlche::Create(memoryAreaHandle, DefaultModelsMemorySize(), true, files, "Rendering Engine Default Models");
+		if (!newRenderer->mModelCache)
 		{
 			R2_CHECK(false, "We couldn't init the default engine models");
 			return false;
@@ -1527,7 +1527,7 @@ namespace r2::draw::renderer
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mPreRenderBucket);
 		
 
-		modlsys::Shutdown(renderer->mModelSystem);
+		modlche::Shutdown(renderer->mModelCache);
 		FREE(renderer->mDefaultModelHandles, *arena);
 
 		r2::draw::tex::UnloadFromGPU(renderer->mSSRDitherTexture);
@@ -2467,14 +2467,14 @@ namespace r2::draw::renderer
 
 	const r2::draw::Model* GetDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel)
 	{
-		if (renderer.mModelSystem == nullptr)
+		if (renderer.mModelCache == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return nullptr;
 		}
 
 		auto modelHandle = r2::sarr::At(*renderer.mDefaultModelHandles, defaultModel);
-		return modlsys::GetModel(renderer.mModelSystem, modelHandle);
+		return modlche::GetModel(renderer.mModelCache, modelHandle);
 	}
 
 	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs(Renderer& renderer)
@@ -2589,7 +2589,7 @@ namespace r2::draw::renderer
 
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel)
 	{
-		if (renderer.mModelSystem == nullptr)
+		if (renderer.mModelCache == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return r2::draw::MaterialHandle{};

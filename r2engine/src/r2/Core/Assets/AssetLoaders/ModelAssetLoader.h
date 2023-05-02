@@ -5,7 +5,7 @@
 
 namespace r2::draw
 {
-	struct ModelSystem;
+	struct ModelCache;
 }
 
 
@@ -15,7 +15,7 @@ namespace r2::asset
 	{
 	public:
 
-		void SetModelSystem(r2::draw::ModelSystem* modelSystem) { mnoptrModelSystem = modelSystem; }
+		void SetModelSystem(r2::draw::ModelCache* modelSystem) { mnoptrModelSystem = modelSystem; }
 		//@TODO(Serge): we should pass some kind of lookup table that will map the name of the mesh to data of the mesh
 		virtual const char* GetPattern() override;
 		virtual AssetType GetType() const override;
@@ -24,7 +24,7 @@ namespace r2::asset
 		virtual bool LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) override;
 
 	private:
-		r2::draw::ModelSystem* mnoptrModelSystem = nullptr;
+		r2::draw::ModelCache* mnoptrModelSystem = nullptr;
 	};
 }
 

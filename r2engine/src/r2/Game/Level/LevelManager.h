@@ -21,7 +21,7 @@ namespace r2::ecs
 namespace r2::draw 
 {
 	struct MaterialSystem;
-	struct ModelSystem;
+	struct ModelCache;
 	struct AnimationCache;
 }
 
@@ -62,7 +62,7 @@ namespace r2
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
 
-		r2::draw::ModelSystem* GetModelSystem();
+		r2::draw::ModelCache* GetModelSystem();
 		r2::draw::AnimationCache* GetAnimationCache();
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
@@ -72,7 +72,7 @@ namespace r2
 			u32 version,
 			const char* binLevelPath,
 			const char* rawJSONPath,
-			const r2::draw::ModelSystem& modelSystem,
+			const r2::draw::ModelCache& modelSystem,
 			const r2::draw::AnimationCache& animationCache);
 #endif
 		static u64 MemorySize(
@@ -100,7 +100,7 @@ namespace r2
 
 		SceneGraph mSceneGraph;
 		
-		r2::draw::ModelSystem* mModelSystem;
+		r2::draw::ModelCache* mModelCache;
 		r2::draw::AnimationCache* mAnimationCache;
 
 		//The issue is that material systems as they are now are very rigid and not well thought out

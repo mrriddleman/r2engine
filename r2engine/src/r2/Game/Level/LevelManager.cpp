@@ -7,7 +7,7 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Game/Level/LevelCache.h"
 #include "r2/Render/Model/Material.h"
-#include "r2/Render/Model/ModelSystem.h"
+#include "r2/Render/Model/ModelCache.h"
 #include "r2/Render/Animation/AnimationCache.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
@@ -37,7 +37,7 @@ namespace r2
 		,mLevelArena(nullptr)
 		, mLoadedLevels(nullptr)
 		,mLevelCache(nullptr)
-		,mModelSystem(nullptr)
+		,mModelCache(nullptr)
 		,mAnimationCache(nullptr)
 		,mMaterialSystem(nullptr)
 	{
@@ -51,7 +51,7 @@ namespace r2
 	{
 		u64 subAreaSize = 0;
 		subAreaSize += MemorySize(numLevels, numModels, numAnimations, memProperties);
-		subAreaSize -= r2::draw::modlsys::MemorySize(numModels, MODEL_SYSTEM_SIZE);
+		subAreaSize -= r2::draw::modlche::MemorySize(numModels, MODEL_SYSTEM_SIZE);
 		subAreaSize -= r2::draw::animcache::MemorySize(numAnimations, ANIMATION_CACHE_SIZE);
 
 		return subAreaSize;
@@ -126,7 +126,7 @@ namespace r2
 
 		r2::asset::FileList modelFiles = r2::asset::lib::MakeFileList(MAX_NUM_MODELS);
 
-		mModelSystem = r2::draw::modlsys::Create(mMemoryAreaHandle, MODEL_SYSTEM_SIZE, true, modelFiles, "Level Manager Model System");
+		mModelCache = r2::draw::modlche::Create(mMemoryAreaHandle, MODEL_SYSTEM_SIZE, true, modelFiles, "Level Manager Model System");
 
 		r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(MAX_NUM_ANIMATIONS);
 
@@ -140,7 +140,7 @@ namespace r2
 	{
 		r2::draw::animcache::Shutdown(*mAnimationCache);
 
-		r2::draw::modlsys::Shutdown(mModelSystem);
+		r2::draw::modlche::Shutdown(mModelCache);
 
 		auto iter = r2::shashmap::Begin(*mLoadedLevels);
 
@@ -292,9 +292,9 @@ namespace r2
 		return &mSceneGraph;
 	}
 
-	r2::draw::ModelSystem* LevelManager::GetModelSystem()
+	r2::draw::ModelCache* LevelManager::GetModelSystem()
 	{
-		return mModelSystem;
+		return mModelCache;
 	}
 
 	r2::draw::AnimationCache* LevelManager::GetAnimationCache()
@@ -320,7 +320,7 @@ namespace r2
 	{
 		const auto numModels = levelData->modelFilePaths()->size();
 
-		const r2::asset::FileList fileList = r2::draw::modlsys::GetFileList(*mModelSystem);
+		const r2::asset::FileList fileList = r2::draw::modlche::GetFileList(*mModelCache);
 
 		for (flatbuffers::uoffset_t i = 0; i < numModels; ++i)
 		{
@@ -380,7 +380,7 @@ namespace r2
 
 		memorySize += sceneGraphMemory;
 
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::modlsys::MemorySize(maxNumModels, MODEL_SYSTEM_SIZE), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::modlche::MemorySize(maxNumModels, MODEL_SYSTEM_SIZE), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::animcache::MemorySize(maxNumAnimations, ANIMATION_CACHE_SIZE), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
 
 		
@@ -392,7 +392,7 @@ namespace r2
 		u32 version,
 		const char* binLevelPath,
 		const char* rawJSONPath,
-		const r2::draw::ModelSystem& modelSystem,
+		const r2::draw::ModelCache& modelSystem,
 		const r2::draw::AnimationCache& animationCache)
 	{
 		if (!mLevelCache)
@@ -408,7 +408,7 @@ namespace r2
 			version,
 			binLevelPath,
 			rawJSONPath,
-			r2::draw::modlsys::GetFileList(modelSystem),
+			r2::draw::modlche::GetFileList(modelSystem),
 			r2::draw::animcache::GetFileList(animationCache));
 	}
 #endif

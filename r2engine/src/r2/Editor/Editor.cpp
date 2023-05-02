@@ -141,8 +141,8 @@ namespace r2
 		//@TEMPORARY!!!
 		if (microbatAnimModel)
 		{
-			r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-			r2::draw::modlsys::ReturnAnimModel(editorModelSystem, microbatAnimModel);
+			r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+			r2::draw::modlche::ReturnAnimModel(editorModelSystem, microbatAnimModel);
 
 		}
 
@@ -284,7 +284,7 @@ namespace r2
 		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
 		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
-		r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+		r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
 		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 		mLevelManager.SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
@@ -333,15 +333,15 @@ namespace r2
 			{
 				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
 
-				r2::draw::ModelSystem* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+				r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
 
 				r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
-				r2::draw::ModelHandle microbatModelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, microbatAsset);
+				r2::draw::ModelHandle microbatModelHandle = r2::draw::modlche::LoadModel(editorModelSystem, microbatAsset);
 
-				microbatAnimModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, microbatModelHandle);
+				microbatAnimModel = r2::draw::modlche::GetAnimModel(editorModelSystem, microbatModelHandle);
 
 				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
@@ -711,7 +711,7 @@ namespace r2
 
 		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
 		
-		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
+		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
 		r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
 
 		for (u32 i = 0; i < numRenderComponents; ++i)
@@ -720,20 +720,20 @@ namespace r2
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
 
-			r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
 
 			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			if (renderComponent.isAnimated)
 			{
-				const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
 				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
-				r2::draw::modlsys::ReturnAnimModel(editorModelSystem, animModel);
+				r2::draw::modlche::ReturnAnimModel(editorModelSystem, animModel);
 			}
 			else
 			{
-				const r2::draw::Model* model = r2::draw::modlsys::GetModel(editorModelSystem, modelHandle);
+				const r2::draw::Model* model = r2::draw::modlche::GetModel(editorModelSystem, modelHandle);
 				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-				r2::draw::modlsys::ReturnModel(editorModelSystem, model);
+				r2::draw::modlche::ReturnModel(editorModelSystem, model);
 			}
 
 			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
@@ -775,7 +775,7 @@ namespace r2
 			return nullptr;
 		}
 
-		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
+		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
 		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
@@ -786,9 +786,9 @@ namespace r2
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 
-			r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
 
-			const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+			const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
 
 			skeletalAnimationComponent.animModel = animModel;
 
@@ -822,7 +822,7 @@ namespace r2
 		instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
 		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
 
-		r2::draw::ModelSystem* editorModelSystem = mLevelManager.GetModelSystem();
+		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
 		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
@@ -852,9 +852,9 @@ namespace r2
 
 				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 
-				r2::draw::ModelHandle modelHandle = r2::draw::modlsys::LoadModel(editorModelSystem, modelAsset);
+				r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
 
-				const r2::draw::AnimModel* animModel = r2::draw::modlsys::GetAnimModel(editorModelSystem, modelHandle);
+				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
 
 				skeletalAnimationComponent.animModel = animModel;
 

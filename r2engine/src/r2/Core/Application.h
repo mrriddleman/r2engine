@@ -29,7 +29,7 @@ namespace r2::draw
 {
     struct AnimModel;
     struct Animation;
-    struct ModelSystem;
+    struct ModelCache;
     struct MaterialSystem;
     struct AnimationCache;
 }
@@ -100,7 +100,7 @@ namespace r2
 
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-        virtual r2::draw::ModelSystem* GetEditorModelSystem() const;
+        virtual r2::draw::ModelCache* GetEditorModelSystem() const;
         virtual r2::draw::MaterialSystem* GetEditorMaterialSystem() const;
         virtual r2::draw::AnimationCache* GetEditorAnimationCache() const;
         virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
