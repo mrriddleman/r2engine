@@ -30,7 +30,7 @@
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/ModelCache.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Random.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
@@ -39,8 +39,6 @@
 #include "r2/Render/Animation/AnimationPlayer.h"
 #include "r2/Render/Model/Light.h"
 
-#include "r2/Render/Model/Material_generated.h"
-#include "r2/Render/Model/MaterialPack_generated.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 

@@ -1,7 +1,7 @@
 #ifndef __RENDER_COMPONENT_H__
 #define __RENDER_COMPONENT_H__
 
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 

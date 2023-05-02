@@ -6,7 +6,7 @@
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 
 namespace r2::ecs
 {

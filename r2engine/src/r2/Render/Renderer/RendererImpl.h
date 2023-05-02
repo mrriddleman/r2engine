@@ -3,7 +3,7 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Render/Renderer/RendererTypes.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/Commands.h"
 

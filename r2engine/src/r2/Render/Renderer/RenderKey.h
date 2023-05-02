@@ -2,7 +2,7 @@
 #define __RENDER_KEY_H__
 
 #include "r2/Render/Renderer/RendererTypes.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Model/Light.h"
 
 #define MAX_BIT_VAL(x) static_cast<u64>((2 << (static_cast<u64>(x)-1))-1)

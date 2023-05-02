@@ -2,7 +2,7 @@
 #ifdef R2_ASSET_PIPELINE
 
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 
 namespace
 {

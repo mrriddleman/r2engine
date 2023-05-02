@@ -9,7 +9,7 @@
 #define Model_h
 
 #include "r2/Render/Model/Mesh.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/Math/Transform.h"
 
 #define MAKE_MODEL(arena, numMeshes) r2::draw::MakeModel(arena, numMeshes, __FILE__, __LINE__, "")

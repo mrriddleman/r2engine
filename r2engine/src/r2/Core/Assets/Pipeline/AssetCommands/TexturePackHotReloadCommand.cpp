@@ -4,7 +4,7 @@
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "assetlib/ImageConvert.h"
-#include "r2/Render/Model/Material.h"
+#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
 
 namespace r2::asset::pln
