@@ -1,15 +1,9 @@
+include "LevelData.fbs";
+
 namespace flat;
 
 file_identifier "rlpk";
 file_extension "rlpk";
-
-table LevelRef
-{
-	levelName:string;
-	levelPath:string;
-	levelFileSize:uint;
-
-}
 
 table LevelGroupData
 {
@@ -17,31 +11,21 @@ table LevelGroupData
 	groupHash:ulong(hash:"fnv1a_64");
 	maxLevelSizeInGroup:uint;
 	groupSizeInBytes:uint;
-	levels:[LevelRef];
+	levels:[LevelData];
 }
 
 table LevelPackData
 {	
 	version:uint;
-	maxLevelsInAGroup:uint;
+	maxNumberOfLevelsInAGroup:uint;
 	maxLevelSizeInBytes:uint;
 	maxGroupSizeInBytes:uint;
-	maxNumMaterialPackReferencesInALevel:uint;
-	maxNumStaticModelPackReferencesInALevel:uint;
-	maxNumAnimModelPackReferencesInALevel:uint;
-	maxNumTexturePackReferencesInALevel:uint;
-	maxNumSoundReferencesInALevel:uint;
-	maxNumMusicReferencesInALevel:uint;
-
-	maxNumMaterialsInALevel:uint;
-	maxNumTexturesInAPackForALevel:uint;
-	maxTextureSizeInAPackForALevel:uint;
-	maxNumTexturePacksForAMaterialForALevel:uint;
-	maxTotalNumberOfTextures:uint;
-	maxTexturePackFileSize:uint;
-	maxMaterialPackFileSize:uint;
-	maxModelPackSize:uint;
-	maxNumModelsInALevel:uint;
+	
+	maxNumModelFilesInAGroup:uint;
+	maxNumAnimationFilesInAGroup:uint;
+	maxModelSizeInAGroup:uint;
+	maxAnimationSizeInAGroup:uint;
+	
 	allLevels:[LevelGroupData];
 }
 

@@ -6,94 +6,17 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-namespace flat {
+#include "ComponentArrayData_generated.h"
+#include "EntityData_generated.h"
+#include "LevelData_generated.h"
 
-struct LevelRef;
-struct LevelRefBuilder;
+namespace flat {
 
 struct LevelGroupData;
 struct LevelGroupDataBuilder;
 
 struct LevelPackData;
 struct LevelPackDataBuilder;
-
-struct LevelRef FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef LevelRefBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_LEVELNAME = 4,
-    VT_LEVELPATH = 6,
-    VT_LEVELFILESIZE = 8
-  };
-  const flatbuffers::String *levelName() const {
-    return GetPointer<const flatbuffers::String *>(VT_LEVELNAME);
-  }
-  const flatbuffers::String *levelPath() const {
-    return GetPointer<const flatbuffers::String *>(VT_LEVELPATH);
-  }
-  uint32_t levelFileSize() const {
-    return GetField<uint32_t>(VT_LEVELFILESIZE, 0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_LEVELNAME) &&
-           verifier.VerifyString(levelName()) &&
-           VerifyOffset(verifier, VT_LEVELPATH) &&
-           verifier.VerifyString(levelPath()) &&
-           VerifyField<uint32_t>(verifier, VT_LEVELFILESIZE) &&
-           verifier.EndTable();
-  }
-};
-
-struct LevelRefBuilder {
-  typedef LevelRef Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_levelName(flatbuffers::Offset<flatbuffers::String> levelName) {
-    fbb_.AddOffset(LevelRef::VT_LEVELNAME, levelName);
-  }
-  void add_levelPath(flatbuffers::Offset<flatbuffers::String> levelPath) {
-    fbb_.AddOffset(LevelRef::VT_LEVELPATH, levelPath);
-  }
-  void add_levelFileSize(uint32_t levelFileSize) {
-    fbb_.AddElement<uint32_t>(LevelRef::VT_LEVELFILESIZE, levelFileSize, 0);
-  }
-  explicit LevelRefBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  LevelRefBuilder &operator=(const LevelRefBuilder &);
-  flatbuffers::Offset<LevelRef> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<LevelRef>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<LevelRef> CreateLevelRef(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> levelName = 0,
-    flatbuffers::Offset<flatbuffers::String> levelPath = 0,
-    uint32_t levelFileSize = 0) {
-  LevelRefBuilder builder_(_fbb);
-  builder_.add_levelFileSize(levelFileSize);
-  builder_.add_levelPath(levelPath);
-  builder_.add_levelName(levelName);
-  return builder_.Finish();
-}
-
-inline flatbuffers::Offset<LevelRef> CreateLevelRefDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const char *levelName = nullptr,
-    const char *levelPath = nullptr,
-    uint32_t levelFileSize = 0) {
-  auto levelName__ = levelName ? _fbb.CreateString(levelName) : 0;
-  auto levelPath__ = levelPath ? _fbb.CreateString(levelPath) : 0;
-  return flat::CreateLevelRef(
-      _fbb,
-      levelName__,
-      levelPath__,
-      levelFileSize);
-}
 
 struct LevelGroupData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelGroupDataBuilder Builder;
@@ -116,8 +39,8 @@ struct LevelGroupData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint32_t groupSizeInBytes() const {
     return GetField<uint32_t>(VT_GROUPSIZEINBYTES, 0);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>> *levels() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>> *>(VT_LEVELS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>> *levels() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>> *>(VT_LEVELS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -149,7 +72,7 @@ struct LevelGroupDataBuilder {
   void add_groupSizeInBytes(uint32_t groupSizeInBytes) {
     fbb_.AddElement<uint32_t>(LevelGroupData::VT_GROUPSIZEINBYTES, groupSizeInBytes, 0);
   }
-  void add_levels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>>> levels) {
+  void add_levels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>>> levels) {
     fbb_.AddOffset(LevelGroupData::VT_LEVELS, levels);
   }
   explicit LevelGroupDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -170,7 +93,7 @@ inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupData(
     uint64_t groupHash = 0,
     uint32_t maxLevelSizeInGroup = 0,
     uint32_t groupSizeInBytes = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelRef>>> levels = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelData>>> levels = 0) {
   LevelGroupDataBuilder builder_(_fbb);
   builder_.add_groupHash(groupHash);
   builder_.add_levels(levels);
@@ -186,9 +109,9 @@ inline flatbuffers::Offset<LevelGroupData> CreateLevelGroupDataDirect(
     uint64_t groupHash = 0,
     uint32_t maxLevelSizeInGroup = 0,
     uint32_t groupSizeInBytes = 0,
-    const std::vector<flatbuffers::Offset<flat::LevelRef>> *levels = nullptr) {
+    const std::vector<flatbuffers::Offset<flat::LevelData>> *levels = nullptr) {
   auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
-  auto levels__ = levels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelRef>>(*levels) : 0;
+  auto levels__ = levels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelData>>(*levels) : 0;
   return flat::CreateLevelGroupData(
       _fbb,
       groupName__,
@@ -202,31 +125,20 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelPackDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
-    VT_MAXLEVELSINAGROUP = 6,
+    VT_MAXNUMBEROFLEVELSINAGROUP = 6,
     VT_MAXLEVELSIZEINBYTES = 8,
     VT_MAXGROUPSIZEINBYTES = 10,
-    VT_MAXNUMMATERIALPACKREFERENCESINALEVEL = 12,
-    VT_MAXNUMSTATICMODELPACKREFERENCESINALEVEL = 14,
-    VT_MAXNUMANIMMODELPACKREFERENCESINALEVEL = 16,
-    VT_MAXNUMTEXTUREPACKREFERENCESINALEVEL = 18,
-    VT_MAXNUMSOUNDREFERENCESINALEVEL = 20,
-    VT_MAXNUMMUSICREFERENCESINALEVEL = 22,
-    VT_MAXNUMMATERIALSINALEVEL = 24,
-    VT_MAXNUMTEXTURESINAPACKFORALEVEL = 26,
-    VT_MAXTEXTURESIZEINAPACKFORALEVEL = 28,
-    VT_MAXNUMTEXTUREPACKSFORAMATERIALFORALEVEL = 30,
-    VT_MAXTOTALNUMBEROFTEXTURES = 32,
-    VT_MAXTEXTUREPACKFILESIZE = 34,
-    VT_MAXMATERIALPACKFILESIZE = 36,
-    VT_MAXMODELPACKSIZE = 38,
-    VT_MAXNUMMODELSINALEVEL = 40,
-    VT_ALLLEVELS = 42
+    VT_MAXNUMMODELFILESINAGROUP = 12,
+    VT_MAXNUMANIMATIONFILESINAGROUP = 14,
+    VT_MAXMODELSIZEINAGROUP = 16,
+    VT_MAXANIMATIONSIZEINAGROUP = 18,
+    VT_ALLLEVELS = 20
   };
   uint32_t version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
-  uint32_t maxLevelsInAGroup() const {
-    return GetField<uint32_t>(VT_MAXLEVELSINAGROUP, 0);
+  uint32_t maxNumberOfLevelsInAGroup() const {
+    return GetField<uint32_t>(VT_MAXNUMBEROFLEVELSINAGROUP, 0);
   }
   uint32_t maxLevelSizeInBytes() const {
     return GetField<uint32_t>(VT_MAXLEVELSIZEINBYTES, 0);
@@ -234,50 +146,17 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   uint32_t maxGroupSizeInBytes() const {
     return GetField<uint32_t>(VT_MAXGROUPSIZEINBYTES, 0);
   }
-  uint32_t maxNumMaterialPackReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMMATERIALPACKREFERENCESINALEVEL, 0);
+  uint32_t maxNumModelFilesInAGroup() const {
+    return GetField<uint32_t>(VT_MAXNUMMODELFILESINAGROUP, 0);
   }
-  uint32_t maxNumStaticModelPackReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMSTATICMODELPACKREFERENCESINALEVEL, 0);
+  uint32_t maxNumAnimationFilesInAGroup() const {
+    return GetField<uint32_t>(VT_MAXNUMANIMATIONFILESINAGROUP, 0);
   }
-  uint32_t maxNumAnimModelPackReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMANIMMODELPACKREFERENCESINALEVEL, 0);
+  uint32_t maxModelSizeInAGroup() const {
+    return GetField<uint32_t>(VT_MAXMODELSIZEINAGROUP, 0);
   }
-  uint32_t maxNumTexturePackReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMTEXTUREPACKREFERENCESINALEVEL, 0);
-  }
-  uint32_t maxNumSoundReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMSOUNDREFERENCESINALEVEL, 0);
-  }
-  uint32_t maxNumMusicReferencesInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMMUSICREFERENCESINALEVEL, 0);
-  }
-  uint32_t maxNumMaterialsInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMMATERIALSINALEVEL, 0);
-  }
-  uint32_t maxNumTexturesInAPackForALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMTEXTURESINAPACKFORALEVEL, 0);
-  }
-  uint32_t maxTextureSizeInAPackForALevel() const {
-    return GetField<uint32_t>(VT_MAXTEXTURESIZEINAPACKFORALEVEL, 0);
-  }
-  uint32_t maxNumTexturePacksForAMaterialForALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMTEXTUREPACKSFORAMATERIALFORALEVEL, 0);
-  }
-  uint32_t maxTotalNumberOfTextures() const {
-    return GetField<uint32_t>(VT_MAXTOTALNUMBEROFTEXTURES, 0);
-  }
-  uint32_t maxTexturePackFileSize() const {
-    return GetField<uint32_t>(VT_MAXTEXTUREPACKFILESIZE, 0);
-  }
-  uint32_t maxMaterialPackFileSize() const {
-    return GetField<uint32_t>(VT_MAXMATERIALPACKFILESIZE, 0);
-  }
-  uint32_t maxModelPackSize() const {
-    return GetField<uint32_t>(VT_MAXMODELPACKSIZE, 0);
-  }
-  uint32_t maxNumModelsInALevel() const {
-    return GetField<uint32_t>(VT_MAXNUMMODELSINALEVEL, 0);
+  uint32_t maxAnimationSizeInAGroup() const {
+    return GetField<uint32_t>(VT_MAXANIMATIONSIZEINAGROUP, 0);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>> *>(VT_ALLLEVELS);
@@ -285,24 +164,13 @@ struct LevelPackData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION) &&
-           VerifyField<uint32_t>(verifier, VT_MAXLEVELSINAGROUP) &&
+           VerifyField<uint32_t>(verifier, VT_MAXNUMBEROFLEVELSINAGROUP) &&
            VerifyField<uint32_t>(verifier, VT_MAXLEVELSIZEINBYTES) &&
            VerifyField<uint32_t>(verifier, VT_MAXGROUPSIZEINBYTES) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMMATERIALPACKREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMSTATICMODELPACKREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMANIMMODELPACKREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMTEXTUREPACKREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMSOUNDREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMMUSICREFERENCESINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMMATERIALSINALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMTEXTURESINAPACKFORALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXTEXTURESIZEINAPACKFORALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMTEXTUREPACKSFORAMATERIALFORALEVEL) &&
-           VerifyField<uint32_t>(verifier, VT_MAXTOTALNUMBEROFTEXTURES) &&
-           VerifyField<uint32_t>(verifier, VT_MAXTEXTUREPACKFILESIZE) &&
-           VerifyField<uint32_t>(verifier, VT_MAXMATERIALPACKFILESIZE) &&
-           VerifyField<uint32_t>(verifier, VT_MAXMODELPACKSIZE) &&
-           VerifyField<uint32_t>(verifier, VT_MAXNUMMODELSINALEVEL) &&
+           VerifyField<uint32_t>(verifier, VT_MAXNUMMODELFILESINAGROUP) &&
+           VerifyField<uint32_t>(verifier, VT_MAXNUMANIMATIONFILESINAGROUP) &&
+           VerifyField<uint32_t>(verifier, VT_MAXMODELSIZEINAGROUP) &&
+           VerifyField<uint32_t>(verifier, VT_MAXANIMATIONSIZEINAGROUP) &&
            VerifyOffset(verifier, VT_ALLLEVELS) &&
            verifier.VerifyVector(allLevels()) &&
            verifier.VerifyVectorOfTables(allLevels()) &&
@@ -317,8 +185,8 @@ struct LevelPackDataBuilder {
   void add_version(uint32_t version) {
     fbb_.AddElement<uint32_t>(LevelPackData::VT_VERSION, version, 0);
   }
-  void add_maxLevelsInAGroup(uint32_t maxLevelsInAGroup) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXLEVELSINAGROUP, maxLevelsInAGroup, 0);
+  void add_maxNumberOfLevelsInAGroup(uint32_t maxNumberOfLevelsInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMBEROFLEVELSINAGROUP, maxNumberOfLevelsInAGroup, 0);
   }
   void add_maxLevelSizeInBytes(uint32_t maxLevelSizeInBytes) {
     fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXLEVELSIZEINBYTES, maxLevelSizeInBytes, 0);
@@ -326,50 +194,17 @@ struct LevelPackDataBuilder {
   void add_maxGroupSizeInBytes(uint32_t maxGroupSizeInBytes) {
     fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXGROUPSIZEINBYTES, maxGroupSizeInBytes, 0);
   }
-  void add_maxNumMaterialPackReferencesInALevel(uint32_t maxNumMaterialPackReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMATERIALPACKREFERENCESINALEVEL, maxNumMaterialPackReferencesInALevel, 0);
+  void add_maxNumModelFilesInAGroup(uint32_t maxNumModelFilesInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMODELFILESINAGROUP, maxNumModelFilesInAGroup, 0);
   }
-  void add_maxNumStaticModelPackReferencesInALevel(uint32_t maxNumStaticModelPackReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMSTATICMODELPACKREFERENCESINALEVEL, maxNumStaticModelPackReferencesInALevel, 0);
+  void add_maxNumAnimationFilesInAGroup(uint32_t maxNumAnimationFilesInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMANIMATIONFILESINAGROUP, maxNumAnimationFilesInAGroup, 0);
   }
-  void add_maxNumAnimModelPackReferencesInALevel(uint32_t maxNumAnimModelPackReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMANIMMODELPACKREFERENCESINALEVEL, maxNumAnimModelPackReferencesInALevel, 0);
+  void add_maxModelSizeInAGroup(uint32_t maxModelSizeInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMODELSIZEINAGROUP, maxModelSizeInAGroup, 0);
   }
-  void add_maxNumTexturePackReferencesInALevel(uint32_t maxNumTexturePackReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMTEXTUREPACKREFERENCESINALEVEL, maxNumTexturePackReferencesInALevel, 0);
-  }
-  void add_maxNumSoundReferencesInALevel(uint32_t maxNumSoundReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMSOUNDREFERENCESINALEVEL, maxNumSoundReferencesInALevel, 0);
-  }
-  void add_maxNumMusicReferencesInALevel(uint32_t maxNumMusicReferencesInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMUSICREFERENCESINALEVEL, maxNumMusicReferencesInALevel, 0);
-  }
-  void add_maxNumMaterialsInALevel(uint32_t maxNumMaterialsInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMATERIALSINALEVEL, maxNumMaterialsInALevel, 0);
-  }
-  void add_maxNumTexturesInAPackForALevel(uint32_t maxNumTexturesInAPackForALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMTEXTURESINAPACKFORALEVEL, maxNumTexturesInAPackForALevel, 0);
-  }
-  void add_maxTextureSizeInAPackForALevel(uint32_t maxTextureSizeInAPackForALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXTEXTURESIZEINAPACKFORALEVEL, maxTextureSizeInAPackForALevel, 0);
-  }
-  void add_maxNumTexturePacksForAMaterialForALevel(uint32_t maxNumTexturePacksForAMaterialForALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMTEXTUREPACKSFORAMATERIALFORALEVEL, maxNumTexturePacksForAMaterialForALevel, 0);
-  }
-  void add_maxTotalNumberOfTextures(uint32_t maxTotalNumberOfTextures) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXTOTALNUMBEROFTEXTURES, maxTotalNumberOfTextures, 0);
-  }
-  void add_maxTexturePackFileSize(uint32_t maxTexturePackFileSize) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXTEXTUREPACKFILESIZE, maxTexturePackFileSize, 0);
-  }
-  void add_maxMaterialPackFileSize(uint32_t maxMaterialPackFileSize) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMATERIALPACKFILESIZE, maxMaterialPackFileSize, 0);
-  }
-  void add_maxModelPackSize(uint32_t maxModelPackSize) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXMODELPACKSIZE, maxModelPackSize, 0);
-  }
-  void add_maxNumModelsInALevel(uint32_t maxNumModelsInALevel) {
-    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXNUMMODELSINALEVEL, maxNumModelsInALevel, 0);
+  void add_maxAnimationSizeInAGroup(uint32_t maxAnimationSizeInAGroup) {
+    fbb_.AddElement<uint32_t>(LevelPackData::VT_MAXANIMATIONSIZEINAGROUP, maxAnimationSizeInAGroup, 0);
   }
   void add_allLevels(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels) {
     fbb_.AddOffset(LevelPackData::VT_ALLLEVELS, allLevels);
@@ -389,45 +224,23 @@ struct LevelPackDataBuilder {
 inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
-    uint32_t maxLevelsInAGroup = 0,
+    uint32_t maxNumberOfLevelsInAGroup = 0,
     uint32_t maxLevelSizeInBytes = 0,
     uint32_t maxGroupSizeInBytes = 0,
-    uint32_t maxNumMaterialPackReferencesInALevel = 0,
-    uint32_t maxNumStaticModelPackReferencesInALevel = 0,
-    uint32_t maxNumAnimModelPackReferencesInALevel = 0,
-    uint32_t maxNumTexturePackReferencesInALevel = 0,
-    uint32_t maxNumSoundReferencesInALevel = 0,
-    uint32_t maxNumMusicReferencesInALevel = 0,
-    uint32_t maxNumMaterialsInALevel = 0,
-    uint32_t maxNumTexturesInAPackForALevel = 0,
-    uint32_t maxTextureSizeInAPackForALevel = 0,
-    uint32_t maxNumTexturePacksForAMaterialForALevel = 0,
-    uint32_t maxTotalNumberOfTextures = 0,
-    uint32_t maxTexturePackFileSize = 0,
-    uint32_t maxMaterialPackFileSize = 0,
-    uint32_t maxModelPackSize = 0,
-    uint32_t maxNumModelsInALevel = 0,
+    uint32_t maxNumModelFilesInAGroup = 0,
+    uint32_t maxNumAnimationFilesInAGroup = 0,
+    uint32_t maxModelSizeInAGroup = 0,
+    uint32_t maxAnimationSizeInAGroup = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::LevelGroupData>>> allLevels = 0) {
   LevelPackDataBuilder builder_(_fbb);
   builder_.add_allLevels(allLevels);
-  builder_.add_maxNumModelsInALevel(maxNumModelsInALevel);
-  builder_.add_maxModelPackSize(maxModelPackSize);
-  builder_.add_maxMaterialPackFileSize(maxMaterialPackFileSize);
-  builder_.add_maxTexturePackFileSize(maxTexturePackFileSize);
-  builder_.add_maxTotalNumberOfTextures(maxTotalNumberOfTextures);
-  builder_.add_maxNumTexturePacksForAMaterialForALevel(maxNumTexturePacksForAMaterialForALevel);
-  builder_.add_maxTextureSizeInAPackForALevel(maxTextureSizeInAPackForALevel);
-  builder_.add_maxNumTexturesInAPackForALevel(maxNumTexturesInAPackForALevel);
-  builder_.add_maxNumMaterialsInALevel(maxNumMaterialsInALevel);
-  builder_.add_maxNumMusicReferencesInALevel(maxNumMusicReferencesInALevel);
-  builder_.add_maxNumSoundReferencesInALevel(maxNumSoundReferencesInALevel);
-  builder_.add_maxNumTexturePackReferencesInALevel(maxNumTexturePackReferencesInALevel);
-  builder_.add_maxNumAnimModelPackReferencesInALevel(maxNumAnimModelPackReferencesInALevel);
-  builder_.add_maxNumStaticModelPackReferencesInALevel(maxNumStaticModelPackReferencesInALevel);
-  builder_.add_maxNumMaterialPackReferencesInALevel(maxNumMaterialPackReferencesInALevel);
+  builder_.add_maxAnimationSizeInAGroup(maxAnimationSizeInAGroup);
+  builder_.add_maxModelSizeInAGroup(maxModelSizeInAGroup);
+  builder_.add_maxNumAnimationFilesInAGroup(maxNumAnimationFilesInAGroup);
+  builder_.add_maxNumModelFilesInAGroup(maxNumModelFilesInAGroup);
   builder_.add_maxGroupSizeInBytes(maxGroupSizeInBytes);
   builder_.add_maxLevelSizeInBytes(maxLevelSizeInBytes);
-  builder_.add_maxLevelsInAGroup(maxLevelsInAGroup);
+  builder_.add_maxNumberOfLevelsInAGroup(maxNumberOfLevelsInAGroup);
   builder_.add_version(version);
   return builder_.Finish();
 }
@@ -435,47 +248,25 @@ inline flatbuffers::Offset<LevelPackData> CreateLevelPackData(
 inline flatbuffers::Offset<LevelPackData> CreateLevelPackDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t version = 0,
-    uint32_t maxLevelsInAGroup = 0,
+    uint32_t maxNumberOfLevelsInAGroup = 0,
     uint32_t maxLevelSizeInBytes = 0,
     uint32_t maxGroupSizeInBytes = 0,
-    uint32_t maxNumMaterialPackReferencesInALevel = 0,
-    uint32_t maxNumStaticModelPackReferencesInALevel = 0,
-    uint32_t maxNumAnimModelPackReferencesInALevel = 0,
-    uint32_t maxNumTexturePackReferencesInALevel = 0,
-    uint32_t maxNumSoundReferencesInALevel = 0,
-    uint32_t maxNumMusicReferencesInALevel = 0,
-    uint32_t maxNumMaterialsInALevel = 0,
-    uint32_t maxNumTexturesInAPackForALevel = 0,
-    uint32_t maxTextureSizeInAPackForALevel = 0,
-    uint32_t maxNumTexturePacksForAMaterialForALevel = 0,
-    uint32_t maxTotalNumberOfTextures = 0,
-    uint32_t maxTexturePackFileSize = 0,
-    uint32_t maxMaterialPackFileSize = 0,
-    uint32_t maxModelPackSize = 0,
-    uint32_t maxNumModelsInALevel = 0,
+    uint32_t maxNumModelFilesInAGroup = 0,
+    uint32_t maxNumAnimationFilesInAGroup = 0,
+    uint32_t maxModelSizeInAGroup = 0,
+    uint32_t maxAnimationSizeInAGroup = 0,
     const std::vector<flatbuffers::Offset<flat::LevelGroupData>> *allLevels = nullptr) {
   auto allLevels__ = allLevels ? _fbb.CreateVector<flatbuffers::Offset<flat::LevelGroupData>>(*allLevels) : 0;
   return flat::CreateLevelPackData(
       _fbb,
       version,
-      maxLevelsInAGroup,
+      maxNumberOfLevelsInAGroup,
       maxLevelSizeInBytes,
       maxGroupSizeInBytes,
-      maxNumMaterialPackReferencesInALevel,
-      maxNumStaticModelPackReferencesInALevel,
-      maxNumAnimModelPackReferencesInALevel,
-      maxNumTexturePackReferencesInALevel,
-      maxNumSoundReferencesInALevel,
-      maxNumMusicReferencesInALevel,
-      maxNumMaterialsInALevel,
-      maxNumTexturesInAPackForALevel,
-      maxTextureSizeInAPackForALevel,
-      maxNumTexturePacksForAMaterialForALevel,
-      maxTotalNumberOfTextures,
-      maxTexturePackFileSize,
-      maxMaterialPackFileSize,
-      maxModelPackSize,
-      maxNumModelsInALevel,
+      maxNumModelFilesInAGroup,
+      maxNumAnimationFilesInAGroup,
+      maxModelSizeInAGroup,
+      maxAnimationSizeInAGroup,
       allLevels__);
 }
 

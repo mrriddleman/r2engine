@@ -39,6 +39,7 @@ namespace r2
 		,mLevelCache(nullptr)
 		,mModelSystem(nullptr)
 		,mAnimationCache(nullptr)
+		,mMaterialSystem(nullptr)
 	{
 	}
 

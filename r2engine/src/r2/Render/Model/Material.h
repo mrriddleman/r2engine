@@ -153,7 +153,6 @@ namespace r2::draw
 		r2::asset::AssetCache* mAssetCache = nullptr;
 		r2::mem::utils::MemBoundary mCacheBoundary = {};
 		s32 mSlot = -1;
-		u32 mNextAvailableHandle = 0;
 	};
 
 	struct MaterialHandle

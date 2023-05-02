@@ -82,7 +82,6 @@ namespace r2
 			const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
-
 		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, const r2::mem::utils::MemoryProperties& memProperties) const;
 
 		void AddModelFilesToModelSystem(const flat::LevelData* levelData);
@@ -91,7 +90,6 @@ namespace r2
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
 		u32 mMaxNumLevels;
-		//u32 mMaxNumLevelsLoadedAtOneTime;
 		
 		r2::mem::StackArena* mArena;
 		r2::mem::PoolArena* mLevelArena;
@@ -104,6 +102,16 @@ namespace r2
 		
 		r2::draw::ModelSystem* mModelSystem;
 		r2::draw::AnimationCache* mAnimationCache;
+
+		//The issue is that material systems as they are now are very rigid and not well thought out
+		//Firstly, they include the textures directly which is limiting and makes things harder
+		//Second, MaterialSystem is a bad name, really it's 1 MaterialParamPack that doesn't really change
+		//What the LevelManager would require is an actual MaterialCache that has many of these packs stored so that it can load/unload them when needed
+		//If we break up the materials so that they don't include the textures, we'd need a texture cache as well
+		r2::draw::MaterialSystem* mMaterialSystem;
+
+		
+	
 	};
 }
 
