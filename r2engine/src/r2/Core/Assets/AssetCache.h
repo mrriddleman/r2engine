@@ -125,7 +125,7 @@ namespace r2::asset
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
 
        
-        AssetBuffer* Load(const Asset& asset, bool startCountAtOne = false);
+        AssetBuffer* Load(const Asset& asset);
         void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         void UpdateLRU(AssetHandle handle);

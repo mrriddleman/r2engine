@@ -410,7 +410,7 @@ namespace r2::asset
     }
 
     //Private
-    AssetBuffer* AssetCache::Load(const Asset& asset, bool startCountAtOne)
+    AssetBuffer* AssetCache::Load(const Asset& asset)
     {
 
         if (!mnoptrFiles || r2::sarr::Size(*mnoptrFiles) == 0)
@@ -542,14 +542,14 @@ namespace r2::asset
         }
         AssetBufferRef bufferRef;
         
-        if(startCountAtOne)
-        {
-            bufferRef.mRefCount = 1;
-        }
-        else
-        {
-            bufferRef.mRefCount = 0;
-        }
+        //if(startCountAtOne)
+        //{
+        //    bufferRef.mRefCount = 1;
+        //}
+        //else
+        //{
+     //       bufferRef.mRefCount = 0;
+//        }
         
         bufferRef.mAssetBuffer = assetBuffer;
 

@@ -527,7 +527,7 @@ project "Sandbox"
 	filter "system:windows"
 		systemversion "latest"
 		flags {"MultiProcessorCompile"}
-
+		buildoptions{"/STACK:reserve=2097152"}
 		libdirs
 		{
 			"r2engine/vendor/FMOD/Windows/core/lib/x64",

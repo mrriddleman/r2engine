@@ -41,6 +41,8 @@ namespace r2::asset
 		NUM_ENGINE_ASSET_TYPES
 	};
 
+	//@TODO(Serge): create a way to generate an asset based on the asset type
+
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);
 }
