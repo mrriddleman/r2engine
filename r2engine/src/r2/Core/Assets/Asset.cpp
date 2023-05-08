@@ -67,4 +67,24 @@ namespace r2::asset
         mType = asset.mType;
         return *this;
     }
+
+    Asset Asset::MakeAssetFromFilePath(const char* filePath, r2::asset::AssetType type)
+    {
+        u32 numParentDirectoriesToInclude = GetNumberOfParentDirectoriesToIncludeForAssetType(type);
+
+		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(filePath, sanitizedPath);
+
+		char assetName[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, assetName, numParentDirectoriesToInclude);
+
+        Asset newAsset(filePath, type);
+        return newAsset;
+    }
+
+    u64 Asset::GetAssetNameForFilePath(const char* filePath, r2::asset::AssetType type)
+    {
+        Asset newAsset = MakeAssetFromFilePath(filePath, type);
+        return newAsset.HashID();
+    }
 }

@@ -12,6 +12,7 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetBuffer.h"
+#include "r2/Render/Model/Materials/MaterialTypes.h"
 
 namespace flat
 {
@@ -155,12 +156,7 @@ namespace r2::draw
 		s32 mSlot = -1;
 	};
 
-	struct MaterialHandle
-	{
-		//forcing 8-byte alignment for free lists
-		u64 handle = 0;
-		s64 slot = -1;
-	};
+
 }
 
 namespace r2::draw::matsys

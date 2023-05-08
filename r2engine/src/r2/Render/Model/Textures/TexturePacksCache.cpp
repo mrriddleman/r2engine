@@ -57,9 +57,9 @@ namespace r2::draw::texche
 		u64 subAreaSize = TexturePacksCache::MemorySize(numTextures, numManifests, numTexturePacks, textureCacheSize);
 		if (memoryArea->UnAllocatedSpace() < subAreaSize)
 		{
-			R2_CHECK(false, "We don't have enough space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes",
-				memoryArea->UnAllocatedSpace(), subAreaSize);
-			return false;
+			R2_CHECK(false, "We don't have enough space to allocate the model system! We have: %llu bytes left but trying to allocate: %llu bytes, difference: %llu",
+				memoryArea->UnAllocatedSpace(), subAreaSize, subAreaSize - memoryArea->UnAllocatedSpace());
+			return nullptr;
 		}
 
 		r2::mem::MemoryArea::SubArea::Handle subAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
@@ -67,7 +67,7 @@ namespace r2::draw::texche
 		if ((subAreaHandle = memoryArea->AddSubArea(subAreaSize, areaName)) == r2::mem::MemoryArea::SubArea::Invalid)
 		{
 			R2_CHECK(false, "We couldn't create a sub area for %s", areaName);
-			return false;
+			return nullptr;
 		}
 
 		r2::mem::StackArena* texturePacksCacheArena = EMPLACE_STACK_ARENA(*memoryArea->GetSubArea(subAreaHandle));
@@ -86,6 +86,11 @@ namespace r2::draw::texche
 
 		R2_CHECK(newTexturePacksCache->mTexturePackManifests != nullptr, "We couldn't create the texture pack manifests array");
 		
+		TexturePackManifestEntry emptyEntry = {};
+
+		r2::sarr::Fill(*newTexturePacksCache->mTexturePackManifests, emptyEntry);
+
+
 		newTexturePacksCache->mLoadedTexturePacks = MAKE_SHASHMAP(*texturePacksCacheArena, LoadedTexturePack, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
 
 		R2_CHECK(newTexturePacksCache->mLoadedTexturePacks != nullptr, "We couldn't create the mLoadedTexturePacks hashmap");
@@ -121,14 +126,18 @@ namespace r2::draw::texche
 
 		for (u32 i = 0; i < numTexturePackManifests; ++i)
 		{
-			UnloadAllTexturesFromTexturePacksManifestFromDisk(*texturePacksCache, { texturePacksCache->mName, static_cast<s32>(i) });
+			const auto& entry = r2::sarr::At(*texturePacksCache->mTexturePackManifests, i);
+
+			if (entry.flatTexturePacksManifest != nullptr && entry.assetCacheRecord.buffer != nullptr)
+			{
+				UnloadAllTexturesFromTexturePacksManifestFromDisk(*texturePacksCache, { texturePacksCache->mName, static_cast<s32>(i) });
+
+				texturePacksCache->mAssetCache->ReturnAssetBuffer(entry.assetCacheRecord);
+			}
 		}
 
-		for (u32 i = 0; i < numTexturePackManifests; ++i)
-		{
-			const auto& entry = r2::sarr::At(*texturePacksCache->mTexturePackManifests, i);
-			texturePacksCache->mAssetCache->ReturnAssetBuffer(entry.assetCacheRecord);
-		}
+		r2::sarr::Clear(*texturePacksCache->mTexturePackManifests);
+		r2::shashmap::Clear(*texturePacksCache->mLoadedTexturePacks);
 
 		mem::utils::MemBoundary assetBoundary = texturePacksCache->mAssetBoundary;
 
@@ -149,12 +158,12 @@ namespace r2::draw::texche
 
 	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& cacheSize)
 	{
-		R2_CHECK(strlen(texturePacksManifestPath) > 0, "We shouldn't have an improper path here");
-		
 		if (!texturePacksManifestPath)
 		{
 			return false;
 		}
+
+		R2_CHECK(strlen(texturePacksManifestPath) > 0, "We shouldn't have an improper path here");
 
 		u64 fileSize = 0;
 		void* fileData = r2::fs::ReadFile<r2::mem::StackArena>(*MEM_ENG_SCRATCH_PTR, texturePacksManifestPath, fileSize);
@@ -195,11 +204,7 @@ namespace r2::draw::texche
 
 		r2::asset::FileList fileList = texturePacksCache.mAssetCache->GetFileList();
 
-		char texturePacksManifestName[r2::fs::FILE_PATH_LENGTH];
-
-		r2::fs::utils::CopyFileNameWithParentDirectories(texturePacksManifestFilePath, texturePacksManifestName, 0);
-
-		r2::asset::Asset manifestAsset = r2::asset::Asset(texturePacksManifestName, r2::asset::TEXTURE_PACK_MANIFEST);
+		r2::asset::Asset manifestAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePacksManifestFilePath, r2::asset::TEXTURE_PACK_MANIFEST);//r2::asset::Asset(texturePacksManifestName, r2::asset::TEXTURE_PACK_MANIFEST);
 
 		const auto numTexturePackManifests = r2::sarr::Capacity(*texturePacksCache.mTexturePackManifests);
 		bool found = false;
@@ -235,7 +240,7 @@ namespace r2::draw::texche
 
 		if (r2::asset::IsInvalidAssetHandle(assetHandle))
 		{
-			R2_CHECK(false, "Failed to load the texture packs manifest file name: %s", texturePacksManifestName);
+			R2_CHECK(false, "Failed to load the texture packs manifest file name: %s", texturePacksManifestFilePath);
 			return InvalidTexturePacksManifestHandle;
 		}
 
@@ -289,7 +294,7 @@ namespace r2::draw::texche
 
 		if (handle.handle < 0 || r2::sarr::Size(*texturePacksCache.mTexturePackManifests) <= handle.handle)
 		{
-			R2_CHECK(false, "handle : %i is not valid since it's not in the range 0 - %ull", handle.handle, r2::sarr::Size(*texturePacksCache.mTexturePackManifests));
+			R2_CHECK(false, "handle : %i is not valid since it's not in the range 0 - %ull", handle.handle, r2::sarr::Capacity(*texturePacksCache.mTexturePackManifests));
 			return false;
 		}
 

@@ -304,16 +304,8 @@ namespace r2
 
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
 	{
-		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::SanitizeSubPath(levelPath, sanitizedPath);
-
-		char levelAssetName[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, levelAssetName, 1);
-
-		std::string fileName = levelAssetName;
-		std::transform(std::begin(fileName), std::end(fileName), std::begin(fileName), (int(*)(int))std::tolower);
-
-		return STRING_ID(fileName.c_str());
+		r2::asset::Asset levelAsset = r2::asset::Asset::MakeAssetFromFilePath(levelPath, r2::asset::LEVEL);
+		return levelAsset.HashID();
 	}
 
 	void LevelManager::AddModelFilesToModelSystem(const flat::LevelData* levelData)

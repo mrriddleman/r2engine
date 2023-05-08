@@ -30,6 +30,10 @@ namespace r2::asset
 #endif
         inline u64 HashID() const {return mHashedPathID;}
         inline AssetType GetType() const { return mType; }
+
+        static Asset MakeAssetFromFilePath(const char* filePath, r2::asset::AssetType type);
+        static u64 GetAssetNameForFilePath(const char* filePath, r2::asset::AssetType type);
+
     private:
         #ifdef R2_ASSET_CACHE_DEBUG
         char mName[r2::fs::FILE_PATH_LENGTH]; 
@@ -38,6 +42,9 @@ namespace r2::asset
         u64 mHashedPathID;
         AssetType mType;
     };
+
+
+
 }
 
 #endif /* Asset_h */
