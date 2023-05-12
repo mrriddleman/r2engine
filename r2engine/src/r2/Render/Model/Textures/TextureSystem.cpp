@@ -141,6 +141,10 @@ namespace r2::draw::texsys
 			return;
 		}
 
+		//@TODO(Serge): one thing we should do here is check to see if we've already uploaded this texture with the exact parameters
+		//				if we have, then nothing to do - don't waste pages if we don't have to
+
+
 		TextureGPUHandle theDefault;
 
 		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);

@@ -155,7 +155,7 @@ namespace r2::draw::mtrlche
 
 		cacheSize = static_cast<u32>(fileSize);
 		numMaterials = static_cast<u32>(materialParamsPack->pack()->size());
-
+		
 		FREE(fileData, *MEM_ENG_SCRATCH_PTR);
 
 		return true;
