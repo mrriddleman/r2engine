@@ -78,7 +78,7 @@ namespace r2::asset
 		char assetName[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, assetName, numParentDirectoriesToInclude);
 
-        Asset newAsset(filePath, type);
+        Asset newAsset(assetName, type);
         return newAsset;
     }
 

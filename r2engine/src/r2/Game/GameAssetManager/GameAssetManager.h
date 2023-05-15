@@ -36,6 +36,7 @@ namespace r2
 		void Shutdown(GameAssetManager* gameAssetManager);
 		u64 MemorySize();
 
+		//@NOTE(Serge): Maybe we don't want to distinguish between loading from disk and to GPU here actually
 		bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
 		bool UnloadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
 

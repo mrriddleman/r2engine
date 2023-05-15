@@ -40,7 +40,7 @@ namespace r2
 
 	namespace lvlche
 	{
-		//@TODO(Serge): we should change the level directory out of the levelPackData file
+		//@TODO(Serge): we should change the level directory out for the levelPackData file
 		LevelCache* CreateLevelCache(const r2::mem::utils::MemBoundary& levelCacheBoundary, const char* levelDirectory, u32 levelCapacity, u32 cacheSize);
 		
 		void Shutdown(LevelCache* levelCache);
