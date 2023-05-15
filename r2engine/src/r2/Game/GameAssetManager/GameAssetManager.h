@@ -32,6 +32,10 @@ namespace r2
 	namespace asstmgr
 	{
 
+		GameAssetManager* Create();
+		void Shutdown(GameAssetManager* gameAssetManager);
+		u64 MemorySize();
+
 		bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
 		bool UnloadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
 
