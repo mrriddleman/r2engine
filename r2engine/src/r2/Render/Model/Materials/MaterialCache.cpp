@@ -341,78 +341,78 @@ namespace r2::draw::mtrlche
 		return nullptr;
 	}
 
-	const flat::MaterialParams* GetMaterialParamsForMaterialHandle(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, const MaterialHandle& materialHandle)
-	{
-		if (materialCache.mAssetCache == nullptr || materialCache.mMaterialParamsManifests == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the cache yet");
-			return nullptr;
-		}
+	//const flat::MaterialParams* GetMaterialParamsForMaterialHandle(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, const MaterialHandle& materialHandle)
+	//{
+	//	if (materialCache.mAssetCache == nullptr || materialCache.mMaterialParamsManifests == nullptr)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the cache yet");
+	//		return nullptr;
+	//	}
 
-		if (materialCache.mName != materialCacheHandle.cacheName)
-		{
-			R2_CHECK(false, "Mismatching cache name between the cache and the handle");
-			return nullptr;
-		}
+	//	if (materialCache.mName != materialCacheHandle.cacheName)
+	//	{
+	//		R2_CHECK(false, "Mismatching cache name between the cache and the handle");
+	//		return nullptr;
+	//	}
 
-		if (materialCacheHandle.packIndex < 0 || r2::sarr::Size(*materialCache.mMaterialParamsManifests) <= materialCacheHandle.packIndex)
-		{
-			R2_CHECK(false, "Handle: %i is not valid since it's not in the range 0 - %ull", materialCacheHandle.packIndex, r2::sarr::Capacity(*materialCache.mMaterialParamsManifests));
-			return nullptr;
-		}
+	//	if (materialCacheHandle.packIndex < 0 || r2::sarr::Size(*materialCache.mMaterialParamsManifests) <= materialCacheHandle.packIndex)
+	//	{
+	//		R2_CHECK(false, "Handle: %i is not valid since it's not in the range 0 - %ull", materialCacheHandle.packIndex, r2::sarr::Capacity(*materialCache.mMaterialParamsManifests));
+	//		return nullptr;
+	//	}
 
-		const flat::MaterialParamsPack* materialParamsPack = r2::sarr::At(*materialCache.mMaterialParamsManifests, materialCacheHandle.packIndex).flatMaterialParamsPack;
-		R2_CHECK(materialParamsPack != nullptr, "Should not be nullptr!");
+	//	const flat::MaterialParamsPack* materialParamsPack = r2::sarr::At(*materialCache.mMaterialParamsManifests, materialCacheHandle.packIndex).flatMaterialParamsPack;
+	//	R2_CHECK(materialParamsPack != nullptr, "Should not be nullptr!");
 
-		if (materialHandle.handle != materialParamsPack->name() || materialHandle.slot == -1 || materialHandle.slot >= materialParamsPack->pack()->size() )
-		{
-			R2_CHECK(false, "Invalid material handle passed in");
-		}
-		
-		const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(materialHandle.slot);
+	//	if (materialHandle.handle != materialParamsPack->name() || materialHandle.slot == -1 || materialHandle.slot >= materialParamsPack->pack()->size() )
+	//	{
+	//		R2_CHECK(false, "Invalid material handle passed in");
+	//	}
+	//	
+	//	const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(materialHandle.slot);
 
-		return materialParams;
-	}
+	//	return materialParams;
+	//}
 
-	MaterialHandle GetMaterialHandleForMaterialName(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, u64 materialName)
-	{
-		if (materialCache.mAssetCache == nullptr || materialCache.mMaterialParamsManifests == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the cache yet");
-			return {};
-		}
+	//MaterialHandle GetMaterialHandleForMaterialName(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, u64 materialName)
+	//{
+	//	if (materialCache.mAssetCache == nullptr || materialCache.mMaterialParamsManifests == nullptr)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the cache yet");
+	//		return {};
+	//	}
 
-		if (materialCache.mName != materialCacheHandle.cacheName)
-		{
-			R2_CHECK(false, "Mismatching cache name between the cache and the handle");
-			return {};
-		}
+	//	if (materialCache.mName != materialCacheHandle.cacheName)
+	//	{
+	//		R2_CHECK(false, "Mismatching cache name between the cache and the handle");
+	//		return {};
+	//	}
 
-		if (materialCacheHandle.packIndex < 0 || r2::sarr::Size(*materialCache.mMaterialParamsManifests) <= materialCacheHandle.packIndex)
-		{
-			R2_CHECK(false, "Handle: %i is not valid since it's not in the range 0 - %ull", materialCacheHandle.packIndex, r2::sarr::Capacity(*materialCache.mMaterialParamsManifests));
-			return {};
-		}
+	//	if (materialCacheHandle.packIndex < 0 || r2::sarr::Size(*materialCache.mMaterialParamsManifests) <= materialCacheHandle.packIndex)
+	//	{
+	//		R2_CHECK(false, "Handle: %i is not valid since it's not in the range 0 - %ull", materialCacheHandle.packIndex, r2::sarr::Capacity(*materialCache.mMaterialParamsManifests));
+	//		return {};
+	//	}
 
-		const flat::MaterialParamsPack* materialParamsPack = r2::sarr::At(*materialCache.mMaterialParamsManifests, materialCacheHandle.packIndex).flatMaterialParamsPack;
+	//	const flat::MaterialParamsPack* materialParamsPack = r2::sarr::At(*materialCache.mMaterialParamsManifests, materialCacheHandle.packIndex).flatMaterialParamsPack;
 
-		R2_CHECK(materialParamsPack != nullptr, "Should not be nullptr!");
+	//	R2_CHECK(materialParamsPack != nullptr, "Should not be nullptr!");
 
-		const auto numMaterialParams = materialParamsPack->pack()->size();
+	//	const auto numMaterialParams = materialParamsPack->pack()->size();
 
-		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
-		{
-			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+	//	for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
+	//	{
+	//		const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
 
-			if (materialParams->name() == materialName)
-			{
-				//@TODO(Serge): this is sort of incomplete now - need a way to make sure it belongs to a certain MaterialCache as well
-				return { materialCacheHandle.packName, static_cast<s64>(i)};
-			}
-		}
+	//		if (materialParams->name() == materialName)
+	//		{
+	//			//@TODO(Serge): this is sort of incomplete now - need a way to make sure it belongs to a certain MaterialCache as well
+	//			return { materialCacheHandle.packName, static_cast<s64>(i)};
+	//		}
+	//	}
 
-		return {};
-	}
+	//	return {};
+	//}
 
 	bool IsInvalidMaterialParamsPackHandle(const MaterialParamsPackHandle& handle)
 	{

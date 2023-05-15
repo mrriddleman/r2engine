@@ -32,7 +32,7 @@ namespace r2::draw
 	union GPURenderTextureUnion
 	{
 		GPURenderTextures renderTextures;
-		GPUMaterialTexture renderTextureArray[12] = { {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} };
+		GPUMaterialTexture renderTextureArray[tex::Cubemap] = { {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} };
 	};
 
 	struct GPURenderMaterial

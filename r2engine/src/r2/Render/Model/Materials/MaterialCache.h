@@ -56,8 +56,8 @@ namespace r2::draw::mtrlche
 	bool RemoveMaterialParamsPackFile(MaterialCache& materialCache, MaterialParamsPackHandle handle);
 
 	const flat::MaterialParams* GetMaterialParamsForMaterialName(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, u64 materialName);
-	const flat::MaterialParams* GetMaterialParamsForMaterialHandle(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, const MaterialHandle& materialHandle);
-	MaterialHandle GetMaterialHandleForMaterialName(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, u64 materialName);
+//	const flat::MaterialParams* GetMaterialParamsForMaterialHandle(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, const MaterialHandle& materialHandle);
+//	MaterialHandle GetMaterialHandleForMaterialName(const MaterialCache& materialCache, const MaterialParamsPackHandle& materialCacheHandle, u64 materialName);
 
 	bool IsInvalidMaterialParamsPackHandle(const MaterialParamsPackHandle& handle);
 	bool AreMaterialParamsPackHandlesEqual(const MaterialParamsPackHandle& handle1, const MaterialParamsPackHandle& handle2);

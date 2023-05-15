@@ -104,7 +104,7 @@ namespace r2::draw::rendererimpl
 	//
 	void SetViewportKey(u32 viewport);
 	void SetViewportLayer(u32 viewportLayer);
-	void SetMaterialID(r2::draw::MaterialHandle materialHandle);
+	//void SetMaterialID(r2::draw::MaterialHandle materialHandle);
 	void SetShaderID(r2::draw::ShaderHandle shaderHandle);
 
 	//Command functions

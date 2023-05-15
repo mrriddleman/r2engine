@@ -773,26 +773,26 @@ namespace r2::draw::rendererimpl
 		//@TODO(Serge): implement
 	}
 
-	void SetMaterialID(r2::draw::MaterialHandle materialID)
-	{
-		if (materialID.handle == r2::draw::mat::InvalidMaterial.handle)
-		{
-			R2_CHECK(false, "Passed in invalid material handle!");
-		}
+	//void SetMaterialID(r2::draw::MaterialHandle materialID)
+	//{
+	//	if (materialID.handle == r2::draw::mat::InvalidMaterial.handle)
+	//	{
+	//		R2_CHECK(false, "Passed in invalid material handle!");
+	//	}
 
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialID.slot);
-		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+	//	r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialID.slot);
+	//	R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-		ShaderHandle shaderHandle = mat::GetShaderHandle(*matSystem, materialID);
+	//	ShaderHandle shaderHandle = mat::GetShaderHandle(*matSystem, materialID);
 
-		if (shaderHandle != InvalidShader)
-		{
-			const Shader* shader = r2::draw::shadersystem::GetShader(shaderHandle);
+	//	if (shaderHandle != InvalidShader)
+	//	{
+	//		const Shader* shader = r2::draw::shadersystem::GetShader(shaderHandle);
 
-			//@TODO(Serge): check current opengl state first
-			r2::draw::shader::Use(*shader);
-		}
-	}
+	//		//@TODO(Serge): check current opengl state first
+	//		r2::draw::shader::Use(*shader);
+	//	}
+	//}
 
 	void SetShaderID(r2::draw::ShaderHandle shaderHandle)
 	{
