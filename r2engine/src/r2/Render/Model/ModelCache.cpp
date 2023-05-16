@@ -5,7 +5,6 @@
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
-#include "r2/Core/Assets/AssetLoaders/AssimpAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 
 namespace r2::draw::modlche

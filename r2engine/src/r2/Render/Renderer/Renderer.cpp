@@ -366,10 +366,6 @@ namespace r2::draw::renderer
 	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer);
 	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer);
 
-	void LoadEngineTexturesFromDisk(Renderer& renderer);
-	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName);
-	void UploadEngineMaterialTexturesToGPU(Renderer& renderer);
-
 	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model);
 	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
@@ -385,8 +381,8 @@ namespace r2::draw::renderer
 	bool IsModelLoaded(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
 	bool IsModelRefHandleValid(const Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
 
-	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
-	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
+	//void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
+	//r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic);
 	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic);
@@ -484,7 +480,7 @@ namespace r2::draw::renderer
 	PointLightHandle AddPointLight(Renderer& renderer, const PointLight& pointLight);
 	SpotLightHandle AddSpotLight(Renderer& renderer, const SpotLight& spotLight);
 	SkyLightHandle AddSkyLight(Renderer& renderer, const SkyLight& skylight, s32 numPrefilteredMips);
-	SkyLightHandle AddSkyLight(Renderer& renderer, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
+	SkyLightHandle AddSkyLight(Renderer& renderer, const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips);
 
 	const DirectionLight* GetDirectionLightConstPtr(Renderer& renderer, DirectionLightHandle dirLightHandle);
 	DirectionLight* GetDirectionLightPtr(Renderer& renderer, DirectionLightHandle dirLightHandle);
@@ -913,7 +909,7 @@ namespace r2::draw::renderer
 
 			debugRenderBatch.debugDrawType = (DebugDrawType)i;
 			debugRenderBatch.vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
-			debugRenderBatch.materialHandle = mat::InvalidMaterial;
+			debugRenderBatch.shaderHandle = r2::draw::InvalidShader;
 			
 			
 			debugRenderBatch.colors = MAKE_SARRAY(*rendererArena, glm::vec4, MAX_NUM_DRAWS);
@@ -975,10 +971,10 @@ namespace r2::draw::renderer
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
 #ifdef R2_DEBUG
-		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines"));
-		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels"));
+		newRenderer->mDebugLinesShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines")));
+		newRenderer->mDebugModelShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels")));
 #endif
-		newRenderer->mFinalCompositeMaterialHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite")));
+		newRenderer->mFinalCompositeShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite")));
 		newRenderer->mDefaultStaticOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
 		newRenderer->mDefaultDynamicOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
 
@@ -1284,12 +1280,25 @@ namespace r2::draw::renderer
 
 		InitializeVertexLayouts(*newRenderer, STATIC_MODELS_VERTEX_LAYOUT_SIZE, ANIM_MODELS_VERTEX_LAYOUT_SIZE);
 
-		LoadEngineTexturesFromDisk(*newRenderer);
-		UploadEngineMaterialTexturesToGPU(*newRenderer);
+		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*noptrInternalMaterialSystem);
+		r2::draw::mat::UploadAllMaterialTexturesToGPU(*noptrInternalMaterialSystem);
 
 		//@NOTE(Serge): any internal engine render material params need to be set after we upload - for now....
 		newRenderer->mDefaultStaticOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
 		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
+
+		auto missingTextureMaterialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture"));
+
+		R2_CHECK(!mat::IsInvalidHandle(missingTextureMaterialID), "We have an invalid material handle trying to get the missing texture material!");
+
+		newRenderer->mMissingTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, missingTextureMaterialID).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mMissingTextureRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, missingTextureMaterialID);
+
+		auto blueNoiseMaterialID = mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64"));
+		R2_CHECK(!mat::IsInvalidHandle(blueNoiseMaterialID), "We have an invalid material handle trying to get the missing texture material!");
+
+		newRenderer->mBlueNoiseTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, blueNoiseMaterialID).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mBlueNoiseRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, blueNoiseMaterialID);
 
 		return newRenderer;
 	}
@@ -1570,6 +1579,7 @@ namespace r2::draw::renderer
 			r2::draw::tex::UnloadFromGPU(renderer->mSMAASearchTexture);
 		}
 
+		//Needs to be here - we may need to move the texture system out of the renderer for this to go
 		mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
@@ -1754,13 +1764,13 @@ namespace r2::draw::renderer
 #ifdef R2_DEBUG
 			DebugRenderBatch& debugLinesRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_LINES);
 			debugLinesRenderBatch.vertexBufferLayoutHandle = renderer.mDebugLinesVertexConfigHandle;
-			debugLinesRenderBatch.materialHandle = renderer.mDebugLinesMaterialHandle;
+			debugLinesRenderBatch.shaderHandle = renderer.mDebugLinesShaderHandle;
 			debugLinesRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
 			debugLinesRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugLinesSubCommandsConfigHandle;
 
 			DebugRenderBatch& debugModelRenderBatch = r2::sarr::At(*renderer.mDebugRenderBatches, DDT_MODELS);
 			debugModelRenderBatch.vertexBufferLayoutHandle = renderer.mDebugModelVertexConfigHandle;
-			debugModelRenderBatch.materialHandle = renderer.mDebugModelMaterialHandle;
+			debugModelRenderBatch.shaderHandle = renderer.mDebugModelShaderHandle;
 			debugModelRenderBatch.renderDebugConstantsConfigHandle = renderer.mDebugRenderConstantsConfigHandle;
 			debugModelRenderBatch.subCommandsConstantConfigHandle = renderer.mDebugModelSubCommandsConfigHandle;
 #endif
@@ -2533,36 +2543,41 @@ namespace r2::draw::renderer
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer)
 	{
-		if (renderer.mnoptrMaterialSystem == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet");
-			return {};
-		}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
+		return renderer.mMissingTextureRenderMaterialParams;
 
-		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
+		//if (renderer.mnoptrMaterialSystem == nullptr)
+		//{
+		//	R2_CHECK(false, "We haven't initialized the renderer yet");
+		//	return {};
+		//}
 
-		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
+		//auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
+
+		//R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
+
+		//return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
 	}
 
 	const tex::Texture* GetMissingTexture(Renderer* renderer)
 	{
-		if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
-		{
-			return nullptr;
-		}
+		return &renderer->mMissingTexture;
+		//if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
+		//{
+		//	return nullptr;
+		//}
 
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
+		//auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
 
-		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
+		//R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+		//return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
 	}
 
 	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer)
 	{
-		if (renderer.mnoptrMaterialSystem == nullptr)
+		return renderer.mBlueNoiseRenderMaterialParams;
+		/*if (renderer.mnoptrMaterialSystem == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet");
 			return {};
@@ -2572,12 +2587,13 @@ namespace r2::draw::renderer
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
+		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);*/
 	}
 
 	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer)
 	{
-		if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
+		return &renderer->mBlueNoiseTexture;
+		/*if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
 		{
 			return nullptr;
 		}
@@ -2586,10 +2602,10 @@ namespace r2::draw::renderer
 
 		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
 
-		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
+		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;*/
 	}
 
-	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
+	/*void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
 	{
 		const r2::draw::Model* quadModel = GetDefaultModel(renderer, r2::draw::QUAD);
 		const r2::draw::Model* sphereModel = GetDefaultModel(renderer, r2::draw::SPHERE);
@@ -2617,9 +2633,9 @@ namespace r2::draw::renderer
 		}
 
 		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
-	}
+	}*/
 
-	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel)
+	/*r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel)
 	{
 		if (renderer.mModelCache == nullptr)
 		{
@@ -2632,7 +2648,7 @@ namespace r2::draw::renderer
 		r2::draw::MaterialHandle materialHandle = r2::sarr::At(*model->optrMaterialHandles, 0);
 
 		return materialHandle;
-	}
+	}*/
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic)
 	{
@@ -2684,21 +2700,6 @@ namespace r2::draw::renderer
 		r2::sarr::Push(*renderer.mEngineModelRefs, GetDefaultModelRef(renderer, CUBE));
 		//r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, UploadModel(fullScreenTriangleModel));
 	//	r2::sarr::Push(*s_optrRenderer->mEngineModelRefs, GetDefaultModelRef(QUAD));
-	}
-
-	void LoadEngineTexturesFromDisk(Renderer& renderer)
-	{
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*renderer.mnoptrMaterialSystem);
-	}
-
-	void UploadEngineMaterialTexturesToGPUFromMaterialName(Renderer& renderer, u64 materialName)
-	{
-		r2::draw::mat::UploadMaterialTexturesToGPUFromMaterialName(*renderer.mnoptrMaterialSystem, materialName);
-	}
-
-	void UploadEngineMaterialTexturesToGPU(Renderer& renderer)
-	{
-		r2::draw::mat::UploadAllMaterialTexturesToGPU(*renderer.mnoptrMaterialSystem);
 	}
 
 	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model)
@@ -3425,8 +3426,6 @@ namespace r2::draw::renderer
 		{
 			const vb::GPUModelRef* fullScreenTriangleModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));// r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
 
-			ShaderHandle materialShaderHandle = renderer.mFinalCompositeMaterialHandle;
-
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
 			finalBatchSubcommand.baseVertex = r2::sarr::At(*fullScreenTriangleModelRef->meshEntries, 0).gpuVertexEntry.start;
@@ -3438,7 +3437,7 @@ namespace r2::draw::renderer
 			finalBatchOffsets.drawState.layer = DL_SCREEN;
 			finalBatchOffsets.numSubCommands = 1;
 			finalBatchOffsets.subCommandsOffset = subCommandsOffset;
-			finalBatchOffsets.shaderId = materialShaderHandle;
+			finalBatchOffsets.shaderId = renderer.mFinalCompositeShaderHandle;
 			
 			subCommandsMemoryOffset += sizeof(cmd::DrawBatchSubCommand);
 			subCommandsOffset += 1;
@@ -6372,9 +6371,9 @@ namespace r2::draw::renderer
 				"These should all be equal");
 		}
 
-		R2_CHECK(!mat::IsInvalidHandle(debugRenderBatch.materialHandle), "This can't be invalid!");
+		R2_CHECK(debugRenderBatch.shaderHandle != InvalidShader, "This can't be invalid!");
 
-		ShaderHandle shaderID = mat::GetShaderHandle(debugRenderBatch.materialHandle);
+		ShaderHandle shaderID = debugRenderBatch.shaderHandle;
 
 		u64 debugConstantsOffset = 0;
 
@@ -6488,9 +6487,9 @@ namespace r2::draw::renderer
 			return;
 		}
 
-		R2_CHECK(!mat::IsInvalidHandle(debugRenderBatch.materialHandle), "This can't be invalid!");
+		R2_CHECK(debugRenderBatch.shaderHandle != r2::draw::InvalidShader, "This can't be invalid!");
 
-		ShaderHandle shaderID = mat::GetShaderHandle(debugRenderBatch.materialHandle);
+		ShaderHandle shaderID = debugRenderBatch.shaderHandle;
 
 		key::DebugKey preDrawKey;
 		preDrawKey.keyValue = 0;
@@ -8549,10 +8548,10 @@ namespace r2::draw::renderer
 		return lightsys::AddSkyLight(*renderer.mLightSystem, skylight, numPrefilteredMips);
 	}
 
-	SkyLightHandle AddSkyLight(Renderer& renderer, const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG)
+	SkyLightHandle AddSkyLight(Renderer& renderer, const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips)
 	{
 		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
-		return lightsys::AddSkyLight(*renderer.mLightSystem, diffuseMaterial, prefilteredMaterial, lutDFG);
+		return lightsys::AddSkyLight(*renderer.mLightSystem, diffuseMaterial, prefilteredMaterial, lutDFG, numMips);
 	}
 
 	const DirectionLight* GetDirectionLightConstPtr(Renderer& renderer, DirectionLightHandle dirLightHandle)
@@ -8864,21 +8863,6 @@ namespace r2::draw::renderer
 		return GetDefaultModelRef(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	void LoadEngineTexturesFromDisk()
-	{
-		LoadEngineTexturesFromDisk(MENG.GetCurrentRendererRef());
-	}
-
-	void UploadEngineMaterialTexturesToGPUFromMaterialName(u64 materialName)
-	{
-		UploadEngineMaterialTexturesToGPUFromMaterialName(MENG.GetCurrentRendererRef(), materialName);
-	}
-
-	void UploadEngineMaterialTexturesToGPU()
-	{
-		UploadEngineMaterialTexturesToGPU(MENG.GetCurrentRendererRef());
-	}
-
 	vb::GPUModelRefHandle UploadModel(const Model* model)
 	{
 		return UploadModel(MENG.GetCurrentRendererRef(), model);
@@ -8932,16 +8916,6 @@ namespace r2::draw::renderer
 	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle)
 	{
 		return IsModelRefHandleValid(MENG.GetCurrentRendererRef(), modelRefHandle);
-	}
-
-	void GetDefaultModelMaterials(r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
-	{
-		GetDefaultModelMaterials(MENG.GetCurrentRendererRef(), defaultModelMaterials);
-	}
-
-	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel)
-	{
-		return GetMaterialHandleForDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic)
@@ -9109,9 +9083,9 @@ namespace r2::draw::renderer
 		return AddSkyLight(MENG.GetCurrentRendererRef(), skylight, numPrefilteredMips);
 	}
 
-	SkyLightHandle AddSkyLight(const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG)
+	SkyLightHandle AddSkyLight(const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips)
 	{
-		return AddSkyLight(MENG.GetCurrentRendererRef(), diffuseMaterial, prefilteredMaterial, lutDFG);
+		return AddSkyLight(MENG.GetCurrentRendererRef(), diffuseMaterial, prefilteredMaterial, lutDFG, numMips);
 	}
 
 	const DirectionLight* GetDirectionLightConstPtr(DirectionLightHandle dirLightHandle)

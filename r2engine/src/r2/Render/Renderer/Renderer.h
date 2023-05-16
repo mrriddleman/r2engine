@@ -41,12 +41,8 @@ namespace r2::draw
 		};
 
 		r2::SArray<Info>* infos = nullptr;
-		//r2::SArray<MaterialHandle>* materialHandles = nullptr;
-
-		
 		r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = nullptr;
 		r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
-
 	};
 
 	struct ConstantBufferData
@@ -61,7 +57,6 @@ namespace r2::draw
 	};
 
 	struct Model;
-
 
 	enum eVertexBufferLayoutTypes : u8
 	{
@@ -117,7 +112,7 @@ namespace r2::draw
 		DebugDrawType debugDrawType;
 
 		vb::VertexBufferLayoutHandle vertexBufferLayoutHandle = vb::InvalidVertexBufferLayoutHandle;
-		r2::draw::MaterialHandle materialHandle = mat::InvalidMaterial;
+		r2::draw::ShaderHandle shaderHandle = r2::draw::InvalidShader;
 
 		ConstantConfigHandle subCommandsConstantConfigHandle = InvalidConstantConfigHandle;
 		ConstantBufferHandle renderDebugConstantsConfigHandle = InvalidConstantConfigHandle;
@@ -157,15 +152,13 @@ namespace r2::draw
 
 		//--------------BEGIN Systems stuff----------------
 		ModelCache* mModelCache = nullptr;
+		//@TODO(Serge): get rid of this
 		MaterialSystem* mnoptrMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
 
 		r2::SArray<vb::GPUModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;
-		
-	//	r2::SArray<void*>* mMaterialParamPacksData = nullptr;
-	//	r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
 
 		r2::SArray<vb::VertexBufferLayoutHandle>* mVertexBufferLayoutHandles = nullptr;
 
@@ -176,12 +169,17 @@ namespace r2::draw
 		r2::SHashMap<ConstantBufferData>* mConstantBufferData = nullptr;
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
 		
-		r2::draw::ShaderHandle mFinalCompositeMaterialHandle;
+		r2::draw::ShaderHandle mFinalCompositeShaderHandle;
 		r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
 		r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
 
 		r2::draw::RenderMaterialParams mDefaultStaticOutlineRenderMaterialParams;
 		r2::draw::RenderMaterialParams mDefaultDynamicOutlineRenderMaterialParams;
+
+		r2::draw::RenderMaterialParams mMissingTextureRenderMaterialParams;
+		r2::draw::RenderMaterialParams mBlueNoiseRenderMaterialParams;
+		r2::draw::tex::Texture mMissingTexture;
+		r2::draw::tex::Texture mBlueNoiseTexture;
 
 		vb::VertexBufferLayoutHandle mStaticVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mAnimVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
@@ -431,8 +429,8 @@ namespace r2::draw
 
 		//------------BEGIN Debug Stuff--------------
 #ifdef R2_DEBUG
-		r2::draw::MaterialHandle mDebugLinesMaterialHandle;
-		r2::draw::MaterialHandle mDebugModelMaterialHandle;
+		r2::draw::ShaderHandle mDebugLinesShaderHandle;
+		r2::draw::ShaderHandle mDebugModelShaderHandle;
 
 		vb::VertexBufferLayoutHandle mDebugLinesVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mDebugModelVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
@@ -498,13 +496,9 @@ namespace r2::draw::renderer
 
 	bool IsModelLoaded(const vb::GPUModelRefHandle& modelRefHandle);
 	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle);
-	
-	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
-	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
 	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
-
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
 	const tex::Texture* GetMissingTexture();
@@ -520,7 +514,7 @@ namespace r2::draw::renderer
 	PointLightHandle AddPointLight(const PointLight& pointLight);
 	SpotLightHandle AddSpotLight(const SpotLight& spotLight);
 	SkyLightHandle AddSkyLight(const SkyLight& skylight, s32 numPrefilteredMips);
-	SkyLightHandle AddSkyLight(const MaterialHandle& diffuseMaterial, const MaterialHandle& prefilteredMaterial, const MaterialHandle& lutDFG);
+	SkyLightHandle AddSkyLight(const RenderMaterialParams& diffuseMaterial, const RenderMaterialParams& prefilteredMaterial, const RenderMaterialParams& lutDFG, s32 numMips);
 
 	const DirectionLight* GetDirectionLightConstPtr(DirectionLightHandle dirLightHandle);
 	DirectionLight* GetDirectionLightPtr(DirectionLightHandle dirLightHandle);

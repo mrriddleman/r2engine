@@ -636,23 +636,15 @@ namespace r2::draw::lightsys
 		return skylightHandle;
 	}
 
-	SkyLightHandle AddSkyLight(LightSystem& system, const MaterialHandle& diffuseMaterialHandle, const MaterialHandle& prefilteredMaterialHandle, const MaterialHandle& lutDFGHandle)
+	SkyLightHandle AddSkyLight(LightSystem& system, const RenderMaterialParams& diffuseMaterialHandle, const RenderMaterialParams& prefilteredMaterialHandle, const RenderMaterialParams& lutDFGHandle, s32 numMips)
 	{
 		SkyLight skyLight;
 
-		r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(diffuseMaterialHandle.slot);
-		R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+		skyLight.diffuseIrradianceTexture = diffuseMaterialHandle.albedo.texture;
+		skyLight.prefilteredRoughnessTexture = prefilteredMaterialHandle.albedo.texture;
+		skyLight.lutDFGTexture = lutDFGHandle.albedo.texture;
 
-		//@TODO(Serge): would be nice to have some kind of verification here?
-		skyLight.diffuseIrradianceTexture = mat::GetRenderMaterial(*matSystem, diffuseMaterialHandle).albedo.texture;
-		skyLight.prefilteredRoughnessTexture = mat::GetRenderMaterial(*matSystem, prefilteredMaterialHandle).albedo.texture;
-		skyLight.lutDFGTexture = mat::GetRenderMaterial(*matSystem, lutDFGHandle).albedo.texture;
-
-		const auto* prefilteredCubemap = mat::GetCubemapTexture(*matSystem, prefilteredMaterialHandle);
-
-		R2_CHECK(prefilteredCubemap != nullptr, "We should always get a proper cubemap here!");
-
-		return AddSkyLight(system, skyLight, texsys::GetNumberOfMipMaps(*prefilteredCubemap));
+		return AddSkyLight(system, skyLight, numMips);
 	}
 
 	bool RemoveSkyLight(LightSystem& system, SkyLightHandle skylightHandle)

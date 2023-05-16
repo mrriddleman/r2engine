@@ -38,7 +38,6 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Render/Animation/AnimationPlayer.h"
 #include "r2/Render/Model/Light.h"
-
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 
@@ -829,12 +828,15 @@ public:
         //setup the lights
         {
          
+            r2::draw::MaterialHandle prefilteredMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered"));
             
+            const auto* prefilteredCubemap = r2::draw::mat::GetCubemapTexture(*mMaterialSystem, prefilteredMaterialHandle);
+            s32 numMips = prefilteredCubemap->numMipLevels;
+
             r2::draw::renderer::AddSkyLight(
-                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved")),
-                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered")),
-                r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG")));
-               
+                r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"))),
+                r2::draw::mat::GetRenderMaterial(prefilteredMaterialHandle),
+                r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG"))), numMips);
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
