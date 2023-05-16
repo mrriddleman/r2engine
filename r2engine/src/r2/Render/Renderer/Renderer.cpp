@@ -1287,18 +1287,11 @@ namespace r2::draw::renderer
 		newRenderer->mDefaultStaticOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
 		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
 
-		auto missingTextureMaterialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture"));
+		newRenderer->mMissingTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture"))).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mMissingTextureRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture")));
 
-		R2_CHECK(!mat::IsInvalidHandle(missingTextureMaterialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		newRenderer->mMissingTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, missingTextureMaterialID).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mMissingTextureRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, missingTextureMaterialID);
-
-		auto blueNoiseMaterialID = mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64"));
-		R2_CHECK(!mat::IsInvalidHandle(blueNoiseMaterialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		newRenderer->mBlueNoiseTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, blueNoiseMaterialID).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mBlueNoiseRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, blueNoiseMaterialID);
+		newRenderer->mBlueNoiseTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64"))).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mBlueNoiseRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64")));
 
 		return newRenderer;
 	}
