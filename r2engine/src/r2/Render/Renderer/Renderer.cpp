@@ -248,7 +248,8 @@ namespace r2::draw
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<vb::GPUModelRef>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialBatch::Info>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numModelRefs * AVG_NUM_OF_MESHES_PER_MODEL), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(numModelRefs), alignment, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(numModelRefs * AVG_NUM_OF_MESHES_PER_MODEL), alignment, headerSize, boundsChecking);
 
 		if (numModels > 0)
 		{
@@ -506,9 +507,26 @@ namespace r2::draw::renderer
 	void UpdateLighting(Renderer& renderer);
 	void UploadAllSurfaces(Renderer& renderer);
 
-	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(
+		Renderer& renderer,
+		const DrawParameters& drawParameters,
+		const vb::GPUModelRefHandle& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		u32 numInstances,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
+
+	void DrawModels(
+		Renderer& renderer,
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	///More draw functions...
 
@@ -525,7 +543,7 @@ namespace r2::draw::renderer
 
 	vb::VertexBufferLayoutSize GetStaticVertexBufferCapacity(const Renderer& renderer);
 	vb::VertexBufferLayoutSize GetAnimVertexBufferCapacity(const Renderer& renderer);
-
+	const vb::GPUModelRef* GetGPUModelRef(const Renderer& renderer, const vb::GPUModelRefHandle& handle);
 	//------------------------------------------------------------------------------
 
 #ifdef R2_DEBUG
@@ -1205,7 +1223,11 @@ namespace r2::draw::renderer
 				nextBatch.gpuModelRefs = MAKE_SARRAY(*rendererArena, const vb::GPUModelRef*, MAX_NUM_DRAWS);
 
 				nextBatch.materialBatch.infos = MAKE_SARRAY(*rendererArena, MaterialBatch::Info, MAX_NUM_DRAWS);
-				nextBatch.materialBatch.materialHandles = MAKE_SARRAY(*rendererArena, MaterialHandle, MAX_NUM_DRAWS * AVG_NUM_OF_MESHES_PER_MODEL);
+				
+				//@TODO(Serge): maybe change this to be GPURenderMaterialHandle when that is integrated to save memory?
+				nextBatch.materialBatch.renderMaterialParams = MAKE_SARRAY(*rendererArena, RenderMaterialParams, MAX_NUM_DRAWS);
+				nextBatch.materialBatch.shaderHandles = MAKE_SARRAY(*rendererArena, ShaderHandle, MAX_NUM_DRAWS);
+
 				nextBatch.models = MAKE_SARRAY(*rendererArena, glm::mat4, MAX_NUM_DRAWS);
 				nextBatch.drawState = MAKE_SARRAY(*rendererArena, cmd::DrawState, MAX_NUM_DRAWS);
 				nextBatch.numInstances = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
@@ -1484,7 +1506,9 @@ namespace r2::draw::renderer
 			FREE(nextBatch.drawState, *arena);
 			FREE(nextBatch.models, *arena);
 
-			FREE(nextBatch.materialBatch.materialHandles, *arena);
+			FREE(nextBatch.materialBatch.shaderHandles, *arena);
+			FREE(nextBatch.materialBatch.renderMaterialParams, *arena);
+
 			FREE(nextBatch.materialBatch.infos, *arena);
 			FREE(nextBatch.gpuModelRefs, *arena);
 
@@ -2954,64 +2978,78 @@ namespace r2::draw::renderer
 		{
 			const vb::GPUModelRef* modelRef = r2::sarr::At(*renderBatch.gpuModelRefs, modelIndex);
 			const cmd::DrawState& drawState = r2::sarr::At(*renderBatch.drawState, modelIndex);
+			u32 drawStateHash = utils::HashBytes32(&drawState, sizeof(drawState));
+
+
+
 			const glm::mat4& modelMatrix = r2::sarr::At(*renderBatch.models, modelIndex);
 			const u32 numMeshRefs = r2::sarr::Size(*modelRef->meshEntries);
 			const u32 numInstances = r2::sarr::At(*renderBatch.numInstances, modelIndex);
-			
-			r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, numMeshRefs);
 
-			r2::sarr::Push(*tempAllocations, (void*)shaders);
+			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
+
+			//@TODO(Serge): somehow make this fash for each mesh - dunno how to do that right now
+			u32 cameraDepthToModel = GetCameraDepth(renderer, {}, modelMatrix);
+
+			//r2::SArray<ShaderHandle>* shaders = MAKE_SARRAY(*renderer.mPreRenderStackArena, ShaderHandle, materialBatchInfo.numMaterials);
+
+		//	r2::sarr::Push(*tempAllocations, (void*)shaders);
 
 			for (u32 i = 0; i < numInstances; i++)
 			{
 				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, 0, 0, 0));
 			}
 			
-			const MaterialBatch::Info& materialBatchInfo = r2::sarr::At(*renderBatch.materialBatch.infos, modelIndex);
-			
 			materialOffset += materialBatchInfo.numMaterials;
 
-			for (u32 materialIndex = 0; materialIndex < materialBatchInfo.numMaterials; ++materialIndex)
-			{
-				const MaterialHandle materialHandle = r2::sarr::At(*renderBatch.materialBatch.materialHandles, materialBatchInfo.start + materialIndex);
+			//for (u32 materialIndex = 0; materialIndex < materialBatchInfo.numMaterials; ++materialIndex)
+			//{
+			//	//const MaterialHandle materialHandle = r2::sarr::At(*renderBatch.materialBatch.materialHandles, materialBatchInfo.start + materialIndex);
 
-				R2_CHECK(!mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
+			//	//R2_CHECK(!mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
 
-				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+			//	//r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
 
-				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+			//	//R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-				ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
+			//	//ShaderHandle materialShaderHandle = mat::GetShaderHandle(*matSystem, materialHandle);
 
-				const RenderMaterialParams& nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
+			//	//const RenderMaterialParams& nextRenderMaterial = mat::GetRenderMaterial(*matSystem, materialHandle);
 
-				r2::sarr::Push(*renderMaterials, nextRenderMaterial);
+			//	const RenderMaterialParams& nextRenderMaterial = r2::sarr::At(*renderBatch.materialBatch.renderMaterialParams, materialBatchInfo.start + materialIndex);
 
-				r2::sarr::Push(*shaders, materialShaderHandle);
-			}
+			////	ShaderHandle materialShaderHandle = r2::sarr::At(*renderBatch.materialBatch.shaderHandles, materialBatchInfo.start + materialIndex);
 
-			R2_CHECK(numMeshRefs >= materialBatchInfo.numMaterials, "We should always have greater than or equal the amount of meshes to materials for a model");
+			//	//@TODO(Serge): Theoretically, we don't really need to do this since it's already in the RenderBatch now
+			//	r2::sarr::Push(*renderMaterials, nextRenderMaterial);
 
-			for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
-			{
-				const MaterialHandle materialHandle = r2::sarr::At(*modelRef->materialHandles, r2::sarr::At(*modelRef->meshEntries, meshIndex).materialIndex);
+			//	//r2::sarr::Push(*shaders, materialShaderHandle);
+			//}
 
-				ShaderHandle materialShaderHandle = mat::GetShaderHandle(materialHandle);
+			//R2_CHECK(numMeshRefs >= materialBatchInfo.numMaterials, "We should always have greater than or equal the amount of meshes to materials for a model");
 
-				R2_CHECK(materialShaderHandle != InvalidShader, "This shouldn't be invalid!");
+			//for (u32 meshIndex = materialBatchInfo.numMaterials; meshIndex < numMeshRefs; ++meshIndex)
+			//{
+			//	R2_CHECK(false, "?");
+			//	//@TODO(Serge): remove!
+			//	const MaterialHandle materialHandle = r2::sarr::At(*modelRef->materialHandles, r2::sarr::At(*modelRef->meshEntries, meshIndex).materialIndex);
 
-				r2::sarr::Push(*shaders, materialShaderHandle);
-			}
+			//	ShaderHandle materialShaderHandle = mat::GetShaderHandle(materialHandle);
+
+			//	R2_CHECK(materialShaderHandle != InvalidShader, "This shouldn't be invalid!");
+
+			//	r2::sarr::Push(*shaders, materialShaderHandle);
+			//}
 
 			for (u32 meshRefIndex = 0; meshRefIndex < numMeshRefs; ++meshRefIndex)
 			{
 				const vb::MeshEntry& meshRef = r2::sarr::At(*modelRef->meshEntries, meshRefIndex);
 
-				ShaderHandle shaderId = r2::sarr::At(*shaders, meshRefIndex);
+				ShaderHandle shaderId = r2::sarr::At(*renderBatch.materialBatch.shaderHandles, meshRef.materialIndex + materialBatchInfo.start); //r2::sarr::At(*shaders, meshRef.materialIndex);
 
 				R2_CHECK(shaderId != r2::draw::InvalidShader, "We don't have a proper shader?");
 
-				u32 drawStateHash = utils::HashBytes32(&drawState, sizeof(drawState));
+				
 
 				key::SortBatchKey commandKey = key::GenerateSortBatchKey(drawState.layer, shaderId, drawStateHash);
 
@@ -3050,7 +3088,7 @@ namespace r2::draw::renderer
 
 				r2::sarr::Push(*drawCommandData->subCommands, subCommand);
 				CameraDepth cameraDepth;
-				cameraDepth.cameraDepth = GetCameraDepth(renderer, meshRef.meshBounds, modelMatrix);
+				cameraDepth.cameraDepth = cameraDepthToModel;
 				cameraDepth.index = r2::sarr::Size(*drawCommandData->cameraDepths);
 
 				r2::sarr::Push(*drawCommandData->cameraDepths, cameraDepth);
@@ -3166,6 +3204,9 @@ namespace r2::draw::renderer
 
 		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, dynamicRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, 0, dynamicDrawCommandBatchSize);
 		PopulateRenderDataFromRenderBatch(renderer, tempAllocations, staticRenderBatch, shaderDrawCommandData, renderMaterials, materialOffsetsPerObject, materialOffset, numDynamicInstances, staticDrawCommandBatchSize);
+
+		r2::sarr::Append(*renderMaterials, *dynamicRenderBatch.materialBatch.renderMaterialParams);
+		r2::sarr::Append(*renderMaterials, *staticRenderBatch.materialBatch.renderMaterialParams);
 
 		key::Basic basicKey;
 		basicKey.keyValue = 0;
@@ -4285,7 +4326,10 @@ namespace r2::draw::renderer
 
 			r2::sarr::Clear(*batch.gpuModelRefs);
 			r2::sarr::Clear(*batch.materialBatch.infos);
-			r2::sarr::Clear(*batch.materialBatch.materialHandles);
+			r2::sarr::Clear(*batch.materialBatch.renderMaterialParams);
+			r2::sarr::Clear(*batch.materialBatch.shaderHandles);
+			//r2::sarr::Clear(*batch.materialBatch.materialHandles);
+
 			r2::sarr::Clear(*batch.models);
 			r2::sarr::Clear(*batch.drawState);
 			r2::sarr::Clear(*batch.numInstances);
@@ -5864,7 +5908,15 @@ namespace r2::draw::renderer
 		
 	}
 
-	void DrawModel(Renderer& renderer, const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(
+		Renderer& renderer,
+		const DrawParameters& drawParameters,
+		const vb::GPUModelRefHandle& modelRefHandle,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		u32 numInstances,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterials,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -5880,12 +5932,15 @@ namespace r2::draw::renderer
 		}
 
 		R2_CHECK(numInstances == r2::sarr::Size(modelMatrices), "We must have the same amount model matrices as instances");
-
+		R2_CHECK(r2::sarr::Size(renderMaterials) == r2::sarr::Size(shadersPerMesh), "These always need to be the same size");
 		//We're going to copy these into the render batches for easier/less overhead processing in PreRender
 		//const ModelRef& modelRef = r2::sarr::At(*renderer.mModelRefs, modelRefHandle);
 
 		const vb::GPUModelRef* gpuModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
 		R2_CHECK(gpuModelRef != nullptr, "Failed to get the GPUModelRef for handle: %llu", modelRefHandle);
+
+
+		R2_CHECK(gpuModelRef->numMaterials == r2::sarr::Size(renderMaterials) || ((r2::sarr::Size(renderMaterials) == 1) && gpuModelRef->numMaterials >= 1), "These must be the same");
 
 		DrawType drawType = STATIC;
 
@@ -5919,7 +5974,34 @@ namespace r2::draw::renderer
 
 		r2::sarr::Push(*batch.drawState, state);
 
-		if (!materialHandles)
+		bool isMaterialSizesSame = r2::sarr::Size(renderMaterials) == gpuModelRef->numMaterials;
+
+
+		MaterialBatch::Info materialBatchInfo;
+
+		materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.renderMaterialParams);
+		materialBatchInfo.numMaterials = gpuModelRef->numMaterials;
+
+		r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
+
+		if (isMaterialSizesSame)
+		{
+			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
+			{
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterials, i));
+				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, i));
+			}
+		}
+		else
+		{
+			for (u32 i = 0; i < gpuModelRef->numMaterials; ++i)
+			{
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterials, 0));
+				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, 0));
+			}
+		}
+
+		/*if (!materialHandles)
 		{
 			MaterialBatch::Info materialBatchInfo;
 
@@ -5979,7 +6061,7 @@ namespace r2::draw::renderer
 			{
 				FREE(materialHandlesToUse, *MEM_ENG_SCRATCH_PTR);
 			}
-		}
+		}*/
 
 		if (drawType == DYNAMIC)
 		{
@@ -5990,7 +6072,15 @@ namespace r2::draw::renderer
 		}
 	}
 
-	void DrawModels(Renderer& renderer, const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(
+		Renderer& renderer,
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms) 
 	{
 		if (renderer.mRenderBatches == nullptr)
 		{
@@ -6006,6 +6096,7 @@ namespace r2::draw::renderer
 
 		R2_CHECK(numModelRefs <= numModelMatrices, "We must have at least as many model matrices as model refs!");
 		R2_CHECK(numModelRefs == numInstancesInArray, "These must be the same!");
+		R2_CHECK(r2::sarr::Size(renderMaterialParamsPerMesh) == r2::sarr::Size(shadersPerMesh), "These always need to be the same");
 
 #if R2_DEBUG
 		u32 numInstancesInTotal = 0;
@@ -6067,17 +6158,16 @@ namespace r2::draw::renderer
 			R2_CHECK(numBonesInTotal == numBoneTransforms, "These should match!");
 		}
 
-		if (materialHandles)
-		{
-			u64 numMaterialsForGPUModelRefs = 0;
-			for (u64 i = 0; i < numModelRefs; ++i)
-			{
-				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
-				numMaterialsForGPUModelRefs += r2::sarr::Size(*modelRef->materialHandles);
-			}
 
-			R2_CHECK(r2::sarr::Size(*materialHandles) == numMaterialsForGPUModelRefs, "These should be the same in this case");
+		u64 numMaterialsForGPUModelRefs = 0;
+		for (u64 i = 0; i < numModelRefs; ++i)
+		{
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
+			numMaterialsForGPUModelRefs += modelRef->numMaterials;
 		}
+
+		R2_CHECK(r2::sarr::Size(renderMaterialParamsPerMesh) == numMaterialsForGPUModelRefs, "These should be the same in this case");
+		R2_CHECK(r2::sarr::Size(shadersPerMesh) == numMaterialsForGPUModelRefs, "These need to be the same as well");
 #endif
 
 		DrawType drawType = (!boneTransforms) ? DrawType::STATIC : DrawType::DYNAMIC;
@@ -6112,7 +6202,28 @@ namespace r2::draw::renderer
 
 		FREE(tempDrawState, *MEM_ENG_SCRATCH_PTR);
 
-		if (!materialHandles)
+		u32 materialOffset = 0;
+		for (u32 i = 0; i < numModelRefs; i++)
+		{
+			const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
+
+			MaterialBatch::Info info;
+			info.start = r2::sarr::Size(*batch.materialBatch.renderMaterialParams);
+			info.numMaterials = modelRef->numMaterials;
+
+			r2::sarr::Push(*batch.materialBatch.infos, info);
+
+			for (u32 j = 0; j < info.numMaterials; ++j)
+			{
+				r2::sarr::Push(*batch.materialBatch.renderMaterialParams, r2::sarr::At(renderMaterialParamsPerMesh, j + materialOffset));
+				r2::sarr::Push(*batch.materialBatch.shaderHandles, r2::sarr::At(shadersPerMesh, j + materialOffset));
+			}
+
+			materialOffset += info.numMaterials;
+		}
+
+
+		/*if (!materialHandles)
 		{
 			for (u32 i = 0; i < numModelRefs; ++i)
 			{
@@ -6151,7 +6262,7 @@ namespace r2::draw::renderer
 
 				materialOffset += materialBatchInfo.numMaterials;
 			}
-		}
+		}*/
 
 		if (drawType == DYNAMIC)
 		{
@@ -7320,6 +7431,11 @@ namespace r2::draw::renderer
 	}
 
 #endif //  R2_DEBUG
+
+	const vb::GPUModelRef* GetGPUModelRef(const Renderer& renderer, const vb::GPUModelRefHandle& handle)
+	{
+		return vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, handle);
+	}
 
 	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize(const Renderer& renderer)
 	{
@@ -8834,14 +8950,28 @@ namespace r2::draw::renderer
 		return GetBlueNoise64Texture(MENG.GetCurrentRendererPtr());
 	}
 
-	void DrawModel(const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandle, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModel(
+		const DrawParameters& drawParameters,
+		const vb::GPUModelRefHandle& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		u32 numInstances,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModel(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandle, modelMatrices, numInstances, materialHandles, boneTransforms);
+		DrawModel(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstances, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
 	}
 
-	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms)
+	void DrawModels(
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, materialHandles, boneTransforms);
+		DrawModels(MENG.GetCurrentRendererRef(), drawParameters, modelRefHandles, modelMatrices, numInstancesPerModel, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
 	}
 
 	void SetDefaultStencilState(DrawParameters& drawParameters)
@@ -8868,6 +8998,11 @@ namespace r2::draw::renderer
 	ShaderHandle GetShadowDepthShaderHandle(bool isDynamic, light::LightType lightType)
 	{
 		return GetShadowDepthShaderHandle(MENG.GetCurrentRendererRef(), isDynamic, lightType);
+	}
+
+	const vb::GPUModelRef* GetGPUModelRef(const vb::GPUModelRefHandle& handle)
+	{
+		return GetGPUModelRef(MENG.GetCurrentRendererRef(), handle);
 	}
 
 	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize()

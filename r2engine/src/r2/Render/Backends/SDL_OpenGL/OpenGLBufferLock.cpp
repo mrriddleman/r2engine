@@ -84,7 +84,7 @@ namespace r2::draw::rendererimpl
 		//@TODO(Serge): no clue how to make this fast
 		GLsync syncName = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-		R2_CHECK(glIsSync(syncName), "?");
+	//	R2_CHECK(glIsSync(syncName), "?");
 
 		BufferLock lock = { {newRange}, syncName };
 

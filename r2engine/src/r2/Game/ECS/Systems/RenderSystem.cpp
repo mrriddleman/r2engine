@@ -104,11 +104,11 @@ namespace r2::ecs
 			gatherBatch->modelRefHandles = MAKE_SARRAY(*mPerFrameArena, r2::draw::vb::GPUModelRefHandle, maxNumModelsToCreate);
 			gatherBatch->transforms = MAKE_SARRAY(*mPerFrameArena, glm::mat4, maxNumModelsToCreate * mMaxNumInstancesPerModel);
 			gatherBatch->instances = MAKE_SARRAY(*mPerFrameArena, u32, maxNumModelsToCreate);
-			gatherBatch->materialHandles = nullptr;
-			if (hasMaterialOverrides)
-			{
-				gatherBatch->materialHandles = MAKE_SARRAY(*mPerFrameArena, r2::draw::MaterialHandle, mMaxNumMaterialsPerModel * maxNumModelsToCreate);
-			}
+
+			//@TODO(Serge): look into a way to just grab the renderer's version and directly store them - wasting memory + performance
+			gatherBatch->renderMaterialParams = MAKE_SARRAY(*mPerFrameArena, r2::draw::RenderMaterialParams, mMaxNumMaterialsPerModel * maxNumModelsToCreate);
+			gatherBatch->shaderHandles = MAKE_SARRAY(*mPerFrameArena, r2::draw::ShaderHandle, mMaxNumMaterialsPerModel * maxNumModelsToCreate);
+
 			gatherBatch->boneTransforms = nullptr;
 			if (isAnimated)
 			{
@@ -137,11 +137,56 @@ namespace r2::ecs
 		}
 
 		r2::sarr::Push(*gatherBatch->instances, numInstances);
-		
+		//@TEMPORARY so that we can remove the material system calls from the Renderer itself
 		if (hasMaterialOverrides)
 		{
-			r2::sarr::Append(*gatherBatch->materialHandles, *renderComponent.optrOverrideMaterials);
+			u32 numOverrides = r2::sarr::Size(*renderComponent.optrOverrideMaterials);
+
+			for (u32 i = 0; i < numOverrides; ++i)
+			{
+				const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*renderComponent.optrOverrideMaterials, i);
+
+				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
+
+				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+
+				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);
+
+				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
+
+				r2::sarr::Push(*gatherBatch->renderMaterialParams, nextRenderMaterial);
+				r2::sarr::Push(*gatherBatch->shaderHandles, materialShaderHandle);
+			}
 		}
+		else
+		{
+			//@TODO(Serge): fill with the regular stuff
+
+			const r2::draw::vb::GPUModelRef* gpuModelRef = r2::draw::renderer::GetGPUModelRef(renderComponent.gpuModelRefHandle);
+
+			const u32 numMaterialHandles = r2::sarr::Size(*gpuModelRef->materialHandles);
+
+			for (u32 i = 0; i < numMaterialHandles; ++i)
+			{
+				const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*gpuModelRef->materialHandles, i);
+
+				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
+
+				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
+
+				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+
+				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);
+
+				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
+
+				r2::sarr::Push(*gatherBatch->renderMaterialParams, nextRenderMaterial);
+				r2::sarr::Push(*gatherBatch->shaderHandles, materialShaderHandle);
+			}
+		}
+
 		if (isAnimated)
 		{
 			r2::sarr::Append(*gatherBatch->boneTransforms, *animationComponent->shaderBones);
@@ -164,7 +209,9 @@ namespace r2::ecs
 		for (; batchIter != r2::shashmap::End(*gatherBatch); ++batchIter)
 		{
 			const auto batch = batchIter->value;
-			r2::draw::renderer::DrawModels(batch->drawParams, *batch->modelRefHandles, *batch->transforms, *batch->instances, batch->materialHandles, batch->boneTransforms);
+
+
+			r2::draw::renderer::DrawModels(batch->drawParams, *batch->modelRefHandles, *batch->transforms, *batch->instances, *batch->renderMaterialParams, *batch->shaderHandles, batch->boneTransforms);
 		}
 	}
 
@@ -186,10 +233,8 @@ namespace r2::ecs
 			r2::sarr::Clear(*batch->modelRefHandles);
 			r2::sarr::Clear(*batch->instances);
 			r2::sarr::Clear(*batch->transforms);
-			if (batch->materialHandles)
-			{
-				r2::sarr::Clear(*batch->materialHandles);
-			}
+			r2::sarr::Clear(*batch->renderMaterialParams);
+			r2::sarr::Clear(*batch->shaderHandles);
 			if (batch->boneTransforms)
 			{
 				r2::sarr::Clear(*batch->boneTransforms);
@@ -208,7 +253,7 @@ namespace r2::ecs
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RenderSystemGatherBatch*>::MemorySize(maxNumDynamicBatches * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 			MemorySizeForPerFrameArena(maxNumStaticBatches, maxNumDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
 		
-		R2_CHECK(memorySize <= Megabytes(32), "Don't let this go crazy");
+		R2_CHECK(memorySize <= Megabytes(71), "Don't let this go crazy");
 
 		return memorySize;
 	}
@@ -234,7 +279,9 @@ namespace r2::ecs
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::vb::GPUModelRefHandle>::MemorySize(maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(maxNumModels * maxNumInstancesPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::MaterialHandle>::MemorySize(maxNumMaterialsPerModel * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(maxNumMaterialsPerModel * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(maxNumMaterialsPerModel * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+
 			//@NOTE: this is inadvertently correct - pretty sure we can only have this many bones anyways (shaderwise)
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderBoneTransform>::MemorySize(maxNumShaderBoneTransforms * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking);
 

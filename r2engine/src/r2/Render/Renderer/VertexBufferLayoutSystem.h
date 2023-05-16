@@ -42,6 +42,7 @@ namespace r2::draw::vb
 
 		r2::SArray<MeshEntry>* meshEntries;
 		r2::SArray<MaterialHandle>* materialHandles;
+		u32 numMaterials;
 		GPUBufferEntry boneEntry;
 		u32 numBones;
 	};

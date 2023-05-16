@@ -108,17 +108,17 @@ namespace r2
                 size = tag.size;
                 r2::util::PathCpy(fileName, tag.fileName);
                 requestedSize = tag.size;
-                description = tag.description;
+        //        description = tag.description;
             }
             
-            MemoryTag::MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line, const std::string& description)
+            MemoryTag::MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line)
             {
                 this->line = line;
                 this->memPtr = memPtr;
                 this->alignment = alignment;
                 this->size = size;
                 r2::util::PathCpy(this->fileName, fileName);
-                this->description = description;
+             //   this->description = description;
             }
             
             MemoryTag& MemoryTag::operator=(const MemoryTag& tag)
@@ -134,7 +134,7 @@ namespace r2
                 size = tag.size;
                 r2::util::PathCpy(fileName, tag.fileName);
                 requestedSize = tag.size;
-                description = tag.description;
+             //   description = tag.description;
                 return *this;
             }
         }

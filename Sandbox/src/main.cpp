@@ -1412,7 +1412,24 @@ public:
 			r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
 			r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
 
-			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
+
+			const r2::draw::vb::GPUModelRef* sponzaGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSponzaModelRefHandle);
+
+			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, sponzaGPUModelRef->numMaterials);
+			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, sponzaGPUModelRef->numMaterials);
+
+			for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
+			{
+				r2::sarr::Push(*renderMaterialParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(*sponzaGPUModelRef->materialHandles, i)));
+				r2::sarr::Push(*shaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*sponzaGPUModelRef->materialHandles, i)));
+			}
+
+			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, *renderMaterialParams, *shaderHandles, nullptr);
+
+			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+
+		//	r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
 			FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
         }
 
@@ -1434,8 +1451,18 @@ public:
         //drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
 
         //draw transparent windows
-        r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), mTransparentWindowMaterialHandles, nullptr);
+        const r2::draw::RenderMaterialParams& transparentWindowRenderMaterial = r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(* mTransparentWindowMaterialHandles, 0));
+        r2::draw::ShaderHandle transparentWindowShaderHandle = r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*mTransparentWindowMaterialHandles, 0));
 
+        r2::SArray<r2::draw::RenderMaterialParams>* transparentWindowRenderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
+        r2::SArray<r2::draw::ShaderHandle>* transparentWindowShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
+
+        r2::sarr::Push(*transparentWindowRenderMaterials, transparentWindowRenderMaterial);
+        r2::sarr::Push(*transparentWindowShaderHandles, transparentWindowShaderHandle);
+        r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), *transparentWindowRenderMaterials,*transparentWindowShaderHandles, nullptr);
+
+        FREE(transparentWindowShaderHandles, *MEM_ENG_SCRATCH_PTR);
+        FREE(transparentWindowRenderMaterials, *MEM_ENG_SCRATCH_PTR);
 
 		r2::draw::DrawParameters animDrawParams;
 		animDrawParams.layer = r2::draw::DL_CHARACTER;
@@ -1457,8 +1484,23 @@ public:
 
 			r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
 			r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
-			
-			r2::draw::renderer::DrawModel(animDrawParams, mMicroBatModelRefHandle, *microBatModelMats, 2, nullptr, allMicroBatBoneTransforms);
+
+
+            const r2::draw::vb::GPUModelRef* microbatGPUModelRef = r2::draw::renderer::GetGPUModelRef(mMicroBatModelRefHandle);
+
+            r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, microbatGPUModelRef->numMaterials);
+            r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, microbatGPUModelRef->numMaterials);
+
+			for (u32 i = 0; i < microbatGPUModelRef->numMaterials; ++i)
+			{
+                r2::sarr::Push(*renderMaterialParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(*microbatGPUModelRef->materialHandles, i)) );
+                r2::sarr::Push(*shaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*microbatGPUModelRef->materialHandles, i)));
+			}
+
+			r2::draw::renderer::DrawModel(animDrawParams, mMicroBatModelRefHandle, *microBatModelMats, 2, *renderMaterialParams, *shaderHandles, allMicroBatBoneTransforms);
+
+            FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+            FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
 
 			FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
 			FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
@@ -1473,8 +1515,22 @@ public:
 			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
 			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
 
-			r2::draw::renderer::DrawModel(animDrawParams, mSkeletonModelRefHandle, *skeletonModelMats, 2, nullptr, mSkeletonBoneTransforms);
 
+			const r2::draw::vb::GPUModelRef* skeletonGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSkeletonModelRefHandle);
+
+			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, skeletonGPUModelRef->numMaterials);
+			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, skeletonGPUModelRef->numMaterials);
+
+			for (u32 i = 0; i < skeletonGPUModelRef->numMaterials; ++i)
+			{
+				r2::sarr::Push(*renderMaterialParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(*skeletonGPUModelRef->materialHandles, i)));
+				r2::sarr::Push(*shaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*skeletonGPUModelRef->materialHandles, i)));
+			}
+
+			r2::draw::renderer::DrawModel(animDrawParams, mSkeletonModelRefHandle, *skeletonModelMats, 2, *renderMaterialParams, *shaderHandles, mSkeletonBoneTransforms);
+
+			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
 			FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
         }
 
@@ -1495,7 +1551,25 @@ public:
 			animDrawParams.stencilState.func.ref = 1;
 			animDrawParams.stencilState.func.mask = 0xFF;
 
-			r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, nullptr, mEllenBoneTransforms);
+
+			const r2::draw::vb::GPUModelRef* ellenGPUModelRef = r2::draw::renderer::GetGPUModelRef(mEllenModelRefHandle);
+
+			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, ellenGPUModelRef->numMaterials);
+			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, ellenGPUModelRef->numMaterials);
+
+			for (u32 i = 0; i < ellenGPUModelRef->numMaterials; ++i)
+			{
+				r2::sarr::Push(*renderMaterialParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(*ellenGPUModelRef->materialHandles, i)));
+				r2::sarr::Push(*shaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*ellenGPUModelRef->materialHandles, i)));
+			}
+
+            r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *renderMaterialParams, *shaderHandles, mEllenBoneTransforms);
+
+			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+
+
+			
 
 			animDrawParams.flags.Remove(r2::draw::eDrawFlags::DEPTH_TEST);
 			animDrawParams.layer = r2::draw::DL_EFFECT;
@@ -1505,13 +1579,26 @@ public:
 			animDrawParams.stencilState.func.ref = 1;
 			animDrawParams.stencilState.func.mask = 0xFF;
 
-			r2::SArray<r2::draw::MaterialHandle>* outlineMaterialHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::MaterialHandle, 1);
 
-			r2::sarr::Push(*outlineMaterialHandles, r2::draw::renderer::GetDefaultOutlineMaterialHandle(false));
+			//r2::SArray<r2::draw::MaterialHandle>* outlineMaterialHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::MaterialHandle, 1);
 
-			r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, outlineMaterialHandles, mEllenBoneTransforms);
+			//r2::sarr::Push(*outlineMaterialHandles, r2::draw::renderer::GetDefaultOutlineMaterialHandle(false));
 
-			FREE(outlineMaterialHandles, *MEM_ENG_SCRATCH_PTR);
+            r2::SArray<r2::draw::RenderMaterialParams>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
+            r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
+
+            r2::draw::MaterialHandle outlineMaterialHandle = r2::draw::renderer::GetDefaultOutlineMaterialHandle(false);
+
+            r2::sarr::Push(*outlineMaterialParams, r2::draw::mat::GetRenderMaterial(outlineMaterialHandle) );
+            r2::sarr::Push(*outlineShaderHandles, r2::draw::mat::GetShaderHandle(outlineMaterialHandle));
+
+			r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *outlineMaterialParams, *outlineShaderHandles, mEllenBoneTransforms);
+
+            FREE(outlineShaderHandles, *MEM_ENG_SCRATCH_PTR);
+            FREE(outlineMaterialParams, *MEM_ENG_SCRATCH_PTR);
+
+
+			//FREE(outlineMaterialHandles, *MEM_ENG_SCRATCH_PTR);
 
 			FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
         }
@@ -1523,7 +1610,19 @@ public:
 
         drawWorldParams.layer = r2::draw::DL_SKYBOX;
 
-        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, mSkyboxMaterialHandles, nullptr);
+        r2::draw::MaterialHandle skyboxMaterialHandle = r2::sarr::At(*mSkyboxMaterialHandles, 0);
+
+        r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
+        r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
+
+        r2::sarr::Push(*skyboxRenderParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, skyboxMaterialHandle));
+        r2::sarr::Push(*skyboxShaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, skyboxMaterialHandle));
+
+
+        r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, *skyboxRenderParams, *skyboxShaderHandles, nullptr);
+
+        FREE(skyboxShaderHandles, *MEM_ENG_SCRATCH_PTR);
+        FREE(skyboxRenderParams, *MEM_ENG_SCRATCH_PTR);
         FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the axis

@@ -29,7 +29,11 @@ namespace r2::ecs
 			r2::SArray<r2::draw::vb::GPUModelRefHandle>* modelRefHandles;
 			r2::SArray<glm::mat4>* transforms;
 			r2::SArray<u32>* instances;
-			r2::SArray<r2::draw::MaterialHandle>* materialHandles;
+
+			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams;
+			r2::SArray<r2::draw::ShaderHandle>* shaderHandles;
+
+			//r2::SArray<r2::draw::MaterialHandle>* materialHandles;
 			r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms;
 
 			static u64 MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct);

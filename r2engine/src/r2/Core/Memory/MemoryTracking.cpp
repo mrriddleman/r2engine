@@ -15,13 +15,13 @@ namespace r2
     {
         BasicMemoryTracking::BasicMemoryTracking():mName("")
         {
-            mTags.reserve(1024);
+            mTags.reserve(4096);
         }
         
         BasicMemoryTracking::BasicMemoryTracking(const std::string& name)
         {
             mName = name;
-            mTags.reserve(1024);
+            mTags.reserve(4096);
         }
         
         void BasicMemoryTracking::SetName(const std::string& name)
@@ -54,7 +54,7 @@ namespace r2
                     totalAskedForSize += tag.requestedSize;
                     totalAllocatedSize += tag.size;
                     
-                    printf("Allocation: Memory address: %p, requested size: %llu, total allocated: %llu, file: %s, line: %i, description: %s\n", tag.memPtr, tag.requestedSize, tag.size, tag.fileName, tag.line, tag.description.c_str());
+                    printf("Allocation: Memory address: %p, requested size: %llu, total allocated: %llu, file: %s, line: %i\n", tag.memPtr, tag.requestedSize, tag.size, tag.fileName, tag.line);
                     printf("-----------------------------------------------------------------\n");
                 }
                 

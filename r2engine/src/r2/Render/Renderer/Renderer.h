@@ -41,7 +41,12 @@ namespace r2::draw
 		};
 
 		r2::SArray<Info>* infos = nullptr;
-		r2::SArray<MaterialHandle>* materialHandles = nullptr;
+		//r2::SArray<MaterialHandle>* materialHandles = nullptr;
+
+		
+		r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = nullptr;
+		r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
+
 	};
 
 	struct ConstantBufferData
@@ -532,8 +537,23 @@ namespace r2::draw::renderer
 	void RemoveSkyLight(SkyLightHandle skylightHandle);
 	void ClearAllLighting();
 
-	void DrawModel(const DrawParameters& drawParameters, const vb::GPUModelRefHandle& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, u32 numInstances, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
-	void DrawModels(const DrawParameters& drawParameters, const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles, const r2::SArray<glm::mat4>& modelMatrices, const r2::SArray<u32>& numInstancesPerModel, const r2::SArray<MaterialHandle>* materialHandles, const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	void DrawModel(
+		const DrawParameters& drawParameters,
+		const vb::GPUModelRefHandle& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		u32 numInstances,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
+	
+	void DrawModels(
+		const DrawParameters& drawParameters,
+		const r2::SArray<vb::GPUModelRefHandle>& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		const r2::SArray<u32>& numInstancesPerModel,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 	void SetDefaultStencilState(DrawParameters& drawParameters);
 	void SetDefaultBlendState(DrawParameters& drawParameters);
@@ -552,6 +572,8 @@ namespace r2::draw::renderer
 
 
 	//@Temporary
+	const vb::GPUModelRef* GetGPUModelRef(const vb::GPUModelRefHandle& handle);
+
 	vb::VertexBufferLayoutSize GetStaticVertexBufferRemainingSize();
 	vb::VertexBufferLayoutSize GetAnimVertexBufferRemainingSize();
 

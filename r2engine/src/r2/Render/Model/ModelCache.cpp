@@ -66,8 +66,8 @@ namespace r2::draw::modlche
 
 		newModelSystem->mModelCache->RegisterAssetLoader(modelLoader);
 
-		r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
-		newModelSystem->mModelCache->RegisterAssetLoader(assimpModelLoader);
+		//r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
+		//newModelSystem->mModelCache->RegisterAssetLoader(assimpModelLoader);
 
 		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(rmodelLoader);

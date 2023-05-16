@@ -19,7 +19,7 @@ namespace r2::asstmgr
 		return 0;
 	}
 
-	bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData)
+	/*bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData)
 	{
 		return false;
 	}
@@ -103,5 +103,5 @@ namespace r2::asstmgr
 	{
 
 	}
-#endif
+#endif*/
 }

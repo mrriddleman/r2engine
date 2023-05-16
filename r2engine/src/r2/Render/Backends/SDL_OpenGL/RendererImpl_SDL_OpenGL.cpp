@@ -1198,8 +1198,8 @@ namespace r2::draw::rendererimpl
 			{
 				//SO SLOW!!
 #ifdef R2_DEBUG
-				auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-				R2_CHECK(result, "Failed to attach texture to frame buffer");
+		//		auto result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+		//		R2_CHECK(result, "Failed to attach texture to frame buffer");
 #endif
 			}
 		}

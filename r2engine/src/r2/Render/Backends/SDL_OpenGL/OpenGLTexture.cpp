@@ -310,7 +310,7 @@ namespace r2::draw::tex
 	u32 READ_ONLY = GL_READ_ONLY;
 	u32 WRITE_ONLY = GL_WRITE_ONLY;
 	
-	void GetOpenGLTextureFormatDataForTextureFormat(const flat::TextureFormat& textureFormat, TextureType type, GLenum& glFormat, GLenum& glInternalFormat, GLenum& imageFormatSize)
+	void GetOpenGLTextureFormatDataForTextureFormat(const flat::TextureFormat& textureFormat, GLenum& glFormat, GLenum& glInternalFormat, GLenum& imageFormatSize)
 	{
 		imageFormatSize = GL_UNSIGNED_BYTE;
 		switch (textureFormat)
@@ -378,7 +378,7 @@ namespace r2::draw::tex
 		GLenum format;
 		GLenum internalFormat;
 		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-		GetOpenGLTextureFormatDataForTextureFormat(textureMetaData->textureFormat(), type, format, internalFormat, imageFormatSize);
+		GetOpenGLTextureFormatDataForTextureFormat(textureMetaData->textureFormat(), format, internalFormat, imageFormatSize);
 
 		r2::draw::tex::GPUHandle newHandle;
 
@@ -721,7 +721,7 @@ namespace r2::draw::tex
 				GLenum format;
 				GLenum internalFormat;
 				GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-				GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), Diffuse, format, internalFormat, imageFormatSize);
+				GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), format, internalFormat, imageFormatSize);
 
 				if (mipLevel == 0 && i == 0)
 				{

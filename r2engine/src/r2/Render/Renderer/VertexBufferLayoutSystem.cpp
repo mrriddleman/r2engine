@@ -584,7 +584,7 @@ namespace r2::draw::vbsys
 		R2_CHECK(modelRef->meshEntries != nullptr, "vertexEntries is nullptr!");
 
 		modelRef->materialHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, MaterialHandle, numMaterals);
-
+		modelRef->numMaterials = numMaterals;
 		R2_CHECK(modelRef->materialHandles != nullptr, "materialHandles is nullptr!");
 
 		for (u32 i = 0; i < numMaterals; ++i)

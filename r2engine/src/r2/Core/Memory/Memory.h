@@ -95,10 +95,10 @@ namespace r2
                 u64 requestedSize = 0;
                 s32 line = -1;
                 void* memPtr = nullptr;
-                std::string description;
+//                std::string description;
 
                 MemoryTag(){}
-                MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line, const std::string& description);
+                MemoryTag(void* memPtr, const char* fileName, u64 alignment, u64 size, s32 line);
                 MemoryTag(const MemoryTag& tag);
                 MemoryTag& operator=(const MemoryTag& tag);
                 ~MemoryTag() = default;
@@ -268,7 +268,7 @@ namespace r2
                 mMemoryTagger.TagAllocation(plainMemory + BoundsCheckingPolicy::SIZE_FRONT, originalSize);
                 mBoundsChecker.GuardBack(plainMemory + BoundsCheckingPolicy::SIZE_FRONT + originalSize);
                 
-                utils::MemoryTag tag(plainMemory, file, alignment, newSize, line, description);
+                utils::MemoryTag tag(plainMemory, file, alignment, newSize, line);
                 tag.requestedSize = originalSize;
                 
                 mMemoryTracker.OnAllocation(tag);
