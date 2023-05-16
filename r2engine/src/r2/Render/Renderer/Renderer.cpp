@@ -387,7 +387,9 @@ namespace r2::draw::renderer
 
 	void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
-	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(Renderer& renderer, bool isStatic);
+
+	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic);
+	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic);
 
 	void SetDefaultTransparencyBlendState(BlendState& blendState);
 	void SetDefaultTransparentCompositeBlendState(BlendState& blendState);
@@ -976,9 +978,13 @@ namespace r2::draw::renderer
 		newRenderer->mDebugLinesMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines"));
 		newRenderer->mDebugModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels"));
 #endif
-		newRenderer->mFinalCompositeMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite"));
-		newRenderer->mDefaultStaticOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline"));
-		newRenderer->mDefaultDynamicOutlineMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline"));
+		newRenderer->mFinalCompositeMaterialHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite")));
+		newRenderer->mDefaultStaticOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
+		newRenderer->mDefaultDynamicOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
+
+
+		
+		
 
 		//Get the depth shader handles
 		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
@@ -1280,6 +1286,10 @@ namespace r2::draw::renderer
 
 		LoadEngineTexturesFromDisk(*newRenderer);
 		UploadEngineMaterialTexturesToGPU(*newRenderer);
+
+		//@NOTE(Serge): any internal engine render material params need to be set after we upload - for now....
+		newRenderer->mDefaultStaticOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
+		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
 
 		return newRenderer;
 	}
@@ -2624,14 +2634,23 @@ namespace r2::draw::renderer
 		return materialHandle;
 	}
 
-	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(Renderer& renderer, bool isStatic)
+	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic)
 	{
 		if (isStatic)
 		{
-			return renderer.mDefaultStaticOutlineMaterialHandle;
+			return renderer.mDefaultStaticOutlineShaderHandle;
 		}
 
-		return renderer.mDefaultDynamicOutlineMaterialHandle;
+		return renderer.mDefaultDynamicOutlineShaderHandle;
+	}
+
+	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(Renderer& renderer, bool isStatic)
+	{
+		if (isStatic)
+		{
+			return renderer.mDefaultStaticOutlineRenderMaterialParams;
+		}
+		return renderer.mDefaultDynamicOutlineRenderMaterialParams;
 	}
 
 	void UploadEngineModels(Renderer& renderer)
@@ -3406,7 +3425,7 @@ namespace r2::draw::renderer
 		{
 			const vb::GPUModelRef* fullScreenTriangleModelRef = vbsys::GetGPUModelRef(*renderer.mVertexBufferLayoutSystem, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));// r2::sarr::At(*renderer.mModelRefs, GetDefaultModelRef(renderer, FULLSCREEN_TRIANGLE));
 
-			ShaderHandle materialShaderHandle = mat::GetShaderHandle(renderer.mFinalCompositeMaterialHandle);
+			ShaderHandle materialShaderHandle = renderer.mFinalCompositeMaterialHandle;
 
 			cmd::DrawBatchSubCommand finalBatchSubcommand;
 			finalBatchSubcommand.baseInstance = finalBatchModelOffset;
@@ -8925,9 +8944,14 @@ namespace r2::draw::renderer
 		return GetMaterialHandleForDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
-	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(bool isStatic)
+	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic)
 	{
-		return GetDefaultOutlineMaterialHandle(MENG.GetCurrentRendererRef(), isStatic);
+		return GetDefaultOutlineShaderHandle(MENG.GetCurrentRendererRef(), isStatic);
+	}
+
+	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic)
+	{
+		return GetDefaultOutlineRenderMaterialParams(MENG.GetCurrentRendererRef(), isStatic);
 	}
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam()

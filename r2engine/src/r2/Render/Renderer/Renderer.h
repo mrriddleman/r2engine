@@ -176,9 +176,12 @@ namespace r2::draw
 		r2::SHashMap<ConstantBufferData>* mConstantBufferData = nullptr;
 		r2::SArray<r2::draw::ConstantBufferLayoutConfiguration>* mConstantLayouts = nullptr;
 		
-		r2::draw::MaterialHandle mFinalCompositeMaterialHandle;
-		r2::draw::MaterialHandle mDefaultStaticOutlineMaterialHandle;
-		r2::draw::MaterialHandle mDefaultDynamicOutlineMaterialHandle;
+		r2::draw::ShaderHandle mFinalCompositeMaterialHandle;
+		r2::draw::ShaderHandle mDefaultStaticOutlineShaderHandle;
+		r2::draw::ShaderHandle mDefaultDynamicOutlineShaderHandle;
+
+		r2::draw::RenderMaterialParams mDefaultStaticOutlineRenderMaterialParams;
+		r2::draw::RenderMaterialParams mDefaultDynamicOutlineRenderMaterialParams;
 
 		vb::VertexBufferLayoutHandle mStaticVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mAnimVertexModelConfigHandle = vb::InvalidVertexBufferLayoutHandle;
@@ -499,7 +502,9 @@ namespace r2::draw::renderer
 	void GetDefaultModelMaterials( r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials);
 	r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(r2::draw::DefaultModel defaultModel);
 
-	r2::draw::MaterialHandle GetDefaultOutlineMaterialHandle(bool isStatic);
+	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
+	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
+
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam();
 	const tex::Texture* GetMissingTexture();

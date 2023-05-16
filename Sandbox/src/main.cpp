@@ -1587,10 +1587,9 @@ public:
             r2::SArray<r2::draw::RenderMaterialParams>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
             r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-            r2::draw::MaterialHandle outlineMaterialHandle = r2::draw::renderer::GetDefaultOutlineMaterialHandle(false);
 
-            r2::sarr::Push(*outlineMaterialParams, r2::draw::mat::GetRenderMaterial(outlineMaterialHandle) );
-            r2::sarr::Push(*outlineShaderHandles, r2::draw::mat::GetShaderHandle(outlineMaterialHandle));
+            r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineRenderMaterialParams(false) );
+            r2::sarr::Push(*outlineShaderHandles, r2::draw::renderer::GetDefaultOutlineShaderHandle(false));
 
 			r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *outlineMaterialParams, *outlineShaderHandles, mEllenBoneTransforms);
 
