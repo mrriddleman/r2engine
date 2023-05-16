@@ -996,7 +996,7 @@ namespace r2
 		memSizeStruct.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 
-		mnoptrRenderSystem->Init<mem::MallocArena>(mMallocArena, MAX_NUM_STATIC_BATCHES, MAX_NUM_DYNAMIC_BATCHES, maxNumModels, maxNumModels, avgMaxNumInstancesPerModel, avgMaxNumMeshesPerModel, avgMaxNumBonesPerModel);
+		mnoptrRenderSystem->Init<mem::MallocArena>(mMallocArena, avgMaxNumInstancesPerModel * maxNumModels, avgMaxNumMeshesPerModel*maxNumModels, avgMaxNumBonesPerModel*maxNumModels);
 
 		mnoptrSkeletalAnimationSystem = (ecs::SkeletalAnimationSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
 

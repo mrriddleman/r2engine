@@ -15,14 +15,6 @@ namespace r2::ecs
 	RenderSystem::RenderSystem()
 		: mMemoryBoundary{}
 		, mArena(nullptr)
-		, mPerFrameArena(nullptr)
-		, mMaxNumStaticModelsToDraw(0)
-		, mMaxNumAnimModelsToDraw(0)
-		, mMaxNumMaterialsPerModel(0)
-		, mMaxNumBoneTransformsPerAnimModel(0)
-		, mMaxNumInstancesPerModel(0)
-		, mStaticBatches(nullptr)
-		, mDynamicBatches(nullptr)
 	{
 		mKeepSorted = false;
 	}
@@ -50,81 +42,25 @@ namespace r2::ecs
 			const InstanceComponentT<TransformComponent>* instancedTransformsComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
 			const InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
 
-			GatherBatchPtr gatherBatchToUse = mStaticBatches;
-			u32 maxNumModels = mMaxNumStaticModelsToDraw;
-			if (animationComponent)
-			{
-				gatherBatchToUse = mDynamicBatches;
-				maxNumModels = mMaxNumAnimModelsToDraw;
-			}
+			DrawRenderComponent(transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
 
-			AddComponentsToGatherBatch(gatherBatchToUse, maxNumModels, transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
+			ClearPerFrameData();
 		}
-
-		SubmitBatch(mStaticBatches);
-		SubmitBatch(mDynamicBatches);
-
-		//Do the simple thing to start
-		FreeAllPerFrameData();
 	}
 
-	void RenderSystem::AddComponentsToGatherBatch(
-		GatherBatchPtr gatherBatchPtr,
-		u32 maxNumModelsToCreate,
+	void RenderSystem::DrawRenderComponent(
 		const TransformComponent& transform,
 		const RenderComponent& renderComponent,
 		const SkeletalAnimationComponent* animationComponent,
 		const InstanceComponentT<TransformComponent>* instancedTransformComponent,
 		const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent)
 	{
-		//I think the idea here is to gather all of the similar state together and only call the necessary amount of DrawModel/DrawModels of the renderer
-		//We have to break things up on certain criteria:
-		//1. Different DrawParameters
-		//2. Animated vs Not animated
-		//3. Material overrides
-		//4. Primitive types
 
-		//first generate the render key
 		bool hasMaterialOverrides = renderComponent.optrOverrideMaterials != nullptr;
 		bool isAnimated = animationComponent != nullptr;
 
-		draw::key::RenderSystemKey renderKey = r2::draw::key::GenerateRenderSystemKey(hasMaterialOverrides, (r2::draw::PrimitiveType)renderComponent.primitiveType, utils::HashBytes32(&renderComponent.drawParameters, sizeof(renderComponent.drawParameters)));
-
-		//now find or create the RenderSystemGatherBatch that we should add to 
-
-		RenderSystemGatherBatch* defaultGatherBatch = nullptr;
-
-		RenderSystemGatherBatch* gatherBatch = r2::shashmap::Get(*gatherBatchPtr, renderKey.keyValue, defaultGatherBatch);
-
-		if (gatherBatch == defaultGatherBatch)
-		{
-			//need to make a gather batch for this
-			gatherBatch = ALLOC(RenderSystemGatherBatch, *mPerFrameArena);
-
-			gatherBatch->modelRefHandles = MAKE_SARRAY(*mPerFrameArena, r2::draw::vb::GPUModelRefHandle, maxNumModelsToCreate);
-			gatherBatch->transforms = MAKE_SARRAY(*mPerFrameArena, glm::mat4, maxNumModelsToCreate * mMaxNumInstancesPerModel);
-			gatherBatch->instances = MAKE_SARRAY(*mPerFrameArena, u32, maxNumModelsToCreate);
-
-			//@TODO(Serge): look into a way to just grab the renderer's version and directly store them - wasting memory + performance
-			gatherBatch->renderMaterialParams = MAKE_SARRAY(*mPerFrameArena, r2::draw::RenderMaterialParams, mMaxNumMaterialsPerModel * maxNumModelsToCreate);
-			gatherBatch->shaderHandles = MAKE_SARRAY(*mPerFrameArena, r2::draw::ShaderHandle, mMaxNumMaterialsPerModel * maxNumModelsToCreate);
-
-			gatherBatch->boneTransforms = nullptr;
-			if (isAnimated)
-			{
-				gatherBatch->boneTransforms = MAKE_SARRAY(*mPerFrameArena, r2::draw::ShaderBoneTransform, mMaxNumBoneTransformsPerAnimModel * maxNumModelsToCreate);
-			}
-			
-			gatherBatch->drawParams = renderComponent.drawParameters;
-			gatherBatch->primitiveType = (r2::draw::PrimitiveType) renderComponent.primitiveType;
-
-			r2::shashmap::Set(*gatherBatchPtr, renderKey.keyValue, gatherBatch);
-		}
-
-		//now add in the data to gatherBatch
-		r2::sarr::Push(*gatherBatch->modelRefHandles, renderComponent.gpuModelRefHandle);
-		
-		r2::sarr::Push(*gatherBatch->transforms, transform.modelMatrix);
+		//@TEMPORARY so that we can remove the material system calls from the Renderer itself
+		r2::sarr::Push(*mBatch.transforms, transform.modelMatrix);
 		u32 numInstances = 1;
 
 		if (instancedTransformComponent)
@@ -132,12 +68,10 @@ namespace r2::ecs
 			numInstances += instancedTransformComponent->numInstances;
 			for (size_t i = 0; i < instancedTransformComponent->numInstances; i++)
 			{
-				r2::sarr::Push(*gatherBatch->transforms, r2::sarr::At(*instancedTransformComponent->instances, i).modelMatrix);
+				r2::sarr::Push(*mBatch.transforms, r2::sarr::At(*instancedTransformComponent->instances, i).modelMatrix);
 			}
 		}
 
-		r2::sarr::Push(*gatherBatch->instances, numInstances);
-		//@TEMPORARY so that we can remove the material system calls from the Renderer itself
 		if (hasMaterialOverrides)
 		{
 			u32 numOverrides = r2::sarr::Size(*renderComponent.optrOverrideMaterials);
@@ -156,8 +90,8 @@ namespace r2::ecs
 
 				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
 
-				r2::sarr::Push(*gatherBatch->renderMaterialParams, nextRenderMaterial);
-				r2::sarr::Push(*gatherBatch->shaderHandles, materialShaderHandle);
+				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
+				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
 			}
 		}
 		else
@@ -182,108 +116,66 @@ namespace r2::ecs
 
 				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
 
-				r2::sarr::Push(*gatherBatch->renderMaterialParams, nextRenderMaterial);
-				r2::sarr::Push(*gatherBatch->shaderHandles, materialShaderHandle);
+				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
+				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
 			}
 		}
 
+		r2::SArray<r2::draw::ShaderBoneTransform>* shaderBoneTransforms = nullptr;
+
 		if (isAnimated)
 		{
-			r2::sarr::Append(*gatherBatch->boneTransforms, *animationComponent->shaderBones);
+			r2::sarr::Append(*mBatch.boneTransforms, *animationComponent->shaderBones);
 
 			if (instancedSkeletalAnimationComponent && !animationComponent->shouldUseSameTransformsForAllInstances)
 			{
 				for (u32 i = 0; i < instancedSkeletalAnimationComponent->numInstances; i++)
 				{
 					SkeletalAnimationComponent& nextAnimationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent->instances, i);
-					r2::sarr::Append(*gatherBatch->boneTransforms, *nextAnimationComponent.shaderBones);
+					r2::sarr::Append(*mBatch.boneTransforms, *nextAnimationComponent.shaderBones);
 				}
 			}
+
+			shaderBoneTransforms = mBatch.boneTransforms;
 		}
+
+		r2::draw::renderer::DrawModel(renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, numInstances, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms); 
 	}
 
-	void RenderSystem::SubmitBatch(GatherBatchPtr gatherBatch)
+	void RenderSystem::ClearPerFrameData()
 	{
-		auto batchIter = r2::shashmap::Begin(*gatherBatch);
 
-		for (; batchIter != r2::shashmap::End(*gatherBatch); ++batchIter)
-		{
-			const auto batch = batchIter->value;
-
-
-			r2::draw::renderer::DrawModels(batch->drawParams, *batch->modelRefHandles, *batch->transforms, *batch->instances, *batch->renderMaterialParams, *batch->shaderHandles, batch->boneTransforms);
-		}
+		r2::sarr::Clear(*mBatch.transforms);
+		r2::sarr::Clear(*mBatch.renderMaterialParams);
+		r2::sarr::Clear(*mBatch.shaderHandles);
+		r2::sarr::Clear(*mBatch.boneTransforms);
 	}
 
-	void RenderSystem::FreeAllPerFrameData()
-	{
-		r2::shashmap::Clear(*mStaticBatches);
-		r2::shashmap::Clear(*mDynamicBatches);
-
-		RESET_ARENA(*mPerFrameArena);
-	}
-
-	void RenderSystem::ClearPerFrameData(GatherBatchPtr gatherBatch)
-	{
-		auto batchIter = r2::shashmap::Begin(*gatherBatch);
-
-		for (; batchIter != r2::shashmap::End(*gatherBatch); ++batchIter)
-		{
-			auto batch = batchIter->value;
-			r2::sarr::Clear(*batch->modelRefHandles);
-			r2::sarr::Clear(*batch->instances);
-			r2::sarr::Clear(*batch->transforms);
-			r2::sarr::Clear(*batch->renderMaterialParams);
-			r2::sarr::Clear(*batch->shaderHandles);
-			if (batch->boneTransforms)
-			{
-				r2::sarr::Clear(*batch->boneTransforms);
-			}
-		}
-	}
-
-	u64 RenderSystem::MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySizeStruct)
+	u64 RenderSystem::MemorySize(u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 		
 		memorySize +=
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystem), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * 2 +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RenderSystemGatherBatch*>::MemorySize(maxNumStaticBatches * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<RenderSystemGatherBatch*>::MemorySize(maxNumDynamicBatches * r2::SHashMap<u64>::LoadFactorMultiplier()), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			MemorySizeForPerFrameArena(maxNumStaticBatches, maxNumDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
+			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			RenderSystemGatherBatch::MemorySize(maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumShaderBoneTransforms, memorySizeStruct);
 		
-		R2_CHECK(memorySize <= Megabytes(71), "Don't let this go crazy");
+		R2_CHECK(memorySize <= Megabytes(50), "Don't let this go crazy");
 
 		return memorySize;
 	}
 
-	u64 RenderSystem::MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySizeStruct)
-	{
-		u64 memorySize = 0;
-
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystemGatherBatch), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticBatches;
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystemGatherBatch), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumDynamicBatches;
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumStaticModelsToDraw / maxNumStaticBatches, maxNumInstancesPerModel, maxNumMaterialsPerModel, 0, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumStaticBatches;
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(RenderSystemGatherBatch::MemorySize(maxNumAnimModelsToDraw / maxNumDynamicBatches, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) * maxNumDynamicBatches;
-
-		return memorySize;
-	}
-
-	u64 RenderSystem::RenderSystemGatherBatch::MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel , u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct)
+	u64 RenderSystem::RenderSystemGatherBatch::MemorySize(u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct)
 	{
 		u64 memorySize = 0;
 
 		memorySize +=
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystemGatherBatch), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::vb::GPUModelRefHandle>::MemorySize(maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(maxNumModels * maxNumInstancesPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(maxNumMaterialsPerModel * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(maxNumMaterialsPerModel * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(maxNumInstancesPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::RenderMaterialParams>::MemorySize(maxNumMaterialsPerModel ), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderHandle>::MemorySize(maxNumMaterialsPerModel), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 
 			//@NOTE: this is inadvertently correct - pretty sure we can only have this many bones anyways (shaderwise)
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderBoneTransform>::MemorySize(maxNumShaderBoneTransforms * maxNumModels), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::ShaderBoneTransform>::MemorySize(maxNumShaderBoneTransforms), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking);
 
 		return memorySize;
 	}

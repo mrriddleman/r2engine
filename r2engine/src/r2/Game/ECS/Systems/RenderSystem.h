@@ -23,20 +23,14 @@ namespace r2::ecs
 
 		struct RenderSystemGatherBatch
 		{
-			r2::draw::DrawParameters drawParams;
-			r2::draw::PrimitiveType primitiveType;
-
-			r2::SArray<r2::draw::vb::GPUModelRefHandle>* modelRefHandles;
 			r2::SArray<glm::mat4>* transforms;
-			r2::SArray<u32>* instances;
 
 			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams;
 			r2::SArray<r2::draw::ShaderHandle>* shaderHandles;
 
-			//r2::SArray<r2::draw::MaterialHandle>* materialHandles;
 			r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms;
 
-			static u64 MemorySize(u32 maxNumModels, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct);
+			static u64 MemorySize(u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySizeStruct);
 
 		};
 
@@ -44,7 +38,7 @@ namespace r2::ecs
 		~RenderSystem();
 
 		template<class ARENA>
-		bool Init(ARENA& arena, u32 maxNumberOfStaticBatches, u32 maxNumberOfDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel)
+		bool Init(ARENA& arena, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms)
 		{
 			r2::mem::utils::MemoryProperties memorySizeStruct;
 			memorySizeStruct.headerSize = arena.HeaderSize();
@@ -55,7 +49,7 @@ namespace r2::ecs
 			memorySizeStruct.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 			
-			u64 memorySize = MemorySize(maxNumberOfStaticBatches, maxNumberOfDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
+			u64 memorySize = MemorySize(maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumShaderBoneTransforms, memorySizeStruct);
 
 			mMemoryBoundary = MAKE_BOUNDARY(arena, memorySize, memorySizeStruct.alignment);
 			
@@ -65,25 +59,10 @@ namespace r2::ecs
 
 			R2_CHECK(mArena != nullptr, "We couldn't emplace the stack arena");
 
-			mStaticBatches = MAKE_SHASHMAP(*mArena, RenderSystemGatherBatch*, maxNumberOfStaticBatches * r2::SHashMap<RenderSystemGatherBatch*>::LoadFactorMultiplier());
-
-			R2_CHECK(mStaticBatches != nullptr, "We couldn't create the mStaticBatches");
-
-			mDynamicBatches = MAKE_SHASHMAP(*mArena, RenderSystemGatherBatch*, maxNumberOfDynamicBatches * r2::SHashMap<RenderSystemGatherBatch*>::LoadFactorMultiplier());
-
-			R2_CHECK(mDynamicBatches != nullptr, "We couldn't create the mDynamicBatches");
-
-			u64 perFrameMemorySize = MemorySizeForPerFrameArena(maxNumberOfStaticBatches, maxNumberOfDynamicBatches, maxNumStaticModelsToDraw, maxNumAnimModelsToDraw, maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumBoneTransformsPerAnimModel, memorySizeStruct);
-			
-			mPerFrameArena = MAKE_STACK_ARENA(*mArena, perFrameMemorySize);
-
-			R2_CHECK(mPerFrameArena != nullptr, "We couldn't create the per frame arena!");
-
-			mMaxNumStaticModelsToDraw = maxNumStaticModelsToDraw;
-			mMaxNumAnimModelsToDraw = maxNumAnimModelsToDraw;
-			mMaxNumMaterialsPerModel = maxNumMaterialsPerModel;
-			mMaxNumBoneTransformsPerAnimModel = maxNumBoneTransformsPerAnimModel;
-			mMaxNumInstancesPerModel = maxNumInstancesPerModel;
+			mBatch.transforms = MAKE_SARRAY(*mArena, glm::mat4, maxNumInstancesPerModel);
+			mBatch.renderMaterialParams = MAKE_SARRAY(*mArena, r2::draw::RenderMaterialParams, maxNumMaterialsPerModel);
+			mBatch.shaderHandles = MAKE_SARRAY(*mArena, r2::draw::ShaderHandle, maxNumMaterialsPerModel);
+			mBatch.boneTransforms = MAKE_SARRAY(*mArena, r2::draw::ShaderBoneTransform, maxNumShaderBoneTransforms);
 
 			return true;
 		}
@@ -93,44 +72,27 @@ namespace r2::ecs
 		template<class ARENA>
 		void Shutdown(ARENA& arena)
 		{
-			RESET_ARENA(*mPerFrameArena);
 			RESET_ARENA(*mArena);
 			FREE_EMPLACED_ARENA(mArena);
 			FREE(mMemoryBoundary.location, arena);
 		}
 
-		static u64 MemorySize(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySize);
+		static u64 MemorySize(u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySize);
 	private:
 
-		static u64 MemorySizeForPerFrameArena(u32 maxNumStaticBatches, u32 maxNumDynamicBatches, u32 maxNumStaticModelsToDraw, u32 maxNumAnimModelsToDraw, u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumBoneTransformsPerAnimModel, const r2::mem::utils::MemoryProperties& memorySize);
-
-		using GatherBatchPtr = r2::SHashMap<RenderSystemGatherBatch*>*;
-
-		void AddComponentsToGatherBatch(
-			GatherBatchPtr gatherBatch,
-			u32 maxNumModelsToCreate,
+		void DrawRenderComponent(
 			const TransformComponent& transform,
 			const RenderComponent& renderComponent,
 			const SkeletalAnimationComponent* animationComponent,
 			const InstanceComponentT<TransformComponent>* instancedTransformComponent,
 			const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent);
 		
-		void SubmitBatch(GatherBatchPtr gatherBatch);
-		void FreeAllPerFrameData();
-		void ClearPerFrameData(GatherBatchPtr gatherBatch);
+		void ClearPerFrameData();
 
 		r2::mem::utils::MemBoundary mMemoryBoundary;
 		r2::mem::StackArena* mArena;
-		r2::mem::StackArena* mPerFrameArena;
 
-		u32 mMaxNumStaticModelsToDraw;
-		u32 mMaxNumAnimModelsToDraw;
-		u32 mMaxNumMaterialsPerModel;
-		u32 mMaxNumBoneTransformsPerAnimModel;
-		u32 mMaxNumInstancesPerModel;
-
-		GatherBatchPtr mStaticBatches;
-		GatherBatchPtr mDynamicBatches;
+		RenderSystemGatherBatch mBatch;
 	};
 }
 
