@@ -4,7 +4,6 @@
 #include "r2/Render/Animation/Animation.h"
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetLoaders/AssimpAnimationAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
 
 namespace r2::draw
@@ -56,9 +55,6 @@ namespace r2::draw
 			newAnimationCache->mAssetBoundary = MAKE_BOUNDARY(*animationCacheArena, modelCacheSize, ALIGNMENT);
 
 			newAnimationCache->mAnimationCache = r2::asset::lib::CreateAssetCache(newAnimationCache->mAssetBoundary, files);
-		
-			r2::asset::AssimpAnimationLoader* animationLoader = (r2::asset::AssimpAnimationLoader*)newAnimationCache->mAnimationCache->MakeAssetLoader<r2::asset::AssimpAnimationLoader>();
-			newAnimationCache->mAnimationCache->RegisterAssetLoader(animationLoader);
 
 			r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)newAnimationCache->mAnimationCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
 			newAnimationCache->mAnimationCache->RegisterAssetLoader(ranimationLoader);
