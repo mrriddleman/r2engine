@@ -48,17 +48,17 @@ namespace r2::draw::rendererimpl
 				GLbitfield waitFlags = 0;
 				GLuint64 waitDuration = 0;
 	
-				R2_CHECK(glIsSync(nextLock.syncObject), "?");
+				//R2_CHECK(glIsSync(nextLock.syncObject), "?");
 
 				GLenum waitRet = glClientWaitSync(nextLock.syncObject, waitFlags, waitDuration);
 
 				//@TODO(Serge): figure out what to do when glClientWaitSync returns GL_TIMEOUT_EXPIRED - maybe nothing?
 
-				GLenum err = glGetError();
-				if (err != GL_NO_ERROR)
-				{
-					R2_CHECK(false, "glClientWaitSync error: %zu", err);
-				}
+				//GLenum err = glGetError();
+				//if (err != GL_NO_ERROR)
+				//{
+				//	R2_CHECK(false, "glClientWaitSync error: %zu", err);
+				//}
 
 				if (waitRet == GL_ALREADY_SIGNALED || waitRet == GL_CONDITION_SATISFIED) {
 

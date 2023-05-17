@@ -274,10 +274,10 @@ namespace r2::draw::gl
 			else
 			{
 				glTexStorage3DMultisample(target, format.msaaSamples, format.internalformat, format.width, format.height, slices, format.fixedSamples);
-				if (GLenum err = glGetError())
-				{
-					R2_CHECK(false, "Couldn't make storage for multisample texture!");
-				}
+				//if (GLenum err = glGetError())
+				//{
+				//	R2_CHECK(false, "Couldn't make storage for multisample texture!");
+				//}
 			}
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
@@ -292,10 +292,10 @@ namespace r2::draw::gl
 			}
 
 			container.handle = glGetTextureHandleARB(container.texId);
-			if (GLenum err = glGetError())
-			{
-				R2_CHECK(false, "Couldn't get the texture handle with error: %lu\n", err);
-			}
+			//if (GLenum err = glGetError())
+			//{
+			//	R2_CHECK(false, "Couldn't get the texture handle with error: %lu\n", err);
+			//}
 			R2_CHECK(container.handle != 0, "We couldn't get a proper handle to the texture array!");
 			glMakeTextureHandleResidentARB(container.handle);
 

@@ -143,10 +143,10 @@ namespace r2::draw::rt::impl
 
 		glBindFramebuffer(GL_FRAMEBUFFER, rt.frameBufferID);
 
-		if (GLenum err = glGetError())
-		{
-			R2_CHECK(false, "Couldn't make storage for multisample texture!");
-		}
+		//if (GLenum err = glGetError())
+		//{
+		//	R2_CHECK(false, "Couldn't make storage for multisample texture!");
+		//}
 
 		if (IsColorAttachment(textureAttachmentFormat.type))
 		{

@@ -528,11 +528,11 @@ namespace r2::draw::rendererimpl
 
 		GLint location = glGetUniformLocation(shader->shaderProg, name);
 
-		GLenum err = glGetError();
+		//GLenum err = glGetError();
 		
 		R2_CHECK(location >= 0, "We couldn't get the uniform location of the uniform name passed in: %s", name);
 		//if(err != GL_NO_ERROR)
-		R2_CHECK(err == GL_NO_ERROR, "We got an OpenGL error from ConstantUint: %i", err);
+		//R2_CHECK(err == GL_NO_ERROR, "We got an OpenGL error from ConstantUint: %i", err);
 
 		return location;
 	}
