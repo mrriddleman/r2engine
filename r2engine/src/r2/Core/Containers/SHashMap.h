@@ -199,23 +199,37 @@ namespace r2
                 (*h.mHash)[fr.hash_i] = ((*h.mData)[fr.data_i]).next;
             }
             else
+            {
                 ((*h.mData)[fr.data_prev]).next = ((*h.mData)[fr.data_i]).next;
+
+                if (((*h.mData)[fr.data_prev]).next == 0)
+                {
+                    int k = 0;
+                }
+            }
+               
            
             
             s64 size = static_cast<s64>(h.mData->mSize);
-            //if (fr.data_i == size - 1)
+            if (fr.data_i == size - 1)
             { 
                 r2::sarr::Pop(*h.mData);
-            //    return;
+
+                return;
             }
             
-            (*h.mData)[fr.data_i] = (*h.mData)[size];
+            (*h.mData)[fr.data_i] = (*h.mData)[size-1];
             
-            FindResult last = Find(h, &((*h.mData)[size]));
+            FindResult last = Find(h, h.mData->mData[fr.data_i].key);
             
             if (last.data_prev != END_OF_LIST)
             {
                 ((*h.mData)[last.data_prev]).next = fr.data_i;
+
+                if (((*h.mData)[last.data_prev]).next == 0)
+                {
+                    int k = 0;
+                }
             }
             else
             {
@@ -244,7 +258,15 @@ namespace r2
                 (*h.mHash)[fr.hash_i] = i;
             }
             else
+            {
                 ((*h.mData)[fr.data_prev]).next = i;
+
+                if (((*h.mData)[fr.data_prev]).next == 0)
+                {
+                    int k = 0;
+                }
+            }
+               
             
             return i;
         }
@@ -260,10 +282,25 @@ namespace r2
                 ((*h.mHash)[fr.hash_i]) = i;
             }
             else
+            {
                 ((*h.mData)[fr.data_prev]).next = i;
+
+                if (((*h.mData)[fr.data_prev]).next == 0)
+                {
+                    int k = 0;
+                    printf("Hello");
+                }
+            }
+                
             
             ((*h.mData)[i]).next = fr.data_i;
             
+            if (((*h.mData)[i]).next == 0)
+            {
+                int k = 0;
+                printf("Hello");
+            }
+
             return i;
         }
         
