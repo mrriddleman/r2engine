@@ -50,9 +50,9 @@ namespace r2::draw
 			newAnimationCache->mMemoryAreaHandle = memoryAreaHandle;
 			newAnimationCache->mSubAreaHandle = subAreaHandle;
 			newAnimationCache->mSubAreaArena = animationCacheArena;
-			newAnimationCache->mAnimationRecords = MAKE_SHASHMAP(*animationCacheArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 
 			newAnimationCache->mAssetBoundary = MAKE_BOUNDARY(*animationCacheArena, modelCacheSize, ALIGNMENT);
+			newAnimationCache->mAnimationRecords = MAKE_SHASHMAP(*animationCacheArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 
 			newAnimationCache->mAnimationCache = r2::asset::lib::CreateAssetCache(newAnimationCache->mAssetBoundary, files);
 
@@ -67,13 +67,14 @@ namespace r2::draw
 			r2::mem::LinearArena* arena = system.mSubAreaArena;
 
 			//return all of the models back to the cache
+			
 
 			r2::draw::animcache::FlushAll(system);
-
+			FREE(system.mAnimationRecords, *arena);
 			r2::asset::lib::DestroyCache(system.mAnimationCache);
 			FREE(system.mAssetBoundary.location, *arena);
 
-			FREE(system.mAnimationRecords, *arena);
+			
 
 			FREE(&system, *arena);
 
@@ -119,11 +120,11 @@ namespace r2::draw
 				r2::asset::AssetCacheRecord defaultRecord;
 				record = r2::shashmap::Get(*system.mAnimationRecords, handle.handle, defaultRecord);
 
-				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+				R2_CHECK(record.GetAssetBuffer() != defaultRecord.GetAssetBuffer(), "We couldn't get the record!");
 				
 			}
 
-			r2::draw::Animation* animation = (r2::draw::Animation*)record.buffer->MutableData();
+			r2::draw::Animation* animation = (r2::draw::Animation*)record.GetAssetBuffer()->MutableData();
 
 			animation->hashName = handle.handle;
 
@@ -142,7 +143,7 @@ namespace r2::draw
 
 			r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system.mAnimationRecords, animation->hashName, defaultRecord);
 
-			if (theRecord.buffer == defaultRecord.buffer)
+			if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 			{
 				R2_CHECK(false, "Failed to get the asset cache record!");
 				return;

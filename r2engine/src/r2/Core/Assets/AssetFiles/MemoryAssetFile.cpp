@@ -6,8 +6,8 @@ namespace r2::asset
 
 	MemoryAssetFile::MemoryAssetFile(const AssetCacheRecord& record)
 		: mOffset(0)
-		, mData(record.buffer->MutableData())
-		, mSize(record.buffer->Size())
+		, mData(record.GetAssetBuffer()->MutableData())
+		, mSize(record.GetAssetBuffer()->Size())
 	{
 		strcpy(mFilePath, "");
 	}

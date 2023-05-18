@@ -13,12 +13,10 @@ namespace r2::asset
         : moptrData(nullptr)
         , mDataSize(0)
     {
-        
     }
     
-    void AssetBuffer::Load(const Asset& asset, s64 slot, byte* data, u64 dataSize)
+    void AssetBuffer::Load( byte* data, u64 dataSize)
     {
-        mHandle = { asset.HashID(), slot };
         moptrData = data;
         mDataSize = dataSize;
     }

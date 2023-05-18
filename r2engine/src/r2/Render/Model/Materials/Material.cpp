@@ -12,7 +12,7 @@
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+
 #include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Utils/Hash.h"
@@ -20,6 +20,7 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include <filesystem>
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 #endif
 
@@ -2145,11 +2146,11 @@ namespace r2::draw::matsys
 		system->mMaterialParamsPackData = system->mAssetCache->GetAssetBuffer(materialManifestAssetHandle);
 		system->mTexturePackManifestData = system->mAssetCache->GetAssetBuffer(texturePackManifestAssetHandle);
 
-		R2_CHECK(system->mMaterialParamsPackData.buffer->IsLoaded(), "We didn't load the material asset record!");
-		R2_CHECK(system->mTexturePackManifestData.buffer->IsLoaded(), "We didn't load the texture packs asset record!");
+		R2_CHECK(system->mMaterialParamsPackData.GetAssetBuffer()->IsLoaded(), "We didn't load the material asset record!");
+		R2_CHECK(system->mTexturePackManifestData.GetAssetBuffer()->IsLoaded(), "We didn't load the texture packs asset record!");
 
-		void* materialParamsPackData = (void*)system->mMaterialParamsPackData.buffer->MutableData();
-		texturePacksData = (void*)system->mTexturePackManifestData.buffer->MutableData();
+		void* materialParamsPackData = (void*)system->mMaterialParamsPackData.GetAssetBuffer()->MutableData();
+		texturePacksData = (void*)system->mTexturePackManifestData.GetAssetBuffer()->MutableData();
 
 		system->mMaterialParamsPack = flat::GetMaterialParamsPack(materialParamsPackData);
 		system->mTexturePackManifest = flat::GetTexturePacksManifest(texturePacksData);
@@ -2197,6 +2198,8 @@ namespace r2::draw::matsys
 		FREE(system->mTexturePacks, *materialArena);
 
 		FREE(system->mInternalData, *materialArena);
+
+		
 
 		FREE(system, *materialArena);
 
@@ -2323,9 +2326,9 @@ namespace r2::draw::matsys
 
 		system->mTexturePackManifestData = system->mAssetCache->GetAssetBuffer(texturePacksManifestAssetHandle);
 
-		R2_CHECK(system->mTexturePackManifestData.buffer->Data() != nullptr, "We don't have the mTexturePackManifestData!");
+		R2_CHECK(system->mTexturePackManifestData.GetAssetBuffer()->Data() != nullptr, "We don't have the mTexturePackManifestData!");
 
-		system->mTexturePackManifest = flat::GetTexturePacksManifest(system->mTexturePackManifestData.buffer->Data());
+		system->mTexturePackManifest = flat::GetTexturePacksManifest(system->mTexturePackManifestData.GetAssetBuffer()->Data());
 
 		R2_CHECK(system->mTexturePackManifest != nullptr, "We should have the manifest reloaded!");
 	}
@@ -2451,7 +2454,7 @@ namespace r2::draw::matsys
 
 				auto materialManifestAssetHandle = foundSystem->mAssetCache->ReloadAsset(materialManifestAsset);
 				foundSystem->mMaterialParamsPackData = foundSystem->mAssetCache->GetAssetBuffer(materialManifestAssetHandle);
-				foundSystem->mMaterialParamsPack = flat::GetMaterialParamsPack(foundSystem->mMaterialParamsPackData.buffer->Data());
+				foundSystem->mMaterialParamsPack = flat::GetMaterialParamsPack(foundSystem->mMaterialParamsPackData.GetAssetBuffer()->Data());
 				
 
 				MaterialHandle materialHandle = mat::GetMaterialHandleFromMaterialPath(*foundSystem, sanitizedPath);

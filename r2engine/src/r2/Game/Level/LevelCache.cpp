@@ -115,7 +115,8 @@ namespace r2::lvlche
 				for (u32 i = 0; i < numLevels; ++i)
 				{
 					const auto& assetCacheRecord = r2::sarr::At(*newLevelCache->mLevels, i);
-					if (r2::asset::AreAssetHandlesEqual(assetCacheRecord.handle, handle))
+					if (r2::asset::AreAssetHandlesEqual({ assetCacheRecord.GetAsset().HashID(), assetCacheRecord.GetAssetCache()->GetSlot()
+				}, handle))
 					{
 						r2::sarr::RemoveAndSwapWithLastElement(*newLevelCache->mLevels, i);
 						break;
@@ -224,7 +225,7 @@ namespace r2::lvlche
 
 		r2::sarr::Push(*levelCache.mLevels, newRecord);
 
-		return flat::GetLevelData(newRecord.buffer->Data());
+		return flat::GetLevelData(newRecord.GetAssetBuffer()->Data());
 	}
 
 	void UnloadLevelData(LevelCache& levelCache, const LevelHandle& handle)
@@ -240,7 +241,7 @@ namespace r2::lvlche
 		for (u32 i = 0; i < numLevels; i++)
 		{
 			const auto& assetCacheRecord = r2::sarr::At(*levelCache.mLevels, i);
-			if (r2::asset::AreAssetHandlesEqual(assetCacheRecord.handle, handle))
+			if (r2::asset::AreAssetHandlesEqual({ assetCacheRecord.GetAsset().HashID(), assetCacheRecord.GetAssetCache()->GetSlot() }, handle))
 			{
 				levelCache.mLevelCache->ReturnAssetBuffer(assetCacheRecord);
 				return;

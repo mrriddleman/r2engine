@@ -49,11 +49,11 @@ namespace r2::draw::modlche
 		newModelSystem->mMemoryAreaHandle = memoryAreaHandle;
 		newModelSystem->mSubAreaHandle = subAreaHandle;
 		newModelSystem->mSubAreaArena = modelArena;
-		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		
 		newModelSystem->mCacheModelReferences = cacheModelReferences;
 		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, modelCacheSize, ALIGNMENT);
-
+		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
+		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, files);
 
 
@@ -83,14 +83,19 @@ namespace r2::draw::modlche
 		}
 
 		r2::mem::LinearArena* arena = system->mSubAreaArena;
-
 		//return all of the models back to the cache
 		r2::draw::modlche::FlushAll(system);
 
-		r2::asset::lib::DestroyCache(system->mModelCache);
-		FREE(system->mAssetBoundary.location, *arena);
 		FREE(system->mMeshes, *arena);
 		FREE(system->mModels, *arena);
+
+		
+
+
+
+		r2::asset::lib::DestroyCache(system->mModelCache);
+		FREE(system->mAssetBoundary.location, *arena);
+;
 
 		FREE(system, *arena);
 
@@ -177,7 +182,7 @@ namespace r2::draw::modlche
 				r2::asset::AssetCacheRecord defaultRecord;
 				record = r2::shashmap::Get(*system->mMeshes, handle.handle, defaultRecord);
 
-				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+				R2_CHECK(record.GetAssetBuffer() != defaultRecord.GetAssetBuffer(), "We couldn't get the record!");
 			}
 		}
 		else
@@ -190,7 +195,7 @@ namespace r2::draw::modlche
 			}
 		}
 
-		r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.buffer->MutableData();
+		r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.GetAssetBuffer()->MutableData();
 
 		mesh->hashName = handle.handle;
 
@@ -215,7 +220,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mMeshes, mesh->hashName, defaultRecord);
 
-		if (theRecord.buffer == defaultRecord.buffer)
+		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{
 			R2_CHECK(false, "Failed to get the asset cache record!");
 			return;
@@ -262,7 +267,7 @@ namespace r2::draw::modlche
 				r2::asset::AssetCacheRecord defaultRecord;
 				record = r2::shashmap::Get(*system->mModels, handle.handle, defaultRecord);
 
-				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+				R2_CHECK(record.GetAssetBuffer() != defaultRecord.GetAssetBuffer(), "We couldn't get the record!");
 			}
 		}
 		else
@@ -275,7 +280,7 @@ namespace r2::draw::modlche
 			}
 		}
 
-		r2::draw::Model* model = (r2::draw::Model*)record.buffer->MutableData();
+		r2::draw::Model* model = (r2::draw::Model*)record.GetAssetBuffer()->MutableData();
 
 		model->hash = handle.handle;
 
@@ -309,7 +314,7 @@ namespace r2::draw::modlche
 				r2::asset::AssetCacheRecord defaultRecord;
 				record = r2::shashmap::Get(*system->mModels, handle.handle, defaultRecord);
 
-				R2_CHECK(record.buffer != defaultRecord.buffer, "We couldn't get the record!");
+				R2_CHECK(record.GetAssetBuffer() != defaultRecord.GetAssetBuffer(), "We couldn't get the record!");
 			}
 		}
 		else
@@ -322,7 +327,7 @@ namespace r2::draw::modlche
 			}
 		}
 
-		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.buffer->MutableData();
+		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.GetAssetBuffer()->MutableData();
 
 		model->model.hash = handle.handle;
 
@@ -347,7 +352,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->hash, defaultRecord);
 
-		if (theRecord.buffer == defaultRecord.buffer)
+		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{
 			R2_CHECK(false, "Failed to get the asset cache record!");
 			return;
@@ -377,7 +382,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.hash, defaultRecord);
 
-		if (theRecord.buffer == defaultRecord.buffer)
+		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{
 			R2_CHECK(false, "Failed to get the asset cache record!");
 			return;

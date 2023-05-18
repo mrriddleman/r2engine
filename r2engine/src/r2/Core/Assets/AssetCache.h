@@ -13,6 +13,7 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Assets/AssetCacheRecord.h"
 #include "r2/Core/File/FileTypes.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
@@ -32,14 +33,8 @@ namespace r2::asset
     
     using AssetLoadProgressCallback = std::function<void(int, bool&)>;
     using AssetFreedCallback = std::function<void(const r2::asset::AssetHandle& handle)>;
-    
-    struct AssetCacheRecord
-    {
-        r2::asset::AssetHandle handle;
-        r2::asset::AssetType type;
-        r2::asset::AssetBuffer* buffer = nullptr;
-    };
-    
+     using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
+
     class AssetCache
     {
     public:
@@ -47,7 +42,7 @@ namespace r2::asset
         static const u32 LRU_CAPACITY = 1024;
         static const u32 MAP_CAPACITY = 1024;
         
-        using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
+       
         
         explicit AssetCache(u64 slot, const r2::mem::utils::MemBoundary& boundary);
 
@@ -91,7 +86,7 @@ namespace r2::asset
             return ALLOC(T, mAssetCacheArena);
         }
 
-        u64 GetSlot() const {return mSlot;}
+        s64 GetSlot() const {return mSlot;}
 #ifdef R2_ASSET_PIPELINE
         void AddReloadFunction(AssetReloadedFunc func);
 
@@ -111,6 +106,8 @@ namespace r2::asset
 
     private:
         
+        friend struct AssetCacheRecord;
+
         struct AssetBufferRef
         {
             AssetBuffer* mAssetBuffer = nullptr;
@@ -124,13 +121,14 @@ namespace r2::asset
         using AssetNameMap = r2::SHashMap<Asset>*;
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
 
-       
+        bool IsLoaded(const Asset& asset);
+
         AssetBuffer* Load(const Asset& asset);
         void Write(const Asset& asset, const void* data, u32 size, u32 offset, r2::fs::FileMode mode);
 
         void UpdateLRU(AssetHandle handle);
         FileHandle FindInFiles(const Asset& asset) const;
-        AssetBufferRef& Find(AssetHandle handle, AssetBufferRef& theDefault);
+        AssetBufferRef& Find(u64 handle, AssetBufferRef& theDefault);
         
         void Free(AssetHandle handle, bool forceFree);
         bool MakeRoom(u64 amount);

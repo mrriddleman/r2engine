@@ -343,7 +343,7 @@ public:
                     {
                         auto record = r2::sarr::At(*assetsBuffers, i);
                         
-                        if(record.handle.handle == handle.handle)
+                        if(record.GetAsset().HashID() == handle.handle)
                         {
                             assetCache->ReturnAssetBuffer(record);
                         }
@@ -1220,9 +1220,9 @@ public:
             
             r2::sarr::Push(*assetsBuffers, assetBuffer);
             
-            R2_CHECK(assetBuffer.buffer != nullptr, "Asset buffer is nullptr");
+            R2_CHECK(assetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
             
-            const byte* data = assetBuffer.buffer->Data();
+            const byte* data = assetBuffer.GetAssetBuffer()->Data();
             
             const auto levelPack = Breakout::GetLevelPack(data);
             
@@ -1275,9 +1275,9 @@ public:
             
             r2::sarr::Push(*assetsBuffers, powerupAssetBuffer);
             
-            R2_CHECK(powerupAssetBuffer.buffer != nullptr, "Asset buffer is nullptr");
+            R2_CHECK(powerupAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
             
-            const byte* powerupsData = powerupAssetBuffer.buffer->Data();
+            const byte* powerupsData = powerupAssetBuffer.GetAssetBuffer()->Data();
             
             const auto powerupsfbb = Breakout::GetPowerups(powerupsData);
             
@@ -1306,9 +1306,9 @@ public:
             
             r2::sarr::Push(*assetsBuffers, highScoreAssetBuffer);
             
-            R2_CHECK(highScoreAssetBuffer.buffer != nullptr, "Asset buffer is nullptr");
+            R2_CHECK(highScoreAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
             
-            const auto scores = Breakout::GetHighScores(highScoreAssetBuffer.buffer->Data())->scores();
+            const auto scores = Breakout::GetHighScores(highScoreAssetBuffer.GetAssetBuffer()->Data())->scores();
             
             printf("======================Scores==========================\n");
             
@@ -1328,9 +1328,9 @@ public:
             
             r2::sarr::Push(*assetsBuffers, settingsAssetBuffer);
             
-            R2_CHECK(settingsAssetBuffer.buffer != nullptr, "Asset buffer is nullptr");
+            R2_CHECK(settingsAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
             
-            const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer.buffer->Data());
+            const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer.GetAssetBuffer()->Data());
             
             printf("======================Settings==========================\n");
             
@@ -1762,18 +1762,17 @@ public:
         
 
 
-        u64 size = r2::sarr::Size(*assetsBuffers);
-        
-        for (u64 i = 0; i < size; ++i)
-        {
-            auto record = r2::sarr::At(*assetsBuffers, i);
-            
-            assetCache->ReturnAssetBuffer(record);
-        }
-        
-        FREE(assetCacheBoundary.location, *linearArenaPtr);
+		u64 size = r2::sarr::Size(*assetsBuffers);
+
+		for (u64 i = 0; i < size; ++i)
+		{
+			auto record = r2::sarr::At(*assetsBuffers, i);
+
+			assetCache->ReturnAssetBuffer(record);
+		}
         FREE(assetsBuffers, *linearArenaPtr);
         r2::asset::lib::DestroyCache(assetCache);
+        FREE(assetCacheBoundary.location, *linearArenaPtr);
 
         FREE_EMPLACED_ARENA(linearArenaPtr);
     }

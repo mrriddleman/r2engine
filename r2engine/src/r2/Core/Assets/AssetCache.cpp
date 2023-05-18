@@ -180,7 +180,7 @@ namespace r2::asset
         
         AssetHandle handle = { asset.HashID(), mSlot };
         AssetBufferRef theDefault;
-        AssetBufferRef& bufferRef = Find(handle, theDefault);
+        AssetBufferRef& bufferRef = Find(asset.HashID(), theDefault);
         
         if (bufferRef.mAssetBuffer == nullptr)
         {
@@ -235,7 +235,7 @@ namespace r2::asset
         AssetHandle handle = { asset.HashID(), mSlot };
 
 		AssetBufferRef theDefault;
-		AssetBufferRef& bufferRef = Find(handle, theDefault);
+		AssetBufferRef& bufferRef = Find(handle.handle, theDefault);
 
 		bool found = bufferRef.mAssetBuffer != nullptr;
 
@@ -244,7 +244,16 @@ namespace r2::asset
 			Free(handle, true);
 		}
 
-        return LoadAsset(asset);
+        auto assetHandle = LoadAsset(asset);
+
+#ifdef R2_ASSET_PIPELINE
+		for (auto func : mReloadFunctions)
+		{
+			func(assetHandle);
+		}
+#endif
+
+        return assetHandle;
     }
 
     void AssetCache::FreeAsset(const AssetHandle& handle)
@@ -287,55 +296,43 @@ namespace r2::asset
         }
         
         AssetBufferRef theDefault;
-        AssetBufferRef& bufferRef = Find(handle, theDefault);
-        
-        AssetCacheRecord record;
-
+        AssetBufferRef& bufferRef = Find(handle.handle, theDefault);
 
 		Asset defaultAsset;
 		const Asset& asset = r2::shashmap::Get(*mAssetNameMap, handle.handle, defaultAsset);
 
         R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset!");
 
-        record.type = asset.GetType();
+        AssetBuffer* assetBufferPtr = nullptr;
 
         if (bufferRef.mAssetBuffer != nullptr)
         {
             ++bufferRef.mRefCount;
             UpdateLRU(handle);
 
-			record.handle = handle;
-			record.buffer = bufferRef.mAssetBuffer;
+            assetBufferPtr = bufferRef.mAssetBuffer;
         }
         else
         {
-            
-            AssetBuffer* buffer = Load(asset);
-            
-            if (!buffer)
-            {
-#ifdef R2_ASSET_CACHE_DEBUG
-                R2_CHECK(false, "We couldn't reload the asset: %s", asset.Name()); 
-#endif
-            }
-
-            record.handle = handle;
-            record.buffer = buffer;
+            R2_CHECK(false, "We haven't loaded the asset yet!");
+            return {};
         }
-        
+
+        AssetCacheRecord record( asset, assetBufferPtr, this );
+
         return record;
     }
     
     bool AssetCache::ReturnAssetBuffer(const AssetCacheRecord& buffer)
     {
         AssetBufferRef theDefault;
-        AssetBufferRef& bufferRef = Find(buffer.handle, theDefault);
+        AssetBufferRef& bufferRef = Find(buffer.GetAsset().HashID(), theDefault);
         
         bool found = bufferRef.mAssetBuffer != nullptr;
         
         if (found)
         {
-            Free(buffer.handle, false);
+            Free({ buffer.GetAsset().HashID(), mSlot }, false);
         }
         
         return found;
@@ -410,6 +407,17 @@ namespace r2::asset
     }
 
     //Private
+    bool AssetCache::IsLoaded(const Asset& asset)
+    {
+		AssetBufferRef theDefault;
+
+		const AssetBufferRef& assetBufferRef = Find(asset.HashID(), theDefault);
+
+        R2_CHECK(assetBufferRef.mRefCount > 0, "This buffer might be freed soon!");
+
+        return assetBufferRef.mAssetBuffer != nullptr && assetBufferRef.mRefCount > 0;
+    }
+
     AssetBuffer* AssetCache::Load(const Asset& asset)
     {
 
@@ -490,7 +498,7 @@ namespace r2::asset
         
         if (!loader->ShouldProcess())
         {
-            assetBuffer->Load(asset, mSlot, rawAssetBuffer, rawAssetSize);
+            assetBuffer->Load(rawAssetBuffer, rawAssetSize);
         }
         else
         {
@@ -526,7 +534,7 @@ namespace r2::asset
 
 			mMemoryHighWaterMark = std::max(mMemoryHighWaterMark, mAssetCacheArena.TotalBytesAllocated());
 
-			assetBuffer->Load(asset, mSlot, buffer, size);
+			assetBuffer->Load(buffer, size);
 
 			success = loader->LoadAsset(theAssetFile->FilePath(), rawAssetBuffer, rawAssetSize, *assetBuffer);
 				
@@ -690,16 +698,16 @@ namespace r2::asset
         return INVALID_FILE_INDEX;
     }
     
-    AssetCache::AssetBufferRef& AssetCache::Find(AssetHandle handle, AssetCache::AssetBufferRef& theDefault)
+    AssetCache::AssetBufferRef& AssetCache::Find(u64 handle, AssetCache::AssetBufferRef& theDefault)
     {
-        return r2::shashmap::Get(*mAssetMap, handle.handle, theDefault);
+        return r2::shashmap::Get(*mAssetMap, handle, theDefault);
     }
     
     void AssetCache::Free(AssetHandle handle, bool forceFree)
     {
         AssetBufferRef theDefault;
-        
-        AssetBufferRef& assetBufferRef = Find(handle, theDefault);
+
+        AssetBufferRef& assetBufferRef = Find(handle.handle, theDefault);
         
         if (assetBufferRef.mAssetBuffer != nullptr)
         {
@@ -719,9 +727,9 @@ namespace r2::asset
                 FREE(assetBufferRef.mAssetBuffer->MutableData(), mAssetCacheArena);
                 
                 FREE(assetBufferRef.mAssetBuffer, *mAssetBufferPoolPtr);
-            
+
                 r2::shashmap::Remove(*mAssetMap, handle.handle);
-                
+
                 RemoveFromLRU(handle);
 #ifdef R2_ASSET_PIPELINE
                 RemoveAssetFromAssetForFileList(handle);
@@ -936,7 +944,7 @@ namespace r2::asset
                 for (auto assetHandle : assetsToReload)
                 {
                     AssetBufferRef defaultBuffer;
-                    AssetBufferRef& bufferRef = Find(assetHandle.handle, defaultBuffer);
+                    AssetBufferRef& bufferRef = Find(assetHandle.handle.handle, defaultBuffer);
                     
                     for (auto func : mReloadFunctions)
                     {
@@ -1008,7 +1016,7 @@ namespace r2::asset
             if (bufRef.mAssetBuffer != nullptr)
             {
                 Asset theDefault;
-                const Asset& asset = r2::shashmap::Get(*mAssetNameMap, bufRef.mAssetBuffer->GetHandle().handle, theDefault);
+                const Asset& asset = r2::shashmap::Get(*mAssetNameMap, (*mAssetLRU)[i].handle, theDefault);
                 
 
                 AssetHandle handle = { asset.HashID(), mSlot };
@@ -1035,7 +1043,7 @@ namespace r2::asset
             if (bufRef.mAssetBuffer != nullptr)
             {
 				Asset theDefault;
-				const Asset& asset = r2::shashmap::Get(*mAssetNameMap, bufRef.mAssetBuffer->GetHandle().handle, theDefault);
+				const Asset& asset = r2::shashmap::Get(*mAssetNameMap, (*mAssetLRU)[i].handle, theDefault);
 
                 AssetHandle handle = { asset.HashID(), mSlot };
                 PrintAsset(asset.Name(), handle, bufRef.mRefCount);

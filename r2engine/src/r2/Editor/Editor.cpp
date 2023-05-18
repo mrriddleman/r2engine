@@ -727,13 +727,11 @@ namespace r2
 			{
 				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
 				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
-				r2::draw::modlche::ReturnAnimModel(editorModelSystem, animModel);
 			}
 			else
 			{
 				const r2::draw::Model* model = r2::draw::modlche::GetModel(editorModelSystem, modelHandle);
 				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-				r2::draw::modlche::ReturnModel(editorModelSystem, model);
 			}
 
 			renderComponent.gpuModelRefHandle = gpuModelRefHandle;

@@ -2,67 +2,93 @@
 #define __GAME_ASSET_MANAGER_H__
 
 
-#include "r2/Utils/Utils.h"
-#include "r2/Game/Level/Level.h"
-#include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Assets/Asset.h"
+#include "r2/Core/Assets/AssetCache.h"
+
+#include "r2/Core/Memory/Memory.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include <string>
-#include <vector>
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #endif
 
-namespace flat
+namespace r2::asset
 {
-	struct LevelData;
-}
-
-namespace r2::draw
-{
-	struct GPURenderMaterial;
-	struct Model;
-	struct AnimModel;
+	class AssetLoader;
+	class AssetWriter;
 }
 
 namespace r2
 {
-	struct GameAssetManager
+	class GameAssetManager
 	{
+	public:
+		GameAssetManager();
+		~GameAssetManager();
 
+		//No copy or move semantics
+		GameAssetManager(const GameAssetManager& other) = delete;
+		GameAssetManager(GameAssetManager&& other) = delete;
+		GameAssetManager& operator=(const GameAssetManager& other) = delete;
+		GameAssetManager& operator=(GameAssetManager&& other) = delete;
+
+		bool Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList);
+		void Shutdown();
+
+		void Update();
+
+		static u64 MemorySizeForGameAssetManager(u32 alignment, u32 headerSize);
+		static u64 CacheMemorySize(u32 numAssets, u32 assetCapacity, u32 alignment, u32 headerSize, u32 boundsChecking, u32 lruCapacity, u32 mapCapacity);
+
+		//@TODO(Serge): probably want more types of loads for threading and stuff, for now keep it simple
+		r2::asset::AssetHandle LoadAsset(const r2::asset::Asset& asset);
+		r2::asset::AssetCacheRecord GetAssetData(r2::asset::AssetHandle assetHandle);
+		void ReturnAssetData(const r2::asset::AssetCacheRecord& assetCacheRecord);
+
+		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
+		void FreeAsset(const r2::asset::AssetHandle& handle);
+
+		void RegisterAssetLoader(r2::asset::AssetLoader* assetLoader);
+		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
+		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
+
+#ifdef R2_ASSET_PIPELINE
+		void AssetChanged(const std::string& path, r2::asset::AssetType type);
+		void AssetAdded(const std::string& path, r2::asset::AssetType type);
+		void AssetRemoved(const std::string& path, r2::asset::AssetType type);
+
+		void RegisterReloadFunction(r2::asset::AssetReloadedFunc func);
+
+		void AddAssetFile(r2::asset::AssetFile* assetFile);
+		void RemoveAssetFile(const std::string& filePath);
+#endif
+
+	private:
+
+		r2::asset::AssetCache* mAssetCache;
+
+#ifdef R2_ASSET_PIPELINE
+
+		enum HotReloadType :u32
+		{
+			CHANGED = 0,
+			ADDED,
+			DELETED
+		};
+
+		struct HotReloadEntry
+		{
+			std::string filePath;
+			r2::asset::AssetType assetType;
+			HotReloadType reloadType;
+		};
+
+		r2::asset::pln::AssetThreadSafeQueue<HotReloadEntry> mHotReloadQueue;
+#endif
 	};
 
-	namespace asstmgr
-	{
 
-		GameAssetManager* Create();
-		void Shutdown(GameAssetManager* gameAssetManager);
-		u64 MemorySize();
-//
-//		//@NOTE(Serge): Maybe we don't want to distinguish between loading from disk and to GPU here actually
-//		bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
-//		bool UnloadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData);
-//
-//		bool UploadLevelAssetsToGPU(GameAssetManager& gameAssetManager);
-//		bool UnloadLevelAssetsFromGPU(GameAssetManager& gameAssetManager);
-//
-//		void Update(GameAssetManager& gameAssetManager);
-//
-//		const r2::draw::GPURenderMaterial* GetRenderMaterialForMaterialName(const GameAssetManager& gameAssetManager, u64 materialName);
-//		void GetRenderMaterialsForModel(const GameAssetManager& gameAssetManager, const r2::draw::Model& model, r2::SArray<r2::draw::GPURenderMaterial>* renderMaterials);
-//
-//		const r2::draw::Model* GetModel(const GameAssetManager& gameAssetManager, u64 modelName);
-//		const r2::draw::AnimModel* GetAnimModel(const GameAssetManager& gameAssetManager, u64 modelName);
-//
-//#ifdef R2_ASSET_PIPELINE
-//		void TextureChanged(GameAssetManager& gameAssetManager, const std::string& texturePath);
-//		void TexturePackAdded(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsAdded);
-//		void TextureAdded(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePath);
-//		void TextureRemoved(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& textureRemoved);
-//		void TexturePackRemoved(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsLeft);
-//
-//		void MaterialChanged(GameAssetManager& gameAssetManager, const std::string& materialPathChanged);
-//		void MaterialAdded(GameAssetManager& gameAssetManager, const std::string& materialPacksManifestFile, const std::string& materialPathAdded);
-//		void MaterialRemoved(GameAssetManager& gameAssetManager, const std::string& materialPacksManifestFile, const std::string& materialPathRemoved);
-//#endif
-	}
+	
 }
 
 

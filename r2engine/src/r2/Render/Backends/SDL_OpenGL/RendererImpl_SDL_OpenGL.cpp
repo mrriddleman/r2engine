@@ -177,6 +177,8 @@ namespace r2::draw::rendererimpl
 		s_glContext = SDL_GL_CreateContext(s_optrWindow);
 
 		R2_CHECK(s_glContext != nullptr, "We should have an OpenGL context!");
+		
+		SDL_GL_SwapWindow(s_optrWindow);
 
 		gladLoadGLLoader(SDL_GL_GetProcAddress);
 

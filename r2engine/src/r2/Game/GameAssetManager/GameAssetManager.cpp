@@ -1,107 +1,236 @@
 #include "r2pch.h"
 
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Core/Assets/AssetFiles/AssetFile.h"
+#include "r2/Core/Assets/AssetLib.h"
 
-namespace r2::asstmgr
+namespace r2
 {
-	GameAssetManager* Create()
+	
+	GameAssetManager::GameAssetManager()
+		:mAssetCache(nullptr)
 	{
-		return nullptr;
 	}
 
-	void Shutdown(GameAssetManager* gameAssetManager)
+	GameAssetManager::~GameAssetManager()
 	{
-
+		mAssetCache = nullptr;
 	}
 
-	u64 MemorySize()
+	bool GameAssetManager::Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList)
 	{
-		return 0;
+		mAssetCache = r2::asset::lib::CreateAssetCache(assetBoundary, fileList);
+		return mAssetCache != nullptr;
 	}
 
-	/*bool LoadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData)
+	void GameAssetManager::Shutdown()
 	{
-		return false;
+		if (mAssetCache)
+		{
+			r2::asset::lib::DestroyCache(mAssetCache);
+		}
 	}
 
-	bool UnloadLevelAssetsFromDisk(GameAssetManager& gameAssetManager, const flat::LevelData* levelData)
+	void GameAssetManager::Update()
 	{
-		return false;
+#ifdef R2_ASSET_PIPELINE
+
+		HotReloadEntry nextEntry;
+		while (mAssetCache && mHotReloadQueue.TryPop(nextEntry))
+		{
+			//@TODO(Serge): process the entry
+		}
+#endif
 	}
 
-	bool UploadLevelAssetsToGPU(GameAssetManager& gameAssetManager)
+	u64 GameAssetManager::MemorySizeForGameAssetManager(u32 alignment, u32 headerSize)
 	{
-		return false;
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+		u64 memorySize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GameAssetManager), alignment, headerSize, boundsChecking);
+
+		return memorySize;
 	}
 
-	bool UnloadLevelAssetsFromGPU(GameAssetManager& gameAssetManager)
+	u64 GameAssetManager::CacheMemorySize(u32 numAssets, u32 assetCapacity, u32 alignment, u32 headerSize, u32 boundsChecking, u32 lruCapacity, u32 mapCapacity)
 	{
-		return false;
+		u64 memorySize = r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacity, alignment, lruCapacity, mapCapacity);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::asset::AssetCache), alignment, headerSize, boundsChecking);
+		return memorySize;
 	}
 
-	void Update(GameAssetManager& gameAssetManager)
+	r2::asset::AssetHandle GameAssetManager::LoadAsset(const r2::asset::Asset& asset)
 	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return {};
+		}
 
+		return mAssetCache->LoadAsset(asset);
 	}
 
-	const r2::draw::GPURenderMaterial* GetRenderMaterialForMaterialName(const GameAssetManager& gameAssetManager, u64 materialName)
+	r2::asset::AssetCacheRecord GameAssetManager::GetAssetData(r2::asset::AssetHandle assetHandle)
 	{
-		return nullptr;
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return {};
+		}
+
+		return mAssetCache->GetAssetBuffer(assetHandle);
 	}
 
-	void GetRenderMaterialsForModel(const GameAssetManager& gameAssetManager, const r2::draw::Model& model, r2::SArray<r2::draw::GPURenderMaterial>* renderMaterials)
+	void GameAssetManager::ReturnAssetData(const r2::asset::AssetCacheRecord& assetCacheRecord)
 	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
 
+		mAssetCache->ReturnAssetBuffer(assetCacheRecord);
 	}
 
-	const r2::draw::Model* GetModel(const GameAssetManager& gameAssetManager, u64 modelName)
+	r2::asset::AssetHandle GameAssetManager::ReloadAsset(const r2::asset::Asset& asset)
 	{
-		return nullptr;
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return {};
+		}
+
+		return mAssetCache->ReloadAsset(asset);
 	}
 
-	const r2::draw::AnimModel* GetAnimModel(const GameAssetManager& gameAssetManager, u64 modelName)
+	void GameAssetManager::FreeAsset(const r2::asset::AssetHandle& handle)
 	{
-		return nullptr;
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		mAssetCache->FreeAsset(handle);
+	}
+
+	void GameAssetManager::RegisterAssetLoader(r2::asset::AssetLoader* assetLoader)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		mAssetCache->RegisterAssetLoader(assetLoader);
+	}
+
+	void GameAssetManager::RegisterAssetWriter(r2::asset::AssetWriter* assetWriter)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		mAssetCache->RegisterAssetWriter(assetWriter);
+	}
+
+	void GameAssetManager::RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		mAssetCache->RegisterAssetFreedCallback(func);
 	}
 
 #ifdef R2_ASSET_PIPELINE
-	void TextureChanged(GameAssetManager& gameAssetManager, const std::string& texturePath)
-	{
 
+	void GameAssetManager::AssetChanged(const std::string& path, r2::asset::AssetType type)
+	{
+		HotReloadEntry newEntry;
+		newEntry.assetType = type;
+		newEntry.reloadType = CHANGED;
+		newEntry.filePath = path;
+
+		mHotReloadQueue.Push(newEntry);
 	}
 
-	void TexturePackAdded(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsAdded)
+	void GameAssetManager::AssetAdded(const std::string& path, r2::asset::AssetType type)
 	{
+		HotReloadEntry newEntry;
+		newEntry.assetType = type;
+		newEntry.reloadType = ADDED;
+		newEntry.filePath = path;
 
+		mHotReloadQueue.Push(newEntry);
 	}
 
-	void TextureAdded(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePath)
+	void GameAssetManager::AssetRemoved(const std::string& path, r2::asset::AssetType type)
 	{
+		HotReloadEntry newEntry;
+		newEntry.assetType = type;
+		newEntry.reloadType = DELETED;
+		newEntry.filePath = path;
 
+		mHotReloadQueue.Push(newEntry);
 	}
 
-	void TextureRemoved(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& textureRemoved)
+	void GameAssetManager::RegisterReloadFunction(r2::asset::AssetReloadedFunc func)
 	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		mAssetCache->AddReloadFunction(func);
 	}
 
-	void TexturePackRemoved(GameAssetManager& gameAssetManager, const std::string& texturePacksManifestFilePath, const std::string& texturePackPath, const std::vector<std::vector<std::string>>& texturePathsLeft)
+	void GameAssetManager::AddAssetFile(r2::asset::AssetFile* assetFile)
 	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
 
+		r2::asset::FileList fileList = mAssetCache->GetFileList();
+		r2::sarr::Push(*fileList, assetFile);
 	}
 
-	void MaterialChanged(GameAssetManager& gameAssetManager, const std::string& materialPathChanged)
+	void GameAssetManager::RemoveAssetFile(const std::string& filePath)
 	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
 
+		//find it first
+		r2::asset::FileList fileList = mAssetCache->GetFileList();
+
+		const u32 numFiles = r2::sarr::Size(*fileList);
+
+		for (u32 i = 0; i < numFiles; ++i)
+		{
+			const r2::asset::AssetFile* nextAssetFile = r2::sarr::At(*fileList, i);
+
+			if (std::string(nextAssetFile->FilePath()) == filePath)
+			{
+				r2::sarr::RemoveAndSwapWithLastElement(*fileList, i);
+				break;
+			}
+		}
 	}
 
-	void MaterialAdded(GameAssetManager& gameAssetManager, const std::string& materialPacksManifestFile, const std::string& materialPathAdded)
-	{
+#endif
 
-	}
 
-	void MaterialRemoved(GameAssetManager& gameAssetManager, const std::string& materialPacksManifestFile, const std::string& materialPathRemoved) 
-	{
-
-	}
-#endif*/
 }
