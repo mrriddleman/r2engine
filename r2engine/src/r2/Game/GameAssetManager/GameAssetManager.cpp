@@ -3,6 +3,10 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
+#include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
+#include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 
 namespace r2
 {
@@ -20,6 +24,22 @@ namespace r2
 	bool GameAssetManager::Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList)
 	{
 		mAssetCache = r2::asset::lib::CreateAssetCache(assetBoundary, fileList);
+
+		//@TODO(Serge): maybe add the loaders here for the engine?
+		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
+		mAssetCache->RegisterAssetLoader(meshLoader);
+
+		r2::asset::ModelAssetLoader* modelLoader = (r2::asset::ModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::ModelAssetLoader>();
+		modelLoader->SetAssetCache(mAssetCache); //@TODO(Serge): make some callbacks or something here instead
+
+		mAssetCache->RegisterAssetLoader(modelLoader);
+
+		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
+		mAssetCache->RegisterAssetLoader(rmodelLoader);
+
+		r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
+		mAssetCache->RegisterAssetLoader(ranimationLoader);
+
 		return mAssetCache != nullptr;
 	}
 

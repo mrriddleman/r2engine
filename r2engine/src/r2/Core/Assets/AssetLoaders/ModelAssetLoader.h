@@ -3,9 +3,9 @@
 
 #include "r2/Core/Assets/AssetLoaders/AssetLoader.h"
 
-namespace r2::draw
+namespace r2::asset
 {
-	struct ModelCache;
+	class AssetCache;
 }
 
 
@@ -15,7 +15,7 @@ namespace r2::asset
 	{
 	public:
 
-		void SetModelSystem(r2::draw::ModelCache* modelSystem) { mnoptrModelSystem = modelSystem; }
+		void SetAssetCache(AssetCache* assetCache) { mnoptrAssetCache = assetCache; }
 		//@TODO(Serge): we should pass some kind of lookup table that will map the name of the mesh to data of the mesh
 		virtual const char* GetPattern() override;
 		virtual AssetType GetType() const override;
@@ -24,7 +24,7 @@ namespace r2::asset
 		virtual bool LoadAsset(const char* filePath, byte* rawBuffer, u64 rawSize, AssetBuffer& assetBuffer) override;
 
 	private:
-		r2::draw::ModelCache* mnoptrModelSystem = nullptr;
+		AssetCache* mnoptrAssetCache = nullptr;
 	};
 }
 

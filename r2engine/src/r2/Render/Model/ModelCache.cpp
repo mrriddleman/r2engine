@@ -61,7 +61,7 @@ namespace r2::draw::modlche
 		newModelSystem->mModelCache->RegisterAssetLoader(meshLoader);
 
 		r2::asset::ModelAssetLoader* modelLoader = (r2::asset::ModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::ModelAssetLoader>();
-		modelLoader->SetModelSystem(newModelSystem);
+		modelLoader->SetAssetCache(newModelSystem->mModelCache);
 
 		newModelSystem->mModelCache->RegisterAssetLoader(modelLoader);
 

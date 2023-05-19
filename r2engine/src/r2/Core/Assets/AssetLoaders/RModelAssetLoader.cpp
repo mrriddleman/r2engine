@@ -205,6 +205,7 @@ namespace r2::asset
 
 			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 			{
+				//@TODO(Serge): get rid of these material handles
 				r2::draw::MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(flatMaterialNames->Get(i)->name());
 
 				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We should have the material handle!");

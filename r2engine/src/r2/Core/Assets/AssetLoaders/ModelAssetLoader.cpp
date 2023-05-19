@@ -5,7 +5,8 @@
 #include "r2/Render/Model/Model_generated.h"
 #include "r2/Render/Model/Mesh.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Model/ModelCache.h"
+#include "r2/Core/Assets/AssetCache.h"
+
 #include "r2/Utils/Hash.h"
 
 namespace r2::asset
@@ -58,7 +59,7 @@ namespace r2::asset
 			return false;
 		}
 
-		R2_CHECK(mnoptrModelSystem != nullptr, "We should have a model system for this to work!");
+		R2_CHECK(mnoptrAssetCache != nullptr, "We should have a model system for this to work!");
 
 		//here we do the memory sizing
 		const flat::Model* flatModel = flat::GetModel(rawBuffer);
@@ -87,16 +88,18 @@ namespace r2::asset
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; ++i)
 		{	
 			r2::asset::Asset meshAsset{ flatModel->meshNames()->Get(i)->c_str(), r2::asset::MESH };
-			r2::draw::MeshHandle meshHandle = r2::draw::modlche::GetMeshHandle(mnoptrModelSystem, meshAsset);
-
-			if (meshHandle.handle == r2::asset::INVALID_ASSET_HANDLE || meshHandle.assetCache == r2::asset::INVALID_ASSET_CACHE)
-			{
-				meshHandle = r2::draw::modlche::LoadMesh(mnoptrModelSystem, meshAsset);
-			}
+			r2::asset::AssetHandle meshHandle = mnoptrAssetCache->LoadAsset(meshAsset);
 
 			R2_CHECK(meshHandle.handle != r2::asset::INVALID_ASSET_HANDLE, "We should have a valid mesh handle here!");
 
-			r2::sarr::Push(*model->optrMeshes, r2::draw::modlche::GetMesh(mnoptrModelSystem, meshHandle));
+			r2::asset::AssetCacheRecord record = mnoptrAssetCache->GetAssetBuffer(meshHandle);
+			r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.GetAssetBuffer()->MutableData();
+			mesh->hashName = meshHandle.handle;
+
+			r2::sarr::Push(*model->optrMeshes, static_cast<const r2::draw::Mesh*>(mesh));
+
+			//@TODO(Serge): This is sort of an issue since now it's possible that it could be freed since there's nothing holding a reference to it
+			mnoptrAssetCache->ReturnAssetBuffer(record);
 		}
 
 		//@TODO(Serge): Speed this up and use a faster way
