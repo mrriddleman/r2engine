@@ -390,7 +390,7 @@ namespace r2
 
             R2_CHECK(mCurrentRendererBackend == draw::RendererBackend::OpenGL, "Only supported renderer backend at the moment is OpenGL");
 
-            r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
+            
 
             //@TODO(Serge): WAYYY IN THE FUTURE - maybe noptrApp->GetTexturePackManifestsBinaryPaths() should be a specific set just for startup
 
@@ -412,7 +412,13 @@ namespace r2
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
             const auto engineMaterialParamsPackSize = SetupMaterialPacks(materialsPath, appMaterialPacksManifests);
+            
 
+            //@TODO(Serge): get tha asset boundary from the app, then make the GameAssetManager from all the material/texture files
+            
+
+            
+            r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
 			bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
 			if (!materialSystemInitialized)
 			{
@@ -448,7 +454,6 @@ namespace r2
             //Should be last/ first in the stack
             //@TODO(Serge): should check to see if the app initialized!
             PushAppLayer(std::make_unique<AppLayer>(std::move(app)));
-
 
 #ifdef R2_EDITOR
 			std::unique_ptr<EditorLayer> editorLayer = std::make_unique<EditorLayer>();

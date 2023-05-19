@@ -9,11 +9,12 @@
 #ifndef Application_hpp
 #define Application_hpp
 
-#include "r2/Platform/MacroDefines.h"
+
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include <memory>
 #include <string>
 
@@ -97,6 +98,8 @@ namespace r2
         virtual std::vector<std::string> GetInternalShaderManifestsRawPaths() const;
 
         virtual std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const;
+        
+        r2::GameAssetManager& GetGameAssetManager();
 
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
@@ -107,6 +110,7 @@ namespace r2
         virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
         virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const;
 #endif
+        
         
 
 #ifdef R2_ASSET_PIPELINE
@@ -127,6 +131,10 @@ namespace r2
 
         virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
 #endif
+
+    protected:
+        r2::GameAssetManager mGameAssetManager;
+
     };
     
     std::unique_ptr<Application> CreateApplication();

@@ -91,6 +91,7 @@ namespace r2
         //GetApplication
         const Application& GetApplication() const;
         
+
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
         friend class SDL2Platform;
@@ -273,6 +274,8 @@ namespace r2
         util::Size mResolution;
         r2::mem::utils::MemBoundary mAssetLibMemBoundary;
         
+        
+
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::AssetCommandHandler mAssetCommandHandler;
 #endif

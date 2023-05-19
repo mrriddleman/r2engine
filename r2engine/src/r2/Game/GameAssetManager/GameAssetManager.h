@@ -3,7 +3,7 @@
 
 
 #include "r2/Core/Assets/Asset.h"
-#include "r2/Core/Assets/AssetCache.h"
+#include "r2/Core/Assets/AssetCacheRecord.h"
 
 #include "r2/Core/Memory/Memory.h"
 
@@ -16,6 +16,7 @@ namespace r2::asset
 {
 	class AssetLoader;
 	class AssetWriter;
+	class AssetCache;
 }
 
 namespace r2
@@ -27,10 +28,7 @@ namespace r2
 		~GameAssetManager();
 
 		//No copy or move semantics
-		GameAssetManager(const GameAssetManager& other) = delete;
-		GameAssetManager(GameAssetManager&& other) = delete;
-		GameAssetManager& operator=(const GameAssetManager& other) = delete;
-		GameAssetManager& operator=(GameAssetManager&& other) = delete;
+
 
 		bool Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList);
 		void Shutdown();

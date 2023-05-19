@@ -270,7 +270,157 @@ public:
     const u64 NUM_DRAW_COMMANDS = 30;
     const u64 NUM_BONES = 1000;
 
+	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* texturePaths, r2::asset::FileList fileList)
+	{
+		for (u32 i = 0; i < texturePaths->size(); ++i)
+		{
+			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+		}
+	}
 
+	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList)
+	{
+		AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
+		AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
+		AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
+		AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
+		AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
+		AddAllTexturesFromTextureType(texturePack->detail(), fileList);
+		AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
+		AddAllTexturesFromTextureType(texturePack->height(), fileList);
+		AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
+		AddAllTexturesFromTextureType(texturePack->normal(), fileList);
+		AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
+		AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
+
+		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
+		{
+			for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
+			{
+				const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
+
+				for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
+				{
+					r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
+					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+				}
+			}
+		}
+	}
+
+    r2::asset::FileList MakeGameAssetManagerFiles()
+    {
+        //@TODO(Serge): calculate how many files are needed here
+        r2::asset::FileList fileList = r2::asset::lib::MakeFileList(2000);
+
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
+
+        void* textureManifestData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
+
+        const flat::TexturePacksManifest* texturesManifest = flat::GetTexturePacksManifest(textureManifestData);
+
+		for (flatbuffers::uoffset_t i = 0; i < texturesManifest->texturePacks()->size(); ++i)
+		{
+			const flat::TexturePack* texturePack = texturesManifest->texturePacks()->Get(i);
+
+			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
+		}
+
+        FREE(textureManifestData, *MEM_ENG_SCRATCH_PTR);
+
+
+		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
+
+		r2::asset::RawAssetFile* batModelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)batModelFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
+
+		r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)sponzaFile);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.ranm", modelFilePath);
+		r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)idleAnimFile);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.ranm", modelFilePath);
+		r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)invertIdleAnimFile);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.ranm", modelFilePath);
+		r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)attackAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonIdleAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonWalkAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonWalkAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/run.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* skeletonRoarAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)skeletonRoarAnimFile);
+
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenIdleAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenRunForward.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenRunForwardAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenRunForwardAnimFile);
+
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenSpawn.ranm", modelFilePath);
+
+		r2::asset::RawAssetFile* ellenSpawnAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenSpawnAnimFile);
+
+
+        return fileList;
+    }
     
     virtual bool Init() override
     {
@@ -313,6 +463,13 @@ public:
         
         //Pre-build asset data
 
+
+        //Setup the GameAssetManager
+        {
+			r2::asset::FileList fileList = MakeGameAssetManagerFiles();
+			mGameAssetManager.Init({}, fileList);
+        }
+		
 
 
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
@@ -1760,7 +1917,7 @@ public:
         FREE(mStaticCubesDrawFlags, *linearArenaPtr);
 
         
-
+        mGameAssetManager.Shutdown();
 
 		u64 size = r2::sarr::Size(*assetsBuffers);
 

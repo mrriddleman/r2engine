@@ -22,6 +22,8 @@
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
 
+
+
 namespace r2::asset
 {
     class AssetFile;
@@ -31,9 +33,7 @@ namespace r2::asset
     class Asset;
     class DefaultAssetLoader;
     
-    using AssetLoadProgressCallback = std::function<void(int, bool&)>;
-    using AssetFreedCallback = std::function<void(const r2::asset::AssetHandle& handle)>;
-     using AssetReloadedFunc = std::function<void (AssetHandle asset)>;
+
 
     class AssetCache
     {

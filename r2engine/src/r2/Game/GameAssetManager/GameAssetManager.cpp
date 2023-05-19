@@ -1,6 +1,7 @@
 #include "r2pch.h"
 
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
