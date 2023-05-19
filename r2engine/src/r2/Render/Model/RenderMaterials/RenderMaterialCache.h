@@ -31,7 +31,7 @@ namespace r2::draw
 		r2::SQueue<s32>* mFreeIndices = nullptr;
 		
 		r2::mem::PoolArena* mGPURenderMaterialArena = nullptr;
-		r2::SArray<GPURenderMaterial*>* mGPURenderMaterialArray = nullptr;
+		r2::SArray<RenderMaterialParams*>* mGPURenderMaterialArray = nullptr;
 		
 		r2::mem::FreeListArena* mAssetHandleArena = nullptr;
 		r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>* mUploadedTextureForMaterialMap = nullptr;
@@ -64,11 +64,11 @@ namespace r2::draw::rmat
 
 	GPURenderMaterialHandle GetGPURenderMaterialHandle(const RenderMaterialCache& renderMaterialCache, u64 materialName);
 
-	const GPURenderMaterial* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
+	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
 
-	const GPURenderMaterial* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle);
+	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle);
 
-	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<GPURenderMaterial>* gpuRenderMaterials);
+	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials);
 
 	bool IsGPURenderMaterialHandleInvalid(const GPURenderMaterialHandle& handle);
 	bool AreGPURenderMaterialHandlesEqual(const GPURenderMaterialHandle& handle1, const GPURenderMaterialHandle& handle2);

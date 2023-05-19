@@ -7,44 +7,33 @@
 
 namespace r2::draw
 {
-	struct GPUMaterialTexture
+	struct RenderMaterialParam
 	{
 		tex::TextureAddress texture;
 		glm::vec4 color = glm::vec4(0); //for normal floats, we'll fill all the values with that value so when we access the channel, we get it the right value
 	};
 
-	struct GPURenderTextures
+	struct RenderMaterialParams
 	{
-		GPUMaterialTexture albedo;
-		GPUMaterialTexture normalMap;
-		GPUMaterialTexture emission;
-		GPUMaterialTexture metallic;
-		GPUMaterialTexture roughness;
-		GPUMaterialTexture ao;
-		GPUMaterialTexture height;
-		GPUMaterialTexture anisotropy;
-		GPUMaterialTexture detail;
-		GPUMaterialTexture clearCoat;
-		GPUMaterialTexture clearCoatRoughness;
-		GPUMaterialTexture clearCoatNormal;
-	};
+		RenderMaterialParam albedo;
+		RenderMaterialParam normalMap;
+		RenderMaterialParam emission;
+		RenderMaterialParam metallic;
+		RenderMaterialParam roughness;
+		RenderMaterialParam ao;
+		RenderMaterialParam height;
+		RenderMaterialParam anisotropy;
+		RenderMaterialParam detail;
 
-	union GPURenderTextureUnion
-	{
-		GPURenderTextures renderTextures;
-		GPUMaterialTexture renderTextureArray[tex::Cubemap] = { {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} };
-	};
-
-	struct GPURenderMaterial
-	{
-		GPURenderTextureUnion gpuTextures;
+		RenderMaterialParam clearCoat;
+		RenderMaterialParam clearCoatRoughness;
+		RenderMaterialParam clearCoatNormal;
 
 		b32 doubleSided = false;
 		f32 heightScale = 0.0f;
 		f32 reflectance = 0.0f;
 		s32 padding = 0;
 	};
-
 	
 }
 

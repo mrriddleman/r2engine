@@ -27,9 +27,9 @@ namespace r2::draw
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<s32>::MemorySize(numMaterials * r2::SHashMap<s32>::LoadFactorMultiplier()), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<s32>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<GPURenderMaterial*>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<RenderMaterialParams*>::MemorySize(numMaterials), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>::MemorySize(memorySize) * r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>::LoadFactorMultiplier(), ALIGNMENT, stackHeaderSize, boundsChecking);
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GPURenderMaterial), ALIGNMENT, poolHeaderSize, boundsChecking) * numMaterials;
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderMaterialParams), ALIGNMENT, poolHeaderSize, boundsChecking) * numMaterials;
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(tex::NUM_TEXTURE_TYPES), ALIGNMENT, freelistHeaderSize, boundsChecking) * numMaterials;
 
 		return memorySize;
@@ -42,7 +42,7 @@ namespace r2::draw::rmat
 	constexpr u32 ALIGNMENT = 16;
 
 	void UpdateGPURenderMaterialForMaterialParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
-	GPURenderMaterial* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams);
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams);
 	void RemoveGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
 	tex::TextureType GetTextureTypeForPropertyType(flat::MaterialPropertyType propertyType);
 
@@ -93,15 +93,15 @@ namespace r2::draw::rmat
 			r2::squeue::PushBack(*newRenderMaterialCache->mFreeIndices, i);
 		}
 
-		newRenderMaterialCache->mGPURenderMaterialArena = MAKE_POOL_ARENA(*renderMaterialCacheArena, sizeof(GPURenderMaterial), ALIGNMENT, numMaterials);
+		newRenderMaterialCache->mGPURenderMaterialArena = MAKE_POOL_ARENA(*renderMaterialCacheArena, sizeof(RenderMaterialParams), ALIGNMENT, numMaterials);
 
 		R2_CHECK(newRenderMaterialCache->mGPURenderMaterialArena != nullptr, "Couldn't create the mGPURenderMaterialArena");
 
-		newRenderMaterialCache->mGPURenderMaterialArray = MAKE_SARRAY(*renderMaterialCacheArena, GPURenderMaterial*, numMaterials);
+		newRenderMaterialCache->mGPURenderMaterialArray = MAKE_SARRAY(*renderMaterialCacheArena, RenderMaterialParams*, numMaterials);
 
 		R2_CHECK(newRenderMaterialCache->mGPURenderMaterialArray != nullptr, "Couldn't create the mGPURenderMaterialArray");
 
-		GPURenderMaterial* nullRenderMaterial = nullptr;
+		RenderMaterialParams* nullRenderMaterial = nullptr;
 
 		r2::sarr::Fill(*newRenderMaterialCache->mGPURenderMaterialArray, nullRenderMaterial);
 
@@ -362,7 +362,7 @@ namespace r2::draw::rmat
 		return newHandle;
 	}
 
-	const GPURenderMaterial* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName)
+	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName)
 	{
 		s32 defaultIndex = -1;
 
@@ -376,7 +376,7 @@ namespace r2::draw::rmat
 		return r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
 	}
 
-	const GPURenderMaterial* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle)
+	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle)
 	{
 		if (IsGPURenderMaterialHandleInvalid(handle))
 		{
@@ -386,7 +386,7 @@ namespace r2::draw::rmat
 		return r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, handle.index);
 	}
 
-	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<GPURenderMaterial>* gpuRenderMaterials)
+	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials)
 	{
 		if (handles == nullptr)
 		{
@@ -414,7 +414,7 @@ namespace r2::draw::rmat
 
 			R2_CHECK(gpuRenderMaterialHandle.renderMaterialCacheName == renderMaterialCache.mName, "These always need to match");
 
-			const GPURenderMaterial* renderMaterialPtr = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, gpuRenderMaterialHandle.index);
+			const RenderMaterialParams* renderMaterialPtr = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, gpuRenderMaterialHandle.index);
 
 			R2_CHECK(renderMaterialPtr != nullptr, "Should never be nullptr");
 
@@ -515,7 +515,7 @@ namespace r2::draw::rmat
 
 		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, materialParams->name(), defaultIndex);
 
-		GPURenderMaterial* gpuRenderMaterial = nullptr;
+		RenderMaterialParams* gpuRenderMaterial = nullptr;
 
 		if (index == defaultIndex)
 		{
@@ -534,7 +534,7 @@ namespace r2::draw::rmat
 			const flat::MaterialColorParam* colorParam = materialParams->colorParams()->Get(i);
 			if (colorParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ALBEDO)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.albedo.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
+				gpuRenderMaterial->albedo.color = glm::vec4(colorParam->value()->r(), colorParam->value()->g(), colorParam->value()->b(), colorParam->value()->a());
 			}
 		}
 
@@ -544,12 +544,12 @@ namespace r2::draw::rmat
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType::MaterialPropertyType_ROUGHNESS)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.roughness.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->roughness.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_METALLIC)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.metallic.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->metallic.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_REFLECTANCE)
@@ -559,22 +559,22 @@ namespace r2::draw::rmat
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_AMBIENT_OCCLUSION)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.ao.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->ao.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.clearCoat.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->clearCoat.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_CLEAR_COAT_ROUGHNESS)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.clearCoatRoughness.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->clearCoatRoughness.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_ANISOTROPY)
 			{
-				gpuRenderMaterial->gpuTextures.renderTextures.anisotropy.color = glm::vec4(floatParam->value());
+				gpuRenderMaterial->anisotropy.color = glm::vec4(floatParam->value());
 			}
 
 			if (floatParam->propertyType() == flat::MaterialPropertyType_HEIGHT_SCALE)
@@ -607,8 +607,63 @@ namespace r2::draw::rmat
 
 				const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle, textureParam->propertyType());
 
-				gpuRenderMaterial->gpuTextures.renderTextureArray[i].texture = texsys::GetTextureAddress(*theTexture);
-				gpuRenderMaterial->gpuTextures.renderTextureArray[i].texture.channel = GetPackingType(materialParams, theTexture->type);
+				tex::TextureAddress address = texsys::GetTextureAddress(*theTexture);
+			 	s32 channel = GetPackingType(materialParams, theTexture->type);
+
+				switch (theTexture->type)
+				{
+				case tex::Diffuse:
+					gpuRenderMaterial->albedo.texture = address;
+					gpuRenderMaterial->albedo.texture.channel = channel;
+					break;
+				case tex::Metallic:
+					gpuRenderMaterial->metallic.texture = address;
+					gpuRenderMaterial->metallic.texture.channel = channel;
+					break;
+				case tex::Normal:
+					gpuRenderMaterial->normalMap.texture = address;
+					gpuRenderMaterial->normalMap.texture.channel = channel;
+					break;
+				case tex::Emissive:
+					gpuRenderMaterial->emission.texture = address;
+					gpuRenderMaterial->emission.texture.channel = channel;
+					break;
+				case tex::Roughness:
+					gpuRenderMaterial->roughness.texture = address;
+					gpuRenderMaterial->roughness.texture.channel = channel;
+					break;
+				case tex::Anisotropy:
+					gpuRenderMaterial->anisotropy.texture = address;
+					gpuRenderMaterial->anisotropy.texture.channel = channel;
+					break;
+				case tex::Height:
+					gpuRenderMaterial->height.texture = address;
+					gpuRenderMaterial->height.texture.channel = channel;
+					break;
+				case tex::ClearCoat:
+					gpuRenderMaterial->clearCoat.texture = address;
+					gpuRenderMaterial->clearCoat.texture.channel = channel;
+					break;
+				case tex::ClearCoatNormal:
+					gpuRenderMaterial->clearCoatNormal.texture = address;
+					gpuRenderMaterial->clearCoatNormal.texture.channel = channel;
+					break;
+				case tex::ClearCoatRoughness:
+					gpuRenderMaterial->clearCoatRoughness.texture = address;
+					gpuRenderMaterial->clearCoatRoughness.texture.channel = channel;
+					break;
+				case tex::Detail:
+					gpuRenderMaterial->detail.texture = address;
+					gpuRenderMaterial->detail.texture.channel = channel;
+					break;
+				case tex::Occlusion:
+					gpuRenderMaterial->ao.texture = address;
+					gpuRenderMaterial->ao.texture.channel = channel;
+					break;
+				default:
+					R2_CHECK(false, "Unsupported texture type");
+					break;
+				} 
 			}
 
 			r2::SArray<r2::asset::AssetHandle>* textureAssetHandles = nullptr;
@@ -646,7 +701,7 @@ namespace r2::draw::rmat
 		}
 		else
 		{
-			gpuRenderMaterial->gpuTextures.renderTextures.albedo.texture = texsys::GetTextureAddress(*cubemapTexture);
+			gpuRenderMaterial->albedo.texture = texsys::GetTextureAddress(*cubemapTexture);
 
 			const u32 numAssetHandles = cubemapTexture->numMipLevels * tex::CubemapSide::NUM_SIDES;
 			
@@ -679,7 +734,7 @@ namespace r2::draw::rmat
 		}
 	}
 
-	GPURenderMaterial* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams)
+	RenderMaterialParams* AddNewGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams)
 	{
 		R2_CHECK(materialParams != nullptr, "Should never be the case");
 
@@ -687,7 +742,7 @@ namespace r2::draw::rmat
 
 		R2_CHECK(!r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName), "Shouldn't have this already");
 
-		GPURenderMaterial* newGPURenderMaterial = ALLOC(GPURenderMaterial, *renderMaterialCache.mGPURenderMaterialArena);
+		RenderMaterialParams* newGPURenderMaterial = ALLOC(RenderMaterialParams, *renderMaterialCache.mGPURenderMaterialArena);
 
 		R2_CHECK(newGPURenderMaterial != nullptr, "Should never happen");
 
@@ -714,7 +769,7 @@ namespace r2::draw::rmat
 			return;//?
 		}
 
-		GPURenderMaterial* gpuRenderMaterial = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
+		RenderMaterialParams* gpuRenderMaterial = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
 
 		FREE(gpuRenderMaterial, *renderMaterialCache.mGPURenderMaterialArena);
 

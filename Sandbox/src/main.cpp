@@ -469,8 +469,6 @@ public:
 			r2::asset::FileList fileList = MakeGameAssetManagerFiles();
 			mGameAssetManager.Init({}, fileList);
         }
-		
-
 
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
