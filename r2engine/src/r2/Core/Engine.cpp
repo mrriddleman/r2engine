@@ -11,6 +11,8 @@
 #ifdef R2_IMGUI
 #include "r2/ImGui/ImGuiLayer.h"
 #endif
+
+#include "r2/Core/Application.h"
 #include "r2/Core/Layer/AppLayer.h"
 
 #ifdef R2_EDITOR
@@ -33,6 +35,10 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Game/Level/LevelManager.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
 
 #ifdef R2_DEBUG
 #include <chrono>
@@ -442,6 +448,25 @@ namespace r2
             mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, mEngineMaterialSystem);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
+            
+
+            //setup the GameAssetManager + ECSCoordinator + LevelManager
+            {
+                mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
+                mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
+
+                mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
+
+                auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
+
+                r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
+                memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
+                mGameAssetManager->Init(memoryHandle, noptrApp->GetAssetFileList());
+
+                mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
+                mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), mGameAssetManager, noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
+            }
+            
             //@TODO(Serge): don't use make unique!
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
@@ -460,6 +485,16 @@ namespace r2
 			mEditorLayer = editorLayer.get();
 			PushLayer(std::move(editorLayer));
 #endif
+           r2::mem::MemoryArea* internalEngineMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle);
+
+           u64 unallocated = internalEngineMemoryArea->UnAllocatedSpace();
+
+           if (unallocated)
+           {
+               printf("Amount of unallocated space in the internal engine memory area is: %llu\n", unallocated);
+           }
+
+
 
             DetectGameControllers();
 
@@ -516,6 +551,17 @@ namespace r2
                 CloseGameController(i);
             }
         }
+
+        mLevelManager->Shutdown();
+        FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
+
+        mGameAssetManager->Shutdown();
+        FREE(mGameAssetManager, *MEM_ENG_PERMANENT_PTR);
+
+        mECSWorld->Shutdown();
+        FREE(mECSWorld, *MEM_ENG_PERMANENT_PTR);
+      //  mECSCoordinator->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
+       // FREE(mECSCoordinator, *MEM_ENG_PERMANENT_PTR);
         
         r2::mem::utils::MemBoundary materialSystemBoundary = mEngineMaterialSystem->mMaterialMemBoundary;
         r2::draw::matsys::FreeMaterialSystem(mEngineMaterialSystem);
@@ -809,6 +855,21 @@ namespace r2
         return mLayerStack.GetApplication();
     }
     
+    LevelManager& Engine::GetLevelManager() const
+    {
+        return *mLevelManager;
+    }
+
+    GameAssetManager& Engine::GetGameAssetManager() const
+    {
+        return *mGameAssetManager;
+    }
+    
+    r2::ecs::ECSWorld& Engine::GetECSWorld()
+    {
+        return *mECSWorld;
+    }
+
     void Engine::WindowResizedEvent(u32 width, u32 height)
     {
         auto appResolution = GetApplication().GetAppResolution();

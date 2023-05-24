@@ -9,7 +9,7 @@
 
 namespace flat
 {
-	class ComponentArrayData;
+	struct ComponentArrayData;
 }
 
 namespace r2::ecs

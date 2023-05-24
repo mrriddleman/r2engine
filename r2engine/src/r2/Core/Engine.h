@@ -8,9 +8,12 @@
 #ifndef Engine_hpp
 #define Engine_hpp
 
-#include "r2/Core/Application.h"
 #include "r2/Platform/IO.h"
 #include "r2/Core/Layer/LayerStack.h"
+#include "r2/Render/Renderer/RendererTypes.h"
+#include "r2/Core/Containers/SArray.h"
+#include "r2/Utils/Utils.h"
+
 
 #ifdef R2_ASSET_PIPELINE
 
@@ -24,6 +27,11 @@ namespace r2::draw
     struct MaterialSystem;
 }
 
+namespace r2::ecs
+{
+    class ECSWorld;
+}
+
 namespace flat
 {
     struct MaterialParamsPack;
@@ -33,6 +41,9 @@ namespace r2
 {
     class ImGuiLayer;
     class EditorLayer;
+    class Application;
+    class LevelManager;
+    class GameAssetManager;
 
     extern const s32 FULL_SCREEN_WINDOW;
     extern const s32 FULL_SCREEN_DESKTOP;
@@ -91,6 +102,9 @@ namespace r2
         //GetApplication
         const Application& GetApplication() const;
         
+        LevelManager& GetLevelManager() const;
+        GameAssetManager& GetGameAssetManager() const;
+        r2::ecs::ECSWorld& GetECSWorld();
 
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
@@ -273,8 +287,11 @@ namespace r2
         b32 mNeedsResolutionChange;
         util::Size mResolution;
         r2::mem::utils::MemBoundary mAssetLibMemBoundary;
-        
-        
+
+
+		r2::GameAssetManager* mGameAssetManager;
+		r2::LevelManager* mLevelManager;
+        r2::ecs::ECSWorld* mECSWorld;
 
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::AssetCommandHandler mAssetCommandHandler;

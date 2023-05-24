@@ -40,6 +40,7 @@ namespace r2
 		,mModelCache(nullptr)
 		,mAnimationCache(nullptr)
 		,mMaterialSystem(nullptr)
+		, mSceneGraph{}
 	{
 	}
 
@@ -57,7 +58,7 @@ namespace r2
 		return subAreaSize;
 	}
 
-	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
+	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, GameAssetManager* noptrGameAssetManager, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
 	{
 		R2_CHECK(levelPackPath != nullptr, "We should have a proper path");
 		R2_CHECK(strlen(levelPackPath) > 0, "We should have path that's more than 0");
@@ -132,6 +133,7 @@ namespace r2
 
 		mAnimationCache = r2::draw::animcache::Create(memoryAreaHandle, ANIMATION_CACHE_SIZE, animationFiles, "Level Manager Animation Cache");
 
+		mnoptrGameAssetManager = noptrGameAssetManager;
 
 		return true;
 	}

@@ -24,6 +24,9 @@
 #endif
 #include "imgui.h"
 
+#include "r2/Core/Engine.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
+
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Utils/Random.h"
@@ -40,8 +43,7 @@ namespace
 	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
 	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
 	constexpr u32 MAX_LEVELS = 100;
-	//constexpr u32 LEVEL_CACHE_SIZE = Megabytes(1);
-	constexpr u32 EDITOR_MEMORY_AREA_SIZE = Megabytes(8);
+
 }
 
 namespace r2
@@ -49,63 +51,14 @@ namespace r2
 	Editor::Editor()
 		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mMallocArena(r2::mem::utils::MemBoundary())
-		,mCoordinator(nullptr)
-		,mnoptrRenderSystem(nullptr)
-		,mnoptrSkeletalAnimationSystem(nullptr)
-#ifdef R2_DEBUG
-		,mnoptrDebugBonesRenderSystem(nullptr)
-		,mnoptrDebugRenderSystem(nullptr)
-#endif // DEBUG
-		//,moptrLevelCache(nullptr)
-		//,mLevelData(nullptr)
-		//, mLevelHandle{}
-		, microbatAnimModel(nullptr)
+		,microbatAnimModel(nullptr)
 	{
 
 	}
 
 	void Editor::Init()
 	{
-		mEditorMemoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("EditorMemoryArea");
-
-		R2_CHECK(mEditorMemoryAreaHandle != r2::mem::MemoryArea::Invalid, "Invalid memory area");
-
-		r2::mem::MemoryArea* editorMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(mEditorMemoryAreaHandle);
-		R2_CHECK(editorMemoryArea != nullptr, "Failed to get the memory area!");
-
-		//@Temporary
-		r2::mem::utils::MemoryProperties memProps;
-		memProps.alignment = 16;
-		memProps.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-		memProps.headerSize = r2::mem::MallocAllocator::HeaderSize();
-
-		u64 levelManagerMemorySize = LevelManager::MemorySize(MAX_LEVELS, LevelManager::MAX_NUM_MODELS, LevelManager::MAX_NUM_ANIMATIONS, memProps);
-
-		auto result = editorMemoryArea->Init(levelManagerMemorySize, 0);
-		R2_CHECK(result == true, "Failed to initialize memory area");
-
-		mCoordinator = ALLOC(ecs::ECSCoordinator, mMallocArena);
-
-		mCoordinator->Init<mem::MallocArena>(mMallocArena, ecs::MAX_NUM_COMPONENTS, ecs::MAX_NUM_ENTITIES, 1, ecs::MAX_NUM_SYSTEMS);
-
-		RegisterComponents();
-		RegisterSystems();
-		
 		mRandom.Randomize();
-
-
-
-		//const auto size = r2::lvlche::MemorySize(MAX_LEVELS, LEVEL_CACHE_SIZE, memProps);
-		//r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(mMallocArena, size, memProps.alignment, "Level Cache Memory Boundary");
-		//moptrLevelCache = r2::lvlche::CreateLevelCache(levelCacheBoundary, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), MAX_LEVELS, LEVEL_CACHE_SIZE);
-
-
-
-
-		mLevelManager.Init(mEditorMemoryAreaHandle, mCoordinator, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), "Level Manager", MAX_LEVELS);
-
-
-		//mSceneGraph.Init<mem::MallocArena>(mMallocArena, mCoordinator);
 
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
@@ -146,31 +99,10 @@ namespace r2
 
 		}
 
-		/*mSceneGraph.Shutdown<mem::MallocArena>(mMallocArena);
-
-		if (!r2::asset::IsInvalidAssetHandle(mLevelHandle))
-		{
-			r2::lvlche::UnloadLevelData(*moptrLevelCache, mLevelHandle);
-		}
-		
-		r2::mem::utils::MemBoundary boundary = moptrLevelCache->mLevelCacheBoundary;
-		r2::lvlche::Shutdown(moptrLevelCache);
-
-		FREE(boundary.location, mMallocArena);*/
-
-		mLevelManager.Shutdown();
-
-		UnRegisterSystems();
-		UnRegisterComponents();
-
 		for (auto iter = mComponentAllocations.rbegin(); iter != mComponentAllocations.rend(); ++iter)
 		{
 			FREE(*iter, mMallocArena);
 		}
-
-		mCoordinator->Shutdown<mem::MallocArena>(mMallocArena);
-
-		FREE(mCoordinator, mMallocArena);
 	}
 
 	void Editor::OnEvent(evt::Event& e)
@@ -212,9 +144,8 @@ namespace r2
 
 	void Editor::Update()
 	{
-		mLevelManager.Update();
-		//mSceneGraph.Update();
-		mnoptrSkeletalAnimationSystem->Update();
+		CENG.GetLevelManager().Update();
+		MENG.GetECSWorld().GetSkeletalAnimationSystem()->Update();
 
 		for (const auto& widget : mEditorWidgets)
 		{
@@ -224,11 +155,12 @@ namespace r2
 
 	void Editor::Render()
 	{
-		mnoptrRenderSystem->Render();
+		MENG.GetECSWorld().GetRenderSystem()->Render();
+
 
 #ifdef R2_DEBUG
-		mnoptrDebugRenderSystem->Render();
-		mnoptrDebugBonesRenderSystem->Render();
+		MENG.GetECSWorld().GetDebugRenderSystem()->Render();
+		MENG.GetECSWorld().GetDebugBonesRenderSystem()->Render();
 #endif
 	}
 
@@ -287,7 +219,7 @@ namespace r2
 		r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
 		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
-		mLevelManager.SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
+		CENG.GetLevelManager().SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
 
 //		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
 
@@ -298,25 +230,11 @@ namespace r2
 	{
 		LevelName levelAssetName = LevelManager::MakeLevelNameFromPath(filePathName.c_str());
 
-		const Level* newLevel = mLevelManager.LoadLevel(levelAssetName);
-
-		/*mLevelHandle = r2::lvlche::LoadLevelData(*moptrLevelCache, levelAssetName);
-
-		mLevelData = r2::lvlche::GetLevelData(*moptrLevelCache, mLevelHandle);
-
-		R2_CHECK(mLevelData != nullptr, "Level Data is nullptr");
-
-		r2::Level newLevel;
-		newLevel.Init(mLevelData, mLevelHandle);
-
-		mSceneGraph.LoadedNewLevel(newLevel);*/
+		const Level* newLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
 
 		evt::EditorLevelLoadedEvent e(*newLevel);
 
 		PostEditorEvent(e);
-
-		//printf("FilePathName: %s\n", filePathName.c_str());
-		//printf("FilePath: %s\n", parentDirectory.c_str());
 	}
 
 	std::string Editor::GetAppLevelPath() const
@@ -457,10 +375,10 @@ namespace r2
 
 				ecs::Entity theNewEntity = e.GetEntity();
 
-				mCoordinator->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
-				mCoordinator->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
-				mCoordinator->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
-				CENG.GetApplication().AddComponentsToEntity(mCoordinator, theNewEntity);
+				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
+				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
+				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
+				CENG.GetApplication().AddComponentsToEntity(MENG.GetECSWorld().GetECSCoordinator(), theNewEntity);
 
 				//transform instance
 				{
@@ -483,7 +401,8 @@ namespace r2
 
 					r2::sarr::Push(*instancedTransformComponent.instances, transformInstance2);
 
-					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theNewEntity, instancedTransformComponent);
+					
+					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theNewEntity, instancedTransformComponent);
 				}
 				
 				//debug bone instance
@@ -508,7 +427,7 @@ namespace r2
 					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
 					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
 
-					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
+					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theNewEntity, instancedDebugBoneComponent);
 				}
 
 				//Skeletal animation instance component
@@ -557,7 +476,7 @@ namespace r2
 					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance1);
 					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance2);
 
-					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theNewEntity, instancedSkeletalAnimationComponent);
+					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theNewEntity, instancedSkeletalAnimationComponent);
 				}
 
 				//debug render component + instances
@@ -595,11 +514,11 @@ namespace r2
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent1);
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent2);
 
-					mCoordinator->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
-					mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugRenderComponent>>(theNewEntity, instancedDebugRenderComponent);
+					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugRenderComponent>(theNewEntity, debugRenderComponent);
+					MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugRenderComponent>>(theNewEntity, instancedDebugRenderComponent);
 				}
 
-				ecs::TransformComponent& transformComponent = mCoordinator->GetComponent<ecs::TransformComponent>(theNewEntity);
+				ecs::TransformComponent& transformComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(theNewEntity);
 				transformComponent.localTransform.position = glm::vec3(0, 0, 2);
 				transformComponent.localTransform.scale = glm::vec3(0.01f);
 				
@@ -612,7 +531,7 @@ namespace r2
 		//@TODO(Serge): remove when DebugBoneComponent no long necessary for Skeletal Animation
 		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e)
 			{
-				const r2::SArray<ecs::Entity>& allEntities = mCoordinator->GetAllLivingEntities();
+				const r2::SArray<ecs::Entity>& allEntities = MENG.GetECSWorld().GetECSCoordinator()->GetAllLivingEntities();
 
 				const auto numEntities = r2::sarr::Size(allEntities);
 
@@ -620,14 +539,14 @@ namespace r2
 				{
 					ecs::Entity e = r2::sarr::At(allEntities, i);
 
-					if (mCoordinator->HasComponent<ecs::SkeletalAnimationComponent>(e) 
+					if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::SkeletalAnimationComponent>(e)
 #ifdef R2_DEBUG
-						&& !mCoordinator->HasComponent<ecs::DebugBoneComponent>(e)
+						&& !MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::DebugBoneComponent>(e)
 #endif		
 						)
 					{
 #ifdef R2_DEBUG
-						const ecs::SkeletalAnimationComponent& skeletalAnimationComponent = mCoordinator->GetComponent<ecs::SkeletalAnimationComponent>(e);
+						const ecs::SkeletalAnimationComponent& skeletalAnimationComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::SkeletalAnimationComponent>(e);
 
 						ecs::DebugBoneComponent debugBoneComponent;
 						debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
@@ -635,18 +554,18 @@ namespace r2
 						r2::sarr::Clear(*debugBoneComponent.debugBones);
 						mComponentAllocations.push_back(debugBoneComponent.debugBones);
 
-						mCoordinator->AddComponent<ecs::DebugBoneComponent>(e, debugBoneComponent);
+						MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(e, debugBoneComponent);
 #endif
 					}
 
-					if (mCoordinator->HasComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e) 
+					if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e)
 #ifdef R2_DEBUG
-						&& !mCoordinator->HasComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e)
+						&& !MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e)
 #endif
 						)
 					{
 #ifdef R2_DEBUG
-						const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = mCoordinator->GetComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e);
+						const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e);
 
 						const auto numInstances = instancedSkeletalAnimationComponent.numInstances;
 
@@ -668,7 +587,7 @@ namespace r2
 							r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
 						}
 
-						mCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
+						MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
 #endif
 					}
 
@@ -687,354 +606,22 @@ namespace r2
 
 	SceneGraph& Editor::GetSceneGraph()
 	{
-		return mLevelManager.GetSceneGraph();
+		return CENG.GetLevelManager().GetSceneGraph();
 	}
 
 	SceneGraph* Editor::GetSceneGraphPtr()
 	{
-		return mLevelManager.GetSceneGraphPtr();
+		return CENG.GetLevelManager().GetSceneGraphPtr();
 	}
 
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()
 	{
-		return mCoordinator;
+		return MENG.GetECSWorld().GetECSCoordinator();
 	}
 
 	r2::mem::MallocArena& Editor::GetMemoryArena()
 	{
 		return mMallocArena;
-	}
-
-	void* Editor::HydrateRenderComponents(void* data)
-	{
-		r2::SArray<ecs::RenderComponent>* tempRenderComponents = static_cast<r2::SArray<ecs::RenderComponent>*>(data);
-
-		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
-		
-		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
-		r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
-
-		for (u32 i = 0; i < numRenderComponents; ++i)
-		{
-			ecs::RenderComponent& renderComponent = r2::sarr::At(*tempRenderComponents, i);
-
-			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
-
-			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
-
-			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-			if (renderComponent.isAnimated)
-			{
-				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
-				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
-			}
-			else
-			{
-				const r2::draw::Model* model = r2::draw::modlche::GetModel(editorModelSystem, modelHandle);
-				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-			}
-
-			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-
-			if (renderComponent.optrMaterialOverrideNames)
-			{
-				const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
-
-				if (numMaterialOverrides > 0)
-				{
-					renderComponent.optrOverrideMaterials = MAKE_SARRAY(mMallocArena, r2::draw::MaterialHandle, numMaterialOverrides);
-					mComponentAllocations.push_back(renderComponent.optrMaterialOverrideNames);
-
-					for (u32 j = 0; j < numMaterialOverrides; ++j)
-					{
-						const ecs::RenderMaterialOverride& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
-
-						const r2::draw::MaterialSystem* materialSystem = r2::draw::matsys::GetMaterialSystemBySystemName(materialOverride.materialSystemName);
-
-						R2_CHECK(materialSystem == editorMaterialSystem, "Just a check to make sure these are the same");
-
-						r2::draw::MaterialHandle nextOverrideMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*materialSystem, materialOverride.materialName);
-
-						r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
-					}
-				}
-			}
-		}
-
-		return tempRenderComponents;
-	}
-
-	void* Editor::HydrateSkeletalAnimationComponents(void* data)
-	{
-		r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents = static_cast<r2::SArray<ecs::SkeletalAnimationComponent>*>(data);
-
-		if (!tempSkeletalAnimationComponents)
-		{
-			return nullptr;
-		}
-
-		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
-
-		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
-
-		for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
-		{
-			ecs::SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*tempSkeletalAnimationComponents, i);
-
-			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
-
-			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
-
-			const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
-
-			skeletalAnimationComponent.animModel = animModel;
-
-
-			r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
-
-			r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
-			
-			skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
-
-			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
-			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
-
-			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-		}
-
-		return tempSkeletalAnimationComponents;
-	}
-
-	void* Editor::HydrateInstancedSkeletalAnimationComponents(void* data)
-	{
-		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>*>(data);
-		if (!tempInstancedSkeletalAnimationComponents)
-		{
-			return nullptr;
-		}
-
-		//@TODO(Serge): technically, we don't need to allocate this at all since the component array has the memory for it - figure out a way to not allocate the array again
-		r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* instancedSkeletalAnimationComponents = nullptr;
-
-		instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
-		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
-
-		r2::draw::ModelCache* editorModelSystem = mLevelManager.GetModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = mLevelManager.GetAnimationCache();
-
-		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
-
-		for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
-		{
-			const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& tempInstancedSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponents, i);
-
-			ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
-			instancedSkeletalAnimationComponent.numInstances = tempInstancedSkeletalAnimationComponent.numInstances;
-
-			instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, tempInstancedSkeletalAnimationComponent.numInstances);
-			mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
-
-
-			for (u32 j = 0; j < tempInstancedSkeletalAnimationComponent.numInstances; ++j)
-			{
-				const ecs::SkeletalAnimationComponent& tempSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponent.instances, j);
-
-				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
-				skeletalAnimationComponent.animModelAssetName = tempSkeletalAnimationComponent.animModelAssetName;
-				skeletalAnimationComponent.shouldLoop = tempSkeletalAnimationComponent.shouldLoop;
-				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = tempSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-				skeletalAnimationComponent.startingAnimationAssetName = tempSkeletalAnimationComponent.startingAnimationAssetName;
-				skeletalAnimationComponent.startTime = tempSkeletalAnimationComponent.startTime;
-
-
-				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
-
-				r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
-
-				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
-
-				skeletalAnimationComponent.animModel = animModel;
-
-				r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
-
-				r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
-
-				skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
-
-
-				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
-				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
-
-				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-
-				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
-			}
-
-			r2::sarr::Push(*instancedSkeletalAnimationComponents, instancedSkeletalAnimationComponent);
-
-		}
-
-		return instancedSkeletalAnimationComponents;
-	}
-
-	void* Editor::HydrateInstancedTransformComponents(void* data)
-	{
-		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>*>(data);
-		if (!tempInstancedTransformComponents)
-		{
-			return nullptr;
-		}
-
-		r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* instancedTransformComponents = nullptr;
-
-		instancedTransformComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::TransformComponent> , r2::sarr::Size(*tempInstancedTransformComponents));
-		mComponentAllocations.push_back(instancedTransformComponents);
-
-		for (u32 i = 0; i < r2::sarr::Size(*tempInstancedTransformComponents); ++i)
-		{
-			const ecs::InstanceComponentT<ecs::TransformComponent>& tempInstancedTransformComponent = r2::sarr::At(*tempInstancedTransformComponents, i);
-
-			ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
-
-			instancedTransformComponent.numInstances = tempInstancedTransformComponent.numInstances;
-			instancedTransformComponent.instances = MAKE_SARRAY(mMallocArena, ecs::TransformComponent, tempInstancedTransformComponent.numInstances);
-			mComponentAllocations.push_back(instancedTransformComponent.instances);
-
-			r2::sarr::Copy(*instancedTransformComponent.instances, *tempInstancedTransformComponent.instances);
-
-			r2::sarr::Push(*instancedTransformComponents, instancedTransformComponent);
-		}
-
-		return instancedTransformComponents;
-	}
-
-	void Editor::RegisterComponents()
-	{
-		ecs::ComponentArrayHydrationFunction renderComponentHydrationFunc = std::bind(&Editor::HydrateRenderComponents, this, std::placeholders::_1);
-		ecs::ComponentArrayHydrationFunction skeletalAnimationComponentHydrationFunc = std::bind(&Editor::HydrateSkeletalAnimationComponents, this, std::placeholders::_1);
-		ecs::ComponentArrayHydrationFunction instancedTransformComponentHydrationFunc = std::bind(&Editor::HydrateInstancedTransformComponents, this, std::placeholders::_1);
-		ecs::ComponentArrayHydrationFunction instancedSkeletalAnimationComponentHydrationFunc = std::bind(&Editor::HydrateInstancedSkeletalAnimationComponents, this, std::placeholders::_1);
-
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena, "HeirarchyComponent",true, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena, "TransformComponent", true, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena, "TransformDirtyComponent", false, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena, "RenderComponent", true, renderComponentHydrationFunc);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena, "SkeletalAnimationComponent", true, skeletalAnimationComponentHydrationFunc);
-		
-		//add some more components to the coordinator for the editor to use
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena, "EditorComponent", true, nullptr);
-
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena, "InstancedTranfromComponent", true, instancedTransformComponentHydrationFunc);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena, "InstancedSkeletalAnimationComponent", true, instancedSkeletalAnimationComponentHydrationFunc);
-
-#ifdef R2_DEBUG
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena, "DebugRenderComponent", false, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena, "DebugBoneComponent", false, nullptr);
-
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena, "InstancedDebugRenderComponent", false, nullptr);
-		mCoordinator->RegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena, "InstancedDebugBoneComponent", false, nullptr);
-#endif
-
-		CENG.GetApplication().RegisterComponents(mCoordinator);
-	}
-
-	void Editor::UnRegisterComponents()
-	{
-		CENG.GetApplication().UnRegisterComponents(mCoordinator);
-
-#ifdef R2_DEBUG
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(mMallocArena);
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugBoneComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::DebugRenderComponent>(mMallocArena);
-#endif
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::InstanceComponentT<ecs::TransformComponent>>(mMallocArena);
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::EditorComponent>(mMallocArena);
-
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::SkeletalAnimationComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::RenderComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformDirtyComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::TransformComponent>(mMallocArena);
-		mCoordinator->UnRegisterComponent<mem::MallocArena, ecs::HeirarchyComponent>(mMallocArena);
-	}
-
-	void Editor::RegisterSystems()
-	{
-		const auto transformComponentType = mCoordinator->GetComponentType<ecs::TransformComponent>();
-		const auto renderComponentType = mCoordinator->GetComponentType<ecs::RenderComponent>();
-		const auto skeletalAnimationComponentType = mCoordinator->GetComponentType<ecs::SkeletalAnimationComponent>();
-#ifdef R2_DEBUG
-		const auto debugRenderComponentType = mCoordinator->GetComponentType<ecs::DebugRenderComponent>();
-		const auto debugBoneComponentType = mCoordinator->GetComponentType<ecs::DebugBoneComponent>();
-#endif
-
-		mnoptrRenderSystem = (ecs::RenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
-		ecs::Signature renderSystemSignature;
-		renderSystemSignature.set(transformComponentType);
-		renderSystemSignature.set(renderComponentType);
-		mCoordinator->SetSystemSignature<ecs::RenderSystem>(renderSystemSignature);
-
-		//@TODO(Serge): Init render system here
-		u32 maxNumModels = r2::draw::renderer::GetMaxNumModelsLoadedAtOneTimePerLayout();
-		u32 avgMaxNumMeshesPerModel = r2::draw::renderer::GetAVGMaxNumMeshesPerModel();
-		u32 avgMaxNumInstancesPerModel = r2::draw::renderer::GetMaxNumInstancesPerModel();
-		u32 avgMaxNumBonesPerModel = r2::draw::renderer::GetAVGMaxNumBonesPerModel();
-
-		r2::mem::utils::MemoryProperties memSizeStruct;
-		memSizeStruct.alignment = 16;
-		memSizeStruct.headerSize = mMallocArena.HeaderSize();
-
-		memSizeStruct.boundsChecking = 0;
-#ifdef R2_DEBUG
-		memSizeStruct.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
-#endif
-
-		mnoptrRenderSystem->Init<mem::MallocArena>(mMallocArena, avgMaxNumInstancesPerModel * maxNumModels, avgMaxNumMeshesPerModel*maxNumModels, avgMaxNumBonesPerModel*maxNumModels);
-
-		mnoptrSkeletalAnimationSystem = (ecs::SkeletalAnimationSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
-
-		ecs::Signature skeletalAnimationSystemSignature;
-		skeletalAnimationSystemSignature.set(skeletalAnimationComponentType);
-#ifdef R2_DEBUG
-		skeletalAnimationSystemSignature.set(debugBoneComponentType);
-#endif
-		mCoordinator->SetSystemSignature<ecs::SkeletalAnimationSystem>(skeletalAnimationSystemSignature);
-
-#ifdef R2_DEBUG
-		mnoptrDebugBonesRenderSystem = (ecs::DebugBonesRenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::DebugBonesRenderSystem>(mMallocArena);
-		ecs::Signature debugBonesSystemSignature;
-		debugBonesSystemSignature.set(debugBoneComponentType);
-		debugBonesSystemSignature.set(transformComponentType);
-
-		mCoordinator->SetSystemSignature<ecs::DebugBonesRenderSystem>(debugBonesSystemSignature);
-
-		mnoptrDebugRenderSystem = (ecs::DebugRenderSystem*)mCoordinator->RegisterSystem<mem::MallocArena, ecs::DebugRenderSystem>(mMallocArena);
-		ecs::Signature debugRenderSystemSignature;
-
-		debugRenderSystemSignature.set(debugRenderComponentType);
-		debugRenderSystemSignature.set(transformComponentType);
-
-		mCoordinator->SetSystemSignature<ecs::DebugRenderSystem>(debugRenderSystemSignature);
-#endif
-
-	}
-
-	void Editor::UnRegisterSystems()
-	{
-#ifdef R2_DEBUG
-		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::DebugRenderSystem>(mMallocArena);
-		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::DebugBonesRenderSystem>(mMallocArena);
-#endif
-		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::SkeletalAnimationSystem>(mMallocArena);
-
-		mnoptrRenderSystem->Shutdown<mem::MallocArena>(mMallocArena);
-
-		mCoordinator->UnRegisterSystem<mem::MallocArena, ecs::RenderSystem>(mMallocArena);
 	}
 }
 

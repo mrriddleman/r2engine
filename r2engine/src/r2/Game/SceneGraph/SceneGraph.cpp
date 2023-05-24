@@ -11,14 +11,14 @@ namespace r2
 		,mnoptrSceneGraphSystem(nullptr) 
 		,mnoptrSceneGraphTransformUpdateSystem(nullptr)
 	{
-
 	}
 
 	SceneGraph::~SceneGraph()
 	{
+
 		R2_CHECK(mnoptrSceneGraphSystem == nullptr, "Did you forget to Shutdown the SceneGraph?");
 		R2_CHECK(mnoptrECSCoordinator == nullptr, "Did you forget to Shutdown the SceneGraph?");
-		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
+		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem == nullptr, "We haven't initialized the SceneGraph yet!");
 	}
 
 	void SceneGraph::Update()

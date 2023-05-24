@@ -169,11 +169,6 @@ namespace r2
         return {};
     }
 
-    r2::GameAssetManager& Application::GetGameAssetManager()
-    {
-        return mGameAssetManager;
-    }
-
 #ifdef R2_EDITOR
 
     r2::draw::ModelCache* Application::GetEditorModelSystem() const

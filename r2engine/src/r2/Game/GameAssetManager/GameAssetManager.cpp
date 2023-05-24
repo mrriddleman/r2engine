@@ -14,6 +14,7 @@ namespace r2
 	
 	GameAssetManager::GameAssetManager()
 		:mAssetCache(nullptr)
+		,mAssetMemoryHandle()
 	{
 	}
 
@@ -22,9 +23,14 @@ namespace r2
 		mAssetCache = nullptr;
 	}
 
-	bool GameAssetManager::Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList)
+	bool GameAssetManager::Init(r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList)
 	{
-		mAssetCache = r2::asset::lib::CreateAssetCache(assetBoundary, fileList);
+		r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
+		R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
+
+		mAssetCache = r2::asset::lib::CreateAssetCache(gameAssetManagerMemoryArea->AreaBoundary(), fileList);
+
+		mAssetMemoryHandle = assetMemoryHandle;
 
 		//@TODO(Serge): maybe add the loaders here for the engine?
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();

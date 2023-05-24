@@ -9,6 +9,7 @@
 #define EntryPoint_h
 
 #include "r2/Platform/Platform.h"
+#include "r2/Core/Application.h"
 
 extern std::unique_ptr<r2::Application> r2::CreateApplication();
 

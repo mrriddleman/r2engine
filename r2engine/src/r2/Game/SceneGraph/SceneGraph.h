@@ -74,6 +74,7 @@ namespace r2
 			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
 			mnoptrSceneGraphSystem = nullptr;
 			mnoptrECSCoordinator = nullptr;
+			mnoptrSceneGraphTransformUpdateSystem = nullptr;
 		}
 
 		void Update();

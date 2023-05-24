@@ -6,6 +6,7 @@
 #include "r2/Game/ECS/Entity.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SHashMap.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
 
@@ -319,6 +320,14 @@ namespace r2::ecs
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Component>::MemorySize(maxNumEntities), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(maxNumEntities+1), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Entity>::MemorySize(maxNumEntities * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking);
+
+			return memorySize;
+		}
+
+		static u64 MemorySizeForInstancedComponentArray(u32 maxNumEntities, u32 numInstances, u64 alignment, u32 headerSize, u32 boundsChecking)
+		{
+			u64 memorySize = MemorySize(maxNumEntities, alignment, headerSize, boundsChecking);
+			memorySize += InstanceComponentT<Component>::MemorySize(numInstances, alignment, headerSize, boundsChecking);
 
 			return memorySize;
 		}

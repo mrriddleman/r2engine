@@ -9,6 +9,7 @@
 #define Platform_hpp
 
 #include "r2/Core/Engine.h"
+#include "r2/Utils/Utils.h"
 
 #define CPLAT r2::Platform::GetConst()
 #define MPLAT r2::Platform::Get()

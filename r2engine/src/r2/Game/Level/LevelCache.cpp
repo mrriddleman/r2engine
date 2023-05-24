@@ -13,8 +13,6 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
-#include "r2/Core/Engine.h"
-#include "r2/Core/Application.h"
 #endif
 
 #include <filesystem>

@@ -30,7 +30,7 @@ namespace r2
 		//No copy or move semantics
 
 
-		bool Init(r2::mem::utils::MemBoundary assetBoundary, r2::asset::FileList fileList);
+		bool Init(r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList);
 		void Shutdown();
 
 		void Update();
@@ -64,6 +64,7 @@ namespace r2
 	private:
 
 		r2::asset::AssetCache* mAssetCache;
+		r2::mem::MemoryArea::Handle mAssetMemoryHandle;
 
 #ifdef R2_ASSET_PIPELINE
 

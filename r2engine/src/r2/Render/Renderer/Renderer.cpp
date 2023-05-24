@@ -9036,14 +9036,14 @@ namespace r2::draw::renderer
 		return AVG_NUM_OF_MESHES_PER_MODEL;
 	}
 
-	u32 GetMaxNumInstancesPerModel()
+	u32 GetMaxNumInstances()
 	{
-		return MAX_NUM_DRAWS / MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME;
+		return MAX_NUM_DRAWS;
 	}
 
-	u32 GetAVGMaxNumBonesPerModel()
+	u32 GetMaxNumBones()
 	{
-		return MAX_NUM_BONES / MAX_NUMBER_OF_MODELS_LOADED_AT_ONE_TIME;
+		return MAX_NUM_BONES;
 	}
 
 	void SetRenderCamera(Camera* cameraPtr)

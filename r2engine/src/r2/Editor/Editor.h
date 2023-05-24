@@ -66,16 +66,16 @@ namespace r2
 
 	private:
 
-		void RegisterComponents();
-		void RegisterSystems();
-		void UnRegisterComponents();
-		void UnRegisterSystems();
+		//void RegisterComponents();
+		//void RegisterSystems();
+		//void UnRegisterComponents();
+		//void UnRegisterSystems();
 
-		//@TEST CODE: REMOVE!
-		void* HydrateRenderComponents(void* tempRenderComponents);
-		void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
-		void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
-		void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
+		////@TEST CODE: REMOVE!
+		//void* HydrateRenderComponents(void* tempRenderComponents);
+		//void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
+		//void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
+		//void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 		
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 
@@ -86,17 +86,17 @@ namespace r2
 		const flat::LevelData* mLevelData;*/
 
 		r2::mem::MallocArena mMallocArena;
-		ecs::ECSCoordinator* mCoordinator;
-		//SceneGraph mSceneGraph;
-		LevelManager mLevelManager;
-
-
-		r2::ecs::RenderSystem* mnoptrRenderSystem;
-		r2::ecs::SkeletalAnimationSystem* mnoptrSkeletalAnimationSystem;
-#ifdef R2_DEBUG
-		r2::ecs::DebugBonesRenderSystem* mnoptrDebugBonesRenderSystem;
-		r2::ecs::DebugRenderSystem* mnoptrDebugRenderSystem;
-#endif
+//		ecs::ECSCoordinator* mCoordinator;
+//		//SceneGraph mSceneGraph;
+//		LevelManager mLevelManager;
+//
+//
+//		r2::ecs::RenderSystem* mnoptrRenderSystem;
+//		r2::ecs::SkeletalAnimationSystem* mnoptrSkeletalAnimationSystem;
+//#ifdef R2_DEBUG
+//		r2::ecs::DebugBonesRenderSystem* mnoptrDebugBonesRenderSystem;
+//		r2::ecs::DebugRenderSystem* mnoptrDebugRenderSystem;
+//#endif
 
 		std::vector<void*> mComponentAllocations;
 

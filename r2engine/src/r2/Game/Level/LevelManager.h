@@ -28,6 +28,7 @@ namespace r2::draw
 namespace r2
 {
 	struct LevelCache;
+	class GameAssetManager;
 
 	using LevelGroup = r2::SArray<Level*>*;
 
@@ -43,7 +44,7 @@ namespace r2
 		LevelManager();
 		~LevelManager();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, GameAssetManager* noptrGameAssetManager, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
 		void Shutdown();
 
 		void Update();
@@ -110,7 +111,7 @@ namespace r2
 		//If we break up the materials so that they don't include the textures, we'd need a texture cache as well
 		r2::draw::MaterialSystem* mMaterialSystem;
 
-		
+		GameAssetManager* mnoptrGameAssetManager;
 	
 	};
 }

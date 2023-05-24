@@ -10,6 +10,7 @@
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
+#include "r2/Core/Assets/Asset.h"
 
 namespace r2::asset
 {

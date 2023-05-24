@@ -11,6 +11,12 @@ namespace r2::ecs
 	{
 		u32 numInstances;
 		r2::SArray<T>* instances;
+
+		static u64 MemorySize(u32 numInstances, u32 alignment, u32 headerSize, u32 boundsChecking)
+		{
+			return r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<T>::MemorySize(numInstances), alignment, headerSize, boundsChecking);
+		}
+
 	};
 }
 

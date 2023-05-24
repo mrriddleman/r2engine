@@ -23,6 +23,11 @@ namespace r2::mem
 	}
 }
 
+namespace r2::ecs
+{
+	class ECSCoordinator;
+}
+
 namespace r2
 {
 	struct LevelCache

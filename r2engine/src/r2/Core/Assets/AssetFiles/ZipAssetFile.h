@@ -18,6 +18,11 @@ namespace r2::fs
 
 namespace r2::asset
 {
+    class Asset;
+}
+
+namespace r2::asset
+{
     class R2_API ZipAssetFile: public AssetFile
     {
     public:

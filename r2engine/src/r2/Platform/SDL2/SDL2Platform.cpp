@@ -28,7 +28,7 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "SDL_image.h"
 #include "r2/Core/Layer/EditorLayer.h"
-
+#include "r2/Core/Application.h"
 #ifdef R2_IMGUI
 #include "backends/imgui_impl_sdl2.h"
 #endif
@@ -60,7 +60,7 @@ namespace r2
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
     //@NOTE: Increase as needed for dev
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(308);
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(360);
     
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);

@@ -22,7 +22,6 @@ namespace r2::mem
     public:
         MallocAllocator();
         explicit MallocAllocator(const utils::MemBoundary& boundary);
-        
         ~MallocAllocator();
         
         void* Allocate(u64 size, u64 alignment, u64 offset);
@@ -35,9 +34,12 @@ namespace r2::mem
         inline const void* StartPtr() const {return mBoundary.location;}
         static u32 HeaderSize() {return sizeof(utils::Header);}
         inline u64 UnallocatedBytes() const {return GetTotalMemory() - GetTotalBytesAllocated();}
+
+        
     private:
         utils::MemBoundary mBoundary;
         u64 mAllocatedMemory;
+        u64 mHighWaterMark;
     };
     
 #if defined(R2_DEBUG) || defined(R2_RELEASE)

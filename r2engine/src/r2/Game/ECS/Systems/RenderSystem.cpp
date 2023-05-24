@@ -15,6 +15,7 @@ namespace r2::ecs
 	RenderSystem::RenderSystem()
 		: mMemoryBoundary{}
 		, mArena(nullptr)
+		, mBatch{}
 	{
 		mKeepSorted = false;
 	}
@@ -156,7 +157,7 @@ namespace r2::ecs
 		u64 memorySize = 0;
 		
 		memorySize +=
-			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(RenderSystem), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
+			r2::ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::RenderSystem>(memorySizeStruct) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), memorySizeStruct.alignment, memorySizeStruct.headerSize, memorySizeStruct.boundsChecking) +
 			RenderSystemGatherBatch::MemorySize(maxNumInstancesPerModel, maxNumMaterialsPerModel, maxNumShaderBoneTransforms, memorySizeStruct);
 		

@@ -6,11 +6,11 @@
 //
 #include "r2pch.h"
 #include "MallocAllocator.h"
-
+#include <algorithm>
 namespace r2::mem
 {
     
-    MallocAllocator::MallocAllocator():mAllocatedMemory(0)
+    MallocAllocator::MallocAllocator():mAllocatedMemory(0), mHighWaterMark(0)
     {
         
     }
@@ -18,13 +18,14 @@ namespace r2::mem
     MallocAllocator::MallocAllocator(const utils::MemBoundary& boundary)
         :mBoundary(boundary)
         , mAllocatedMemory(0)
+        , mHighWaterMark(0)
     {
         
     }
     
     MallocAllocator::~MallocAllocator()
     {
-        
+        printf("Malloc allocator High water mark is: %llu\n", mHighWaterMark);
     }
     
     void* MallocAllocator::Allocate(u64 size, u64 alignment, u64 offset)
@@ -38,6 +39,8 @@ namespace r2::mem
         header->size = static_cast<u32>(size);
         
         mAllocatedMemory += realSize;
+
+        mHighWaterMark = std::max(mHighWaterMark, mAllocatedMemory);
         
         return utils::PointerAdd(pointer, HeaderSize());
     }
@@ -55,6 +58,7 @@ namespace r2::mem
         utils::Header* header = (utils::Header*)utils::PointerSubtract(memoryPtr, HeaderSize());
         return static_cast<u32>(header->size);
     }
+
 }
 
 namespace r2::mem::utils

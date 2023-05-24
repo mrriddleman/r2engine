@@ -584,8 +584,8 @@ namespace r2::draw::renderer
 
 	u32 GetMaxNumModelsLoadedAtOneTimePerLayout();
 	u32 GetAVGMaxNumMeshesPerModel();
-	u32 GetMaxNumInstancesPerModel();
-	u32 GetAVGMaxNumBonesPerModel();
+	u32 GetMaxNumInstances();
+	u32 GetMaxNumBones();
 
 #ifdef R2_DEBUG
 

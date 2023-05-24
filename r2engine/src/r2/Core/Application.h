@@ -14,8 +14,10 @@
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 
-#include "r2/Game/GameAssetManager/GameAssetManager.h"
-#include <memory>
+
+#include "r2/Game/ECS/Entity.h"
+
+//#include <memory>
 #include <string>
 
 #ifdef R2_ASSET_PIPELINE
@@ -24,7 +26,6 @@
 #endif
 
 #ifdef R2_EDITOR
-#include "r2/Game/ECS/Entity.h"
 
 namespace r2::draw
 {
@@ -43,12 +44,19 @@ namespace r2::ecs
 #endif // R2_EDITOR
 
 
+namespace r2::asset 
+{
+    class AssetFile;
+}
+
 namespace r2
 {
     namespace evt
     {
         class Event;
     }
+
+    
     
     
     class R2_API Application
@@ -98,8 +106,12 @@ namespace r2
         virtual std::vector<std::string> GetInternalShaderManifestsRawPaths() const;
 
         virtual std::vector<std::string> GetMaterialPacksManifestsBinaryPaths() const;
-        
-        r2::GameAssetManager& GetGameAssetManager();
+       
+        virtual u32 GetAssetMemoryAreaSize() const = 0;
+        virtual u32 GetMaxNumECSSystems() const = 0;
+        virtual u32 GetMaxNumECSEntities() const = 0;
+        virtual u32 GetMaxNumComponents() const = 0;
+        virtual r2::SArray<r2::asset::AssetFile*>* GetAssetFileList() const = 0;
 
         //@SO TEMPORARY!!!
 #ifdef R2_EDITOR
@@ -133,7 +145,6 @@ namespace r2
 #endif
 
     protected:
-        r2::GameAssetManager mGameAssetManager;
 
     };
     
