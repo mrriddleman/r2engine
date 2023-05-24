@@ -40,28 +40,6 @@ namespace r2::lvlche
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
 		}
 
-		/*if (initialLevelPackData)
-		{
-			r2::asset::RawAssetFile* levelPackRawFile = r2::asset::lib::MakeRawAssetFile(levelPackDataFilePath);
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelPackRawFile);
-
-			for (flatbuffers::uoffset_t i = 0; i < initialLevelPackData->allLevels()->size(); ++i)
-			{
-				auto numLevelsInGroup = initialLevelPackData->allLevels()->Get(i)->levels()->size();
-				for (flatbuffers::uoffset_t j = 0; j < numLevelsInGroup; j++)
-				{
-					const char* levelRelPath = initialLevelPackData->allLevels()->Get(i)->levels()->Get(j)->levelPath()->c_str();
-
-					char levelPath[r2::fs::FILE_PATH_LENGTH];
-					r2::fs::utils::BuildPathFromCategory(fs::utils::LEVELS, levelRelPath, levelPath);
-
-					r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(levelPath, NUM_PARENT_DIRECTORIES_TO_INCLUDE_IN_LEVEL_NAME);
-
-					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
-				}
-			}
-		}*/
-
 		R2_CHECK(levelCacheBoundary.location != nullptr, "Passed in an invalid level cache boundary");
 
 		LevelCache* newLevelCache = new (levelCacheBoundary.location) LevelCache();
@@ -91,20 +69,6 @@ namespace r2::lvlche
 		newLevelCache->mAssetBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*newLevelCache->mArena, levelCacheSize, ALIGNMENT, "Level Cache Asset Boundary");
 
 		newLevelCache->mLevelCache = r2::asset::lib::CreateAssetCache(newLevelCache->mAssetBoundary, fileList);
-
-		//char levelPackNameWithExtension[r2::fs::FILE_PATH_LENGTH];
-
-		//r2::fs::utils::CopyFileNameWithExtension(levelPackDataFilePath, levelPackNameWithExtension);
-
-		//newLevelCache->mLevelPackDataAssetHandle = newLevelCache->mLevelCache->LoadAsset(r2::asset::Asset(levelPackNameWithExtension, r2::asset::LEVEL_PACK));
-
-		//R2_CHECK(!r2::asset::IsInvalidAssetHandle(newLevelCache->mLevelPackDataAssetHandle), "We couldn't load the level pack data");
-		//
-		//newLevelCache->mLevelPackCacheRecord = newLevelCache->mLevelCache->GetAssetBuffer(newLevelCache->mLevelPackDataAssetHandle);
-
-		//R2_CHECK(newLevelCache->mLevelPackCacheRecord.buffer != nullptr, "We couldn't get the asset buffer");
-
-		//newLevelCache->mLevelPackData = flat::GetLevelPackData(newLevelCache->mLevelPackCacheRecord.buffer->Data());
 
 		newLevelCache->mLevelCache->RegisterAssetFreedCallback([newLevelCache](const r2::asset::AssetHandle& handle)
 			{
@@ -139,10 +103,6 @@ namespace r2::lvlche
 		{
 			levelCache->mLevelCache->ReturnAssetBuffer(r2::sarr::At(*levelCache->mLevels, i));
 		}
-
-		//levelCache->mLevelCache->ReturnAssetBuffer(levelCache->mLevelPackCacheRecord);
-		//levelCache->mLevelPackDataAssetHandle = {};
-		//levelCache->mLevelPackCacheRecord = {};
 
 		r2::asset::lib::DestroyCache(levelCache->mLevelCache);
 
@@ -249,41 +209,6 @@ namespace r2::lvlche
 		R2_CHECK(false, "We couldn't find the asset handle: %llu", handle.handle);
 	}
 
-	/*u32 GetNumLevelsInLevelGroup(LevelCache& levelCache, LevelName groupName)
-	{
-		const auto levelsToSearch = levelCache.mLevelPackData->allLevels();
-
-		for (flatbuffers::uoffset_t i = 0; i < levelsToSearch->size(); ++i)
-		{
-			if (levelsToSearch->Get(i)->groupHash() == groupName)
-			{
-				return levelsToSearch->Get(i)->levels()->size();
-			}
-		}
-
-		return 0;
-	}*/
-
-	//u32 GetMaxLevelSizeInBytes(LevelCache& levelCache)
-	//{
-	//	return levelCache.mMaxLevelSizeInBytes;
-	//}
-
-	//u32 GetMaxNumLevelsInAGroup(LevelCache& levelCache)
-	//{
-	//	return levelCache.mMaxNumLevelsInGroup;
-	//}
-
-	//u32 GetMaxGroupSizeInBytes(LevelCache& levelCache)
-	//{
-	//	return levelCache.mMaxGroupSizeInBytes;
-	//}
-
-	//u32 GetNumberOfLevelFiles(LevelCache& levelCache)
-	//{
-	//	return r2::sarr::Size(*levelCache.mLevels);
-	//}
-
 	u32 GetLevelCapacity(LevelCache& levelCache)
 	{
 		return r2::sarr::Capacity(*levelCache.mLevels);
@@ -303,66 +228,6 @@ namespace r2::lvlche
 	{
 		return levelCache.mLevelCache->HasAsset(levelAsset);
 	}
-
-	//void LoadLevelGroup(LevelCache& levelCache, LevelName groupName, r2::SArray<LevelHandle>& levelHandles)
-	//{
-	//	if (levelCache.mLevelCache == nullptr)
-	//	{
-	//		R2_CHECK(false, "We haven't initialized the levelCache yet!");
-	//		return;
-	//	}
-
-	//	const auto levelsToSearch = levelCache.mLevelPackData->allLevels();
-
-	//	for (flatbuffers::uoffset_t i = 0; i < levelsToSearch->size(); ++i)
-	//	{
-	//		if (levelsToSearch->Get(i)->groupHash() == groupName)
-	//		{
-	//			R2_CHECK(r2::sarr::Capacity(levelHandles) - r2::sarr::Size(levelHandles) >= levelsToSearch->Get(i)->levels()->size(), "We don't have enough space to put the handles!");
-
-	//			const auto levelGroup = levelsToSearch->Get(i);
-
-	//			for (flatbuffers::uoffset_t j = 0; j < levelGroup->levels()->size(); ++j)
-	//			{
-	//				r2::sarr::Push(levelHandles, LoadLevelData(levelCache, levelGroup->levels()->Get(j)->levelName()->c_str()));
-	//			}
-
-	//			break;
-	//		}
-	//	}
-	//}
-
-	//void GetLevelDataForGroup(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles, r2::SArray<const flat::LevelData*>& levelGroupData)
-	//{
-	//	if (levelCache.mLevelCache == nullptr)
-	//	{
-	//		R2_CHECK(false, "We haven't initialized the levelCache yet!");
-	//		return;
-	//	}
-
-	//	const auto numHandles = r2::sarr::Size(levelHandles);
-	//	R2_CHECK(r2::sarr::Size(levelHandles) <= (r2::sarr::Capacity(levelGroupData) - r2::sarr::Size(levelGroupData)), "We don't have enough space for the levelGroupData");
-	//	for (u32 i = 0; i < numHandles; ++i)
-	//	{
-	//		r2::sarr::Push(levelGroupData, GetLevelData(levelCache, r2::sarr::At(levelHandles, i)));
-	//	}
-	//}
-
-	//void UnloadLevelGroupData(LevelCache& levelCache, const r2::SArray<LevelHandle>& levelHandles)
-	//{
-	//	if (levelCache.mLevelCache == nullptr)
-	//	{
-	//		R2_CHECK(false, "We haven't initialized the levelCache yet!");
-	//		return;
-	//	}
-
-	//	const auto numHandles = r2::sarr::Size(levelHandles);
-
-	//	for (u32 i = 0; i < numHandles; ++i)
-	//	{
-	//		UnloadLevelData(levelCache, r2::sarr::At(levelHandles, i));
-	//	}
-	//}
 
 	void FlushAll(LevelCache& levelCache)
 	{
@@ -419,55 +284,6 @@ namespace r2::lvlche
 
 
 		return saved;
-		////first return the cache record
-		//levelCache.mLevelCache->ReturnAssetBuffer(levelCache.mLevelPackCacheRecord);
-		////force free the asset since we'll still hold onto it even though there are no references
-		//levelCache.mLevelCache->FreeAsset(levelCache.mLevelPackDataAssetHandle);
-
-		////don't hold any reference to the record
-		//levelCache.mLevelPackDataAssetHandle = {};
-		//levelCache.mLevelPackCacheRecord = {};
-		//levelCache.mLevelPackData = nullptr;
-
-		////now regenerate the levelPackData
-		//{
-		//	char binLevelPackDataPath[r2::fs::FILE_PATH_LENGTH];
-		//	r2::util::PathCpy(binLevelPackDataPath, r2::sarr::At(*fileList, 0)->FilePath());
-
-		//	char levelPackDataName[r2::fs::FILE_PATH_LENGTH];
-		//	r2::fs::utils::CopyFileName(binLevelPackDataPath, levelPackDataName);
-
-		//	char levelPackRawParentPath[r2::fs::FILE_PATH_LENGTH];
-		//	r2::util::PathCpy(levelPackRawParentPath, CENG.GetApplication().GetLevelPackDataJSONPath().c_str());
-
-		//	char levelPackRawPath[r2::fs::FILE_PATH_LENGTH];
-		//	r2::fs::utils::AppendSubPath(levelPackRawParentPath, levelPackRawPath, levelPackDataName);
-
-		//	r2::fs::utils::AppendExt(levelPackRawPath, ".json");
-
-		//	r2::asset::pln::RegenerateLevelDataFromDirectories(binLevelPackDataPath, levelPackRawPath, CENG.GetApplication().GetLevelPackDataBinPath().c_str(), CENG.GetApplication().GetLevelPackDataJSONPath().c_str());
-		//}
-		//
-		//char levelPackNameWithExtension[r2::fs::FILE_PATH_LENGTH];
-
-		//r2::fs::utils::CopyFileNameWithExtension(r2::sarr::At(*fileList, 0)->FilePath(), levelPackNameWithExtension);
-
-		////now we can reload the level pack
-		//levelCache.mLevelPackDataAssetHandle = levelCache.mLevelCache->LoadAsset(r2::asset::Asset(levelPackNameWithExtension, r2::asset::LEVEL_PACK));
-
-		//R2_CHECK(!r2::asset::IsInvalidAssetHandle(levelCache.mLevelPackDataAssetHandle), "We couldn't load the level pack data");
-
-		//levelCache.mLevelPackCacheRecord = levelCache.mLevelCache->GetAssetBuffer(levelCache.mLevelPackDataAssetHandle);
-
-		//R2_CHECK(levelCache.mLevelPackCacheRecord.buffer != nullptr, "We couldn't get the asset buffer");
-
-		//levelCache.mLevelPackData = flat::GetLevelPackData(levelCache.mLevelPackCacheRecord.buffer->Data());
-
-		//R2_CHECK(levelCache.mLevelPackData != nullptr, "We don't have the level pack!");
-
-		//levelCache.mMaxGroupSizeInBytes = levelCache.mLevelPackData->maxGroupSizeInBytes();
-		//levelCache.mMaxLevelSizeInBytes = levelCache.mLevelPackData->maxLevelSizeInBytes();
-		//levelCache.mMaxNumLevelsInGroup = levelCache.mLevelPackData->maxLevelsInAGroup();
 	}
 #endif
 }

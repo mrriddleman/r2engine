@@ -6,11 +6,7 @@
 #include "r2/Editor/EditorWidget.h"
 #include "r2/Editor/EditorActions/EditorAction.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
-#include "r2/Game/ECS/ECSCoordinator.h"
-#include "r2/Game/SceneGraph/SceneGraph.h"
-#include "r2/Game/Level/LevelManager.h"
 #include "r2/Utils/Random.h"
-#include "r2/Core/Memory/InternalEngineMemory.h"
 
 namespace r2::evt
 {
@@ -20,12 +16,7 @@ namespace r2::evt
 
 namespace r2::ecs
 {
-	class RenderSystem;
-	class SkeletalAnimationSystem;
-#ifdef R2_DEBUG
-	class DebugBonesRenderSystem;
-	class DebugRenderSystem;
-#endif
+	class ECSCoordinator;
 }
 
 namespace r2::draw
@@ -35,8 +26,7 @@ namespace r2::draw
 
 namespace r2
 {
-	struct LevelCache;
-
+	class SceneGraph;
 
 	class Editor
 	{
@@ -66,37 +56,13 @@ namespace r2
 
 	private:
 
-		//void RegisterComponents();
-		//void RegisterSystems();
-		//void UnRegisterComponents();
-		//void UnRegisterSystems();
-
-		////@TEST CODE: REMOVE!
-		//void* HydrateRenderComponents(void* tempRenderComponents);
-		//void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
-		//void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
-		//void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
-		
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 
 		r2::util::Random mRandom;
 		const r2::draw::AnimModel* microbatAnimModel;
-		/*LevelCache* moptrLevelCache;
-		r2::LevelHandle mLevelHandle;
-		const flat::LevelData* mLevelData;*/
 
 		r2::mem::MallocArena mMallocArena;
-//		ecs::ECSCoordinator* mCoordinator;
-//		//SceneGraph mSceneGraph;
-//		LevelManager mLevelManager;
-//
-//
-//		r2::ecs::RenderSystem* mnoptrRenderSystem;
-//		r2::ecs::SkeletalAnimationSystem* mnoptrSkeletalAnimationSystem;
-//#ifdef R2_DEBUG
-//		r2::ecs::DebugBonesRenderSystem* mnoptrDebugBonesRenderSystem;
-//		r2::ecs::DebugRenderSystem* mnoptrDebugRenderSystem;
-//#endif
+
 
 		std::vector<void*> mComponentAllocations;
 

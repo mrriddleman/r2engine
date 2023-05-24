@@ -14,6 +14,7 @@
 #include "r2/Render/Model/ModelCache.h"
 #include "r2/Render/Model/Light.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
+#include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
 
 namespace r2
 {
@@ -156,6 +157,7 @@ namespace r2::draw
 		MaterialSystem* mnoptrMaterialSystem = nullptr;
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
+		RenderMaterialCache* mRenderMaterialCache = nullptr;
 
 		r2::SArray<vb::GPUModelRefHandle>* mEngineModelRefs = nullptr;
 		r2::SArray<ModelHandle>* mDefaultModelHandles = nullptr;

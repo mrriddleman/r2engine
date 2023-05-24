@@ -17,6 +17,8 @@
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 #include "imgui.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
 
 
 namespace r2::edit

@@ -6,6 +6,7 @@
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
 namespace r2::edit
 {

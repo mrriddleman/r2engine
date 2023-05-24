@@ -5,6 +5,7 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
 
 namespace r2::edit
 {

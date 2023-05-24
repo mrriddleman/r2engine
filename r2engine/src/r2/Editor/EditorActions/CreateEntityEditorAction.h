@@ -3,6 +3,7 @@
 
 #ifdef R2_EDITOR
 #include "r2/Editor/EditorActions/EditorAction.h"
+#include "r2/Game/ECS/Entity.h"
 
 namespace r2
 {

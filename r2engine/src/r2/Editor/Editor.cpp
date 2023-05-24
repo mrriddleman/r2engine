@@ -26,25 +26,15 @@
 
 #include "r2/Core/Engine.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
+#include "r2/Game/Level/LevelManager.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Utils/Random.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
-#include "r2/Game/Level/LevelCache.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Render/Animation/AnimationCache.h"
-
-
-namespace 
-{
-	//Figure out render system defaults
-	constexpr u32 MAX_NUM_STATIC_BATCHES = 32;
-	constexpr u32 MAX_NUM_DYNAMIC_BATCHES = 32;
-	constexpr u32 MAX_LEVELS = 100;
-
-}
 
 namespace r2
 {
@@ -220,10 +210,6 @@ namespace r2
 		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
 		CENG.GetLevelManager().SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
-
-//		r2::lvlche::SaveNewLevelFile(*moptrLevelCache, mSceneGraph.GetECSCoordinator(), 1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str());
-
-		//r2::asset::pln::SaveLevelData(mCoordinator, 1, (levelDataBinPath / levelBinURI).string(), (levelDataRawPath / levelRawURI).string());
 	}
 
 	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)

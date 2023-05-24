@@ -4,6 +4,8 @@
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorActions/DestroyEntityEditorAction.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"

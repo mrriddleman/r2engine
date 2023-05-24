@@ -225,6 +225,11 @@ namespace r2
                 
                 return subArea.mSubAreaHandle;
             }
+            else
+            {
+                R2_CHECK(false, "We don't have enough memory to fit that size. Requesting %llu, bytes left: %llu, difference: %llu\n", sizeInBytes, bytesLeftInArea, sizeInBytes - bytesLeftInArea);
+                return SubArea::Invalid;
+            }
             
             return SubArea::Invalid;
         }

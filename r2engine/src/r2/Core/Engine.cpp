@@ -458,9 +458,9 @@ namespace r2
                 mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
                 auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
-
                 r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
                 memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
+
                 mGameAssetManager->Init(memoryHandle, noptrApp->GetAssetFileList());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);

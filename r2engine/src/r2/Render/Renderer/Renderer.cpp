@@ -968,6 +968,15 @@ namespace r2::draw::renderer
 			return false;
 		}
 
+		newRenderer->mRenderMaterialCache = r2::draw::rmat::Create(memoryAreaHandle, NUM_RENDER_MATERIALS_TO_RENDER, "RenderMaterials");
+
+		if (!newRenderer->mRenderMaterialCache)
+		{
+			R2_CHECK(false, "We couldn't initialize the render material cache");
+			return false;
+		}
+
+
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
 #ifdef R2_DEBUG
@@ -1577,6 +1586,8 @@ namespace r2::draw::renderer
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 	
+		r2::draw::rmat::Shutdown(renderer->mRenderMaterialCache);
+
 		r2::draw::vb::FreeVertexBufferLayoutSystem(renderer->mVertexBufferLayoutSystem);
 		r2::draw::texsys::Shutdown();
 
