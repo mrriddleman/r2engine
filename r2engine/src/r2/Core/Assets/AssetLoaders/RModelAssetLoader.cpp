@@ -149,9 +149,9 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::AnimModel));
 
-			model->model.optrMaterialHandles = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::MaterialHandle, numMaterials);
+			model->model.optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMaterials);
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::MaterialHandle>::MemorySize(numMaterials));
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMaterials));
 
 			model->model.optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
@@ -206,11 +206,11 @@ namespace r2::asset
 			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 			{
 				//@TODO(Serge): get rid of these material handles
-				r2::draw::MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(flatMaterialNames->Get(i)->name());
+				//r2::draw::MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle();
 
-				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We should have the material handle!");
+				//R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We should have the material handle!");
 
-				r2::sarr::Push(*model->model.optrMaterialHandles, materialHandle);
+				r2::sarr::Push(*model->model.optrMaterialNames, flatMaterialNames->Get(i)->name());
 			}
 
 			const auto flatMeshes = modelData->meshes();
@@ -321,9 +321,9 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
-			model->optrMaterialHandles = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::MaterialHandle, numMaterials);
+			model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMaterials);
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::MaterialHandle>::MemorySize(numMaterials));
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMaterials));
 
 			model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
@@ -339,11 +339,11 @@ namespace r2::asset
 
 			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 			{
-				r2::draw::MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(flatMaterialNames->Get(i)->name());
+				//r2::draw::MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle();
 
-				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We should have the material handle!");
+				//R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "We should have the material handle!");
 
-				r2::sarr::Push(*model->optrMaterialHandles, materialHandle);
+				r2::sarr::Push(*model->optrMaterialNames, flatMaterialNames->Get(i)->name());
 			}
 
 			const auto flatMeshes = modelData->meshes();

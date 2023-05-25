@@ -499,6 +499,12 @@ namespace r2::draw::renderer
 	bool IsModelLoaded(const vb::GPUModelRefHandle& modelRefHandle);
 	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle);
 
+
+	//Render Material Cache methods
+
+	r2::draw::RenderMaterialCache* GetRenderMaterialCache();
+
+
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic);
 	const r2::draw::RenderMaterialParams& GetDefaultOutlineRenderMaterialParams(bool isStatic);
 

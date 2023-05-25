@@ -68,7 +68,7 @@ namespace r2::draw
 		u64 hash = 0;
         
         //these should be the same size
-        r2::SArray<MaterialHandle>* optrMaterialHandles = nullptr;
+        r2::SArray<u64>* optrMaterialNames = nullptr;
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
 
         glm::mat4 globalInverseTransform;

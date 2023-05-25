@@ -2714,7 +2714,33 @@ namespace r2::draw::renderer
 			return vb::InvalidGPUModelRefHandle;
 		}
 
-		return vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *model);
+
+		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+		{
+			return cachedHandle;
+		}
+
+		vb::GPUModelRefHandle result = vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+
+		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
+
+		R2_CHECK(modelRef != nullptr, "?");
+		//now resolve the material name
+
+		const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
+
+		for (u32 i = 0; i < numMaterialNames; ++i)
+		{
+			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
+			MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(materialName);
+
+			R2_CHECK(!mat::IsInvalidHandle(materialHandle), "Invalid material handle when uploading the model");
+
+			r2::sarr::Push(*modelRef->materialHandles, materialHandle);
+		}
+		
+		return result;
 	}
 
 	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
@@ -2724,8 +2750,54 @@ namespace r2::draw::renderer
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
 			return;
 		}
+		
+		if (r2::sarr::IsEmpty(models))
+		{
+			return;
+		}
+
+		//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
+		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
+		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+		{
+			r2::sarr::Push(modelRefs, cachedHandle);
+			for (u32 i = 1; i < r2::sarr::Size(models); ++i)
+			{
+				cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, i));
+				R2_CHECK(vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle), "This must be the case now");
+
+				r2::sarr::Push(modelRefs, cachedHandle);
+			}
+
+			return;
+		}
+
+		const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
 
 		vbsys::UploadAllModels(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+
+		const auto numModelRefs = r2::sarr::Size(modelRefs);
+
+		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
+		{
+			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
+
+			vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
+
+			const Model* model = r2::sarr::At(models, i - startingModelRefOffset);
+
+			const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
+
+			for (u32 i = 0; i < numMaterialNames; ++i)
+			{
+				auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
+				MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(materialName);
+
+				R2_CHECK(!mat::IsInvalidHandle(materialHandle), "Invalid material handle when uploading the model");
+
+				r2::sarr::Push(*modelRef->materialHandles, materialHandle);
+			}
+		}
 	}
 
 	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
@@ -2736,7 +2808,33 @@ namespace r2::draw::renderer
 			return vb::InvalidGPUModelRefHandle;
 		}
 
-		return vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *model);
+
+		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+		{
+			return cachedHandle;
+		}
+
+		vb::GPUModelRefHandle result = vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+
+		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
+
+		R2_CHECK(modelRef != nullptr, "?");
+		//now resolve the material name
+
+		const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
+
+		for (u32 i = 0; i < numMaterialNames; ++i)
+		{
+			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
+			MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(materialName);
+
+			R2_CHECK(!mat::IsInvalidHandle(materialHandle), "Invalid material handle when uploading the model");
+
+			r2::sarr::Push(*modelRef->materialHandles, materialHandle);
+		}
+
+		return result;
 	}
 
 	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
@@ -2747,7 +2845,52 @@ namespace r2::draw::renderer
 			return;
 		}
 
+		if (r2::sarr::IsEmpty(models))
+		{
+			return;
+		}
+
+		//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
+		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
+		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+		{
+			r2::sarr::Push(modelRefs, cachedHandle);
+			for (u32 i = 1; i < r2::sarr::Size(models); ++i)
+			{
+				cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, i));
+				R2_CHECK(vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle), "This must be the case now");
+				r2::sarr::Push(modelRefs, cachedHandle);
+			}
+
+			return;
+		}
+
+		const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
+
 		vbsys::UploadAllAnimModels(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+
+		const auto numModelRefs = r2::sarr::Size(modelRefs);
+
+		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
+		{
+			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
+
+			vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
+
+			const AnimModel* model = r2::sarr::At(models, i - startingModelRefOffset);
+
+			const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
+
+			for (u32 i = 0; i < numMaterialNames; ++i)
+			{
+				auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
+				MaterialHandle materialHandle = r2::draw::matsys::FindMaterialHandle(materialName);
+
+				R2_CHECK(!mat::IsInvalidHandle(materialHandle), "Invalid material handle when uploading the model");
+
+				r2::sarr::Push(*modelRef->materialHandles, materialHandle);
+			}
+		}
 	}
 
 	void UnloadModel(Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle)
@@ -2843,6 +2986,11 @@ namespace r2::draw::renderer
 		}
 
 		return vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, modelRefHandle);
+	}
+
+	r2::draw::RenderMaterialCache* GetRenderMaterialCache(Renderer& renderer)
+	{
+		return renderer.mRenderMaterialCache;
 	}
 
 	u64 AddFillConstantBufferCommandForData(Renderer& renderer, ConstantBufferHandle handle, u64 elementIndex, const void* data)
@@ -8920,6 +9068,11 @@ namespace r2::draw::renderer
 	bool IsModelRefHandleValid(const vb::GPUModelRefHandle& modelRefHandle)
 	{
 		return IsModelRefHandleValid(MENG.GetCurrentRendererRef(), modelRefHandle);
+	}
+
+	r2::draw::RenderMaterialCache* GetRenderMaterialCache()
+	{
+		return GetRenderMaterialCache(MENG.GetCurrentRendererRef());
 	}
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(bool isStatic)

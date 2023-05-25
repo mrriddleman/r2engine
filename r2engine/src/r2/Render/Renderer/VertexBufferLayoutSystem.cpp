@@ -566,7 +566,7 @@ namespace r2::draw::vbsys
 		}
 
 		u64 numMeshes = r2::sarr::Size(*model.optrMeshes);
-		u64 numMaterals = r2::sarr::Size(*model.optrMaterialHandles);
+		u64 numMaterals = r2::sarr::Size(*model.optrMaterialNames);
 
 		R2_CHECK(numMeshes >= 1, "We should have at least one mesh");
 		R2_CHECK(numMaterals >= 1, "We should have at least one material");
@@ -583,15 +583,10 @@ namespace r2::draw::vbsys
 
 		R2_CHECK(modelRef->meshEntries != nullptr, "vertexEntries is nullptr!");
 
+		//@NOTE(Serge): we make the material handles but we don't resolve them here - we let the renderer do that
 		modelRef->materialHandles = MAKE_SARRAY(*vertexBufferLayout->gpuModelRefArena, MaterialHandle, numMaterals);
 		modelRef->numMaterials = numMaterals;
 		R2_CHECK(modelRef->materialHandles != nullptr, "materialHandles is nullptr!");
-
-		for (u32 i = 0; i < numMaterals; ++i)
-		{
-			//@NOTE(Serge): this is the exact ordering of the models that came from the assimpassetloader, and needs to be the same, if you change that, this needs to change
-			r2::sarr::Push(*modelRef->materialHandles, r2::sarr::At(*model.optrMaterialHandles, i));
-		}
 
 		for (u64 i = 0; i < numMeshes; ++i)
 		{
@@ -950,6 +945,11 @@ namespace r2::draw::vbsys
 
 	const vb::GPUModelRef* GetGPUModelRef(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle)
 	{
+		return GetGPUModelRefPtr(system, handle);
+	}
+
+	vb::GPUModelRef* GetGPUModelRefPtr(const vb::VertexBufferLayoutSystem& system, const vb::GPUModelRefHandle& handle)
+	{
 		if (handle == vb::InvalidGPUModelRefHandle)
 		{
 			return nullptr;
@@ -970,7 +970,7 @@ namespace r2::draw::vbsys
 			return false;
 		}
 
-		const auto* gpuModelRef = r2::sarr::At(*vertexBufferLayout->gpuModelRefs, gpuModelRefIndex);
+		auto* gpuModelRef = r2::sarr::At(*vertexBufferLayout->gpuModelRefs, gpuModelRefIndex);
 
 		return gpuModelRef;
 	}

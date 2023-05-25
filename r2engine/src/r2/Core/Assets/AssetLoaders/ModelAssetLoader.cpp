@@ -83,7 +83,7 @@ namespace r2::asset
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMeshes));
 
-		model->optrMaterialHandles = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::MaterialHandle, numMeshes);
+		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMeshes);
 		
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; ++i)
 		{	
@@ -105,20 +105,22 @@ namespace r2::asset
 		//@TODO(Serge): Speed this up and use a faster way
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialNames; ++i)
 		{
-			auto materialHandle = r2::draw::matsys::FindMaterialHandle(flatModel->materials()->Get(i)->name());
+			//auto materialHandle = r2::draw::matsys::FindMaterialHandle(flatModel->materials()->Get(i)->name());
 
-			r2::sarr::Push(*model->optrMaterialHandles, materialHandle);
+			r2::sarr::Push(*model->optrMaterialNames, flatModel->materials()->Get(i)->name());
 		}
 
 		auto numMaterialsToAdd = numMeshes - numMaterialNames;
 
 		if (numMaterialsToAdd > 0)
 		{
-			auto materialHandle = r2::draw::matsys::FindMaterialHandle(STRING_ID("Default"));
+
+			auto defaultMaterialName = STRING_ID("Default");
+			//auto materialHandle = r2::draw::matsys::FindMaterialHandle(defaultMaterialName);
 
 			for (u64 i = numMaterialNames; i < numMeshes; ++i)
 			{
-				r2::sarr::Push(*model->optrMaterialHandles, materialHandle);
+				r2::sarr::Push(*model->optrMaterialNames, defaultMaterialName);
 			}
 		}
 
