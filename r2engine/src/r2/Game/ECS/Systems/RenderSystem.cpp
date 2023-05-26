@@ -57,7 +57,7 @@ namespace r2::ecs
 		const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent)
 	{
 
-		bool hasMaterialOverrides = renderComponent.optrOverrideMaterials != nullptr;
+		bool hasMaterialOverrides = renderComponent.optrMaterialOverrideNames != nullptr && r2::sarr::Size(*renderComponent.optrMaterialOverrideNames) > 0;
 		bool isAnimated = animationComponent != nullptr;
 
 		//@TEMPORARY so that we can remove the material system calls from the Renderer itself
@@ -75,11 +75,13 @@ namespace r2::ecs
 
 		if (hasMaterialOverrides)
 		{
-			u32 numOverrides = r2::sarr::Size(*renderComponent.optrOverrideMaterials);
+			u32 numOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
+
+			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
 			for (u32 i = 0; i < numOverrides; ++i)
 			{
-				const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*renderComponent.optrOverrideMaterials, i);
+				/*const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*renderComponent.optrOverrideMaterials, i);
 
 				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
 
@@ -87,9 +89,17 @@ namespace r2::ecs
 
 				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
 
-				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);
+				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);*/
 
-				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
+				const RenderMaterialOverride& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
+
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.materialName);
+				R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
+				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;//r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
+
+				r2::draw::MaterialSystem* matSys = r2::draw::matsys::GetMaterialSystemBySystemName(materialName.materialSystemName);
+				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSys, r2::draw::mat::GetMaterialHandleFromMaterialName(*matSys, materialName.materialName));
+
 
 				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
 				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);

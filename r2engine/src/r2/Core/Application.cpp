@@ -176,11 +176,6 @@ namespace r2
         return nullptr;
     }
 
-    r2::draw::MaterialSystem* Application::GetEditorMaterialSystem() const
-    {
-        return nullptr;
-    }
-
     r2::draw::AnimationCache* Application::GetEditorAnimationCache() const
     {
         return nullptr;

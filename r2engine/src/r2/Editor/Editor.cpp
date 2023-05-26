@@ -251,7 +251,6 @@ namespace r2
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelHash = microbatAsset.HashID();
-				renderComponent.optrOverrideMaterials = nullptr;
 				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;

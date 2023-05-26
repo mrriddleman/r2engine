@@ -20,7 +20,6 @@ namespace r2::ecs
 
 namespace r2::draw 
 {
-	struct MaterialSystem;
 	struct ModelCache;
 	struct AnimationCache;
 }
@@ -103,13 +102,6 @@ namespace r2
 		
 		r2::draw::ModelCache* mModelCache;
 		r2::draw::AnimationCache* mAnimationCache;
-
-		//The issue is that material systems as they are now are very rigid and not well thought out
-		//Firstly, they include the textures directly which is limiting and makes things harder
-		//Second, MaterialSystem is a bad name, really it's 1 MaterialParamPack that doesn't really change
-		//What the LevelManager would require is an actual MaterialCache that has many of these packs stored so that it can load/unload them when needed
-		//If we break up the materials so that they don't include the textures, we'd need a texture cache as well
-		r2::draw::MaterialSystem* mMaterialSystem;
 
 		GameAssetManager* mnoptrGameAssetManager;
 	

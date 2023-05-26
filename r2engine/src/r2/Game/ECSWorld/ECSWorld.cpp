@@ -137,7 +137,7 @@ namespace r2::ecs
 		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
 
 		r2::draw::ModelCache* editorModelSystem = CENG.GetLevelManager().GetModelSystem();
-		r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
+	//	r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
 
 		for (u32 i = 0; i < numRenderComponents; ++i)
 		{
@@ -161,7 +161,7 @@ namespace r2::ecs
 
 			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 
-			if (renderComponent.optrMaterialOverrideNames)
+			/*if (renderComponent.optrMaterialOverrideNames)
 			{
 				const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
 
@@ -183,7 +183,7 @@ namespace r2::ecs
 						r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
 					}
 				}
-			}
+			}*/
 		}
 
 		return tempRenderComponents;

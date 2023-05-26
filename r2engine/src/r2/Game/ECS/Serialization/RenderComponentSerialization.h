@@ -157,7 +157,6 @@ namespace r2::ecs
 			
 			RenderComponent renderComponent;
 			renderComponent.gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-			renderComponent.optrOverrideMaterials = nullptr;
 			renderComponent.optrMaterialOverrideNames = nullptr;
 
 			renderComponent.assetModelHash = flatRenderComponent->assetModelHash();
