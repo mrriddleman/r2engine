@@ -26,7 +26,7 @@ namespace r2::draw
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneData>::MemorySize(boneDataSize), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<BoneInfo>::MemorySize(boneInfoSize), alignment, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
 
 		if (boneMapping > 0)
 		{
@@ -57,6 +57,6 @@ namespace r2::draw
     {
         return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Model), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const Mesh*>::MemorySize(numMeshes), alignment, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<MaterialHandle>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numMaterials), alignment, headerSize, boundsChecking);
     }
 }

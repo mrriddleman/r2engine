@@ -1761,7 +1761,7 @@ public:
 
         r2::draw::animcache::Shutdown(*mAnimationCache);
         r2::draw::modlche::Shutdown(mModelSystem);
-        
+        r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*mMaterialSystem);
         void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
         FREE(materialBoundary, *linearArenaPtr);
@@ -2242,6 +2242,7 @@ private:
     r2::draw::ModelCache* mModelSystem = nullptr;
     r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
+
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
     const r2::draw::AnimModel* mSkeletonModel = nullptr;
     const r2::draw::AnimModel* mEllenModel = nullptr;

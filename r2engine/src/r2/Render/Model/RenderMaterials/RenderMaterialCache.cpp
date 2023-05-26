@@ -129,7 +129,59 @@ namespace r2::draw::rmat
 		auto iter = r2::shashmap::Begin(*cache->mGPURenderMaterialIndices);
 		for (; iter != r2::shashmap::End(*cache->mGPURenderMaterialIndices); ++iter)
 		{
-			UnloadMaterialParams(*cache, iter->key);
+			u64 materialName = iter->key;
+
+			r2::SArray<r2::asset::AssetHandle>* defaultAssetHandles = nullptr;
+
+			r2::SArray<r2::asset::AssetHandle>* assetHandles = r2::shashmap::Get(*cache->mUploadedTextureForMaterialMap, materialName, defaultAssetHandles);
+
+			if (assetHandles == defaultAssetHandles)
+			{
+				//we don't have anything to unload
+				continue;
+			}
+
+			const u32 numTexturesToUnload = r2::sarr::Size(*assetHandles);
+
+
+
+			for (u32 i = 0; i < numTexturesToUnload; ++i)
+			{
+				auto handle = r2::sarr::At(*assetHandles, i);
+				if (handle.handle == 12654673806030675710)
+				{
+					int k = 0;
+				}
+
+				texsys::UnloadFromGPU(handle);
+			}
+
+			s32 defaultIndex = -1;
+
+			s32 index = r2::shashmap::Get(*cache->mGPURenderMaterialIndices, materialName, defaultIndex);
+
+			if (index == defaultIndex)
+			{
+				return;//?
+			}
+
+			RenderMaterialParams* gpuRenderMaterial = r2::sarr::At(*cache->mGPURenderMaterialArray, index);
+
+			FREE(gpuRenderMaterial, *cache->mGPURenderMaterialArena);
+
+			r2::sarr::At(*cache->mGPURenderMaterialArray, index) = nullptr;
+
+			r2::squeue::PushBack(*cache->mFreeIndices, index);
+
+			//r2::shashmap::Remove(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
+
+			//RemoveGPURenderMaterial(renderMaterialCache, materialName);
+
+			FREE(assetHandles, *cache->mAssetHandleArena);
+
+			r2::shashmap::Remove(*cache->mUploadedTextureForMaterialMap, materialName);
+
+		//	UnloadMaterialParams(*cache, iter->key);
 		}
 
 		FREE(cache->mUploadedTextureForMaterialMap, *arena);
@@ -267,8 +319,17 @@ namespace r2::draw::rmat
 
 			if (!isCubemap)
 			{
+
+
 				//find the texture that matches textureHandle
 				const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle, propertyType);
+
+				if (theTexture == nullptr)
+				{
+					u64 stringID =  STRING_ID("ellen/micro/ellen_head_microdetail.rtex");
+
+					int k = 0;
+				}
 
 				R2_CHECK(theTexture != nullptr, "We should always have the texture here if we don't have an empty textureHandle!");
 

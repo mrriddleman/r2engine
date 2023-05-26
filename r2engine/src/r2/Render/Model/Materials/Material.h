@@ -96,7 +96,7 @@ namespace r2::draw
 		u64 materialName = 0;
 		ShaderHandle shaderHandle = InvalidShader;
 		MaterialTextureAssets textureAssets;
-		r2::draw::RenderMaterialParams renderMaterial = {};
+	//	r2::draw::RenderMaterialParams renderMaterial = {};
 		r2::asset::AssetType mType = r2::asset::TEXTURE;//TEXTURE OR CUBEMAP
 
 	};

@@ -450,6 +450,21 @@ namespace r2
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             
 
+			r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mEngineMaterialSystem);
+			r2::draw::mat::UploadAllMaterialTexturesToGPU(*mEngineMaterialSystem);
+
+			//@NOTE(Serge): any internal engine render material params need to be set after we upload - for now....
+            mRendererBackends[mCurrentRendererBackend]->mDefaultStaticOutlineRenderMaterialParams = r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mRendererBackends[mCurrentRendererBackend]->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
+            mRendererBackends[mCurrentRendererBackend]->mDefaultDynamicOutlineRenderMaterialParams = r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mRendererBackends[mCurrentRendererBackend]->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
+
+            mRendererBackends[mCurrentRendererBackend]->mMissingTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mEngineMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mEngineMaterialSystem, STRING_ID("StaticMissingTexture"))).normalTextures.materialTexture.diffuseTexture;
+            mRendererBackends[mCurrentRendererBackend]->mMissingTextureRenderMaterialParams = r2::draw::mat::GetRenderMaterial(*mEngineMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mEngineMaterialSystem, STRING_ID("StaticMissingTexture")));
+
+            mRendererBackends[mCurrentRendererBackend]->mBlueNoiseTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mEngineMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mEngineMaterialSystem, STRING_ID("BlueNoise64"))).normalTextures.materialTexture.diffuseTexture;
+            mRendererBackends[mCurrentRendererBackend]->mBlueNoiseRenderMaterialParams = r2::draw::mat::GetRenderMaterial(*mEngineMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*mEngineMaterialSystem, STRING_ID("BlueNoise64")));
+
+
+
             //setup the GameAssetManager + ECSCoordinator + LevelManager
             {
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);

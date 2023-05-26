@@ -152,6 +152,12 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 		
+
+		if (texture.handle == 12654673806030675710)
+		{
+			int k = 0;
+		}
+
 		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(texture, type, anisotropy, wrapMode, minFilter, magFilter);
 		texGPUHandle.type = type;
 		texGPUHandle.anisotropy = anisotropy;
@@ -220,6 +226,8 @@ namespace r2::draw::texsys
 		{
 			r2::draw::tex::UnloadFromGPU(texGPUHandle.gpuHandle);
 			r2::shashmap::Remove(*s_optrTextureSystem->mTextureMap, texture.handle);
+
+			R2_CHECK(!r2::shashmap::Has(*s_optrTextureSystem->mTextureMap, texture.handle), "remove don't work!");
 		}
 	}
 

@@ -102,11 +102,8 @@ namespace r2::asset
 			mnoptrAssetCache->ReturnAssetBuffer(record);
 		}
 
-		//@TODO(Serge): Speed this up and use a faster way
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialNames; ++i)
 		{
-			//auto materialHandle = r2::draw::matsys::FindMaterialHandle(flatModel->materials()->Get(i)->name());
-
 			r2::sarr::Push(*model->optrMaterialNames, flatModel->materials()->Get(i)->name());
 		}
 
@@ -116,7 +113,6 @@ namespace r2::asset
 		{
 
 			auto defaultMaterialName = STRING_ID("Default");
-			//auto materialHandle = r2::draw::matsys::FindMaterialHandle(defaultMaterialName);
 
 			for (u64 i = numMaterialNames; i < numMeshes; ++i)
 			{

@@ -102,7 +102,7 @@
     },
     {
       propertyType: "DETAIL",
-      value: "ellen/micro/ellen_head_microdetail.rtex",
+      value: "ellen/detail/ellen_head_microdetail.rtex",
       packingType: "RGBA",
       texturePackName: 18199531748715869547,
       texturePackNameStr:"ellen"

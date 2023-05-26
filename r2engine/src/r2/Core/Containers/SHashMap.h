@@ -201,11 +201,6 @@ namespace r2
             else
             {
                 ((*h.mData)[fr.data_prev]).next = ((*h.mData)[fr.data_i]).next;
-
-                if (((*h.mData)[fr.data_prev]).next == 0)
-                {
-                    int k = 0;
-                }
             }
                
            
@@ -225,15 +220,10 @@ namespace r2
             if (last.data_prev != END_OF_LIST)
             {
                 ((*h.mData)[last.data_prev]).next = fr.data_i;
-
-                if (((*h.mData)[last.data_prev]).next == 0)
-                {
-                    int k = 0;
-                }
             }
             else
             {
-                (*h.mHash)[last.hash_i] = fr.data_i;
+                (*h.mHash)[last.hash_i] = last.data_i;
             }
         }
         
@@ -260,14 +250,8 @@ namespace r2
             else
             {
                 ((*h.mData)[fr.data_prev]).next = i;
-
-                if (((*h.mData)[fr.data_prev]).next == 0)
-                {
-                    int k = 0;
-                }
             }
-               
-            
+
             return i;
         }
         
@@ -284,22 +268,9 @@ namespace r2
             else
             {
                 ((*h.mData)[fr.data_prev]).next = i;
-
-                if (((*h.mData)[fr.data_prev]).next == 0)
-                {
-                    int k = 0;
-                    printf("Hello");
-                }
             }
-                
-            
+             
             ((*h.mData)[i]).next = fr.data_i;
-            
-            if (((*h.mData)[i]).next == 0)
-            {
-                int k = 0;
-                printf("Hello");
-            }
 
             return i;
         }

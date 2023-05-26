@@ -1289,19 +1289,6 @@ namespace r2::draw::renderer
 
 		InitializeVertexLayouts(*newRenderer, STATIC_MODELS_VERTEX_LAYOUT_SIZE, ANIM_MODELS_VERTEX_LAYOUT_SIZE);
 
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*noptrInternalMaterialSystem);
-		r2::draw::mat::UploadAllMaterialTexturesToGPU(*noptrInternalMaterialSystem);
-
-		//@NOTE(Serge): any internal engine render material params need to be set after we upload - for now....
-		newRenderer->mDefaultStaticOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
-		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = mat::GetRenderMaterial(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
-
-		newRenderer->mMissingTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture"))).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mMissingTextureRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("StaticMissingTexture")));
-
-		newRenderer->mBlueNoiseTexture = mat::GetMaterialTextureAssetsForMaterial(*noptrInternalMaterialSystem, mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64"))).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mBlueNoiseRenderMaterialParams = mat::GetRenderMaterial(*noptrInternalMaterialSystem, mat::GetMaterialHandleFromMaterialName(*noptrInternalMaterialSystem, STRING_ID("BlueNoise64")));
-
 		return newRenderer;
 	}
 
@@ -1582,7 +1569,7 @@ namespace r2::draw::renderer
 		}
 
 		//Needs to be here - we may need to move the texture system out of the renderer for this to go
-		mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
+	//	mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 	
