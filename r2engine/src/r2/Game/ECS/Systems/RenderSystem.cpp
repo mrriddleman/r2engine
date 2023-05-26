@@ -101,23 +101,20 @@ namespace r2::ecs
 
 			const r2::draw::vb::GPUModelRef* gpuModelRef = r2::draw::renderer::GetGPUModelRef(renderComponent.gpuModelRefHandle);
 
-			const u32 numMaterialHandles = r2::sarr::Size(*gpuModelRef->materialHandles);
+			const u32 numMaterialHandles = gpuModelRef->numMaterials;
 
 			for (u32 i = 0; i < numMaterialHandles; ++i)
 			{
-				const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*gpuModelRef->materialHandles, i);
+				r2::draw::ShaderHandle materialShaderHandle = r2::sarr::At(*gpuModelRef->shaderHandles, i);
 
-				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
+				r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
-				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
 
-				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
+				const r2::draw::RenderMaterialParams* nextRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*gpuModelRef->renderMaterialHandles, i));
 
-				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);
+				R2_CHECK(nextRenderMaterial != nullptr, "This should never be nullptr");
 
-				const r2::draw::RenderMaterialParams& nextRenderMaterial = r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
-
-				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
+				r2::sarr::Push(*mBatch.renderMaterialParams, *nextRenderMaterial);
 				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);
 			}
 		}

@@ -73,6 +73,7 @@ namespace r2::draw::rmat
 	bool IsGPURenderMaterialHandleInvalid(const GPURenderMaterialHandle& handle);
 	bool AreGPURenderMaterialHandlesEqual(const GPURenderMaterialHandle& handle1, const GPURenderMaterialHandle& handle2);
 
+	//@TODO(Serge): implement a Reload method for when materials/textures change
 }
 
 #endif

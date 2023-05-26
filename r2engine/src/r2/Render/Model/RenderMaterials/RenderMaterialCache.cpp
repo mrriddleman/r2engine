@@ -113,6 +113,8 @@ namespace r2::draw::rmat
 
 		R2_CHECK(newRenderMaterialCache->mUploadedTextureForMaterialMap != nullptr, "Couldn't create the mUploadedTextureForMaterialMap");
 
+		newRenderMaterialCache->mName = r2::utils::HashBytes32(areaName, strlen(areaName));
+
 		return newRenderMaterialCache;
 	}
 
@@ -148,11 +150,6 @@ namespace r2::draw::rmat
 			for (u32 i = 0; i < numTexturesToUnload; ++i)
 			{
 				auto handle = r2::sarr::At(*assetHandles, i);
-				if (handle.handle == 12654673806030675710)
-				{
-					int k = 0;
-				}
-
 				texsys::UnloadFromGPU(handle);
 			}
 

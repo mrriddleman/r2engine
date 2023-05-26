@@ -143,8 +143,6 @@ namespace r2::draw::texsys
 
 		//@TODO(Serge): one thing we should do here is check to see if we've already uploaded this texture with the exact parameters
 		//				if we have, then nothing to do - don't waste pages if we don't have to
-
-
 		TextureGPUHandle theDefault;
 
 		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
@@ -152,12 +150,6 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 		
-
-		if (texture.handle == 12654673806030675710)
-		{
-			int k = 0;
-		}
-
 		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(texture, type, anisotropy, wrapMode, minFilter, magFilter);
 		texGPUHandle.type = type;
 		texGPUHandle.anisotropy = anisotropy;
@@ -166,7 +158,6 @@ namespace r2::draw::texsys
 		texGPUHandle.wrapMode = wrapMode;
 
 		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.handle, texGPUHandle);
-
 	}
 
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)

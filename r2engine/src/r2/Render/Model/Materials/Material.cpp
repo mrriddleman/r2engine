@@ -633,11 +633,6 @@ namespace r2::draw::mat
 
 		RenderMaterialCache* renderMaterialCache = renderer::GetRenderMaterialCache();
 
-		if (materialIndex == 6)
-		{
-			int k = 0;
-		}
-
 		if (internalMaterialData.mType == r2::asset::TEXTURE)
 		{
 			r2::SArray<tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, tex::Texture, tex::Cubemap);
@@ -2652,12 +2647,14 @@ namespace r2::draw::matsys
 
 					if (internalMaterialData.mType == r2::asset::TEXTURE)
 					{
+						//@NOTE(Serge): we would need to update the RenderMaterialCache to have hotreloading working again - not sure if worth right now
+
 				//		mat::UpdateRenderMaterialDataTexture(*foundSystem, materialIndex, foundTexture);
 					}
 					else
 					{
 						const r2::draw::tex::CubemapTexture& cubemap = internalMaterialData.textureAssets.cubemap;
-
+						//@NOTE(Serge): we would need to update the RenderMaterialCache to have hotreloading working again - not sure if worth right now
 				//		mat::UpdateRenderMaterialDataTexture(*foundSystem, materialIndex, cubemap);
 					}
 				}

@@ -9,6 +9,8 @@
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/GPUBuffer.h"
 #include "r2/Render/Renderer/RenderKey.h"
+#include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
+#include "r2/Render/Renderer/Shader.h"
 
 namespace r2::draw
 {
@@ -41,7 +43,9 @@ namespace r2::draw::vb
 		b32 isAnimated;
 
 		r2::SArray<MeshEntry>* meshEntries;
-		r2::SArray<MaterialHandle>* materialHandles;
+		r2::SArray<rmat::GPURenderMaterialHandle>* renderMaterialHandles;
+		r2::SArray<ShaderHandle>* shaderHandles;
+
 		u32 numMaterials;
 		GPUBufferEntry boneEntry;
 		u32 numBones;
