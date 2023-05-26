@@ -39,7 +39,6 @@ namespace r2
 		,mLevelCache(nullptr)
 		,mModelCache(nullptr)
 		,mAnimationCache(nullptr)
-		,mMaterialSystem(nullptr)
 		, mSceneGraph{}
 	{
 	}
