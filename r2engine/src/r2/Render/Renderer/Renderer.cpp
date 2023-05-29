@@ -1301,11 +1301,6 @@ namespace r2::draw::renderer
 			R2_CHECK(materialParams != nullptr, "We should have the material params!");
 			R2_CHECK(r2::sarr::At(*newRenderer->mnoptrMaterialSystem->mInternalData, i).materialName == materialParams->name(), "hmmm");
 
-			if (materialParams->name() == 6966058738252663180)
-			{
-				int k = 0;
-			}
-
 			const InternalMaterialData& internalMaterialData = r2::sarr::At(*newRenderer->mnoptrMaterialSystem->mInternalData, i);
 
 			if (internalMaterialData.mType == r2::asset::TEXTURE)
@@ -1341,17 +1336,15 @@ namespace r2::draw::renderer
 			}
 		}
 
-	//	r2::draw::mat::UploadAllMaterialTexturesToGPU(*mEngineMaterialSystem);
-
 		//@TODO(Serge): Get the rendermaterialparams directly here
-		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));//r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
-		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));//r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
+		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));
+		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
 
 		newRenderer->mMissingTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"))).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticMissingTexture"));//r2::draw::mat::GetRenderMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture")));
+		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticMissingTexture"));
 
 		newRenderer->mBlueNoiseTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("BlueNoise64"))).normalTextures.materialTexture.diffuseTexture;
-		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));//r2::draw::mat::GetRenderMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("BlueNoise64")));
+		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
 
 
 

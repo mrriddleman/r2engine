@@ -26,7 +26,7 @@ namespace r2::asset
         inline bool Empty() const { return mHashedPathID == 0; }
         
 #ifdef R2_ASSET_CACHE_DEBUG
-        inline const char* Name() const {return mName;}
+        inline const std::string& Name() const {return mName;}
 #endif
         inline u64 HashID() const {return mHashedPathID;}
         inline AssetType GetType() const { return mType; }
@@ -36,7 +36,7 @@ namespace r2::asset
 
     private:
         #ifdef R2_ASSET_CACHE_DEBUG
-        char mName[r2::fs::FILE_PATH_LENGTH]; 
+        std::string mName; 
         #endif
 
         u64 mHashedPathID;

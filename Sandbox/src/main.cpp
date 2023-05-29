@@ -2073,32 +2073,27 @@ public:
 
 	//@SO TEMPORARY!!!
 #ifdef R2_EDITOR
-	r2::draw::ModelCache* GetEditorModelSystem() const
+	r2::draw::ModelCache* GetEditorModelSystem() const override
 	{
 		return mModelSystem;
 	}
 
-	r2::draw::MaterialSystem* GetEditorMaterialSystem() const
-	{
-		return mMaterialSystem;
-	}
-
-    r2::draw::AnimationCache* GetEditorAnimationCache() const
+    r2::draw::AnimationCache* GetEditorAnimationCache() const override
     {
         return mAnimationCache;
     }
 
-    virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const override
     {
         /*coordinator->RegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr, "DummyComponent", true);*/
     }
 	
-    virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
+    virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const override
     {
         /*coordinator->UnRegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr);*/
     }
 
-    virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const
+    virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const override
     {
         //DummyComponent d;
         //d.dummy = 42;

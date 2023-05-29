@@ -289,6 +289,7 @@ namespace r2::assets::assetlib
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
 		
+		//@TODO(Serge): add in parent directories needed
 		model.modelName = inputFilePath.stem().string();
 
 		model.materialNames.reserve(numMeshes);

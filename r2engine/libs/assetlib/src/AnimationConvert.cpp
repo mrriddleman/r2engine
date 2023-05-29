@@ -95,6 +95,7 @@ namespace r2::assets::assetlib
 
 		Animation animation;
 		animation.originalPath = inputFilePath.string();
+		//@TODO(Serge): use the path to generate a proper name with the appropriate amount of parent directories
 
 		ProcessAnimation(animation, scene->mRootNode, scene);
 

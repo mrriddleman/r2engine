@@ -49,4 +49,9 @@ namespace r2::asset
 		return asset;
 	}
 
+	bool AssetCacheRecord::IsEmptyAssetCacheRecord(const AssetCacheRecord& assetCacheRecord)
+	{
+		return assetCacheRecord.buffer == nullptr || assetCacheRecord.mnoptrAssetCache == nullptr;
+	}
+
 }

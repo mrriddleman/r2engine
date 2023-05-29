@@ -17,7 +17,7 @@ namespace r2::asset
     , mType(DEFAULT)
     {
 #ifdef R2_ASSET_CACHE_DEBUG
-        r2::util::PathCpy(mName, "");
+        mName = "";
 #endif
     }
     
@@ -25,7 +25,7 @@ namespace r2::asset
     {
 
 #ifdef R2_ASSET_CACHE_DEBUG
-        r2::util::PathCpy(mName, name);
+        mName = name;
 #endif
         char path[r2::fs::FILE_PATH_LENGTH];
         r2::util::PathCpy(path, name);
@@ -48,7 +48,7 @@ namespace r2::asset
     Asset::Asset(const Asset& asset)
     {
 #ifdef R2_ASSET_CACHE_DEBUG
-        r2::util::PathCpy(mName, asset.mName);
+        mName = asset.mName;
 #endif
         mHashedPathID = asset.mHashedPathID;
         mType = asset.mType;
@@ -61,7 +61,7 @@ namespace r2::asset
             return *this;
         }
 #ifdef R2_ASSET_CACHE_DEBUG
-        r2::util::PathCpy(mName, asset.mName);
+        mName = asset.mName;
 #endif
         mHashedPathID = asset.mHashedPathID;
         mType = asset.mType;

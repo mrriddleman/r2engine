@@ -189,7 +189,7 @@ namespace r2::asset
             if (!buffer)
             {
 #ifdef R2_ASSET_CACHE_DEBUG
-                R2_CHECK(false, "Failed to Load Asset: %s", asset.Name());
+                R2_CHECK(false, "Failed to Load Asset: %s", asset.Name().c_str());
 #endif
                 return invalidHandle;
             }
@@ -373,7 +373,7 @@ namespace r2::asset
 			return nullptr;
 		}
 
-        FileHandle fileIndex = FindInFiles(asset);
+        FileHandle fileIndex = FindInFiles(asset.HashID());
 
         if (fileIndex == -1)
         {
@@ -382,6 +382,18 @@ namespace r2::asset
         }
 
         return r2::sarr::At(*mnoptrFiles, fileIndex);
+    }
+
+    void AssetCache::AddAssetFile(AssetFile* assetFile)
+    {
+        u64 assetHandle = assetFile->GetAssetHandle(0);
+
+        FileHandle fileIndex = FindInFiles(assetHandle);
+
+        if (fileIndex == -1)
+        {
+            r2::sarr::Push(*mnoptrFiles, assetFile);
+        }
     }
 
     void AssetCache::RegisterAssetLoader(AssetLoader* optrAssetLoader)
@@ -445,7 +457,7 @@ namespace r2::asset
         
         R2_CHECK(loader != nullptr, "couldn't find asset loader");
         
-        FileHandle fileIndex = FindInFiles(asset);
+        FileHandle fileIndex = FindInFiles(asset.HashID());
         if(fileIndex == INVALID_FILE_INDEX)
         {
             R2_CHECK(false, "We failed to find the asset in any of our asset files");
@@ -479,7 +491,7 @@ namespace r2::asset
         if (rawAssetBuffer == nullptr)
         {
 #ifdef R2_ASSET_CACHE_DEBUG
-            R2_CHECK(false, "Failed to get the raw data from the asset: %s\n", asset.Name());
+            R2_CHECK(false, "Failed to get the raw data from the asset: %s\n", asset.Name().c_str());
 #endif
             return nullptr;
         }
@@ -488,7 +500,7 @@ namespace r2::asset
         
         assetBuffer = ALLOC(AssetBuffer, *mAssetBufferPoolPtr);
 #ifdef R2_ASSET_CACHE_DEBUG
-        R2_CHECK(assetBuffer != nullptr, "Failed to allocate a new asset buffer for asset: %s\n", asset.Name());
+        R2_CHECK(assetBuffer != nullptr, "Failed to allocate a new asset buffer for asset: %s\n", asset.Name().c_str());
 #endif
         if (assetBuffer == nullptr)
         {
@@ -602,13 +614,13 @@ namespace r2::asset
 			}
 		}
 
-		R2_CHECK(writer != nullptr, "Couldn't find an asset Writer for asset: %s\n", asset.Name());
+		R2_CHECK(writer != nullptr, "Couldn't find an asset Writer for asset: %s\n", asset.Name().c_str());
         if (!writer)
         {
             return;
         }
 
-		FileHandle fileIndex = FindInFiles(asset);
+		FileHandle fileIndex = FindInFiles(asset.HashID());
 		if (fileIndex == INVALID_FILE_INDEX)
 		{
 			R2_CHECK(false, "We failed to find the asset in any of our asset files");
@@ -664,14 +676,14 @@ namespace r2::asset
 #endif
     }
     
-    FileHandle AssetCache::FindInFiles(const Asset& asset) const
+    FileHandle AssetCache::FindInFiles(u64 assetID) const
     {
         if (!mnoptrFiles)
         {
             return INVALID_FILE_INDEX;
         }
 
-        const AssetHandle handle = { asset.HashID(), mSlot };
+        const AssetHandle handle = { assetID, mSlot };
         
         const u64 numnoptrFiles = r2::sarr::Size(*mnoptrFiles);
         
@@ -718,7 +730,7 @@ namespace r2::asset
                 Asset theDefault;
                 const Asset& theAsset = r2::shashmap::Get(*mAssetNameMap, handle.handle, theDefault);
 #ifdef R2_ASSET_CACHE_DEBUG
-                R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", theAsset.Name(),  assetBufferRef.mRefCount);
+                R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", theAsset.Name().c_str(),  assetBufferRef.mRefCount);
 #endif
             }
             
@@ -1020,7 +1032,7 @@ namespace r2::asset
                 
 
                 AssetHandle handle = { asset.HashID(), mSlot };
-                PrintAsset(asset.Name(), handle, bufRef.mRefCount);
+                PrintAsset(asset.Name().c_str(), handle, bufRef.mRefCount);
             }
         }
         
@@ -1046,7 +1058,7 @@ namespace r2::asset
 				const Asset& asset = r2::shashmap::Get(*mAssetNameMap, (*mAssetLRU)[i].handle, theDefault);
 
                 AssetHandle handle = { asset.HashID(), mSlot };
-                PrintAsset(asset.Name(), handle, bufRef.mRefCount);
+                PrintAsset(asset.Name().c_str(), handle, bufRef.mRefCount);
             }
         }
         

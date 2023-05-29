@@ -464,10 +464,10 @@ namespace r2
                 r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
                 memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
 
-                mGameAssetManager->Init(memoryHandle, noptrApp->GetAssetFileList());
+                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, noptrApp->GetAssetFileList());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
-                mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), mGameAssetManager, noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
+                mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
             }
             
             //@TODO(Serge): don't use make unique!
@@ -558,7 +558,7 @@ namespace r2
         mLevelManager->Shutdown();
         FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
 
-        mGameAssetManager->Shutdown();
+        mGameAssetManager->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
         FREE(mGameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
         mECSWorld->Shutdown();

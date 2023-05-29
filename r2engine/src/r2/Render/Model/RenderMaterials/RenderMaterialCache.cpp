@@ -316,17 +316,8 @@ namespace r2::draw::rmat
 
 			if (!isCubemap)
 			{
-
-
 				//find the texture that matches textureHandle
 				const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle, propertyType);
-
-				if (theTexture == nullptr)
-				{
-					u64 stringID =  STRING_ID("ellen/micro/ellen_head_microdetail.rtex");
-
-					int k = 0;
-				}
 
 				R2_CHECK(theTexture != nullptr, "We should always have the texture here if we don't have an empty textureHandle!");
 

@@ -43,7 +43,7 @@ namespace r2
 		LevelManager();
 		~LevelManager();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, GameAssetManager* noptrGameAssetManager, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
+		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
 		void Shutdown();
 
 		void Update();
@@ -62,8 +62,8 @@ namespace r2
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
 
-		r2::draw::ModelCache* GetModelSystem();
-		r2::draw::AnimationCache* GetAnimationCache();
+		//r2::draw::ModelCache* GetModelSystem();
+		//r2::draw::AnimationCache* GetAnimationCache();
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
@@ -96,15 +96,7 @@ namespace r2
 
 		r2::SHashMap<Level>* mLoadedLevels; //LevelName -> LevelHandle
 
-		LevelCache* mLevelCache;
-
-		SceneGraph mSceneGraph;
-		
-		r2::draw::ModelCache* mModelCache;
-		r2::draw::AnimationCache* mAnimationCache;
-
-		GameAssetManager* mnoptrGameAssetManager;
-	
+		SceneGraph mSceneGraph;	
 	};
 }
 

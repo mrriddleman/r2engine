@@ -173,6 +173,7 @@ namespace r2::asset
 
 
 			//Process the Nodes
+			model->model.hash = metaData->modelName();
 
 			const u64 numJoints = metaData->skeletonMetaData()->numJoints();
 			const u64 numBindPoseTransforms = metaData->skeletonMetaData()->numBindPoseTransforms();
@@ -242,7 +243,7 @@ namespace r2::asset
 
 				r2::sarr::Push(*model->model.optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
 			}
-
+			
 			//Animation data
 			const auto flatBoneInfos = modelData->animationData()->boneInfo();
 
@@ -327,6 +328,8 @@ namespace r2::asset
 			const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
 
 			model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+
+			model->hash = metaData->modelName();
 
 			//materials
 

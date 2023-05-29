@@ -19,6 +19,8 @@ namespace r2::asset
 		const AssetCache* GetAssetCache() const;
 		const Asset& GetAsset() const;
 		
+		static bool IsEmptyAssetCacheRecord(const AssetCacheRecord& assetCacheRecord);
+
 	private:
 		mutable AssetBuffer* buffer;
 		AssetCache* mnoptrAssetCache;

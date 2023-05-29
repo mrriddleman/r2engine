@@ -5,17 +5,20 @@
 #include "r2/Game/Level/LevelPack_generated.h"
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-#include "r2/Game/Level/LevelCache.h"
 #include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Model/ModelCache.h"
 #include "r2/Render/Animation/AnimationCache.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetLib.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #endif // R2_ASSET_PIPELINE
 
+#include "r2/Core/Engine.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace
 {
@@ -32,14 +35,11 @@ namespace r2
 	LevelManager::LevelManager()
 		:mMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mSubAreaHandle(r2::mem::MemoryArea::SubArea::Invalid)
-		, mMaxNumLevels(0)
+		,mMaxNumLevels(0)
 		,mArena(nullptr)
 		,mLevelArena(nullptr)
-		, mLoadedLevels(nullptr)
-		,mLevelCache(nullptr)
-		,mModelCache(nullptr)
-		,mAnimationCache(nullptr)
-		, mSceneGraph{}
+		,mLoadedLevels(nullptr)
+		,mSceneGraph{}
 	{
 	}
 
@@ -51,13 +51,11 @@ namespace r2
 	{
 		u64 subAreaSize = 0;
 		subAreaSize += MemorySize(numLevels, numModels, numAnimations, memProperties);
-		subAreaSize -= r2::draw::modlche::MemorySize(numModels, MODEL_SYSTEM_SIZE);
-		subAreaSize -= r2::draw::animcache::MemorySize(numAnimations, ANIMATION_CACHE_SIZE);
 
 		return subAreaSize;
 	}
 
-	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, GameAssetManager* noptrGameAssetManager, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
+	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
 	{
 		R2_CHECK(levelPackPath != nullptr, "We should have a proper path");
 		R2_CHECK(strlen(levelPackPath) > 0, "We should have path that's more than 0");
@@ -106,42 +104,28 @@ namespace r2
 
 		mSceneGraph.Init<r2::mem::StackArena>(*mArena, ecsCoordinator);
 
-		u32 levelCacheMemoryNeededInBytes = maxNumLevels * AVG_LEVEL_SIZE;
 
-		u64 levelCacheMemorySizeNeededInBytes = lvlche::MemorySize(maxNumLevels, levelCacheMemoryNeededInBytes, memProperties);
+		//@TODO(Serge): add in the level files from the path
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		r2::asset::FileList fileList = gameAssetManager.GetFileList();
 
-		const auto unAllocated = mArena->UnallocatedBytes();
-		if (!(unAllocated > levelCacheMemorySizeNeededInBytes))
+		//@Temporary
+		for (auto& file : std::filesystem::recursive_directory_iterator(levelPackPath))
 		{
-			R2_CHECK(false, "We don't have enough memory for the level cache. We have: %llu, but we need: %llu, difference: %llu\n",
-				unAllocated, levelCacheMemorySizeNeededInBytes, levelCacheMemorySizeNeededInBytes - unAllocated);
-			return false;
+			if (!(file.is_regular_file() && file.file_size() > 0))
+			{
+				continue;
+			}
+
+			r2::asset::RawAssetFile* levelFile = r2::asset::lib::MakeRawAssetFile(file.path().string().c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)levelFile);
 		}
-
-		r2::mem::utils::MemBoundary levelCacheBoundary = MAKE_BOUNDARY(*mArena, levelCacheMemorySizeNeededInBytes, memProperties.alignment);
-
-		mLevelCache = lvlche::CreateLevelCache(levelCacheBoundary, levelPackPath, mMaxNumLevels, levelCacheMemoryNeededInBytes);
-
-		R2_CHECK(mLevelCache != nullptr, "We couldn't create the level cache correctly");
-
-		r2::asset::FileList modelFiles = r2::asset::lib::MakeFileList(MAX_NUM_MODELS);
-
-		mModelCache = r2::draw::modlche::Create(mMemoryAreaHandle, MODEL_SYSTEM_SIZE, true, modelFiles, "Level Manager Model System");
-
-		r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(MAX_NUM_ANIMATIONS);
-
-		mAnimationCache = r2::draw::animcache::Create(memoryAreaHandle, ANIMATION_CACHE_SIZE, animationFiles, "Level Manager Animation Cache");
-
-		mnoptrGameAssetManager = noptrGameAssetManager;
 
 		return true;
 	}
 
 	void LevelManager::Shutdown()
 	{
-		r2::draw::animcache::Shutdown(*mAnimationCache);
-
-		r2::draw::modlche::Shutdown(mModelCache);
 
 		auto iter = r2::shashmap::Begin(*mLoadedLevels);
 
@@ -151,12 +135,6 @@ namespace r2
 		}
 
 		r2::shashmap::Clear(*mLoadedLevels);
-
-		mem::utils::MemBoundary levelCacheBoundary = mLevelCache->mLevelCacheBoundary;
-
-		lvlche::Shutdown(mLevelCache);
-
-		FREE(levelCacheBoundary.location, *mArena);
 
 		mSceneGraph.Shutdown<r2::mem::StackArena>(*mArena);
 
@@ -181,7 +159,7 @@ namespace r2
 
 	const r2::Level* LevelManager::LoadLevel(LevelName levelName)
 	{
-		if (!mLevelCache || !mLoadedLevels)
+		if (!mLoadedLevels)
 		{
 			R2_CHECK(false, "We haven't initialized the LevelManager yet");
 			return nullptr;
@@ -196,9 +174,13 @@ namespace r2
 			return &theLevel;
 		}
 
-		LevelHandle levelHandle = lvlche::LoadLevelData(*mLevelCache, levelName );
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		const flat::LevelData* flatLevelData = lvlche::GetLevelData(*mLevelCache, levelHandle);
+		LevelHandle levelHandle = gameAssetManager.LoadAsset(r2::asset::Asset(levelName, r2::asset::LEVEL));
+
+		const byte* levelData = gameAssetManager.GetAssetDataConst<byte>(levelHandle);
+
+		const flat::LevelData* flatLevelData = flat::GetLevelData(levelData);
 
 		//now add the files to the file lists
 		//these need to be before the scene graph load level
@@ -237,7 +219,7 @@ namespace r2
 
 	void LevelManager::UnloadLevel(const Level* level)
 	{
-		if (!mLevelCache || !mLoadedLevels)
+		if (!mLoadedLevels)
 		{
 			R2_CHECK(false, "We haven't initialized the LevelManager yet");
 			return;
@@ -266,7 +248,9 @@ namespace r2
 
 		r2::shashmap::Remove(*mLoadedLevels, levelHashName);
 
-		lvlche::UnloadLevelData(*mLevelCache, theLevel.GetLevelHandle());
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		gameAssetManager.UnloadAsset(theLevel.GetLevelHandle());
 	}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
@@ -293,16 +277,6 @@ namespace r2
 		return &mSceneGraph;
 	}
 
-	r2::draw::ModelCache* LevelManager::GetModelSystem()
-	{
-		return mModelCache;
-	}
-
-	r2::draw::AnimationCache* LevelManager::GetAnimationCache()
-	{
-		return mAnimationCache;
-	}
-
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
 	{
 		r2::asset::Asset levelAsset = r2::asset::Asset::MakeAssetFromFilePath(levelPath, r2::asset::LEVEL);
@@ -313,10 +287,19 @@ namespace r2
 	{
 		const auto numModels = levelData->modelFilePaths()->size();
 
-		const r2::asset::FileList fileList = r2::draw::modlche::GetFileList(*mModelCache);
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		const r2::asset::FileList fileList = gameAssetManager.GetFileList();
 
 		for (flatbuffers::uoffset_t i = 0; i < numModels; ++i)
 		{
+			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(levelData->animationFilePaths()->Get(i)->binPath()->c_str(), r2::asset::RMODEL);
+
+			if (gameAssetManager.HasAsset(animationAsset))
+			{
+				continue;
+			}
+
 			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->modelFilePaths()->Get(i)->binPath()->c_str());
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
@@ -327,10 +310,19 @@ namespace r2
 	{
 		const auto numAnimations = levelData->animationFilePaths()->size();
 
-		const r2::asset::FileList fileList = r2::draw::animcache::GetFileList(*mAnimationCache);
-
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		
+		const r2::asset::FileList fileList = gameAssetManager.GetFileList();
+		
 		for (flatbuffers::uoffset_t i = 0; i < numAnimations; ++i)
 		{
+			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(levelData->animationFilePaths()->Get(i)->binPath()->c_str(), r2::asset::RANIMATION);
+
+			if (gameAssetManager.HasAsset(animationAsset))
+			{
+				continue;
+			}
+
 			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->animationFilePaths()->Get(i)->binPath()->c_str());
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
@@ -361,10 +353,6 @@ namespace r2
 		lvlCacheMemProps.headerSize = stackHeaderSize;
 		lvlCacheMemProps.boundsChecking = memProperties.boundsChecking;
 
-		u64 levelCacheSize = lvlche::MemorySize(maxNumLevels, maxNumLevels * AVG_LEVEL_SIZE, lvlCacheMemProps);
-
-		memorySize += levelCacheSize;
-
 		auto hashMapSize = r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<Level>::MemorySize(maxNumLevels * r2::SHashMap<LevelName>::LoadFactorMultiplier()), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
 		
 		memorySize += hashMapSize;
@@ -373,10 +361,6 @@ namespace r2
 
 		memorySize += sceneGraphMemory;
 
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::modlche::MemorySize(maxNumModels, MODEL_SYSTEM_SIZE), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::animcache::MemorySize(maxNumAnimations, ANIMATION_CACHE_SIZE), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
-
-		
 		return memorySize;
 	}
 
@@ -388,21 +372,33 @@ namespace r2
 		const r2::draw::ModelCache& modelSystem,
 		const r2::draw::AnimationCache& animationCache)
 	{
-		if (!mLevelCache)
-		{
-			R2_CHECK(false, "We haven't created the level cache yet!");
+		char sanitizedBinLevelPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(binLevelPath, sanitizedBinLevelPath);
 
-			return;
+		char sanitizedRawLevelPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(rawJSONPath, sanitizedRawLevelPath);
+
+		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(sanitizedBinLevelPath, r2::asset::LEVEL);
+
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		//first check to see if we have asset for this
+		if (!gameAssetManager.HasAsset(newLevelAsset))
+		{	
+			const r2::asset::FileList fileList = gameAssetManager.GetFileList();
+			
+			//make a new asset file for the asset cache
+			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(sanitizedBinLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
+
+			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
 		}
+		
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+		
+		//Write out the new level file
+		bool saved = r2::asset::pln::SaveLevelData(ecsWorld.GetECSCoordinator(), version, sanitizedBinLevelPath, sanitizedRawLevelPath, r2::draw::modlche::GetFileList(modelSystem), r2::draw::animcache::GetFileList(animationCache));
 
-		lvlche::SaveNewLevelFile(
-			*mLevelCache,
-			mSceneGraph.GetECSCoordinator(),
-			version,
-			binLevelPath,
-			rawJSONPath,
-			r2::draw::modlche::GetFileList(modelSystem),
-			r2::draw::animcache::GetFileList(animationCache));
+		R2_CHECK(saved, "We couldn't save the file: %s\n", sanitizedBinLevelPath);
 	}
 #endif
 }

@@ -81,21 +81,11 @@ namespace r2::ecs
 
 			for (u32 i = 0; i < numOverrides; ++i)
 			{
-				/*const r2::draw::MaterialHandle materialHandle = r2::sarr::At(*renderComponent.optrOverrideMaterials, i);
-
-				R2_CHECK(!r2::draw::mat::IsInvalidHandle(materialHandle), "This can't be invalid!");
-
-				r2::draw::MaterialSystem* matSystem = r2::draw::matsys::GetMaterialSystem(materialHandle.slot);
-
-				R2_CHECK(matSystem != nullptr, "Failed to get the material system!");
-
-				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSystem, materialHandle);*/
-
 				const RenderMaterialOverride& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
 
 				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.materialName);
 				R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
-				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;//r2::draw::mat::GetRenderMaterial(*matSystem, materialHandle);
+				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;
 
 				r2::draw::MaterialSystem* matSys = r2::draw::matsys::GetMaterialSystemBySystemName(materialName.materialSystemName);
 				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSys, r2::draw::mat::GetMaterialHandleFromMaterialName(*matSys, materialName.materialName));

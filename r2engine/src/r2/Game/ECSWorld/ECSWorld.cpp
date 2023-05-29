@@ -19,6 +19,7 @@
 #include "r2/Core/Application.h"
 #include "r2/Platform/Platform.h"
 #include "r2/Render/Animation/AnimationCache.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace r2::ecs
 {
@@ -136,8 +137,7 @@ namespace r2::ecs
 
 		const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
 
-		r2::draw::ModelCache* editorModelSystem = CENG.GetLevelManager().GetModelSystem();
-	//	r2::draw::MaterialSystem* editorMaterialSystem = CENG.GetApplication().GetEditorMaterialSystem();
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		for (u32 i = 0; i < numRenderComponents; ++i)
 		{
@@ -145,45 +145,23 @@ namespace r2::ecs
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
 
-			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
+			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
 			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			if (renderComponent.isAnimated)
 			{
-				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
+				const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
 				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
 			}
 			else
 			{
-				const r2::draw::Model* model = r2::draw::modlche::GetModel(editorModelSystem, modelHandle);
+				const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle); 
 				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
 			}
 
+			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
+
 			renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-
-			/*if (renderComponent.optrMaterialOverrideNames)
-			{
-				const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
-
-				if (numMaterialOverrides > 0)
-				{
-					renderComponent.optrOverrideMaterials = MAKE_SARRAY(mMallocArena, r2::draw::MaterialHandle, numMaterialOverrides);
-					mComponentAllocations.push_back(renderComponent.optrMaterialOverrideNames);
-
-					for (u32 j = 0; j < numMaterialOverrides; ++j)
-					{
-						const ecs::RenderMaterialOverride& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
-
-						const r2::draw::MaterialSystem* materialSystem = r2::draw::matsys::GetMaterialSystemBySystemName(materialOverride.materialSystemName);
-
-						R2_CHECK(materialSystem == editorMaterialSystem, "Just a check to make sure these are the same");
-
-						r2::draw::MaterialHandle nextOverrideMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*materialSystem, materialOverride.materialName);
-
-						r2::sarr::Push(*renderComponent.optrOverrideMaterials, nextOverrideMaterialHandle);
-					}
-				}
-			}*/
 		}
 
 		return tempRenderComponents;
@@ -198,8 +176,7 @@ namespace r2::ecs
 			return nullptr;
 		}
 
-		r2::draw::ModelCache* editorModelSystem = CENG.GetLevelManager().GetModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = CENG.GetLevelManager().GetAnimationCache();
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
 
@@ -209,18 +186,18 @@ namespace r2::ecs
 
 			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 
-			r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
+			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
-			const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
+			const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
 
 			skeletalAnimationComponent.animModel = animModel;
 
 
 			r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-			r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
+			r2::draw::AnimationHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
-			skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
+			skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 
 			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
 			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
@@ -245,8 +222,7 @@ namespace r2::ecs
 		instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
 		mComponentAllocations.push_back(instancedSkeletalAnimationComponents);
 
-		r2::draw::ModelCache* editorModelSystem = CENG.GetLevelManager().GetModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = CENG.GetLevelManager().GetAnimationCache();
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
 
@@ -275,17 +251,17 @@ namespace r2::ecs
 
 				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
 
-				r2::draw::ModelHandle modelHandle = r2::draw::modlche::LoadModel(editorModelSystem, modelAsset);
+				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
-				const r2::draw::AnimModel* animModel = r2::draw::modlche::GetAnimModel(editorModelSystem, modelHandle);
+				const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
 
 				skeletalAnimationComponent.animModel = animModel;
 
 				r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-				r2::draw::AnimationHandle animationHandle = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset);
+				r2::draw::AnimationHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
-				skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle);
+				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));

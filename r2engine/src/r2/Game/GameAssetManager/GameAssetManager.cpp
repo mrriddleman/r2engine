@@ -1,19 +1,14 @@
 #include "r2pch.h"
-
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
-#include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
-#include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
-#include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
-#include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
-#include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
+
 
 namespace r2
 {
 	
 	GameAssetManager::GameAssetManager()
 		:mAssetCache(nullptr)
+		,mCachedRecords(nullptr)
 		,mAssetMemoryHandle()
 	{
 	}
@@ -21,41 +16,6 @@ namespace r2
 	GameAssetManager::~GameAssetManager()
 	{
 		mAssetCache = nullptr;
-	}
-
-	bool GameAssetManager::Init(r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList)
-	{
-		r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
-		R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
-
-		mAssetCache = r2::asset::lib::CreateAssetCache(gameAssetManagerMemoryArea->AreaBoundary(), fileList);
-
-		mAssetMemoryHandle = assetMemoryHandle;
-
-		//@TODO(Serge): maybe add the loaders here for the engine?
-		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
-		mAssetCache->RegisterAssetLoader(meshLoader);
-
-		r2::asset::ModelAssetLoader* modelLoader = (r2::asset::ModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::ModelAssetLoader>();
-		modelLoader->SetAssetCache(mAssetCache); //@TODO(Serge): make some callbacks or something here instead
-
-		mAssetCache->RegisterAssetLoader(modelLoader);
-
-		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
-		mAssetCache->RegisterAssetLoader(rmodelLoader);
-
-		r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
-		mAssetCache->RegisterAssetLoader(ranimationLoader);
-
-		return mAssetCache != nullptr;
-	}
-
-	void GameAssetManager::Shutdown()
-	{
-		if (mAssetCache)
-		{
-			r2::asset::lib::DestroyCache(mAssetCache);
-		}
 	}
 
 	void GameAssetManager::Update()
@@ -70,7 +30,7 @@ namespace r2
 #endif
 	}
 
-	u64 GameAssetManager::MemorySizeForGameAssetManager(u32 alignment, u32 headerSize)
+	u64 GameAssetManager::MemorySizeForGameAssetManager(u32 numFiles, u32 alignment, u32 headerSize)
 	{
 		u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -78,6 +38,7 @@ namespace r2
 #endif
 
 		u64 memorySize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GameAssetManager), alignment, headerSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numFiles * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking);
 
 		return memorySize;
 	}
@@ -87,6 +48,28 @@ namespace r2
 		u64 memorySize = r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacity, alignment, lruCapacity, mapCapacity);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::asset::AssetCache), alignment, headerSize, boundsChecking);
 		return memorySize;
+	}
+
+	bool GameAssetManager::HasAsset(const r2::asset::Asset& asset)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return false;
+		}
+
+		return mAssetCache->HasAsset(asset);
+	}
+
+	const r2::asset::FileList GameAssetManager::GetFileList() const
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return false;
+		}
+
+		return mAssetCache->GetFileList();
 	}
 
 	r2::asset::AssetHandle GameAssetManager::LoadAsset(const r2::asset::Asset& asset)
@@ -100,26 +83,29 @@ namespace r2
 		return mAssetCache->LoadAsset(asset);
 	}
 
-	r2::asset::AssetCacheRecord GameAssetManager::GetAssetData(r2::asset::AssetHandle assetHandle)
+	void GameAssetManager::UnloadAsset(const r2::asset::AssetHandle& assetHandle)
 	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return {};
-		}
-
-		return mAssetCache->GetAssetBuffer(assetHandle);
-	}
-
-	void GameAssetManager::ReturnAssetData(const r2::asset::AssetCacheRecord& assetCacheRecord)
-	{
-		if (!mAssetCache)
+		if (!mAssetCache || !mCachedRecords)
 		{
 			R2_CHECK(false, "Asset Cache is nullptr");
 			return;
 		}
 
-		mAssetCache->ReturnAssetBuffer(assetCacheRecord);
+		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
+		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+
+		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
+		{
+			r2::shashmap::Remove(*mCachedRecords, assetHandle.handle);
+
+			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, assetHandle.handle), "We still have the asset record?");
+
+			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
+
+			R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record");
+		}
+
+		mAssetCache->FreeAsset(assetHandle);
 	}
 
 	r2::asset::AssetHandle GameAssetManager::ReloadAsset(const r2::asset::Asset& asset)
@@ -130,18 +116,21 @@ namespace r2
 			return {};
 		}
 
-		return mAssetCache->ReloadAsset(asset);
-	}
+		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
+		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, asset.HashID(), defaultAssetCacheRecord);
 
-	void GameAssetManager::FreeAsset(const r2::asset::AssetHandle& handle)
-	{
-		if (!mAssetCache)
+		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
+			r2::shashmap::Remove(*mCachedRecords, asset.HashID());
+
+			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, asset.HashID()), "We still have the asset record?");
+
+			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
+
+			R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record");
 		}
 
-		mAssetCache->FreeAsset(handle);
+		return mAssetCache->ReloadAsset(asset);
 	}
 
 	void GameAssetManager::RegisterAssetLoader(r2::asset::AssetLoader* assetLoader)
@@ -175,6 +164,25 @@ namespace r2
 		}
 
 		mAssetCache->RegisterAssetFreedCallback(func);
+	}
+
+	void GameAssetManager::FreeAllAssets()
+	{
+		if (!mAssetCache || !mCachedRecords)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return;
+		}
+
+		auto iter = r2::shashmap::Begin(*mCachedRecords);
+		for (; iter != r2::shashmap::End(*mCachedRecords); ++iter)
+		{
+			mAssetCache->ReturnAssetBuffer(iter->value);
+		}
+
+		r2::shashmap::Clear(*mCachedRecords);
+
+		mAssetCache->FlushAll();
 	}
 
 #ifdef R2_ASSET_PIPELINE
