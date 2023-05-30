@@ -20,8 +20,8 @@ namespace r2::asset::pln
 		u32 version,
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
-		const r2::asset::FileList modelFiles, 
-		const r2::asset::FileList animationFiles);
+		const std::vector<AssetFile*>& modelFiles,
+		const std::vector<AssetFile*>& animationFiles);
 	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 }

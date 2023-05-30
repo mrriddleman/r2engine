@@ -21,6 +21,7 @@
 #ifdef R2_ASSET_PIPELINE
 #include <filesystem>
 #include "r2/Core/Assets/AssetLib.h"
+#include <set>
 #endif
 
 #define NOT_INITIALIZED !mnoptrFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders || !mAssetNameMap
@@ -998,6 +999,36 @@ namespace r2::asset
     {
         asset::lib::ResetFilesForCache(*this, fileList);
         mnoptrFiles = fileList;
+    }
+
+    std::vector<AssetFile*> AssetCache::GetAllAssetFilesForAssetType(r2::asset::AssetType type)
+    {
+        std::set<FileHandle> fileHandles;
+
+        for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
+        {
+            const AssetsToFile& assetsToFile = mAssetsForFiles[i];
+            for (size_t j = 0; j < assetsToFile.assets.size(); ++j)
+            {
+                const AssetRecord& assetRecord = assetsToFile.assets[j];
+
+                if (type == assetRecord.type)
+                {
+                    fileHandles.insert(assetsToFile.file);
+                }
+            }
+        }
+
+        std::vector<AssetFile*> assetFiles;
+        assetFiles.reserve(fileHandles.size());
+
+        for (FileHandle fileIndex : fileHandles)
+        {
+            AssetFile* assetFile = r2::sarr::At(*mnoptrFiles, fileIndex);
+            assetFiles.push_back(assetFile);
+        }
+
+        return assetFiles;
     }
 #endif
 

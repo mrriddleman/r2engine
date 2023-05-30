@@ -91,6 +91,8 @@ namespace r2::asset
         void AddReloadFunction(AssetReloadedFunc func);
 
         void ResetFileList(FileList fileList);
+
+        std::vector<AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
 #endif
         void ClearFileList();
 

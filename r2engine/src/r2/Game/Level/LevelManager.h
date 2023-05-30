@@ -72,8 +72,8 @@ namespace r2
 			u32 version,
 			const char* binLevelPath,
 			const char* rawJSONPath,
-			const r2::draw::ModelCache& modelSystem,
-			const r2::draw::AnimationCache& animationCache);
+			const std::vector<r2::asset::AssetFile*>& modelFiles,
+			const std::vector<r2::asset::AssetFile*>& animationFiles);
 #endif
 		static u64 MemorySize(
 			u32 maxNumLevels,

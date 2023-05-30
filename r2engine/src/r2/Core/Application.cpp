@@ -169,32 +169,6 @@ namespace r2
         return {};
     }
 
-#ifdef R2_EDITOR
-
-    r2::draw::ModelCache* Application::GetEditorModelSystem() const
-    {
-        return nullptr;
-    }
-
-    r2::draw::AnimationCache* Application::GetEditorAnimationCache() const
-    {
-        return nullptr;
-    }
-
-    void Application::RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
-    {
-
-    }
-
-    void Application::UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const
-    {
-
-    }
-    void Application::AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const
-    {
-
-    }
-#endif
 
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const

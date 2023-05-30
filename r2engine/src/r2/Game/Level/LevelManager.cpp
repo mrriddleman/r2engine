@@ -369,8 +369,8 @@ namespace r2
 		u32 version,
 		const char* binLevelPath,
 		const char* rawJSONPath,
-		const r2::draw::ModelCache& modelSystem,
-		const r2::draw::AnimationCache& animationCache)
+		const std::vector<r2::asset::AssetFile*>& modelFiles,
+		const std::vector<r2::asset::AssetFile*>& animationFiles)
 	{
 		char sanitizedBinLevelPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::SanitizeSubPath(binLevelPath, sanitizedBinLevelPath);
@@ -396,7 +396,12 @@ namespace r2
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 		
 		//Write out the new level file
-		bool saved = r2::asset::pln::SaveLevelData(ecsWorld.GetECSCoordinator(), version, sanitizedBinLevelPath, sanitizedRawLevelPath, r2::draw::modlche::GetFileList(modelSystem), r2::draw::animcache::GetFileList(animationCache));
+		bool saved = r2::asset::pln::SaveLevelData(
+			ecsWorld.GetECSCoordinator(),
+			version,
+			sanitizedBinLevelPath,
+			sanitizedRawLevelPath,
+			modelFiles, animationFiles);
 
 		R2_CHECK(saved, "We couldn't save the file: %s\n", sanitizedBinLevelPath);
 	}

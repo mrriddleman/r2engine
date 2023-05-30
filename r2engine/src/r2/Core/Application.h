@@ -112,16 +112,6 @@ namespace r2
         virtual u32 GetMaxNumComponents() const = 0;
         virtual r2::SArray<r2::asset::AssetFile*>* GetAssetFileList() const = 0;
 
-        //@SO TEMPORARY!!!
-#ifdef R2_EDITOR
-        virtual r2::draw::ModelCache* GetEditorModelSystem() const;
-        virtual r2::draw::AnimationCache* GetEditorAnimationCache() const;
-        virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
-        virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const;
-        virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const;
-#endif
-        
-        
 
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;

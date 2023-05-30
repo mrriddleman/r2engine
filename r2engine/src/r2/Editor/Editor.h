@@ -57,10 +57,6 @@ namespace r2
 	private:
 
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
-
-		r2::util::Random mRandom;
-		const r2::draw::AnimModel* microbatAnimModel;
-
 		r2::mem::MallocArena mMallocArena;
 
 

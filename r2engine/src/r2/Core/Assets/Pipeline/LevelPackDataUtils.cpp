@@ -35,25 +35,31 @@ namespace r2::asset::pln
 		return generatedJSON && generatedBinary;
 	}
 
-	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, const FileList fileList)
+	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, const std::vector<r2::asset::AssetFile*>& fileList)
 	{
 		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences;
 
-		u32 numFiles = r2::sarr::Size(*fileList);
+		size_t numFiles = fileList.size();
 
-		for (u32 i = 0; i < numFiles; ++i)
+		char directoryPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::BuildPathFromCategory(directory, "", directoryPath);
+
+		for (size_t i = 0; i < numFiles; ++i)
 		{
-			AssetFile* assetFile = r2::sarr::At(*fileList, i);
+			AssetFile* assetFile = fileList[i];
 
 			R2_CHECK(assetFile != nullptr, "asset file is null?");
 
-			const char* filePath = assetFile->FilePath();
+			std::filesystem::path filePath = assetFile->FilePath();
 
-			char filePathURI[r2::fs::FILE_PATH_LENGTH];
-			//@TODO(Serge): we may want to figure out a way to include parent directories - right now just filename + ext
-			r2::fs::utils::CopyFileNameWithExtension(filePath, filePathURI);
+			std::filesystem::path filePathURI = filePath.lexically_relative(directoryPath);
 
-			auto packReference = flat::CreatePackReference(builder, STRING_ID(filePathURI), builder.CreateString(filePath));
+			//make sure to sanitize the filePathURI first
+			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::SanitizeSubPath(filePathURI.string().c_str(), sanitizedFilePathURI);
+
+			//@TODO(Serge): if we have packs with multiple assets in them, this might be a problem
+			auto packReference = flat::CreatePackReference(builder, assetFile->GetAssetHandle(0), builder.CreateString(sanitizedFilePathURI));
 
 			packReferences.push_back(packReference);
 		}
@@ -66,8 +72,8 @@ namespace r2::asset::pln
 		u32 version,
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
-		const FileList modelFiles,
-		const FileList animationFiles)
+		const std::vector<AssetFile*>& modelFiles,
+		const std::vector<AssetFile*>& animationFiles)
 	{
 		std::filesystem::path fsBinLevelPath = binLevelPath;
 		std::filesystem::path fsRawLevelPath = rawJSONPath;
@@ -95,9 +101,9 @@ namespace r2::asset::pln
 
 		std::vector<flatbuffers::Offset<flat::EntityData>> entityVec;
 		std::vector<flatbuffers::Offset<flat::ComponentArrayData>> componentDataArray;
-		
-		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, modelFiles);
-		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, animationFiles);
+
+		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, modelFiles);
+		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, animationFiles);
 
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
 

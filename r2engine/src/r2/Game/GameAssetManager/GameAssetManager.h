@@ -150,6 +150,8 @@ namespace r2
 
 		void AddAssetFile(r2::asset::AssetFile* assetFile);
 		void RemoveAssetFile(const std::string& filePath);
+
+		std::vector<r2::asset::AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
 #endif
 
 	private:

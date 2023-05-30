@@ -41,7 +41,7 @@
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
-
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -418,6 +418,8 @@ public:
 
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        
+        r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
         //for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
         //{
@@ -581,55 +583,55 @@ public:
 		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
 		r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
 
-        r2::asset::FileList modelFiles = r2::asset::lib::MakeFileList(10);
+		/*r2::asset::FileList modelFiles = r2::asset::lib::MakeFileList(10);
 
 		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
 
 		r2::asset::RawAssetFile* batModelFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)batModelFile);
+		r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)batModelFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Skeleton/skeleton_archer_allinone.rmdl", modelFilePath);
 
-        r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		r2::asset::RawAssetFile* skeletonFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
-
-
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
-
-        r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
-
-        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
+		r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)skeletonFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Ellen/EllenIdle.rmdl", modelFilePath);
 
-        r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		r2::asset::RawAssetFile* ellenFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
+		r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)ellenFile);
 
-        mModelSystem = r2::draw::modlche::Create(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
 
-        if (!mModelSystem)
-        {
-            R2_CHECK(false, "Failed to create the model system!");
-            return false;
-        }
-        r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(100);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "Sponza/Sponza.rmdl", modelFilePath);
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.ranm", modelFilePath);
-        r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		r2::asset::RawAssetFile* sponzaFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)idleAnimFile);
+		r2::sarr::Push(*modelFiles, (r2::asset::AssetFile*)sponzaFile);
+
+		mModelSystem = r2::draw::modlche::Create(memoryAreaHandle, Megabytes(64), true, modelFiles, "Sandbox Model System");
+
+		if (!mModelSystem)
+		{
+			R2_CHECK(false, "Failed to create the model system!");
+			return false;
+		}
+		r2::asset::FileList animationFiles = r2::asset::lib::MakeFileList(100);
+
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_idle.ranm", modelFilePath);
+		r2::asset::RawAssetFile* idleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)idleAnimFile);
 
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_invert_idle.ranm", modelFilePath);
 		r2::asset::RawAssetFile* invertIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)invertIdleAnimFile);
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)invertIdleAnimFile);
 
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "MicroBat/micro_bat_attack.ranm", modelFilePath);
 		r2::asset::RawAssetFile* attackAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
@@ -637,11 +639,11 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)attackAnimFile);
 
 
-        r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.ranm", modelFilePath);
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/skeleton_archer_allinone.ranm", modelFilePath);
 
-        r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
+		r2::asset::RawAssetFile* skeletonIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
 
-        r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonIdleAnimFile);
+		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonIdleAnimFile);
 
 
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Skeleton/walk.ranm", modelFilePath);
@@ -658,7 +660,7 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)skeletonRoarAnimFile);
 
 
-        
+
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::ANIMATIONS, "Ellen/EllenIdle.ranm", modelFilePath);
 
 		r2::asset::RawAssetFile* ellenIdleAnimFile = r2::asset::lib::MakeRawAssetFile(modelFilePath);
@@ -680,27 +682,40 @@ public:
 		r2::sarr::Push(*animationFiles, (r2::asset::AssetFile*)ellenSpawnAnimFile);
 
 
-        mAnimationCache = r2::draw::animcache::Create(memoryAreaHandle, Megabytes(16), animationFiles, "Sandbox Animation Cache");
+		mAnimationCache = r2::draw::animcache::Create(memoryAreaHandle, Megabytes(16), animationFiles, "Sandbox Animation Cache");
 
-        if (!mAnimationCache)
-        {
-            R2_CHECK(false, "Failed to create the animation cache");
-            return false;
-        }
+		if (!mAnimationCache)
+		{
+			R2_CHECK(false, "Failed to create the animation cache");
+			return false;
+		}*/
 
-        auto microbatHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
-        mMicroBatModel = r2::draw::modlche::GetAnimModel(mModelSystem, microbatHandle);
+        
 
-        auto skeletonHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
-        mSkeletonModel = r2::draw::modlche::GetAnimModel(mModelSystem, skeletonHandle);
+        
+        
+       // auto microbatHandle = r2::draw::modlche::LoadModel(mModelSystem, );
+       //r2::draw::modlche::GetAnimModel(mModelSystem, microbatHandle);
+        auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
+        mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
 
-        auto ellenHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
-        mEllenModel = r2::draw::modlche::GetAnimModel(mModelSystem, ellenHandle);
+       // auto skeletonHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
+       // mSkeletonModel = r2::draw::modlche::GetAnimModel(mModelSystem, skeletonHandle);
+        auto skeletonHandle = gameAssetManager.LoadAsset(r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
+        mSkeletonModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(skeletonHandle);
+
+        //auto ellenHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
+        //mEllenModel = r2::draw::modlche::GetAnimModel(mModelSystem, ellenHandle);
+        auto ellenHandle = gameAssetManager.LoadAsset(r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
+        mEllenModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(ellenHandle);
 
         mSelectedAnimModel = mMicroBatModel;
 
-        auto sponzaHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
-        mSponzaModel = r2::draw::modlche::GetModel(mModelSystem, sponzaHandle);
+       // auto sponzaHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
+       // mSponzaModel = r2::draw::modlche::GetModel(mModelSystem, sponzaHandle);
+        auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
+        mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
+
 
         glm::mat4 sponzaModelMatrix = glm::mat4(1.0);
 
@@ -864,7 +879,14 @@ public:
         r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.ranm", r2::asset::RANIMATION));
         r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.ranm", r2::asset::RANIMATION));
 
-        r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
+        const auto numAnimations = r2::sarr::Size(*animationAssets);
+        for (u32 i= 0; i < numAnimations; ++i)
+        {
+            auto animationHandle = gameAssetManager.LoadAsset(r2::sarr::At(*animationAssets, i));
+            r2::sarr::Push(*mAnimationsHandles, animationHandle);
+        }
+
+       // r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
 
         FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
 
@@ -1414,11 +1436,13 @@ public:
         auto time = CENG.GetTicks();
   //      auto curTime = time;
 
-        const r2::draw::Animation* microbatAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
-        const r2::draw::Animation* microbatAnimation3 = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
+        r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-        const r2::draw::Animation* skeletonAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-        const r2::draw::Animation* ellenAnimation = r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+        const r2::draw::Animation* microbatAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
+        const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
+
+        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+5));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
 		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
@@ -1774,8 +1798,8 @@ public:
     virtual void Shutdown() override
     {
 
-        r2::draw::animcache::Shutdown(*mAnimationCache);
-        r2::draw::modlche::Shutdown(mModelSystem);
+        //r2::draw::animcache::Shutdown(*mAnimationCache);
+        //r2::draw::modlche::Shutdown(mModelSystem);
         r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*mMaterialSystem);
         void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
@@ -2070,38 +2094,6 @@ public:
 
 		return fileList;
     }
-
-	//@SO TEMPORARY!!!
-#ifdef R2_EDITOR
-	r2::draw::ModelCache* GetEditorModelSystem() const override
-	{
-		return mModelSystem;
-	}
-
-    r2::draw::AnimationCache* GetEditorAnimationCache() const override
-    {
-        return mAnimationCache;
-    }
-
-    virtual void RegisterComponents(r2::ecs::ECSCoordinator* coordinator) const override
-    {
-        /*coordinator->RegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr, "DummyComponent", true);*/
-    }
-	
-    virtual void UnRegisterComponents(r2::ecs::ECSCoordinator* coordinator) const override
-    {
-        /*coordinator->UnRegisterComponent<r2::mem::LinearArena, DummyComponent>(*linearArenaPtr);*/
-    }
-
-    virtual void AddComponentsToEntity(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity e) const override
-    {
-        //DummyComponent d;
-        //d.dummy = 42;
-
-        //coordinator->AddComponent<DummyComponent>(e, d);
-    }
-
-#endif
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
@@ -2249,8 +2241,8 @@ private:
     r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
     r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
 
-    r2::draw::ModelCache* mModelSystem = nullptr;
-    r2::draw::AnimationCache* mAnimationCache = nullptr;
+  //  r2::draw::ModelCache* mModelSystem = nullptr;
+  //  r2::draw::AnimationCache* mAnimationCache = nullptr;
     r2::draw::MaterialSystem* mMaterialSystem = nullptr;
 
     const r2::draw::AnimModel* mMicroBatModel = nullptr;

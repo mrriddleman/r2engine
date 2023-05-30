@@ -265,6 +265,17 @@ namespace r2
 		}
 	}
 
+	std::vector<r2::asset::AssetFile*> GameAssetManager::GetAllAssetFilesForAssetType(r2::asset::AssetType type)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return {};
+		}
+
+		return mAssetCache->GetAllAssetFilesForAssetType(type);
+	}
+
 #endif
 
 

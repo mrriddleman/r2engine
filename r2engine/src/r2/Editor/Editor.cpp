@@ -28,6 +28,7 @@
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
@@ -41,15 +42,12 @@ namespace r2
 	Editor::Editor()
 		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mMallocArena(r2::mem::utils::MemBoundary())
-		,microbatAnimModel(nullptr)
 	{
 
 	}
 
 	void Editor::Init()
 	{
-		mRandom.Randomize();
-
 		//Do all of the panels/widgets setup here
 		std::unique_ptr<edit::MainMenuBar> mainMenuBar = std::make_unique<edit::MainMenuBar>();
 		mEditorWidgets.push_back(std::move(mainMenuBar));
@@ -68,8 +66,6 @@ namespace r2
 		{
 			widget->Init(this);
 		}
-
-		microbatAnimModel = nullptr;
 	}
 
 	void Editor::Shutdown()
@@ -80,14 +76,6 @@ namespace r2
 		}
 
 		mEditorWidgets.clear();
-
-		//@TEMPORARY!!!
-		if (microbatAnimModel)
-		{
-			r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-			r2::draw::modlche::ReturnAnimModel(editorModelSystem, microbatAnimModel);
-
-		}
 
 		for (auto iter = mComponentAllocations.rbegin(); iter != mComponentAllocations.rend(); ++iter)
 		{
@@ -206,10 +194,15 @@ namespace r2
 		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
 		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
-		r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-		r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
+	//	r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
+	//	r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
-		CENG.GetLevelManager().SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), *editorModelSystem, *editorAnimationCache);
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		std::vector<asset::AssetFile*> modelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
+		std::vector<asset::AssetFile*> animationFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RANIMATION);
+
+		CENG.GetLevelManager().SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), modelFiles, animationFiles);
 	}
 
 	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)
@@ -235,17 +228,13 @@ namespace r2
 		r2::evt::EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
 			{
-				r2::draw::DefaultModel modelType = (r2::draw::DefaultModel)mRandom.RandomNum(r2::draw::QUAD, r2::draw::CYLINDER);
-
-				r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-
-				r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
+				GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
-				r2::draw::ModelHandle microbatModelHandle = r2::draw::modlche::LoadModel(editorModelSystem, microbatAsset);
+				r2::draw::ModelHandle microbatModelHandle = gameAssetManager.LoadAsset(microbatAsset); //r2::draw::modlche::LoadModel(editorModelSystem, microbatAsset);
 
-				microbatAnimModel = r2::draw::modlche::GetAnimModel(editorModelSystem, microbatModelHandle);
+				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatModelHandle);//r2::draw::modlche::GetAnimModel(editorModelSystem, microbatModelHandle);
 
 				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
 
@@ -343,9 +332,9 @@ namespace r2
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
 	
 
-				r2::draw::AnimationHandle animationHandle0 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
+				r2::draw::AnimationHandle animationHandle0 = gameAssetManager.LoadAsset(animationAsset0);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
 
-				skeletalAnimationComponent.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
+				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle0);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
 
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
@@ -363,7 +352,7 @@ namespace r2
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::SkeletalAnimationComponent>(theNewEntity, skeletalAnimationComponent);
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
-				CENG.GetApplication().AddComponentsToEntity(MENG.GetECSWorld().GetECSCoordinator(), theNewEntity);
+				
 
 				//transform instance
 				{
@@ -434,8 +423,8 @@ namespace r2
 					skeletalAnimationInstance1.startTime = 0; 
 					skeletalAnimationInstance1.shouldLoop = true;
 
-					r2::draw::AnimationHandle animationHandle1 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
-					skeletalAnimationInstance1.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
+					r2::draw::AnimationHandle animationHandle1 = gameAssetManager.LoadAsset(animationAsset1);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
+					skeletalAnimationInstance1.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle1);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
 
 					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->boneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
@@ -450,8 +439,8 @@ namespace r2
 					skeletalAnimationInstance2.startTime = 0;
 					skeletalAnimationInstance2.shouldLoop = true;
 
-					r2::draw::AnimationHandle animationHandle2 = r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
-					skeletalAnimationInstance2.animation = r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
+					r2::draw::AnimationHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
+					skeletalAnimationInstance2.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle2);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
 
 
 					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->boneInfo));
