@@ -95,6 +95,19 @@ namespace r2
 		//@TODO(Serge): probably want more types of loads for threading and stuff, for now keep it simple
 		r2::asset::AssetHandle LoadAsset(const r2::asset::Asset& asset);
 
+		template<typename T>
+		T* LoadAndGetAsset(const r2::asset::Asset& asset)
+		{
+			r2::asset::AssetHandle handle = LoadAsset(asset);
+			return GetAssetData<T>(handle);
+		}
+
+		template<typename T>
+		const T* LoadAndGetAssetConst(const r2::asset::Asset& asset)
+		{
+			return LoadAndGetAsset<T>(asset);
+		}
+
 		//@NOTE(Serge): POTENTIAL BIG ISSUE - if we have handles that are equal even though their asset types are different, this
 		//				will cause a hash conflict. Must be mindful of this. The error should be fairly obvious since it will probably
 		//				be a corruption when you try to get the asset. We could make our own (for this class) kind of asset handle
