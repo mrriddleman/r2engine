@@ -57,7 +57,7 @@ namespace r2
         using AllocateFunc = std::function<byte* (u64 size, u64 alignment)>;
         using FreeFunc = std::function<void (byte*)>;
         
-        enum PlacementPolicy
+        enum PlacementPolicy:u32
         {
             FIND_FIRST,
             FIND_BEST

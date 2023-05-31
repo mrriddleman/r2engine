@@ -397,6 +397,17 @@ namespace r2::asset
         }
     }
 
+    void AssetCache::RemoveFile(const Asset& asset)
+    {
+        FileHandle fileIndex = FindInFiles(asset.HashID());
+
+        if (fileIndex == -1)
+        {
+            r2::sarr::RemoveAndSwapWithLastElement(*mnoptrFiles, fileIndex);
+        }
+
+    }
+
     void AssetCache::RegisterAssetLoader(AssetLoader* optrAssetLoader)
     {
         R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
