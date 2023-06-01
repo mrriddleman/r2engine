@@ -168,9 +168,9 @@ namespace r2
 		mAssetCache->RegisterAssetFreedCallback(func);
 	}
 
-	r2::draw::TexturePacksCache* GameAssetManager::GetTexturePacksCache() const
+	r2::draw::TexturePacksCache& GameAssetManager::GetTexturePacksCache() const
 	{
-		return mTexturePacksCache;
+		return *mTexturePacksCache;
 	}
 
 	void GameAssetManager::FreeAllAssets()

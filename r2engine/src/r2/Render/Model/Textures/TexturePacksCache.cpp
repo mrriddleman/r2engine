@@ -118,7 +118,7 @@ namespace r2::draw::texche
 
 		TexturePackManifestEntry newEntry;
 
-		newEntry.flatTexturePacksManifest = texturePacksCache.mnoptrGameAssetManager->LoadAndGetAssetConst<flat::TexturePacksManifest>(manifestAsset);
+		newEntry.flatTexturePacksManifest = flat::GetTexturePacksManifest(texturePacksCache.mnoptrGameAssetManager->LoadAndGetAssetConst<byte>(manifestAsset));
 		R2_CHECK(newEntry.flatTexturePacksManifest != nullptr, "We should have the flatbuffer data");
 
 		const u32 numTexturePackManifests = r2::sarr::Capacity(*texturePacksCache.mTexturePackManifests);
@@ -141,9 +141,12 @@ namespace r2::draw::texche
 
 		const flat::TexturePacksManifest* manifest = newEntry.flatTexturePacksManifest;
 
-		for (flatbuffers::uoffset_t i = 0; i < manifest->texturePacks()->size(); ++i)
+
+		auto texturePacks = manifest->texturePacks();
+
+		for (flatbuffers::uoffset_t i = 0; i < texturePacks->size(); ++i)
 		{
-			const flat::TexturePack* texturePack = manifest->texturePacks()->Get(i);
+			const flat::TexturePack* texturePack = texturePacks->Get(i);
 
 			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
 

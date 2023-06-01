@@ -159,7 +159,7 @@ namespace r2
 		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
-		r2::draw::TexturePacksCache* GetTexturePacksCache() const;
+		r2::draw::TexturePacksCache& GetTexturePacksCache() const;
 
 #ifdef R2_ASSET_PIPELINE
 		void AssetChanged(const std::string& path, r2::asset::AssetType type);

@@ -1322,7 +1322,7 @@ public:
         const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
 
         const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+5));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+6));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
 		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
@@ -1867,7 +1867,7 @@ public:
 		//@TODO(Serge): calculate how many files are needed here
 		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(2000);
 
-		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		/*char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
 		void* textureManifestData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
@@ -1881,7 +1881,7 @@ public:
 			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
 		}
 
-		FREE(textureManifestData, *MEM_ENG_SCRATCH_PTR);
+		FREE(textureManifestData, *MEM_ENG_SCRATCH_PTR);*/
 
 
 		char modelFilePath[r2::fs::FILE_PATH_LENGTH];

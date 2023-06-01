@@ -492,6 +492,11 @@ namespace r2
 
                 mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, noptrApp->GetAssetFileList(), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks );
 
+                for (u32 i = 0; i < textureManifests.size(); ++i)
+                {
+                    r2::draw::texche::AddTexturePacksManifestFile(mGameAssetManager->GetTexturePacksCache(), textureManifests[i].c_str());
+                }
+
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
                 mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
             }
