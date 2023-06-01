@@ -458,13 +458,39 @@ namespace r2
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
 
+				std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
+
+				u32 totalNumTextures = 0;
+				u32 totalNumTextureManifests = textureManifests.size();
+				u32 totalNumTexturePacks = 0;
+				u32 totalTextureCacheSize = 0;
+
+				for (u32 i = 0; i < textureManifests.size(); ++i)
+				{
+					u32 numTextures = 0;
+					u32 cacheSize = 0;
+					u32 numTexturePacks = 0;
+
+					r2::draw::texche::GetTexturePacksCacheSizes(textureManifests[i].c_str(), numTextures, numTexturePacks, cacheSize);
+
+                    totalNumTextures += numTextures;
+                    totalNumTexturePacks += numTexturePacks;
+                    totalTextureCacheSize += cacheSize;
+				}
+
+#ifdef R2_ASSET_PIPELINE
+                totalNumTextures = std::max(totalNumTextures, 2000u);
+                totalNumTexturePacks = std::max(totalNumTexturePacks, 1000u);
+                totalNumTextureManifests = std::max(totalNumTextureManifests, 100u);
+#endif
+
                 mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
                 auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
                 r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
                 memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
 
-                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, noptrApp->GetAssetFileList());
+                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, noptrApp->GetAssetFileList(), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks );
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
                 mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);

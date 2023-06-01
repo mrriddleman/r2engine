@@ -58,9 +58,8 @@ namespace r2::draw::texche
 	struct TexturePacksManifestHandle
 	{
 		s32 handle;
+		static const TexturePacksManifestHandle Invalid;
 	};
-
-	TexturePacksManifestHandle InvalidTexturePacksManifestHandle = { -1 };
 
 	template<class ARENA>
 	TexturePacksCache* Create(ARENA& arena, u32 numTextures, u32 numManifests, u32 numTexturePacks, r2::GameAssetManager* gameAssetManager)
@@ -136,7 +135,7 @@ namespace r2::draw::texche
 
 			if (entry.flatTexturePacksManifest != nullptr )
 			{
-				UnloadAllTexturesFromTexturePacksManifestFromDisk(*texturePacksCache, { texturePacksCache->mName, static_cast<s32>(i) });
+				UnloadAllTexturesFromTexturePacksManifestFromDisk(*texturePacksCache, { static_cast<s32>(i) });
 			}
 		}
 
@@ -159,7 +158,7 @@ namespace r2::draw::texche
 
 		FREE_EMPLACED_ARENA(texturePacksCacheArena);
 
-		FREE(texturePacksCacheBoundary, *arena);
+		FREE(texturePacksCacheBoundary.location, arena);
 	}
 
 	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& cacheSize);
@@ -172,8 +171,8 @@ namespace r2::draw::texche
 	bool UnloadAllTexturesFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
 	bool UnloadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName);
 
-	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
-	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
+	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 }
 
 #endif // __TEXTURE_PACKS_CACHE_H__

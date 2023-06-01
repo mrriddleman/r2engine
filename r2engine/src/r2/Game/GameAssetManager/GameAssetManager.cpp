@@ -9,13 +9,15 @@ namespace r2
 	GameAssetManager::GameAssetManager()
 		:mAssetCache(nullptr)
 		,mCachedRecords(nullptr)
-		,mAssetMemoryHandle()
+		,mTexturePacksCache(nullptr)
 	{
 	}
 
 	GameAssetManager::~GameAssetManager()
 	{
 		mAssetCache = nullptr;
+		mCachedRecords = nullptr;
+		mTexturePacksCache = nullptr;
 	}
 
 	void GameAssetManager::Update()
@@ -164,6 +166,11 @@ namespace r2
 		}
 
 		mAssetCache->RegisterAssetFreedCallback(func);
+	}
+
+	r2::draw::TexturePacksCache* GameAssetManager::GetTexturePacksCache() const
+	{
+		return mTexturePacksCache;
 	}
 
 	void GameAssetManager::FreeAllAssets()

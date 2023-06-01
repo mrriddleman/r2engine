@@ -14,6 +14,7 @@
 #include "r2/Core/Memory/Memory.h"
 
 #include "r2/Render/Model/Model.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include <string>
@@ -36,14 +37,12 @@ namespace r2
 		~GameAssetManager();
 
 		template<class ARENA>
-		bool Init(ARENA& arena, r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList)
+		bool Init(ARENA& arena, r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList, u32 numTextures, u32 numTextureManifests, u32 numTexturePacks)
 		{
 			r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
 			R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
 
 			mAssetCache = r2::asset::lib::CreateAssetCache(gameAssetManagerMemoryArea->AreaBoundary(), fileList);
-
-			mAssetMemoryHandle = assetMemoryHandle;
 
 			const u64 fileListCapacity = r2::sarr::Capacity(*fileList);
 
@@ -65,12 +64,18 @@ namespace r2
 			r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
 			mAssetCache->RegisterAssetLoader(ranimationLoader);
 
+			mTexturePacksCache = draw::texche::Create<ARENA>(arena, numTextures, numTextureManifests, numTexturePacks, this);
+
+			R2_CHECK(mTexturePacksCache != nullptr, "Failed to make the texture packs cache");
+
 			return mAssetCache != nullptr;
 		}
 
 		template<class ARENA>
 		void Shutdown(ARENA& arena)
 		{
+			r2::draw::texche::Shutdown<ARENA>(arena, mTexturePacksCache);
+
 			FreeAllAssets();
 
 			if (mCachedRecords)
@@ -154,6 +159,8 @@ namespace r2
 		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
+		r2::draw::TexturePacksCache* GetTexturePacksCache() const;
+
 #ifdef R2_ASSET_PIPELINE
 		void AssetChanged(const std::string& path, r2::asset::AssetType type);
 		void AssetAdded(const std::string& path, r2::asset::AssetType type);
@@ -178,8 +185,8 @@ namespace r2
 		//				be a corruption when you try to get the asset. We could make our own (for this class) kind of asset handle
 		//				that would just index into an array or something but keep it simple for now.
 		r2::SHashMap<r2::asset::AssetCacheRecord>* mCachedRecords;
-		r2::mem::MemoryArea::Handle mAssetMemoryHandle;
-		
+
+		r2::draw::TexturePacksCache* mTexturePacksCache;
 
 #ifdef R2_ASSET_PIPELINE
 
@@ -200,10 +207,6 @@ namespace r2
 		r2::asset::pln::AssetThreadSafeQueue<HotReloadEntry> mHotReloadQueue;
 #endif
 	};
-
-
-	
 }
-
 
 #endif

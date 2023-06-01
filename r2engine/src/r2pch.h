@@ -20,6 +20,7 @@
 #include "r2/Core/Logging/Log.h"
 #include "r2/Utils/Flags.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Containers/SHashMap.h"
 #include "r2/Core/Containers/SQueue.h"
 
 #endif /* r2pch_hpp */
