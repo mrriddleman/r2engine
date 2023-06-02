@@ -1,7 +1,7 @@
 #include "r2pch.h"
 
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
-#include "r2/Render/Model/MaterialParams_generated.h"
+#include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Utils/Hash.h"

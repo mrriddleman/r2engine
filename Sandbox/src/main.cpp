@@ -270,45 +270,6 @@ public:
     const u64 NUM_DRAW_COMMANDS = 30;
     const u64 NUM_BONES = 1000;
 
-	void AddAllTexturesFromTextureType(const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>* texturePaths, r2::asset::FileList fileList) const
-	{
-		for (u32 i = 0; i < texturePaths->size(); ++i)
-		{
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(texturePaths->Get(i)->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-		}
-	}
-
-	void AddAllTexturePathsInTexturePackToFileList(const flat::TexturePack* texturePack, r2::asset::FileList fileList) const
-	{
-		AddAllTexturesFromTextureType(texturePack->albedo(), fileList);
-		AddAllTexturesFromTextureType(texturePack->anisotropy(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoat(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatNormal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->clearCoatRoughness(), fileList);
-		AddAllTexturesFromTextureType(texturePack->detail(), fileList);
-		AddAllTexturesFromTextureType(texturePack->emissive(), fileList);
-		AddAllTexturesFromTextureType(texturePack->height(), fileList);
-		AddAllTexturesFromTextureType(texturePack->metallic(), fileList);
-		AddAllTexturesFromTextureType(texturePack->normal(), fileList);
-		AddAllTexturesFromTextureType(texturePack->occlusion(), fileList);
-		AddAllTexturesFromTextureType(texturePack->roughness(), fileList);
-
-		if (texturePack->metaData() && texturePack->metaData()->mipLevels())
-		{
-			for (flatbuffers::uoffset_t i = 0; i < texturePack->metaData()->mipLevels()->size(); ++i)
-			{
-				const flat::MipLevel* mipLevel = texturePack->metaData()->mipLevels()->Get(i);
-
-				for (flatbuffers::uoffset_t side = 0; side < mipLevel->sides()->size(); ++side)
-				{
-					r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(mipLevel->sides()->Get(side)->textureName()->c_str(), r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE));
-					r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-				}
-			}
-		}
-	}
-    
     virtual bool Init() override
     {
         memoryAreaHandle = r2::mem::GlobalMemory::AddMemoryArea("SandboxArea");
@@ -348,17 +309,7 @@ public:
         
         char filePath[r2::fs::FILE_PATH_LENGTH];
         
-        //Pre-build asset data
 
-
-        //Setup the GameAssetManager
-        {
-	//		r2::asset::FileList fileList = MakeGameAssetManagerFiles();
-	//		mGameAssetManager.Init({}, fileList);
-
-
-
-        }
 
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
@@ -1866,23 +1817,6 @@ public:
     {
 		//@TODO(Serge): calculate how many files are needed here
 		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(2000);
-
-		/*char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
-
-		void* textureManifestData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, texturePackPath);
-
-		const flat::TexturePacksManifest* texturesManifest = flat::GetTexturePacksManifest(textureManifestData);
-
-		for (flatbuffers::uoffset_t i = 0; i < texturesManifest->texturePacks()->size(); ++i)
-		{
-			const flat::TexturePack* texturePack = texturesManifest->texturePacks()->Get(i);
-
-			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
-		}
-
-		FREE(textureManifestData, *MEM_ENG_SCRATCH_PTR);*/
-
 
 		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
 

@@ -28,6 +28,12 @@ namespace r2::asset
 	class AssetCache;
 }
 
+namespace flat
+{
+	struct MaterialParamsPack;
+	struct MaterialParams;
+}
+
 namespace r2
 {
 	class GameAssetManager
@@ -161,6 +167,12 @@ namespace r2
 
 		r2::draw::TexturePacksCache& GetTexturePacksCache() const;
 
+		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
+		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);
+
+		bool GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+		bool GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
+
 #ifdef R2_ASSET_PIPELINE
 		void AssetChanged(const std::string& path, r2::asset::AssetType type);
 		void AssetAdded(const std::string& path, r2::asset::AssetType type);
@@ -177,6 +189,7 @@ namespace r2
 	private:
 
 		void FreeAllAssets();
+		void GetTexturesForMaterialParamsInternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
 		r2::asset::AssetCache* mAssetCache;
 

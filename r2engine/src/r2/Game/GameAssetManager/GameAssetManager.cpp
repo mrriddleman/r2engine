@@ -1,7 +1,17 @@
 #include "r2pch.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
+#include "r2/Render/Model/Materials/MaterialParams_generated.h"
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Utils/Hash.h"
 
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
+
+namespace
+{
+	const u64 EMPTY_TEXTURE_PACK_NAME = STRING_ID("");
+}
 
 namespace r2
 {
@@ -171,6 +181,191 @@ namespace r2
 	r2::draw::TexturePacksCache& GameAssetManager::GetTexturePacksCache() const
 	{
 		return *mTexturePacksCache;
+	}
+
+
+	void AddTexturePacksToTexturePackSet(const flat::MaterialParams* materialParams, r2::SArray<u64>& texturePacks)
+	{
+		auto textureParams = materialParams->textureParams();
+
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
+		{
+			u64 texturePackName = textureParams->Get(i)->texturePackName();
+
+			if (EMPTY_TEXTURE_PACK_NAME == texturePackName)
+			{
+				continue;
+			}
+
+			bool found = false;
+			for (u32 j = 0; j < r2::sarr::Size(texturePacks); ++j)
+			{
+				if (r2::sarr::At(texturePacks, j) == texturePackName)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+			{
+				r2::sarr::Push(texturePacks, texturePackName);
+			}
+		}
+	}
+
+	bool GameAssetManager::LoadMaterialTextures(const flat::MaterialParams* materialParams)
+	{
+		if (materialParams == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+		
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		auto textureParams = materialParams->textureParams();
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, textureParams->size());
+
+		if (texturePacks == nullptr)
+		{
+			R2_CHECK(false, "We couldn't create the texturePacks array");
+			return false;
+		}
+
+		AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+
+		draw::texche::LoadTexturePacksFromDisk(*mTexturePacksCache, *texturePacks);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
+		return true;
+	}
+
+	bool GameAssetManager::LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack)
+	{
+		if (materialParamsPack == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		u32 numTexturePacks = materialParamsPack->pack()->size() * draw::tex::Cubemap;
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, numTexturePacks);
+
+		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
+		{
+			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+			AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+		}
+
+		draw::texche::LoadTexturePacksFromDisk(*mTexturePacksCache, *texturePacks);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+		
+		return true;
+	}
+
+	void GameAssetManager::GetTexturesForMaterialParamsInternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+
+		for (u32 i = 0; i < r2::sarr::Size(*texturePacks); ++i)
+		{
+			const u64 texturePackName = r2::sarr::At(*texturePacks, i);
+
+			bool isCubemap = r2::draw::texche::IsTexturePackACubemap(*mTexturePacksCache, texturePackName);
+
+			if (!isCubemap && textures != nullptr)
+			{
+				const r2::SArray<r2::draw::tex::Texture>* texturePackTextures = r2::draw::texche::GetTexturesForTexturePack(*mTexturePacksCache, texturePackName);
+				R2_CHECK(texturePackTextures != nullptr, "");
+				r2::sarr::Append(*textures, *texturePackTextures);
+			}
+			else if (isCubemap && cubemaps != nullptr)
+			{
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, texturePackName);
+
+				R2_CHECK(cubemap != nullptr, "");
+
+				r2::sarr::Push(*cubemaps, *cubemap);
+			}
+			else
+			{
+				R2_CHECK(false, "hmm");
+			}
+		}
+	}
+
+	bool GameAssetManager::GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+		if (materialParams == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		auto textureParams = materialParams->textureParams();
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, textureParams->size());
+
+		if (texturePacks == nullptr)
+		{
+			R2_CHECK(false, "We couldn't create the texturePacks array");
+			return false;
+		}
+
+		AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+
+		GetTexturesForMaterialParamsInternal(texturePacks, textures, cubemaps);
+
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+		
+		return true;
+	}
+
+	bool GameAssetManager::GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
+	{
+		if (materialParamsPack == nullptr)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, materialParamsPack->pack()->size() * draw::tex::Cubemap);
+
+		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
+		{
+			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+			AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+		}
+
+		GetTexturesForMaterialParamsInternal(texturePacks, textures, cubemaps);
+
+		return true;
 	}
 
 	void GameAssetManager::FreeAllAssets()

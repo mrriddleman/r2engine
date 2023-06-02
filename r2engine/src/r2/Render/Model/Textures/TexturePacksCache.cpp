@@ -270,7 +270,7 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	bool LoadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName)
+	bool LoadTexturePackFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
 		s32 invalidIndex = -1;
 
@@ -282,6 +282,20 @@ namespace r2::draw::texche
 		}
 
 		return LoadTexturePackFromTexturePacksManifestFromDisk(texturePacksCache, { index }, texturePackName);
+	}
+
+	bool LoadTexturePacksFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks)
+	{
+		const auto numTexturePacks = r2::sarr::Size(texturePacks);
+
+		for (u32 i = 0; i < numTexturePacks; ++i)
+		{
+			bool result = LoadTexturePackFromDisk(texturePacksCache, r2::sarr::At(texturePacks, i));
+
+			R2_CHECK(result != false, "?");
+		}
+
+		return true;
 	}
 
 	bool LoadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName)
@@ -473,6 +487,39 @@ namespace r2::draw::texche
 		}
 	}
 
+	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName)
+	{
+		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the TexturePacksCache yet");
+			return false;
+		}
+
+		s32 invalidIndex = -1;
+		s32 manifestIndex = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, invalidIndex);
+
+		if (manifestIndex == invalidIndex)
+		{
+			R2_CHECK(false, "We couldn't find the texture pack!");
+			return false;
+		}
+
+		const TexturePackManifestEntry& entry = r2::sarr::At(*texturePacksCache.mTexturePackManifests, manifestIndex);
+
+		const auto numTexturePacks = entry.flatTexturePacksManifest->texturePacks()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTexturePacks; ++i)
+		{
+			if (entry.flatTexturePacksManifest->texturePacks()->Get(i)->packName() == texturePackName)
+			{
+				return entry.flatTexturePacksManifest->texturePacks()->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP;
+			}
+		}
+
+		R2_CHECK(false, "Should never get here");
+		return false;
+	}
+
 	const r2::SArray<r2::draw::tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
 		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mLoadedTexturePacks == nullptr)
@@ -487,7 +534,7 @@ namespace r2::draw::texche
 
 		if (resultTexturePack.packName == defaultLoadedTexturePack.packName)
 		{
-			bool loaded = LoadTexturePackFromTexturePacksManifestFromDisk(texturePacksCache, texturePackName);
+			bool loaded = LoadTexturePackFromDisk(texturePacksCache, texturePackName);
 
 			if (!loaded)
 			{
@@ -518,7 +565,7 @@ namespace r2::draw::texche
 
 		if (resultTexturePack.packName == defaultLoadedTexturePack.packName)
 		{
-			bool loaded = LoadTexturePackFromTexturePacksManifestFromDisk(texturePacksCache, texturePackName);
+			bool loaded = LoadTexturePackFromDisk(texturePacksCache, texturePackName);
 
 			if (!loaded)
 			{
