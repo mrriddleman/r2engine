@@ -84,9 +84,7 @@ namespace r2::draw::texche
 
 		R2_CHECK(newTexturePacksCache->mTexturePackManifests != nullptr, "We couldn't create the texture pack manifests array");
 
-		TexturePackManifestEntry emptyEntry = {};
-
-		r2::sarr::Fill(*newTexturePacksCache->mTexturePackManifests, emptyEntry);
+		
 
 
 		newTexturePacksCache->mLoadedTexturePacks = MAKE_SHASHMAP(*texturePacksCacheArena, LoadedTexturePack, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());

@@ -14,7 +14,7 @@
 
 namespace r2::draw
 {
-	struct ModelCache;
+
 	template<typename T> struct CommandBucket;
 }
 

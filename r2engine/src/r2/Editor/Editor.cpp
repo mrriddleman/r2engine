@@ -35,7 +35,6 @@
 #include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
 #include "r2/Core/File/PathUtils.h"
-#include "r2/Render/Animation/AnimationCache.h"
 
 namespace r2
 {
@@ -332,7 +331,7 @@ namespace r2
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
 	
 
-				r2::draw::AnimationHandle animationHandle0 = gameAssetManager.LoadAsset(animationAsset0);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
+				r2::asset::AssetHandle animationHandle0 = gameAssetManager.LoadAsset(animationAsset0);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
 
 				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle0);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
 
@@ -423,7 +422,7 @@ namespace r2
 					skeletalAnimationInstance1.startTime = 0; 
 					skeletalAnimationInstance1.shouldLoop = true;
 
-					r2::draw::AnimationHandle animationHandle1 = gameAssetManager.LoadAsset(animationAsset1);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
+					r2::asset::AssetHandle animationHandle1 = gameAssetManager.LoadAsset(animationAsset1);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
 					skeletalAnimationInstance1.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle1);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
 
 					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->boneInfo));
@@ -439,7 +438,7 @@ namespace r2
 					skeletalAnimationInstance2.startTime = 0;
 					skeletalAnimationInstance2.shouldLoop = true;
 
-					r2::draw::AnimationHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
+					r2::asset::AssetHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
 					skeletalAnimationInstance2.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle2);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
 
 

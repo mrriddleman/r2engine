@@ -18,7 +18,6 @@
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Core/Application.h"
 #include "r2/Platform/Platform.h"
-#include "r2/Render/Animation/AnimationCache.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace r2::ecs
@@ -195,7 +194,7 @@ namespace r2::ecs
 
 			r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-			r2::draw::AnimationHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
+			r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
 			skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 
@@ -259,7 +258,7 @@ namespace r2::ecs
 
 				r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-				r2::draw::AnimationHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
+				r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
 				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 

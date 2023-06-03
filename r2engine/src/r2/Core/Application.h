@@ -27,13 +27,6 @@
 
 #ifdef R2_EDITOR
 
-namespace r2::draw
-{
-    struct AnimModel;
-    struct Animation;
-    struct ModelCache;
-    struct AnimationCache;
-}
 
 namespace r2::ecs
 {

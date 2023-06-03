@@ -22,14 +22,13 @@
 #include "BreakoutLevelsFile.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Assets/AssetBuffer.h"
-#include "r2/Core/Assets/AssetFiles/GLTFAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetLib.h"
-#include "r2/Render/Animation/AnimationCache.h"
+
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Model.h"
-#include "r2/Render/Model/ModelCache.h"
+
 #include "r2/Render/Model/Materials/Material.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Random.h"
@@ -508,7 +507,7 @@ public:
 
         r2::sarr::Push(*animModelMats, ellenModel2);
 
-        mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::AnimationHandle, 20);
+        mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
 
 		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
@@ -2048,7 +2047,7 @@ private:
 	r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
 	r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
 
-    r2::SArray<r2::draw::AnimationHandle>* mAnimationsHandles;
+    r2::SArray<r2::asset::AssetHandle>* mAnimationsHandles;
 
     r2::draw::vb::GPUModelRefHandle mStaticCubeModelRefHandle;
     r2::SArray<glm::mat4>* mStaticCubeModelMats;

@@ -101,18 +101,18 @@ namespace r2::draw::texche
 
 		r2::asset::Asset manifestAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePacksManifestFilePath, r2::asset::TEXTURE_PACK_MANIFEST);
 
-		if (texturePacksCache.mnoptrGameAssetManager->HasAsset(manifestAsset))
+		s32 invalidIndex = -1;
+		s32 packManifestIndex = r2::shashmap::Get(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, manifestAsset.HashID(), invalidIndex);
+
+		if (invalidIndex != packManifestIndex)
 		{
 			//we already have this - nothing to do
-			s32 invalidIndex = -1;
-			s32 handle = r2::shashmap::Get(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, manifestAsset.HashID(), invalidIndex);
-
-			return { handle };
+			return { packManifestIndex };
 		}
 
 		r2::asset::FileList fileList = texturePacksCache.mnoptrGameAssetManager->GetFileList();
 
-		r2::asset::RawAssetFile* texturePacksManifestFile = r2::asset::lib::MakeRawAssetFile(texturePacksManifestFilePath, 0);
+		r2::asset::RawAssetFile* texturePacksManifestFile = r2::asset::lib::MakeRawAssetFile(texturePacksManifestFilePath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE_PACK_MANIFEST));
 
 		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)texturePacksManifestFile);
 
@@ -123,19 +123,8 @@ namespace r2::draw::texche
 
 		const u32 numTexturePackManifests = r2::sarr::Capacity(*texturePacksCache.mTexturePackManifests);
 
-		s32 packManifestIndex = -1;
-
-		for (u32 i = 0; i < numTexturePackManifests; ++i)
-		{
-			const TexturePackManifestEntry& entry = r2::sarr::At(*texturePacksCache.mTexturePackManifests, i);
-
-			if (entry.flatTexturePacksManifest == nullptr)
-			{
-				r2::sarr::At(*texturePacksCache.mTexturePackManifests, i) = newEntry;
-				packManifestIndex = static_cast<s32>(i);
-				break;
-			}
-		}
+		packManifestIndex = r2::sarr::Size(*texturePacksCache.mTexturePackManifests);
+		r2::sarr::Push(*texturePacksCache.mTexturePackManifests, newEntry);
 
 		r2::shashmap::Set(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, manifestAsset.HashID(), packManifestIndex);
 

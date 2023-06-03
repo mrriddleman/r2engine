@@ -19,7 +19,16 @@ namespace r2::asset
    // using FileList = r2::SArray<AssetFile*>*;
     class RawAssetFile;
     class ZipAssetFile;
-    class GLTFAssetFile;
+
+    struct AssetLib
+    {
+        AssetCache* mAssetCache;
+
+
+
+
+    };
+
 }
 
 //@TODO(Serge): this is bad for multithreading. We should consider a different way of doing this if we're going
@@ -30,8 +39,13 @@ namespace r2::asset::lib
     bool Init(const r2::mem::utils::MemBoundary& boundary);
     void Update();
     void Shutdown();
-  //  void AddFiles(const r2::asset::AssetCache& cache, FileList list);
+
     
+
+
+
+
+
 #ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths);
     using AssetFilesBuiltListener = std::function<void(std::vector<std::string> paths)>;
@@ -42,7 +56,6 @@ namespace r2::asset::lib
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     ZipAssetFile* MakeZipAssetFile(const char* path);  
-    GLTFAssetFile* MakeGLTFAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
 
     FileList MakeFileList(u64 capacity);
     
@@ -52,7 +65,6 @@ namespace r2::asset::lib
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files);
     void DestroyCache(r2::asset::AssetCache* cache);
     r2::asset::AssetCache* GetAssetCache(s64 slot);
-
 
     u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u64 maxFilesInList);
 }

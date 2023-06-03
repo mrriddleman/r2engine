@@ -165,8 +165,9 @@ namespace r2
 		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
-		r2::draw::TexturePacksCache& GetTexturePacksCache() const;
 
+		bool AddTexturePacksManifest(const char* texturePacksManifestFilePath);
+		
 		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
 		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);
 

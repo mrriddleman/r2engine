@@ -18,12 +18,6 @@ namespace r2::ecs
 	class ECSCoordinator;
 }
 
-namespace r2::draw 
-{
-	struct ModelCache;
-	struct AnimationCache;
-}
-
 namespace r2
 {
 	struct LevelCache;

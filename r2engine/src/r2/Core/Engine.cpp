@@ -494,7 +494,7 @@ namespace r2
 
                 for (u32 i = 0; i < textureManifests.size(); ++i)
                 {
-                    r2::draw::texche::AddTexturePacksManifestFile(mGameAssetManager->GetTexturePacksCache(), textureManifests[i].c_str());
+                    mGameAssetManager->AddTexturePacksManifest(textureManifests[i].c_str());
                 }
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);

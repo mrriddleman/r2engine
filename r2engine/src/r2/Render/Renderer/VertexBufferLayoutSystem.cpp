@@ -5,7 +5,6 @@
 #include "r2/Render/Renderer/RendererImpl.h"
 #include "r2/Render/Renderer/CommandBucket.h"
 #include "r2/Render/Renderer/Commands.h"
-#include "r2/Render/Model/ModelCache.h"
 
 namespace r2::draw::vb
 {

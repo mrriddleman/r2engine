@@ -12,22 +12,11 @@ namespace r2::asset
 		case TEXTURE:
 			return 2;
 		case MODEL:
-			R2_CHECK(false, "Shouldn't be used anymore");
 			return 1;
 		case MESH:
-			R2_CHECK(false, "Shouldn't be used anymore");
 			return 1;
-		case ASSIMP_MODEL:
-			R2_CHECK(false, "Shouldn't be used anymore");
-			return 0;
-		case ASSIMP_ANIMATION:
-			R2_CHECK(false, "Shouldn't be used anymore");
-			return 0;
 		case CUBEMAP_TEXTURE:
 			return 2;
-		case GLTF_MODEL:
-			R2_CHECK(false, "Shouldn't be used anymore");
-			return 0;
 		case MATERIAL_PACK_MANIFEST:
 			return 0;
 		case TEXTURE_PACK_MANIFEST:

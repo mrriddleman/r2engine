@@ -178,12 +178,6 @@ namespace r2
 		mAssetCache->RegisterAssetFreedCallback(func);
 	}
 
-	r2::draw::TexturePacksCache& GameAssetManager::GetTexturePacksCache() const
-	{
-		return *mTexturePacksCache;
-	}
-
-
 	void AddTexturePacksToTexturePackSet(const flat::MaterialParams* materialParams, r2::SArray<u64>& texturePacks)
 	{
 		auto textureParams = materialParams->textureParams();
@@ -212,6 +206,23 @@ namespace r2
 				r2::sarr::Push(texturePacks, texturePackName);
 			}
 		}
+	}
+
+	bool GameAssetManager::AddTexturePacksManifest(const char* texturePacksManifestFilePath)
+	{
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		if (texturePacksManifestFilePath == nullptr || strlen(texturePacksManifestFilePath) <= 0)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		return r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, texturePacksManifestFilePath).handle != draw::texche::TexturePacksManifestHandle::Invalid.handle;
 	}
 
 	bool GameAssetManager::LoadMaterialTextures(const flat::MaterialParams* materialParams)
