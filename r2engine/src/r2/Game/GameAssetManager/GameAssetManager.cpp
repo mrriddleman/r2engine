@@ -57,7 +57,7 @@ namespace r2
 
 	u64 GameAssetManager::CacheMemorySize(u32 numAssets, u32 assetCapacity, u32 alignment, u32 headerSize, u32 boundsChecking, u32 lruCapacity, u32 mapCapacity)
 	{
-		u64 memorySize = r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacity, alignment, lruCapacity, mapCapacity);
+		u64 memorySize = r2::asset::AssetCache::TotalMemoryNeeded(numAssets, assetCapacity, alignment, lruCapacity, mapCapacity);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::asset::AssetCache), alignment, headerSize, boundsChecking);
 		return memorySize;
 	}

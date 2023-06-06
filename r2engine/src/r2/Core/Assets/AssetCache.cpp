@@ -24,7 +24,7 @@
 #include <set>
 #endif
 
-#define NOT_INITIALIZED !mnoptrFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders || !mAssetNameMap
+#define NOT_INITIALIZED !mnoptrFiles || !mAssetLRU || !mAssetMap || !mAssetLoaders
 
 namespace
 {
@@ -43,7 +43,6 @@ namespace r2::asset
         , mAssetMap(nullptr)
         , mAssetLoaders(nullptr)
         , mAssetWriters(nullptr)
-        , mAssetNameMap(nullptr)
         , mAssetFreedCallbackList(nullptr)
         , mDefaultLoader(nullptr)
         , mSlot(slot)
@@ -65,10 +64,11 @@ namespace r2::asset
         
         //Memory allocations for our lists and maps
         {
+            lruCapacity = std::max( static_cast<u32>( r2::sarr::Capacity(*noptrList)), lruCapacity);
+
             mAssetLRU = MAKE_SQUEUE(mAssetCacheArena, AssetHandle, lruCapacity);
-            mAssetMap = MAKE_SHASHMAP(mAssetCacheArena, AssetBufferRef, mapCapacity);
-            mAssetNameMap = MAKE_SHASHMAP(mAssetCacheArena, Asset, mapCapacity);
-          //  mAssetFileMap = MAKE_SHASHMAP(mMallocArena, FileHandle, MAP_CAPACITY);
+            mAssetMap = MAKE_SHASHMAP(mAssetCacheArena, AssetBufferRef, mapCapacity * r2::SHashMap<u32>::LoadFactorMultiplier());
+
             mDefaultLoader = ALLOC(DefaultAssetLoader, mAssetCacheArena);
             
             mAssetLoaders = MAKE_SARRAY(mAssetCacheArena, AssetLoader*, lruCapacity);
@@ -79,7 +79,7 @@ namespace r2::asset
         
 #ifdef R2_ASSET_PIPELINE
         
-     //   r2::asset::lib::AddFiles(*this, mnoptrFiles);
+
         //@TODO(Serge): may need an update function that does the following instead
         //The below will just add paths to a vector or something
         r2::asset::lib::AddAssetFilesBuiltListener([this](std::vector<std::string> paths)
@@ -96,7 +96,7 @@ namespace r2::asset
                     if (std::filesystem::path(file->FilePath()) == std::filesystem::path(path))
                     {
 
-                        this->InvalidateAssetsForFile(i);
+                        this->InvalidateAssetsForFile(file);
                     }
                 }
             }
@@ -151,7 +151,6 @@ namespace r2::asset
         FREE(mDefaultLoader, mAssetCacheArena);
         FREE(mAssetLRU, mAssetCacheArena);
         FREE(mAssetMap, mAssetCacheArena);
-        FREE(mAssetNameMap, mAssetCacheArena);
         FREE(mAssetWriters, mAssetCacheArena);
         FREE(mAssetLoaders, mAssetCacheArena);
         FREE(mAssetBufferPoolPtr, mAssetCacheArena);
@@ -159,14 +158,12 @@ namespace r2::asset
 
         mAssetLRU = nullptr;
         mAssetMap = nullptr;
-        mAssetNameMap = nullptr;
         mAssetLoaders = nullptr;
         mAssetWriters = nullptr;
         mnoptrFiles = nullptr;
         mDefaultLoader = nullptr;
         mAssetBufferPoolPtr = nullptr;
         mAssetFreedCallbackList = nullptr;
-     //   mAssetFileMap = nullptr;
     }
     
     AssetHandle AssetCache::LoadAsset(const Asset& asset)
@@ -222,13 +219,6 @@ namespace r2::asset
         }
 
         return false;
-
-
-		//AssetHandle handle = { asset.HashID(), mSlot };
-		//AssetBufferRef theDefault;
-		//AssetBufferRef& bufferRef = Find(handle, theDefault);
-
-  //      return bufferRef.mAssetBuffer != nullptr;
     }
     
     AssetHandle AssetCache::ReloadAsset(const Asset& asset)
@@ -300,7 +290,7 @@ namespace r2::asset
         AssetBufferRef& bufferRef = Find(handle.handle, theDefault);
 
 		Asset defaultAsset;
-		const Asset& asset = r2::shashmap::Get(*mAssetNameMap, handle.handle, defaultAsset);
+        const Asset& asset = bufferRef.mAsset;
 
         R2_CHECK(!asset.Empty() && defaultAsset.HashID() != asset.HashID(), "Failed to get the asset!");
 
@@ -574,19 +564,10 @@ namespace r2::asset
         }
         AssetBufferRef bufferRef;
         
-        //if(startCountAtOne)
-        //{
-        //    bufferRef.mRefCount = 1;
-        //}
-        //else
-        //{
-     //       bufferRef.mRefCount = 0;
-//        }
-        
         bufferRef.mAssetBuffer = assetBuffer;
-
+        bufferRef.mAsset = asset;
         r2::shashmap::Set(*mAssetMap, handle.handle, bufferRef);
-        r2::shashmap::Set(*mAssetNameMap, handle.handle, asset);
+
         UpdateLRU(handle);
         
 #ifdef R2_ASSET_PIPELINE
@@ -702,11 +683,6 @@ namespace r2::asset
         for (u64 i = 0; i < numnoptrFiles; ++i)
         {
             AssetFile* file = r2::sarr::At(*mnoptrFiles, i);
-            
-            //if (!file->IsOpen())
-            //{
-            //    file->Open();
-            //}
 
             const u64 numAssets = file->NumAssets();
             
@@ -739,8 +715,7 @@ namespace r2::asset
             
             if (forceFree && assetBufferRef.mRefCount > 0)
             {
-                Asset theDefault;
-                const Asset& theAsset = r2::shashmap::Get(*mAssetNameMap, handle.handle, theDefault);
+                const Asset& theAsset = assetBufferRef.mAsset;
 #ifdef R2_ASSET_CACHE_DEBUG
                 R2_CHECK(false, "AssetCache::Free() - we're trying to free the asset: %s but we still have %u references to it!", theAsset.Name().c_str(),  assetBufferRef.mRefCount);
 #endif
@@ -837,27 +812,18 @@ namespace r2::asset
         return mMemoryHighWaterMark;
     }
 
-    u64 AssetCache::TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity, u32 mapCapacity)
+    u64 AssetCache::TotalMemoryNeeded(u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity, u32 mapCapacity)
     {
         u64 elementSize = sizeof(AssetBuffer);
+        u32 boundsChecking = 0;
+        u32 headerSize = r2::mem::FreeListAllocator::HeaderSize();
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
-        elementSize = elementSize + r2::mem::BasicBoundsChecking::SIZE_BACK + r2::mem::BasicBoundsChecking::SIZE_FRONT;
+
+        boundsChecking = r2::mem::BasicBoundsChecking::SIZE_BACK + r2::mem::BasicBoundsChecking::SIZE_FRONT;
+        elementSize = elementSize + boundsChecking;
+        headerSize = r2::mem::MallocAllocator::HeaderSize();
 #endif
         u64 poolSizeInBytes = lruCapacity * elementSize;
-        
-        /*alignment = std::max({
-            alignment,
-            alignof(r2::SQueue<AssetHandle>),
-            alignof(AssetHandle),
-            alignof(DefaultAssetLoader),
-            alignof(r2::SArray<AssetLoader*>),
-            alignof(r2::SArray<AssetWriter*>),
-            alignof(AssetLoader*),
-            alignof(Asset),
-            alignof(r2::SHashMap<Asset>),
-            alignof(r2::mem::PoolArena),
-            alignof(r2::SArray<AssetFreedCallback>),
-            });*/
 
         return 
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<AssetHandle>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking)  +
@@ -892,37 +858,48 @@ namespace r2::asset
     void AssetCache::AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord)
     {
         bool found = false;
-        
-        for (u64 i = 0; i < mAssetsForFiles.size(); ++i)
+        s32 assetsForFilesIndex = -1;
+
+        for (u64 i = 0; !found && i < mAssetsForFiles.size(); ++i)
         {
-            if (mAssetsForFiles[i].file == fileHandle)
+            u32 numAssets = mAssetsForFiles[i].assetFile->NumAssets();
+            
+            for (u32 j = 0;!found && j < numAssets; ++j)
             {
-                found = true;
-                
-                bool foundAssetHandle = false;
-                for (const auto& handle : mAssetsForFiles[i].assets)
+                if (mAssetsForFiles[i].assetFile->GetAssetHandle(j) == assetRecord.handle.handle)
                 {
-                    if (assetRecord.handle.handle == handle.handle.handle)
-                    {
-                        foundAssetHandle = true;
-                        break;
-                    }
+                    assetsForFilesIndex = i;
+                    found = true;
                 }
-                
-                if (!foundAssetHandle)
-                {
-                    mAssetsForFiles[i].assets.push_back(assetRecord);
-                }
-                
-                break;
             }
         }
-        
+
+        bool needToAddNewEntry = true;
+
+        if (found)
+        {
+            bool foundAssetHandle = false;
+			for (const auto& handle : mAssetsForFiles[assetsForFilesIndex].assets)
+			{
+				if (assetRecord.handle.handle == handle.handle.handle)
+				{
+					foundAssetHandle = true;
+                    needToAddNewEntry = false;
+					break;
+				}
+			}
+
+			if (!foundAssetHandle)
+			{
+				mAssetsForFiles[assetsForFilesIndex].assets.push_back(assetRecord);
+			}
+        }
+
         if (!found)
         {
             //add new entry
             AssetsToFile newEntry;
-            newEntry.file = fileHandle;
+            newEntry.assetFile = r2::sarr::At(*mnoptrFiles, fileHandle);
             newEntry.assets.push_back(assetRecord);
             mAssetsForFiles.push_back(newEntry);
         }
@@ -944,50 +921,44 @@ namespace r2::asset
         }
     }
     
-    void AssetCache::InvalidateAssetsForFile(FileHandle fileHandle)
+    void AssetCache::InvalidateAssetsForFile(AssetFile* assetFile)
     {
         //reload all of the assets for that file and ensure that the asset isn't currently in use - assert if that's the case
         //We may need to keep a record of all the assets associated with the file, we could then just invalidate (free) them
         //Then the next time we request that asset, we reload automatically - alternatively, we can have callbacks here
         //We should also close the files
         
-        R2_CHECK(fileHandle >= 0 && fileHandle < static_cast<s64>(r2::sarr::Size(*mnoptrFiles)), "File handle: %llu is not within the number of files we have", fileHandle);
+        R2_CHECK(assetFile != nullptr, "Asset file is nullptr");
         
-        AssetFile* file = r2::sarr::At(*mnoptrFiles, fileHandle);
-    
-        file->Close();
+        assetFile->Close();
         
         std::vector<AssetRecord> assetsToReload;
         
+        s32 assetsForFilesIndex = -1;
+
         for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
         {
-            if (mAssetsForFiles[i].file == fileHandle)
+            if (std::filesystem::path(mAssetsForFiles[i].assetFile->FilePath()) == std::filesystem::path(assetFile->FilePath()))
             {
-                assetsToReload = mAssetsForFiles[i].assets;
-                //unload these assets
-                for (auto assetHandle : assetsToReload)
-                {
-                    AssetBufferRef defaultBuffer;
-                    AssetBufferRef& bufferRef = Find(assetHandle.handle.handle, defaultBuffer);
-                    
-                    for (auto func : mReloadFunctions)
-                    {
-                        func(assetHandle.handle);
-                    }
-                    
-                    if (bufferRef.mAssetBuffer != nullptr)
-                    {
-                        Free(assetHandle.handle, true);
-                    }
-                }
-
+                assetsForFilesIndex = i;
                 break;
             }
         }
-        
-        bool opened = file->Open();
-        
-        R2_CHECK(opened, "Could not re-open the file: %s\n", file->FilePath());
+
+        if (assetsForFilesIndex != -1)
+        {
+            assetsToReload = mAssetsForFiles[assetsForFilesIndex].assets;
+
+            for (auto assetHandle : assetsToReload)
+            {
+                for (auto func : mReloadFunctions)
+                {
+                    func(assetHandle.handle);
+                }
+
+                Free(assetHandle.handle, true);
+            }
+        }
         
         if (assetsToReload.size() > 0)
         {
@@ -995,10 +966,9 @@ namespace r2::asset
             {
                 AssetBuffer* buffer = Load(Asset(assetRecord.name.c_str(), assetRecord.type));
                 
-                R2_CHECK(buffer != nullptr, "buffer could not be loaded for asset: %s", assetRecord.name.c_str());
+                R2_CHECK(buffer != nullptr, "buffer could not be loaded for asset: %s", assetRecord.name.c_str());
             }
         }
-        
     }
     
     void AssetCache::AddReloadFunction(AssetReloadedFunc func)
@@ -1014,7 +984,7 @@ namespace r2::asset
 
     std::vector<AssetFile*> AssetCache::GetAllAssetFilesForAssetType(r2::asset::AssetType type)
     {
-        std::set<FileHandle> fileHandles;
+        std::set<AssetFile*> fileHandles;
 
         for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
         {
@@ -1025,20 +995,12 @@ namespace r2::asset
 
                 if (type == assetRecord.type)
                 {
-                    fileHandles.insert(assetsToFile.file);
+                    fileHandles.insert(assetsToFile.assetFile);
                 }
             }
         }
 
-        std::vector<AssetFile*> assetFiles;
-        assetFiles.reserve(fileHandles.size());
-
-        for (FileHandle fileIndex : fileHandles)
-        {
-            AssetFile* assetFile = r2::sarr::At(*mnoptrFiles, fileIndex);
-            assetFiles.push_back(assetFile);
-        }
-
+        std::vector<AssetFile*> assetFiles(fileHandles.begin(), fileHandles.end());
         return assetFiles;
     }
 #endif
@@ -1070,7 +1032,7 @@ namespace r2::asset
             if (bufRef.mAssetBuffer != nullptr)
             {
                 Asset theDefault;
-                const Asset& asset = r2::shashmap::Get(*mAssetNameMap, (*mAssetLRU)[i].handle, theDefault);
+                const Asset& asset = bufRef.mAsset;
                 
 
                 AssetHandle handle = { asset.HashID(), mSlot };
@@ -1097,7 +1059,7 @@ namespace r2::asset
             if (bufRef.mAssetBuffer != nullptr)
             {
 				Asset theDefault;
-				const Asset& asset = r2::shashmap::Get(*mAssetNameMap, (*mAssetLRU)[i].handle, theDefault);
+                const Asset& asset = bufRef.mAsset;
 
                 AssetHandle handle = { asset.HashID(), mSlot };
                 PrintAsset(asset.Name().c_str(), handle, bufRef.mRefCount);
@@ -1186,64 +1148,4 @@ namespace r2::asset
         }
     }
 #endif
-    
-//#ifdef R2_DEBUG
-//    std::string AssetCache::GetParentDirectory() const
-//    {
-//        u64 numnoptrFiles = r2::sarr::Size(*mnoptrFiles);
-//
-//        R2_CHECK(numnoptrFiles > 0, "We don't have any files to compare!");
-//        std::filesystem::path parentPath;
-//
-//        if (numnoptrFiles > 0)
-//        {
-//            std::vector<std::filesystem::path::iterator> filePathIters;
-//
-//            for (u64 i = 0; i < numnoptrFiles; ++i)
-//            {
-//                const AssetFile* assetFile = r2::sarr::At(*mnoptrFiles, i);
-//                filePathIters.push_back(std::filesystem::path(assetFile->FilePath()).begin());
-//            }
-//
-//            if (filePathIters.size() == 1)
-//            {
-//                const AssetFile* assetFile = r2::sarr::At(*mnoptrFiles, 0);
-//                parentPath = std::filesystem::path(assetFile->FilePath()).parent_path();
-//            }
-//            else
-//            {
-//
-//                while (true)
-//                {
-//                    std::filesystem::path tempPath = std::filesystem::path(*filePathIters[0]);
-//                    filePathIters[0]++;
-//                    bool failed = false;
-//                    for (u32 i = 1; i < filePathIters.size(); ++i)
-//                    {
-//                        if (tempPath != std::filesystem::path(*filePathIters[i]))
-//                        {
-//                            failed = true;
-//                            break;
-//                        }
-//
-//                        filePathIters[i]++;
-//                    }
-//
-//                    if (!failed)
-//                    {
-//                        parentPath/=tempPath;
-//                    }
-//                    else
-//                    {
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//
-//        R2_CHECK(parentPath.string().size()> 1, "We have no parent directory?");
-//
-//        return parentPath.string();
-//    }
-//#endif
 }

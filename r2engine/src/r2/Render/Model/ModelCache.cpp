@@ -114,7 +114,7 @@ namespace r2::draw::modlche
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
-			r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, numAssets, assetCapacityInBytes, ALIGNMENT);
+			r2::asset::AssetCache::TotalMemoryNeeded(numAssets, assetCapacityInBytes, ALIGNMENT);
 	}
 
 	bool HasMesh(ModelCache* system, const r2::asset::Asset& mesh)

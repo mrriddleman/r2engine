@@ -8,10 +8,12 @@
 #include "AssetLib.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
-
+#include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
+
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
 #ifdef R2_ASSET_PIPELINE
@@ -21,6 +23,30 @@
 #else
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
+
+
+namespace r2::asset
+{
+	u64 AssetLib::MemorySize(u32 cacheSize, u32 numGameManifests, u32 numEngineManifests)
+	{
+		u64 memorySize = 0;
+
+		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
+		u32 boundsChecking = 0;
+#ifdef R2_DEBUG
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(AssetLib), 16, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), 16, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<AssetCacheRecord>::MemorySize((numGameManifests + numEngineManifests) * r2::SHashMap<u32>::LoadFactorMultiplier()), 16, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ManifestAssetFile*>::MemorySize(numGameManifests), 16, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ManifestAssetFile*>::MemorySize(numEngineManifests), 16, stackHeaderSize, boundsChecking);
+		memorySize += AssetCache::TotalMemoryNeeded(numGameManifests + numEngineManifests, cacheSize, 16);
+
+		return memorySize;
+	}
+}
 
 namespace r2::asset::lib
 {
@@ -44,6 +70,264 @@ namespace r2::asset::lib
     const u64 MAX_FILES_TO_ASSET_CACHE_CAPACITY = 2000;
     const u64 MAX_ASSET_CACHES = 1000;
     
+
+    const u32 MAX_NUM_GAME_ASSET_FILES = 2000;
+    const u32 ALIGNMENT = 16;
+
+    AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numGameManifests, u32 numEngineManifests, u32 cacheSize)
+    {
+        r2::mem::StackArena* stackArena = EMPLACE_STACK_ARENA_IN_BOUNDARY(boundary);
+
+        R2_CHECK(stackArena != nullptr, "Failed to emplace the stack arena");
+
+        AssetLib* newAssetLib = ALLOC(AssetLib, *stackArena);
+
+        R2_CHECK(newAssetLib != nullptr, "We couldn't allocate the asset lib");
+
+        newAssetLib->mArena = stackArena;
+        newAssetLib->mBoundary = boundary;
+
+        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numGameManifests + numEngineManifests);
+
+        R2_CHECK(newAssetLib->mAssetCacheRecords != nullptr, "We couldn't create the AssetCacheRecords hashmap");
+
+        newAssetLib->mEngineManifestAssetFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numEngineManifests);
+
+        R2_CHECK(newAssetLib->mEngineManifestAssetFiles != nullptr, "We couldn't create the engine manifest asset files");
+
+        newAssetLib->mGamesManifestAssetFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numGameManifests);
+
+        newAssetLib->mGameFileList = MakeFileList(MAX_NUM_GAME_ASSET_FILES);//MAKE_SARRAY(*stackArena, r2::asset::AssetFile*, MAX_NUM_GAME_ASSET_FILES);
+
+        u64 totalSize = AssetCache::TotalMemoryNeeded(numGameManifests + numEngineManifests, cacheSize, ALIGNMENT);
+
+        newAssetLib->mAssetCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*stackArena, totalSize, ALIGNMENT, "Asset lib's asset cache");
+
+        FileList fileList = MakeFileList(numGameManifests + numEngineManifests);
+
+        R2_CHECK(fileList != nullptr, "Failed to create the fileList");
+
+        //@TODO(Serge): remove the CreateAssetCache + MakeFileList stuff
+        newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, fileList);
+
+        R2_CHECK(newAssetLib->mAssetCache != nullptr, "Failed to create the AssetCache");
+
+        return newAssetLib;
+    }
+
+    void Shutdown(AssetLib* assetLib)
+    {
+        if (assetLib == nullptr)
+        {
+            R2_CHECK(false, "assetLib is nullptr?");
+            return;
+        }
+
+        r2::mem::StackArena* arena = assetLib->mArena;
+
+        auto iter = r2::shashmap::Begin(*assetLib->mAssetCacheRecords);
+
+        for (; iter != r2::shashmap::End(*assetLib->mAssetCacheRecords); ++iter)
+        {
+            assetLib->mAssetCache->ReturnAssetBuffer(iter->value);
+        }
+
+        r2::shashmap::Clear(*assetLib->mAssetCacheRecords);
+
+        DestroyCache(assetLib->mAssetCache);
+
+        FREE(assetLib->mAssetCacheBoundary.location, *arena);
+
+        assetLib->mGameFileList = nullptr;
+
+        FREE(assetLib->mGamesManifestAssetFiles, *arena);
+
+        FREE(assetLib->mEngineManifestAssetFiles, *arena);
+
+        FREE(assetLib->mAssetCacheRecords, *arena);
+
+        FREE(assetLib, *arena);
+
+        FREE_EMPLACED_ARENA(arena);
+    }
+
+    void Update(AssetLib& assetLib)
+    {
+
+    }
+
+    const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle, bool isGameManifest)
+    {
+        ManifestAssetFile* foundManifestFile = nullptr;
+        
+        AssetCacheRecord defaultRecord;
+
+        AssetCacheRecord resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestAssetHandle, defaultRecord);
+
+        if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
+        {
+            return resultRecord.GetAssetBuffer()->Data();
+        }
+
+        if (isGameManifest)
+        {
+            const u32 numManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
+
+            for (u32 i = 0; i < numManifests; ++i)
+            {
+                ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
+
+                if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
+                {
+                    foundManifestFile = manifestFile;
+                    break;
+                }
+            }
+        }
+        else
+        {
+			const u32 numManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
+
+			for (u32 i = 0; i < numManifests; ++i)
+			{
+				ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
+
+				if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
+				{
+					foundManifestFile = manifestFile;
+					break;
+				}
+			}
+        }
+
+        if (!foundManifestFile)
+        {
+            R2_CHECK(false, "Failed to find the manifest for: %llu", manifestAssetHandle);
+            return nullptr;
+        }
+
+        AssetHandle assetHandle = assetLib.mAssetCache->LoadAsset(Asset(manifestAssetHandle, foundManifestFile->GetAssetType()));
+
+        AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
+
+        r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestAssetHandle, assetCacheRecord);
+
+        return assetCacheRecord.GetAssetBuffer()->Data();
+    }
+
+    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile, bool isGameManifest)
+    {
+        if (isGameManifest)
+        {
+            r2::sarr::Push(*assetLib.mGamesManifestAssetFiles, manifestFile);
+        }
+        else
+        {
+            r2::sarr::Push(*assetLib.mEngineManifestAssetFiles, manifestFile);
+        }
+
+        FileList fileList = assetLib.mAssetCache->GetFileList();
+        r2::sarr::Push(*fileList, (AssetFile*)manifestFile);
+    }
+
+
+    void CloseAndFreeAllFilesInFileList(FileList fileList)
+    {
+		u64 numFiles = r2::sarr::Size(*fileList);
+		for (u64 i = 0; i < numFiles; ++i)
+		{
+			AssetFile* file = r2::sarr::At(*fileList, i);
+
+			if (file->IsOpen())
+			{
+				file->Close();
+			}
+
+			FREE(file, *s_arenaPtr);
+		}
+
+        r2::sarr::Clear(*fileList);
+    }
+
+    FileList GetFileListForGameAssetManager(const AssetLib& assetLib)
+    {
+        FileList fileList = assetLib.mGameFileList;
+
+        CloseAndFreeAllFilesInFileList(fileList);
+
+        const u32 numGameManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
+
+        for (u32 i = 0; i < numGameManifests; ++i)
+        {
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
+
+            bool result = manifestFile->AddAllFilePaths(fileList);
+
+            R2_CHECK(result, "Failed to add the files");
+        }
+
+		const u32 numEngineManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
+
+		for (u32 i = 0; i < numEngineManifests; ++i)
+		{
+			ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
+
+			bool result = manifestFile->AddAllFilePaths(fileList);
+
+			R2_CHECK(result, "Failed to add the files");
+		}
+
+        return fileList;
+    }
+
+#ifdef R2_ASSET_PIPELINE
+
+    bool ReloadManifestFileInternal(AssetLib& assetLib, std::filesystem::path tempManifestFilePath, r2::SArray<ManifestAssetFile*>* manifestAssetFiles)
+    {
+		bool hasReloaded = false;
+        u32 numManifests = r2::sarr::Size(*manifestAssetFiles);
+
+		for (u32 i = 0; i < numManifests; ++i)
+		{
+			ManifestAssetFile* manifestFile = r2::sarr::At(*manifestAssetFiles, i);
+
+			std::filesystem::path nextManifestFilePath = manifestFile->FilePath();
+
+			if (tempManifestFilePath == nextManifestFilePath)
+			{
+				AssetCacheRecord defaultRecord;
+
+				const AssetCacheRecord& resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile->GetManifestFileHandle(), defaultRecord);
+
+				if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
+				{
+					assetLib.mAssetCache->ReturnAssetBuffer(resultRecord);
+
+                    r2::shashmap::Remove(*assetLib.mAssetCacheRecords, manifestFile->GetManifestFileHandle());
+				}
+
+				assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(tempManifestFilePath.string().c_str(), manifestFile->GetAssetType()));
+				hasReloaded = true;
+				break;
+			}
+		}
+
+        return hasReloaded;
+    }
+
+    void ReloadManifestFile(AssetLib& assetLib, const std::string& manifestFilePath)
+    {
+        std::filesystem::path tempManifestFilePath = manifestFilePath;
+
+        bool hasReloaded = ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mGamesManifestAssetFiles);
+
+        if (!hasReloaded)
+        {
+            ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mEngineManifestAssetFiles);
+        }
+    }
+#endif
+
     bool Init(const r2::mem::utils::MemBoundary& boundary)
     {
 #ifdef R2_ASSET_PIPELINE
@@ -103,18 +387,7 @@ namespace r2::asset::lib
                 
                 if (fileList != nullptr)
                 {
-                    u64 numFiles = r2::sarr::Size(*fileList);
-                    for (u64 i = 0; i < numFiles; ++i)
-                    {
-                        AssetFile* file = r2::sarr::At(*fileList, i);
-                        
-                        if (file->IsOpen())
-                        {
-                            file->Close();
-                        }
-                        
-                        FREE(file, *s_arenaPtr);
-                    }
+                    CloseAndFreeAllFilesInFileList(fileList);
                     
                     FREE(fileList, *s_arenaPtr);
                 }
@@ -127,22 +400,6 @@ namespace r2::asset::lib
         
         FREE(s_arenaPtr, *MEM_ENG_PERMANENT_PTR);
         s_arenaPtr = nullptr;
-    }
-    
-    void AddFiles(const r2::asset::AssetCache& cache, FileList list)
-    {
-        //if (s_assetCaches)// && s_fileToAssetCacheMap)
-        //{
-        //    u64 numFiles = r2::sarr::Size(*list);
-        //    
-        //    for (u64 i = 0; i < numFiles; ++i)
-        //    {
-        //        r2::asset::AssetFile* file = r2::sarr::At(*list, i);
-        //        u64 hash = r2::utils::Hash<const char*>{}(file->FilePath());
-        //        
-        //        r2::shashmap::Set(*s_fileToAssetCacheMap, hash, cache.GetSlot());
-        //    }
-        //}
     }
     
 #ifdef R2_ASSET_PIPELINE
@@ -303,15 +560,5 @@ namespace r2::asset::lib
             s_assetCaches[slot] = nullptr;
             s_filesForCaches[slot] = nullptr;
         }
-    }
-    
-    u64 EstimateMaxMemUsage(u32 maxZipArchiveCentralDirSize, u64 maxFilesInList)
-    {
-        u64 assetMemUsage = r2::SHashMap<u64>::MemorySize(MAX_FILES_TO_ASSET_CACHE_CAPACITY) + r2::SArray<AssetCache*>::MemorySize(MAX_ASSET_CACHES) +
-            sizeof(AssetCache) * MAX_ASSET_CACHES;
-        
-        u64 filesMemUsage = r2::SArray<FileList>::MemorySize(MAX_ASSET_CACHES) + MAX_ASSET_CACHES * maxFilesInList * (sizeof(ZipAssetFile) + sizeof(r2::fs::ZipFile) + maxZipArchiveCentralDirSize);
-        
-        return filesMemUsage + assetMemUsage;
     }
 }

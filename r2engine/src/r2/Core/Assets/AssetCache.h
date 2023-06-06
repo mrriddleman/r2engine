@@ -105,7 +105,7 @@ namespace r2::asset
         void AddAssetFile(AssetFile* assetFile);
         void RemoveFile(const Asset& asset);
 
-        static u64 TotalMemoryNeeded(u32 headerSize, u32 boundsChecking, u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
+        static u64 TotalMemoryNeeded(u64 numAssets, u64 assetCapacity, u64 alignment, u32 lruCapacity = LRU_CAPACITY, u32 mapCapacity =MAP_CAPACITY);
         static u64 CalculateCacheSizeNeeded(u64 initialAssetCapcity, u64 numAssets, u64 alignment);
 
 
@@ -115,6 +115,7 @@ namespace r2::asset
 
         struct AssetBufferRef
         {
+            Asset mAsset;
             AssetBuffer* mAssetBuffer = nullptr;
             s32 mRefCount = 0;
         };
@@ -123,7 +124,6 @@ namespace r2::asset
         using AssetMap = r2::SHashMap<AssetBufferRef>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
         using AssetWriterList = r2::SArray<AssetWriter*>*;
-        using AssetNameMap = r2::SHashMap<Asset>*;
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
 
         bool IsLoaded(const Asset& asset);
@@ -149,7 +149,6 @@ namespace r2::asset
         AssetMap mAssetMap;
         AssetLoaderList mAssetLoaders;
         AssetWriterList mAssetWriters;
-        AssetNameMap mAssetNameMap;
         AssetFreedCallbackList mAssetFreedCallbackList;
 
         DefaultAssetLoader* mDefaultLoader;
@@ -176,7 +175,7 @@ namespace r2::asset
         };
         struct AssetsToFile
         {
-            FileHandle file;
+            AssetFile* assetFile = nullptr;
             std::vector<AssetRecord> assets;
         };
         
@@ -184,7 +183,7 @@ namespace r2::asset
         
         void AddAssetToAssetsForFileList(FileHandle fileHandle, const AssetRecord& assetRecord);
         void RemoveAssetFromAssetForFileList(AssetHandle assetHandle);
-        void InvalidateAssetsForFile(FileHandle fileHandle);
+        void InvalidateAssetsForFile(AssetFile* file);
 
         std::vector<AssetsToFile> mAssetsForFiles;
 

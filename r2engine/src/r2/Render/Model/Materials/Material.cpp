@@ -972,7 +972,7 @@ namespace r2::draw::mat
 		u64 memSize1 = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), alignment, headerSize, boundsChecking);
 		u64 memSize2 = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::MaterialSystem), alignment, headerSize, boundsChecking);
 
-		u64 memSize6 = r2::mem::utils::GetMaxMemoryForAllocation(r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking, totalNumberOfTextures, textureCacheInBytes, alignment), alignment, headerSize, boundsChecking);
+		u64 memSize6 = r2::mem::utils::GetMaxMemoryForAllocation(r2::asset::AssetCache::TotalMemoryNeeded(totalNumberOfTextures, textureCacheInBytes, alignment), alignment, headerSize, boundsChecking);
 		u64 memSize7 = r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::draw::tex::TexturePack*>::MemorySize(hashCapacity), alignment, headerSize, boundsChecking);
 
 		u64 t = r2::draw::tex::TexturePackMemorySize(maxTexturesInAPack, alignment, headerSize, boundsChecking);
@@ -2136,7 +2136,7 @@ namespace r2::draw::matsys
 
 		u64 assetCacheBoundarySize =
 			r2::mem::utils::GetMaxMemoryForAllocation(
-				r2::asset::AssetCache::TotalMemoryNeeded(headerSize, boundsChecking,
+				r2::asset::AssetCache::TotalMemoryNeeded(
 					totalNumberOfTextures, totalTextureSize + materialParamsPackSize + texturePacksSize, boundary.alignment),
 				boundary.alignment, headerSize, boundsChecking);
 
