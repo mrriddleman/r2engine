@@ -7,14 +7,14 @@
 
 namespace r2::asset
 {
-	MaterialManifestAssetFile::MaterialManifestAssetFile()
+	SingleManifestAssetFile::SingleManifestAssetFile()
 		:mFile(nullptr)
 		,mNumDirectoriesToIncludeInAssetHandle(r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::MATERIAL_PACK_MANIFEST))
 		,mAssetHandle(0)
 	{
 	}
 
-	MaterialManifestAssetFile::~MaterialManifestAssetFile()
+	SingleManifestAssetFile::~SingleManifestAssetFile()
 	{
 		if (mFile)
 		{
@@ -22,7 +22,7 @@ namespace r2::asset
 		}
 	}
 
-	bool MaterialManifestAssetFile::Init(const char* path)
+	bool SingleManifestAssetFile::Init(const char* path)
 	{
 		mAssetHandle = Asset::GetAssetNameForFilePath(path, GetAssetType());
 
@@ -34,27 +34,27 @@ namespace r2::asset
 		return mAssetHandle != 0;
 	}
 
-	r2::asset::EngineAssetType MaterialManifestAssetFile::GetAssetType()
+	r2::asset::EngineAssetType SingleManifestAssetFile::GetAssetType()
 	{
 		return r2::asset::MATERIAL_PACK_MANIFEST;
 	}
 
-	bool MaterialManifestAssetFile::AddAllFilePaths(FileList files)
+	bool SingleManifestAssetFile::AddAllFilePaths(FileList files)
 	{
 		return true;
 	}
 
-	bool MaterialManifestAssetFile::HasFilePath(const char* filePath)
+	bool SingleManifestAssetFile::HasFilePath(const char* filePath)
 	{
 		return false;
 	}
 
-	u64 MaterialManifestAssetFile::GetManifestFileHandle()
+	u64 SingleManifestAssetFile::GetManifestFileHandle()
 	{
 		return mAssetHandle;
 	}
 
-	bool MaterialManifestAssetFile::Open(bool writable /*= false*/)
+	bool SingleManifestAssetFile::Open(bool writable /*= false*/)
 	{
 		r2::fs::FileMode mode;
 		mode = r2::fs::Mode::Read;
@@ -67,57 +67,57 @@ namespace r2::asset
 		return Open(mode);
 	}
 
-	bool MaterialManifestAssetFile::Open(r2::fs::FileMode mode)
+	bool SingleManifestAssetFile::Open(r2::fs::FileMode mode)
 	{
 		r2::fs::DeviceConfig config;
 		mFile = r2::fs::FileSystem::Open(config, mPath, mode);
 		return mFile != nullptr;
 	}
 
-	bool MaterialManifestAssetFile::Close()
+	bool SingleManifestAssetFile::Close()
 	{
 		r2::fs::FileSystem::Close(mFile);
 		mFile = nullptr;
 		return true;
 	}
 
-	bool MaterialManifestAssetFile::IsOpen() const
+	bool SingleManifestAssetFile::IsOpen() const
 	{
 		return mFile != nullptr;
 	}
 
-	u64 MaterialManifestAssetFile::RawAssetSize(const Asset& asset)
+	u64 SingleManifestAssetFile::RawAssetSize(const Asset& asset)
 	{
 		return mFile->Size();
 	}
 
-	u64 MaterialManifestAssetFile::LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
+	u64 SingleManifestAssetFile::LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
 	{
 		return mFile->ReadAll(data);
 	}
 
-	u64 MaterialManifestAssetFile::WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset)
+	u64 SingleManifestAssetFile::WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset)
 	{
 		mFile->Seek(offset);
 		return mFile->Write(data, dataBufferSize);
 	}
 
-	u64 MaterialManifestAssetFile::NumAssets()
+	u64 SingleManifestAssetFile::NumAssets()
 	{
 		return 1;
 	}
 
-	void MaterialManifestAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
+	void SingleManifestAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
 	{
 		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
 	}
 
-	u64 MaterialManifestAssetFile::GetAssetHandle(u64 index)
+	u64 SingleManifestAssetFile::GetAssetHandle(u64 index)
 	{
 		return mAssetHandle;
 	}
 
-	const char* MaterialManifestAssetFile::FilePath() const
+	const char* SingleManifestAssetFile::FilePath() const
 	{
 		return mPath;
 	}
