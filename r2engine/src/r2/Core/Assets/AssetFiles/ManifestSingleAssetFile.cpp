@@ -1,5 +1,5 @@
 #include "r2pch.h"
-#include "r2/Core/Assets/AssetFiles/SingleManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/FileSystem.h"

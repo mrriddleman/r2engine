@@ -58,12 +58,14 @@ namespace r2::asset::lib
     AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numGameManifests, u32 numEngineManifests, u32 cacheSize);
     void Shutdown(AssetLib* assetLib);
     void Update(AssetLib& assetLib);
-
     
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle, bool isGameManifest);
+    const byte* GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, bool isGameManifest);
 
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile, bool isGameManifest);
-    FileList GetFileListForGameAssetManager(const AssetLib& assetLib);
+    bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
+    FileList GetFileList(const AssetLib& assetLib);
+
 
 #ifdef R2_ASSET_PIPELINE
     void ReloadManifestFile(AssetLib& assetLib, const std::string& manifestFilePath);
@@ -79,6 +81,7 @@ namespace r2::asset::lib
     
     RawAssetFile* MakeRawAssetFile(const char* path, u32 numParentDirectoriesToInclude = 0);
     ZipAssetFile* MakeZipAssetFile(const char* path);  
+    ManifestAssetFile* MakeManifestSingleAssetFile(const char* path);
 
     FileList MakeFileList(u64 capacity);
     

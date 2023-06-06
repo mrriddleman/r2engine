@@ -13,6 +13,7 @@
 #include "r2/Core/Assets/AssetFiles/RawAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -156,6 +157,26 @@ namespace r2::asset::lib
 
     }
 
+    const byte* GetManifestData(AssetLib& assetLib, ManifestAssetFile& manifestFile)
+    {
+		AssetCacheRecord defaultRecord;
+
+		AssetCacheRecord resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), defaultRecord);
+
+		if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
+		{
+			return resultRecord.GetAssetBuffer()->Data();
+		}
+
+		AssetHandle assetHandle = assetLib.mAssetCache->LoadAsset(Asset(manifestFile.GetManifestFileHandle(), manifestFile.GetAssetType()));
+
+		AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
+
+		r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), assetCacheRecord);
+
+		return assetCacheRecord.GetAssetBuffer()->Data();
+    }
+
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle, bool isGameManifest)
     {
         ManifestAssetFile* foundManifestFile = nullptr;
@@ -215,6 +236,48 @@ namespace r2::asset::lib
         return assetCacheRecord.GetAssetBuffer()->Data();
     }
 
+    const byte* GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, bool isGameManifest)
+    {
+        ManifestAssetFile* foundManifest = nullptr;
+        if (isGameManifest)
+        {
+            const u32 numGameManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
+
+            for (u32 i = 0; i < numGameManifests; ++i)
+            {
+                ManifestAssetFile* nextManifestAssetFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
+                if (nextManifestAssetFile->GetAssetType() == type)
+                {
+                    foundManifest = nextManifestAssetFile;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            const u32 numEngineManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
+
+            for (u32 i = 0; i < numEngineManifests; ++i)
+            {
+				ManifestAssetFile* nextManifestAssetFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
+				if (nextManifestAssetFile->GetAssetType() == type)
+				{
+					foundManifest = nextManifestAssetFile;
+					break;
+				}
+            }
+        }
+
+        if (!foundManifest)
+        {
+            R2_CHECK(false, "We couldn't find a manifest for that type");
+            return nullptr;
+        }
+
+        return GetManifestData(assetLib, *foundManifest);
+
+    }
+
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile, bool isGameManifest)
     {
         if (isGameManifest)
@@ -249,7 +312,7 @@ namespace r2::asset::lib
         r2::sarr::Clear(*fileList);
     }
 
-    FileList GetFileListForGameAssetManager(const AssetLib& assetLib)
+    bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib)
     {
         FileList fileList = assetLib.mGameFileList;
 
@@ -277,7 +340,12 @@ namespace r2::asset::lib
 			R2_CHECK(result, "Failed to add the files");
 		}
 
-        return fileList;
+        return true;
+    }
+
+    FileList GetFileList(const AssetLib& assetLib)
+    {
+        return assetLib.mGameFileList;
     }
 
 #ifdef R2_ASSET_PIPELINE
@@ -471,6 +539,15 @@ namespace r2::asset::lib
         return zipAssetFile;
     }
     
+    ManifestAssetFile* MakeManifestSingleAssetFile(const char* path)
+    {
+        ManifestSingleAssetFile* manifestFile = ALLOC(ManifestSingleAssetFile, *s_arenaPtr);
+
+        bool result = manifestFile->Init(path);
+        R2_CHECK(result, "Failed to initialize the Manifest File");
+        return manifestFile;
+    }
+
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files)
     {
         if (s_assetCaches)

@@ -103,7 +103,7 @@ namespace r2
         virtual u32 GetMaxNumECSSystems() const = 0;
         virtual u32 GetMaxNumECSEntities() const = 0;
         virtual u32 GetMaxNumComponents() const = 0;
-        virtual r2::SArray<r2::asset::AssetFile*>* GetAssetFileList() const = 0;
+        virtual bool AddLooseAssetFiles(r2::SArray<r2::asset::AssetFile*>* fileList) const = 0;
 
 
 #ifdef R2_ASSET_PIPELINE

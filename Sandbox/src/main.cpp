@@ -1812,11 +1812,8 @@ public:
         return r2::ecs::MAX_NUM_COMPONENTS;
     }
 
-    virtual r2::SArray<r2::asset::AssetFile*>* GetAssetFileList() const override
+    virtual bool AddLooseAssetFiles(r2::SArray<r2::asset::AssetFile*>* fileList) const override
     {
-		//@TODO(Serge): calculate how many files are needed here
-		r2::asset::FileList fileList = r2::asset::lib::MakeFileList(2000);
-
 		char modelFilePath[r2::fs::FILE_PATH_LENGTH];
 
 		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::MODELS, "MicroBat/micro_bat.rmdl", modelFilePath);
@@ -1905,7 +1902,7 @@ public:
 		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)ellenSpawnAnimFile);
 
 
-		return fileList;
+		return true;
     }
     
 #ifdef R2_ASSET_PIPELINE

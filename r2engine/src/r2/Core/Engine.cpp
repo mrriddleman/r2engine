@@ -91,6 +91,10 @@ namespace r2
         , mNeedsResolutionChange(false)
         , mResolution({0,0})
         , mCurrentRendererBackend(r2::draw::RendererBackend::OpenGL)
+        , mGameAssetManager(nullptr)
+        , mLevelManager(nullptr)
+        , mECSWorld(nullptr)
+        , mAssetLib(nullptr)
     {
         for (u32 i = 0; i < NUM_PLATFORM_CONTROLLERS; ++i)
         {
@@ -123,6 +127,19 @@ namespace r2
             }
             
             r2::asset::lib::Init(mAssetLibMemBoundary);
+
+
+            u32 numMaterialManifests = noptrApp->GetMaterialPackManifestsBinaryPaths().size();
+            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests, 1);
+
+            r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
+
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests, 1, Kilobytes(512));
+
+            R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
+
+
+
 
 
             char internalShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
@@ -453,7 +470,7 @@ namespace r2
 			
 
 
-            //setup the GameAssetManager + ECSCoordinator + LevelManager
+            //setup the GameAssetManager + ECSWorld + LevelManager
             {
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
@@ -490,7 +507,12 @@ namespace r2
                 r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
                 memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
 
-                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, noptrApp->GetAssetFileList(), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks );
+
+                r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
+
+                noptrApp->AddLooseAssetFiles(r2::asset::lib::GetFileList(*mAssetLib));
+
+                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, r2::asset::lib::GetFileList(*mAssetLib), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks );
 
                 for (u32 i = 0; i < textureManifests.size(); ++i)
                 {
@@ -612,11 +634,19 @@ namespace r2
 		FREE(mMaterialParamPacks, *MEM_ENG_PERMANENT_PTR);
 		FREE(mMaterialParamPacksData, *MEM_ENG_PERMANENT_PTR);
 
+
+        r2::mem::utils::MemBoundary assetLibBoundary = mAssetLib->mBoundary;
+        r2::asset::lib::Shutdown(mAssetLib);
+        FREE(assetLibBoundary.location, *MEM_ENG_PERMANENT_PTR);
+
+
         r2::asset::lib::Shutdown();
 #ifdef R2_ASSET_PIPELINE
         mAssetCommandHandler.Shutdown();
       //  r2::asset::pln::Shutdown();
 #endif
+
+        
         
         FREE((byte*)mAssetLibMemBoundary.location, *MEM_ENG_PERMANENT_PTR);
     }
@@ -904,6 +934,11 @@ namespace r2
         return *mECSWorld;
     }
 
+    r2::asset::AssetLib& Engine::GetAssetLib() const
+    {
+        return *mAssetLib;
+    }
+
     void Engine::WindowResizedEvent(u32 width, u32 height)
     {
         auto appResolution = GetApplication().GetAppResolution();
@@ -1152,6 +1187,18 @@ namespace r2
 
     u64 Engine::SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
     {
+        //This will be the new setup:
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
+        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile, false);
+        
+        for (const std::string& manifestPath : appMaterialPacksManifests )
+        {
+            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(manifestPath.c_str());
+            r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile, true);
+        }
+
+
+
 		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
 
 		const char* engineMaterialParamsPackPath = materialsPath;

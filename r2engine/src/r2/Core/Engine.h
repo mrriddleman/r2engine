@@ -37,6 +37,11 @@ namespace flat
     struct MaterialParamsPack;
 }
 
+namespace r2::asset
+{
+    struct AssetLib;
+}
+
 namespace r2
 {
     class ImGuiLayer;
@@ -44,6 +49,7 @@ namespace r2
     class Application;
     class LevelManager;
     class GameAssetManager;
+    
 
     extern const s32 FULL_SCREEN_WINDOW;
     extern const s32 FULL_SCREEN_DESKTOP;
@@ -105,6 +111,7 @@ namespace r2
         LevelManager& GetLevelManager() const;
         GameAssetManager& GetGameAssetManager() const;
         r2::ecs::ECSWorld& GetECSWorld();
+        r2::asset::AssetLib& GetAssetLib() const;
 
     private:
         static const u32 NUM_PLATFORM_CONTROLLERS = 8;
@@ -292,6 +299,7 @@ namespace r2
 		r2::GameAssetManager* mGameAssetManager;
 		r2::LevelManager* mLevelManager;
         r2::ecs::ECSWorld* mECSWorld;
+        r2::asset::AssetLib* mAssetLib;
 
 #ifdef R2_ASSET_PIPELINE
         r2::asset::pln::AssetCommandHandler mAssetCommandHandler;
