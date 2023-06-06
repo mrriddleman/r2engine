@@ -1,5 +1,5 @@
 #include "r2pch.h"
-#include "r2/Core/Assets/AssetFiles/MaterialManifestAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/SingleManifestAssetFile.h"
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/FileSystem.h"
@@ -7,14 +7,14 @@
 
 namespace r2::asset
 {
-	SingleManifestAssetFile::SingleManifestAssetFile()
+	ManifestSingleAssetFile::ManifestSingleAssetFile()
 		:mFile(nullptr)
 		,mNumDirectoriesToIncludeInAssetHandle(r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::MATERIAL_PACK_MANIFEST))
 		,mAssetHandle(0)
 	{
 	}
 
-	SingleManifestAssetFile::~SingleManifestAssetFile()
+	ManifestSingleAssetFile::~ManifestSingleAssetFile()
 	{
 		if (mFile)
 		{
@@ -22,7 +22,7 @@ namespace r2::asset
 		}
 	}
 
-	bool SingleManifestAssetFile::Init(const char* path)
+	bool ManifestSingleAssetFile::Init(const char* path)
 	{
 		mAssetHandle = Asset::GetAssetNameForFilePath(path, GetAssetType());
 
@@ -34,27 +34,27 @@ namespace r2::asset
 		return mAssetHandle != 0;
 	}
 
-	r2::asset::EngineAssetType SingleManifestAssetFile::GetAssetType()
+	r2::asset::EngineAssetType ManifestSingleAssetFile::GetAssetType()
 	{
 		return r2::asset::MATERIAL_PACK_MANIFEST;
 	}
 
-	bool SingleManifestAssetFile::AddAllFilePaths(FileList files)
+	bool ManifestSingleAssetFile::AddAllFilePaths(FileList files)
 	{
 		return true;
 	}
 
-	bool SingleManifestAssetFile::HasFilePath(const char* filePath)
+	bool ManifestSingleAssetFile::HasFilePath(const char* filePath)
 	{
 		return false;
 	}
 
-	u64 SingleManifestAssetFile::GetManifestFileHandle()
+	u64 ManifestSingleAssetFile::GetManifestFileHandle()
 	{
 		return mAssetHandle;
 	}
 
-	bool SingleManifestAssetFile::Open(bool writable /*= false*/)
+	bool ManifestSingleAssetFile::Open(bool writable /*= false*/)
 	{
 		r2::fs::FileMode mode;
 		mode = r2::fs::Mode::Read;
@@ -67,57 +67,57 @@ namespace r2::asset
 		return Open(mode);
 	}
 
-	bool SingleManifestAssetFile::Open(r2::fs::FileMode mode)
+	bool ManifestSingleAssetFile::Open(r2::fs::FileMode mode)
 	{
 		r2::fs::DeviceConfig config;
 		mFile = r2::fs::FileSystem::Open(config, mPath, mode);
 		return mFile != nullptr;
 	}
 
-	bool SingleManifestAssetFile::Close()
+	bool ManifestSingleAssetFile::Close()
 	{
 		r2::fs::FileSystem::Close(mFile);
 		mFile = nullptr;
 		return true;
 	}
 
-	bool SingleManifestAssetFile::IsOpen() const
+	bool ManifestSingleAssetFile::IsOpen() const
 	{
 		return mFile != nullptr;
 	}
 
-	u64 SingleManifestAssetFile::RawAssetSize(const Asset& asset)
+	u64 ManifestSingleAssetFile::RawAssetSize(const Asset& asset)
 	{
 		return mFile->Size();
 	}
 
-	u64 SingleManifestAssetFile::LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
+	u64 ManifestSingleAssetFile::LoadRawAsset(const Asset& asset, byte* data, u32 dataBufSize)
 	{
 		return mFile->ReadAll(data);
 	}
 
-	u64 SingleManifestAssetFile::WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset)
+	u64 ManifestSingleAssetFile::WriteRawAsset(const Asset& asset, const byte* data, u32 dataBufferSize, u32 offset)
 	{
 		mFile->Seek(offset);
 		return mFile->Write(data, dataBufferSize);
 	}
 
-	u64 SingleManifestAssetFile::NumAssets()
+	u64 ManifestSingleAssetFile::NumAssets()
 	{
 		return 1;
 	}
 
-	void SingleManifestAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
+	void ManifestSingleAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
 	{
 		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
 	}
 
-	u64 SingleManifestAssetFile::GetAssetHandle(u64 index)
+	u64 ManifestSingleAssetFile::GetAssetHandle(u64 index)
 	{
 		return mAssetHandle;
 	}
 
-	const char* SingleManifestAssetFile::FilePath() const
+	const char* ManifestSingleAssetFile::FilePath() const
 	{
 		return mPath;
 	}

@@ -10,12 +10,12 @@ namespace r2::fs
 
 namespace r2::asset
 {
-	class SingleManifestAssetFile : public ManifestAssetFile
+	class ManifestSingleAssetFile : public ManifestAssetFile
 	{
 	public:
 
-		SingleManifestAssetFile();
-		~SingleManifestAssetFile();
+		ManifestSingleAssetFile();
+		~ManifestSingleAssetFile();
 
 		virtual bool Init(const char* path) override;
 		virtual r2::asset::EngineAssetType GetAssetType() override;
