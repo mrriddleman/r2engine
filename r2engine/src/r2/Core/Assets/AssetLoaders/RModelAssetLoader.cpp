@@ -149,9 +149,9 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::AnimModel));
 
-			model->model.optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMaterials);
+			model->model.optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterials);
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMaterials));
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials));
 
 			model->model.optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
@@ -206,7 +206,10 @@ namespace r2::asset
 
 			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 			{
-				r2::sarr::Push(*model->model.optrMaterialNames, flatMaterialNames->Get(i)->name());
+				const auto* materialName = flatMaterialNames->Get(i);
+				R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
+
+				r2::sarr::Push(*model->model.optrMaterialNames, { materialName->name(), materialName->materialPackName() });
 			}
 
 			const auto flatMeshes = modelData->meshes();
@@ -317,9 +320,9 @@ namespace r2::asset
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
-			model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMaterials);
+			model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterials);
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMaterials));
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials));
 
 			model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
@@ -337,7 +340,10 @@ namespace r2::asset
 
 			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
 			{
-				r2::sarr::Push(*model->optrMaterialNames, flatMaterialNames->Get(i)->name());
+				const auto* materialName = flatMaterialNames->Get(i);
+				R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
+
+				r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
 			}
 
 			const auto flatMeshes = modelData->meshes();

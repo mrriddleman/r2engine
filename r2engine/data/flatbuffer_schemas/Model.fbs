@@ -6,6 +6,7 @@ file_extension "modl";
 table MaterialName
 {
 	name:ulong (hash:"fnv1a_64");
+	materialPackName:ulong (hash:"fnv1a_64");
 }
 
 table Model

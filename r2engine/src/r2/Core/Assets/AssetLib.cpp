@@ -75,7 +75,7 @@ namespace r2::asset::lib
     const u32 MAX_NUM_GAME_ASSET_FILES = 2000;
     const u32 ALIGNMENT = 16;
 
-    AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numGameManifests, u32 numEngineManifests, u32 cacheSize)
+    AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numManifests, u32 cacheSize)
     {
         r2::mem::StackArena* stackArena = EMPLACE_STACK_ARENA_IN_BOUNDARY(boundary);
 
@@ -88,23 +88,19 @@ namespace r2::asset::lib
         newAssetLib->mArena = stackArena;
         newAssetLib->mBoundary = boundary;
 
-        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numGameManifests + numEngineManifests);
+        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numManifests);
 
         R2_CHECK(newAssetLib->mAssetCacheRecords != nullptr, "We couldn't create the AssetCacheRecords hashmap");
 
-        newAssetLib->mEngineManifestAssetFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numEngineManifests);
+        newAssetLib->mManifestFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numManifests);
 
-        R2_CHECK(newAssetLib->mEngineManifestAssetFiles != nullptr, "We couldn't create the engine manifest asset files");
+        newAssetLib->mGameFileList = MakeFileList(MAX_NUM_GAME_ASSET_FILES);
 
-        newAssetLib->mGamesManifestAssetFiles = MAKE_SARRAY(*stackArena, ManifestAssetFile*, numGameManifests);
-
-        newAssetLib->mGameFileList = MakeFileList(MAX_NUM_GAME_ASSET_FILES);//MAKE_SARRAY(*stackArena, r2::asset::AssetFile*, MAX_NUM_GAME_ASSET_FILES);
-
-        u64 totalSize = AssetCache::TotalMemoryNeeded(numGameManifests + numEngineManifests, cacheSize, ALIGNMENT);
+        u64 totalSize = AssetCache::TotalMemoryNeeded(numManifests, cacheSize, ALIGNMENT);
 
         newAssetLib->mAssetCacheBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*stackArena, totalSize, ALIGNMENT, "Asset lib's asset cache");
 
-        FileList fileList = MakeFileList(numGameManifests + numEngineManifests);
+        FileList fileList = MakeFileList(numManifests);
 
         R2_CHECK(fileList != nullptr, "Failed to create the fileList");
 
@@ -141,9 +137,7 @@ namespace r2::asset::lib
 
         assetLib->mGameFileList = nullptr;
 
-        FREE(assetLib->mGamesManifestAssetFiles, *arena);
-
-        FREE(assetLib->mEngineManifestAssetFiles, *arena);
+        FREE(assetLib->mManifestFiles, *arena);
 
         FREE(assetLib->mAssetCacheRecords, *arena);
 
@@ -177,7 +171,7 @@ namespace r2::asset::lib
 		return assetCacheRecord.GetAssetBuffer()->Data();
     }
 
-    const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle, bool isGameManifest)
+    const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle)
     {
         ManifestAssetFile* foundManifestFile = nullptr;
         
@@ -190,37 +184,19 @@ namespace r2::asset::lib
             return resultRecord.GetAssetBuffer()->Data();
         }
 
-        if (isGameManifest)
+        const u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+
+        for (u32 i = 0; i < numManifests; ++i)
         {
-            const u32 numManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
-            for (u32 i = 0; i < numManifests; ++i)
+            if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
             {
-                ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
-
-                if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
-                {
-                    foundManifestFile = manifestFile;
-                    break;
-                }
+                foundManifestFile = manifestFile;
+                break;
             }
         }
-        else
-        {
-			const u32 numManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
-
-			for (u32 i = 0; i < numManifests; ++i)
-			{
-				ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
-
-				if (manifestFile->GetManifestFileHandle() == manifestAssetHandle)
-				{
-					foundManifestFile = manifestFile;
-					break;
-				}
-			}
-        }
-
+        
         if (!foundManifestFile)
         {
             R2_CHECK(false, "Failed to find the manifest for: %llu", manifestAssetHandle);
@@ -236,63 +212,13 @@ namespace r2::asset::lib
         return assetCacheRecord.GetAssetBuffer()->Data();
     }
 
-    const byte* GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, bool isGameManifest)
+    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
     {
-        ManifestAssetFile* foundManifest = nullptr;
-        if (isGameManifest)
-        {
-            const u32 numGameManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
-
-            for (u32 i = 0; i < numGameManifests; ++i)
-            {
-                ManifestAssetFile* nextManifestAssetFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
-                if (nextManifestAssetFile->GetAssetType() == type)
-                {
-                    foundManifest = nextManifestAssetFile;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            const u32 numEngineManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
-
-            for (u32 i = 0; i < numEngineManifests; ++i)
-            {
-				ManifestAssetFile* nextManifestAssetFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
-				if (nextManifestAssetFile->GetAssetType() == type)
-				{
-					foundManifest = nextManifestAssetFile;
-					break;
-				}
-            }
-        }
-
-        if (!foundManifest)
-        {
-            R2_CHECK(false, "We couldn't find a manifest for that type");
-            return nullptr;
-        }
-
-        return GetManifestData(assetLib, *foundManifest);
-
-    }
-
-    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile, bool isGameManifest)
-    {
-        if (isGameManifest)
-        {
-            r2::sarr::Push(*assetLib.mGamesManifestAssetFiles, manifestFile);
-        }
-        else
-        {
-            r2::sarr::Push(*assetLib.mEngineManifestAssetFiles, manifestFile);
-        }
+        r2::sarr::Push(*assetLib.mManifestFiles, manifestFile);
 
         FileList fileList = assetLib.mAssetCache->GetFileList();
         r2::sarr::Push(*fileList, (AssetFile*)manifestFile);
     }
-
 
     void CloseAndFreeAllFilesInFileList(FileList fileList)
     {
@@ -318,27 +244,16 @@ namespace r2::asset::lib
 
         CloseAndFreeAllFilesInFileList(fileList);
 
-        const u32 numGameManifests = r2::sarr::Size(*assetLib.mGamesManifestAssetFiles);
+        const u32 numGameManifests = r2::sarr::Size(*assetLib.mManifestFiles);
 
         for (u32 i = 0; i < numGameManifests; ++i)
         {
-            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mGamesManifestAssetFiles, i);
+            ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
 
             bool result = manifestFile->AddAllFilePaths(fileList);
 
             R2_CHECK(result, "Failed to add the files");
         }
-
-		const u32 numEngineManifests = r2::sarr::Size(*assetLib.mEngineManifestAssetFiles);
-
-		for (u32 i = 0; i < numEngineManifests; ++i)
-		{
-			ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mEngineManifestAssetFiles, i);
-
-			bool result = manifestFile->AddAllFilePaths(fileList);
-
-			R2_CHECK(result, "Failed to add the files");
-		}
 
         return true;
     }
@@ -387,12 +302,7 @@ namespace r2::asset::lib
     {
         std::filesystem::path tempManifestFilePath = manifestFilePath;
 
-        bool hasReloaded = ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mGamesManifestAssetFiles);
-
-        if (!hasReloaded)
-        {
-            ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mEngineManifestAssetFiles);
-        }
+        ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mManifestFiles);
     }
 #endif
 

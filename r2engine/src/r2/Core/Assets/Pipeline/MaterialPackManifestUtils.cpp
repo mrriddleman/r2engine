@@ -10,6 +10,8 @@
 #include "r2/Utils/Hash.h"
 #include <filesystem>
 #include <fstream>
+#include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Assets/Asset.h"
 
 namespace r2::asset::pln
 {
@@ -608,8 +610,12 @@ namespace r2::asset::pln
 		std::filesystem::path binPath = binFilePath;
 
 		//add the texture packs to the manifest
+
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(binPath.string().c_str(), r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+
 		auto manifest = flat::CreateMaterialParamsPack(
-			builder, STRING_ID(binPath.stem().string().c_str()),
+			builder, materialPackName,
 			builder.CreateVector(flatMaterialParams));
 
 		//generate the manifest

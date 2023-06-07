@@ -134,7 +134,7 @@ namespace r2
 
             r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
 
-            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests, 1, Kilobytes(512));
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1, Kilobytes(512));
 
             R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
 
@@ -1189,12 +1189,12 @@ namespace r2
     {
         //This will be the new setup:
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
-        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile, false);
+        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile);
         
         for (const std::string& manifestPath : appMaterialPacksManifests )
         {
             r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(manifestPath.c_str());
-            r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile, true);
+            r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
         }
 
 

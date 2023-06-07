@@ -6,6 +6,7 @@
 #include "r2/Render/Model/Mesh.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Core/Assets/AssetCache.h"
+#include "r2/Core/File/PathUtils.h"
 
 #include "r2/Utils/Hash.h"
 
@@ -81,9 +82,9 @@ namespace r2::asset
 		model->hash = flatModel->name();
 		model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
-		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u64>::MemorySize(numMeshes));
+		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(numMeshes));
 
-		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, u64, numMeshes);
+		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMeshes);
 		
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; ++i)
 		{	
@@ -104,19 +105,23 @@ namespace r2::asset
 
 		for (flatbuffers::uoffset_t i = 0; i < numMaterialNames; ++i)
 		{
-			r2::sarr::Push(*model->optrMaterialNames, flatModel->materials()->Get(i)->name());
+			const auto* materialName = flatModel->materials()->Get(i);
+			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
+			r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
 		}
 
 		auto numMaterialsToAdd = numMeshes - numMaterialNames;
 
 		if (numMaterialsToAdd > 0)
 		{
-
 			auto defaultMaterialName = STRING_ID("Default");
+			char materialsPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+			const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
 
 			for (u64 i = numMaterialNames; i < numMeshes; ++i)
 			{
-				r2::sarr::Push(*model->optrMaterialNames, defaultMaterialName);
+				r2::sarr::Push(*model->optrMaterialNames, { defaultMaterialName, materialPackName });
 			}
 		}
 

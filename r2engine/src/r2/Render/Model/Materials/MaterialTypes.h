@@ -12,7 +12,15 @@ namespace r2::draw
 		s64 slot = -1; //NEW VERSION - the index in the materialparamspack
 		//@TODO(Serge): add the name of the cache here
 	};
-
-	using MaterialName = u64;
 }
+
+namespace r2::mat
+{
+	struct MaterialName
+	{
+		u64 name;
+		u64 packName;
+	};
+}
+
 #endif // __MATERIAL_TYPES_H__

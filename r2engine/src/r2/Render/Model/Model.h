@@ -9,8 +9,8 @@
 #define Model_h
 
 #include "r2/Render/Model/Mesh.h"
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/Math/Transform.h"
+#include "r2/Render/Model/Materials/MaterialTypes.h"
 
 #define MAKE_MODEL(arena, numMeshes) r2::draw::MakeModel(arena, numMeshes, __FILE__, __LINE__, "")
 #define FREE_MODEL(arena, modelPtr) r2::draw::FreeModel(arena, modelPtr, __FILE__, __LINE__, "")
@@ -68,9 +68,8 @@ namespace r2::draw
 		u64 hash = 0;
         
         //these should be the same size
-        r2::SArray<u64>* optrMaterialNames = nullptr;
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
-
+        r2::SArray<r2::mat::MaterialName>* optrMaterialNames = nullptr;
         glm::mat4 globalInverseTransform;
 
 		static u64 MemorySize(u64 numMeshes, u64 numMaterials, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment);

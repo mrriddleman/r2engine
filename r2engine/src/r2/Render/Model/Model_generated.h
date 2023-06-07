@@ -17,14 +17,19 @@ struct ModelBuilder;
 struct MaterialName FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialNameBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4
+    VT_NAME = 4,
+    VT_MATERIALPACKNAME = 6
   };
   uint64_t name() const {
     return GetField<uint64_t>(VT_NAME, 0);
   }
+  uint64_t materialPackName() const {
+    return GetField<uint64_t>(VT_MATERIALPACKNAME, 0);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_NAME) &&
+           VerifyField<uint64_t>(verifier, VT_MATERIALPACKNAME) &&
            verifier.EndTable();
   }
 };
@@ -35,6 +40,9 @@ struct MaterialNameBuilder {
   flatbuffers::uoffset_t start_;
   void add_name(uint64_t name) {
     fbb_.AddElement<uint64_t>(MaterialName::VT_NAME, name, 0);
+  }
+  void add_materialPackName(uint64_t materialPackName) {
+    fbb_.AddElement<uint64_t>(MaterialName::VT_MATERIALPACKNAME, materialPackName, 0);
   }
   explicit MaterialNameBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -50,8 +58,10 @@ struct MaterialNameBuilder {
 
 inline flatbuffers::Offset<MaterialName> CreateMaterialName(
     flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t name = 0) {
+    uint64_t name = 0,
+    uint64_t materialPackName = 0) {
   MaterialNameBuilder builder_(_fbb);
+  builder_.add_materialPackName(materialPackName);
   builder_.add_name(name);
   return builder_.Finish();
 }

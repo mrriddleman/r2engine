@@ -34,6 +34,12 @@ namespace r2::assets::assetlib
 		return fabsf(x - y) < EPSILON;
 	}
 
+	struct MaterialName
+	{
+		uint64_t name = 0;
+		uint64_t materialPackName = 0;
+	};
+
 	struct Joint
 	{
 		std::string name;
@@ -88,7 +94,7 @@ namespace r2::assets::assetlib
 		uint64_t hashName = 0;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
-		uint64_t materialName = 0;
+		MaterialName materialName;
 		int materialIndex = -1;
 	};
 
@@ -98,7 +104,7 @@ namespace r2::assets::assetlib
 		std::string modelName;
 		std::string originalPath;
 
-		std::vector<uint64_t> materialNames;
+		std::vector<MaterialName> materialNames;
 		std::vector<Mesh> meshes;
 
 		glm::mat4 globalInverseTransform;
@@ -559,7 +565,7 @@ namespace r2::assets::assetlib
 			nextMesh.indices.reserve(mesh->mNumFaces * 3);
 		}
 
-		uint64_t materialName = 0;
+		MaterialName materialName;
 
 		int materialIndex = -1;
 
@@ -638,7 +644,8 @@ namespace r2::assets::assetlib
 
 									if (textureNameID == texParam->value())
 									{
-										materialName = materialParams->name();
+										materialName.name = materialParams->name();
+										materialName.materialPackName = materialManifest->name();
 										found = true;
 										break;
 									}
@@ -652,8 +659,8 @@ namespace r2::assets::assetlib
 				else
 				{
 					const char* matName = material->GetName().C_Str();
-
-					materialName = STRING_ID(matName);
+					materialName.name = STRING_ID(matName);
+					materialName.materialPackName = materialManifest->name();
 				}
 
 
@@ -702,7 +709,7 @@ namespace r2::assets::assetlib
 				//	materialHandle = r2::draw::matsys::FindMaterialHandle(matNameID);
 				//}
 
-				if (materialName != 0)
+				if (materialName.name != 0 && materialName.materialPackName != 0)//materialName != 0 && materialPackName != 0)
 				{
 					bool found = false;
 
@@ -712,7 +719,7 @@ namespace r2::assets::assetlib
 					{
 						auto nextMatHandle = model.materialNames[i];
 
-						if (nextMatHandle == materialName)
+						if (nextMatHandle.name == materialName.name && nextMatHandle.materialPackName == materialName.materialPackName)
 						{
 							materialIndex = i;
 							found = true;
@@ -736,7 +743,8 @@ namespace r2::assets::assetlib
 
 		assert(materialIndex != -1 && "We should have a material for the mesh!");
 
-		assert(materialName != 0 && "We should have a proper material");
+		assert(materialName.name != 0 && "We should have a proper material");
+		assert(materialName.materialPackName != 0 && "We should have a proper material");
 
 		nextMesh.materialName = materialName;
 		nextMesh.materialIndex = materialIndex;
@@ -1081,7 +1089,7 @@ namespace r2::assets::assetlib
 		const auto numMaterialsInModel = model.materialNames.size();
 		for (size_t i = 0; i < numMaterialsInModel; ++i)
 		{
-			flatMaterialNames.push_back(flat::CreateMaterialName(dataBuilder, model.materialNames[i]));
+			flatMaterialNames.push_back(flat::CreateMaterialName(dataBuilder, model.materialNames[i].name, model.materialNames[i].materialPackName));
 		}
 
 		flat::Matrix4 flatGlobalInverseTransform = ToFlatMatrix4(model.globalInverseTransform);

@@ -2696,7 +2696,7 @@ namespace r2::draw::renderer
 		{
 			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
 
-			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName);
+			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
 			R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
 
@@ -2704,7 +2704,7 @@ namespace r2::draw::renderer
 
 			//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
 			
-			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName));
+			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2764,7 +2764,7 @@ namespace r2::draw::renderer
 			{
 				auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
 
-				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName);
+				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
 				R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
 
@@ -2772,7 +2772,7 @@ namespace r2::draw::renderer
 
 
 				//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName));
+				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
 
 				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2809,7 +2809,7 @@ namespace r2::draw::renderer
 		{
 			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
 
-			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName);
+			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
 			R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
 
@@ -2817,7 +2817,7 @@ namespace r2::draw::renderer
 
 
 			//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName));
+			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2875,14 +2875,14 @@ namespace r2::draw::renderer
 			{
 				auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
 
-				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName);
+				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
 				R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
 
 				r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
 				//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName));
+				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
 
 				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 

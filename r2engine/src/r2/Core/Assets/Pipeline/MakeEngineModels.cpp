@@ -4,6 +4,7 @@
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Render/Model/Mesh_generated.h"
 #include "r2/Render/Model/Model_generated.h"
+#include "r2/Core/Assets/Asset.h"
 
 #include "r2/Utils/Hash.h"
 #include "r2/Core/File/PathUtils.h"
@@ -211,7 +212,7 @@ namespace r2::asset::pln
 	void MakeCylinderModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
-	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
+	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, u64 materialPackName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir);
 
 
 	std::map<std::string, MakeModlFunc> s_makeModelsMap
@@ -1313,40 +1314,68 @@ namespace r2::asset::pln
 
 	void MakeQuadModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Quad", "QuadMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Quad", "QuadMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeCubeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cube", "CubeMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Cube", "CubeMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeSphereModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Sphere", "SphereMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Sphere", "SphereMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeConeModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cone", "ConeMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Cone", "ConeMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeCylinderModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Cylinder", "CylinderMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Cylinder", "CylinderMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeSkyboxModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("Skybox", "CubeMesh", "Skybox", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("Skybox", "CubeMesh", "Skybox", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
 	void MakeFullscreenTriangleModel(const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
-		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", "StaticDefault", schemaPath, binaryParentDir, jsonParentDir);
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+		const auto materialPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST);
+
+		MakeModelInternal("FullscreenTriangle", "FullscreenTriangleMesh", "StaticDefault", materialPackName, schemaPath, binaryParentDir, jsonParentDir);
 	}
 
-	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
+	void MakeModelInternal(const char* modelName, const char* meshName, const char* materialName, u64 materialPackName, const std::string& schemaPath, const std::string& binaryParentDir, const std::string& jsonParentDir)
 	{
 		flatbuffers::FlatBufferBuilder fbb;
 
@@ -1355,7 +1384,7 @@ namespace r2::asset::pln
 
 		std::vector<flatbuffers::Offset<flatbuffers::String>> meshPaths = { fbb.CreateString(filePath) };
 
-		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = { flat::CreateMaterialName(fbb, STRING_ID(materialName)) };
+		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = { flat::CreateMaterialName(fbb, STRING_ID(materialName), materialPackName) };
 
 		auto model = flat::CreateModelDirect(fbb, STRING_ID(filename.c_str()), &meshPaths, &materialNames);
 

@@ -33,8 +33,7 @@ namespace r2::asset
 
         r2::SHashMap<AssetCacheRecord>* mAssetCacheRecords;
 
-        r2::SArray<ManifestAssetFile*>* mGamesManifestAssetFiles;
-        r2::SArray<ManifestAssetFile*>* mEngineManifestAssetFiles;
+        r2::SArray<ManifestAssetFile*>* mManifestFiles;
 
         FileList mGameFileList;
 
@@ -55,14 +54,13 @@ namespace r2::asset::lib
 
     
 
-    AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numGameManifests, u32 numEngineManifests, u32 cacheSize);
+    AssetLib* Create(const r2::mem::utils::MemBoundary& boundary, u32 numManifests, u32 cacheSize);
     void Shutdown(AssetLib* assetLib);
     void Update(AssetLib& assetLib);
     
-    const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle, bool isGameManifest);
-    const byte* GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, bool isGameManifest);
+    const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
 
-    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile, bool isGameManifest);
+    void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
     bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
     FileList GetFileList(const AssetLib& assetLib);
 
