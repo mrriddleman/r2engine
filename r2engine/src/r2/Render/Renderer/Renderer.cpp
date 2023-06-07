@@ -980,16 +980,12 @@ namespace r2::draw::renderer
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
 #ifdef R2_DEBUG
-		newRenderer->mDebugLinesShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugLines")));
-		newRenderer->mDebugModelShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DebugModels")));
+		newRenderer->mDebugLinesShaderHandle = shadersystem::FindShaderHandle(STRING_ID("Debug"));
+		newRenderer->mDebugModelShaderHandle = shadersystem::FindShaderHandle(STRING_ID("DebugModel"));
 #endif
-		newRenderer->mFinalCompositeShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("FinalComposite")));
-		newRenderer->mDefaultStaticOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticOutline")));
-		newRenderer->mDefaultDynamicOutlineShaderHandle = mat::GetShaderHandle(mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("DynamicOutline")));
-
-
-		
-		
+		newRenderer->mFinalCompositeShaderHandle = shadersystem::FindShaderHandle(STRING_ID("Screen"));
+		newRenderer->mDefaultStaticOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("StaticOutline"));
+		newRenderer->mDefaultDynamicOutlineShaderHandle = shadersystem::FindShaderHandle(STRING_ID("DynamicOutline"));
 
 		//Get the depth shader handles
 		newRenderer->mShadowDepthShaders[0] = shadersystem::FindShaderHandle(STRING_ID("StaticShadowDepth"));
@@ -2596,112 +2592,23 @@ namespace r2::draw::renderer
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer)
 	{
-
 		return renderer.mMissingTextureRenderMaterialParams;
-
-		//if (renderer.mnoptrMaterialSystem == nullptr)
-		//{
-		//	R2_CHECK(false, "We haven't initialized the renderer yet");
-		//	return {};
-		//}
-
-		//auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
-
-		//R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		//return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);
 	}
 
 	const tex::Texture* GetMissingTexture(Renderer* renderer)
 	{
 		return &renderer->mMissingTexture;
-		//if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
-		//{
-		//	return nullptr;
-		//}
-
-		//auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"));
-
-		//R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		//return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;
 	}
 
 	const RenderMaterialParams& GetBlueNoise64TextureMaterialParam(Renderer& renderer)
 	{
 		return renderer.mBlueNoiseRenderMaterialParams;
-		/*if (renderer.mnoptrMaterialSystem == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet");
-			return {};
-		}
-
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer.mnoptrMaterialSystem, STRING_ID("BlueNoise64"));
-
-		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		return r2::draw::mat::GetRenderMaterial(*renderer.mnoptrMaterialSystem, materialID);*/
 	}
 
 	const tex::Texture* GetBlueNoise64Texture(Renderer* renderer)
 	{
 		return &renderer->mBlueNoiseTexture;
-		/*if (renderer == nullptr || renderer->mnoptrMaterialSystem == nullptr)
-		{
-			return nullptr;
-		}
-
-		auto materialID = r2::draw::mat::GetMaterialHandleFromMaterialName(*renderer->mnoptrMaterialSystem, STRING_ID("BlueNoise64"));
-
-		R2_CHECK(!mat::IsInvalidHandle(materialID), "We have an invalid material handle trying to get the missing texture material!");
-
-		return &mat::GetMaterialTextureAssetsForMaterial(*renderer->mnoptrMaterialSystem, materialID).normalTextures.materialTexture.diffuseTexture;*/
 	}
-
-	/*void GetDefaultModelMaterials(Renderer& renderer, r2::SArray<r2::draw::MaterialHandle>& defaultModelMaterials)
-	{
-		const r2::draw::Model* quadModel = GetDefaultModel(renderer, r2::draw::QUAD);
-		const r2::draw::Model* sphereModel = GetDefaultModel(renderer, r2::draw::SPHERE);
-		const r2::draw::Model* cubeModel = GetDefaultModel(renderer, r2::draw::CUBE);
-		const r2::draw::Model* cylinderModel = GetDefaultModel(renderer, r2::draw::CYLINDER);
-		const r2::draw::Model* coneModel = GetDefaultModel(renderer, r2::draw::CONE);
-		const r2::draw::Model* skyboxModel = GetDefaultModel(renderer, r2::draw::SKYBOX);
-		const r2::draw::Model* fullscreenTriangleModel = GetDefaultModel(renderer, r2::draw::FULLSCREEN_TRIANGLE);
-
-		r2::SArray<const r2::draw::Model*>* defaultModels = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::Model*, NUM_DEFAULT_MODELS);
-		r2::sarr::Push(*defaultModels, quadModel);
-		r2::sarr::Push(*defaultModels, cubeModel);
-		r2::sarr::Push(*defaultModels, sphereModel);
-		r2::sarr::Push(*defaultModels, coneModel);
-		r2::sarr::Push(*defaultModels, cylinderModel);
-		r2::sarr::Push(*defaultModels, fullscreenTriangleModel);
-		r2::sarr::Push(*defaultModels, skyboxModel);
-
-		u64 numModels = r2::sarr::Size(*defaultModels);
-		for (u64 i = 0; i < numModels; ++i)
-		{
-			const r2::draw::Model* model = r2::sarr::At(*defaultModels, i);
-			r2::draw::MaterialHandle materialHandle = r2::sarr::At(*model->optrMaterialHandles, 0);
-			r2::sarr::Push(defaultModelMaterials, materialHandle);
-		}
-
-		FREE(defaultModels, *MEM_ENG_SCRATCH_PTR);
-	}*/
-
-	/*r2::draw::MaterialHandle GetMaterialHandleForDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel)
-	{
-		if (renderer.mModelCache == nullptr)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return r2::draw::MaterialHandle{};
-		}
-
-		const r2::draw::Model* model = GetDefaultModel(renderer, defaultModel);
-
-		r2::draw::MaterialHandle materialHandle = r2::sarr::At(*model->optrMaterialHandles, 0);
-
-		return materialHandle;
-	}*/
 
 	r2::draw::ShaderHandle GetDefaultOutlineShaderHandle(Renderer& renderer, bool isStatic)
 	{
@@ -2779,6 +2686,12 @@ namespace r2::draw::renderer
 
 		const auto numMaterialNames = r2::sarr::Size(*model->optrMaterialNames);
 
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+
+	//	asset::lib::GetManifestData(assetLib,)
+
+
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
 			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
@@ -2789,8 +2702,8 @@ namespace r2::draw::renderer
 
 			r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
-
 			//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
+			
 			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
