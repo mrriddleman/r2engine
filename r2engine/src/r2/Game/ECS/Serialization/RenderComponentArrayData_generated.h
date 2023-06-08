@@ -6,6 +6,8 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "Model_generated.h"
+
 namespace flat {
 
 struct StencilOp;
@@ -28,9 +30,6 @@ struct CullStateBuilder;
 
 struct DrawParameters;
 struct DrawParametersBuilder;
-
-struct OverrideMaterial;
-struct OverrideMaterialBuilder;
 
 struct RenderComponentData;
 struct RenderComponentDataBuilder;
@@ -522,58 +521,6 @@ inline flatbuffers::Offset<DrawParameters> CreateDrawParameters(
   return builder_.Finish();
 }
 
-struct OverrideMaterial FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef OverrideMaterialBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MATERIALSYSTEM = 4,
-    VT_MATERIALNAME = 6
-  };
-  uint64_t materialSystem() const {
-    return GetField<uint64_t>(VT_MATERIALSYSTEM, 0);
-  }
-  uint64_t materialName() const {
-    return GetField<uint64_t>(VT_MATERIALNAME, 0);
-  }
-  bool Verify(flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint64_t>(verifier, VT_MATERIALSYSTEM) &&
-           VerifyField<uint64_t>(verifier, VT_MATERIALNAME) &&
-           verifier.EndTable();
-  }
-};
-
-struct OverrideMaterialBuilder {
-  typedef OverrideMaterial Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_materialSystem(uint64_t materialSystem) {
-    fbb_.AddElement<uint64_t>(OverrideMaterial::VT_MATERIALSYSTEM, materialSystem, 0);
-  }
-  void add_materialName(uint64_t materialName) {
-    fbb_.AddElement<uint64_t>(OverrideMaterial::VT_MATERIALNAME, materialName, 0);
-  }
-  explicit OverrideMaterialBuilder(flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  OverrideMaterialBuilder &operator=(const OverrideMaterialBuilder &);
-  flatbuffers::Offset<OverrideMaterial> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<OverrideMaterial>(end);
-    return o;
-  }
-};
-
-inline flatbuffers::Offset<OverrideMaterial> CreateOverrideMaterial(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    uint64_t materialSystem = 0,
-    uint64_t materialName = 0) {
-  OverrideMaterialBuilder builder_(_fbb);
-  builder_.add_materialName(materialName);
-  builder_.add_materialSystem(materialSystem);
-  return builder_.Finish();
-}
-
 struct RenderComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RenderComponentDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -595,8 +542,8 @@ struct RenderComponentData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table 
   const flat::DrawParameters *drawParams() const {
     return GetPointer<const flat::DrawParameters *>(VT_DRAWPARAMS);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::OverrideMaterial>> *overrideMaterials() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::OverrideMaterial>> *>(VT_OVERRIDEMATERIALS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *overrideMaterials() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *>(VT_OVERRIDEMATERIALS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -628,7 +575,7 @@ struct RenderComponentDataBuilder {
   void add_drawParams(flatbuffers::Offset<flat::DrawParameters> drawParams) {
     fbb_.AddOffset(RenderComponentData::VT_DRAWPARAMS, drawParams);
   }
-  void add_overrideMaterials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::OverrideMaterial>>> overrideMaterials) {
+  void add_overrideMaterials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> overrideMaterials) {
     fbb_.AddOffset(RenderComponentData::VT_OVERRIDEMATERIALS, overrideMaterials);
   }
   explicit RenderComponentDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
@@ -649,7 +596,7 @@ inline flatbuffers::Offset<RenderComponentData> CreateRenderComponentData(
     uint32_t primitiveType = 0,
     bool isAnimated = false,
     flatbuffers::Offset<flat::DrawParameters> drawParams = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::OverrideMaterial>>> overrideMaterials = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> overrideMaterials = 0) {
   RenderComponentDataBuilder builder_(_fbb);
   builder_.add_assetModelHash(assetModelHash);
   builder_.add_overrideMaterials(overrideMaterials);
@@ -665,8 +612,8 @@ inline flatbuffers::Offset<RenderComponentData> CreateRenderComponentDataDirect(
     uint32_t primitiveType = 0,
     bool isAnimated = false,
     flatbuffers::Offset<flat::DrawParameters> drawParams = 0,
-    const std::vector<flatbuffers::Offset<flat::OverrideMaterial>> *overrideMaterials = nullptr) {
-  auto overrideMaterials__ = overrideMaterials ? _fbb.CreateVector<flatbuffers::Offset<flat::OverrideMaterial>>(*overrideMaterials) : 0;
+    const std::vector<flatbuffers::Offset<flat::MaterialName>> *overrideMaterials = nullptr) {
+  auto overrideMaterials__ = overrideMaterials ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialName>>(*overrideMaterials) : 0;
   return flat::CreateRenderComponentData(
       _fbb,
       assetModelHash,

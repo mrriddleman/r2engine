@@ -50,4 +50,28 @@ namespace r2::mat
 		return 0;
 	}
 
+	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName)
+	{
+		const flat::MaterialParams* material = GetMaterialParamsForMaterialName(materialPack, materialName);
+
+		if (!material)
+		{
+			return 0;
+		}
+
+		const auto numTextureParams = material->textureParams()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTextureParams; ++i)
+		{
+			const auto* texParam = material->textureParams()->Get(i);
+
+			if (texParam->propertyType() == flat::MaterialPropertyType_ALBEDO)
+			{
+				return texParam->value();
+			}
+		}
+
+		return 0;
+	}
+
 }

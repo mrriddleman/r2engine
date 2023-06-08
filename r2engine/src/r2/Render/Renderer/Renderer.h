@@ -153,8 +153,8 @@ namespace r2::draw
 
 		//--------------BEGIN Systems stuff----------------
 		ModelCache* mModelCache = nullptr;
-		//@TODO(Serge): get rid of this
-		MaterialSystem* mnoptrMaterialSystem = nullptr;
+		
+		
 		LightSystem* mLightSystem = nullptr;
 		vb::VertexBufferLayoutSystem* mVertexBufferLayoutSystem = nullptr;
 		RenderMaterialCache* mRenderMaterialCache = nullptr;
@@ -459,7 +459,7 @@ namespace r2::draw
 namespace r2::draw::renderer
 {
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, MaterialSystem* noptrInternalMaterialSystem);
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle);
 	void Update(Renderer& renderer);
 	void Render(Renderer& renderer, float alpha);
 	void Shutdown(Renderer* renderer);

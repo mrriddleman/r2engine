@@ -1,14 +1,21 @@
 #include "r2pch.h"
 
 #include "r2/Game/ECS/Systems/RenderSystem.h"
+
+#include "r2/Core/Assets/AssetLib.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Utils/Hash.h"
+
+
 
 namespace r2::ecs
 {
@@ -73,6 +80,8 @@ namespace r2::ecs
 			}
 		}
 
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
 		if (hasMaterialOverrides)
 		{
 			u32 numOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
@@ -81,15 +90,17 @@ namespace r2::ecs
 
 			for (u32 i = 0; i < numOverrides; ++i)
 			{
-				const RenderMaterialOverride& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
+				const r2::mat::MaterialName& materialName = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, i);
 
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.materialName);
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, materialName.name);
 				R2_CHECK(renderMaterial != nullptr, "Can't be nullptr");
 				const r2::draw::RenderMaterialParams& nextRenderMaterial = *renderMaterial;
 
-				r2::draw::MaterialSystem* matSys = r2::draw::matsys::GetMaterialSystemBySystemName(materialName.materialSystemName);
-				r2::draw::ShaderHandle materialShaderHandle = r2::draw::mat::GetShaderHandle(*matSys, r2::draw::mat::GetMaterialHandleFromMaterialName(*matSys, materialName.materialName));
+				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
+				const flat::MaterialParamsPack* materialManifest = flat::GetMaterialParamsPack(manifestData);
+
+				r2::draw::ShaderHandle materialShaderHandle = r2::draw::shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialManifest, materialName.name));
 
 				r2::sarr::Push(*mBatch.renderMaterialParams, nextRenderMaterial);
 				r2::sarr::Push(*mBatch.shaderHandles, materialShaderHandle);

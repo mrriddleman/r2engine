@@ -1,3 +1,5 @@
+include "../Model.fbs";
+
 namespace flat;
 
 table StencilOp
@@ -52,19 +54,13 @@ table DrawParameters
 	cullState:CullState;
 }
 
-table OverrideMaterial
-{
-	materialSystem:ulong(hash:"fnv1a_64");
-	materialName:ulong(hash:"fnv1a_64");
-}
-
 table RenderComponentData
 {
 	assetModelHash:ulong(hash:"fnv1a_64");
 	primitiveType:uint;
 	isAnimated:bool;
 	drawParams:DrawParameters;
-	overrideMaterials:[OverrideMaterial];
+	overrideMaterials:[MaterialName];
 }
 
 table RenderComponentArrayData

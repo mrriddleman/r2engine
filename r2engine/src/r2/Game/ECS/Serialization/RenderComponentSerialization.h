@@ -8,6 +8,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/Renderer.h"
+#include "r2/Render/Model/Model_generated.h"
 
 namespace r2::ecs
 {
@@ -101,19 +102,19 @@ namespace r2::ecs
 
 			auto flatDrawParams = drawParametersBuilder.Finish();
 
-			flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::OverrideMaterial>>> overrideMaterialOffset = 0;
+			flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> overrideMaterialOffset = 0;
 			if (renderComponent.optrMaterialOverrideNames)
 			{
 				const auto numMaterialOverrides = r2::sarr::Size(*renderComponent.optrMaterialOverrideNames);
-				std::vector<flatbuffers::Offset<flat::OverrideMaterial>> flatOverrideMaterials;
+				std::vector<flatbuffers::Offset<flat::MaterialName>> flatOverrideMaterials;
 
 				for (u32 j = 0; j < numMaterialOverrides; ++j)
 				{
 					const auto& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
 
-					flat::OverrideMaterialBuilder overrideMaterialBuilder(fbb);
-					overrideMaterialBuilder.add_materialName(materialOverride.materialName);
-					overrideMaterialBuilder.add_materialSystem(materialOverride.materialSystemName);
+					flat::MaterialNameBuilder overrideMaterialBuilder(fbb);
+					overrideMaterialBuilder.add_name(materialOverride.name);//.add_materialName(materialOverride.materialName);
+					overrideMaterialBuilder.add_materialPackName(materialOverride.packName);//.add_materialSystem(materialOverride.materialSystemName);
 
 					flatOverrideMaterials.push_back(overrideMaterialBuilder.Finish());
 				}
@@ -193,15 +194,15 @@ namespace r2::ecs
 
 			if (flatRenderComponent->overrideMaterials())
 			{
-				renderComponent.optrMaterialOverrideNames = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, RenderMaterialOverride, flatRenderComponent->overrideMaterials()->size());
+				renderComponent.optrMaterialOverrideNames = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, flatRenderComponent->overrideMaterials()->size());
 
 				for (flatbuffers::uoffset_t j = 0; j < flatRenderComponent->overrideMaterials()->size(); j++)
 				{
 					const auto* flatOverrideMaterial = flatRenderComponent->overrideMaterials()->Get(j);
 
-					RenderMaterialOverride renderMaterialOverride;
-					renderMaterialOverride.materialName = flatOverrideMaterial->materialName();
-					renderMaterialOverride.materialSystemName = flatOverrideMaterial->materialSystem();
+					r2::mat::MaterialName renderMaterialOverride;
+					renderMaterialOverride.name = flatOverrideMaterial->name();
+					renderMaterialOverride.packName = flatOverrideMaterial->materialPackName();
 
 					r2::sarr::Push(*renderComponent.optrMaterialOverrideNames, renderMaterialOverride);
 				}

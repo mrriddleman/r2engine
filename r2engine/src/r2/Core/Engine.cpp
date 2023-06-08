@@ -434,12 +434,10 @@ namespace r2
 			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
-            const auto engineMaterialParamsPackSize = SetupMaterialPacks(materialsPath, appMaterialPacksManifests);
-            
+            SetupMaterialPacks(materialsPath, appMaterialPacksManifests);
+            SetupGameAssetManager(noptrApp);
 
             //@TODO(Serge): get tha asset boundary from the app, then make the GameAssetManager from all the material/texture files
-            
-
             
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
 			bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
@@ -456,68 +454,14 @@ namespace r2
 				return false;
 			}
 
-			u32 materialMemorySystemSize = r2::draw::mat::GetMaterialBoundarySize(materialsPath, texturePackPath);
-
-			r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*MEM_ENG_PERMANENT_PTR, materialMemorySystemSize, ALIGNMENT);
-
-			mEngineMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialsPath, r2::sarr::At(*mMaterialParamPacks, 0), engineMaterialParamsPackSize, texturePackPath);
-
-            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle, mEngineMaterialSystem);
+            mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle);
 
             R2_CHECK(mRendererBackends[mCurrentRendererBackend] != nullptr, "Failed to create the %s renderer!", r2::draw::GetRendererBackendName(mCurrentRendererBackend));
             
-
-			
-
-
-            //setup the GameAssetManager + ECSWorld + LevelManager
+            //setup the ECSWorld + LevelManager
             {
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
-
-				std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
-
-				u32 totalNumTextures = 0;
-				u32 totalNumTextureManifests = textureManifests.size();
-				u32 totalNumTexturePacks = 0;
-				u32 totalTextureCacheSize = 0;
-
-				for (u32 i = 0; i < textureManifests.size(); ++i)
-				{
-					u32 numTextures = 0;
-					u32 cacheSize = 0;
-					u32 numTexturePacks = 0;
-
-					r2::draw::texche::GetTexturePacksCacheSizes(textureManifests[i].c_str(), numTextures, numTexturePacks, cacheSize);
-
-                    totalNumTextures += numTextures;
-                    totalNumTexturePacks += numTexturePacks;
-                    totalTextureCacheSize += cacheSize;
-				}
-
-#ifdef R2_ASSET_PIPELINE
-                totalNumTextures = std::max(totalNumTextures, 2000u);
-                totalNumTexturePacks = std::max(totalNumTexturePacks, 1000u);
-                totalNumTextureManifests = std::max(totalNumTextureManifests, 100u);
-#endif
-
-                mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
-
-                auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
-                r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
-                memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
-
-
-                r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
-
-                noptrApp->AddLooseAssetFiles(r2::asset::lib::GetFileList(*mAssetLib));
-
-                mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, r2::asset::lib::GetFileList(*mAssetLib), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks );
-
-                for (u32 i = 0; i < textureManifests.size(); ++i)
-                {
-                    mGameAssetManager->AddTexturePacksManifest(textureManifests[i].c_str());
-                }
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
                 mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
@@ -619,9 +563,6 @@ namespace r2
       //  mECSCoordinator->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);
        // FREE(mECSCoordinator, *MEM_ENG_PERMANENT_PTR);
         
-        r2::mem::utils::MemBoundary materialSystemBoundary = mEngineMaterialSystem->mMaterialMemBoundary;
-        r2::draw::matsys::FreeMaterialSystem(mEngineMaterialSystem);
-        FREE(materialSystemBoundary.location, *MEM_ENG_PERMANENT_PTR);
 
         r2::draw::shadersystem::Shutdown();
         r2::draw::matsys::ShutdownMaterialSystems();
@@ -1185,7 +1126,59 @@ namespace r2
         }
     }
 
-    u64 Engine::SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
+    void Engine::SetupGameAssetManager(const Application* noptrApp)
+    {
+        std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
+
+		u32 totalNumTextures = 0;
+		u32 totalNumTextureManifests = textureManifests.size();
+		u32 totalNumTexturePacks = 0;
+		u32 totalTextureCacheSize = 0;
+
+		for (u32 i = 0; i < textureManifests.size(); ++i)
+		{
+			u32 numTextures = 0;
+			u32 cacheSize = 0;
+			u32 numTexturePacks = 0;
+
+			r2::draw::texche::GetTexturePacksCacheSizes(textureManifests[i].c_str(), numTextures, numTexturePacks, cacheSize);
+
+			totalNumTextures += numTextures;
+			totalNumTexturePacks += numTexturePacks;
+			totalTextureCacheSize += cacheSize;
+		}
+
+#ifdef R2_ASSET_PIPELINE
+		totalNumTextures = std::max(totalNumTextures, 2000u);
+		totalNumTexturePacks = std::max(totalNumTexturePacks, 1000u);
+		totalNumTextureManifests = std::max(totalNumTextureManifests, 100u);
+#endif
+
+		mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
+
+		auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
+		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
+		memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
+
+
+		r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
+
+		noptrApp->AddLooseAssetFiles(r2::asset::lib::GetFileList(*mAssetLib));
+
+		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, r2::asset::lib::GetFileList(*mAssetLib), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
+
+		char engineTexturePackManifestPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, engineTexturePackManifestPath, "engine_texture_pack.tman");
+
+        mGameAssetManager->AddTexturePacksManifest(engineTexturePackManifestPath);
+
+		for (u32 i = 0; i < textureManifests.size(); ++i)
+		{
+			mGameAssetManager->AddTexturePacksManifest(textureManifests[i].c_str());
+		}
+    }
+
+    void Engine::SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
     {
         //This will be the new setup:
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
@@ -1197,8 +1190,6 @@ namespace r2
             r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
         }
 
-
-
 		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
 
 		const char* engineMaterialParamsPackPath = materialsPath;
@@ -1207,28 +1198,6 @@ namespace r2
 		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
 		{
 			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
-		}
-
-		u64 engineMaterialParamsPackSize = 0;
-
-		u32 numMaterialParamsPacks = r2::sarr::Size(*pathsToLoad);
-		for (u32 i = 0; i < numMaterialParamsPacks; ++i)
-		{
-			u64 materialParamsPackSize = 0;
-			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_SCRATCH_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
-
-			if (!materialParamsPackData)
-			{
-				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
-				return 0 ;
-			}
-
-			if (i == 0)
-			{
-				engineMaterialParamsPackSize = materialParamsPackSize;
-			}
-
-			FREE(materialParamsPackData, *MEM_ENG_SCRATCH_PTR);
 		}
 
 		mMaterialParamPacksData = MAKE_SARRAY(*MEM_ENG_PERMANENT_PTR, void*, appMaterialPacksManifests.size() + 1);
@@ -1243,7 +1212,7 @@ namespace r2
 			if (!materialParamsPackData)
 			{
 				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
-				return  0;
+				return;
 			}
 
 			r2::sarr::Push(*mMaterialParamPacksData, materialParamsPackData);
@@ -1255,7 +1224,7 @@ namespace r2
 		}
 		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
 
-        return engineMaterialParamsPackSize;
+		
     }
     
     void Engine::OnEvent(evt::Event& e)

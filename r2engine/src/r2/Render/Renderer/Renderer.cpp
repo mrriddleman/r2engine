@@ -8,6 +8,7 @@
 #include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Textures/Texture.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
@@ -20,6 +21,7 @@
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 #include "r2/Utils/Hash.h"
 #include "glm/gtc/type_ptr.hpp"
@@ -807,7 +809,7 @@ namespace r2::draw::renderer
 	//}
 
 	//basic stuff
-	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle, MaterialSystem* noptrInternalMaterialSystem)
+	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle)
 	{
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "The memoryAreaHandle passed in is invalid!");
 
@@ -944,14 +946,6 @@ namespace r2::draw::renderer
 		}
 
 		SetClearDepth(1.0f);
-
-		newRenderer->mnoptrMaterialSystem = noptrInternalMaterialSystem;
-		
-		if (!newRenderer->mnoptrMaterialSystem)
-		{
-			R2_CHECK(false, "We couldn't initialize the material system");
-			return false;
-		}
 
 		bool textureSystemInitialized = r2::draw::texsys::Init(memoryAreaHandle, MAX_NUM_TEXTURES, nullptr, "Texture System");
 		if (!textureSystemInitialized)
@@ -1286,63 +1280,43 @@ namespace r2::draw::renderer
 		InitializeVertexLayouts(*newRenderer, STATIC_MODELS_VERTEX_LAYOUT_SIZE, ANIM_MODELS_VERTEX_LAYOUT_SIZE);
 
 		
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*newRenderer->mnoptrMaterialSystem);
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		const u64 numMaterials = r2::sarr::Size(*newRenderer->mnoptrMaterialSystem->mInternalData);
+		asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		for (u64 i = 0; i < numMaterials; ++i)
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
+
+		const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
+
+		const flat::MaterialParamsPack* engineMaterialPack = flat::GetMaterialParamsPack(materialManifestData);
+
+		gameAssetManager.LoadMaterialTextures(engineMaterialPack);
+
+
+		r2::SArray<r2::draw::tex::Texture>* engineTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 10);
+
+		gameAssetManager.GetTexturesForMaterialParamsPack(engineMaterialPack, engineTextures, nullptr);
+
+		for (flatbuffers::uoffset_t i = 0; i < engineMaterialPack->pack()->size(); ++i)
 		{
-			const flat::MaterialParams* materialParams = newRenderer->mnoptrMaterialSystem->mMaterialParamsPack->pack()->Get(i);
+			const flat::MaterialParams* materialParams = engineMaterialPack->pack()->Get(i);
 
-			R2_CHECK(materialParams != nullptr, "We should have the material params!");
-			R2_CHECK(r2::sarr::At(*newRenderer->mnoptrMaterialSystem->mInternalData, i).materialName == materialParams->name(), "hmmm");
+			bool result = rmat::UploadMaterialTextureParams(*newRenderer->mRenderMaterialCache, materialParams, engineTextures, nullptr);
 
-			const InternalMaterialData& internalMaterialData = r2::sarr::At(*newRenderer->mnoptrMaterialSystem->mInternalData, i);
-
-			if (internalMaterialData.mType == r2::asset::TEXTURE)
-			{
-				r2::SArray<tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, tex::Texture, tex::Cubemap);
-
-				//for (u32 i = 0; i < tex::Cubemap; ++i)
-				{
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.diffuseTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.anisotropyTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.aoTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.clearCoatNormalTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.clearCoatRoughnessTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.clearCoatTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.detailTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.emissionTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.heightTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.metallicTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.normalMapTexture);
-					r2::sarr::Push(*textures, internalMaterialData.textureAssets.normalTextures.materialTexture.roughnessTexture);
-				}
-
-				bool result = rmat::UploadMaterialTextureParams(*newRenderer->mRenderMaterialCache, materialParams, textures, nullptr);
-
-				R2_CHECK(result, "We failed to upload the material texture params");
-
-				FREE(textures, *MEM_ENG_SCRATCH_PTR);
-				
-			}
-			else
-			{
-				rmat::UploadMaterialTextureParams(*newRenderer->mRenderMaterialCache, materialParams, nullptr, &internalMaterialData.textureAssets.cubemap);
-			}
+			R2_CHECK(result, "We failed to upload the material texture params");
 		}
 
-		//@TODO(Serge): Get the rendermaterialparams directly here
+		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
+
 		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));
 		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
 
-		newRenderer->mMissingTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("StaticMissingTexture"))).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("StaticMissingTexture"));
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticMissingTexture"));
 
-		newRenderer->mBlueNoiseTexture = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*newRenderer->mnoptrMaterialSystem, r2::draw::mat::GetMaterialHandleFromMaterialName(*newRenderer->mnoptrMaterialSystem, STRING_ID("BlueNoise64"))).normalTextures.materialTexture.diffuseTexture;
+		newRenderer->mBlueNoiseTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
-
-
 
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
 		UploadEngineModels(*newRenderer);
@@ -1627,7 +1601,9 @@ namespace r2::draw::renderer
 		}
 
 		//Needs to be here - we may need to move the texture system out of the renderer for this to go
-		mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
+	//	mat::UnloadAllMaterialTexturesFromGPU(*renderer->mnoptrMaterialSystem);
+
+
 
 		lightsys::DestroyLightSystem(*arena, renderer->mLightSystem);
 	
@@ -2688,13 +2664,14 @@ namespace r2::draw::renderer
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-
-	//	asset::lib::GetManifestData(assetLib,)
-
-
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
 			auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
+
+			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+
+			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
 			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
@@ -2702,14 +2679,11 @@ namespace r2::draw::renderer
 
 			r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
-			//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-			
-			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
+			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
 			r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-
 		}
 		
 		return result;
@@ -2750,6 +2724,8 @@ namespace r2::draw::renderer
 
 		const auto numModelRefs = r2::sarr::Size(modelRefs);
 
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
 		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
 		{
 			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
@@ -2763,6 +2739,10 @@ namespace r2::draw::renderer
 			for (u32 i = 0; i < numMaterialNames; ++i)
 			{
 				auto materialName = r2::sarr::At(*model->optrMaterialNames, i);
+				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+
+				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
 				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
@@ -2770,9 +2750,7 @@ namespace r2::draw::renderer
 
 				r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
-
-				//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
+				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
 				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2786,6 +2764,11 @@ namespace r2::draw::renderer
 		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return vb::InvalidGPUModelRefHandle;
+		}
+
+		if (!model)
+		{
 			return vb::InvalidGPUModelRefHandle;
 		}
 
@@ -2803,11 +2786,18 @@ namespace r2::draw::renderer
 		R2_CHECK(modelRef != nullptr, "?");
 		//now resolve the material name
 
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
 		const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
 
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
 			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
+
+			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+
+			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
 			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
@@ -2815,9 +2805,7 @@ namespace r2::draw::renderer
 
 			r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
-
-			//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-			ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
+			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
 			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
@@ -2861,6 +2849,10 @@ namespace r2::draw::renderer
 
 		const auto numModelRefs = r2::sarr::Size(modelRefs);
 
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+
 		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
 		{
 			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
@@ -2875,14 +2867,18 @@ namespace r2::draw::renderer
 			{
 				auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
 
+				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+
+				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+
 				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
 
 				R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
 
 				r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
 
-				//@TODO(Serge): when we refactor the AssetLib so that it contains the materialparams - then we can use that instead
-				ShaderHandle shaderHandle = mat::GetShaderHandle(matsys::FindMaterialHandle(materialName.name));
+				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
 				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 

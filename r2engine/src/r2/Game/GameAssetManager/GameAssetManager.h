@@ -174,6 +174,8 @@ namespace r2
 		bool GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 		bool GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
+		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
+
 #ifdef R2_ASSET_PIPELINE
 		void AssetChanged(const std::string& path, r2::asset::AssetType type);
 		void AssetAdded(const std::string& path, r2::asset::AssetType type);

@@ -376,7 +376,59 @@ namespace r2
 
 		GetTexturesForMaterialParamsInternal(texturePacks, textures, cubemaps);
 
+		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
+
 		return true;
+	}
+
+	const r2::draw::tex::Texture* GameAssetManager::GetAlbedoTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName)
+	{
+		s32 materialParamsPackIndex = -1;
+		s32 materialTexParamsIndex = -1;
+
+		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
+		{
+			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+			if (materialParams->name() == materialName)
+			{
+				const auto numTextureParams = materialParams->textureParams()->size();
+				
+				for (u32 j = 0; j < numTextureParams; ++j)
+				{
+					if (materialParams->textureParams()->Get(j)->propertyType() == flat::MaterialPropertyType_ALBEDO)
+					{
+						materialParamsPackIndex = i;
+						materialTexParamsIndex = j;
+						break;
+					}
+				}
+
+				if (materialParamsPackIndex != -1)
+				{
+					break;
+				}
+			}
+		}
+
+		if (materialParamsPackIndex == -1 || materialTexParamsIndex == -1)
+		{
+			return nullptr;
+		}
+
+		const r2::SArray<r2::draw::tex::Texture>* textures =draw::texche::GetTexturesForTexturePack(*mTexturePacksCache, materialParamsPack->pack()->Get(materialParamsPackIndex)->textureParams()->Get(materialTexParamsIndex)->texturePackName());
+
+		const auto numTextures = r2::sarr::Size(*textures);
+
+		for (u32 i = 0; i < numTextures; ++i)
+		{
+			const draw::tex::Texture& texture = r2::sarr::At(*textures, i);
+			if (texture.type == draw::tex::Diffuse)
+			{
+				return &texture;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void GameAssetManager::FreeAllAssets()
