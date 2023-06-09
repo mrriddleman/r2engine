@@ -43,7 +43,7 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
-
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
@@ -358,9 +358,9 @@ public:
         animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
 
-        mStaticCubeModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-        mStaticCubeMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-        mStaticCubesDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
+      //  mStaticCubeModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
+       // mStaticCubeMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+      //  mStaticCubesDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
         mStaticCubeModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::CUBE);
 
         mTransparentWindowMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
@@ -506,22 +506,42 @@ public:
 
         mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
 
-		r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
+		//r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
 
-		mMaterialSystem = r2::draw::matsys::CreateMaterialSystem(boundary, materialsPath, texturePackPath);
 
-		if (!mMaterialSystem)
-		{
-			R2_CHECK(false, "We couldn't initialize the material system");
-			return false;
-		}
+        r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-      //  FREE(texturePackManifestData, *MEM_ENG_SCRATCH_PTR);
-      //  FREE(materialPackData, *MEM_ENG_SCRATCH_PTR);
+		const byte* materialManifestData = r2::asset::lib::GetManifestData(assetLib, r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::EngineAssetType::MATERIAL_PACK_MANIFEST));
 
-		r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
-		r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
+		const flat::MaterialParamsPack* gameMaterialPack = flat::GetMaterialParamsPack(materialManifestData);
+
+		gameAssetManager.LoadMaterialTextures(gameMaterialPack);
+
+		u32 totalNumberOfTextures = 0;
+		u32 totalNumberOfTexturePacks = 0;
+		u32 totalNumCubemaps = 0;
+		u32 cacheSize = 0;
+		r2::draw::texche::GetTexturePacksCacheSizes(texturePackPath, totalNumberOfTextures, totalNumberOfTexturePacks, totalNumCubemaps, cacheSize);
+
+		r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
+		r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
+
+		gameAssetManager.GetTexturesForMaterialParamsPack(gameMaterialPack, gameTextures, gameCubemaps);
+
+        r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+		r2::draw::rmat::UploadMaterialTextureParamsArray(*renderMaterialCache, gameMaterialPack, gameTextures, gameCubemaps);
+
+		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
+		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
+
+        //materialsPath
+
+		//r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
+		//r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
+
+
+
 
         auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
         mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
@@ -554,53 +574,55 @@ public:
     //    r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
     //    R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
 
-        r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
-        R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
+      //  r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
+      //  R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
 
         r2::util::Random randomizer;
    //     randomizer.Randomize();
-        r2::sarr::Push(*mStaticCubeMaterials, blueClearCoatMaterialHandle);
-        for (u32 i = 0; i < NUM_DRAWS; ++i)
-        {
-           
-            r2::sarr::Push(*mStaticCubesDrawFlags, drawFlags);
-            
-            //figure out the position
-			auto zPos = (int)randomizer.RandomNum(1, 10);
-			auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
-			auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
+     //   r2::sarr::Push(*mStaticCubeMaterials, blueClearCoatMaterialHandle);
+   //     for (u32 i = 0; i < NUM_DRAWS; ++i)
+   //     {
+   //        
+   //         r2::sarr::Push(*mStaticCubesDrawFlags, drawFlags);
+   //         
+   //         //figure out the position
+			//auto zPos = (int)randomizer.RandomNum(1, 10);
+			//auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
+			//auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
 
-            glm::vec3 position = glm::vec3(xPos, yPos, zPos);
+   //         glm::vec3 position = glm::vec3(xPos, yPos, zPos);
 
-            glm::mat4 modelMat = glm::mat4(1.0);
+   //         glm::mat4 modelMat = glm::mat4(1.0);
 
-            float scale = static_cast<float>(randomizer.RandomNum(2, 7)) / 5.0f;
+   //         float scale = static_cast<float>(randomizer.RandomNum(2, 7)) / 5.0f;
 
-            float rotationX = static_cast<float>(randomizer.RandomNum(0, 350));
-            float rotationY = static_cast<float>(randomizer.RandomNum(0, 350));
-            float rotationZ = static_cast<float>(randomizer.RandomNum(0, 350));
+   //         float rotationX = static_cast<float>(randomizer.RandomNum(0, 350));
+   //         float rotationY = static_cast<float>(randomizer.RandomNum(0, 350));
+   //         float rotationZ = static_cast<float>(randomizer.RandomNum(0, 350));
 
 
-            modelMat = glm::translate(modelMat, position);
-			modelMat = glm::rotate(modelMat, glm::radians(rotationX), glm::vec3(1, 0, 0));
-			modelMat = glm::rotate(modelMat, glm::radians(rotationY), glm::vec3(0, 1, 0));
-			modelMat = glm::rotate(modelMat, glm::radians(rotationZ), glm::vec3(0, 0, 1));
-            modelMat = glm::scale(modelMat, glm::vec3(scale));
-            
-            
+   //         modelMat = glm::translate(modelMat, position);
+			//modelMat = glm::rotate(modelMat, glm::radians(rotationX), glm::vec3(1, 0, 0));
+			//modelMat = glm::rotate(modelMat, glm::radians(rotationY), glm::vec3(0, 1, 0));
+			//modelMat = glm::rotate(modelMat, glm::radians(rotationZ), glm::vec3(0, 0, 1));
+   //         modelMat = glm::scale(modelMat, glm::vec3(scale));
+   //         
+   //         
 
-            r2::sarr::Push(*mStaticCubeModelMats, modelMat);
-        }
+   //         r2::sarr::Push(*mStaticCubeModelMats, modelMat);
+   //     }
 
 
         //color grading
 
-        r2::draw::MaterialHandle colorGradingMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("ColorGradingLUT"));
-        R2_CHECK(r2::draw::mat::IsValid(colorGradingMaterialHandle), "Failed to get color grading material handle");
+       // r2::draw::MaterialHandle colorGradingMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("ColorGradingLUT"));
+       // R2_CHECK(r2::draw::mat::IsValid(colorGradingMaterialHandle), "Failed to get color grading material handle");
 
-        const r2::draw::tex::Texture& colorGradingLUT = r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mMaterialSystem, colorGradingMaterialHandle).normalTextures.materialTexture.diffuseTexture;
+        
 
-        r2::draw::renderer::SetColorGradingLUT(&colorGradingLUT, 32);
+        const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); //r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mMaterialSystem, colorGradingMaterialHandle).normalTextures.materialTexture.diffuseTexture;
+
+        r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
         r2::draw::renderer::SetColorGradingContribution(0.2);
         r2::draw::renderer::EnableColorGrading(true);
 
@@ -660,9 +682,9 @@ public:
         mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
 
 
-        r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportSkybox"));
+       // r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportSkybox"));
 
-        R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
+       // R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
 
 
         //r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
@@ -712,15 +734,16 @@ public:
         //setup the lights
         {
          
-            r2::draw::MaterialHandle prefilteredMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered"));
+         //   r2::draw::MaterialHandle prefilteredMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered"));
             
-            const auto* prefilteredCubemap = r2::draw::mat::GetCubemapTexture(*mMaterialSystem, prefilteredMaterialHandle);
+            const auto* prefilteredCubemap = gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); //r2::draw::mat::GetCubemapTexture(*mMaterialSystem, prefilteredMaterialHandle);
             s32 numMips = prefilteredCubemap->numMipLevels;
 
+            
             r2::draw::renderer::AddSkyLight(
-                r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"))),
-                r2::draw::mat::GetRenderMaterial(prefilteredMaterialHandle),
-                r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG"))), numMips);
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),//r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"))),
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),//r2::draw::mat::GetRenderMaterial(prefilteredMaterialHandle),
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);//r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG"))), numMips);
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
@@ -1625,10 +1648,10 @@ public:
 
         //r2::draw::animcache::Shutdown(*mAnimationCache);
         //r2::draw::modlche::Shutdown(mModelSystem);
-        r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*mMaterialSystem);
+        /*r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*mMaterialSystem);
         void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
         r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
-        FREE(materialBoundary, *linearArenaPtr);
+        FREE(materialBoundary, *linearArenaPtr);*/
 
         FREE(modelMats, *linearArenaPtr);
 
@@ -1661,9 +1684,9 @@ public:
         FREE(mTransparentWindowMats, *linearArenaPtr);
         FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
 
-        FREE(mStaticCubeModelMats, *linearArenaPtr);
-        FREE(mStaticCubeMaterials, *linearArenaPtr);
-        FREE(mStaticCubesDrawFlags, *linearArenaPtr);
+       // FREE(mStaticCubeModelMats, *linearArenaPtr);
+     //   FREE(mStaticCubeMaterials, *linearArenaPtr);
+        //FREE(mStaticCubesDrawFlags, *linearArenaPtr);
 
         
       //  mGameAssetManager.Shutdown();
@@ -2038,13 +2061,12 @@ private:
     r2::SArray<r2::asset::AssetHandle>* mAnimationsHandles;
 
     r2::draw::vb::GPUModelRefHandle mStaticCubeModelRefHandle;
-    r2::SArray<glm::mat4>* mStaticCubeModelMats;
-    r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
-    r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
+  //  r2::SArray<glm::mat4>* mStaticCubeModelMats;
+   // r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
+  //  r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
 
   //  r2::draw::ModelCache* mModelSystem = nullptr;
   //  r2::draw::AnimationCache* mAnimationCache = nullptr;
-    r2::draw::MaterialSystem* mMaterialSystem = nullptr;
 
     const r2::draw::AnimModel* mMicroBatModel = nullptr;
     const r2::draw::AnimModel* mSkeletonModel = nullptr;

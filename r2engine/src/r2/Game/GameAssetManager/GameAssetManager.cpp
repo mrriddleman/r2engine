@@ -431,6 +431,43 @@ namespace r2
 		return nullptr;
 	}
 
+	const r2::draw::tex::CubemapTexture* GameAssetManager::GetCubemapTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName)
+	{
+		s32 materialParamsPackIndex = -1;
+		s32 materialTexParamsIndex = -1;
+
+		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
+		{
+			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+			if (materialParams->name() == materialName)
+			{
+				const auto numTextureParams = materialParams->textureParams()->size();
+
+				for (u32 j = 0; j < numTextureParams; ++j)
+				{
+					if (materialParams->textureParams()->Get(j)->propertyType() == flat::MaterialPropertyType_ALBEDO)
+					{
+						materialParamsPackIndex = i;
+						materialTexParamsIndex = j;
+						break;
+					}
+				}
+
+				if (materialParamsPackIndex != -1)
+				{
+					break;
+				}
+			}
+		}
+
+		if (materialParamsPackIndex == -1 || materialTexParamsIndex == -1)
+		{
+			return nullptr;
+		}
+
+		return r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, materialParamsPack->pack()->Get(materialParamsPackIndex)->textureParams()->Get(materialTexParamsIndex)->texturePackName());
+	}
+
 	void GameAssetManager::FreeAllAssets()
 	{
 		if (!mAssetCache || !mCachedRecords)

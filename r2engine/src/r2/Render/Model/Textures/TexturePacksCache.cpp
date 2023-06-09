@@ -225,16 +225,19 @@ namespace r2::draw::texche
 
 				loadedTexturePack.cubemap.mips[m].mipLevel = mipLevel->level();
 
-				for (flatbuffers::uoffset_t i = 0; i < numSides; ++i)
+				for (flatbuffers::uoffset_t s = 0; s < numSides; ++s)
 				{
-					const auto side = mipLevel->sides()->Get(i);
+					const auto side = mipLevel->sides()->Get(s);
 
 					r2::asset::Asset textureAsset = r2::asset::Asset::MakeAssetFromFilePath(side->textureName()->c_str(), r2::asset::CUBEMAP_TEXTURE);
 
 					r2::draw::tex::Texture texture;
 					texture.type = tex::TextureType::Diffuse;
+					texture.textureAssetHandle = texturePacksCache.mnoptrGameAssetManager->LoadAsset(textureAsset);
 
-					loadedTexturePack.cubemap.mips[m].sides[i] = texture;
+					R2_CHECK(!r2::asset::IsInvalidAssetHandle(texture.textureAssetHandle), "We couldn't load the texture: %s!", side->textureName()->c_str());
+
+					loadedTexturePack.cubemap.mips[m].sides[s] = texture;
 				}
 			}
 		}
