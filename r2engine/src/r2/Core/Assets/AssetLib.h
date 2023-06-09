@@ -59,6 +59,8 @@ namespace r2::asset::lib
     void Update(AssetLib& assetLib);
     
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
+    void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray);
+
 
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
     bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);

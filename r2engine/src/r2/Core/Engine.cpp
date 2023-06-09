@@ -434,10 +434,19 @@ namespace r2
 			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
-            SetupMaterialPacks(materialsPath, appMaterialPacksManifests);
+            SetupMaterialManifests(materialsPath, appMaterialPacksManifests);
             SetupGameAssetManager(noptrApp);
 
-            //@TODO(Serge): get tha asset boundary from the app, then make the GameAssetManager from all the material/texture files
+            r2::SArray<const byte*>* materialManifestsData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, appMaterialPacksManifests.size() + 1);
+            r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParamsPack*, r2::sarr::Capacity(*materialManifestsData));
+
+            r2::asset::lib::GetManifestDataForType(*mAssetLib, r2::asset::MATERIAL_PACK_MANIFEST, materialManifestsData);
+
+            for (u32 i = 0; i < numMaterialManifests; ++i)
+            {
+                const byte* materialParamsPackData = r2::sarr::At(*materialManifestsData, i);
+                r2::sarr::Push(*materialParamsPacks, flat::GetMaterialParamsPack(materialParamsPackData));
+            }
             
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
 			bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
@@ -447,12 +456,15 @@ namespace r2
 				return false;
 			}
 
-			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, mMaterialParamPacks);
+			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, materialParamsPacks);
 			if (!shaderSystemIntialized)
 			{
 				R2_CHECK(false, "We couldn't initialize the shader system");
 				return false;
 			}
+
+            FREE(materialParamsPacks, *MEM_ENG_SCRATCH_PTR);
+            FREE(materialManifestsData, *MEM_ENG_SCRATCH_PTR);
 
             mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle);
 
@@ -570,13 +582,13 @@ namespace r2
         r2::draw::shadersystem::Shutdown();
         r2::draw::matsys::ShutdownMaterialSystems();
 		
-		const auto numParamPacks = r2::sarr::Size(*mMaterialParamPacksData);
-		for (s32 i = static_cast<s32>(numParamPacks) - 1; i >= 0; --i)
-		{
-			FREE(r2::sarr::At(*mMaterialParamPacksData, i), *MEM_ENG_PERMANENT_PTR);
-		}
-		FREE(mMaterialParamPacks, *MEM_ENG_PERMANENT_PTR);
-		FREE(mMaterialParamPacksData, *MEM_ENG_PERMANENT_PTR);
+		//const auto numParamPacks = r2::sarr::Size(*mMaterialParamPacksData);
+		//for (s32 i = static_cast<s32>(numParamPacks) - 1; i >= 0; --i)
+		//{
+		//	FREE(r2::sarr::At(*mMaterialParamPacksData, i), *MEM_ENG_PERMANENT_PTR);
+		//}
+		//FREE(mMaterialParamPacks, *MEM_ENG_PERMANENT_PTR);
+		//FREE(mMaterialParamPacksData, *MEM_ENG_PERMANENT_PTR);
 
 
         r2::mem::utils::MemBoundary assetLibBoundary = mAssetLib->mBoundary;
@@ -1183,7 +1195,7 @@ namespace r2
 		}
     }
 
-    void Engine::SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
+    void Engine::SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
     {
         //This will be the new setup:
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
@@ -1195,7 +1207,7 @@ namespace r2
             r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
         }
 
-		r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
+		/*r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
 
 		const char* engineMaterialParamsPackPath = materialsPath;
 		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
@@ -1227,7 +1239,7 @@ namespace r2
 
 			r2::sarr::Push(*mMaterialParamPacks, materialPack);
 		}
-		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);
+		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);*/
 
 		
     }

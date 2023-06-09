@@ -247,7 +247,7 @@ namespace r2
         void ControllerRemappedEvent(io::ControllerID controllerID);
         
         //Materials Setup
-        void SetupMaterialPacks(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests);
+        void SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests);
         void SetupGameAssetManager(const Application* noptrApp);
 
 
@@ -281,8 +281,8 @@ namespace r2
         EditorLayer* mEditorLayer;
 #endif
 
-		r2::SArray<void*>* mMaterialParamPacksData = nullptr;
-		r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
+		//r2::SArray<void*>* mMaterialParamPacksData = nullptr;
+		//r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
 
         draw::Renderer* mRendererBackends[draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES];
         

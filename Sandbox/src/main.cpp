@@ -279,26 +279,12 @@ public:
         
         r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
         R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
-        
-        u64 materialMemorySystemSize = 0;
+ 
 
-		
-		char materialsPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
-
-		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
-
-      //  void* materialPackData = nullptr;
-      //  void* texturePackManifestData = nullptr;
-        materialMemorySystemSize = r2::draw::mat::GetMaterialBoundarySize(materialsPath, texturePackPath);//r2::draw::mat::LoadMaterialAndTextureManifests(materialsPath, texturePackPath, &materialPackData, &texturePackManifestData);
-		
-        R2_CHECK(materialMemorySystemSize != 0, "Didn't properly load the material and manifests!");
-
-        auto result = sandBoxMemoryArea->Init(Megabytes(128) + materialMemorySystemSize, 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(128), 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
-        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4) + materialMemorySystemSize);
+        subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4));
         R2_CHECK(subMemoryAreaHandle != r2::mem::MemoryArea::SubArea::Invalid, "sub area handle is invalid!");
         
         auto subMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle)->GetSubArea(subMemoryAreaHandle);
@@ -390,7 +376,7 @@ public:
         r2::sarr::Push(*mStaticModelDrawFlags, drawFlags); //for Sponza
 
         mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, NUM_DRAWS);
-        mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
+      //  mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
         
         mBatBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mBatDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
@@ -506,8 +492,12 @@ public:
 
         mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
 
-		//r2::mem::utils::MemBoundary boundary = MAKE_BOUNDARY(*linearArenaPtr, materialMemorySystemSize, 64);
 
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_TEXTURES_MANIFESTS_BIN, texturePackPath, "SandboxTexturePack.tman");
 
 
         r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
@@ -534,13 +524,6 @@ public:
 
 		FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
-
-        //materialsPath
-
-		//r2::draw::mat::LoadAllMaterialTexturesFromDisk(*mMaterialSystem);
-		//r2::draw::mat::UploadAllMaterialTexturesToGPU(*mMaterialSystem);
-
-
 
 
         auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
@@ -614,13 +597,7 @@ public:
 
 
         //color grading
-
-       // r2::draw::MaterialHandle colorGradingMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("ColorGradingLUT"));
-       // R2_CHECK(r2::draw::mat::IsValid(colorGradingMaterialHandle), "Failed to get color grading material handle");
-
-        
-
-        const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); //r2::draw::mat::GetMaterialTextureAssetsForMaterial(*mMaterialSystem, colorGradingMaterialHandle).normalTextures.materialTexture.diffuseTexture;
+        const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
 
         r2::draw::renderer::SetColorGradingLUT(colorGradingLUT, 32);
         r2::draw::renderer::SetColorGradingContribution(0.2);
@@ -733,17 +710,14 @@ public:
         r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
         {
-         
-         //   r2::draw::MaterialHandle prefilteredMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportPrefiltered"));
-            
-            const auto* prefilteredCubemap = gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); //r2::draw::mat::GetCubemapTexture(*mMaterialSystem, prefilteredMaterialHandle);
+            const auto* prefilteredCubemap = gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
             s32 numMips = prefilteredCubemap->numMipLevels;
 
             
             r2::draw::renderer::AddSkyLight(
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),//r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportConvolved"))),
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),//r2::draw::mat::GetRenderMaterial(prefilteredMaterialHandle),
-                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);//r2::draw::mat::GetRenderMaterial(r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportLUTDFG"))), numMips);
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),
+                *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportLUTDFG")), numMips);
 
 			r2::draw::DirectionLight dirLight;
 			dirLight.lightProperties.color = glm::vec4(1, 0.5, 80.f / 255.f, 1.0f);
@@ -1337,8 +1311,8 @@ public:
                 const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->renderMaterialHandles, i));
 
                 R2_CHECK(renderMaterial != nullptr, "...");
-                r2::sarr::Push(*renderMaterialParams, *renderMaterial);//r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(*sponzaGPUModelRef->materialHandles, i)));
-                r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));//r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*sponzaGPUModelRef->materialHandles, i)));
+                r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+                r2::sarr::Push(*shaderHandles, r2::sarr::At(*sponzaGPUModelRef->shaderHandles, i));
 			}
 
 			r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, *renderMaterialParams, *shaderHandles, nullptr);
@@ -1646,13 +1620,6 @@ public:
     virtual void Shutdown() override
     {
 
-        //r2::draw::animcache::Shutdown(*mAnimationCache);
-        //r2::draw::modlche::Shutdown(mModelSystem);
-        /*r2::draw::mat::UnloadAllMaterialTexturesFromGPU(*mMaterialSystem);
-        void* materialBoundary = mMaterialSystem->mMaterialMemBoundary.location;
-        r2::draw::matsys::FreeMaterialSystem(mMaterialSystem);
-        FREE(materialBoundary, *linearArenaPtr);*/
-
         FREE(modelMats, *linearArenaPtr);
 
 
@@ -1673,7 +1640,7 @@ public:
 
         
 
-        FREE(mStaticModelMaterialHandles, *linearArenaPtr);
+     //   FREE(mStaticModelMaterialHandles, *linearArenaPtr);
         FREE(mStaticModelRefs, *linearArenaPtr);
       //  FREE(mAnimModelRefs, *linearArenaPtr);
 
@@ -1687,9 +1654,6 @@ public:
        // FREE(mStaticCubeModelMats, *linearArenaPtr);
      //   FREE(mStaticCubeMaterials, *linearArenaPtr);
         //FREE(mStaticCubesDrawFlags, *linearArenaPtr);
-
-        
-      //  mGameAssetManager.Shutdown();
 
 		u64 size = r2::sarr::Size(*assetsBuffers);
 
@@ -2035,7 +1999,7 @@ private:
     r2::draw::vb::GPUModelRefHandle mEllenModelRefHandle;
 
     r2::SArray<r2::draw::vb::GPUModelRefHandle>* mStaticModelRefs;
-    r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
+  //  r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
     r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
 
 

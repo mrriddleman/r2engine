@@ -212,6 +212,21 @@ namespace r2::asset::lib
         return assetCacheRecord.GetAssetBuffer()->Data();
     }
 
+    void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray)
+    {
+        u32 numManifestFiles = r2::sarr::Size(*assetLib.mManifestFiles);
+
+        for (u32 i = 0; i < numManifestFiles; ++i)
+        {
+            r2::asset::ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+
+            if (manifestFile->GetAssetType() == type)
+            {
+                r2::sarr::Push(*manifestDataArray, GetManifestData(assetLib, manifestFile->GetManifestFileHandle()));
+            }
+        }
+    }
+
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
     {
         r2::sarr::Push(*assetLib.mManifestFiles, manifestFile);
