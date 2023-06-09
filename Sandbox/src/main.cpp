@@ -41,6 +41,8 @@
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Textures/TexturePacksCache.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
@@ -362,7 +364,6 @@ public:
         mStaticCubeModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::CUBE);
 
         mTransparentWindowMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-        mTransparentWindowMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
         mTransparentWindowModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
         mTransparentWindowDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
 
@@ -390,10 +391,6 @@ public:
 
         mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, NUM_DRAWS);
         mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-
-		//mAnimModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, 3);
-
-        mSkyboxMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, 1);
         
         mBatBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
         mBatDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
@@ -607,15 +604,6 @@ public:
         r2::draw::renderer::SetColorGradingContribution(0.2);
         r2::draw::renderer::EnableColorGrading(true);
 
-
-        //transparent windows
-        r2::draw::MaterialHandle transparentWindowMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("TransparentWindow"));
-        R2_CHECK(r2::draw::mat::IsValid(transparentWindowMaterialHandle), "Failed to get transparent window material handle");
-
-
-        r2::sarr::Push(*mTransparentWindowMaterialHandles, transparentWindowMaterialHandle);
-
-
         float startingX = 10.0f;
 
         for (u32 i = 0; i < NUM_DRAWS; ++i)
@@ -676,7 +664,6 @@ public:
 
         R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
 
-        r2::sarr::Push(*mSkyboxMaterialHandles, skyboxMaterialHandle); //;
 
         //r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
 
@@ -1357,14 +1344,20 @@ public:
         //drawTransparentWindowParams.blendState.blendFunctions[0].sfactor = r2::draw::ONE;
         //drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
 
+
+		char materialsPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
+
+
+        u64 materialParamsPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
         //draw transparent windows
-        const r2::draw::RenderMaterialParams& transparentWindowRenderMaterial = r2::draw::mat::GetRenderMaterial(*mMaterialSystem, r2::sarr::At(* mTransparentWindowMaterialHandles, 0));
-        r2::draw::ShaderHandle transparentWindowShaderHandle = r2::draw::mat::GetShaderHandle(*mMaterialSystem, r2::sarr::At(*mTransparentWindowMaterialHandles, 0));
+        const r2::draw::RenderMaterialParams* transparentWindowRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("TransparentWindow"));
+        r2::draw::ShaderHandle transparentWindowShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("TransparentWindow"), materialParamsPackName });
 
         r2::SArray<r2::draw::RenderMaterialParams>* transparentWindowRenderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
         r2::SArray<r2::draw::ShaderHandle>* transparentWindowShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-        r2::sarr::Push(*transparentWindowRenderMaterials, transparentWindowRenderMaterial);
+        r2::sarr::Push(*transparentWindowRenderMaterials, *transparentWindowRenderMaterial);
         r2::sarr::Push(*transparentWindowShaderHandles, transparentWindowShaderHandle);
         r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), *transparentWindowRenderMaterials,*transparentWindowShaderHandles, nullptr);
 
@@ -1525,13 +1518,15 @@ public:
 
         drawWorldParams.layer = r2::draw::DL_SKYBOX;
 
-        r2::draw::MaterialHandle skyboxMaterialHandle = r2::sarr::At(*mSkyboxMaterialHandles, 0);
-
         r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
         r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-        r2::sarr::Push(*skyboxRenderParams, r2::draw::mat::GetRenderMaterial(*mMaterialSystem, skyboxMaterialHandle));
-        r2::sarr::Push(*skyboxShaderHandles, r2::draw::mat::GetShaderHandle(*mMaterialSystem, skyboxMaterialHandle));
+
+		const r2::draw::RenderMaterialParams* skyboxRenderMaterialParams = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportSkybox"));
+		r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName });
+
+        r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
+        r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);
 
 
         r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, *skyboxRenderParams, *skyboxShaderHandles, nullptr);
@@ -1654,8 +1649,6 @@ public:
 		FREE(mBatDebugBones, *linearArenaPtr);
 
         
-        
-        FREE(mSkyboxMaterialHandles, *linearArenaPtr);
 
         FREE(mStaticModelMaterialHandles, *linearArenaPtr);
         FREE(mStaticModelRefs, *linearArenaPtr);
@@ -1666,7 +1659,6 @@ public:
 
 
         FREE(mTransparentWindowMats, *linearArenaPtr);
-        FREE(mTransparentWindowMaterialHandles, *linearArenaPtr);
         FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
 
         FREE(mStaticCubeModelMats, *linearArenaPtr);
@@ -2022,7 +2014,7 @@ private:
     r2::SArray<r2::draw::vb::GPUModelRefHandle>* mStaticModelRefs;
     r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
     r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
-    r2::SArray<r2::draw::MaterialHandle>* mSkyboxMaterialHandles;
+
 
     r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;
     r2::SArray<glm::mat4>* modelMats;
@@ -2030,7 +2022,6 @@ private:
 
     r2::draw::vb::GPUModelRefHandle mTransparentWindowModelRefHandle;
     r2::SArray<glm::mat4>* mTransparentWindowMats;
-    r2::SArray<r2::draw::MaterialHandle>* mTransparentWindowMaterialHandles;
     r2::SArray<r2::draw::DrawFlags>* mTransparentWindowDrawFlags;
 
     r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;

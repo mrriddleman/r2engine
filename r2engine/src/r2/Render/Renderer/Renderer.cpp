@@ -1284,6 +1284,7 @@ namespace r2::draw::renderer
 
 		asset::AssetLib& assetLib = CENG.GetAssetLib();
 
+		//@TODO(Serge): Clean this up - I don't like how we have to know what the material + texture manifest names are in the renderer
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_MATERIALS_MANIFESTS_BIN, materialsPath, "engine_material_params_pack.mppk");
 
@@ -1293,21 +1294,26 @@ namespace r2::draw::renderer
 
 		gameAssetManager.LoadMaterialTextures(engineMaterialPack);
 
+		char texturePackPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
-		r2::SArray<r2::draw::tex::Texture>* engineTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 10);
+		//@TODO(Serge): this should be part of the TextureCache or AssetLib(maybe) - each manifest should know how many of each texture they have
+		u32 totalNumberOfTextures = 0;
+		u32 totalNumberOfTexturePacks = 0;
+		u32 totalNumCubemaps = 0;
+		u32 cacheSize = 0;
+		r2::draw::texche::GetTexturePacksCacheSizes(texturePackPath, totalNumberOfTextures, totalNumberOfTexturePacks, totalNumCubemaps, cacheSize);
 
-		gameAssetManager.GetTexturesForMaterialParamsPack(engineMaterialPack, engineTextures, nullptr);
+		r2::SArray<r2::draw::tex::Texture>* engineTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, totalNumberOfTextures);
+		r2::SArray<r2::draw::tex::CubemapTexture>* engineCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, totalNumCubemaps);
 
-		for (flatbuffers::uoffset_t i = 0; i < engineMaterialPack->pack()->size(); ++i)
-		{
-			const flat::MaterialParams* materialParams = engineMaterialPack->pack()->Get(i);
+		gameAssetManager.GetTexturesForMaterialParamsPack(engineMaterialPack, engineTextures, engineCubemaps);
 
-			bool result = rmat::UploadMaterialTextureParams(*newRenderer->mRenderMaterialCache, materialParams, engineTextures, nullptr);
+		rmat::UploadMaterialTextureParamsArray(*newRenderer->mRenderMaterialCache, engineMaterialPack, engineTextures, engineCubemaps);
 
-			R2_CHECK(result, "We failed to upload the material texture params");
-		}
-
+		FREE(engineCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
+
 
 		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));
 		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
@@ -1326,8 +1332,7 @@ namespace r2::draw::renderer
 
 	void Update(Renderer& renderer)
 	{
-		r2::draw::shadersystem::Update();
-		r2::draw::matsys::Update();
+		
 		
 	}
 

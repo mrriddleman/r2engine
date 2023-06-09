@@ -517,6 +517,9 @@ namespace r2
 #endif
         r2::asset::lib::Update();
 
+		r2::draw::shadersystem::Update();
+		r2::draw::matsys::Update();
+
         if (mNeedsResolutionChange)
         {
             mNeedsResolutionChange = false;
@@ -1134,14 +1137,16 @@ namespace r2
 		u32 totalNumTextureManifests = textureManifests.size();
 		u32 totalNumTexturePacks = 0;
 		u32 totalTextureCacheSize = 0;
+        u32 totalNumCubemaps = 0;
 
 		for (u32 i = 0; i < textureManifests.size(); ++i)
 		{
 			u32 numTextures = 0;
 			u32 cacheSize = 0;
 			u32 numTexturePacks = 0;
+            u32 numCubemaps = 0;
 
-			r2::draw::texche::GetTexturePacksCacheSizes(textureManifests[i].c_str(), numTextures, numTexturePacks, cacheSize);
+			r2::draw::texche::GetTexturePacksCacheSizes(textureManifests[i].c_str(), numTextures, numTexturePacks, numCubemaps, cacheSize);
 
 			totalNumTextures += numTextures;
 			totalNumTexturePacks += numTexturePacks;

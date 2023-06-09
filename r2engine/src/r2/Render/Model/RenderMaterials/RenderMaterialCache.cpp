@@ -2,6 +2,7 @@
 
 #include "r2/Render/Model/RenderMaterials/RenderMaterialCache.h"
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Utils/Hash.h"
@@ -221,6 +222,31 @@ namespace r2::draw::rmat
 		return tex::GetCubemapAssetHandle(*cubemapTexture).handle == textureName && GetTextureTypeForPropertyType(propertyType) == tex::Diffuse;
 	}
 
+	bool IsTextureParamCubemapTexture(const r2::SArray<tex::CubemapTexture>* cubemapTextures, u64 textureName, flat::MaterialPropertyType propertyType, const tex::CubemapTexture* foundCubemap)
+	{
+		if (!cubemapTextures)
+		{
+			return false;
+		}
+
+		const auto numCubemapTextures = r2::sarr::Size(*cubemapTextures);
+		
+		foundCubemap = nullptr;
+
+		for (u32 i = 0; i < numCubemapTextures; ++i)
+		{
+			const tex::CubemapTexture& cubemap = r2::sarr::At(*cubemapTextures, i);
+
+			if (IsTextureParamCubemapTexture(&cubemap, textureName, propertyType))
+			{
+				foundCubemap = &cubemap;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	s32 GetWrapMode(const flat::MaterialTextureParam* texParam)
 	{
 		R2_CHECK(texParam != nullptr, "We should have a proper texParam!");
@@ -342,10 +368,81 @@ namespace r2::draw::rmat
 		return true;
 	}
 
-	//bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<const flat::MaterialParams*>* materialParamsArray, const r2::SArray<tex::Texture>* textures, const r2::SArray<const tex::CubemapTexture*>* cubemapTextures)
-	//{
-	//	return false;
-	//}
+	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialParamsPack* materialParamsPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures)
+	{
+		for (flatbuffers::uoffset_t i = 0; i < materialParamsPack->pack()->size(); ++i)
+		{
+			const flat::MaterialParams* materialParams = materialParamsPack->pack()->Get(i);
+
+			const auto numTextureParams = materialParams->textureParams()->size();
+			
+			bool isCubemap = false;
+			tex::CubemapTexture foundCubemap;
+			const flat::MaterialTextureParam* cubemapTextureParam = nullptr;
+
+			for (flatbuffers::uoffset_t j = 0; j < numTextureParams; ++j)
+			{
+				const flat::MaterialTextureParam* textureParam = materialParams->textureParams()->Get(j);
+
+				u64 textureHandle = textureParam->value();
+				flat::MaterialPropertyType propertyType = textureParam->propertyType();
+
+				if (textureHandle == EMPTY_TEXTURE || propertyType != flat::MaterialPropertyType_ALBEDO)
+				{
+					continue;
+				}
+				
+				if (IsTextureParamCubemapTexture(cubemapTextures, textureHandle, propertyType, &foundCubemap))
+				{
+					cubemapTextureParam = textureParam;
+					isCubemap = true;
+					break;
+				}
+			}
+
+			r2::SArray<tex::Texture>* materialTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, tex::Texture, numTextureParams);
+
+			if (!isCubemap)
+			{
+				for (flatbuffers::uoffset_t j = 0; j < numTextureParams; ++j)
+				{
+					const flat::MaterialTextureParam* textureParam = materialParams->textureParams()->Get(j);
+
+					u64 textureHandle = textureParam->value();
+					flat::MaterialPropertyType propertyType = textureParam->propertyType();
+
+					if (textureHandle == EMPTY_TEXTURE)
+					{
+						continue;
+					}
+
+					const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle, propertyType);
+
+					R2_CHECK(theTexture != nullptr, "We should always have the texture here if we don't have an empty textureHandle!");
+
+					r2::sarr::Push(*materialTextures, *theTexture);
+
+					r2::draw::texsys::UploadToGPU(theTexture->textureAssetHandle, theTexture->type, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+				}
+			}
+			else
+			{
+				r2::draw::texsys::UploadToGPU(foundCubemap, cubemapTextureParam->anisotropicFiltering(), GetWrapMode(cubemapTextureParam), GetMinFilter(cubemapTextureParam), GetMagFilter(cubemapTextureParam));
+			}
+
+			draw::tex::CubemapTexture* cubemapToUse = nullptr;
+			if (isCubemap)
+			{
+				cubemapToUse = &foundCubemap;
+			}
+
+			UpdateGPURenderMaterialForMaterialParams(renderMaterialCache, materialParams, materialTextures, cubemapToUse);
+
+			FREE(materialTextures, *MEM_ENG_SCRATCH_PTR);
+		}
+
+		return true;
+	}
 
 	bool UnloadMaterialParams(RenderMaterialCache& renderMaterialCache, u64 materialName)
 	{

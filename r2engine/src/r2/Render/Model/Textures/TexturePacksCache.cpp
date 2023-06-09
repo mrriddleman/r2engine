@@ -53,7 +53,7 @@ namespace r2::draw::texche
 	bool LoadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
 	bool UnloadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle, u64 texturePackName);
 
-	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& cacheSize)
+	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& numCubemaps, u32& cacheSize)
 	{
 		if (!texturePacksManifestPath)
 		{
@@ -78,7 +78,19 @@ namespace r2::draw::texche
 		cacheSize = static_cast<u32>(texturePacksManifest->totalTextureSize()) + static_cast<u32>(fileSize); //+ the file size if we want to keep that around
 		numTextures = static_cast<u32>(texturePacksManifest->totalNumberOfTextures());
 		numTexturePacks = static_cast<u32>(texturePacksManifest->texturePacks()->size());
-		
+
+		const auto texturePacks = texturePacksManifest->texturePacks();
+
+		for (flatbuffers::uoffset_t i = 0; i < texturePacks->size(); ++i)
+		{
+			if (texturePacks->Get(i)->metaData()->type() == flat::TextureType::TextureType_CUBEMAP)
+			{
+				numCubemaps ++ ;
+			}
+		}
+
+
+
 		FREE(fileData, *MEM_ENG_SCRATCH_PTR);
 
 		return true;

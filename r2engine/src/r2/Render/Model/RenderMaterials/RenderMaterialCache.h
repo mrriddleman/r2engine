@@ -55,7 +55,7 @@ namespace r2::draw::rmat
 	void Shutdown(RenderMaterialCache* cache);
 
 	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture);
-//	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<const flat::MaterialParams*>* materialParamsArray, const r2::SArray<tex::Texture>* textures, const r2::SArray<const tex::CubemapTexture*>* cubemapTextures);
+	bool UploadMaterialTextureParamsArray(RenderMaterialCache& renderMaterialCache, const flat::MaterialParamsPack* materialParamsPack, const r2::SArray<tex::Texture>* textures, const r2::SArray<tex::CubemapTexture>* cubemapTextures);
 
 	bool UnloadMaterialParams(RenderMaterialCache& renderMaterialCache, u64 materialName);
 	bool UnloadMaterialParamsArray(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>& materialNames);

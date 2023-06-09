@@ -159,7 +159,7 @@ namespace r2::draw::texche
 		FREE(texturePacksCacheBoundary.location, arena);
 	}
 
-	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& cacheSize);
+	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& numCubemaps, u32& cacheSize);
 
 	TexturePacksManifestHandle AddTexturePacksManifestFile(TexturePacksCache& texturePacksCache, const char* texturePacksManifestFilePath);
 
