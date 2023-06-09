@@ -95,44 +95,52 @@ namespace r2::asset
 			r2::draw::AnimationChannel channel;
 
 			channel.hashName = flatChannel->channelName();
-
-			if (flatChannel->positionKeys()->size() > 0)
+			const auto positionKeys = flatChannel->positionKeys();
+			const auto numPositionKeys = flatChannel->positionKeys()->size();
+			if (numPositionKeys > 0)
 			{
-				channel.positionKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, flatChannel->positionKeys()->size());
+				channel.positionKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numPositionKeys);
 
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(flatChannel->positionKeys()->size()));
+				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numPositionKeys));
 			}
 
-			for (u32 pKey = 0; pKey < flatChannel->positionKeys()->size(); ++pKey)
+			for (u32 pKey = 0; pKey < numPositionKeys; ++pKey)
 			{
-				const auto flatPositionKey = flatChannel->positionKeys()->Get(pKey);
-				r2::sarr::Push(*channel.positionKeys, { flatPositionKey->time(), glm::vec3(flatPositionKey->value().x(), flatPositionKey->value().y(), flatPositionKey->value().z())});
+				const auto flatPositionKey = positionKeys->Get(pKey);
+				const auto flatPositionValue = flatPositionKey->value();
+
+				r2::sarr::Push(*channel.positionKeys, { flatPositionKey->time(), glm::vec3(flatPositionValue.x(), flatPositionValue.y(), flatPositionValue.z())});
 			}
 
-			if (flatChannel->scaleKeys()->size() > 0)
-			{
-				channel.scaleKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, flatChannel->scaleKeys()->size());
+			const auto scaleKeys = flatChannel->scaleKeys();
+			const auto numScaleKeys = scaleKeys->size();
 
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(flatChannel->scaleKeys()->size()));
+			if (numScaleKeys > 0)
+			{
+				channel.scaleKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numScaleKeys);
+				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numScaleKeys));
 			}
 
-			for (u32 sKey = 0; sKey < flatChannel->scaleKeys()->size(); ++sKey)
+			for (u32 sKey = 0; sKey < numScaleKeys; ++sKey)
 			{
-				const auto flatScaleKey = flatChannel->scaleKeys()->Get(sKey);
-				r2::sarr::Push(*channel.scaleKeys, { flatScaleKey->time(), glm::vec3(flatScaleKey->value().x(), flatScaleKey->value().y(), flatScaleKey->value().z()) });
+				const auto flatScaleKey = scaleKeys->Get(sKey);
+				const auto flatScaleValue = flatScaleKey->value();
+				r2::sarr::Push(*channel.scaleKeys, { flatScaleKey->time(), glm::vec3(flatScaleValue.x(), flatScaleValue.y(), flatScaleValue.z()) });
+			}
+			const auto rotationKeys = flatChannel->rotationKeys();
+			const auto numRotationKeys = rotationKeys->size();
+
+			if (numRotationKeys > 0)
+			{
+				channel.rotationKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::RotationKey, numRotationKeys);
+				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(numRotationKeys));
 			}
 
-			if (flatChannel->rotationKeys()->size() > 0)
+			for (u32 rKey = 0; rKey < numRotationKeys; ++rKey)
 			{
-				channel.rotationKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::RotationKey, flatChannel->rotationKeys()->size());
-
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(flatChannel->rotationKeys()->size()));
-			}
-
-			for (u32 rKey = 0; rKey < flatChannel->rotationKeys()->size(); ++rKey)
-			{
-				const auto flatRotationKey = flatChannel->rotationKeys()->Get(rKey);
-				r2::sarr::Push(*channel.rotationKeys, { flatRotationKey->time(), glm::quat(flatRotationKey->value().w(), flatRotationKey->value().x(), flatRotationKey->value().y(), flatRotationKey->value().z()) });
+				const auto flatRotationKey = rotationKeys->Get(rKey);
+				const auto flatRotationValue = flatRotationKey->value();
+				r2::sarr::Push(*channel.rotationKeys, { flatRotationKey->time(), glm::quat(flatRotationValue.w(), flatRotationValue.x(), flatRotationValue.y(), flatRotationValue.z()) });
 			}
 
 			r2::shashmap::Set(*animation->channels, channel.hashName, channel);
