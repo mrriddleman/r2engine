@@ -18,11 +18,11 @@ namespace r2::asset
 		~ManifestSingleAssetFile();
 
 		virtual bool Init(const char* path) override;
-		virtual r2::asset::EngineAssetType GetAssetType() override;
+		virtual r2::asset::EngineAssetType GetAssetType() const override;
 		virtual bool AddAllFilePaths(FileList files) override;
-		virtual bool HasFilePath(const char* filePath) override;
-		virtual u64 GetManifestFileHandle() override;
-
+		virtual bool HasFilePath(const char* filePath) const override;
+		virtual u64 GetManifestFileHandle() const override;
+		virtual bool ReloadFilePath(const char* filePath) const override;
 		virtual bool Open(bool writable = false) override;
 		virtual bool Open(r2::fs::FileMode mode) override;
 		virtual bool Close() override;

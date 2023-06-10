@@ -34,7 +34,7 @@ namespace r2::asset
 		return mAssetHandle != 0;
 	}
 
-	r2::asset::EngineAssetType ManifestSingleAssetFile::GetAssetType()
+	r2::asset::EngineAssetType ManifestSingleAssetFile::GetAssetType() const
 	{
 		return r2::asset::MATERIAL_PACK_MANIFEST;
 	}
@@ -44,14 +44,19 @@ namespace r2::asset
 		return true;
 	}
 
-	bool ManifestSingleAssetFile::HasFilePath(const char* filePath)
+	bool ManifestSingleAssetFile::HasFilePath(const char* filePath) const
 	{
 		return false;
 	}
 
-	u64 ManifestSingleAssetFile::GetManifestFileHandle()
+	u64 ManifestSingleAssetFile::GetManifestFileHandle() const
 	{
 		return mAssetHandle;
+	}
+
+	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath) const 
+	{
+		return false;
 	}
 
 	bool ManifestSingleAssetFile::Open(bool writable /*= false*/)

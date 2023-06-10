@@ -17,10 +17,12 @@
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
+#include "r2/Core/File/PathUtils.h"
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
+
 #else
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
@@ -60,6 +62,10 @@ namespace r2::asset::lib
 #ifdef R2_ASSET_PIPELINE
     r2::asset::pln::AssetThreadSafeQueue<std::vector<std::string>> s_assetsBuiltQueue;
     std::vector<AssetFilesBuiltListener> s_listeners;
+
+
+    bool ReloadManifestFileInternal(AssetLib& assetLib, const ManifestAssetFile& manifestFile, std::filesystem::path changedPath);
+
 #endif
     
 #ifdef R2_ASSET_PIPELINE
@@ -148,7 +154,33 @@ namespace r2::asset::lib
 
     void Update(AssetLib& assetLib)
     {
+#ifdef R2_ASSET_PIPELINE
+        ManifestReloadEntry entry;
+        while (assetLib.mManifestChangedRequests.TryPop(entry))
+        {
+            const u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
+            ManifestAssetFile* foundManifest = nullptr;
 
+            for (u32 i = 0; i < numManifests; ++i)
+            {
+                ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+                std::filesystem::path nextManifestFilePath = manifestFile->FilePath();
+
+                if (entry.manifestPath == nextManifestFilePath)
+                {
+                    foundManifest = manifestFile;
+                    break;
+                }
+            }
+
+            if (!foundManifest)
+            {
+                continue;
+            }
+
+            ReloadManifestFileInternal(assetLib, *foundManifest, entry.changedPath);
+        }
+#endif
     }
 
     const byte* GetManifestData(AssetLib& assetLib, ManifestAssetFile& manifestFile)
@@ -280,44 +312,39 @@ namespace r2::asset::lib
 
 #ifdef R2_ASSET_PIPELINE
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, std::filesystem::path tempManifestFilePath, r2::SArray<ManifestAssetFile*>* manifestAssetFiles)
+    bool ReloadManifestFileInternal(AssetLib& assetLib, const ManifestAssetFile& manifestFile, std::filesystem::path changedPath)
     {
 		bool hasReloaded = false;
-        u32 numManifests = r2::sarr::Size(*manifestAssetFiles);
+        AssetCacheRecord defaultRecord;
+		const AssetCacheRecord& resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), defaultRecord);
 
-		for (u32 i = 0; i < numManifests; ++i)
-		{
-			ManifestAssetFile* manifestFile = r2::sarr::At(*manifestAssetFiles, i);
+        if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
+        {
+            assetLib.mAssetCache->ReturnAssetBuffer(resultRecord);
 
-			std::filesystem::path nextManifestFilePath = manifestFile->FilePath();
+            r2::shashmap::Remove(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle());
+        }
 
-			if (tempManifestFilePath == nextManifestFilePath)
-			{
-				AssetCacheRecord defaultRecord;
+		assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(manifestFile.FilePath(), manifestFile.GetAssetType()));
 
-				const AssetCacheRecord& resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile->GetManifestFileHandle(), defaultRecord);
+        char sanitizedChangedPath[r2::fs::FILE_PATH_LENGTH];
+        r2::fs::utils::SanitizeSubPath(changedPath.string().c_str(), sanitizedChangedPath);
 
-				if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
-				{
-					assetLib.mAssetCache->ReturnAssetBuffer(resultRecord);
-
-                    r2::shashmap::Remove(*assetLib.mAssetCacheRecords, manifestFile->GetManifestFileHandle());
-				}
-
-				assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(tempManifestFilePath.string().c_str(), manifestFile->GetAssetType()));
-				hasReloaded = true;
-				break;
-			}
-		}
+        if (manifestFile.HasFilePath(sanitizedChangedPath))
+        {
+           hasReloaded = manifestFile.ReloadFilePath(sanitizedChangedPath);
+        }
 
         return hasReloaded;
     }
 
-    void ReloadManifestFile(AssetLib& assetLib, const std::string& manifestFilePath)
+    void ManifestChanged(AssetLib& assetLib, const std::string& manifestFilePath, const std::string& filePathChanged)
     {
-        std::filesystem::path tempManifestFilePath = manifestFilePath;
+        ManifestReloadEntry newEntry;
+        newEntry.manifestPath = manifestFilePath;
+        newEntry.changedPath = filePathChanged;
 
-        ReloadManifestFileInternal(assetLib, tempManifestFilePath, assetLib.mManifestFiles);
+        assetLib.mManifestChangedRequests.Push(newEntry);        
     }
 #endif
 

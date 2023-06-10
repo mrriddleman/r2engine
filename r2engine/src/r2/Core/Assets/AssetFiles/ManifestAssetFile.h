@@ -12,10 +12,11 @@ namespace r2::asset
 
 		virtual ~ManifestAssetFile() {}
 		virtual bool Init(const char* path) = 0;
-		virtual r2::asset::EngineAssetType GetAssetType() = 0;
+		virtual r2::asset::EngineAssetType GetAssetType() const = 0;
 		virtual bool AddAllFilePaths(FileList files) = 0;
-		virtual bool HasFilePath(const char* filePath) = 0;
-		virtual u64 GetManifestFileHandle() = 0;
+		virtual bool HasFilePath(const char* filePath) const = 0;
+		virtual u64 GetManifestFileHandle() const = 0;
+		virtual bool ReloadFilePath(const char* filePath) const = 0;
 	};
 }
 #endif

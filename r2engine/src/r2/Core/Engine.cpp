@@ -1197,7 +1197,6 @@ namespace r2
 
     void Engine::SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
     {
-        //This will be the new setup:
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
         r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile);
         
@@ -1206,42 +1205,6 @@ namespace r2
             r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(manifestPath.c_str());
             r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
         }
-
-		/*r2::SArray<const char*>* pathsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const char*, appMaterialPacksManifests.size() + 1);
-
-		const char* engineMaterialParamsPackPath = materialsPath;
-		r2::sarr::Push(*pathsToLoad, engineMaterialParamsPackPath);
-
-		for (size_t i = 0; i < appMaterialPacksManifests.size(); ++i)
-		{
-			r2::sarr::Push(*pathsToLoad, appMaterialPacksManifests.at(i).c_str());
-		}
-
-		mMaterialParamPacksData = MAKE_SARRAY(*MEM_ENG_PERMANENT_PTR, void*, appMaterialPacksManifests.size() + 1);
-
-		mMaterialParamPacks = MAKE_SARRAY(*MEM_ENG_PERMANENT_PTR, const flat::MaterialParamsPack*, appMaterialPacksManifests.size() + 1);
-
-		for (u32 i = 0; i < r2::sarr::Size(*pathsToLoad); ++i)
-		{
-			u64 materialParamsPackSize = 0;
-			void* materialParamsPackData = r2::fs::ReadFile(*MEM_ENG_PERMANENT_PTR, r2::sarr::At(*pathsToLoad, i), materialParamsPackSize);
-
-			if (!materialParamsPackData)
-			{
-				R2_CHECK(false, "Failed to read the material params pack file: %s", materialsPath);
-				return;
-			}
-
-			r2::sarr::Push(*mMaterialParamPacksData, materialParamsPackData);
-
-			const flat::MaterialParamsPack* materialPack = flat::GetMaterialParamsPack(materialParamsPackData);
-			R2_CHECK(materialPack != nullptr, "Why would this be null at this point? Problem in flatbuffers?");
-
-			r2::sarr::Push(*mMaterialParamPacks, materialPack);
-		}
-		FREE(pathsToLoad, *MEM_ENG_SCRATCH_PTR);*/
-
-		
     }
     
     void Engine::OnEvent(evt::Event& e)

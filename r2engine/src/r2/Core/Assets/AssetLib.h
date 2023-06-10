@@ -15,6 +15,12 @@
 #include "r2/Core/Assets/AssetCacheRecord.h"
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 
+#ifdef R2_ASSET_PIPELINE
+#include <filesystem>
+#include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
+#include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
+#endif
+
 namespace r2::asset
 {
     class AssetCache;
@@ -22,6 +28,13 @@ namespace r2::asset
     class ZipAssetFile;
     class ManifestAssetFile;
 	
+#ifdef R2_ASSET_PIPELINE
+    struct ManifestReloadEntry
+    {
+        std::filesystem::path manifestPath;
+        std::filesystem::path changedPath;
+    };
+#endif
 
     struct AssetLib
     {
@@ -36,6 +49,10 @@ namespace r2::asset
         r2::SArray<ManifestAssetFile*>* mManifestFiles;
 
         FileList mGameFileList;
+
+#ifdef R2_ASSET_PIPELINE
+        r2::asset::pln::AssetThreadSafeQueue<ManifestReloadEntry> mManifestChangedRequests;
+#endif
 
         static u64 MemorySize(u32 cacheSize, u32 numGameManifests, u32 numEngineManifests);
 
@@ -68,7 +85,7 @@ namespace r2::asset::lib
 
 
 #ifdef R2_ASSET_PIPELINE
-    void ReloadManifestFile(AssetLib& assetLib, const std::string& manifestFilePath);
+    void ManifestChanged(AssetLib& assetLib, const std::string& manifestFilePath, const std::string& filePathChanged);
 #endif
 
 #ifdef R2_ASSET_PIPELINE
