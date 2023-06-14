@@ -9,14 +9,23 @@ namespace r2::asset
 	class ManifestAssetFile : public AssetFile
 	{
 	public:
-
 		virtual ~ManifestAssetFile() {}
-		virtual bool Init(const char* path) = 0;
-		virtual r2::asset::EngineAssetType GetAssetType() const = 0;
+		virtual bool Init(const char* path, r2::asset::AssetType assetType) = 0;
+		virtual r2::asset::AssetType GetAssetType() const = 0;
 		virtual bool AddAllFilePaths(FileList files) = 0;
-		virtual bool HasFilePath(const char* filePath) const = 0;
 		virtual u64 GetManifestFileHandle() const = 0;
-		virtual bool ReloadFilePath(const char* filePath) const = 0;
+		virtual bool ReloadFilePath(const char* filePath, const byte* manifestData) const = 0;
+#ifdef R2_ASSET_PIPELINE
+		using ReloadFilePathFunc = std::function<bool(const char*, const byte* manifestData)>;
+		void SetReloadFilePathCallback(ReloadFilePathFunc func)
+		{
+			mReloadFilePathFunc = func;
+		}
+#endif
+	protected:
+#ifdef R2_ASSET_PIPELINE
+		ReloadFilePathFunc mReloadFilePathFunc;
+#endif
 	};
 }
 #endif

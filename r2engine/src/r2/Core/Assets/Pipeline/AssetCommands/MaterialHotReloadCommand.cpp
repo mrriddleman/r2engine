@@ -3,6 +3,11 @@
 
 #include "r2/Core/Assets/Pipeline/AssetCommands/MaterialHotReloadCommand.h"
 #include "r2/Render/Model/Materials/Material.h"
+#include "r2/Render/Renderer/Renderer.h"
+#include "r2/Core/Assets/AssetLib.h"
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+#include "r2/Utils/Hash.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace
 {
@@ -101,6 +106,83 @@ namespace r2::asset::pln
 		{
 			mGenerateMaterialPackFuncs.push_back(func);
 		}
+	}
+
+	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const char* changedFilePath, const byte* manifestData)
+	{
+		//first find the material if it exists
+		//if it doesn't then it probably was removed so unload it
+		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+
+		//@TODO(Serge): this is how it should be I think
+		//u64 materialName = r2::asset::Asset::GetAssetNameForFilePath(changedFilePath, r2::asset::MATERIAL);
+
+		//For now though, I think we need to do this since we're not guarenteed that our names are all lowercase (as GetAssetNameForFilePath would make)
+		std::filesystem::path changedPath = changedFilePath;
+		std::string materialNameStr = changedPath.stem().string();
+		u64 materialName = STRING_ID(materialNameStr.c_str());
+
+		r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+		R2_CHECK(renderMaterialCache != nullptr, "This should never be nullptr");
+
+		bool isLoaded = r2::draw::rmat::IsMaterialLoadedOnGPU(*renderMaterialCache, materialName);
+
+		//now find it in the MaterialParamsPack. If we don't find it then, we know it was removed
+		const flat::MaterialParams* foundMaterialParams = nullptr;
+
+		const auto numMaterialParams = materialParamsPack->pack()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
+		{
+			const auto* materialParams = materialParamsPack->pack()->Get(i);
+
+			if (materialParams->name() == materialName)
+			{
+				foundMaterialParams = materialParams;
+
+				break;
+			}
+		}
+
+		if (foundMaterialParams)
+		{
+			//load the material params again
+			r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+			r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, 200);
+			r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
+			bool result = gameAssetManager.GetTexturesForMaterialParams(foundMaterialParams, textures, cubemaps);
+			R2_CHECK(result, "This should always work");
+
+			r2::draw::tex::CubemapTexture* cubemapTextureToUse = nullptr;
+			r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
+
+			if (r2::sarr::Size(*textures) > 0)
+			{
+				texturesToUse = textures;
+			}
+
+			if (r2::sarr::Size(*cubemaps) > 0)
+			{
+				cubemapTextureToUse = &r2::sarr::At(*cubemaps, 0);
+			}
+
+			if (isLoaded)
+			{
+				gameAssetManager.LoadMaterialTextures(foundMaterialParams);
+				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterialParams, texturesToUse, cubemapTextureToUse);
+				R2_CHECK(result, "This should always work");
+			}
+
+			FREE(cubemaps, *MEM_ENG_SCRATCH_PTR);
+			FREE(textures, *MEM_ENG_SCRATCH_PTR);
+		}
+		else
+		{
+			r2::draw::rmat::UnloadMaterialParams(*renderMaterialCache, materialName);
+		}
+
+		return true;
 	}
 
 	void MaterialHotReloadCommand::GenerateMaterialPackManifestsIfNeeded()
@@ -235,7 +317,8 @@ namespace r2::asset::pln
 			return;
 		}
 
-		r2::draw::matsys::MaterialChanged(changedPath);
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, changedPath);
 	}
 
 	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)
@@ -272,7 +355,8 @@ namespace r2::asset::pln
 			return;
 		}
 
-		r2::draw::matsys::MaterialAdded(manifestPathBin, newPath);
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, newPath);
 	}
 
 	void MaterialHotReloadCommand::MaterialRemovedRequest(const std::string& removedPath)
@@ -316,7 +400,8 @@ namespace r2::asset::pln
 			return;
 		}
 		
-		r2::draw::matsys::MaterialRemoved(manifestPathBin, removedPath);
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, removedPath);
 	}
 
 }

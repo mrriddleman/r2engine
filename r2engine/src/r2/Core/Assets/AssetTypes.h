@@ -44,6 +44,7 @@ namespace r2::asset
 		RANIMATION,
 		LEVEL,
 		LEVEL_PACK,
+		MATERIAL,
 		NUM_ENGINE_ASSET_TYPES
 	};
 

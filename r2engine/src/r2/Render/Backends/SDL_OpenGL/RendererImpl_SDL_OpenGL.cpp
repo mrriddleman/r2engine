@@ -138,6 +138,8 @@ namespace r2::draw
 
 	u32 CW = GL_CW;
 	u32 CCW = GL_CCW;
+	u32 UNSIGNED_BYTE = GL_UNSIGNED_BYTE;
+
 }
 
 namespace r2::draw::cmd

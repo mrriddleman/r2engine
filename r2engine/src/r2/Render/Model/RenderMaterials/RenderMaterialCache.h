@@ -17,7 +17,6 @@ namespace flat
 
 namespace r2::draw
 {
-
 	struct RenderMaterialCache
 	{
 		u32 mName = 0;
@@ -42,14 +41,7 @@ namespace r2::draw
 
 namespace r2::draw::rmat
 {
-	struct GPURenderMaterialHandle
-	{
-		u64 materialName = 0;
-		u32 renderMaterialCacheName = 0;
-		s32 index = -1;
-	};
-
-	const GPURenderMaterialHandle InvalideGPURenderMaterialHandle = {};
+	
 
 	RenderMaterialCache* Create(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 numMaterials, const char* areaName);
 	void Shutdown(RenderMaterialCache* cache);
@@ -62,18 +54,9 @@ namespace r2::draw::rmat
 
 	bool IsMaterialLoadedOnGPU(const RenderMaterialCache& renderMaterialCache, u64 materialName);
 
-	GPURenderMaterialHandle GetGPURenderMaterialHandle(const RenderMaterialCache& renderMaterialCache, u64 materialName);
-
 	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName);
 
-	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle);
-
-	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials);
-
-	bool IsGPURenderMaterialHandleInvalid(const GPURenderMaterialHandle& handle);
-	bool AreGPURenderMaterialHandlesEqual(const GPURenderMaterialHandle& handle1, const GPURenderMaterialHandle& handle2);
-
-	//@TODO(Serge): implement a Reload method for when materials/textures change
+	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials);
 }
 
 #endif

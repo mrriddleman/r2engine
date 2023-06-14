@@ -234,7 +234,7 @@ namespace r2::asset
 		{
 			Free(handle, true);
 		}
-
+        
         auto assetHandle = LoadAsset(asset);
 
 #ifdef R2_ASSET_PIPELINE

@@ -29,6 +29,8 @@ namespace r2::asset
 			return 1;
 		case LEVEL_PACK:
 			return 0;
+		case MATERIAL:
+			return 0;
 		default:
 
 			//@TODO(Serge): may need to extend this using the Application

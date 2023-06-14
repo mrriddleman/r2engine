@@ -2678,11 +2678,7 @@ namespace r2::draw::renderer
 			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
 			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
-
-			R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
-
-			r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
+			r2::sarr::Push(*modelRef->materialNames, materialName);
 
 			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
@@ -2749,11 +2745,7 @@ namespace r2::draw::renderer
 				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
 				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
-
-				R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
-
-				r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
+				r2::sarr::Push(*modelRef->materialNames, materialName);
 
 				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
@@ -2804,11 +2796,7 @@ namespace r2::draw::renderer
 			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
 			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-			rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
-
-			R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
-
-			r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
+			r2::sarr::Push(*modelRef->materialNames, materialName);
 
 			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
@@ -2877,11 +2865,7 @@ namespace r2::draw::renderer
 				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
 				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-				rmat::GPURenderMaterialHandle handle = rmat::GetGPURenderMaterialHandle(*renderer.mRenderMaterialCache, materialName.name);
-
-				R2_CHECK(!rmat::IsGPURenderMaterialHandleInvalid(handle), "The render material handle is invalid for some reason - probably you didn't upload the material yet");
-
-				r2::sarr::Push(*modelRef->renderMaterialHandles, handle);
+				r2::sarr::Push(*modelRef->materialNames, materialName);
 
 				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 

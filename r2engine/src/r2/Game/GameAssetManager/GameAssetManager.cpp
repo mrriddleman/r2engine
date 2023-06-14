@@ -84,6 +84,33 @@ namespace r2
 		return mAssetCache->GetFileList();
 	}
 
+	u64 GameAssetManager::GetAssetDataSize(r2::asset::AssetHandle assetHandle)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet!");
+			return 0;
+		}
+
+		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
+
+		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+
+		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
+		{
+			return result.GetAssetBuffer()->Size();
+		}
+
+		result = mAssetCache->GetAssetBuffer(assetHandle);
+
+		R2_CHECK(result.GetAssetBuffer()->IsLoaded(), "Not loaded?");
+
+		//store the record
+		r2::shashmap::Set(*mCachedRecords, assetHandle.handle, result);
+
+		return result.GetAssetBuffer()->Size();
+	}
+
 	r2::asset::AssetHandle GameAssetManager::LoadAsset(const r2::asset::Asset& asset)
 	{
 		if (!mAssetCache)
@@ -240,8 +267,14 @@ namespace r2
 		}
 
 		auto textureParams = materialParams->textureParams();
-
 		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, textureParams->size());
+		AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+
+		/*
+
+	
+		r2::SArray<r2::draw::tex::Texture>* textures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, r2::draw::tex::Cubemap);
+		r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, r2::draw::tex::Cubemap);
 
 		if (texturePacks == nullptr)
 		{
@@ -249,8 +282,39 @@ namespace r2
 			return false;
 		}
 
-		AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
+		{
+			r2::sarr::Push(*texturePacks, textureParams->Get(i)->texturePackName());
+			if (!r2::draw::texche::IsTexturePackACubemap(*mTexturePacksCache, textureParams->Get(i)->texturePackName()))
+			{
+				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName(), textureParams->Get(i)->value());
 
+				R2_CHECK(texture != nullptr, "Should never be nullptr");
+
+				r2::sarr::Push(*textures, *texture);
+			}
+			else
+			{
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName());
+
+				R2_CHECK(cubemap != nullptr, "Should never be nullptr");
+
+				r2::sarr::Push(*cubemaps, *cubemap);
+			}
+		}
+
+		if (r2::sarr::Size(*textures) > 0)
+		{
+			draw::texche::LoadTextuesFromDisk(*mTexturePacksCache, *texturePacks, *textures);
+		}
+		else
+		{
+			draw::texche::LoadCubemapTexturesFromDisk(*mTexturePacksCache, *texturePacks, *cubemaps);
+		}
+		
+		FREE(cubemaps, *MEM_ENG_SCRATCH_PTR);
+		FREE(textures, *MEM_ENG_SCRATCH_PTR);
+		*/
 		draw::texche::LoadTexturePacksFromDisk(*mTexturePacksCache, *texturePacks);
 
 		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
@@ -321,6 +385,7 @@ namespace r2
 
 	bool GameAssetManager::GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
 	{
+		//for this method specifically, we only want to get the specific textures of this material, no others from the packs
 		if (materialParams == nullptr)
 		{
 			R2_CHECK(false, "Should never be nullptr");
@@ -335,20 +400,31 @@ namespace r2
 
 		auto textureParams = materialParams->textureParams();
 
-		r2::SArray<u64>* texturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, textureParams->size());
-
-		if (texturePacks == nullptr)
+		for (flatbuffers::uoffset_t i = 0; i < textureParams->size(); ++i)
 		{
-			R2_CHECK(false, "We couldn't create the texturePacks array");
-			return false;
+			if (textureParams->Get(i)->value() == EMPTY_TEXTURE_PACK_NAME)
+			{
+				continue;
+			}
+
+			if (!r2::draw::texche::IsTexturePackACubemap(*mTexturePacksCache, textureParams->Get(i)->texturePackName()))
+			{
+				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName(), textureParams->Get(i)->value());
+
+				R2_CHECK(texture != nullptr, "Should never be nullptr");
+
+				r2::sarr::Push(*textures, *texture);
+			}
+			else
+			{
+				const r2::draw::tex::CubemapTexture* cubemap = r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName());
+
+				R2_CHECK(cubemap != nullptr, "Should never be nullptr");
+
+				r2::sarr::Push(*cubemaps, *cubemap);
+			}
 		}
 
-		AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
-
-		GetTexturesForMaterialParamsInternal(texturePacks, textures, cubemaps);
-
-		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
-		
 		return true;
 	}
 

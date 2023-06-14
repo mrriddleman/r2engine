@@ -281,7 +281,7 @@ public:
         R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
  
 
-        auto result = sandBoxMemoryArea->Init(Megabytes(128), 0);
+        auto result = sandBoxMemoryArea->Init(Megabytes(4), 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
         
         subMemoryAreaHandle = sandBoxMemoryArea->AddSubArea(Megabytes(4));
@@ -1308,7 +1308,7 @@ public:
 
 			for (u32 i = 0; i < sponzaGPUModelRef->numMaterials; ++i)
 			{
-                const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->renderMaterialHandles, i));
+                const r2::draw::RenderMaterialParams* renderMaterial= r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*sponzaGPUModelRef->materialNames, i).name);
 
                 R2_CHECK(renderMaterial != nullptr, "...");
                 r2::sarr::Push(*renderMaterialParams, *renderMaterial);
@@ -1390,7 +1390,7 @@ public:
 
 			for (u32 i = 0; i < microbatGPUModelRef->numMaterials; ++i)
 			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*microbatGPUModelRef->renderMaterialHandles, i));
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*microbatGPUModelRef->materialNames, i).name);
 
 				R2_CHECK(renderMaterial != nullptr, "...");
 
@@ -1424,7 +1424,7 @@ public:
 
 			for (u32 i = 0; i < skeletonGPUModelRef->numMaterials; ++i)
 			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*skeletonGPUModelRef->renderMaterialHandles, i));
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*skeletonGPUModelRef->materialNames, i).name);
 
 				R2_CHECK(renderMaterial != nullptr, "...");
 
@@ -1464,7 +1464,7 @@ public:
 
 			for (u32 i = 0; i < ellenGPUModelRef->numMaterials; ++i)
 			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*ellenGPUModelRef->renderMaterialHandles, i));
+				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*ellenGPUModelRef->materialNames, i).name);
 
 				R2_CHECK(renderMaterial != nullptr, "...");
 

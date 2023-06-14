@@ -746,7 +746,7 @@
       clearCoatNormal: [
 
       ],
-      packSize: 154150277,
+      packSize: 154151472,
       totalNumberOfTextures: 69,
       metaData: {
         mipLevels: [
@@ -802,7 +802,7 @@
     }
   ],
   totalNumberOfTextures: 137,
-  totalTextureSize: 298820616,
+  totalTextureSize: 298821811,
   maxTexturesInAPack: 69,
   formatMetaData: [
     {

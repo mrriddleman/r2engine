@@ -2,6 +2,7 @@
 #define __MATERIAL_MANIFEST_ASSET_FILE_H__
 
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
+#include "r2/Core/Assets/Asset.h"
 
 namespace r2::fs
 {
@@ -13,16 +14,14 @@ namespace r2::asset
 	class ManifestSingleAssetFile : public ManifestAssetFile
 	{
 	public:
-
 		ManifestSingleAssetFile();
 		~ManifestSingleAssetFile();
 
-		virtual bool Init(const char* path) override;
-		virtual r2::asset::EngineAssetType GetAssetType() const override;
+		virtual bool Init(const char* path, r2::asset::AssetType assetType) override;
+		virtual r2::asset::AssetType GetAssetType() const override;
 		virtual bool AddAllFilePaths(FileList files) override;
-		virtual bool HasFilePath(const char* filePath) const override;
 		virtual u64 GetManifestFileHandle() const override;
-		virtual bool ReloadFilePath(const char* filePath) const override;
+		virtual bool ReloadFilePath(const char* filePath, const byte* manifestData) const override;
 		virtual bool Open(bool writable = false) override;
 		virtual bool Open(r2::fs::FileMode mode) override;
 		virtual bool Close() override;
@@ -38,8 +37,8 @@ namespace r2::asset
 	private:
 		char mPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::File* mFile;
-		u32 mNumDirectoriesToIncludeInAssetHandle;
-		u64 mAssetHandle;
+		r2::asset::Asset mAsset;
+
 	};
 }
 

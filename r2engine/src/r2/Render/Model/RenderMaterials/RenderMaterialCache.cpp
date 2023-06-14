@@ -350,7 +350,7 @@ namespace r2::draw::rmat
 
 				r2::sarr::Push(*materialTextures, *texture);
 
-				r2::draw::texsys::UploadToGPU(texture->textureAssetHandle, texture->type, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+				r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
 			}
 			else
 			{
@@ -388,12 +388,6 @@ namespace r2::draw::rmat
 				u64 textureHandle = textureParam->value();
 				flat::MaterialPropertyType propertyType = textureParam->propertyType();
 
-				auto theNameOfTheTexture = STRING_ID("newport_conv/albedo/newport_loft_conv_right.rtex");
-				if (textureHandle == theNameOfTheTexture)
-				{
-					int k = 0;
-				}
-
 				if (textureHandle == EMPTY_TEXTURE || propertyType != flat::MaterialPropertyType_ALBEDO)
 				{
 					continue;
@@ -422,12 +416,6 @@ namespace r2::draw::rmat
 					{
 						continue;
 					}
-					const auto texturePackName = textureParam->texturePackName();
-					if (texturePackName == 11585652685679969130 && textureHandle == 15271771113314728577)
-					{
-						int k = 0;
-					}
-
 
 					const tex::Texture* texture = FindTextureForTextureName(textures, textureHandle);
 
@@ -436,7 +424,7 @@ namespace r2::draw::rmat
 
 					r2::sarr::Push(*materialTextures, *texture);
 
-					r2::draw::texsys::UploadToGPU(texture->textureAssetHandle, texture->type, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
 				}
 			}
 			else
@@ -499,25 +487,6 @@ namespace r2::draw::rmat
 		return r2::shashmap::Has(*renderMaterialCache.mGPURenderMaterialIndices, materialName);
 	}
 
-	GPURenderMaterialHandle GetGPURenderMaterialHandle(const RenderMaterialCache& renderMaterialCache, u64 materialName)
-	{
-		s32 defaultIndex = -1;
-
-		s32 index = r2::shashmap::Get(*renderMaterialCache.mGPURenderMaterialIndices, materialName, defaultIndex);
-
-		if (index == defaultIndex)
-		{
-			return InvalideGPURenderMaterialHandle;
-		}
-
-		GPURenderMaterialHandle newHandle;
-		newHandle.index = index;
-		newHandle.materialName = materialName;
-		newHandle.renderMaterialCacheName = renderMaterialCache.mName;
-
-		return newHandle;
-	}
-
 	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, u64 materialName)
 	{
 		s32 defaultIndex = -1;
@@ -532,17 +501,7 @@ namespace r2::draw::rmat
 		return r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
 	}
 
-	const RenderMaterialParams* GetGPURenderMaterial(RenderMaterialCache& renderMaterialCache, const GPURenderMaterialHandle& handle)
-	{
-		if (IsGPURenderMaterialHandleInvalid(handle))
-		{
-			return nullptr;
-		}
-
-		return r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, handle.index);
-	}
-
-	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<GPURenderMaterialHandle>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials)
+	bool GetGPURenderMaterials(RenderMaterialCache& renderMaterialCache, const r2::SArray<u64>* handles, r2::SArray<RenderMaterialParams>* gpuRenderMaterials)
 	{
 		if (handles == nullptr)
 		{
@@ -566,11 +525,9 @@ namespace r2::draw::rmat
 
 		for (u32 i = 0; i < numHandles; ++i)
 		{
-			const GPURenderMaterialHandle& gpuRenderMaterialHandle = r2::sarr::At(*handles, i);
+			u64 materialName = r2::sarr::At(*handles, i);
 
-			R2_CHECK(gpuRenderMaterialHandle.renderMaterialCacheName == renderMaterialCache.mName, "These always need to match");
-
-			const RenderMaterialParams* renderMaterialPtr = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, gpuRenderMaterialHandle.index);
+			const RenderMaterialParams* renderMaterialPtr = GetGPURenderMaterial(renderMaterialCache, materialName);
 
 			R2_CHECK(renderMaterialPtr != nullptr, "Should never be nullptr");
 
@@ -578,16 +535,6 @@ namespace r2::draw::rmat
 		}
 
 		return true;
-	}
-
-	bool IsGPURenderMaterialHandleInvalid(const GPURenderMaterialHandle& handle)
-	{
-		return handle.index == InvalideGPURenderMaterialHandle.index || handle.materialName == 0 || handle.renderMaterialCacheName == 0;
-	}
-
-	bool AreGPURenderMaterialHandlesEqual(const GPURenderMaterialHandle& handle1, const GPURenderMaterialHandle& handle2)
-	{
-		return handle1.index == handle2.index && handle1.materialName == handle2.materialName && handle1.renderMaterialCacheName == handle2.renderMaterialCacheName;
 	}
 
 	s32 GetPackingType(const flat::MaterialParams* materialParams, tex::TextureType textureType)
@@ -663,6 +610,11 @@ namespace r2::draw::rmat
 		return 0;
 	}
 
+	void ClearRenderMaterialParams(RenderMaterialParams* renderMaterialParams)
+	{
+		*renderMaterialParams = {};
+	}
+
 	void UpdateGPURenderMaterialForMaterialParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture)
 	{
 		R2_CHECK(materialParams != nullptr, "This should not be nullptr");
@@ -681,6 +633,7 @@ namespace r2::draw::rmat
 		else
 		{
 			gpuRenderMaterial = r2::sarr::At(*renderMaterialCache.mGPURenderMaterialArray, index);
+			ClearRenderMaterialParams(gpuRenderMaterial);
 		}
 
 		R2_CHECK(gpuRenderMaterial != nullptr, "Should never happen");

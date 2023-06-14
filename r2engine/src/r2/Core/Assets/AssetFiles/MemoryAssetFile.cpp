@@ -12,12 +12,12 @@ namespace r2::asset
 		strcpy(mFilePath, "");
 	}
 
-	MemoryAssetFile::MemoryAssetFile(void* data, u64 size)
+	MemoryAssetFile::MemoryAssetFile(const void* data, u64 size)
 		: mOffset(0)
 		, mData(data)
 		, mSize(size)
 	{
-
+		strcpy(mFilePath, "");
 	}
 
 	MemoryAssetFile::~MemoryAssetFile()

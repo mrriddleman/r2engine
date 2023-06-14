@@ -121,7 +121,7 @@ namespace r2::ecs
 				r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
 
-				const r2::draw::RenderMaterialParams* nextRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*gpuModelRef->renderMaterialHandles, i));
+				const r2::draw::RenderMaterialParams* nextRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*gpuModelRef->materialNames, i).name);
 
 				R2_CHECK(nextRenderMaterial != nullptr, "This should never be nullptr");
 

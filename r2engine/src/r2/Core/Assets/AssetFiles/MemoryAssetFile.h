@@ -15,7 +15,7 @@ namespace r2::asset
 	public:
 
 		MemoryAssetFile(const AssetCacheRecord& record);
-		MemoryAssetFile(void* data, u64 size);
+		MemoryAssetFile(const void* data, u64 size);
 
 		virtual ~MemoryAssetFile();
 
@@ -40,7 +40,7 @@ namespace r2::asset
 	private:
 		mutable u64 mOffset;
 		mutable char mFilePath[r2::fs::FILE_PATH_LENGTH];
-		void* mData;
+		const void* mData;
 		u64 mSize;
 	};
 }

@@ -43,7 +43,7 @@ namespace r2::draw::vb
 		b32 isAnimated;
 
 		r2::SArray<MeshEntry>* meshEntries;
-		r2::SArray<rmat::GPURenderMaterialHandle>* renderMaterialHandles;
+		r2::SArray<r2::mat::MaterialName>* materialNames;
 		r2::SArray<ShaderHandle>* shaderHandles;
 
 		u32 numMaterials;

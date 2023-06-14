@@ -5,6 +5,7 @@
 #include "r2/Core/Assets/Asset.h"
 #include "r2/Core/Assets/AssetCache.h"
 #include "r2/Core/Assets/AssetCacheRecord.h"
+#include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
@@ -157,6 +158,8 @@ namespace r2
 			return GetAssetData<T>(assetHandle);
 		}
 
+		u64 GetAssetDataSize(r2::asset::AssetHandle assetHandle);
+
 		void UnloadAsset(const r2::asset::AssetHandle& assetHandle);
 
 		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
@@ -170,6 +173,7 @@ namespace r2
 		
 		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
 		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);
+		
 
 		bool GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 		bool GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);

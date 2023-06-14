@@ -318,22 +318,25 @@ namespace r2::asset::lib
         AssetCacheRecord defaultRecord;
 		const AssetCacheRecord& resultRecord = r2::shashmap::Get(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), defaultRecord);
 
-        if (!AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord))
+        bool hadRecord = !AssetCacheRecord::IsEmptyAssetCacheRecord(resultRecord);
+
+        if (hadRecord)
         {
             assetLib.mAssetCache->ReturnAssetBuffer(resultRecord);
 
             r2::shashmap::Remove(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle());
         }
 
-		assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(manifestFile.FilePath(), manifestFile.GetAssetType()));
+		auto assetHandle = assetLib.mAssetCache->ReloadAsset(r2::asset::Asset::MakeAssetFromFilePath(manifestFile.FilePath(), manifestFile.GetAssetType()));
 
+        AssetCacheRecord assetCacheRecord = assetLib.mAssetCache->GetAssetBuffer(assetHandle);
+
+		r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), assetCacheRecord);
+        
         char sanitizedChangedPath[r2::fs::FILE_PATH_LENGTH];
         r2::fs::utils::SanitizeSubPath(changedPath.string().c_str(), sanitizedChangedPath);
 
-        if (manifestFile.HasFilePath(sanitizedChangedPath))
-        {
-           hasReloaded = manifestFile.ReloadFilePath(sanitizedChangedPath);
-        }
+        hasReloaded = manifestFile.ReloadFilePath(sanitizedChangedPath, assetCacheRecord.GetAssetBuffer()->Data());
 
         return hasReloaded;
     }
@@ -491,11 +494,11 @@ namespace r2::asset::lib
         return zipAssetFile;
     }
     
-    ManifestAssetFile* MakeManifestSingleAssetFile(const char* path)
+    ManifestAssetFile* MakeManifestSingleAssetFile(const char* path, r2::asset::AssetType assetType)
     {
         ManifestSingleAssetFile* manifestFile = ALLOC(ManifestSingleAssetFile, *s_arenaPtr);
 
-        bool result = manifestFile->Init(path);
+        bool result = manifestFile->Init(path, assetType);
         R2_CHECK(result, "Failed to initialize the Manifest File");
         return manifestFile;
     }

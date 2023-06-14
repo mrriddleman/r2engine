@@ -3,14 +3,9 @@
 #if defined(R2_PLATFORM_WINDOWS) || defined(R2_PLATFORM_MAC) || defined(R2_PLATFORM_LINUX)
 
 #include "r2/Render/Model/Textures/Texture.h"
-#include "r2/Core/Assets/AssetLib.h"
-#include "r2/Core/Assets/AssetCache.h"
-#include "r2/Core/Assets/AssetBuffer.h"
 #include "r2/Render/Backends/SDL_OpenGL/OpenGLTextureSystem.h"
 #include "r2/Render/Renderer/RenderTarget.h"
-#include "stb_image.h"
 #include "glad/glad.h"
-//#include "SDL_image.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Math/MathUtils.h"
 
@@ -36,29 +31,29 @@ typedef s32 errno_t;
 namespace
 {
 	//from stb image
-	void VerticalFlip(void* image, int w, int h, int bytes_per_pixel)
-	{
-		int row;
-		size_t bytes_per_row = (size_t)w * bytes_per_pixel;
-		stbi_uc temp[2048];
-		stbi_uc* bytes = (stbi_uc*)image;
+	//void VerticalFlip(void* image, int w, int h, int bytes_per_pixel)
+	//{
+	//	int row;
+	//	size_t bytes_per_row = (size_t)w * bytes_per_pixel;
+	//	unsigned char temp[2048];
+	//	stbi_uc* bytes = (stbi_uc*)image;
 
-		for (row = 0; row < (h >> 1); row++) {
-			stbi_uc* row0 = bytes + row * bytes_per_row;
-			stbi_uc* row1 = bytes + (h - row - 1) * bytes_per_row;
-			// swap row0 with row1
-			size_t bytes_left = bytes_per_row;
-			while (bytes_left) {
-				size_t bytes_copy = (bytes_left < sizeof(temp)) ? bytes_left : sizeof(temp);
-				memcpy(temp, row0, bytes_copy);
-				memcpy(row0, row1, bytes_copy);
-				memcpy(row1, temp, bytes_copy);
-				row0 += bytes_copy;
-				row1 += bytes_copy;
-				bytes_left -= bytes_copy;
-			}
-		}
-	}
+	//	for (row = 0; row < (h >> 1); row++) {
+	//		stbi_uc* row0 = bytes + row * bytes_per_row;
+	//		stbi_uc* row1 = bytes + (h - row - 1) * bytes_per_row;
+	//		// swap row0 with row1
+	//		size_t bytes_left = bytes_per_row;
+	//		while (bytes_left) {
+	//			size_t bytes_copy = (bytes_left < sizeof(temp)) ? bytes_left : sizeof(temp);
+	//			memcpy(temp, row0, bytes_copy);
+	//			memcpy(row0, row1, bytes_copy);
+	//			memcpy(row1, temp, bytes_copy);
+	//			row0 += bytes_copy;
+	//			row1 += bytes_copy;
+	//			bytes_left -= bytes_copy;
+	//		}
+	//	}
+	//}
 
 	struct DDSTextureDetails
 	{
@@ -310,7 +305,7 @@ namespace r2::draw::tex
 	u32 READ_ONLY = GL_READ_ONLY;
 	u32 WRITE_ONLY = GL_WRITE_ONLY;
 	
-	void GetOpenGLTextureFormatDataForTextureFormat(const flat::TextureFormat& textureFormat, GLenum& glFormat, GLenum& glInternalFormat, GLenum& imageFormatSize)
+	void GetInternalTextureFormatDataForTextureFormat(const u32& textureFormat, u32& glFormat, u32& glInternalFormat, u32& imageFormatSize)
 	{
 		imageFormatSize = GL_UNSIGNED_BYTE;
 		switch (textureFormat)
@@ -356,20 +351,9 @@ namespace r2::draw::tex
 	}
 
 
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
+	TextureHandle UploadToGPU(const void* imageData, u64 size, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
-		//@TODO(Serge): RE-WRITE THIS TO FIT THE NEW .rtex TEXTURES!
-
-		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(texture.assetCache);
-
-		if (!assetCache)
-		{
-			return r2::draw::tex::GPUHandle{};
-		}
-
-		r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(texture);
-		
-		r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
+		r2::asset::MemoryAssetFile memoryAssetFile(imageData, size);
 
 		r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
 
@@ -378,7 +362,7 @@ namespace r2::draw::tex
 		GLenum format;
 		GLenum internalFormat;
 		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-		GetOpenGLTextureFormatDataForTextureFormat(textureMetaData->textureFormat(), format, internalFormat, imageFormatSize);
+		GetInternalTextureFormatDataForTextureFormat(textureMetaData->textureFormat(), format, internalFormat, imageFormatSize);
 
 		r2::draw::tex::GPUHandle newHandle;
 
@@ -428,211 +412,42 @@ namespace r2::draw::tex
 			}
 		}
 
-		//int texWidth;
-		//int texHeight;
-		//int channels;
-		//int mipLevels = 1;
-		//bool compressed = false;
-		//void* imageData = nullptr;
-		//GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-		//bool isHDR = stbi_is_hdr_from_memory(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
-
-		//if(isHDR)
-		//{
-		//	stbi_set_flip_vertically_on_load(false);
-		//	imageData = stbi_loadf_from_memory(assetCacheRecord.buffer->Data(),
-		//		static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
-		//	imageFormatSize = GL_FLOAT;
-		//}
-		//else
-		//{
-		//	stbi_set_flip_vertically_on_load(true);
-		//	imageData = stbi_load_from_memory(
-		//		assetCacheRecord.buffer->Data(),
-		//		static_cast<int>(assetCacheRecord.buffer->Size()), &texWidth, &texHeight, &channels, 0);
-		//}
-		//
-		//bool usedSTBI = true;
-		////bool usedTiff = false;
-		//bool usedDDS = false;
-
-		//DDSTextureDetails ddsTextureDetails;
-		////SDL_Surface* imageSurface = nullptr;
-
-		//if (!imageData)
-		//{
-		//	usedSTBI = false;
-		//	
-
-		//	bool ddsSuccess = ReadDDSFileData(assetCacheRecord.buffer->Data(), assetCacheRecord.buffer->Size(), ddsTextureDetails);
-
-
-		//	if (ddsSuccess)
-		//	{
-		//		texWidth = ddsTextureDetails.width;
-		//		texHeight = ddsTextureDetails.height;
-		//		mipLevels = ddsTextureDetails.mipMapCount;
-
-		//		usedDDS = true;
-		//		compressed = true;
-		//		channels = ddsTextureDetails.glFormat;
-		//	}
-		//	else
-		//	{
-
-		//		R2_CHECK(false, "Failed to load texture, unknown format");
-		//		return {};
-
-		//		/*SDL_RWops* ops = SDL_RWFromConstMem(assetCacheRecord.buffer->Data(), static_cast<int>(assetCacheRecord.buffer->Size()));
-
-		//		R2_CHECK(ops != nullptr, "We should be able to get the RWOps from memory");
-
-		//		imageSurface = IMG_LoadTIF_RW(ops);
-
-		//		if (!imageSurface)
-		//		{
-		//			R2_CHECK(false, "We couldn't read the tiff File!");
-		//			return TextureHandle{};
-		//		}
-
-		//		usedTiff = true;
-		//		imageData = (u8*)imageSurface->pixels;
-
-		//		texWidth = imageSurface->w;
-		//		texHeight = imageSurface->h;
-
-		//		channels = imageSurface->format->BytesPerPixel;
-
-		//		VerticalFlip(imageData, texWidth, texHeight, channels);*/
-		//	}
-		//}
-		//
-		//GLenum format;
-		//GLenum internalFormat;
-		//if (channels == 1)
-		//{
-		//	format = GL_RED;
-		//	if (isHDR)
-		//	{
-		//		internalFormat = GL_R32F;
-		//	}
-		//	else
-		//	{
-		//		internalFormat = GL_R8;
-		//	}
-		//}
-		//else if (channels == 3)
-		//{
-		//	if (isHDR)
-		//	{
-		//		internalFormat = GL_RGB32F;
-		//	}
-		//	else
-		//	{
-		//		if (type == Diffuse)
-		//		{
-		//			internalFormat = GL_SRGB8;
-		//		}
-		//		else
-		//		{
-		//			internalFormat = GL_RGB8;
-		//		}
-		//	}
-		//	
-
-		//	format = GL_RGB;
-		//}
-		//else if (channels == 4)
-		//{
-		//	if (isHDR)
-		//	{
-		//		internalFormat = GL_RGBA32F;
-		//	}
-		//	else
-		//	{
-		//		if (type == Diffuse)
-		//		{
-		//			internalFormat = GL_SRGB8_ALPHA8;
-		//		}
-		//		else
-		//		{
-		//			internalFormat = GL_RGBA8;
-		//		}
-		//	}
-
-		//	
-		//	
-		//	format = GL_RGBA;
-		//}
-		//else if(channels == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
-		//{
-		//	internalFormat = channels;
-		//	format = channels;
-		//}
-		//else
-		//{
-		//	R2_CHECK(false, "Unknown image format!");
-		//}
-
-		//r2::draw::tex::GPUHandle newHandle;
-		//r2::draw::tex::TextureFormat textureFormat;
-
-		//textureFormat.internalformat = internalFormat;
-		//textureFormat.width = texWidth;
-		//textureFormat.height = texHeight;
-		//textureFormat.mipLevels = mipLevels;
-		//textureFormat.compressed = compressed;
-		//textureFormat.wrapMode = wrapMode;
-		//textureFormat.minFilter = minFilter;
-		//textureFormat.magFilter = magFilter;
-		//textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
-		//textureFormat.anisotropy = anisotropy;
-
-		//r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1);
-
-		//if (compressed && usedDDS)
-		//{
-		//	size_t offset = 0;
-		//	for (int mip = 0; mip < mipLevels; ++mip)
-		//	{
-		//		r2::draw::gl::tex::CompressedTexSubImage2D(newHandle, mip, 0, 0, MipMapWidth(ddsTextureDetails, mip), MipMapHeight(ddsTextureDetails, mip), ddsTextureDetails.glFormat, ddsTextureDetails.sizes[mip], r2::mem::utils::PointerAdd(ddsTextureDetails.pixels, offset));
-		//		offset += ddsTextureDetails.sizes[mip];
-		//	}
-		//}
-		//else
-		//{
-		//	r2::draw::gl::tex::TexSubImage2D(newHandle, 0, 0, 0, texWidth, texHeight, format, imageFormatSize, imageData);
-		//}
-		//
-
-		//if (usedSTBI)
-		//{
-		//	stbi_image_free(imageData);
-
-		//}
-
-		////if(usedTiff)
-		////{
-		////	SDL_FreeSurface(imageSurface);
-		////}
-
-		//if (usedDDS)
-		//{
-		//	CleanupDDSTextureDetails(ddsTextureDetails);
-		//}
-
-		assetCache->ReturnAssetBuffer(assetCacheRecord);
-
-		assetCache->FreeAsset(texture);
-
 		return newHandle;
+	}
+
+	void UploadCubemapPageToGPU(TextureHandle newHandle, const void* imageData, u64 size, u32 mipLevel, u32 side, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
+	{
+		std::vector<char> data;
+
+		r2::asset::MemoryAssetFile memoryAssetFile{ imageData, size };
+
+		r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
+
+		const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
+
+		GLenum format;
+		GLenum internalFormat;
+		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+		GetInternalTextureFormatDataForTextureFormat(textureInfo->textureFormat(), format, internalFormat, imageFormatSize);
+
+		//These seem wrong but I dunno
+		const auto mip = textureInfo->mips()->Get(0);
+
+		data.resize(textureInfo->mips()->Get(0)->originalSize());
+
+		r2::assets::assetlib::unpack_texture_page(textureInfo, 0, memoryAssetFile.binaryBlob.data, data.data());
+
+		r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(side), mipLevel, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
+
+		data.clear();
 	}
 
 	TextureHandle UploadToGPU(const CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		//@TODO(Serge): RE-WRITE THIS TO FIT THE NEW .rtex TEXTURES!
 
-		r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(GetCubemapAssetHandle(cubemap).assetCache);
+		//@TODO(Serge): remove the references to the asset cache
+		/*r2::asset::AssetCache* assetCache = r2::asset::lib::GetAssetCache(GetCubemapAssetHandle(cubemap).assetCache);
 
 		if (!assetCache)
 		{
@@ -642,7 +457,7 @@ namespace r2::draw::tex
 		r2::draw::tex::GPUHandle newHandle;
 
 		int numMips = 0;
-		r2::draw::tex::TextureFormat textureFormat;
+		r2::draw::tex::TextureFormat textureFormat;*/
 
 		//for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 		//{
@@ -702,59 +517,60 @@ namespace r2::draw::tex
 		//	assetCache->FreeAsset(cubemap.mips[0].sides[i].textureAssetHandle);
 		//}
 
-		std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
+		//std::vector<char> data; //UGH... @TODO(Serge): replace somehow with a temp allocator. Right now I don't think we have enough scratch memory for all cases. It would be nice if we could unpack directly
 
-		const auto numMipLevels = cubemap.numMipLevels;
+		//const auto numMipLevels = cubemap.numMipLevels;
 
-		for (u32 mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
-		{
-			for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
-			{
-				r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[mipLevel].sides[CubemapSide::RIGHT + i].textureAssetHandle);
+		//for (u32 mipLevel = 0; mipLevel < numMipLevels; ++mipLevel)
+		//{
+		//	for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+		//	{
+		//		r2::asset::AssetCacheRecord assetCacheRecord = assetCache->GetAssetBuffer(cubemap.mips[mipLevel].sides[CubemapSide::RIGHT + i].textureAssetHandle);
 
-				r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
+		//		r2::asset::MemoryAssetFile memoryAssetFile{ assetCacheRecord };
 
-				r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
+		//		r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
 
-				const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
+		//		const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
 
-				GLenum format;
-				GLenum internalFormat;
-				GLenum imageFormatSize = GL_UNSIGNED_BYTE;
-				GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), format, internalFormat, imageFormatSize);
+		//		GLenum format;
+		//		GLenum internalFormat;
+		//		GLenum imageFormatSize = GL_UNSIGNED_BYTE;
+		//		GetOpenGLTextureFormatDataForTextureFormat(textureInfo->textureFormat(), format, internalFormat, imageFormatSize);
 
-				if (mipLevel == 0 && i == 0)
-				{
-					textureFormat.internalformat = internalFormat;
-					textureFormat.width = textureInfo->mips()->Get(0)->width();
-					textureFormat.height = textureInfo->mips()->Get(0)->height();
-					textureFormat.mipLevels = numMipLevels;
-					textureFormat.isCubemap = true;
-					textureFormat.wrapMode = wrapMode;
-					textureFormat.magFilter = magFilter;
-					textureFormat.minFilter = minFilter;
-					textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
-					textureFormat.anisotropy = anisotropy;
+		//		if (mipLevel == 0 && i == 0)
+		//		{
+		//			textureFormat.internalformat = internalFormat;
+		//			textureFormat.width = textureInfo->mips()->Get(0)->width();
+		//			textureFormat.height = textureInfo->mips()->Get(0)->height();
+		//			textureFormat.mipLevels = numMipLevels;
+		//			textureFormat.isCubemap = true;
+		//			textureFormat.wrapMode = wrapMode;
+		//			textureFormat.magFilter = magFilter;
+		//			textureFormat.minFilter = minFilter;
+		//			textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+		//			textureFormat.anisotropy = anisotropy;
 
-					r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1, true);
-				}
+		//			r2::draw::gl::texsys::MakeNewGLTexture(newHandle, textureFormat, 1, true);
+		//		}
 
-				const auto mip = textureInfo->mips()->Get(0);
-				
-				data.resize(textureInfo->mips()->Get(0)->originalSize());
+		//		const auto mip = textureInfo->mips()->Get(0);
+		//		
+		//		data.resize(textureInfo->mips()->Get(0)->originalSize());
 
-				r2::assets::assetlib::unpack_texture_page(textureInfo, 0, memoryAssetFile.binaryBlob.data, data.data());
+		//		r2::assets::assetlib::unpack_texture_page(textureInfo, 0, memoryAssetFile.binaryBlob.data, data.data());
 
-				r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), mipLevel, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
+		//		r2::draw::gl::tex::TexSubCubemapImage2D(newHandle, static_cast<CubemapSide>(CubemapSide::RIGHT + i), mipLevel, 0, 0, mip->width(), mip->height(), format, imageFormatSize, data.data());
 
-				data.clear();
+		//		data.clear();
 
-				assetCache->ReturnAssetBuffer(assetCacheRecord);
+		//		//@TODO(Serge): remove these - this messes up the texturepackscache now
+		//		assetCache->ReturnAssetBuffer(assetCacheRecord);
 
-				assetCache->FreeAsset(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
-			}
+		//		assetCache->FreeAsset(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
+		//	}
 
-		}
+		//}
 
 
 		//r2::draw::tex::TextureFormat textureFormat;
@@ -869,7 +685,8 @@ namespace r2::draw::tex
 		
 
 
-		return newHandle;
+		//return newHandle;
+		return {};
 	}
 
 	void UnloadFromGPU(TextureHandle& texture)

@@ -2,8 +2,12 @@
 #include "r2/Render/Model/Textures/TextureSystem.h"
 #include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Core/Containers/SHashMap.h"
-
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Core/Math/MathUtils.h"
+#include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
+#include "assetlib/TextureAsset.h"
+#include "r2/Render/Renderer/RendererTypes.h"
 
 namespace r2::draw
 {
@@ -133,7 +137,7 @@ namespace r2::draw::texsys
 		FREE_EMPLACED_ARENA(arena);
 	}
 
-	void UploadToGPU(const r2::asset::AssetHandle& texture, tex::TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
+	void UploadToGPU(const r2::draw::tex::Texture& texture, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
 	{
 		if (s_optrTextureSystem == nullptr)
 		{
@@ -145,19 +149,24 @@ namespace r2::draw::texsys
 		//				if we have, then nothing to do - don't waste pages if we don't have to
 		TextureGPUHandle theDefault;
 
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
+		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, theDefault);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
-		
-		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(texture, type, anisotropy, wrapMode, minFilter, magFilter);
-		texGPUHandle.type = type;
+
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		const void* imageData = gameAssetManager.GetAssetDataConst<void>(texture.textureAssetHandle);
+		u64 dataSize = gameAssetManager.GetAssetDataSize(texture.textureAssetHandle);
+
+		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(imageData, dataSize, anisotropy, wrapMode, minFilter, magFilter);
+		texGPUHandle.type = texture.type;
 		texGPUHandle.anisotropy = anisotropy;
 		texGPUHandle.minFilter = minFilter;
 		texGPUHandle.magFilter = magFilter;
 		texGPUHandle.wrapMode = wrapMode;
 
-		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.handle, texGPUHandle);
+		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, texGPUHandle);
 	}
 
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
@@ -178,12 +187,52 @@ namespace r2::draw::texsys
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
 
-		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(cubemap, anisotropy, wrapMode, minFilter, magFilter);
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		r2::draw::tex::TextureFormat textureFormat;
+		{
+			const void* imageData = gameAssetManager.GetAssetDataConst<void>(cubemap.mips[0].sides[0].textureAssetHandle);
+			u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[0].sides[0].textureAssetHandle);
+
+			r2::asset::MemoryAssetFile memoryAssetFile{ imageData, dataSize };
+
+			r2::assets::assetlib::load_binaryfile("", memoryAssetFile);
+
+			const auto textureInfo = r2::assets::assetlib::read_texture_meta_data(memoryAssetFile);
+
+			u32 format;
+			u32 internalFormat;
+			u32 imageFormatSize = r2::draw::UNSIGNED_BYTE; 
+			tex::GetInternalTextureFormatDataForTextureFormat(textureInfo->textureFormat(), format, internalFormat, imageFormatSize);
+			
+			textureFormat.internalformat = internalFormat;
+			textureFormat.width = textureInfo->mips()->Get(0)->width();
+			textureFormat.height = textureInfo->mips()->Get(0)->height();
+			textureFormat.mipLevels = cubemap.numMipLevels;
+			textureFormat.isCubemap = true;
+			textureFormat.wrapMode = wrapMode;
+			textureFormat.magFilter = magFilter;
+			textureFormat.minFilter = minFilter;
+			textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
+			textureFormat.anisotropy = anisotropy;
+		}
+		
+		texGPUHandle.gpuHandle = tex::CreateTexture(textureFormat, 1, true);
 		texGPUHandle.type = tex::Cubemap;
 		texGPUHandle.anisotropy = anisotropy;
 		texGPUHandle.minFilter = minFilter;
 		texGPUHandle.magFilter = magFilter;
 		texGPUHandle.wrapMode = wrapMode;
+
+		for (u32 mipLevel = 0; mipLevel < cubemap.numMipLevels; ++mipLevel)
+		{
+			for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
+			{
+				const void* imageData = gameAssetManager.GetAssetDataConst<void>(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
+				u64 dataSize = gameAssetManager.GetAssetDataSize(cubemap.mips[mipLevel].sides[i].textureAssetHandle);
+				tex::UploadCubemapPageToGPU(texGPUHandle.gpuHandle, imageData, dataSize, mipLevel, i, anisotropy, wrapMode, minFilter, magFilter);
+			}
+		}
 
 		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
 	}
@@ -199,7 +248,7 @@ namespace r2::draw::texsys
 			UnloadFromGPU(texture);
 		}
 
-		texsys::UploadToGPU(texture, texGPUHandle.type, texGPUHandle.anisotropy, texGPUHandle.wrapMode, texGPUHandle.minFilter, texGPUHandle.magFilter);
+		texsys::UploadToGPU({ texture, texGPUHandle.type }, texGPUHandle.anisotropy, texGPUHandle.wrapMode, texGPUHandle.minFilter, texGPUHandle.magFilter);
 	}
 
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture)

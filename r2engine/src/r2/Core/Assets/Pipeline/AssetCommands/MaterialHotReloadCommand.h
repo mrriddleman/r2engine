@@ -25,6 +25,9 @@ namespace r2::asset::pln
 		void AddFindMaterialPackManifestFunctions(const std::vector<FindMaterialPackManifestFileFunc>& findFuncs);
 		void AddGenerateMaterialPackManifestsFromDirectoriesFunctions(std::vector<GenerateMaterialPackManifestFromDirectoriesFunc> genFuncs);
 
+		static bool MaterialManifestHotReloaded(const char* changedFilePath, const byte* manifestData);
+
+
 	private:
 
 		void GenerateMaterialPackManifestsIfNeeded();

@@ -137,8 +137,10 @@ namespace r2::draw::tex
 		b32 isSparse;
 	};
 
-	TextureHandle UploadToGPU(const r2::asset::AssetHandle& texture, TextureType type, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
+	TextureHandle UploadToGPU(const void* data, u64 size, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
 	TextureHandle UploadToGPU(const CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
+
+	void UploadCubemapPageToGPU(TextureHandle newHandle, const void* data, u64 size, u32 mipLevel, u32 side, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
 
 
 	void UnloadFromGPU(TextureHandle& texture);
@@ -176,6 +178,9 @@ namespace r2::draw::tex
 
 	u32 MaxMipsForSparseTextureSize(const r2::draw::tex::TextureHandle& textureHandle);
 	u32 MaxMipsForTextureSizeBiggerThan(const r2::draw::tex::TextureHandle& textureHandle, u32 dim);
+
+	void GetInternalTextureFormatDataForTextureFormat(const u32& textureFormat, u32& glFormat, u32& glInternalFormat, u32& imageFormatSize);
+
 
 	namespace impl
 	{

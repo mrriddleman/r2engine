@@ -166,7 +166,8 @@ namespace r2::draw::texche
 	bool LoadAllTexturesFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
 	bool LoadTexturePackFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	bool LoadTexturePacksFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks);
-
+	bool LoadTextuesFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks, const r2::SArray<r2::draw::tex::Texture>& textures);
+	bool LoadCubemapTexturesFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks, const r2::SArray<r2::draw::tex::CubemapTexture>& cubemapTextures);
 
 	bool UnloadAllTexturesFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
 	bool UnloadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName);
@@ -175,6 +176,9 @@ namespace r2::draw::texche
 
 
 	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	const tex::Texture* GetTextureFromTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
+
+
 	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 }
 

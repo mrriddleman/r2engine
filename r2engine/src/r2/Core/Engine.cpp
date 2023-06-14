@@ -39,6 +39,7 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
+#include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 
 #ifdef R2_DEBUG
 #include <chrono>
@@ -523,11 +524,12 @@ namespace r2
     void Engine::Update()
     {
 #ifdef R2_ASSET_PIPELINE
-     //   r2::asset::pln::Update(); //for shaders
-
-        mAssetCommandHandler.Update();
+		mAssetCommandHandler.Update();
 #endif
+
         r2::asset::lib::Update();
+
+        r2::asset::lib::Update(*mAssetLib);
 
 		r2::draw::shadersystem::Update();
 		r2::draw::matsys::Update();
@@ -1197,12 +1199,18 @@ namespace r2
 
     void Engine::SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
     {
-        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath);
+        r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
+#ifdef R2_ASSET_PIPELINE
+		engineManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
+#endif
         r2::asset::lib::RegisterManifestFile(*mAssetLib, engineManifestAssetFile);
-        
+
         for (const std::string& manifestPath : appMaterialPacksManifests )
         {
-            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(manifestPath.c_str());
+            r2::asset::ManifestAssetFile* nextManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(manifestPath.c_str(), r2::asset::MATERIAL_PACK_MANIFEST);
+#ifdef R2_ASSET_PIPELINE
+            nextManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
+#endif
             r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
         }
     }

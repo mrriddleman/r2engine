@@ -1,6 +1,6 @@
 #include "r2pch.h"
 #include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
-#include "r2/Core/Assets/Asset.h"
+
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Core/File/PathUtils.h"
@@ -9,9 +9,9 @@ namespace r2::asset
 {
 	ManifestSingleAssetFile::ManifestSingleAssetFile()
 		:mFile(nullptr)
-		,mNumDirectoriesToIncludeInAssetHandle(r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::MATERIAL_PACK_MANIFEST))
-		,mAssetHandle(0)
+		, mAsset{}
 	{
+		r2::util::PathCpy(mPath, "");
 	}
 
 	ManifestSingleAssetFile::~ManifestSingleAssetFile()
@@ -22,21 +22,21 @@ namespace r2::asset
 		}
 	}
 
-	bool ManifestSingleAssetFile::Init(const char* path)
+	bool ManifestSingleAssetFile::Init(const char* path, r2::asset::AssetType assetType)
 	{
-		mAssetHandle = Asset::GetAssetNameForFilePath(path, GetAssetType());
+		mAsset = r2::asset::Asset::MakeAssetFromFilePath(path, assetType);
 
 		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::SanitizeSubPath(path, sanitizedPath);
 
 		r2::util::PathCpy(mPath, sanitizedPath);
 
-		return mAssetHandle != 0;
+		return mAsset.HashID() != 0;
 	}
 
-	r2::asset::EngineAssetType ManifestSingleAssetFile::GetAssetType() const
+	r2::asset::AssetType ManifestSingleAssetFile::GetAssetType() const
 	{
-		return r2::asset::MATERIAL_PACK_MANIFEST;
+		return mAsset.GetType();
 	}
 
 	bool ManifestSingleAssetFile::AddAllFilePaths(FileList files)
@@ -44,19 +44,18 @@ namespace r2::asset
 		return true;
 	}
 
-	bool ManifestSingleAssetFile::HasFilePath(const char* filePath) const
-	{
-		return false;
-	}
-
 	u64 ManifestSingleAssetFile::GetManifestFileHandle() const
 	{
-		return mAssetHandle;
+		return mAsset.HashID();
 	}
 
-	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath) const 
+	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath, const byte* manifestData) const 
 	{
+#ifdef R2_ASSET_PIPELINE
+		return mReloadFilePathFunc(filePath, manifestData);
+#else
 		return false;
+#endif
 	}
 
 	bool ManifestSingleAssetFile::Open(bool writable /*= false*/)
@@ -114,12 +113,12 @@ namespace r2::asset
 
 	void ManifestSingleAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)
 	{
-		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, mNumDirectoriesToIncludeInAssetHandle);
+		r2::fs::utils::CopyFileNameWithParentDirectories(mPath, name, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(mAsset.GetType()));
 	}
 
 	u64 ManifestSingleAssetFile::GetAssetHandle(u64 index)
 	{
-		return mAssetHandle;
+		return mAsset.HashID();
 	}
 
 	const char* ManifestSingleAssetFile::FilePath() const

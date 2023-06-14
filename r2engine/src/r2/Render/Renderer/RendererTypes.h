@@ -104,6 +104,7 @@ namespace r2::draw
 
     extern u32 CW;
     extern u32 CCW;
+    extern u32 UNSIGNED_BYTE;
 
 	enum DefaultModel
 	{
