@@ -35,6 +35,8 @@ namespace r2::draw
 		r2::mem::FreeListArena* mAssetHandleArena = nullptr;
 		r2::SHashMap<r2::SArray<r2::asset::AssetHandle>*>* mUploadedTextureForMaterialMap = nullptr;
 
+		r2::draw::tex::Texture mMissingTexture;
+
 		static u64 MemorySize(u32 numMaterials);
 	};
 }

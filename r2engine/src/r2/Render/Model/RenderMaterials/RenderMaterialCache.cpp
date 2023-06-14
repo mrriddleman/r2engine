@@ -338,22 +338,20 @@ namespace r2::draw::rmat
 				continue;
 			}
 
-			flat::MaterialPropertyType propertyType = textureParam->propertyType();
-
 			if (!isCubemap)
 			{
 				//find the texture that matches textureHandle
-
 				const tex::Texture* texture = FindTextureForTextureName(textures, textureHandle);
 
-				R2_CHECK(texture != nullptr, "We should always have the texture here if we don't have an empty textureHandle!");
-
-				r2::sarr::Push(*materialTextures, *texture);
-
-				r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+				if (texture)
+				{
+					r2::sarr::Push(*materialTextures, *texture);
+					r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+				}
 			}
 			else
 			{
+				flat::MaterialPropertyType propertyType = textureParam->propertyType();
 				if (IsTextureParamCubemapTexture(cubemapTexture, textureHandle, propertyType))
 				{
 					r2::draw::texsys::UploadToGPU(*cubemapTexture, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
@@ -419,20 +417,18 @@ namespace r2::draw::rmat
 
 					const tex::Texture* texture = FindTextureForTextureName(textures, textureHandle);
 
+					if (texture)
+					{
+						r2::sarr::Push(*materialTextures, *texture);
 
-					R2_CHECK(texture != nullptr, "We should always have the texture here if we don't have an empty textureHandle!");
-
-					r2::sarr::Push(*materialTextures, *texture);
-
-					r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+						r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					}
 				}
 			}
 			else
 			{
 				r2::draw::texsys::UploadToGPU(*foundCubemap, cubemapTextureParam->anisotropicFiltering(), GetWrapMode(cubemapTextureParam), GetMinFilter(cubemapTextureParam), GetMagFilter(cubemapTextureParam));
 			}
-
-			
 
 			UpdateGPURenderMaterialForMaterialParams(renderMaterialCache, materialParams, materialTextures, foundCubemap);
 
@@ -715,7 +711,13 @@ namespace r2::draw::rmat
 				}
 
 				const tex::Texture* theTexture = FindTextureForTextureName(textures, textureHandle);
-				R2_CHECK(theTexture != nullptr, "Should never happen");
+				//R2_CHECK(theTexture != nullptr, "Should never happen");
+
+				if (!theTexture)
+				{
+					//put in the missing texture here
+					theTexture = &renderMaterialCache.mMissingTexture;
+				}
 
 				tex::TextureAddress address = texsys::GetTextureAddress(*theTexture);
 

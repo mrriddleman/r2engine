@@ -411,9 +411,10 @@ namespace r2
 			{
 				const r2::draw::tex::Texture* texture = r2::draw::texche::GetTextureFromTexturePack(*mTexturePacksCache, textureParams->Get(i)->texturePackName(), textureParams->Get(i)->value());
 
-				R2_CHECK(texture != nullptr, "Should never be nullptr");
-
-				r2::sarr::Push(*textures, *texture);
+				if (texture)
+				{
+					r2::sarr::Push(*textures, *texture);
+				}
 			}
 			else
 			{

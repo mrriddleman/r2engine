@@ -970,7 +970,6 @@ namespace r2::draw::renderer
 			return false;
 		}
 
-
 		newRenderer->mLightSystem = lightsys::CreateLightSystem(*newRenderer->mSubAreaArena);
 
 #ifdef R2_DEBUG
@@ -1309,19 +1308,21 @@ namespace r2::draw::renderer
 
 		gameAssetManager.GetTexturesForMaterialParamsPack(engineMaterialPack, engineTextures, engineCubemaps);
 
+		//We want these to be set before we upload them since they might use the missing texture in UploadMaterialTextureParamsArray()
+		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("StaticMissingTexture"));
+		newRenderer->mBlueNoiseTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
+
+		newRenderer->mRenderMaterialCache->mMissingTexture = newRenderer->mMissingTexture;
+
 		rmat::UploadMaterialTextureParamsArray(*newRenderer->mRenderMaterialCache, engineMaterialPack, engineTextures, engineCubemaps);
 
 		FREE(engineCubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(engineTextures, *MEM_ENG_SCRATCH_PTR);
 
-
 		newRenderer->mDefaultStaticOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticOutline"));
 		newRenderer->mDefaultDynamicOutlineRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("DynamicOutline"));
-
-		newRenderer->mMissingTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("StaticMissingTexture"));
+	
 		newRenderer->mMissingTextureRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("StaticMissingTexture"));
-
-		newRenderer->mBlueNoiseTexture = *gameAssetManager.GetAlbedoTextureForMaterialName(engineMaterialPack, STRING_ID("BlueNoise64"));
 		newRenderer->mBlueNoiseRenderMaterialParams = *rmat::GetGPURenderMaterial(*newRenderer->mRenderMaterialCache, STRING_ID("BlueNoise64"));
 
 		//@NOTE(Serge): this always has to be after the initialize vertex layouts and after we upload the render materials
