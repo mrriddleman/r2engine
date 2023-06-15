@@ -55,6 +55,11 @@ namespace r2::asset::pln
 		mTexturePacksBinaryOutputDirectories.insert(mTexturePacksBinaryOutputDirectories.end(), outputDirectories.begin(), outputDirectories.end());
 	}
 
+	bool TexturePackHotReloadCommand::TexturePacksManifestHotReloaded(const char* changedFilePath, const byte* manifestData)
+	{
+		return false;
+	}
+
 	//Private methods
 	void TexturePackHotReloadCommand::GenerateTexturePackManifestsIfNeeded()
 	{

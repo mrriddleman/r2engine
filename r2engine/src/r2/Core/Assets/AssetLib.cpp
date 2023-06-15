@@ -14,6 +14,7 @@
 #include "r2/Core/Assets/AssetFiles/ZipAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 #include "r2/Core/Assets/AssetFiles/ManifestSingleAssetFile.h"
+#include "r2/Core/Assets/AssetFiles/TexturePackManifestAssetFile.h"
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/File/FileDevices/Modifiers/Zip/ZipFile.h"
@@ -94,7 +95,7 @@ namespace r2::asset::lib
         newAssetLib->mArena = stackArena;
         newAssetLib->mBoundary = boundary;
 
-        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numManifests);
+        newAssetLib->mAssetCacheRecords = MAKE_SHASHMAP(*stackArena, r2::asset::AssetCacheRecord, numManifests * r2::SHashMap<u32>::LoadFactorMultiplier());
 
         R2_CHECK(newAssetLib->mAssetCacheRecords != nullptr, "We couldn't create the AssetCacheRecords hashmap");
 
@@ -518,6 +519,15 @@ namespace r2::asset::lib
         bool result = manifestFile->Init(path, assetType);
         R2_CHECK(result, "Failed to initialize the Manifest File");
         return manifestFile;
+    }
+
+    ManifestAssetFile* MakeTexturePackManifestAssetFile(const char* path)
+    {
+        TexturePackManifestAssetFile* manifestFile = ALLOC(TexturePackManifestAssetFile, *s_arenaPtr);
+
+		bool result = manifestFile->Init(path, r2::asset::TEXTURE_PACK_MANIFEST);
+		R2_CHECK(result, "Failed to initialize the Manifest File");
+		return manifestFile;
     }
 
     r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files)

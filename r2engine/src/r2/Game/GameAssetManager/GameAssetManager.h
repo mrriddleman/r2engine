@@ -169,7 +169,7 @@ namespace r2
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
 
-		bool AddTexturePacksManifest(const char* texturePacksManifestFilePath);
+		bool AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		
 		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
 		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);

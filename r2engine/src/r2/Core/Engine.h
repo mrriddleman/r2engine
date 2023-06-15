@@ -247,8 +247,13 @@ namespace r2
         void ControllerRemappedEvent(io::ControllerID controllerID);
         
         //Materials Setup
-        void SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests);
-        void SetupGameAssetManager(const Application* noptrApp);
+        void SetupAssetLib(
+            const char* engineMaterialsPath,
+            const std::vector<std::string>& appMaterialPacksManifests,
+            const char* engineTexturePacksManifestPath,
+            const std::vector<std::string>& appTexturePacksManifestPaths);
+
+        void SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp);
 
 
         SetVSyncFunc mSetVSyncFunc = nullptr;

@@ -94,7 +94,7 @@ namespace r2::draw::texche
 		return true;
 	}
 
-	TexturePacksManifestHandle AddTexturePacksManifestFile(TexturePacksCache& texturePacksCache, const char* texturePacksManifestFilePath)
+	TexturePacksManifestHandle AddTexturePacksManifestFile(TexturePacksCache& texturePacksCache, u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest)
 	{
 		//add the texturePacksManifestFilePath file 
 		if (texturePacksCache.mnoptrGameAssetManager == nullptr || texturePacksCache.mTexturePackManifests == nullptr)
@@ -103,16 +103,14 @@ namespace r2::draw::texche
 			return TexturePacksManifestHandle::Invalid;
 		}
 		
-		if (texturePacksManifestFilePath == nullptr || strlen(texturePacksManifestFilePath) == 0)
+		if (texturePacksManifest == nullptr || texturePackHandle == 0)
 		{
 			R2_CHECK(false, "Passed in an invalid texture pack manifest file path!");
 			return TexturePacksManifestHandle::Invalid;
 		}
 
-		r2::asset::Asset manifestAsset = r2::asset::Asset::MakeAssetFromFilePath(texturePacksManifestFilePath, r2::asset::TEXTURE_PACK_MANIFEST);
-
 		s32 invalidIndex = -1;
-		s32 packManifestIndex = r2::shashmap::Get(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, manifestAsset.HashID(), invalidIndex);
+		s32 packManifestIndex = r2::shashmap::Get(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, texturePackHandle, invalidIndex);
 
 		if (invalidIndex != packManifestIndex)
 		{
@@ -120,15 +118,9 @@ namespace r2::draw::texche
 			return { packManifestIndex };
 		}
 
-		r2::asset::FileList fileList = texturePacksCache.mnoptrGameAssetManager->GetFileList();
-
-		r2::asset::RawAssetFile* texturePacksManifestFile = r2::asset::lib::MakeRawAssetFile(texturePacksManifestFilePath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::TEXTURE_PACK_MANIFEST));
-
-		r2::sarr::Push(*fileList, (r2::asset::AssetFile*)texturePacksManifestFile);
-
 		TexturePackManifestEntry newEntry;
 
-		newEntry.flatTexturePacksManifest = flat::GetTexturePacksManifest(texturePacksCache.mnoptrGameAssetManager->LoadAndGetAssetConst<byte>(manifestAsset));
+		newEntry.flatTexturePacksManifest = texturePacksManifest;
 		R2_CHECK(newEntry.flatTexturePacksManifest != nullptr, "We should have the flatbuffer data");
 
 		const u32 numTexturePackManifests = r2::sarr::Capacity(*texturePacksCache.mTexturePackManifests);
@@ -136,18 +128,15 @@ namespace r2::draw::texche
 		packManifestIndex = r2::sarr::Size(*texturePacksCache.mTexturePackManifests);
 		r2::sarr::Push(*texturePacksCache.mTexturePackManifests, newEntry);
 
-		r2::shashmap::Set(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, manifestAsset.HashID(), packManifestIndex);
+		r2::shashmap::Set(*texturePacksCache.mManifestNameToTexturePackManifestEntryMap, texturePackHandle, packManifestIndex);
 
 		const flat::TexturePacksManifest* manifest = newEntry.flatTexturePacksManifest;
-
 
 		auto texturePacks = manifest->texturePacks();
 
 		for (flatbuffers::uoffset_t i = 0; i < texturePacks->size(); ++i)
 		{
 			const flat::TexturePack* texturePack = texturePacks->Get(i);
-
-			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
 
 			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePack->packName(), packManifestIndex);
 		}

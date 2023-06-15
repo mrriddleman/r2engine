@@ -20,6 +20,10 @@ namespace r2::asset::pln
 		void AddBinaryManifestFilePaths(const std::vector<std::string>& binFilePaths);
 		void AddTexturePackWatchDirectories(const std::vector<std::string>& watchPaths);
 		void AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories);
+
+
+		static bool TexturePacksManifestHotReloaded(const char* changedFilePath, const byte* manifestData);
+
 	private:
 
 		void GenerateTexturePackManifestsIfNeeded();

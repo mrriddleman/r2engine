@@ -90,6 +90,8 @@ namespace r2::asset
 
 			AddAllTexturePathsInTexturePackToFileList(texturePack, fileList);
 		}
+
+		return true;
 	}
 
 	u64 TexturePackManifestAssetFile::GetManifestFileHandle() const
@@ -169,7 +171,12 @@ namespace r2::asset
 
 	u64 TexturePackManifestAssetFile::NumAssets()
 	{
-		return mTexturePacksManifest->totalNumberOfTextures();
+		if (mTexturePacksManifest)
+		{
+			return mTexturePacksManifest->totalNumberOfTextures();
+		}
+
+		return 1;
 	}
 
 	void TexturePackManifestAssetFile::GetAssetName(u64 index, char* name, u32 nameBuferSize)

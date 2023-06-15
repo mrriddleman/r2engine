@@ -235,7 +235,7 @@ namespace r2
 		}
 	}
 
-	bool GameAssetManager::AddTexturePacksManifest(const char* texturePacksManifestFilePath)
+	bool GameAssetManager::AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest)
 	{
 		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
 		{
@@ -243,13 +243,13 @@ namespace r2
 			return false;
 		}
 
-		if (texturePacksManifestFilePath == nullptr || strlen(texturePacksManifestFilePath) <= 0)
+		if (texturePacksManifest == nullptr || texturePackManifestHandle <= 0)
 		{
 			R2_CHECK(false, "Should never be nullptr");
 			return false;
 		}
 
-		return r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, texturePacksManifestFilePath).handle != draw::texche::TexturePacksManifestHandle::Invalid.handle;
+		return r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, texturePackManifestHandle, texturePacksManifest).handle != draw::texche::TexturePacksManifestHandle::Invalid.handle;
 	}
 
 	bool GameAssetManager::LoadMaterialTextures(const flat::MaterialParams* materialParams)

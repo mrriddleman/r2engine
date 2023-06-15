@@ -35,7 +35,7 @@
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Core/File/FileSystem.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
-
+#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
@@ -131,17 +131,14 @@ namespace r2
 
 
             u32 numMaterialManifests = noptrApp->GetMaterialPackManifestsBinaryPaths().size();
-            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests, 1);
+            u32 numTextureManifets = noptrApp->GetTexturePackManifestsBinaryPaths().size();
+            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets, 2);
 
             r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
 
-            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1, Kilobytes(512));
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1 + numTextureManifets + 1, Kilobytes(512));
 
             R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
-
-
-
-
 
             char internalShaderManifestPath[r2::fs::FILE_PATH_LENGTH];
             r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_SHADERS_MANIFESTS_DIR, internalShaderManifestPath, "r2shaders.sman");
@@ -420,12 +417,6 @@ namespace r2
 
             auto appMaterialPacksManifests = noptrApp->GetMaterialPackManifestsBinaryPaths();
             auto appInitialTexturePackManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
-            std::vector<std::string> initialTexturePackManifests;
-            initialTexturePackManifests.insert(initialTexturePackManifests.begin(), appInitialTexturePackManifests.begin(), appInitialTexturePackManifests.end());
-            initialTexturePackManifests.push_back(std::string(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN) + std::string("/engine_texture_pack.tman"));
-
-            std::vector<std::string> initialMaterialPacksManifests;
-            initialMaterialPacksManifests.insert(initialMaterialPacksManifests.begin(), appMaterialPacksManifests.begin(), appMaterialPacksManifests.end());
 
 
             //Do all the material setup 
@@ -435,8 +426,13 @@ namespace r2
 			char texturePackPath[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, texturePackPath, "engine_texture_pack.tman");
 
-            SetupMaterialManifests(materialsPath, appMaterialPacksManifests);
-            SetupGameAssetManager(noptrApp);
+            SetupAssetLib(
+                materialsPath,
+                appMaterialPacksManifests,
+                texturePackPath,
+                appInitialTexturePackManifests);
+
+            SetupGameAssetManager(texturePackPath, noptrApp);
 
             r2::SArray<const byte*>* materialManifestsData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, appMaterialPacksManifests.size() + 1);
             r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParamsPack*, r2::sarr::Capacity(*materialManifestsData));
@@ -1143,7 +1139,7 @@ namespace r2
         }
     }
 
-    void Engine::SetupGameAssetManager(const Application* noptrApp)
+    void Engine::SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp)
     {
         std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
 
@@ -1186,18 +1182,28 @@ namespace r2
 
 		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, r2::asset::lib::GetFileList(*mAssetLib), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
 
-		char engineTexturePackManifestPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::AppendSubPath(R2_ENGINE_INTERNAL_TEXTURES_MANIFESTS_BIN, engineTexturePackManifestPath, "engine_texture_pack.tman");
 
-        mGameAssetManager->AddTexturePacksManifest(engineTexturePackManifestPath);
+        const auto engineTexturePacksManifestHandle = r2::asset::Asset::GetAssetNameForFilePath(engineTexturePackManifestPath, r2::asset::TEXTURE_PACK_MANIFEST);
+
+        const byte* engineTexturePacksData = r2::asset::lib::GetManifestData(*mAssetLib, engineTexturePacksManifestHandle);
+
+        mGameAssetManager->AddTexturePacksManifest(engineTexturePacksManifestHandle, flat::GetTexturePacksManifest(engineTexturePacksData));
 
 		for (u32 i = 0; i < textureManifests.size(); ++i)
 		{
-			mGameAssetManager->AddTexturePacksManifest(textureManifests[i].c_str());
+			const auto appTexturePacksManifestHandle = r2::asset::Asset::GetAssetNameForFilePath(textureManifests[i].c_str(), r2::asset::TEXTURE_PACK_MANIFEST);
+
+			const byte* appTexturePacksData = r2::asset::lib::GetManifestData(*mAssetLib, appTexturePacksManifestHandle);
+
+			mGameAssetManager->AddTexturePacksManifest(appTexturePacksManifestHandle, flat::GetTexturePacksManifest(appTexturePacksData));
 		}
     }
 
-    void Engine::SetupMaterialManifests(const char* materialsPath, const std::vector<std::string>& appMaterialPacksManifests)
+    void Engine::SetupAssetLib(
+        const char* materialsPath,
+        const std::vector<std::string>& appMaterialPacksManifests,
+		const char* engineTexturePacksManifestPath,
+		const std::vector<std::string>& appTexturePacksManifestPaths)
     {
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
 #ifdef R2_ASSET_PIPELINE
@@ -1212,6 +1218,21 @@ namespace r2
             nextManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::MaterialHotReloadCommand::MaterialManifestHotReloaded);
 #endif
             r2::asset::lib::RegisterManifestFile(*mAssetLib, nextManifestAssetFile);
+        }
+
+        r2::asset::ManifestAssetFile* engineTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(engineTexturePacksManifestPath);
+#ifdef R2_ASSET_PIPELINE
+        engineTexturePacksManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::TexturePackHotReloadCommand::TexturePacksManifestHotReloaded);
+#endif
+        r2::asset::lib::RegisterManifestFile(*mAssetLib, engineTexturePacksManifestAssetFile);
+
+        for (const std::string& manifestPath : appTexturePacksManifestPaths)
+        {
+            r2::asset::ManifestAssetFile* appTexturePacksManifestAssetFile = r2::asset::lib::MakeTexturePackManifestAssetFile(manifestPath.c_str());
+#ifdef R2_ASSET_PIPELINE
+            appTexturePacksManifestAssetFile->SetReloadFilePathCallback(r2::asset::pln::TexturePackHotReloadCommand::TexturePacksManifestHotReloaded);
+#endif
+            r2::asset::lib::RegisterManifestFile(*mAssetLib, appTexturePacksManifestAssetFile);
         }
     }
     
