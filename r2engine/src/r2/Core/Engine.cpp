@@ -446,12 +446,12 @@ namespace r2
             }
             
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
-			bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
+			/*bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
 			if (!materialSystemInitialized)
 			{
 				R2_CHECK(false, "We couldn't initialize the material systems");
 				return false;
-			}
+			}*/
 
 			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, materialParamsPacks);
 			if (!shaderSystemIntialized)
@@ -528,7 +528,7 @@ namespace r2
         r2::asset::lib::Update(*mAssetLib);
 
 		r2::draw::shadersystem::Update();
-		r2::draw::matsys::Update();
+	//	r2::draw::matsys::Update();
 
         if (mNeedsResolutionChange)
         {
@@ -578,7 +578,7 @@ namespace r2
         
 
         r2::draw::shadersystem::Shutdown();
-        r2::draw::matsys::ShutdownMaterialSystems();
+    //    r2::draw::matsys::ShutdownMaterialSystems();
 		
 		//const auto numParamPacks = r2::sarr::Size(*mMaterialParamPacksData);
 		//for (s32 i = static_cast<s32>(numParamPacks) - 1; i >= 0; --i)

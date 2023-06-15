@@ -6,6 +6,7 @@
 #include "assetlib/ImageConvert.h"
 #include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
+#include "r2/Core/Assets/AssetLib.h"
 
 namespace r2::asset::pln
 {
@@ -166,7 +167,11 @@ namespace r2::asset::pln
 
 		ConvertImage(changedPath, index, outputPath);
 
-		r2::draw::matsys::TextureChanged(outputPath.string());
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], changedPath);
+		//r2::draw::matsys::TextureChanged(outputPath.string());
 	}
 
 	bool TexturePackHotReloadCommand::HasMetaFileAndAtleast1File(const std::string& watchDir, const std::string& nameOfPack)
@@ -279,17 +284,27 @@ namespace r2::asset::pln
 		//We need to regenerate the manifest file
 		RegenerateTexturePackManifestFile(index);
 
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
 		if (!hasTexturePackInManifest)
 		{
 			std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
 
-			std::vector<std::vector<std::string>> pathsInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
+			//std::vector<std::vector<std::string>> pathsInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
 
-			r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index], packPath.string(), pathsInTexturePack);
+			
+			
+
+			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], packPath.string());
+
+			//r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index], packPath.string(), pathsInTexturePack);
 		}
 		else
 		{
-			r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index], newPath);
+
+			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], newPath);
+			//r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index], newPath);
 		}
 	}
 
@@ -311,15 +326,17 @@ namespace r2::asset::pln
 
 		std::filesystem::path removedPath = std::filesystem::path(removedPathStr);
 		std::filesystem::path packPath = std::filesystem::path(mTexturePacksWatchDirectories[index]) / nameOfPack;
-
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 		if (!hasMetaAndAtleast1File)
 		{
-			std::vector<std::vector<std::string>> pathsLeftInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
+			//std::vector<std::vector<std::string>> pathsLeftInTexturePack = pln::tex::GetAllTexturesInTexturePack(mManifestBinaryFilePaths[index], nameOfPack);
 			
 			std::filesystem::path outputPackPath = pln::tex::GetOutputFilePath(packPath, mTexturePacksWatchDirectories[index], mTexturePacksBinaryOutputDirectories[index]);
 
 			RegenerateTexturePackManifestFile(index);
-			r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
+
+			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], packPath.string());
+			//r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
 			return;
 		}
 
@@ -332,7 +349,10 @@ namespace r2::asset::pln
 		if (hasTexturePathInManifest)
 		{
 			RegenerateTexturePackManifestFile(index);
-			r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], outputFilePath.string());
+
+			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], outputFilePath.string());
+
+		//	r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], outputFilePath.string());
 		}
 	}
 
