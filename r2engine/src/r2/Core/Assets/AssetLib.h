@@ -36,6 +36,12 @@ namespace r2::asset
     };
 #endif
 
+    struct ManifestAsset
+    {
+        r2::asset::AssetFile* mAssetFile;
+        const byte* manifestData;
+    };
+
     struct AssetLib
     {
         r2::mem::StackArena* mArena;
@@ -78,15 +84,15 @@ namespace r2::asset::lib
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
     void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray);
 
-
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
     bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
     FileList GetFileList(const AssetLib& assetLib);
 
-
 #ifdef R2_ASSET_PIPELINE
     void ManifestChanged(AssetLib& assetLib, const std::string& manifestFilePath, const std::string& filePathChanged);
 #endif
+
+
 
 #ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths);

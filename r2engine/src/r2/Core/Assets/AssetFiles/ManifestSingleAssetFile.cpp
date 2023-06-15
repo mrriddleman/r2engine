@@ -49,13 +49,23 @@ namespace r2::asset
 		return mAsset.HashID();
 	}
 
-	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath, const byte* manifestData) const 
+	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath, const byte* manifestData) 
 	{
 #ifdef R2_ASSET_PIPELINE
 		return mReloadFilePathFunc(filePath, manifestData);
 #else
 		return false;
 #endif
+	}
+
+	bool ManifestSingleAssetFile::NeedsManifestData() const
+	{
+		return false;
+	}
+
+	void ManifestSingleAssetFile::SetManifestData(const byte* manifestData)
+	{
+
 	}
 
 	bool ManifestSingleAssetFile::Open(bool writable /*= false*/)

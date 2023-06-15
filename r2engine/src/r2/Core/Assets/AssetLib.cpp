@@ -64,7 +64,7 @@ namespace r2::asset::lib
     std::vector<AssetFilesBuiltListener> s_listeners;
 
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, const ManifestAssetFile& manifestFile, std::filesystem::path changedPath);
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, std::filesystem::path changedPath);
 
 #endif
     
@@ -156,8 +156,10 @@ namespace r2::asset::lib
     {
 #ifdef R2_ASSET_PIPELINE
         ManifestReloadEntry entry;
+        bool shouldRegenerateFiles = false;
         while (assetLib.mManifestChangedRequests.TryPop(entry))
         {
+            shouldRegenerateFiles = true;
             const u32 numManifests = r2::sarr::Size(*assetLib.mManifestFiles);
             ManifestAssetFile* foundManifest = nullptr;
 
@@ -179,6 +181,12 @@ namespace r2::asset::lib
             }
 
             ReloadManifestFileInternal(assetLib, *foundManifest, entry.changedPath);
+        }
+
+        if (shouldRegenerateFiles)
+        {
+			//hmm maybe dangerous, but, we need to update the files in the GameAssetManager somehow
+			RegenerateAssetFilesFromManifests(assetLib);
         }
 #endif
     }
@@ -265,6 +273,12 @@ namespace r2::asset::lib
 
         FileList fileList = assetLib.mAssetCache->GetFileList();
         r2::sarr::Push(*fileList, (AssetFile*)manifestFile);
+
+        if (manifestFile->NeedsManifestData())
+        {
+            const byte* manifestData = GetManifestData(assetLib, manifestFile->GetManifestFileHandle());
+            manifestFile->SetManifestData(manifestData);
+        }
     }
 
     void CloseAndFreeAllFilesInFileList(FileList fileList)
@@ -312,7 +326,7 @@ namespace r2::asset::lib
 
 #ifdef R2_ASSET_PIPELINE
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, const ManifestAssetFile& manifestFile, std::filesystem::path changedPath)
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, std::filesystem::path changedPath)
     {
 		bool hasReloaded = false;
         AssetCacheRecord defaultRecord;
@@ -337,6 +351,9 @@ namespace r2::asset::lib
         r2::fs::utils::SanitizeSubPath(changedPath.string().c_str(), sanitizedChangedPath);
 
         hasReloaded = manifestFile.ReloadFilePath(sanitizedChangedPath, assetCacheRecord.GetAssetBuffer()->Data());
+
+      
+
 
         return hasReloaded;
     }

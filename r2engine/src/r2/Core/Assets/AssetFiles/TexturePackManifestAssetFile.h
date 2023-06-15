@@ -1,8 +1,13 @@
-#ifndef __MATERIAL_MANIFEST_ASSET_FILE_H__
-#define __MATERIAL_MANIFEST_ASSET_FILE_H__
+#ifndef __TEXTURE_PACK_MANIFEST_ASSET_FILE_H__
+#define __TEXTURE_PACK_MANIFEST_ASSET_FILE_H__
 
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
 #include "r2/Core/Assets/Asset.h"
+
+namespace flat
+{
+	struct TexturePacksManifest;
+}
 
 namespace r2::fs
 {
@@ -11,18 +16,18 @@ namespace r2::fs
 
 namespace r2::asset
 {
-	class ManifestSingleAssetFile : public ManifestAssetFile
+	class TexturePackManifestAssetFile : public ManifestAssetFile
 	{
 	public:
-		ManifestSingleAssetFile();
-		~ManifestSingleAssetFile();
+
+		TexturePackManifestAssetFile();
+		~TexturePackManifestAssetFile();
 
 		virtual bool Init(const char* path, r2::asset::AssetType assetType) override;
 		virtual r2::asset::AssetType GetAssetType() const override;
 		virtual bool AddAllFilePaths(FileList files) override;
 		virtual u64 GetManifestFileHandle() const override;
 		virtual bool ReloadFilePath(const char* filePath, const byte* manifestData) override;
-
 		virtual bool NeedsManifestData() const override;
 		virtual void SetManifestData(const byte* manifestData) override;
 
@@ -38,13 +43,13 @@ namespace r2::asset
 		virtual u64 GetAssetHandle(u64 index) override;
 		virtual const char* FilePath() const override;
 
-
 	private:
 		char mPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::File* mFile;
 		r2::asset::Asset mAsset;
-
+		const flat::TexturePacksManifest* mTexturePacksManifest;
+		
 	};
 }
 
-#endif // __MATERIAL_MANIFEST_ASSET_FILE_H__
+#endif // __TEXTURE_PACK_MANIFEST_ASSET_FILE_H__

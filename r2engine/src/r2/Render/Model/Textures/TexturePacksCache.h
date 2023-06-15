@@ -84,18 +84,13 @@ namespace r2::draw::texche
 
 		R2_CHECK(newTexturePacksCache->mTexturePackManifests != nullptr, "We couldn't create the texture pack manifests array");
 
-		
-
-
 		newTexturePacksCache->mLoadedTexturePacks = MAKE_SHASHMAP(*texturePacksCacheArena, LoadedTexturePack, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
 
 		R2_CHECK(newTexturePacksCache->mLoadedTexturePacks != nullptr, "We couldn't create the mLoadedTexturePacks hashmap");
 
-
 		newTexturePacksCache->mPackNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numTexturePacks * r2::SHashMap<u32>::LoadFactorMultiplier());
 
 		R2_CHECK(newTexturePacksCache->mPackNameToTexturePackManifestEntryMap != nullptr, "We couldn't create the mPackNameToTexturePackManifestEntryMap");
-		
 
 		newTexturePacksCache->mManifestNameToTexturePackManifestEntryMap = MAKE_SHASHMAP(*texturePacksCacheArena, s32, numManifests * r2::SHashMap<u32>::LoadFactorMultiplier());
 
@@ -174,11 +169,8 @@ namespace r2::draw::texche
 
 	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName);
 
-
 	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	const tex::Texture* GetTextureFromTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
-
-
 	const tex::CubemapTexture* GetCubemapTextureForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 }
 
