@@ -27,7 +27,9 @@ namespace r2::asset
 		virtual r2::asset::AssetType GetAssetType() const override;
 		virtual bool AddAllFilePaths(FileList files) override;
 		virtual u64 GetManifestFileHandle() const override;
-		virtual bool ReloadFilePath(const char* filePath, const byte* manifestData) override;
+#ifdef R2_ASSET_PIPELINE
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type) override;
+#endif
 		virtual bool NeedsManifestData() const override;
 		virtual void SetManifestData(const byte* manifestData) override;
 

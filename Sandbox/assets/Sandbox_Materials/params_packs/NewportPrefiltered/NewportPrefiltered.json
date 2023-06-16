@@ -46,7 +46,7 @@
     {
       value: "newport_prefilter/albedo/newport_loft0_prefilter_right.rtex",
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter",
       minFilter: "NEAREST_MIPMAP_LINEAR",
       magFilter: "LINEAR",
@@ -59,49 +59,49 @@
       propertyType: "NORMAL",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "METALLIC",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "ROUGHNESS",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 4821508364552419426,
+      texturePackName: "newport_prefilter",
       texturePackNameStr:"newport_prefilter"
     }
   ]

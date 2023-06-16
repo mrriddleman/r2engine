@@ -108,7 +108,7 @@ namespace r2::asset::pln
 		}
 	}
 
-	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const char* changedFilePath, const byte* manifestData)
+	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
 	{
 		//first find the material if it exists
 		//if it doesn't then it probably was removed so unload it
@@ -117,8 +117,9 @@ namespace r2::asset::pln
 		//@TODO(Serge): this is how it should be I think
 		//u64 materialName = r2::asset::Asset::GetAssetNameForFilePath(changedFilePath, r2::asset::MATERIAL);
 
+		R2_CHECK(paths.size() == 1, "Always should be the case");
 		//For now though, I think we need to do this since we're not guarenteed that our names are all lowercase (as GetAssetNameForFilePath would make)
-		std::filesystem::path changedPath = changedFilePath;
+		std::filesystem::path changedPath = paths[0];
 		std::string materialNameStr = changedPath.stem().string();
 		u64 materialName = STRING_ID(materialNameStr.c_str());
 
@@ -318,7 +319,7 @@ namespace r2::asset::pln
 		}
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, changedPath);
+		r2::asset::lib::PathChangedInManifest(assetLib, manifestPathBin, { changedPath });
 	}
 
 	void MaterialHotReloadCommand::MaterialAddedRequest(const std::string& newPath)
@@ -356,7 +357,7 @@ namespace r2::asset::pln
 		}
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, newPath);
+		r2::asset::lib::PathAddedInManifest(assetLib, manifestPathBin, { newPath });
 	}
 
 	void MaterialHotReloadCommand::MaterialRemovedRequest(const std::string& removedPath)
@@ -401,7 +402,7 @@ namespace r2::asset::pln
 		}
 		
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-		r2::asset::lib::ManifestChanged(assetLib, manifestPathBin, removedPath);
+		r2::asset::lib::PathRemovedInManifest(assetLib, manifestPathBin, { removedPath });
 	}
 
 }

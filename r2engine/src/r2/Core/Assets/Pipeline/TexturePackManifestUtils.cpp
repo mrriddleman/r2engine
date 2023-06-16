@@ -14,7 +14,7 @@
 #include "assetlib/TextureMetaData_generated.h"
 #include "assetlib/TextureAsset.h"
 #include "assetlib/AssetFile.h"
-
+#include "r2/Core/Assets/Asset.h"
 
 namespace
 {
@@ -376,7 +376,7 @@ namespace r2::asset::pln::tex
 
 			std::vector<std::string> cubemapTexturePaths;
 
-			u64 packName = STRING_ID(texturePackDir.path().stem().string().c_str());
+			u64 packName = r2::asset::Asset::GetAssetNameForFilePath(texturePackDir.path().stem().string().c_str(), r2::asset::TEXTURE_PACK); //STRING_ID(texturePackDir.path().stem().string().c_str());
 
 			for (const auto& file : std::filesystem::recursive_directory_iterator(texturePackDir.path().string()))
 			{
@@ -649,7 +649,7 @@ namespace r2::asset::pln::tex
 		}
 
 
-		auto packNameStringID = STRING_ID(packName.c_str());
+		auto packNameStringID = r2::asset::Asset::GetAssetNameForFilePath(packName.c_str(), r2::asset::TEXTURE_PACK);//STRING_ID(packName.c_str());
 
 		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 
@@ -683,7 +683,7 @@ namespace r2::asset::pln::tex
 		}
 
 
-		auto packNameStringID = STRING_ID(packName.c_str());
+		auto packNameStringID = r2::asset::Asset::GetAssetNameForFilePath(packName.c_str(), r2::asset::TEXTURE_PACK);//STRING_ID(packName.c_str());
 
 		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 
@@ -825,7 +825,7 @@ namespace r2::asset::pln::tex
 			return texturesInPack;
 		}
 
-		auto packNameStringID = STRING_ID(packName.c_str());
+		auto packNameStringID = r2::asset::Asset::GetAssetNameForFilePath(packName.c_str(), r2::asset::TEXTURE_PACK);//STRING_ID(packName.c_str());
 
 		const flat::TexturePacksManifest* manifest = flat::GetTexturePacksManifest((const void*)manifestFileData);
 

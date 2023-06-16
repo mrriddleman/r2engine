@@ -52,8 +52,8 @@
     {
       value: "colorgradinglut/albedo/test_color_grading_lut.rtex",
       packingType: "RGBA",
-      texturePackName: "ColorGradingLUT",
-      texturePackNameStr:"ColorGradingLUT"
+      texturePackName: "colorgradinglut",
+      texturePackNameStr:"colorgradinglut"
     },
     {
       propertyType: "NORMAL",

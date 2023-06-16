@@ -2,6 +2,7 @@
 #define __MATERIAL_HOT_RELOAD_COMMAND_H__
 
 #ifdef R2_ASSET_PIPELINE
+#include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/AssetHotReloadCommand.h"
 #include "r2/Core/Assets/Pipeline/MaterialPackManifestUtils.h"
 
@@ -25,7 +26,7 @@ namespace r2::asset::pln
 		void AddFindMaterialPackManifestFunctions(const std::vector<FindMaterialPackManifestFileFunc>& findFuncs);
 		void AddGenerateMaterialPackManifestsFromDirectoriesFunctions(std::vector<GenerateMaterialPackManifestFromDirectoriesFunc> genFuncs);
 
-		static bool MaterialManifestHotReloaded(const char* changedFilePath, const byte* manifestData);
+		static bool MaterialManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type);
 
 
 	private:

@@ -98,17 +98,13 @@ namespace r2::asset
 	{
 		return mAsset.HashID();
 	}
-
-	bool TexturePackManifestAssetFile::ReloadFilePath(const char* filePath, const byte* manifestData)
+#ifdef R2_ASSET_PIPELINE
+	bool TexturePackManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
 	{
 		SetManifestData(manifestData);
-
-#ifdef R2_ASSET_PIPELINE
-		return mReloadFilePathFunc(filePath, manifestData);
-#else
-		return false;
-#endif
+		return mReloadFilePathFunc(paths, manifestData, type);
 	}
+#endif
 
 	bool TexturePackManifestAssetFile::NeedsManifestData() const
 	{

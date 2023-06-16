@@ -48,56 +48,56 @@
     {
       value: "sponza/albedo/4975155472559461469.rtex",
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "NORMAL",
       value: "sponza/normal/2299742237651021498.rtex",
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "EMISSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "METALLIC",
       value: "sponza/metallic/3371964815757888145.rtex",
       packingType: "B",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "ROUGHNESS",
       value: "sponza/metallic/3371964815757888145.rtex",
       packingType: "G",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "AMBIENT_OCCLUSION",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "HEIGHT",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     },
     {
       propertyType: "ANISOTROPY",
       value: 14695981039346656837,
       packingType: "RGBA",
-      texturePackName: 11585652685679969130,
+      texturePackName: "sponza",
       texturePackNameStr:"sponza"
     }
   ]

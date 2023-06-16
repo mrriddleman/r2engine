@@ -570,7 +570,7 @@ namespace r2
 	{
 		HotReloadEntry newEntry;
 		newEntry.assetType = type;
-		newEntry.reloadType = CHANGED;
+		newEntry.reloadType = r2::asset::CHANGED;
 		newEntry.filePath = path;
 
 		mHotReloadQueue.Push(newEntry);
@@ -580,7 +580,7 @@ namespace r2
 	{
 		HotReloadEntry newEntry;
 		newEntry.assetType = type;
-		newEntry.reloadType = ADDED;
+		newEntry.reloadType = r2::asset::ADDED;
 		newEntry.filePath = path;
 
 		mHotReloadQueue.Push(newEntry);
@@ -590,7 +590,7 @@ namespace r2
 	{
 		HotReloadEntry newEntry;
 		newEntry.assetType = type;
-		newEntry.reloadType = DELETED;
+		newEntry.reloadType = r2::asset::DELETED;
 		newEntry.filePath = path;
 
 		mHotReloadQueue.Push(newEntry);

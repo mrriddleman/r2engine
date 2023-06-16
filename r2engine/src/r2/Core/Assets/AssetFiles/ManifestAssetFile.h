@@ -14,12 +14,12 @@ namespace r2::asset
 		virtual r2::asset::AssetType GetAssetType() const = 0;
 		virtual bool AddAllFilePaths(FileList files) = 0;
 		virtual u64 GetManifestFileHandle() const = 0;
-		virtual bool ReloadFilePath(const char* filePath, const byte* manifestData) = 0;
 		virtual bool NeedsManifestData() const = 0;
 		virtual void SetManifestData(const byte* manifestData) = 0;
 
 #ifdef R2_ASSET_PIPELINE
-		using ReloadFilePathFunc = std::function<bool(const char*, const byte* manifestData)>;
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, HotReloadType hotreloadType) = 0;
+		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const byte* manifestData, HotReloadType hotreloadType)>;
 		void SetReloadFilePathCallback(ReloadFilePathFunc func)
 		{
 			mReloadFilePathFunc = func;

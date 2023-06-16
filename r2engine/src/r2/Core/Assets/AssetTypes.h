@@ -24,9 +24,6 @@ namespace r2::asset
 
 	using FileList = r2::SArray<AssetFile*>*;
 
-
-	
-
 	using FileHandle = s64;
 
 	using AssetType = u32;
@@ -45,12 +42,18 @@ namespace r2::asset
 		LEVEL,
 		LEVEL_PACK,
 		MATERIAL,
+		TEXTURE_PACK,
 		NUM_ENGINE_ASSET_TYPES
 	};
 
+	enum HotReloadType : u32
+	{
+		CHANGED = 0,
+		ADDED,
+		DELETED
+	};
 	
 	u32 GetNumberOfParentDirectoriesToIncludeForAssetType(AssetType assetType);
-
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);

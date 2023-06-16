@@ -1,7 +1,7 @@
 {
   texturePacks: [
     {
-      packName: 13632125256007332093,
+      packName: 16285348456908105885,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/ColorGradingLUT/albedo/test_color_grading_lut.rtex"
       ],
@@ -47,7 +47,7 @@
       }
     },
     {
-      packName: 18199531748715869547,
+      packName: 1741090675266394315,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Body_Albedo.rtex",
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Ellen/albedo/Ellen_Eye_Albedo.rtex",
@@ -101,7 +101,7 @@
       }
     },
     {
-      packName: 17351122780281340654,
+      packName: 14781115403476922414,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/MicroBat/albedo/micro_bat_col.rtex"
       ],
@@ -147,7 +147,7 @@
       }
     },
     {
-      packName: 12702858826531139154,
+      packName: 15406085935930000306,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_back.rtex",
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport/albedo/Newport0_bottom.rtex",
@@ -225,7 +225,7 @@
       }
     },
     {
-      packName: 6377220994408905929,
+      packName: 477817908088162409,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_back.rtex",
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_conv/albedo/newport_loft_conv_bottom.rtex",
@@ -303,7 +303,7 @@
       }
     },
     {
-      packName: 10574092072377421955,
+      packName: 2007009599742851203,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_lutDFG/albedo/newport_loft_LutDFG.rtex"
       ],
@@ -349,7 +349,7 @@
       }
     },
     {
-      packName: 4821508364552419426,
+      packName: 12058307412772650114,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_back.rtex",
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Newport_prefilter/albedo/newport_loft0_prefilter_bottom.rtex",
@@ -597,7 +597,7 @@
       }
     },
     {
-      packName: 5241291254806722222,
+      packName: 5651713804920238990,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Skeleton/albedo/skel_archer_col.rtex"
       ],
@@ -643,7 +643,7 @@
       }
     },
     {
-      packName: 11585652685679969130,
+      packName: 16503806373553748554,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/11474523244911310074.rtex",
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/Sponza/albedo/11490520546946913238.rtex",
@@ -755,7 +755,7 @@
       }
     },
     {
-      packName: 17743152345863433361,
+      packName: 8561905345233882129,
       albedo: [
         "D:/Projects/r2engine/Sandbox/assets_bin/Sandbox_Textures/packs/TransparentWindow/albedo/blending_transparent_window.rtex"
       ],

@@ -2,7 +2,7 @@
 #define __TEXTURE_PACK_HOT_RELOAD_COMMAND_H__
 
 #ifdef R2_ASSET_PIPELINE
-
+#include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/AssetHotReloadCommand.h"
 
 namespace r2::asset::pln
@@ -22,7 +22,7 @@ namespace r2::asset::pln
 		void AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories);
 
 
-		static bool TexturePacksManifestHotReloaded(const char* changedFilePath, const byte* manifestData);
+		static bool TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type);
 
 	private:
 

@@ -29,10 +29,14 @@ namespace r2::asset
     class ManifestAssetFile;
 	
 #ifdef R2_ASSET_PIPELINE
+
+	
+
     struct ManifestReloadEntry
     {
+        HotReloadType hotReloadType;
         std::filesystem::path manifestPath;
-        std::filesystem::path changedPath;
+        std::vector<std::string> changedPaths;
     };
 #endif
 
@@ -89,10 +93,10 @@ namespace r2::asset::lib
     FileList GetFileList(const AssetLib& assetLib);
 
 #ifdef R2_ASSET_PIPELINE
-    void ManifestChanged(AssetLib& assetLib, const std::string& manifestFilePath, const std::string& filePathChanged);
+    void PathChangedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& changedPaths);
+    void PathAddedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsAdded);
+    void PathRemovedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector < std::string>& pathsRemoved);
 #endif
-
-
 
 #ifdef R2_ASSET_PIPELINE
     void PushFilesBuilt(std::vector<std::string> paths);

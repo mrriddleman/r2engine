@@ -211,18 +211,11 @@ namespace r2
 
 #ifdef R2_ASSET_PIPELINE
 
-		enum HotReloadType :u32
-		{
-			CHANGED = 0,
-			ADDED,
-			DELETED
-		};
-
 		struct HotReloadEntry
 		{
 			std::string filePath;
 			r2::asset::AssetType assetType;
-			HotReloadType reloadType;
+			r2::asset::HotReloadType reloadType;
 		};
 
 		r2::asset::pln::AssetThreadSafeQueue<HotReloadEntry> mHotReloadQueue;

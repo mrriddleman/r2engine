@@ -151,6 +151,33 @@ namespace r2::fs::utils
         if (len == 0)
             return false;
 
+
+        if (numParents == 0)
+        {
+            //we need to find the start of the string
+            //which will be either the first encounter of a PATH_SEPARATOR or the start of the string
+            s32 startIndex = static_cast<s32>(len) - 1;
+
+            for (s32 i = startIndex; i >= 0; --i)
+            {
+                startIndex = i;
+                if (filePath[i] == PATH_SEPARATOR)
+                {
+                    startIndex++;
+                    break;
+                }
+            }
+
+			for (u32 i = 0; i < len; ++i)
+			{
+				fileNameWithDirectories[i] = filePath[i + startIndex];
+			}
+
+            fileNameWithDirectories[len] = '\0';
+
+            return true;
+        }
+
         u32 subPathCounter = 0;
         size_t startIndex = len - 1;
 

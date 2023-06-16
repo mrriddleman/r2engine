@@ -31,6 +31,8 @@ namespace r2::asset
 			return 0;
 		case MATERIAL:
 			return 0;
+		case TEXTURE_PACK:
+			return 0;
 		default:
 
 			//@TODO(Serge): may need to extend this using the Application

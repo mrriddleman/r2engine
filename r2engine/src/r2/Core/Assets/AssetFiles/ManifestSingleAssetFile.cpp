@@ -49,14 +49,12 @@ namespace r2::asset
 		return mAsset.HashID();
 	}
 
-	bool ManifestSingleAssetFile::ReloadFilePath(const char* filePath, const byte* manifestData) 
-	{
 #ifdef R2_ASSET_PIPELINE
-		return mReloadFilePathFunc(filePath, manifestData);
-#else
-		return false;
-#endif
+	bool ManifestSingleAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
+	{
+		return mReloadFilePathFunc(paths, manifestData, type);
 	}
+#endif
 
 	bool ManifestSingleAssetFile::NeedsManifestData() const
 	{

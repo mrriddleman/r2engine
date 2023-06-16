@@ -65,7 +65,7 @@ namespace r2::asset::lib
     std::vector<AssetFilesBuiltListener> s_listeners;
 
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, std::filesystem::path changedPath);
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& paths, HotReloadType type);
 
 #endif
     
@@ -181,7 +181,7 @@ namespace r2::asset::lib
                 continue;
             }
 
-            ReloadManifestFileInternal(assetLib, *foundManifest, entry.changedPath);
+            ReloadManifestFileInternal(assetLib, *foundManifest, entry.changedPaths, entry.hotReloadType);
         }
 
         if (shouldRegenerateFiles)
@@ -327,7 +327,7 @@ namespace r2::asset::lib
 
 #ifdef R2_ASSET_PIPELINE
 
-    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, std::filesystem::path changedPath)
+    bool ReloadManifestFileInternal(AssetLib& assetLib, ManifestAssetFile& manifestFile, const std::vector<std::string>& changedPaths, HotReloadType type)
     {
 		bool hasReloaded = false;
         AssetCacheRecord defaultRecord;
@@ -348,25 +348,53 @@ namespace r2::asset::lib
 
 		r2::shashmap::Set(*assetLib.mAssetCacheRecords, manifestFile.GetManifestFileHandle(), assetCacheRecord);
         
-        char sanitizedChangedPath[r2::fs::FILE_PATH_LENGTH];
-        r2::fs::utils::SanitizeSubPath(changedPath.string().c_str(), sanitizedChangedPath);
 
-        hasReloaded = manifestFile.ReloadFilePath(sanitizedChangedPath, assetCacheRecord.GetAssetBuffer()->Data());
+        std::vector<std::string> pathsToUse;
+        pathsToUse.reserve(changedPaths.size());
 
-      
+        for (const std::string& changedPath : changedPaths)
+        {
+			char sanitizedChangedPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::SanitizeSubPath(changedPath.c_str(), sanitizedChangedPath);
 
+            pathsToUse.push_back(sanitizedChangedPath);
+        }
+
+        hasReloaded = manifestFile.ReloadFilePath(pathsToUse, assetCacheRecord.GetAssetBuffer()->Data(), type);
 
         return hasReloaded;
     }
 
-    void ManifestChanged(AssetLib& assetLib, const std::string& manifestFilePath, const std::string& filePathChanged)
+    void PathChangedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathChanged)
     {
         ManifestReloadEntry newEntry;
+        newEntry.hotReloadType = CHANGED;
         newEntry.manifestPath = manifestFilePath;
-        newEntry.changedPath = filePathChanged;
+        newEntry.changedPaths = filePathChanged;
 
         assetLib.mManifestChangedRequests.Push(newEntry);        
     }
+
+    void PathAddedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathAdded)
+    {
+		ManifestReloadEntry newEntry;
+		newEntry.hotReloadType = ADDED;
+		newEntry.manifestPath = manifestFilePath;
+		newEntry.changedPaths = filePathAdded;
+
+		assetLib.mManifestChangedRequests.Push(newEntry);
+    }
+
+    void PathRemovedInManifest(AssetLib& assetLib, const std::string& manifestFilePath, const std::vector<std::string>& filePathRemoved)
+    {
+		ManifestReloadEntry newEntry;
+		newEntry.hotReloadType = DELETED;
+		newEntry.manifestPath = manifestFilePath;
+		newEntry.changedPaths = filePathRemoved;
+
+		assetLib.mManifestChangedRequests.Push(newEntry);
+    }
+
 #endif
 
     bool Init(const r2::mem::utils::MemBoundary& boundary)

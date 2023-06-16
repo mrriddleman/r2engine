@@ -56,8 +56,16 @@ namespace r2::asset::pln
 		mTexturePacksBinaryOutputDirectories.insert(mTexturePacksBinaryOutputDirectories.end(), outputDirectories.begin(), outputDirectories.end());
 	}
 
-	bool TexturePackHotReloadCommand::TexturePacksManifestHotReloaded(const char* changedFilePath, const byte* manifestData)
+	bool TexturePackHotReloadCommand::TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
 	{
+		R2_CHECK(manifestData != nullptr, "Should never happen");
+		const flat::TexturePacksManifest* texturePacksManifest = flat::GetTexturePacksManifest(manifestData);
+
+
+
+
+
+
 		return false;
 	}
 
@@ -170,7 +178,7 @@ namespace r2::asset::pln
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], changedPath);
+		r2::asset::lib::PathChangedInManifest(assetLib, mManifestBinaryFilePaths[index], { changedPath });
 		//r2::draw::matsys::TextureChanged(outputPath.string());
 	}
 
@@ -296,14 +304,14 @@ namespace r2::asset::pln
 			
 			
 
-			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], packPath.string());
+			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { packPath.string() });
 
 			//r2::draw::matsys::TexturePackAdded(mManifestBinaryFilePaths[index], packPath.string(), pathsInTexturePack);
 		}
 		else
 		{
 
-			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], newPath);
+			r2::asset::lib::PathAddedInManifest(assetLib, mManifestBinaryFilePaths[index], { newPath });
 			//r2::draw::matsys::TextureAdded(mManifestBinaryFilePaths[index], newPath);
 		}
 	}
@@ -335,7 +343,7 @@ namespace r2::asset::pln
 
 			RegenerateTexturePackManifestFile(index);
 
-			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], packPath.string());
+			r2::asset::lib::PathRemovedInManifest(assetLib, mManifestBinaryFilePaths[index], { packPath.string() });
 			//r2::draw::matsys::TexturePackRemoved(mManifestBinaryFilePaths[index], packPath.string(), pathsLeftInTexturePack);
 			return;
 		}
@@ -350,7 +358,7 @@ namespace r2::asset::pln
 		{
 			RegenerateTexturePackManifestFile(index);
 
-			r2::asset::lib::ManifestChanged(assetLib, mManifestBinaryFilePaths[index], outputFilePath.string());
+			r2::asset::lib::PathRemovedInManifest(assetLib, mManifestBinaryFilePaths[index], { outputFilePath.string() });
 
 		//	r2::draw::matsys::TextureRemoved(mManifestBinaryFilePaths[index], outputFilePath.string());
 		}

@@ -138,7 +138,14 @@ namespace r2::draw::texche
 		{
 			const flat::TexturePack* texturePack = texturePacks->Get(i);
 
-			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePack->packName(), packManifestIndex);
+			auto texturePackName = texturePack->packName();
+
+			if (8749292291342238949 == texturePackName)
+			{
+				int k = 0;
+			}
+
+			r2::shashmap::Set(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, packManifestIndex);
 		}
 
 		return { packManifestIndex };
@@ -263,6 +270,11 @@ namespace r2::draw::texche
 	bool LoadTexturePackFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName)
 	{
 		s32 invalidIndex = -1;
+
+		if (8749292291342238949 == texturePackName)
+		{
+			int k = 0;
+		}
 
 		s32 index = r2::shashmap::Get(*texturePacksCache.mPackNameToTexturePackManifestEntryMap, texturePackName, invalidIndex);
 
