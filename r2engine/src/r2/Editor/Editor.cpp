@@ -183,7 +183,7 @@ namespace r2
 			mUndoStack.push_back(std::move(action));
 		}
 	}
-
+	 
 	void Editor::Save()
 	{
 		//@Test - very temporary

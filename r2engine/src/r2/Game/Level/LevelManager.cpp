@@ -98,7 +98,7 @@ namespace r2
 		mMemoryAreaHandle = memoryAreaHandle;
 		mSubAreaHandle = subAreaHandle;
 
-		mLoadedLevels = MAKE_SHASHMAP(*mArena, Level, maxNumLevels * r2::SHashMap<Level>::LoadFactorMultiplier());
+		mLoadedLevels = MAKE_SARRAY(*mArena, Level, maxNumLevels);
 
 		mSceneGraph.Init<r2::mem::StackArena>(*mArena, ecsCoordinator);
 
@@ -125,14 +125,15 @@ namespace r2
 	void LevelManager::Shutdown()
 	{
 
-		auto iter = r2::shashmap::Begin(*mLoadedLevels);
+		u32 numLevels = r2::sarr::Size(*mLoadedLevels);
 
-		for (; iter != r2::shashmap::End(*mLoadedLevels); ++iter)
+		for (u32 i = 0; i < numLevels; ++i)
 		{
-			UnloadLevel(&iter->value);
+			Level& level = r2::sarr::At(*mLoadedLevels, i);
+			UnloadLevel(&level);
 		}
 
-		r2::shashmap::Clear(*mLoadedLevels);
+		r2::sarr::Clear(*mLoadedLevels);
 
 		mSceneGraph.Shutdown<r2::mem::StackArena>(*mArena);
 
@@ -165,11 +166,12 @@ namespace r2
 
 		Level defaultLevel = {};
 
-		Level& theLevel = r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
+		s32 index = -1;
+		Level* theLevel = FindLevel(levelName, index);
 
-		if (!r2::asset::AreAssetHandlesEqual(theLevel.GetLevelHandle(), defaultLevel.GetLevelHandle()))
+		if (theLevel != nullptr)
 		{
-			return &theLevel;
+			return theLevel;
 		}
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
@@ -191,9 +193,9 @@ namespace r2
 
 		mSceneGraph.LoadedNewLevel(newLevel);
 
-		r2::shashmap::Set(*mLoadedLevels, levelName, newLevel);
+		r2::sarr::Push(*mLoadedLevels, newLevel);
 
-		return &r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
+		return r2::sarr::End(*mLoadedLevels);
 	}
 
 	const Level* LevelManager::GetLevel(const char* levelURI)
@@ -203,16 +205,8 @@ namespace r2
 
 	const Level* LevelManager::GetLevel(LevelName levelName)
 	{
-		Level defaultLevel = {};
-
-		Level& theLevel = r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
-
-		if (!r2::asset::AreAssetHandlesEqual(theLevel.GetLevelHandle(), defaultLevel.GetLevelHandle()))
-		{
-			return &theLevel;
-		}
-
-		return nullptr;
+		s32 index = -1;
+		return FindLevel(levelName, index);
 	}
 
 	void LevelManager::UnloadLevel(const Level* level)
@@ -236,28 +230,29 @@ namespace r2
 		const auto levelHashName = STRING_ID(fileURI);
 
 		Level defaultLevel = {};
-		Level& theLevel = r2::shashmap::Get(*mLoadedLevels, levelHashName, defaultLevel);
+		s32 index = -1;
+		Level* theLevel = FindLevel(levelHashName, index);
 
-		if (r2::asset::AreAssetHandlesEqual(defaultLevel.GetLevelHandle(), theLevel.GetLevelHandle()))
+		if (theLevel == nullptr)
 		{
 			//not even loaded - return
 			return;
 		}
 
-		r2::shashmap::Remove(*mLoadedLevels, levelHashName);
+		
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		gameAssetManager.UnloadAsset(theLevel.GetLevelHandle());
+		gameAssetManager.UnloadAsset(theLevel->GetLevelHandle());
+
+		r2::sarr::RemoveAndSwapWithLastElement(*mLoadedLevels, index);
+
 	}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
 	{
-		Level defaultLevel;
-
-		const Level& theLevel = r2::shashmap::Get(*mLoadedLevels, levelName, defaultLevel);
-
-		return r2::asset::AreAssetHandlesEqual(defaultLevel.GetLevelHandle(), theLevel.GetLevelHandle());
+		s32 index = -1;
+		return FindLevel(levelName, index) != nullptr;
 	}
 
 	bool LevelManager::IsLevelLoaded(const char* levelName)
@@ -302,6 +297,22 @@ namespace r2
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
 		}
+	}
+
+	Level* LevelManager::FindLevel(LevelName levelname, s32& index)
+	{
+		const u32 numLevels = r2::sarr::Size(*mLoadedLevels);
+
+		for (u32 i = 0; i < numLevels; ++i)
+		{
+			Level& level = r2::sarr::At(*mLoadedLevels, i);
+			if (level.GetLevelHashName() == levelname)
+			{
+				return &level;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void LevelManager::AddAnimationFilesToAnimationCache(const flat::LevelData* levelData)
