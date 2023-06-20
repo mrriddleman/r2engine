@@ -108,7 +108,7 @@ namespace r2::asset::pln
 		}
 	}
 
-	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
+	bool MaterialHotReloadCommand::MaterialManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
 	{
 		//first find the material if it exists
 		//if it doesn't then it probably was removed so unload it
@@ -170,7 +170,7 @@ namespace r2::asset::pln
 
 			if (isLoaded)
 			{
-				gameAssetManager.LoadMaterialTextures(foundMaterialParams);
+				gameAssetManager.LoadMaterialTextures(foundMaterialParams); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
 				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterialParams, texturesToUse, cubemapTextureToUse);
 				R2_CHECK(result, "This should always work");
 			}

@@ -50,9 +50,9 @@ namespace r2::asset
 	}
 
 #ifdef R2_ASSET_PIPELINE
-	bool ManifestSingleAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
+	bool ManifestSingleAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
 	{
-		return mReloadFilePathFunc(paths, manifestData, type);
+		return mReloadFilePathFunc(paths, manifestFilePath, manifestData, type);
 	}
 #endif
 

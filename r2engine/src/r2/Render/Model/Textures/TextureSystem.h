@@ -36,7 +36,7 @@ namespace r2::draw::texsys
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter);
 	void ReloadTexture(const r2::asset::AssetHandle& texture);
 	void UnloadFromGPU(const r2::asset::AssetHandle& texture);
-
+	bool IsUploaded(const r2::asset::AssetHandle& texture);
 	
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::Texture& texture);
 	r2::draw::tex::TextureAddress GetTextureAddress(const r2::draw::tex::TextureHandle& textureHandle);

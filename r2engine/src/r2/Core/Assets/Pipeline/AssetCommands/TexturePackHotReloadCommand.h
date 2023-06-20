@@ -22,7 +22,7 @@ namespace r2::asset::pln
 		void AddTexturePackBinaryOutputDirectories(const std::vector<std::string>& outputDirectories);
 
 
-		static bool TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type);
+		static bool TexturePacksManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type);
 
 	private:
 
@@ -39,14 +39,10 @@ namespace r2::asset::pln
 
 		void GenerateRTexFilesIfNeeded();
 
-
 		std::vector<std::string> mManifestRawFilePaths;
 		std::vector<std::string> mManifestBinaryFilePaths;
 		std::vector<std::string> mTexturePacksWatchDirectories;
 		std::vector<std::string> mTexturePacksBinaryOutputDirectories;
-
-
-		//AssetsBuiltFunc mBuildFunc;
 	};
 }
 

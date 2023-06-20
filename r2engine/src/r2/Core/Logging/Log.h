@@ -123,4 +123,10 @@ __LINE__, ##__VA_ARGS__)
 #define R2_CHECK(test, ...)
 #endif
 
+#if defined R2_DEBUG || defined R2_RELEASE
+#define TODO R2_CHECK(false, "@TODO(Serge): implement")
+#else
+#define TODO
+#endif
+
 #endif /* Log_hpp */

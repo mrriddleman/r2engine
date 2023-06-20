@@ -4,6 +4,7 @@
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
+#include "r2/Utils/Hash.h"
 
 namespace r2::mat
 {
@@ -111,5 +112,67 @@ namespace r2::mat
 
 		return shaderHandle;
 	}
+
+#ifdef R2_ASSET_PIPELINE
+	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexture(const flat::MaterialParamsPack* materialPack, u64 texturePackName, u64 textureName)
+	{
+		R2_CHECK(materialPack != nullptr, "Should never happen");
+		R2_CHECK(texturePackName != 0 && texturePackName != STRING_ID(""), "Should never happen");
+		R2_CHECK(textureName != 0 && textureName != STRING_ID(""), "Should never happen");
+
+		auto numMaterialParams = materialPack->pack()->size();
+
+		std::vector<const flat::MaterialParams*> materialParamsToReturn = {};
+
+		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
+		{
+			const auto* materialParams = materialPack->pack()->Get(i);
+
+			auto numTextureParams = materialParams->textureParams()->size();
+
+			for (flatbuffers::uoffset_t t = 0; t < numTextureParams; ++t)
+			{
+				const auto* textureParam = materialParams->textureParams()->Get(t);
+
+				if (textureParam->texturePackName() == texturePackName && textureParam->value() == textureName)
+				{
+					materialParamsToReturn.push_back(materialParams);
+					break;
+				}
+			}
+		}
+
+		return materialParamsToReturn;
+	}
+
+	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexturePack(const flat::MaterialParamsPack* materialPack, u64 texturePackName)
+	{
+		R2_CHECK(materialPack != nullptr, "Should never happen");
+		R2_CHECK(texturePackName != 0 && texturePackName != STRING_ID(""), "Should never happen");
+		auto numMaterialParams = materialPack->pack()->size();
+
+		std::vector<const flat::MaterialParams*> materialParamsToReturn = {};
+
+		for (flatbuffers::uoffset_t i = 0; i < numMaterialParams; ++i)
+		{
+			const auto* materialParams = materialPack->pack()->Get(i);
+
+			auto numTextureParams = materialParams->textureParams()->size();
+
+			for (flatbuffers::uoffset_t t = 0; t < numTextureParams; ++t)
+			{
+				const auto* textureParam = materialParams->textureParams()->Get(t);
+
+				if (textureParam->texturePackName() == texturePackName)
+				{
+					materialParamsToReturn.push_back(materialParams);
+					break;
+				}
+			}
+		}
+
+		return materialParamsToReturn;
+	}
+#endif
 
 }

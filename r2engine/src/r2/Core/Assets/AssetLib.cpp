@@ -186,8 +186,9 @@ namespace r2::asset::lib
 
         if (shouldRegenerateFiles)
         {
+            //@TODO(Serge): figure out a better way to do this.
 			//hmm maybe dangerous, but, we need to update the files in the GameAssetManager somehow
-			RegenerateAssetFilesFromManifests(assetLib);
+			//RegenerateAssetFilesFromManifests(assetLib);
         }
 #endif
     }
@@ -360,7 +361,7 @@ namespace r2::asset::lib
             pathsToUse.push_back(sanitizedChangedPath);
         }
 
-        hasReloaded = manifestFile.ReloadFilePath(pathsToUse, assetCacheRecord.GetAssetBuffer()->Data(), type);
+        hasReloaded = manifestFile.ReloadFilePath(pathsToUse, manifestFile.FilePath(), assetCacheRecord.GetAssetBuffer()->Data(), type);
 
         return hasReloaded;
     }

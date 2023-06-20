@@ -237,6 +237,21 @@ namespace r2::draw::texsys
 		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
 	}
 
+	bool IsUploaded(const r2::asset::AssetHandle& texture)
+	{
+		if (s_optrTextureSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the texture system yet!");
+			return false;
+		}
+
+		TextureGPUHandle theDefault;
+
+		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
+
+		return !TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle);
+	}
+
 	void ReloadTexture(const r2::asset::AssetHandle& texture)
 	{
 		TextureGPUHandle theDefault;

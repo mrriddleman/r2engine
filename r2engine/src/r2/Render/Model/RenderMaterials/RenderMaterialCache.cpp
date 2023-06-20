@@ -346,7 +346,15 @@ namespace r2::draw::rmat
 				if (texture)
 				{
 					r2::sarr::Push(*materialTextures, *texture);
-					r2::draw::texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+
+					if (texsys::IsUploaded(texture->textureAssetHandle))
+					{
+						texsys::ReloadTexture(texture->textureAssetHandle);
+					}
+					else
+					{
+						texsys::UploadToGPU({ texture->textureAssetHandle, texture->type }, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					}
 				}
 			}
 			else
@@ -354,7 +362,15 @@ namespace r2::draw::rmat
 				flat::MaterialPropertyType propertyType = textureParam->propertyType();
 				if (IsTextureParamCubemapTexture(cubemapTexture, textureHandle, propertyType))
 				{
-					r2::draw::texsys::UploadToGPU(*cubemapTexture, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					const auto cubemapTextureAssetHandle = tex::GetCubemapAssetHandle(*cubemapTexture);
+					if (texsys::IsUploaded(cubemapTextureAssetHandle))
+					{
+						texsys::ReloadTexture(cubemapTextureAssetHandle);
+					}
+					else
+					{
+						texsys::UploadToGPU(*cubemapTexture, textureParam->anisotropicFiltering(), GetWrapMode(textureParam), GetMinFilter(textureParam), GetMagFilter(textureParam));
+					}
 				}
 			}
 		}

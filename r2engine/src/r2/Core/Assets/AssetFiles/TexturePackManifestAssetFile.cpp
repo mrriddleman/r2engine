@@ -99,10 +99,10 @@ namespace r2::asset
 		return mAsset.HashID();
 	}
 #ifdef R2_ASSET_PIPELINE
-	bool TexturePackManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, r2::asset::HotReloadType type)
+	bool TexturePackManifestAssetFile::ReloadFilePath(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
 	{
 		SetManifestData(manifestData);
-		return mReloadFilePathFunc(paths, manifestData, type);
+		return mReloadFilePathFunc(paths, manifestFilePath, manifestData, type);
 	}
 #endif
 
@@ -167,11 +167,6 @@ namespace r2::asset
 
 	u64 TexturePackManifestAssetFile::NumAssets()
 	{
-		if (mTexturePacksManifest)
-		{
-			return mTexturePacksManifest->totalNumberOfTextures();
-		}
-
 		return 1;
 	}
 

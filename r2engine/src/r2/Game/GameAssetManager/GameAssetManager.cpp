@@ -32,14 +32,6 @@ namespace r2
 
 	void GameAssetManager::Update()
 	{
-#ifdef R2_ASSET_PIPELINE
-
-		HotReloadEntry nextEntry;
-		while (mAssetCache && mHotReloadQueue.TryPop(nextEntry))
-		{
-			//@TODO(Serge): process the entry
-		}
-#endif
 	}
 
 	u64 GameAssetManager::MemorySizeForGameAssetManager(u32 numFiles, u32 alignment, u32 headerSize)
@@ -122,6 +114,14 @@ namespace r2
 		return mAssetCache->LoadAsset(asset);
 	}
 
+	void GameAssetManager::UnloadAsset(const u64 assethandle)
+	{
+		if (!mAssetCache)
+			return;
+
+		UnloadAsset({ assethandle, mAssetCache->GetSlot() });
+	}
+
 	void GameAssetManager::UnloadAsset(const r2::asset::AssetHandle& assetHandle)
 	{
 		if (!mAssetCache || !mCachedRecords)
@@ -163,6 +163,8 @@ namespace r2
 			r2::shashmap::Remove(*mCachedRecords, asset.HashID());
 
 			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, asset.HashID()), "We still have the asset record?");
+
+
 
 			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
 
@@ -252,6 +254,23 @@ namespace r2
 		return r2::draw::texche::AddTexturePacksManifestFile(*mTexturePacksCache, texturePackManifestHandle, texturePacksManifest).handle != draw::texche::TexturePacksManifestHandle::Invalid.handle;
 	}
 
+	bool GameAssetManager::UpdateTexturePacksManifest(u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest)
+	{
+		if (mAssetCache == nullptr || mTexturePacksCache == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the GameAssetManager yet");
+			return false;
+		}
+
+		if (texturePacksManifest == nullptr || texturePackHandle <= 0)
+		{
+			R2_CHECK(false, "Should never be nullptr");
+			return false;
+		}
+
+		return r2::draw::texche::UpdateTexturePacksManifest(*mTexturePacksCache, texturePackHandle, texturePacksManifest);
+	}
+
 	bool GameAssetManager::LoadMaterialTextures(const flat::MaterialParams* materialParams)
 	{
 		if (materialParams == nullptr)
@@ -315,7 +334,7 @@ namespace r2
 		FREE(cubemaps, *MEM_ENG_SCRATCH_PTR);
 		FREE(textures, *MEM_ENG_SCRATCH_PTR);
 		*/
-		draw::texche::LoadTexturePacksFromDisk(*mTexturePacksCache, *texturePacks);
+		draw::texche::LoadTexturePacks(*mTexturePacksCache, *texturePacks);
 
 		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
 
@@ -346,11 +365,16 @@ namespace r2
 			AddTexturePacksToTexturePackSet(materialParams, *texturePacks);
 		}
 
-		draw::texche::LoadTexturePacksFromDisk(*mTexturePacksCache, *texturePacks);
+		draw::texche::LoadTexturePacks(*mTexturePacksCache, *texturePacks);
 
 		FREE(texturePacks, *MEM_ENG_SCRATCH_PTR);
 		
 		return true;
+	}
+
+	bool GameAssetManager::UnloadTexturePack(u64 texturePackName)
+	{
+		return draw::texche::UnloadTexturePack(*mTexturePacksCache, texturePackName);
 	}
 
 	void GameAssetManager::GetTexturesForMaterialParamsInternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps)
@@ -556,7 +580,13 @@ namespace r2
 		auto iter = r2::shashmap::Begin(*mCachedRecords);
 		for (; iter != r2::shashmap::End(*mCachedRecords); ++iter)
 		{
-			mAssetCache->ReturnAssetBuffer(iter->value);
+			r2::asset::AssetCacheRecord defaultRecord;
+			r2::asset::AssetCacheRecord& record = r2::shashmap::Get(*mCachedRecords, iter->key, defaultRecord);
+
+			if (!record.IsEmptyAssetCacheRecord(record))
+			{
+				mAssetCache->ReturnAssetBuffer(record);
+			}
 		}
 
 		r2::shashmap::Clear(*mCachedRecords);
@@ -566,45 +596,14 @@ namespace r2
 
 #ifdef R2_ASSET_PIPELINE
 
-	void GameAssetManager::AssetChanged(const std::string& path, r2::asset::AssetType type)
+	bool GameAssetManager::ReloadTextureInTexturePack(u64 texturePackName, u64 textureName)
 	{
-		HotReloadEntry newEntry;
-		newEntry.assetType = type;
-		newEntry.reloadType = r2::asset::CHANGED;
-		newEntry.filePath = path;
-
-		mHotReloadQueue.Push(newEntry);
+		return draw::texche::ReloadTextureInTexturePack(*mTexturePacksCache, texturePackName, textureName);
 	}
 
-	void GameAssetManager::AssetAdded(const std::string& path, r2::asset::AssetType type)
+	bool GameAssetManager::ReloadTexturePack(u64 texturePackName)
 	{
-		HotReloadEntry newEntry;
-		newEntry.assetType = type;
-		newEntry.reloadType = r2::asset::ADDED;
-		newEntry.filePath = path;
-
-		mHotReloadQueue.Push(newEntry);
-	}
-
-	void GameAssetManager::AssetRemoved(const std::string& path, r2::asset::AssetType type)
-	{
-		HotReloadEntry newEntry;
-		newEntry.assetType = type;
-		newEntry.reloadType = r2::asset::DELETED;
-		newEntry.filePath = path;
-
-		mHotReloadQueue.Push(newEntry);
-	}
-
-	void GameAssetManager::RegisterReloadFunction(r2::asset::AssetReloadedFunc func)
-	{
-		if (!mAssetCache)
-		{
-			R2_CHECK(false, "Asset Cache is nullptr");
-			return;
-		}
-
-		mAssetCache->AddReloadFunction(func);
+		return draw::texche::ReloadTexturePack(*mTexturePacksCache, texturePackName);
 	}
 
 	void GameAssetManager::AddAssetFile(r2::asset::AssetFile* assetFile)

@@ -18,7 +18,10 @@ namespace r2::mat
 	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName);
 	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName);
 
-
+#ifdef R2_ASSET_PIPELINE
+	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexture(const flat::MaterialParamsPack* materialPack, u64 texturePackName, u64 textureName);
+	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexturePack(const flat::MaterialParamsPack* materialPack, u64 texturePackName);
+#endif
 
 
 }

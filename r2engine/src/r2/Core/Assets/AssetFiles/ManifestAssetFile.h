@@ -18,8 +18,8 @@ namespace r2::asset
 		virtual void SetManifestData(const byte* manifestData) = 0;
 
 #ifdef R2_ASSET_PIPELINE
-		virtual bool ReloadFilePath(const std::vector<std::string>& paths, const byte* manifestData, HotReloadType hotreloadType) = 0;
-		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const byte* manifestData, HotReloadType hotreloadType)>;
+		virtual bool ReloadFilePath(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, HotReloadType hotreloadType) = 0;
+		using ReloadFilePathFunc = std::function<bool(const std::vector<std::string>&, const std::string& manifestFilePath, const byte* manifestData, HotReloadType hotreloadType)>;
 		void SetReloadFilePathCallback(ReloadFilePathFunc func)
 		{
 			mReloadFilePathFunc = func;

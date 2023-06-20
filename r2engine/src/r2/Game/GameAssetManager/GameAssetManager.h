@@ -161,6 +161,7 @@ namespace r2
 		u64 GetAssetDataSize(r2::asset::AssetHandle assetHandle);
 
 		void UnloadAsset(const r2::asset::AssetHandle& assetHandle);
+		void UnloadAsset(const u64 assethandle);
 
 		r2::asset::AssetHandle ReloadAsset(const r2::asset::Asset& asset);
 
@@ -170,10 +171,12 @@ namespace r2
 
 
 		bool AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest);
+		bool UpdateTexturePacksManifest(u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		
 		bool LoadMaterialTextures(const flat::MaterialParams* materialParams);
 		bool LoadMaterialTextures(const flat::MaterialParamsPack* materialParamsPack);
 		
+		bool UnloadTexturePack(u64 texturePackName);
 
 		bool GetTexturesForMaterialParams(const flat::MaterialParams* materialParams, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 		bool GetTexturesForMaterialParamsPack(const flat::MaterialParamsPack* materialParamsPack, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
@@ -182,11 +185,9 @@ namespace r2
 		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
 
 #ifdef R2_ASSET_PIPELINE
-		void AssetChanged(const std::string& path, r2::asset::AssetType type);
-		void AssetAdded(const std::string& path, r2::asset::AssetType type);
-		void AssetRemoved(const std::string& path, r2::asset::AssetType type);
 
-		void RegisterReloadFunction(r2::asset::AssetReloadedFunc func);
+		bool ReloadTextureInTexturePack(u64 texturePackName, u64 textureName);
+		bool ReloadTexturePack(u64 texturePackName);
 
 		void AddAssetFile(r2::asset::AssetFile* assetFile);
 		void RemoveAssetFile(const std::string& filePath);
@@ -209,17 +210,6 @@ namespace r2
 
 		r2::draw::TexturePacksCache* mTexturePacksCache;
 
-#ifdef R2_ASSET_PIPELINE
-
-		struct HotReloadEntry
-		{
-			std::string filePath;
-			r2::asset::AssetType assetType;
-			r2::asset::HotReloadType reloadType;
-		};
-
-		r2::asset::pln::AssetThreadSafeQueue<HotReloadEntry> mHotReloadQueue;
-#endif
 	};
 }
 

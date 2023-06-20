@@ -128,7 +128,7 @@ namespace r2::draw::texche
 
 			if (entry.flatTexturePacksManifest != nullptr )
 			{
-				UnloadAllTexturesFromTexturePacksManifestFromDisk(*texturePacksCache, { static_cast<s32>(i) });
+				UnloadAllTexturePacks(*texturePacksCache, { static_cast<s32>(i) });
 			}
 		}
 
@@ -157,17 +157,19 @@ namespace r2::draw::texche
 	bool GetTexturePacksCacheSizes(const char* texturePacksManifestPath, u32& numTextures, u32& numTexturePacks, u32& numCubemaps, u32& cacheSize);
 
 	TexturePacksManifestHandle AddTexturePacksManifestFile(TexturePacksCache& texturePacksCache, u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
+	bool UpdateTexturePacksManifest(TexturePacksCache& texturePacksCache, u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
 
-	bool LoadAllTexturesFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
-	bool LoadTexturePackFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName);
-	bool LoadTexturePacksFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks);
-	bool LoadTextuesFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks, const r2::SArray<r2::draw::tex::Texture>& textures);
-	bool LoadCubemapTexturesFromDisk(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks, const r2::SArray<r2::draw::tex::CubemapTexture>& cubemapTextures);
+	bool LoadAllTexturePacks(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
+	bool LoadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	bool LoadTexturePacks(TexturePacksCache& texturePacksCache, const r2::SArray<u64>& texturePacks);
 
-	bool UnloadAllTexturesFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
-	bool UnloadTexturePackFromTexturePacksManifestFromDisk(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	bool UnloadAllTexturePacks(TexturePacksCache& texturePacksCache, TexturePacksManifestHandle handle);
+	bool UnloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 
 	bool IsTexturePackACubemap(TexturePacksCache& texturePacksCache, u64 texturePackName);
+
+	bool ReloadTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
+	bool ReloadTextureInTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
 
 	const r2::SArray<tex::Texture>* GetTexturesForTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName);
 	const tex::Texture* GetTextureFromTexturePack(TexturePacksCache& texturePacksCache, u64 texturePackName, u64 textureName);
