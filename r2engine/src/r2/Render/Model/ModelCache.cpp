@@ -435,7 +435,13 @@ namespace r2::draw::modlche
 
 			for (; meshIter != r2::shashmap::End(*system->mMeshes); ++meshIter)
 			{
-				system->mModelCache->ReturnAssetBuffer(meshIter->value);
+				r2::asset::AssetCacheRecord defaultCacheRecord;
+				r2::asset::AssetCacheRecord result = r2::shashmap::Get(*system->mMeshes, meshIter->key, defaultCacheRecord);
+
+				if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
+				{
+					system->mModelCache->ReturnAssetBuffer(meshIter->value);
+				}
 			}
 
 			auto beginHash = r2::shashmap::Begin(*system->mModels);
@@ -443,7 +449,13 @@ namespace r2::draw::modlche
 			auto iter = beginHash;
 			for (; iter != r2::shashmap::End(*system->mModels); ++iter)
 			{
-				system->mModelCache->ReturnAssetBuffer(iter->value);
+				r2::asset::AssetCacheRecord defaultCacheRecord;
+				r2::asset::AssetCacheRecord result = r2::shashmap::Get(*system->mModels, iter->key, defaultCacheRecord);
+
+				if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
+				{
+					system->mModelCache->ReturnAssetBuffer(iter->value);
+				}
 			}
 
 			r2::shashmap::Clear(*system->mMeshes);
