@@ -59,7 +59,6 @@ namespace r2
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 		r2::mem::MallocArena mMallocArena;
 
-
 		std::vector<void*> mComponentAllocations;
 
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;

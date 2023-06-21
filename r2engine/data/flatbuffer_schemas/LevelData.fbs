@@ -27,7 +27,8 @@ table LevelData
 
 	modelFilePaths:[PackReference];
 	animationFilePaths:[PackReference];
-
+	texturePackPaths:[PackReference];
+	soundPaths:[PackReference];
 }
 
 root_type LevelData;

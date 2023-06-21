@@ -53,11 +53,12 @@ namespace r2
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
+		
+
+
+
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
-
-		//r2::draw::ModelCache* GetModelSystem();
-		//r2::draw::AnimationCache* GetAnimationCache();
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
@@ -81,6 +82,8 @@ namespace r2
 		void AddModelFilesToModelSystem(const flat::LevelData* levelData);
 		void AddAnimationFilesToAnimationCache(const flat::LevelData* levelData);
 
+		Level* FindLevel(LevelName levelname, s32& index);
+
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
 		u32 mMaxNumLevels;
@@ -88,7 +91,7 @@ namespace r2
 		r2::mem::StackArena* mArena;
 		r2::mem::PoolArena* mLevelArena;
 
-		r2::SHashMap<Level>* mLoadedLevels; //LevelName -> LevelHandle
+		r2::SArray<Level>* mLoadedLevels;
 
 		SceneGraph mSceneGraph;	
 	};
