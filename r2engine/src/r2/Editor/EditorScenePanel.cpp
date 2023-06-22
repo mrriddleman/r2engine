@@ -95,6 +95,12 @@ namespace r2::edit
 			mSceneGraphDataNeedsUpdate = true;
 			return e.ShouldConsume();
 		});
+
+		dispatcher.Dispatch<r2::evt::EditorNewLevelCreatedEvent>([this](const r2::evt::EditorNewLevelCreatedEvent& e)
+		{
+			mSceneGraphDataNeedsUpdate = true;
+			return e.ShouldConsume();
+		});
 	}
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
@@ -378,7 +384,9 @@ namespace r2::edit
 			return;
 		}
 
-		if (ImGui::TreeNode("Level Name Goes Here!"))
+		std::string levelName = mnoptrEditor->GetEditorLevel().GetGroupName() + "/" + mnoptrEditor->GetEditorLevel().GetLevelName();
+
+		if (ImGui::TreeNode(levelName.c_str()))
 		{
 			static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_NoBordersInBody;
 

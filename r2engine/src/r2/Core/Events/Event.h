@@ -31,6 +31,8 @@ namespace r2
             EVT_EDITOR_ENTITY_FLAG_CHANGED,
 
             EVT_EDITOR_LEVEL_LOADED,
+            EVT_EDITOR_LEVEL_CREATED,
+            EVT_EDITOR_LEVEL_SET
 
 #endif
         };

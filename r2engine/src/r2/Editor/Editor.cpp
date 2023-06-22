@@ -68,6 +68,7 @@ namespace r2
 			widget->Init(this);
 		}
 
+		
 		mCurrentEditorLevel.Clear();
 	}
 
@@ -190,26 +191,6 @@ namespace r2
 	 
 	void Editor::Save()
 	{
-		//@Test - very temporary - dunno where to put this yet
-		mCurrentEditorLevel.SetVersion(1);
-		mCurrentEditorLevel.SetGroupName("testGroup");
-		mCurrentEditorLevel.SetLevelName("Level1");
-
-		
-	//	std::filesystem::path levelBinURI = "testGroup/Level1.rlvl";
-	//	std::filesystem::path levelRawURI = "testGroup/Level1.json";
-
-	//	std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
-	//	std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
-
-	//	r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
-	//	r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
-
-		/*GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-		std::vector<asset::AssetFile*> modelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
-		std::vector<asset::AssetFile*> animationFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RANIMATION);*/
-
 		CENG.GetLevelManager().SaveNewLevelFile(mCurrentEditorLevel);
 	}
 
@@ -221,9 +202,19 @@ namespace r2
 		
 		mCurrentEditorLevel.Load(newLevel->GetLevelData());
 
-		evt::EditorLevelLoadedEvent e(*newLevel);
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel);
 
 		PostEditorEvent(e);
+	}
+
+	void Editor::SetCurrentLevel(const EditorLevel& editorLevel)
+	{
+		mCurrentEditorLevel = editorLevel;
+	}
+
+	const EditorLevel& Editor::GetEditorLevel() const
+	{
+		return mCurrentEditorLevel;
 	}
 
 	std::string Editor::GetAppLevelPath() const
@@ -519,7 +510,7 @@ namespace r2
 		});
 
 		//@TODO(Serge): remove when DebugBoneComponent no long necessary for Skeletal Animation
-		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& e)
+		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& event)
 			{
 				const r2::SArray<ecs::Entity>& allEntities = MENG.GetECSWorld().GetECSCoordinator()->GetAllLivingEntities();
 
@@ -584,7 +575,7 @@ namespace r2
 				}
 
 
-				return e.ShouldConsume();
+				return event.ShouldConsume();
 			});
 
 

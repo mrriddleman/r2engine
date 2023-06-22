@@ -3,6 +3,7 @@
 #define __EDITOR_MAIN_MENU_BAR_H__
 
 #include "r2/Editor/EditorWidget.h"
+#include "r2/Editor/EditorLevel.h"
 
 namespace r2::edit
 {
@@ -16,6 +17,8 @@ namespace r2::edit
 		virtual void OnEvent(evt::Event& e) override;
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
+	private:
+		EditorLevel mNewEditorLevel;
 	};
 }
 

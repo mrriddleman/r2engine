@@ -8,8 +8,8 @@ namespace r2
 {
 	EditorLevel::EditorLevel()
 		:mVersion(1)
-		,mLevelName("")
-		,mGroupName("")
+		,mLevelName("New Level")
+		,mGroupName("New Group")
 	{
 
 	}
@@ -154,6 +154,9 @@ namespace r2
 
 	void EditorLevel::Clear()
 	{
+		mVersion = 1;
+		mLevelName = "New Level";
+		mGroupName = "New Group";
 		mModelFiles.clear();
 		mAnimationFiles.clear();
 		mMaterialNames.clear();

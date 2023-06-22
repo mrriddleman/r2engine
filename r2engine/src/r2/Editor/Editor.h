@@ -41,17 +41,19 @@ namespace r2
 		void Update();
 		void Render();
 		void RenderImGui(u32 dockingSpaceID);
-		void PostNewAction(std::unique_ptr<edit::EditorAction> action);
+		
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
 		void LoadLevel(const std::string& filePathName);
 
-		std::string GetAppLevelPath() const;
+		void SetCurrentLevel(const EditorLevel& editorLevel);
+		const EditorLevel& GetEditorLevel() const;
 
+		void PostNewAction(std::unique_ptr<edit::EditorAction> action);
 		void PostEditorEvent(r2::evt::EditorEvent& e);
 
-
+		std::string GetAppLevelPath() const;
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
 		ecs::ECSCoordinator* GetECSCoordinator();
