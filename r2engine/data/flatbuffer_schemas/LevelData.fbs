@@ -1,5 +1,6 @@
 include "EntityData.fbs";
 include "ComponentArrayData.fbs";
+include "Model.fbs";
 
 namespace flat;
 
@@ -27,7 +28,7 @@ table LevelData
 
 	modelFilePaths:[PackReference];
 	animationFilePaths:[PackReference];
-	texturePackPaths:[PackReference];
+	materialNames:[MaterialName];
 	soundPaths:[PackReference];
 }
 

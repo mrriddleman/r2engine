@@ -9,6 +9,7 @@
 #include "ComponentArrayData_generated.h"
 #include "EntityData_generated.h"
 #include "LevelData_generated.h"
+#include "Model_generated.h"
 
 namespace flat {
 

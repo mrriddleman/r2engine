@@ -1,6 +1,6 @@
 #include "r2pch.h"
 
-#ifdef R2_ASSET_PIPELINE
+#if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/Assets/Pipeline/AssetPipelineUtils.h"
@@ -9,6 +9,7 @@
 #include "r2/Game/Level/LevelData_generated.h"
 #include <filesystem>
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
+#include "r2/Render/Model/Materials/MaterialTypes.h"
 
 namespace r2::asset::pln
 {
@@ -35,7 +36,19 @@ namespace r2::asset::pln
 		return generatedJSON && generatedBinary;
 	}
 
-	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, const std::vector<r2::asset::AssetFile*>& fileList)
+	std::vector<flatbuffers::Offset<flat::MaterialName>> MakeMaterialNameVectorFromMaterialNames(flatbuffers::FlatBufferBuilder& builder, const std::vector<r2::mat::MaterialName>& materialNames)
+	{
+		std::vector<flatbuffers::Offset<flat::MaterialName>> flatMaterialNames = {};
+		flatMaterialNames.reserve(materialNames.size());
+
+		for (const r2::mat::MaterialName& materialName : materialNames)
+		{
+			flatMaterialNames.push_back(flat::CreateMaterialName(builder, materialName.name, materialName.packName));
+		}
+		return flatMaterialNames;
+	}
+
+	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromFileList(flatbuffers::FlatBufferBuilder& builder, r2::fs::utils::Directory directory, r2::asset::AssetType assetType, const std::vector<std::string>& fileList)
 	{
 		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences;
 
@@ -46,11 +59,7 @@ namespace r2::asset::pln
 
 		for (size_t i = 0; i < numFiles; ++i)
 		{
-			AssetFile* assetFile = fileList[i];
-
-			R2_CHECK(assetFile != nullptr, "asset file is null?");
-
-			std::filesystem::path filePath = assetFile->FilePath();
+			std::filesystem::path filePath = fileList[i];
 
 			std::filesystem::path filePathURI = filePath.lexically_relative(directoryPath);
 
@@ -58,8 +67,11 @@ namespace r2::asset::pln
 			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
 			r2::fs::utils::SanitizeSubPath(filePathURI.string().c_str(), sanitizedFilePathURI);
 
+
+			const auto assetHandle = r2::asset::Asset::GetAssetNameForFilePath(sanitizedFilePathURI, assetType);
+
 			//@TODO(Serge): if we have packs with multiple assets in them, this might be a problem
-			auto packReference = flat::CreatePackReference(builder, assetFile->GetAssetHandle(0), builder.CreateString(sanitizedFilePathURI));
+			auto packReference = flat::CreatePackReference(builder, assetHandle, builder.CreateString(sanitizedFilePathURI));
 
 			packReferences.push_back(packReference);
 		}
@@ -69,11 +81,9 @@ namespace r2::asset::pln
 
 	bool SaveLevelData(
 		const r2::ecs::ECSCoordinator* coordinator,
-		u32 version,
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
-		const std::vector<AssetFile*>& modelFiles,
-		const std::vector<AssetFile*>& animationFiles)
+		const EditorLevel& editorLevel)
 	{
 		std::filesystem::path fsBinLevelPath = binLevelPath;
 		std::filesystem::path fsRawLevelPath = rawJSONPath;
@@ -102,14 +112,18 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::EntityData>> entityVec;
 		std::vector<flatbuffers::Offset<flat::ComponentArrayData>> componentDataArray;
 
-		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, modelFiles);
-		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, animationFiles);
-
+		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, r2::asset::RMODEL, editorLevel.GetModelAssetPaths());
+		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, r2::asset::RANIMATION, editorLevel.GetAnimationAssetPaths());
+		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = MakeMaterialNameVectorFromMaterialNames(builder, editorLevel.GetMaterialNames());
+		
+		//@TODO(Serge): fix this - the director is incorrect if we have music files
+		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::SOUND_FX, r2::asset::SOUND, editorLevel.GetSoundPaths());
+		
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
 
 		auto levelData = flat::CreateLevelData(
 			builder,
-			version,
+			editorLevel.GetVersion(),
 			STRING_ID(levelName.c_str()),
 			builder.CreateString(levelName),
 			STRING_ID(groupName.c_str()),
@@ -119,7 +133,9 @@ namespace r2::asset::pln
 			builder.CreateVector(entityVec),
 			builder.CreateVector(componentDataArray),
 			builder.CreateVector(modelPackReferences),
-			builder.CreateVector(animationPackReferences));
+			builder.CreateVector(animationPackReferences),
+			builder.CreateVector(materialNames),
+			builder.CreateVector(soundReferences));
 
 		builder.Finish(levelData);
 

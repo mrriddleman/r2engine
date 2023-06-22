@@ -8,6 +8,7 @@
 
 #include "ComponentArrayData_generated.h"
 #include "EntityData_generated.h"
+#include "Model_generated.h"
 
 namespace flat {
 
@@ -95,7 +96,7 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_COMPONENTARRAYS = 20,
     VT_MODELFILEPATHS = 22,
     VT_ANIMATIONFILEPATHS = 24,
-    VT_TEXTUREPACKPATHS = 26,
+    VT_MATERIALNAMES = 26,
     VT_SOUNDPATHS = 28
   };
   uint32_t version() const {
@@ -131,8 +132,8 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *animationFilePaths() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_ANIMATIONFILEPATHS);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *texturePackPaths() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_TEXTUREPACKPATHS);
+  const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *materialNames() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>> *>(VT_MATERIALNAMES);
   }
   const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *soundPaths() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>> *>(VT_SOUNDPATHS);
@@ -161,9 +162,9 @@ struct LevelData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyOffset(verifier, VT_ANIMATIONFILEPATHS) &&
            verifier.VerifyVector(animationFilePaths()) &&
            verifier.VerifyVectorOfTables(animationFilePaths()) &&
-           VerifyOffset(verifier, VT_TEXTUREPACKPATHS) &&
-           verifier.VerifyVector(texturePackPaths()) &&
-           verifier.VerifyVectorOfTables(texturePackPaths()) &&
+           VerifyOffset(verifier, VT_MATERIALNAMES) &&
+           verifier.VerifyVector(materialNames()) &&
+           verifier.VerifyVectorOfTables(materialNames()) &&
            VerifyOffset(verifier, VT_SOUNDPATHS) &&
            verifier.VerifyVector(soundPaths()) &&
            verifier.VerifyVectorOfTables(soundPaths()) &&
@@ -208,8 +209,8 @@ struct LevelDataBuilder {
   void add_animationFilePaths(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> animationFilePaths) {
     fbb_.AddOffset(LevelData::VT_ANIMATIONFILEPATHS, animationFilePaths);
   }
-  void add_texturePackPaths(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> texturePackPaths) {
-    fbb_.AddOffset(LevelData::VT_TEXTUREPACKPATHS, texturePackPaths);
+  void add_materialNames(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> materialNames) {
+    fbb_.AddOffset(LevelData::VT_MATERIALNAMES, materialNames);
   }
   void add_soundPaths(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> soundPaths) {
     fbb_.AddOffset(LevelData::VT_SOUNDPATHS, soundPaths);
@@ -239,13 +240,13 @@ inline flatbuffers::Offset<LevelData> CreateLevelData(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>> componentArrays = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> modelFilePaths = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> animationFilePaths = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> texturePackPaths = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::MaterialName>>> materialNames = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::PackReference>>> soundPaths = 0) {
   LevelDataBuilder builder_(_fbb);
   builder_.add_groupHash(groupHash);
   builder_.add_hash(hash);
   builder_.add_soundPaths(soundPaths);
-  builder_.add_texturePackPaths(texturePackPaths);
+  builder_.add_materialNames(materialNames);
   builder_.add_animationFilePaths(animationFilePaths);
   builder_.add_modelFilePaths(modelFilePaths);
   builder_.add_componentArrays(componentArrays);
@@ -271,7 +272,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
     const std::vector<flatbuffers::Offset<flat::ComponentArrayData>> *componentArrays = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *modelFilePaths = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *animationFilePaths = nullptr,
-    const std::vector<flatbuffers::Offset<flat::PackReference>> *texturePackPaths = nullptr,
+    const std::vector<flatbuffers::Offset<flat::MaterialName>> *materialNames = nullptr,
     const std::vector<flatbuffers::Offset<flat::PackReference>> *soundPaths = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto groupName__ = groupName ? _fbb.CreateString(groupName) : 0;
@@ -280,7 +281,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
   auto componentArrays__ = componentArrays ? _fbb.CreateVector<flatbuffers::Offset<flat::ComponentArrayData>>(*componentArrays) : 0;
   auto modelFilePaths__ = modelFilePaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*modelFilePaths) : 0;
   auto animationFilePaths__ = animationFilePaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*animationFilePaths) : 0;
-  auto texturePackPaths__ = texturePackPaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*texturePackPaths) : 0;
+  auto materialNames__ = materialNames ? _fbb.CreateVector<flatbuffers::Offset<flat::MaterialName>>(*materialNames) : 0;
   auto soundPaths__ = soundPaths ? _fbb.CreateVector<flatbuffers::Offset<flat::PackReference>>(*soundPaths) : 0;
   return flat::CreateLevelData(
       _fbb,
@@ -295,7 +296,7 @@ inline flatbuffers::Offset<LevelData> CreateLevelDataDirect(
       componentArrays__,
       modelFilePaths__,
       animationFilePaths__,
-      texturePackPaths__,
+      materialNames__,
       soundPaths__);
 }
 

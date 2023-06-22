@@ -1,10 +1,11 @@
 #ifndef __LEVEL_PACK_DATA_UTILS_H__
 #define __LEVEL_PACK_DATA_UTILS_H__
 
-#ifdef R2_ASSET_PIPELINE
+#if defined(R2_ASSET_PIPELINE) && defined(R2_EDITOR)
 
 #include <string>
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Editor/EditorLevel.h"
 
 namespace r2::ecs
 {
@@ -17,11 +18,9 @@ namespace r2::asset::pln
 	
 	bool SaveLevelData(
 		const r2::ecs::ECSCoordinator* coordinator,
-		u32 version,
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
-		const std::vector<AssetFile*>& modelFiles,
-		const std::vector<AssetFile*>& animationFiles);
+		const EditorLevel& editorLevel);
 	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 }

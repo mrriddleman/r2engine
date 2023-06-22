@@ -654,6 +654,17 @@ namespace r2
 		return mAssetCache->GetAllAssetFilesForAssetType(type);
 	}
 
+	const r2::asset::AssetFile* GameAssetManager::GetAssetFile(const r2::asset::Asset& asset)
+	{
+		if (!mAssetCache)
+		{
+			R2_CHECK(false, "Asset Cache is nullptr");
+			return nullptr;
+		}
+
+		return mAssetCache->GetAssetFileForAsset(asset);
+	}
+
 #endif
 
 

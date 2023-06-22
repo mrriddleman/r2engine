@@ -130,7 +130,7 @@ namespace r2::edit
 				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
 				// action
 
-				mnoptrEditor->LoadLevel(filePathName, filePath);
+				mnoptrEditor->LoadLevel(filePathName);
 			}
 
 			// close

@@ -43,6 +43,7 @@ namespace r2::asset
 		LEVEL_PACK,
 		MATERIAL,
 		TEXTURE_PACK,
+		SOUND,
 		NUM_ENGINE_ASSET_TYPES
 	};
 

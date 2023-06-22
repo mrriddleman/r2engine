@@ -32,7 +32,7 @@ namespace r2::asset
 
         std::transform(std::begin(path), std::end(path), std::begin(path), (int(*)(int))std::tolower);
         
-        mHashedPathID = r2::utils::Hash<const char*>{}(path);
+        mHashedPathID = STRING_ID(path);
         mType = type;
     }
 

@@ -473,7 +473,8 @@ namespace r2
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);
-                mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000);
+                mLevelManager->Init(engineMem.internalEngineMemoryHandle, mECSWorld->GetECSCoordinator(), noptrApp->GetLevelPackDataBinPath().c_str(), "Level Manager", 1000,
+                    noptrApp->GetLevelPackDataBinPath().c_str(), noptrApp->GetLevelPackDataJSONPath().c_str());
             }
             
             //@TODO(Serge): don't use make unique!

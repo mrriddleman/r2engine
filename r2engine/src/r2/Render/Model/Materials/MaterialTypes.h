@@ -18,8 +18,18 @@ namespace r2::mat
 {
 	struct MaterialName
 	{
-		u64 name;
-		u64 packName;
+		u64 name = 0;
+		u64 packName = 0;
+
+		bool operator==(const MaterialName& materialName) const
+		{
+			return name == materialName.name && packName == materialName.packName;
+		}
+
+		bool operator<(const MaterialName& materialName) const
+		{
+			return packName < materialName.packName || (name < materialName.name&& packName == materialName.packName);
+		}
 	};
 }
 

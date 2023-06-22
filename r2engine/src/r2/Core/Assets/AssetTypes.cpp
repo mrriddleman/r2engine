@@ -33,6 +33,8 @@ namespace r2::asset
 			return 0;
 		case TEXTURE_PACK:
 			return 0;
+		case SOUND:
+			return 1;
 		default:
 
 			//@TODO(Serge): may need to extend this using the Application

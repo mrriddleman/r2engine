@@ -13,7 +13,12 @@
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
+
 #endif // R2_ASSET_PIPELINE
+
+#ifdef R2_EDITOR
+#include "r2/Editor/EditorLevel.h"
+#endif
 
 #include "r2/Core/Engine.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
@@ -53,11 +58,24 @@ namespace r2
 		return subAreaSize;
 	}
 
-	bool LevelManager::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels)
+	bool LevelManager::Init(
+		r2::mem::MemoryArea::Handle memoryAreaHandle,
+		ecs::ECSCoordinator* ecsCoordinator,
+		const char* levelPackPath,
+		const char* areaName,
+		u32 maxNumLevels,
+		const char* binLevelOutputPath,
+		const char* rawLevelOutputPath)
 	{
 		R2_CHECK(levelPackPath != nullptr, "We should have a proper path");
 		R2_CHECK(strlen(levelPackPath) > 0, "We should have path that's more than 0");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "We need a valid memory area");
+
+		R2_CHECK(binLevelOutputPath != nullptr && strlen(binLevelOutputPath) > 0, "We don't have a proper path");
+		R2_CHECK(rawLevelOutputPath != nullptr && strlen(rawLevelOutputPath) > 0, "We don't have a proper path");
+
+		r2::fs::utils::SanitizeSubPath(binLevelOutputPath, mBinOutputPath);
+		r2::fs::utils::SanitizeSubPath(rawLevelOutputPath, mRawOutputPath);
 
 		r2::mem::utils::MemoryProperties memProperties;
 		memProperties.alignment = 16;
@@ -195,7 +213,7 @@ namespace r2
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
-		return r2::sarr::End(*mLoadedLevels);
+		return &r2::sarr::Last(*mLoadedLevels);
 	}
 
 	const Level* LevelManager::GetLevel(const char* levelURI)
@@ -238,8 +256,6 @@ namespace r2
 			//not even loaded - return
 			return;
 		}
-
-		
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
@@ -286,6 +302,8 @@ namespace r2
 
 		for (flatbuffers::uoffset_t i = 0; i < numModels; ++i)
 		{
+
+
 			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(levelData->animationFilePaths()->Get(i)->binPath()->c_str(), r2::asset::RMODEL);
 
 			if (gameAssetManager.HasAsset(animationAsset))
@@ -374,20 +392,18 @@ namespace r2
 	}
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-	void LevelManager::SaveNewLevelFile(
-		u32 version,
-		const char* binLevelPath,
-		const char* rawJSONPath,
-		const std::vector<r2::asset::AssetFile*>& modelFiles,
-		const std::vector<r2::asset::AssetFile*>& animationFiles)
+	void LevelManager::SaveNewLevelFile(const EditorLevel& editorLevel)
 	{
-		char sanitizedBinLevelPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::SanitizeSubPath(binLevelPath, sanitizedBinLevelPath);
+		char binLevelPath[r2::fs::FILE_PATH_LENGTH];
+		char rawLevelPath[r2::fs::FILE_PATH_LENGTH];
 
-		char sanitizedRawLevelPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::SanitizeSubPath(rawJSONPath, sanitizedRawLevelPath);
+		std::string levelBinURI = editorLevel.GetGroupName() + r2::fs::utils::PATH_SEPARATOR + editorLevel.GetLevelName() + ".rlvl";
+		std::string levelRawURI = editorLevel.GetGroupName() + r2::fs::utils::PATH_SEPARATOR + editorLevel.GetLevelName() + ".json";
 
-		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(sanitizedBinLevelPath, r2::asset::LEVEL);
+		r2::fs::utils::AppendSubPath(mBinOutputPath, binLevelPath, levelBinURI.c_str());
+		r2::fs::utils::AppendSubPath(mRawOutputPath, rawLevelPath, levelRawURI.c_str());
+
+		r2::asset::Asset newLevelAsset = r2::asset::Asset::MakeAssetFromFilePath(binLevelPath, r2::asset::LEVEL);
 
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
@@ -397,7 +413,7 @@ namespace r2
 			const r2::asset::FileList fileList = gameAssetManager.GetFileList();
 			
 			//make a new asset file for the asset cache
-			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(sanitizedBinLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
+			r2::asset::RawAssetFile* newFile = r2::asset::lib::MakeRawAssetFile(binLevelPath, r2::asset::GetNumberOfParentDirectoriesToIncludeForAssetType(r2::asset::LEVEL));
 
 			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)newFile);
 		}
@@ -406,13 +422,9 @@ namespace r2
 		
 		//Write out the new level file
 		bool saved = r2::asset::pln::SaveLevelData(
-			ecsWorld.GetECSCoordinator(),
-			version,
-			sanitizedBinLevelPath,
-			sanitizedRawLevelPath,
-			modelFiles, animationFiles);
+			ecsWorld.GetECSCoordinator(), binLevelPath, rawLevelPath, editorLevel);
 
-		R2_CHECK(saved, "We couldn't save the file: %s\n", sanitizedBinLevelPath);
+		R2_CHECK(saved, "We couldn't save the file: %s\n", binLevelPath);
 	}
 #endif
 }

@@ -1003,6 +1003,24 @@ namespace r2::asset
         std::vector<AssetFile*> assetFiles(fileHandles.begin(), fileHandles.end());
         return assetFiles;
     }
+
+    const AssetFile* AssetCache::GetAssetFileForAsset(const r2::asset::Asset& asset)
+    {
+        for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
+        {
+            const AssetsToFile& assetsToFile = mAssetsForFiles[i];
+            for (size_t j = 0; j < assetsToFile.assets.size(); ++j)
+            {
+				const AssetRecord& assetRecord = assetsToFile.assets[j];
+
+                if (asset.GetType() == assetRecord.type && assetRecord.handle.handle == asset.HashID())
+                {
+                    return assetsToFile.assetFile;
+                }
+            }
+        }
+        return nullptr;
+    }
 #endif
 
     void AssetCache::ClearFileList()

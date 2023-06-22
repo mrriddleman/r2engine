@@ -7,7 +7,8 @@
 namespace r2 
 {
 	EditorLevel::EditorLevel()
-		:mLevelName("")
+		:mVersion(1)
+		,mLevelName("")
 		,mGroupName("")
 	{
 
@@ -15,13 +16,16 @@ namespace r2
 
 	EditorLevel::~EditorLevel()
 	{
-
+		Clear();
 	}
 
 	bool EditorLevel::Load(const flat::LevelData* levelData)
 	{
+		Clear();
+
 		mLevelName = levelData->name()->str();
 		mGroupName = levelData->groupName()->str();
+		mVersion = levelData->version();
 
 		u32 numModelFiles = levelData->modelFilePaths()->size();
 		for (u32 i = 0; i < numModelFiles; ++i)
@@ -35,10 +39,14 @@ namespace r2
 			mAnimationFiles.insert(levelData->animationFilePaths()->Get(i)->binPath()->str());
 		}
 
-		u32 numTexturePackPaths = levelData->texturePackPaths()->size();
+		u32 numTexturePackPaths = levelData->materialNames()->size();
 		for (u32 i = 0; i < numTexturePackPaths; ++i)
 		{
-			mTexturePackPaths.insert(levelData->texturePackPaths()->Get(i)->binPath()->str());
+			r2::mat::MaterialName newMaterialName;
+			newMaterialName.packName = levelData->materialNames()->Get(i)->materialPackName();
+			newMaterialName.name = levelData->materialNames()->Get(i)->name();
+
+			mMaterialNames.insert(newMaterialName);
 		}
 
 		u32 numSoundPaths = levelData->soundPaths()->size();
@@ -48,6 +56,16 @@ namespace r2
 		}
 
 		return true;
+	}
+
+	void EditorLevel::SetVersion(u32 version)
+	{
+		mVersion = version;
+	}
+
+	u32 EditorLevel::GetVersion() const
+	{
+		return mVersion;
 	}
 
 	void EditorLevel::SetLevelName(const std::string& levelName)
@@ -82,9 +100,9 @@ namespace r2
 		return vecAssetFiles;
 	}
 
-	std::vector<std::string> EditorLevel::GetTexturePackPaths() const
+	std::vector<r2::mat::MaterialName> EditorLevel::GetMaterialNames() const
 	{
-		std::vector<std::string> vecAssetFiles(mTexturePackPaths.begin(), mTexturePackPaths.end());
+		std::vector<r2::mat::MaterialName> vecAssetFiles(mMaterialNames.begin(), mMaterialNames.end());
 		return vecAssetFiles;
 	}
 
@@ -104,9 +122,9 @@ namespace r2
 		mAnimationFiles.insert(animationFile);
 	}
 
-	void EditorLevel::AddTexturePackPath(const std::string& texturePackPath)
+	void EditorLevel::AddMaterialName(const r2::mat::MaterialName& materialName)
 	{
-		mTexturePackPaths.insert(texturePackPath);
+		mMaterialNames.insert(materialName);
 	}
 
 	void EditorLevel::AddSoundPath(const std::string& soundPath)
@@ -124,9 +142,9 @@ namespace r2
 		mAnimationFiles.erase(animationFile);
 	}
 
-	void EditorLevel::RemoveTexturePackPath(const std::string& texturePackPath)
+	void EditorLevel::RemoveMaterialName(const r2::mat::MaterialName& materialName)
 	{
-		mTexturePackPaths.erase(texturePackPath);
+		mMaterialNames.erase(materialName);
 	}
 
 	void EditorLevel::RemoveSoundPath(const std::string& soundPath)
@@ -134,6 +152,13 @@ namespace r2
 		mSoundPaths.erase(soundPath);
 	}
 
+	void EditorLevel::Clear()
+	{
+		mModelFiles.clear();
+		mAnimationFiles.clear();
+		mMaterialNames.clear();
+		mSoundPaths.clear();
+	}
 }
 
 #endif //  R2_EDITOR

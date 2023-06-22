@@ -93,6 +93,8 @@ namespace r2::asset
         void ResetFileList(FileList fileList);
 
         std::vector<AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
+
+        const AssetFile* GetAssetFileForAsset(const r2::asset::Asset& asset);
 #endif
         void ClearFileList();
 

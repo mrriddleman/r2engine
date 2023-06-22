@@ -7,6 +7,7 @@
 #include "r2/Editor/EditorActions/EditorAction.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Utils/Random.h"
+#include "r2/Editor/EditorLevel.h"
 
 namespace r2::evt
 {
@@ -22,6 +23,8 @@ namespace r2::ecs
 namespace r2::draw
 {
 	struct AnimModel;
+	struct Animation;
+	struct Model;
 }
 
 namespace r2
@@ -42,7 +45,7 @@ namespace r2
 		void UndoLastAction();
 		void RedoLastAction();
 		void Save();
-		void LoadLevel(const std::string& filePathName, const std::string& parentDirectory);
+		void LoadLevel(const std::string& filePathName);
 
 		std::string GetAppLevelPath() const;
 
@@ -56,8 +59,13 @@ namespace r2
 
 	private:
 
+		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
+		void AddAnimationToLevel(u64 animationAssetName, const r2::draw::Animation& animation);
+
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 		r2::mem::MallocArena mMallocArena;
+
+		EditorLevel mCurrentEditorLevel;
 
 		std::vector<void*> mComponentAllocations;
 

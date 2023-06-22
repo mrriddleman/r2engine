@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include "r2/Render/Model/Materials/MaterialTypes.h"
 
 namespace r2::asset
 {
@@ -26,6 +27,9 @@ namespace r2
 
 		bool Load(const flat::LevelData* levelData);
 
+		void SetVersion(u32 version);
+		u32 GetVersion() const;
+
 		void SetLevelName(const std::string& levelName);
 		void SetGroupName(const std::string& groupName);
 
@@ -34,27 +38,30 @@ namespace r2
 
 		std::vector<std::string> GetModelAssetPaths() const;
 		std::vector<std::string> GetAnimationAssetPaths() const;
-		std::vector<std::string> GetTexturePackPaths() const;
+		std::vector<r2::mat::MaterialName> GetMaterialNames() const;
 		std::vector<std::string> GetSoundPaths() const;
 
 		void AddModelFile(const std::string& modelFile);
 		void AddAnimationFile(const std::string& animationFile);
-		void AddTexturePackPath(const std::string& texturePackPath);
+		void AddMaterialName(const r2::mat::MaterialName& materialName);
 		void AddSoundPath(const std::string& soundPath);
 
 		void RemoveModelFile(const std::string& modelFile);
 		void RemoveAnimationFile(const std::string& animationFile);
-		void RemoveTexturePackPath(const std::string& texturePackPath);
+		void RemoveMaterialName(const r2::mat::MaterialName& materialName);
 		void RemoveSoundPath(const std::string& soundPath);
 
+		void Clear();
+
 	private:
-		
+		u32 mVersion;
+
 		std::string mLevelName;
 		std::string mGroupName;
 
 		std::set<std::string> mModelFiles;
 		std::set<std::string> mAnimationFiles;
-		std::set<std::string> mTexturePackPaths;
+		std::set<r2::mat::MaterialName> mMaterialNames;
 		std::set<std::string> mSoundPaths;
 	};
 }

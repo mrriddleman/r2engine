@@ -193,6 +193,7 @@ namespace r2
 		void RemoveAssetFile(const std::string& filePath);
 
 		std::vector<r2::asset::AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
+		const r2::asset::AssetFile* GetAssetFile(const r2::asset::Asset& asset);
 #endif
 
 	private:

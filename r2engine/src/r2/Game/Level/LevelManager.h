@@ -22,6 +22,7 @@ namespace r2
 {
 	struct LevelCache;
 	class GameAssetManager;
+	class EditorLevel;
 
 	using LevelGroup = r2::SArray<Level*>*;
 
@@ -37,7 +38,14 @@ namespace r2
 		LevelManager();
 		~LevelManager();
 
-		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, ecs::ECSCoordinator* ecsCoordinator, const char* levelPackPath, const char* areaName, u32 maxNumLevels);
+		bool Init(
+			r2::mem::MemoryArea::Handle memoryAreaHandle,
+			ecs::ECSCoordinator* ecsCoordinator,
+			const char* levelPackPath,
+			const char* areaName,
+			u32 maxNumLevels,
+			const char* binLevelOutputPath,
+			const char* rawLevelOutputPath);
 		void Shutdown();
 
 		void Update();
@@ -53,22 +61,13 @@ namespace r2
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
-		
-
-
-
 		SceneGraph& GetSceneGraph();
 		SceneGraph* GetSceneGraphPtr();
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-		void SaveNewLevelFile(
-			u32 version,
-			const char* binLevelPath,
-			const char* rawJSONPath,
-			const std::vector<r2::asset::AssetFile*>& modelFiles,
-			const std::vector<r2::asset::AssetFile*>& animationFiles);
+		void SaveNewLevelFile(const EditorLevel& editorLevel);
 #endif
 		static u64 MemorySize(
 			u32 maxNumLevels,
@@ -94,6 +93,8 @@ namespace r2
 		r2::SArray<Level>* mLoadedLevels;
 
 		SceneGraph mSceneGraph;	
+		char mBinOutputPath[r2::fs::FILE_PATH_LENGTH];
+		char mRawOutputPath[r2::fs::FILE_PATH_LENGTH];
 	};
 }
 

@@ -30,6 +30,8 @@
 #include "r2/Game/SceneGraph/SceneGraph.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
+#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Platform/Platform.h"
@@ -42,7 +44,7 @@ namespace r2
 		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mMallocArena(r2::mem::utils::MemBoundary())
 	{
-
+		
 	}
 
 	void Editor::Init()
@@ -65,6 +67,8 @@ namespace r2
 		{
 			widget->Init(this);
 		}
+
+		mCurrentEditorLevel.Clear();
 	}
 
 	void Editor::Shutdown()
@@ -186,29 +190,36 @@ namespace r2
 	 
 	void Editor::Save()
 	{
-		//@Test - very temporary
-		std::filesystem::path levelBinURI = "testGroup/Level1.rlvl";
-		std::filesystem::path levelRawURI = "testGroup/Level1.json";
+		//@Test - very temporary - dunno where to put this yet
+		mCurrentEditorLevel.SetVersion(1);
+		mCurrentEditorLevel.SetGroupName("testGroup");
+		mCurrentEditorLevel.SetLevelName("Level1");
 
-		std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
-		std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
+		
+	//	std::filesystem::path levelBinURI = "testGroup/Level1.rlvl";
+	//	std::filesystem::path levelRawURI = "testGroup/Level1.json";
+
+	//	std::filesystem::path levelDataBinPath = CENG.GetApplication().GetLevelPackDataBinPath();
+	//	std::filesystem::path levelDataRawPath = CENG.GetApplication().GetLevelPackDataJSONPath();
 
 	//	r2::draw::ModelCache* editorModelSystem = CENG.GetApplication().GetEditorModelSystem();
 	//	r2::draw::AnimationCache* editorAnimationCache = CENG.GetApplication().GetEditorAnimationCache();
 
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		/*GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		std::vector<asset::AssetFile*> modelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
-		std::vector<asset::AssetFile*> animationFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RANIMATION);
+		std::vector<asset::AssetFile*> animationFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RANIMATION);*/
 
-		CENG.GetLevelManager().SaveNewLevelFile(1, (levelDataBinPath / levelBinURI).string().c_str(), (levelDataRawPath / levelRawURI).string().c_str(), modelFiles, animationFiles);
+		CENG.GetLevelManager().SaveNewLevelFile(mCurrentEditorLevel);
 	}
 
-	void Editor::LoadLevel(const std::string& filePathName, const std::string& parentDirectory)
+	void Editor::LoadLevel(const std::string& filePathName)
 	{
 		LevelName levelAssetName = LevelManager::MakeLevelNameFromPath(filePathName.c_str());
 
 		const Level* newLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
+		
+		mCurrentEditorLevel.Load(newLevel->GetLevelData());
 
 		evt::EditorLevelLoadedEvent e(*newLevel);
 
@@ -231,11 +242,13 @@ namespace r2
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
-				r2::draw::ModelHandle microbatModelHandle = gameAssetManager.LoadAsset(microbatAsset); //r2::draw::modlche::LoadModel(editorModelSystem, microbatAsset);
+				r2::draw::ModelHandle microbatModelHandle = gameAssetManager.LoadAsset(microbatAsset);
 
-				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatModelHandle);//r2::draw::modlche::GetAnimModel(editorModelSystem, microbatModelHandle);
+				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatModelHandle);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);//r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);
+
+				AddModelToLevel(microbatAsset.HashID(), microbatAnimModel->model);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelHash = microbatAsset.HashID();
@@ -316,6 +329,7 @@ namespace r2
 				*/
 				r2::asset::Asset animationAsset0 = r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION);
 
+				
 
 				ecs::SkeletalAnimationComponent skeletalAnimationComponent;
 				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
@@ -335,6 +349,7 @@ namespace r2
 
 				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle0);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
 
+				AddAnimationToLevel(animationHandle0.handle, *skeletalAnimationComponent.animation);
 
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
@@ -441,6 +456,8 @@ namespace r2
 					r2::asset::AssetHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
 					skeletalAnimationInstance2.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle2);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
 
+					AddAnimationToLevel(animationHandle1.handle, *skeletalAnimationInstance1.animation);
+					AddAnimationToLevel(animationHandle2.handle, *skeletalAnimationInstance2.animation);
 
 					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->boneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
@@ -595,6 +612,27 @@ namespace r2
 	r2::mem::MallocArena& Editor::GetMemoryArena()
 	{
 		return mMallocArena;
+	}
+
+	void Editor::AddModelToLevel(u64 modelHandle, const r2::draw::Model& model)
+	{
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		const auto* assetFile = gameAssetManager.GetAssetFile(r2::asset::Asset(modelHandle, r2::asset::RMODEL));
+		mCurrentEditorLevel.AddModelFile(assetFile->FilePath());
+
+		const u32 numMaterialNames = r2::sarr::Size(*model.optrMaterialNames);
+
+		for (u32 i = 0; i < numMaterialNames; ++i)
+		{
+			mCurrentEditorLevel.AddMaterialName(r2::sarr::At(*model.optrMaterialNames, i));
+		}
+	}
+
+	void Editor::AddAnimationToLevel(u64 animationHandle, const r2::draw::Animation& animation)
+	{
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		mCurrentEditorLevel.AddAnimationFile(gameAssetManager.GetAssetFile(r2::asset::Asset(animationHandle, r2::asset::RANIMATION))->FilePath());
 	}
 }
 

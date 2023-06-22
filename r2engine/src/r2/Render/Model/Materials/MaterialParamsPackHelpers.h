@@ -23,7 +23,9 @@ namespace r2::mat
 	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexturePack(const flat::MaterialParamsPack* materialPack, u64 texturePackName);
 #endif
 
-
+#ifdef R2_EDITOR
+	//std::vector<std::string> GetAllTexturePacksForMaterialNames(const r2::SArray<MaterialName>& materialNames);
+#endif
 }
 
 #endif
