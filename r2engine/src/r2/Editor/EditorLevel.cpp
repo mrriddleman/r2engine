@@ -3,6 +3,7 @@
 #ifdef  R2_EDITOR
 #include "r2/Editor/EditorLevel.h"
 #include "r2/Game/Level/LevelData_generated.h"
+#include "r2/Core/File/PathUtils.h"
 
 namespace r2 
 {
@@ -27,16 +28,20 @@ namespace r2
 		mGroupName = levelData->groupName()->str();
 		mVersion = levelData->version();
 
+		char filePath[r2::fs::FILE_PATH_LENGTH];
+
 		u32 numModelFiles = levelData->modelFilePaths()->size();
 		for (u32 i = 0; i < numModelFiles; ++i)
 		{
-			mModelFiles.insert(levelData->modelFilePaths()->Get(i)->binPath()->str());
+			r2::fs::utils::BuildPathFromCategory(fs::utils::MODELS, levelData->modelFilePaths()->Get(i)->binPath()->str().c_str(), filePath);
+			mModelFiles.insert(filePath);
 		}
 
 		u32 numAnimationFiles = levelData->animationFilePaths()->size();
 		for (u32 i = 0; i < numAnimationFiles; ++i)
 		{
-			mAnimationFiles.insert(levelData->animationFilePaths()->Get(i)->binPath()->str());
+			r2::fs::utils::BuildPathFromCategory(fs::utils::ANIMATIONS, levelData->animationFilePaths()->Get(i)->binPath()->str().c_str(), filePath);
+			mAnimationFiles.insert(filePath);
 		}
 
 		u32 numTexturePackPaths = levelData->materialNames()->size();
@@ -52,7 +57,9 @@ namespace r2
 		u32 numSoundPaths = levelData->soundPaths()->size();
 		for (u32 i = 0; i < numSoundPaths; ++i)
 		{
-			mSoundPaths.insert(levelData->soundPaths()->Get(i)->binPath()->str());
+			//@TODO(Serge): figure this out
+			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUND_FX, levelData->soundPaths()->Get(i)->binPath()->str().c_str(), filePath);
+			mSoundPaths.insert(filePath);
 		}
 
 		return true;

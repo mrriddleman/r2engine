@@ -349,9 +349,23 @@ namespace r2
 
 
 		f64 startMaterialLoading = CENG.GetTicks();
+
+
+		f64 materialGatherStart;
+		f64 materialGatherEnd;
+
+		f64 materialDiskLoadStart;
+		f64 materialDiskLoadEnd;
+
+		f64 materialUploadStart;
+		f64 materialUploadEnd;
+
+		f64 totalTextureUploadTime = 0;
 		//load the materials
 		//@TODO(Serge): probably all of this will change when we do the texture refactor
 		{
+
+			materialGatherStart = CENG.GetTicks();
 			const auto* materialNames = levelData->materialNames();
 
 			const flatbuffers::uoffset_t numMaterials = materialNames->size();
@@ -377,12 +391,17 @@ namespace r2
 				r2::sarr::Push(*materialParamsToLoad, materialParams);
 			}
 
+			materialGatherEnd = CENG.GetTicks();
+			materialDiskLoadStart = materialGatherEnd;
 			//Load from disk
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
 				bool result = gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialParamsToLoad, i));
 				R2_CHECK(result, "Should always work");
 			}
+
+			materialDiskLoadEnd = CENG.GetTicks();
+			materialUploadStart = materialDiskLoadEnd;
 
 			//load to gpu
 			r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, numTexturesTotal);
@@ -409,7 +428,10 @@ namespace r2
 					cubemapTexture = &r2::sarr::At(*gameCubemaps, 0);
 				}
 
+				f64 texParamUploadStart = CENG.GetTicks();
 				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTexture);
+				f64 texParamUploadEnd = CENG.GetTicks();
+				totalTextureUploadTime += (texParamUploadEnd - texParamUploadStart);
 
 				r2::sarr::Clear(*gameTextures);
 				r2::sarr::Clear(*gameCubemaps);
@@ -419,11 +441,13 @@ namespace r2
 			FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 
 			FREE(materialParamsToLoad, *MEM_ENG_SCRATCH_PTR);
+
+			materialUploadEnd = CENG.GetTicks();
 		}
 
-		f64 end = CENG.GetTicks();
+		f64 end = materialUploadEnd;
 
-		//Load the sounds + music
+		//@TODO(Serge): Load the sounds + music
 		{
 			//const auto* soundFiles = levelData->soundPaths();
 
@@ -431,18 +455,28 @@ namespace r2
 
 			//for (flatbuffers::uoffset_t i = 0; i < numSoundFiles; ++i)
 			//{
-			//	//load somehow
+			//	//@TODO(Serge): implement
 			//}
 		}
 		
 		printf("Model loading took: %f\n", endModelLoading - startModelLoading);
 		printf("Animation loading took: %f\n", endAnimationLoading - startAnimationLoading);
+		printf("Material Gather took: %f\n", materialGatherEnd - materialGatherStart);
+		printf("Material disk load took: %f\n", materialDiskLoadEnd - materialDiskLoadStart);
+		printf("Material upload took: %f\n", materialUploadEnd - materialUploadStart);
 		printf("Material loading took: %f\n", end - startMaterialLoading);
+		printf("Texture param upload took: %f\n", totalTextureUploadTime);
 		printf("Total load time: %f\n", end - start);
 	}
 
 	void LevelManager::UnLoadLevelData(const flat::LevelData* levelData)
 	{
+		//I think the idea is to figure out which models/animations/materials/sounds etc to unload 
+		//based on what other levels are already loaded, that way we don't unload anything that we still need
+		//since we know levels will essentially be based on different kinds of packs (sounds, textures, models, animations etc)
+
+
+
 		TODO;
 	}
 
