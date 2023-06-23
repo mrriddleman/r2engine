@@ -4,13 +4,15 @@
 #include "r2/Core/Assets/Pipeline/TexturePackManifestUtils.h"
 #include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
 #include "assetlib/ImageConvert.h"
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/Assets/Pipeline/AssetConverterUtils.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Renderer/Renderer.h"
+#include "r2/Render/Model/Textures/Texture.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Memory/Memory.h"
 
 namespace r2::asset::pln
 {

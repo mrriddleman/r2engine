@@ -5,8 +5,8 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include <glm/glm.hpp>
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Camera/Camera.h"
+#include "r2/Render/Model/RenderMaterials/RenderMaterial.h"
 
 namespace r2::draw
 {

@@ -2,8 +2,8 @@
 #define __RENDER_KEY_H__
 
 #include "r2/Render/Renderer/RendererTypes.h"
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Model/Light.h"
+#include "r2/Render/Renderer/Shader.h"
 
 #define MAX_BIT_VAL(x) static_cast<u64>((2 << (static_cast<u64>(x)-1))-1)
 #define ENCODE_KEY_VALUE(value, num_bits, offset) ((MAX_BIT_VAL(num_bits) & static_cast<u64>(value)) << static_cast<u64>(offset))

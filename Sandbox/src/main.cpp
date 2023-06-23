@@ -29,7 +29,6 @@
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Model.h"
 
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Random.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"

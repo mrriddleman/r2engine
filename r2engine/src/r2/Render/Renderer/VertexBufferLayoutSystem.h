@@ -5,6 +5,7 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Containers/SinglyLinkedList.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
+#include "r2/Core/Memory/Allocators/LinearAllocator.h"
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/GPUBuffer.h"

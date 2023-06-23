@@ -9,7 +9,6 @@
 #include "r2/Render/Renderer/BufferLayout.h"
 #include "r2/Render/Renderer/RenderKey.h"
 #include "r2/Render/Camera/Camera.h"
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Render/Renderer/Shader.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Render/Model/Textures/Texture.h"

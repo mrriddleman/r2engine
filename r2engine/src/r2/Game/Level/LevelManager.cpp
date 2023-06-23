@@ -5,7 +5,6 @@
 #include "r2/Game/Level/LevelPack_generated.h"
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-#include "r2/Render/Model/Materials/Material.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetLib.h"

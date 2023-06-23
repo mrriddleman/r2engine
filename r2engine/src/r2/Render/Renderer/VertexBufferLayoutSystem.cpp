@@ -1,5 +1,6 @@
 #include "r2pch.h"
 #include "r2/Render/Renderer/VertexBufferLayoutSystem.h"
+#include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Render/Renderer/RendererImpl.h"
