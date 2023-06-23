@@ -4,6 +4,7 @@
 
 #include "r2/Editor/EditorWidget.h"
 #include "r2/Editor/EditorLevel.h"
+#include <deque>
 
 namespace r2::edit
 {
@@ -18,7 +19,17 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 	private:
+
+		void LoadLevel(const std::string& filePath);
+		
+		void SaveLevelToRecents(const std::string& filePath);
+
+		void LoadRecentsFile();
+		void SaveRecentsFile();
+
 		EditorLevel mNewEditorLevel;
+		std::deque<std::string> mLastLevelPathsOpened;
+
 	};
 }
 

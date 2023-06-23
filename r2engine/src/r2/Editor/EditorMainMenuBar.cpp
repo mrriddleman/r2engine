@@ -6,6 +6,10 @@
 #include <glad/glad.h>
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorActions/NewLevelEditorAction.h"
+#include "r2/Core/File/PathUtils.h"
+#include <filesystem>
+#include <fstream>
+
 
 namespace r2::edit 
 {
@@ -21,7 +25,7 @@ namespace r2::edit
 	{
 		mnoptrEditor = noptrEditor;
 
-		
+		LoadRecentsFile();
 	}
 
 	void MainMenuBar::Shutdown()
@@ -51,8 +55,6 @@ namespace r2::edit
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-
-				
 				if (ImGui::MenuItem("New Level"))
 				{
 					showNewLevelPopup = true;
@@ -64,18 +66,37 @@ namespace r2::edit
 				}
 				if (ImGui::BeginMenu("Open Recent"))
 				{
-					//@TODO(Serge): populate with a proper vector of last levels/scenes
-					ImGui::MenuItem("Level 1");
-					ImGui::MenuItem("Level 2");
-					ImGui::MenuItem("Level 3");
-					ImGui::MenuItem("Level 4");
-					ImGui::MenuItem("Level 5");
+					std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+
+					size_t numPathsToShow = std::min(mLastLevelPathsOpened.size(), 10ull);
+
+					for (u32 i = 0; i < numPathsToShow; ++i)
+					{
+						std::filesystem::path nextPath = mLastLevelPathsOpened[i];
+						
+						std::filesystem::path relPath = nextPath.lexically_relative(appLevelPath);
+
+						if (ImGui::MenuItem(relPath.string().c_str()))
+						{
+							LoadLevel(mLastLevelPathsOpened[i]);
+							break;
+						}
+					}
+
 					ImGui::EndMenu();
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 				{
 					//@TODO(Serge): maybe should be an action
 					mnoptrEditor->Save();
+
+					const auto& level = mnoptrEditor->GetEditorLevel();
+
+					std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+
+					std::filesystem::path fullLevelPath = appLevelPath / level.GetGroupName() / (level.GetLevelName() + ".rlvl");
+
+					SaveLevelToRecents(fullLevelPath.string());
 				}
 				if (ImGui::MenuItem("Save As.."))
 				{
@@ -141,7 +162,7 @@ namespace r2::edit
 			ImGui::SameLine(0.0f, 20.0f);
 			char levelName[1000];
 			strncpy(levelName, mNewEditorLevel.GetLevelName().c_str(), 1000);
-			ImGui::InputText("##hidelabel0", levelName, 1000, ImGuiInputTextFlags_CharsNoBlank);
+			ImGui::InputText("##hidelabel0", levelName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
 			
 			mNewEditorLevel.SetLevelName(levelName);
 
@@ -149,7 +170,7 @@ namespace r2::edit
 			ImGui::SameLine(0.0f, 20.0f);
 			char groupName[1000];
 			strncpy(groupName, mNewEditorLevel.GetGroupName().c_str(), 1000);
-			ImGui::InputText("##hidelabel1", groupName, 1000, ImGuiInputTextFlags_CharsNoBlank);
+			ImGui::InputText("##hidelabel1", groupName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
 
 			mNewEditorLevel.SetGroupName(groupName);
 
@@ -182,15 +203,75 @@ namespace r2::edit
 			{
 				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
 				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				// action
-
-				mnoptrEditor->LoadLevel(filePathName);
+				LoadLevel(filePathName);
 			}
 
 			// close
 			ImGuiFileDialog::Instance()->Close();
 		}
 
+	}
+
+	void MainMenuBar::SaveLevelToRecents(const std::string& filePathName)
+	{
+		char sanitizedFilePath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(filePathName.c_str(), sanitizedFilePath);
+
+		mLastLevelPathsOpened.erase(std::remove(mLastLevelPathsOpened.begin(), mLastLevelPathsOpened.end(), sanitizedFilePath), mLastLevelPathsOpened.end());
+
+		mLastLevelPathsOpened.push_front(sanitizedFilePath);
+
+		SaveRecentsFile();
+	}
+
+	void MainMenuBar::LoadRecentsFile()
+	{
+		std::fstream fs;
+
+		std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+
+		std::filesystem::path recentsFile = appLevelPath / "recents.txt";
+
+		fs.open(recentsFile, std::fstream::in);
+
+		if (fs.good())
+		{
+			std::string line;
+			while (std::getline(fs, line))
+			{
+				char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::SanitizeSubPath(line.c_str(), sanitizedPath);
+				mLastLevelPathsOpened.push_back(sanitizedPath);
+			}
+		}
+
+		fs.close();
+
+	}
+
+	void MainMenuBar::SaveRecentsFile()
+	{
+		std::fstream fs;
+
+		std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+
+		std::filesystem::path recentsFile = appLevelPath / "recents.txt";
+
+		fs.open(recentsFile, std::fstream::out);
+
+		for (const std::string& line : mLastLevelPathsOpened)
+		{
+			fs << line << std::endl;
+		}
+
+		fs.close();
+	}
+
+	void MainMenuBar::LoadLevel(const std::string& filePathName)
+	{
+		// action
+		mnoptrEditor->LoadLevel(filePathName);
+		SaveLevelToRecents(filePathName);
 	}
 }
 

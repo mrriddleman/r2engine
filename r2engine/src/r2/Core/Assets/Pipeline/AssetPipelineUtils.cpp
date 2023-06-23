@@ -13,7 +13,7 @@ namespace r2::asset::pln::utils
 		if (fs.good())
 		{
 			fs.write((const char*)data, size);
-
+			
 			R2_CHECK(fs.good(), "Failed to write out the buffer!");
 			if (!fs.good())
 			{
