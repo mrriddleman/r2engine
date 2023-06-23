@@ -451,17 +451,17 @@ public:
 
 
 
-        glm::mat4 microbatMat = glm::mat4(1.0f);
-        microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 0.1));
-        microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
-        r2::sarr::Push(*animModelMats, microbatMat);
+        //glm::mat4 microbatMat = glm::mat4(1.0f);
+        //microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 0.1));
+        //microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        //microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
+        //r2::sarr::Push(*animModelMats, microbatMat);
 
-		glm::mat4 microbatMat2 = glm::mat4(1.0f);
-		microbatMat2 = glm::translate(microbatMat2, glm::vec3(0, 1, 0.1));
-		microbatMat2 = glm::rotate(microbatMat2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		microbatMat2 = glm::scale(microbatMat2, glm::vec3(0.01f));
-		r2::sarr::Push(*animModelMats, microbatMat2);
+		//glm::mat4 microbatMat2 = glm::mat4(1.0f);
+		//microbatMat2 = glm::translate(microbatMat2, glm::vec3(0, 1, 0.1));
+		//microbatMat2 = glm::rotate(microbatMat2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//microbatMat2 = glm::scale(microbatMat2, glm::vec3(0.01f));
+		//r2::sarr::Push(*animModelMats, microbatMat2);
 
         glm::mat4 skeletonModel = glm::mat4(1.0f);
         skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 0.1));
@@ -525,20 +525,19 @@ public:
 		FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
 
 
-        auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
-        mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
+        //auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
+        //mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
 
        // auto skeletonHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
        // mSkeletonModel = r2::draw::modlche::GetAnimModel(mModelSystem, skeletonHandle);
         auto skeletonHandle = gameAssetManager.LoadAsset(r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
         mSkeletonModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(skeletonHandle);
 
-        //auto ellenHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
-        //mEllenModel = r2::draw::modlche::GetAnimModel(mModelSystem, ellenHandle);
+
         auto ellenHandle = gameAssetManager.LoadAsset(r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
         mEllenModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(ellenHandle);
 
-        mSelectedAnimModel = mMicroBatModel;
+        mSelectedAnimModel = mSkeletonModel;
 
        // auto sponzaHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
        // mSponzaModel = r2::draw::modlche::GetModel(mModelSystem, sponzaHandle);
@@ -673,7 +672,7 @@ public:
 
         //FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
 
-        mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+      //  mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
         mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
         mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 
@@ -682,9 +681,9 @@ public:
 
         r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
 
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION));
 
         r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.ranm", r2::asset::RANIMATION));
         r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.ranm", r2::asset::RANIMATION));
@@ -889,7 +888,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
+                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
 					if (mSelectedAnimationID - 1 < 0)
 					{
 						mSelectedAnimationID = (s32)numAnimations - 1;
@@ -906,7 +905,7 @@ public:
 			{
                 if (mSelectedAnimModel)
                 {
-                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 3;
+                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
                     mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
                 }
                 
@@ -1000,7 +999,7 @@ public:
             else if (e.KeyCode() == r2::io::KEY_u)
             {
                 r2::draw::renderer::UnloadAllAnimModels();
-                mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+          //      mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
                 mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
                 mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			/*if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle) &&
@@ -1057,10 +1056,10 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_j)
             {
-                if (!r2::draw::renderer::IsModelLoaded(mMicroBatModelRefHandle))
-                {
-                    mMicroBatModelRefHandle = r2::draw::renderer::UploadAnimModel(mMicroBatModel);
-                }
+			/* if (!r2::draw::renderer::IsModelLoaded(mMicroBatModelRefHandle))
+			 {
+				 mMicroBatModelRefHandle = r2::draw::renderer::UploadAnimModel(mMicroBatModel);
+			 }*/
             }
             else if (e.KeyCode() == r2::io::KEY_k)
             {
@@ -1236,47 +1235,36 @@ public:
 		//r2::sarr::Clear(*mBoneTransforms);
         //r2::sarr::Clear(*mDebugBones);
 
-        r2::sarr::Clear(*mBatBoneTransforms);
-        r2::sarr::Clear(*mBat2BoneTransforms);
+        //r2::sarr::Clear(*mBatBoneTransforms);
+        //r2::sarr::Clear(*mBat2BoneTransforms);
         r2::sarr::Clear(*mSkeletonBoneTransforms);
         r2::sarr::Clear(*mEllenBoneTransforms);
 
-        r2::sarr::Clear(*mBatDebugBones);
-        r2::sarr::Clear(*mBat2DebugBones);
+        //r2::sarr::Clear(*mBatDebugBones);
+        //r2::sarr::Clear(*mBat2DebugBones);
         r2::sarr::Clear(*mSkeletonDebugBones);
         r2::sarr::Clear(*mEllenDebugBones);
 
         auto time = CENG.GetTicks();
-  //      auto curTime = time;
+
 
         r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-        const r2::draw::Animation* microbatAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
-        const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
+     //   const r2::draw::Animation* microbatAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
+     //   const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
 
-        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+6));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+        //@TODO(Serge): fix this other skeleton animation bugs - setting to 0 so it won't crash
+        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, 0)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+3));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
+		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
+		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
 
 		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
 
 		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
-
-	//	r2::draw::renderer::UpdateViewMatrix(mPersController.GetCameraPtr()->view);
-
-
-	//	r2::draw::renderer::UpdateCameraPosition(mPersController.GetCameraPtr()->position);
-
-
-        
-
-        //r2::draw::renderer::UpdateCamera(mPersController.GetCamera());
-
-		//r2::draw::renderer::UpdateExposure(mExposure);
     }
 
     virtual void Render(float alpha) override
@@ -1370,8 +1358,8 @@ public:
 		r2::draw::renderer::SetDefaultBlendState(animDrawParams);
 
         //Draw the bat
-        if (r2::draw::renderer::IsModelLoaded(mMicroBatModelRefHandle))
-        {
+	   /* if (r2::draw::renderer::IsModelLoaded(mMicroBatModelRefHandle))
+		{
 			r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
 			r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
 
@@ -1382,10 +1370,10 @@ public:
 			r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
 
 
-            const r2::draw::vb::GPUModelRef* microbatGPUModelRef = r2::draw::renderer::GetGPUModelRef(mMicroBatModelRefHandle);
+			const r2::draw::vb::GPUModelRef* microbatGPUModelRef = r2::draw::renderer::GetGPUModelRef(mMicroBatModelRefHandle);
 
-            r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, microbatGPUModelRef->numMaterials);
-            r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, microbatGPUModelRef->numMaterials);
+			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, microbatGPUModelRef->numMaterials);
+			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, microbatGPUModelRef->numMaterials);
 
 			for (u32 i = 0; i < microbatGPUModelRef->numMaterials; ++i)
 			{
@@ -1393,18 +1381,18 @@ public:
 
 				R2_CHECK(renderMaterial != nullptr, "...");
 
-                r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-                r2::sarr::Push(*shaderHandles, r2::sarr::At(*microbatGPUModelRef->shaderHandles, i));
+				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+				r2::sarr::Push(*shaderHandles, r2::sarr::At(*microbatGPUModelRef->shaderHandles, i));
 			}
 
 			r2::draw::renderer::DrawModel(animDrawParams, mMicroBatModelRefHandle, *microBatModelMats, 2, *renderMaterialParams, *shaderHandles, allMicroBatBoneTransforms);
 
-            FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-            FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
 
 			FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
 			FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
-        }
+		}*/
 
         animDrawParams.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 
@@ -1412,8 +1400,8 @@ public:
         if (r2::draw::renderer::IsModelLoaded(mSkeletonModelRefHandle))
         {
 			r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 2));
-			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 3));
+			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 0));
+			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 1));
 
 
 			const r2::draw::vb::GPUModelRef* skeletonGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSkeletonModelRefHandle);
@@ -1443,8 +1431,8 @@ public:
         if (r2::draw::renderer::IsModelLoaded(mEllenModelRefHandle))
         {
 			r2::SArray<glm::mat4>* ellenModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 4));
-			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 5));
+			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 2));
+			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 3));
 
 			animDrawParams.stencilState.op.stencilFail = r2::draw::KEEP;
 			animDrawParams.stencilState.op.depthFail = r2::draw::KEEP;
@@ -1606,9 +1594,9 @@ public:
         if (mDrawDebugBones)
         {
 
-            r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 4), glm::vec4(1, 1, 0, 1));
+          //  r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
+            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
           
         }
 
@@ -1993,7 +1981,7 @@ private:
 
     //r2::SArray<r2::draw::vb::GPUModelRefHandle>* mAnimModelRefs;
 
-    r2::draw::vb::GPUModelRefHandle mMicroBatModelRefHandle;
+   // r2::draw::vb::GPUModelRefHandle mMicroBatModelRefHandle;
     r2::draw::vb::GPUModelRefHandle mSkeletonModelRefHandle;
     r2::draw::vb::GPUModelRefHandle mEllenModelRefHandle;
 
@@ -2031,7 +2019,7 @@ private:
   //  r2::draw::ModelCache* mModelSystem = nullptr;
   //  r2::draw::AnimationCache* mAnimationCache = nullptr;
 
-    const r2::draw::AnimModel* mMicroBatModel = nullptr;
+    //const r2::draw::AnimModel* mMicroBatModel = nullptr;
     const r2::draw::AnimModel* mSkeletonModel = nullptr;
     const r2::draw::AnimModel* mEllenModel = nullptr;
     const r2::draw::AnimModel* mSelectedAnimModel = nullptr;

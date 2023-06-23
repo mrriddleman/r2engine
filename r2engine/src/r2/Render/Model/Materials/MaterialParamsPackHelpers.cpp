@@ -2,6 +2,7 @@
 #include "r2/Render/Model/Materials/MaterialParams_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Model_generated.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Render/Renderer/ShaderSystem.h"
 #include "r2/Utils/Hash.h"
@@ -27,6 +28,28 @@ namespace r2::mat
 		}
 
 		return nullptr;
+	}
+
+	const flat::MaterialParams* GetMaterialParamsForMaterialName(MaterialName materialName)
+	{
+		if (materialName.name == 0 || materialName.packName == 0)
+		{
+			return nullptr;
+		}
+
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+
+		R2_CHECK(manifestData != nullptr, "");
+
+		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+
+		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+
+		const flat::MaterialParams* material = GetMaterialParamsForMaterialName(materialParamsPack, materialName.name);
+
+		return material;
 	}
 
 	u64 GetShaderNameForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName)
@@ -79,17 +102,7 @@ namespace r2::mat
 
 	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName)
 	{
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
-
-		R2_CHECK(manifestData != nullptr, "");
-
-		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-
-		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
-
-		const flat::MaterialParams* material = GetMaterialParamsForMaterialName(materialParamsPack, materialName.name);
+		const flat::MaterialParams* material = GetMaterialParamsForMaterialName(materialName);
 
 		const auto numShaderParams = material->ulongParams()->size();
 
@@ -111,6 +124,15 @@ namespace r2::mat
 		R2_CHECK(shaderHandle != r2::draw::InvalidShader, "This can never be the case - you forgot to load the shader?");
 
 		return shaderHandle;
+	}
+
+	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName)
+	{
+		MaterialName materialName;
+		materialName.name = flatMaterialName->name();
+		materialName.packName = flatMaterialName->materialPackName();
+
+		return materialName;
 	}
 
 #ifdef R2_ASSET_PIPELINE

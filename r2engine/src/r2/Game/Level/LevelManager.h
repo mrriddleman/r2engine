@@ -78,10 +78,10 @@ namespace r2
 	private:
 		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, const r2::mem::utils::MemoryProperties& memProperties) const;
 
-		void AddModelFilesToModelSystem(const flat::LevelData* levelData);
-		void AddAnimationFilesToAnimationCache(const flat::LevelData* levelData);
-
 		Level* FindLevel(LevelName levelname, s32& index);
+
+		void LoadLevelData(const flat::LevelData* levelData);
+		void UnLoadLevelData(const flat::LevelData* levelData);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 

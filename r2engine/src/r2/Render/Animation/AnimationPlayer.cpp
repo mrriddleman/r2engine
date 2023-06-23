@@ -467,7 +467,8 @@ namespace
         
         for (u32 i = startingIndex; i < numScalingKeys -1; ++i)
         {
-            if (animationTime < r2::sarr::At(*channel.scaleKeys, i+1).time)
+            const auto time = r2::sarr::At(*channel.scaleKeys, i + 1).time;
+            if (animationTime < time)
             {
                 return i;
             }

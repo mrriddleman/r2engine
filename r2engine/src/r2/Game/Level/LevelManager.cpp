@@ -9,6 +9,8 @@
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
+#include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/LevelPackDataUtils.h"
@@ -199,31 +201,16 @@ namespace r2
 
 		const flat::LevelData* flatLevelData = flat::GetLevelData(levelData);
 
-		//now add the files to the file lists
-		//these need to be before the scene graph load level
-		AddModelFilesToModelSystem(flatLevelData);
-		AddAnimationFilesToAnimationCache(flatLevelData);
-
-
 		Level newLevel;
 		newLevel.Init(flatLevelData, levelHandle);
 
-		mSceneGraph.LoadedNewLevel(newLevel);
+		LoadLevelData(flatLevelData);
+
+		mSceneGraph.LoadLevel(newLevel);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
 		return &r2::sarr::Last(*mLoadedLevels);
-	}
-
-	const Level* LevelManager::GetLevel(const char* levelURI)
-	{
-		return GetLevel(STRING_ID(levelURI));
-	}
-
-	const Level* LevelManager::GetLevel(LevelName levelName)
-	{
-		s32 index = -1;
-		return FindLevel(levelName, index);
 	}
 
 	void LevelManager::UnloadLevel(const Level* level)
@@ -256,12 +243,26 @@ namespace r2
 			return;
 		}
 
+	//	mSceneGraph.UnloadLevel(*theLevel);
+
+	//	UnLoadLevelData(theLevel->GetLevelData());
+
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		gameAssetManager.UnloadAsset(theLevel->GetLevelHandle());
 
 		r2::sarr::RemoveAndSwapWithLastElement(*mLoadedLevels, index);
+	}
 
+	const Level* LevelManager::GetLevel(const char* levelURI)
+	{
+		return GetLevel(STRING_ID(levelURI));
+	}
+
+	const Level* LevelManager::GetLevel(LevelName levelName)
+	{
+		s32 index = -1;
+		return FindLevel(levelName, index);
 	}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
@@ -291,31 +292,6 @@ namespace r2
 		return levelAsset.HashID();
 	}
 
-	void LevelManager::AddModelFilesToModelSystem(const flat::LevelData* levelData)
-	{
-		const auto numModels = levelData->modelFilePaths()->size();
-
-		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-		const r2::asset::FileList fileList = gameAssetManager.GetFileList();
-
-		for (flatbuffers::uoffset_t i = 0; i < numModels; ++i)
-		{
-
-
-			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(levelData->animationFilePaths()->Get(i)->binPath()->c_str(), r2::asset::RMODEL);
-
-			if (gameAssetManager.HasAsset(animationAsset))
-			{
-				continue;
-			}
-
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->modelFilePaths()->Get(i)->binPath()->c_str());
-
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
-		}
-	}
-
 	Level* LevelManager::FindLevel(LevelName levelname, s32& index)
 	{
 		const u32 numLevels = r2::sarr::Size(*mLoadedLevels);
@@ -332,27 +308,142 @@ namespace r2
 		return nullptr;
 	}
 
-	void LevelManager::AddAnimationFilesToAnimationCache(const flat::LevelData* levelData)
+	void LevelManager::LoadLevelData(const flat::LevelData* levelData)
 	{
-		const auto numAnimations = levelData->animationFilePaths()->size();
+		f64 start = CENG.GetTicks();
 
+		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-		
-		const r2::asset::FileList fileList = gameAssetManager.GetFileList();
-		
-		for (flatbuffers::uoffset_t i = 0; i < numAnimations; ++i)
-		{
-			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(levelData->animationFilePaths()->Get(i)->binPath()->c_str(), r2::asset::RANIMATION);
 
-			if (gameAssetManager.HasAsset(animationAsset))
+		const auto* modelFiles = levelData->modelFilePaths();
+
+		const flatbuffers::uoffset_t numModelFiles = modelFiles->size();
+
+		f64 startModelLoading = CENG.GetTicks();
+
+		for (flatbuffers::uoffset_t i = 0; i < numModelFiles; ++i)
+		{
+			r2::asset::Asset modelAsset = r2::asset::Asset::MakeAssetFromFilePath(modelFiles->Get(i)->binPath()->str().c_str(), r2::asset::RMODEL);
+			gameAssetManager.LoadAsset(modelAsset);
+
+			//@NOTE(Serge): maybe we should be uploading the model to the GPU - however that would require us knowing 
+			//				what kind of model it is. Maybe we need to make a universal model so this doesn't keep happening.
+			//				Since each entity loads and uploads their models when hydrating, this isn't important at the moment.
+		}
+
+		f64 endModelLoading = CENG.GetTicks();
+		
+		f64 startAnimationLoading = CENG.GetTicks();
+		const auto* animationFiles = levelData->animationFilePaths();
+
+		const flatbuffers::uoffset_t numAnimationFiles = animationFiles->size();
+		 
+		for (flatbuffers::uoffset_t i = 0; i < numAnimationFiles; ++i)
+		{
+			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(animationFiles->Get(i)->binPath()->str().c_str(), r2::asset::RANIMATION);
+			gameAssetManager.LoadAsset(animationAsset);
+		}
+
+		f64 endAnimationLoading = CENG.GetTicks();
+		
+
+
+		f64 startMaterialLoading = CENG.GetTicks();
+		//load the materials
+		//@TODO(Serge): probably all of this will change when we do the texture refactor
+		{
+			const auto* materialNames = levelData->materialNames();
+
+			const flatbuffers::uoffset_t numMaterials = materialNames->size();
+
+			r2::SArray<const flat::MaterialParams*>* materialParamsToLoad = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParams*, numMaterials);
+
+			u32 numTexturesTotal = 0;
+			u32 numCubemapTexturesTotal = numMaterials;
+
+			//gather all the materials
+			for (flatbuffers::uoffset_t i = 0; i < numMaterials; ++i)
 			{
-				continue;
+				const flat::MaterialName* flatMaterialName = materialNames->Get(i);
+
+				r2::mat::MaterialName materialName = r2::mat::MakeMaterialNameFromFlatMaterial(flatMaterialName);
+
+				const flat::MaterialParams* materialParams = r2::mat::GetMaterialParamsForMaterialName(materialName);
+
+				R2_CHECK(materialParams != nullptr, "This should never be nullptr");
+
+				numTexturesTotal = std::max(materialParams->textureParams()->size(), numTexturesTotal);
+
+				r2::sarr::Push(*materialParamsToLoad, materialParams);
 			}
 
-			r2::asset::RawAssetFile* assetFile = r2::asset::lib::MakeRawAssetFile(levelData->animationFilePaths()->Get(i)->binPath()->c_str());
+			//Load from disk
+			for (u32 i = 0; i < numMaterials; ++i)
+			{
+				bool result = gameAssetManager.LoadMaterialTextures(r2::sarr::At(*materialParamsToLoad, i));
+				R2_CHECK(result, "Should always work");
+			}
 
-			r2::sarr::Push(*fileList, (r2::asset::AssetFile*)assetFile);
+			//load to gpu
+			r2::SArray<r2::draw::tex::Texture>* gameTextures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::Texture, numTexturesTotal);
+			r2::SArray<r2::draw::tex::CubemapTexture>* gameCubemaps = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::tex::CubemapTexture, numTexturesTotal);
+
+			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
+			for (u32 i = 0; i < numMaterials; ++i)
+			{
+
+				const flat::MaterialParams* materialParams = r2::sarr::At(*materialParamsToLoad, i);
+				bool result = gameAssetManager.GetTexturesForMaterialParams(materialParams, gameTextures, gameCubemaps);
+				R2_CHECK(result, "Should always work");
+
+
+				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
+				if (r2::sarr::Size(*gameTextures) > 0)
+				{
+					texturesToUse = gameTextures;
+				}
+
+				r2::draw::tex::CubemapTexture* cubemapTexture = nullptr;
+				if (r2::sarr::Size(*gameCubemaps) > 0)
+				{
+					cubemapTexture = &r2::sarr::At(*gameCubemaps, 0);
+				}
+
+				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTexture);
+
+				r2::sarr::Clear(*gameTextures);
+				r2::sarr::Clear(*gameCubemaps);
+			}
+
+			FREE(gameCubemaps, *MEM_ENG_SCRATCH_PTR);
+			FREE(gameTextures, *MEM_ENG_SCRATCH_PTR);
+
+			FREE(materialParamsToLoad, *MEM_ENG_SCRATCH_PTR);
 		}
+
+		f64 end = CENG.GetTicks();
+
+		//Load the sounds + music
+		{
+			//const auto* soundFiles = levelData->soundPaths();
+
+			//const flatbuffers::uoffset_t numSoundFiles = soundFiles->size();
+
+			//for (flatbuffers::uoffset_t i = 0; i < numSoundFiles; ++i)
+			//{
+			//	//load somehow
+			//}
+		}
+		
+		printf("Model loading took: %f\n", endModelLoading - startModelLoading);
+		printf("Animation loading took: %f\n", endAnimationLoading - startAnimationLoading);
+		printf("Material loading took: %f\n", end - startMaterialLoading);
+		printf("Total load time: %f\n", end - start);
+	}
+
+	void LevelManager::UnLoadLevelData(const flat::LevelData* levelData)
+	{
+		TODO;
 	}
 
 	u64 LevelManager::MemorySize(

@@ -9,14 +9,19 @@ namespace flat
 {
 	struct MaterialParams;
 	struct MaterialParamsPack;
+	struct MaterialName;
 }
 
 namespace r2::mat
 {
 	const flat::MaterialParams* GetMaterialParamsForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName);
+	const flat::MaterialParams* GetMaterialParamsForMaterialName(MaterialName materialName);
+
 	u64 GetShaderNameForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName);
 	u64 GetAlbedoTextureNameForMaterialName(const flat::MaterialParamsPack* materialPack, u64 materialName);
 	r2::draw::ShaderHandle GetShaderHandleForMaterialName(MaterialName materialName);
+
+	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName);
 
 #ifdef R2_ASSET_PIPELINE
 	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexture(const flat::MaterialParamsPack* materialPack, u64 texturePackName, u64 textureName);
