@@ -696,6 +696,10 @@ public:
         const auto numAnimations = r2::sarr::Size(*animationAssets);
         for (u32 i= 0; i < numAnimations; ++i)
         {
+            if (i == 1)
+            {
+                int k = 0;
+            }
             auto animationHandle = gameAssetManager.LoadAsset(r2::sarr::At(*animationAssets, i));
             r2::sarr::Push(*mAnimationsHandles, animationHandle);
         }
@@ -1261,9 +1265,9 @@ public:
 
 		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
     }
 

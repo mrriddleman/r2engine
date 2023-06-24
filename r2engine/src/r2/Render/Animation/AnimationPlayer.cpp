@@ -150,7 +150,7 @@ namespace r2::draw
 
         double animationTime = 0.0;
 
-        animationTime = timeInTicks - realStartTime;
+        animationTime = (timeInTicks - realStartTime) ;
 
         if (animationTime < 0.0)
         {

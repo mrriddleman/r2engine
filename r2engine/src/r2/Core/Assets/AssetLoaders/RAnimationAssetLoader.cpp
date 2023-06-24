@@ -85,8 +85,9 @@ namespace r2::asset
 		}
 
 		animation->hashName = modelData->animationName();
-		animation->duration = modelData->durationInTicks();
 		animation->ticksPerSeconds = modelData->ticksPerSeconds();
+
+		double maxChannelDuration = 0;
 
 		for (u32 i = 0; i < modelData->channels()->size(); ++i)
 		{
@@ -110,6 +111,8 @@ namespace r2::asset
 				const auto flatPositionValue = flatPositionKey->value();
 
 				r2::sarr::Push(*channel.positionKeys, { flatPositionKey->time(), glm::vec3(flatPositionValue.x(), flatPositionValue.y(), flatPositionValue.z())});
+			
+				maxChannelDuration = std::max(flatPositionKey->time(), maxChannelDuration);
 			}
 
 			const auto scaleKeys = flatChannel->scaleKeys();
@@ -126,6 +129,8 @@ namespace r2::asset
 				const auto flatScaleKey = scaleKeys->Get(sKey);
 				const auto flatScaleValue = flatScaleKey->value();
 				r2::sarr::Push(*channel.scaleKeys, { flatScaleKey->time(), glm::vec3(flatScaleValue.x(), flatScaleValue.y(), flatScaleValue.z()) });
+
+				maxChannelDuration = std::max(flatScaleKey->time(), maxChannelDuration);
 			}
 			const auto rotationKeys = flatChannel->rotationKeys();
 			const auto numRotationKeys = rotationKeys->size();
@@ -141,10 +146,15 @@ namespace r2::asset
 				const auto flatRotationKey = rotationKeys->Get(rKey);
 				const auto flatRotationValue = flatRotationKey->value();
 				r2::sarr::Push(*channel.rotationKeys, { flatRotationKey->time(), glm::quat(flatRotationValue.w(), flatRotationValue.x(), flatRotationValue.y(), flatRotationValue.z()) });
+
+				maxChannelDuration = std::max(flatRotationKey->time(), maxChannelDuration);
 			}
 
 			r2::shashmap::Set(*animation->channels, channel.hashName, channel);
 		}
+
+		//@TODO(Serge): this should be taken care of when we convert the animation, but for now this will suffice
+		animation->duration = std::min(modelData->durationInTicks(), maxChannelDuration);
 
 		return true;
 	}
