@@ -459,6 +459,7 @@ namespace r2
 			//}
 		}
 		
+#ifdef R2_DEBUG
 		printf("Model loading took: %f\n", endModelLoading - startModelLoading);
 		printf("Animation loading took: %f\n", endAnimationLoading - startAnimationLoading);
 		printf("Material Gather took: %f\n", materialGatherEnd - materialGatherStart);
@@ -467,13 +468,15 @@ namespace r2
 		printf("Material loading took: %f\n", end - startMaterialLoading);
 		printf("Texture param upload took: %f\n", totalTextureUploadTime);
 		printf("Total load time: %f\n", end - start);
+#endif
 	}
 
 	void LevelManager::UnLoadLevelData(const flat::LevelData* levelData)
 	{
 		//I think the idea is to figure out which models/animations/materials/sounds etc to unload 
 		//based on what other levels are already loaded, that way we don't unload anything that we still need
-		//since we know levels will essentially be based on different kinds of packs (sounds, textures, models, animations etc)
+		//since we know levels will essentially be based on different kinds of packs (sounds, textures, models, animations etc).
+		
 
 
 

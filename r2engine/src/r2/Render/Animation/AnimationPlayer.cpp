@@ -145,7 +145,7 @@ namespace r2::draw
 
 		double ticksPerSecond = animation->ticksPerSeconds != 0 ? animation->ticksPerSeconds : 30.0;
 		double timeInTicks = r2::util::MillisecondsToSeconds(timeInMilliseconds) * ticksPerSecond;
-        double realStartTime = r2::util::MillisecondsToSeconds(startTime);
+        double realStartTime = r2::util::MillisecondsToSeconds(startTime) * ticksPerSecond;
         double duration = animation->duration;
 
         double animationTime = 0.0;

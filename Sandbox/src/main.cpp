@@ -1254,7 +1254,7 @@ public:
      //   const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
 
         //@TODO(Serge): fix this other skeleton animation bugs - setting to 0 so it won't crash
-        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, 0)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
         const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+3));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
 		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
@@ -1263,7 +1263,7 @@ public:
 
 		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
+		r2::draw::PlayAnimationForAnimModel(time, 0, false, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
         
     }
 

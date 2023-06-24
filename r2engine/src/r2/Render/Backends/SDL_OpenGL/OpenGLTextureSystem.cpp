@@ -192,15 +192,16 @@ namespace r2::draw::gl
 				target = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 			}
 
-			container.format = format;
-			container.numSlices = slices;
-
 			SparseInternalFormatTileSizes tileSizes = FindBestTileSize(target, format);
-			
+
 			u32 smallestMipX = SmallestMipX(format);
 			u32 smallestMipY = SmallestMipY(format);
 
-			container.isSparse = CanBeSparse(format, tileSizes, smallestMipX, smallestMipY);
+			bool isSparse = CanBeSparse(format, tileSizes, smallestMipX, smallestMipY);
+
+			container.format = format;
+			container.numSlices = slices;
+			container.isSparse = isSparse;
 
 			glGenTextures(1, &container.texId);
 
@@ -269,15 +270,11 @@ namespace r2::draw::gl
 			
 			if (!format.isMSAA)
 			{
-				glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices / r2::draw::tex::NUM_SIDES)) * r2::draw::tex::NUM_SIDES : slices);
+				glTexStorage3D(target, format.mipLevels, format.internalformat, format.width, format.height, format.isCubemap ? (GLsizei(slices * r2::draw::tex::NUM_SIDES)) : slices);
 			}
 			else
 			{
 				glTexStorage3DMultisample(target, format.msaaSamples, format.internalformat, format.width, format.height, slices, format.fixedSamples);
-				//if (GLenum err = glGetError())
-				//{
-				//	R2_CHECK(false, "Couldn't make storage for multisample texture!");
-				//}
 			}
 
 			if (!container.freeSpace || r2::squeue::Space(*container.freeSpace) < slices)
@@ -307,6 +304,11 @@ namespace r2::draw::gl
 			return r2::squeue::Size(*container.freeSpace) >= numPages;
 		}
 
+		bool IsContainerEmpty(const r2::draw::tex::TextureContainer& container)
+		{
+			return r2::squeue::Space(*container.freeSpace) == 0;
+		}
+
 		GLsizei VirtualAlloc(r2::draw::tex::TextureContainer& container, u32 numPages)
 		{
 			GLsizei front = r2::squeue::First(*container.freeSpace);
@@ -314,6 +316,13 @@ namespace r2::draw::gl
 			for (u32 i = 0; i < numPages; ++i)
 			{
 				r2::squeue::PopFront(*container.freeSpace);
+
+				if (r2::squeue::Size(*container.freeSpace) && (i+1 < numPages))
+				{
+					GLsizei next = r2::squeue::First(*container.freeSpace);
+
+					R2_CHECK(next > front, "Front was: %lu, next is: %lu. We're assuming this is contiguous", front, next);
+				}
 			}
 			
 			return front;
@@ -382,6 +391,8 @@ namespace r2::draw::gl
 		//Don't use publically 
 		void ChangeCommitment(r2::draw::tex::TextureContainer& container, GLsizei slice, GLsizei numLayersToCommit, GLboolean commit)
 		{
+
+			R2_CHECK(slice + numLayersToCommit <= container.numSlices, "Hmmm....");
 
 			if (!container.isSparse)
 				return;
@@ -478,6 +489,17 @@ namespace r2::draw::gl
 			tex::Free(handle);
 
 			texcontainer::VirtualFree(*handle.container, handle.sliceIndex, handle.numPages);
+
+			//@TODO(Serge): implement
+			/*if (texcontainer::IsContainerEmpty(*handle.container))
+			{
+				u64 intFormat = ConvertFormat(handle.container->format);
+
+				r2::SArray<r2::draw::tex::TextureContainer*>* theDefault = nullptr;
+				r2::SArray<r2::draw::tex::TextureContainer*>* arrayToUse = r2::shashmap::Get(*s_glTextureSystem->texArray2Ds, intFormat, theDefault);
+
+
+			}*/
 		}
 
 		//private

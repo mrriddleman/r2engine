@@ -256,7 +256,7 @@ namespace r2
             });
             
             mEngine.SetGetTicksCallback([this]{
-                return  (f64(SDL_GetPerformanceCounter() - mStartTime) * k_millisecondsToSeconds) / (f64)SDL_GetPerformanceFrequency();
+                return  (static_cast<f64>(SDL_GetPerformanceCounter() - mStartTime)  / (f64)SDL_GetPerformanceFrequency()) * k_millisecondsToSeconds;
             });
            
             mEngine.mSetClipboardTextFunc = SDL2SetClipboardTextFunc;
