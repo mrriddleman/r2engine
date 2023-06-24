@@ -307,7 +307,7 @@ namespace r2::draw::rmat
 		return 0;
 	}
 
-	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture)
+	bool UploadMaterialTextureParams(RenderMaterialCache& renderMaterialCache, const flat::MaterialParams* materialParams, const r2::SArray<tex::Texture>* textures, const tex::CubemapTexture* cubemapTexture, bool shouldReload)
 	{
 		if (!materialParams)
 		{
@@ -347,7 +347,7 @@ namespace r2::draw::rmat
 				{
 					r2::sarr::Push(*materialTextures, *texture);
 
-					if (texsys::IsUploaded(texture->textureAssetHandle))
+					if (shouldReload && texsys::IsUploaded(texture->textureAssetHandle))
 					{
 						texsys::ReloadTexture(texture->textureAssetHandle);
 					}
@@ -363,7 +363,7 @@ namespace r2::draw::rmat
 				if (IsTextureParamCubemapTexture(cubemapTexture, textureHandle, propertyType))
 				{
 					const auto cubemapTextureAssetHandle = tex::GetCubemapAssetHandle(*cubemapTexture);
-					if (texsys::IsUploaded(cubemapTextureAssetHandle))
+					if (shouldReload && texsys::IsUploaded(cubemapTextureAssetHandle))
 					{
 						texsys::ReloadTexture(cubemapTextureAssetHandle);
 					}

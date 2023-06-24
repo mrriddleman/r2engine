@@ -174,7 +174,7 @@ namespace r2::asset::pln
 			if (isLoaded)
 			{
 				gameAssetManager.LoadMaterialTextures(foundMaterialParams); //@NOTE(Serge): this actually does nothing at the moment since this pack is probably loaded already
-				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterialParams, texturesToUse, cubemapTextureToUse);
+				result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, foundMaterialParams, texturesToUse, cubemapTextureToUse, true);
 				R2_CHECK(result, "This should always work");
 			}
 

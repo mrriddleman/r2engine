@@ -429,7 +429,7 @@ namespace r2
 				}
 
 				f64 texParamUploadStart = CENG.GetTicks();
-				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTexture);
+				r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTexture, false);
 				f64 texParamUploadEnd = CENG.GetTicks();
 				totalTextureUploadTime += (texParamUploadEnd - texParamUploadStart);
 

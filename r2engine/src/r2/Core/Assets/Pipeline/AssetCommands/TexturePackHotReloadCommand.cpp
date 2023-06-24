@@ -188,7 +188,7 @@ namespace r2::asset::pln
 
 				if (isLoaded)
 				{
-					result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTextureToUse);
+					result = r2::draw::rmat::UploadMaterialTextureParams(*renderMaterialCache, materialParams, texturesToUse, cubemapTextureToUse, true);
 				}
 
 				r2::sarr::Clear(*textures);
