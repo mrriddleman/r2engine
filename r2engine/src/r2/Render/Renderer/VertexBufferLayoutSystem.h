@@ -40,16 +40,16 @@ namespace r2::draw::vb
 	struct GPUModelRef
 	{
 		GPUModelRefHandle gpuModelRefHandle;
-		u64 modelHash;
-		b32 isAnimated;
+		u64 assetName;
 
 		r2::SArray<MeshEntry>* meshEntries;
 		r2::SArray<r2::mat::MaterialName>* materialNames;
 		r2::SArray<ShaderHandle>* shaderHandles;
-
-		u32 numMaterials;
+		
 		GPUBufferEntry boneEntry;
+		u32 numMaterials;
 		u32 numBones;
+		b32 isAnimated;
 	};
 
 	constexpr size_t MAX_VBOS = BufferLayoutConfiguration::MAX_VERTEX_BUFFER_CONFIGS;

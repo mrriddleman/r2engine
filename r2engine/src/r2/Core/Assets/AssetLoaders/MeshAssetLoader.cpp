@@ -70,7 +70,7 @@ namespace r2::asset
 		void* dataPtr = assetBuffer.MutableData();
 		r2::draw::Mesh* mesh = new (dataPtr) r2::draw::Mesh();
 
-		mesh->hashName = flatMesh->name();
+		mesh->assetName = flatMesh->name();
 
 		void* startOfData = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Mesh));
 

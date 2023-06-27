@@ -79,7 +79,7 @@ namespace r2::asset
 
 		void* startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
 
-		model->hash = flatModel->name();
+		model->assetName = flatModel->name();
 		model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(numMeshes));
@@ -95,7 +95,7 @@ namespace r2::asset
 
 			r2::asset::AssetCacheRecord record = mnoptrAssetCache->GetAssetBuffer(meshHandle);
 			r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.GetAssetBuffer()->MutableData();
-			mesh->hashName = meshHandle.handle;
+			mesh->assetName = meshHandle.handle;
 
 			r2::sarr::Push(*model->optrMeshes, static_cast<const r2::draw::Mesh*>(mesh));
 

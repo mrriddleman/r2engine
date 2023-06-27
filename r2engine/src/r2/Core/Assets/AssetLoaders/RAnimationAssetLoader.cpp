@@ -84,7 +84,7 @@ namespace r2::asset
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<r2::draw::AnimationChannel>::MemorySize(hashMapSize));
 		}
 
-		animation->hashName = modelData->animationName();
+		animation->assetName = modelData->animationName();
 		animation->ticksPerSeconds = modelData->ticksPerSeconds();
 
 		double maxChannelDuration = 0;

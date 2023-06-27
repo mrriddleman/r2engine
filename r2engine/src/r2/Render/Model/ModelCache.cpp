@@ -197,7 +197,7 @@ namespace r2::draw::modlche
 
 		r2::draw::Mesh* mesh = (r2::draw::Mesh*)record.GetAssetBuffer()->MutableData();
 
-		mesh->hashName = handle.handle;
+		mesh->assetName = handle.handle;
 
 		return mesh;
 	}
@@ -218,7 +218,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mMeshes, mesh->hashName, defaultRecord);
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mMeshes, mesh->assetName, defaultRecord);
 
 		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{
@@ -282,7 +282,7 @@ namespace r2::draw::modlche
 
 		r2::draw::Model* model = (r2::draw::Model*)record.GetAssetBuffer()->MutableData();
 
-		model->hash = handle.handle;
+		model->assetName = handle.handle;
 
 		return model;
 	}
@@ -329,7 +329,7 @@ namespace r2::draw::modlche
 
 		r2::draw::AnimModel* model = (r2::draw::AnimModel*)record.GetAssetBuffer()->MutableData();
 
-		model->model.hash = handle.handle;
+		model->model.assetName = handle.handle;
 
 		return model;
 	}
@@ -350,7 +350,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->hash, defaultRecord);
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->assetName, defaultRecord);
 
 		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{
@@ -380,7 +380,7 @@ namespace r2::draw::modlche
 
 		r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.hash, defaultRecord);
+		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.assetName, defaultRecord);
 
 		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
 		{

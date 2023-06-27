@@ -8,7 +8,6 @@
 
 namespace r2::draw
 {
-
 	struct VectorKey
 	{
 		double time;
@@ -41,26 +40,12 @@ namespace r2::draw
 		r2::SArray<VectorKey>* scaleKeys = nullptr;
 		r2::SArray<RotationKey>* rotationKeys = nullptr;
 
-		
-
 		static u64 MemorySizeNoData(u64 numPositionKeys, u64 numScaleKeys, u64 numRotationKeys, float duration, u64 alignment, u32 headerSize, u32 boundsChecking);
-
-
 	};
-
-	namespace chnl
-	{
-		//const u32 NUM_SAMPLES = 10;
-		//void UpdateFrameIndexSamples(AnimationChannel& channel);
-		//s32  FindPositionFrameIndex(const AnimationChannel& channel, float time, bool loop);
-		//s32  FindScaleFrameIndex(const AnimationChannel& channel, float time, bool loop);
-		//s32  FindRotationFrameIndex(const AnimationChannel& channel, float time, bool loop);
-	}
 
 	struct Animation
 	{
-		
-		u64 hashName;
+		u64 assetName;
 		
 		double duration = 0; //in ticks
 		double ticksPerSeconds = 0;
@@ -69,8 +54,6 @@ namespace r2::draw
 		static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 		static u64 MemorySize(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 	};
-
-	
 }
 
 

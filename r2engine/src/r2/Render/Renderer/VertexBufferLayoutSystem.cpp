@@ -602,7 +602,7 @@ namespace r2::draw::vbsys
 		R2_CHECK(gpuRefIndex != -1, "We couldn't find a slot to put this gpuref in? We might be out of slots?");
 
 		modelRef->gpuModelRefHandle = vb::GenerateModelRefHandle(handle, gpuRefIndex, vb::VertexBufferLayoutSystem::g_GPUModelSalt++);
-		modelRef->modelHash = model.hash;
+		modelRef->assetName = model.assetName;
 		modelRef->isAnimated = boneData && boneInfo;
 
 		vb::GPUBufferEntry vertexEntry;
@@ -907,7 +907,7 @@ namespace r2::draw::vbsys
 			{
 				const auto* gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
-				if (gpuModelRef && gpuModelRef->modelHash == model.hash)
+				if (gpuModelRef && gpuModelRef->assetName == model.assetName)
 				{
 					return gpuModelRef->gpuModelRefHandle;
 				}
@@ -1089,7 +1089,7 @@ namespace r2::draw::vbsys
 			{
 				const vb::GPUModelRef* modelRef = GetGPUModelRef(system, modelRefHandle);
 				R2_CHECK(modelRef != nullptr, "We have an invalid model ref?");
-				R2_CHECK(false, "We couldn't unload modelrefhandle with hash: %llu", modelRef->modelHash);
+				R2_CHECK(false, "We couldn't unload modelrefhandle with hash: %llu", modelRef->assetName);
 			}
 		}
 

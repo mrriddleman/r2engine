@@ -173,7 +173,7 @@ namespace r2::asset
 
 
 			//Process the Nodes
-			model->model.hash = metaData->modelName();
+			model->model.assetName = metaData->modelName();
 
 			const u64 numJoints = metaData->skeletonMetaData()->numJoints();
 			const u64 numBindPoseTransforms = metaData->skeletonMetaData()->numBindPoseTransforms();
@@ -241,7 +241,7 @@ namespace r2::asset
 				nextMeshPtr->optrIndices->mSize = numIndices;
 				nextMeshPtr->optrVertices->mSize = numVertices;
 
-				nextMeshPtr->hashName = metaData->meshInfos()->Get(i)->meshName();
+				nextMeshPtr->assetName = metaData->meshInfos()->Get(i)->meshName();
 				nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
 
 				r2::sarr::Push(*model->model.optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
@@ -332,7 +332,7 @@ namespace r2::asset
 
 			model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
 
-			model->hash = metaData->modelName();
+			model->assetName = metaData->modelName();
 
 			//materials
 
@@ -375,7 +375,7 @@ namespace r2::asset
 				nextMeshPtr->optrIndices->mSize = numIndices;
 				nextMeshPtr->optrVertices->mSize = numVertices;
 
-				nextMeshPtr->hashName = metaData->meshInfos()->Get(i)->meshName();
+				nextMeshPtr->assetName = metaData->meshInfos()->Get(i)->meshName();
 				nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
 				const auto bounds = metaData->meshInfos()->Get(i)->meshBounds();
 

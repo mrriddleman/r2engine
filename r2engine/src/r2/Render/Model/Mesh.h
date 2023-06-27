@@ -24,7 +24,7 @@ namespace r2::draw
 
     struct Mesh
     {
-        u64 hashName = 0;
+        u64 assetName = 0;
         r2::SArray<r2::draw::Vertex>* optrVertices = nullptr;
         r2::SArray<u32>* optrIndices = nullptr;
         u32 materialIndex = 0;

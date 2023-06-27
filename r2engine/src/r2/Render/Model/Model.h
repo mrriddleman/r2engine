@@ -36,8 +36,6 @@ namespace r2::draw
 	struct BoneInfo
 	{
         glm::mat4 offsetTransform;
-		//glm::mat4 offsetTransform = glm::mat4(1.0f);
-		//glm::mat4 finalTransform = glm::mat4(1.0f);
 	};
 
 	struct ShaderBoneTransform
@@ -65,7 +63,7 @@ namespace r2::draw
 
 	struct Model
 	{
-		u64 hash = 0;
+		u64 assetName = 0;
         
         //these should be the same size
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
@@ -101,35 +99,6 @@ namespace r2::draw
 		glm::vec3 p0;
 		glm::vec3 p1;
 	};
-
-	//struct MeshRef
-	//{
-	//	//Where the data lives
-	//	u32 baseVertex = 0;
-	//	u32 baseIndex = 0;
-	//	u32 numIndices = 0;
-	//	u32 numVertices = 0;
- //       u32 materialIndex = 0;
-
- //       Bounds objectBounds;
- //   };
-
- //   struct ModelRef
- //   {
- //       u64 hash;
- //       //@NOTE(Serge): I assume we'll only be uploading mesh data to one vertex buffer and not have them span different ones? If this changes then this should be on the MeshRef
-	//	VertexBufferHandle vertexBufferHandle;
-	//	IndexBufferHandle indexBufferHandle;
-
- //       r2::SArray<MeshRef>* mMeshRefs;
- //       r2::SArray<MaterialHandle>* mMaterialHandles;
-
- //       b32 mAnimated;
- //       u32 mNumBones;
- //   };
-
-  //  using ModelRefHandle = s64; //index into the model refs of the renderer currently
-  //  const ModelRefHandle InvalidModelRefHandle = -1;
 
     template<class ARENA>
     Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description);
