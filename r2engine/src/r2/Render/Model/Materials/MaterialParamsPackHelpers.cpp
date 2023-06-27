@@ -135,6 +135,12 @@ namespace r2::mat
 		return materialName;
 	}
 
+	void GetAllTexturePacksForMaterial(const flat::MaterialParams* material, const r2::SArray<u64>* texturePacks)
+	{
+		TODO;
+	}
+
+
 #ifdef R2_ASSET_PIPELINE
 	std::vector<const flat::MaterialParams*> GetAllMaterialParamsInMaterialPackThatContainTexture(const flat::MaterialParamsPack* materialPack, u64 texturePackName, u64 textureName)
 	{

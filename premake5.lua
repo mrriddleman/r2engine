@@ -475,7 +475,8 @@ project "Sandbox"
 		"r2engine/src",
 		"%{includeDirs.glm}",
 		"%{includeDirs.flatbuffers}",
-		"%{includeDirs.texturemetadata}"
+		"%{includeDirs.texturemetadata}",
+		"%{includeDirs.assetlib}"
 	}
 
 	links

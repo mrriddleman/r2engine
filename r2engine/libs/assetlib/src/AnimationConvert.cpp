@@ -23,6 +23,7 @@
 
 #include "assetlib/RAnimation_generated.h"
 #include "assetlib/RAnimationMetaData_generated.h"
+#include "assetlib/AssetUtils.h"
 
 namespace fs = std::filesystem;
 
@@ -96,6 +97,13 @@ namespace r2::assets::assetlib
 		Animation animation;
 		animation.originalPath = inputFilePath.string();
 		//@TODO(Serge): use the path to generate a proper name with the appropriate amount of parent directories
+		char animationAssetName[256];
+
+		std::filesystem::path dstAnimationPath = inputFilePath;
+		dstAnimationPath.replace_extension(RANM_EXTENSION);
+		r2::asset::MakeAssetNameStringForFilePath(dstAnimationPath.string().c_str(), animationAssetName, r2::asset::RANIMATION);
+
+		animation.animationName = r2::asset::GetAssetNameForFilePath(dstAnimationPath.string().c_str(), r2::asset::RANIMATION);
 
 		ProcessAnimation(animation, scene->mRootNode, scene);
 
@@ -114,7 +122,7 @@ namespace r2::assets::assetlib
 			
 			animation.duration = anim->mDuration;
 			animation.ticksPerSecond = anim->mTicksPerSecond;
-			animation.animationName = STRING_ID(anim->mName.C_Str());
+			
 
 			if (anim->mNumChannels > 0)
 			{

@@ -14,10 +14,10 @@
 #include "Hash.h"
 #include "assetlib/DiskAssetFile.h"
 #include "Materials/MaterialParamsPack_generated.h"
-
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
+#include "assetlib/AssetUtils.h"
 
 #define MAX_BONE_WEIGHTS 4
 
@@ -295,8 +295,14 @@ namespace r2::assets::assetlib
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
 		
-		//@TODO(Serge): add in parent directories needed
-		model.modelName = inputFilePath.stem().string();
+		char modelAssetName[256];
+
+		std::filesystem::path dstModelPath = inputFilePath;
+		dstModelPath.replace_extension(RMDL_EXTENSION);
+		r2::asset::MakeAssetNameStringForFilePath(dstModelPath.string().c_str(), modelAssetName, r2::asset::RMODEL);
+
+		model.modelName = modelAssetName;
+		printf("modelAssetName: %s\n", modelAssetName);
 
 		model.materialNames.reserve(numMeshes);
 
@@ -564,6 +570,8 @@ namespace r2::assets::assetlib
 		{
 			nextMesh.indices.reserve(mesh->mNumFaces * 3);
 		}
+
+		nextMesh.hashName = r2::asset::GetAssetNameForFilePath(mesh->mName.C_Str(), r2::asset::MESH);
 
 		MaterialName materialName;
 

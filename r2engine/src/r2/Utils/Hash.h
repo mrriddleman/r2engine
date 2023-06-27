@@ -8,6 +8,8 @@
 #ifndef Hash_h
 #define Hash_h
 
+#include <string>
+
 #define STRING_ID(str) r2::utils::Hash<const char*>{}(str)
 
 namespace r2::utils

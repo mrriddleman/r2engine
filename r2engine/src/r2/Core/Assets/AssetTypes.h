@@ -4,6 +4,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Containers/SArray.h"
 #include <functional>
+#include "assetlib/AssetUtils.h"
 
 namespace r2::asset
 {
@@ -14,6 +15,8 @@ namespace r2::asset
 	{
 		u64 handle = INVALID_ASSET_HANDLE;
 		s64 assetCache = INVALID_ASSET_CACHE;
+
+		bool operator==(const AssetHandle& assetHandle) const;
 	};
 
 	using AssetLoadProgressCallback = std::function<void(int, bool&)>;
@@ -26,35 +29,12 @@ namespace r2::asset
 
 	using FileHandle = s64;
 
-	using AssetType = u32;
-
-	enum EngineAssetType : u32
-	{
-		DEFAULT = 0,
-		TEXTURE,
-		MODEL,
-		MESH,
-		CUBEMAP_TEXTURE,
-		MATERIAL_PACK_MANIFEST,
-		TEXTURE_PACK_MANIFEST,
-		RMODEL,
-		RANIMATION,
-		LEVEL,
-		LEVEL_PACK,
-		MATERIAL,
-		TEXTURE_PACK,
-		SOUND,
-		NUM_ENGINE_ASSET_TYPES
-	};
-
 	enum HotReloadType : u32
 	{
 		CHANGED = 0,
 		ADDED,
 		DELETED
 	};
-	
-	u32 GetNumberOfParentDirectoriesToIncludeForAssetType(AssetType assetType);
 
 	bool IsInvalidAssetHandle(const AssetHandle& assetHandle);
 	bool AreAssetHandlesEqual(const AssetHandle& assetHandle1, const AssetHandle& assetHandle2);

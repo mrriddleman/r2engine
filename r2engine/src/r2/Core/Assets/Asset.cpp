@@ -70,14 +70,8 @@ namespace r2::asset
 
     Asset Asset::MakeAssetFromFilePath(const char* filePath, r2::asset::AssetType type)
     {
-        u32 numParentDirectoriesToInclude = GetNumberOfParentDirectoriesToIncludeForAssetType(type);
-
-		char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::SanitizeSubPath(filePath, sanitizedPath);
-
-		char assetName[r2::fs::FILE_PATH_LENGTH];
-		r2::fs::utils::CopyFileNameWithParentDirectories(sanitizedPath, assetName, numParentDirectoriesToInclude);
-
+        char assetName[r2::fs::FILE_PATH_LENGTH];
+        MakeAssetNameStringForFilePath(filePath, assetName, type);
         Asset newAsset(assetName, type);
         return newAsset;
     }

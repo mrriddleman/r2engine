@@ -4,7 +4,7 @@
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Game/Level/Level.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
-#include "r2/Core/Memory/Allocators/PoolAllocator.h"
+#include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
 
@@ -34,6 +34,7 @@ namespace r2
 		static const u32 ANIMATION_CACHE_SIZE;
 		static const u32 MAX_NUM_MODELS;
 		static const u32 MAX_NUM_ANIMATIONS;
+		static const u32 MAX_NUM_TEXTURE_PACKS;
 
 		LevelManager();
 		~LevelManager();
@@ -73,22 +74,23 @@ namespace r2
 			u32 maxNumLevels,
 			u32 maxNumModels,
 			u32 maxNumAnimations,
+			u32 maxNumTexturePacks,
 			const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
-		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, const r2::mem::utils::MemoryProperties& memProperties) const;
+		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, u32 numTexturePacks, const r2::mem::utils::MemoryProperties& memProperties) const;
 
-		Level* FindLevel(LevelName levelname, s32& index);
+		Level* FindLoadedLevel(LevelName levelname, s32& index);
 
-		void LoadLevelData(const flat::LevelData* levelData);
-		void UnLoadLevelData(const flat::LevelData* levelData);
+		void LoadLevelData(Level& level);
+		void UnLoadLevelData(const Level& level);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle; 
 		u32 mMaxNumLevels;
 		
 		r2::mem::StackArena* mArena;
-		r2::mem::PoolArena* mLevelArena;
+		r2::mem::FreeListArena* mLevelArena;
 
 		r2::SArray<Level>* mLoadedLevels;
 

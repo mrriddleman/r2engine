@@ -169,7 +169,9 @@ namespace r2
 		void RegisterAssetWriter(r2::asset::AssetWriter* assetWriter);
 		void RegisterAssetFreedCallback(r2::asset::AssetFreedCallback func);
 
-
+		//@TODO(Serge): really annoying we have two different interfaces - 1 for textures, 1 for everything else
+		//				we need a to figure out a way to consolidate these. I think we'd have to pack all the textures together into 1 
+		//				file for this to work
 		bool AddTexturePacksManifest(u64 texturePackManifestHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		bool UpdateTexturePacksManifest(u64 texturePackHandle, const flat::TexturePacksManifest* texturePacksManifest);
 		
