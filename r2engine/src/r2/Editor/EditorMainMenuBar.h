@@ -21,7 +21,8 @@ namespace r2::edit
 	private:
 
 		void LoadLevel(const std::string& filePath);
-		
+		void UnloadLevel();
+
 		void SaveLevelToRecents(const std::string& filePath);
 
 		void LoadRecentsFile();

@@ -85,6 +85,11 @@ namespace r2::edit
 
 					ImGui::EndMenu();
 				}
+				if (ImGui::MenuItem("Unload Level"))
+				{
+					UnloadLevel();
+				}
+
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 				{
 					//@TODO(Serge): maybe should be an action
@@ -272,6 +277,11 @@ namespace r2::edit
 		// action
 		mnoptrEditor->LoadLevel(filePathName);
 		SaveLevelToRecents(filePathName);
+	}
+
+	void MainMenuBar::UnloadLevel()
+	{
+		mnoptrEditor->UnloadCurrentLevel();
 	}
 }
 

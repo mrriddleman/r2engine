@@ -75,7 +75,7 @@ namespace r2
 
 	void SceneGraph::UnloadLevel(const Level& level)
 	{
-		TODO;
+		mnoptrECSCoordinator->UnloadAllECSDataFromLevel(level);
 	}
 
 	void SceneGraph::Attach(ecs::Entity entity, ecs::Entity parent)

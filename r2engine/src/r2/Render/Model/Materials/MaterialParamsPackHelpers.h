@@ -23,7 +23,7 @@ namespace r2::mat
 
 	MaterialName MakeMaterialNameFromFlatMaterial(const flat::MaterialName* flatMaterialName);
 
-	void GetAllTexturePacksForMaterial(const flat::MaterialParams* material, const r2::SArray<u64>* texturePacks);
+	void GetAllTexturePacksForMaterial(const flat::MaterialParams* material, r2::SArray<u64>* texturePacks);
 	
 
 #ifdef R2_ASSET_PIPELINE

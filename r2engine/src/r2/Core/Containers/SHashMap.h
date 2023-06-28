@@ -202,9 +202,7 @@ namespace r2
             {
                 ((*h.mData)[fr.data_prev]).next = ((*h.mData)[fr.data_i]).next;
             }
-               
-           
-            
+
             s64 size = static_cast<s64>(h.mData->mSize);
             if (fr.data_i == size - 1)
             { 
@@ -219,7 +217,7 @@ namespace r2
             
             if (last.data_prev != END_OF_LIST)
             {
-                ((*h.mData)[last.data_prev]).next = fr.data_i;
+                ((*h.mData)[last.data_prev]).next = last.data_i;
             }
             else
             {

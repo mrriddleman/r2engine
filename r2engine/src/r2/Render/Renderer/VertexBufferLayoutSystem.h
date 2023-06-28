@@ -124,6 +124,7 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model);
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model);
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, u64 modelAssetName);
 
 	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle);
 

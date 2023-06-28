@@ -360,7 +360,7 @@ namespace r2::draw::renderer
 	const Model* GetDefaultModel(Renderer& renderer, r2::draw::DefaultModel defaultModel);
 	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs(Renderer& renderer);
 	vb::GPUModelRefHandle GetDefaultModelRef(Renderer& renderer, r2::draw::DefaultModel defaultModel);
-
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, u64 modelAssetName);
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer);
 	const tex::Texture* GetMissingTexture(Renderer* renderer);
 
@@ -2569,6 +2569,17 @@ namespace r2::draw::renderer
 		}
 
 		return r2::sarr::At(*renderer.mEngineModelRefs, defaultModel);
+	}
+
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(Renderer& renderer, u64 modelAssetName)
+	{
+		if (renderer.mVertexBufferLayoutSystem == nullptr)
+		{
+			R2_CHECK(false, "We haven't initialized the renderer yet!");
+			return vb::InvalidGPUModelRefHandle;
+		}
+
+		return vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, modelAssetName);
 	}
 
 	const RenderMaterialParams& GetMissingTextureRenderMaterialParam(Renderer& renderer)
@@ -8996,6 +9007,11 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle GetDefaultModelRef(r2::draw::DefaultModel defaultModel)
 	{
 		return GetDefaultModelRef(MENG.GetCurrentRendererRef(), defaultModel);
+	}
+
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(u64 modelAssetName)
+	{
+		return GetModelRefHandleForModelAssetName(MENG.GetCurrentRendererRef(), modelAssetName);
 	}
 
 	vb::GPUModelRefHandle UploadModel(const Model* model)

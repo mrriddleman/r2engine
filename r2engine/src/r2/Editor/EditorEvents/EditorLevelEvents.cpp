@@ -54,6 +54,19 @@ namespace r2::evt
 		return ss.str();
 	}
 
+	EditorLevelWillUnLoadEvent::EditorLevelWillUnLoadEvent(const EditorLevel& level)
+		:EditorLevelEvent(level, false)
+	{
+
+	}
+
+	std::string EditorLevelWillUnLoadEvent::ToString() const
+	{
+		std::stringstream ss;
+		ss << "EditorLevelWillUnLoadedEvent will unload level: " << "Group Name: " << mLevel.GetGroupName() << ", Level Name: " << mLevel.GetLevelName();
+		return ss.str();
+	}
+
 }
 
 

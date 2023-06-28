@@ -895,6 +895,16 @@ namespace r2::draw::vbsys
 
 	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::Model& model)
 	{
+		return GetModelRefHandle(system, model.assetName);
+	}
+
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model)
+	{
+		return GetModelRefHandle(system, model.model.assetName);
+	}
+
+	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, u64 modelAssetName)
+	{
 		const auto& numLayouts = r2::sarr::Size(*system.mVertexBufferLayouts);
 
 		for (u64 i = 0; i < numLayouts; ++i)
@@ -907,7 +917,7 @@ namespace r2::draw::vbsys
 			{
 				const auto* gpuModelRef = r2::sarr::At(*layout->gpuModelRefs, j);
 
-				if (gpuModelRef && gpuModelRef->assetName == model.assetName)
+				if (gpuModelRef && gpuModelRef->assetName == modelAssetName)
 				{
 					return gpuModelRef->gpuModelRefHandle;
 				}
@@ -915,11 +925,6 @@ namespace r2::draw::vbsys
 		}
 
 		return vb::InvalidGPUModelRefHandle;
-	}
-
-	vb::GPUModelRefHandle GetModelRefHandle(const vb::VertexBufferLayoutSystem& system, const r2::draw::AnimModel& model)
-	{
-		return GetModelRefHandle(system, model.model);
 	}
 
 	u32 GetGPUBufferLayoutHandle(const vb::VertexBufferLayoutSystem& system, const vb::VertexBufferLayoutHandle& handle)

@@ -26,6 +26,14 @@ namespace r2::evt
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_LOADED)
 	};
 
+	class EditorLevelWillUnLoadEvent : public EditorLevelEvent
+	{
+	public:
+		EditorLevelWillUnLoadEvent(const EditorLevel& level);
+		std::string ToString() const override;
+		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_WILL_UNLOAD)
+	};
+
 	class EditorNewLevelCreatedEvent : public EditorLevelEvent
 	{
 	public:

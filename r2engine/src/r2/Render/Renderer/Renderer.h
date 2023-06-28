@@ -490,6 +490,8 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model);
 	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
+	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(u64 modelAssetName);
+
 	void UnloadModel(const vb::GPUModelRefHandle& modelRefHandle);
 	void UnloadStaticModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);
 	void UnloadAnimModelRefHandles(const r2::SArray<vb::GPUModelRefHandle>* handles);

@@ -46,6 +46,7 @@ namespace r2
 		void RedoLastAction();
 		void Save();
 		void LoadLevel(const std::string& filePathName);
+		void UnloadCurrentLevel();
 
 		void SetCurrentLevel(const EditorLevel& editorLevel);
 		const EditorLevel& GetEditorLevel() const;

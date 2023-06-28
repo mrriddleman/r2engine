@@ -4,6 +4,7 @@
 #include "r2/Utils/Utils.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Game/ECS/Entity.h"
 
 namespace flat
 {
@@ -27,7 +28,8 @@ namespace r2
 			LevelHandle levelHandle,
 			r2::SArray<r2::asset::AssetHandle>* modelAssets,
 			r2::SArray<r2::asset::AssetHandle>* animationAssets,
-			r2::SArray<u64>* texturePacks);
+			r2::SArray<u64>* texturePacks,
+			r2::SArray<ecs::Entity>* entities);
 
 		void Shutdown();
 
@@ -36,7 +38,7 @@ namespace r2
 		LevelHandle GetLevelHandle() const;
 
 		const char* GetLevelName() const;
-		LevelName GetLevelHashName() const;
+		LevelName GetLevelAssetName() const;
 
 		const char* GetGroupName() const;
 		LevelName GetGroupHashName() const;
@@ -44,8 +46,13 @@ namespace r2
 		const r2::SArray<r2::asset::AssetHandle>* GetModelAssets() const;
 		const r2::SArray<r2::asset::AssetHandle>* GetAnimationAssets() const;
 		const r2::SArray<u64>* GetTexturePacks() const;
+		const r2::SArray<ecs::Entity>* GetEntities() const;
 
-		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, const r2::mem::utils::MemoryProperties& memoryProperties);
+		void AddEntity(ecs::Entity e) const;
+		void RemoveEntity(ecs::Entity e) const;
+		void ClearAllEntities() const;
+
+		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
 		friend class LevelManager;
@@ -60,6 +67,7 @@ namespace r2
 
 		//@TODO(Serge): sound files
 
+		r2::SArray<ecs::Entity>* mEntities;
 	};
 }
 

@@ -29,7 +29,7 @@ namespace r2
 	const u32 LevelManager::MAX_NUM_MODELS = 100;
 	const u32 LevelManager::MAX_NUM_ANIMATIONS = 500;
 	const u32 LevelManager::MAX_NUM_TEXTURE_PACKS = 100;
-
+	
 	LevelManager::LevelManager()
 		:mMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mSubAreaHandle(r2::mem::MemoryArea::SubArea::Invalid)
@@ -42,14 +42,6 @@ namespace r2
 
 	LevelManager::~LevelManager()
 	{
-	}
-
-	u64 LevelManager::GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, u32 numTexturePacks, const r2::mem::utils::MemoryProperties& memProperties) const
-	{
-		u64 subAreaSize = 0;
-		subAreaSize += MemorySize(numLevels, numModels, numAnimations, numTexturePacks, memProperties);
-
-		return subAreaSize;
 	}
 
 	bool LevelManager::Init(
@@ -82,7 +74,7 @@ namespace r2
 		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
-		u64 subAreaSize = GetSubAreaSizeForLevelManager(maxNumLevels, MAX_NUM_MODELS, MAX_NUM_ANIMATIONS, MAX_NUM_TEXTURE_PACKS, memProperties);
+		u64 subAreaSize = MemorySize(maxNumLevels, MAX_NUM_MODELS, MAX_NUM_ANIMATIONS, MAX_NUM_TEXTURE_PACKS, ecs::MAX_NUM_ENTITIES, memProperties);
 		u64 unallocated = memoryArea->UnAllocatedSpace();
 		if (unallocated < subAreaSize)
 		{
@@ -203,8 +195,9 @@ namespace r2
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->modelFilePaths()->size());
 		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->animationFilePaths()->size());
 		r2::SArray<u64>* texturePackAssets = MAKE_SARRAY(*mLevelArena, u64, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
+		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, flatLevelData->numEntities());
 
-		newLevel.Init(flatLevelData, levelHandle, modelAssets, animationAssets, texturePackAssets);
+		newLevel.Init(flatLevelData, levelHandle, modelAssets, animationAssets, texturePackAssets, entities);
 
 		LoadLevelData(newLevel);
 
@@ -241,17 +234,23 @@ namespace r2
 			//not even loaded - return
 			return;
 		}
+
+		mSceneGraph.UnloadLevel(*theLevel);
+		
+		theLevel->ClearAllEntities();
+		
 		Level copyOfLevel = *theLevel;
 
-		mSceneGraph.UnloadLevel(copyOfLevel);
-		
 		r2::sarr::RemoveAndSwapWithLastElement(*mLoadedLevels, index);
 
 		UnLoadLevelData(copyOfLevel);
 
+		FREE(copyOfLevel.mEntities, *mLevelArena);
 		FREE(copyOfLevel.mTexturePackAssets, *mLevelArena);
 		FREE(copyOfLevel.mAnimationAssets, *mLevelArena);
 		FREE(copyOfLevel.mModelAssets, *mLevelArena);
+
+		copyOfLevel.Shutdown();
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
@@ -303,12 +302,14 @@ namespace r2
 		for (u32 i = 0; i < numLevels; ++i)
 		{
 			Level& level = r2::sarr::At(*mLoadedLevels, i);
-			if (level.GetLevelHashName() == levelname)
+			if (level.GetLevelAssetName() == levelname)
 			{
+				index = i;
 				return &level;
 			}
 		}
 
+		index = -1;
 		return nullptr;
 	}
 
@@ -350,6 +351,7 @@ namespace r2
 		for (flatbuffers::uoffset_t i = 0; i < numAnimationFiles; ++i)
 		{
 			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(animationFiles->Get(i)->binPath()->str().c_str(), r2::asset::RANIMATION);
+			
 			r2::sarr::Push(*animationAssets, gameAssetManager.LoadAsset(animationAsset));
 		}
 
@@ -571,8 +573,11 @@ namespace r2
 		const u32 numModelsToUnload = r2::sarr::Size(*modelAssetsToUnload);
 		for (u32 i = 0; i < numModelsToUnload; ++i)
 		{
-			gameAssetManager.UnloadAsset(r2::sarr::At(*modelAssetsToUnload, i));
-			//@TODO(Serge): Unload the model from the gpu here
+			const r2::asset::AssetHandle& assetHandle = r2::sarr::At(*modelAssetsToUnload, i);
+
+			r2::draw::renderer::UnloadModel(r2::draw::renderer::GetModelRefHandleForModelAssetName(assetHandle.handle));
+
+			gameAssetManager.UnloadAsset(assetHandle);
 		}
 		
 		const u32 numAnimationsToUnload = r2::sarr::Size(*animationAssetsToUnload);
@@ -597,6 +602,7 @@ namespace r2
 		u32 maxNumModels,
 		u32 maxNumAnimations,
 		u32 maxNumTexturePacks,
+		u32 maxNumEntities,
 		const r2::mem::utils::MemoryProperties& memProperties)
 	{
 		u64 freeListHeaderSize = r2::mem::FreeListAllocator::HeaderSize();
@@ -607,12 +613,15 @@ namespace r2
 		
 		memorySize += stackHeaderSize;
 
+		r2::mem::utils::MemoryProperties lvlArenaMemProps;
+		lvlArenaMemProps.alignment = memProperties.alignment;
+		lvlArenaMemProps.headerSize = freeListHeaderSize;
+		lvlArenaMemProps.boundsChecking = memProperties.boundsChecking;
 
 		u64 freeListArenaSize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
-		freeListArenaSize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(maxNumModels), memProperties.alignment, freeListHeaderSize, memProperties.boundsChecking) * maxNumLevels;
-		freeListArenaSize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(maxNumAnimations), memProperties.alignment, freeListHeaderSize, memProperties.boundsChecking) * maxNumLevels;
-		freeListArenaSize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(maxNumTexturePacks), memProperties.alignment, freeListHeaderSize, memProperties.boundsChecking) * maxNumLevels;
 
+		freeListArenaSize += Level::MemorySize(maxNumModels, maxNumAnimations, maxNumTexturePacks, maxNumEntities, lvlArenaMemProps) * maxNumLevels;
+		
 		memorySize += freeListArenaSize;
 		
 

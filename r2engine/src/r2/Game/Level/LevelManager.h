@@ -75,11 +75,11 @@ namespace r2
 			u32 maxNumModels,
 			u32 maxNumAnimations,
 			u32 maxNumTexturePacks,
+			u32 maxNumEntities,
 			const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
-		u64 GetSubAreaSizeForLevelManager(u32 numLevels, u32 numModels, u32 numAnimations, u32 numTexturePacks, const r2::mem::utils::MemoryProperties& memProperties) const;
-
+		
 		Level* FindLoadedLevel(LevelName levelname, s32& index);
 
 		void LoadLevelData(Level& level);

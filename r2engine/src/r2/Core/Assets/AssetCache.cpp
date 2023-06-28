@@ -731,6 +731,9 @@ namespace r2::asset
 
                 RemoveFromLRU(handle);
 #ifdef R2_ASSET_PIPELINE
+
+                R2_CHECK(!r2::shashmap::Has(*mAssetMap, handle.handle), "Should never happen!");
+
                 RemoveAssetFromAssetForFileList(handle);
 #endif
 

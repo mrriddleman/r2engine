@@ -70,7 +70,7 @@ namespace r2
         
         template<typename T> inline void Push(SArray<T>& arr, const T& item);
         template<typename T> inline void Pop(SArray<T>& arr);
-        template<typename T> inline void RemoveAndSwapWithLastElement(SArray<T>& arr, u64 index);
+        template<typename T> inline void RemoveAndSwapWithLastElement(SArray<T>& arr, s64 index);
         
         template<typename T> inline T& At(SArray<T>& arr, u64 index);
         template<typename T> inline const T& At(const SArray<T>& arr, u64 index);
@@ -176,7 +176,7 @@ namespace r2
             }
         }
 
-        template<typename T> inline void RemoveAndSwapWithLastElement(SArray<T>& arr, u64 index)
+        template<typename T> inline void RemoveAndSwapWithLastElement(SArray<T>& arr, s64 index)
         {
             R2_CHECK(index < arr.mSize, "You passed in an invalid index, you passed in: %llu but we only have %llu elements!", index, arr.mSize);
 

@@ -73,6 +73,7 @@ namespace r2::ecs
 		u32 NumLivingEntities() const;
 
 		void LoadAllECSDataFromLevel(const Level& level);
+		void UnloadAllECSDataFromLevel(const Level& level);
 
 		template<typename Component>
 		bool HasComponent(Entity entity)

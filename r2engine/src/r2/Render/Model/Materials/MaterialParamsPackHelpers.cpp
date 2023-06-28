@@ -135,9 +135,24 @@ namespace r2::mat
 		return materialName;
 	}
 
-	void GetAllTexturePacksForMaterial(const flat::MaterialParams* material, const r2::SArray<u64>* texturePacks)
+	void GetAllTexturePacksForMaterial(const flat::MaterialParams* material, r2::SArray<u64>* texturePacks)
 	{
-		TODO;
+		R2_CHECK(material != nullptr, "Material is nullptr");
+		R2_CHECK(texturePacks != nullptr, "texture packs is nullptr");
+
+		const flatbuffers::uoffset_t numTextureParams = material->textureParams()->size();
+
+		for (flatbuffers::uoffset_t i = 0; i < numTextureParams; ++i)
+		{
+			const auto* textureParam = material->textureParams()->Get(i);
+
+			u64 texturePackName = textureParam->texturePackName();
+
+			if (r2::sarr::IndexOf(*texturePacks, texturePackName) != -1)
+			{
+				r2::sarr::Push(*texturePacks, texturePackName);
+			}
+		}
 	}
 
 

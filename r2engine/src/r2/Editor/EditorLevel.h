@@ -19,13 +19,16 @@ namespace flat
 
 namespace r2
 {
+	class Level;
+
 	class EditorLevel
 	{
 	public:
 		EditorLevel();
 		~EditorLevel();
 
-		bool Load(const flat::LevelData* levelData);
+		bool Load(const Level* level);
+		void UnloadLevel();
 
 		void SetVersion(u32 version);
 		u32 GetVersion() const;
@@ -53,6 +56,8 @@ namespace r2
 
 		void Clear();
 
+		const Level* GetLevelPtr() const;
+
 	private:
 		u32 mVersion;
 
@@ -63,6 +68,8 @@ namespace r2
 		std::set<std::string> mAnimationFiles;
 		std::set<r2::mat::MaterialName> mMaterialNames;
 		std::set<std::string> mSoundPaths;
+
+		const Level* mnoptrLevel;
 	};
 }
 

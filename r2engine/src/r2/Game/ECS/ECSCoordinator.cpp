@@ -28,9 +28,9 @@ namespace r2::ecs
 
 	void ECSCoordinator::DestroyEntity(Entity entity)
 	{
-		mEntityManager->DestroyEntity(entity);
-		mComponentManager->EntityDestroyed(entity);
 		mSystemManager->EntityDestroyed(entity);
+		mComponentManager->EntityDestroyed(entity);
+		mEntityManager->DestroyEntity(entity);
 	}
 
 	void ECSCoordinator::DestoryAllEntities()
@@ -63,7 +63,6 @@ namespace r2::ecs
 
 		R2_CHECK(numLiveEntities == levelEntities->size(), "These should be the same");
 
-		r2::SArray<Entity>* newlyCreatedEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Entity, numLiveEntities);
 		r2::SArray<const flat::EntityData*>* flatEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::EntityData*, numLiveEntities);
 		r2::SArray<Signature>* entitySignatures = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, Signature, numLiveEntities);
 
@@ -74,24 +73,39 @@ namespace r2::ecs
 			Entity nextECSEntity = CreateEntity();
 			const flat::EntityData* nextFlatEntity = levelEntities->Get(i);
 
-			r2::sarr::Push(*newlyCreatedEntities, nextECSEntity);
+			level.AddEntity(nextECSEntity);
 			r2::sarr::Push(*flatEntities, nextFlatEntity);	
 			r2::sarr::Push(*entitySignatures, {});
 		}
 
-		mComponentManager->DeSerialize(newlyCreatedEntities, flatEntities, entitySignatures, flatLevelData->componentArrays());
+		mComponentManager->DeSerialize(level.GetEntities(), flatEntities, entitySignatures, flatLevelData->componentArrays());
 
 		//now set the entity signatures
+		const r2::SArray<ecs::Entity>* newEntities = level.GetEntities();
+
 		for (u32 i = 0; i < numLiveEntities; ++i)
 		{
-			mEntityManager->SetSignature(r2::sarr::At(*newlyCreatedEntities, i), r2::sarr::At(*entitySignatures, i));
+			mEntityManager->SetSignature(r2::sarr::At(*newEntities, i), r2::sarr::At(*entitySignatures, i));
 		}
 
-		mSystemManager->DeSerializeEntitySignatures(newlyCreatedEntities, entitySignatures);
+		mSystemManager->DeSerializeEntitySignatures(level.GetEntities(), entitySignatures);
 
 		FREE(entitySignatures, *MEM_ENG_SCRATCH_PTR);
 		FREE(flatEntities, *MEM_ENG_SCRATCH_PTR);
-		FREE(newlyCreatedEntities, *MEM_ENG_SCRATCH_PTR);
+	}
+
+	void ECSCoordinator::UnloadAllECSDataFromLevel(const Level& level)
+	{
+		const r2::SArray<ecs::Entity>* levelEntities = level.GetEntities();
+
+		R2_CHECK(levelEntities != nullptr, "This should never happen");
+
+		const u32 numEntities = r2::sarr::Size(*levelEntities);
+
+		for (u32 i = 0; i < numEntities; ++i)
+		{
+			DestroyEntity(r2::sarr::At(*levelEntities, i));
+		}
 	}
 
 	void ECSCoordinator::SerializeECS (

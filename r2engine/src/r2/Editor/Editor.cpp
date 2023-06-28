@@ -196,15 +196,36 @@ namespace r2
 
 	void Editor::LoadLevel(const std::string& filePathName)
 	{
+		if (mCurrentEditorLevel.GetLevelPtr() != nullptr)
+		{
+			UnloadCurrentLevel();
+		}
+
 		LevelName levelAssetName = LevelManager::MakeLevelNameFromPath(filePathName.c_str());
 
 		const Level* newLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
 		
-		mCurrentEditorLevel.Load(newLevel->GetLevelData());
+		mCurrentEditorLevel.Load(newLevel);
 
 		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel);
 
 		PostEditorEvent(e);
+	}
+
+	void Editor::UnloadCurrentLevel()
+	{
+		evt::EditorLevelWillUnLoadEvent e(mCurrentEditorLevel);
+
+		PostEditorEvent(e);
+
+		const Level* level = mCurrentEditorLevel.GetLevelPtr();
+
+		if (level)
+		{
+			CENG.GetLevelManager().UnloadLevel(level);
+		}
+
+		mCurrentEditorLevel.UnloadLevel();
 	}
 
 	void Editor::SetCurrentLevel(const EditorLevel& editorLevel)

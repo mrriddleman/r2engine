@@ -4,6 +4,7 @@
 #include "r2/Editor/EditorLevel.h"
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Core/File/PathUtils.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2 
 {
@@ -11,6 +12,7 @@ namespace r2
 		:mVersion(1)
 		,mLevelName("New Level")
 		,mGroupName("New Group")
+		,mnoptrLevel(nullptr)
 	{
 
 	}
@@ -20,9 +22,17 @@ namespace r2
 		Clear();
 	}
 
-	bool EditorLevel::Load(const flat::LevelData* levelData)
+	bool EditorLevel::Load(const Level* level)
 	{
+		R2_CHECK(level != nullptr, "Should never happen");
+
 		Clear();
+
+
+		mnoptrLevel = level;
+
+		const flat::LevelData* levelData = level->GetLevelData();
+
 
 		mLevelName = levelData->name()->str();
 		mGroupName = levelData->groupName()->str();
@@ -63,6 +73,11 @@ namespace r2
 		}
 
 		return true;
+	}
+
+	void EditorLevel::UnloadLevel()
+	{
+		Clear();
 	}
 
 	void EditorLevel::SetVersion(u32 version)
@@ -168,6 +183,12 @@ namespace r2
 		mAnimationFiles.clear();
 		mMaterialNames.clear();
 		mSoundPaths.clear();
+		mnoptrLevel = nullptr;
+	}
+
+	const Level* EditorLevel::GetLevelPtr() const
+	{
+		return mnoptrLevel;
 	}
 }
 

@@ -545,6 +545,8 @@ namespace r2
     
     void Engine::Shutdown()
     {
+        mLevelManager->Shutdown();
+
         mLayerStack.ShutdownAll();
 
         for (u32 i = 0; i < r2::draw::RendererBackend::NUM_RENDERER_BACKEND_TYPES; ++i)
@@ -565,7 +567,7 @@ namespace r2
             }
         }
 
-        mLevelManager->Shutdown();
+        
         FREE(mLevelManager, *MEM_ENG_PERMANENT_PTR);
 
         mGameAssetManager->Shutdown<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR);

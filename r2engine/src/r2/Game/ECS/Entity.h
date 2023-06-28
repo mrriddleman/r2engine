@@ -8,7 +8,7 @@
 
 namespace r2::ecs
 {
-	using Entity = u32;
+	using Entity = u64;
 	
 	static const Entity INVALID_ENTITY = 0;
 	static const u32 MAX_NUM_ENTITIES = 5000; //I dunno yet
