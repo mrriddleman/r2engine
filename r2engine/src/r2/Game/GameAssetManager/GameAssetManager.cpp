@@ -42,7 +42,7 @@ namespace r2
 #endif
 
 		u64 memorySize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(GameAssetManager), alignment, headerSize, boundsChecking);
-		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numFiles * r2::SHashMap<u32>::LoadFactorMultiplier()), alignment, headerSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetCacheRecord>::MemorySize(numFiles), alignment, headerSize, boundsChecking);
 
 		return memorySize;
 	}
@@ -84,9 +84,7 @@ namespace r2
 			return 0;
 		}
 
-		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-
-		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+		r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);//r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
@@ -98,7 +96,9 @@ namespace r2
 		R2_CHECK(result.GetAssetBuffer()->IsLoaded(), "Not loaded?");
 
 		//store the record
-		r2::shashmap::Set(*mCachedRecords, assetHandle.handle, result);
+		//r2::shashmap::Set(*mCachedRecords, assetHandle.handle, result);
+		r2::sarr::Push(*mCachedRecords, result);
+
 
 		return result.GetAssetBuffer()->Size();
 	}
@@ -131,13 +131,14 @@ namespace r2
 		}
 
 		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+		r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);//r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
-			r2::shashmap::Remove(*mCachedRecords, assetHandle.handle);
+			RemoveAssetCacheRecord(assetHandle);
+			/*r2::shashmap::Remove(*mCachedRecords, assetHandle.handle);
 
-			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, assetHandle.handle), "We still have the asset record?");
+			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, assetHandle.handle), "We still have the asset record?");*/
 
 			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
 
@@ -156,14 +157,14 @@ namespace r2
 		}
 
 		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-		r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, asset.HashID(), defaultAssetCacheRecord);
+		r2::asset::AssetCacheRecord result = FindAssetCacheRecord({ asset.HashID(), mAssetCache->GetSlot() });//r2::shashmap::Get(*mCachedRecords, asset.HashID(), defaultAssetCacheRecord);
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
-			r2::shashmap::Remove(*mCachedRecords, asset.HashID());
+			/*r2::shashmap::Remove(*mCachedRecords, asset.HashID());
 
-			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, asset.HashID()), "We still have the asset record?");
-
+			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, asset.HashID()), "We still have the asset record?");*/
+			RemoveAssetCacheRecord({ asset.HashID(), mAssetCache->GetSlot() });
 
 
 			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
@@ -577,11 +578,11 @@ namespace r2
 			return;
 		}
 
-		auto iter = r2::shashmap::Begin(*mCachedRecords);
-		for (; iter != r2::shashmap::End(*mCachedRecords); ++iter)
+		const auto numCacheRecords = r2::sarr::Size(*mCachedRecords);
+
+		for (u32 i = 0; i < numCacheRecords; ++i)
 		{
-			r2::asset::AssetCacheRecord defaultRecord;
-			r2::asset::AssetCacheRecord& record = r2::shashmap::Get(*mCachedRecords, iter->key, defaultRecord);
+			const r2::asset::AssetCacheRecord& record = r2::sarr::At(*mCachedRecords, i);
 
 			if (!record.IsEmptyAssetCacheRecord(record))
 			{
@@ -589,9 +590,40 @@ namespace r2
 			}
 		}
 
-		r2::shashmap::Clear(*mCachedRecords);
+		r2::sarr::Clear(*mCachedRecords);
 
 		mAssetCache->FlushAll();
+	}
+
+	r2::asset::AssetCacheRecord GameAssetManager::FindAssetCacheRecord(const r2::asset::AssetHandle& assetHandle)
+	{
+		const u32 numCacheRecords = r2::sarr::Size(*mCachedRecords);
+
+		for (u32 i = 0; i < numCacheRecords; ++i)
+		{
+			const r2::asset::AssetCacheRecord& assetCacheRecord = r2::sarr::At(*mCachedRecords, i);
+			if (assetCacheRecord.GetAsset().HashID() == assetHandle.handle)
+			{
+				return assetCacheRecord;
+			}
+		}
+
+		return {};
+	}
+
+	void GameAssetManager::RemoveAssetCacheRecord(const r2::asset::AssetHandle& assetHandle)
+	{
+		const u32 numCacheRecords = r2::sarr::Size(*mCachedRecords);
+
+		for (u32 i = 0; i < numCacheRecords; ++i)
+		{
+			const r2::asset::AssetCacheRecord& assetCacheRecord = r2::sarr::At(*mCachedRecords, i);
+			if (assetCacheRecord.GetAsset().HashID() == assetHandle.handle)
+			{
+				r2::sarr::RemoveAndSwapWithLastElement(*mCachedRecords, i);
+				break;
+			}
+		}
 	}
 
 #ifdef R2_ASSET_PIPELINE

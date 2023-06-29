@@ -1145,6 +1145,9 @@ TEST_CASE("Test SHashMap")
             REQUIRE(r2::shashmap::Has(*hashMap, i));
         }
         
+        r2::shashmap::Set(*hashMap, 325, 'F');
+
+
         size_t keyToRemove = (size_t)'F';
         
         r2::shashmap::Remove(*hashMap, keyToRemove);

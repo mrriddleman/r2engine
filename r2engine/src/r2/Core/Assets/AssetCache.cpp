@@ -67,7 +67,7 @@ namespace r2::asset
             lruCapacity = std::max( static_cast<u32>( r2::sarr::Capacity(*noptrList)), lruCapacity);
 
             mAssetLRU = MAKE_SQUEUE(mAssetCacheArena, AssetHandle, lruCapacity);
-            mAssetMap = MAKE_SHASHMAP(mAssetCacheArena, AssetBufferRef, mapCapacity * r2::SHashMap<u32>::LoadFactorMultiplier());
+            mAssetMap = MAKE_SARRAY(mAssetCacheArena, AssetBufferRef, mapCapacity);
 
             mDefaultLoader = ALLOC(DefaultAssetLoader, mAssetCacheArena);
             
@@ -566,7 +566,10 @@ namespace r2::asset
         
         bufferRef.mAssetBuffer = assetBuffer;
         bufferRef.mAsset = asset;
-        r2::shashmap::Set(*mAssetMap, handle.handle, bufferRef);
+
+        r2::sarr::Push(*mAssetMap, bufferRef);
+
+        //r2::shashmap::Set(*mAssetMap, handle.handle, bufferRef);
 
         UpdateLRU(handle);
         
@@ -700,7 +703,33 @@ namespace r2::asset
     
     AssetCache::AssetBufferRef& AssetCache::Find(u64 handle, AssetCache::AssetBufferRef& theDefault)
     {
-        return r2::shashmap::Get(*mAssetMap, handle, theDefault);
+        const u32 numAssetsInMap = r2::sarr::Size(*mAssetMap);
+
+        for (u32 i = 0; i < numAssetsInMap; ++i)
+        {
+            auto& assetBufferRef = r2::sarr::At(*mAssetMap, i);
+            if (assetBufferRef.mAsset.HashID() == handle)
+            {
+                return assetBufferRef;
+            }
+        }
+
+        return theDefault;
+    }
+
+    void AssetCache::RemoveAssetBuffer(u64 handle)
+    {
+		const u32 numAssetsInMap = r2::sarr::Size(*mAssetMap);
+
+        for (u32 i = 0; i < numAssetsInMap; ++i)
+        {
+            auto& assetBufferRef = r2::sarr::At(*mAssetMap, i);
+            if (assetBufferRef.mAsset.HashID() == handle)
+            {
+                r2::sarr::RemoveAndSwapWithLastElement(*mAssetMap, i);
+                break;
+            }
+        }
     }
     
     void AssetCache::Free(AssetHandle handle, bool forceFree)
@@ -727,12 +756,13 @@ namespace r2::asset
                 
                 FREE(assetBufferRef.mAssetBuffer, *mAssetBufferPoolPtr);
 
-                r2::shashmap::Remove(*mAssetMap, handle.handle);
+                RemoveAssetBuffer(handle.handle);
 
                 RemoveFromLRU(handle);
 #ifdef R2_ASSET_PIPELINE
 
-                R2_CHECK(!r2::shashmap::Has(*mAssetMap, handle.handle), "Should never happen!");
+                R2_CHECK(Find(handle.handle, theDefault).mAssetBuffer == theDefault.mAssetBuffer, "Should always be the case");
+                //R2_CHECK(!r2::shashmap::Has(*mAssetMap, handle.handle), "Should never happen!");
 
                 RemoveAssetFromAssetForFileList(handle);
 #endif
@@ -830,7 +860,7 @@ namespace r2::asset
 
         return 
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SQueue<AssetHandle>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking)  +
-            r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AssetBufferRef>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
+            r2::mem::utils::GetMaxMemoryForAllocation(SArray<AssetBufferRef>::MemorySize(mapCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(sizeof(DefaultAssetLoader), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetLoader*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<AssetWriter*>::MemorySize(lruCapacity), alignment, headerSize, boundsChecking) +
@@ -1048,7 +1078,7 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
+            AssetBufferRef bufRef = Find((*mAssetLRU)[i].handle, defaultRef); //r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
             
             if (bufRef.mAssetBuffer != nullptr)
             {
@@ -1075,7 +1105,7 @@ namespace r2::asset
         
         for (u64 i = 0; i < size; ++i)
         {
-            AssetBufferRef bufRef = r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
+            AssetBufferRef bufRef = Find((*mAssetLRU)[i].handle, defaultRef);//r2::shashmap::Get(*mAssetMap, (*mAssetLRU)[i].handle, defaultRef);
             
             if (bufRef.mAssetBuffer != nullptr)
             {

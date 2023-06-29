@@ -299,19 +299,19 @@ public:
 
         r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
         
-        r2::asset::ZipAssetFile* zipFile = r2::asset::lib::MakeZipAssetFile(filePath);
-        r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
-        r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
+       // r2::asset::ZipAssetFile* zipFile = r2::asset::lib::MakeZipAssetFile(filePath);
+       // r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
+       // r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
         
-        assetCacheBoundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
-        assetCache = r2::asset::lib::CreateAssetCache(assetCacheBoundary, files);
+        //assetCacheBoundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
+        //assetCache = r2::asset::lib::CreateAssetCache(assetCacheBoundary, files);
 
-        assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
+     //   assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
         
-        reload = true;
+      //  reload = true;
         
 #ifdef R2_ASSET_PIPELINE
-        if (assetCache)
+        /*if (assetCache)
         {
             assetCache->AddReloadFunction([this](r2::asset::AssetHandle handle)
             {
@@ -333,7 +333,7 @@ public:
                 }
 
             });
-        }
+        }*/
 #endif
 
         mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -855,7 +855,7 @@ public:
       //  r2::draw::renderer::UpdateSceneLighting(*mLightSystem);
 
 
-        return assetCache != nullptr;
+        return true;//assetCache != nullptr;
     }
 
     virtual void OnEvent(r2::evt::Event& e) override
@@ -1089,7 +1089,7 @@ public:
     
     virtual void Update() override
     {
-        if (reload)
+        /*if (reload)
         {
             reload = false;
             
@@ -1232,7 +1232,7 @@ public:
             r2::sarr::Push(*assetsBuffers, oneMoreLevelRef);
             
             r2::sarr::Push(*assetsBuffers, oneMoreScoreRef);
-        }
+        }*/
         
         mPersController.Update();
 
@@ -1646,17 +1646,17 @@ public:
      //   FREE(mStaticCubeMaterials, *linearArenaPtr);
         //FREE(mStaticCubesDrawFlags, *linearArenaPtr);
 
-		u64 size = r2::sarr::Size(*assetsBuffers);
+		//u64 size = r2::sarr::Size(*assetsBuffers);
 
-		for (u64 i = 0; i < size; ++i)
-		{
-			auto record = r2::sarr::At(*assetsBuffers, i);
+		//for (u64 i = 0; i < size; ++i)
+		//{
+		//	auto record = r2::sarr::At(*assetsBuffers, i);
 
-			assetCache->ReturnAssetBuffer(record);
-		}
-        FREE(assetsBuffers, *linearArenaPtr);
-        r2::asset::lib::DestroyCache(assetCache);
-        FREE(assetCacheBoundary.location, *linearArenaPtr);
+		//	assetCache->ReturnAssetBuffer(record);
+		//}
+  //      FREE(assetsBuffers, *linearArenaPtr);
+  //      r2::asset::lib::DestroyCache(assetCache);
+  //      FREE(assetCacheBoundary.location, *linearArenaPtr);
 
         FREE_EMPLACED_ARENA(linearArenaPtr);
     }
@@ -1976,8 +1976,8 @@ private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
     r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
     r2::cam::PerspectiveController mPersController;
-    r2::asset::AssetCache* assetCache;
-    bool reload;
+  //  r2::asset::AssetCache* assetCache;
+   // bool reload;
     r2::mem::utils::MemBoundary assetCacheBoundary;
     r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
     r2::mem::LinearArena* linearArenaPtr;

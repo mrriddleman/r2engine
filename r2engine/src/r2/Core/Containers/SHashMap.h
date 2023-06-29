@@ -132,6 +132,11 @@ namespace r2
         
         template<typename T> FindResult Find(const SHashMap<T>& h, u64 key)
         {
+			if (key == 15207814376541435223)
+			{
+				int k = 0;
+			}
+
             FindResult fr;
             
             fr.hash_i = END_OF_LIST;
@@ -217,11 +222,11 @@ namespace r2
             
             if (last.data_prev != END_OF_LIST)
             {
-                ((*h.mData)[last.data_prev]).next = last.data_i;
+                ((*h.mData)[last.data_prev]).next = fr.data_i;
             }
             else
             {
-                (*h.mHash)[last.hash_i] = last.data_i;
+                (*h.mHash)[last.hash_i] = fr.data_i;
             }
         }
         
@@ -338,6 +343,12 @@ namespace r2
         
         template<typename T> void Remove(SHashMap<T>& h, u64 key)
         {
+
+			if (key == 15207814376541435223)
+			{
+				int k = 0;
+			}
+
             hashmap_internal::FindAndErase(h, key);
         }
         

@@ -123,7 +123,7 @@ namespace r2::asset
         };
         
         using AssetList = r2::SQueue<AssetHandle>*;
-        using AssetMap = r2::SHashMap<AssetBufferRef>*;
+        using AssetMap = r2::SArray<AssetBufferRef>*;
         using AssetLoaderList = r2::SArray<AssetLoader*>*;
         using AssetWriterList = r2::SArray<AssetWriter*>*;
         using AssetFreedCallbackList = r2::SArray<AssetFreedCallback>*;
@@ -136,7 +136,8 @@ namespace r2::asset
         void UpdateLRU(AssetHandle handle);
         FileHandle FindInFiles(u64 assetID) const;
         AssetBufferRef& Find(u64 handle, AssetBufferRef& theDefault);
-        
+        void RemoveAssetBuffer(u64 handle);
+
         void Free(AssetHandle handle, bool forceFree);
         bool MakeRoom(u64 amount);
         void FreeOneResource(bool forceFree);

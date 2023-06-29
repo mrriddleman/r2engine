@@ -13,6 +13,7 @@ namespace r2::draw
 {
 	struct TextureGPUHandle
 	{
+		u64 assetName;
 		r2::draw::tex::GPUHandle gpuHandle;
 		r2::draw::tex::TextureType type = tex::Diffuse;
 		float anisotropy;
@@ -27,7 +28,7 @@ namespace r2::draw
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle = r2::mem::MemoryArea::Invalid;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle = r2::mem::MemoryArea::SubArea::Invalid;
 		r2::mem::LinearArena* mSubAreaArena = nullptr;
-		r2::SHashMap<TextureGPUHandle>* mTextureMap = nullptr;
+		r2::SArray<TextureGPUHandle>* mTextureMap = nullptr;
 		r2::mem::utils::MemBoundary implBoundary;
 	};
 }
@@ -44,6 +45,49 @@ namespace
 namespace r2::draw::texsys
 {
 	r2::draw::tex::TextureAddress GetTextureAddressInternal(const r2::asset::AssetHandle& texture);
+
+	TextureGPUHandle FindGPUHandle(const r2::asset::AssetHandle& assetHandle)
+	{
+		if (!s_optrTextureSystem)
+		{
+			R2_CHECK(false, "We haven't initialized the texture system yet");
+			return {};
+		}
+
+		const u32 numTextures = r2::sarr::Size(*s_optrTextureSystem->mTextureMap);
+
+		for (u32 i = 0; i < numTextures; ++i)
+		{
+			auto& textureGPUHandle = r2::sarr::At(*s_optrTextureSystem->mTextureMap, i);
+			if (textureGPUHandle.assetName == assetHandle.handle)
+			{
+				return textureGPUHandle;
+			}
+		}
+
+		return {};
+	}
+
+	void RemoveTextureGPUHandle(const r2::asset::AssetHandle& assetHandle)
+	{
+		if (!s_optrTextureSystem)
+		{
+			R2_CHECK(false, "We haven't initialized the texture system yet");
+			return;
+		}
+
+		const u32 numTextures = r2::sarr::Size(*s_optrTextureSystem->mTextureMap);
+
+		for (u32 i = 0; i < numTextures; ++i)
+		{
+			auto& textureGPUHandle = r2::sarr::At(*s_optrTextureSystem->mTextureMap, i);
+			if (textureGPUHandle.assetName == assetHandle.handle)
+			{
+				r2::sarr::RemoveAndSwapWithLastElement(*s_optrTextureSystem->mTextureMap, i);
+				break;
+			}
+		}
+	}
 
 	bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 maxNumTextures, const r2::SArray<InitialTextureFormat>* formatsToMake, const char* systemName)
 	{
@@ -103,7 +147,7 @@ namespace r2::draw::texsys
 		s_optrTextureSystem->mSubAreaHandle = subAreaHandle;
 		s_optrTextureSystem->mSubAreaArena = textureLinearArena;
 
-		s_optrTextureSystem->mTextureMap = MAKE_SHASHMAP(*textureLinearArena, TextureGPUHandle, static_cast<u64>(maxNumTextures * LOAD_FACTOR));
+		s_optrTextureSystem->mTextureMap = MAKE_SARRAY(*textureLinearArena, TextureGPUHandle, static_cast<u64>(maxNumTextures * LOAD_FACTOR));
 		R2_CHECK(s_optrTextureSystem->mTextureMap != nullptr, "We couldn't allocate the texture map!");
 
 
@@ -149,7 +193,7 @@ namespace r2::draw::texsys
 		//				if we have, then nothing to do - don't waste pages if we don't have to
 		TextureGPUHandle theDefault;
 
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, theDefault);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(texture.textureAssetHandle);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, theDefault);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
@@ -159,6 +203,7 @@ namespace r2::draw::texsys
 		const void* imageData = gameAssetManager.GetAssetDataConst<void>(texture.textureAssetHandle);
 		u64 dataSize = gameAssetManager.GetAssetDataSize(texture.textureAssetHandle);
 
+		texGPUHandle.assetName = texture.textureAssetHandle.handle;
 		texGPUHandle.gpuHandle = r2::draw::tex::UploadToGPU(imageData, dataSize, anisotropy, wrapMode, minFilter, magFilter);
 		texGPUHandle.type = texture.type;
 		texGPUHandle.anisotropy = anisotropy;
@@ -166,7 +211,8 @@ namespace r2::draw::texsys
 		texGPUHandle.magFilter = magFilter;
 		texGPUHandle.wrapMode = wrapMode;
 
-		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, texGPUHandle);
+		r2::sarr::Push(*s_optrTextureSystem->mTextureMap, texGPUHandle);
+		//r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, texGPUHandle);
 	}
 
 	void UploadToGPU(const r2::draw::tex::CubemapTexture& cubemap, float anisotropy, s32 wrapMode, s32 minFilter, s32 magFilter)
@@ -182,7 +228,7 @@ namespace r2::draw::texsys
 		auto cubemapAssetHandle = GetCubemapAssetHandle(cubemap);
 
 		//I guess we'll just take the first asset handle for our mapping? Dunno if that will be a problem down the road?
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, theDefault);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(cubemapAssetHandle);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, theDefault);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 			return;
@@ -216,7 +262,8 @@ namespace r2::draw::texsys
 			textureFormat.isAnisotropic = !r2::math::NearZero(anisotropy);
 			textureFormat.anisotropy = anisotropy;
 		}
-		
+
+		texGPUHandle.assetName = cubemapAssetHandle.handle;
 		texGPUHandle.gpuHandle = tex::CreateTexture(textureFormat, 1, true);
 		texGPUHandle.type = tex::Cubemap;
 		texGPUHandle.anisotropy = anisotropy;
@@ -234,7 +281,8 @@ namespace r2::draw::texsys
 			}
 		}
 
-		r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
+		r2::sarr::Push(*s_optrTextureSystem->mTextureMap, texGPUHandle);
+		//r2::shashmap::Set(*s_optrTextureSystem->mTextureMap, cubemapAssetHandle.handle, texGPUHandle);
 	}
 
 	bool IsUploaded(const r2::asset::AssetHandle& texture)
@@ -247,7 +295,7 @@ namespace r2::draw::texsys
 
 		TextureGPUHandle theDefault;
 
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(texture);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
 
 		return !TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle);
 	}
@@ -256,7 +304,7 @@ namespace r2::draw::texsys
 	{
 		TextureGPUHandle theDefault;
 
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(texture);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, theDefault);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, theDefault.gpuHandle))
 		{
@@ -275,14 +323,17 @@ namespace r2::draw::texsys
 		}
 
 		TextureGPUHandle defaultGPUHandle;
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, defaultGPUHandle);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(texture);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, defaultGPUHandle);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, defaultGPUHandle.gpuHandle))
 		{
 			r2::draw::tex::UnloadFromGPU(texGPUHandle.gpuHandle);
-			r2::shashmap::Remove(*s_optrTextureSystem->mTextureMap, texture.handle);
 
-			R2_CHECK(!r2::shashmap::Has(*s_optrTextureSystem->mTextureMap, texture.handle), "remove don't work!");
+
+			RemoveTextureGPUHandle(texture);
+			//r2::shashmap::Remove(*s_optrTextureSystem->mTextureMap, texture.handle);
+
+			//R2_CHECK(!r2::shashmap::Has(*s_optrTextureSystem->mTextureMap, texture.handle), "remove don't work!");
 		}
 	}
 
@@ -304,7 +355,7 @@ namespace r2::draw::texsys
 	const r2::draw::tex::TextureHandle* GetTextureHandle(const r2::draw::tex::Texture& texture)
 	{
 		TextureGPUHandle defaultGPUHandle;
-		const TextureGPUHandle& texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, defaultGPUHandle);
+		const TextureGPUHandle& texGPUHandle = FindGPUHandle(texture.textureAssetHandle);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.textureAssetHandle.handle, defaultGPUHandle);
 
 		if (!TextureHandlesEqual(texGPUHandle.gpuHandle, defaultGPUHandle.gpuHandle))
 		{
@@ -323,7 +374,7 @@ namespace r2::draw::texsys
 		}
 
 		TextureGPUHandle defaultGPUHandle;
-		TextureGPUHandle gpuHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, defaultGPUHandle);
+		TextureGPUHandle gpuHandle = FindGPUHandle(texture);//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, texture.handle, defaultGPUHandle);
 
 		if (TextureHandlesEqual(gpuHandle.gpuHandle, defaultGPUHandle.gpuHandle))
 		{
@@ -337,7 +388,7 @@ namespace r2::draw::texsys
 	u32 GetNumberOfMipMaps(const r2::draw::tex::CubemapTexture& cubemap)
 	{
 		TextureGPUHandle defaultGPUHandle;
-		TextureGPUHandle texGPUHandle = r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, GetCubemapAssetHandle(cubemap).handle, defaultGPUHandle);
+		TextureGPUHandle texGPUHandle = FindGPUHandle(GetCubemapAssetHandle(cubemap));//r2::shashmap::Get(*s_optrTextureSystem->mTextureMap, GetCubemapAssetHandle(cubemap).handle, defaultGPUHandle);
 
 		if (TextureHandlesEqual(texGPUHandle.gpuHandle, defaultGPUHandle.gpuHandle))
 		{
@@ -357,7 +408,7 @@ namespace r2::draw::texsys
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(TextureSystem), ALIGNMENT, headerSize, boundsChecking) + 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<TextureGPUHandle>::MemorySize(static_cast<u64>(maxNumTextures * LOAD_FACTOR)), ALIGNMENT, headerSize, boundsChecking);
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<TextureGPUHandle>::MemorySize(maxNumTextures), ALIGNMENT, headerSize, boundsChecking);
 	}
 
 }

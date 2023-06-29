@@ -53,7 +53,7 @@ namespace r2
 
 			const u64 fileListCapacity = r2::sarr::Capacity(*fileList);
 
-			mCachedRecords = MAKE_SHASHMAP(arena, r2::asset::AssetCacheRecord, fileListCapacity * r2::SHashMap<u32>::LoadFactorMultiplier());
+			mCachedRecords = MAKE_SARRAY(arena, r2::asset::AssetCacheRecord, fileListCapacity);
 
 			R2_CHECK(mCachedRecords != nullptr, "couldn't create the cached records");
 
@@ -133,9 +133,7 @@ namespace r2
 				return nullptr;
 			}
 
-			r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-
-			r2::asset::AssetCacheRecord result = r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+			r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);//r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
 
 			if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 			{
@@ -147,7 +145,9 @@ namespace r2
 			R2_CHECK(result.GetAssetBuffer()->IsLoaded(), "Not loaded?");
 
 			//store the record
-			r2::shashmap::Set(*mCachedRecords, assetHandle.handle, result);
+			//r2::shashmap::Set(*mCachedRecords, assetHandle.handle, result);
+			r2::sarr::Push(*mCachedRecords, result);
+
 
 			return reinterpret_cast<T*>(result.GetAssetBuffer()->MutableData());
 		}
@@ -203,13 +203,16 @@ namespace r2
 		void FreeAllAssets();
 		void GetTexturesForMaterialParamsInternal(r2::SArray<u64>* texturePacks, r2::SArray<r2::draw::tex::Texture>* textures, r2::SArray<r2::draw::tex::CubemapTexture>* cubemaps);
 
+		r2::asset::AssetCacheRecord FindAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);
+		void RemoveAssetCacheRecord(const r2::asset::AssetHandle& assetHandle);
+
 		r2::asset::AssetCache* mAssetCache;
 
 		//@NOTE(Serge): POTENTIAL BIG ISSUE - if we have handles that are equal even though their asset types are different, this
 		//				will cause a hash conflict. Must be mindful of this. The error should be fairly obvious since it will probably
 		//				be a corruption when you try to get the asset. We could make our own (for this class) kind of asset handle
 		//				that would just index into an array or something but keep it simple for now.
-		r2::SHashMap<r2::asset::AssetCacheRecord>* mCachedRecords;
+		r2::SArray<r2::asset::AssetCacheRecord>* mCachedRecords;
 
 		r2::draw::TexturePacksCache* mTexturePacksCache;
 
