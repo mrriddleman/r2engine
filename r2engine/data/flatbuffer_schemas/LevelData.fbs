@@ -17,10 +17,10 @@ table LevelData
 {
 	version:uint;
 
-	hash:ulong (hash:"fnv1a_64");
-	name:string;
-	groupHash:ulong(hash:"fnv1a_64");
-	groupName:string;
+	levelAssetName:ulong (hash:"fnv1a_64");
+	levelNameString:string;
+	groupAssetName:ulong(hash:"fnv1a_64");
+	groupNameString:string;
 	path:string;
 	numEntities:uint;
 	entities:[EntityData];

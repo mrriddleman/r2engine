@@ -5,13 +5,17 @@
 #include "r2/Game/Level/LevelData_generated.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Game/Level/Level.h"
+#include <filesystem>
 
 namespace r2 
 {
+	const std::string DEFAULT_LEVEL_NAME = "NewLevel";
+	const std::string DEFAULT_GROUP_NAME = "NewGroup";
+
 	EditorLevel::EditorLevel()
 		:mVersion(1)
-		,mLevelName("New Level")
-		,mGroupName("New Group")
+		,mLevelName(DEFAULT_LEVEL_NAME)
+		,mGroupName(DEFAULT_GROUP_NAME)
 		,mnoptrLevel(nullptr)
 	{
 
@@ -34,8 +38,8 @@ namespace r2
 		const flat::LevelData* levelData = level->GetLevelData();
 
 
-		mLevelName = levelData->name()->str();
-		mGroupName = levelData->groupName()->str();
+		mLevelName = std::filesystem::path(levelData->levelNameString()->str()).stem().string();
+		mGroupName = levelData->groupNameString()->str();
 		mVersion = levelData->version();
 
 		char filePath[r2::fs::FILE_PATH_LENGTH];
@@ -177,8 +181,8 @@ namespace r2
 	void EditorLevel::Clear()
 	{
 		mVersion = 1;
-		mLevelName = "New Level";
-		mGroupName = "New Group";
+		mLevelName = DEFAULT_LEVEL_NAME;
+		mGroupName = DEFAULT_GROUP_NAME;
 		mModelFiles.clear();
 		mAnimationFiles.clear();
 		mMaterialNames.clear();

@@ -178,7 +178,7 @@ namespace r2
 
         template<typename T> inline void RemoveAndSwapWithLastElement(SArray<T>& arr, s64 index)
         {
-            R2_CHECK(index < arr.mSize, "You passed in an invalid index, you passed in: %llu but we only have %llu elements!", index, arr.mSize);
+            R2_CHECK(index < static_cast<s64>(arr.mSize), "You passed in an invalid index, you passed in: %llu but we only have %llu elements!", index, arr.mSize);
 
             if (arr.mSize <= 0)
                 return;

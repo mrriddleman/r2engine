@@ -88,8 +88,13 @@ namespace r2::asset::pln
 		std::filesystem::path fsBinLevelPath = binLevelPath;
 		std::filesystem::path fsRawLevelPath = rawJSONPath;
 
+		fsBinLevelPath.replace_extension(".rlvl");
 		std::string groupName = fsBinLevelPath.parent_path().stem().string();
-		std::string levelName = fsBinLevelPath.stem().string();
+		std::filesystem::path groupNamePath = groupName;
+		std::string levelName = (groupNamePath / fsBinLevelPath.stem()).string();
+
+		char sanitizedLevelPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::SanitizeSubPath(levelName.c_str(), sanitizedLevelPath);
 
 		if (!std::filesystem::exists(fsBinLevelPath.parent_path()))
 		{
@@ -116,7 +121,7 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, r2::asset::RANIMATION, editorLevel.GetAnimationAssetPaths());
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = MakeMaterialNameVectorFromMaterialNames(builder, editorLevel.GetMaterialNames());
 		
-		//@TODO(Serge): fix this - the director is incorrect if we have music files
+		//@TODO(Serge): fix this - the directory is incorrect if we have music files
 		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::SOUND_FX, r2::asset::SOUND, editorLevel.GetSoundPaths());
 		
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
@@ -124,9 +129,9 @@ namespace r2::asset::pln
 		auto levelData = flat::CreateLevelData(
 			builder,
 			editorLevel.GetVersion(),
-			STRING_ID(levelName.c_str()),
-			builder.CreateString(levelName),
-			STRING_ID(groupName.c_str()),
+			r2::asset::GetAssetNameForFilePath(fsBinLevelPath.string().c_str(), r2::asset::LEVEL),
+			builder.CreateString(sanitizedLevelPath),
+			r2::asset::GetAssetNameForFilePath(groupName.c_str(), r2::asset::LEVEL_GROUP),
 			builder.CreateString(groupName.c_str()),
 			builder.CreateString(binLevelPath), 
 			numEntities,

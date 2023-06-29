@@ -68,7 +68,7 @@ namespace r2
 			return "";
 		}
 
-		return mnoptrLevelData->name()->c_str();
+		return mnoptrLevelData->levelNameString()->c_str();
 	}
 
 	r2::LevelName Level::GetLevelAssetName() const
@@ -92,7 +92,7 @@ namespace r2
 			return "";
 		}
 
-		return mnoptrLevelData->groupName()->c_str();
+		return mnoptrLevelData->groupNameString()->c_str();
 	}
 
 	LevelName Level::GetGroupHashName() const
@@ -104,7 +104,7 @@ namespace r2
 			return 0;
 		}
 
-		return mnoptrLevelData->groupHash();
+		return mnoptrLevelData->groupAssetName();
 	}
 
 	u64 Level::MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties)

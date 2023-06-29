@@ -20,6 +20,7 @@ namespace r2::asset
 		RANIMATION,
 		LEVEL,
 		LEVEL_PACK,
+		LEVEL_GROUP,
 		MATERIAL,
 		TEXTURE_PACK,
 		SOUND,

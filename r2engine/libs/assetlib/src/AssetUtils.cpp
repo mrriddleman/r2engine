@@ -172,6 +172,8 @@ namespace r2::asset
 			return 1;
 		case LEVEL_PACK:
 			return 0;
+		case LEVEL_GROUP:
+			return 0;
 		case MATERIAL:
 			return 0;
 		case TEXTURE_PACK:
