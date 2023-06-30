@@ -5,11 +5,12 @@
 #include "ImGuiFileDialog.h"
 #include <glad/glad.h>
 #include "r2/Editor/Editor.h"
-#include "r2/Editor/EditorActions/NewLevelEditorAction.h"
 #include "r2/Core/File/PathUtils.h"
 #include <filesystem>
 #include <fstream>
-
+#include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Platform/Platform.h"
+#include "r2/Game/Level/LevelManager.h"
 
 namespace r2::edit 
 {
@@ -58,7 +59,7 @@ namespace r2::edit
 				if (ImGui::MenuItem("New Level"))
 				{
 					showNewLevelPopup = true;
-					mNewEditorLevel = {};
+					mNewEditorLevel.Clear();
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
@@ -193,7 +194,7 @@ namespace r2::edit
 				mNewEditorLevel.SetLevelName(levelName);
 				mNewEditorLevel.SetGroupName(groupName);
 
-				mnoptrEditor->PostNewAction(std::make_unique<NewLevelEditorAction>(mnoptrEditor, mNewEditorLevel, mnoptrEditor->GetEditorLevel()));
+				mnoptrEditor->SetCurrentLevel(mNewEditorLevel);
 				ImGui::CloseCurrentPopup();
 			}
 

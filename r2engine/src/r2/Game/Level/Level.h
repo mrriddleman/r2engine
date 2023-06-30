@@ -52,12 +52,16 @@ namespace r2
 		void RemoveEntity(ecs::Entity e) const;
 		void ClearAllEntities() const;
 
+#ifdef R2_EDITOR
+		void ResetLevelName(LevelName levelName)const ;
+#endif
+
 		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
 		friend class LevelManager;
 		const flat::LevelData* mnoptrLevelData;
-		LevelHandle mLevelHandle;
+		mutable LevelHandle mLevelHandle;
 
 		//we're going to add in arrays for each type of asset handle
 		r2::SArray<r2::asset::AssetHandle>* mModelAssets;

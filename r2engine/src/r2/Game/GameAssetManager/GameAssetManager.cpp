@@ -570,6 +570,15 @@ namespace r2
 		return r2::draw::texche::GetCubemapTextureForTexturePack(*mTexturePacksCache, materialParamsPack->pack()->Get(materialParamsPackIndex)->textureParams()->Get(materialTexParamsIndex)->texturePackName());
 	}
 
+	s64 GameAssetManager::GetAssetCacheSlot() const
+	{
+		if (!mAssetCache)
+		{
+			return -1;
+		}
+		return mAssetCache->GetSlot();
+	}
+
 	void GameAssetManager::FreeAllAssets()
 	{
 		if (!mAssetCache || !mCachedRecords)

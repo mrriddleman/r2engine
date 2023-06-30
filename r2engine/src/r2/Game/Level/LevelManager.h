@@ -51,6 +51,8 @@ namespace r2
 
 		void Update();
 
+		const Level* MakeNewLevel(LevelName levelName);
+
 		const Level* LoadLevel(const char* levelURI);
 		const Level* LoadLevel(LevelName levelName);
 

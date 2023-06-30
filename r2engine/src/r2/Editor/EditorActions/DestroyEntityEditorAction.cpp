@@ -39,6 +39,8 @@ namespace r2::edit
 	{
 		mEntityToDestroy = mnoptrEditor->GetSceneGraph().CreateEntity(mParentOfEntityToDestory);
 
+		mnoptrEditor->GetEditorLevel().AddEntity(mEntityToDestroy);
+
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 
 		coordinator->AddComponent<ecs::EditorComponent>(mEntityToDestroy, mEntityEditorNameComponent);
@@ -64,6 +66,7 @@ namespace r2::edit
 			mnoptrEditor->GetSceneGraph().Attach(mChildren[i], mParentOfEntityToDestory);
 		}
 
+		mnoptrEditor->GetEditorLevel().RemoveEntity(mEntityToDestroy);
 		mnoptrEditor->GetSceneGraph().DestroyEntity(mEntityToDestroy);
 
 		r2::evt::EditorEntityDestroyedEvent e(mEntityToDestroy);

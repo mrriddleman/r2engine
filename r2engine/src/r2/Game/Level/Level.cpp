@@ -28,7 +28,6 @@ namespace r2
 		r2::SArray<u64>* texturePacks,
 		r2::SArray<ecs::Entity>* entities)
 	{
-		R2_CHECK(levelData != nullptr, "levelData is nullptr");
 		mnoptrLevelData = levelData;
 		mLevelHandle = levelHandle;
 		mModelAssets = modelAssets;
@@ -61,8 +60,6 @@ namespace r2
 
 	const char* Level::GetLevelName() const
 	{
-		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
-
 		if (!mnoptrLevelData)
 		{
 			return "";
@@ -73,20 +70,11 @@ namespace r2
 
 	r2::LevelName Level::GetLevelAssetName() const
 	{
-		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
-
-		if (!mnoptrLevelData)
-		{
-			return 0;
-		}
-
 		return mLevelHandle.handle;
 	}
 
 	const char* Level::GetGroupName() const
 	{
-		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
-
 		if (!mnoptrLevelData)
 		{
 			return "";
@@ -97,8 +85,6 @@ namespace r2
 
 	LevelName Level::GetGroupHashName() const
 	{
-		R2_CHECK(mnoptrLevelData != nullptr, "mnoptrLevelData is nullptr");
-
 		if (!mnoptrLevelData)
 		{
 			return 0;
@@ -155,4 +141,18 @@ namespace r2
 	{
 		r2::sarr::Clear(*mEntities);
 	}
+
+#ifdef R2_EDITOR
+	void Level::ResetLevelName(LevelName levelName)const
+	{
+		if (!mnoptrLevelData)
+		{
+			mLevelHandle.handle = levelName;
+		}
+		else
+		{
+			R2_CHECK(false, "We can't change the name of a level if we already loaded it");
+		}
+	}
+#endif
 }

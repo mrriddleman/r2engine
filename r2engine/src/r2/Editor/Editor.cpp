@@ -230,7 +230,15 @@ namespace r2
 
 	void Editor::SetCurrentLevel(const EditorLevel& editorLevel)
 	{
-		mCurrentEditorLevel = editorLevel;
+		UnloadCurrentLevel();
+
+		const Level* newLevel = CENG.GetLevelManager().LoadLevel(editorLevel.GetLevelPtr()->GetLevelAssetName());
+
+		mCurrentEditorLevel.Load(newLevel);
+
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel);
+
+		PostEditorEvent(e);
 	}
 
 	const EditorLevel& Editor::GetEditorLevel() const

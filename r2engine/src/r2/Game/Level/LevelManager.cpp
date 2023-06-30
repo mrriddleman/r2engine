@@ -159,6 +159,26 @@ namespace r2
 		mSceneGraph.Update();
 	}
 
+	const Level* LevelManager::MakeNewLevel(LevelName levelName)
+	{
+		Level newLevel;
+
+		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_MODELS);
+		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_ANIMATIONS);
+		r2::SArray<u64>* texturePackAssets = MAKE_SARRAY(*mLevelArena, u64, MAX_NUM_TEXTURE_PACKS);
+		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
+
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		//@NOTE(Serge): sort of weird we're doing this but it's only when we make new levels for the editor
+		//				we may want to have this method only for R2_EDITOR/R2_ASSET_PIPELINE
+		newLevel.Init(nullptr, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, animationAssets, texturePackAssets, entities);
+
+		r2::sarr::Push(*mLoadedLevels, newLevel);
+
+		return &r2::sarr::Last(*mLoadedLevels);
+	}
+
 	const r2::Level* LevelManager::LoadLevel(const char* levelURI)
 	{
 		return LoadLevel(STRING_ID(levelURI));
@@ -195,7 +215,7 @@ namespace r2
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->modelFilePaths()->size());
 		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->animationFilePaths()->size());
 		r2::SArray<u64>* texturePackAssets = MAKE_SARRAY(*mLevelArena, u64, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
-		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, flatLevelData->numEntities());
+		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
 		newLevel.Init(flatLevelData, levelHandle, modelAssets, animationAssets, texturePackAssets, entities);
 
@@ -223,7 +243,7 @@ namespace r2
 		}
 
 		//make the hash name
-		const auto levelHashName = r2::asset::Asset::GetAssetNameForFilePath(level->GetLevelData()->path()->str().c_str(), r2::asset::LEVEL);
+		const auto levelHashName = level->GetLevelAssetName();
 
 		Level defaultLevel = {};
 		s32 index = -1;
@@ -250,11 +270,11 @@ namespace r2
 		FREE(copyOfLevel.mAnimationAssets, *mLevelArena);
 		FREE(copyOfLevel.mModelAssets, *mLevelArena);
 
-		copyOfLevel.Shutdown();
-
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		gameAssetManager.UnloadAsset(copyOfLevel.GetLevelHandle());
+		
+		copyOfLevel.Shutdown();
 	}
 
 	const Level* LevelManager::GetLevel(const char* levelURI)

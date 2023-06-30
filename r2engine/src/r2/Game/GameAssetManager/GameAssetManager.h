@@ -197,6 +197,7 @@ namespace r2
 		std::vector<r2::asset::AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
 		const r2::asset::AssetFile* GetAssetFile(const r2::asset::Asset& asset);
 #endif
+		s64 GetAssetCacheSlot() const;
 
 	private:
 

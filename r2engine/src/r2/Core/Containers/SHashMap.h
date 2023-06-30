@@ -343,12 +343,6 @@ namespace r2
         
         template<typename T> void Remove(SHashMap<T>& h, u64 key)
         {
-
-			if (key == 15207814376541435223)
-			{
-				int k = 0;
-			}
-
             hashmap_internal::FindAndErase(h, key);
         }
         

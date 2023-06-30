@@ -6,6 +6,7 @@
 #include <set>
 #include <string>
 #include "r2/Render/Model/Materials/MaterialTypes.h"
+#include "r2/Game/ECS/Entity.h"
 
 namespace r2::asset
 {
@@ -27,8 +28,12 @@ namespace r2
 		EditorLevel();
 		~EditorLevel();
 
+		
+		void Save();
 		bool Load(const Level* level);
 		void UnloadLevel();
+		void Reload();
+
 
 		void SetVersion(u32 version);
 		u32 GetVersion() const;
@@ -57,8 +62,13 @@ namespace r2
 		void Clear();
 
 		const Level* GetLevelPtr() const;
-
+		void AddEntity(ecs::Entity e) const;
+		void RemoveEntity(ecs::Entity e) const;
 	private:
+		
+
+		void ClearAssetData();
+		void ResetLevelName();
 		u32 mVersion;
 
 		std::string mLevelName;

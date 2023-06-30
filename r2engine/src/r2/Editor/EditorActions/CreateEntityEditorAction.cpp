@@ -20,6 +20,8 @@ namespace r2::edit
 
 	void CreateEntityEditorAction::Undo()
 	{
+		mnoptrEditor->GetEditorLevel().RemoveEntity(mCreatedEntity);
+
 		mnoptrEditor->GetSceneGraph().DestroyEntity(mCreatedEntity);
 
 		r2::evt::EditorEntityDestroyedEvent e(mCreatedEntity);
@@ -30,6 +32,8 @@ namespace r2::edit
 	void CreateEntityEditorAction::Redo()
 	{
 		mCreatedEntity = mnoptrEditor->GetSceneGraph().CreateEntity(mParentEntity);
+
+		mnoptrEditor->GetEditorLevel().AddEntity(mCreatedEntity);
 
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 

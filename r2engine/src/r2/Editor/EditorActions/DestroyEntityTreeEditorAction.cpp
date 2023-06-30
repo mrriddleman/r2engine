@@ -59,6 +59,8 @@ namespace r2::edit
 		{
 			mEntityTree[i] = mnoptrEditor->GetSceneGraph().CreateEntity(mEntityTreeHeirarchyComponents[i].parent);
 
+			mnoptrEditor->GetEditorLevel().AddEntity(mEntityTree[i]);
+
 			mnoptrEditor->GetECSCoordinator()->AddComponent<ecs::EditorComponent>(mEntityTree[i], mEntityTreeEditorNameComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::HeirarchyComponent>(mEntityTree[i], mEntityTreeHeirarchyComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::TransformComponent>(mEntityTree[i], mEntityTreeTransformComponents[i]);
@@ -72,6 +74,7 @@ namespace r2::edit
 	{
 		for (auto iter = mEntityTree.rbegin(); iter != mEntityTree.rend(); ++iter)
 		{
+			mnoptrEditor->GetEditorLevel().RemoveEntity(*iter);
 			mnoptrEditor->GetSceneGraph().DestroyEntity(*iter);
 		}
 
