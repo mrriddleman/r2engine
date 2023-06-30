@@ -7,6 +7,7 @@
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::edit
 {
@@ -20,7 +21,7 @@ namespace r2::edit
 
 	void CreateEntityEditorAction::Undo()
 	{
-		mnoptrEditor->GetEditorLevel().RemoveEntity(mCreatedEntity);
+		mnoptrEditor->GetEditorLevelConst().RemoveEntity(mCreatedEntity);
 
 		mnoptrEditor->GetSceneGraph().DestroyEntity(mCreatedEntity);
 
@@ -33,7 +34,7 @@ namespace r2::edit
 	{
 		mCreatedEntity = mnoptrEditor->GetSceneGraph().CreateEntity(mParentEntity);
 
-		mnoptrEditor->GetEditorLevel().AddEntity(mCreatedEntity);
+		mnoptrEditor->GetEditorLevelConst().AddEntity(mCreatedEntity);
 
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 

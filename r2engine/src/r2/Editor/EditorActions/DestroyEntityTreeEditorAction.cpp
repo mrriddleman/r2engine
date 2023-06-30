@@ -11,6 +11,7 @@
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::edit
 {
@@ -59,7 +60,7 @@ namespace r2::edit
 		{
 			mEntityTree[i] = mnoptrEditor->GetSceneGraph().CreateEntity(mEntityTreeHeirarchyComponents[i].parent);
 
-			mnoptrEditor->GetEditorLevel().AddEntity(mEntityTree[i]);
+			mnoptrEditor->GetEditorLevelConst().AddEntity(mEntityTree[i]);
 
 			mnoptrEditor->GetECSCoordinator()->AddComponent<ecs::EditorComponent>(mEntityTree[i], mEntityTreeEditorNameComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::HeirarchyComponent>(mEntityTree[i], mEntityTreeHeirarchyComponents[i]);
@@ -74,7 +75,7 @@ namespace r2::edit
 	{
 		for (auto iter = mEntityTree.rbegin(); iter != mEntityTree.rend(); ++iter)
 		{
-			mnoptrEditor->GetEditorLevel().RemoveEntity(*iter);
+			mnoptrEditor->GetEditorLevelConst().RemoveEntity(*iter);
 			mnoptrEditor->GetSceneGraph().DestroyEntity(*iter);
 		}
 

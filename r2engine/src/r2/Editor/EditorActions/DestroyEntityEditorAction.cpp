@@ -9,6 +9,7 @@
 
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::edit
 {
@@ -39,7 +40,7 @@ namespace r2::edit
 	{
 		mEntityToDestroy = mnoptrEditor->GetSceneGraph().CreateEntity(mParentOfEntityToDestory);
 
-		mnoptrEditor->GetEditorLevel().AddEntity(mEntityToDestroy);
+		mnoptrEditor->GetEditorLevelConst().AddEntity(mEntityToDestroy);
 
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 
@@ -66,7 +67,7 @@ namespace r2::edit
 			mnoptrEditor->GetSceneGraph().Attach(mChildren[i], mParentOfEntityToDestory);
 		}
 
-		mnoptrEditor->GetEditorLevel().RemoveEntity(mEntityToDestroy);
+		mnoptrEditor->GetEditorLevelConst().RemoveEntity(mEntityToDestroy);
 		mnoptrEditor->GetSceneGraph().DestroyEntity(mEntityToDestroy);
 
 		r2::evt::EditorEntityDestroyedEvent e(mEntityToDestroy);

@@ -64,9 +64,9 @@ namespace r2
 		mnoptrECSCoordinator->DestroyEntity(entity);
 	}
 
-	void SceneGraph::LoadLevel(const Level& level)
+	void SceneGraph::LoadLevel(const Level& level, const flat::LevelData* levelData)
 	{
-		mnoptrECSCoordinator->LoadAllECSDataFromLevel(level);
+		mnoptrECSCoordinator->LoadAllECSDataFromLevel(level, levelData);
 
 		ecs::TransformDirtyComponent dirty;
 

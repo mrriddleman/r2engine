@@ -3,7 +3,6 @@
 #define __EDITOR_MAIN_MENU_BAR_H__
 
 #include "r2/Editor/EditorWidget.h"
-#include "r2/Editor/EditorLevel.h"
 #include <deque>
 
 namespace r2::edit
@@ -28,7 +27,9 @@ namespace r2::edit
 		void LoadRecentsFile();
 		void SaveRecentsFile();
 
-		EditorLevel mNewEditorLevel;
+		std::string mGroupName;
+		std::string mLevelName;
+		
 		std::deque<std::string> mLastLevelPathsOpened;
 
 	};

@@ -1054,6 +1054,24 @@ namespace r2::asset
         }
         return nullptr;
     }
+
+    const AssetFile* AssetCache::GetAssetFileForAssetHandle(const r2::asset::AssetHandle& assetHandle)
+    {
+        for (size_t i = 0; i < mAssetsForFiles.size(); ++i)
+        {
+            const AssetsToFile& assetsToFile = mAssetsForFiles[i];
+            for (size_t j = 0; j < assetsToFile.assets.size(); ++j)
+            {
+                const AssetRecord& assetRecord = assetsToFile.assets[j];
+
+                if (assetRecord.handle == assetHandle)
+                {
+                    return assetsToFile.assetFile;
+                }
+            }
+        }
+        return nullptr;
+    }
 #endif
 
     void AssetCache::ClearFileList()

@@ -8,6 +8,10 @@
 #include "r2/Game/ECS/Systems/SceneGraphSystem.h"
 #include "r2/Game/ECS/Systems/SceneGraphTransformUpdateSystem.h"
 
+namespace flat
+{
+	struct LevelData;
+}
 
 namespace r2
 {
@@ -83,7 +87,7 @@ namespace r2
 		ecs::Entity CreateEntity(ecs::Entity parent);
 		void DestroyEntity(ecs::Entity entity);
 
-		void LoadLevel(const Level& level);
+		void LoadLevel(const Level& level, const flat::LevelData* levelData);
 		void UnloadLevel(const Level& level);
 
 		void Attach(ecs::Entity entity, ecs::Entity parent);

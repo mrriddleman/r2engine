@@ -59,7 +59,8 @@ namespace r2::edit
 				if (ImGui::MenuItem("New Level"))
 				{
 					showNewLevelPopup = true;
-					mNewEditorLevel.Clear();
+					mGroupName = "NewGroup";
+					mLevelName = "NewLevel";
 				}
 				if (ImGui::MenuItem("Open Level"))
 				{
@@ -96,17 +97,29 @@ namespace r2::edit
 					//@TODO(Serge): maybe should be an action
 					mnoptrEditor->Save();
 
-					const auto& level = mnoptrEditor->GetEditorLevel();
+					const auto& level = mnoptrEditor->GetEditorLevelConst();
 
 					std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
 
-					std::filesystem::path fullLevelPath = appLevelPath / level.GetGroupName() / (level.GetLevelName() + ".rlvl");
+					std::filesystem::path fullLevelPath = appLevelPath / std::string(level.GetGroupName()) / (std::string(level.GetLevelName()) + ".rlvl");
 
 					SaveLevelToRecents(fullLevelPath.string());
 				}
 				if (ImGui::MenuItem("Save As.."))
 				{
+					//what should happen:
+					//- open a file dialog with the current level name 
+					//- if we change the name - we need to update the level data
 
+					const auto& level = mnoptrEditor->GetEditorLevelConst();
+
+					std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+
+					std::filesystem::path fullLevelPath = appLevelPath / std::string(level.GetGroupName()) / (std::string(level.GetLevelName()) + ".rlvl");
+					//ImGui::SetNextWindowSize(ImVec2(600, 400));
+					
+					
+					ImGuiFileDialog::Instance()->OpenDialog("SaveAsLevelFileDlgKey", "Save As File", ".rlvl", fullLevelPath.string());
 				}
 
 				ImGui::EndMenu();
@@ -167,18 +180,18 @@ namespace r2::edit
 			ImGui::Text("Level Name: ");
 			ImGui::SameLine(0.0f, 20.0f);
 			char levelName[1000];
-			strncpy(levelName, mNewEditorLevel.GetLevelName().c_str(), 1000);
+			strncpy(levelName, mLevelName.c_str(), 1000);
 			ImGui::InputText("##hidelabel0", levelName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
 			
-			mNewEditorLevel.SetLevelName(levelName);
+			mLevelName = levelName;
 
 			ImGui::Text("Group Name: ");
 			ImGui::SameLine(0.0f, 20.0f);
 			char groupName[1000];
-			strncpy(groupName, mNewEditorLevel.GetGroupName().c_str(), 1000);
+			strncpy(groupName, mGroupName.c_str(), 1000);
 			ImGui::InputText("##hidelabel1", groupName, 1000, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_AutoSelectAll);
 
-			mNewEditorLevel.SetGroupName(groupName);
+			mGroupName = groupName;
 
 			if (ImGui::Button("Cancel"))
 			{
@@ -190,19 +203,17 @@ namespace r2::edit
 
 			if (ImGui::Button("Create"))
 			{
-				mNewEditorLevel.SetVersion(1);
-				mNewEditorLevel.SetLevelName(levelName);
-				mNewEditorLevel.SetGroupName(groupName);
-
-				mnoptrEditor->SetCurrentLevel(mNewEditorLevel);
+				mnoptrEditor->CreateNewLevel(groupName, levelName);
 				ImGui::CloseCurrentPopup();
 			}
 
 			ImGui::EndPopup();
 		}
 		
+		ImVec2 maxSize = ImVec2((float)1200, (float)800);  // The full display area
+		ImVec2 minSize = ImVec2((float)1200 * 0.5, (float)800 * 0.5);  // Half the display area
 		// display
-		if (ImGuiFileDialog::Instance()->Display("ChooseLevelFileDlgKey"))
+		if (ImGuiFileDialog::Instance()->Display("ChooseLevelFileDlgKey", ImGuiWindowFlags_NoCollapse, minSize, maxSize))
 		{
 			// action if OK
 			if (ImGuiFileDialog::Instance()->IsOk())
@@ -213,6 +224,42 @@ namespace r2::edit
 			}
 
 			// close
+			ImGuiFileDialog::Instance()->Close();
+		}
+
+		
+		if (ImGuiFileDialog::Instance()->Display("SaveAsLevelFileDlgKey", ImGuiWindowFlags_NoCollapse, minSize, maxSize))
+		{
+			// action if OK
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				std::filesystem::path appLevelPath = mnoptrEditor->GetAppLevelPath();
+				std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+				std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+				printf("Save As - filePathName: %s\n", filePathName.c_str());
+				printf("Save As - filePath: %s\n\n", filePath.c_str());
+
+				auto& level = mnoptrEditor->GetEditorLevelRef();
+
+				//now figure out if the level name changed at all
+				//get the group name and level name from the filePathName
+				std::filesystem::path levelRelativePath = std::filesystem::path(filePathName).lexically_relative(appLevelPath);
+
+				R2_CHECK(levelRelativePath.parent_path().stem().string() != "", "Group name is empty");
+				R2_CHECK(levelRelativePath.stem().string() != "", "level name is empty");
+
+				if ((levelRelativePath.parent_path().stem().string() != level.GetGroupName() ||
+					levelRelativePath.stem().string() != level.GetLevelName()))
+				{
+					level.SetGroupName(levelRelativePath.parent_path().stem().string().c_str());
+					level.SetLevelName(levelRelativePath.stem().string().c_str());	
+				}
+
+				mnoptrEditor->Save();
+				SaveLevelToRecents(filePathName);
+			}
+
 			ImGuiFileDialog::Instance()->Close();
 		}
 

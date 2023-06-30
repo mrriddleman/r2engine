@@ -384,7 +384,7 @@ namespace r2::edit
 			return;
 		}
 
-		std::string levelName = mnoptrEditor->GetEditorLevel().GetGroupName() + "/" + mnoptrEditor->GetEditorLevel().GetLevelName();
+		std::string levelName = std::string(mnoptrEditor->GetEditorLevelConst().GetGroupName()) + "/" + std::string(mnoptrEditor->GetEditorLevelConst().GetLevelName());
 
 		if (ImGui::TreeNode(levelName.c_str()))
 		{

@@ -50,9 +50,9 @@ namespace r2::ecs
 		return mEntityManager->NumLivingEntities();
 	}
 
-	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level)
+	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level, const flat::LevelData* flatLevelData)
 	{
-		const flat::LevelData* flatLevelData = level.GetLevelData();
+
 
 		//@TODO(Serge): Not sure if we want to destroy all entities - maybe not, for now we are
 		DestoryAllEntities();

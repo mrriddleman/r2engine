@@ -31,6 +31,7 @@
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
+#include "r2/Core/Assets/AssetTypes.h"
 
 //@TEST: for test code only - REMOVE!
 #include "r2/Render/Renderer/Renderer.h"
@@ -43,6 +44,7 @@ namespace r2
 	Editor::Editor()
 		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
 		,mMallocArena(r2::mem::utils::MemBoundary())
+		, mCurrentEditorLevel(nullptr)
 	{
 		
 	}
@@ -67,9 +69,8 @@ namespace r2
 		{
 			widget->Init(this);
 		}
-
 		
-		mCurrentEditorLevel.Clear();
+		CreateNewLevel("NewGroup", "NewLevel");
 	}
 
 	void Editor::Shutdown()
@@ -191,59 +192,59 @@ namespace r2
 	 
 	void Editor::Save()
 	{
-		CENG.GetLevelManager().SaveNewLevelFile(mCurrentEditorLevel);
+		CENG.GetLevelManager().SaveNewLevelFile(*mCurrentEditorLevel);
 	}
 
 	void Editor::LoadLevel(const std::string& filePathName)
 	{
-		if (mCurrentEditorLevel.GetLevelPtr() != nullptr)
+		if (mCurrentEditorLevel)
 		{
 			UnloadCurrentLevel();
 		}
 
 		LevelName levelAssetName = LevelManager::MakeLevelNameFromPath(filePathName.c_str());
 
-		const Level* newLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
-		
-		mCurrentEditorLevel.Load(newLevel);
+		mCurrentEditorLevel = CENG.GetLevelManager().LoadLevel(levelAssetName);
 
-		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel);
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName());
 
 		PostEditorEvent(e);
 	}
 
 	void Editor::UnloadCurrentLevel()
 	{
-		evt::EditorLevelWillUnLoadEvent e(mCurrentEditorLevel);
+		CreateNewLevel("NewGroup", "NewLevel");
+	}
 
-		PostEditorEvent(e);
-
-		const Level* level = mCurrentEditorLevel.GetLevelPtr();
-
-		if (level)
+	void Editor::CreateNewLevel(const std::string& groupName, const std::string& levelName)
+	{
+		if (mCurrentEditorLevel)
 		{
-			CENG.GetLevelManager().UnloadLevel(level);
+			evt::EditorLevelWillUnLoadEvent e(mCurrentEditorLevel->GetLevelAssetName());
+
+			PostEditorEvent(e);
+
+			CENG.GetLevelManager().UnloadLevel(mCurrentEditorLevel);
+			mCurrentEditorLevel = nullptr;
 		}
 
-		mCurrentEditorLevel.UnloadLevel();
-	}
+		std::filesystem::path levelURI = std::filesystem::path(groupName) / std::filesystem::path(levelName);
+		levelURI.replace_extension(".rlvl");
 
-	void Editor::SetCurrentLevel(const EditorLevel& editorLevel)
-	{
-		UnloadCurrentLevel();
-
-		const Level* newLevel = CENG.GetLevelManager().LoadLevel(editorLevel.GetLevelPtr()->GetLevelAssetName());
-
-		mCurrentEditorLevel.Load(newLevel);
-
-		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel);
+		mCurrentEditorLevel = CENG.GetLevelManager().MakeNewLevel(levelName.c_str(), groupName.c_str(), r2::asset::GetAssetNameForFilePath(levelURI.string().c_str(), r2::asset::LEVEL));
+		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName());
 
 		PostEditorEvent(e);
 	}
 
-	const EditorLevel& Editor::GetEditorLevel() const
+	const Level& Editor::GetEditorLevelConst() const
 	{
-		return mCurrentEditorLevel;
+		return *mCurrentEditorLevel;
+	}
+
+	Level& Editor::GetEditorLevelRef() 
+	{
+		return *mCurrentEditorLevel;
 	}
 
 	std::string Editor::GetAppLevelPath() const
@@ -639,20 +640,45 @@ namespace r2
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		const auto* assetFile = gameAssetManager.GetAssetFile(r2::asset::Asset(modelHandle, r2::asset::RMODEL));
-		mCurrentEditorLevel.AddModelFile(assetFile->FilePath());
+		//mCurrentEditorLevel.AddModelFile(assetFile->FilePath());
+		auto* modelAssets = mCurrentEditorLevel->GetModelAssets();
+		auto* materials = mCurrentEditorLevel->GetMaterials();
+
+		r2::asset::AssetHandle modelAssetHandle = { modelHandle, gameAssetManager.GetAssetCacheSlot() };
+
+		if (r2::sarr::IndexOf(*modelAssets, modelAssetHandle) == -1)
+		{
+			//@NOTE(Serge): may want to load here - dunno yet
+			r2::sarr::Push(*modelAssets, modelAssetHandle);
+		}
 
 		const u32 numMaterialNames = r2::sarr::Size(*model.optrMaterialNames);
 
 		for (u32 i = 0; i < numMaterialNames; ++i)
 		{
-			mCurrentEditorLevel.AddMaterialName(r2::sarr::At(*model.optrMaterialNames, i));
+			r2::mat::MaterialName materialName =r2::sarr::At(*model.optrMaterialNames, i);
+			if (r2::sarr::IndexOf(*materials, materialName) == -1)
+			{
+				r2::sarr::Push(*materials, materialName);
+			}
 		}
 	}
 
 	void Editor::AddAnimationToLevel(u64 animationHandle, const r2::draw::Animation& animation)
 	{
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-		mCurrentEditorLevel.AddAnimationFile(gameAssetManager.GetAssetFile(r2::asset::Asset(animationHandle, r2::asset::RANIMATION))->FilePath());
+
+		r2::asset::AssetHandle animationAssetHandle = { animationHandle, gameAssetManager.GetAssetCacheSlot() };
+
+		auto* animations = mCurrentEditorLevel->GetAnimationAssets();
+
+		if (r2::sarr::IndexOf(*animations, animationAssetHandle) == -1)
+		{
+			//@NOTE(Serge): may want to load here - dunno yet
+			r2::sarr::Push(*animations, animationAssetHandle);
+		}
+
+		//mCurrentEditorLevel.AddAnimationFile(gameAssetManager.GetAssetFile(r2::asset::Asset(animationHandle, r2::asset::RANIMATION))->FilePath());
 	}
 }
 

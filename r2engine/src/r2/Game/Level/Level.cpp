@@ -6,13 +6,15 @@
 namespace r2
 {
 	Level::Level()
-		:mnoptrLevelData(nullptr)
+		:mVersion(1u)
 		,mLevelHandle{}
 		,mModelAssets(nullptr)
 		,mAnimationAssets(nullptr)
-		,mTexturePackAssets(nullptr)
+		,mMaterials(nullptr)
 		,mEntities(nullptr)
 	{
+		r2::util::PathCpy(mLevelName, "");
+		r2::util::PathCpy(mGroupName, "");
 	}
 
 	Level::~Level()
@@ -21,18 +23,24 @@ namespace r2
 	}
 
 	bool Level::Init(
-		const flat::LevelData* levelData,
+		u32 version,
+		const char* levelName,
+		const char* groupName,
 		LevelHandle levelHandle,
 		r2::SArray<r2::asset::AssetHandle>* modelAssets,
 		r2::SArray<r2::asset::AssetHandle>* animationAssets,
-		r2::SArray<u64>* texturePacks,
+		r2::SArray<r2::mat::MaterialName>* materials,
 		r2::SArray<ecs::Entity>* entities)
 	{
-		mnoptrLevelData = levelData;
+		
+		mVersion = version;
+		r2::util::PathCpy(mLevelName, levelName);
+		r2::util::PathCpy(mGroupName, groupName);
+
 		mLevelHandle = levelHandle;
 		mModelAssets = modelAssets;
 		mAnimationAssets = animationAssets;
-		mTexturePackAssets = texturePacks;
+		mMaterials = materials;
 		mEntities = entities;
 
 		return true;
@@ -40,18 +48,21 @@ namespace r2
 
 	void Level::Shutdown()
 	{
-		mnoptrLevelData = nullptr;
+		
 		mLevelHandle = {};
 		mModelAssets = nullptr;
 		mAnimationAssets = nullptr;
-		mTexturePackAssets = nullptr;
+		mMaterials = nullptr;
 		mEntities = nullptr;
+
+		r2::util::PathCpy(mLevelName, "");
+		r2::util::PathCpy(mGroupName, "");
 	}
 
-	const flat::LevelData* Level::GetLevelData() const
+	/*const flat::LevelData* Level::GetLevelData() const
 	{
 		return mnoptrLevelData;
-	}
+	}*/
 
 	LevelHandle Level::GetLevelHandle() const
 	{
@@ -60,12 +71,12 @@ namespace r2
 
 	const char* Level::GetLevelName() const
 	{
-		if (!mnoptrLevelData)
-		{
-			return "";
-		}
+		return mLevelName;
+	}
 
-		return mnoptrLevelData->levelNameString()->c_str();
+	void Level::SetLevelName(const char* levelName)
+	{
+		r2::util::PathCpy(mLevelName, levelName);
 	}
 
 	r2::LevelName Level::GetLevelAssetName() const
@@ -75,22 +86,27 @@ namespace r2
 
 	const char* Level::GetGroupName() const
 	{
-		if (!mnoptrLevelData)
-		{
-			return "";
-		}
-
-		return mnoptrLevelData->groupNameString()->c_str();
+		return mGroupName;
 	}
 
 	LevelName Level::GetGroupHashName() const
 	{
-		if (!mnoptrLevelData)
-		{
-			return 0;
-		}
+		return r2::asset::GetAssetNameForFilePath(mGroupName, r2::asset::LEVEL_GROUP);
+	}
 
-		return mnoptrLevelData->groupAssetName();
+	void Level::SetGroupName(const char* groupName)
+	{
+		r2::util::PathCpy(mGroupName, groupName);
+	}
+
+	u32 Level::GetVersion() const
+	{
+		return mVersion;
+	}
+
+	void Level::SetVersion(u32 version)
+	{
+		mVersion = version;
 	}
 
 	u64 Level::MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties)
@@ -99,26 +115,26 @@ namespace r2
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(numModelAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(numAnimationAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numTexturePacks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numTexturePacks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntities), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
 	}
 
-	const r2::SArray<r2::asset::AssetHandle>* Level::GetModelAssets() const
+	r2::SArray<r2::asset::AssetHandle>* Level::GetModelAssets() const
 	{
 		return mModelAssets;
 	}
 
-	const r2::SArray<r2::asset::AssetHandle>* Level::GetAnimationAssets() const
+	r2::SArray<r2::asset::AssetHandle>* Level::GetAnimationAssets() const
 	{
 		return mAnimationAssets;
 	}
 
-	const r2::SArray<u64>* Level::GetTexturePacks() const
+	r2::SArray<r2::mat::MaterialName>* Level::GetMaterials() const
 	{
-		return mTexturePackAssets;
+		return mMaterials;
 	}
 
-	const r2::SArray<ecs::Entity>* Level::GetEntities() const
+	r2::SArray<ecs::Entity>* Level::GetEntities() const
 	{
 		return mEntities;
 	}
@@ -141,18 +157,4 @@ namespace r2
 	{
 		r2::sarr::Clear(*mEntities);
 	}
-
-#ifdef R2_EDITOR
-	void Level::ResetLevelName(LevelName levelName)const
-	{
-		if (!mnoptrLevelData)
-		{
-			mLevelHandle.handle = levelName;
-		}
-		else
-		{
-			R2_CHECK(false, "We can't change the name of a level if we already loaded it");
-		}
-	}
-#endif
 }

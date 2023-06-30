@@ -17,10 +17,6 @@
 
 #endif // R2_ASSET_PIPELINE
 
-#ifdef R2_EDITOR
-#include "r2/Editor/EditorLevel.h"
-#endif
-
 #include "r2/Core/Engine.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
@@ -159,32 +155,32 @@ namespace r2
 		mSceneGraph.Update();
 	}
 
-	const Level* LevelManager::MakeNewLevel(LevelName levelName)
+	Level* LevelManager::MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName)
 	{
 		Level newLevel;
 
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_MODELS);
 		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_ANIMATIONS);
-		r2::SArray<u64>* texturePackAssets = MAKE_SARRAY(*mLevelArena, u64, MAX_NUM_TEXTURE_PACKS);
+		r2::SArray<r2::mat::MaterialName>* materials = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, MAX_NUM_TEXTURE_PACKS);
 		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		//@NOTE(Serge): sort of weird we're doing this but it's only when we make new levels for the editor
 		//				we may want to have this method only for R2_EDITOR/R2_ASSET_PIPELINE
-		newLevel.Init(nullptr, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, animationAssets, texturePackAssets, entities);
+		newLevel.Init(1, levelNameStr, groupName, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, animationAssets, materials, entities);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
 		return &r2::sarr::Last(*mLoadedLevels);
 	}
 
-	const r2::Level* LevelManager::LoadLevel(const char* levelURI)
+	r2::Level* LevelManager::LoadLevel(const char* levelURI)
 	{
 		return LoadLevel(STRING_ID(levelURI));
 	}
 
-	const r2::Level* LevelManager::LoadLevel(LevelName levelName)
+	r2::Level* LevelManager::LoadLevel(LevelName levelName)
 	{
 		if (!mLoadedLevels)
 		{
@@ -212,16 +208,23 @@ namespace r2
 
 		Level newLevel;
 
+#ifdef R2_EDITOR
+		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_MODELS);
+		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_ANIMATIONS);
+		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, MAX_NUM_TEXTURE_PACKS);
+#else
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->modelFilePaths()->size());
 		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->animationFilePaths()->size());
-		r2::SArray<u64>* texturePackAssets = MAKE_SARRAY(*mLevelArena, u64, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
+		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
+#endif
+		
 		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
-		newLevel.Init(flatLevelData, levelHandle, modelAssets, animationAssets, texturePackAssets, entities);
+		newLevel.Init(flatLevelData->version(), flatLevelData->levelNameString()->c_str(), flatLevelData->groupNameString()->c_str(), levelHandle, modelAssets, animationAssets, texturePackAssets, entities);
 
-		LoadLevelData(newLevel);
+		LoadLevelData(newLevel, flatLevelData);
 
-		mSceneGraph.LoadLevel(newLevel);
+		mSceneGraph.LoadLevel(newLevel, flatLevelData);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -266,7 +269,7 @@ namespace r2
 		UnLoadLevelData(copyOfLevel);
 
 		FREE(copyOfLevel.mEntities, *mLevelArena);
-		FREE(copyOfLevel.mTexturePackAssets, *mLevelArena);
+		FREE(copyOfLevel.mMaterials, *mLevelArena);
 		FREE(copyOfLevel.mAnimationAssets, *mLevelArena);
 		FREE(copyOfLevel.mModelAssets, *mLevelArena);
 
@@ -277,12 +280,12 @@ namespace r2
 		copyOfLevel.Shutdown();
 	}
 
-	const Level* LevelManager::GetLevel(const char* levelURI)
+	Level* LevelManager::GetLevel(const char* levelURI)
 	{
 		return GetLevel(STRING_ID(levelURI));
 	}
 
-	const Level* LevelManager::GetLevel(LevelName levelName)
+	Level* LevelManager::GetLevel(LevelName levelName)
 	{
 		s32 index = -1;
 		return FindLoadedLevel(levelName, index);
@@ -311,8 +314,7 @@ namespace r2
 
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
 	{
-		r2::asset::Asset levelAsset = r2::asset::Asset::MakeAssetFromFilePath(levelPath, r2::asset::LEVEL);
-		return levelAsset.HashID();
+		return r2::asset::GetAssetNameForFilePath(levelPath, r2::asset::LEVEL);
 	}
 
 	Level* LevelManager::FindLoadedLevel(LevelName levelname, s32& index)
@@ -333,12 +335,11 @@ namespace r2
 		return nullptr;
 	}
 
-	void LevelManager::LoadLevelData(Level& level)
+	void LevelManager::LoadLevelData(Level& level, const flat::LevelData* levelData)
 	{
-		const flat::LevelData* levelData = level.GetLevelData();
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = level.mModelAssets;
 		r2::SArray<r2::asset::AssetHandle>* animationAssets = level.mAnimationAssets;
-		r2::SArray<u64>* textureAssets = level.mTexturePackAssets;
+		r2::SArray<r2::mat::MaterialName>* materials = level.mMaterials;
 
 		f64 start = CENG.GetTicks();
 
@@ -419,7 +420,8 @@ namespace r2
 
 				r2::sarr::Push(*materialParamsToLoad, materialParams);
 
-				r2::mat::GetAllTexturePacksForMaterial(materialParams, textureAssets);
+				r2::sarr::Push(*materials, materialName);
+				//r2::mat::GetAllTexturePacksForMaterial(materialParams, textureAssets);
 			}
 
 			materialGatherEnd = CENG.GetTicks();
@@ -514,12 +516,35 @@ namespace r2
 
 		r2::SArray<r2::asset::AssetHandle>* modelAssetsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetHandle, r2::sarr::Size(*level.mModelAssets));
 		r2::SArray<r2::asset::AssetHandle>* animationAssetsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetHandle, r2::sarr::Size(*level.mAnimationAssets));
-		r2::SArray<u64>* texturePacksToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, r2::sarr::Size(*level.mTexturePackAssets));
+		r2::SArray<u64>* loadedLevelsTexturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);
+		r2::SArray<u64>* levelToUnloadTexturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);		
+		r2::SArray<u64>* texturePacksToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);
+		
+		//fill the levelToUnloadTexturePacks texture packs
+
+		const auto numMaterialsInLevelToUnload = r2::sarr::Size(*level.mMaterials);
+
+		for (u32 i = 0; i < numMaterialsInLevelToUnload; ++i)
+		{
+			r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialParamsForMaterialName(r2::sarr::At(*level.mMaterials, i)), levelToUnloadTexturePacks);
+		}
+
+		for (u32 i = 0; i < r2::sarr::Size(*mLoadedLevels); ++i)
+		{
+			const auto& nextLoadedLevel = r2::sarr::At(*mLoadedLevels, i);
+
+			const auto numMaterials = r2::sarr::Size(*nextLoadedLevel.mMaterials);
+
+			for (u32 j = 0; j < numMaterials; ++j)
+			{
+				r2::mat::GetAllTexturePacksForMaterial(r2::mat::GetMaterialParamsForMaterialName(r2::sarr::At(*nextLoadedLevel.mMaterials, j)), loadedLevelsTexturePacks);
+			}
+		}
 
 		const u32 numLoadedLevels = r2::sarr::Size(*mLoadedLevels);
 		const u32 numModelsInLevel = r2::sarr::Size(*level.mModelAssets);
 		const u32 numAnimationsInLevel = r2::sarr::Size(*level.mAnimationAssets);
-		const u32 numTexturePacksInLevel = r2::sarr::Size(*level.mTexturePackAssets);
+		const u32 numTexturePacksInLevel = r2::sarr::Size(*loadedLevelsTexturePacks);
 
 		for (u32 j = 0; j < numModelsInLevel; ++j)
 		{
@@ -567,21 +592,11 @@ namespace r2
 
 		for (u32 j = 0; j < numTexturePacksInLevel; ++j)
 		{
-			auto texturePackAsset = r2::sarr::At(*level.mTexturePackAssets, j);
+			auto texturePackAsset = r2::sarr::At(*levelToUnloadTexturePacks, j);
 
 			bool found = false;
 
-			for (u32 i = 0; i < numLoadedLevels && !found; ++i)
-			{
-				const Level& loadedLevel = r2::sarr::At(*mLoadedLevels, i);
-				//now go through each model and see if it's in our level, if it isn't in there then add to the list
-				if (r2::sarr::IndexOf(*loadedLevel.mTexturePackAssets, texturePackAsset) != -1)
-				{
-					found = true;
-				}
-			}
-
-			if (!found)
+			if (r2::sarr::IndexOf(*loadedLevelsTexturePacks, texturePackAsset) == -1)
 			{
 				r2::sarr::Push(*texturePacksToUnload, texturePackAsset);
 			}
@@ -613,6 +628,8 @@ namespace r2
 		}
 
 		FREE(texturePacksToUnload, *MEM_ENG_SCRATCH_PTR);
+		FREE(levelToUnloadTexturePacks, *MEM_ENG_SCRATCH_PTR);
+		FREE(loadedLevelsTexturePacks, *MEM_ENG_SCRATCH_PTR);
 		FREE(animationAssetsToUnload, *MEM_ENG_SCRATCH_PTR);
 		FREE(modelAssetsToUnload, *MEM_ENG_SCRATCH_PTR);
 	}
@@ -662,13 +679,13 @@ namespace r2
 	}
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-	void LevelManager::SaveNewLevelFile(const EditorLevel& editorLevel)
+	void LevelManager::SaveNewLevelFile(const Level& editorLevel)
 	{
 		char binLevelPath[r2::fs::FILE_PATH_LENGTH];
 		char rawLevelPath[r2::fs::FILE_PATH_LENGTH];
 
-		std::string levelBinURI = editorLevel.GetGroupName() + r2::fs::utils::PATH_SEPARATOR + editorLevel.GetLevelName() + ".rlvl";
-		std::string levelRawURI = editorLevel.GetGroupName() + r2::fs::utils::PATH_SEPARATOR + editorLevel.GetLevelName() + ".json";
+		std::string levelBinURI = std::string(editorLevel.GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(editorLevel.GetLevelName()) + ".rlvl";
+		std::string levelRawURI = std::string(editorLevel.GetGroupName()) + r2::fs::utils::PATH_SEPARATOR + std::string(editorLevel.GetLevelName()) + ".json";
 
 		r2::fs::utils::AppendSubPath(mBinOutputPath, binLevelPath, levelBinURI.c_str());
 		r2::fs::utils::AppendSubPath(mRawOutputPath, rawLevelPath, levelRawURI.c_str());

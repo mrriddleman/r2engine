@@ -12,6 +12,11 @@ namespace r2
 	class Level;
 }
 
+namespace flat
+{
+	struct LevelData;
+}
+
 namespace r2::ecs
 {
 	class ECSCoordinator
@@ -72,7 +77,7 @@ namespace r2::ecs
 
 		u32 NumLivingEntities() const;
 
-		void LoadAllECSDataFromLevel(const Level& level);
+		void LoadAllECSDataFromLevel(const Level& level, const flat::LevelData* levelData);
 		void UnloadAllECSDataFromLevel(const Level& level);
 
 		template<typename Component>

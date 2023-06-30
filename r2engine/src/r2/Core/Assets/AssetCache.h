@@ -95,6 +95,9 @@ namespace r2::asset
         std::vector<AssetFile*> GetAllAssetFilesForAssetType(r2::asset::AssetType type);
 
         const AssetFile* GetAssetFileForAsset(const r2::asset::Asset& asset);
+
+        const AssetFile* GetAssetFileForAssetHandle(const r2::asset::AssetHandle& assetHandle);
+
 #endif
         void ClearFileList();
 

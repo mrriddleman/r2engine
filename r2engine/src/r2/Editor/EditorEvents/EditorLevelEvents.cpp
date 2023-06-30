@@ -4,18 +4,18 @@
 
 namespace r2::evt
 {
-	const r2::EditorLevel& EditorLevelEvent::GetEditorLevel() const
+	const r2::LevelName& EditorLevelEvent::GetEditorLevel() const
 	{
 		return mLevel;
 	}
 
-	EditorLevelEvent::EditorLevelEvent(const EditorLevel& level, bool shouldConsume)
+	EditorLevelEvent::EditorLevelEvent(const LevelName& level, bool shouldConsume)
 		:EditorEvent(shouldConsume)
 		, mLevel(level)
 	{
 	}
 
-	EditorLevelLoadedEvent::EditorLevelLoadedEvent(const EditorLevel& level)
+	EditorLevelLoadedEvent::EditorLevelLoadedEvent(const LevelName& level)
 		:EditorLevelEvent(level, false)
 	{
 	}
@@ -23,12 +23,12 @@ namespace r2::evt
 	std::string EditorLevelLoadedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorLevelLoadedEvent level: " << "Group Name: " << mLevel.GetGroupName() << ", Level Name: " << mLevel.GetLevelName();
+		ss << "EditorLevelLoadedEvent level: " << mLevel;
 		return ss.str();
 	}
 
 
-	EditorNewLevelCreatedEvent::EditorNewLevelCreatedEvent(EditorLevel& editorLevel)
+	EditorNewLevelCreatedEvent::EditorNewLevelCreatedEvent(LevelName& editorLevel)
 		:EditorLevelEvent(editorLevel, false)
 	{
 
@@ -37,12 +37,12 @@ namespace r2::evt
 	std::string EditorNewLevelCreatedEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorNewLevelCreatedEvent new level: " << "Group Name: " << mLevel.GetGroupName() << ", Level Name: " << mLevel.GetLevelName();
+		ss << "EditorNewLevelCreatedEvent new level: " << mLevel;
 		return ss.str();
 	}
 
 
-	EditorSetEditorLevel::EditorSetEditorLevel(EditorLevel& editorLevel)
+	EditorSetEditorLevel::EditorSetEditorLevel(LevelName& editorLevel)
 		:EditorLevelEvent(editorLevel, false)
 	{
 	}
@@ -50,11 +50,11 @@ namespace r2::evt
 	std::string EditorSetEditorLevel::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorSetEditorLevel set to level: " << "Group Name: " << mLevel.GetGroupName() << ", Level Name: " << mLevel.GetLevelName();
+		ss << "EditorSetEditorLevel set to level: " << mLevel;
 		return ss.str();
 	}
 
-	EditorLevelWillUnLoadEvent::EditorLevelWillUnLoadEvent(const EditorLevel& level)
+	EditorLevelWillUnLoadEvent::EditorLevelWillUnLoadEvent(const LevelName& level)
 		:EditorLevelEvent(level, false)
 	{
 
@@ -63,7 +63,7 @@ namespace r2::evt
 	std::string EditorLevelWillUnLoadEvent::ToString() const
 	{
 		std::stringstream ss;
-		ss << "EditorLevelWillUnLoadedEvent will unload level: " << "Group Name: " << mLevel.GetGroupName() << ", Level Name: " << mLevel.GetLevelName();
+		ss << "EditorLevelWillUnLoadedEvent will unload level: " << mLevel;
 		return ss.str();
 	}
 

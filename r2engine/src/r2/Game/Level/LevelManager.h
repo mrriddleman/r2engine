@@ -22,7 +22,6 @@ namespace r2
 {
 	struct LevelCache;
 	class GameAssetManager;
-	class EditorLevel;
 
 	using LevelGroup = r2::SArray<Level*>*;
 
@@ -51,13 +50,13 @@ namespace r2
 
 		void Update();
 
-		const Level* MakeNewLevel(LevelName levelName);
+		Level* MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName);
 
-		const Level* LoadLevel(const char* levelURI);
-		const Level* LoadLevel(LevelName levelName);
+		Level* LoadLevel(const char* levelURI);
+		Level* LoadLevel(LevelName levelName);
 
-		const Level* GetLevel(const char* levelURI);
-		const Level* GetLevel(LevelName levelName);
+		Level* GetLevel(const char* levelURI);
+		Level* GetLevel(LevelName levelName);
 
 		void UnloadLevel(const Level* level);
 
@@ -70,7 +69,7 @@ namespace r2
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
-		void SaveNewLevelFile(const EditorLevel& editorLevel);
+		void SaveNewLevelFile(const Level& editorLevel);
 #endif
 		static u64 MemorySize(
 			u32 maxNumLevels,
@@ -84,7 +83,7 @@ namespace r2
 		
 		Level* FindLoadedLevel(LevelName levelname, s32& index);
 
-		void LoadLevelData(Level& level);
+		void LoadLevelData(Level& level, const flat::LevelData* levelData);
 		void UnLoadLevelData(const Level& level);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;

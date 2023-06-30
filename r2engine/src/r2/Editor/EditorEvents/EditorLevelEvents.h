@@ -4,24 +4,24 @@
 #ifdef R2_EDITOR
 
 #include "r2/Editor/EditorEvents/EditorEvent.h"
-#include "r2/Editor/EditorLevel.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::evt
 {
 	class EditorLevelEvent : public EditorEvent
 	{
 	public:
-		const EditorLevel& GetEditorLevel() const;
+		const LevelName& GetEditorLevel() const;
 		EVENT_CLASS_CATEGORY(ECAT_EDITOR | ECAT_EDITOR_LEVEL)
 	protected:
-		EditorLevelEvent(const EditorLevel& level, bool shouldConsume);
-		EditorLevel mLevel;
+		EditorLevelEvent(const LevelName& level, bool shouldConsume);
+		LevelName mLevel;
 	};
 
 	class EditorLevelLoadedEvent : public EditorLevelEvent
 	{
 	public:
-		EditorLevelLoadedEvent(const EditorLevel& level);
+		EditorLevelLoadedEvent(const LevelName& level);
 		std::string ToString() const override;
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_LOADED)
 	};
@@ -29,7 +29,7 @@ namespace r2::evt
 	class EditorLevelWillUnLoadEvent : public EditorLevelEvent
 	{
 	public:
-		EditorLevelWillUnLoadEvent(const EditorLevel& level);
+		EditorLevelWillUnLoadEvent(const LevelName& level);
 		std::string ToString() const override;
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_WILL_UNLOAD)
 	};
@@ -37,7 +37,7 @@ namespace r2::evt
 	class EditorNewLevelCreatedEvent : public EditorLevelEvent
 	{
 	public:
-		EditorNewLevelCreatedEvent(EditorLevel& editorLevel);
+		EditorNewLevelCreatedEvent(LevelName& editorLevel);
 		std::string ToString() const override;
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_CREATED)
 	};
@@ -45,7 +45,7 @@ namespace r2::evt
 	class EditorSetEditorLevel : public EditorLevelEvent
 	{
 	public:
-		EditorSetEditorLevel(EditorLevel& editorLevel);
+		EditorSetEditorLevel(LevelName& editorLevel);
 		std::string ToString() const override;
 		EVENT_CLASS_TYPE(EVT_EDITOR_LEVEL_SET)
 	};

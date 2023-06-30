@@ -5,7 +5,7 @@
 
 #include <string>
 #include "r2/Core/Assets/AssetTypes.h"
-#include "r2/Editor/EditorLevel.h"
+#include "r2/Game/Level/Level.h"
 
 namespace r2::ecs
 {
@@ -20,7 +20,7 @@ namespace r2::asset::pln
 		const r2::ecs::ECSCoordinator* coordinator,
 		const std::string& binLevelPath,
 		const std::string& rawJSONPath,
-		const EditorLevel& editorLevel);
+		const r2::Level& editorLevel);
 	void RegenerateLevelDataFromDirectories(const std::string& binFilePath, const std::string& rawFilePath, const std::string& binaryDir, const std::string& rawDir);
 	bool GenerateEmptyLevelPackFile(const std::string& binFilePath, const std::string& rawFilePath);
 }

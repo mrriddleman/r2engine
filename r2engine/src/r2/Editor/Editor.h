@@ -7,7 +7,8 @@
 #include "r2/Editor/EditorActions/EditorAction.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Utils/Random.h"
-#include "r2/Editor/EditorLevel.h"
+
+
 
 namespace r2::evt
 {
@@ -30,6 +31,7 @@ namespace r2::draw
 namespace r2
 {
 	class SceneGraph;
+	class Level;
 
 	class Editor
 	{
@@ -47,9 +49,11 @@ namespace r2
 		void Save();
 		void LoadLevel(const std::string& filePathName);
 		void UnloadCurrentLevel();
+		void CreateNewLevel(const std::string& groupName, const std::string& levelName);
 
-		void SetCurrentLevel(const EditorLevel& editorLevel);
-		const EditorLevel& GetEditorLevel() const;
+		
+		const Level& GetEditorLevelConst() const;
+		Level& GetEditorLevelRef() ;
 
 		void PostNewAction(std::unique_ptr<edit::EditorAction> action);
 		void PostEditorEvent(r2::evt::EditorEvent& e);
@@ -68,7 +72,7 @@ namespace r2
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 		r2::mem::MallocArena mMallocArena;
 
-		EditorLevel mCurrentEditorLevel;
+		Level* mCurrentEditorLevel;
 
 		std::vector<void*> mComponentAllocations;
 
