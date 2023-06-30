@@ -257,6 +257,8 @@ namespace r2::edit
 				}
 
 				mnoptrEditor->Save();
+				//We're loading it again so that everything is properly sync'd in the level manager
+				mnoptrEditor->LoadLevel(filePathName);
 				SaveLevelToRecents(filePathName);
 			}
 
