@@ -27,9 +27,9 @@ namespace r2
     {
         struct HashMapEntry
         {
-            u64 key = 0;
-            u64 next = 0;
-            T value{};
+            u64 key;
+            u64 next;
+            T value;
         };
         
         SHashMap(): mCapacity(0), mHash(nullptr), mData(nullptr){}
@@ -52,7 +52,6 @@ namespace r2
         {
             return LOAD_FACTOR_MULT;
         }
-
 
         u64 mCapacity;
         SArray<u64>* mHash;
@@ -132,38 +131,34 @@ namespace r2
         
         template<typename T> FindResult Find(const SHashMap<T>& h, u64 key)
         {
-			if (key == 15207814376541435223)
-			{
-				int k = 0;
-			}
-
             FindResult fr;
             
             fr.hash_i = END_OF_LIST;
             fr.data_prev = END_OF_LIST;
             fr.data_i = END_OF_LIST;
             
-            u64 size = h.mHash->mSize;
+            u64 size = r2::sarr::Size(*h.mHash);
             if (size == 0)
             {
                 R2_CHECK(false, "");
+                return fr;
             }
             
             fr.hash_i = key % size;
-            fr.data_i = (*h.mHash)[fr.hash_i];
+            fr.data_i = h.mHash->mData[fr.hash_i];
             
             while (fr.data_i != END_OF_LIST)
             {
-                if (((*h.mData)[fr.data_i]).key == key)
+                if (h.mData->mData[fr.data_i].key == key)
                 {
                     return fr;
                 }
                 
                 fr.data_prev = fr.data_i;
-                fr.data_i = ((*h.mData)[fr.data_i]).next;
+                fr.data_i = h.mData->mData[fr.data_i].next;
             }
+
             return fr;
-            
         }
         
         template<typename T> FindResult Find(const SHashMap<T>& h, const typename SHashMap<T>::HashMapEntry * e)
@@ -174,24 +169,25 @@ namespace r2
             fr.data_prev = END_OF_LIST;
             fr.data_i = END_OF_LIST;
 
-            u64 size = h.mHash->mSize;
+            u64 size = r2::sarr::Size(*h.mHash);
             if (size == 0)
             {
                 R2_CHECK(false, "");
+                return fr;
             }
             
             fr.hash_i = e->key % size;
-            fr.data_i = (*h.mHash)[fr.hash_i];
+            fr.data_i = h.mHash->mData[fr.hash_i];
             
             while (fr.data_i != END_OF_LIST)
             {
-                if (&((*h.mData)[fr.data_i]) == e)
+                if (&(h.mData->mData[fr.data_i]) == e)
                 {
                     return fr;
                 }
                 
                 fr.data_prev = fr.data_i;
-                fr.data_i = ((*h.mData)[fr.data_i]).next;
+                fr.data_i = h.mData->mData[fr.data_i].next;
             }
             
             return fr;
@@ -201,32 +197,33 @@ namespace r2
         {
             if (fr.data_prev == END_OF_LIST)
             {
-                (*h.mHash)[fr.hash_i] = ((*h.mData)[fr.data_i]).next;
+                h.mHash->mData[fr.hash_i] = h.mData->mData[fr.data_i].next;
             }
             else
             {
-                ((*h.mData)[fr.data_prev]).next = ((*h.mData)[fr.data_i]).next;
+                h.mData->mData[fr.data_prev].next = h.mData->mData[fr.data_i].next;
             }
 
-            s64 size = static_cast<s64>(h.mData->mSize);
+            s64 size = static_cast<s64>(r2::sarr::Size(*h.mData));
             if (fr.data_i == size - 1)
             { 
                 r2::sarr::Pop(*h.mData);
-
                 return;
             }
             
-            (*h.mData)[fr.data_i] = (*h.mData)[size-1];
+            h.mData->mData[fr.data_i] = h.mData->mData[size-1];
             
+            r2::sarr::Pop(*h.mData);
+
             FindResult last = Find(h, h.mData->mData[fr.data_i].key);
             
             if (last.data_prev != END_OF_LIST)
             {
-                ((*h.mData)[last.data_prev]).next = fr.data_i;
+                h.mData->mData[last.data_prev].next = fr.data_i;
             }
             else
             {
-                (*h.mHash)[last.hash_i] = fr.data_i;
+                h.mHash->mData[last.hash_i] = fr.data_i;
             }
         }
         
@@ -248,11 +245,11 @@ namespace r2
             
             if (fr.data_prev == END_OF_LIST)
             {
-                (*h.mHash)[fr.hash_i] = i;
+                h.mHash->mData[fr.hash_i] = i;
             }
             else
             {
-                ((*h.mData)[fr.data_prev]).next = i;
+                h.mData->mData[fr.data_prev].next = i;
             }
 
             return i;
@@ -266,14 +263,14 @@ namespace r2
             
             if (fr.data_prev == END_OF_LIST)
             {
-                ((*h.mHash)[fr.hash_i]) = i;
+                h.mHash->mData[fr.hash_i] = i;
             }
             else
             {
-                ((*h.mData)[fr.data_prev]).next = i;
+                h.mData->mData[fr.data_prev].next = i;
             }
              
-            ((*h.mData)[i]).next = fr.data_i;
+            h.mData->mData[i].next = fr.data_i;
 
             return i;
         }
@@ -310,7 +307,6 @@ namespace r2
             return i == hashmap_internal::END_OF_LIST ? theDefault : (*h.mData)[i].value;
         }
 
-
         template<typename T> T& Get(SHashMap<T>& h, u64 key, T& theDefault, bool& success) //success == true if it's not default
         {
             success = false;
@@ -330,7 +326,7 @@ namespace r2
         template<typename T> const T& Get(const SHashMap<T>& h, u64 key, const T& theDefault)
         {
             const u64 i = hashmap_internal::FindOrFail(h, key);
-            return i == hashmap_internal::END_OF_LIST ? theDefault : (*h.mData)[i].value;
+            return i == hashmap_internal::END_OF_LIST ? theDefault : ((*h.mData)[i]).value;
         }
         
         template<typename T> void Set(SHashMap<T>& h, u64 key, const T & value)
@@ -344,18 +340,16 @@ namespace r2
         template<typename T> void Remove(SHashMap<T>& h, u64 key)
         {
             hashmap_internal::FindAndErase(h, key);
+
+#ifdef R2_DEBUG
+			R2_CHECK(!r2::shashmap::Has(h, key), "We have a key: %llu that wasn't removed!", key);
+#endif
         }
         
         template<typename T> void Clear(SHashMap<T>& h)
         {
             r2::sarr::Clear(*h.mData);
-            
-            h.mHash->mSize = h.mCapacity;
-            
-            for (u64 i = 0; i < h.mCapacity; ++i)
-            {
-                (*h.mHash)[i] = hashmap_internal::END_OF_LIST;
-            }
+            r2::sarr::Fill(*h.mHash, hashmap_internal::END_OF_LIST);
         }
         
         template<typename T> const typename SHashMap<T>::HashMapEntry * Begin(const SHashMap<T>& h)
@@ -516,12 +510,7 @@ namespace r2
         mData = dataArrayStart;
         mData->Create(dataStart, capacity);
         
-        mHash->mSize = capacity;
-        
-        for (u64 i = 0; i < capacity; ++i)
-        {
-            (*mHash)[i] = hashmap_internal::END_OF_LIST;
-        }
+        r2::sarr::Fill(*mHash, hashmap_internal::END_OF_LIST);
     }
 }
 

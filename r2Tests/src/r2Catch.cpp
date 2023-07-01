@@ -1104,7 +1104,7 @@ TEST_CASE("Test SHashMap")
     SECTION("Test shashmap functionality")
     {
         r2::mem::StackArena stackArena(*testMemoryArea->GetSubArea(subAreaHandle));
-        r2::SHashMap<char>* hashMap = MAKE_SHASHMAP(stackArena, char, 255);
+        r2::SHashMap<char>* hashMap = MAKE_SHASHMAP(stackArena, char, (128-32) *1.5);
         
         REQUIRE(hashMap != nullptr);
         
@@ -1170,6 +1170,16 @@ TEST_CASE("Test SHashMap")
 
                 REQUIRE(val == defaultChar);
             }
+        }
+
+        for (size_t i = 32; i < 127; ++i)
+        {
+            if (r2::shashmap::Has(*hashMap, i))
+            {
+                r2::shashmap::Remove(*hashMap, i);
+            }
+
+            REQUIRE(!r2::shashmap::Has(*hashMap, i));
         }
         
         FREE(hashMap, stackArena);
