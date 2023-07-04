@@ -39,6 +39,7 @@
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Core/Assets/AssetFiles/ManifestAssetFile.h"
+#include "r2/Core/Layer/ECSLayer.h"
 
 #ifdef R2_DEBUG
 #include <chrono>
@@ -479,7 +480,8 @@ namespace r2
             //@TODO(Serge): don't use make unique!
             PushLayer(std::make_unique<RenderLayer>());
             PushLayer(std::make_unique<SoundLayer>());
-            
+            PushLayer(std::make_unique<ECSLayer>(mECSWorld));
+
 #ifdef R2_IMGUI
             std::unique_ptr<ImGuiLayer> imguiLayer = std::make_unique<ImGuiLayer>();
             mImGuiLayer = imguiLayer.get();
@@ -537,7 +539,6 @@ namespace r2
 			OnEvent(e);
         }
 
-        mECSWorld->Update();
         if (!mMinimized)
         {
             mLayerStack.Update();
@@ -611,7 +612,6 @@ namespace r2
     
     void Engine::Render(float alpha)
     {
-        mECSWorld->Render();
         if (!mMinimized)
         {
             mLayerStack.Render(alpha);
