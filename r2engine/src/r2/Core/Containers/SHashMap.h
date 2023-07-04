@@ -122,6 +122,25 @@ namespace r2
         {
             typename SHashMap<T>::HashMapEntry e;
             
+			//check to see if we have this key
+#ifdef R2_DEBUG
+			bool found = false;
+			const u32 numDatas = r2::sarr::Size(*h.mData);
+			for (u32 i = 0; i < numDatas; ++i)
+			{
+				if (r2::sarr::At(*h.mData, i).key == key)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (found)
+			{
+				R2_CHECK(false, "we already have the key");
+			}
+#endif
+
             e.key = key;
             e.next = END_OF_LIST;
             u64 ei = r2::sarr::Size(*h.mData);

@@ -40,15 +40,12 @@ namespace r2
 
 		bool Init(
 			r2::mem::MemoryArea::Handle memoryAreaHandle,
-			ecs::ECSCoordinator* ecsCoordinator,
 			const char* levelPackPath,
 			const char* areaName,
 			u32 maxNumLevels,
 			const char* binLevelOutputPath,
 			const char* rawLevelOutputPath);
 		void Shutdown();
-
-		void Update();
 
 		Level* MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName);
 
@@ -62,9 +59,6 @@ namespace r2
 
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
-
-		SceneGraph& GetSceneGraph();
-		SceneGraph* GetSceneGraphPtr();
 
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
@@ -95,7 +89,6 @@ namespace r2
 
 		r2::SArray<Level>* mLoadedLevels;
 
-		SceneGraph mSceneGraph;	
 		char mBinOutputPath[r2::fs::FILE_PATH_LENGTH];
 		char mRawOutputPath[r2::fs::FILE_PATH_LENGTH];
 	};

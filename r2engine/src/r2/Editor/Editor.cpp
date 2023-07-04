@@ -19,8 +19,6 @@
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
-#include "r2/Game/ECS/Systems/DebugBonesRenderSystem.h"
-#include "r2/Game/ECS/Systems/DebugRenderSystem.h"
 #endif
 #include "imgui.h"
 
@@ -127,9 +125,6 @@ namespace r2
 
 	void Editor::Update()
 	{
-		CENG.GetLevelManager().Update();
-		MENG.GetECSWorld().GetSkeletalAnimationSystem()->Update();
-
 		for (const auto& widget : mEditorWidgets)
 		{
 			widget->Update();
@@ -138,13 +133,7 @@ namespace r2
 
 	void Editor::Render()
 	{
-		MENG.GetECSWorld().GetRenderSystem()->Render();
 
-
-#ifdef R2_DEBUG
-		MENG.GetECSWorld().GetDebugRenderSystem()->Render();
-		MENG.GetECSWorld().GetDebugBonesRenderSystem()->Render();
-#endif
 	}
 
 	void Editor::RenderImGui(u32 dockingSpaceID)
@@ -617,12 +606,7 @@ namespace r2
 
 	SceneGraph& Editor::GetSceneGraph()
 	{
-		return CENG.GetLevelManager().GetSceneGraph();
-	}
-
-	SceneGraph* Editor::GetSceneGraphPtr()
-	{
-		return CENG.GetLevelManager().GetSceneGraphPtr();
+		return MENG.GetECSWorld().GetSceneGraph();
 	}
 
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()

@@ -32,8 +32,10 @@ namespace r2
 		,mMaxNumLevels(0)
 		,mArena(nullptr)
 		,mLoadedLevels(nullptr)
-		,mSceneGraph{}
+		,mLevelArena(nullptr)
 	{
+		r2::util::PathCpy(mBinOutputPath, "");
+		r2::util::PathCpy(mRawOutputPath, "");;
 	}
 
 	LevelManager::~LevelManager()
@@ -42,7 +44,6 @@ namespace r2
 
 	bool LevelManager::Init(
 		r2::mem::MemoryArea::Handle memoryAreaHandle,
-		ecs::ECSCoordinator* ecsCoordinator,
 		const char* levelPackPath,
 		const char* areaName,
 		u32 maxNumLevels,
@@ -105,9 +106,6 @@ namespace r2
 
 		mLoadedLevels = MAKE_SARRAY(*mArena, Level, maxNumLevels);
 
-		mSceneGraph.Init<r2::mem::StackArena>(*mArena, ecsCoordinator);
-
-
 		//@TODO(Serge): add in the level files from the path
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 		r2::asset::FileList fileList = gameAssetManager.GetFileList();
@@ -139,8 +137,6 @@ namespace r2
 
 		r2::sarr::Clear(*mLoadedLevels);
 
-		mSceneGraph.Shutdown<r2::mem::StackArena>(*mArena);
-
 		FREE(mLoadedLevels, *mArena);
 
 		FREE(mLevelArena, *mArena);
@@ -148,11 +144,6 @@ namespace r2
 		FREE_EMPLACED_ARENA(mArena);
 
 		//@TODO(Serge): should we have to remove the sub areas?
-	}
-
-	void LevelManager::Update()
-	{
-		mSceneGraph.Update();
 	}
 
 	Level* LevelManager::MakeNewLevel(const char* levelNameStr, const char* groupName, LevelName levelName)
@@ -224,7 +215,8 @@ namespace r2
 
 		LoadLevelData(newLevel, flatLevelData);
 
-		mSceneGraph.LoadLevel(newLevel, flatLevelData);
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+		ecsWorld.LoadLevel(newLevel, flatLevelData);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -258,7 +250,8 @@ namespace r2
 			return;
 		}
 
-		mSceneGraph.UnloadLevel(*theLevel);
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+		ecsWorld.UnloadLevel(*theLevel);
 		
 		theLevel->ClearAllEntities();
 		
@@ -300,16 +293,6 @@ namespace r2
 	bool LevelManager::IsLevelLoaded(const char* levelName)
 	{
 		return IsLevelLoaded(STRING_ID(levelName));
-	}
-
-	SceneGraph& LevelManager::GetSceneGraph()
-	{
-		return mSceneGraph;
-	}
-
-	SceneGraph* LevelManager::GetSceneGraphPtr()
-	{
-		return &mSceneGraph;
 	}
 
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
@@ -661,19 +644,9 @@ namespace r2
 		
 		memorySize += freeListArenaSize;
 		
-
-		r2::mem::utils::MemoryProperties lvlCacheMemProps;
-		lvlCacheMemProps.alignment = memProperties.alignment;
-		lvlCacheMemProps.headerSize = stackHeaderSize;
-		lvlCacheMemProps.boundsChecking = memProperties.boundsChecking;
-
 		auto hashMapSize = r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<Level>::MemorySize(maxNumLevels), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
 		
 		memorySize += hashMapSize;
-		
-		auto sceneGraphMemory = SceneGraph::MemorySize(lvlCacheMemProps);
-
-		memorySize += sceneGraphMemory;
 
 		return memorySize;
 	}

@@ -3,12 +3,18 @@
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
-
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
+#include "r2/Game/SceneGraph/SceneGraph.h"
 
 namespace r2
 {
 	class LevelManager;
+	class Level;
+}
+
+namespace flat
+{
+	struct LevelData;
 }
 
 namespace r2::ecs
@@ -32,14 +38,14 @@ namespace r2::ecs
 		bool Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
 		void Shutdown();
 
-		r2::ecs::ECSCoordinator* GetECSCoordinator() const;
-		r2::ecs::RenderSystem* GetRenderSystem() const;
-		r2::ecs::SkeletalAnimationSystem* GetSkeletalAnimationSystem();
-#ifdef R2_DEBUG
-		r2::ecs::DebugRenderSystem* GetDebugRenderSystem();
-		r2::ecs::DebugBonesRenderSystem* GetDebugBonesRenderSystem();
-#endif // R2_DEBUG
+		void Update();
+		void Render();
 
+		bool LoadLevel(const Level& level, const flat::LevelData* levelData);
+		bool UnloadLevel(const Level& level);
+
+		r2::ecs::ECSCoordinator* GetECSCoordinator() const;
+		SceneGraph& GetSceneGraph();
 
 		u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
 
@@ -68,11 +74,12 @@ namespace r2::ecs
 		r2::ecs::DebugBonesRenderSystem* moptrDebugBonesRenderSystem;
 #endif
 
+		SceneGraph mSceneGraph;
+
 		//This is temporary since we don't know how much memory will be needed for the component allocations
 		//will need to change this later
 		r2::mem::MallocArena mMallocArena;
 		std::vector<void*> mComponentAllocations;
-
 	};
 }
 

@@ -59,11 +59,6 @@ namespace r2
 		r2::util::PathCpy(mGroupName, "");
 	}
 
-	/*const flat::LevelData* Level::GetLevelData() const
-	{
-		return mnoptrLevelData;
-	}*/
-
 	LevelHandle Level::GetLevelHandle() const
 	{
 		return mLevelHandle;

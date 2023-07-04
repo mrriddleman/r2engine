@@ -84,12 +84,44 @@ namespace r2::ecs
 
 		RegisterEngineComponents();
 		RegisterEngineSystems();
+		
+		bool sceneGraphInitialized = mSceneGraph.Init<r2::mem::StackArena>(*mArena, mECSCoordinator);
+		R2_CHECK(sceneGraphInitialized, "The scene graph didn't initialize?");
 
-		return result;
+		return result && sceneGraphInitialized;
+	}
+
+	void ECSWorld::Update()
+	{
+		mSceneGraph.Update();
+		moptrSkeletalAnimationSystem->Update();
+	}
+
+	void ECSWorld::Render()
+	{
+		moptrRenderSystem->Render();
+#ifdef R2_DEBUG
+		moptrDebugRenderSystem->Render();
+		moptrDebugBonesRenderSystem->Render();
+#endif
+	}
+
+	bool ECSWorld::LoadLevel(const Level& level, const flat::LevelData* levelData)
+	{
+		mSceneGraph.LoadLevel(level, levelData);
+		return true;
+	}
+
+	bool ECSWorld::UnloadLevel(const Level& level)
+	{
+		mSceneGraph.UnloadLevel(level);
+		return true;
 	}
 
 	void ECSWorld::Shutdown()
 	{
+		mSceneGraph.Shutdown<r2::mem::StackArena>(*mArena);
+
 		UnRegisterEngineSystems();
 		UnRegisterEngineComponents();
 
@@ -108,27 +140,10 @@ namespace r2::ecs
 		return mECSCoordinator;
 	}
 
-	r2::ecs::RenderSystem* ECSWorld::GetRenderSystem() const
+	SceneGraph& ECSWorld::GetSceneGraph()
 	{
-		return moptrRenderSystem;
+		return mSceneGraph;
 	}
-
-	r2::ecs::SkeletalAnimationSystem* ECSWorld::GetSkeletalAnimationSystem()
-	{
-		return moptrSkeletalAnimationSystem;
-	}
-
-#ifdef R2_DEBUG
-	r2::ecs::DebugRenderSystem* ECSWorld::GetDebugRenderSystem()
-	{
-		return moptrDebugRenderSystem;
-	}
-
-	r2::ecs::DebugBonesRenderSystem* ECSWorld::GetDebugBonesRenderSystem()
-	{
-		return moptrDebugBonesRenderSystem;
-	}
-#endif // R2_DEBUG
 
 	void* ECSWorld::HydrateRenderComponents(void* data)
 	{
@@ -477,8 +492,8 @@ namespace r2::ecs
 		memorySize += ComponentArray<InstanceComponentT<DebugBoneComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif
 
-
-
+		auto sceneGraphMemory = SceneGraph::MemorySize(memProperties);
+		memorySize += sceneGraphMemory;
 
 		return memorySize;
 	}

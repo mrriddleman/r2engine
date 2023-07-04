@@ -36,8 +36,6 @@ namespace r2
 
 		void Shutdown();
 
-	//	const flat::LevelData* GetLevelData() const;
-
 		LevelHandle GetLevelHandle() const;
 
 		const char* GetLevelName() const;
