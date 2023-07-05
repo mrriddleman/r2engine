@@ -20,9 +20,9 @@ namespace
 {
     std::vector<f64> s_CalcBoneRuns;
 
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
 
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset);
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
     
     r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
@@ -98,7 +98,7 @@ namespace r2::draw
 		const AnimModel& model,
 		const Animation* animation,
 		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
-        r2::SArray<DebugBone>& outDebugBones,
+        r2::SArray<DebugBone>* outDebugBones,
 		u64 offset) 
     {
 		if (r2::sarr::Capacity(outBoneTransforms) < r2::sarr::Size(*model.boneInfo))
@@ -119,7 +119,11 @@ namespace r2::draw
             r2::SArray<r2::math::Transform>* tempTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
 
 			outBoneTransforms.mSize += model.boneInfo->mSize;
-			outDebugBones.mSize += model.boneInfo->mSize;
+            if (outDebugBones)
+            {
+                outDebugBones->mSize += model.boneInfo->mSize;
+            }
+			
 
 			CalculateStaticDebugBones(model, *tempTransforms, outDebugBones, offset);
 
@@ -177,7 +181,11 @@ namespace r2::draw
 //		R2_CHECK(animationTime <= animation->duration, "Hmmm");
 
         outBoneTransforms.mSize += model.boneInfo->mSize;
-        outDebugBones.mSize += model.boneInfo->mSize;
+        if (outDebugBones)
+        {
+            outDebugBones->mSize += model.boneInfo->mSize;
+        }
+        
 
 		//for (u32 i = 0; i < model.boneInfo->mSize; ++i)
 		//{
@@ -194,7 +202,7 @@ namespace r2::draw
 
 namespace
 {
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
     {
 		const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
 		r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -227,9 +235,12 @@ namespace
                     const r2::math::Transform& globalTransform = r2::sarr::At(*tempGlobalTransforms, j);
                     const r2::math::Transform& parentTransform = r2::sarr::At(*tempGlobalTransforms, realBoneParentIndex);
 
-					r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
-					debugBone.p0 = parentTransform.position;
-					debugBone.p1 = globalTransform.position;
+                    if (outDebugBones)
+                    {
+						r2::draw::DebugBone& debugBone = r2::sarr::At(*outDebugBones, boneIndex + offset);
+						debugBone.p0 = parentTransform.position;
+						debugBone.p1 = globalTransform.position;
+                    }
                 }
             }
         }
@@ -239,7 +250,7 @@ namespace
         FREE(tempGlobalTransforms, *MEM_ENG_SCRATCH_PTR);
     }
 
-	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>& outDebugBones, u64 offset)
+	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
 	{
         const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
         r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -304,10 +315,14 @@ namespace
                 {
                     const r2::math::Transform& parentBoneGlobalTransform = r2::sarr::At(*tempGlobalTransforms, realParentJointIndex);
 
-					r2::draw::DebugBone& debugBone = r2::sarr::At(outDebugBones, boneIndex + offset);
+                    if (outDebugBones)
+                    {
+						r2::draw::DebugBone& debugBone = r2::sarr::At(*outDebugBones, boneIndex + offset);
 
-                    debugBone.p0 = parentBoneGlobalTransform.position;
-                    debugBone.p1 = globalTransform.position;
+						debugBone.p0 = parentBoneGlobalTransform.position;
+						debugBone.p1 = globalTransform.position;
+                    }
+					
                 }
             }
         }

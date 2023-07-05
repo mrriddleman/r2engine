@@ -15,7 +15,7 @@
 #include "assetlib/AssetFile.h"
 
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
-#include "r2/Core/Memory/MemoryBoundsChecking.h"
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #endif
 
 #ifdef R2_ASSET_PIPELINE
@@ -609,8 +609,9 @@ namespace r2::asset
 				break;
 			}
 		}
-
+#ifdef R2_ASSET_CACHE_DEBUG
 		R2_CHECK(writer != nullptr, "Couldn't find an asset Writer for asset: %s\n", asset.Name().c_str());
+#endif
         if (!writer)
         {
             return;

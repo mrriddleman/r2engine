@@ -955,7 +955,7 @@ public:
         FREE(skyboxModelMatrices, *MEM_ENG_SCRATCH_PTR);
 
         //Draw the axis
-
+#ifdef R2_DEBUG
         r2::SArray<glm::vec3>* basePositions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
         r2::SArray<glm::vec3>* directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, 3);
         r2::SArray<float>* lengths = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, 3);
@@ -995,6 +995,7 @@ public:
          //   r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
           //  r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
         }
+#endif
     }
     
     virtual void Shutdown() override
@@ -1228,6 +1229,16 @@ public:
 
 		return true;
     }
+
+	std::string GetLevelPackDataBinPath() const
+	{
+		return SANDBOX_LEVELS_DIR_BIN;
+	}
+
+	std::string GetLevelPackDataJSONPath() const
+	{
+		return SANDBOX_LEVELS_DIR_RAW;
+	}
     
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
@@ -1299,15 +1310,7 @@ public:
         return r2::asset::pln::BuildShaderManifestsFromJsonIO;
     }
 
-    std::string GetLevelPackDataBinPath() const
-    {
-        return SANDBOX_LEVELS_DIR_BIN;
-    }
-
-    std::string GetLevelPackDataJSONPath() const
-    {
-        return SANDBOX_LEVELS_DIR_RAW;
-    }
+    
 
 #endif
     

@@ -169,6 +169,15 @@ namespace r2
         return {};
     }
 
+	std::string Application::GetLevelPackDataBinPath() const
+	{
+		return "";
+	}
+
+	std::string Application::GetLevelPackDataJSONPath() const
+	{
+		return "";
+	}
 
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
@@ -227,16 +236,5 @@ namespace r2
     {
         return nullptr;
     }
-
-    std::string Application::GetLevelPackDataBinPath() const
-    {
-        return "";
-    }
-
-    std::string Application::GetLevelPackDataJSONPath() const
-    {
-        return "";
-    }
-
 #endif
 }

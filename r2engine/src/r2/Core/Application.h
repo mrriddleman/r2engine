@@ -105,6 +105,8 @@ namespace r2
         virtual u32 GetMaxNumComponents() const = 0;
         virtual bool AddLooseAssetFiles(r2::SArray<r2::asset::AssetFile*>* fileList) const = 0;
 
+		virtual std::string GetLevelPackDataBinPath() const = 0;
+		virtual std::string GetLevelPackDataJSONPath() const = 0;
 
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;
@@ -119,8 +121,7 @@ namespace r2
         virtual std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const = 0;
         virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
 
-        virtual std::string GetLevelPackDataBinPath() const = 0;
-        virtual std::string GetLevelPackDataJSONPath() const = 0;
+       
 
         virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
 #endif

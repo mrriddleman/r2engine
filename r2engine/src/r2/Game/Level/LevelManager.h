@@ -38,7 +38,6 @@ namespace r2
 
 		bool Init(
 			r2::mem::MemoryArea::Handle memoryAreaHandle,
-			const char* levelPackPath,
 			const char* areaName,
 			u32 maxNumLevels,
 			const char* binLevelOutputPath,

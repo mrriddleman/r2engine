@@ -19,6 +19,7 @@
 
 #include "r2/Core/Engine.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include <filesystem>
 
 namespace r2
 {
@@ -44,14 +45,11 @@ namespace r2
 
 	bool LevelManager::Init(
 		r2::mem::MemoryArea::Handle memoryAreaHandle,
-		const char* levelPackPath,
 		const char* areaName,
 		u32 maxNumLevels,
 		const char* binLevelOutputPath,
 		const char* rawLevelOutputPath)
 	{
-		R2_CHECK(levelPackPath != nullptr, "We should have a proper path");
-		R2_CHECK(strlen(levelPackPath) > 0, "We should have path that's more than 0");
 		R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "We need a valid memory area");
 
 		R2_CHECK(binLevelOutputPath != nullptr && strlen(binLevelOutputPath) > 0, "We don't have a proper path");
@@ -111,7 +109,7 @@ namespace r2
 		r2::asset::FileList fileList = gameAssetManager.GetFileList();
 
 		//@Temporary
-		for (auto& file : std::filesystem::recursive_directory_iterator(levelPackPath))
+		for (auto& file : std::filesystem::recursive_directory_iterator(binLevelOutputPath))
 		{
 			if (!(file.is_regular_file() && file.file_size() > 0))
 			{

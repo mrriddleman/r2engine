@@ -18,7 +18,6 @@ namespace r2::draw
     struct ShaderBoneTransform;
     struct Animation;
 
-
 	u32 PlayAnimationForAnimModel(
 		u32 timeInMilliseconds,
 		u32 startTime,
@@ -26,7 +25,7 @@ namespace r2::draw
 		const AnimModel& model,
 		const Animation* animation,
 		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
-		r2::SArray<DebugBone>& outDebugBones,
+		r2::SArray<DebugBone>* outDebugBones,
 		u64 offset);
 }
 

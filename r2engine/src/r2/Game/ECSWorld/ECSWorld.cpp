@@ -2,7 +2,7 @@
 
 #include "r2/Game/ECSWorld/ECSWorld.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
-#include "r2/Game/ECS/Components/EditorComponent.h"
+
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
@@ -15,6 +15,10 @@
 #include "r2/Game/ECS/Systems/DebugBonesRenderSystem.h"
 #include "r2/Game/ECS/Systems/DebugRenderSystem.h"
 #endif
+#ifdef R2_EDITOR
+#include "r2/Game/ECS/Components/EditorComponent.h"
+#endif
+
 #include "r2/Game/Level/LevelManager.h"
 #include "r2/Core/Application.h"
 #include "r2/Platform/Platform.h"
@@ -405,8 +409,9 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena, "SkeletalAnimationComponent", true, skeletalAnimationComponentHydrationFunc);
 
 		//add some more components to the coordinator for the editor to use
+#ifdef R2_EDITOR
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena, "EditorComponent", true, nullptr);
-
+#endif
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena, "InstancedTranfromComponent", true, instancedTransformComponentHydrationFunc);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena, "InstancedSkeletalAnimationComponent", true, instancedSkeletalAnimationComponentHydrationFunc);
 
@@ -431,9 +436,9 @@ namespace r2::ecs
 
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena);
-
+#ifdef R2_EDITOR
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena);
-
+#endif
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena);
@@ -547,8 +552,9 @@ namespace r2::ecs
 		memorySize += ComponentArray<TransformDirtyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<RenderComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<SkeletalAnimationComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+#ifdef R2_EDITOR
 		memorySize += ComponentArray<EditorComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
-
+#endif
 		memorySize += ComponentArray<InstanceComponentT<ecs::TransformComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<InstanceComponentT<SkeletalAnimationComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);
 #ifdef R2_DEBUG

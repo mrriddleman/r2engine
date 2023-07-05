@@ -1,5 +1,6 @@
 #ifndef __EDITOR_COMPONENT_H__
 #define __EDITOR_COMPONENT_H__
+#ifdef R2_EDITOR
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
@@ -72,3 +73,4 @@ namespace r2::ecs
 }
 
 #endif // __EDITOR_COMPONENT_H__
+#endif
