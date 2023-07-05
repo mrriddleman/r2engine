@@ -63,6 +63,9 @@ namespace r2::ecs
 		void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
 		void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 
+
+		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
+
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
 		r2::mem::MemoryArea::SubArea::Handle mSubAreaHandle;
 		r2::mem::StackArena* mArena;

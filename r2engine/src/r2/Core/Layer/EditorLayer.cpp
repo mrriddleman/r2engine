@@ -56,6 +56,9 @@ namespace r2
 			if (e.KeyCode() == r2::io::KEY_F1 && ((e.Modifiers() & r2::io::Key::SHIFT_PRESSED_KEY) == r2::io::Key::SHIFT_PRESSED_KEY))
 			{
 				mEnabled = !mEnabled;
+
+				editor.ReloadLevel();
+
 				return true;
 			}
 

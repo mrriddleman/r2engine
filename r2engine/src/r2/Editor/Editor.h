@@ -50,8 +50,8 @@ namespace r2
 		void LoadLevel(const std::string& filePathName);
 		void UnloadCurrentLevel();
 		void CreateNewLevel(const std::string& groupName, const std::string& levelName);
+		void ReloadLevel();
 
-		
 		const Level& GetEditorLevelConst() const;
 		Level& GetEditorLevelRef() ;
 

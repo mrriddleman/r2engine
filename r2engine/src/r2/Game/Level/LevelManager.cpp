@@ -191,7 +191,14 @@ namespace r2
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-		LevelHandle levelHandle = gameAssetManager.LoadAsset(r2::asset::Asset(levelName, r2::asset::LEVEL));
+		const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
+
+		if (!gameAssetManager.HasAsset(levelAsset))
+		{
+			return nullptr;
+		}
+
+		LevelHandle levelHandle = gameAssetManager.LoadAsset(levelAsset);
 
 		const byte* levelData = gameAssetManager.GetAssetDataConst<byte>(levelHandle);
 
@@ -217,6 +224,8 @@ namespace r2
 
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 		ecsWorld.LoadLevel(newLevel, flatLevelData);
+
+
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -275,7 +284,7 @@ namespace r2
 
 	Level* LevelManager::GetLevel(const char* levelURI)
 	{
-		return GetLevel(STRING_ID(levelURI));
+		return GetLevel(r2::asset::GetAssetNameForFilePath(levelURI, r2::asset::LEVEL));
 	}
 
 	Level* LevelManager::GetLevel(LevelName levelName)
@@ -292,7 +301,22 @@ namespace r2
 
 	bool LevelManager::IsLevelLoaded(const char* levelName)
 	{
-		return IsLevelLoaded(STRING_ID(levelName));
+		return IsLevelLoaded(r2::asset::GetAssetNameForFilePath(levelName, r2::asset::LEVEL));
+	}
+
+	Level* LevelManager::ReloadLevel(const char* levelURI)
+	{
+		return ReloadLevel(r2::asset::GetAssetNameForFilePath(levelURI, r2::asset::LEVEL));
+	}
+
+	Level* LevelManager::ReloadLevel(LevelName levelName)
+	{
+		if (IsLevelLoaded(levelName))
+		{
+			UnloadLevel(GetLevel(levelName));
+		}
+
+		return LoadLevel(levelName);
 	}
 
 	LevelName LevelManager::MakeLevelNameFromPath(const char* levelPath)
@@ -426,11 +450,9 @@ namespace r2
 			r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 			for (u32 i = 0; i < numMaterials; ++i)
 			{
-
 				const flat::MaterialParams* materialParams = r2::sarr::At(*materialParamsToLoad, i);
 				bool result = gameAssetManager.GetTexturesForMaterialParams(materialParams, gameTextures, gameCubemaps);
 				R2_CHECK(result, "Should always work");
-
 
 				r2::SArray<r2::draw::tex::Texture>* texturesToUse = nullptr;
 				if (r2::sarr::Size(*gameTextures) > 0)

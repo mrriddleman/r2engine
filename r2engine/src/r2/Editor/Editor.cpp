@@ -226,6 +226,20 @@ namespace r2
 		PostEditorEvent(e);
 	}
 
+	void Editor::ReloadLevel()
+	{
+		if (mCurrentEditorLevel)
+		{
+			const auto levelAssetName = mCurrentEditorLevel->GetLevelAssetName();
+			Level* theLevel = CENG.GetLevelManager().ReloadLevel(levelAssetName);
+
+			if (theLevel)
+			{
+				mCurrentEditorLevel = theLevel;
+			}
+		}
+	}
+
 	const Level& Editor::GetEditorLevelConst() const
 	{
 		return *mCurrentEditorLevel;
@@ -529,7 +543,7 @@ namespace r2
 		});
 
 		//@TODO(Serge): remove when DebugBoneComponent no long necessary for Skeletal Animation
-		dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& event)
+		/*dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& event)
 			{
 				const r2::SArray<ecs::Entity>& allEntities = MENG.GetECSWorld().GetECSCoordinator()->GetAllLivingEntities();
 
@@ -595,7 +609,7 @@ namespace r2
 
 
 				return event.ShouldConsume();
-			});
+			});*/
 
 
 		for (const auto& widget : mEditorWidgets)

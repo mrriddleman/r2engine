@@ -63,7 +63,6 @@ namespace r2::ecs
 	}
 }
 
-
 namespace
 {
     constexpr r2::util::Size g_resolutions[] = { {640, 480}, {1024, 768}, {1280, 768}, {1920, 1080}, {2560, 1440} };
@@ -243,29 +242,6 @@ class Sandbox: public r2::Application
 {
 public:
     
-    enum ConstantConfigHandles
-    {
-        VP_MATRICES = 0,
-        VECTOR_CONSTANTS,
-        MODEL_MATRICES,
-        SUB_COMMANDS,
-        MODEL_MATERIALS,
-        BONE_TRANSFORMS,
-        BONE_TRANSFORM_OFFSETS,
-        LIGHTING,
-        NUM_CONSTANT_CONFIGS
-    };
-
-    enum VertexConfigHandles
-    {
-        STATIC_MODELS_CONFIG = 0,
-        ANIM_MODELS_CONFIG,
-
-
-        DEBUG_CONFIG, //@NOTE: should be next to last always
-        NUM_VERTEX_CONFIGS
-    };
-    
     const u64 NUM_DRAWS = 15;
     const u64 NUM_DRAW_COMMANDS = 30;
     const u64 NUM_BONES = 1000;
@@ -278,7 +254,6 @@ public:
         
         r2::mem::MemoryArea* sandBoxMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryAreaHandle);
         R2_CHECK(sandBoxMemoryArea != nullptr, "Failed to get the memory area!");
- 
 
         auto result = sandBoxMemoryArea->Init(Megabytes(4), 0);
         R2_CHECK(result == true, "Failed to initialize memory area");
@@ -292,204 +267,55 @@ public:
         
         R2_CHECK(linearArenaPtr != nullptr, "Failed to create linear arena!");
         
-        
-        char filePath[r2::fs::FILE_PATH_LENGTH];
-        
-
-
-        r2::fs::utils::AppendSubPath(ASSET_BIN_DIR, filePath, "AllBreakoutData.zip");
-        
-       // r2::asset::ZipAssetFile* zipFile = r2::asset::lib::MakeZipAssetFile(filePath);
-       // r2::asset::FileList files = r2::asset::lib::MakeFileList(10);
-       // r2::sarr::Push(*files, (r2::asset::AssetFile*)zipFile);
-        
-        //assetCacheBoundary = MAKE_BOUNDARY(*linearArenaPtr, Kilobytes(768), 64);
-        //assetCache = r2::asset::lib::CreateAssetCache(assetCacheBoundary, files);
-
-     //   assetsBuffers = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetCacheRecord, 1000);
-        
-      //  reload = true;
-        
-#ifdef R2_ASSET_PIPELINE
-        /*if (assetCache)
-        {
-            assetCache->AddReloadFunction([this](r2::asset::AssetHandle handle)
-            {
-                reload = true;
-                
-                if (assetsBuffers)
-                {
-                    u64 size = r2::sarr::Size(*assetsBuffers);
-                    
-                    for (u64 i = 0; i < size; ++i)
-                    {
-                        auto record = r2::sarr::At(*assetsBuffers, i);
-                        
-                        if(record.GetAsset().HashID() == handle.handle)
-                        {
-                            assetCache->ReturnAssetBuffer(record);
-                        }
-                    }
-                }
-
-            });
-        }*/
-#endif
-
         mPersController.Init(4.0f, 70.0f, static_cast<float>(CENG.DisplaySize().width) / static_cast<float>(CENG.DisplaySize().height), 0.1f, 100.f, glm::vec3(0.0f, -1.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         r2::draw::renderer::SetRenderCamera(mPersController.GetCameraPtr());
         
         modelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-        animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-        mStaticModelDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
-
-      //  mStaticCubeModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
-       // mStaticCubeMaterials = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-      //  mStaticCubesDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
-        mStaticCubeModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::CUBE);
+        /*animModelMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
 
         mTransparentWindowMats = MAKE_SARRAY(*linearArenaPtr, glm::mat4, NUM_DRAWS);
         mTransparentWindowModelRefHandle = r2::draw::renderer::GetDefaultModelRef(r2::draw::QUAD);
-        mTransparentWindowDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);
+        mTransparentWindowDrawFlags = MAKE_SARRAY(*linearArenaPtr, r2::draw::DrawFlags, NUM_DRAWS);*/
 
         r2::draw::DrawFlags drawFlags;
         drawFlags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
         
         r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
-        //for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
-        //{
-        //    auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
+		//mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
+		//mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
-        //    if (nextModel == r2::draw::QUAD)
-        //    {
-        //        for (int i = 0; i < 4; ++i)
-        //        {
-        //            r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
-        //        }
-        //    }
-
-        //    r2::sarr::Push(*mStaticModelDrawFlags, drawFlags);
-        //}
-
-        r2::sarr::Push(*mStaticModelDrawFlags, drawFlags); //for Sponza
-
-        mStaticModelRefs = MAKE_SARRAY(*linearArenaPtr, r2::draw::vb::GPUModelRefHandle, NUM_DRAWS);
-      //  mStaticModelMaterialHandles = MAKE_SARRAY(*linearArenaPtr, r2::draw::MaterialHandle, NUM_DRAWS);
-        
-        mBatBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-        mBatDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
-        
-        mBat2BoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-        mBat2DebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
-
-		mSkeletonBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-		mSkeletonDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
-
-		mEllenBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
-		mEllenDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
+		//mEllenBoneTransforms = MAKE_SARRAY(*linearArenaPtr, r2::draw::ShaderBoneTransform, NUM_BONES);
+		//mEllenDebugBones = MAKE_SARRAY(*linearArenaPtr, r2::draw::DebugBone, NUM_BONES);
 
 
+  //      glm::mat4 skeletonModel = glm::mat4(1.0f);
+  //      skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 0.1));
+  //      skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  //      skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
+  //      r2::sarr::Push(*animModelMats, skeletonModel);
 
-        glm::mat4 quadMat = glm::mat4(1.0f);
-        
-      //  quadMat = glm::rotate(quadMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-  //      quadMat = glm::scale(quadMat, glm::vec3(10.0f));
-  //      r2::sarr::Push(*modelMats, quadMat);
-
-  //      glm::mat4 quadMat1 = glm::mat4(1.0f);
-  //      quadMat1 = glm::translate(quadMat1, glm::vec3(5.0f, 0.0f, 5.0f));
-  //      quadMat1 = glm::rotate(quadMat1, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-  //      quadMat1 = glm::scale(quadMat1, glm::vec3(10.0f));
-  //     
-  //      
-  //      r2::sarr::Push(*modelMats, quadMat1);
-
-		//glm::mat4 quadMat2 = glm::mat4(1.0f);
-  //      quadMat2 = glm::translate(quadMat2, glm::vec3(-5.0f, 0.0f, 5.0f));
-  //      quadMat2 = glm::rotate(quadMat2, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//quadMat2 = glm::scale(quadMat2, glm::vec3(10.0f));
-		//
-  //      
-		//r2::sarr::Push(*modelMats, quadMat2);
-
-		//glm::mat4 quadMat3 = glm::mat4(1.0f);
-  //      quadMat3 = glm::translate(quadMat3, glm::vec3(0.0f, 5.0f, 5.0f));
-  //      quadMat3 = glm::rotate(quadMat3, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		//quadMat3 = glm::scale(quadMat3, glm::vec3(10.0f));
-		//
-		//
-		//r2::sarr::Push(*modelMats, quadMat3);
-
-		//glm::mat4 quadMat4 = glm::mat4(1.0f);
-  //      quadMat4 = glm::translate(quadMat4, glm::vec3(0.0f, -5.0f, 5.0f));
-  //      quadMat4 = glm::rotate(quadMat4, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		//quadMat4 = glm::scale(quadMat4, glm::vec3(10.0f));
-		//
-		//
-		//r2::sarr::Push(*modelMats, quadMat4);
+		//glm::mat4 skeletonModel2 = glm::mat4(1.0f);
+		//skeletonModel2 = glm::translate(skeletonModel2, glm::vec3(-3, 1, 0.1));
+		//skeletonModel2 = glm::rotate(skeletonModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//skeletonModel2 = glm::scale(skeletonModel2, glm::vec3(0.01f));
+		//r2::sarr::Push(*animModelMats, skeletonModel2);
 
 
-		//glm::mat4 cubeMat = glm::mat4(1.0f);
-		//cubeMat = glm::translate(cubeMat, glm::vec3(1.5, 0, 2));
-		//r2::sarr::Push(*modelMats, cubeMat);
+  //      glm::mat4 ellenModel = glm::mat4(1.0f);
+  //      ellenModel = glm::translate(ellenModel, glm::vec3(3, 0, 0.1));
+  //      ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  //      ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
+  //      r2::sarr::Push(*animModelMats, ellenModel);
 
-  //      glm::mat4 sphereMat = glm::mat4(1.0f);
-  //      sphereMat = glm::translate(sphereMat, glm::vec3(4, 0, 1.1));
-  //      r2::sarr::Push(*modelMats, sphereMat);
+  //      glm::mat4 ellenModel2 = glm::mat4(1.0);
+  //      ellenModel2 = glm::translate(ellenModel2, glm::vec3(3, 1, 0.1));
+		//ellenModel2 = glm::rotate(ellenModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//ellenModel2 = glm::scale(ellenModel2, glm::vec3(0.01f));
 
-		//glm::mat4 coneMat = glm::mat4(1.0f);
-		//coneMat = glm::translate(coneMat, glm::vec3(-1, 0, 0.6));
-		////coneMat = glm::rotate(coneMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-		//r2::sarr::Push(*modelMats, coneMat);
+  //      r2::sarr::Push(*animModelMats, ellenModel2);
 
-  //      glm::mat4 cylinderMat = glm::mat4(1.0f);
-  //      
-  //      cylinderMat = glm::translate(cylinderMat, glm::vec3(-4, 0.0, 1.6));
-  //     // cylinderMat = glm::rotate(cylinderMat, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-  //      r2::sarr::Push(*modelMats, cylinderMat);
-
-
-
-        //glm::mat4 microbatMat = glm::mat4(1.0f);
-        //microbatMat = glm::translate(microbatMat, glm::vec3(0, 0, 0.1));
-        //microbatMat = glm::rotate(microbatMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        //microbatMat = glm::scale(microbatMat, glm::vec3(0.01f));
-        //r2::sarr::Push(*animModelMats, microbatMat);
-
-		//glm::mat4 microbatMat2 = glm::mat4(1.0f);
-		//microbatMat2 = glm::translate(microbatMat2, glm::vec3(0, 1, 0.1));
-		//microbatMat2 = glm::rotate(microbatMat2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		//microbatMat2 = glm::scale(microbatMat2, glm::vec3(0.01f));
-		//r2::sarr::Push(*animModelMats, microbatMat2);
-
-        glm::mat4 skeletonModel = glm::mat4(1.0f);
-        skeletonModel = glm::translate(skeletonModel, glm::vec3(-3, 0, 0.1));
-        skeletonModel = glm::rotate(skeletonModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        skeletonModel = glm::scale(skeletonModel, glm::vec3(0.01f));
-        r2::sarr::Push(*animModelMats, skeletonModel);
-
-		glm::mat4 skeletonModel2 = glm::mat4(1.0f);
-		skeletonModel2 = glm::translate(skeletonModel2, glm::vec3(-3, 1, 0.1));
-		skeletonModel2 = glm::rotate(skeletonModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		skeletonModel2 = glm::scale(skeletonModel2, glm::vec3(0.01f));
-		r2::sarr::Push(*animModelMats, skeletonModel2);
-
-
-        glm::mat4 ellenModel = glm::mat4(1.0f);
-        ellenModel = glm::translate(ellenModel, glm::vec3(3, 0, 0.1));
-        ellenModel = glm::rotate(ellenModel, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        ellenModel = glm::scale(ellenModel, glm::vec3(0.01f));
-        r2::sarr::Push(*animModelMats, ellenModel);
-
-        glm::mat4 ellenModel2 = glm::mat4(1.0);
-        ellenModel2 = glm::translate(ellenModel2, glm::vec3(3, 1, 0.1));
-		ellenModel2 = glm::rotate(ellenModel2, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		ellenModel2 = glm::scale(ellenModel2, glm::vec3(0.01f));
-
-        r2::sarr::Push(*animModelMats, ellenModel2);
-
-        mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
+  //      mAnimationsHandles = MAKE_SARRAY(*linearArenaPtr, r2::asset::AssetHandle, 20);
 
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
@@ -528,19 +354,15 @@ public:
         //auto microbatHandle = gameAssetManager.LoadAsset(r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL));
         //mMicroBatModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatHandle);
 
-       // auto skeletonHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
-       // mSkeletonModel = r2::draw::modlche::GetAnimModel(mModelSystem, skeletonHandle);
-        auto skeletonHandle = gameAssetManager.LoadAsset(r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
-        mSkeletonModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(skeletonHandle);
 
+        //auto skeletonHandle = gameAssetManager.LoadAsset(r2::asset::Asset("skeleton_archer_allinone.rmdl", r2::asset::RMODEL));
+        //mSkeletonModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(skeletonHandle);
 
-        auto ellenHandle = gameAssetManager.LoadAsset(r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
-        mEllenModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(ellenHandle);
+        //auto ellenHandle = gameAssetManager.LoadAsset(r2::asset::Asset("EllenIdle.rmdl", r2::asset::RMODEL));
+        //mEllenModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(ellenHandle);
 
-        mSelectedAnimModel = mSkeletonModel;
+        //mSelectedAnimModel = mSkeletonModel;
 
-       // auto sponzaHandle = r2::draw::modlche::LoadModel(mModelSystem, r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
-       // mSponzaModel = r2::draw::modlche::GetModel(mModelSystem, sponzaHandle);
         auto sponzaHandle = gameAssetManager.LoadAsset(r2::asset::Asset("Sponza.rmdl", r2::asset::RMODEL));
         mSponzaModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(sponzaHandle);
 
@@ -552,47 +374,8 @@ public:
         sponzaModelMatrix = glm::rotate(sponzaModelMatrix, glm::radians(90.0f), glm::vec3(1, 0, 0));
 
         r2::sarr::Push(*modelMats, sponzaModelMatrix);
-    //    r2::draw::MaterialHandle defaultStaticModelMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("StoneBlockWall"));
-    //    R2_CHECK(r2::draw::mat::IsValid(defaultStaticModelMaterialHandle), "Failed to get a proper handle for the static material!");
-
-      //  r2::draw::MaterialHandle blueClearCoatMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BlueClearCoat"));
-      //  R2_CHECK(r2::draw::mat::IsValid(blueClearCoatMaterialHandle), "Failed to get blue clear coat material handle");
 
         r2::util::Random randomizer;
-   //     randomizer.Randomize();
-     //   r2::sarr::Push(*mStaticCubeMaterials, blueClearCoatMaterialHandle);
-   //     for (u32 i = 0; i < NUM_DRAWS; ++i)
-   //     {
-   //        
-   //         r2::sarr::Push(*mStaticCubesDrawFlags, drawFlags);
-   //         
-   //         //figure out the position
-			//auto zPos = (int)randomizer.RandomNum(1, 10);
-			//auto xPos = (int)randomizer.RandomNum(0, 13) - (int)randomizer.RandomNum(0, 13);
-			//auto yPos = (int)randomizer.RandomNum(0, 10) - (int)randomizer.RandomNum(0, 10);
-
-   //         glm::vec3 position = glm::vec3(xPos, yPos, zPos);
-
-   //         glm::mat4 modelMat = glm::mat4(1.0);
-
-   //         float scale = static_cast<float>(randomizer.RandomNum(2, 7)) / 5.0f;
-
-   //         float rotationX = static_cast<float>(randomizer.RandomNum(0, 350));
-   //         float rotationY = static_cast<float>(randomizer.RandomNum(0, 350));
-   //         float rotationZ = static_cast<float>(randomizer.RandomNum(0, 350));
-
-
-   //         modelMat = glm::translate(modelMat, position);
-			//modelMat = glm::rotate(modelMat, glm::radians(rotationX), glm::vec3(1, 0, 0));
-			//modelMat = glm::rotate(modelMat, glm::radians(rotationY), glm::vec3(0, 1, 0));
-			//modelMat = glm::rotate(modelMat, glm::radians(rotationZ), glm::vec3(0, 0, 1));
-   //         modelMat = glm::scale(modelMat, glm::vec3(scale));
-   //         
-   //         
-
-   //         r2::sarr::Push(*mStaticCubeModelMats, modelMat);
-   //     }
-
 
         //color grading
         const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
@@ -601,113 +384,52 @@ public:
         r2::draw::renderer::SetColorGradingContribution(0.2);
         r2::draw::renderer::EnableColorGrading(true);
 
-        float startingX = 10.0f;
+        //float startingX = 10.0f;
 
-        for (u32 i = 0; i < NUM_DRAWS; ++i)
-        {
-            r2::sarr::Push(*mTransparentWindowDrawFlags, drawFlags);
+        //for (u32 i = 0; i < NUM_DRAWS; ++i)
+        //{
+        //    r2::sarr::Push(*mTransparentWindowDrawFlags, drawFlags);
 
-            glm::mat4 modelMat = glm::mat4(1.0);
+        //    glm::mat4 modelMat = glm::mat4(1.0);
 
-            modelMat = glm::translate(modelMat, glm::vec3(startingX, 0, 1.0f));
-            modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
-            modelMat = glm::scale(modelMat, glm::vec3(2));
+        //    modelMat = glm::translate(modelMat, glm::vec3(startingX, 0, 1.0f));
+        //    modelMat = glm::rotate(modelMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
+        //    modelMat = glm::scale(modelMat, glm::vec3(2));
 
-            r2::sarr::Push(*mTransparentWindowMats, modelMat);
+        //    r2::sarr::Push(*mTransparentWindowMats, modelMat);
 
-            startingX -= 20.f / static_cast<float>(NUM_DRAWS);
-        }
-
-    //    r2::draw::MaterialHandle brushedMetalMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("BrushedMetal"));
-    //    R2_CHECK(r2::draw::mat::IsValid(brushedMetalMaterialHandle), "Failed to get the brushed metal material handle");
-
-    //    for (u32 i = 0; i < r2::draw::FULLSCREEN_TRIANGLE; ++i)
-    //    {
-    //        auto nextModel = static_cast<r2::draw::DefaultModel>(r2::draw::QUAD + i);
-
-    //        if (nextModel == r2::draw::QUAD)
-    //        {
-    //            for (int i = 0; i < 5; ++i)
-    //            {
-    //                r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-    //                r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-    //            }
-
-
-    //           
-    //        }
-    //        
-    //        else
-    //        {
-    //            r2::sarr::Push(*mStaticModelRefs, r2::draw::renderer::GetDefaultModelRef(nextModel));
-				//// defaultStaticModelMaterialHandle = r2::draw::renderer::GetMaterialHandleForDefaultModel(nextModel);
-				//if (nextModel == r2::draw::SPHERE)
-				//{
-				//	r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-				//}
-				//else
-				//{
-				//	r2::sarr::Push(*mStaticModelMaterialHandles, defaultStaticModelMaterialHandle);
-				//}
-    //        }
-    //        
-    //    }
-
+        //    startingX -= 20.f / static_cast<float>(NUM_DRAWS);
+        //}
 
         mSkyboxModelRef = r2::draw::renderer::GetDefaultModelRef(r2::draw::SKYBOX);
 
-
-       // r2::draw::MaterialHandle skyboxMaterialHandle = r2::draw::mat::GetMaterialHandleFromMaterialName(*mMaterialSystem, STRING_ID("NewportSkybox"));
-
-       // R2_CHECK(r2::draw::mat::IsValid(skyboxMaterialHandle), "Failed to get a proper handle for the skybox!");
-
-
-        //r2::SArray<const r2::draw::AnimModel*>* animModelsToDraw = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const r2::draw::AnimModel*, NUM_DRAWS);
-
-        //r2::sarr::Push(*animModelsToDraw, mMicroBatModel);
-        //r2::sarr::Push(*animModelsToDraw, mSkeletonModel);
-        //r2::sarr::Push(*animModelsToDraw, mEllenModel);
-
-        //r2::draw::renderer::UploadAnimModels(*animModelsToDraw, *mAnimModelRefs);
-
-        //FREE(animModelsToDraw, *MEM_ENG_SCRATCH_PTR);
-
-      //  mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-        mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-        mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+        //mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+        //mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 
         mSponzaModelRefHandle = r2::draw::renderer::UploadModel(mSponzaModel);
 
-
-        r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
+      //  r2::SArray<r2::asset::Asset>* animationAssets = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::Asset, 20);
 
         //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION));
         //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION));
         //r2::sarr::Push(*animationAssets, r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION));
 
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("run.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("skeleton_archer_allinone.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("walk.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("run.ranm", r2::asset::RANIMATION));
 
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenIdle.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.ranm", r2::asset::RANIMATION));
-        r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenIdle.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenRunForward.ranm", r2::asset::RANIMATION));
+        //r2::sarr::Push(*animationAssets, r2::asset::Asset("EllenSpawn.ranm", r2::asset::RANIMATION));
 
-        const auto numAnimations = r2::sarr::Size(*animationAssets);
-        for (u32 i= 0; i < numAnimations; ++i)
-        {
-            if (i == 1)
-            {
-                int k = 0;
-            }
-            auto animationHandle = gameAssetManager.LoadAsset(r2::sarr::At(*animationAssets, i));
-            r2::sarr::Push(*mAnimationsHandles, animationHandle);
-        }
+        //const auto numAnimations = r2::sarr::Size(*animationAssets);
+        //for (u32 i= 0; i < numAnimations; ++i)
+        //{
+        //    auto animationHandle = gameAssetManager.LoadAsset(r2::sarr::At(*animationAssets, i));
+        //    r2::sarr::Push(*mAnimationsHandles, animationHandle);
+        //}
 
-       // r2::draw::animcache::LoadAnimations(*mAnimationCache, *animationAssets, *mAnimationsHandles);
-
-        FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
-
+        //FREE(animationAssets, *MEM_ENG_SCRATCH_PTR);
 
         r2::draw::renderer::SetClearColor(glm::vec4(0.f, 0.f, 0.f, 1.f));
         //setup the lights
@@ -715,7 +437,6 @@ public:
             const auto* prefilteredCubemap = gameAssetManager.GetCubemapTextureForMaterialName(gameMaterialPack, STRING_ID("NewportPrefiltered")); 
             s32 numMips = prefilteredCubemap->numMipLevels;
 
-            
             r2::draw::renderer::AddSkyLight(
                 *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportConvolved")),
                 *r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportPrefiltered")),
@@ -730,8 +451,6 @@ public:
 
             r2::draw::renderer::AddDirectionLight(dirLight);
 
-            
-
             //r2::draw::DirectionLight dirLight2;
             //dirLight2.lightProperties.color = glm::vec4(1.0f);
             //dirLight2.direction = glm::normalize(glm::vec4(0.0f) - glm::vec4(4.0f, 0.0f, 4.0f, 0.0f));
@@ -741,9 +460,6 @@ public:
             //r2::draw::renderer::AddDirectionLight(dirLight2);
 
 			//r2::draw::lightsys::AddDirectionalLight(*mLightSystem, dirLight);
-
-			
-            
 
 			/*for (int i = 0; i < 10; ++i)
 			{
@@ -793,69 +509,9 @@ public:
 			//	r2::draw::renderer::AddPointLight(pointLight);
 			//}
 
-            //r2::draw::PointLight pointLight;
-            //pointLight.position = glm::vec4(0, 1.3, 1, 1.0);
-            //pointLight.lightProperties.color = glm::vec4(1.0f);
-            //pointLight.lightProperties.intensity = 100.0;
-            //pointLight.lightProperties.fallOff = 0.1;
-            //pointLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
-            //r2::draw::renderer::AddPointLight(pointLight);
-
-
-			//r2::draw::SpotLight spotLight;
-			//spotLight.lightProperties.color = glm::vec4(1.0f);
-
-			//spotLight.position = glm::vec4(0, 2, 1, glm::cos(glm::radians(60.f)));
-			//spotLight.direction = glm::vec4(glm::vec3(0, -1, 0), glm::cos(glm::radians(75.f)));
-
-			//spotLight.lightProperties.intensity = 100;
-			//spotLight.lightProperties.fallOff = 0.01;
-			//spotLight.lightProperties.castsShadowsUseSoftShadows = glm::uvec4(1, 0, 0, 0);
-
-			//r2::draw::renderer::AddSpotLight(spotLight);
-
-
-   //         
-			//r2::draw::PointLight pointLight2;
-
-			//pointLight2.position = glm::vec4(-3, 2, -1, 1.0);
-			//pointLight2.lightProperties.color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-
-			//pointLight2.lightProperties.intensity = 1;
-			//pointLight2.lightProperties.fallOff = 0.01;
-
-
-
-
-			//r2::draw::PointLight pointLight3;
-
-   //         pointLight3.position = glm::vec4(-1, 2, 0, 1.0);
-   //         pointLight3.lightProperties.color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-   //         pointLight3.lightProperties.intensity = 2;
-   //         pointLight3.lightProperties.fallOff = 0.01;
-
-
-			//r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight3);
-
-
-			//r2::draw::PointLight pointLight4;
-
-			//pointLight4.position = glm::vec4(3, 2, 0, 1.0);
-			//pointLight4.lightProperties.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
-			//pointLight4.lightProperties.intensity = 5;
-			//pointLight4.lightProperties.fallOff = 0;
-
-
-//			r2::draw::lightsys::AddPointLight(*mLightSystem, pointLight4);
-
         }
 
-      //  r2::draw::renderer::UpdateSceneLighting(*mLightSystem);
-
-
-        return true;//assetCache != nullptr;
+        return true;
     }
 
     virtual void OnEvent(r2::evt::Event& e) override
@@ -890,28 +546,28 @@ public:
 		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& e) {
 			if (e.KeyCode() == r2::io::KEY_LEFT)
 			{
-                if (mSelectedAnimModel)
-                {
-                    s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
-					if (mSelectedAnimationID - 1 < 0)
-					{
-						mSelectedAnimationID = (s32)numAnimations - 1;
-					}
-					else
-					{
-						--mSelectedAnimationID;
-					}
-                }
+     //           if (mSelectedAnimModel)
+     //           {
+     //               s64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
+					//if (mSelectedAnimationID - 1 < 0)
+					//{
+					//	mSelectedAnimationID = (s32)numAnimations - 1;
+					//}
+					//else
+					//{
+					//	--mSelectedAnimationID;
+					//}
+     //           }
                 
 				return true;
 			}
 			else if (e.KeyCode() == r2::io::KEY_RIGHT)
 			{
-                if (mSelectedAnimModel)
-                {
-                    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
-                    mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
-                }
+                //if (mSelectedAnimModel)
+                //{
+                //    u64 numAnimations = r2::sarr::Size(*mAnimationsHandles) / 2;
+                //    mSelectedAnimationID = size_t(mSelectedAnimationID + 1) % numAnimations;
+                //}
                 
 				return true;
 			}
@@ -1002,10 +658,10 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_u)
             {
-                r2::draw::renderer::UnloadAllAnimModels();
+            //    r2::draw::renderer::UnloadAllAnimModels();
           //      mMicroBatModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-                mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-                mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+           //     mSkeletonModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
+            //    mEllenModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			/*if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle) &&
 				r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 0)) &&
 				r2::draw::renderer::IsModelLoaded(r2::sarr::At(*mAnimModelRefs, 1)))
@@ -1067,19 +723,18 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_k)
             {
-                if (!r2::draw::renderer::IsModelLoaded(mSkeletonModelRefHandle))
-                {
-                    mSkeletonModelRefHandle = r2::draw::renderer::UploadAnimModel(mSkeletonModel);
-                }
+			/*if (!r2::draw::renderer::IsModelLoaded(mSkeletonModelRefHandle))
+			{
+				mSkeletonModelRefHandle = r2::draw::renderer::UploadAnimModel(mSkeletonModel);
+			}*/
             }
             else if (e.KeyCode() == r2::io::KEY_l)
             {
-                if (!r2::draw::renderer::IsModelLoaded(mEllenModelRefHandle))
-                {
-                    mEllenModelRefHandle = r2::draw::renderer::UploadAnimModel(mEllenModel);
-                }
+                //if (!r2::draw::renderer::IsModelLoaded(mEllenModelRefHandle))
+                //{
+                //    mEllenModelRefHandle = r2::draw::renderer::UploadAnimModel(mEllenModel);
+                //}
             }
-
 
 			return false;
 		});
@@ -1089,186 +744,29 @@ public:
     
     virtual void Update() override
     {
-        /*if (reload)
-        {
-            reload = false;
-            
-            r2::sarr::Clear(*assetsBuffers);
-            
-            r2::asset::Asset levelsAsset("breakout_level_pack.breakout_level", r2::asset::DEFAULT);
-            
-            auto levelAssetHandle = assetCache->LoadAsset(levelsAsset);
-            
-            auto assetBuffer = assetCache->GetAssetBuffer(levelAssetHandle);
-            
-            r2::sarr::Push(*assetsBuffers, assetBuffer);
-            
-            R2_CHECK(assetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
-            
-            const byte* data = assetBuffer.GetAssetBuffer()->Data();
-            
-            const auto levelPack = Breakout::GetLevelPack(data);
-            
-            const auto levels = levelPack->levels();
-            
-            printf("======================Levels==========================\n");
-            
-            for (u32 i = 0; i < levels->size(); ++i)
-            {
-                printf("Level: %s\n", levels->Get(i)->name()->c_str());
-                
-                printf("Hash: %llu\n", levels->Get(i)->hashName());
-                
-                const auto blocks = levels->Get(i)->blocks();
-                
-                for (u32 j = 0; j < blocks->size(); ++j)
-                {
-                    auto fillColor = blocks->Get(j)->fillColor();
-                    printf("-------------------Block--------------------\n");
-                    
-                    printf("Color: r: %f g: %f b: %f a: %f\n", fillColor->r(), fillColor->g(), fillColor->b(), fillColor->a());
-                    
-                    printf("HP: %i\n", blocks->Get(j)->hp());
-                    
-                    printf("Symbol: %c\n", blocks->Get(j)->symbol());
-                    
-                    printf("--------------------------------------------\n");
-                }
-                
-                printf("----------------------Layout-----------------\n");
-                
-                printf("Height: %u\n", levels->Get(i)->layout()->height());
-                
-                printf("Width: %u\n\n", levels->Get(i)->layout()->width());
-                
-                printf("%s\n", levels->Get(i)->layout()->layout()->c_str());
-                
-                printf("---------------------------------------------\n");
-            }
-            printf("======================================================\n");
-            
-            
-            
-            printf("======================Powerups==========================\n");
-            
-            r2::asset::Asset powerupsAsset("breakout_powerups.powerup", r2::asset::DEFAULT);
-            
-            auto powerupsAssetHandle = assetCache->LoadAsset(powerupsAsset);
-            auto powerupAssetBuffer = assetCache->GetAssetBuffer(powerupsAssetHandle);
-            
-            r2::sarr::Push(*assetsBuffers, powerupAssetBuffer);
-            
-            R2_CHECK(powerupAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
-            
-            const byte* powerupsData = powerupAssetBuffer.GetAssetBuffer()->Data();
-            
-            const auto powerupsfbb = Breakout::GetPowerups(powerupsData);
-            
-            const auto powerups = powerupsfbb->powerups();
-            
-            for (u32 i = 0; i < powerups->size(); ++i)
-            {
-                auto powerup = powerups->Get(i);
-                printf("----------------------Powerup-----------------\n");
-                
-                printf("type: %i\n", powerup->type());
-                
-                printf("size multiplier: %f\n", powerup->sizeMultiplier());
-                
-                printf("increase amount: %i\n", powerup->increaseAmount());
-                
-                printf("----------------------------------------------\n");
-            }
-            
-            printf("========================================================\n");
-            
-            r2::asset::Asset highScoresAsset("breakout_high_scores.scores", r2::asset::DEFAULT);
-            
-            auto highScoreAssetHandle = assetCache->LoadAsset(highScoresAsset);
-            auto highScoreAssetBuffer = assetCache->GetAssetBuffer(highScoreAssetHandle);
-            
-            r2::sarr::Push(*assetsBuffers, highScoreAssetBuffer);
-            
-            R2_CHECK(highScoreAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
-            
-            const auto scores = Breakout::GetHighScores(highScoreAssetBuffer.GetAssetBuffer()->Data())->scores();
-            
-            printf("======================Scores==========================\n");
-            
-            for (u32 i = 0; i < scores->size(); ++i)
-            {
-                auto score = scores->Get(i);
-                
-                printf("Player: %s\t\tScore: %u\n", score->name()->c_str(), score->points());
-            }
-            
-            printf("======================================================\n");
-            
-            r2::asset::Asset playerSettingsAsset("breakout_player_save.player", r2::asset::DEFAULT);
-            
-            auto playerSettingsAssetHandle = assetCache->LoadAsset(playerSettingsAsset);
-            auto settingsAssetBuffer = assetCache->GetAssetBuffer(playerSettingsAssetHandle);
-            
-            r2::sarr::Push(*assetsBuffers, settingsAssetBuffer);
-            
-            R2_CHECK(settingsAssetBuffer.GetAssetBuffer() != nullptr, "Asset buffer is nullptr");
-            
-            const auto settings = Breakout::GetPlayerSettings(settingsAssetBuffer.GetAssetBuffer()->Data());
-            
-            printf("======================Settings==========================\n");
-            
-            printf("Player Starting Level: %u\n", settings->startingLevel());
-            
-            printf("Player Starting Lives: %u\n", settings->lives());
-            
-            printf("Player points: %u\n", settings->points());
-            
-            printf("========================================================\n");
-            
-            auto oneMoreLevelRef = assetCache->GetAssetBuffer(levelAssetHandle);
-            
-            auto oneMoreScoreRef = assetCache->GetAssetBuffer(highScoreAssetHandle);
-            
-            r2::sarr::Push(*assetsBuffers, oneMoreLevelRef);
-            
-            r2::sarr::Push(*assetsBuffers, oneMoreScoreRef);
-        }*/
-        
         mPersController.Update();
 
-		//r2::sarr::Clear(*mBoneTransforms);
-        //r2::sarr::Clear(*mDebugBones);
+        //r2::sarr::Clear(*mSkeletonBoneTransforms);
+        //r2::sarr::Clear(*mEllenBoneTransforms);
 
-        //r2::sarr::Clear(*mBatBoneTransforms);
-        //r2::sarr::Clear(*mBat2BoneTransforms);
-        r2::sarr::Clear(*mSkeletonBoneTransforms);
-        r2::sarr::Clear(*mEllenBoneTransforms);
+        //r2::sarr::Clear(*mSkeletonDebugBones);
+        //r2::sarr::Clear(*mEllenDebugBones);
 
-        //r2::sarr::Clear(*mBatDebugBones);
-        //r2::sarr::Clear(*mBat2DebugBones);
-        r2::sarr::Clear(*mSkeletonDebugBones);
-        r2::sarr::Clear(*mEllenDebugBones);
+      //  auto time = CENG.GetTicks();
 
-        auto time = CENG.GetTicks();
-
-
-        r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-     //   const r2::draw::Animation* microbatAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID));
-     //   const r2::draw::Animation* microbatAnimation3 = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+2));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 2));
+      //  r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
         //@TODO(Serge): fix this other skeleton animation bugs - setting to 0 so it won't crash
-        const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
-        const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+3));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
+     //   const r2::draw::Animation* skeletonAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID)); // r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 3));
+     //   const r2::draw::Animation* ellenAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID+3));//r2::draw::animcache::GetAnimation(*mAnimationCache, r2::sarr::At(*mAnimationsHandles, mSelectedAnimationID + 6));
 
 		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation, *mBatBoneTransforms, *mBatDebugBones, 0);
 
 		//r2::draw::PlayAnimationForAnimModel(time, 0, true, *mMicroBatModel, microbatAnimation3, *mBat2BoneTransforms, *mBat2DebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
+	//	r2::draw::PlayAnimationForAnimModel(time, 0, true, *mSkeletonModel, skeletonAnimation, *mSkeletonBoneTransforms, *mSkeletonDebugBones, 0);
 
-		r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
-        
+	//	r2::draw::PlayAnimationForAnimModel(time, 0, true, *mEllenModel, ellenAnimation, *mEllenBoneTransforms, *mEllenDebugBones, 0);
     }
 
     virtual void Render(float alpha) override
@@ -1278,19 +776,16 @@ public:
         drawWorldParams.flags.Clear();
         drawWorldParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
 
-
         r2::draw::renderer::SetDefaultCullState(drawWorldParams);
         r2::draw::renderer::SetDefaultStencilState(drawWorldParams);
         r2::draw::renderer::SetDefaultBlendState(drawWorldParams);
 
         r2::draw::RenderMaterialCache* renderMaterialCache = r2::draw::renderer::GetRenderMaterialCache();
 
-
         if (r2::draw::renderer::IsModelLoaded(mSponzaModelRefHandle))
         {
 			r2::SArray<glm::mat4>* sponzaModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
 			r2::sarr::Push(*sponzaModelMatrices, r2::sarr::At(*modelMats, 0));
-
 
 			const r2::draw::vb::GPUModelRef* sponzaGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSponzaModelRefHandle);
 
@@ -1310,36 +805,24 @@ public:
 
 			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
 			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
-
-		//	r2::draw::renderer::DrawModel(drawWorldParams, mSponzaModelRefHandle, *sponzaModelMatrices, 1, nullptr, nullptr);
 			FREE(sponzaModelMatrices, *MEM_ENG_SCRATCH_PTR);
         }
 
-        r2::draw::DrawParameters drawTransparentWindowParams;
-        drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
-        drawTransparentWindowParams.flags.Clear();
-        drawTransparentWindowParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-        
-        r2::draw::renderer::SetDefaultCullState(drawTransparentWindowParams);
-        //drawTransparentWindowParams.cullState.frontFace = r2::draw::FRONT_AND_BACK;
-
-        r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
-        r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
-
-        //drawTransparentWindowParams.blendState.blendingEnabled = true;
-        //drawTransparentWindowParams.blendState.numBlendFunctions = 1;
-        //drawTransparentWindowParams.blendState.blendFunctions[0].blendDrawBuffer = 0;
-        //drawTransparentWindowParams.blendState.blendFunctions[0].sfactor = r2::draw::ONE;
-        //drawTransparentWindowParams.blendState.blendFunctions[0].dfactor = r2::draw::ONE_MINUS_SRC_ALPHA;
-
+        //r2::draw::DrawParameters drawTransparentWindowParams;
+        //drawTransparentWindowParams.layer = r2::draw::DL_TRANSPARENT;
+        //drawTransparentWindowParams.flags.Clear();
+        //drawTransparentWindowParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+        //
+        //r2::draw::renderer::SetDefaultCullState(drawTransparentWindowParams);
+        //r2::draw::renderer::SetDefaultStencilState(drawTransparentWindowParams);
+        //r2::draw::renderer::SetDefaultBlendState(drawTransparentWindowParams);
 
 		char materialsPath[r2::fs::FILE_PATH_LENGTH];
 		r2::fs::utils::AppendSubPath(SANDBOX_MATERIALS_MANIFESTS_BIN, materialsPath, "SandboxMaterialParamsPack.mppk");
 
-
         u64 materialParamsPackName = r2::asset::Asset::GetAssetNameForFilePath(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
         //draw transparent windows
-        const r2::draw::RenderMaterialParams* transparentWindowRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("TransparentWindow"));
+  /*      const r2::draw::RenderMaterialParams* transparentWindowRenderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("TransparentWindow"));
         r2::draw::ShaderHandle transparentWindowShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("TransparentWindow"), materialParamsPackName });
 
         r2::SArray<r2::draw::RenderMaterialParams>* transparentWindowRenderMaterials = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
@@ -1350,155 +833,105 @@ public:
         r2::draw::renderer::DrawModel(drawTransparentWindowParams, mTransparentWindowModelRefHandle, *mTransparentWindowMats, r2::sarr::Size(*mTransparentWindowMats), *transparentWindowRenderMaterials,*transparentWindowShaderHandles, nullptr);
 
         FREE(transparentWindowShaderHandles, *MEM_ENG_SCRATCH_PTR);
-        FREE(transparentWindowRenderMaterials, *MEM_ENG_SCRATCH_PTR);
+        FREE(transparentWindowRenderMaterials, *MEM_ENG_SCRATCH_PTR);*/
 
-		r2::draw::DrawParameters animDrawParams;
+		/*r2::draw::DrawParameters animDrawParams;
 		animDrawParams.layer = r2::draw::DL_CHARACTER;
 		animDrawParams.flags.Clear();
 		animDrawParams.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-		
-        r2::draw::renderer::SetDefaultCullState(animDrawParams);
+
+		r2::draw::renderer::SetDefaultCullState(animDrawParams);
 		r2::draw::renderer::SetDefaultStencilState(animDrawParams);
 		r2::draw::renderer::SetDefaultBlendState(animDrawParams);
 
-        //Draw the bat
-	   /* if (r2::draw::renderer::IsModelLoaded(mMicroBatModelRefHandle))
-		{
-			r2::SArray<glm::mat4>* microBatModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-			r2::SArray<r2::draw::ShaderBoneTransform>* allMicroBatBoneTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderBoneTransform, NUM_BONES);
-
-			r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 0));
-			r2::sarr::Push(*microBatModelMats, r2::sarr::At(*animModelMats, 1));
-
-			r2::sarr::Append(*allMicroBatBoneTransforms, *mBatBoneTransforms);
-			r2::sarr::Append(*allMicroBatBoneTransforms, *mBat2BoneTransforms);
-
-
-			const r2::draw::vb::GPUModelRef* microbatGPUModelRef = r2::draw::renderer::GetGPUModelRef(mMicroBatModelRefHandle);
-
-			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, microbatGPUModelRef->numMaterials);
-			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, microbatGPUModelRef->numMaterials);
-
-			for (u32 i = 0; i < microbatGPUModelRef->numMaterials; ++i)
-			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*microbatGPUModelRef->materialNames, i).name);
-
-				R2_CHECK(renderMaterial != nullptr, "...");
-
-				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-				r2::sarr::Push(*shaderHandles, r2::sarr::At(*microbatGPUModelRef->shaderHandles, i));
-			}
-
-			r2::draw::renderer::DrawModel(animDrawParams, mMicroBatModelRefHandle, *microBatModelMats, 2, *renderMaterialParams, *shaderHandles, allMicroBatBoneTransforms);
-
-			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
-
-			FREE(allMicroBatBoneTransforms, *MEM_ENG_SCRATCH_PTR);
-			FREE(microBatModelMats, *MEM_ENG_SCRATCH_PTR);
-		}*/
-
-        animDrawParams.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+		animDrawParams.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);*/
 
         //Draw the Skeleton
-        if (r2::draw::renderer::IsModelLoaded(mSkeletonModelRefHandle))
-        {
-			r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 0));
-			r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 1));
+   //     if (r2::draw::renderer::IsModelLoaded(mSkeletonModelRefHandle))
+   //     {
+			//r2::SArray<glm::mat4>* skeletonModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+			//r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 0));
+			//r2::sarr::Push(*skeletonModelMats, r2::sarr::At(*animModelMats, 1));
 
+			//const r2::draw::vb::GPUModelRef* skeletonGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSkeletonModelRefHandle);
 
-			const r2::draw::vb::GPUModelRef* skeletonGPUModelRef = r2::draw::renderer::GetGPUModelRef(mSkeletonModelRefHandle);
+			//r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, skeletonGPUModelRef->numMaterials);
+			//r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, skeletonGPUModelRef->numMaterials);
 
-			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, skeletonGPUModelRef->numMaterials);
-			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, skeletonGPUModelRef->numMaterials);
+			//for (u32 i = 0; i < skeletonGPUModelRef->numMaterials; ++i)
+			//{
+			//	const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*skeletonGPUModelRef->materialNames, i).name);
 
-			for (u32 i = 0; i < skeletonGPUModelRef->numMaterials; ++i)
-			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*skeletonGPUModelRef->materialNames, i).name);
+			//	R2_CHECK(renderMaterial != nullptr, "...");
 
-				R2_CHECK(renderMaterial != nullptr, "...");
+			//	r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+			//	r2::sarr::Push(*shaderHandles, r2::sarr::At(*skeletonGPUModelRef->shaderHandles, i));
+			//}
 
-				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-				r2::sarr::Push(*shaderHandles, r2::sarr::At(*skeletonGPUModelRef->shaderHandles, i));
-			}
+			//r2::draw::renderer::DrawModel(animDrawParams, mSkeletonModelRefHandle, *skeletonModelMats, 2, *renderMaterialParams, *shaderHandles, mSkeletonBoneTransforms);
 
-			r2::draw::renderer::DrawModel(animDrawParams, mSkeletonModelRefHandle, *skeletonModelMats, 2, *renderMaterialParams, *shaderHandles, mSkeletonBoneTransforms);
+			//FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			//FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+			//FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
+   //     }
 
-			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
-			FREE(skeletonModelMats, *MEM_ENG_SCRATCH_PTR);
-        }
+   //     //Draw Ellen
 
-        //Draw Ellen
+   //     if (r2::draw::renderer::IsModelLoaded(mEllenModelRefHandle))
+   //     {
+			//r2::SArray<glm::mat4>* ellenModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
+			//r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 2));
+			//r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 3));
 
-        if (r2::draw::renderer::IsModelLoaded(mEllenModelRefHandle))
-        {
-			r2::SArray<glm::mat4>* ellenModelMats = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 2);
-			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 2));
-			r2::sarr::Push(*ellenModelMats, r2::sarr::At(*animModelMats, 3));
+			//animDrawParams.stencilState.op.stencilFail = r2::draw::KEEP;
+			//animDrawParams.stencilState.op.depthFail = r2::draw::KEEP;
+			//animDrawParams.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
+			//animDrawParams.stencilState.stencilWriteEnabled = true;
+			//animDrawParams.stencilState.stencilEnabled = true;
+			//animDrawParams.stencilState.func.func = r2::draw::ALWAYS;
+			//animDrawParams.stencilState.func.ref = 1;
+			//animDrawParams.stencilState.func.mask = 0xFF;
 
-			animDrawParams.stencilState.op.stencilFail = r2::draw::KEEP;
-			animDrawParams.stencilState.op.depthFail = r2::draw::KEEP;
-			animDrawParams.stencilState.op.depthAndStencilPass = r2::draw::REPLACE;
-			animDrawParams.stencilState.stencilWriteEnabled = true;
-			animDrawParams.stencilState.stencilEnabled = true;
-			animDrawParams.stencilState.func.func = r2::draw::ALWAYS;
-			animDrawParams.stencilState.func.ref = 1;
-			animDrawParams.stencilState.func.mask = 0xFF;
+			//const r2::draw::vb::GPUModelRef* ellenGPUModelRef = r2::draw::renderer::GetGPUModelRef(mEllenModelRefHandle);
 
+			//r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, ellenGPUModelRef->numMaterials);
+			//r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, ellenGPUModelRef->numMaterials);
 
-			const r2::draw::vb::GPUModelRef* ellenGPUModelRef = r2::draw::renderer::GetGPUModelRef(mEllenModelRefHandle);
+			//for (u32 i = 0; i < ellenGPUModelRef->numMaterials; ++i)
+			//{
+			//	const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*ellenGPUModelRef->materialNames, i).name);
 
-			r2::SArray<r2::draw::RenderMaterialParams>* renderMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, ellenGPUModelRef->numMaterials);
-			r2::SArray<r2::draw::ShaderHandle>* shaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, ellenGPUModelRef->numMaterials);
+			//	R2_CHECK(renderMaterial != nullptr, "...");
 
-			for (u32 i = 0; i < ellenGPUModelRef->numMaterials; ++i)
-			{
-				const r2::draw::RenderMaterialParams* renderMaterial = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, r2::sarr::At(*ellenGPUModelRef->materialNames, i).name);
+			//	r2::sarr::Push(*renderMaterialParams, *renderMaterial);
+			//	r2::sarr::Push(*shaderHandles, r2::sarr::At(*ellenGPUModelRef->shaderHandles, i));
+			//}
 
-				R2_CHECK(renderMaterial != nullptr, "...");
+   //         r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *renderMaterialParams, *shaderHandles, mEllenBoneTransforms);
 
-				r2::sarr::Push(*renderMaterialParams, *renderMaterial);
-				r2::sarr::Push(*shaderHandles, r2::sarr::At(*ellenGPUModelRef->shaderHandles, i));
-			}
+			//FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
+			//FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
 
-            r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *renderMaterialParams, *shaderHandles, mEllenBoneTransforms);
+			//animDrawParams.flags.Remove(r2::draw::eDrawFlags::DEPTH_TEST);
+			//animDrawParams.layer = r2::draw::DL_EFFECT;
+			//animDrawParams.stencilState.stencilEnabled = true;
+			//animDrawParams.stencilState.stencilWriteEnabled = false;
+			//animDrawParams.stencilState.func.func = r2::draw::NOTEQUAL;
+			//animDrawParams.stencilState.func.ref = 1;
+			//animDrawParams.stencilState.func.mask = 0xFF;
 
-			FREE(shaderHandles, *MEM_ENG_SCRATCH_PTR);
-			FREE(renderMaterialParams, *MEM_ENG_SCRATCH_PTR);
+   //         r2::SArray<r2::draw::RenderMaterialParams>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
+   //         r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-			animDrawParams.flags.Remove(r2::draw::eDrawFlags::DEPTH_TEST);
-			animDrawParams.layer = r2::draw::DL_EFFECT;
-			animDrawParams.stencilState.stencilEnabled = true;
-			animDrawParams.stencilState.stencilWriteEnabled = false;
-			animDrawParams.stencilState.func.func = r2::draw::NOTEQUAL;
-			animDrawParams.stencilState.func.ref = 1;
-			animDrawParams.stencilState.func.mask = 0xFF;
+   //         r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineRenderMaterialParams(false) );
+   //         r2::sarr::Push(*outlineShaderHandles, r2::draw::renderer::GetDefaultOutlineShaderHandle(false));
 
+			//r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *outlineMaterialParams, *outlineShaderHandles, mEllenBoneTransforms);
 
-			//r2::SArray<r2::draw::MaterialHandle>* outlineMaterialHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::MaterialHandle, 1);
-
-			//r2::sarr::Push(*outlineMaterialHandles, r2::draw::renderer::GetDefaultOutlineMaterialHandle(false));
-
-            r2::SArray<r2::draw::RenderMaterialParams>* outlineMaterialParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
-            r2::SArray<r2::draw::ShaderHandle>* outlineShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
-
-
-            r2::sarr::Push(*outlineMaterialParams, r2::draw::renderer::GetDefaultOutlineRenderMaterialParams(false) );
-            r2::sarr::Push(*outlineShaderHandles, r2::draw::renderer::GetDefaultOutlineShaderHandle(false));
-
-			r2::draw::renderer::DrawModel(animDrawParams, mEllenModelRefHandle, *ellenModelMats, 2, *outlineMaterialParams, *outlineShaderHandles, mEllenBoneTransforms);
-
-            FREE(outlineShaderHandles, *MEM_ENG_SCRATCH_PTR);
-            FREE(outlineMaterialParams, *MEM_ENG_SCRATCH_PTR);
-
-
-			//FREE(outlineMaterialHandles, *MEM_ENG_SCRATCH_PTR);
-
-			FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
-        }
-        
+   //         FREE(outlineShaderHandles, *MEM_ENG_SCRATCH_PTR);
+   //         FREE(outlineMaterialParams, *MEM_ENG_SCRATCH_PTR);
+			//FREE(ellenModelMats, *MEM_ENG_SCRATCH_PTR);
+   //     }
 
         //Draw the Skybox
 		r2::SArray<glm::mat4>* skyboxModelMatrices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::mat4, 1);
@@ -1509,13 +942,11 @@ public:
         r2::SArray<r2::draw::RenderMaterialParams>* skyboxRenderParams = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::RenderMaterialParams, 1);
         r2::SArray < r2::draw::ShaderHandle>* skyboxShaderHandles = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::draw::ShaderHandle, 1);
 
-
 		const r2::draw::RenderMaterialParams* skyboxRenderMaterialParams = r2::draw::rmat::GetGPURenderMaterial(*renderMaterialCache, STRING_ID("NewportSkybox"));
 		r2::draw::ShaderHandle skyboxShaderHandle = r2::mat::GetShaderHandleForMaterialName({ STRING_ID("NewportSkybox"), materialParamsPackName });
 
         r2::sarr::Push(*skyboxRenderParams, *skyboxRenderMaterialParams);
         r2::sarr::Push(*skyboxShaderHandles, skyboxShaderHandle);
-
 
         r2::draw::renderer::DrawModel(drawWorldParams, mSkyboxModelRef, *skyboxModelMatrices, 1, *skyboxRenderParams, *skyboxShaderHandles, nullptr);
 
@@ -1551,8 +982,6 @@ public:
         r2::sarr::Push(*colors, glm::vec4(0, 1, 0, 1));
         r2::sarr::Push(*colors, glm::vec4(0, 0, 1, 1));
 
-
-
         r2::draw::renderer::DrawArrowInstanced(*basePositions, *directions, *lengths, *coneRadii, *colors, true, true);
 
         FREE(colors, *MEM_ENG_SCRATCH_PTR);
@@ -1561,51 +990,11 @@ public:
         FREE(directions, *MEM_ENG_SCRATCH_PTR);
         FREE(basePositions, *MEM_ENG_SCRATCH_PTR);
 
-     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), true);
-     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), 1, 0.1, glm::vec4(0, 1, 0, 1), true);
-     //   r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), 1, 0.1, glm::vec4(0, 0, 1, 1), true);
-
-
-		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, -5), 0.5, glm::vec4(0.8, 0.6, 0.1, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(0, 5, 5), 0.5, glm::vec4(1, 0, 0, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 0), 0.5, glm::vec4(1, 0, 1, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 0), 0.5, glm::vec4(1, 1, 0, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, -5), 0.5, glm::vec4(0.6, 0.3, 0.7, 1), true);
-
-  //      r2::draw::renderer::DrawArrow(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), 1, 0.1, glm::vec4(1, 0, 0, 1), false);
-
-  //     // r2::draw::renderer::DrawCone(glm::vec3(5, 5, -5), glm::vec3(-5, -5, 5), 0.5, 1, glm::vec4(0.6, 0.3, 0.7, 1), true);
-
-  //      r2::draw::renderer::DrawCylinder(glm::vec3(-5, 5, -5), glm::vec3(0, 1, 0), 0.5, 1, glm::vec4(0.5, 0.5, 1, 1), true);
-		////r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, -5), 0.5, glm::vec4(0.5, 0.5, 1, 1), true);
-  //      r2::draw::renderer::DrawCube(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
-		////r2::draw::renderer::DrawSphere(glm::vec3(-5, 5, 5), 0.5, glm::vec4(0, 1, 1, 1), true);
-		//r2::draw::renderer::DrawSphere(glm::vec3(5, 5, 5), 0.5, glm::vec4(1, 1, 1, 1), false);
-
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5, -5), glm::vec4(1, 1, 1, 1), true);
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(0, 5,  5), glm::vec4(1, 1, 0, 1), true);
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5,  0), glm::vec4(0, 1, 1, 1), true);
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 0), glm::vec4(1, 0, 1, 1), true);
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, -5), glm::vec4(0, 1, 0, 1), true);
-  //      r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, -5), glm::vec4(1, 1, 1, 1), true);
-		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(-5, 5, 5), glm::vec4(0, 0, 0, 1), true);
-		//r2::draw::renderer::DrawLine(glm::vec3(0), glm::vec3(5, 5, 5), glm::vec4(0.5, 1, 0, 1), true);
-
-       // glm::mat4 mat = r2::draw::renderer::DrawCylinder(glm::vec3(0, 5, -5), glm::vec3(0, 1, 0), 1, 5, glm::vec4(1, 1, 1, 1), false);
-         
-  //      r2::draw::renderer::DrawTangentVectors(r2::draw::CYLINDER, r2::sarr::At(*modelMats,r2::draw::CYLINDER));
-  //      r2::draw::renderer::DrawTangentVectors(r2::draw::QUAD, r2::sarr::At(*modelMats, r2::draw::QUAD));
         if (mDrawDebugBones)
         {
-
-          //  r2::draw::renderer::DrawDebugBones(*mBatDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
-            r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
-          
+         //   r2::draw::renderer::DrawDebugBones(*mSkeletonDebugBones, r2::sarr::At(*animModelMats, 0), glm::vec4(1, 1, 0, 1));
+          //  r2::draw::renderer::DrawDebugBones(*mEllenDebugBones, r2::sarr::At(*animModelMats, 2), glm::vec4(1, 1, 0, 1));
         }
-
-        
-        
     }
     
     virtual void Shutdown() override
@@ -1613,50 +1002,17 @@ public:
 
         FREE(modelMats, *linearArenaPtr);
 
+  //      FREE(mAnimationsHandles, *linearArenaPtr);
+  //      FREE(animModelMats, *linearArenaPtr);
 
-        FREE(mAnimationsHandles, *linearArenaPtr);
-        FREE(animModelMats, *linearArenaPtr);
+  //      FREE(mEllenBoneTransforms, *linearArenaPtr);
+  //      FREE(mEllenDebugBones, *linearArenaPtr);
 
-        FREE(mEllenBoneTransforms, *linearArenaPtr);
-        FREE(mEllenDebugBones, *linearArenaPtr);
+		//FREE(mSkeletonBoneTransforms, *linearArenaPtr);
+		//FREE(mSkeletonDebugBones, *linearArenaPtr);
 
-		FREE(mSkeletonBoneTransforms, *linearArenaPtr);
-		FREE(mSkeletonDebugBones, *linearArenaPtr);
-
-        FREE(mBat2BoneTransforms, *linearArenaPtr);
-        FREE(mBat2DebugBones, *linearArenaPtr);
-
-		FREE(mBatBoneTransforms, *linearArenaPtr);
-		FREE(mBatDebugBones, *linearArenaPtr);
-
-        
-
-     //   FREE(mStaticModelMaterialHandles, *linearArenaPtr);
-        FREE(mStaticModelRefs, *linearArenaPtr);
-      //  FREE(mAnimModelRefs, *linearArenaPtr);
-
-        
-        FREE(mStaticModelDrawFlags, *linearArenaPtr);
-
-
-        FREE(mTransparentWindowMats, *linearArenaPtr);
-        FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
-
-       // FREE(mStaticCubeModelMats, *linearArenaPtr);
-     //   FREE(mStaticCubeMaterials, *linearArenaPtr);
-        //FREE(mStaticCubesDrawFlags, *linearArenaPtr);
-
-		//u64 size = r2::sarr::Size(*assetsBuffers);
-
-		//for (u64 i = 0; i < size; ++i)
-		//{
-		//	auto record = r2::sarr::At(*assetsBuffers, i);
-
-		//	assetCache->ReturnAssetBuffer(record);
-		//}
-  //      FREE(assetsBuffers, *linearArenaPtr);
-  //      r2::asset::lib::DestroyCache(assetCache);
-  //      FREE(assetCacheBoundary.location, *linearArenaPtr);
+  //      FREE(mTransparentWindowMats, *linearArenaPtr);
+  //      FREE(mTransparentWindowDrawFlags, *linearArenaPtr);
 
         FREE_EMPLACED_ARENA(linearArenaPtr);
     }
@@ -1703,7 +1059,6 @@ public:
     {
         std::vector<std::string> manifestBinPaths
         {
-           // SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialPack.mpak"),
             SANDBOX_MATERIALS_MANIFESTS_BIN + std::string("/SandboxMaterialParamsPack.mppk")
 		};
 		return manifestBinPaths;
@@ -1713,7 +1068,6 @@ public:
     {
 		std::vector<std::string> manifestRawPaths
 		{
-			//SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialPack.json"),
             SANDBOX_MATERIALS_MANIFESTS + std::string("/SandboxMaterialParamsPack.json")
 		};
 		return manifestRawPaths;
@@ -1976,57 +1330,32 @@ private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
     r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
     r2::cam::PerspectiveController mPersController;
-  //  r2::asset::AssetCache* assetCache;
-   // bool reload;
-    r2::mem::utils::MemBoundary assetCacheBoundary;
-    r2::SArray<r2::asset::AssetCacheRecord>* assetsBuffers;
+
     r2::mem::LinearArena* linearArenaPtr;
 
+  //  r2::draw::vb::GPUModelRefHandle mSkeletonModelRefHandle;
+ //   r2::draw::vb::GPUModelRefHandle mEllenModelRefHandle;
 
-    //r2::SArray<r2::draw::vb::GPUModelRefHandle>* mAnimModelRefs;
-
-   // r2::draw::vb::GPUModelRefHandle mMicroBatModelRefHandle;
-    r2::draw::vb::GPUModelRefHandle mSkeletonModelRefHandle;
-    r2::draw::vb::GPUModelRefHandle mEllenModelRefHandle;
-
-    r2::SArray<r2::draw::vb::GPUModelRefHandle>* mStaticModelRefs;
-  //  r2::SArray<r2::draw::MaterialHandle>* mStaticModelMaterialHandles;
     r2::draw::vb::GPUModelRefHandle mSkyboxModelRef;
 
-
-    r2::SArray<r2::draw::DrawFlags>* mStaticModelDrawFlags;
     r2::SArray<glm::mat4>* modelMats;
-    r2::SArray<glm::mat4>* animModelMats;
+   // r2::SArray<glm::mat4>* animModelMats;
 
-    r2::draw::vb::GPUModelRefHandle mTransparentWindowModelRefHandle;
-    r2::SArray<glm::mat4>* mTransparentWindowMats;
-    r2::SArray<r2::draw::DrawFlags>* mTransparentWindowDrawFlags;
+ //   r2::draw::vb::GPUModelRefHandle mTransparentWindowModelRefHandle;
+  //  r2::SArray<glm::mat4>* mTransparentWindowMats;
+  //  r2::SArray<r2::draw::DrawFlags>* mTransparentWindowDrawFlags;
 
-    r2::SArray<r2::draw::ShaderBoneTransform>* mBatBoneTransforms;
-    r2::SArray<r2::draw::ShaderBoneTransform>* mBat2BoneTransforms;
-    r2::SArray<r2::draw::DebugBone>* mBatDebugBones;
-    r2::SArray<r2::draw::DebugBone>* mBat2DebugBones;
+	//r2::SArray<r2::draw::ShaderBoneTransform>* mSkeletonBoneTransforms;
+	//r2::SArray<r2::draw::DebugBone>* mSkeletonDebugBones;
 
-	r2::SArray<r2::draw::ShaderBoneTransform>* mSkeletonBoneTransforms;
-	r2::SArray<r2::draw::DebugBone>* mSkeletonDebugBones;
+	//r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
+	//r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
 
-	r2::SArray<r2::draw::ShaderBoneTransform>* mEllenBoneTransforms;
-	r2::SArray<r2::draw::DebugBone>* mEllenDebugBones;
+    //r2::SArray<r2::asset::AssetHandle>* mAnimationsHandles;
 
-    r2::SArray<r2::asset::AssetHandle>* mAnimationsHandles;
-
-    r2::draw::vb::GPUModelRefHandle mStaticCubeModelRefHandle;
-  //  r2::SArray<glm::mat4>* mStaticCubeModelMats;
-   // r2::SArray<r2::draw::MaterialHandle>* mStaticCubeMaterials;
-  //  r2::SArray<r2::draw::DrawFlags>* mStaticCubesDrawFlags;
-
-  //  r2::draw::ModelCache* mModelSystem = nullptr;
-  //  r2::draw::AnimationCache* mAnimationCache = nullptr;
-
-    //const r2::draw::AnimModel* mMicroBatModel = nullptr;
-    const r2::draw::AnimModel* mSkeletonModel = nullptr;
-    const r2::draw::AnimModel* mEllenModel = nullptr;
-    const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
+   // const r2::draw::AnimModel* mSkeletonModel = nullptr;
+   // const r2::draw::AnimModel* mEllenModel = nullptr;
+    //const r2::draw::AnimModel* mSelectedAnimModel = nullptr;
     const r2::draw::Model* mSponzaModel = nullptr;
     r2::draw::vb::GPUModelRefHandle mSponzaModelRefHandle;
 

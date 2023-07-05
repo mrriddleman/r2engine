@@ -109,7 +109,74 @@ namespace r2::ecs
 	bool ECSWorld::LoadLevel(const Level& level, const flat::LevelData* levelData)
 	{
 		mSceneGraph.LoadLevel(level, levelData);
+
+		PostLoadLevel(level, levelData);
+
 		return true;
+	}
+
+	void ECSWorld::PostLoadLevel(const Level& level, const flat::LevelData* levelData)
+	{
+		const r2::SArray<ecs::Entity>& allEntities = mECSCoordinator->GetAllLivingEntities();
+
+		const auto numEntities = r2::sarr::Size(allEntities);
+
+		for (u64 i = 0; i < numEntities; ++i)
+		{
+			ecs::Entity e = r2::sarr::At(allEntities, i);
+
+			if (mECSCoordinator->HasComponent<ecs::SkeletalAnimationComponent>(e)
+#ifdef R2_DEBUG
+				&& !mECSCoordinator->HasComponent<ecs::DebugBoneComponent>(e)
+#endif		
+				)
+			{
+#ifdef R2_DEBUG
+				const ecs::SkeletalAnimationComponent& skeletalAnimationComponent = mECSCoordinator->GetComponent<ecs::SkeletalAnimationComponent>(e);
+
+				ecs::DebugBoneComponent debugBoneComponent;
+				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
+				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				r2::sarr::Clear(*debugBoneComponent.debugBones);
+				mComponentAllocations.push_back(debugBoneComponent.debugBones);
+
+				mECSCoordinator->AddComponent<ecs::DebugBoneComponent>(e, debugBoneComponent);
+#endif
+			}
+
+			if (mECSCoordinator->HasComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e)
+#ifdef R2_DEBUG
+				&& !mECSCoordinator->HasComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e)
+#endif
+				)
+			{
+#ifdef R2_DEBUG
+				const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e);
+
+				const auto numInstances = instancedSkeletalAnimationComponent.numInstances;
+
+				ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
+				instancedDebugBoneComponent.numInstances = numInstances;
+				instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, numInstances);
+				mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
+
+				for (u32 j = 0; j < numInstances; ++j)
+				{
+					const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->boneInfo);
+
+					ecs::DebugBoneComponent debugBoneInstance1;
+					debugBoneInstance1.color = glm::vec4(1, 1, 0, 1);
+					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, numDebugBones);
+					r2::sarr::Clear(*debugBoneInstance1.debugBones);
+					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
+
+					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
+				}
+
+				mECSCoordinator->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
+#endif
+			}
+		}
 	}
 
 	bool ECSWorld::UnloadLevel(const Level& level)

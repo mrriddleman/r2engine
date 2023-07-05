@@ -5,8 +5,6 @@
 #include "r2/Game/Level/Level.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
-#include "r2/Core/Containers/SHashMap.h"
-#include "r2/Game/SceneGraph/SceneGraph.h"
 
 namespace flat
 {
@@ -60,6 +58,9 @@ namespace r2
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
+		Level* ReloadLevel(const char* levelURI);
+		Level* ReloadLevel(LevelName levelName);
+
 		static LevelName MakeLevelNameFromPath(const char* levelPath);
 
 #if defined (R2_ASSET_PIPELINE) && defined (R2_EDITOR)
@@ -76,7 +77,6 @@ namespace r2
 	private:
 		
 		Level* FindLoadedLevel(LevelName levelname, s32& index);
-
 		void LoadLevelData(Level& level, const flat::LevelData* levelData);
 		void UnLoadLevelData(const Level& level);
 
