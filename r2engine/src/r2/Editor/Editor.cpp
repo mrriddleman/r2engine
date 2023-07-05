@@ -538,79 +538,8 @@ namespace r2
 				
 				transformComponent.localTransform.rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0));
 				
-
 			return e.ShouldConsume();
 		});
-
-		//@TODO(Serge): remove when DebugBoneComponent no long necessary for Skeletal Animation
-		/*dispatcher.Dispatch<r2::evt::EditorLevelLoadedEvent>([this](const r2::evt::EditorLevelLoadedEvent& event)
-			{
-				const r2::SArray<ecs::Entity>& allEntities = MENG.GetECSWorld().GetECSCoordinator()->GetAllLivingEntities();
-
-				const auto numEntities = r2::sarr::Size(allEntities);
-
-				for (u64 i = 0; i < numEntities; ++i)
-				{
-					ecs::Entity e = r2::sarr::At(allEntities, i);
-
-					if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::SkeletalAnimationComponent>(e)
-#ifdef R2_DEBUG
-						&& !MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::DebugBoneComponent>(e)
-#endif		
-						)
-					{
-#ifdef R2_DEBUG
-						const ecs::SkeletalAnimationComponent& skeletalAnimationComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::SkeletalAnimationComponent>(e);
-
-						ecs::DebugBoneComponent debugBoneComponent;
-						debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-						debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
-						r2::sarr::Clear(*debugBoneComponent.debugBones);
-						mComponentAllocations.push_back(debugBoneComponent.debugBones);
-
-						MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(e, debugBoneComponent);
-#endif
-					}
-
-					if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e)
-#ifdef R2_DEBUG
-						&& !MENG.GetECSWorld().GetECSCoordinator()->HasComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e)
-#endif
-						)
-					{
-#ifdef R2_DEBUG
-						const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = MENG.GetECSWorld().GetECSCoordinator()->GetComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(e);
-
-						const auto numInstances = instancedSkeletalAnimationComponent.numInstances;
-
-						ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
-						instancedDebugBoneComponent.numInstances = numInstances;
-						instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, numInstances);
-						mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
-
-						for (u32 j = 0; j < numInstances; ++j)
-						{
-							const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->boneInfo);
-
-							ecs::DebugBoneComponent debugBoneInstance1;
-							debugBoneInstance1.color = glm::vec4(1, 1, 0, 1);
-							debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, numDebugBones);
-							r2::sarr::Clear(*debugBoneInstance1.debugBones);
-							mComponentAllocations.push_back(debugBoneInstance1.debugBones);
-
-							r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
-						}
-
-						MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(e, instancedDebugBoneComponent);
-#endif
-					}
-
-				}
-
-
-				return event.ShouldConsume();
-			});*/
-
 
 		for (const auto& widget : mEditorWidgets)
 		{
@@ -638,7 +567,7 @@ namespace r2
 		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		const auto* assetFile = gameAssetManager.GetAssetFile(r2::asset::Asset(modelHandle, r2::asset::RMODEL));
-		//mCurrentEditorLevel.AddModelFile(assetFile->FilePath());
+
 		auto* modelAssets = mCurrentEditorLevel->GetModelAssets();
 		auto* materials = mCurrentEditorLevel->GetMaterials();
 
@@ -675,8 +604,6 @@ namespace r2
 			//@NOTE(Serge): may want to load here - dunno yet
 			r2::sarr::Push(*animations, animationAssetHandle);
 		}
-
-		//mCurrentEditorLevel.AddAnimationFile(gameAssetManager.GetAssetFile(r2::asset::Asset(animationHandle, r2::asset::RANIMATION))->FilePath());
 	}
 }
 

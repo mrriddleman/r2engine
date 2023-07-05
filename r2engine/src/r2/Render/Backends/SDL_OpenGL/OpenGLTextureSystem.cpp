@@ -155,14 +155,14 @@ namespace r2::draw::gl
 
 			SparseInternalFormatTileSizes tileSizes;
 
-			GLCall(glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount));
+			glGetInternalformativ(target, format.internalformat, GL_NUM_VIRTUAL_PAGE_SIZES_ARB, 1, &indexCount);
 
 			for (GLint i = 0; i < indexCount; ++i)
 			{
 				//GLCall(glTexParameteri(target, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, i));
-				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize));
-				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize));
-				GLCall(glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize));
+				glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &xSize);
+				glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &ySize);
+				glGetInternalformativ(target, format.internalformat, GL_VIRTUAL_PAGE_SIZE_Z_ARB, 1, &zSize);
 
 
 				// For our purposes, the "best" format is the one that winds up with Z=1 and the largest x and y sizes.
@@ -404,7 +404,7 @@ namespace r2::draw::gl
 				target = GL_TEXTURE_CUBE_MAP_ARRAY;
 			}
 			
-			GLCall(glBindTexture(target, container.texId));
+			glBindTexture(target, container.texId);
 
 			GLsizei levelWidth = glm::max( container.format.width, container.xTileSize),
 				levelHeight = glm::max(container.format.height, container.yTileSize);
@@ -419,14 +419,14 @@ namespace r2::draw::gl
 					//@NOTE: YOU HAVE TO COMMIT ALL OF THE PAGES FOR THE CUBE MAP!!!!!!!!
 					for (u32 i = 0; i < r2::draw::tex::NUM_SIDES; ++i)
 					{
-						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice * r2::draw::tex::NUM_SIDES + i, levelWidth, levelHeight, 1, commit));
+						glTexPageCommitmentARB(target, level, 0, 0, slice * r2::draw::tex::NUM_SIDES + i, levelWidth, levelHeight, 1, commit);
 					}
 				}
 				else
 				{
 					for (int layer = 0; layer < numLayersToCommit; ++layer)
 					{
-						GLCall(glTexPageCommitmentARB(target, level, 0, 0, slice + layer, levelWidth, levelHeight, 1, commit));
+						glTexPageCommitmentARB(target, level, 0, 0, slice + layer, levelWidth, levelHeight, 1, commit);
 					}
 					
 				}
@@ -594,11 +594,11 @@ namespace r2::draw::tex::impl
 
 
 		GLboolean fullArrayCubeMipMaps;
-		GLCall(glGetBooleanv(GL_SPARSE_TEXTURE_FULL_ARRAY_CUBE_MIPMAPS_ARB, &fullArrayCubeMipMaps));
+		glGetBooleanv(GL_SPARSE_TEXTURE_FULL_ARRAY_CUBE_MIPMAPS_ARB, &fullArrayCubeMipMaps);
 
 		GLint numSparseLevels = 0;
 
-		GLCall(glGetTexParameteriv(GL_TEXTURE_CUBE_MAP_ARRAY, GL_NUM_SPARSE_LEVELS_ARB, &numSparseLevels));
+		glGetTexParameteriv(GL_TEXTURE_CUBE_MAP_ARRAY, GL_NUM_SPARSE_LEVELS_ARB, &numSparseLevels);
 
 		R2_CHECK(fullArrayCubeMipMaps == GL_TRUE, "Dunno what to do if this is false yet - https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_sparse_texture.txt");
 
@@ -705,11 +705,11 @@ namespace r2::draw::tex::impl
 		GLint maxTextureArrayLevels = 0;
 		if (sparse) 
 		{
-			GLCall(glGetIntegerv(GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB, &maxTextureArrayLevels));
+			glGetIntegerv(GL_MAX_SPARSE_ARRAY_TEXTURE_LAYERS_ARB, &maxTextureArrayLevels);
 		}
 		else 
 		{
-			GLCall(glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels));
+			glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &maxTextureArrayLevels);
 		}
 
 		return maxTextureArrayLevels/16; //should be 128 on dev system
