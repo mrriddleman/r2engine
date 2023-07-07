@@ -456,8 +456,6 @@ project "Sandbox"
 	language "C++"
 	cppdialect "C++17"
 	exceptionhandling "Off"
-
-	--staticruntme "off"
 	
 	local sandboxOutputDir = "bin/" .. outputdir .. "/%{prj.name}"
 
@@ -591,6 +589,31 @@ project "Sandbox"
 			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/zlib1.dll ../bin/Release_windows_x86_64/%{prj.name}"
 		} 
 
+	filter {"configurations:Publish", "system:windows"}
+		libdirs
+		{
+			"r2engine/vendor/assimp/Windows/lib/Release",
+		}
+
+		links
+		{
+			"fmod_vc",
+			"assimp-vc142-mt"
+		}
+
+		postbuildcommands 
+		{
+			"{COPY} ../r2engine/vendor/SDL2/Windows/lib/x64/SDL2.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/FMOD/Windows/core/lib/x64/fmod.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/assimp/Windows/lib/Release/assimp-vc142-mt.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{RMDIR} ../bin/Publish_windows_x86_64/%{prj.name}/sounds",
+			"{COPY} ../engine_assets/sounds ./bin/Publish_windows_x86_64/%{prj.name}/sounds",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/SDL2_image.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libtiff-5.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libpng16-16.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/libjpeg-9.dll ../bin/Publish_windows_x86_64/%{prj.name}",
+			"{COPY} ../r2engine/vendor/SDL2Image/Windows/lib/x64/zlib1.dll ../bin/Publish_windows_x86_64/%{prj.name}"
+		}
 
 	filter "system:macosx"
 		systemversion "latest"
@@ -642,5 +665,5 @@ project "Sandbox"
 	filter "configurations:Publish"
 		defines "R2_PUBLISH"
 		runtime "Release"
-		optimize "On"
+		optimize "Full"
 		staticruntime "off"

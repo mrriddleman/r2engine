@@ -67,9 +67,9 @@ namespace r2
         {
             struct MemoryProperties
             {
-                u32 alignment;
-                u32 headerSize;
-                u32 boundsChecking;
+                u32 alignment = 0;
+                u32 headerSize = 0;
+                u32 boundsChecking = 0;
             };
 
             struct MemBoundary

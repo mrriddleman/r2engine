@@ -454,7 +454,7 @@ namespace r2
             
             r2::mem::GlobalMemory::EngineMemory().singleFrameArena->GetPolicyRef().Reset();
 
-#if defined( R2_DEBUG ) || defined(R2_RELEASE)
+#if defined( R2_DEBUG ) || defined(R2_RELEASE) || defined(R2_PUBLISH)
             frames++;
             totalFrames++;
 			//Calculate ms per frame

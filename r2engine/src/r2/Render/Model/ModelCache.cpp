@@ -56,7 +56,6 @@ namespace r2::draw::modlche
 		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize, files);
 
-
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(meshLoader);
 
@@ -64,9 +63,6 @@ namespace r2::draw::modlche
 		modelLoader->SetAssetCache(newModelSystem->mModelCache);
 
 		newModelSystem->mModelCache->RegisterAssetLoader(modelLoader);
-
-		//r2::asset::AssimpAssetLoader* assimpModelLoader = (r2::asset::AssimpAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::AssimpAssetLoader>();
-		//newModelSystem->mModelCache->RegisterAssetLoader(assimpModelLoader);
 
 		r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
 		newModelSystem->mModelCache->RegisterAssetLoader(rmodelLoader);
@@ -89,9 +85,6 @@ namespace r2::draw::modlche
 		FREE(system->mMeshes, *arena);
 		FREE(system->mModels, *arena);
 
-		
-
-
 
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
@@ -106,8 +99,9 @@ namespace r2::draw::modlche
 	{
 		u32 boundsChecking = 0;
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
-		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+		
 #endif
+		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ModelCache), ALIGNMENT, headerSize, boundsChecking) +

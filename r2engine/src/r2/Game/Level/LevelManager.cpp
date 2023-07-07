@@ -60,7 +60,7 @@ namespace r2
 
 		r2::mem::utils::MemoryProperties memProperties;
 		memProperties.alignment = 16;
-
+		memProperties.boundsChecking = 0;
 #ifdef R2_DEBUG
 		memProperties.boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif

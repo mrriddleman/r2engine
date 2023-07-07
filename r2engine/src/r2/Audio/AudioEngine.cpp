@@ -582,7 +582,7 @@ namespace r2::audio
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
             
             u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#ifdef R2_DEBUG || R2_RELEASE
             boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
             
@@ -601,7 +601,7 @@ namespace r2::audio
             
             AudioEngine::mSoundAllocator = EMPLACE_LINEAR_ARENA(*r2::mem::GlobalMemory::GetMemoryArea(engineMem.internalEngineMemoryHandle)->GetSubArea(AudioEngine::mSoundMemoryAreaHandle));
             
-            R2_CHECK(AudioEngine::mSoundAllocator != nullptr, "We have an invalid linear arean for sound!");
+            R2_CHECK(AudioEngine::mSoundAllocator != nullptr, "We have an invalid linear arena for sound!");
         }
 
         if (gImpl == nullptr)
