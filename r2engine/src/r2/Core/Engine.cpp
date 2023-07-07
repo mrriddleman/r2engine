@@ -434,34 +434,14 @@ namespace r2
 
             SetupGameAssetManager(texturePackPath, noptrApp);
 
-            r2::SArray<const byte*>* materialManifestsData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, appMaterialPacksManifests.size() + 1);
-            r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const flat::MaterialParamsPack*, r2::sarr::Capacity(*materialManifestsData));
-
-            r2::asset::lib::GetManifestDataForType(*mAssetLib, r2::asset::MATERIAL_PACK_MANIFEST, materialManifestsData);
-
-            for (u32 i = 0; i < numMaterialManifests; ++i)
-            {
-                const byte* materialParamsPackData = r2::sarr::At(*materialManifestsData, i);
-                r2::sarr::Push(*materialParamsPacks, flat::GetMaterialParamsPack(materialParamsPackData));
-            }
-            
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
-			/*bool materialSystemInitialized = r2::draw::matsys::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_MATERIAL_SYSTEMS, MAX_NUM_MATERIALS_PER_MATERIAL_SYSTEM, "Material Systems Area");
-			if (!materialSystemInitialized)
-			{
-				R2_CHECK(false, "We couldn't initialize the material systems");
-				return false;
-			}*/
 
-			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, materialParamsPacks);
+			bool shaderSystemIntialized = r2::draw::shadersystem::Init(engineMem.internalEngineMemoryHandle, MAX_NUM_SHADERS, noptrApp->GetShaderManifestsPath().c_str(), internalShaderManifestPath, appMaterialPacksManifests.size() + 1);
 			if (!shaderSystemIntialized)
 			{
 				R2_CHECK(false, "We couldn't initialize the shader system");
 				return false;
 			}
-
-            FREE(materialParamsPacks, *MEM_ENG_SCRATCH_PTR);
-            FREE(materialManifestsData, *MEM_ENG_SCRATCH_PTR);
 
             mRendererBackends[mCurrentRendererBackend] = r2::draw::renderer::CreateRenderer(mCurrentRendererBackend, engineMem.internalEngineMemoryHandle);
 
@@ -1149,7 +1129,7 @@ namespace r2
         std::vector<std::string> textureManifests = noptrApp->GetTexturePackManifestsBinaryPaths();
 
 		u32 totalNumTextures = 0;
-		u32 totalNumTextureManifests = textureManifests.size();
+		u32 totalNumTextureManifests = textureManifests.size() + 1; //+1 for the engine
 		u32 totalNumTexturePacks = 0;
 		u32 totalTextureCacheSize = 0;
         u32 totalNumCubemaps = 0;
@@ -1168,6 +1148,20 @@ namespace r2
 			totalTextureCacheSize += cacheSize;
 		}
 
+        {
+			u32 numTextures = 0;
+			u32 cacheSize = 0;
+			u32 numTexturePacks = 0;
+			u32 numCubemaps = 0;
+
+			r2::draw::texche::GetTexturePacksCacheSizes(engineTexturePackManifestPath, numTextures, numTexturePacks, numCubemaps, cacheSize);
+
+			totalNumTextures += numTextures;
+			totalNumTexturePacks += numTexturePacks;
+			totalTextureCacheSize += cacheSize;
+        }
+		
+
 #ifdef R2_ASSET_PIPELINE
 		totalNumTextures = std::max(totalNumTextures, 2000u);
 		totalNumTexturePacks = std::max(totalNumTexturePacks, 1000u);
@@ -1176,17 +1170,22 @@ namespace r2
 
 		mGameAssetManager = ALLOC(r2::GameAssetManager, *MEM_ENG_PERMANENT_PTR);
 
-		auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
-		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
-		memoryArea->Init(noptrApp->GetAssetMemoryAreaSize());
-
-
 		r2::asset::lib::RegenerateAssetFilesFromManifests(*mAssetLib);
 
 		noptrApp->AddLooseAssetFiles(r2::asset::lib::GetFileList(*mAssetLib));
+		
+        auto memoryHandle = r2::mem::GlobalMemory::AddMemoryArea("Game Asset memory");
+		r2::mem::MemoryArea* memoryArea = r2::mem::GlobalMemory::GetMemoryArea(memoryHandle);
 
-		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, r2::asset::lib::GetFileList(*mAssetLib), totalNumTextures, totalNumTextureManifests, totalNumTexturePacks);
+        u32 gameAssetCacheSize = noptrApp->GetAssetMemorySize();
 
+        r2::asset::FileList gameFileList = r2::asset::lib::GetFileList(*mAssetLib);
+
+        u32 numFiles = r2::sarr::Capacity(*gameFileList);
+        auto totalCacheAmount = r2::asset::AssetCache::TotalMemoryNeeded(numFiles, gameAssetCacheSize, ALIGNMENT, std::max(numFiles, 1024u), std::max(numFiles, 1024u));
+		memoryArea->Init(totalCacheAmount, 0);
+
+		mGameAssetManager->Init<r2::mem::LinearArena>(*MEM_ENG_PERMANENT_PTR, memoryHandle, gameFileList, totalNumTextures, totalNumTextureManifests, totalNumTexturePacks, gameAssetCacheSize);
 
         const auto engineTexturePacksManifestHandle = r2::asset::Asset::GetAssetNameForFilePath(engineTexturePackManifestPath, r2::asset::TEXTURE_PACK_MANIFEST);
 

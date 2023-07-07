@@ -22,6 +22,8 @@
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
 #endif
 
+#include <cstdio>
+
 namespace r2::asset
 {
 	class AssetLoader;
@@ -44,12 +46,22 @@ namespace r2
 		~GameAssetManager();
 
 		template<class ARENA>
-		bool Init(ARENA& arena, r2::mem::MemoryArea::Handle assetMemoryHandle, r2::asset::FileList fileList, u32 numTextures, u32 numTextureManifests, u32 numTexturePacks)
+		bool Init(
+			ARENA& arena,
+			r2::mem::MemoryArea::Handle assetMemoryHandle,
+			r2::asset::FileList fileList,
+			u32 numTextures,
+			u32 numTextureManifests,
+			u32 numTexturePacks,
+			u32 assetCache)
 		{
 			r2::mem::MemoryArea* gameAssetManagerMemoryArea = r2::mem::GlobalMemory::GetMemoryArea(assetMemoryHandle);
 			R2_CHECK(gameAssetManagerMemoryArea != nullptr, "Failed to get the memory area!");
 
-			mAssetCache = r2::asset::lib::CreateAssetCache(gameAssetManagerMemoryArea->AreaBoundary(), fileList);
+			auto areaBoundary = gameAssetManagerMemoryArea->AreaBoundary();
+			areaBoundary.alignment = 16;
+
+			mAssetCache = r2::asset::lib::CreateAssetCache(areaBoundary, assetCache, fileList);
 
 			const u64 fileListCapacity = r2::sarr::Capacity(*fileList);
 

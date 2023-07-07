@@ -112,7 +112,7 @@ namespace r2::asset::lib
         R2_CHECK(fileList != nullptr, "Failed to create the fileList");
 
         //@TODO(Serge): remove the CreateAssetCache + MakeFileList stuff
-        newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, fileList);
+        newAssetLib->mAssetCache = CreateAssetCache(newAssetLib->mAssetCacheBoundary, cacheSize, fileList);
 
         R2_CHECK(newAssetLib->mAssetCache != nullptr, "Failed to create the AssetCache");
 
@@ -559,7 +559,7 @@ namespace r2::asset::lib
 		return manifestFile;
     }
 
-    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, r2::asset::FileList files)
+    r2::asset::AssetCache* CreateAssetCache(const r2::mem::utils::MemBoundary& boundary, u32 assetTotalSize, r2::asset::FileList files)
     {
         if (s_assetCaches)
         {
@@ -577,7 +577,11 @@ namespace r2::asset::lib
             {
                 return nullptr;
             }
+
+            const auto memoryNeeded = r2::asset::AssetCache::TotalMemoryNeeded(r2::sarr::Size(*files), assetTotalSize, boundary.alignment);
             
+            R2_CHECK(boundary.size >= memoryNeeded, "Our boundary for this asset cache is not big enough. We need: %llu, but have: %llu, difference: %llu", memoryNeeded, boundary.size, static_cast<s64>(memoryNeeded) - static_cast<s64>(boundary.size));
+
             r2::asset::AssetCache* cache = ALLOC_PARAMS(r2::asset::AssetCache, *s_arenaPtr, slot, boundary);
             
             if (cache)

@@ -430,16 +430,18 @@ namespace r2::draw
 
 
 		//------------BEGIN Debug Stuff--------------
+		//@NOTE(Serge): These config handles need to exist for all configurations since we need to properly line up
+		//				the shader layouts
+		ConstantConfigHandle mDebugLinesSubCommandsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mDebugModelSubCommandsConfigHandle = InvalidConstantConfigHandle;
+		ConstantConfigHandle mDebugRenderConstantsConfigHandle = InvalidConstantConfigHandle;
+
 #ifdef R2_DEBUG
 		r2::draw::ShaderHandle mDebugLinesShaderHandle;
 		r2::draw::ShaderHandle mDebugModelShaderHandle;
 
 		vb::VertexBufferLayoutHandle mDebugLinesVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
 		vb::VertexBufferLayoutHandle mDebugModelVertexConfigHandle = vb::InvalidVertexBufferLayoutHandle;
-
-		ConstantConfigHandle mDebugLinesSubCommandsConfigHandle = InvalidConstantConfigHandle;
-		ConstantConfigHandle mDebugModelSubCommandsConfigHandle = InvalidConstantConfigHandle;
-		ConstantConfigHandle mDebugRenderConstantsConfigHandle = InvalidConstantConfigHandle;
 
 		r2::draw::CommandBucket<key::DebugKey>* mDebugCommandBucket = nullptr;
 		r2::draw::CommandBucket<key::DebugKey>* mPreDebugCommandBucket = nullptr;

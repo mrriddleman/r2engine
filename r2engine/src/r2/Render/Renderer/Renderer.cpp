@@ -710,102 +710,12 @@ namespace r2::draw::renderer
 	void ClearDebugRenderData(Renderer& renderer);
 
 	vb::VertexBufferLayoutHandle AddDebugDrawLayout(Renderer& renderer);
+#endif
+
+	//@NOTE(Serge): these always need to happen right now to line with the shader layouts
 	ConstantConfigHandle AddDebugLineSubCommandsLayout(Renderer& renderer);
 	ConstantConfigHandle AddDebugModelSubCommandsLayout(Renderer& renderer);
 	ConstantConfigHandle AddDebugColorsLayout(Renderer& renderer);
-#endif
-
-
-	//s64 HasFormat(const r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats, flat:: TextureFormat format, bool isCubemap)
-	//{
-	//	const u64 numFormats = r2::sarr::Size(*formats);
-	//	for (u64 i = 0; i < numFormats; ++i)
-	//	{
-	//		const texsys::InitialTextureFormat& initialTextureFormat = r2::sarr::At(*formats, i);
-	//		if (initialTextureFormat.textureFormat == format && initialTextureFormat.isCubemap == isCubemap)
-	//			return i;
-	//	}
-
-	//	return -1;
-	//}
-
-	//void AddRenderSurfaceTextures(r2::SArray<r2::draw::texsys::InitialTextureFormat>* formats)
-	//{
-	//	const auto displaySize = CENG.DisplaySize();
-
-	//	s64 hasDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, false);
-
-	//	if (hasDepth < 0)
-	//	{
-	//		texsys::InitialTextureFormat depthFormat;
-	//		depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
-	//		depthFormat.numMips = 1;
-	//		depthFormat.isCubemap = false;
-	//		depthFormat.isAnisotropic = false;
-	//		depthFormat.numPages = light::MAX_NUM_DIRECTIONAL_LIGHTS + light::MAX_NUM_SPOT_LIGHTS + 1; //for shadows -> light::MAX_NUM_LIGHTS*2, for zpp -> 1
-	//		depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
-	//		depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
-	//		
-	//		r2::sarr::Push(*formats, depthFormat);
-	//	}
-	//	else
-	//	{
-	//		texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasDepth);
-
-	//		depthFormat.numPages += light::MAX_NUM_DIRECTIONAL_LIGHTS + light::MAX_NUM_SPOT_LIGHTS + 1;
-	//		depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
-	//		depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
-
-	//	}
-
-	//	s64 hasCubemapDepth = HasFormat(formats, flat::TextureFormat_DEPTH16, true);
-
-	//	if (hasCubemapDepth < 0)
-	//	{
-	//		texsys::InitialTextureFormat depthFormat;
-	//		depthFormat.textureFormat = flat::TextureFormat_DEPTH16;
-	//		depthFormat.numMips = 1;
-	//		depthFormat.isCubemap = true;
-	//		depthFormat.isAnisotropic = false;
-	//		depthFormat.numPages = light::MAX_NUM_POINT_LIGHTS; //for pointligt shadows -> light::MAX_NUM_LIGHTS
-	//		depthFormat.width = std::max(light::SHADOW_MAP_SIZE, displaySize.width);
-	//		depthFormat.height = std::max(light::SHADOW_MAP_SIZE, displaySize.height);
-
-	//		r2::sarr::Push(*formats, depthFormat);
-	//	}
-	//	else
-	//	{
-	//		texsys::InitialTextureFormat& depthFormat = r2::sarr::At(*formats, hasCubemapDepth);
-
-	//		depthFormat.numPages += light::MAX_NUM_POINT_LIGHTS;
-	//		depthFormat.width = std::max(depthFormat.width, std::max(light::SHADOW_MAP_SIZE, displaySize.width));
-	//		depthFormat.height = std::max(depthFormat.height, std::max(light::SHADOW_MAP_SIZE, displaySize.height));
-	//	}
-
-	//	s64 hasGBuffer = HasFormat(formats, flat::TextureFormat_RGB16, false);
-	//	if (hasGBuffer < 0)
-	//	{
-	//		texsys::InitialTextureFormat gbufferFormat;
-	//		gbufferFormat.textureFormat = flat::TextureFormat_RGB16;
-	//		gbufferFormat.numMips = 1;
-	//		gbufferFormat.isCubemap = false;
-	//		gbufferFormat.isAnisotropic = false;
-	//		gbufferFormat.numPages = 1; //for pointligt shadows -> light::MAX_NUM_LIGHTS
-	//		gbufferFormat.width =  displaySize.width;
-	//		gbufferFormat.height = displaySize.height;
-
-	//		r2::sarr::Push(*formats, gbufferFormat);
-	//	}
-	//	else
-	//	{
-	//		texsys::InitialTextureFormat& gbufferFormat = r2::sarr::At(*formats, hasGBuffer);
-
-	//		gbufferFormat.numPages += 1;
-	//		gbufferFormat.width = std::max(gbufferFormat.width, displaySize.width);
-	//		gbufferFormat.height = std::max(gbufferFormat.height, displaySize.height);
-	//	}
-
-	//}
 
 	//basic stuff
 	Renderer* CreateRenderer(RendererBackend backendType, r2::mem::MemoryArea::Handle memoryAreaHandle)
@@ -822,7 +732,7 @@ namespace r2::draw::renderer
 		R2_CHECK(memoryArea != nullptr, "Memory area is null?");
 
 		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 		u32 stackHeaderSize = r2::mem::StackAllocator::HeaderSize();
@@ -1767,13 +1677,14 @@ namespace r2::draw::renderer
 	{
 
 #ifdef R2_DEBUG
-		//add the debug stuff here
+		//Only add the vertex layout here
 		AddDebugDrawLayout(renderer);
+#endif
+		//@NOTE(Serge): we always have to add the debug constant layouts so everything always matches in the shaders
 		AddDebugColorsLayout(renderer);
 		AddDebugModelSubCommandsLayout(renderer);
 		AddDebugLineSubCommandsLayout(renderer);
-#endif
-		
+
 		AddShadowDataLayout(renderer);
 
 		AddMaterialOffsetsLayout(renderer);
@@ -2149,10 +2060,9 @@ namespace r2::draw::renderer
 		return renderer.mSubcommandsConfigHandle;
 	}
 
-#ifdef R2_DEBUG
+
 	ConstantConfigHandle AddDebugLineSubCommandsLayout(Renderer& renderer)
 	{
-
 		if (renderer.mConstantLayouts == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
@@ -2202,7 +2112,6 @@ namespace r2::draw::renderer
 
 	ConstantConfigHandle AddDebugColorsLayout(Renderer& renderer)
 	{
-
 		if (renderer.mConstantLayouts == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the renderer yet!");
@@ -2225,8 +2134,6 @@ namespace r2::draw::renderer
 
 		return renderer.mDebugRenderConstantsConfigHandle;
 	}
-
-#endif
 
 	ConstantConfigHandle AddBoneTransformsLayout(Renderer& renderer)
 	{
@@ -2453,7 +2360,7 @@ namespace r2::draw::renderer
 	u64 MemorySize(u64 renderTargetsMemorySize)
 	{
 		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#if defined(R2_DEBUG ) || defined(R2_RELEASE)
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();

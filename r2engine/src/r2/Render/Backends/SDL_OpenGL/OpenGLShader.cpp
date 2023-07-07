@@ -28,9 +28,8 @@
 #include <string>
 #include <regex>
 
-#ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/ShaderManifest_generated.h"
-#endif
+
 
 namespace r2::draw::shader
 {
@@ -735,7 +734,7 @@ namespace r2::draw::shader
                 continue;                
             }
 
-#if defined(R2_ASSET_PIPELINE)
+#ifdef R2_ASSET_PIPELINE
             shadersystem::AddShaderToShaderPartList(STRING_ID(quotelessPath), originalFilePath);
 #endif
 

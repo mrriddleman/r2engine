@@ -9,6 +9,9 @@
 #include "r2/Core/Containers/SHashMap.h"
 #include "r2/Utils/Hash.h"
 
+#include "r2/Core/Memory/InternalEngineMemory.h"
+#include "r2/Core/Assets/AssetLib.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include <unordered_map>
 #include <unordered_set>
@@ -29,7 +32,7 @@ namespace r2::draw
 
         const r2::ShaderManifests* mInternalShaderManifests = nullptr;
         const r2::ShaderManifests* mAppShaderManifests = nullptr;
-        const r2::SArray<const flat::MaterialParamsPack*>* mnoptrMaterialParamPacks = nullptr;
+        r2::SArray<const flat::MaterialParamsPack*>* mMaterialParamPacks = nullptr;
 
 #ifdef R2_ASSET_PIPELINE
         r2::SArray<ShaderHandle>* mShadersToReload = nullptr;
@@ -39,8 +42,9 @@ namespace r2::draw
 
         r2::SHashMap<r2::SArray<ShaderName>*>* mShaderPartMap = nullptr;
         std::unordered_map<u64, std::unordered_set<ShaderName>> mShaderMap;
-        std::unordered_map<std::string, const r2::ShaderManifests*> mShaderPathToManifests;
+        
 #endif
+        std::unordered_map<std::string, const r2::ShaderManifests*> mShaderPathToManifests;
     };
 }
 
@@ -61,17 +65,15 @@ namespace
 
 namespace r2::draw::shadersystem
 {
-#ifdef R2_ASSET_PIPELINE
-    void BuildShaderPathToManifests(const r2::ShaderManifests* manifestFileData);
-#endif
 
+    void BuildShaderPathToManifests(const r2::ShaderManifests* manifestFileData);
     void* LoadShaderManifestBuffer(const char* shaderManifestPath);
     void LoadShadersFromManifestFile(const r2::ShaderManifests* manifestFileData, bool assertOnFailure);
     void DeleteLoadedShaders();
     ShaderHandle MakeShaderHandleFromIndex(u64 index);
     u64 GetIndexFromShaderHandle(ShaderHandle handle);
 
-    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath, const r2::SArray<const flat::MaterialParamsPack*>* materialParamsPacks)
+    bool Init(const r2::mem::MemoryArea::Handle memoryAreaHandle, u64 capacity, const char* shaderManifestPath, const char* internalShaderManifestPath, u32 numMaterialPacks)
     {
         R2_CHECK(memoryAreaHandle != r2::mem::MemoryArea::Invalid, "Memory Area handle is invalid");
         R2_CHECK(s_optrShaderSystem == nullptr, "Are you trying to initialize this system more than once?");
@@ -94,7 +96,7 @@ namespace r2::draw::shadersystem
         }
 
         u64 unallocatedSpace = noptrMemArea->UnAllocatedSpace();
-        u64 memoryNeeded = shadersystem::GetMemorySize(capacity);
+        u64 memoryNeeded = shadersystem::GetMemorySize(capacity, numMaterialPacks);
         if (memoryNeeded > unallocatedSpace)
         {
             R2_CHECK(false, "We don't have enough space to allocate a new sub area for this system");
@@ -141,7 +143,7 @@ namespace r2::draw::shadersystem
         s_optrShaderSystem->mReloadShaderManifests = MAKE_SARRAY(*shaderLinearArena, std::string, capacity);
 
 		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
@@ -174,15 +176,25 @@ namespace r2::draw::shadersystem
 
         s_optrShaderSystem->mInternalShaderManifests = r2::GetShaderManifests(s_optrShaderSystem->mInternalShaderManifestsData);
 
-        R2_CHECK(materialParamsPacks != nullptr, "We should have material params packs");
+        s_optrShaderSystem->mMaterialParamPacks = MAKE_SARRAY(*shaderLinearArena, const flat::MaterialParamsPack*, numMaterialPacks);
+        R2_CHECK(s_optrShaderSystem->mMaterialParamPacks != nullptr, "We should have material params packs");
+			
+        r2::SArray<const byte*>* materialManifestsData = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, numMaterialPacks);
 
-        s_optrShaderSystem->mnoptrMaterialParamPacks = materialParamsPacks;
+        r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-#ifdef R2_ASSET_PIPELINE
+        r2::asset::lib::GetManifestDataForType(assetLib, r2::asset::MATERIAL_PACK_MANIFEST, materialManifestsData);
+
+		for (u32 i = 0; i < numMaterialPacks; ++i)
+		{
+		    const byte* materialParamsPackData = r2::sarr::At(*materialManifestsData, i);
+		    r2::sarr::Push(*s_optrShaderSystem->mMaterialParamPacks, flat::GetMaterialParamsPack(materialParamsPackData));
+		}
+
+        FREE(materialManifestsData, *MEM_ENG_SCRATCH_PTR);
+
         BuildShaderPathToManifests(s_optrShaderSystem->mAppShaderManifests);
         BuildShaderPathToManifests(s_optrShaderSystem->mInternalShaderManifests);
-#endif
-
         LoadShadersFromManifestFile(s_optrShaderSystem->mAppShaderManifests, assertOnFailure);
         LoadShadersFromManifestFile(s_optrShaderSystem->mInternalShaderManifests, assertOnFailure);
 
@@ -471,7 +483,7 @@ namespace r2::draw::shadersystem
 
     void GetMaterialShaderPiecesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& materialParts)
     {
-		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mnoptrMaterialParamPacks == nullptr)
+		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mMaterialParamPacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the shader system yet!");
 			return;
@@ -479,11 +491,11 @@ namespace r2::draw::shadersystem
 
 		//need to find the shader material for this define
 
-		const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mnoptrMaterialParamPacks);
+		const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mMaterialParamPacks);
 
 		for (u32 i = 0; i < numMaterialParamPacks; ++i)
 		{
-			const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mnoptrMaterialParamPacks, i);
+			const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mMaterialParamPacks, i);
 
 			FindAllMaterialShaderParamsWithType(materialParamPack, flat::MaterialPropertyType_SHADER_MATERIAL_FUNCTION, shaderName, shaderStageName, materialParts);
 		}
@@ -491,19 +503,19 @@ namespace r2::draw::shadersystem
 
     void GetDefinesForShader(ShaderName shaderName, ShaderName shaderStageName, r2::SArray<const flat::MaterialShaderParam*>& defines)
     {
-		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mnoptrMaterialParamPacks == nullptr)
+		if (s_optrShaderSystem == nullptr || s_optrShaderSystem->mMaterialParamPacks == nullptr)
 		{
 			R2_CHECK(false, "We haven't initialized the shader system yet!");
 			return;
-		}
+		} 
 
         //need to find the shader material for this define
 
-        const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mnoptrMaterialParamPacks);
+        const auto numMaterialParamPacks = r2::sarr::Size(*s_optrShaderSystem->mMaterialParamPacks);
 
         for (u32 i = 0; i < numMaterialParamPacks; ++i)
         {
-            const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mnoptrMaterialParamPacks, i);
+            const flat::MaterialParamsPack* materialParamPack = r2::sarr::At(*s_optrShaderSystem->mMaterialParamPacks, i);
 
             FindAllMaterialShaderParamsWithType(materialParamPack, flat::MaterialPropertyType_SHADER_DEFINE, shaderName, shaderStageName, defines);
         }
@@ -523,6 +535,8 @@ namespace r2::draw::shadersystem
         FREE(s_optrShaderSystem->mAppShaderManifestsData, *s_optrShaderSystem->mShaderLoadingArena);
 
         r2::mem::LinearArena* shaderArena = s_optrShaderSystem->mLinearArena;
+
+        FREE(s_optrShaderSystem->mMaterialParamPacks, *shaderArena);
 
         FREE(s_optrShaderSystem->mShaderLoadingArena, *shaderArena);
 
@@ -550,7 +564,7 @@ namespace r2::draw::shadersystem
         FREE_EMPLACED_ARENA(shaderArena);
     }
 
-    u64 GetMemorySize(u64 numShaders)
+    u64 GetMemorySize(u64 numShaders, u32 numMaterialPacks)
     {
         u32 boundsChecking = 0;
 #ifdef R2_DEBUG
@@ -573,7 +587,7 @@ namespace r2::draw::shadersystem
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::SArray<ShaderName>*>::MemorySize(numShaders) * r2::SHashMap<r2::SArray<ShaderName>*>::LoadFactorMultiplier(), ALIGNMENT, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ShaderName>::MemorySize(NUM_SHADER_REFERENCES_PER_SHADER_PART), ALIGNMENT, headerSize, boundsChecking) * numShaders +
 #endif
-
+            r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<const flat::MaterialParamsPack*>::MemorySize(numMaterialPacks), ALIGNMENT, headerSize, boundsChecking) +
             r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::draw::Shader>::MemorySize(numShaders), ALIGNMENT, headerSize, boundsChecking);
 
         return r2::mem::utils::GetMaxMemoryForAllocation(memorySize, ALIGNMENT);
@@ -656,18 +670,6 @@ namespace r2::draw::shadersystem
     }
 
 #ifdef R2_ASSET_PIPELINE
-
-    void ReloadManifestFile(const std::string& manifestFilePath)
-    {
-
-        if (s_optrShaderSystem == nullptr)
-        {
-        //    R2_CHECK(false, "We haven't initialized the shader system yet!");
-            return;
-        }
-
-        r2::sarr::Push(*s_optrShaderSystem->mReloadShaderManifests, manifestFilePath);
-    }
 
     void ReloadShadersFromChangedPath(const std::string& changedPath)
     {
@@ -804,18 +806,9 @@ namespace r2::draw::shadersystem
         }
     }
 
-    const r2::ShaderManifests* FindShaderManifestByFullPath(const char* path)
-    {
-        auto iter = s_optrShaderSystem->mShaderPathToManifests.find(path);
+    
 
-        if (iter == s_optrShaderSystem->mShaderPathToManifests.end())
-        {
-            R2_CHECK(false, "couldn't find the manifest for %s", path);
-            return nullptr;
-        }
-
-        return iter->second;
-    }
+#endif // R2_ASSET_PIPELINE
 
     void BuildShaderPathToManifests(const r2::ShaderManifests* manifestFileData)
     {
@@ -841,9 +834,19 @@ namespace r2::draw::shadersystem
 				s_optrShaderSystem->mShaderPathToManifests[manifestFileData->manifests()->Get(i)->computePath()->str()] = manifestFileData;
         }
     }
+    
+	const r2::ShaderManifests* FindShaderManifestByFullPath(const char* path)
+	{
+		auto iter = s_optrShaderSystem->mShaderPathToManifests.find(path);
 
+		if (iter == s_optrShaderSystem->mShaderPathToManifests.end())
+		{
+			R2_CHECK(false, "couldn't find the manifest for %s", path);
+			return nullptr;
+		}
 
-#endif // R2_ASSET_PIPELINE
+		return iter->second;
+	}
 
     ShaderHandle MakeShaderHandleFromIndex(u64 index)
     {

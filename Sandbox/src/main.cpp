@@ -1116,10 +1116,10 @@ public:
         return g_resolutions[mResolution];
     }
 
-    virtual u32 GetAssetMemoryAreaSize() const override
+    virtual u32 GetAssetMemorySize() const override
     {
         //@TODO(Serge): calculate this much later
-        return Kilobytes(128);
+        return Megabytes(350);
     }
 
     virtual u32 GetMaxNumECSSystems() const override

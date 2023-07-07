@@ -51,10 +51,10 @@ namespace r2::draw::modlche
 		newModelSystem->mSubAreaArena = modelArena;
 		
 		newModelSystem->mCacheModelReferences = cacheModelReferences;
-		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, modelCacheSize, ALIGNMENT);
+		newModelSystem->mAssetBoundary = MAKE_BOUNDARY(*modelArena, r2::asset::AssetCache::TotalMemoryNeeded(r2::sarr::Capacity(*files), modelCacheSize, ALIGNMENT), ALIGNMENT);
 		newModelSystem->mModels = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
 		newModelSystem->mMeshes = MAKE_SHASHMAP(*modelArena, r2::asset::AssetCacheRecord, r2::sarr::Capacity(*files) * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier());
-		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, files);
+		newModelSystem->mModelCache = r2::asset::lib::CreateAssetCache(newModelSystem->mAssetBoundary, modelCacheSize, files);
 
 
 		r2::asset::MeshAssetLoader* meshLoader = (r2::asset::MeshAssetLoader*)newModelSystem->mModelCache->MakeAssetLoader<r2::asset::MeshAssetLoader>();
@@ -105,7 +105,7 @@ namespace r2::draw::modlche
 	u64 MemorySize(u64 numAssets, u64 assetCapacityInBytes)
 	{
 		u32 boundsChecking = 0;
-#ifdef R2_DEBUG
+#if defined(R2_DEBUG) || defined(R2_RELEASE)
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
