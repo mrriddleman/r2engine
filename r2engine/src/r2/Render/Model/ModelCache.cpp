@@ -99,15 +99,15 @@ namespace r2::draw::modlche
 	{
 		u32 boundsChecking = 0;
 #if defined(R2_DEBUG) || defined(R2_RELEASE)
-		
-#endif
 		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
+#endif
+		
 		u32 headerSize = r2::mem::LinearAllocator::HeaderSize();
 
 		return r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ModelCache), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * r2::SHashMap<r2::asset::AssetCacheRecord>::LoadFactorMultiplier()), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * 2), ALIGNMENT, headerSize, boundsChecking) +
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<r2::asset::AssetCacheRecord>::MemorySize(numAssets * 2), ALIGNMENT, headerSize, boundsChecking) +
 			r2::asset::AssetCache::TotalMemoryNeeded(numAssets, assetCapacityInBytes, ALIGNMENT);
 	}
 

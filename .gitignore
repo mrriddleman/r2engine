@@ -31,7 +31,7 @@ Sandbox/assets/asset_bin/
 Sanbox/assets/*
 Sandbox/*.vcxproj
 Sandbox/*.vcxproj.user
-
+Sandbox/bin/*
 Sandbox/assets/models/
 Sandbox/assets/sound/music/
 Sandbox/assets/sound/sound_fx/
