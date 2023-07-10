@@ -85,10 +85,8 @@ namespace r2::draw::modlche
 		FREE(system->mMeshes, *arena);
 		FREE(system->mModels, *arena);
 
-
 		r2::asset::lib::DestroyCache(system->mModelCache);
 		FREE(system->mAssetBoundary.location, *arena);
-;
 
 		FREE(system, *arena);
 

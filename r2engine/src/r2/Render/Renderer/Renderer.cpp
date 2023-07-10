@@ -294,7 +294,7 @@ namespace
 {
 	u64 DefaultModelsMemorySize()
 	{
-		return Kilobytes(600);
+		return Kilobytes(650);
 //		u32 boundsChecking = 0;
 //#ifdef R2_DEBUG
 //		boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
