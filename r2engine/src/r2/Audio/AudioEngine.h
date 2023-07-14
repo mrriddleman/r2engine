@@ -45,9 +45,8 @@ namespace r2::audio
 #ifdef R2_ASSET_PIPELINE
         static void PushNewlyBuiltSoundDefinitions(std::vector<std::string> paths);
 #endif
-        static void ReloadSoundDefinitions(const char* path);
-        static void AddSoundDefinitions(const char* path);
-        static void RemoveSoundDefinitions(const char* path);
+        static void ReloadSoundDefinitions();
+
 
         enum _SoundFlags
         {

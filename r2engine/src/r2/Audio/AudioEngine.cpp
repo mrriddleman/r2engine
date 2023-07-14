@@ -18,8 +18,7 @@
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
 #include "r2/Core/Assets/AssetTypes.h"
-#include <cstring>
-
+#include "r2/Core/Assets/AssetLib.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
@@ -615,6 +614,8 @@ namespace r2::audio
         }
         
         gAudioEngineInitialize = true;
+
+        ReloadSoundDefinitions();
     }
     
     void AudioEngine::Update()
@@ -643,7 +644,7 @@ namespace r2::audio
                 }
             }
 
-            ReloadSoundDefinitions(CPLAT.SoundDefinitionsPath().c_str());
+            ReloadSoundDefinitions();
         }
 #endif
         gImpl->Update();
@@ -675,97 +676,53 @@ namespace r2::audio
     }
 #endif
     
-    void AudioEngine::ReloadSoundDefinitions(const char* path)
+    void AudioEngine::ReloadSoundDefinitions()
     {
         if (gAudioEngineInitialize)
         {
-            r2::fs::File* file = r2::fs::FileSystem::Open(r2::fs::DeviceConfig(), path, r2::fs::Read | r2::fs::Binary);
-            
-      //      R2_CHECK(file != nullptr, "AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
-            if(!file)
+            r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+            r2::SArray<const byte*>* manifestDataArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, 1);
+
+            r2::asset::lib::GetManifestDataForType(assetLib, asset::SOUND_DEFINTION, manifestDataArray);
+    
+            auto soundDefinitions = r2::GetSoundDefinitions(r2::sarr::At(*manifestDataArray, 0));
+                
+            const auto size = soundDefinitions->definitions()->size();
+                
+            for (u32 i = 0; i < size; ++i)
             {
-                R2_LOGE("AudioEngine::ReloadSoundDefinitions - We couldn't open the file: %s\n", path);
-                return;
+                const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
+                    
+                SoundDefinition soundDef;
+                r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
+                soundDef.minDistance = def->minDistance();
+                soundDef.maxDistance = def->maxDistance();
+                soundDef.defaultVolume = def->defaultVolume();
+                soundDef.defaultPitch = def->pitch();
+                soundDef.loadOnRegister = def->loadOnRegister();
+                    
+                if (def->loop())
+                {
+                    soundDef.flags |= LOOP;
+                }
+                    
+                if (def->is3D())
+                {
+                    soundDef.flags |= IS_3D;
+                }
+                    
+                if (def->stream())
+                {
+                    soundDef.flags |= STREAM;
+                }
+                AudioEngine audio;
+                soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
+                SoundID soundID = audio.RegisterSound(soundDef);    
             }
-            
-            
-            if (file)
-            {
-                u64 fileSize = file->Size();
                 
-                byte* fileBuf = (byte*)ALLOC_BYTESN(*MEM_ENG_SCRATCH_PTR, fileSize, 4);
-                
-                R2_CHECK(fileBuf != nullptr, "Failed to allocate bytes for sound definitions");
-                
-                if (!fileBuf)
-                {
-                    return;
-                }
-                
-                bool succeeded = file->ReadAll(fileBuf);
-                
-                R2_CHECK(succeeded, "Failed to read the whole file!");
-                
-                if (!succeeded)
-                {
-                    FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
-                    return;
-                }
-                
-                auto soundDefinitions = r2::GetSoundDefinitions(fileBuf);
-                
-                const auto size = soundDefinitions->definitions()->size();
-                
-                for (u32 i = 0; i < size; ++i)
-                {
-                    const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
-                    
-                    SoundDefinition soundDef;
-                    r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
-                    soundDef.minDistance = def->minDistance();
-                    soundDef.maxDistance = def->maxDistance();
-                    soundDef.defaultVolume = def->defaultVolume();
-                    soundDef.defaultPitch = def->pitch();
-                    soundDef.loadOnRegister = def->loadOnRegister();
-                    
-                    if (def->loop())
-                    {
-                        soundDef.flags |= LOOP;
-                    }
-                    
-                    if (def->is3D())
-                    {
-                        soundDef.flags |= IS_3D;
-                    }
-                    
-                    if (def->stream())
-                    {
-                        soundDef.flags |= STREAM;
-                    }
-                    AudioEngine audio;
-                    soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
-                    SoundID soundID = audio.RegisterSound(soundDef);
-                    
-                    
-                }
-                
-                FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
-                
-                r2::fs::FileSystem::Close(file);
-            }
+            FREE(manifestDataArray, *MEM_ENG_SCRATCH_PTR);
         }
-    }
-
-    void AudioEngine::AddSoundDefinitions(const char* path)
-    {
-        //@TODO(Serge):
-        R2_CHECK(false, "We haven't implemented this yet!");
-    }
-
-    void AudioEngine::RemoveSoundDefinitions(const char* path)
-    {
-		//@TODO(Serge):
-		R2_CHECK(false, "We haven't implemented this yet!");
     }
     
     AudioEngine::SoundID AudioEngine::RegisterSound(const SoundDefinition& soundDef)

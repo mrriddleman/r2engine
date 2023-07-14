@@ -129,14 +129,13 @@ namespace r2
             
             r2::asset::lib::Init(mAssetLibMemBoundary);
 
-
             u32 numMaterialManifests = noptrApp->GetMaterialPackManifestsBinaryPaths().size();
             u32 numTextureManifets = noptrApp->GetTexturePackManifestsBinaryPaths().size();
-            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets, 2);
+            u64 assetLibMemorySize = r2::asset::AssetLib::MemorySize(Kilobytes(512), numMaterialManifests + numTextureManifets + 1, 2); //+1 for sounds
 
             r2::mem::utils::MemBoundary assetLibMemoryBoundary = MAKE_MEMORY_BOUNDARY_VERBOSE(*MEM_ENG_PERMANENT_PTR, assetLibMemorySize, 16, "AssetLibMemoryBoundary");
 
-            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1 + numTextureManifets + 1, Kilobytes(512));
+            mAssetLib = r2::asset::lib::Create(assetLibMemoryBoundary, numMaterialManifests + 1 + numTextureManifets + 1 + 1, Kilobytes(512));
 
             R2_CHECK(mAssetLib != nullptr, "We couldn't create the asset library");
 
@@ -431,7 +430,8 @@ namespace r2
                 materialsPath,
                 appMaterialPacksManifests,
                 texturePackPath,
-                appInitialTexturePackManifests);
+                appInitialTexturePackManifests,
+                noptrApp->GetSoundDefinitionPath().c_str());
 
             SetupGameAssetManager(texturePackPath, noptrApp);
 
@@ -1208,7 +1208,8 @@ namespace r2
         const char* materialsPath,
         const std::vector<std::string>& appMaterialPacksManifests,
 		const char* engineTexturePacksManifestPath,
-		const std::vector<std::string>& appTexturePacksManifestPaths)
+		const std::vector<std::string>& appTexturePacksManifestPaths,
+        const char* soundDefinitionPath)
     {
         r2::asset::ManifestAssetFile* engineManifestAssetFile = r2::asset::lib::MakeManifestSingleAssetFile(materialsPath, r2::asset::MATERIAL_PACK_MANIFEST);
 #ifdef R2_ASSET_PIPELINE
@@ -1239,6 +1240,12 @@ namespace r2
 #endif
             r2::asset::lib::RegisterManifestFile(*mAssetLib, appTexturePacksManifestAssetFile);
         }
+
+		r2::asset::ManifestAssetFile* soundDefinitionFile = r2::asset::lib::MakeManifestSingleAssetFile(soundDefinitionPath, r2::asset::SOUND_DEFINTION);
+#ifdef R2_ASSET_PIPELINE
+        soundDefinitionFile->SetReloadFilePathCallback(r2::asset::pln::SoundHotReloadCommand::SoundManifestHotReloaded);
+#endif
+		r2::asset::lib::RegisterManifestFile(*mAssetLib, soundDefinitionFile);
     }
     
     void Engine::OnEvent(evt::Event& e)

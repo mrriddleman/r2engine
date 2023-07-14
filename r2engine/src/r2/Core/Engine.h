@@ -251,7 +251,8 @@ namespace r2
             const char* engineMaterialsPath,
             const std::vector<std::string>& appMaterialPacksManifests,
             const char* engineTexturePacksManifestPath,
-            const std::vector<std::string>& appTexturePacksManifestPaths);
+            const std::vector<std::string>& appTexturePacksManifestPaths,
+            const char* soundDefinitionPath);
 
         void SetupGameAssetManager(const char* engineTexturePackManifestPath, const Application* noptrApp);
 

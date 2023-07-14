@@ -83,6 +83,11 @@ namespace r2::asset::pln
 		mSoundDefinitionRawFilePath = soundDefinitionRawFilePath;
 	}
 
+	bool SoundHotReloadCommand::SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type)
+	{
+		return false;
+	}
+
 	void SoundHotReloadCommand::SoundDefinitionsChanged(const std::string& changedPath)
 	{
 		if (std::filesystem::path(changedPath).extension() == ".json")

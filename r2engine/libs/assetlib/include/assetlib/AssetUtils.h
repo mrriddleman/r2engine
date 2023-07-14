@@ -24,6 +24,7 @@ namespace r2::asset
 		MATERIAL,
 		TEXTURE_PACK,
 		SOUND,
+		SOUND_DEFINTION,
 		NUM_ENGINE_ASSET_TYPES
 	};
 

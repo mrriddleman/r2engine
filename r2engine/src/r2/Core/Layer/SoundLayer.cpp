@@ -17,8 +17,6 @@ namespace r2
     void SoundLayer::Init()
     {
         r2::audio::AudioEngine::Init();
-        
-        r2::audio::AudioEngine::ReloadSoundDefinitions(CPLAT.SoundDefinitionsPath().c_str());
     }
     
     void SoundLayer::Shutdown()

@@ -2,7 +2,7 @@
 #define __SOUND_HOT_RELOAD_COMMAND_H__
 
 #ifdef R2_ASSET_PIPELINE
-
+#include "r2/Core/Assets/AssetTypes.h"
 #include "r2/Core/Assets/Pipeline/AssetCommands/AssetHotReloadCommand.h"
 
 namespace r2::asset::pln
@@ -21,6 +21,8 @@ namespace r2::asset::pln
 
 		void SetSoundDefinitionBinFilePath(const std::string& soundDefinitionFilePath);
 		void SetSoundDefinitionRawFilePath(const std::string& soundDefinitionRawFilePath);
+
+		static bool SoundManifestHotReloaded(const std::vector<std::string>& paths, const std::string& manifestFilePath, const byte* manifestData, r2::asset::HotReloadType type);
 
 	private:
 		void LoadSoundDefinitions();
