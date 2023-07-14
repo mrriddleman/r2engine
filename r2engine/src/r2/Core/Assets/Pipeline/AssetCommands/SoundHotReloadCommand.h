@@ -19,7 +19,8 @@ namespace r2::asset::pln
 
 		void AddSoundDirectories(const std::vector<std::string>& soundDirectories);
 
-		void SetSoundDefinitionFilePath(const std::string& soundDefinitionFilePath);
+		void SetSoundDefinitionBinFilePath(const std::string& soundDefinitionFilePath);
+		void SetSoundDefinitionRawFilePath(const std::string& soundDefinitionRawFilePath);
 
 	private:
 		void LoadSoundDefinitions();
@@ -27,7 +28,8 @@ namespace r2::asset::pln
 		void AddNewSoundDefinitionFromFile(const std::string& addedPath);
 
 		std::vector<std::string> mSoundDirectories;
-		std::string mSoundDefinitionFilePath;
+		std::string mSoundDefinitionBinFilePath;
+		std::string mSoundDefinitionRawFilePath;
 
 		std::vector<r2::audio::AudioEngine::SoundDefinition> mSoundDefinitions;
 

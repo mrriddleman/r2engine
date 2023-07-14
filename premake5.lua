@@ -520,7 +520,9 @@ project "Sandbox"
 		'SANDBOX_SHADERS_INTERNAL_SHADER_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/shaders/manifests/internal_passes"',
 
 		'SANDBOX_LEVELS_DIR_BIN="'..os.getcwd()..'/%{prj.name}/assets_bin/Sandbox_Levels"',
-		'SANDBOX_LEVELS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Levels"'
+		'SANDBOX_LEVELS_DIR_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Levels"',
+
+		'SANDBOX_SOUND_DEFINITIONS_RAW="'..os.getcwd()..'/%{prj.name}/assets/Sandbox_Sounds/sound_definitions"'
 	}
 
 	filter "system:windows"

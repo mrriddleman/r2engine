@@ -36,7 +36,7 @@ namespace r2::asset::pln::audio
         return r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, soundDefinitionFilePath);
     }
     
-    bool GenerateSoundDefinitionsFromDirectories(const std::string& filePath, const std::vector<std::string>& directories)
+	bool GenerateSoundDefinitionsFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories)
     {
         std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions;
         
@@ -63,7 +63,7 @@ namespace r2::asset::pln::audio
             }
         }
         
-        return GenerateSoundDefinitionsFile(filePath, soundDefinitions);
+        return GenerateSoundDefinitionsFile(binFilePath, jsonFilePath, soundDefinitions);
     }
     
     bool AddNewSoundDefinition(std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions, const r2::audio::AudioEngine::SoundDefinition& def)
@@ -183,7 +183,7 @@ namespace r2::asset::pln::audio
         return soundDefinitions;
     }
     
-    bool GenerateSoundDefinitionsFile(const std::string& filePath, const std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions)
+	bool GenerateSoundDefinitionsFile(const std::string& binFilePath, const std::string& rawFilePath, const std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions)
     {
         flatbuffers::FlatBufferBuilder builder;
         std::vector<flatbuffers::Offset<r2::SoundDefinition>> flatSoundDefs;
@@ -211,7 +211,7 @@ namespace r2::asset::pln::audio
         u32 size = builder.GetSize();
         
         std::fstream fs;
-        fs.open(filePath, std::fstream::out | std::fstream::binary);
+        fs.open(binFilePath, std::fstream::out | std::fstream::binary);
         if (fs.good())
         {
             fs.write((const char*)buf, size);
@@ -231,11 +231,11 @@ namespace r2::asset::pln::audio
         
         r2::fs::utils::AppendSubPath(flatbufferSchemaPath.c_str(), soundDefinitionSchemaPath, SOUND_DEFINITION_NAME_FBS.c_str());
         
-        std::filesystem::path p = filePath;
+        std::filesystem::path p = binFilePath;
         
-        std::filesystem::path jsonPath = p.parent_path() / std::filesystem::path(p.stem().string() + JSON_EXT);
+        std::filesystem::path jsonPath = rawFilePath;
         
-        bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(p.parent_path().string(), soundDefinitionSchemaPath, filePath);
+        bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), soundDefinitionSchemaPath, binFilePath);
         
         bool generatedBinary = r2::asset::pln::flathelp::GenerateFlatbufferBinaryFile(p.parent_path().string(), soundDefinitionSchemaPath, jsonPath.string());
         

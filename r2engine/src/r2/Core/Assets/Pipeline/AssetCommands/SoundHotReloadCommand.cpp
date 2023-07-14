@@ -28,7 +28,7 @@ namespace r2::asset::pln
 
 		//for (const auto& path : mSoundDefinitionFilePaths)
 		{
-			std::filesystem::path p = mSoundDefinitionFilePath;
+			std::filesystem::path p = mSoundDefinitionRawFilePath;
 			std::string definitionDir = p.parent_path().string();
 
 			FileWatcher fw;
@@ -36,8 +36,6 @@ namespace r2::asset::pln
 			fw.AddModifyListener(std::bind(&SoundHotReloadCommand::SoundDefinitionsChanged, this, std::placeholders::_1));
 			mFileWatchers.push_back(fw);
 		}
-
-		
 	}
 
 	void SoundHotReloadCommand::Update()
@@ -49,7 +47,7 @@ namespace r2::asset::pln
 
 		if (mCallRebuiltSoundDefinitions)
 		{
-			r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions({ mSoundDefinitionFilePath});
+			r2::audio::AudioEngine::PushNewlyBuiltSoundDefinitions({ mSoundDefinitionBinFilePath});
 			mCallRebuiltSoundDefinitions = false;
 		}
 	}
@@ -61,7 +59,13 @@ namespace r2::asset::pln
 
 	std::vector<r2::asset::pln::AssetHotReloadCommand::CreateDirCmd> SoundHotReloadCommand::DirectoriesToCreate() const
 	{
-		return {};
+		AssetHotReloadCommand::CreateDirCmd createDirCmd;
+
+		createDirCmd.pathsToCreate = { mSoundDefinitionBinFilePath };
+		createDirCmd.startAtParent = true;
+		createDirCmd.startAtOne = false;
+
+		return { createDirCmd };
 	}
 
 	void SoundHotReloadCommand::AddSoundDirectories(const std::vector<std::string>& soundDirectories)
@@ -69,9 +73,14 @@ namespace r2::asset::pln
 		mSoundDirectories.insert(mSoundDirectories.end(), soundDirectories.begin(), soundDirectories.end());
 	}
 
-	void SoundHotReloadCommand::SetSoundDefinitionFilePath(const std::string& soundDefinitionFilePath)
+	void SoundHotReloadCommand::SetSoundDefinitionBinFilePath(const std::string& soundDefinitionFilePath)
 	{
-		mSoundDefinitionFilePath = soundDefinitionFilePath;
+		mSoundDefinitionBinFilePath = soundDefinitionFilePath;
+	}
+
+	void SoundHotReloadCommand::SetSoundDefinitionRawFilePath(const std::string& soundDefinitionRawFilePath)
+	{
+		mSoundDefinitionRawFilePath = soundDefinitionRawFilePath;
 	}
 
 	void SoundHotReloadCommand::SoundDefinitionsChanged(const std::string& changedPath)
@@ -81,7 +90,7 @@ namespace r2::asset::pln
 			bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(changedPath);
 			R2_CHECK(result, "Failed to generate sound definitions from: %s", changedPath.c_str());
 
-			mSoundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(mSoundDefinitionFilePath);
+			mSoundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(mSoundDefinitionBinFilePath);
 
 			mCallRebuiltSoundDefinitions = true;
 		}
@@ -98,7 +107,7 @@ namespace r2::asset::pln
 
 		r2::asset::pln::audio::AddNewSoundDefinition(mSoundDefinitions, soundDefinition);
 
-		bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFile(mSoundDefinitionFilePath, mSoundDefinitions);
+		bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFile(mSoundDefinitionBinFilePath, mSoundDefinitionRawFilePath, mSoundDefinitions);
 
 		R2_CHECK(result, "Failed to write sound definition file");
 
@@ -114,7 +123,7 @@ namespace r2::asset::pln
 
 		//for (const auto& soundDefinitionFilPath : mSoundDefinitionFilePaths)
 		{
-			std::filesystem::path p = mSoundDefinitionFilePath;
+			std::filesystem::path p = mSoundDefinitionBinFilePath;
 			std::string definitionDir = p.parent_path().string();
 
 			std::string soundDefinitionFile = "";
@@ -122,7 +131,7 @@ namespace r2::asset::pln
 
 			if (soundDefinitionFile.empty())
 			{
-				if (r2::asset::pln::audio::FindSoundDefinitionFile(definitionDir, soundDefinitionFile, false))
+				if (r2::asset::pln::audio::FindSoundDefinitionFile(std::filesystem::path(mSoundDefinitionRawFilePath).parent_path().string(), soundDefinitionFile, false))
 				{
 					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(soundDefinitionFile))
 					{
@@ -132,12 +141,11 @@ namespace r2::asset::pln
 				}
 				else
 				{
-					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromDirectories(mSoundDefinitionFilePath, mSoundDirectories))
+					if (!r2::asset::pln::audio::GenerateSoundDefinitionsFromDirectories(mSoundDefinitionBinFilePath, mSoundDefinitionRawFilePath, mSoundDirectories))
 					{
 						R2_CHECK(false, "Failed to generate sound definition file from directories!");
 						return;
 					}
-
 				}
 
 				mCallRebuiltSoundDefinitions = true;

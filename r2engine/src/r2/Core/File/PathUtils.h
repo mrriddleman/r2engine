@@ -14,8 +14,7 @@ namespace r2::fs::utils
     {
         ROOT = 0,
         SOUND_DEFINITIONS,
-        SOUND_FX,
-        MUSIC,
+        SOUNDS,
         TEXTURES,
         SHADERS_RAW,
         SHADERS_BIN,

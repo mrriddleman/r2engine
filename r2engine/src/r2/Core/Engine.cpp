@@ -376,7 +376,8 @@ namespace r2
 
             {
                 soundAssetCommand->AddSoundDirectories(noptrApp->GetSoundDirectoryWatchPaths());
-                soundAssetCommand->SetSoundDefinitionFilePath(noptrApp->GetSoundDefinitionPath());
+                soundAssetCommand->SetSoundDefinitionBinFilePath(noptrApp->GetSoundDefinitionPath());
+                soundAssetCommand->SetSoundDefinitionRawFilePath(noptrApp->GetRawSoundDefinitionsPath());
             }
 
             std::unique_ptr<r2::asset::pln::GameAssetHotReloadCommand> gameAssetCommand = std::make_unique<r2::asset::pln::GameAssetHotReloadCommand>();

@@ -17,8 +17,9 @@
 #include "r2/Core/File/File.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Utils/Hash.h"
-
+#include "r2/Core/Assets/AssetTypes.h"
 #include <cstring>
+
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetThreadSafeQueue.h"
@@ -742,13 +743,10 @@ namespace r2::audio
                         soundDef.flags |= STREAM;
                     }
                     AudioEngine audio;
-                    char fileName[r2::fs::FILE_PATH_LENGTH];
-                    r2::fs::utils::CopyFileNameWithExtension(soundDef.soundName, fileName);
-                    
-                    soundDef.soundKey = STRING_ID(fileName);
+                    soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
                     SoundID soundID = audio.RegisterSound(soundDef);
                     
-                    r2::shashmap::Set(*gImpl->mDefinitions, soundDef.soundKey, soundID);
+                    
                 }
                 
                 FREE(fileBuf, *MEM_ENG_SCRATCH_PTR);
@@ -778,6 +776,7 @@ namespace r2::audio
         for (u64 i = 0; i < MAX_NUM_SOUNDS; ++i)
         {
             const Sound& sound = r2::sarr::At(*gImpl->mSounds, i);
+            
             if (strcmp(sound.mSoundDefinition.soundName, soundDef.soundName) == 0)
             {
                 //return the index that we already had for this sound definition
@@ -806,6 +805,8 @@ namespace r2::audio
         sound.mSoundDefinition.defaultPitch = soundDef.defaultPitch;
         r2::util::PathCpy( sound.mSoundDefinition.soundName, soundDef.soundName );
         
+        r2::shashmap::Set(*gImpl->mDefinitions, soundDef.soundKey, soundID);
+
         if (soundDef.loadOnRegister)
         {
             bool result = LoadSound(soundID);
@@ -813,6 +814,20 @@ namespace r2::audio
         }
     
         return soundID;
+    }
+
+    void AudioEngine::UnregisterSound(const char* soundAssetName)
+    {
+		SoundID defaultID = AudioEngine::InvalidSoundID;
+		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundAssetName, r2::asset::SOUND), defaultID);
+
+		if (theSoundID == defaultID)
+		{
+			R2_CHECK(false, "AudioEngine::UnregisterSound - Couldn't find sound: %s", soundAssetName);
+			return;
+		}
+
+        UnregisterSound(theSoundID);
     }
     
     void AudioEngine::UnregisterSound(SoundID soundID)
@@ -844,12 +859,14 @@ namespace r2::audio
         sound.mSoundDefinition.maxDistance = 0.0f;
         sound.mSoundDefinition.flags = NONE;
         sound.mSoundDefinition.loadOnRegister = false;
+
+        r2::shashmap::Remove(*gImpl->mDefinitions, soundID);
     }
     
     bool AudioEngine::LoadSound(const char* soundName)
     {
         SoundID defaultID = AudioEngine::InvalidSoundID;
-        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundName, r2::asset::SOUND), defaultID);
         
         if (theSoundID == defaultID)
         {
@@ -910,14 +927,17 @@ namespace r2::audio
             return;
         }
         
+
+
         CheckFMODResult(sound.fmodSound->release());
         sound.fmodSound = nullptr;
+        
     }
 
     void AudioEngine::UnloadSound(const char* soundName)
     {
 		SoundID defaultID = AudioEngine::InvalidSoundID;
-		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundName, r2::asset::SOUND), defaultID);
 
 		if (theSoundID == defaultID)
 		{
@@ -928,6 +948,44 @@ namespace r2::audio
         UnloadSound(theSoundID);
     }
     
+    bool AudioEngine::IsSoundLoaded(const char* soundName)
+    {
+		SoundID defaultID = AudioEngine::InvalidSoundID;
+		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundName, r2::asset::SOUND), defaultID);
+
+        if (theSoundID == defaultID)
+        {
+            return false;
+        }
+
+        return gImpl->SoundIsLoaded(theSoundID);
+    }
+
+    bool AudioEngine::IsSoundRegistered(const char* soundName)
+    {
+		SoundID defaultID = AudioEngine::InvalidSoundID;
+		SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundName, r2::asset::SOUND), defaultID);
+        return theSoundID != defaultID;
+    }
+
+    void AudioEngine::UnloadSounds(const r2::SArray<SoundID>& soundsToUnload, bool unregister)
+    {
+        const auto numSoundsToUnload = r2::sarr::Size(soundsToUnload);
+
+        for (u32 i = 0; i < numSoundsToUnload; ++i)
+        {
+            UnloadSound(r2::sarr::At(soundsToUnload, i));
+        }
+
+        if (unregister)
+        {
+            for (u32 i = 0; i < numSoundsToUnload; ++i)
+            {
+                UnregisterSound(r2::sarr::At(soundsToUnload, i));
+            }
+        }
+    }
+
     void AudioEngine::Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up)
     {
         FMOD_VECTOR pos = GLMToFMODVector(position);
@@ -940,7 +998,7 @@ namespace r2::audio
     AudioEngine::ChannelID AudioEngine::PlaySound(const char* soundName, const glm::vec3& pos, float volume, float pitch)
     {
         SoundID defaultID = AudioEngine::InvalidSoundID;
-        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, STRING_ID(soundName), defaultID);
+        SoundID theSoundID = r2::shashmap::Get(*gImpl->mDefinitions, r2::asset::GetAssetNameForFilePath(soundName, r2::asset::SOUND), defaultID);
         
         if (theSoundID == defaultID)
         {

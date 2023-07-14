@@ -48,9 +48,6 @@ namespace r2
         class Event;
     }
 
-    
-    
-    
     class R2_API Application
     {
     public:
@@ -83,6 +80,7 @@ namespace r2
         virtual std::string GetAppLogPath() const;
         virtual r2::asset::PathResolver GetPathResolver() const;
         virtual std::string GetSoundDefinitionPath() const;
+        
         virtual std::string GetShaderManifestsPath() const;
         virtual std::vector<std::string> GetTexturePackManifestsBinaryPaths() const;
         virtual std::vector<std::string> GetTexturePackManifestsRawPaths() const;
@@ -117,11 +115,9 @@ namespace r2
         virtual std::vector<std::string> GetTexturePacksBinaryDirectoryPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksWatchPaths() const = 0;
         virtual std::vector<std::string> GetMaterialPacksBinaryPaths() const = 0;
-
+        virtual std::string GetRawSoundDefinitionsPath() const = 0;
         virtual std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> GetFindMaterialManifestsFuncs() const = 0;
         virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
-
-       
 
         virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
 #endif

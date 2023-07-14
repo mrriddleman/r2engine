@@ -222,6 +222,11 @@ namespace r2
         return {};
     }
 
+    std::string Application::GetRawSoundDefinitionsPath() const 
+    {
+        return "";
+    }
+
     std::vector<r2::asset::pln::FindMaterialPackManifestFileFunc> Application::GetFindMaterialManifestsFuncs() const
     {
         return {};

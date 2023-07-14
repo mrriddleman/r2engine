@@ -1262,14 +1262,12 @@ public:
     
     virtual std::vector<std::string> GetSoundDirectoryWatchPaths() const override
     {
-        char soundFXPath[r2::fs::FILE_PATH_LENGTH];
-        char musicPath [r2::fs::FILE_PATH_LENGTH];
-        ResolveCategoryPath(r2::fs::utils::SOUND_FX, soundFXPath);
-        ResolveCategoryPath(r2::fs::utils::MUSIC, musicPath);
+        char soundsPath[r2::fs::FILE_PATH_LENGTH];
+
+        ResolveCategoryPath(r2::fs::utils::SOUNDS, soundsPath);
         
         std::vector<std::string> soundPaths = {
-            std::string(soundFXPath),
-            std::string(musicPath)
+            std::string(soundsPath)
         };
         
         return soundPaths;
@@ -1310,7 +1308,10 @@ public:
         return r2::asset::pln::BuildShaderManifestsFromJsonIO;
     }
 
-    
+    std::string GetRawSoundDefinitionsPath() const
+    {
+        return SANDBOX_SOUND_DEFINITIONS_RAW + std::string("/sounds.json");
+    }
 
 #endif
     
@@ -1381,13 +1382,10 @@ namespace
                 r2::util::PathCpy(subpath, "");
                 break;
             case r2::fs::utils::SOUND_DEFINITIONS:
-                r2::util::PathCpy(subpath, "assets/sound/sound_definitions");
+                r2::util::PathCpy(subpath, "assets_bin/Sandbox_Sounds/sound_definitions");
                 break;
-            case r2::fs::utils::SOUND_FX:
-                r2::util::PathCpy(subpath, "assets/sound/sound_fx");
-                break;
-            case r2::fs::utils::MUSIC:
-                r2::util::PathCpy(subpath, "assets/sound/music");
+            case r2::fs::utils::SOUNDS:
+                r2::util::PathCpy(subpath, "assets/Sandbox_Sounds/sounds");
                 break;
             case r2::fs::utils::TEXTURES:
                 r2::util::PathCpy(subpath, "assets_bin/Sandbox_Textures/packs");
@@ -1413,7 +1411,6 @@ namespace
             default:
                 result = false;
                 break;
-                
         }
         
         if (result)

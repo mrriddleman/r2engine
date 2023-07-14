@@ -80,14 +80,16 @@ namespace r2::audio
         
         SoundID RegisterSound(const SoundDefinition& soundDef);
         void UnregisterSound(SoundID soundID);
-        
+        void UnregisterSound(const char* soundAssetName);
+
         bool LoadSound(const char* soundName);
         bool LoadSound(SoundID soundID);
         void UnloadSound(SoundID handle);
         void UnloadSound(const char* soundName);
+        bool IsSoundLoaded(const char* soundName);
+        bool IsSoundRegistered(const char* soundName);
 
-
-
+        void UnloadSounds(const r2::SArray<SoundID>& soundsToUnload, bool unregister = false);
 
         void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
         ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
@@ -107,7 +109,6 @@ namespace r2::audio
         
         int GetSampleRate() const;
         SpeakerMode GetSpeakerMode() const;
-        
         
         s32 GetNumberOfDrivers() const;
         u32 GetCurrentDriver() const;
