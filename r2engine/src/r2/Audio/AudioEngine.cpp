@@ -8,6 +8,7 @@
 #include "r2pch.h"
 #include "AudioEngine.h"
 #include "fmod.hpp"
+#include "fmod_studio.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Allocators/PoolAllocator.h"
 #include "r2/Core/Containers/SHashMap.h"
@@ -28,7 +29,7 @@ namespace
 {
     const u32 MAX_NUM_SOUNDS = 512;
     const u32 MAX_NUM_CHANNELS = 128;
-    const u64 SOUND_ALIGNMENT = 512;
+    const u64 SOUND_ALIGNMENT = 16;
     const u32 MAX_NUM_DEFINITIONS = MAX_NUM_SOUNDS*2;
     const f32 SILENCE = 0.0f;
     const u32 VIRTUALIZE_FADE_TIME = 3 * 1000;
@@ -149,54 +150,31 @@ namespace r2::audio
         void Shutdown(r2::mem::LinearArena& allocator);
         bool SoundIsLoaded(AudioEngine::SoundID soundID);
         static u64 TotalAllocatedSize(u32 headerSize, u32 boundsCheckingSize);
-        static int FMODMemorySize();
         
         using SoundList = r2::SArray<Sound>*;
         using ChannelList = r2::SArray<Channel*>*;
         using DefinitionMap = r2::SHashMap<AudioEngine::SoundID>*;
         
         FMOD::System* mSystem = nullptr;
+        FMOD::Studio::System* mStudioSystem = nullptr;
         SoundList mSounds = nullptr;
         DefinitionMap mDefinitions = nullptr;
         ChannelList mChannels = nullptr;
-        byte* mFMODMemory = nullptr;
         r2::mem::PoolArena* mChannelPool = nullptr;
     };
 
     u64 Implementation::TotalAllocatedSize(u32 headerSize, u32 boundsCheckingSize)
     {
         u64 totalAllocationSizeNeeded = 0;
-        
-        u64 sizeForSystem = r2::mem::utils::GetMaxMemoryForAllocation( sizeof(FMOD::System) + sizeof(FMOD::System*), SOUND_ALIGNMENT); //for mSystem
 
-        totalAllocationSizeNeeded += sizeForSystem;
-        
-        u64 sizeForSounds = r2::mem::utils::GetMaxMemoryForAllocation(SArray<Sound>::MemorySize(MAX_NUM_SOUNDS) + sizeof(SoundList), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mSounds
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Implementation), SOUND_ALIGNMENT, headerSize, boundsCheckingSize);
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(SArray<Sound>::MemorySize(MAX_NUM_SOUNDS), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mSounds
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AudioEngine::SoundID>::MemorySize(MAX_NUM_DEFINITIONS) * SHashMap<u32>::LoadFactorMultiplier(), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mDefinitions
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation( SArray<Channel*>::MemorySize(MAX_NUM_CHANNELS), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mChannels
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Channel), SOUND_ALIGNMENT, headerSize, boundsCheckingSize) * MAX_NUM_CHANNELS; //for mChannelPool
+        totalAllocationSizeNeeded += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::PoolArena), SOUND_ALIGNMENT, headerSize, boundsCheckingSize);
 
-        totalAllocationSizeNeeded += sizeForSounds;
-        
-        u64 sizeForDefinitions = r2::mem::utils::GetMaxMemoryForAllocation(SHashMap<AudioEngine::SoundID>::MemorySize(MAX_NUM_DEFINITIONS) + sizeof(DefinitionMap), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mDefinitions
-
-        totalAllocationSizeNeeded += sizeForDefinitions;
-        
-        u64 sizeForChannelList = r2::mem::utils::GetMaxMemoryForAllocation( SArray<Channel*>::MemorySize(MAX_NUM_CHANNELS) + sizeof(ChannelList), SOUND_ALIGNMENT, boundsCheckingSize + headerSize); //for mChannels
-
-        totalAllocationSizeNeeded += sizeForChannelList;
-        
-        u64 sizeForChannelPool = r2::mem::utils::GetMaxMemoryForAllocation(MAX_NUM_CHANNELS * (sizeof(Channel) + boundsCheckingSize) + sizeof(r2::mem::PoolArena), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mChannelPool
-
-        totalAllocationSizeNeeded += sizeForChannelPool;
-        
-        u64 sizeForFMODMemory = r2::mem::utils::GetMaxMemoryForAllocation(FMODMemorySize() + sizeof(byte*), SOUND_ALIGNMENT, headerSize, boundsCheckingSize); //for mFMODMemory
-
-        totalAllocationSizeNeeded += sizeForFMODMemory;
-        
         return totalAllocationSizeNeeded;
-    }
-    
-    int Implementation::FMODMemorySize()
-    {
-        return Megabytes(4);
     }
     
     void Implementation::Init(r2::mem::LinearArena& allocator)
@@ -226,16 +204,17 @@ namespace r2::audio
         }
         
         mChannelPool = MAKE_POOL_ARENA(allocator, sizeof(Channel), alignof(Channel), MAX_NUM_CHANNELS);
- 
-        mFMODMemory = ALLOC_BYTESN(allocator, FMODMemorySize(), SOUND_ALIGNMENT);
-        
-        CheckFMODResult( FMOD::Memory_Initialize(mFMODMemory, FMODMemorySize(), 0, 0, 0) );
-        CheckFMODResult( FMOD::System_Create(&mSystem) );
-        CheckFMODResult( mSystem->init(MAX_NUM_CHANNELS, FMOD_INIT_NORMAL, nullptr));
+
+        CheckFMODResult( FMOD::Studio::System::create(&mStudioSystem) );
+        CheckFMODResult(mStudioSystem->initialize(MAX_NUM_CHANNELS, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, nullptr));
+        CheckFMODResult(mStudioSystem->getCoreSystem(&mSystem));
+
     }
     
     void Implementation::Update()
     {
+        CheckFMODResult(mStudioSystem->update());
+
         for (u64 i = 0; i < MAX_NUM_CHANNELS; ++i)
         {
             Channel* channel = r2::sarr::At(*mChannels, i);
@@ -251,13 +230,13 @@ namespace r2::audio
                 }
             }
         }
-        
-        CheckFMODResult( mSystem->update() );
     }
     
     void Implementation::Shutdown(r2::mem::LinearArena& allocator)
     {
-        CheckFMODResult( mSystem->release() );
+        CheckFMODResult(mStudioSystem->unloadAll());
+        CheckFMODResult(mStudioSystem->release());
+       // CheckFMODResult(mStudioSystem->release() );
         
         for (u64 i = 0; i < MAX_NUM_CHANNELS; ++i)
         {
@@ -272,13 +251,13 @@ namespace r2::audio
         }
 
         //Free in reverse order
-        FREE(mFMODMemory, allocator);
+       // FREE(mFMODMemory, allocator);
         FREE(mChannelPool, allocator);
         FREE(mChannels, allocator);
         FREE(mDefinitions, allocator);
         FREE(mSounds, allocator);
         
-        mFMODMemory = nullptr;
+        //mFMODMemory = nullptr;
         mChannels = nullptr;
         mChannelPool = nullptr;
         mDefinitions = nullptr;
@@ -411,14 +390,14 @@ namespace r2::audio
             case Implementation::Channel::State::PLAYING:
             {
                 mVirtualizeFader.Update(CPLAT.TickRate());
-                UpdateChannelParameters();
+				UpdateChannelParameters();
                 
                 if (!IsPlaying())
                 {
                     mState = State::STOPPED;
                     return;
                 }
-                
+				
                 if (mStopRequested)
                 {
                     mState = State::STOPPING;
@@ -582,13 +561,12 @@ namespace r2::audio
             r2::mem::InternalEngineMemory& engineMem = r2::mem::GlobalMemory::EngineMemory();
             
             u32 boundsChecking = 0;
-#ifdef R2_DEBUG || R2_RELEASE
+#if defined(R2_DEBUG)|| defined(R2_RELEASE)
             boundsChecking = r2::mem::BasicBoundsChecking::SIZE_FRONT + r2::mem::BasicBoundsChecking::SIZE_BACK;
 #endif
             
             u64 soundAreaSize =
             sizeof(r2::mem::LinearArena) +
-            sizeof(Implementation) +
             Implementation::TotalAllocatedSize(r2::mem::LinearAllocator::HeaderSize(), boundsChecking);
             
             soundAreaSize = r2::mem::utils::GetMaxMemoryForAllocation(soundAreaSize, SOUND_ALIGNMENT);
