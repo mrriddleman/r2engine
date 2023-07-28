@@ -58,7 +58,7 @@ namespace r2::audio
         
         using SoundFlags = r2::Flags<_SoundFlags, u8>;
         
-        struct R2_API SoundDefinition
+        /*struct R2_API SoundDefinition
         {
             char soundName[fs::FILE_PATH_LENGTH] = {};
             u64 soundKey = 0;
@@ -75,7 +75,7 @@ namespace r2::audio
             SoundDefinition& operator=(const SoundDefinition& soundDef);
             SoundDefinition(SoundDefinition && soundDef) = default;
             SoundDefinition& operator=(SoundDefinition&& soundDef) = default;
-        };
+        };*/
         
         /*SoundID RegisterSound(const SoundDefinition& soundDef);
         void UnregisterSound(SoundID soundID);
@@ -188,6 +188,7 @@ namespace r2::audio
 
     private:
 
+        static void ReleaseAllEventInstances();
         static s32 FindInstanceHandleIndex(const EventInstanceHandle& eventInstance);
         static s32 FindInstanceIndex(const EventInstanceHandle& eventInstance);
         static s32 FindNexAvailableEventInstanceIndex();

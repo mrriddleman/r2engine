@@ -12,8 +12,6 @@
 #include "r2/Core/Assets/Pipeline/FlatbufferHelpers.h"
 #include "r2/Core/File/PathUtils.h"
 #include "r2/Audio/AudioEngine.h"
-#include "r2/Utils/Flags.h"
-#include "r2/Utils/Hash.h"
 #include <filesystem>
 #include <fstream>
 
@@ -38,35 +36,48 @@ namespace r2::asset::pln::audio
     
 	bool GenerateSoundDefinitionsFromDirectories(const std::string& binFilePath, const std::string& jsonFilePath, const std::vector<std::string>& directories)
     {
-        std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions;
-        
-        for(const auto& directory : directories)
+        std::vector<std::string> bankFiles;
+        std::string masterBankFile;
+        std::string masterBankStringsFile;
+
+		char directoryPath[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, "", directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
+
+        for (const auto& directory : directories)
         {
-            for(auto& file : std::filesystem::recursive_directory_iterator(directory))
+            for (auto& file : std::filesystem::recursive_directory_iterator(directory))
             {
-                //UGH MAC - ignore .DS_Store
-                if (std::filesystem::file_size(file.path()) <= 0 || file.path().filename() == ".DS_Store")
+                if (std::filesystem::is_directory(file) || std::filesystem::file_size(file.path()) <= 0 || file.path().filename() == ".DS_Store")
                 {
                     continue;
                 }
-                
-                r2::audio::AudioEngine::SoundDefinition def;
 
-                r2::fs::utils::SanitizeSubPath(file.path().string().c_str(), def.soundName);
+                std::filesystem::path filePathURI = file.path().lexically_relative(directoryPath);
 
-                char fileName[r2::fs::FILE_PATH_LENGTH];
-                r2::fs::utils::CopyFileNameWithExtension(def.soundName, fileName);
-                def.soundKey = STRING_ID(fileName);
-                
-                AddNewSoundDefinition(soundDefinitions, def);
-                
+                char sanitizedPath[r2::fs::FILE_PATH_LENGTH];
+
+                r2::fs::utils::SanitizeSubPath(filePathURI.string().c_str(), sanitizedPath);
+
+                std::string sanitizedPathStr = sanitizedPath;
+                if (sanitizedPathStr.find("Master.bank") != std::string::npos)
+                {
+                    masterBankFile = sanitizedPathStr;
+                }
+                else if (sanitizedPathStr.find("Master.strings.bank") != std::string::npos)
+                {
+                    masterBankStringsFile = sanitizedPathStr;
+                }
+                else
+                {
+                    bankFiles.push_back(sanitizedPathStr);
+                }
             }
         }
-        
-        return GenerateSoundDefinitionsFile(binFilePath, jsonFilePath, soundDefinitions);
+
+        return GenerateSoundDefinitionsFile(binFilePath, jsonFilePath, masterBankFile, masterBankStringsFile, bankFiles);
     }
     
-    bool AddNewSoundDefinition(std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions, const r2::audio::AudioEngine::SoundDefinition& def)
+   /* bool AddNewSoundDefinition(std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions, const r2::audio::AudioEngine::SoundDefinition& def)
     {
         r2::audio::AudioEngine::SoundDefinition matchedDef;
         u64 soundKey = def.soundKey;
@@ -88,7 +99,7 @@ namespace r2::asset::pln::audio
         
         soundDefinitions.push_back(def);
         return true;
-    }
+    }*/
     
     bool FindSoundDefinitionFile(const std::string& directory, std::string& outPath, bool isBinary)
     {
@@ -110,7 +121,7 @@ namespace r2::asset::pln::audio
         return false;
     }
     
-    std::vector<r2::audio::AudioEngine::SoundDefinition> LoadSoundDefinitions(const std::string& soundDefinitionFilePath)
+    /*std::vector<r2::audio::AudioEngine::SoundDefinition> LoadSoundDefinitions(const std::string& soundDefinitionFilePath)
     {
         std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions;
         
@@ -181,31 +192,24 @@ namespace r2::asset::pln::audio
         fs.close();
         
         return soundDefinitions;
-    }
+    }*/
     
-	bool GenerateSoundDefinitionsFile(const std::string& binFilePath, const std::string& rawFilePath, const std::vector<r2::audio::AudioEngine::SoundDefinition>& soundDefinitions)
+	bool GenerateSoundDefinitionsFile(const std::string& binFilePath, const std::string& jsonFilePath, const std::string& masterBank, const std::string& masterBankStrings, const std::vector<std::string>& bankFiles)
     {
         flatbuffers::FlatBufferBuilder builder;
-        std::vector<flatbuffers::Offset<r2::SoundDefinition>> flatSoundDefs;
-        
-        for (const auto& soundDef : soundDefinitions)
+        std::vector<flatbuffers::Offset<flat::BankFile>> flatBankFiles;
+
+        for (const auto& bankFile : bankFiles)
         {
-            flatSoundDefs.push_back(r2::CreateSoundDefinition
-                                    (builder,
-                                     builder.CreateString(std::string(soundDef.soundName)),
-                                     soundDef.defaultVolume,
-                                     soundDef.defaultPitch,
-                                     soundDef.minDistance,
-                                     soundDef.maxDistance,
-                                     soundDef.flags.IsSet(r2::audio::AudioEngine::IS_3D),
-                                     soundDef.flags.IsSet(r2::audio::AudioEngine::LOOP),
-                                     soundDef.flags.IsSet(r2::audio::AudioEngine::STREAM),
-                                     soundDef.loadOnRegister));
+            flatBankFiles.push_back(flat::CreateBankFile(builder, builder.CreateString(bankFile)));
         }
-        
-        auto sounds = r2::CreateSoundDefinitions(builder, builder.CreateVector(flatSoundDefs));
-        
-        builder.Finish(sounds);
+
+        auto masterBankFile = flat::CreateBankFile(builder, builder.CreateString(masterBank));
+        auto masterBankStringsFile = flat::CreateBankFile(builder, builder.CreateString(masterBankStrings));
+
+        auto soundDef = flat::CreateSoundDefinitions(builder, masterBankFile, masterBankStringsFile, builder.CreateVector(flatBankFiles));
+
+        builder.Finish(soundDef);
         
         byte* buf = builder.GetBufferPointer();
         u32 size = builder.GetSize();
@@ -233,7 +237,7 @@ namespace r2::asset::pln::audio
         
         std::filesystem::path p = binFilePath;
         
-        std::filesystem::path jsonPath = rawFilePath;
+        std::filesystem::path jsonPath = jsonFilePath;
         
         bool generatedJSON = r2::asset::pln::flathelp::GenerateFlatbufferJSONFile(jsonPath.parent_path().string(), soundDefinitionSchemaPath, binFilePath);
         

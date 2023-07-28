@@ -1,25 +1,18 @@
-namespace r2;
+namespace flat;
 
 file_identifier "sdef";
-
 file_extension "sdef";
 
-table SoundDefinition
+table BankFile
 {
-	soundName:string;
-	defaultVolume:float;
-	pitch:float;
-	minDistance:float;
-	maxDistance:float;
-	is3D:bool;
-	loop:bool;
-	stream:bool;
-	loadOnRegister:bool;
+	path:string;
 }
 
 table SoundDefinitions
 {
-	definitions:[SoundDefinition];
+	masterBank:BankFile;
+	masterBankStrings:BankFile;
+	banks:[BankFile];
 }
 
 root_type SoundDefinitions;

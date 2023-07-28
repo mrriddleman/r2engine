@@ -74,7 +74,7 @@ namespace r2::audio
    // const AudioEngine::SoundID AudioEngine::InvalidSoundID;
    // const AudioEngine::ChannelID AudioEngine::InvalidChannelID;
 
-    AudioEngine::SoundDefinition::SoundDefinition(const AudioEngine::SoundDefinition& soundDef)
+   /* AudioEngine::SoundDefinition::SoundDefinition(const AudioEngine::SoundDefinition& soundDef)
     : defaultVolume(soundDef.defaultVolume)
     , defaultPitch(soundDef.defaultPitch)
     , minDistance(soundDef.minDistance)
@@ -99,7 +99,7 @@ namespace r2::audio
         r2::util::PathCpy(soundName, soundDef.soundName);
         
         return *this;
-    }
+    }*/
 
     //----------------------------IMPLEMENTATION-------------------------------------
     //struct Sound
@@ -188,6 +188,9 @@ namespace r2::audio
         BankList mLoadedBanks = nullptr;
         EventInstanceList mLiveEventInstances = nullptr;
         EventInstanceHandleList mEventInstanceHandles = nullptr;
+
+        r2::audio::AudioEngine::BankHandle mMasterBank = r2::audio::AudioEngine::InvalidBank;
+        r2::audio::AudioEngine::BankHandle mMasterStringsBank = r2::audio::AudioEngine::InvalidBank;
     };
 
     u64 Implementation::MemorySize(u32 maxNumBanks, u32 maxNumEvents, u32 headerSize, u32 boundsCheckingSize)
@@ -235,6 +238,7 @@ namespace r2::audio
         mEventInstanceCount = 0;
 
         FMOD::Studio::Bank* emptyBank = nullptr;
+
         r2::sarr::Fill(*mLoadedBanks, emptyBank);
 
       //  mSounds = MAKE_SARRAY(allocator, Sound, MAX_NUM_SOUNDS);
@@ -752,46 +756,79 @@ namespace r2::audio
     {
         if (gAudioEngineInitialize)
         {
+            StopAllEvents(false);
+
+            ReleaseAllEventInstances();
+            
+            UnloadAllBanks();
+
             r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
             r2::SArray<const byte*>* manifestDataArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, 1);
 
             r2::asset::lib::GetManifestDataForType(assetLib, asset::SOUND_DEFINTION, manifestDataArray);
     
-            auto soundDefinitions = r2::GetSoundDefinitions(r2::sarr::At(*manifestDataArray, 0));
+            const auto* soundDefinitions = flat::GetSoundDefinitions(r2::sarr::At(*manifestDataArray, 0));
                 
-            const auto size = soundDefinitions->definitions()->size();
-                
-            for (u32 i = 0; i < size; ++i)
+            const auto size = soundDefinitions->banks()->size();
+            
+			char directoryPath[r2::fs::FILE_PATH_LENGTH];
+
+			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBank()->path()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
+
+            gImpl->mMasterBank = LoadBank(directoryPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
+
+			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBankStrings()->path()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
+
+            gImpl->mMasterStringsBank = LoadBank(directoryPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
+            
+            /*FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
+
+            R2_CHECK(stringsBank != nullptr, "?");
+
+            int stringsCount = 0;
+            CheckFMODResult(stringsBank->getStringCount(&stringsCount));
+
+            for (int i = 0; i < stringsCount; ++i)
             {
-                const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
-                    
-                SoundDefinition soundDef;
-                r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
-                soundDef.minDistance = def->minDistance();
-                soundDef.maxDistance = def->maxDistance();
-                soundDef.defaultVolume = def->defaultVolume();
-                soundDef.defaultPitch = def->pitch();
-                soundDef.loadOnRegister = def->loadOnRegister();
-                    
-                if (def->loop())
-                {
-                    soundDef.flags |= LOOP;
-                }
-                    
-                if (def->is3D())
-                {
-                    soundDef.flags |= IS_3D;
-                }
-                    
-                if (def->stream())
-                {
-                    soundDef.flags |= STREAM;
-                }
-                AudioEngine audio;
-                soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
-             //   SoundID soundID = audio.RegisterSound(soundDef);    
-            }
+                FMOD_GUID guid;
+                char path[fs::FILE_PATH_LENGTH];
+                int retrieved;
+                CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
+
+            }*/
+            //@TODO(Serge): now list all of the strings from the master strings bank
+            
+            //for (u32 i = 0; i < size; ++i)
+            //{
+            //    const r2::SoundDefinition* def = soundDefinitions->definitions()->Get(i);
+            //        
+            //    SoundDefinition soundDef;
+            //    r2::util::PathCpy(soundDef.soundName, def->soundName()->c_str());
+            //    soundDef.minDistance = def->minDistance();
+            //    soundDef.maxDistance = def->maxDistance();
+            //    soundDef.defaultVolume = def->defaultVolume();
+            //    soundDef.defaultPitch = def->pitch();
+            //    soundDef.loadOnRegister = def->loadOnRegister();
+            //        
+            //    if (def->loop())
+            //    {
+            //        soundDef.flags |= LOOP;
+            //    }
+            //        
+            //    if (def->is3D())
+            //    {
+            //        soundDef.flags |= IS_3D;
+            //    }
+            //        
+            //    if (def->stream())
+            //    {
+            //        soundDef.flags |= STREAM;
+            //    }
+            //    AudioEngine audio;
+            //    soundDef.soundKey = r2::asset::GetAssetNameForFilePath(soundDef.soundName, r2::asset::SOUND);
+            // //   SoundID soundID = audio.RegisterSound(soundDef);    
+            //}
                 
             FREE(manifestDataArray, *MEM_ENG_SCRATCH_PTR);
         }
@@ -1426,8 +1463,13 @@ namespace r2::audio
             CheckFMODResult(bank->unloadSampleData());
         }
         
-        CheckFMODResult(bank->unload());
+        CheckFMODResult(bank->getLoadingState(&loadingState));
 
+        if (loadingState == FMOD_STUDIO_LOADING_STATE_LOADED)
+        {
+            CheckFMODResult(bank->unload());
+        }
+        
         r2::sarr::At(*gImpl->mLoadedBanks, bankHandle) = nullptr;
 
         return true;
@@ -1513,8 +1555,19 @@ namespace r2::audio
 
 			if (bank != nullptr)
 			{
-                CheckFMODResult(bank->unloadSampleData());
-                CheckFMODResult(bank->unload());
+                FMOD_STUDIO_LOADING_STATE loadingState;
+                CheckFMODResult(bank->getSampleLoadingState(&loadingState));
+
+                if (loadingState == FMOD_STUDIO_LOADING_STATE_LOADED)
+                {
+                    CheckFMODResult(bank->unloadSampleData());
+                }
+
+                bank->getLoadingState(&loadingState);
+                if (loadingState == FMOD_STUDIO_LOADING_STATE_LOADED)
+                {
+                    CheckFMODResult(bank->unload());
+                }
 			}
 		}
 
@@ -1582,8 +1635,15 @@ namespace r2::audio
 			return false;
 		}
 
-        CheckFMODResult(bank->unloadSampleData());
+        FMOD_STUDIO_LOADING_STATE loadingState;
+        
+        CheckFMODResult(bank->getSampleLoadingState(&loadingState));
 
+        if (loadingState == FMOD_STUDIO_LOADING_STATE_LOADED)
+        {
+            CheckFMODResult(bank->unloadSampleData());
+        }
+        
         return true;
     }
 
@@ -2190,6 +2250,26 @@ namespace r2::audio
         CheckFMODResult(gImpl->mStudioSystem->getParameterByName(paramName, &value));
 
         return value;
+    }
+
+    void AudioEngine::ReleaseAllEventInstances()
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the implementation");
+			return;
+		}
+
+		const u32 numInstances = r2::sarr::Size(*gImpl->mLiveEventInstances);
+        for (u32 i = 0; i < numInstances; ++i)
+        {
+            r2::sarr::At(*gImpl->mLiveEventInstances, i)->release();
+        }
+
+        r2::sarr::Clear(*gImpl->mLiveEventInstances);
+        r2::sarr::Clear(*gImpl->mEventInstanceHandles);
+
+        r2::sarr::Fill(*gImpl->mEventInstanceHandles, InvalidEventInstanceHandle);
     }
 
     s32 AudioEngine::FindInstanceHandleIndex(const EventInstanceHandle& eventInstance)

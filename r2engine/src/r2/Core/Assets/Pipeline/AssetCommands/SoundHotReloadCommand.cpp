@@ -96,7 +96,7 @@ namespace r2::asset::pln
 			bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFromJson(changedPath);
 			R2_CHECK(result, "Failed to generate sound definitions from: %s", changedPath.c_str());
 
-			mSoundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(mSoundDefinitionBinFilePath);
+		//	mSoundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(mSoundDefinitionBinFilePath);
 
 			mCallRebuiltSoundDefinitions = true;
 		}
@@ -104,19 +104,6 @@ namespace r2::asset::pln
 
 	void SoundHotReloadCommand::AddNewSoundDefinitionFromFile(const std::string& addedPath)
 	{
-		r2::audio::AudioEngine::SoundDefinition soundDefinition;
-		r2::util::PathCpy(soundDefinition.soundName, addedPath.c_str());
-
-		std::string fileName = std::filesystem::path(addedPath).filename().string();
-
-		soundDefinition.soundKey = STRING_ID(fileName.c_str());
-
-		r2::asset::pln::audio::AddNewSoundDefinition(mSoundDefinitions, soundDefinition);
-
-		bool result = r2::asset::pln::audio::GenerateSoundDefinitionsFile(mSoundDefinitionBinFilePath, mSoundDefinitionRawFilePath, mSoundDefinitions);
-
-		R2_CHECK(result, "Failed to write sound definition file");
-
 		mCallRebuiltSoundDefinitions = true;
 	}
 
@@ -156,11 +143,12 @@ namespace r2::asset::pln
 
 				mCallRebuiltSoundDefinitions = true;
 			}
-			else
-			{
-				std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(soundDefinitionFile);
-				mSoundDefinitions.insert(mSoundDefinitions.end(), soundDefinitions.begin(), soundDefinitions.end());
-			}
+			//else
+			//{
+
+			//	//std::vector<r2::audio::AudioEngine::SoundDefinition> soundDefinitions = r2::asset::pln::audio::LoadSoundDefinitions(soundDefinitionFile);
+			//	//mSoundDefinitions.insert(mSoundDefinitions.end(), soundDefinitions.begin(), soundDefinitions.end());
+			//}
 		}
 	}
 

@@ -33,7 +33,7 @@ namespace r2::asset::pln
 		std::string mSoundDefinitionBinFilePath;
 		std::string mSoundDefinitionRawFilePath;
 
-		std::vector<r2::audio::AudioEngine::SoundDefinition> mSoundDefinitions;
+	//	std::vector<r2::audio::AudioEngine::SoundDefinition> mSoundDefinitions;
 
 		bool mCallRebuiltSoundDefinitions;
 
