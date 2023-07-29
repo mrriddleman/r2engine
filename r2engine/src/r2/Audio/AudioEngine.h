@@ -189,6 +189,7 @@ namespace r2::audio
     private:
 
         static void ReleaseAllEventInstances();
+        static void BuildBankFilePathFromFMODPath(const char* fmodPath, char* outpath, u32 size);
         static s32 FindInstanceHandleIndex(const EventInstanceHandle& eventInstance);
         static s32 FindInstanceIndex(const EventInstanceHandle& eventInstance);
         static s32 FindNexAvailableEventInstanceIndex();

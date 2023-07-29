@@ -809,13 +809,8 @@ namespace r2::audio
             {
                 char* loadedBank = r2::sarr::At(*loadedBanks, i);
 
-                char bankPathURI[r2::fs::FILE_PATH_LENGTH];
-                r2::fs::utils::GetRelativePath("bank:/", loadedBank, bankPathURI);
-
-                char bankPath[r2::fs::FILE_PATH_LENGTH];
-                r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, bankPath);
-
-                r2::fs::utils::AppendExt(bankPath, ".bank");
+				char bankPath[r2::fs::FILE_PATH_LENGTH];
+				BuildBankFilePathFromFMODPath(loadedBank, bankPath, r2::fs::FILE_PATH_LENGTH);
 
                 LoadBank(bankPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             }
@@ -1469,13 +1464,8 @@ namespace r2::audio
                 continue;
             }
 
-			char bankPathURI[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::GetRelativePath("bank:/", nextBankPath, bankPathURI);
-
 			char bankPath[r2::fs::FILE_PATH_LENGTH];
-			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, bankPath);
-
-			r2::fs::utils::AppendExt(bankPath, ".bank");
+            BuildBankFilePathFromFMODPath(nextBankPath, bankPath, r2::fs::FILE_PATH_LENGTH);
 
             if (retrieved && strcmp(bankPath, path) == 0)
             {
@@ -2316,6 +2306,16 @@ namespace r2::audio
         CheckFMODResult(gImpl->mStudioSystem->getParameterByName(paramName, &value));
 
         return value;
+    }
+
+    void AudioEngine::BuildBankFilePathFromFMODPath(const char* fmodPath, char* outpath, u32 size)
+    {
+		char bankPathURI[r2::fs::FILE_PATH_LENGTH];
+		r2::fs::utils::GetRelativePath("bank:/", fmodPath, bankPathURI);
+
+		r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, outpath);
+
+		r2::fs::utils::AppendExt(outpath, ".bank");
     }
 
     void AudioEngine::ReleaseAllEventInstances()
