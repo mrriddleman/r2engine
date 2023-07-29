@@ -783,16 +783,12 @@ namespace r2::audio
                 }
             }
 
-
-
             StopAllEvents(false);
 
             ReleaseAllEventInstances();
             
             UnloadAllBanks();
 
-            
-            
 			char directoryPath[r2::fs::FILE_PATH_LENGTH];
 
 			r2::fs::utils::BuildPathFromCategory(r2::fs::utils::Directory::SOUNDS, soundDefinitions->masterBank()->path()->c_str(), directoryPath); //@NOTE(Serge): maybe should be SOUND_DEFINITIONS?
@@ -818,6 +814,8 @@ namespace r2::audio
 
                 char bankPath[r2::fs::FILE_PATH_LENGTH];
                 r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, bankPath);
+
+                r2::fs::utils::AppendExt(bankPath, ".bank");
 
                 LoadBank(bankPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             }
@@ -1457,15 +1455,33 @@ namespace r2::audio
         {
             const FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, i);
 
+            if (!bank)
+            {
+                continue;
+            }
+
             char nextBankPath[r2::fs::FILE_PATH_LENGTH];
             int retrieved;
-            if (bank && bank->getPath(nextBankPath, r2::fs::FILE_PATH_LENGTH, &retrieved) == FMOD_OK)
+
+            bank->getPath(nextBankPath, r2::fs::FILE_PATH_LENGTH, &retrieved);
+            if (!retrieved)
             {
-                if (retrieved && strcmp(nextBankPath, path) == 0)
-                {
-                    return static_cast<BankHandle>(i);
-                }
+                continue;
             }
+
+			char bankPathURI[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::GetRelativePath("bank:/", nextBankPath, bankPathURI);
+
+			char bankPath[r2::fs::FILE_PATH_LENGTH];
+			r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, bankPath);
+
+			r2::fs::utils::AppendExt(bankPath, ".bank");
+
+            if (retrieved && strcmp(bankPath, path) == 0)
+            {
+                return static_cast<BankHandle>(i);
+            }
+            
         }
 
         BankHandle result = FindNextAvailableBankHandle();

@@ -23,6 +23,8 @@ namespace r2::asset::pln
 			FileWatcher fw;
 			fw.Init(delay, path);
 			fw.AddCreatedListener(std::bind(&SoundHotReloadCommand::AddNewSoundDefinitionFromFile, this, std::placeholders::_1));
+			fw.AddModifyListener(std::bind(&SoundHotReloadCommand::AddNewSoundDefinitionFromFile, this, std::placeholders::_1));
+			fw.AddRemovedListener(std::bind(&SoundHotReloadCommand::AddNewSoundDefinitionFromFile, this, std::placeholders::_1));
 			mFileWatchers.push_back(fw);
 		}
 
