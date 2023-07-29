@@ -756,21 +756,42 @@ namespace r2::audio
     {
         if (gAudioEngineInitialize)
         {
+			r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+
+			r2::SArray<const byte*>* manifestDataArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, 1);
+
+			r2::asset::lib::GetManifestDataForType(assetLib, asset::SOUND_DEFINTION, manifestDataArray);
+
+			const auto* soundDefinitions = flat::GetSoundDefinitions(r2::sarr::At(*manifestDataArray, 0));
+
+            //We need to figure out all of the banks that were already loaded - save their paths/names
+            const u32 numBankSlots = r2::sarr::Capacity(*gImpl->mLoadedBanks);
+
+            r2::SArray<char*>* loadedBanks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, char*, numBankSlots);
+
+            for (u32 i = 0; i < numBankSlots; ++i)
+            {
+                FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, i);
+                
+                if (bank)
+                {
+                    char* path = ALLOC_ARRAYN(char, r2::fs::FILE_PATH_LENGTH, *MEM_ENG_SCRATCH_PTR);
+                    int retrieved;
+                    CheckFMODResult( bank->getPath(path, r2::fs::FILE_PATH_LENGTH, &retrieved) );
+
+                    r2::sarr::Push(*loadedBanks, path);
+                }
+            }
+
+
+
             StopAllEvents(false);
 
             ReleaseAllEventInstances();
             
             UnloadAllBanks();
 
-            r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-            r2::SArray<const byte*>* manifestDataArray = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, const byte*, 1);
-
-            r2::asset::lib::GetManifestDataForType(assetLib, asset::SOUND_DEFINTION, manifestDataArray);
-    
-            const auto* soundDefinitions = flat::GetSoundDefinitions(r2::sarr::At(*manifestDataArray, 0));
-                
-            const auto size = soundDefinitions->banks()->size();
+            
             
 			char directoryPath[r2::fs::FILE_PATH_LENGTH];
 
@@ -782,6 +803,25 @@ namespace r2::audio
 
             gImpl->mMasterStringsBank = LoadBank(directoryPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             
+
+            //load all of the banks that were loaded before
+            //problem is that the paths are FMOD paths not an os path
+            //this needs to be resolved somehow
+
+            const u32 numPaths = r2::sarr::Size(*loadedBanks);
+            for (u32 i = 0; i < numPaths; ++i)
+            {
+                char* loadedBank = r2::sarr::At(*loadedBanks, i);
+
+                char bankPathURI[r2::fs::FILE_PATH_LENGTH];
+                r2::fs::utils::GetRelativePath("bank:/", loadedBank, bankPathURI);
+
+                char bankPath[r2::fs::FILE_PATH_LENGTH];
+                r2::fs::utils::BuildPathFromCategory(fs::utils::SOUNDS, bankPathURI, bankPath);
+
+                LoadBank(bankPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
+            }
+
             /*FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
 
             R2_CHECK(stringsBank != nullptr, "?");
@@ -830,6 +870,16 @@ namespace r2::audio
             // //   SoundID soundID = audio.RegisterSound(soundDef);    
             //}
                 
+            //free all of the temp data
+
+            const s32 numLoadedBanks = r2::sarr::Size(*loadedBanks);
+
+            for (s32 i = numLoadedBanks - 1; i >= 0; --i)
+            {
+                FREE(r2::sarr::At(*loadedBanks, i), *MEM_ENG_SCRATCH_PTR);
+            }
+
+            FREE(loadedBanks, *MEM_ENG_SCRATCH_PTR);
             FREE(manifestDataArray, *MEM_ENG_SCRATCH_PTR);
         }
     }
