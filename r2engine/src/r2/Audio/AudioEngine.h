@@ -11,7 +11,6 @@
 
 #include "glm/vec3.hpp"
 #include "r2/Core/Memory/Memory.h"
-#include "r2/Core/Memory/Allocators/LinearAllocator.h"
 
 namespace r2::audio
 {
@@ -37,7 +36,15 @@ namespace r2::audio
             SEVEN_POINT1POINT4,
             MAX
         };
-        
+
+        enum _LoadBankFlags
+        {
+            LOAD_BANK_NORMAL = 0,
+            LOAD_BANK_NONBLOCKING,
+            LOAD_BANK_DECOMPRESS_SAMPLES,
+            LOAD_BANK_UNENCRYPTED
+        };
+
         static void Init();
         static void Update();
         static void Shutdown();
@@ -47,16 +54,6 @@ namespace r2::audio
 #endif
         static void ReloadSoundDefinitions();
 
-
-        enum _SoundFlags
-        {
-            NONE = 0,
-            IS_3D = 1 << 0,
-            LOOP = 1 << 1,
-            STREAM = 1 << 2,
-        };
-        
-        using SoundFlags = r2::Flags<_SoundFlags, u8>;
         
         /*struct R2_API SoundDefinition
         {
@@ -106,13 +103,13 @@ namespace r2::audio
         float GetChannelPitch(ChannelID channelID) const;
         void SetChannelPitch(ChannelID channelID, float picth);*/
         
-        int GetSampleRate() const;
-        SpeakerMode GetSpeakerMode() const;
+        static int GetSampleRate();
+        static SpeakerMode GetSpeakerMode();
         
-        s32 GetNumberOfDrivers() const;
-        u32 GetCurrentDriver() const;
-        void SetDriver(int driverId);
-        void GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels);
+        static s32 GetNumberOfDrivers();
+        static u32 GetCurrentDriver();
+        static void SetDriver(int driverId);
+        static void GetDriverInfo(int driverId, char* driverName, u32 driverNameLength, u32& systemRate, SpeakerMode& mode, u32& speakerModeChannels);
         
         /*
         * New Interface proposal
@@ -162,7 +159,9 @@ namespace r2::audio
 
         //@NOTE(Serge): if you use releaseAfterPlay, then we don't return a valid EventInstanceHandle
         static EventInstanceHandle PlayEvent(const char* eventName, const Attributes3D& attributes3D, bool releaseAfterPlay = true);
-        static bool PlayEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D, bool releaseAfterPlay = true);
+        static EventInstanceHandle PlayEvent(const char* eventName, bool releaseAfterPlay = true);
+        static bool PlayEvent(const EventInstanceHandle& eventInstanceHandle, bool releaseAfterPlay = false);
+        static bool PlayEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D, bool releaseAfterPlay = false);
 
         static bool PauseEvent(const EventInstanceHandle& eventInstance);
         static bool StopEvent(const EventInstanceHandle& eventInstance, bool allowFadeOut);
@@ -176,6 +175,8 @@ namespace r2::audio
         static bool IsEventPaused(const EventInstanceHandle& eventInstance);
         static bool HasEventStopped(const EventInstanceHandle& eventInstance);
         static bool IsEventValid(const EventInstanceHandle& eventInstance);
+
+        static bool IsEventInstanceHandleValid(const EventInstanceHandle& eventInstanceHandle);
 
         static bool IsEvent3D(const char* eventName);
         static bool ReleaseAllEventInstances(const char* eventName);

@@ -47,6 +47,8 @@
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
 
+#include "r2/Audio/AudioEngine.h"
+
 struct DummyComponent
 {
     int dummy;
@@ -511,6 +513,18 @@ public:
 
         }
 
+        //audio test setup
+        {
+            //load test bank 1
+            r2::audio::AudioEngine audioEngine;
+
+            char bankPath[r2::fs::FILE_PATH_LENGTH];
+            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::SOUNDS, "TestBank1.bank", bankPath);
+
+            mTestBankHandle = audioEngine.LoadBank(bankPath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
+        }
+
+
         return true;
     }
 
@@ -735,7 +749,72 @@ public:
                 //    mEllenModelRefHandle = r2::draw::renderer::UploadAnimModel(mEllenModel);
                 //}
             }
+            else if (e.KeyCode() == r2::io::KEY_m)
+            {
+                r2::audio::AudioEngine audioEngine;
 
+                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                {
+                    audioEngine.PlayEvent(mMusicEventHandle, false);
+                }
+                else
+                {
+                    mMusicEventHandle = audioEngine.PlayEvent("event:/Music", false);
+                }
+            }
+            else if (e.KeyCode() == r2::io::KEY_p)
+            {
+                r2::audio::AudioEngine audioEngine;
+                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                {
+                    audioEngine.PauseEvent(mMusicEventHandle);
+                }
+            }
+            else if (e.KeyCode() == r2::io::KEY_n)
+            {
+                r2::audio::AudioEngine audioEngine;
+                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                {
+                    audioEngine.StopEvent(mMusicEventHandle, true);
+                }
+            }
+            else if (e.KeyCode() == r2::io::KEY_o)
+            {
+                r2::audio::AudioEngine audioEngine;
+                if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
+                {
+                    bool isPlaying = audioEngine.IsEventPlaying(mMusicEventHandle);
+
+                    if (isPlaying)
+                    {
+                        printf("Music is currently playing\n");
+                    }
+                    else
+                    {
+                        printf("Music is currently not playing\n");
+                    }
+
+                    bool isMusicPaused = audioEngine.IsEventPaused(mMusicEventHandle);
+                    if (isMusicPaused)
+                    {
+                        printf("Music is paused\n");
+                    }
+                    else
+                    {
+                        printf("Music is not paused\n");
+                    }
+
+                    bool hasStopped = audioEngine.HasEventStopped(mMusicEventHandle);
+                    if (hasStopped)
+                    {
+                        printf("Music has stopped\n");
+                    }
+                    else
+                    {
+                        printf("Music not stopped\n");
+                    }
+                }
+            }
 			return false;
 		});
 
@@ -1368,6 +1447,9 @@ private:
 
     float mExposure = 1.0f;
     s32 mResolution = 3;
+
+    r2::audio::AudioEngine::BankHandle mTestBankHandle;
+    r2::audio::AudioEngine::EventInstanceHandle mMusicEventHandle;
 };
 
 namespace

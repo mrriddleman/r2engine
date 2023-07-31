@@ -815,7 +815,7 @@ namespace r2::audio
                 LoadBank(bankPath, FMOD_STUDIO_LOAD_BANK_NORMAL);
             }
 
-            /*FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
+            FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
 
             R2_CHECK(stringsBank != nullptr, "?");
 
@@ -829,7 +829,8 @@ namespace r2::audio
                 int retrieved;
                 CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
 
-            }*/
+                printf("FMOD Path: %s\n", path);
+            }
             //@TODO(Serge): now list all of the strings from the master strings bank
             
             //for (u32 i = 0; i < size; ++i)
@@ -1322,7 +1323,7 @@ namespace r2::audio
   //      return AudioEngine::InvalidSoundID;
   //  }
     
-    int AudioEngine::GetSampleRate() const
+    int AudioEngine::GetSampleRate()
     {
         R2_CHECK(gImpl != nullptr, "We haven't initialized the AudioEngine yet!");
         int sampleRate, numRawSpeakers;
@@ -1332,7 +1333,7 @@ namespace r2::audio
         return sampleRate;
     }
     
-    AudioEngine::SpeakerMode AudioEngine::GetSpeakerMode() const
+    AudioEngine::SpeakerMode AudioEngine::GetSpeakerMode()
     {
         R2_CHECK(gImpl != nullptr, "We haven't initialized the AudioEngine yet!");
 
@@ -1343,7 +1344,7 @@ namespace r2::audio
         return static_cast<SpeakerMode>(speakerMode);
     }
     
-    s32 AudioEngine::GetNumberOfDrivers() const
+    s32 AudioEngine::GetNumberOfDrivers()
     {
         R2_CHECK(gImpl != nullptr, "We haven't initialized the AudioEngine yet!");
 
@@ -1352,7 +1353,7 @@ namespace r2::audio
         return numDrivers;
     }
     
-    u32 AudioEngine::GetCurrentDriver() const
+    u32 AudioEngine::GetCurrentDriver()
     {
         R2_CHECK(gImpl != nullptr, "We haven't initialized the AudioEngine yet!");
 
@@ -1904,6 +1905,93 @@ namespace r2::audio
         return newInstanceHandle;
     }
 
+    AudioEngine::EventInstanceHandle AudioEngine::PlayEvent(const char* eventName, bool releaseAfterPlay)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return InvalidEventInstanceHandle;
+		}
+		EventInstanceHandle newInstanceHandle = InvalidEventInstanceHandle;
+
+		FMOD::Studio::EventDescription* description = nullptr;
+		CheckFMODResult(gImpl->mStudioSystem->getEvent(eventName, &description));
+
+        if (description)
+        {
+            FMOD::Studio::EventInstance* instance = nullptr;
+
+            CheckFMODResult(description->createInstance(&instance));
+
+            if (instance)
+            {
+                CheckFMODResult(instance->start());
+
+				if (releaseAfterPlay)
+				{
+					CheckFMODResult(instance->release());
+				}
+                else
+                {
+					//save it
+					newInstanceHandle.eventName = r2::utils::HashBytes32(eventName, strlen(eventName));
+					newInstanceHandle.instance = ++gImpl->mEventInstanceCount;
+					newInstanceHandle.padding = 0;
+
+					s32 instanceIndex = FindNexAvailableEventInstanceIndex();
+
+					R2_CHECK(instanceIndex != -1, "No more instances available");
+
+					EventInstanceHandle& instanceHandleToUse = r2::sarr::At(*gImpl->mEventInstanceHandles, instanceIndex);
+
+					instanceHandleToUse = newInstanceHandle;
+
+					instance->setUserData(&instanceHandleToUse);
+
+					r2::sarr::Push(*gImpl->mLiveEventInstances, instance);
+                }
+
+            }
+        }
+
+        return newInstanceHandle;
+    }
+
+    bool AudioEngine::PlayEvent(const EventInstanceHandle& eventInstanceHandle, bool releaseAfterPlay)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return false;
+		}
+
+		s32 instanceIndex = FindInstanceIndex(eventInstanceHandle);
+
+		if (instanceIndex == -1)
+		{
+			return false;
+		}
+
+        FMOD::Studio::EventInstance* instance = r2::sarr::At(*gImpl->mLiveEventInstances, instanceIndex);
+
+		CheckFMODResult(instance->start());
+
+		if (releaseAfterPlay)
+		{
+			CheckFMODResult(instance->release());
+
+			r2::sarr::RemoveAndSwapWithLastElement(*gImpl->mLiveEventInstances, instanceIndex);
+
+			s32 instanceHandleIndex = FindInstanceHandleIndex(eventInstanceHandle);
+
+			R2_CHECK(instanceHandleIndex != -1, "Should never happen");
+
+			r2::sarr::At(*gImpl->mEventInstanceHandles, instanceHandleIndex) = InvalidEventInstanceHandle;
+		}
+
+        return true;
+    }
+
     bool AudioEngine::PlayEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D, bool releaseAfterPlay)
     {
 		if (!gImpl)
@@ -2167,6 +2255,11 @@ namespace r2::audio
 		FMOD::Studio::EventInstance* instance = r2::sarr::At(*gImpl->mLiveEventInstances, instanceIndex);
 
         return instance->isValid();
+    }
+
+    bool AudioEngine::IsEventInstanceHandleValid(const EventInstanceHandle& eventInstanceHandle)
+    {
+        return eventInstanceHandle.instance != -1 && eventInstanceHandle.eventName != 0;
     }
 
     bool AudioEngine::IsEvent3D(const char* eventName)
