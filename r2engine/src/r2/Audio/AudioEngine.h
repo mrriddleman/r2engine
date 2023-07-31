@@ -8,7 +8,6 @@
 #ifndef AudioEngine_h
 #define AudioEngine_h
 
-
 #include "glm/vec3.hpp"
 #include "r2/Core/Memory/Memory.h"
 
@@ -17,11 +16,6 @@ namespace r2::audio
     class R2_API AudioEngine
     {
     public:
-        using SoundID = s64;
-        using ChannelID = s64;
-        
-        static const SoundID InvalidSoundID = -1;
-        static const ChannelID InvalidChannelID = -1;
         
         enum SpeakerMode
         {
@@ -53,55 +47,6 @@ namespace r2::audio
         static void PushNewlyBuiltSoundDefinitions(std::vector<std::string> paths);
 #endif
         static void ReloadSoundDefinitions();
-
-        
-        /*struct R2_API SoundDefinition
-        {
-            char soundName[fs::FILE_PATH_LENGTH] = {};
-            u64 soundKey = 0;
-            float defaultVolume = 1.0f;
-            float defaultPitch = 1.0f;
-            float minDistance = 0.0f;
-            float maxDistance = 0.0f;
-            SoundFlags flags = NONE;
-            bool loadOnRegister = false;
-            
-            SoundDefinition() = default;
-            ~SoundDefinition() = default;
-            SoundDefinition(const SoundDefinition& soundDef);
-            SoundDefinition& operator=(const SoundDefinition& soundDef);
-            SoundDefinition(SoundDefinition && soundDef) = default;
-            SoundDefinition& operator=(SoundDefinition&& soundDef) = default;
-        };*/
-        
-        /*SoundID RegisterSound(const SoundDefinition& soundDef);
-        void UnregisterSound(SoundID soundID);
-        void UnregisterSound(const char* soundAssetName);
-
-        bool LoadSound(const char* soundName);
-        bool LoadSound(SoundID soundID);
-        void UnloadSound(SoundID handle);
-        void UnloadSound(const char* soundName);
-        bool IsSoundLoaded(const char* soundName);
-        bool IsSoundRegistered(const char* soundName);
-
-        void UnloadSounds(const r2::SArray<SoundID>& soundsToUnload, bool unregister = false);
-
-        void Set3DListenerAndOrientation(const glm::vec3& position, const glm::vec3& look, const glm::vec3& up);
-        ChannelID PlaySound(SoundID sound, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
-        
-        ChannelID PlaySound(const char* soundName, const glm::vec3& pos= glm::vec3{0,0,0}, float volume = 0.0f, float pitch = 0.0f);
-        
-        void StopChannel(ChannelID channelID, float fadeOutInSeconds = 0.0f);
-        
-        void StopAllChannels(float fadeOutInSeconds = 0.0f);
-        void PauseChannel(ChannelID channelID);
-        void PauseAll();
-        void SetChannel3DPosition(ChannelID channelID, const glm::vec3& position);
-        void SetChannelVolume(ChannelID channelID, float volume);
-        bool IsChannelPlaying(ChannelID channelID) const;
-        float GetChannelPitch(ChannelID channelID) const;
-        void SetChannelPitch(ChannelID channelID, float picth);*/
         
         static int GetSampleRate();
         static SpeakerMode GetSpeakerMode();
@@ -114,7 +59,6 @@ namespace r2::audio
         /*
         * New Interface proposal
         */
-
         using Listener = u32;
 
         static const Listener DEFAULT_LISTENER = 0;
@@ -142,7 +86,6 @@ namespace r2::audio
         static const BankHandle InvalidBank = -1;
         
         static BankHandle LoadBank(const char* path, u32 flags);
-  //      static BankHandle GetBankHandle(const char* bankAssetName);
         static bool UnloadSoundBank(BankHandle bank);
         static bool IsBankValid(BankHandle bank);
         static bool HasBankFinishedLoading(BankHandle bank);
@@ -201,10 +144,6 @@ namespace r2::audio
         static s32 FindNexAvailableEventInstanceIndex();
 
         static r2::mem::MemoryArea::SubArea::Handle mSoundMemoryAreaHandle;
-        //static r2::mem::LinearArena* mSoundAllocator;
-        //
-        //SoundID NextAvailableSoundID();
-        //ChannelID NextAvailableChannelID();
     };
 }
 
