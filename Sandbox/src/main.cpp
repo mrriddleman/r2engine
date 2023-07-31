@@ -378,7 +378,7 @@ public:
         r2::sarr::Push(*modelMats, sponzaModelMatrix);
 
         r2::util::Random randomizer;
-
+        
         //color grading
         const r2::draw::tex::Texture* colorGradingLUT = gameAssetManager.GetAlbedoTextureForMaterialName(gameMaterialPack, STRING_ID("ColorGradingLUT")); 
 
@@ -815,6 +815,40 @@ public:
                     }
                 }
             }
+            else if (e.KeyCode() == r2::io::KEY_h)
+            {
+			    static r2::util::Random randomizer;
+
+			    std::call_once(std::once_flag{}, [&]() {
+				    randomizer.Randomize();
+				});
+
+                r2::audio::AudioEngine audioEngine;
+                if (!r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle))
+                {
+                    mEventInstanceHandle = audioEngine.CreateEventInstance("event:/MyEvent");
+                }
+
+                R2_CHECK(r2::audio::AudioEngine::IsEventInstanceHandleValid(mEventInstanceHandle), "?");
+
+                const r2::Camera& camera = mPersController.GetCamera();
+
+				r2::audio::AudioEngine::Attributes3D attributes;
+                
+                float paramValue = randomizer.Randomf();
+
+                r2::audio::AudioEngine::SetEventParameterByName(mEventInstanceHandle, "Parameter 1", paramValue);
+
+				attributes.position.x = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+                attributes.position.y = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+                attributes.position.z = static_cast<s32>(randomizer.RandomNum(0, 20)) - 10;
+
+				attributes.look = glm::vec3(0, 0, 1);
+				attributes.up = camera.up;
+				attributes.velocity = glm::vec3(0);
+
+                audioEngine.PlayEvent(mEventInstanceHandle, attributes);
+            }
 			return false;
 		});
 
@@ -824,6 +858,21 @@ public:
     virtual void Update() override
     {
         mPersController.Update();
+
+        //update listener
+        {
+			const r2::Camera& camera = mPersController.GetCamera();
+
+			r2::audio::AudioEngine audioEngine;
+
+			r2::audio::AudioEngine::Attributes3D attributes;
+			attributes.position = camera.position;
+			attributes.look = camera.facing;
+			attributes.up = camera.up;
+			attributes.velocity = glm::vec3(0);
+
+			audioEngine.SetListener3DAttributes(r2::audio::AudioEngine::DEFAULT_LISTENER, attributes);
+        }
 
         //r2::sarr::Clear(*mSkeletonBoneTransforms);
         //r2::sarr::Clear(*mEllenBoneTransforms);
@@ -1450,6 +1499,7 @@ private:
 
     r2::audio::AudioEngine::BankHandle mTestBankHandle;
     r2::audio::AudioEngine::EventInstanceHandle mMusicEventHandle;
+    r2::audio::AudioEngine::EventInstanceHandle mEventInstanceHandle;
 };
 
 namespace

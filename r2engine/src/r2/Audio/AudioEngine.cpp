@@ -1749,7 +1749,7 @@ namespace r2::audio
         CheckFMODResult(gImpl->mStudioSystem->setNumListeners(numListeners));
     }
 
-    void AudioEngine::SetListener3DAttributes(u32 listenerIndex, const Attributes3D& attributes3D)
+    void AudioEngine::SetListener3DAttributes(Listener listenerIndex, const Attributes3D& attributes3D)
     {
 		if (!gImpl)
 		{

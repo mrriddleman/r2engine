@@ -114,6 +114,11 @@ namespace r2::audio
         /*
         * New Interface proposal
         */
+
+        using Listener = u32;
+
+        static const Listener DEFAULT_LISTENER = 0;
+
 		struct Attributes3D
 		{
             glm::vec3 position;
@@ -150,7 +155,7 @@ namespace r2::audio
 
         //Listeners - there's always 1 I think?
         static void SetNumListeners(u32 numListeners);
-        static void SetListener3DAttributes(u32 listenerIndex, const Attributes3D& attributes3D);
+        static void SetListener3DAttributes(Listener listenerIndex, const Attributes3D& attributes3D);
         static u32  GetNumListeners();
 
         //Events
