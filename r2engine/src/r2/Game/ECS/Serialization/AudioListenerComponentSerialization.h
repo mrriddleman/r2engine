@@ -59,22 +59,7 @@ namespace r2::ecs
 		{
 			const flat::AudioListenerComponentData* flatAudioListenerComponent = componentVector->Get(i);
 
-			//We can't just map the entity directly since we don't guarantee the same entity values
-			s32 entityIndex = -1;
-			for (u32 j = 0; j < r2::sarr::Size(*refEntities); ++j)
-			{
-				if (r2::sarr::At(*refEntities, j)->entityID() == flatAudioListenerComponent->entityToFollow())
-				{
-					entityIndex = j;
-					break;
-				}
-			}
-
-			Entity entityToFollow = 0;
-			if (entityIndex != -1)
-			{
-				entityToFollow = r2::sarr::At(*entities, entityIndex);
-			}
+			Entity entityToFollow = MapSerializedEntity(flatAudioListenerComponent->entityToFollow(), entities, refEntities);
 
 			AudioListenerComponent newAudioListenerComponent;
 			newAudioListenerComponent.entityToFollow = entityToFollow;

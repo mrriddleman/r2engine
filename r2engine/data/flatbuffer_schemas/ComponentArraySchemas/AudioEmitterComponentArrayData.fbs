@@ -1,0 +1,28 @@
+namespace flat;
+
+enum AudioEmitterStartCondition : uint8
+{
+	PLAY_ON_START = 0,
+}
+
+table AudioEmitterParameter
+{
+	parameterName:string;
+	value:float;
+}
+
+table AudioEmitterComponentData
+{
+	eventName:string;
+	startCondition:AudioEmitterStartCondition;
+	parameters:[AudioEmitterParameter];
+	allowFadeoutWhenStopping:bool;
+	releaseAfterPlay:bool;
+}
+
+table AudioEmitterComponentArrayData
+{
+	audioEmitterComponentArray:[AudioEmitterComponentData];
+}
+
+root_type AudioEmitterComponentArrayData;

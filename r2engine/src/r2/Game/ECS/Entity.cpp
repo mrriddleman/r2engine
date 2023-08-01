@@ -130,4 +130,26 @@ namespace r2::ecs
 	{
 		return entity != INVALID_ENTITY;
 	}
+
+	Entity MapSerializedEntity(u32 entityToMap, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities)
+	{
+		//We can't just map the entity directly since we don't guarantee the same entity values
+		s32 entityIndex = -1;
+		for (u32 j = 0; j < r2::sarr::Size(*refEntities); ++j)
+		{
+			if (r2::sarr::At(*refEntities, j)->entityID() == entityToMap)
+			{
+				entityIndex = j;
+				break;
+			}
+		}
+
+		Entity result = INVALID_ENTITY;
+		if (entityIndex != -1)
+		{
+			result = r2::sarr::At(*entities, entityIndex);
+		}
+
+		return result;
+	}
 }

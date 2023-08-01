@@ -59,22 +59,7 @@ namespace r2::ecs
 		{
 			const flat::HeirarchyComponentData* flatHeirarchyComponent = componentVector->Get(i);
 
-			//We can't just map the entity directly since we don't guarantee the same entity values
-			s32 entityIndex = -1;
-			for (u32 j= 0; j < r2::sarr::Size(*refEntities); ++j)
-			{
-				if (r2::sarr::At(*refEntities, j)->entityID() == flatHeirarchyComponent->parent())
-				{
-					entityIndex = j;
-					break;
-				}
-			}
-
-			Entity parent = 0;
-			if (entityIndex != -1)
-			{
-				parent = r2::sarr::At(*entities, entityIndex);
-			}
+			Entity parent = MapSerializedEntity(flatHeirarchyComponent->parent(), entities, refEntities);
 
 			HeirarchyComponent heirarchyComponent;
 			heirarchyComponent.parent = parent;

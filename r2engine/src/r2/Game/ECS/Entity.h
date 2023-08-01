@@ -96,6 +96,9 @@ namespace r2::ecs
 		r2::SArray<Entity>* mCreatedEntities;
 		r2::SArray<Signature>* mEntitySignatures;
 	};
+
+
+	Entity MapSerializedEntity(u32 entityToMap, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities);
 }
 
 #endif

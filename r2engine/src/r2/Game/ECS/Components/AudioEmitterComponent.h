@@ -2,6 +2,7 @@
 #define __AUDIO_EMITTER_COMPONENT_H__
 
 #include "r2/Utils/Utils.h"
+#include "r2/Audio/AudioEngine.h"
 
 namespace r2::ecs
 {
@@ -21,12 +22,15 @@ namespace r2::ecs
 
 	struct AudioEmitterComponent
 	{
+
+		r2::audio::AudioEngine::EventInstanceHandle eventInstanceHandle;
 		char eventName[r2::fs::FILE_PATH_LENGTH];
 		AudioEmitterParameter parameters[MAX_AUDIO_EMITTER_PARAMETERS];
 		AudioEmitterStartCondition startCondition;
 		u32 numParameters;
 		b32 allowFadeoutWhenStopping;
-		b32 triggerOnce;
+		b32 releaseAfterPlay;
+		
 	};
 }
 
