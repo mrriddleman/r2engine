@@ -46,8 +46,8 @@ fbsCodeOutputMap = {
 "ComponentArraySchemas/InstancedTransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/RenderComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/SkeletalAnimationComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
-"ComponentArraySchemas/TransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/"
-
+"ComponentArraySchemas/TransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
+"ComponentArraySchemas/AudioListenerComponentArrayData.fbs": "/r2/Game/ECS/Serialization/"
 }
 
 extraParams = {
@@ -76,7 +76,8 @@ extraParams = {
 "ComponentArraySchemas/InstancedTransformComponentArrayData.fbs":"",
 "ComponentArraySchemas/RenderComponentArrayData.fbs":"",
 "ComponentArraySchemas/SkeletalAnimationComponentArrayData.fbs":"",
-"ComponentArraySchemas/TransformComponentArrayData.fbs":""
+"ComponentArraySchemas/TransformComponentArrayData.fbs":"",
+"ComponentArraySchemas/AudioListenerComponentArrayData.fbs":""
 }
 
 for filename in os.listdir(dataPath):

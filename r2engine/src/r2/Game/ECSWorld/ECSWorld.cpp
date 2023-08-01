@@ -9,6 +9,7 @@
 #include "r2/Game/ECS/Systems/RenderSystem.h"
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+#include "r2/Game/ECS/Components/AudioListenerComponent.h"
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
@@ -43,7 +44,6 @@ namespace r2::ecs
 
 	ECSWorld::~ECSWorld()
 	{
-
 	}
 
 	bool ECSWorld::Init(r2::mem::MemoryArea::Handle memoryAreaHandle, u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems)

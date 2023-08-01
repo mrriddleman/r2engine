@@ -1,5 +1,5 @@
-#ifndef __EDITOR_COMPONENT_H__
-#define __EDITOR_COMPONENT_H__
+#ifndef __EDITOR_COMPONENT_SERIALIZATION_H__
+#define __EDITOR_COMPONENT_SERIALIZATION_H__
 #ifdef R2_EDITOR
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"

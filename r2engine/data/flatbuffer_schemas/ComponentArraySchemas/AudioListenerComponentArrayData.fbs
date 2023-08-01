@@ -1,0 +1,19 @@
+namespace flat;
+
+table AudioListener
+{
+	listener:uint;
+}
+
+table AudioListenerComponentData
+{
+	listener:AudioListener;
+	entityToFollow:uint;
+}
+
+table AudioListenerComponentArrayData
+{
+	audioListenerComponentArray:[AudioListenerComponentData];
+}
+
+root_type AudioListenerComponentArrayData;

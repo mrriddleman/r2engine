@@ -15,6 +15,7 @@
 #include "r2/Game/ECS/Serialization/RenderComponentSerialization.h"
 #include "r2/Game/ECS/Serialization/SkeletalAnimationComponentSerialization.h"
 #include "r2/Game/ECS/Serialization/TransformComponentSerialization.h"
+#include "r2/Game/ECS/Serialization/AudioListenerComponentSerialization.h"
 
 namespace r2::ecs
 {
