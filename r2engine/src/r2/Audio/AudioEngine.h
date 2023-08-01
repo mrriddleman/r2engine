@@ -99,6 +99,7 @@ namespace r2::audio
         //Listeners - there's always 1 I think?
         static void SetNumListeners(u32 numListeners);
         static void SetListener3DAttributes(Listener listenerIndex, const Attributes3D& attributes3D);
+        static void GetListener3DAttributes(Listener listenerIndex, Attributes3D& attributes3D);
         static u32  GetNumListeners();
 
         //Events

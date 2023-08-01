@@ -44,12 +44,30 @@ namespace
         return v;
     }
 
+    glm::vec3 FMODVectorToGLM(const FMOD_VECTOR& fmodVec)
+    {
+        glm::vec3 r;
+        r.x = fmodVec.x;
+        r.y = fmodVec.y;
+        r.z = fmodVec.z;
+
+        return r;
+    }
+
     void Attributes3DToFMOD3DAttributes(const r2::audio::AudioEngine::Attributes3D& attributes, FMOD_3D_ATTRIBUTES& fmodAttributes)
     {
         fmodAttributes.forward = GLMToFMODVector(attributes.look);
         fmodAttributes.position = GLMToFMODVector(attributes.position);
         fmodAttributes.up = GLMToFMODVector(attributes.up);
         fmodAttributes.velocity = GLMToFMODVector(attributes.velocity);
+    }
+
+    void FMOD3DAttributesToAttributes3D(const FMOD_3D_ATTRIBUTES& fmodAttributes, r2::audio::AudioEngine::Attributes3D& attributes)
+    {
+        attributes.look = FMODVectorToGLM(fmodAttributes.forward);
+        attributes.position = FMODVectorToGLM(fmodAttributes.position);
+        attributes.up = FMODVectorToGLM(fmodAttributes.up);
+        attributes.velocity = FMODVectorToGLM(fmodAttributes.velocity);
     }
     
     void CheckFMODResult(FMOD_RESULT result)
@@ -818,12 +836,25 @@ namespace r2::audio
 		}
 
         FMOD_3D_ATTRIBUTES fmodAttributes;
-        fmodAttributes.position = GLMToFMODVector(attributes3D.position);
-        fmodAttributes.up = GLMToFMODVector(attributes3D.up);
-        fmodAttributes.forward = GLMToFMODVector(attributes3D.look);
-        fmodAttributes.velocity = GLMToFMODVector(attributes3D.velocity);
+        
+        Attributes3DToFMOD3DAttributes(attributes3D, fmodAttributes);
 
         CheckFMODResult(gImpl->mStudioSystem->setListenerAttributes(static_cast<int>(listenerIndex), &fmodAttributes));
+    }
+
+    void AudioEngine::GetListener3DAttributes(Listener listenerIndex, Attributes3D& attributes3D)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return;
+		}
+
+        FMOD_3D_ATTRIBUTES fmodAttributes;
+
+        CheckFMODResult(gImpl->mStudioSystem->getListenerAttributes(listenerIndex, &fmodAttributes));
+
+        FMOD3DAttributesToAttributes3D(fmodAttributes, attributes3D);
     }
 
     u32 AudioEngine::GetNumListeners()
