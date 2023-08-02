@@ -22,6 +22,8 @@ namespace r2::ecs
 	class ECSCoordinator;
 	class RenderSystem;
 	class SkeletalAnimationSystem;
+	class AudioListenerSystem;
+	class AudioEmitterSystem;
 
 #ifdef R2_DEBUG
 	class DebugBonesRenderSystem;
@@ -72,6 +74,10 @@ namespace r2::ecs
 		r2::ecs::ECSCoordinator* mECSCoordinator;
 		r2::ecs::RenderSystem* moptrRenderSystem;
 		r2::ecs::SkeletalAnimationSystem* moptrSkeletalAnimationSystem;
+
+		r2::ecs::AudioListenerSystem* moptrAudioListenerSystem;
+		r2::ecs::AudioEmitterSystem* moptrAudioEmitterSystem;
+
 #ifdef R2_DEBUG
 		r2::ecs::DebugRenderSystem* moptrDebugRenderSystem;
 		r2::ecs::DebugBonesRenderSystem* moptrDebugBonesRenderSystem;
@@ -79,7 +85,7 @@ namespace r2::ecs
 
 		SceneGraph mSceneGraph;
 
-		//This is temporary since we don't know how much memory will be needed for the component allocations
+		//@TEMPORARY: This is temporary since we don't know how much memory will be needed for the component allocations
 		//will need to change this later
 		r2::mem::MallocArena mMallocArena;
 		std::vector<void*> mComponentAllocations;

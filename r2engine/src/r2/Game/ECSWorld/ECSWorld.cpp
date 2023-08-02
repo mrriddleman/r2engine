@@ -10,6 +10,12 @@
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/Components/AudioListenerComponent.h"
+#include "r2/Game/ECS/Components/AudioEmitterComponent.h"
+#include "r2/Game/ECS/Components/AudioParameterComponent.h"
+#include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
+#include "r2/Game/ECS/Systems/AudioEmitterSystem.h"
+#include "r2/Game/ECS/Systems/AudioListenerSystem.h"
+
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
@@ -34,6 +40,8 @@ namespace r2::ecs
 		,mECSCoordinator(nullptr)
 		,moptrRenderSystem(nullptr)
 		,moptrSkeletalAnimationSystem(nullptr)
+		,moptrAudioListenerSystem(nullptr)
+		,moptrAudioEmitterSystem(nullptr)
 #ifdef R2_DEBUG
 		,moptrDebugRenderSystem(nullptr)
 		,moptrDebugBonesRenderSystem(nullptr)
@@ -99,6 +107,11 @@ namespace r2::ecs
 	{
 		mSceneGraph.Update();
 		moptrSkeletalAnimationSystem->Update();
+
+
+		//These should probably be near the last things to update so the game has the ability to add audio events
+		moptrAudioListenerSystem->Update();
+		moptrAudioEmitterSystem->Update();
 	}
 
 	void ECSWorld::Render()
@@ -407,6 +420,10 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena, "TransformDirtyComponent", false, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena, "RenderComponent", true, renderComponentHydrationFunc);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena, "SkeletalAnimationComponent", true, skeletalAnimationComponentHydrationFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioListenerComponent>(*mArena, "AudioListenerComponent", true, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterComponent>(*mArena, "AudioEmitterComponent", true, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioParameterComponent>(*mArena, "AudioParameterComponent", false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena, "AudioEmitterActionComponent", false, nullptr);
 
 		//add some more components to the coordinator for the editor to use
 #ifdef R2_EDITOR
@@ -439,6 +456,11 @@ namespace r2::ecs
 #ifdef R2_EDITOR
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena);
 #endif
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena);
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioParameterComponent>(*mArena);
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioEmitterComponent>(*mArena);
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioListenerComponent>(*mArena);
+
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena);
@@ -503,10 +525,28 @@ namespace r2::ecs
 
 		mECSCoordinator->SetSystemSignature<ecs::DebugRenderSystem>(debugRenderSystemSignature);
 #endif
+
+		const auto audioListenerComponentType = mECSCoordinator->GetComponentType<ecs::AudioListenerComponent>();
+		const auto audioEmitterComponentType = mECSCoordinator->GetComponentType<ecs::AudioEmitterComponent>();
+
+		moptrAudioListenerSystem = (ecs::AudioListenerSystem*)mECSCoordinator->RegisterSystem<mem::StackArena, ecs::AudioListenerSystem>(*mArena);
+		ecs::Signature audioListenerSystemSignature;
+		audioListenerSystemSignature.set(transformComponentType);
+		audioListenerSystemSignature.set(audioListenerComponentType);
+		mECSCoordinator->SetSystemSignature<ecs::AudioListenerSystem>(audioListenerSystemSignature);
+
+		moptrAudioEmitterSystem = (ecs::AudioEmitterSystem*)mECSCoordinator->RegisterSystem<mem::StackArena, ecs::AudioEmitterSystem>(*mArena);
+		ecs::Signature audioEmitterSystemSignature;
+		audioEmitterSystemSignature.set(audioEmitterComponentType);
+		mECSCoordinator->SetSystemSignature<ecs::AudioEmitterSystem>(audioEmitterSystemSignature);
+
 	}
 
 	void ECSWorld::UnRegisterEngineSystems()
 	{
+		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::AudioEmitterSystem>(*mArena);
+		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::AudioListenerSystem>(*mArena);
+
 #ifdef R2_DEBUG
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::DebugRenderSystem>(*mArena);
 		mECSCoordinator->UnRegisterSystem<mem::StackArena, ecs::DebugBonesRenderSystem>(*mArena);
@@ -540,18 +580,29 @@ namespace r2::ecs
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::ecs::ECSCoordinator::MemorySize(maxNumComponents, maxNumEntities, maxNumSystems, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::SkeletalAnimationSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::AudioListenerSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::AudioEmitterSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
+
 		memorySize += r2::ecs::RenderSystem::MemorySize(maxNumInstances, avgMaxNumMeshesPerModel*maxNumModels, maxNumBones, memProperties);
+
+
 #ifdef R2_DEBUG
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::DebugRenderSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += r2::mem::utils::GetMaxMemoryForAllocation(ecs::ECSCoordinator::MemorySizeOfSystemType<r2::ecs::DebugBonesRenderSystem>(memProperties), ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif // R2_DEBUG
 
-		//add all of the Engine Component memory now
+		//add all of the Engine Component memory here
 		memorySize += ComponentArray<HeirarchyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<TransformComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<TransformDirtyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<RenderComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<SkeletalAnimationComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+
+		memorySize += ComponentArray<AudioListenerComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<AudioEmitterComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<AudioParameterComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<AudioEmitterActionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+
 #ifdef R2_EDITOR
 		memorySize += ComponentArray<EditorComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif

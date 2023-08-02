@@ -38,17 +38,6 @@ namespace
     const u32 MAX_NUM_FILES = 1024;
     const u32 MAX_NUM_STORAGE_AREAS = 8;
     const f64 k_millisecondsToSeconds = 1000.;
-    r2::mem::MallocArena zipArena{r2::mem::utils::MemBoundary()};
-    
-    void* AllocZip(u64 size, u64 align)
-    {
-        return ALLOC_BYTESN(zipArena, size, align);
-    }
-    
-    void FreeZip(byte* ptr)
-    {
-        FREE(ptr, zipArena);
-    }
 }
 
 namespace r2
@@ -60,7 +49,7 @@ namespace r2
     const u64 SDL2Platform::MAX_NUM_MEMORY_AREAS = 16;
     
     //@NOTE: Increase as needed for dev
-    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(390);
+    const u64 SDL2Platform::TOTAL_INTERNAL_ENGINE_MEMORY = Megabytes(400);
     
     //@NOTE: Should never exceed the above memory
     const u64 SDL2Platform::TOTAL_INTERNAL_PERMANENT_MEMORY = Megabytes(8);

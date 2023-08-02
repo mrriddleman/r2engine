@@ -32,7 +32,7 @@ namespace r2::ecs
 		//first set the number of active listeners if that has changed
 		const auto numListeners = audioEngine.GetNumListeners();
 
-		if (numListeners != numEntities)
+		if (numListeners != numEntities && numEntities > 0)
 		{
 			audioEngine.SetNumListeners(numEntities);
 		}
