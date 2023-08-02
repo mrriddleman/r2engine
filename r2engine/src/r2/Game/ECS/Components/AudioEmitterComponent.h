@@ -8,7 +8,8 @@ namespace r2::ecs
 {
 	enum AudioEmitterStartCondition : u32
 	{
-		PLAY_ON_START = 0,
+		PLAY_ON_CREATE = 0,
+		PLAY_ON_EVENT,
 		NUM_AUDIO_EMITTER_START_TYPES
 	};
 
@@ -22,7 +23,6 @@ namespace r2::ecs
 
 	struct AudioEmitterComponent
 	{
-
 		r2::audio::AudioEngine::EventInstanceHandle eventInstanceHandle;
 		char eventName[r2::fs::FILE_PATH_LENGTH];
 		AudioEmitterParameter parameters[MAX_AUDIO_EMITTER_PARAMETERS];
@@ -30,7 +30,6 @@ namespace r2::ecs
 		u32 numParameters;
 		b32 allowFadeoutWhenStopping;
 		b32 releaseAfterPlay;
-		
 	};
 }
 

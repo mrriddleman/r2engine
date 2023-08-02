@@ -2,7 +2,9 @@ namespace flat;
 
 enum AudioEmitterStartCondition : uint8
 {
-	PLAY_ON_START = 0,
+	PLAY_ON_CREATE = 0,
+	PLAY_ON_EVENT,
+	NUM_AUDIO_EMITTER_START_TYPES
 }
 
 table AudioEmitterParameter

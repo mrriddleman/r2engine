@@ -1210,6 +1210,33 @@ namespace r2::audio
         return true;
     }
 
+    bool AudioEngine::SetAttributes3DForEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return false;
+		}
+
+		s32 instanceIndex = FindInstanceIndex(eventInstanceHandle);
+
+		if (instanceIndex == -1)
+		{
+			R2_CHECK(false, "Probably a bug");
+			return false;
+		}
+
+		FMOD::Studio::EventInstance* instance = r2::sarr::At(*gImpl->mLiveEventInstances, instanceIndex);
+
+        FMOD_3D_ATTRIBUTES fmodAttributes;
+
+        Attributes3DToFMOD3DAttributes(attributes3D, fmodAttributes);
+
+        CheckFMODResult(instance->set3DAttributes(&fmodAttributes));
+
+        return true;
+    }
+
     void AudioEngine::SetEventParameterByName(const EventInstanceHandle& eventInstanceHandle, const char* paramName, float value)
     {
 		if (!gImpl)

@@ -117,6 +117,8 @@ namespace r2::audio
 
         static bool StopAllEvents(bool allowFadeOut);
 
+        static bool SetAttributes3DForEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D);
+
         static void SetEventParameterByName(const EventInstanceHandle& eventInstanceHandle, const char* paramName, float value);
         static float GetEventParameterValue(const EventInstanceHandle& eventInstanceHandle, const char* paramName);
 

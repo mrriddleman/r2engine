@@ -18,28 +18,34 @@ struct AudioEmitterComponentArrayData;
 struct AudioEmitterComponentArrayDataBuilder;
 
 enum AudioEmitterStartCondition {
-  AudioEmitterStartCondition_PLAY_ON_START = 0,
-  AudioEmitterStartCondition_MIN = AudioEmitterStartCondition_PLAY_ON_START,
-  AudioEmitterStartCondition_MAX = AudioEmitterStartCondition_PLAY_ON_START
+  AudioEmitterStartCondition_PLAY_ON_CREATE = 0,
+  AudioEmitterStartCondition_PLAY_ON_EVENT = 1,
+  AudioEmitterStartCondition_NUM_AUDIO_EMITTER_START_TYPES = 2,
+  AudioEmitterStartCondition_MIN = AudioEmitterStartCondition_PLAY_ON_CREATE,
+  AudioEmitterStartCondition_MAX = AudioEmitterStartCondition_NUM_AUDIO_EMITTER_START_TYPES
 };
 
-inline const AudioEmitterStartCondition (&EnumValuesAudioEmitterStartCondition())[1] {
+inline const AudioEmitterStartCondition (&EnumValuesAudioEmitterStartCondition())[3] {
   static const AudioEmitterStartCondition values[] = {
-    AudioEmitterStartCondition_PLAY_ON_START
+    AudioEmitterStartCondition_PLAY_ON_CREATE,
+    AudioEmitterStartCondition_PLAY_ON_EVENT,
+    AudioEmitterStartCondition_NUM_AUDIO_EMITTER_START_TYPES
   };
   return values;
 }
 
 inline const char * const *EnumNamesAudioEmitterStartCondition() {
-  static const char * const names[2] = {
-    "PLAY_ON_START",
+  static const char * const names[4] = {
+    "PLAY_ON_CREATE",
+    "PLAY_ON_EVENT",
+    "NUM_AUDIO_EMITTER_START_TYPES",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameAudioEmitterStartCondition(AudioEmitterStartCondition e) {
-  if (flatbuffers::IsOutRange(e, AudioEmitterStartCondition_PLAY_ON_START, AudioEmitterStartCondition_PLAY_ON_START)) return "";
+  if (flatbuffers::IsOutRange(e, AudioEmitterStartCondition_PLAY_ON_CREATE, AudioEmitterStartCondition_NUM_AUDIO_EMITTER_START_TYPES)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesAudioEmitterStartCondition()[index];
 }
@@ -180,7 +186,7 @@ struct AudioEmitterComponentDataBuilder {
 inline flatbuffers::Offset<AudioEmitterComponentData> CreateAudioEmitterComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> eventName = 0,
-    flat::AudioEmitterStartCondition startCondition = flat::AudioEmitterStartCondition_PLAY_ON_START,
+    flat::AudioEmitterStartCondition startCondition = flat::AudioEmitterStartCondition_PLAY_ON_CREATE,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::AudioEmitterParameter>>> parameters = 0,
     bool allowFadeoutWhenStopping = false,
     bool releaseAfterPlay = false) {
@@ -196,7 +202,7 @@ inline flatbuffers::Offset<AudioEmitterComponentData> CreateAudioEmitterComponen
 inline flatbuffers::Offset<AudioEmitterComponentData> CreateAudioEmitterComponentDataDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *eventName = nullptr,
-    flat::AudioEmitterStartCondition startCondition = flat::AudioEmitterStartCondition_PLAY_ON_START,
+    flat::AudioEmitterStartCondition startCondition = flat::AudioEmitterStartCondition_PLAY_ON_CREATE,
     const std::vector<flatbuffers::Offset<flat::AudioEmitterParameter>> *parameters = nullptr,
     bool allowFadeoutWhenStopping = false,
     bool releaseAfterPlay = false) {
