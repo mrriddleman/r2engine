@@ -27,17 +27,20 @@ namespace r2::ecs
 
 			for (u32 p = 0; p < audioEmitterComponent.numParameters; ++p)
 			{
+				auto paramName = fbb.CreateString(audioEmitterComponent.parameters[p].parameterName);
 				flat::AudioEmitterParameterBuilder paramBuilder(fbb);
-				paramBuilder.add_parameterName(fbb.CreateString(audioEmitterComponent.parameters[p].parameterName));
+				paramBuilder.add_parameterName(paramName);
 				paramBuilder.add_value(audioEmitterComponent.parameters[p].parameterValue);
 
 				r2::sarr::Push(*flatAudioEmitterParameters, paramBuilder.Finish());
 			}
 
+			auto flatEventName = fbb.CreateString(audioEmitterComponent.eventName);
+			auto flatParamsVec = fbb.CreateVector(flatAudioEmitterParameters->mData, flatAudioEmitterParameters->mSize);
 			flat::AudioEmitterComponentDataBuilder audioEmitterComponentBuilder(fbb);
-			audioEmitterComponentBuilder.add_eventName(fbb.CreateString(audioEmitterComponent.eventName));
+			audioEmitterComponentBuilder.add_eventName(flatEventName);
 			audioEmitterComponentBuilder.add_startCondition(static_cast<flat::AudioEmitterStartCondition>(audioEmitterComponent.startCondition));
-			audioEmitterComponentBuilder.add_parameters(fbb.CreateVector(flatAudioEmitterParameters->mData, flatAudioEmitterParameters->mSize));
+			audioEmitterComponentBuilder.add_parameters(flatParamsVec);
 			audioEmitterComponentBuilder.add_allowFadeoutWhenStopping(audioEmitterComponent.allowFadeoutWhenStopping > 0);
 			audioEmitterComponentBuilder.add_releaseAfterPlay(audioEmitterComponent.releaseAfterPlay > 0);
 

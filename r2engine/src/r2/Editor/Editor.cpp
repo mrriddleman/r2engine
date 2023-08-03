@@ -399,17 +399,17 @@ namespace r2
 
 				ecs::AudioEmitterComponent audioEmitterComponent;
 				r2::util::PathCpy(audioEmitterComponent.eventName, "event:/MyEvent");
-				audioEmitterComponent.releaseAfterPlay = false;
+				audioEmitterComponent.releaseAfterPlay = true;
 				audioEmitterComponent.startCondition = ecs::PLAY_ON_EVENT;
 				audioEmitterComponent.allowFadeoutWhenStopping = true;
 				audioEmitterComponent.numParameters = 0;
 
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterComponent>(theNewEntity, audioEmitterComponent);
 
-				ecs::AudioEmitterActionComponent audioEmitterActionComponent;
-				audioEmitterActionComponent.action = ecs::AEA_CREATE;
+			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
+			//	audioEmitterActionComponent.action = ecs::AEA_CREATE;
 
-				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterActionComponent>(theNewEntity, audioEmitterActionComponent);
+			//	MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterActionComponent>(theNewEntity, audioEmitterActionComponent);
 
 				//transform instance
 				{
