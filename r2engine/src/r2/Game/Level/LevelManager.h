@@ -53,7 +53,8 @@ namespace r2
 		Level* GetLevel(LevelName levelName);
 
 		void UnloadLevel(const Level* level);
-
+		bool ExistsOnDisk(const char* levelURI);
+		bool ExistsOnDisk(LevelName levelName);
 		bool IsLevelLoaded(LevelName levelName);
 		bool IsLevelLoaded(const char* levelURI);
 
@@ -72,6 +73,8 @@ namespace r2
 			u32 maxNumTexturePacks,
 			u32 maxNumEntities,
 			const r2::mem::utils::MemoryProperties& memProperties);
+
+		
 
 	private:
 		

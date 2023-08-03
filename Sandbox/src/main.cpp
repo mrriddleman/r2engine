@@ -27,22 +27,25 @@
 #include "r2/Core/Assets/AssetLib.h"
 
 #include "r2/Render/Renderer/Renderer.h"
-#include "r2/Render/Model/Model.h"
 
 #include "r2/Utils/Hash.h"
 #include "r2/Utils/Random.h"
 #include "r2/Render/Camera/PerspectiveCameraController.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "r2/Core/Memory/InternalEngineMemory.h"
-#include "r2/Render/Animation/AnimationPlayer.h"
 #include "r2/Render/Model/Light.h"
-#include "r2/Render/Model/Textures/TexturePackManifest_generated.h"
+
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/System.h"
+//
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
 #include "r2/Render/Model/Materials/MaterialParamsPack_generated.h"
+
+#include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
+
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
@@ -751,7 +754,15 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_m)
             {
-                r2::audio::AudioEngine audioEngine;
+
+			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
+			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
+
+			    MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
+
+
+
+                /*r2::audio::AudioEngine audioEngine;
 
                 if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))
                 {
@@ -760,7 +771,7 @@ public:
                 else
                 {
                     mMusicEventHandle = audioEngine.PlayEvent("event:/Music", false);
-                }
+                }*/
             }
             else if (e.KeyCode() == r2::io::KEY_p)
             {

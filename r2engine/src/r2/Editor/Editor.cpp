@@ -8,6 +8,10 @@
 #include "r2/Editor/EditorScenePanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "r2/Game/ECS/Components/AudioListenerComponent.h"
+#include "r2/Game/ECS/Components/AudioEmitterComponent.h"
+#include "r2/Game/ECS/Components/AudioParameterComponent.h"
+#include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
@@ -16,6 +20,9 @@
 #include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Editor/EditorEvents/EditorLevelEvents.h"
+
+
+
 #ifdef R2_DEBUG
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
@@ -32,8 +39,6 @@
 #include "r2/Core/Assets/AssetTypes.h"
 
 //@TEST: for test code only - REMOVE!
-#include "r2/Render/Renderer/Renderer.h"
-#include "r2/Platform/Platform.h"
 #include "r2/Core/Application.h"
 #include "r2/Core/File/PathUtils.h"
 
@@ -391,6 +396,20 @@ namespace r2
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::DebugBoneComponent>(theNewEntity, debugBoneComponent);
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::RenderComponent>(theNewEntity, renderComponent);
 				
+
+				ecs::AudioEmitterComponent audioEmitterComponent;
+				r2::util::PathCpy(audioEmitterComponent.eventName, "event:/MyEvent");
+				audioEmitterComponent.releaseAfterPlay = false;
+				audioEmitterComponent.startCondition = ecs::PLAY_ON_EVENT;
+				audioEmitterComponent.allowFadeoutWhenStopping = true;
+				audioEmitterComponent.numParameters = 0;
+
+				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterComponent>(theNewEntity, audioEmitterComponent);
+
+				ecs::AudioEmitterActionComponent audioEmitterActionComponent;
+				audioEmitterActionComponent.action = ecs::AEA_CREATE;
+
+				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterActionComponent>(theNewEntity, audioEmitterActionComponent);
 
 				//transform instance
 				{

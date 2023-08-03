@@ -280,6 +280,7 @@ namespace r2
 		copyOfLevel.Shutdown();
 	}
 
+
 	Level* LevelManager::GetLevel(const char* levelURI)
 	{
 		return GetLevel(r2::asset::GetAssetNameForFilePath(levelURI, r2::asset::LEVEL));
@@ -289,6 +290,20 @@ namespace r2
 	{
 		s32 index = -1;
 		return FindLoadedLevel(levelName, index);
+	}
+
+	bool LevelManager::ExistsOnDisk(const char* levelURI)
+	{
+		return ExistsOnDisk(STRING_ID(levelURI));
+	}
+
+	bool LevelManager::ExistsOnDisk(LevelName levelName)
+	{
+		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+
+		const auto levelAsset = r2::asset::Asset(levelName, r2::asset::LEVEL);
+
+		return gameAssetManager.HasAsset(levelAsset);
 	}
 
 	bool LevelManager::IsLevelLoaded(LevelName levelName)
@@ -309,6 +324,13 @@ namespace r2
 
 	Level* LevelManager::ReloadLevel(LevelName levelName)
 	{
+		//Basically this is saying if this doesn't exist on disk but we have it loaded
+		//then we have created the level without saving so just give it back 
+		if (!ExistsOnDisk(levelName) && IsLevelLoaded(levelName))
+		{
+			return GetLevel(levelName);
+		}
+
 		if (IsLevelLoaded(levelName))
 		{
 			UnloadLevel(GetLevel(levelName));

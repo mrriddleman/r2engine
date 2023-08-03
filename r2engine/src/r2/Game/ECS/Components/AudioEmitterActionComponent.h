@@ -6,7 +6,6 @@
 
 namespace r2::ecs 
 {
-
 	enum AudioEmitterAction : u32
 	{
 		AEA_CREATE = 0,
@@ -19,7 +18,6 @@ namespace r2::ecs
 
 	struct AudioEmitterActionComponent
 	{
-		r2::audio::AudioEngine::EventInstanceHandle eventInstanceHandle;
 		AudioEmitterAction action;
 	};
 }

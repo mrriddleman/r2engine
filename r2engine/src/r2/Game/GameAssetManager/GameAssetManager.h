@@ -14,7 +14,6 @@
 
 #include "r2/Core/Memory/Memory.h"
 
-#include "r2/Render/Model/Model.h"
 #include "r2/Render/Model/Textures/TexturePacksCache.h"
 
 #ifdef R2_ASSET_PIPELINE

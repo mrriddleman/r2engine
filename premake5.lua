@@ -484,6 +484,7 @@ project "Sandbox"
 
 	includedirs
 	{
+		"r2engine/src/r2/Render/Model",
 		"r2engine/src",
 		"%{includeDirs.glm}",
 		"%{includeDirs.flatbuffers}",

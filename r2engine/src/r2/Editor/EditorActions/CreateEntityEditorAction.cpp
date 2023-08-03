@@ -34,7 +34,10 @@ namespace r2::edit
 	{
 		mCreatedEntity = mnoptrEditor->GetSceneGraph().CreateEntity(mParentEntity);
 
-		mnoptrEditor->GetEditorLevelConst().AddEntity(mCreatedEntity);
+
+		Level& editorLevel = mnoptrEditor->GetEditorLevelRef();
+
+		editorLevel.AddEntity(mCreatedEntity);
 
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 
