@@ -406,6 +406,9 @@ namespace r2
 
 				MENG.GetECSWorld().GetECSCoordinator()->AddComponent<ecs::AudioEmitterComponent>(theNewEntity, audioEmitterComponent);
 
+				//@TEMPORARY!!!! - we would need some other mechanism for adding/loading the bank, probably through the asset catalog tool or something
+				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND));
+
 			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
 			//	audioEmitterActionComponent.action = ecs::AEA_CREATE;
 
@@ -622,6 +625,16 @@ namespace r2
 		{
 			//@NOTE(Serge): may want to load here - dunno yet
 			r2::sarr::Push(*animations, animationAssetHandle);
+		}
+	}
+
+	void Editor::AddSoundBankToLevel(u64 soundBankAssetName)
+	{
+		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();
+
+		if (r2::sarr::IndexOf(*soundBanks, soundBankAssetName) == -1)
+		{
+			r2::sarr::Push(*soundBanks, soundBankAssetName);
 		}
 	}
 }

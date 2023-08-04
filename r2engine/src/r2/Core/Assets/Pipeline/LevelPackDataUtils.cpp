@@ -11,6 +11,7 @@
 #include "r2/Core/Assets/AssetFiles/AssetFile.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
+#include "r2/Audio/SoundDefinitionHelpers.h"
 
 namespace r2::asset::pln
 {
@@ -88,6 +89,30 @@ namespace r2::asset::pln
 		return packReferences;
 	}
 
+	std::vector<flatbuffers::Offset<flat::PackReference>> MakePackReferencesFromSoundBankAssetNames(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<u64>* soundBankAssetNames)
+	{
+		std::vector<flatbuffers::Offset<flat::PackReference>> packReferences = {};
+
+		size_t numSoundBanks = r2::sarr::Size(*soundBankAssetNames);
+
+		for (size_t i = 0; i < numSoundBanks; ++i)
+		{
+			const char* soundBankName = r2::audio::GetSoundBankNameFromAssetName(r2::sarr::At(*soundBankAssetNames, i));
+
+			char sanitizedFilePathURI[r2::fs::FILE_PATH_LENGTH];
+
+			r2::fs::utils::SanitizeSubPath(soundBankName, sanitizedFilePathURI);
+
+			const auto assetHandle = r2::asset::Asset::GetAssetNameForFilePath(sanitizedFilePathURI, r2::asset::SOUND);
+
+			auto packReference = flat::CreatePackReference(builder, assetHandle, builder.CreateString(sanitizedFilePathURI));
+
+			packReferences.push_back(packReference);
+		}
+
+		return packReferences;
+	}
+
 	bool SaveLevelData(
 		const r2::ecs::ECSCoordinator* coordinator,
 		const std::string& binLevelPath,
@@ -126,9 +151,7 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, r2::asset::RMODEL, editorLevel.GetModelAssets());
 		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, r2::asset::RANIMATION, editorLevel.GetAnimationAssets());
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = MakeMaterialNameVectorFromMaterialNames(builder, editorLevel.GetMaterials());
-		
-		//@TODO(Serge): fix this - the directory is incorrect if we have music files
-		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = {};//MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::SOUND_FX, r2::asset::SOUND, editorLevel.GetSoundPaths());
+		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = MakePackReferencesFromSoundBankAssetNames(builder, editorLevel.GetSoundBankAssetNames());
 		
 		coordinator->SerializeECS(builder, entityVec, componentDataArray);
 

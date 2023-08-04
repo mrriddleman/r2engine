@@ -179,7 +179,7 @@ namespace r2::asset
 		case TEXTURE_PACK:
 			return 0;
 		case SOUND:
-			return 1;
+			return 0;
 		case SOUND_DEFINTION:
 			return 0;
 		default:

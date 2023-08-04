@@ -86,6 +86,7 @@ namespace r2::audio
         static const BankHandle InvalidBank = -1;
         
         static BankHandle LoadBank(const char* path, u32 flags);
+        static BankHandle GetBankHandle(u64 bankAssetName);
         static bool UnloadSoundBank(BankHandle bank);
         static bool IsBankValid(BankHandle bank);
         static bool HasBankFinishedLoading(BankHandle bank);

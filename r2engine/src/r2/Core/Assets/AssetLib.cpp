@@ -269,6 +269,24 @@ namespace r2::asset::lib
         }
     }
 
+    u32 GetManifestDataCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type)
+    {
+        u32 count = 0;
+		u32 numManifestFiles = r2::sarr::Size(*assetLib.mManifestFiles);
+
+        for (u32 i = 0; i < numManifestFiles; ++i)
+        {
+            r2::asset::ManifestAssetFile* manifestFile = r2::sarr::At(*assetLib.mManifestFiles, i);
+
+            if (manifestFile->GetAssetType() == type)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile)
     {
         r2::sarr::Push(*assetLib.mManifestFiles, manifestFile);

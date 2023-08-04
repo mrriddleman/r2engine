@@ -519,12 +519,12 @@ public:
         //audio test setup
         {
             //load test bank 1
-            r2::audio::AudioEngine audioEngine;
+            //r2::audio::AudioEngine audioEngine;
 
-            char bankPath[r2::fs::FILE_PATH_LENGTH];
-            r2::fs::utils::BuildPathFromCategory(r2::fs::utils::SOUNDS, "TestBank1.bank", bankPath);
+            //char bankPath[r2::fs::FILE_PATH_LENGTH];
+            //r2::fs::utils::BuildPathFromCategory(r2::fs::utils::SOUNDS, "TestBank1.bank", bankPath);
 
-            mTestBankHandle = audioEngine.LoadBank(bankPath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
+            //mTestBankHandle = audioEngine.LoadBank(bankPath, r2::audio::AudioEngine::LOAD_BANK_NORMAL);
         }
 
 
@@ -758,7 +758,11 @@ public:
 			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
 			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
 
-			    MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
+                if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
+                { 
+                    MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
+                }
+			   
 
 
 

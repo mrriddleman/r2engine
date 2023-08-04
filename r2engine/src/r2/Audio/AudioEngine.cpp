@@ -568,10 +568,47 @@ namespace r2::audio
         return result;
     }
 
-    //AudioEngine::BankHandle AudioEngine::GetBankHandle(const char* bankAssetName)
-    //{
-    //    return InvalidBank;
-    //}
+    AudioEngine::BankHandle AudioEngine::GetBankHandle(u64 bankAssetName)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return InvalidBank;
+		}
+
+		const u32 numLoadedBanks = r2::sarr::Size(*gImpl->mLoadedBanks);
+
+        for (u32 i = 0; i < numLoadedBanks; ++i)
+        {
+            const FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, i);
+
+            if (!bank)
+            {
+                continue;
+            }
+
+            char nextBankPath[r2::fs::FILE_PATH_LENGTH];
+            int retrieved;
+
+            bank->getPath(nextBankPath, r2::fs::FILE_PATH_LENGTH, &retrieved);
+            if (!retrieved)
+            {
+                continue;
+            }
+
+            char bankPath[r2::fs::FILE_PATH_LENGTH];
+            BuildBankFilePathFromFMODPath(nextBankPath, bankPath, r2::fs::FILE_PATH_LENGTH);
+
+            auto assetName = r2::asset::GetAssetNameForFilePath(bankPath, r2::asset::SOUND);
+
+            if (assetName == bankAssetName)
+            {
+                return static_cast<BankHandle>(i);
+            }
+        }
+
+        return InvalidBank;
+    }
 
     bool AudioEngine::UnloadSoundBank(BankHandle bankHandle)
     {

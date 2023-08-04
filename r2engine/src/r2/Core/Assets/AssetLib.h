@@ -88,6 +88,8 @@ namespace r2::asset::lib
     const byte* GetManifestData(AssetLib& assetLib, u64 manifestAssetHandle);
     void GetManifestDataForType(AssetLib& assetLib, r2::asset::EngineAssetType type, r2::SArray<const byte*>* manifestDataArray);
 
+    u32 GetManifestDataCountForType(AssetLib& assetLib, r2::asset::EngineAssetType type);
+
     void RegisterManifestFile(AssetLib& assetLib, ManifestAssetFile* manifestFile);
     bool RegenerateAssetFilesFromManifests(const AssetLib& assetLib);
     FileList GetFileList(const AssetLib& assetLib);

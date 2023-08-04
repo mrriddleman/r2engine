@@ -67,6 +67,7 @@ namespace r2
 
 		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
 		void AddAnimationToLevel(u64 animationAssetName, const r2::draw::Animation& animation);
+		void AddSoundBankToLevel(u64 soundBankAssetName);
 
 		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
 		r2::mem::MallocArena mMallocArena;

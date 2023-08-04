@@ -32,6 +32,7 @@ namespace r2
 			r2::SArray<r2::asset::AssetHandle>* modelAssets,
 			r2::SArray<r2::asset::AssetHandle>* animationAssets,
 			r2::SArray<r2::mat::MaterialName>* materials,
+			r2::SArray<u64>* soundBanks,
 			r2::SArray<ecs::Entity>* entities);
 
 		void Shutdown();
@@ -52,13 +53,14 @@ namespace r2
 		r2::SArray<r2::asset::AssetHandle>* GetModelAssets() const;
 		r2::SArray<r2::asset::AssetHandle>* GetAnimationAssets() const;
 		r2::SArray<r2::mat::MaterialName>* GetMaterials() const;
+		r2::SArray<u64>* GetSoundBankAssetNames() const;
 		r2::SArray<ecs::Entity>* GetEntities() const;
 
 		void AddEntity(ecs::Entity e) const;
 		void RemoveEntity(ecs::Entity e) const;
 		void ClearAllEntities() const;
 
-		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
+		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
 		friend class LevelManager;
@@ -76,6 +78,7 @@ namespace r2
 		r2::SArray<r2::mat::MaterialName>* mMaterials;
 
 		//@TODO(Serge): sound files
+		r2::SArray<u64>* mSoundBanks;
 
 		r2::SArray<ecs::Entity>* mEntities;
 	};

@@ -32,6 +32,7 @@ namespace r2
 		static const u32 MAX_NUM_MODELS;
 		static const u32 MAX_NUM_ANIMATIONS;
 		static const u32 MAX_NUM_TEXTURE_PACKS;
+		static const u32 MAX_NUM_SOUND_BANKS;
 
 		LevelManager();
 		~LevelManager();
@@ -71,10 +72,9 @@ namespace r2
 			u32 maxNumModels,
 			u32 maxNumAnimations,
 			u32 maxNumTexturePacks,
+			u32 maxNumSoundBanks,
 			u32 maxNumEntities,
 			const r2::mem::utils::MemoryProperties& memProperties);
-
-		
 
 	private:
 		
