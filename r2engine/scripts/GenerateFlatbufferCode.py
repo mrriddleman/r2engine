@@ -49,7 +49,6 @@ fbsCodeOutputMap = {
 "ComponentArraySchemas/TransformComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/AudioListenerComponentArrayData.fbs": "/r2/Game/ECS/Serialization/",
 "ComponentArraySchemas/AudioEmitterComponentArrayData.fbs":"/r2/Game/ECS/Serialization/",
-"EditorSchemas/EditorInspectionComponent.fbs":"/r2/Editor/Data/"
 }
 
 extraParams = {
@@ -81,7 +80,6 @@ extraParams = {
 "ComponentArraySchemas/TransformComponentArrayData.fbs":"",
 "ComponentArraySchemas/AudioListenerComponentArrayData.fbs":"",
 "ComponentArraySchemas/AudioEmitterComponentArrayData.fbs":"",
-"EditorSchemas/EditorInspectionComponent.fbs":"",
 }
 
 for filename in os.listdir(dataPath):
