@@ -618,6 +618,11 @@ namespace r2::audio
 			return false;
 		}
 
+        if (bankHandle == InvalidBank)
+        {
+            return false;
+        }
+
         FMOD::Studio::Bank* bank = r2::sarr::At(*gImpl->mLoadedBanks, bankHandle);
         
         if (!bank)

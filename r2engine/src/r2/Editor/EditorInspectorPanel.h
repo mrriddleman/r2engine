@@ -4,6 +4,10 @@
 #define __EDITOR_INSPECTOR_PANEL_H__
 
 #include "r2/Editor/EditorWidget.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponent.h"
+#include "r2/Game/ECS/Component.h"
+#include "r2/Game/ECS/Entity.h"
+#include <unordered_map>
 
 namespace r2::edit
 {
@@ -17,6 +21,12 @@ namespace r2::edit
 		virtual void OnEvent(evt::Event& e) override;
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
+
+		void RegisterComponentType(r2::ecs::ComponentType componentType, InspectorPanelComponentWidgetFunc componentWidget);
+
+	private:
+		std::unordered_map<r2::ecs::ComponentType, InspectorPanelComponentWidgetFunc> mComponentWidgets;
+		ecs::Entity mEntitySelected;
 	};
 }
 

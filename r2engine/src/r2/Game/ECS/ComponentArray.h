@@ -11,25 +11,10 @@
 #include "r2/Game/ECS/ComponentArrayData_generated.h"
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
+#include "r2/Game/ECS/Component.h"
 
 namespace r2::ecs
 {
-
-	//https://stackoverflow.com/questions/14727313/c-how-to-reference-templated-functions-using-stdbind-stdfunction
-	//class ComponentArrayHydration
-	//{
-	//public:
-	//	template <typename Component>
-	//	struct HydrateFunction
-	//	{
-	//		static std::function<void(r2::SArray<Component>&)> Function = nullptr;
-	//	};
-	//};
-
-	//template<typename Component>
-	//std::function<void(r2::SArray<Component>&)> ComponentArrayHydration::HydrateFunction<Component>::Function = nullptr;
-
-	using ComponentType = s32;
 	using ComponentArrayHydrationFunction = std::function<void*(void*)>;
 
 	class IComponentArray

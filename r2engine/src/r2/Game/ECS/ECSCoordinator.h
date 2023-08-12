@@ -189,6 +189,8 @@ namespace r2::ecs
 			mSystemManager->MoveEntity<SystemType>(fromIndex, toIndex);
 		}
 
+		Signature& GetSignature(Entity e);
+
 		void SerializeECS (
 			flatbuffers::FlatBufferBuilder& builder,
 			std::vector<flatbuffers::Offset<flat::EntityData>>& entityVec,

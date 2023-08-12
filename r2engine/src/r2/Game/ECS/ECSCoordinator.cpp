@@ -50,6 +50,11 @@ namespace r2::ecs
 		return mEntityManager->NumLivingEntities();
 	}
 
+	Signature& ECSCoordinator::GetSignature(Entity e)
+	{
+		return mEntityManager->GetSignature(e);
+	}
+
 	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level, const flat::LevelData* flatLevelData)
 	{
 

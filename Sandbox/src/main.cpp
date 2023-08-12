@@ -51,6 +51,7 @@
 #endif
 
 #include "r2/Audio/AudioEngine.h"
+#include <mutex>
 
 struct DummyComponent
 {
@@ -755,13 +756,13 @@ public:
             else if (e.KeyCode() == r2::io::KEY_m)
             {
 
-			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
-			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
+			    //r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
+			    //audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
 
-                if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
-                { 
-                    MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
-                }
+       //         if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
+       //         { 
+       //             MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
+       //         }
 			   
 
 
