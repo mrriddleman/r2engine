@@ -7,6 +7,8 @@
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
+#include "r2/Core/Engine.h"
+#include "r2/Core/Application.h"
 
 namespace r2::edit
 {
@@ -25,6 +27,9 @@ namespace r2::edit
 	void InspectorPanel::Init(Editor* noptrEditor)
 	{
 		mnoptrEditor = noptrEditor;
+
+		RegisterAllEngineComponentWidgets(*this);
+		CENG.GetApplication().RegisterComponentImGuiWidgets(*this);
 	}
 
 	void InspectorPanel::Shutdown()

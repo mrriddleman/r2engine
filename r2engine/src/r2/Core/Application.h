@@ -33,6 +33,11 @@ namespace r2::ecs
     class ECSCoordinator;
 }
 
+namespace r2::edit
+{
+    class InspectorPanel;
+}
+
 #endif // R2_EDITOR
 
 
@@ -120,6 +125,10 @@ namespace r2
         virtual std::vector<r2::asset::pln::GenerateMaterialPackManifestFromDirectoriesFunc> GetGenerateMaterialManifestsFromDirectoriesFuncs() const = 0;
 
         virtual r2::asset::pln::InternalShaderPassesBuildFunc GetInternalShaderPassesBuildFunc() const = 0;
+#endif
+
+#ifdef R2_EDITOR
+        virtual void RegisterComponentImGuiWidgets(r2::edit::InspectorPanel& inspectorPanel) const = 0;
 #endif
 
     protected:

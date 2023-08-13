@@ -450,7 +450,9 @@ namespace r2
             
             //setup the ECSWorld + LevelManager
             {
+
                 mECSWorld = ALLOC(r2::ecs::ECSWorld, *MEM_ENG_PERMANENT_PTR);
+                //@NOTE(Serge): we're using internal engine memory for this and it might be better to use game memory - leaving it for now
                 mECSWorld->Init(engineMem.internalEngineMemoryHandle, noptrApp->GetMaxNumComponents(), noptrApp->GetMaxNumECSEntities(), noptrApp->GetMaxNumECSSystems());
 
                 mLevelManager = ALLOC(LevelManager, *MEM_ENG_PERMANENT_PTR);

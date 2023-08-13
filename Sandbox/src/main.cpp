@@ -1474,6 +1474,13 @@ public:
         printf("Resolution is %d by %d\n", g_resolutions[mResolution].width, g_resolutions[mResolution].height);
     }
     
+#ifdef R2_EDITOR
+    virtual void RegisterComponentImGuiWidgets(r2::edit::InspectorPanel& inspectorPanel) const override
+    {
+
+    }
+#endif
+
 private:
     r2::mem::MemoryArea::Handle memoryAreaHandle;
     r2::mem::MemoryArea::SubArea::Handle subMemoryAreaHandle;
