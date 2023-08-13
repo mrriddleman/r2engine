@@ -93,6 +93,10 @@ namespace r2::edit
 		mComponentWidgets[componentType] = componentWidget;
 	}
 
+	Editor* InspectorPanel::GetEditor()
+	{
+		return mnoptrEditor;
+	}
 }
 
 #endif

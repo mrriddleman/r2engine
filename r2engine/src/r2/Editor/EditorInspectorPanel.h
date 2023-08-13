@@ -24,6 +24,8 @@ namespace r2::edit
 
 		void RegisterComponentType(r2::ecs::ComponentType componentType, InspectorPanelComponentWidgetFunc componentWidget);
 
+		Editor* GetEditor();
+
 	private:
 		std::unordered_map<r2::ecs::ComponentType, InspectorPanelComponentWidgetFunc> mComponentWidgets;
 		ecs::Entity mEntitySelected;

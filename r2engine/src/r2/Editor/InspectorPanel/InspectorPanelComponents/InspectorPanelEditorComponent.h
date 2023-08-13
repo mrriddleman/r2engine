@@ -1,0 +1,18 @@
+#ifdef R2_EDITOR
+#ifndef __INSPECTOR_PANEL_EDITOR_COMPONENT__
+#define __INSPECTOR_PANEL_EDITOR_COMPONENT__
+
+#include "r2/Game/ECS/Entity.h"
+
+namespace r2::ecs
+{
+	class ECSCoordinator;
+}
+
+namespace r2::edit
+{
+	void InspectorPanelEditorComponent(r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator);
+}
+
+#endif // __INSPECTOR_PANEL_EDITOR_COMPONENT__
+#endif
