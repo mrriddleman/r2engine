@@ -20,6 +20,5 @@ namespace r2::edit
 
 		inspectorPanel.RegisterComponentType(coordinator->GetComponentType<r2::ecs::EditorComponent>(), InspectorPanelEditorComponent);
 		inspectorPanel.RegisterComponentType(coordinator->GetComponentType<r2::ecs::TransformComponent>(), InspectorPanelTransformComponent);
-		//inspectorPanel.RegisterComponentType(coordinator->GetComponentType<r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(), InspectorPanelInstancedTransformComponent);
 	}
 }
