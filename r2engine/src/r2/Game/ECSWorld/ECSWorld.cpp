@@ -415,7 +415,7 @@ namespace r2::ecs
 		ecs::ComponentArrayHydrationFunction instancedTransformComponentHydrationFunc = std::bind(&ECSWorld::HydrateInstancedTransformComponents, this, std::placeholders::_1);
 		ecs::ComponentArrayHydrationFunction instancedSkeletalAnimationComponentHydrationFunc = std::bind(&ECSWorld::HydrateInstancedSkeletalAnimationComponents, this, std::placeholders::_1);
 
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::HeirarchyComponent>(*mArena, "HeirarchyComponent", true, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::HierarchyComponent>(*mArena, "HeirarchyComponent", true, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformComponent>(*mArena, "TransformComponent", true, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena, "TransformDirtyComponent", false, nullptr);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena, "RenderComponent", true, renderComponentHydrationFunc);
@@ -465,7 +465,7 @@ namespace r2::ecs
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::TransformComponent>(*mArena);
-		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::HeirarchyComponent>(*mArena);
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::HierarchyComponent>(*mArena);
 	}
 	
 	void ECSWorld::RegisterEngineSystems()
@@ -592,7 +592,7 @@ namespace r2::ecs
 #endif // R2_DEBUG
 
 		//add all of the Engine Component memory here
-		memorySize += ComponentArray<HeirarchyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+		memorySize += ComponentArray<HierarchyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<TransformComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<TransformDirtyComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<RenderComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);

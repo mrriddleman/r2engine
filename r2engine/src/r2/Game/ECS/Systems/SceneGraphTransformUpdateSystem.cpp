@@ -6,7 +6,7 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
@@ -40,7 +40,7 @@ namespace r2::ecs
 			ecs::Entity entity = r2::sarr::At(*mEntities, i);
 
 			//get the heirarch component and the transform component of the entity
-			const HeirarchyComponent& entityHeirarchComponent = mnoptrCoordinator->GetComponent<HeirarchyComponent>(entity);
+			const HierarchyComponent& entityHeirarchComponent = mnoptrCoordinator->GetComponent<HierarchyComponent>(entity);
 			TransformComponent& entityTransformComponent = mnoptrCoordinator->GetComponent<TransformComponent>(entity);
 
 			math::Transform parentTransform;

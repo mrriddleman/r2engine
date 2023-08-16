@@ -1,7 +1,7 @@
 #ifndef __SCENE_GRAPH_H__
 #define __SCENE_GRAPH_H__
 
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
@@ -46,7 +46,7 @@ namespace r2
 
 			ecs::Signature systemSignature;
 
-			const auto heirarchyComponentType = coordinator->GetComponentType<ecs::HeirarchyComponent>();
+			const auto heirarchyComponentType = coordinator->GetComponentType<ecs::HierarchyComponent>();
 			const auto transformComponentType = coordinator->GetComponentType<ecs::TransformComponent>();
 			systemSignature.set(heirarchyComponentType);
 			systemSignature.set(transformComponentType);

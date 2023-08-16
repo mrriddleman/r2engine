@@ -15,11 +15,12 @@ namespace r2::ecs
 namespace r2::edit
 {
 	class InspectorPanel;
+	class Editor;
 }
 
 namespace r2::edit
 {
-	using InspectorPanelComponentWidgetFunc = std::function<void(r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)>;
+	using InspectorPanelComponentWidgetFunc = std::function<void(Editor*editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)>;
 
 	void RegisterAllEngineComponentWidgets(InspectorPanel& inspectorPanel);
 }

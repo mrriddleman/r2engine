@@ -36,7 +36,7 @@ namespace r2::edit
 
 		mEntityTree.push_back(entityToDestroy);
 		mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorComponent>(entityToDestroy));
-		mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HeirarchyComponent>(entityToDestroy));
+		mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HierarchyComponent>(entityToDestroy));
 		mEntityTreeTransformComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(entityToDestroy));
 
 		for (size_t i = 0; i < numChildren; ++i)
@@ -46,7 +46,7 @@ namespace r2::edit
 			mEntityTree.push_back(e);
 
 			mEntityTreeEditorNameComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::EditorComponent>(e));
-			mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HeirarchyComponent>(e));
+			mEntityTreeHeirarchyComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::HierarchyComponent>(e));
 			mEntityTreeTransformComponents.push_back(mnoptrEditor->GetSceneGraph().GetECSCoordinator()->GetComponent<ecs::TransformComponent>(e));
 		}
 
@@ -63,7 +63,7 @@ namespace r2::edit
 			mnoptrEditor->GetEditorLevelConst().AddEntity(mEntityTree[i]);
 
 			mnoptrEditor->GetECSCoordinator()->AddComponent<ecs::EditorComponent>(mEntityTree[i], mEntityTreeEditorNameComponents[i]);
-			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::HeirarchyComponent>(mEntityTree[i], mEntityTreeHeirarchyComponents[i]);
+			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::HierarchyComponent>(mEntityTree[i], mEntityTreeHeirarchyComponents[i]);
 			mnoptrEditor->GetECSCoordinator()->SetComponent<ecs::TransformComponent>(mEntityTree[i], mEntityTreeTransformComponents[i]);
 		}
 

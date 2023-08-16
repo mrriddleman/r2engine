@@ -4,6 +4,10 @@
 
 #include "r2/Game/ECS/Entity.h"
 
+namespace r2
+{
+	class Editor;
+}
 namespace r2::ecs
 {
 	class ECSCoordinator;
@@ -11,7 +15,7 @@ namespace r2::ecs
 
 namespace r2::edit
 {
-	void InspectorPanelTransformComponent(r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator);
+	void InspectorPanelTransformComponent(Editor* editor,r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator);
 }
 
 

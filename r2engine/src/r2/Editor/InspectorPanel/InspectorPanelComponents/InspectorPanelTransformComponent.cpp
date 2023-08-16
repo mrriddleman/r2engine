@@ -69,7 +69,7 @@ namespace r2::edit
 		}
 	}
 
-	void InspectorPanelTransformComponent(r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	void InspectorPanelTransformComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 	{
 		r2::ecs::TransformComponent& transformComponent = coordinator->GetComponent<r2::ecs::TransformComponent>(theEntity);
 

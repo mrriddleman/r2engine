@@ -6,7 +6,7 @@
 
 namespace r2::ecs
 {
-	struct HeirarchyComponent
+	struct HierarchyComponent
 	{
 		Entity parent = INVALID_ENTITY;
 	};

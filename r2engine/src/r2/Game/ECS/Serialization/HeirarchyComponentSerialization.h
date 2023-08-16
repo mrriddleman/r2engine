@@ -2,7 +2,7 @@
 #define __HEIRARCHY_COMPONENT_SERIALIZATION_H__
 
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Serialization/HeirarchyComponentArrayData_generated.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
@@ -17,7 +17,7 @@ namespace r2::ecs
 	};
 */
 	template<>
-	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<HeirarchyComponent>& components)
+	inline void SerializeComponentArray(flatbuffers::FlatBufferBuilder& fbb, const r2::SArray<HierarchyComponent>& components)
 	{
 		const auto numComponents = r2::sarr::Size(components);
 
@@ -25,7 +25,7 @@ namespace r2::ecs
 
 		for (u32 i = 0; i < numComponents; ++i)
 		{
-			const HeirarchyComponent& heirarchyComponent = r2::sarr::At(components, i);
+			const HierarchyComponent& heirarchyComponent = r2::sarr::At(components, i);
 
 			flat::HeirarchyComponentDataBuilder heirarchyComponentBuilder(fbb);
 
@@ -46,7 +46,7 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<HeirarchyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(r2::SArray<HierarchyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
 		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
@@ -61,7 +61,7 @@ namespace r2::ecs
 
 			Entity parent = MapSerializedEntity(flatHeirarchyComponent->parent(), entities, refEntities);
 
-			HeirarchyComponent heirarchyComponent;
+			HierarchyComponent heirarchyComponent;
 			heirarchyComponent.parent = parent;
 
 			r2::sarr::Push(components, heirarchyComponent);

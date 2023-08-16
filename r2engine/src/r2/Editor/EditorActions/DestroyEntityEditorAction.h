@@ -5,7 +5,7 @@
 
 #include "r2/Editor/EditorActions/EditorAction.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 
 namespace
@@ -30,7 +30,7 @@ namespace r2::edit
 		std::vector<ecs::Entity> mChildren; 
 
 		ecs::EditorComponent mEntityEditorNameComponent;
-		ecs::HeirarchyComponent mEntityHeirarchyComponent;
+		ecs::HierarchyComponent mEntityHeirarchyComponent;
 		ecs::TransformComponent mEntityTransformComponent;
 
 	};

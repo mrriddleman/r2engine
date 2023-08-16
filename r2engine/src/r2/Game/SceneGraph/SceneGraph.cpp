@@ -39,10 +39,10 @@ namespace r2
 
 		ecs::Entity newEntity = mnoptrECSCoordinator->CreateEntity();
 
-		ecs::HeirarchyComponent heirarchyComponent;
+		ecs::HierarchyComponent heirarchyComponent;
 		heirarchyComponent.parent = parent;
 
-		mnoptrECSCoordinator->AddComponent<ecs::HeirarchyComponent>(newEntity, heirarchyComponent);
+		mnoptrECSCoordinator->AddComponent<ecs::HierarchyComponent>(newEntity, heirarchyComponent);
 
 		ecs::TransformComponent transformComponent;
 		transformComponent.modelMatrix = glm::mat4(1.0f);
@@ -87,15 +87,15 @@ namespace r2
 
 		//we should check to see if we already have a heirarchy component for this entity first
 		//if we don't then add one
-		bool hasComponent = mnoptrECSCoordinator->HasComponent<ecs::HeirarchyComponent>(entity);
+		bool hasComponent = mnoptrECSCoordinator->HasComponent<ecs::HierarchyComponent>(entity);
 		if (!hasComponent)
 		{
-			ecs::HeirarchyComponent heirarchyComponent;
+			ecs::HierarchyComponent heirarchyComponent;
 			heirarchyComponent.parent = ecs::INVALID_ENTITY; //root - ie. no parent
-			mnoptrECSCoordinator->AddComponent<ecs::HeirarchyComponent>(entity, heirarchyComponent);
+			mnoptrECSCoordinator->AddComponent<ecs::HierarchyComponent>(entity, heirarchyComponent);
 		}
 		
-		ecs::HeirarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);
+		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		heirarchyComponent.parent = parent;
 
 		//essentially what we need to do here is to sort the entities in the SceneGraphSystem such that
@@ -113,7 +113,7 @@ namespace r2
 			{
 				ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
 
-				const auto& heirarchy = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+				const auto& heirarchy = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 				if (heirarchy.parent == ecs::INVALID_ENTITY)
 				{
@@ -157,7 +157,7 @@ namespace r2
 		R2_CHECK(mnoptrSceneGraphSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem != nullptr, "We haven't initialized the SceneGraph yet!");
 
-		ecs::HeirarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);
+		ecs::HierarchyComponent& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		heirarchyComponent.parent = ecs::INVALID_ENTITY;
 
 		s64 index = r2::sarr::IndexOf(*mnoptrSceneGraphSystem->mEntities, entity);
@@ -178,7 +178,7 @@ namespace r2
 		for (u32 i = 0; i < numEntities; ++i)
 		{
 			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
-			auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+			auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 			if (heirarchyComponent.parent == parent)
 			{
@@ -214,7 +214,7 @@ namespace r2
 		{
 			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
 
-			const auto& heirarchy = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+			const auto& heirarchy = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 			if (heirarchy.parent == ecs::INVALID_ENTITY)
 			{
@@ -235,7 +235,7 @@ namespace r2
 		{
 			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
 
-			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 			if (heirarchyComponent.parent == parent)
 			{
@@ -251,7 +251,7 @@ namespace r2
 		for (u32 i = parentIndex+1; i < numEntitiesInScene; ++i)
 		{
 			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
-			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 			if (heirarchyComponent.parent == parent)
 			{
@@ -271,7 +271,7 @@ namespace r2
 		{
 			ecs::Entity e = r2::sarr::At(*mnoptrSceneGraphSystem->mEntities, i);
 
-			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+			const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 			if (heirarchyComponent.parent == ecs::INVALID_ENTITY)
 			{
@@ -306,7 +306,7 @@ namespace r2
 
 	ecs::Entity SceneGraph::GetParent(ecs::Entity entity)
 	{
-		const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HeirarchyComponent>(entity);
+		const auto& heirarchyComponent = mnoptrECSCoordinator->GetComponent<ecs::HierarchyComponent>(entity);
 		return heirarchyComponent.parent;
 	}
 

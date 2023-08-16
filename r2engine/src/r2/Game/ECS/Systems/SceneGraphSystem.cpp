@@ -1,7 +1,7 @@
 #include "r2pch.h"
 
 #include "r2/Game/ECS/Systems/SceneGraphSystem.h"
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
 
@@ -26,7 +26,7 @@ namespace r2::ecs
 	{
 		R2_CHECK(mnoptrCoordinator != nullptr, "Should have a coordinator set correctly");
 		R2_CHECK(mnoptrSceneGraph != nullptr, "Should have a scene graph set first!");
-		const ecs::HeirarchyComponent& heirarchyComponent = mnoptrCoordinator->GetComponent<ecs::HeirarchyComponent>(e);
+		const ecs::HierarchyComponent& heirarchyComponent = mnoptrCoordinator->GetComponent<ecs::HierarchyComponent>(e);
 
 		ecs::Entity parent = heirarchyComponent.parent;
 

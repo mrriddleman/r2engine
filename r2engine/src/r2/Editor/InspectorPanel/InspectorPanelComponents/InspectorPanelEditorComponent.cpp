@@ -8,7 +8,7 @@
 
 namespace r2::edit
 {
-	void InspectorPanelEditorComponent(r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	void InspectorPanelEditorComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 	{
 		r2::ecs::EditorComponent& editorComponent = coordinator->GetComponent<r2::ecs::EditorComponent>(theEntity);
 

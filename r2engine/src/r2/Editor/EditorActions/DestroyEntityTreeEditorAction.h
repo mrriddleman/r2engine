@@ -6,7 +6,7 @@
 #include "r2/Game/ECS/Entity.h"
 
 #include "r2/Game/ECS/Components/EditorComponent.h"
-#include "r2/Game/ECS/Components/HeirarchyComponent.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/TransformComponent.h"
 
 namespace
@@ -36,7 +36,7 @@ namespace r2::edit
 		//				to be able to create their own Components so we need a way to support that.
 		//				This is very temporary code for now.
 		std::vector<ecs::EditorComponent> mEntityTreeEditorNameComponents;
-		std::vector<ecs::HeirarchyComponent> mEntityTreeHeirarchyComponents;
+		std::vector<ecs::HierarchyComponent> mEntityTreeHeirarchyComponents;
 		std::vector<ecs::TransformComponent> mEntityTreeTransformComponents;
 		
 	};

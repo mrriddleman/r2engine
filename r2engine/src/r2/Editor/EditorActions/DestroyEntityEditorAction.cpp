@@ -32,7 +32,7 @@ namespace r2::edit
 		FREE(children, *MEM_ENG_SCRATCH_PTR);
 
 		mEntityEditorNameComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::EditorComponent>(mEntityToDestroy);
-		mEntityHeirarchyComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::HeirarchyComponent>(mEntityToDestroy);
+		mEntityHeirarchyComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::HierarchyComponent>(mEntityToDestroy);
 		mEntityTransformComponent = mnoptrEditor->GetECSCoordinator()->GetComponent<ecs::TransformComponent>(mEntityToDestroy);
 	}
 
@@ -45,7 +45,7 @@ namespace r2::edit
 		ecs::ECSCoordinator* coordinator = mnoptrEditor->GetSceneGraph().GetECSCoordinator();
 
 		coordinator->AddComponent<ecs::EditorComponent>(mEntityToDestroy, mEntityEditorNameComponent);
-		coordinator->SetComponent<ecs::HeirarchyComponent>(mEntityToDestroy, mEntityHeirarchyComponent);
+		coordinator->SetComponent<ecs::HierarchyComponent>(mEntityToDestroy, mEntityHeirarchyComponent);
 		coordinator->SetComponent<ecs::TransformComponent>(mEntityToDestroy, mEntityTransformComponent);
 
 		for (ecs::Entity e : mChildren)
