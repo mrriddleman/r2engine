@@ -78,7 +78,7 @@ namespace r2::edit
 
 						if (iter != mComponentWidgets.end())
 						{
-							mComponentWidgets[componentType](mEntitySelected, coordinator);
+							mComponentWidgets[componentType](mnoptrEditor,mEntitySelected, coordinator);
 						}
 					}
 				}

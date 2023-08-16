@@ -15,11 +15,11 @@ namespace r2::edit
 	{
 		const r2::SArray<r2::ecs::Entity>& entities = coordinator->GetAllLivingEntities();
 
-		r2::ecs::HierarchyComponent& hierarchyComponent = coordinator->GetComponent<r2::ecs::HierarchyComponent>(theEntity);
+		const r2::ecs::HierarchyComponent& hierarchyComponent = coordinator->GetComponent<r2::ecs::HierarchyComponent>(theEntity);
 
 		std::string parentString = "No Parent";
 
-		r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(hierarchyComponent.parent);
+		const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(hierarchyComponent.parent);
 
 		const u32 numEntities = r2::sarr::Size(entities);
 
@@ -52,7 +52,7 @@ namespace r2::edit
 
 					std::string entityName = std::string("Entity - ") + std::to_string(nextEntity);
 
-					r2::ecs::EditorComponent* nextEditorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(nextEntity);
+					const r2::ecs::EditorComponent* nextEditorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(nextEntity);
 					if (nextEditorComponent)
 					{
 						entityName = nextEditorComponent->editorName;

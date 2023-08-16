@@ -7,6 +7,11 @@
 
 #include "r2/Game/ECS/Entity.h"
 
+namespace r2
+{
+	class Editor;
+}
+
 namespace r2::ecs
 {
 	class ECSCoordinator;
@@ -15,7 +20,7 @@ namespace r2::ecs
 namespace r2::edit
 {
 	class InspectorPanel;
-	class Editor;
+	
 }
 
 namespace r2::edit
