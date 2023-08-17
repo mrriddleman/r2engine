@@ -10,6 +10,7 @@ namespace r2::ecs
 	struct DebugBoneComponent
 	{
 		glm::vec4 color;
+		//debugBones not used in the editor
 		r2::SArray<r2::draw::DebugBone>* debugBones;
 	};
 }

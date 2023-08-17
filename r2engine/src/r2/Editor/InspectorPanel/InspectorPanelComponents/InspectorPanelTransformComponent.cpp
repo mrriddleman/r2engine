@@ -6,16 +6,22 @@
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "imgui.h"
 #include <glm/gtc/quaternion.hpp>
 
 
 namespace r2::edit
 {
-	void TransformImGuiWidget(r2::ecs::Entity entity, int id, r2::ecs::TransformComponent& transformComponent)
+	void TransformImGuiWidget(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity entity, int id, r2::ecs::TransformComponent& transformComponent)
 	{
-		std::string nodeName = std::string("Entity - ") + std::to_string(entity) + std::string("- Transform Instance - ") + std::to_string(id);
+		const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(entity);
 
+		std::string nodeName = std::string("Entity - ") + std::to_string(entity) + std::string(" - Transform Instance - ") + std::to_string(id);
+		if (editorComponent)
+		{
+			nodeName = editorComponent->editorName + std::string(" - Transform Instance - ") + std::to_string(id);
+		}
 		if (ImGui::TreeNodeEx(nodeName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", nodeName.c_str()))
 		{
 			ImGui::Text("Position");
@@ -75,7 +81,7 @@ namespace r2::edit
 
 		if (ImGui::CollapsingHeader("Transform Component"))
 		{
-			TransformImGuiWidget(theEntity, 0, transformComponent);
+			TransformImGuiWidget(coordinator, theEntity, 0, transformComponent);
 
 			r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>* instancedTransforms = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT< r2::ecs::TransformComponent>>(theEntity);
 
@@ -86,7 +92,7 @@ namespace r2::edit
 				for (u32 i = 0; i < numInstances; ++i)
 				{
 					r2::ecs::TransformComponent& transformComponent = r2::sarr::At(*instancedTransforms->instances, i);
-					TransformImGuiWidget(theEntity, i + 1, transformComponent);
+					TransformImGuiWidget(coordinator, theEntity, i + 1, transformComponent);
 				}
 			}
 
