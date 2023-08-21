@@ -70,6 +70,18 @@ namespace r2::edit
 				ImGui::EndCombo();
 			}
 
+			ImGui::Text("X Offset: ");
+			ImGui::SameLine();
+			ImGui::DragFloat("##label xoffset", &debugRenderComponent.offset.x, 0.1f);
+
+			ImGui::Text("Y Offset: ");
+			ImGui::SameLine();
+			ImGui::DragFloat("##label yoffset", &debugRenderComponent.offset.y, 0.1f);
+
+			ImGui::Text("Z Offset: ");
+			ImGui::SameLine();
+			ImGui::DragFloat("##label zoffset", &debugRenderComponent.offset.z, 0.1f);
+
 			if (debugRenderComponent.debugModelType != draw::DEBUG_QUAD &&
 				debugRenderComponent.debugModelType != draw::DEBUG_LINE &&
 				debugRenderComponent.debugModelType != draw::DEBUG_CUBE)

@@ -524,6 +524,8 @@ namespace r2
 					debugRenderComponent.filled = true;
 					debugRenderComponent.color = glm::vec4(1, 1, 0, 1);
 					debugRenderComponent.scale = glm::vec3(2, 2, 1);
+					debugRenderComponent.offset = glm::vec3(0);
+					debugRenderComponent.radius = 1.0f;
 
 					ecs::InstanceComponentT<ecs::DebugRenderComponent> instancedDebugRenderComponent;
 					instancedDebugRenderComponent.numInstances = 2;
@@ -537,7 +539,10 @@ namespace r2
 					debugRenderComponent1.depthTest = true;
 					debugRenderComponent1.filled = true;
 					debugRenderComponent1.scale = glm::vec3(1, 2, 1);
-					
+					debugRenderComponent1.offset = glm::vec3(0);
+					debugRenderComponent1.radius = 1.0f;
+
+
 					ecs::DebugRenderComponent debugRenderComponent2;
 					debugRenderComponent2.color = glm::vec4(1, 0, 1, 1);
 					debugRenderComponent2.debugModelType = draw::DEBUG_QUAD;
@@ -545,7 +550,8 @@ namespace r2
 					debugRenderComponent2.depthTest = true;
 					debugRenderComponent2.filled = true;
 					debugRenderComponent2.scale = glm::vec3(2, 1, 1);
-
+					debugRenderComponent2.offset = glm::vec3(0);
+					debugRenderComponent2.radius = 1.0f;
 
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent1);
 					r2::sarr::Push(*instancedDebugRenderComponent.instances, debugRenderComponent2);

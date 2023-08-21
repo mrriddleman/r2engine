@@ -25,6 +25,9 @@ namespace r2::ecs
 		//for Quads, this will be the normal
 		glm::vec3 direction;
 
+		//some offset to give the position of the render debug component
+		glm::vec3 offset;
+
 		glm::vec4 color;
 		b32 filled;
 		b32 depthTest;

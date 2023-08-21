@@ -60,7 +60,7 @@ namespace r2::ecs
 
 	void DebugRenderSystem::RenderDebug(const DebugRenderComponent& c, const TransformComponent& t)
 	{
-		glm::vec3 position = t.accumTransform.position;
+		glm::vec3 position = t.accumTransform.position + c.offset;
 		float radius = c.radius;
 		glm::vec4 color = c.color;
 		glm::vec3 scale = c.scale;
@@ -118,13 +118,15 @@ namespace r2::ecs
 		//calculate the positions
 		if (addC)
 		{
-			r2::sarr::Push(*positions, t.accumTransform.position);
+			r2::sarr::Push(*positions, t.accumTransform.position + c.offset);
 		}
 
 		for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
 		{
 			const auto& position = r2::sarr::At(*instancedTransformComponent.instances, r2::sarr::At(*indicesPerType, i)).accumTransform.position;
-			r2::sarr::Push(*positions, position);
+			const auto& offset = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).offset;
+
+			r2::sarr::Push(*positions, position + offset);
 		}
 
 		//make the colors
