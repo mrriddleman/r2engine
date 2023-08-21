@@ -66,6 +66,11 @@ namespace r2::edit
 			debugRenderComponent.debugModelType != draw::DEBUG_LINE &&
 			debugRenderComponent.debugModelType != draw::DEBUG_CUBE)
 		{
+			if (r2::math::LessThanOrEq(debugRenderComponent.radius, 0.0f))
+			{
+				debugRenderComponent.radius = 1.0f;
+			}
+
 			ImGui::Text("Radius: ");
 			ImGui::SameLine();
 			ImGui::DragFloat("##label radius", &debugRenderComponent.radius, 0.01, 0.01);

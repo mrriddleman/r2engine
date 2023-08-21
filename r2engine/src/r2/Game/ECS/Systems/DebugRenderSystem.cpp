@@ -14,6 +14,10 @@
 
 namespace r2::ecs
 {
+	struct InstanceIndices
+	{
+		r2::SArray<u32>* indices = nullptr;
+	};
 
 	DebugRenderSystem::DebugRenderSystem()
 	{
@@ -95,127 +99,207 @@ namespace r2::ecs
 		}
 	}
 
-	void DebugRenderSystem::RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
+	void DrawInstancedDebugModel(
+		r2::draw::DebugModelType debugModelType,
+		r2::SArray<u32>* indicesPerType,
+		r2::SArray<void*>* tempAllocations,
+		const DebugRenderComponent& c,
+		const TransformComponent& t,
+		const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
 		const InstanceComponentT<TransformComponent>& instancedTransformComponent)
 	{
-		R2_CHECK(instancedTransformComponent.numInstances == instancedDebugRenderComponent.numInstances, "We have mismatching transform and debug render instances");
-
 		//need to make the positions
-		const auto numInstances = instancedTransformComponent.numInstances;
-		r2::SArray<glm::vec3>* positions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
+		const auto numInstances = r2::sarr::Capacity(*indicesPerType);
+
+		r2::SArray<glm::vec3>* positions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances);
+		r2::sarr::Push(*tempAllocations, (void*)positions);
+		const bool addC = c.debugModelType == debugModelType;
 
 		//calculate the positions
-		r2::sarr::Push(*positions, t.accumTransform.position);
-		for (u32 i = 0; i < numInstances; ++i)
+		if (addC)
 		{
-			r2::sarr::Push(*positions, r2::sarr::At(*instancedTransformComponent.instances, i).accumTransform.position);
+			r2::sarr::Push(*positions, t.accumTransform.position);
+		}
+
+		for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+		{
+			const auto& position = r2::sarr::At(*instancedTransformComponent.instances, r2::sarr::At(*indicesPerType, i)).accumTransform.position;
+			r2::sarr::Push(*positions, position);
 		}
 
 		//make the colors
-		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numInstances + 1);
+		r2::SArray<glm::vec4>* colors = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec4, numInstances);
+		r2::sarr::Push(*tempAllocations, (void*)colors);
 
-		r2::sarr::Push(*colors, c.color);
-		for (u32 i = 0; i < numInstances; ++i)
+		if (addC)
 		{
-			r2::sarr::Push(*colors, r2::sarr::At(*instancedDebugRenderComponent.instances, i).color);
+			r2::sarr::Push(*colors, c.color);
+		}
+		
+		for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+		{
+			const auto& color = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).color;
+			r2::sarr::Push(*colors, color);
 		}
 
 		r2::SArray<glm::vec3>* directions = nullptr;
 		r2::SArray<float>* radii = nullptr;
 		r2::SArray<float>* scales = nullptr;
 
-		if (c.debugModelType == draw::DEBUG_ARROW ||
-			c.debugModelType == draw::DEBUG_CYLINDER ||
-			c.debugModelType == draw::DEBUG_CONE)
+		if (debugModelType == draw::DEBUG_ARROW ||
+			debugModelType == draw::DEBUG_CYLINDER ||
+			debugModelType == draw::DEBUG_CONE)
 		{
-			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*radii, c.radius);
-			for (u32 i = 0; i < numInstances; ++i)
+			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)radii);
+
+			if (addC)
 			{
-				r2::sarr::Push(*radii, r2::sarr::At(*instancedDebugRenderComponent.instances, i).radius);
+				r2::sarr::Push(*radii, c.radius);
 			}
 
-			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale.x);
-			for (u32 i = 0; i < numInstances; ++i)
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
 			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
+				const auto& radius = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).radius;
+				r2::sarr::Push(*radii, radius);
 			}
 
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)scales);
+
+			if (addC)
+			{
+				r2::sarr::Push(*scales, c.scale.x);
+			}
+			
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& scale = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).scale.x;
+				r2::sarr::Push(*scales, scale);
+			}
+
+			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)directions);
+
+			if (addC)
+			{
+				r2::sarr::Push(*directions, c.direction);
+			}
+			
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& direction = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).direction;
+				r2::sarr::Push(*directions, direction);
+			}
+		}
+
+		if (debugModelType == draw::DEBUG_SPHERE)
+		{
+			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)radii);
+
+			if (addC)
+			{
+				r2::sarr::Push(*radii, c.radius);
+			}
+
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& radius = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).radius;
+				r2::sarr::Push(*radii, radius);
+			}
+		}
+
+		if (debugModelType == draw::DEBUG_CUBE)
+		{
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)scales);
+
+			if (addC)
+			{
+				r2::sarr::Push(*scales, c.scale.x);
+			}
+
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& scale = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).scale.x;
+				r2::sarr::Push(*scales, scale);
+			}
+		}
+
+		if (debugModelType == draw::DEBUG_LINE)
+		{
+			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances);
+
+			r2::sarr::Push(*tempAllocations, (void*)scales);
+			if (addC)
+			{
+				r2::sarr::Push(*scales, c.scale.x);
+			}
+			
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& scale = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).scale.x;
+				r2::sarr::Push(*scales, scale);
+			}
+
+			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances);
+			r2::sarr::Push(*tempAllocations, (void*)directions);
+
+			if (addC)
+			{
+				r2::sarr::Push(*directions, c.direction);
+			}
+
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& direction = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).direction;
+				r2::sarr::Push(*directions, direction);
+			}
+		}
+
+		if (debugModelType == draw::DEBUG_QUAD)
+		{
 			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
-			r2::sarr::Push(*directions, c.direction);
-			for (u32 i = 0; i < numInstances; ++i)
+
+			r2::sarr::Push(*tempAllocations, (void*)directions);
+
+			if (addC)
 			{
-				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
+				r2::sarr::Push(*directions, c.direction);
+			}
+			
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				const auto& direction = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).direction;
+				r2::sarr::Push(*directions, direction);
 			}
 		}
 
-
-		if (c.debugModelType == draw::DEBUG_SPHERE)
-		{
-			radii = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*radii, c.radius);
-			for (u32 i = 0; i < numInstances; ++i)
-			{
-				r2::sarr::Push(*radii, r2::sarr::At(*instancedDebugRenderComponent.instances, i).radius);
-			}
-		}
-
-		if (c.debugModelType == draw::DEBUG_CUBE)
-		{
-			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale.x);
-			for (u32 i = 0; i < numInstances; ++i)
-			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
-			}
-		}
-
-		if (c.debugModelType == draw::DEBUG_LINE)
-		{
-			scales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, float, numInstances + 1);
-			r2::sarr::Push(*scales, c.scale.x);
-			for (u32 i = 0; i < numInstances; ++i)
-			{
-				r2::sarr::Push(*scales, r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale.x);
-			}
-
-			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
-			r2::sarr::Push(*directions, c.direction);
-			for (u32 i = 0; i < numInstances; ++i)
-			{
-				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
-			}
-		}
-
-		if (c.debugModelType == draw::DEBUG_QUAD)
-		{
-			directions = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec3, numInstances + 1);
-			r2::sarr::Push(*directions, c.direction);
-			for (u32 i = 0; i < numInstances; ++i)
-			{
-				r2::sarr::Push(*directions, r2::sarr::At(*instancedDebugRenderComponent.instances, i).direction);
-			}
-		}
-
-		switch (c.debugModelType)
+		switch (debugModelType)
 		{
 		case draw::DEBUG_QUAD:
 		{
-			r2::SArray<glm::vec2>* quadScales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec2, numInstances + 1);
+			r2::SArray<glm::vec2>* quadScales = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, glm::vec2, numInstances);
 
-			r2::sarr::Push(*quadScales, glm::vec2(c.scale.x, c.scale.y));
-			for (u32 i = 0; i < numInstances; ++i)
+			r2::sarr::Push(*tempAllocations, (void*)quadScales);
+
+			if (addC)
 			{
-				glm::vec3 scale = r2::sarr::At(*instancedDebugRenderComponent.instances, i).scale;
+				r2::sarr::Push(*quadScales, glm::vec2(c.scale.x, c.scale.y));
+			}
+
+			for (u32 i = 0; i < r2::sarr::Size(*indicesPerType); ++i)
+			{
+				glm::vec3 scale = r2::sarr::At(*instancedDebugRenderComponent.instances, r2::sarr::At(*indicesPerType, i)).scale;
 
 				r2::sarr::Push(*quadScales, glm::vec2(scale.x, scale.y));
 			}
 			r2::draw::renderer::DrawQuadInstanced(*positions, *quadScales, *directions, *colors, c.filled, c.depthTest);
 
-			FREE(quadScales, *MEM_ENG_SCRATCH_PTR);
+			//	FREE(quadScales, *MEM_ENG_SCRATCH_PTR);
 		}
-			break;
+		break;
 		case draw::DEBUG_SPHERE:
 			r2::draw::renderer::DrawSphereInstanced(*positions, *radii, *colors, c.filled, c.depthTest);
 			break;
@@ -247,24 +331,61 @@ namespace r2::ecs
 			R2_CHECK(false, "Unsupported ATM");
 			break;
 		}
+	}
 
-		if (directions)
+	void DebugRenderSystem::RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
+		const InstanceComponentT<TransformComponent>& instancedTransformComponent)
+	{
+		R2_CHECK(instancedTransformComponent.numInstances == instancedDebugRenderComponent.numInstances, "We have mismatching transform and debug render instances");
+
+		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 100);
+
+		//figure out how many of each type we need
+		u32 numInstancesPerType[r2::draw::NUM_DEBUG_MODELS];
+		memset(numInstancesPerType, 0, sizeof(u32) * r2::draw::NUM_DEBUG_MODELS);
+
+		numInstancesPerType[c.debugModelType] = 1;
+
+		for (u32 i = 0; i < instancedDebugRenderComponent.numInstances; ++i)
 		{
-			FREE(directions, *MEM_ENG_SCRATCH_PTR);
+			const DebugRenderComponent& nextDebugRenderComponent = r2::sarr::At(*instancedDebugRenderComponent.instances, i);
+			numInstancesPerType[nextDebugRenderComponent.debugModelType]++;
 		}
 
-		if (scales)
+		InstanceIndices indicesPerType[r2::draw::NUM_DEBUG_MODELS];
+
+		for (u32 i = 0; i < r2::draw::NUM_DEBUG_MODELS; ++i)
 		{
-			FREE(scales, *MEM_ENG_SCRATCH_PTR);
+			if (numInstancesPerType[i] > 0)
+			{
+				indicesPerType[i].indices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, numInstancesPerType[i]);
+				r2::sarr::Push(*tempAllocations, (void*)indicesPerType[i].indices);
+			}
 		}
 
-		if (radii)
+		for (u32 i = 0; i < instancedDebugRenderComponent.numInstances; ++i)
 		{
-			FREE(radii, *MEM_ENG_SCRATCH_PTR);
+			const DebugRenderComponent& nextDebugRenderComponent = r2::sarr::At(*instancedDebugRenderComponent.instances, i);
+
+			r2::sarr::Push(*indicesPerType[nextDebugRenderComponent.debugModelType].indices, i);
 		}
 
-		FREE(colors, *MEM_ENG_SCRATCH_PTR);
-		FREE(positions, *MEM_ENG_SCRATCH_PTR);
+		for (u32 i = 0; i < r2::draw::NUM_DEBUG_MODELS; ++i)
+		{
+			if (numInstancesPerType[i] > 0)
+			{
+				DrawInstancedDebugModel(static_cast<r2::draw::DebugModelType>(i), indicesPerType[i].indices, tempAllocations, c, t, instancedDebugRenderComponent, instancedTransformComponent);
+			}
+		}
+
+		s32 numTempAllocations = r2::sarr::Size(*tempAllocations);
+
+		for (s32 i = numTempAllocations - 1; i >= 0; --i)
+		{
+			FREE(r2::sarr::At(*tempAllocations, i), *MEM_ENG_SCRATCH_PTR);
+		}
+
+		FREE(tempAllocations, *MEM_ENG_SCRATCH_PTR);
 	}
 }
 
