@@ -22,12 +22,18 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 
-		void RegisterComponentType(r2::ecs::ComponentType componentType, InspectorPanelComponentWidgetFunc componentWidget);
+		void RegisterComponentType(
+			const std::string& componentName,
+			u32 sortOrder,
+			r2::ecs::ComponentType componentType,
+			InspectorPanelComponentWidgetFunc componentWidget,
+			InspectorPanelRemoveComponentFunc removeComponentFunc);
 
 		Editor* GetEditor();
 
 	private:
-		std::unordered_map<r2::ecs::ComponentType, InspectorPanelComponentWidgetFunc> mComponentWidgets;
+		std::vector<InspectorPanelComponentWidget> mComponentWidgets;
+		//std::unordered_map<r2::ecs::ComponentType, InspectorPanelComponentWidgetFunc> mComponentWidgets;
 		ecs::Entity mEntitySelected;
 	};
 }

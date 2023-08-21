@@ -9,6 +9,7 @@
 #include "imgui.h"
 #include "r2/Core/Engine.h"
 #include "r2/Core/Application.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 
 namespace r2::edit
 {
@@ -68,18 +69,15 @@ namespace r2::edit
 			{
 				const ecs::Signature& entitySignature = coordinator->GetSignature(mEntitySelected);
 
-				for (size_t i = 0; i < entitySignature.size(); ++i)
+				R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
+
+				InspectorPanelEditorComponent(mnoptrEditor, mEntitySelected, coordinator);
+
+				for (size_t i=0; i < mComponentWidgets.size(); ++i)
 				{
-					if (entitySignature[i])
+					if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
 					{
-						ecs::ComponentType componentType = static_cast<ecs::ComponentType>(i);
-
-						auto iter = mComponentWidgets.find(componentType);
-
-						if (iter != mComponentWidgets.end())
-						{
-							mComponentWidgets[componentType](mnoptrEditor,mEntitySelected, coordinator);
-						}
+						mComponentWidgets[i].ImGuiDraw(*this, mEntitySelected);
 					}
 				}
 			}
@@ -88,9 +86,31 @@ namespace r2::edit
 		}
 	}
 
-	void InspectorPanel::RegisterComponentType(r2::ecs::ComponentType componentType, InspectorPanelComponentWidgetFunc componentWidget)
+	void InspectorPanel::RegisterComponentType(
+		const std::string& componentName,
+		u32 sortOrder,
+		r2::ecs::ComponentType componentType,
+		InspectorPanelComponentWidgetFunc componentWidgetFunc,
+		InspectorPanelRemoveComponentFunc removeComponentFunc)
 	{
-		mComponentWidgets[componentType] = componentWidget;
+		InspectorPanelComponentWidget componentWidget{ componentName, componentType, componentWidgetFunc, removeComponentFunc };
+
+		componentWidget.SetSortOrder(sortOrder);
+
+		auto iter = std::find_if(mComponentWidgets.begin(), mComponentWidgets.end(), [&](const InspectorPanelComponentWidget& widget)
+			{
+				return widget.GetComponentType() == componentType;
+			});
+
+		if (iter == mComponentWidgets.end())
+		{
+			mComponentWidgets.push_back(componentWidget);
+
+			std::sort(mComponentWidgets.begin(), mComponentWidgets.end(), [](const InspectorPanelComponentWidget& w1, const InspectorPanelComponentWidget& w2)
+				{
+					return w1.GetSortOrder() < w2.GetSortOrder();
+				});
+		}
 	}
 
 	Editor* InspectorPanel::GetEditor()

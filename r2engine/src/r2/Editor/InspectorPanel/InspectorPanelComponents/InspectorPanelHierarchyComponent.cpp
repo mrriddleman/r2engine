@@ -28,7 +28,7 @@ namespace r2::edit
 			parentString = editorComponent->editorName;
 		}
 
-		if (ImGui::CollapsingHeader("Hierarchy Component"))
+//		if (ImGui::CollapsingHeader("Hierarchy Component"))
 		{
 			ImGui::Text("Parent: ");
 			ImGui::SameLine();

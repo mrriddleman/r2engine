@@ -15,10 +15,14 @@ namespace r2::edit
 		char buf[1024];
 		
 		strncpy(buf, editorComponent.editorName.c_str(), 1024);
-
-		if (ImGui::CollapsingHeader("Editor Component"))
+		ImGui::PushID("Editor Component");
+		//if (ImGui::CollapsingHeader("Editor Component"))
 		{
-			ImGui::InputText("Editor Name", buf, 1024);
+			ImGui::Text("Entity Name: ");
+			
+			ImGui::SameLine();
+
+			ImGui::InputText("##label", buf, 1024);
 
 			editorComponent.editorName = buf;
 
@@ -51,6 +55,7 @@ namespace r2::edit
 				editorComponent.flags.Set(r2::ecs::EDITOR_FLAG_SELECTED_ENTITY);
 			}
 		}
+		ImGui::PopID();
 	}
 }
 #endif

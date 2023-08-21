@@ -79,7 +79,7 @@ namespace r2::edit
 	{
 		r2::ecs::TransformComponent& transformComponent = coordinator->GetComponent<r2::ecs::TransformComponent>(theEntity);
 
-		if (ImGui::CollapsingHeader("Transform Component"))
+		//if (ImGui::CollapsingHeader("Transform Component"))
 		{
 			TransformImGuiWidget(coordinator, theEntity, 0, transformComponent);
 

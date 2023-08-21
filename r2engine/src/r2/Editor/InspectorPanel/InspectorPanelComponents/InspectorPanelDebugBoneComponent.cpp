@@ -38,7 +38,7 @@ namespace r2::edit
 	{
 		r2::ecs::DebugBoneComponent& debugBoneComponent = coordinator->GetComponent<r2::ecs::DebugBoneComponent>(theEntity);
 
-		if (ImGui::CollapsingHeader("Debug Bone Component"))
+	//	if (ImGui::CollapsingHeader("Debug Bone Component"))
 		{
 			DebugBoneComponentInstance(coordinator, theEntity, 0, debugBoneComponent);
 
