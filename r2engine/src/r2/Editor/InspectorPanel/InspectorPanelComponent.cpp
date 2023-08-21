@@ -10,12 +10,14 @@
 #include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
+#include "r2/Game/ECS/Components/DebugRenderComponent.h"
 
 //ImGui Components
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelTransformComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelHierarchyComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugBoneComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugRenderComponent.h"
 
 #include "imgui.h"
 
@@ -46,8 +48,19 @@ namespace r2::edit
 				//coordinator->RemoveComponent<r2::ecs::HierarchyComponent>(theEntity);
 			});
 		inspectorPanel.RegisterComponentType(
-			"Debug Bone Component",
+			"Debug Render Component",
 			2,
+			coordinator->GetComponentType<r2::ecs::DebugRenderComponent>(),
+			InspectorPanelDebugRenderComponent,
+			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+			{
+
+			});
+
+
+		inspectorPanel.RegisterComponentType(
+			"Debug Bone Component",
+			3,
 			coordinator->GetComponentType<r2::ecs::DebugBoneComponent>(),
 			InspectorPanelDebugBoneComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -91,9 +104,9 @@ namespace r2::edit
 	void InspectorPanelComponentWidget::ImGuiDraw(InspectorPanel& inspectorPanel, ecs::Entity theEntity)
 	{
 		Editor* editor = inspectorPanel.GetEditor();
-
+		R2_CHECK(editor != nullptr, "Should never be nullptr");
 		r2::ecs::ECSCoordinator* coordinator = editor->GetECSCoordinator();
-
+		R2_CHECK(coordinator != nullptr, "Should never be nullptr");
 		bool open = ImGui::CollapsingHeader(mComponentName.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_SpanAvailWidth);
 
 		ImVec2 size = ImGui::GetContentRegionAvail();
