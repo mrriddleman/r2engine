@@ -755,18 +755,20 @@ public:
             }
             else if (e.KeyCode() == r2::io::KEY_m)
             {
+                
+			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
+			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
 
-			    //r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
-			    //audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
+			    if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
+			    {
+                    if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<r2::ecs::AudioEmitterComponent>(2))
+                    {
+                        MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(2, audioEmitterActionComponent);
+                    }
 
-       //         if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
-       //         { 
-       //             MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(1, audioEmitterActionComponent);
-       //         }
-			   
-
-
-
+				    
+			    }
+			    
                 /*r2::audio::AudioEngine audioEngine;
 
                 if (r2::audio::AudioEngine::IsEventInstanceHandleValid(mMusicEventHandle))

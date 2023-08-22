@@ -105,12 +105,12 @@ namespace r2::ecs
 
 	void ECSWorld::Update()
 	{
+		moptrAudioListenerSystem->Update();
+
 		mSceneGraph.Update();
 		moptrSkeletalAnimationSystem->Update();
 
-
 		//These should probably be near the last things to update so the game has the ability to add audio events
-		moptrAudioListenerSystem->Update();
 		moptrAudioEmitterSystem->Update();
 	}
 

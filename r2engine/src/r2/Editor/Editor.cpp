@@ -229,6 +229,25 @@ namespace r2
 		evt::EditorLevelLoadedEvent e(mCurrentEditorLevel->GetLevelAssetName());
 
 		PostEditorEvent(e);
+
+		//@Temporary
+		{
+			r2::audio::AudioEngine audioEngine;
+
+			ecs::Entity newEntity = GetSceneGraph().CreateEntity();
+
+			ecs::AudioListenerComponent audioListenerComponent;
+			audioListenerComponent.listener = audioEngine.DEFAULT_LISTENER;
+			audioListenerComponent.entityToFollow = ecs::INVALID_ENTITY;
+
+			GetECSCoordinator()->AddComponent<ecs::AudioListenerComponent>(newEntity, audioListenerComponent);
+
+			ecs::EditorComponent editorComponent;
+			editorComponent.editorName = "Audio Listener";
+			editorComponent.flags.Clear();
+
+			GetECSCoordinator()->AddComponent<ecs::EditorComponent>(newEntity, editorComponent);
+		}
 	}
 
 	void Editor::ReloadLevel()
@@ -265,6 +284,7 @@ namespace r2
 		//@TODO(Serge): listen to the entity creation event and add in the appropriate components for testing
 		//@NOTE: all test code!				
 		r2::evt::EventDispatcher dispatcher(e);
+
 		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
 			{
 				GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
@@ -408,6 +428,14 @@ namespace r2
 
 				//@TEMPORARY!!!! - we would need some other mechanism for adding/loading the bank, probably through the asset catalog tool or something
 				AddSoundBankToLevel(r2::asset::GetAssetNameForFilePath("TestBank1.bank", r2::asset::SOUND));
+
+				r2::audio::AudioEngine audioEngine;
+				char bankPath[r2::fs::FILE_PATH_LENGTH];
+				r2::fs::utils::BuildPathFromCategory(r2::fs::utils::SOUNDS, "TestBank1.bank", bankPath);
+
+				audioEngine.LoadBank(bankPath, 0);
+
+
 
 			//	ecs::AudioEmitterActionComponent audioEmitterActionComponent;
 			//	audioEmitterActionComponent.action = ecs::AEA_CREATE;
@@ -637,7 +665,7 @@ namespace r2
 	void Editor::AddSoundBankToLevel(u64 soundBankAssetName)
 	{
 		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();
-
+	
 		if (r2::sarr::IndexOf(*soundBanks, soundBankAssetName) == -1)
 		{
 			r2::sarr::Push(*soundBanks, soundBankAssetName);

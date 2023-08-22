@@ -11,6 +11,7 @@
 #include "r2/Game/ECS/Components/HierarchyComponent.h"
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
+#include "r2/Game/ECS/Components/AudioListenerComponent.h"
 
 //ImGui Components
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
@@ -18,6 +19,7 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelHierarchyComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugBoneComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugRenderComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioListenerComponent.h"
 
 #include "imgui.h"
 
@@ -47,9 +49,20 @@ namespace r2::edit
 			{
 				//coordinator->RemoveComponent<r2::ecs::HierarchyComponent>(theEntity);
 			});
+
+		inspectorPanel.RegisterComponentType(
+			"Audio Listener Component",
+			2,
+			coordinator->GetComponentType<r2::ecs::AudioListenerComponent>(),
+			InspectorPanelAudioListenerComponent,
+			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+			{
+				coordinator->RemoveComponent<r2::ecs::AudioListenerComponent>(theEntity);
+			});
+
 		inspectorPanel.RegisterComponentType(
 			"Debug Render Component",
-			2,
+			3,
 			coordinator->GetComponentType<r2::ecs::DebugRenderComponent>(),
 			InspectorPanelDebugRenderComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -57,10 +70,9 @@ namespace r2::edit
 
 			});
 
-
 		inspectorPanel.RegisterComponentType(
 			"Debug Bone Component",
-			3,
+			4,
 			coordinator->GetComponentType<r2::ecs::DebugBoneComponent>(),
 			InspectorPanelDebugBoneComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
