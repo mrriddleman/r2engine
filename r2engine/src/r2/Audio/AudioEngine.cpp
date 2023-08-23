@@ -1561,6 +1561,74 @@ namespace r2::audio
         return value;
     }
 
+#ifdef R2_EDITOR
+    void AudioEngine::GetEventNames(std::vector<std::string>& eventNames)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return;
+		}
+
+		FMOD::Studio::Bank* stringsBank = r2::sarr::At(*gImpl->mLoadedBanks, gImpl->mMasterStringsBank);
+
+		R2_CHECK(stringsBank != nullptr, "?");
+
+		int stringsCount = 0;
+
+		CheckFMODResult(stringsBank->getStringCount(&stringsCount));
+
+		for (int i = 0; i < stringsCount; ++i)
+		{
+			FMOD_GUID guid;
+			char path[fs::FILE_PATH_LENGTH];
+			int retrieved;
+			CheckFMODResult(stringsBank->getStringInfo(i, &guid, path, fs::FILE_PATH_LENGTH, &retrieved));
+
+            std::string strPath = path;
+
+			if (retrieved && strPath.find_first_of("event:/") != std::string::npos)
+			{
+                eventNames.push_back(strPath);
+			}
+		}
+    }
+
+    void AudioEngine::GetEventParameters(const std::string& eventName, std::vector<AudioEngineParameterDesc>& parameterDescriptions)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return;
+		}
+
+        FMOD::Studio::EventDescription* eventDescription = nullptr;
+
+        CheckFMODResult(gImpl->mStudioSystem->getEvent(eventName.c_str(), &eventDescription));
+
+        if (eventDescription)
+        {
+            int parameterCount = 0;
+            CheckFMODResult(eventDescription->getParameterDescriptionCount(&parameterCount));
+
+            for (int i = 0; i < parameterCount; ++i)
+            {
+                FMOD_STUDIO_PARAMETER_DESCRIPTION fmodParamDescription;
+                CheckFMODResult(eventDescription->getParameterDescriptionByIndex(i, &fmodParamDescription));
+
+                AudioEngineParameterDesc paramDesc;
+                paramDesc.name = fmodParamDescription.name;
+                paramDesc.defaultValue = fmodParamDescription.defaultvalue;
+                paramDesc.minValue = fmodParamDescription.minimum;
+                paramDesc.maxValue = fmodParamDescription.maximum;
+
+                parameterDescriptions.push_back(paramDesc);
+            }
+        }
+    }
+
+#endif
+
     void AudioEngine::BuildBankFilePathFromFMODPath(const char* fmodPath, char* outpath, u32 size)
     {
 		char bankPathURI[r2::fs::FILE_PATH_LENGTH];

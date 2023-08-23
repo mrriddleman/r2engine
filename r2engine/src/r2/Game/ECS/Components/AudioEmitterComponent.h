@@ -26,8 +26,8 @@ namespace r2::ecs
 		r2::audio::AudioEngine::EventInstanceHandle eventInstanceHandle;
 		char eventName[r2::fs::FILE_PATH_LENGTH];
 		AudioEmitterParameter parameters[MAX_AUDIO_EMITTER_PARAMETERS];
-		AudioEmitterStartCondition startCondition;
 		u32 numParameters;
+		AudioEmitterStartCondition startCondition;
 		b32 allowFadeoutWhenStopping;
 		b32 releaseAfterPlay;
 	};

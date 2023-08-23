@@ -11,6 +11,11 @@
 #include "glm/vec3.hpp"
 #include "r2/Core/Memory/Memory.h"
 
+#ifdef R2_EDITOR
+#include <vector>
+#include <string>
+#endif
+
 namespace r2::audio
 {
     class R2_API AudioEngine
@@ -138,7 +143,21 @@ namespace r2::audio
         //global params
         static void SetGlobalParameter(const char* paramName, float value);
         static float GetGlobalParamater(const char* paramName);
+#ifdef R2_EDITOR
 
+        struct AudioEngineParameterDesc
+        {
+            std::string name;
+            float minValue;
+            float maxValue;
+            float defaultValue;
+        };
+
+        static void GetEventNames(std::vector<std::string>& eventNames);
+        static void GetEventParameters(const std::string& eventName, std::vector< AudioEngineParameterDesc>& parameterDescriptions);
+
+
+#endif
     private:
 
         static void ReleaseAllEventInstances();
