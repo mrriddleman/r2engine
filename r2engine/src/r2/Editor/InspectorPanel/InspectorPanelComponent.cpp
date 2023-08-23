@@ -12,6 +12,7 @@
 #include "r2/Game/ECS/Components/DebugBoneComponent.h"
 #include "r2/Game/ECS/Components/DebugRenderComponent.h"
 #include "r2/Game/ECS/Components/AudioListenerComponent.h"
+#include "r2/Game/ECS/Components/AudioEmitterComponent.h"
 
 //ImGui Components
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
@@ -20,6 +21,7 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugBoneComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelDebugRenderComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioListenerComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioEmitterComponent.h"
 
 #include "imgui.h"
 
@@ -31,9 +33,11 @@ namespace r2::edit
 
 		r2::ecs::ECSCoordinator* coordinator = editor->GetECSCoordinator();
 
+		u32 sortOrder = 0;
+
 		inspectorPanel.RegisterComponentType(
 			"Transform Component",
-			0,
+			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::TransformComponent>(),
 			InspectorPanelTransformComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -42,7 +46,7 @@ namespace r2::edit
 			});
 		inspectorPanel.RegisterComponentType(
 			"Hierarchy Component",
-			1,
+			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::HierarchyComponent>(),
 			InspectorPanelHierarchyComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -52,7 +56,7 @@ namespace r2::edit
 
 		inspectorPanel.RegisterComponentType(
 			"Audio Listener Component",
-			2,
+			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::AudioListenerComponent>(),
 			InspectorPanelAudioListenerComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -61,8 +65,18 @@ namespace r2::edit
 			});
 
 		inspectorPanel.RegisterComponentType(
+			"Audio Emitter Component",
+			sortOrder++,
+			coordinator->GetComponentType<r2::ecs::AudioEmitterComponent>(),
+			InspectorPanelAudioEmitterComponent,
+			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+			{
+				coordinator->RemoveComponent<r2::ecs::AudioEmitterComponent>(theEntity);
+			});
+
+		inspectorPanel.RegisterComponentType(
 			"Debug Render Component",
-			3,
+			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::DebugRenderComponent>(),
 			InspectorPanelDebugRenderComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -72,7 +86,7 @@ namespace r2::edit
 
 		inspectorPanel.RegisterComponentType(
 			"Debug Bone Component",
-			4,
+			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::DebugBoneComponent>(),
 			InspectorPanelDebugBoneComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)

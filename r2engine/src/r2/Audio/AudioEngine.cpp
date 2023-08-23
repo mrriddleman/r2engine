@@ -1587,7 +1587,9 @@ namespace r2::audio
 
             std::string strPath = path;
 
-			if (retrieved && strPath.find_first_of("event:/") != std::string::npos)
+            auto result = strPath.find("event:/");
+
+			if (retrieved && result != std::string::npos)
 			{
                 eventNames.push_back(strPath);
 			}

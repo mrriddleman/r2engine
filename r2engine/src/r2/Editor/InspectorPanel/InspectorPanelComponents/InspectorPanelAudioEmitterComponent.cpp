@@ -42,7 +42,7 @@ namespace r2::edit
 		for (u32 p = 0; p < audioEmitterComponent.numParameters; ++p)
 		{
 			audioEngine.SetEventParameterByName(
-				audioEmitterComponent.eventInstanceHandle,
+				eventInstanceHandle,
 				audioEmitterComponent.parameters[p].parameterName,
 				audioEmitterComponent.parameters[p].parameterValue);
 		}
@@ -80,8 +80,10 @@ namespace r2::edit
 
 		std::vector<std::string> eventNames;
 		audioEngine.GetEventNames(eventNames);
+		ImGui::Text("Event: ");
+		ImGui::SameLine();
 
-		if (ImGui::BeginCombo("Audio Event Name", previewEventName.c_str()))
+		if (ImGui::BeginCombo("##label Audio Event Name", previewEventName.c_str()))
 		{
 			for (u32 i = 0; i < eventNames.size(); ++i)
 			{
@@ -90,6 +92,7 @@ namespace r2::edit
 				if (ImGui::Selectable(eventName.c_str(), std::string(audioEmitterComponent.eventName) == eventName))
 				{
 					strcpy(audioEmitterComponent.eventName, eventName.c_str());
+					audioEmitterComponent.numParameters = 0;
 				}
 			}
 
@@ -97,13 +100,15 @@ namespace r2::edit
 		}
 		ImGui::SameLine();
 
-		if (ImGui::Button("Preview"))
+		if (ImGui::SmallButton(">Preview"))
 		{
 			PreviewAudioEmitterComponent(coordinator, theEntity, audioEmitterComponent);
 		}
 
 		std::string previewStartCondition = GetStartConditionString(audioEmitterComponent.startCondition);
 
+		ImGui::Text("Start: ");
+		ImGui::SameLine();
 		if (ImGui::BeginCombo("##label startcondition", previewStartCondition.c_str()))
 		{
 			for (u32 i = ecs::PLAY_ON_CREATE; i < ecs::NUM_AUDIO_EMITTER_START_TYPES; ++i)
@@ -124,9 +129,10 @@ namespace r2::edit
 
 		if (!parameters.empty())
 		{
-			const size_t numParams = std::min(parameters.size(), (size_t)audioEmitterComponent.numParameters);
+			const size_t numParams = std::min(std::max(parameters.size(), (size_t)audioEmitterComponent.numParameters), (size_t)r2::ecs::MAX_AUDIO_EMITTER_PARAMETERS);
 
-			if (std::string(audioEmitterComponent.eventName) != previewEventName)
+			if (std::string(audioEmitterComponent.eventName) != previewEventName ||
+				audioEmitterComponent.numParameters != numParams)
 			{
 				audioEmitterComponent.numParameters = numParams;
 				//reset the parameters
@@ -141,7 +147,11 @@ namespace r2::edit
 				}
 			}
 
-			ImGui::Text("Parameters");
+			if (numParams > 0)
+			{
+				ImGui::Text("Parameters");
+			}
+			
 			for (size_t i = 0; i < numParams; ++i)
 			{
 				if (ImGui::TreeNodeEx(parameters[i].name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", parameters[i].name.c_str()))
