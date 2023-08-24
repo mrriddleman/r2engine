@@ -169,6 +169,12 @@ namespace r2
 			return GetAssetData<T>(assetHandle);
 		}
 
+		template<typename T>
+		const T* GetAssetDataConst(u64 assetName)
+		{
+			return GetAssetDataConst<T>({ assetName, GetAssetCacheSlot() });
+		}
+
 		u64 GetAssetDataSize(r2::asset::AssetHandle assetHandle);
 
 		void UnloadAsset(const r2::asset::AssetHandle& assetHandle);
@@ -197,7 +203,7 @@ namespace r2
 		const r2::draw::tex::Texture* GetAlbedoTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
 		const r2::draw::tex::CubemapTexture* GetCubemapTextureForMaterialName(const flat::MaterialParamsPack* materialParamsPack, u64 materialName);
 
-#ifdef R2_ASSET_PIPELINE
+#if defined(R2_ASSET_PIPELINE) || defined(R2_EDITOR)
 
 		bool ReloadTextureInTexturePack(u64 texturePackName, u64 textureName);
 		bool ReloadTexturePack(u64 texturePackName);
