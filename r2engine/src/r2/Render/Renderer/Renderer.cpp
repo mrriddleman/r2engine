@@ -6072,68 +6072,6 @@ namespace r2::draw::renderer
 			}
 		}
 
-		/*if (!materialHandles)
-		{
-			MaterialBatch::Info materialBatchInfo;
-
-			materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-			materialBatchInfo.numMaterials = r2::sarr::Size(*gpuModelRef->materialHandles);
-
-			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
-
-			for (u32 i = 0; i < materialBatchInfo.numMaterials; ++i)
-			{
-				r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*gpuModelRef->materialHandles, i));
-			}
-		}
-		else
-		{
-			u64 numMaterials = r2::sarr::Size(*materialHandles);
-			r2::SArray<MaterialHandle>* materialHandlesToUse = nullptr;
-			
-			bool isMaterialSizesSame = numMaterials == r2::sarr::Size(*gpuModelRef->materialHandles);
-
-			if (!isMaterialSizesSame)
-			{
-				if (numMaterials == 1)
-				{
-					const u64 numMaterialsToFill = r2::sarr::Size(*gpuModelRef->materialHandles);
-
-					materialHandlesToUse = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, MaterialHandle, numMaterialsToFill);
-
-					r2::sarr::Fill(*materialHandlesToUse, r2::sarr::At(*materialHandles, 0));
-				}
-				else
-				{
-					R2_CHECK(false, "Mismatch on the number of materials being used for the model. Num Override materials: %ull is not equal to num materials of the model: %ull", numMaterials, r2::sarr::Size(*gpuModelRef->materialHandles));
-				}
-			}
-			else
-			{
-				materialHandlesToUse = const_cast<r2::SArray<MaterialHandle>*>(materialHandles);
-			}
-
-			R2_CHECK(materialHandlesToUse != nullptr, "materialHandlesToUse should exist");
-
-			numMaterials = r2::sarr::Size(*materialHandlesToUse);
-
-			R2_CHECK(numMaterials == r2::sarr::Size(*gpuModelRef->materialHandles), "This should be the same in this case");
-
-			MaterialBatch::Info materialBatchInfo;
-
-			materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-			materialBatchInfo.numMaterials = numMaterials;
-
-			r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
-
-			r2::sarr::Append(*batch.materialBatch.materialHandles, *materialHandlesToUse);
-
-			if (!isMaterialSizesSame && r2::sarr::Size(*materialHandles) == 1)
-			{
-				FREE(materialHandlesToUse, *MEM_ENG_SCRATCH_PTR);
-			}
-		}*/
-
 		if (drawType == DYNAMIC)
 		{
 			b32 useSameBoneTransformsForInstances = drawParameters.flags.IsSet(USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
@@ -6292,48 +6230,6 @@ namespace r2::draw::renderer
 
 			materialOffset += info.numMaterials;
 		}
-
-
-		/*if (!materialHandles)
-		{
-			for (u32 i = 0; i < numModelRefs; ++i)
-			{
-				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
-
-				MaterialBatch::Info info;
-				info.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				info.numMaterials = r2::sarr::Size(*modelRef->materialHandles);
-
-				r2::sarr::Push(*batch.materialBatch.infos, info);
-
-				for (u32 j = 0; j < info.numMaterials; ++j)
-				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*modelRef->materialHandles, j));
-				}
-			}
-		}
-		else
-		{
-			u32 materialOffset = 0;
-
-			for (u32 i = 0; i < numModelRefs; ++i)
-			{
-				const vb::GPUModelRef* modelRef = r2::sarr::At(*modelRefArray, i);
-
-				MaterialBatch::Info materialBatchInfo;
-				materialBatchInfo.start = r2::sarr::Size(*batch.materialBatch.materialHandles);
-				materialBatchInfo.numMaterials = r2::sarr::Size(*modelRef->materialHandles);
-
-				r2::sarr::Push(*batch.materialBatch.infos, materialBatchInfo);
-
-				for (u32 j = 0; j < materialBatchInfo.numMaterials; ++j)
-				{
-					r2::sarr::Push(*batch.materialBatch.materialHandles, r2::sarr::At(*materialHandles, j + materialOffset));
-				}
-
-				materialOffset += materialBatchInfo.numMaterials;
-			}
-		}*/
 
 		if (drawType == DYNAMIC)
 		{

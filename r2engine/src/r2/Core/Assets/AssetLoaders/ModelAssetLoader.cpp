@@ -84,7 +84,7 @@ namespace r2::asset
 
 		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(numMeshes));
 
-		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMeshes);
+		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterialNames);
 		
 		for (flatbuffers::uoffset_t i = 0; i < numMeshes; ++i)
 		{	

@@ -14,6 +14,7 @@
 #include "r2/Game/ECS/Components/AudioListenerComponent.h"
 #include "r2/Game/ECS/Components/AudioEmitterComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+#include "r2/Game/ECS/Components/RenderComponent.h"
 
 //ImGui Components
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
@@ -24,6 +25,7 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioListenerComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelAudioEmitterComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelSkeletalAnimationComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelRenderComponent.h"
 
 #include "imgui.h"
 
@@ -57,13 +59,23 @@ namespace r2::edit
 			});
 
 		inspectorPanel.RegisterComponentType(
+			"Render Component",
+			sortOrder++,
+			coordinator->GetComponentType<r2::ecs::RenderComponent>(),
+			InspectorPanelRenderComponent,
+			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+			{
+				//@TODO(Serge): implement
+			});
+
+		inspectorPanel.RegisterComponentType(
 			"Animation Component",
 			sortOrder++,
 			coordinator->GetComponentType<r2::ecs::SkeletalAnimationComponent>(),
 			InspectorPanelSkeletalAnimationComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 			{
-
+				//@TODO(Serge): implement
 			});
 
 		inspectorPanel.RegisterComponentType(
@@ -93,7 +105,7 @@ namespace r2::edit
 			InspectorPanelDebugRenderComponent,
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 			{
-
+				//@TODO(Serge): implement
 			});
 
 		inspectorPanel.RegisterComponentType(

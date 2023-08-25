@@ -25,13 +25,14 @@ namespace r2::draw
 
 	enum class PrimitiveType : u8
 	{
-		POINTS,
+		POINTS = 0,
 		LINES,
 		LINE_LOOP,
 		LINE_STRIP,
 		TRIANGLES,
 		TRIANGLE_STRIP,
-		TRIANGLE_FAN
+		TRIANGLE_FAN,
+        NUM_PRIMITIVE_TYPES
 	};
 
     enum eDrawFlags
@@ -75,14 +76,17 @@ namespace r2::draw
 	extern u32 LESS;
 	extern u32 LEQUAL;
 	extern u32 EQUAL;
+    
+    extern u32 NEVER;
 
     extern u32 GREATER;
     extern u32 GEQUAL;
+    extern u32 NOTEQUAL;
 
 	extern u32 KEEP;
 	extern u32 REPLACE;
 	extern u32 ZERO;
-	extern u32 NOTEQUAL;
+	
     extern u32 ALWAYS;
 
 	extern u32 CULL_FACE_FRONT;
@@ -100,6 +104,9 @@ namespace r2::draw
     extern u32 ONE_MINUS_DST_ALPHA;
     extern u32 BLEND_EQUATION_ADD;
     extern u32 BLEND_EQUATION_SUBTRACT;
+    extern u32 BLEND_EQUATION_REVERSE_SUBTRACT;
+    extern u32 BLEND_EQUATION_MIN;
+    extern u32 BLEND_EQUATION_MAX;
     extern u32 COLOR;
 
     extern u32 CW;
