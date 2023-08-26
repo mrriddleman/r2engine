@@ -505,6 +505,22 @@ namespace r2::edit
 				ImGui::TreePop();
 			}
 
+			/*
+				struct RenderComponent
+				{
+					u64 assetModelHash;
+					u32 primitiveType;
+					b32 isAnimated;
+					r2::draw::DrawParameters drawParameters;
+					r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
+					r2::SArray<r2::mat::MaterialName>* optrMaterialOverrideNames;
+				};
+			*/
+
+			//@TODO(Serge): implement material overrides - no clue how the memory works atm
+
+			
+
 		//	ImGui::TreePop();
 		}
 	}
