@@ -1265,7 +1265,7 @@ public:
     virtual u32 GetAssetMemorySize() const override
     {
         //@TODO(Serge): calculate this much later
-        return Megabytes(350);
+        return Megabytes(300);
     }
 
     virtual u32 GetMaxNumECSSystems() const override

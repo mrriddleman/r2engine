@@ -19,6 +19,7 @@
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #else
+#include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Core/Memory/Allocators/FreeListAllocator.h"
 #endif
 
@@ -106,6 +107,7 @@ namespace r2::asset
         const FileList GetFileList() const { return mnoptrFiles; }
 
         const AssetFile* GetAssetFile(const Asset& asset) const;
+        const AssetFile* GetAssetFile(const r2::asset::AssetHandle& assetHandle) const;
 
         void AddAssetFile(AssetFile* assetFile);
         void RemoveFile(const Asset& asset);
@@ -166,7 +168,7 @@ namespace r2::asset
      //   AssetFileMap mAssetFileMap; //this maps from an asset id to a file index in mFiles
 #ifdef R2_ASSET_PIPELINE
         //This is for debug only
-        r2::mem::MallocArena mAssetCacheArena;
+        r2::mem::FreeListArena mAssetCacheArena;
 #else
         
         r2::mem::FreeListArena mAssetCacheArena;

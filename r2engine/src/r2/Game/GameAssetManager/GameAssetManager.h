@@ -82,6 +82,8 @@ namespace r2
 			r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
 			mAssetCache->RegisterAssetLoader(ranimationLoader);
 
+			mAssetCache->RegisterAssetFreedCallback(std::bind(&GameAssetManager::RemoveAssetCacheRecord, this, std::placeholders::_1));
+
 			mTexturePacksCache = draw::texche::Create<ARENA>(arena, numTextures, numTextureManifests, numTexturePacks, this);
 
 			R2_CHECK(mTexturePacksCache != nullptr, "Failed to make the texture packs cache");

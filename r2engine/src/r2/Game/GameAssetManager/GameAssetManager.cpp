@@ -131,18 +131,21 @@ namespace r2
 		}
 
 		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-		r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);//r2::shashmap::Get(*mCachedRecords, assetHandle.handle, defaultAssetCacheRecord);
+		r2::asset::AssetCacheRecord result = FindAssetCacheRecord(assetHandle);
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
 			RemoveAssetCacheRecord(assetHandle);
-			/*r2::shashmap::Remove(*mCachedRecords, assetHandle.handle);
-
-			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, assetHandle.handle), "We still have the asset record?");*/
 
 			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
+			
+			if (!wasReturned)
+			{
+				const auto* assetFile = mAssetCache->GetAssetFile(assetHandle);
 
-			R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record");
+				R2_CHECK(wasReturned, "Somehow we couldn't return the asset cache record: %s", assetFile->FilePath());
+			}
+			
 		}
 
 		mAssetCache->FreeAsset(assetHandle);
@@ -157,15 +160,12 @@ namespace r2
 		}
 
 		r2::asset::AssetCacheRecord defaultAssetCacheRecord;
-		r2::asset::AssetCacheRecord result = FindAssetCacheRecord({ asset.HashID(), mAssetCache->GetSlot() });//r2::shashmap::Get(*mCachedRecords, asset.HashID(), defaultAssetCacheRecord);
+		r2::asset::AssetCacheRecord result = FindAssetCacheRecord({ asset.HashID(), mAssetCache->GetSlot() });
 
 		if (!r2::asset::AssetCacheRecord::IsEmptyAssetCacheRecord(result))
 		{
-			/*r2::shashmap::Remove(*mCachedRecords, asset.HashID());
 
-			R2_CHECK(!r2::shashmap::Has(*mCachedRecords, asset.HashID()), "We still have the asset record?");*/
 			RemoveAssetCacheRecord({ asset.HashID(), mAssetCache->GetSlot() });
-
 
 			bool wasReturned = mAssetCache->ReturnAssetBuffer(result);
 

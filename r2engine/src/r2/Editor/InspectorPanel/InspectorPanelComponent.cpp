@@ -1,4 +1,5 @@
 #include "r2pch.h"
+#ifdef R2_EDITOR
 #include "r2/Editor/InspectorPanel/InspectorPanelComponent.h"
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Editor/Editor.h"
@@ -186,3 +187,4 @@ namespace r2::edit
 	}
 
 }
+#endif

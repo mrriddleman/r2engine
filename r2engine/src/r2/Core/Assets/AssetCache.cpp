@@ -357,6 +357,15 @@ namespace r2::asset
     }
 
     const AssetFile* AssetCache::GetAssetFile(const Asset& asset) const
+	{
+		AssetHandle assetHandle;
+        assetHandle.handle = asset.HashID();
+        assetHandle.assetCache = mSlot;
+
+        return GetAssetFile(assetHandle);
+    }
+
+    const AssetFile* AssetCache::GetAssetFile(const r2::asset::AssetHandle& assetHandle) const
     {
 		R2_CHECK(!NOT_INITIALIZED, "We haven't initialized the asset cache");
 		if (NOT_INITIALIZED)
@@ -364,15 +373,15 @@ namespace r2::asset
 			return nullptr;
 		}
 
-        FileHandle fileIndex = FindInFiles(asset.HashID());
+		FileHandle fileIndex = FindInFiles(assetHandle.handle);
 
-        if (fileIndex == -1)
-        {
-            R2_CHECK(false, "Couldn't find the asset file for the asset");
-            return nullptr;
-        }
+		if (fileIndex == -1)
+		{
+		//	R2_CHECK(false, "Couldn't find the asset file for the asset");
+			return nullptr;
+		}
 
-        return r2::sarr::At(*mnoptrFiles, fileIndex);
+		return r2::sarr::At(*mnoptrFiles, fileIndex);
     }
 
     void AssetCache::AddAssetFile(AssetFile* assetFile)
@@ -753,6 +762,18 @@ namespace r2::asset
             
             if (assetBufferRef.mRefCount < 0)
             {
+
+                const Asset& theAsset = assetBufferRef.mAsset;
+
+                //Do this before we actually do the freeing
+				const auto numFreedCallbacks = r2::sarr::Size(*mAssetFreedCallbackList);
+
+				for (u32 i = 0; i < numFreedCallbacks; ++i)
+				{
+					auto callback = r2::sarr::At(*mAssetFreedCallbackList, i);
+					callback(handle);
+				}
+
                 FREE(assetBufferRef.mAssetBuffer->MutableData(), mAssetCacheArena);
                 
                 FREE(assetBufferRef.mAssetBuffer, *mAssetBufferPoolPtr);
@@ -768,13 +789,7 @@ namespace r2::asset
                 RemoveAssetFromAssetForFileList(handle);
 #endif
 
-                const auto numFreedCallbacks = r2::sarr::Size(*mAssetFreedCallbackList);
 
-                for (u32 i = 0; i < numFreedCallbacks; ++i)
-                {
-                    auto callback = r2::sarr::At(*mAssetFreedCallbackList, i);
-                    callback(handle);
-                }
             }
         }
     }
