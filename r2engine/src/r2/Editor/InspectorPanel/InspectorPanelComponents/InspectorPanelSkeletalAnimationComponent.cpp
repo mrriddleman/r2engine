@@ -4,11 +4,9 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelSkeletalAnimationComponent.h"
 
 #include "r2/Core/Engine.h"
-
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
-#include "r2/Game/GameAssetManager/GameAssetManager.h"
 #include "r2/Core/File/PathUtils.h"
 
 #include "imgui.h"
@@ -17,19 +15,10 @@ namespace r2::edit
 {
 	void DisplayAnimationDetails(int id, const r2::draw::Animation* animation)
 	{
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+		R2_CHECK(animation != nullptr, "Should never happen");
 
-		const r2::asset::AssetFile* currentAnimationAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(animation->assetName, r2::asset::RANIMATION));
-
-		R2_CHECK(currentAnimationAssetfile != nullptr, "The current animation asset file is nullptr");
-
-		const char* currentAnimationFilePath = currentAnimationAssetfile->FilePath();
-
-		char animationName[r2::fs::FILE_PATH_LENGTH];
-
-		r2::fs::utils::CopyFileName(currentAnimationFilePath, animationName);
 		ImGui::PushID(id);
-		ImGui::Text("Animation Name: %s", animationName);
+		ImGui::Text("Animation Name: %s", animation->animationName.c_str());
 		ImGui::Text("Duration: %f", animation->duration);
 		ImGui::Text("Ticks Per Second: %f", animation->ticksPerSeconds);
 		ImGui::PopID();
@@ -45,21 +34,18 @@ namespace r2::edit
 			nodeName = editorComponent->editorName + std::string(" - Animation Instance - ") + std::to_string(id);
 		}
 
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
 		if (ImGui::TreeNodeEx(nodeName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", nodeName.c_str()))
 		{
 			if (ImGui::TreeNodeEx("Current Animation"))
 			{
-				DisplayAnimationDetails(id, animationComponent.animation);
+				DisplayAnimationDetails(id, r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex));
 
 				ImGui::TreePop();
 			}
 
 			if (ImGui::TreeNodeEx("Starting Animation"))
 			{
-				//@TODO(Serge): for this to always work we need all of the animations loaded
-				const r2::draw::Animation* startingAnimation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationComponent.startingAnimationAssetName);
+				const r2::draw::Animation* startingAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.startingAnimationIndex);
 				R2_CHECK(startingAnimation != nullptr, "This should never happen");
 				DisplayAnimationDetails(id+1, startingAnimation);
 				ImGui::TreePop();
@@ -74,7 +60,9 @@ namespace r2::edit
 			int startTime = animationComponent.startTime;
 			ImGui::Text("Start Time: ");
 			ImGui::SameLine();
-			if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(animationComponent.animation->duration * (1.0f / animationComponent.animation->ticksPerSeconds))))
+
+			const r2::draw::Animation* currentAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex);
+			if (ImGui::DragInt("##label starttime", &startTime, 1, 0, r2::util::SecondsToMilliseconds(currentAnimation->duration * (1.0f / currentAnimation->ticksPerSeconds))))
 			{
 				animationComponent.startTime = startTime;
 			}

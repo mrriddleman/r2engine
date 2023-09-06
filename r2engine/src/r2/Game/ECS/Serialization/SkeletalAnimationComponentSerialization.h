@@ -16,13 +16,14 @@ namespace r2::ecs
 		struct SkeletalAnimationComponent
 		{
 			u64 animModelAssetName;
-
-			b32 shouldUseSameTransformsForAllInstances;
-			const r2::draw::AnimModel* animModel;
+			u32 startingAnimationIndex;
 			u32 startTime;
 			b32 shouldLoop;
-			const r2::draw::Animation* animation;
+			b32 shouldUseSameTransformsForAllInstances;
 
+			//These shouldn't be edited directly in the editor just set when the above is set
+			u32 currentAnimationIndex;
+			const r2::draw::Model* animModel;
 			r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 		};
 	*/
@@ -34,10 +35,10 @@ namespace r2::ecs
 		flat::SkeletalAnimationComponentDataBuilder skeletalAnimationComponentBuilder(fbb);
 
 		skeletalAnimationComponentBuilder.add_animModelAssetName(skeletalAnimationComponent.animModelAssetName);
+		skeletalAnimationComponentBuilder.add_startingAnimationIndex(skeletalAnimationComponent.startingAnimationIndex);
+		skeletalAnimationComponentBuilder.add_startTime(skeletalAnimationComponent.startTime);
 		skeletalAnimationComponentBuilder.add_shouldLoop(skeletalAnimationComponent.shouldLoop);
 		skeletalAnimationComponentBuilder.add_shouldUseSameTransformForAllInstances(skeletalAnimationComponent.shouldUseSameTransformsForAllInstances);
-		skeletalAnimationComponentBuilder.add_startingAnimationAssetName(skeletalAnimationComponent.startingAnimationAssetName);
-		skeletalAnimationComponentBuilder.add_startTime(skeletalAnimationComponent.startTime);
 
 		r2::sarr::Push(*skeletalAnimationComponents, skeletalAnimationComponentBuilder.Finish());
 	}
@@ -112,7 +113,7 @@ namespace r2::ecs
 	inline void DeSerializeSkeletalAnimationComponent(SkeletalAnimationComponent& skeletalAnimationComponent, const flat::SkeletalAnimationComponentData* flatSkeletalAnimationComponent)
 	{
 		skeletalAnimationComponent.animModelAssetName = flatSkeletalAnimationComponent->animModelAssetName();
-		skeletalAnimationComponent.startingAnimationAssetName = flatSkeletalAnimationComponent->startingAnimationAssetName();
+		skeletalAnimationComponent.startingAnimationIndex = flatSkeletalAnimationComponent->startingAnimationIndex();
 		skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = flatSkeletalAnimationComponent->shouldUseSameTransformForAllInstances();
 		skeletalAnimationComponent.startTime = flatSkeletalAnimationComponent->startTime();
 		skeletalAnimationComponent.shouldLoop = flatSkeletalAnimationComponent->shouldLoop();
@@ -131,11 +132,11 @@ namespace r2::ecs
 
 			SkeletalAnimationComponent skeletalAnimationComponent;
 			skeletalAnimationComponent.animModelAssetName = 0;
-			skeletalAnimationComponent.startingAnimationAssetName = 0;
+			skeletalAnimationComponent.startingAnimationIndex = 0;
 			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 			skeletalAnimationComponent.animModel = nullptr;
 			skeletalAnimationComponent.shaderBones = nullptr;
-			skeletalAnimationComponent.animation = nullptr;
+			skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 			skeletalAnimationComponent.shouldLoop = false;
 			skeletalAnimationComponent.startTime = 0;
 
@@ -169,11 +170,11 @@ namespace r2::ecs
 			{
 				SkeletalAnimationComponent skeletalAnimationComponent;
 				skeletalAnimationComponent.animModelAssetName = 0;
-				skeletalAnimationComponent.startingAnimationAssetName = 0;
+				skeletalAnimationComponent.startingAnimationIndex = 0;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
 				skeletalAnimationComponent.animModel = nullptr;
 				skeletalAnimationComponent.shaderBones = nullptr;
-				skeletalAnimationComponent.animation = nullptr;
+				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 				skeletalAnimationComponent.shouldLoop = false;
 				skeletalAnimationComponent.startTime = 0;
 

@@ -11,6 +11,10 @@
 #include "r2/Render/Animation/Animation.h"
 #include <glm/glm.hpp>
 
+#ifdef R2_EDITOR
+#include "r2/Core/File/PathUtils.h"
+#endif
+
 namespace r2::asset
 {
 	glm::mat4 GetGLMMatrix4FromFlatMatrix(const flat::Matrix4* mat)
@@ -387,13 +391,29 @@ namespace r2::asset
 			model->optrAnimations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation*, numAnimations);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation*>::MemorySize(numAnimations));
 
+#ifdef R2_EDITOR
+			char animationName[r2::fs::FILE_PATH_LENGTH];
+			char sanitizedAnimationPath[r2::fs::FILE_PATH_LENGTH];
+#endif
+
 			for (u32 i = 0; i < numAnimations; ++i)
 			{
 				const flat::RAnimation* flatAnimationData = animations->Get(i);
 
 				r2::draw::Animation* animation = new (startOfArrayPtr) r2::draw::Animation();
 
+				R2_CHECK(animation != nullptr, "Big problem here");
+
 				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Animation));
+
+#ifdef R2_EDITOR
+				//add in the name of the animation here
+				const auto* tempAnimationMetaData = animationMetaData->Get(i);
+				std::string originalAnimationPath = tempAnimationMetaData->originalPath()->str();
+				r2::fs::utils::SanitizeSubPath(originalAnimationPath.c_str(), sanitizedAnimationPath);
+				r2::fs::utils::CopyFileName(sanitizedAnimationPath, animationName);
+				animation->animationName = animationName;
+#endif
 
 				const auto* flatChannels = flatAnimationData->channels();
 				const auto numChannels = flatChannels->size();

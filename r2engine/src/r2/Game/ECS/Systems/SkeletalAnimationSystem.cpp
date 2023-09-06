@@ -80,7 +80,7 @@ namespace r2::ecs
 				animationComponent.startTime,
 				(bool)animationComponent.shouldLoop,
 				*animationComponent.animModel,
-				animationComponent.animation,
+				r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex),
 				*animationComponent.shaderBones, debugBonesToUse, 0);
 
 			if (instancedAnimationComponent && !animationComponent.shouldUseSameTransformsForAllInstances)
@@ -103,7 +103,7 @@ namespace r2::ecs
 						skeletalAnimationComponent.startTime,
 						(bool)skeletalAnimationComponent.shouldLoop,
 						*skeletalAnimationComponent.animModel,
-						skeletalAnimationComponent.animation,
+						r2::sarr::At(*skeletalAnimationComponent.animModel->optrAnimations, skeletalAnimationComponent.currentAnimationIndex),
 						*skeletalAnimationComponent.shaderBones, debugBonesToUse, 0);
 				}
 			}

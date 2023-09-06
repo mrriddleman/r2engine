@@ -18,19 +18,16 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
   typedef SkeletalAnimationComponentDataBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ANIMMODELASSETNAME = 4,
-    VT_STARTINGANIMATIONASSETNAME = 6,
-    VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES = 8,
-    VT_STARTTIME = 10,
-    VT_SHOULDLOOP = 12
+    VT_STARTINGANIMATIONINDEX = 6,
+    VT_STARTTIME = 8,
+    VT_SHOULDLOOP = 10,
+    VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES = 12
   };
   uint64_t animModelAssetName() const {
     return GetField<uint64_t>(VT_ANIMMODELASSETNAME, 0);
   }
-  uint64_t startingAnimationAssetName() const {
-    return GetField<uint64_t>(VT_STARTINGANIMATIONASSETNAME, 0);
-  }
-  bool shouldUseSameTransformForAllInstances() const {
-    return GetField<uint8_t>(VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES, 0) != 0;
+  uint32_t startingAnimationIndex() const {
+    return GetField<uint32_t>(VT_STARTINGANIMATIONINDEX, 0);
   }
   uint32_t startTime() const {
     return GetField<uint32_t>(VT_STARTTIME, 0);
@@ -38,13 +35,16 @@ struct SkeletalAnimationComponentData FLATBUFFERS_FINAL_CLASS : private flatbuff
   bool shouldLoop() const {
     return GetField<uint8_t>(VT_SHOULDLOOP, 0) != 0;
   }
+  bool shouldUseSameTransformForAllInstances() const {
+    return GetField<uint8_t>(VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES, 0) != 0;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_ANIMMODELASSETNAME) &&
-           VerifyField<uint64_t>(verifier, VT_STARTINGANIMATIONASSETNAME) &&
-           VerifyField<uint8_t>(verifier, VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES) &&
+           VerifyField<uint32_t>(verifier, VT_STARTINGANIMATIONINDEX) &&
            VerifyField<uint32_t>(verifier, VT_STARTTIME) &&
            VerifyField<uint8_t>(verifier, VT_SHOULDLOOP) &&
+           VerifyField<uint8_t>(verifier, VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES) &&
            verifier.EndTable();
   }
 };
@@ -56,17 +56,17 @@ struct SkeletalAnimationComponentDataBuilder {
   void add_animModelAssetName(uint64_t animModelAssetName) {
     fbb_.AddElement<uint64_t>(SkeletalAnimationComponentData::VT_ANIMMODELASSETNAME, animModelAssetName, 0);
   }
-  void add_startingAnimationAssetName(uint64_t startingAnimationAssetName) {
-    fbb_.AddElement<uint64_t>(SkeletalAnimationComponentData::VT_STARTINGANIMATIONASSETNAME, startingAnimationAssetName, 0);
-  }
-  void add_shouldUseSameTransformForAllInstances(bool shouldUseSameTransformForAllInstances) {
-    fbb_.AddElement<uint8_t>(SkeletalAnimationComponentData::VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES, static_cast<uint8_t>(shouldUseSameTransformForAllInstances), 0);
+  void add_startingAnimationIndex(uint32_t startingAnimationIndex) {
+    fbb_.AddElement<uint32_t>(SkeletalAnimationComponentData::VT_STARTINGANIMATIONINDEX, startingAnimationIndex, 0);
   }
   void add_startTime(uint32_t startTime) {
     fbb_.AddElement<uint32_t>(SkeletalAnimationComponentData::VT_STARTTIME, startTime, 0);
   }
   void add_shouldLoop(bool shouldLoop) {
     fbb_.AddElement<uint8_t>(SkeletalAnimationComponentData::VT_SHOULDLOOP, static_cast<uint8_t>(shouldLoop), 0);
+  }
+  void add_shouldUseSameTransformForAllInstances(bool shouldUseSameTransformForAllInstances) {
+    fbb_.AddElement<uint8_t>(SkeletalAnimationComponentData::VT_SHOULDUSESAMETRANSFORMFORALLINSTANCES, static_cast<uint8_t>(shouldUseSameTransformForAllInstances), 0);
   }
   explicit SkeletalAnimationComponentDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -83,16 +83,16 @@ struct SkeletalAnimationComponentDataBuilder {
 inline flatbuffers::Offset<SkeletalAnimationComponentData> CreateSkeletalAnimationComponentData(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint64_t animModelAssetName = 0,
-    uint64_t startingAnimationAssetName = 0,
-    bool shouldUseSameTransformForAllInstances = false,
+    uint32_t startingAnimationIndex = 0,
     uint32_t startTime = 0,
-    bool shouldLoop = false) {
+    bool shouldLoop = false,
+    bool shouldUseSameTransformForAllInstances = false) {
   SkeletalAnimationComponentDataBuilder builder_(_fbb);
-  builder_.add_startingAnimationAssetName(startingAnimationAssetName);
   builder_.add_animModelAssetName(animModelAssetName);
   builder_.add_startTime(startTime);
-  builder_.add_shouldLoop(shouldLoop);
+  builder_.add_startingAnimationIndex(startingAnimationIndex);
   builder_.add_shouldUseSameTransformForAllInstances(shouldUseSameTransformForAllInstances);
+  builder_.add_shouldLoop(shouldLoop);
   return builder_.Finish();
 }
 

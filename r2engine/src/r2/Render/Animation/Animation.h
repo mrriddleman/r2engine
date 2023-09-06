@@ -6,6 +6,10 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/quaternion.hpp"
 
+#ifdef R2_EDITOR
+#include <string>
+#endif
+
 namespace r2::draw
 {
 	struct VectorKey
@@ -50,6 +54,10 @@ namespace r2::draw
 		double duration = 0; //in ticks
 		double ticksPerSeconds = 0;
 		r2::SHashMap<AnimationChannel>* channels;
+
+#ifdef R2_EDITOR
+		std::string animationName;
+#endif
 
 		static u64 MemorySizeNoData(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);
 		static u64 MemorySize(u64 numChannels, u64 alignment, u32 headerSize, u32 boundsChecking);

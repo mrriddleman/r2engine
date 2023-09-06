@@ -246,16 +246,9 @@ namespace r2::ecs
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
 			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-			//if (renderComponent.isAnimated)
-			//{
-			//	const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
-			//	gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
-			//}
-			//else
-			//{
-				const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle); 
-				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-			//}
+
+			const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle); 
+			gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
 
 			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
 
@@ -289,17 +282,9 @@ namespace r2::ecs
 			const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
 			skeletalAnimationComponent.animModel = animModel;
+			skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 
-
-			//r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
-
-			//r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
-
-			//skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
-
-			//@TEMPORARY!!!
-			skeletalAnimationComponent.animation = r2::sarr::At(*animModel->optrAnimations, 0);
-
+			//@HACK!!! - we should have some kind of proper scheme to allocate this memory
 			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
 			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
@@ -346,7 +331,7 @@ namespace r2::ecs
 				skeletalAnimationComponent.animModelAssetName = tempSkeletalAnimationComponent.animModelAssetName;
 				skeletalAnimationComponent.shouldLoop = tempSkeletalAnimationComponent.shouldLoop;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = tempSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-				skeletalAnimationComponent.startingAnimationAssetName = tempSkeletalAnimationComponent.startingAnimationAssetName;
+				skeletalAnimationComponent.startingAnimationIndex = tempSkeletalAnimationComponent.startingAnimationIndex;
 				skeletalAnimationComponent.startTime = tempSkeletalAnimationComponent.startTime;
 
 
@@ -357,16 +342,10 @@ namespace r2::ecs
 				const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
 				skeletalAnimationComponent.animModel = animModel;
+				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 
-				//r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-				//r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
-
-				//skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
-
-				//@TEMPORARY!!!
-				skeletalAnimationComponent.animation = r2::sarr::At(*animModel->optrAnimations, 0);
-
+				//@HACK!!! - we should have some kind of proper scheme to allocate this memory
 				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
 				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
