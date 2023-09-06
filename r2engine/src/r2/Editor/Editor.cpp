@@ -647,21 +647,6 @@ namespace r2
 		}
 	}
 
-	void Editor::AddAnimationToLevel(u64 animationHandle, const r2::draw::Animation& animation)
-	{
-		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-		r2::asset::AssetHandle animationAssetHandle = { animationHandle, gameAssetManager.GetAssetCacheSlot() };
-
-		auto* animations = mCurrentEditorLevel->GetAnimationAssets();
-
-		if (r2::sarr::IndexOf(*animations, animationAssetHandle) == -1)
-		{
-			//@NOTE(Serge): may want to load here - dunno yet
-			r2::sarr::Push(*animations, animationAssetHandle);
-		}
-	}
-
 	void Editor::AddSoundBankToLevel(u64 soundBankAssetName)
 	{
 		auto* soundBanks = mCurrentEditorLevel->GetSoundBankAssetNames();

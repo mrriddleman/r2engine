@@ -27,7 +27,6 @@ table LevelData
 	componentArrays:[ComponentArrayData];
 
 	modelFilePaths:[PackReference];
-	animationFilePaths:[PackReference];
 	materialNames:[MaterialName];
 	soundPaths:[PackReference];
 }

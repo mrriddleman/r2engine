@@ -9,7 +9,6 @@ namespace r2
 		:mVersion(1u)
 		,mLevelHandle{}
 		,mModelAssets(nullptr)
-		,mAnimationAssets(nullptr)
 		,mMaterials(nullptr)
 		,mSoundBanks(nullptr)
 		,mEntities(nullptr)
@@ -29,7 +28,6 @@ namespace r2
 		const char* groupName,
 		LevelHandle levelHandle,
 		r2::SArray<r2::asset::AssetHandle>* modelAssets,
-		r2::SArray<r2::asset::AssetHandle>* animationAssets,
 		r2::SArray<r2::mat::MaterialName>* materials,
 		r2::SArray<u64>* soundBanks,
 		r2::SArray<ecs::Entity>* entities)
@@ -41,7 +39,6 @@ namespace r2
 
 		mLevelHandle = levelHandle;
 		mModelAssets = modelAssets;
-		mAnimationAssets = animationAssets;
 		mMaterials = materials;
 		mSoundBanks = soundBanks;
 		mEntities = entities;
@@ -54,7 +51,6 @@ namespace r2
 		
 		mLevelHandle = {};
 		mModelAssets = nullptr;
-		mAnimationAssets = nullptr;
 		mMaterials = nullptr;
 		mSoundBanks = nullptr;
 		mEntities = nullptr;
@@ -108,12 +104,11 @@ namespace r2
 		mVersion = version;
 	}
 
-	u64 Level::MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties)
+	u64 Level::MemorySize(u32 numModelAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties)
 	{
 		return
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(Level), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(numModelAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
-			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::asset::AssetHandle>::MemorySize(numAnimationAssets), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<r2::mat::MaterialName>::MemorySize(numTexturePacks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u64>::MemorySize(numSoundBanks), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<ecs::Entity>::MemorySize(numEntities), memoryProperties.alignment, memoryProperties.headerSize, memoryProperties.boundsChecking);
@@ -122,11 +117,6 @@ namespace r2
 	r2::SArray<r2::asset::AssetHandle>* Level::GetModelAssets() const
 	{
 		return mModelAssets;
-	}
-
-	r2::SArray<r2::asset::AssetHandle>* Level::GetAnimationAssets() const
-	{
-		return mAnimationAssets;
 	}
 
 	r2::SArray<r2::mat::MaterialName>* Level::GetMaterials() const

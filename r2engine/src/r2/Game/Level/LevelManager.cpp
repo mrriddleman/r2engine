@@ -153,7 +153,6 @@ namespace r2
 		Level newLevel;
 
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_MODELS);
-		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_ANIMATIONS);
 		r2::SArray<r2::mat::MaterialName>* materials = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, MAX_NUM_TEXTURE_PACKS);
 		r2::SArray<u64>* soundBanks = MAKE_SARRAY(*mLevelArena, u64, MAX_NUM_SOUND_BANKS);
 		r2::SArray<ecs::Entity>* entities = MAKE_SARRAY(*mLevelArena, ecs::Entity, ecs::MAX_NUM_ENTITIES);
@@ -162,7 +161,7 @@ namespace r2
 
 		//@NOTE(Serge): sort of weird we're doing this but it's only when we make new levels for the editor
 		//				we may want to have this method only for R2_EDITOR/R2_ASSET_PIPELINE
-		newLevel.Init(1, levelNameStr, groupName, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, animationAssets, materials, soundBanks, entities);
+		newLevel.Init(1, levelNameStr, groupName, {levelName, gameAssetManager.GetAssetCacheSlot()}, modelAssets, materials, soundBanks, entities);
 
 		r2::sarr::Push(*mLoadedLevels, newLevel);
 
@@ -211,12 +210,10 @@ namespace r2
 
 #ifdef R2_EDITOR
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_MODELS);
-		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, MAX_NUM_ANIMATIONS);
 		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, MAX_NUM_TEXTURE_PACKS);
 		r2::SArray<u64>* soundBanks = MAKE_SARRAY(*mLevelArena, u64, MAX_NUM_SOUND_BANKS);
 #else
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->modelFilePaths()->size());
-		r2::SArray<r2::asset::AssetHandle>* animationAssets = MAKE_SARRAY(*mLevelArena, r2::asset::AssetHandle, flatLevelData->animationFilePaths()->size());
 		r2::SArray<r2::mat::MaterialName>* texturePackAssets = MAKE_SARRAY(*mLevelArena, r2::mat::MaterialName, flatLevelData->materialNames()->size() * r2::draw::tex::Cubemap);
 		r2::SArray<u64>* soundBanks = MAKE_SARRAY(*mLevelArena, u64, flatLevelData->soundPaths()->size());
 #endif
@@ -229,7 +226,6 @@ namespace r2
 			flatLevelData->groupNameString()->c_str(),
 			levelHandle,
 			modelAssets,
-			animationAssets,
 			texturePackAssets,
 			soundBanks,
 			entities);
@@ -286,7 +282,6 @@ namespace r2
 		FREE(copyOfLevel.mEntities, *mLevelArena);
 		FREE(copyOfLevel.mSoundBanks, *mLevelArena);
 		FREE(copyOfLevel.mMaterials, *mLevelArena);
-		FREE(copyOfLevel.mAnimationAssets, *mLevelArena);
 		FREE(copyOfLevel.mModelAssets, *mLevelArena);
 
 		r2::GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
@@ -381,7 +376,6 @@ namespace r2
 	void LevelManager::LoadLevelData(Level& level, const flat::LevelData* levelData)
 	{
 		r2::SArray<r2::asset::AssetHandle>* modelAssets = level.mModelAssets;
-		r2::SArray<r2::asset::AssetHandle>* animationAssets = level.mAnimationAssets;
 		r2::SArray<r2::mat::MaterialName>* materials = level.mMaterials;
 		r2::SArray<u64>* soundBanks = level.mSoundBanks;
 
@@ -407,21 +401,8 @@ namespace r2
 		}
 
 		f64 endModelLoading = CENG.GetTicks();
-		
-		f64 startAnimationLoading = endModelLoading;
-		const auto* animationFiles = levelData->animationFilePaths();
 
-		const flatbuffers::uoffset_t numAnimationFiles = animationFiles->size();
-		 
-		for (flatbuffers::uoffset_t i = 0; i < numAnimationFiles; ++i)
-		{
-			r2::asset::Asset animationAsset = r2::asset::Asset::MakeAssetFromFilePath(animationFiles->Get(i)->binPath()->str().c_str(), r2::asset::RANIMATION);
-			
-			r2::sarr::Push(*animationAssets, gameAssetManager.LoadAsset(animationAsset));
-		}
-
-		f64 endAnimationLoading = CENG.GetTicks();
-		f64 soundLoading = endAnimationLoading;
+		f64 soundLoading = endModelLoading;
 
 		const auto* soundPaths = levelData->soundPaths();
 		const flatbuffers::uoffset_t numSoundPaths = soundPaths->size();
@@ -536,22 +517,9 @@ namespace r2
 		}
 
 		f64 end = materialUploadEnd;
-
-		//@TODO(Serge): Load the sounds + music
-		{
-			//const auto* soundFiles = levelData->soundPaths();
-
-			//const flatbuffers::uoffset_t numSoundFiles = soundFiles->size();
-
-			//for (flatbuffers::uoffset_t i = 0; i < numSoundFiles; ++i)
-			//{
-			//	//@TODO(Serge): implement
-			//}
-		}
 		
 #ifdef R2_DEBUG
 		printf("Model loading took: %f\n", endModelLoading - startModelLoading);
-		printf("Animation loading took: %f\n", endAnimationLoading - startAnimationLoading);
 		printf("Sound loading took: %f\n", endSoundLoading - soundLoading);
 		printf("Material Gather took: %f\n", materialGatherEnd - materialGatherStart);
 		printf("Material disk load took: %f\n", materialDiskLoadEnd - materialDiskLoadStart);
@@ -573,7 +541,6 @@ namespace r2
 		//@NOTE(Serge): we shouldn't have the level in the mLoadedLevel list at this point
 
 		r2::SArray<r2::asset::AssetHandle>* modelAssetsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetHandle, r2::sarr::Size(*level.mModelAssets));
-		r2::SArray<r2::asset::AssetHandle>* animationAssetsToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::asset::AssetHandle, r2::sarr::Size(*level.mAnimationAssets));
 		r2::SArray<u64>* loadedLevelsTexturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);
 		r2::SArray<u64>* levelToUnloadTexturePacks = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);		
 		r2::SArray<u64>* texturePacksToUnload = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u64, MAX_NUM_TEXTURE_PACKS);
@@ -602,7 +569,6 @@ namespace r2
 
 		const u32 numLoadedLevels = r2::sarr::Size(*mLoadedLevels);
 		const u32 numModelsInLevel = r2::sarr::Size(*level.mModelAssets);
-		const u32 numAnimationsInLevel = r2::sarr::Size(*level.mAnimationAssets);
 		const u32 numSoundBanksInLevel = r2::sarr::Size(*level.mSoundBanks);
 		const u32 numTexturePacksInLevel = r2::sarr::Size(*loadedLevelsTexturePacks);
 
@@ -626,29 +592,6 @@ namespace r2
 			if (!found)
 			{
 				r2::sarr::Push(*modelAssetsToUnload, modelAsset);
-			}
-		}
-
-		for (u32 j = 0; j < numAnimationsInLevel; ++j)
-		{
-			auto animationAsset = r2::sarr::At(*level.mAnimationAssets, j);
-
-			bool found = false;
-
-			for (u32 i = 0; i < numLoadedLevels && !found; ++i)
-			{
-				const Level& loadedLevel = r2::sarr::At(*mLoadedLevels, i);
-				//now go through each model and see if it's in our level, if it isn't in there then add to the list
-				if (r2::sarr::IndexOf(*loadedLevel.mAnimationAssets, animationAsset) != -1)
-				{
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-			{
-				r2::sarr::Push(*animationAssetsToUnload, animationAsset);
 			}
 		}
 
@@ -698,12 +641,6 @@ namespace r2
 			gameAssetManager.UnloadAsset(assetHandle);
 		}
 		
-		const u32 numAnimationsToUnload = r2::sarr::Size(*animationAssetsToUnload);
-		for (u32 i = 0; i < numAnimationsToUnload; ++i)
-		{
-			gameAssetManager.UnloadAsset(r2::sarr::At(*animationAssetsToUnload, i));
-		}
-
 		const u32 numTexturePacksToUnload = r2::sarr::Size(*texturePacksToUnload);
 		for (u32 i = 0; i < numTexturePacksToUnload; ++i)
 		{
@@ -721,7 +658,6 @@ namespace r2
 		FREE(texturePacksToUnload, *MEM_ENG_SCRATCH_PTR);
 		FREE(levelToUnloadTexturePacks, *MEM_ENG_SCRATCH_PTR);
 		FREE(loadedLevelsTexturePacks, *MEM_ENG_SCRATCH_PTR);
-		FREE(animationAssetsToUnload, *MEM_ENG_SCRATCH_PTR);
 		FREE(modelAssetsToUnload, *MEM_ENG_SCRATCH_PTR);
 	}
 
@@ -749,7 +685,7 @@ namespace r2
 
 		u64 freeListArenaSize = r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::FreeListArena), memProperties.alignment, stackHeaderSize, memProperties.boundsChecking);
 
-		freeListArenaSize += Level::MemorySize(maxNumModels, maxNumAnimations, maxNumTexturePacks, maxNumEntities, maxNumSoundBanks, lvlArenaMemProps) * maxNumLevels;
+		freeListArenaSize += Level::MemorySize(maxNumModels, maxNumTexturePacks, maxNumEntities, maxNumSoundBanks, lvlArenaMemProps) * maxNumLevels;
 		
 		memorySize += freeListArenaSize;
 		

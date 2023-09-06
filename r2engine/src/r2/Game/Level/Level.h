@@ -30,7 +30,6 @@ namespace r2
 			const char* groupName,
 			LevelHandle levelHandle,
 			r2::SArray<r2::asset::AssetHandle>* modelAssets,
-			r2::SArray<r2::asset::AssetHandle>* animationAssets,
 			r2::SArray<r2::mat::MaterialName>* materials,
 			r2::SArray<u64>* soundBanks,
 			r2::SArray<ecs::Entity>* entities);
@@ -51,7 +50,6 @@ namespace r2
 		void SetVersion(u32 version);
 
 		r2::SArray<r2::asset::AssetHandle>* GetModelAssets() const;
-		r2::SArray<r2::asset::AssetHandle>* GetAnimationAssets() const;
 		r2::SArray<r2::mat::MaterialName>* GetMaterials() const;
 		r2::SArray<u64>* GetSoundBankAssetNames() const;
 		r2::SArray<ecs::Entity>* GetEntities() const;
@@ -60,7 +58,7 @@ namespace r2
 		void RemoveEntity(ecs::Entity e) const;
 		void ClearAllEntities() const;
 
-		static u64 MemorySize(u32 numModelAssets, u32 numAnimationAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
+		static u64 MemorySize(u32 numModelAssets, u32 numTexturePacks, u32 numSoundBanks, u32 numEntities, const r2::mem::utils::MemoryProperties& memoryProperties);
 
 	private:
 		friend class LevelManager;
@@ -73,11 +71,9 @@ namespace r2
 
 		//we're going to add in arrays for each type of asset handle
 		r2::SArray<r2::asset::AssetHandle>* mModelAssets;
-		r2::SArray<r2::asset::AssetHandle>* mAnimationAssets;
 		//we'll need to do something special for the materials/textures
 		r2::SArray<r2::mat::MaterialName>* mMaterials;
 
-		//@TODO(Serge): sound files
 		r2::SArray<u64>* mSoundBanks;
 
 		r2::SArray<ecs::Entity>* mEntities;

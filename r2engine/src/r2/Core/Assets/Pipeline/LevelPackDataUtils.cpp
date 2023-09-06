@@ -149,7 +149,6 @@ namespace r2::asset::pln
 		std::vector<flatbuffers::Offset<flat::ComponentArrayData>> componentDataArray;
 
 		std::vector<flatbuffers::Offset<flat::PackReference>> modelPackReferences = MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::MODELS, r2::asset::RMODEL, editorLevel.GetModelAssets());
-		std::vector<flatbuffers::Offset<flat::PackReference>> animationPackReferences = {};//MakePackReferencesFromFileList(builder, r2::fs::utils::Directory::ANIMATIONS, r2::asset::RANIMATION, editorLevel.GetAnimationAssets());
 		std::vector<flatbuffers::Offset<flat::MaterialName>> materialNames = MakeMaterialNameVectorFromMaterialNames(builder, editorLevel.GetMaterials());
 		std::vector<flatbuffers::Offset<flat::PackReference>> soundReferences = MakePackReferencesFromSoundBankAssetNames(builder, editorLevel.GetSoundBankAssetNames());
 		
@@ -167,7 +166,6 @@ namespace r2::asset::pln
 			builder.CreateVector(entityVec),
 			builder.CreateVector(componentDataArray),
 			builder.CreateVector(modelPackReferences),
-			builder.CreateVector(animationPackReferences),
 			builder.CreateVector(materialNames),
 			builder.CreateVector(soundReferences));
 
