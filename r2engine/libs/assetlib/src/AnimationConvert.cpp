@@ -41,8 +41,6 @@ namespace r2::assets::assetlib
 	}
 
 	void ProcessAnimation(Animation& animation, const aiNode* node, const aiScene* scene);
-	//bool ConvertAnimationToFlatbuffer(Animation& animation, const fs::path& inputFilePath, const fs::path& outputPath);
-
 
 	bool LoadAnimationFromFile(const std::filesystem::path& inputFilePath, Animation& animation)
 	{

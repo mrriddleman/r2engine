@@ -78,11 +78,6 @@ bool IsModel(const std::string& extension)
 		theExtension == GLTF_EXTENSION;
 }
 
-bool IsAnimation(const std::string& extension)
-{
-	return IsModel(extension);
-}
-
 fs::path GetOutputPathForInputDirectory(const fs::path& outputPath, const fs::path& inputPath, const fs::path& path)
 {
 	std::vector<fs::path> pathsSeen;
@@ -232,9 +227,9 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-m", "--material" }, &arguments.materialParamsManifestPath, "Material Params Manifest Path");
 	args.Parse(agrc, argv);
 
-	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
-	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
-	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
+	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
+	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
+	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
 
 	if (arguments.inputDir.empty())
 	{
@@ -320,11 +315,6 @@ int main(int agrc, char** argv)
 
 				r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, extension);
 			}
-			//else if (IsAnimation(extension) && arguments.isAnimations)
-			//{
-			//	assert(false && "FIX ME");
-			//	r2::assets::assetlib::ConvertAnimation(p.path(), newOutputPath, extension);
-			//}
 		}
 	}
 
