@@ -128,7 +128,7 @@ project "r2engine"
 		'R2_ENGINE_INTERNAL_MODELS_RAW="'..os.getcwd()..'/r2engine/assets/models/raw"',
 		'R2_ENGINE_INTERNAL_MODELS_BIN="'..os.getcwd()..'/r2engine/assets_bin/models/"',
 
-		'R2_ENGINE_ASSET_CONVERTER_EXE="'..os.getcwd()..'/r2engine/tools/assetconverter/bin/Publish_windows_x86_64/assetconverter/assetconverter.exe"',
+		'R2_ENGINE_ASSET_CONVERTER_EXE="'..os.getcwd()..'/r2engine/tools/assetconverter/bin/Debug_windows_x86_64/assetconverter/assetconverter.exe"',
 
 	}
 --[[

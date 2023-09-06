@@ -43,12 +43,11 @@ struct Arguments
 	std::string inputDir;
 	std::string outputDir;
 	std::string materialParamsManifestPath;
-	bool isAnimations;
 };
 
 bool SkipDirectory(const fs::path& p)
 {
-	return p.stem().string() == "hdr";
+	return p.stem().string() == "hdr" || p.stem().string() == "Animations";
 }
 
 bool IsImage(const std::string& extension)
@@ -231,13 +230,11 @@ int main(int agrc, char** argv)
 	args.AddArgument({ "-i", "--input" }, &arguments.inputDir, "Input Directory");
 	args.AddArgument({ "-o", "--output" }, &arguments.outputDir, "Output Directory");
 	args.AddArgument({ "-m", "--material" }, &arguments.materialParamsManifestPath, "Material Params Manifest Path");
-	args.AddArgument({ "-a", "--animation" }, &arguments.isAnimations, "Animations");
 	args.Parse(agrc, argv);
 
-	//arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
-	//arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
-	//arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
-	//arguments.isAnimations = false;
+	arguments.inputDir = "D:\\Projects\\r2engine\\Sandbox\\assets\\Sandbox_Models";
+	arguments.outputDir = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Models";
+	arguments.materialParamsManifestPath = "D:\\Projects\\r2engine\\Sandbox\\assets_bin\\Sandbox_Materials\\manifests\\SandboxMaterialParamsPack.mppk";
 
 	if (arguments.inputDir.empty())
 	{
@@ -300,18 +297,34 @@ int main(int agrc, char** argv)
 		}
 		else if (p.is_regular_file() && p.file_size() > 0)
 		{
+			if (p.path().parent_path().stem().string() == "Animations")
+			{
+				continue;
+			}
+
 			if (IsImage(extension) && !SkipDirectory(p.path().parent_path()))
 			{
 				r2::assets::assetlib::ConvertImage(p.path(), newOutputPath, extension, std::max(desiredMipLevels, (uint32_t)1), mipMapFilter);
 			}
-			else if (IsModel(extension) && !arguments.isAnimations)
+			else if (IsModel(extension))
 			{
-				r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, extension);
+				//@NOTE(Serge): kind of hacky - if we're looking at a model file - see if we have an animations directory, if we do then bundle that with the model
+				std::filesystem::path animationDirectory = "";
+				
+				std::filesystem::path animationsPath = p.path().parent_path() / "Animations";
+
+				if (std::filesystem::is_directory(animationsPath))
+				{
+					animationDirectory = animationsPath;
+				}
+
+				r2::assets::assetlib::ConvertModel(p.path(), newOutputPath, materialParamsManifestPath, animationDirectory, extension);
 			}
-			else if (IsAnimation(extension) && arguments.isAnimations)
-			{
-				r2::assets::assetlib::ConvertAnimation(p.path(), newOutputPath, extension);
-			}
+			//else if (IsAnimation(extension) && arguments.isAnimations)
+			//{
+			//	assert(false && "FIX ME");
+			//	r2::assets::assetlib::ConvertAnimation(p.path(), newOutputPath, extension);
+			//}
 		}
 	}
 

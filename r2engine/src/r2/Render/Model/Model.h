@@ -12,19 +12,11 @@
 #include "r2/Core/Math/Transform.h"
 #include "r2/Render/Model/Materials/MaterialTypes.h"
 
-#define MAKE_MODEL(arena, numMeshes) r2::draw::MakeModel(arena, numMeshes, __FILE__, __LINE__, "")
-#define FREE_MODEL(arena, modelPtr) r2::draw::FreeModel(arena, modelPtr, __FILE__, __LINE__, "")
-
-namespace flat
-{
-    struct RModel;
-    struct RMesh;
-    struct AnimationData;
-    struct RModelMetaData;
-}
 
 namespace r2::draw
 {
+	struct Animation;
+
 #define MAX_BONE_WEIGHTS 4
 
 	struct BoneData
@@ -68,84 +60,45 @@ namespace r2::draw
         //these should be the same size
 		r2::SArray<const Mesh*>* optrMeshes = nullptr;
         r2::SArray<r2::mat::MaterialName>* optrMaterialNames = nullptr;
+		r2::SArray<BoneData>* optrBoneData = nullptr;
+		r2::SArray<BoneInfo>* optrBoneInfo = nullptr;
+		r2::SHashMap<s32>* optrBoneMapping = nullptr;
+		
+		Skeleton skeleton;
+
+		r2::SArray<Animation*>* optrAnimations = nullptr;
+
         glm::mat4 globalInverseTransform;
 
-		static u64 MemorySize(u64 numMeshes, u64 numMaterials, u64 numVertices, u64 numIndices, u64 headerSize, u64 boundsChecking, u64 alignment);
 		static u64 ModelMemorySize(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
 
-
+		static u64 MemorySize(u32 numMeshes, u32 numMaterials, u32 numJoints, u32 boneDataSize, u32 boneInfoSize, u32 numAnimations, u32 alignment, u32 headerSize, u32 boundsChecking);
 	};
 
-	struct AnimModel
-	{
-        Model model;
-		r2::SArray<BoneData>* boneData = nullptr;
-		r2::SArray<BoneInfo>* boneInfo = nullptr;
+	//struct AnimModel
+	//{
+ //       Model model;
+	//	r2::SArray<BoneData>* boneData = nullptr;
+	//	r2::SArray<BoneInfo>* boneInfo = nullptr;
 
-		//r2::SArray<Animation>* animations = nullptr;
- //       r2::SArray<Animation>* noptrAddedAnimations = nullptr;
-		r2::SHashMap<s32>* boneMapping = nullptr;
-		
-        Skeleton skeleton;
+	//	//r2::SArray<Animation>* animations = nullptr;
+ ////       r2::SArray<Animation>* noptrAddedAnimations = nullptr;
+	//	r2::SHashMap<s32>* boneMapping = nullptr;
+	//	
+ //       Skeleton skeleton;
 
-        //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
-        static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
-		//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
-        static u64 MemorySizeNoData(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
-	};
+ //       //This will only calculate the amount of memory needed for this object given the inputs WITHOUT calculating the amount of data needed for each individual object of the array(s)
+ //       static u64 MemorySizeNoData(u64 boneMapping, u64 boneDataSize, u64 boneInfoSize, u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
+	//	//char directory[r2::fs::FILE_PATH_LENGTH] = { '\0' };
+ //       static u64 MemorySizeNoData(u64 numMeshes, u64 numMaterials, u64 alignment, u32 headerSize, u32 boundsChecking);
+	//};
 
 	struct DebugBone
 	{
 		glm::vec3 p0;
 		glm::vec3 p1;
 	};
-
-    template<class ARENA>
-    Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description);
-
-    template<class ARENA>
-    void FreeModel(ARENA& arena, Model* modelPtr, const char* file, s32 line, const char* description);
 }
 
-namespace r2::draw
-{
-    template<class ARENA>
-    Model* MakeModel(ARENA& arena, u64 numMeshes, const char* file, s32 line, const char* description)
-    {
-        Model* newModel = ALLOC_VERBOSE(Model, arena, file, line, description);
-        if (!newModel)
-        {
-            R2_CHECK(false, "We couldn't allocate a new model!");
-            return nullptr;
-        }
-            
-        newModel->optrMeshes = MAKE_SARRAY(arena, Mesh, numMeshes);
-
-        if (!newModel->optrMeshes)
-        {
-            FREE_VERBOSE(newModel, arena, file, line, description);
-            R2_CHECK(false, "Failed to allocate the array for all of the meshes");
-            return false;
-        }
-
-        return newModel;
-    }
-
-    template<class ARENA>
-    void FreeModel(ARENA& arena, Model* modelPtr, const char* file, s32 line, const char* description)
-    {
-        u64 numMeshes = r2::sarr::Size(*modelPtr->optrMeshes);
-
-        for (u64 i = 0; i < numMeshes; ++i)
-        {
-            FREE_MESH(arena, r2::sarr::At(*modelPtr->optrMeshes, i));
-        }
-
-        FREE_VERBOSE(modelPtr->optrMeshes, arena, file, line, description);
-        FREE_VERBOSE(modelPtr, arena, file, line, description);
-    }
-
-    
-}
 
 #endif /* Model_h */

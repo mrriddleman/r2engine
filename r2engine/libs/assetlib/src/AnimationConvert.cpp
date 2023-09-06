@@ -7,8 +7,7 @@
 
 #include <cassert>
 #include <string>
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
+
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -31,36 +30,6 @@ namespace r2::assets::assetlib
 {
 	const std::string RANM_EXTENSION = ".ranm";
 
-	struct VectorKey
-	{
-		double time;
-		glm::vec3 value;
-	};
-
-	struct RotationKey
-	{
-		double time;
-		glm::quat quat;
-	};
-
-	struct Channel
-	{
-		uint64_t channelName;
-
-		std::vector<VectorKey> positionKeys;
-		std::vector<VectorKey> scaleKeys;
-		std::vector<RotationKey> rotationKeys;
-	};
-
-	struct Animation
-	{
-		uint64_t animationName = 0;
-		double duration = 0; //in ticks
-		double ticksPerSecond = 0; 
-		std::vector<Channel> channels;
-		std::string originalPath;
-	};
-
 	glm::vec3 AssimpVec3ToGLMVec3(const aiVector3D& vec3D)
 	{
 		return glm::vec3(vec3D.x, vec3D.y, vec3D.z);
@@ -72,9 +41,10 @@ namespace r2::assets::assetlib
 	}
 
 	void ProcessAnimation(Animation& animation, const aiNode* node, const aiScene* scene);
-	bool ConvertAnimationToFlatbuffer(Animation& animation, const fs::path& inputFilePath, const fs::path& outputPath);
+	//bool ConvertAnimationToFlatbuffer(Animation& animation, const fs::path& inputFilePath, const fs::path& outputPath);
 
-	bool ConvertAnimation(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::string& extension)
+
+	bool LoadAnimationFromFile(const std::filesystem::path& inputFilePath, Animation& animation)
 	{
 		Assimp::Importer import;
 
@@ -91,10 +61,9 @@ namespace r2::assets::assetlib
 
 			assert(false && errString.c_str());
 
-			return 0;
+			return false;
 		}
 
-		Animation animation;
 		animation.originalPath = inputFilePath.string();
 		//@TODO(Serge): use the path to generate a proper name with the appropriate amount of parent directories
 		char animationAssetName[256];
@@ -109,8 +78,15 @@ namespace r2::assets::assetlib
 
 		import.FreeScene();
 
-		return ConvertAnimationToFlatbuffer(animation, inputFilePath, parentOutputDir);
+		return true;
 	}
+
+	//bool ConvertAnimation(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::string& extension)
+	//{
+	//	return false;
+
+	//	//return ConvertAnimationToFlatbuffer(animation, inputFilePath, parentOutputDir);
+	//}
 
 	void ProcessAnimation(Animation& animation, const aiNode* node, const aiScene* scene)
 	{
@@ -185,93 +161,93 @@ namespace r2::assets::assetlib
 		}
 	}
 
-	bool ConvertAnimationToFlatbuffer(Animation& animation, const fs::path& inputFilePath, const fs::path& outputPath)
-	{
-		//meta data stuff
-		flatbuffers::FlatBufferBuilder metaDataBuilder;
-		std::vector<flatbuffers::Offset<flat::RChannelMetaData>> channelMetaDatas;
-		
-		for (const auto& channel : animation.channels)
-		{
-			channelMetaDatas.push_back(flat::CreateRChannelMetaData(metaDataBuilder, channel.positionKeys.size(), channel.scaleKeys.size(), channel.rotationKeys.size()));
-		}
+	//bool ConvertAnimationToFlatbuffer(Animation& animation, const fs::path& inputFilePath, const fs::path& outputPath)
+	//{
+	//	//meta data stuff
+	//	flatbuffers::FlatBufferBuilder metaDataBuilder;
+	//	std::vector<flatbuffers::Offset<flat::RChannelMetaData>> channelMetaDatas;
+	//	
+	//	for (const auto& channel : animation.channels)
+	//	{
+	//		channelMetaDatas.push_back(flat::CreateRChannelMetaData(metaDataBuilder, channel.positionKeys.size(), channel.scaleKeys.size(), channel.rotationKeys.size()));
+	//	}
 
-		auto metaData = flat::CreateRAnimationMetaData(
-			metaDataBuilder,
-			animation.animationName,
-			animation.duration,
-			animation.ticksPerSecond,
-			metaDataBuilder.CreateVector(channelMetaDatas),
-			metaDataBuilder.CreateString(animation.originalPath));
+	//	auto metaData = flat::CreateRAnimationMetaData(
+	//		metaDataBuilder,
+	//		animation.animationName,
+	//		animation.duration,
+	//		animation.ticksPerSecond,
+	//		metaDataBuilder.CreateVector(channelMetaDatas),
+	//		metaDataBuilder.CreateString(animation.originalPath));
 
-		metaDataBuilder.Finish(metaData, "rman");
+	//	metaDataBuilder.Finish(metaData, "rman");
 
-		auto* metaDataData = metaDataBuilder.GetBufferPointer();
-		const auto metaDataSize = metaDataBuilder.GetSize();
+	//	auto* metaDataData = metaDataBuilder.GetBufferPointer();
+	//	const auto metaDataSize = metaDataBuilder.GetSize();
 
-		auto flatAnimationMetaData = flat::GetMutableRAnimationMetaData(metaDataData);
+	//	auto flatAnimationMetaData = flat::GetMutableRAnimationMetaData(metaDataData);
 
-		flatbuffers::FlatBufferBuilder dataBuilder;
+	//	flatbuffers::FlatBufferBuilder dataBuilder;
 
-		std::vector<flatbuffers::Offset<flat::Channel>> channels;
+	//	std::vector<flatbuffers::Offset<flat::Channel>> channels;
 
-		for (const auto& channel : animation.channels)
-		{
-			std::vector<flat::VectorKey> flatPositionKeys;
-			std::vector<flat::VectorKey> flatScaleKeys;
-			std::vector<flat::RotationKey> flatRotationKeys;
+	//	for (const auto& channel : animation.channels)
+	//	{
+	//		std::vector<flat::VectorKey> flatPositionKeys;
+	//		std::vector<flat::VectorKey> flatScaleKeys;
+	//		std::vector<flat::RotationKey> flatRotationKeys;
 
-			for (const auto& positionKey : channel.positionKeys)
-			{
-				flat::VectorKey pKey(positionKey.time, flat::Vertex3(positionKey.value.x, positionKey.value.y, positionKey.value.z));
-				flatPositionKeys.push_back(pKey);
-			}
+	//		for (const auto& positionKey : channel.positionKeys)
+	//		{
+	//			flat::VectorKey pKey(positionKey.time, flat::Vertex3(positionKey.value.x, positionKey.value.y, positionKey.value.z));
+	//			flatPositionKeys.push_back(pKey);
+	//		}
 
-			for (const auto& scaleKey : channel.scaleKeys)
-			{
-				flat::VectorKey sKey(scaleKey.time, flat::Vertex3(scaleKey.value.x, scaleKey.value.y, scaleKey.value.z));
-				flatScaleKeys.push_back(sKey);
-			}
+	//		for (const auto& scaleKey : channel.scaleKeys)
+	//		{
+	//			flat::VectorKey sKey(scaleKey.time, flat::Vertex3(scaleKey.value.x, scaleKey.value.y, scaleKey.value.z));
+	//			flatScaleKeys.push_back(sKey);
+	//		}
 
-			for (const auto& rotationKey : channel.rotationKeys)
-			{
-				flat::RotationKey rKey(rotationKey.time, flat::Quaternion(rotationKey.quat.x, rotationKey.quat.y, rotationKey.quat.z, rotationKey.quat.w));
-				flatRotationKeys .push_back(rKey);
-			}
-			
-			channels.push_back(
-				flat::CreateChannel(
-					dataBuilder,
-					channel.channelName,
-					dataBuilder.CreateVectorOfStructs(flatPositionKeys),
-					dataBuilder.CreateVectorOfStructs(flatScaleKeys),
-					dataBuilder.CreateVectorOfStructs(flatRotationKeys)));
-		}
+	//		for (const auto& rotationKey : channel.rotationKeys)
+	//		{
+	//			flat::RotationKey rKey(rotationKey.time, flat::Quaternion(rotationKey.quat.x, rotationKey.quat.y, rotationKey.quat.z, rotationKey.quat.w));
+	//			flatRotationKeys .push_back(rKey);
+	//		}
+	//		
+	//		channels.push_back(
+	//			flat::CreateChannel(
+	//				dataBuilder,
+	//				channel.channelName,
+	//				dataBuilder.CreateVectorOfStructs(flatPositionKeys),
+	//				dataBuilder.CreateVectorOfStructs(flatScaleKeys),
+	//				dataBuilder.CreateVectorOfStructs(flatRotationKeys)));
+	//	}
 
-		auto animationData = flat::CreateRAnimation(dataBuilder, animation.animationName, animation.duration, animation.ticksPerSecond, dataBuilder.CreateVector(channels));
+	//	auto animationData = flat::CreateRAnimation(dataBuilder, animation.animationName, animation.duration, animation.ticksPerSecond, dataBuilder.CreateVector(channels));
 
-		dataBuilder.Finish(animationData, "ranm");
+	//	dataBuilder.Finish(animationData, "ranm");
 
-		auto* flatAnimationDataBuf = dataBuilder.GetBufferPointer();
-		const auto flatAnimationDataSize = dataBuilder.GetSize();
+	//	auto* flatAnimationDataBuf = dataBuilder.GetBufferPointer();
+	//	const auto flatAnimationDataSize = dataBuilder.GetSize();
 
-		DiskAssetFile assetFile;
-		assetFile.SetFreeDataBlob(false);
+	//	DiskAssetFile assetFile;
+	//	assetFile.SetFreeDataBlob(false);
 
-		pack_animation(assetFile, metaDataData, metaDataSize, flatAnimationDataBuf, flatAnimationDataSize);
+	//	pack_animation(assetFile, metaDataData, metaDataSize, flatAnimationDataBuf, flatAnimationDataSize);
 
-		fs::path filenamePath = inputFilePath.filename();
+	//	fs::path filenamePath = inputFilePath.filename();
 
-		fs::path outputFilePath = outputPath / filenamePath.replace_extension(RANM_EXTENSION);
+	//	fs::path outputFilePath = outputPath / filenamePath.replace_extension(RANM_EXTENSION);
 
-		bool result = save_binaryfile(outputFilePath.string().c_str(), assetFile);
+	//	bool result = save_binaryfile(outputFilePath.string().c_str(), assetFile);
 
-		if (!result)
-		{
-			printf("Failed to output file: %s\n", outputFilePath.string().c_str());
-			return false;
-		}
+	//	if (!result)
+	//	{
+	//		printf("Failed to output file: %s\n", outputFilePath.string().c_str());
+	//		return false;
+	//	}
 
-		return result;
-	}
+	//	return result;
+	//}
 }

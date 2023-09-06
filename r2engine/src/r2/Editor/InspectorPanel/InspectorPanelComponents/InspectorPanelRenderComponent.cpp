@@ -245,15 +245,15 @@ namespace r2::edit
 
 			const r2::draw::Model* model = nullptr;
 
-			if (renderComponent.isAnimated)
-			{
-				const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(renderComponent.assetModelHash);
-				model = &animModel->model;
-			}
-			else
-			{
+			//if (renderComponent.isAnimated)
+			//{
+			//	const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(renderComponent.assetModelHash);
+			//	model = &animModel->model;
+			//}
+			//else
+			//{
 				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
-			}
+		//	}
 
 			const r2::asset::AssetFile* currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 

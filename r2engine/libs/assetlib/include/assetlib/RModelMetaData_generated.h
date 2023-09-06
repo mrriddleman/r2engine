@@ -7,6 +7,7 @@
 #include "flatbuffers/flatbuffers.h"
 
 #include "Mesh_generated.h"
+#include "RAnimationMetaData_generated.h"
 
 namespace flat {
 
@@ -495,7 +496,8 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_ISANIMATEDMODEL = 18,
     VT_BONEMETADATA = 20,
     VT_SKELETONMETADATA = 22,
-    VT_ORIGINALPATH = 24
+    VT_ORIGINALPATH = 24,
+    VT_ANIMATIONMETADATA = 26
   };
   uint64_t modelName() const {
     return GetField<uint64_t>(VT_MODELNAME, 0);
@@ -563,6 +565,12 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::String *mutable_originalPath() {
     return GetPointer<flatbuffers::String *>(VT_ORIGINALPATH);
   }
+  const flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *animationMetaData() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *>(VT_ANIMATIONMETADATA);
+  }
+  flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *mutable_animationMetaData() {
+    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>> *>(VT_ANIMATIONMETADATA);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint64_t>(verifier, VT_MODELNAME) &&
@@ -581,6 +589,9 @@ struct RModelMetaData FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyTable(skeletonMetaData()) &&
            VerifyOffset(verifier, VT_ORIGINALPATH) &&
            verifier.VerifyString(originalPath()) &&
+           VerifyOffset(verifier, VT_ANIMATIONMETADATA) &&
+           verifier.VerifyVector(animationMetaData()) &&
+           verifier.VerifyVectorOfTables(animationMetaData()) &&
            verifier.EndTable();
   }
 };
@@ -622,6 +633,9 @@ struct RModelMetaDataBuilder {
   void add_originalPath(flatbuffers::Offset<flatbuffers::String> originalPath) {
     fbb_.AddOffset(RModelMetaData::VT_ORIGINALPATH, originalPath);
   }
+  void add_animationMetaData(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData) {
+    fbb_.AddOffset(RModelMetaData::VT_ANIMATIONMETADATA, animationMetaData);
+  }
   explicit RModelMetaDataBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -646,9 +660,11 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaData(
     bool isAnimatedModel = false,
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
-    flatbuffers::Offset<flatbuffers::String> originalPath = 0) {
+    flatbuffers::Offset<flatbuffers::String> originalPath = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flat::RAnimationMetaData>>> animationMetaData = 0) {
   RModelMetaDataBuilder builder_(_fbb);
   builder_.add_modelName(modelName);
+  builder_.add_animationMetaData(animationMetaData);
   builder_.add_originalPath(originalPath);
   builder_.add_skeletonMetaData(skeletonMetaData);
   builder_.add_boneMetaData(boneMetaData);
@@ -674,9 +690,11 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
     bool isAnimatedModel = false,
     flatbuffers::Offset<flat::BoneMetaData> boneMetaData = 0,
     flatbuffers::Offset<flat::SkeletonMetaData> skeletonMetaData = 0,
-    const char *originalPath = nullptr) {
+    const char *originalPath = nullptr,
+    const std::vector<flatbuffers::Offset<flat::RAnimationMetaData>> *animationMetaData = nullptr) {
   auto meshInfos__ = meshInfos ? _fbb.CreateVector<flatbuffers::Offset<flat::MeshInfo>>(*meshInfos) : 0;
   auto originalPath__ = originalPath ? _fbb.CreateString(originalPath) : 0;
+  auto animationMetaData__ = animationMetaData ? _fbb.CreateVector<flatbuffers::Offset<flat::RAnimationMetaData>>(*animationMetaData) : 0;
   return flat::CreateRModelMetaData(
       _fbb,
       modelName,
@@ -689,7 +707,8 @@ inline flatbuffers::Offset<RModelMetaData> CreateRModelMetaDataDirect(
       isAnimatedModel,
       boneMetaData,
       skeletonMetaData,
-      originalPath__);
+      originalPath__,
+      animationMetaData__);
 }
 
 inline const flat::RModelMetaData *GetRModelMetaData(const void *buf) {

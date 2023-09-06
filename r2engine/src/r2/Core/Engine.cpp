@@ -177,26 +177,26 @@ namespace r2
             modelAssetCMD->AddRawModelDirectories(rawModelPaths);
             modelAssetCMD->AddMaterialManifestPaths(binaryMaterialManifestPaths);
 
-            std::vector<std::string> binaryAnimationPaths;
-            std::vector<std::string> rawAnimationPaths;
+            //std::vector<std::string> binaryAnimationPaths;
+            //std::vector<std::string> rawAnimationPaths;
 
-            //Animation command data
-            {
-                for (const std::string& nextPath : noptrApp->GetAnimationBinaryPaths())
-                {
-                    binaryAnimationPaths.push_back(nextPath);
-                }
+            ////Animation command data
+            //{
+            //    for (const std::string& nextPath : noptrApp->GetAnimationBinaryPaths())
+            //    {
+            //        binaryAnimationPaths.push_back(nextPath);
+            //    }
 
-                for (const std::string& nextPath : noptrApp->GetAnimationRawPaths())
-                {
-                    rawAnimationPaths.push_back(nextPath);
-                }
-            }
+            //    for (const std::string& nextPath : noptrApp->GetAnimationRawPaths())
+            //    {
+            //        rawAnimationPaths.push_back(nextPath);
+            //    }
+            //}
 
-            std::unique_ptr<asset::pln::AnimationHotReloadCommand> animationAssetCMD = std::make_unique<asset::pln::AnimationHotReloadCommand>();
+            //std::unique_ptr<asset::pln::AnimationHotReloadCommand> animationAssetCMD = std::make_unique<asset::pln::AnimationHotReloadCommand>();
 
-            animationAssetCMD->AddBinaryAnimationDirectories(binaryAnimationPaths);
-            animationAssetCMD->AddRawAnimationDirectories(rawAnimationPaths);
+            //animationAssetCMD->AddBinaryAnimationDirectories(binaryAnimationPaths);
+            //animationAssetCMD->AddRawAnimationDirectories(rawAnimationPaths);
 
             std::vector<std::string> manifestRawFilePaths;
             std::vector<std::string> manifestBinaryFilePaths;
@@ -393,7 +393,7 @@ namespace r2
             mAssetCommands.push_back(std::move(materialAssetCMD));
 			mAssetCommands.push_back(std::move(texturePackAssetCommand));
 			mAssetCommands.push_back(std::move(modelAssetCMD));
-			mAssetCommands.push_back(std::move(animationAssetCMD));
+		//	mAssetCommands.push_back(std::move(animationAssetCMD));
             mAssetCommands.push_back(std::move(shaderAssetCommand));
             mAssetCommands.push_back(std::move(soundAssetCommand));
             mAssetCommands.push_back(std::move(gameAssetCommand));

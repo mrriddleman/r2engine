@@ -118,8 +118,8 @@ namespace r2::asset::pln
 
 			if (std::filesystem::is_empty(outputDirPath))
 			{
-				int result = pln::assetconvert::RunAnimationConverter(inputDirPath.string(), outputDirPath.string());
-				R2_CHECK(result == 0, "Failed to create the ranim files of: %s\n", inputDirPath.string().c_str());
+			//	int result = pln::assetconvert::RunAnimationConverter(inputDirPath.string(), outputDirPath.string());
+			//	R2_CHECK(result == 0, "Failed to create the ranim files of: %s\n", inputDirPath.string().c_str());
 			}
 			else
 			{
@@ -137,9 +137,9 @@ namespace r2::asset::pln
 
 					if (std::filesystem::is_empty(outputPath))
 					{
-						int result = pln::assetconvert::RunAnimationConverter(p.path().string(), outputPath.string());
+				//		int result = pln::assetconvert::RunAnimationConverter(p.path().string(), outputPath.string());
 
-						R2_CHECK(result == 0, "Failed to create the ranm files of: %s\n", p.path().string().c_str());
+					//	R2_CHECK(result == 0, "Failed to create the ranm files of: %s\n", p.path().string().c_str());
 					}
 				}
 			}

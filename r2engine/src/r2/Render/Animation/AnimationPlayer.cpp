@@ -7,22 +7,18 @@
 #include "r2pch.h"
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "AnimationPlayer.h"
-#include "r2/Render/Model/Model.h"
 #include "r2/Render/Animation/Animation.h"
 #include "r2/Core/Math/MathUtils.h"
 #include "r2/Utils/Hash.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include "r2/Utils/Timer.h"
 
 namespace
 {
     std::vector<f64> s_CalcBoneRuns;
 
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
+    void CalculateStaticDebugBones(const r2::draw::Model& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
 
-    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
+    void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::Model& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset);
     
     r2::draw::AnimationChannel* FindChannel(const r2::draw::Animation& animation, u64 hashName);
     
@@ -95,19 +91,19 @@ namespace r2::draw
 		u32 timeInMilliseconds,
 		u32 startTime,
 		bool loop,
-		const AnimModel& model,
+		const Model& model,
 		const Animation* animation,
 		r2::SArray<ShaderBoneTransform>& outBoneTransforms,
         r2::SArray<DebugBone>* outDebugBones,
 		u64 offset) 
     {
-		if (r2::sarr::Capacity(outBoneTransforms) < r2::sarr::Size(*model.boneInfo))
+		if (r2::sarr::Capacity(outBoneTransforms) < r2::sarr::Size(*model.optrBoneInfo))
 		{
 			R2_CHECK(false, "We must have enough space to put the final bone transforms in!");
 			return 0;
 		}
 
-        if (outBoneTransforms.mSize + model.boneInfo->mSize > r2::sarr::Capacity(outBoneTransforms))
+        if (outBoneTransforms.mSize + model.optrBoneInfo->mSize > r2::sarr::Capacity(outBoneTransforms))
         {
             R2_CHECK(false, "We must have enough space to put the final bone transforms in!");
             return 0;
@@ -118,10 +114,10 @@ namespace r2::draw
             const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
             r2::SArray<r2::math::Transform>* tempTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
 
-			outBoneTransforms.mSize += model.boneInfo->mSize;
+			outBoneTransforms.mSize += model.optrBoneInfo->mSize;
             if (outDebugBones)
             {
-                outDebugBones->mSize += model.boneInfo->mSize;
+                outDebugBones->mSize += model.optrBoneInfo->mSize;
             }
 			
 
@@ -131,14 +127,14 @@ namespace r2::draw
             {
                 u64 hashName = r2::sarr::At(*model.skeleton.mJointNames, j);
 				s32 theDefault = -1;
-				s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, hashName, theDefault);
+				s32 boneMapResult = r2::shashmap::Get(*model.optrBoneMapping, hashName, theDefault);
 
                 if (boneMapResult != theDefault)
                 {
                     u32 boneIndex = boneMapResult;
-					r2::sarr::At(outBoneTransforms, boneIndex + offset).globalInv = model.model.globalInverseTransform;
+					r2::sarr::At(outBoneTransforms, boneIndex + offset).globalInv = model.globalInverseTransform;
 					r2::sarr::At(outBoneTransforms, boneIndex + offset).transform = r2::math::ToMatrix(r2::sarr::At(*tempTransforms, j));
-					r2::sarr::At(outBoneTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
+					r2::sarr::At(outBoneTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.optrBoneInfo, boneIndex).offsetTransform;
                 }
             }
 
@@ -180,10 +176,10 @@ namespace r2::draw
 
 //		R2_CHECK(animationTime <= animation->duration, "Hmmm");
 
-        outBoneTransforms.mSize += model.boneInfo->mSize;
+        outBoneTransforms.mSize += model.optrBoneInfo->mSize;
         if (outDebugBones)
         {
-            outDebugBones->mSize += model.boneInfo->mSize;
+            outDebugBones->mSize += model.optrBoneInfo->mSize;
         }
         
 
@@ -202,7 +198,7 @@ namespace r2::draw
 
 namespace
 {
-    void CalculateStaticDebugBones(const r2::draw::AnimModel& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
+    void CalculateStaticDebugBones(const r2::draw::Model& model, r2::SArray<r2::math::Transform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
     {
 		const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
 		r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -223,7 +219,7 @@ namespace
 			}
 
 			s32 theDefault = -1;
-			s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, hashName, theDefault);
+			s32 boneMapResult = r2::shashmap::Get(*model.optrBoneMapping, hashName, theDefault);
 
             if (boneMapResult != theDefault)
             {
@@ -250,7 +246,7 @@ namespace
         FREE(tempGlobalTransforms, *MEM_ENG_SCRATCH_PTR);
     }
 
-	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::AnimModel& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
+	void CalculateBoneTransforms(f64 animationTime, const r2::draw::Animation& animation, const r2::draw::Model& model, r2::SArray<r2::draw::ShaderBoneTransform>& outTransforms, r2::SArray<r2::draw::DebugBone>* outDebugBones, u64 offset)
 	{
         const u64 numJoints = r2::sarr::Size(*model.skeleton.mJointNames);
         r2::SArray<r2::math::Transform>* tempGlobalTransforms = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::math::Transform, numJoints);
@@ -295,7 +291,7 @@ namespace
 
 			s32 theDefault = -1;
 
-			s32 boneMapResult = r2::shashmap::Get(*model.boneMapping, hashName, theDefault);
+			s32 boneMapResult = r2::shashmap::Get(*model.optrBoneMapping, hashName, theDefault);
 
             if (boneMapResult != theDefault)
             {
@@ -303,11 +299,11 @@ namespace
 
                 const r2::math::Transform& globalTransform = r2::sarr::At(*tempGlobalTransforms, j);
 
-                r2::sarr::At(outTransforms, boneIndex + offset).globalInv = model.model.globalInverseTransform;
+                r2::sarr::At(outTransforms, boneIndex + offset).globalInv = model.globalInverseTransform;
                 //@Optimization
                 //@TODO(Serge): slow
                 r2::sarr::At(outTransforms, boneIndex + offset).transform = r2::math::ToMatrix(globalTransform);
-                r2::sarr::At(outTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.boneInfo, boneIndex).offsetTransform;
+                r2::sarr::At(outTransforms, boneIndex + offset).invBindPose = r2::sarr::At(*model.optrBoneInfo, boneIndex).offsetTransform;
 
                 s32 realParentJointIndex = r2::sarr::At(*model.skeleton.mRealParentBones, j);
 

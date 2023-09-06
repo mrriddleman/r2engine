@@ -8,7 +8,6 @@ namespace r2::asset::pln::assetconvert
 {
 	int RunConverter(const std::string& inputDir, const std::string& outputDir);
 	int RunModelConverter(const std::string& inputDir, const std::string& outputDir, const std::string& materialManifestPath);
-	int RunAnimationConverter(const std::string& inputDir, const std::string& outputDir);
 }
 
 

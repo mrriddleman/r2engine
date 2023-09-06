@@ -275,17 +275,20 @@ namespace r2::ecs
 						}
 					}
 
-					R2_CHECK(componentIndex != -1, "Should never happen");
+				//	R2_CHECK(componentIndex != -1, "Should never happen");
+					if (componentIndex != -1)
+					{
+						Entity e = r2::sarr::At(*entitiesToAddComponentsTo, i);
 
-					Entity e = r2::sarr::At(*entitiesToAddComponentsTo, i);
+						const auto& component = r2::sarr::At(*realComponents, componentIndex);
 
-					const auto& component = r2::sarr::At(*realComponents, componentIndex);
+						AddComponent(e, component);
 
-					AddComponent(e, component);
+						auto& signature = r2::sarr::At(*entitySignatures, i);
 
-					auto& signature = r2::sarr::At(*entitySignatures, i);
-
-					signature.set(componentType, true);
+						signature.set(componentType, true);
+					}
+					
 				}
 			}
 			

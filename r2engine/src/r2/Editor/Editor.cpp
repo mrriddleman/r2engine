@@ -293,11 +293,11 @@ namespace r2
 
 				r2::draw::ModelHandle microbatModelHandle = gameAssetManager.LoadAsset(microbatAsset);
 
-				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(microbatModelHandle);
+				auto microbatAnimModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(microbatModelHandle);
 
-				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(microbatAnimModel);
+				r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::renderer::UploadModel(microbatAnimModel);
 
-				AddModelToLevel(microbatAsset.HashID(), microbatAnimModel->model);
+				AddModelToLevel(microbatAsset.HashID(), *microbatAnimModel);
 
 				ecs::RenderComponent renderComponent;
 				renderComponent.assetModelHash = microbatAsset.HashID();
@@ -376,7 +376,7 @@ namespace r2
 
 				r2::SArray<r2::draw::ShaderBoneTransform>* shaderBones;
 				*/
-				r2::asset::Asset animationAsset0 = r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION);
+				//r2::asset::Asset animationAsset0 = r2::asset::Asset("micro_bat_idle.ranm", r2::asset::RANIMATION);
 
 				
 
@@ -384,7 +384,7 @@ namespace r2
 				skeletalAnimationComponent.animModelAssetName = microbatAsset.HashID();
 				skeletalAnimationComponent.animModel = microbatAnimModel;
 				skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
-				skeletalAnimationComponent.startingAnimationAssetName = animationAsset0.HashID();
+				skeletalAnimationComponent.startingAnimationAssetName = r2::sarr::At(*microbatAnimModel->optrAnimations, 0)->assetName; //animationAsset0.HashID();
 				skeletalAnimationComponent.startTime = 0; //.startTimePerInstance = MAKE_SARRAY(mMallocArena, u32, 1);
 			//	r2::sarr::Push(*skeletalAnimationComponent.startTimePerInstance, 0u);
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.startTimePerInstance);
@@ -394,19 +394,19 @@ namespace r2
 			//	mComponentAllocations.push_back(skeletalAnimationComponent.loopPerInstance);
 	
 
-				r2::asset::AssetHandle animationHandle0 = gameAssetManager.LoadAsset(animationAsset0);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
+			//	r2::asset::AssetHandle animationHandle0 = gameAssetManager.LoadAsset(animationAsset0);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset0);
 
-				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle0);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
+				skeletalAnimationComponent.animation = r2::sarr::At(*microbatAnimModel->optrAnimations, 0);//gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle0);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle0);
 
-				AddAnimationToLevel(animationHandle0.handle, *skeletalAnimationComponent.animation);
+				//AddAnimationToLevel(animationHandle0.handle, *skeletalAnimationComponent.animation);
 
-				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
 				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
 				ecs::DebugBoneComponent debugBoneComponent;
 				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 				r2::sarr::Clear(*debugBoneComponent.debugBones);
 				mComponentAllocations.push_back(debugBoneComponent.debugBones);
 
@@ -476,13 +476,13 @@ namespace r2
 
 					ecs::DebugBoneComponent debugBoneInstance1;
 					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
-					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 					r2::sarr::Clear(*debugBoneInstance1.debugBones);
 					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
 
 					ecs::DebugBoneComponent debugBoneInstance2;
 					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
-					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 					r2::sarr::Clear(*debugBoneInstance2.debugBones);
 					mComponentAllocations.push_back(debugBoneInstance2.debugBones);
 
@@ -500,21 +500,21 @@ namespace r2
 					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
 
 
-					r2::asset::Asset animationAsset1 = r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION);
-					r2::asset::Asset animationAsset2 = r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION);
+					//r2::asset::Asset animationAsset1 = r2::asset::Asset("micro_bat_invert_idle.ranm", r2::asset::RANIMATION);
+					//r2::asset::Asset animationAsset2 = r2::asset::Asset("micro_bat_attack.ranm", r2::asset::RANIMATION);
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
 					skeletalAnimationInstance1.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance1.animModel = microbatAnimModel;
 					skeletalAnimationInstance1.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-					skeletalAnimationInstance1.startingAnimationAssetName = animationAsset1.HashID();
+					skeletalAnimationInstance1.startingAnimationAssetName = r2::sarr::At(*microbatAnimModel->optrAnimations, 1)->assetName;
 					skeletalAnimationInstance1.startTime = 0; 
 					skeletalAnimationInstance1.shouldLoop = true;
 
-					r2::asset::AssetHandle animationHandle1 = gameAssetManager.LoadAsset(animationAsset1);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
-					skeletalAnimationInstance1.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle1);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
+					//r2::asset::AssetHandle animationHandle1 = gameAssetManager.LoadAsset(animationAsset1);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset1);
+					skeletalAnimationInstance1.animation = r2::sarr::At(*microbatAnimModel->optrAnimations, 1);//gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle1);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle1);
 
-					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->boneInfo));
+					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->optrBoneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
 					mComponentAllocations.push_back(skeletalAnimationInstance1.shaderBones);
 
@@ -523,17 +523,17 @@ namespace r2
 					skeletalAnimationInstance2.animModelAssetName = microbatAsset.HashID();
 					skeletalAnimationInstance2.animModel = microbatAnimModel;
 					skeletalAnimationInstance2.shouldUseSameTransformsForAllInstances = skeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-					skeletalAnimationInstance2.startingAnimationAssetName = animationAsset2.HashID();
+					skeletalAnimationInstance2.startingAnimationAssetName = r2::sarr::At(*microbatAnimModel->optrAnimations, 2)->assetName;
 					skeletalAnimationInstance2.startTime = 0;
 					skeletalAnimationInstance2.shouldLoop = true;
 
-					r2::asset::AssetHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
-					skeletalAnimationInstance2.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle2);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
+				//	r2::asset::AssetHandle animationHandle2 = gameAssetManager.LoadAsset(animationAsset2);//r2::draw::animcache::LoadAnimation(*editorAnimationCache, animationAsset2);
+					skeletalAnimationInstance2.animation = r2::sarr::At(*microbatAnimModel->optrAnimations, 2);//gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle2);//r2::draw::animcache::GetAnimation(*editorAnimationCache, animationHandle2);
 
-					AddAnimationToLevel(animationHandle1.handle, *skeletalAnimationInstance1.animation);
-					AddAnimationToLevel(animationHandle2.handle, *skeletalAnimationInstance2.animation);
+					//AddAnimationToLevel(animationHandle1.handle, *skeletalAnimationInstance1.animation);
+					//AddAnimationToLevel(animationHandle2.handle, *skeletalAnimationInstance2.animation);
 
-					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->boneInfo));
+					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->optrBoneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
 					mComponentAllocations.push_back(skeletalAnimationInstance2.shaderBones);
 

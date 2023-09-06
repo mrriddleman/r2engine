@@ -52,7 +52,7 @@ namespace r2::ecs
 			R2_CHECK(animationComponent.shaderBones != nullptr, "These should not be null");
 
 			u32 numInstancesToAnimate = 1;
-			const u32 numShaderBones = r2::sarr::Size(*animationComponent.animModel->boneInfo);
+			const u32 numShaderBones = r2::sarr::Size(*animationComponent.animModel->optrBoneInfo);
 			u32 totalNumShaderBones = numShaderBones;
 
 			if (instancedAnimationComponent)

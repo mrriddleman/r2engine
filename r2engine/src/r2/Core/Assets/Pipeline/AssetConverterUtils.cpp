@@ -37,7 +37,10 @@ namespace r2::asset::pln::assetconvert
 		return RunSystemCommand(command);
 	}
 
-	int RunModelConverter(const std::string& inputDir, const std::string& outputDir, const std::string& materialManifestPath)
+	int RunModelConverter(
+		const std::string& inputDir,
+		const std::string& outputDir,
+		const std::string& materialManifestPath)
 	{
 		char command[Kilobytes(2)];
 		std::string converterEXEPathStr = R2_ENGINE_ASSET_CONVERTER_EXE;
@@ -54,12 +57,12 @@ namespace r2::asset::pln::assetconvert
 		std::filesystem::path materialPath = materialManifestPath;
 		materialPath.make_preferred();
 
-		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -m %s -a false", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str(), materialPath.string().c_str());
+		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -m %s", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str(), materialPath.string().c_str());
 
 		return RunSystemCommand(command);
 	}
 
-	int RunAnimationConverter(const std::string& inputDir, const std::string& outputDir)
+	/*int RunAnimationConverter(const std::string& inputDir, const std::string& outputDir)
 	{
 		char command[Kilobytes(2)];
 		std::string converterEXEPathStr = R2_ENGINE_ASSET_CONVERTER_EXE;
@@ -76,7 +79,7 @@ namespace r2::asset::pln::assetconvert
 		sprintf_s(command, Kilobytes(2), "%s -i %s -o %s -a true", converterEXEPath.string().c_str(), inputDirPath.string().c_str(), outputDirPath.string().c_str());
 
 		return RunSystemCommand(command);
-	}
+	}*/
 }
 
 #endif

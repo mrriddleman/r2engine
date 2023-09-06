@@ -4,8 +4,11 @@
 #include "assetlib/RModel_generated.h"
 #include "assetlib/RModelMetaData_generated.h"
 #include "assetlib/ModelAsset.h"
+#include "assetlib/RAnimation_generated.h"
+#include "assetlib/RAnimationMetaData_generated.h"
 #include "r2/Core/Assets/AssetFiles/MemoryAssetFile.h"
 #include "r2/Render/Model/Model.h"
+#include "r2/Render/Animation/Animation.h"
 #include <glm/glm.hpp>
 
 namespace r2::asset
@@ -100,21 +103,66 @@ namespace r2::asset
 		}
 
 		totalSize += meshDataSize;
-		
+
+		u32 numBones = 0;
+		u32 numBoneData = 0;
+		u32 maxNumChannels = 0;
+		u32 numAnimationsInModel = 0;
+		u32 numJoints = 0;
+
 		if (metaData->isAnimatedModel())
 		{
-			totalSize += r2::draw::Skeleton::MemorySizeNoData(metaData->skeletonMetaData()->numJoints(), alignment, header, boundsChecking);
-			
-			const auto numBones = metaData->boneMetaData()->numBoneInfo();
+			numBones = metaData->boneMetaData()->numBoneInfo();
+			numBoneData = metaData->boneMetaData()->numBoneData();
+			numJoints = metaData->skeletonMetaData()->numJoints();
+		}
 
-			u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
+		const auto* animationsMetaData = metaData->animationMetaData();
 
-			totalSize += r2::draw::AnimModel::MemorySizeNoData(hashCapacity, totalVertices, numBones, metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
+		if (animationsMetaData)
+		{
+			const auto numAnimations = animationsMetaData->size();
+			numAnimationsInModel = numAnimations;
 
-			return static_cast<u64>(totalSize);
+			for (u32 i = 0; i < numAnimations; ++i)
+			{
+				const flat::RAnimationMetaData* animationMetaData = animationsMetaData->Get(i);
+				const auto* channelsMetaData = animationMetaData->channelsMetaData();
+				const auto numChannels = channelsMetaData->size();
+
+				u64 bytes = r2::draw::Animation::MemorySize(numChannels, alignment, header, boundsChecking);
+
+				for (u32 j = 0; j < numChannels; ++j)
+				{
+					const auto channelMetaData = channelsMetaData->Get(j);
+					bytes += r2::draw::AnimationChannel::MemorySizeNoData(
+						channelMetaData->numPositionKeys(),
+						channelMetaData->numScaleKeys(),
+						channelMetaData->numRotationKeys(),
+						animationMetaData->durationInTicks(),
+						alignment, header, boundsChecking);
+				}
+
+				totalSize += bytes;
+			}
 		}
 		
-		totalSize += r2::draw::Model::ModelMemorySize(metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
+		totalSize += r2::draw::Model::MemorySize(metaData->numMeshes(), metaData->numMaterials(), numJoints, totalVertices, numBones, numAnimationsInModel, alignment, header, boundsChecking);
+
+		//if (metaData->isAnimatedModel())
+		//{
+		//	totalSize += r2::draw::Skeleton::MemorySizeNoData(metaData->skeletonMetaData()->numJoints(), alignment, header, boundsChecking);
+		//	
+		//	const auto numBones = metaData->boneMetaData()->numBoneInfo();
+
+		//	u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
+
+		//	totalSize += r2::draw::AnimModel::MemorySizeNoData(hashCapacity, totalVertices, numBones, metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
+
+		//	return static_cast<u64>(totalSize);
+		//}
+		//
+		//totalSize += r2::draw::Model::ModelMemorySize(metaData->numMeshes(), metaData->numMaterials(), alignment, header, boundsChecking);
 
 		return totalSize;
 	}
@@ -141,40 +189,106 @@ namespace r2::asset
 		const auto numVertices = metaData->numVertices();
 		const auto numMaterials = metaData->numMaterials();
 
+		
+		r2::draw::Model* model = new (dataPtr) r2::draw::Model();
+
+		R2_CHECK(model != nullptr, "We should have a proper model!");
+
+		model->optrBoneData = nullptr;
+		model->optrBoneInfo = nullptr;
+		model->optrBoneMapping = nullptr;
+		model->skeleton.mBindPoseTransforms = nullptr;
+		model->skeleton.mJointNames = nullptr;
+		model->skeleton.mParents = nullptr;
+		model->skeleton.mRealParentBones = nullptr;
+		model->skeleton.mRestPoseTransforms = nullptr;
+		model->optrAnimations = nullptr;
+
+		startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
+
+		model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterials);
+
+		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials));
+
+		model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
+
+		startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(numMeshes));
+
+		const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
+
+		model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
+
+		model->assetName = metaData->modelName();
+
+		//materials
+
+		const auto flatMaterialNames = modelData->materials();
+
+		for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
+		{
+			const auto* materialName = flatMaterialNames->Get(i);
+			R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
+
+			r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
+		}
+
+		const auto flatMeshes = modelData->meshes();
+
+		for (flatbuffers::uoffset_t i = 0; i < flatMeshes->size(); ++i)
+		{
+			r2::draw::Mesh* nextMeshPtr = new (startOfArrayPtr) r2::draw::Mesh();
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Mesh));
+
+			const auto numVertices = metaData->meshInfos()->Get(i)->vertexBufferSize() / sizeof(r2::draw::Vertex);
+			const auto numIndices = metaData->meshInfos()->Get(i)->indexBufferSize() / metaData->meshInfos()->Get(i)->sizeOfAnIndex();
+
+			R2_CHECK(numIndices > 0, "We should have indices for this format");
+
+			nextMeshPtr->optrVertices = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Vertex, numVertices);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Vertex>::MemorySize(numVertices));
+
+			nextMeshPtr->optrIndices = EMPLACE_SARRAY(startOfArrayPtr, u32, numIndices);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u32>::MemorySize(numIndices));
+
+			r2::assets::assetlib::unpack_mesh(
+				metaData,
+				i,
+				reinterpret_cast<const char*>(modelData->meshes()->Get(i)->data()->Data()),
+				metaData->meshInfos()->Get(i)->compressedSize(),
+				reinterpret_cast<char*>(nextMeshPtr->optrVertices->mData),
+				reinterpret_cast<char*>(nextMeshPtr->optrIndices->mData));
+
+			nextMeshPtr->optrIndices->mSize = numIndices;
+			nextMeshPtr->optrVertices->mSize = numVertices;
+
+			nextMeshPtr->assetName = metaData->meshInfos()->Get(i)->meshName();
+			nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
+			const auto bounds = metaData->meshInfos()->Get(i)->meshBounds();
+
+			nextMeshPtr->objectBounds.radius = bounds->radius();
+			nextMeshPtr->objectBounds.origin = GetVec3FromFlatVec3(bounds->origin());
+			nextMeshPtr->objectBounds.extents = GetVec3FromFlatVec3(bounds->extents());
+
+			r2::sarr::Push(*model->optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
+		}
+
 		if (metaData->isAnimatedModel())
 		{
 			const auto numBones = metaData->boneMetaData()->numBoneInfo();
 
-			r2::draw::AnimModel* model = new (dataPtr) r2::draw::AnimModel();
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::AnimModel));
-
-			model->model.optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterials);
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials));
-
-			model->model.optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<const r2::draw::Mesh*>::MemorySize(numMeshes));
-
-			model->boneData = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneData, numVertices);
-
+			model->optrBoneData = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneData, numVertices);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneData>::MemorySize(numVertices));
 
-			model->boneInfo = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneInfo, numBones);
-
+			model->optrBoneInfo = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::BoneInfo, numBones);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::BoneInfo>::MemorySize(numBones));
 
 			u64 hashCapacity = static_cast<u64>(std::round(numBones * r2::SHashMap<u32>::LoadFactorMultiplier()));
 
-			model->boneMapping = MAKE_SHASHMAP_IN_PLACE(s32, startOfArrayPtr, hashCapacity);
+			model->optrBoneMapping = MAKE_SHASHMAP_IN_PLACE(s32, startOfArrayPtr, hashCapacity);
 
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<u32>::MemorySize(hashCapacity));
 
-
-			//Process the Nodes
-			model->model.assetName = metaData->modelName();
-
+			////Process the Nodes
 			const u64 numJoints = metaData->skeletonMetaData()->numJoints();
 			const u64 numBindPoseTransforms = metaData->skeletonMetaData()->numBindPoseTransforms();
 
@@ -193,60 +307,7 @@ namespace r2::asset
 			model->skeleton.mRealParentBones = EMPLACE_SARRAY(startOfArrayPtr, s32, numBindPoseTransforms);
 			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<s32>::MemorySize(numBindPoseTransforms));
 
-			
 
-			//Model data
-			const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
-
-			model->model.globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
-
-			//materials
-
-			const auto flatMaterialNames = modelData->materials();
-
-			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
-			{
-				const auto* materialName = flatMaterialNames->Get(i);
-				R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
-
-				r2::sarr::Push(*model->model.optrMaterialNames, { materialName->name(), materialName->materialPackName() });
-			}
-
-			const auto flatMeshes = modelData->meshes();
-
-			for (flatbuffers::uoffset_t i = 0; i < flatMeshes->size(); ++i)
-			{
-				r2::draw::Mesh* nextMeshPtr = new (startOfArrayPtr) r2::draw::Mesh();
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Mesh));
-
-				const auto numVertices = metaData->meshInfos()->Get(i)->vertexBufferSize() / sizeof(r2::draw::Vertex);
-				const auto numIndices = metaData->meshInfos()->Get(i)->indexBufferSize() / metaData->meshInfos()->Get(i)->sizeOfAnIndex();
-
-				R2_CHECK(numIndices > 0, "We should have indices for this format");
-
-				nextMeshPtr->optrVertices = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Vertex, numVertices);
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Vertex>::MemorySize(numVertices));
-
-				nextMeshPtr->optrIndices = EMPLACE_SARRAY(startOfArrayPtr, u32, numIndices);
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u32>::MemorySize(numIndices));
-				
-				r2::assets::assetlib::unpack_mesh(
-					metaData,
-					i,
-					reinterpret_cast<const char*>(modelData->meshes()->Get(i)->data()->Data()),
-					metaData->meshInfos()->Get(i)->compressedSize(),
-					reinterpret_cast<char*>(nextMeshPtr->optrVertices->mData),
-					reinterpret_cast<char*>(nextMeshPtr->optrIndices->mData));
-
-				nextMeshPtr->optrIndices->mSize = numIndices;
-				nextMeshPtr->optrVertices->mSize = numVertices;
-
-				nextMeshPtr->assetName = metaData->meshInfos()->Get(i)->meshName();
-				nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
-
-				r2::sarr::Push(*model->model.optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
-			}
-			
 			//Animation data
 			const auto flatBoneInfos = modelData->animationData()->boneInfo();
 
@@ -255,7 +316,7 @@ namespace r2::asset
 				r2::draw::BoneInfo boneInfo;
 				boneInfo.offsetTransform = GetGLMMatrix4FromFlatMatrix(&flatBoneInfos->Get(i)->offsetTransform());
 
-				r2::sarr::Push(*model->boneInfo, boneInfo);
+				r2::sarr::Push(*model->optrBoneInfo, boneInfo);
 			}
 
 			const auto flatBoneData = modelData->animationData()->boneData();
@@ -266,14 +327,14 @@ namespace r2::asset
 				boneData.boneWeights = GetVec4FromFlatVec4(&flatBoneData->Get(i)->boneWeights());
 				boneData.boneIDs = GetIVec4FromFlatIVec4(&flatBoneData->Get(i)->boneIDs());
 
-				r2::sarr::Push(*model->boneData, boneData);
+				r2::sarr::Push(*model->optrBoneData, boneData);
 			}
 
 			const auto flatBoneMapEntries = modelData->animationData()->boneMapping();
 
 			for (flatbuffers::uoffset_t i = 0; i < flatBoneMapEntries->size(); ++i)
 			{
-				r2::shashmap::Set(*model->boneMapping, flatBoneMapEntries->Get(i)->key(), flatBoneMapEntries->Get(i)->val());
+				r2::shashmap::Set(*model->optrBoneMapping, flatBoneMapEntries->Get(i)->key(), flatBoneMapEntries->Get(i)->val());
 			}
 
 			const auto flatJoints = modelData->animationData()->jointNames();
@@ -312,81 +373,115 @@ namespace r2::asset
 				r2::sarr::Push(*model->skeleton.mRealParentBones, flatRealParents->Get(i));
 			}
 		}
-		else
+
+		const auto* animationMetaData = metaData->animationMetaData();
+		
+		if (animationMetaData && animationMetaData->size() > 0)
 		{
-			r2::draw::Model* model = new (dataPtr) r2::draw::Model();
+			R2_CHECK(modelData->animations()->size() == animationMetaData->size(), "These should always be the same");
+			
+			const auto* animations = modelData->animations();
 
-			R2_CHECK(model != nullptr, "We should have a proper model!");
+			const auto numAnimations = modelData->animations()->size();
 
-			startOfArrayPtr = r2::mem::utils::PointerAdd(dataPtr, sizeof(r2::draw::Model));
+			model->optrAnimations = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Animation*, numAnimations);
+			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Animation*>::MemorySize(numAnimations));
 
-			model->optrMaterialNames = EMPLACE_SARRAY(startOfArrayPtr, r2::mat::MaterialName, numMaterials);
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::mat::MaterialName>::MemorySize(numMaterials));
-
-			model->optrMeshes = EMPLACE_SARRAY(startOfArrayPtr, const r2::draw::Mesh*, numMeshes);
-
-			startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Mesh>::MemorySize(numMeshes));
-
-			const flat::Matrix4* flatGlobalInverse = modelData->globalInverseTransform();
-
-			model->globalInverseTransform = GetGLMMatrix4FromFlatMatrix(flatGlobalInverse);
-
-			model->assetName = metaData->modelName();
-
-			//materials
-
-			const auto flatMaterialNames = modelData->materials();
-
-			for (flatbuffers::uoffset_t i = 0; i < flatMaterialNames->size(); ++i)
+			for (u32 i = 0; i < numAnimations; ++i)
 			{
-				const auto* materialName = flatMaterialNames->Get(i);
-				R2_CHECK(materialName->materialPackName() != 0, "The material pack name should never be nullptr");
+				const flat::RAnimation* flatAnimationData = animations->Get(i);
 
-				r2::sarr::Push(*model->optrMaterialNames, { materialName->name(), materialName->materialPackName() });
-			}
+				r2::draw::Animation* animation = new (startOfArrayPtr) r2::draw::Animation();
 
-			const auto flatMeshes = modelData->meshes();
+				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Animation));
 
-			for (flatbuffers::uoffset_t i = 0; i < flatMeshes->size(); ++i)
-			{
-				r2::draw::Mesh* nextMeshPtr = new (startOfArrayPtr) r2::draw::Mesh();
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, sizeof(r2::draw::Mesh));
+				const auto* flatChannels = flatAnimationData->channels();
+				const auto numChannels = flatChannels->size();
 
-				const auto numVertices = metaData->meshInfos()->Get(i)->vertexBufferSize() / sizeof(r2::draw::Vertex);
-				const auto numIndices = metaData->meshInfos()->Get(i)->indexBufferSize() / metaData->meshInfos()->Get(i)->sizeOfAnIndex();
+				const auto hashMapSize = glm::round( numChannels * r2::SHashMap<r2::draw::AnimationChannel>::LoadFactorMultiplier() );
 
-				R2_CHECK(numIndices > 0, "We should have indices for this format");
+				if (numChannels > 0)
+				{
+					animation->channels = MAKE_SHASHMAP_IN_PLACE(r2::draw::AnimationChannel, startOfArrayPtr, hashMapSize);
+					startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SHashMap<r2::draw::AnimationChannel>::MemorySize(hashMapSize));
+				}
 
-				nextMeshPtr->optrVertices = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::Vertex, numVertices);
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::Vertex>::MemorySize(numVertices));
+				animation->assetName = flatAnimationData->animationName();
+				animation->ticksPerSeconds = flatAnimationData->ticksPerSeconds();
 
-				nextMeshPtr->optrIndices = EMPLACE_SARRAY(startOfArrayPtr, u32, numIndices);
-				startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<u32>::MemorySize(numIndices));
+				double maxChannelDuration = 0;
 
-				r2::assets::assetlib::unpack_mesh(
-					metaData,
-					i,
-					reinterpret_cast<const char*>(modelData->meshes()->Get(i)->data()->Data()),
-					metaData->meshInfos()->Get(i)->compressedSize(),
-					reinterpret_cast<char*>(nextMeshPtr->optrVertices->mData),
-					reinterpret_cast<char*>(nextMeshPtr->optrIndices->mData));
+				for (u32 i = 0; i < numChannels; ++i)
+				{
+					const flat::Channel* flatChannel = flatChannels->Get(i);
 
-				nextMeshPtr->optrIndices->mSize = numIndices;
-				nextMeshPtr->optrVertices->mSize = numVertices;
+					r2::draw::AnimationChannel channel;
 
-				nextMeshPtr->assetName = metaData->meshInfos()->Get(i)->meshName();
-				nextMeshPtr->materialIndex = modelData->meshes()->Get(i)->materialIndex();
-				const auto bounds = metaData->meshInfos()->Get(i)->meshBounds();
+					channel.hashName = flatChannel->channelName();
+					const auto positionKeys = flatChannel->positionKeys();
+					const auto numPositionKeys = flatChannel->positionKeys()->size();
+					if (numPositionKeys > 0)
+					{
+						channel.positionKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numPositionKeys);
 
-				nextMeshPtr->objectBounds.radius = bounds->radius();
-				nextMeshPtr->objectBounds.origin = GetVec3FromFlatVec3(bounds->origin());
-				nextMeshPtr->objectBounds.extents = GetVec3FromFlatVec3(bounds->extents());
+						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numPositionKeys));
+					}
 
-				r2::sarr::Push(*model->optrMeshes, const_cast<const r2::draw::Mesh*>(nextMeshPtr));
+					for (u32 pKey = 0; pKey < numPositionKeys; ++pKey)
+					{
+						const auto flatPositionKey = positionKeys->Get(pKey);
+						const auto flatPositionValue = flatPositionKey->value();
+
+						r2::sarr::Push(*channel.positionKeys, { flatPositionKey->time(), glm::vec3(flatPositionValue.x(), flatPositionValue.y(), flatPositionValue.z()) });
+
+						maxChannelDuration = std::max(flatPositionKey->time(), maxChannelDuration);
+					}
+
+					const auto scaleKeys = flatChannel->scaleKeys();
+					const auto numScaleKeys = scaleKeys->size();
+
+					if (numScaleKeys > 0)
+					{
+						channel.scaleKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::VectorKey, numScaleKeys);
+						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::VectorKey>::MemorySize(numScaleKeys));
+					}
+
+					for (u32 sKey = 0; sKey < numScaleKeys; ++sKey)
+					{
+						const auto flatScaleKey = scaleKeys->Get(sKey);
+						const auto flatScaleValue = flatScaleKey->value();
+						r2::sarr::Push(*channel.scaleKeys, { flatScaleKey->time(), glm::vec3(flatScaleValue.x(), flatScaleValue.y(), flatScaleValue.z()) });
+
+						maxChannelDuration = std::max(flatScaleKey->time(), maxChannelDuration);
+					}
+					const auto rotationKeys = flatChannel->rotationKeys();
+					const auto numRotationKeys = rotationKeys->size();
+
+					if (numRotationKeys > 0)
+					{
+						channel.rotationKeys = EMPLACE_SARRAY(startOfArrayPtr, r2::draw::RotationKey, numRotationKeys);
+						startOfArrayPtr = r2::mem::utils::PointerAdd(startOfArrayPtr, r2::SArray<r2::draw::RotationKey>::MemorySize(numRotationKeys));
+					}
+
+					for (u32 rKey = 0; rKey < numRotationKeys; ++rKey)
+					{
+						const auto flatRotationKey = rotationKeys->Get(rKey);
+						const auto flatRotationValue = flatRotationKey->value();
+						r2::sarr::Push(*channel.rotationKeys, { flatRotationKey->time(), glm::quat(flatRotationValue.w(), flatRotationValue.x(), flatRotationValue.y(), flatRotationValue.z()) });
+
+						maxChannelDuration = std::max(flatRotationKey->time(), maxChannelDuration);
+					}
+
+					r2::shashmap::Set(*animation->channels, channel.hashName, channel);
+				}
+
+				//@TODO(Serge): this should be taken care of when we convert the animation, but for now this will suffice
+				animation->duration = std::min(flatAnimationData->durationInTicks(), maxChannelDuration);
+
+
+				r2::sarr::Push(*model->optrAnimations, animation);
 			}
 		}
-
 
 		return true;
 	}

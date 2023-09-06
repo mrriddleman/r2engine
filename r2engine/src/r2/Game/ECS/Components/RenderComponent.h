@@ -11,7 +11,7 @@ namespace r2::ecs
 	{
 		u64 assetModelHash;
 		u32 primitiveType;
-		b32 isAnimated;
+		b32 isAnimated; //@TODO(Serge): see if we can get rid of this
 		r2::draw::DrawParameters drawParameters;
 		r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
 		r2::SArray<r2::mat::MaterialName>* optrMaterialOverrideNames;

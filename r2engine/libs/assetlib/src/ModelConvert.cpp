@@ -18,6 +18,8 @@
 #include "assetlib/RModel_generated.h"
 #include "assetlib/ModelAsset.h"
 #include "assetlib/AssetUtils.h"
+#include "assetlib/AnimationConvert.h"
+
 
 #define MAX_BONE_WEIGHTS 4
 
@@ -114,6 +116,10 @@ namespace r2::assets::assetlib
 		std::unordered_map<uint64_t, int> boneMapping;
 
 		Skeleton skeleton;
+
+		std::string animationParentDirectory;
+
+		std::vector<Animation> animations;
 	};
 
 	std::unordered_map<std::string, uint32_t> mBoneNecessityMap;
@@ -249,7 +255,12 @@ namespace r2::assets::assetlib
 		return transform;
 	}
 
-	bool ConvertModel(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::filesystem::path& binaryMaterialParamPacksManifestFile, const std::string& extension)
+	bool ConvertModel(
+		const std::filesystem::path& inputFilePath,
+		const std::filesystem::path& parentOutputDir,
+		const std::filesystem::path& binaryMaterialParamPacksManifestFile,
+		const std::filesystem::path& animationParentDirectory,
+		const std::string& extension)
 	{
 		mJoints.clear();
 		mBoneNecessityMap.clear();
@@ -294,7 +305,8 @@ namespace r2::assets::assetlib
 		Model model;
 		model.binaryMaterialPath = binaryMaterialParamPacksManifestFile;
 		model.originalPath = inputFilePath.string();
-		
+		model.animationParentDirectory = animationParentDirectory.string();
+
 		char modelAssetName[256];
 
 		std::filesystem::path dstModelPath = inputFilePath;
@@ -342,6 +354,18 @@ namespace r2::assets::assetlib
 		}
 		
 		import.FreeScene();
+
+		if (!model.animationParentDirectory.empty())
+		{
+			for (const auto& dirEntry : std::filesystem::directory_iterator(model.animationParentDirectory))
+			{
+				Animation nextAnimation;
+
+				LoadAnimationFromFile(dirEntry.path(), nextAnimation);
+
+				model.animations.push_back(nextAnimation);
+			}
+		}
 
 		return ConvertModelToFlatbuffer(model, inputFilePath, parentOutputDir);
 	}
@@ -1036,6 +1060,30 @@ namespace r2::assets::assetlib
 			modelBounds.radius,
 			flat::Vertex3(modelBounds.extents[0], modelBounds.extents[1], modelBounds.extents[2]));
 
+		//Make the animation meta data here
+		std::vector<flatbuffers::Offset<flat::RAnimationMetaData>> animationsMetaData;
+		animationsMetaData.reserve(model.animations.size());
+
+		for (const auto& animation : model.animations)
+		{
+			std::vector<flatbuffers::Offset<flat::RChannelMetaData>> channelMetaDatas;
+			channelMetaDatas.reserve(animation.channels.size());
+			for (const auto& channel : animation.channels)
+			{
+				channelMetaDatas.push_back(flat::CreateRChannelMetaData(builder, channel.positionKeys.size(), channel.scaleKeys.size(), channel.rotationKeys.size()));
+			}
+
+			auto metaData = flat::CreateRAnimationMetaData(
+				builder,
+				animation.animationName,
+				animation.duration,
+				animation.ticksPerSecond,
+				builder.CreateVector(channelMetaDatas),
+				builder.CreateString(animation.originalPath));
+
+			animationsMetaData.push_back(metaData);
+		}
+
 		auto modelMetaDataOffset = flat::CreateRModelMetaData(
 			builder,
 			STRING_ID(model.modelName.c_str()),
@@ -1048,7 +1096,8 @@ namespace r2::assets::assetlib
 			model.boneData.size() > 0,
 			flat::CreateBoneMetaData(builder, model.boneData.size(), model.boneInfo.size()),
 			flat::CreateSkeletonMetaData(builder, model.skeleton.mJointNames.size(), model.skeleton.mParents.size(), model.skeleton.mRestPoseTransforms.size(), model.skeleton.mBindPoseTransforms.size()),
-			builder.CreateString(model.originalPath));
+			builder.CreateString(model.originalPath),
+			builder.CreateVector(animationsMetaData)); 
 
 		builder.Finish(modelMetaDataOffset, "mdmd");
 
@@ -1186,14 +1235,59 @@ namespace r2::assets::assetlib
 				dataBuilder.CreateVectorOfStructs(flatBindPoseTransforms),
 				dataBuilder.CreateVector(flatRealParentBones));
 		}
-		
+
+		std::vector<flatbuffers::Offset<flat::RAnimation>> flatAnimations;
+
+		for (const auto& animation : model.animations)
+		{
+			std::vector<flatbuffers::Offset<flat::Channel>> channels;
+
+			for (const auto& channel : animation.channels)
+			{
+				std::vector<flat::VectorKey> flatPositionKeys;
+				std::vector<flat::VectorKey> flatScaleKeys;
+				std::vector<flat::RotationKey> flatRotationKeys;
+
+				for (const auto& positionKey : channel.positionKeys)
+				{
+					flat::VectorKey pKey(positionKey.time, flat::Vertex3(positionKey.value.x, positionKey.value.y, positionKey.value.z));
+					flatPositionKeys.push_back(pKey);
+				}
+
+				for (const auto& scaleKey : channel.scaleKeys)
+				{
+					flat::VectorKey sKey(scaleKey.time, flat::Vertex3(scaleKey.value.x, scaleKey.value.y, scaleKey.value.z));
+					flatScaleKeys.push_back(sKey);
+				}
+
+				for (const auto& rotationKey : channel.rotationKeys)
+				{
+					flat::RotationKey rKey(rotationKey.time, flat::Quaternion(rotationKey.quat.x, rotationKey.quat.y, rotationKey.quat.z, rotationKey.quat.w));
+					flatRotationKeys.push_back(rKey);
+				}
+
+				channels.push_back(
+					flat::CreateChannel(
+						dataBuilder,
+						channel.channelName,
+						dataBuilder.CreateVectorOfStructs(flatPositionKeys),
+						dataBuilder.CreateVectorOfStructs(flatScaleKeys),
+						dataBuilder.CreateVectorOfStructs(flatRotationKeys)));
+			}
+
+			auto flatAnimationData = flat::CreateRAnimation(dataBuilder, animation.animationName, animation.duration, animation.ticksPerSecond, dataBuilder.CreateVector(channels));
+
+			flatAnimations.push_back(flatAnimationData);
+		}
+
 		const auto rmodel = flat::CreateRModel(
 			dataBuilder,
 			STRING_ID(model.modelName.c_str()),
 			&flatGlobalInverseTransform,
 			dataBuilder.CreateVector(flatMaterialNames),
 			dataBuilder.CreateVector(flatMeshes),
-			animationData);
+			animationData,
+			dataBuilder.CreateVector(flatAnimations));
 
 		dataBuilder.Finish(rmodel, "rmdl");
 

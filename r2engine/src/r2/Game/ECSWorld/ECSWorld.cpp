@@ -153,7 +153,7 @@ namespace r2::ecs
 
 				ecs::DebugBoneComponent debugBoneComponent;
 				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->boneInfo));
+				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 				r2::sarr::Clear(*debugBoneComponent.debugBones);
 				mComponentAllocations.push_back(debugBoneComponent.debugBones);
 
@@ -179,7 +179,7 @@ namespace r2::ecs
 
 				for (u32 j = 0; j < numInstances; ++j)
 				{
-					const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->boneInfo);
+					const auto numDebugBones = r2::sarr::Size(*r2::sarr::At(*instancedSkeletalAnimationComponent.instances, j).animModel->optrBoneInfo);
 
 					ecs::DebugBoneComponent debugBoneInstance1;
 					debugBoneInstance1.color = glm::vec4(1, 1, 0, 1);
@@ -246,16 +246,16 @@ namespace r2::ecs
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
 			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-			if (renderComponent.isAnimated)
-			{
-				const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
-				gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
-			}
-			else
-			{
+			//if (renderComponent.isAnimated)
+			//{
+			//	const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
+			//	gpuModelRefHandle = r2::draw::renderer::UploadAnimModel(animModel);
+			//}
+			//else
+			//{
 				const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle); 
 				gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-			}
+			//}
 
 			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
 
@@ -286,18 +286,21 @@ namespace r2::ecs
 
 			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
-			const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
+			const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
 			skeletalAnimationComponent.animModel = animModel;
 
 
-			r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
+			//r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-			r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
+			//r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
-			skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
+			//skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 
-			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
+			//@TEMPORARY!!!
+			skeletalAnimationComponent.animation = r2::sarr::At(*animModel->optrAnimations, 0);
+
+			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
 			mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
 			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
@@ -351,18 +354,20 @@ namespace r2::ecs
 
 				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
 
-				const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(modelHandle);
+				const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
 
 				skeletalAnimationComponent.animModel = animModel;
 
-				r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
+				//r2::asset::Asset animationAsset = r2::asset::Asset(skeletalAnimationComponent.startingAnimationAssetName, r2::asset::RANIMATION);
 
-				r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
+				//r2::asset::AssetHandle animationHandle = gameAssetManager.LoadAsset(animationAsset);
 
-				skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
+				//skeletalAnimationComponent.animation = gameAssetManager.GetAssetDataConst<r2::draw::Animation>(animationHandle);
 
+				//@TEMPORARY!!!
+				skeletalAnimationComponent.animation = r2::sarr::At(*animModel->optrAnimations, 0);
 
-				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->boneInfo));
+				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
 				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);

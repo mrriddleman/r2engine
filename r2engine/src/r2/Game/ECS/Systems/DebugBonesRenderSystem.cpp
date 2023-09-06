@@ -48,7 +48,7 @@ namespace r2::ecs
 				const SkeletalAnimationComponent& animationComponent = mnoptrCoordinator->GetComponent<SkeletalAnimationComponent>(e);
 
 				const u32 numModels = instancedTranformsComponent->numInstances;
-				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent.animModel->boneInfo);
+				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent.animModel->optrBoneInfo);
 
 				for (u32 j = 0; j < numModels; ++j)
 				{

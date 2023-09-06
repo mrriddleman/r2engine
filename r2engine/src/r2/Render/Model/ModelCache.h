@@ -45,10 +45,10 @@ namespace r2::draw
 
 		ModelHandle LoadModel(ModelCache* system, const r2::asset::Asset& model);
 		const Model* GetModel(ModelCache* system, const ModelHandle& handle);
-		const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle);
+//		const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle);
 
 		void ReturnModel(ModelCache* system, const Model* model);
-		void ReturnAnimModel(ModelCache* system, const AnimModel* model);
+//		void ReturnAnimModel(ModelCache* system, const AnimModel* model);
 
 		void LoadModels(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles);
 		void LoadMeshes(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<MeshHandle>& handles);

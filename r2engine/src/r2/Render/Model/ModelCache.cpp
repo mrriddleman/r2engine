@@ -279,7 +279,7 @@ namespace r2::draw::modlche
 		return model;
 	}
 
-	const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle)
+	/*const AnimModel* GetAnimModel(ModelCache* system, const ModelHandle& handle)
 	{
 		if (!system)
 		{
@@ -324,7 +324,7 @@ namespace r2::draw::modlche
 		model->model.assetName = handle.handle;
 
 		return model;
-	}
+	}*/
 
 	void ReturnModel(ModelCache* system, const Model* model)
 	{
@@ -356,32 +356,32 @@ namespace r2::draw::modlche
 
 	}
 
-	void ReturnAnimModel(ModelCache* system, const AnimModel* model)
-	{
-		if (!system)
-		{
-			R2_CHECK(false, "Passed in a null model system");
-			return;
-		}
+	//void ReturnAnimModel(ModelCache* system, const AnimModel* model)
+	//{
+	//	if (!system)
+	//	{
+	//		R2_CHECK(false, "Passed in a null model system");
+	//		return;
+	//	}
 
-		if (!model)
-		{
-			R2_CHECK(false, "Passed in a null model");
-			return;
-		}
+	//	if (!model)
+	//	{
+	//		R2_CHECK(false, "Passed in a null model");
+	//		return;
+	//	}
 
-		r2::asset::AssetCacheRecord defaultRecord;
+	//	r2::asset::AssetCacheRecord defaultRecord;
 
-		r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.assetName, defaultRecord);
+	//	r2::asset::AssetCacheRecord theRecord = r2::shashmap::Get(*system->mModels, model->model.assetName, defaultRecord);
 
-		if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
-		{
-			R2_CHECK(false, "Failed to get the asset cache record!");
-			return;
-		}
+	//	if (theRecord.GetAssetBuffer() == defaultRecord.GetAssetBuffer())
+	//	{
+	//		R2_CHECK(false, "Failed to get the asset cache record!");
+	//		return;
+	//	}
 
-		system->mModelCache->ReturnAssetBuffer(theRecord);
-	}
+	//	system->mModelCache->ReturnAssetBuffer(theRecord);
+	//}
 
 	void LoadModels(ModelCache* system, const r2::SArray<r2::asset::Asset>& assets, r2::SArray<ModelHandle>& handles)
 	{

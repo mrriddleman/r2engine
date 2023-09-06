@@ -370,8 +370,8 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle UploadModel(Renderer& renderer, const Model* model);
 	void UploadModels(Renderer& renderer, const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
+	//vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model);
+	//void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
 	void UnloadModel(Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle);
 	void UnloadStaticModelRefHandles(Renderer& renderer, const r2::SArray<vb::GPUModelRefHandle>* handles);
@@ -2576,8 +2576,15 @@ namespace r2::draw::renderer
 			return cachedHandle;
 		}
 
-		vb::GPUModelRefHandle result = vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		vb::VertexBufferLayoutHandle configHandleToUse = renderer.mStaticVertexModelConfigHandle;
 
+		if (model->optrBoneData > 0)
+		{
+			configHandleToUse = renderer.mAnimVertexModelConfigHandle;
+		}
+
+		vb::GPUModelRefHandle result = vbsys::UploadModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, configHandleToUse, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		
 		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
 
 		R2_CHECK(modelRef != nullptr, "?");
@@ -2621,6 +2628,19 @@ namespace r2::draw::renderer
 			return;
 		}
 
+		//built in limitation - all models should be either animated or static 
+		bool isAnimated = r2::sarr::At(models, 0)->optrBoneData > 0;
+#ifdef R2_DEBUG
+		//@NOTE: verify that all models are one or the other 
+		const auto numModelsToCheck = r2::sarr::Size(models);
+
+		for (u32 i = 1; i < numModelsToCheck; ++i)
+		{
+			bool animatedModel = r2::sarr::At(models, i)->optrBoneData > 0;
+			R2_CHECK(animatedModel == isAnimated, "These always need to be the same!");
+		}
+#endif
+
 		//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
 		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
 		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
@@ -2639,8 +2659,14 @@ namespace r2::draw::renderer
 
 		const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
 
-		vbsys::UploadAllModels(*renderer.mVertexBufferLayoutSystem, renderer.mStaticVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		vb::VertexBufferLayoutHandle configHandleToUse = renderer.mStaticVertexModelConfigHandle;
+		if (isAnimated)
+		{
+			configHandleToUse = renderer.mAnimVertexModelConfigHandle;
+		}
 
+		vbsys::UploadAllModels(*renderer.mVertexBufferLayoutSystem, configHandleToUse, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+		
 		const auto numModelRefs = r2::sarr::Size(modelRefs);
 
 		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
@@ -2674,125 +2700,125 @@ namespace r2::draw::renderer
 		}
 	}
 
-	vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
-	{
-		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return vb::InvalidGPUModelRefHandle;
-		}
+	//vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
+	//{
+	//	if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
+	//		return vb::InvalidGPUModelRefHandle;
+	//	}
 
-		if (!model)
-		{
-			return vb::InvalidGPUModelRefHandle;
-		}
+	//	if (!model)
+	//	{
+	//		return vb::InvalidGPUModelRefHandle;
+	//	}
 
-		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *model);
+	//	vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *model);
 
-		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
-		{
-			return cachedHandle;
-		}
+	//	if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+	//	{
+	//		return cachedHandle;
+	//	}
 
-		vb::GPUModelRefHandle result = vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+	//	vb::GPUModelRefHandle result = vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
 
-		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
+	//	vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
 
-		R2_CHECK(modelRef != nullptr, "?");
-		//now resolve the material name
+	//	R2_CHECK(modelRef != nullptr, "?");
+	//	//now resolve the material name
 
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+	//	r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-		const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
+	//	const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
 
-		for (u32 i = 0; i < numMaterialNames; ++i)
-		{
-			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
+	//	for (u32 i = 0; i < numMaterialNames; ++i)
+	//	{
+	//		auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
 
-			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+	//		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+	//		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+	//		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-			r2::sarr::Push(*modelRef->materialNames, materialName);
+	//		r2::sarr::Push(*modelRef->materialNames, materialName);
 
-			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+	//		ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
 
-			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
+	//		R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
 
-			r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-		}
+	//		r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
+	//	}
 
-		return result;
-	}
+	//	return result;
+	//}
 
-	void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
-	{
-		if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
-		{
-			R2_CHECK(false, "We haven't initialized the renderer yet!");
-			return;
-		}
+	//void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
+	//{
+	//	if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
+	//	{
+	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
+	//		return;
+	//	}
 
-		if (r2::sarr::IsEmpty(models))
-		{
-			return;
-		}
+	//	if (r2::sarr::IsEmpty(models))
+	//	{
+	//		return;
+	//	}
 
-		//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
-		vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
-		if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
-		{
-			r2::sarr::Push(modelRefs, cachedHandle);
-			for (u32 i = 1; i < r2::sarr::Size(models); ++i)
-			{
-				cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, i));
-				R2_CHECK(vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle), "This must be the case now");
-				r2::sarr::Push(modelRefs, cachedHandle);
-			}
+	//	//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
+	//	vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
+	//	if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
+	//	{
+	//		r2::sarr::Push(modelRefs, cachedHandle);
+	//		for (u32 i = 1; i < r2::sarr::Size(models); ++i)
+	//		{
+	//			cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, i));
+	//			R2_CHECK(vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle), "This must be the case now");
+	//			r2::sarr::Push(modelRefs, cachedHandle);
+	//		}
 
-			return;
-		}
+	//		return;
+	//	}
 
-		const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
+	//	const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
 
-		vbsys::UploadAllAnimModels(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
+	//	vbsys::UploadAllAnimModels(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
 
-		const auto numModelRefs = r2::sarr::Size(modelRefs);
-
-
-		r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
+	//	const auto numModelRefs = r2::sarr::Size(modelRefs);
 
 
-		for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
-		{
-			vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
+	//	r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
 
-			vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
 
-			const AnimModel* model = r2::sarr::At(models, i - startingModelRefOffset);
+	//	for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
+	//	{
+	//		vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
 
-			const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
+	//		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
 
-			for (u32 i = 0; i < numMaterialNames; ++i)
-			{
-				auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
+	//		const AnimModel* model = r2::sarr::At(models, i - startingModelRefOffset);
 
-				const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
+	//		const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
 
-				const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-				R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
+	//		for (u32 i = 0; i < numMaterialNames; ++i)
+	//		{
+	//			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
 
-				r2::sarr::Push(*modelRef->materialNames, materialName);
+	//			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
 
-				ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+	//			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
+	//			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
 
-				R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
+	//			r2::sarr::Push(*modelRef->materialNames, materialName);
 
-				r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-			}
-		}
-	}
+	//			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
+
+	//			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
+
+	//			r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
+	//		}
+	//	}
+	//}
 
 	void UnloadModel(Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle)
 	{
@@ -8827,15 +8853,15 @@ namespace r2::draw::renderer
 		UploadModels(MENG.GetCurrentRendererRef(), models, modelRefs);
 	}
 
-	vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model)
-	{
-		return UploadAnimModel(MENG.GetCurrentRendererRef(), model);
-	}
+	//vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model)
+	//{
+	//	return UploadAnimModel(MENG.GetCurrentRendererRef(), model);
+	//}
 
-	void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
-	{
-		UploadAnimModels(MENG.GetCurrentRendererRef(), models, modelRefs);
-	}
+	//void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
+	//{
+	//	UploadAnimModels(MENG.GetCurrentRendererRef(), models, modelRefs);
+	//}
 
 	void UnloadModel(const vb::GPUModelRefHandle& modelRefHandle)
 	{

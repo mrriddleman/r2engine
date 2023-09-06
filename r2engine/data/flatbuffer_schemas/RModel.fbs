@@ -1,5 +1,6 @@
 include "Mesh.fbs";
 include "Model.fbs";
+include "RAnimation.fbs";
 
 namespace flat;
 
@@ -75,6 +76,7 @@ table RModel
 	materials:[MaterialName];
 	meshes:[RMesh];
 	animationData:AnimationData;
+	animations:[RAnimation];
 }
 
 root_type RModel;
