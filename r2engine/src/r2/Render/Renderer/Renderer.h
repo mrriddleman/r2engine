@@ -599,6 +599,10 @@ namespace r2::draw::renderer
 	u32 GetMaxNumInstances();
 	u32 GetMaxNumBones();
 
+#ifdef R2_EDITOR
+	r2::asset::FileList GetModelFiles();
+#endif
+
 #ifdef R2_DEBUG
 
 	void DrawDebugBones(const r2::SArray<DebugBone>& bones, const glm::mat4& modelMatrix, const glm::vec4& color);
@@ -619,7 +623,6 @@ namespace r2::draw::renderer
 	void DrawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::mat4& modelMat, const glm::vec4& color, bool depthTest);
 
 	void DrawTangentVectors(DefaultModel model, const glm::mat4& transform);
-
 
 	void DrawQuadInstanced(const r2::SArray<glm::vec3>& centers, const r2::SArray<glm::vec2>& scales, const r2::SArray<glm::vec3>& normals, const r2::SArray<glm::vec4>& colors, bool filled, bool depthTest = true);
 

@@ -63,13 +63,8 @@ namespace r2::assets::assetlib
 		}
 
 		animation.originalPath = inputFilePath.string();
-		//@TODO(Serge): use the path to generate a proper name with the appropriate amount of parent directories
-		char animationAssetName[256];
-
 		std::filesystem::path dstAnimationPath = inputFilePath;
 		dstAnimationPath.replace_extension(RANM_EXTENSION);
-		r2::asset::MakeAssetNameStringForFilePath(dstAnimationPath.string().c_str(), animationAssetName, r2::asset::RANIMATION);
-
 		animation.animationName = r2::asset::GetAssetNameForFilePath(dstAnimationPath.string().c_str(), r2::asset::RANIMATION);
 
 		ProcessAnimation(animation, scene->mRootNode, scene);
@@ -78,13 +73,6 @@ namespace r2::assets::assetlib
 
 		return true;
 	}
-
-	//bool ConvertAnimation(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::string& extension)
-	//{
-	//	return false;
-
-	//	//return ConvertAnimationToFlatbuffer(animation, inputFilePath, parentOutputDir);
-	//}
 
 	void ProcessAnimation(Animation& animation, const aiNode* node, const aiScene* scene)
 	{

@@ -37,8 +37,6 @@ namespace r2::assets::assetlib
 		std::string originalPath;
 	};
 
-	//bool ConvertAnimation(const std::filesystem::path& inputFilePath, const std::filesystem::path& parentOutputDir, const std::string& extension);
-	
 	bool LoadAnimationFromFile(const std::filesystem::path& inputFilePath, Animation& animation);
 }
 

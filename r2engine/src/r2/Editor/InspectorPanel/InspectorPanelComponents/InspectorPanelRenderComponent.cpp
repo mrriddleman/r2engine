@@ -13,7 +13,7 @@
 
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/RendererTypes.h"
-
+#include "r2/Render/Renderer/Renderer.h"
 #include "imgui.h"
 
 namespace r2::edit
@@ -244,16 +244,7 @@ namespace r2::edit
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 			const r2::draw::Model* model = nullptr;
-
-			//if (renderComponent.isAnimated)
-			//{
-			//	const r2::draw::AnimModel* animModel = gameAssetManager.GetAssetDataConst<r2::draw::AnimModel>(renderComponent.assetModelHash);
-			//	model = &animModel->model;
-			//}
-			//else
-			//{
-				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
-		//	}
+			model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
 
 			const r2::asset::AssetFile* currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 
@@ -266,10 +257,49 @@ namespace r2::edit
 			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
 
 			//@TODO(Serge): make this into a ImGui::Combo
-			ImGui::Text("Model Name: %s", modelFileName.c_str());
+			//ImGui::Text("Model Name: %s", modelFileName.c_str());
+
+			std::vector<r2::asset::AssetFile*> rModelFiles = gameAssetManager.GetAllAssetFilesForAssetType(r2::asset::RMODEL);
+
+			//@TODO(Serge): remove the primitive model lines once we have refactored the r2::asset::MODEL stuff
+			{
+				r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
+				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
+				for (u32 i = 0; i < numPrimitiveModels; ++i)
+				{
+					r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
+					std::filesystem::path assetFilePath = assetFile->FilePath();
+
+					if (assetFilePath.extension().string() == ".modl" &&
+						(assetFilePath.stem().string() != "FullscreenTriangle" && 
+						 assetFilePath.stem().string() != "Skybox"))
+					{
+						rModelFiles.push_back(assetFile);
+					}
+				}
+			}
+			
+
+			ImGui::Text("Render model:");
+			ImGui::SameLine();
+			if (ImGui::BeginCombo("##label rendermodel", modelFileName.c_str()))
+			{
+				for (u32 i = 0; i < rModelFiles.size(); ++i)
+				{
+					std::string nextModelFileName = GetModelNameForAssetFile(rModelFiles[i]);
+
+					if (ImGui::Selectable(nextModelFileName.c_str(), nextModelFileName == modelFileName))
+					{
+						//@TODO(Serge): implement
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
 
 			//@TODO(Serge): make this into a ImGui::Combo
-			ImGui::Text("Model Type: %s", GetIsAnimatedString(renderComponent.isAnimated).c_str());
+		//	ImGui::Text("Model Type: %s", GetIsAnimatedString(renderComponent.isAnimated).c_str());
 
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));

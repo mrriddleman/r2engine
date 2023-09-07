@@ -477,6 +477,10 @@ namespace r2::draw::renderer
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
 
+#ifdef R2_EDITOR
+	r2::asset::FileList GetModelFiles(Renderer& renderer);
+#endif
+
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light);
 	PointLightHandle AddPointLight(Renderer& renderer, const PointLight& pointLight);
 	SpotLightHandle AddSpotLight(Renderer& renderer, const SpotLight& spotLight);
@@ -8481,6 +8485,13 @@ namespace r2::draw::renderer
 		renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
+#ifdef R2_EDITOR
+	r2::asset::FileList GetModelFiles(Renderer& renderer)
+	{
+		return r2::draw::modlche::GetFileList(*renderer.mModelCache);
+	}
+#endif
+
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light)
 	{
 		R2_CHECK(renderer.mLightSystem != nullptr, "We should have a valid lighting system for the renderer");
@@ -9037,6 +9048,13 @@ namespace r2::draw::renderer
 	{
 		return MAX_NUM_BONES;
 	}
+
+#ifdef R2_EDITOR
+	r2::asset::FileList GetModelFiles()
+	{
+		return GetModelFiles(MENG.GetCurrentRendererRef());
+	}
+#endif
 
 	void SetRenderCamera(Camera* cameraPtr)
 	{
