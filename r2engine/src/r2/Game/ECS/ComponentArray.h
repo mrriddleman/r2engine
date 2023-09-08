@@ -275,37 +275,36 @@ namespace r2::ecs
 
 			if (!r2::sarr::IsEmpty(*realComponents))
 			{
-				for (u32 i = 0; i < numRefEntities; ++i)
+				for (flatbuffers::uoffset_t j = 0; j < entityToIndexMap->size(); ++j)
 				{
-					const flat::EntityData* entityData = r2::sarr::At(*refEntityData, i);
-
+					const auto* entry = entityToIndexMap->Get(j);
 					s32 componentIndex = -1;
 
-					for (flatbuffers::uoffset_t j = 0; j < entityToIndexMap->size(); ++j)
+					s32 entitySignatureIndex = -1;
+					for (u32 i = 0; i < numRefEntities; ++i)
 					{
-						const auto* entry = entityToIndexMap->Get(j);
+						const flat::EntityData* entityData = r2::sarr::At(*refEntityData, i);
 
 						if (entry->entity() == entityData->entityID())
 						{
 							componentIndex = entry->index();
+							entitySignatureIndex = static_cast<s32>(i);
 							break;
 						}
 					}
 
-				//	R2_CHECK(componentIndex != -1, "Should never happen");
-					if (componentIndex != -1)
-					{
-						Entity e = r2::sarr::At(*entitiesToAddComponentsTo, i);
+					R2_CHECK(componentIndex != -1, "Should never happen");
+					R2_CHECK(entitySignatureIndex != -1, "Should never happen");
 
-						const auto& component = r2::sarr::At(*realComponents, componentIndex);
+					Entity e = r2::sarr::At(*entitiesToAddComponentsTo, entitySignatureIndex);
 
-						AddComponent(e, component);
+					const auto& component = r2::sarr::At(*realComponents, componentIndex);
 
-						auto& signature = r2::sarr::At(*entitySignatures, i);
+					AddComponent(e, component);
 
-						signature.set(componentType, true);
-					}
-					
+					auto& signature = r2::sarr::At(*entitySignatures, entitySignatureIndex);
+
+					signature.set(componentType, true);
 				}
 			}
 
