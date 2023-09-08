@@ -20,6 +20,8 @@
 
 namespace r2::ecs
 {
+	class ECSWorld;
+
 	const u64 EMPTY_COMPONENT_HASH = STRING_ID("");
 
 	class ComponentManager
@@ -29,12 +31,11 @@ namespace r2::ecs
 			: mComponentArrays(nullptr)
 			, mComponentTypes(nullptr)
 			,mComponentHashNameMap(nullptr)
-			,mComponentHydrationMap(nullptr)
 		{
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponentType(ARENA& arena, const char* componentName, bool shouldSerialize, ComponentArrayHydrationFunction hydrationFunction)
+		void RegisterComponentType(ARENA& arena, const char* componentName, bool shouldSerialize, FreeComponentFunc freeComponentFunc)
 		{
 			auto componentTypeHash = STRING_ID(componentName);
 
@@ -57,7 +58,7 @@ namespace r2::ecs
 
 			r2::shashmap::Set(*mComponentTypes, componentTypeHash, static_cast<ComponentType>(r2::sarr::Size(*mComponentArrays)) );
 
-			r2::shashmap::Set(*mComponentHydrationMap, componentTypeHash, hydrationFunction);
+			r2::shashmap::Set(*mFreeComponentFuncMap, componentTypeHash, freeComponentFunc);
 
 			r2::sarr::Push(*mComponentArrays, (IComponentArray*)componentArray);
 		}
@@ -90,10 +91,10 @@ namespace r2::ecs
 			r2::shashmap::Remove(*mComponentTypes, componentTypeHash);
 
 			r2::shashmap::Remove(*mComponentHashNameMap, typeid(Component).hash_code());
+			
+			r2::shashmap::Remove(*mFreeComponentFuncMap, componentTypeHash);
 
 			FREE(componentArray, arena);
-
-			r2::shashmap::Remove(*mComponentHydrationMap, componentTypeHash);
 
 			r2::sarr::At(*mComponentArrays, componentType) = nullptr;
 		}
@@ -127,11 +128,11 @@ namespace r2::ecs
 				return false;
 			}
 
-			mComponentHydrationMap = MAKE_SHASHMAP(arena, ComponentArrayHydrationFunction, maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier());
+			mFreeComponentFuncMap = MAKE_SHASHMAP(arena, FreeComponentFunc, maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier());
 
-			if (!mComponentHydrationMap)
+			if (!mFreeComponentFuncMap)
 			{
-				R2_CHECK(false, "We couldn't create the component hydration map");
+				R2_CHECK(false, "We couldn't create the mFreeComponentFuncMap");
 				return false;
 			}
 
@@ -146,12 +147,13 @@ namespace r2::ecs
 			r2::sarr::Clear(*mComponentArrays);
 			r2::shashmap::Clear(*mComponentTypes);
 			r2::shashmap::Clear(*mComponentHashNameMap);
-			r2::shashmap::Clear(*mComponentHydrationMap);
+			r2::shashmap::Clear(*mFreeComponentFuncMap);
 
-			FREE(mComponentHydrationMap, arena);
+			FREE(mFreeComponentFuncMap, arena);
 			FREE(mComponentHashNameMap, arena);
 			FREE(mComponentTypes, arena);
 			FREE(mComponentArrays, arena);
+			
 		}
 
 		template<typename Component>
@@ -185,7 +187,14 @@ namespace r2::ecs
 		void RemoveComponent(Entity entity)
 		{
 			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
-			componentArray->RemoveComponent(entity);
+
+			u64 componentTypeHash = GetComponentTypeHash<Component>();
+
+			FreeComponentFunc defaultFreeComponentFunc = nullptr;
+
+			FreeComponentFunc freeFunc = r2::shashmap::Get(*mFreeComponentFuncMap, componentTypeHash, defaultFreeComponentFunc);
+
+			componentArray->RemoveComponent(entity, freeFunc);
 		}
 
 		template<typename Component>
@@ -206,7 +215,14 @@ namespace r2::ecs
 		void SetComponent(Entity entity, const Component& component)
 		{
 			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
-			componentArray->SetComponent(entity, component);
+
+			u64 componentTypeHash = GetComponentTypeHash<Component>();
+
+			FreeComponentFunc defaultFreeComponentFunc = nullptr;
+
+			FreeComponentFunc freeFunc = r2::shashmap::Get(*mFreeComponentFuncMap, componentTypeHash, defaultFreeComponentFunc);
+
+			componentArray->SetComponent(entity, component, freeFunc);
 		}
 
 		void EntityDestroyed(Entity entity)
@@ -218,8 +234,13 @@ namespace r2::ecs
 			for (size_t i = 0; i < numComponentArrays; i++)
 			{
 				auto const& componentArray = r2::sarr::At(*mComponentArrays, i);
+				auto componentTypeHash = componentArray->GetHashName();
 
-				componentArray->EntityDestroyed(entity);
+				FreeComponentFunc defaultFreeComponentFunc = nullptr;
+
+				FreeComponentFunc freeFunc = r2::shashmap::Get(*mFreeComponentFuncMap, componentTypeHash, defaultFreeComponentFunc);
+
+				componentArray->EntityDestroyed(entity, freeFunc);
 			}
 		}
 
@@ -231,7 +252,13 @@ namespace r2::ecs
 			{
 				auto const& componentArray = r2::sarr::At(*mComponentArrays, i);
 
-				componentArray->DestoryAllEntities();
+				auto componentTypeHash = componentArray->GetHashName();
+
+				FreeComponentFunc defaultFreeComponentFunc = nullptr;
+
+				FreeComponentFunc freeFunc = r2::shashmap::Get(*mFreeComponentFuncMap, componentTypeHash, defaultFreeComponentFunc);
+
+				componentArray->DestoryAllEntities(freeFunc);
 			}
 		}
 
@@ -251,7 +278,7 @@ namespace r2::ecs
 			}
 		}
 
-		void DeSerialize(const r2::SArray<ecs::Entity>* ecsEntitiesToPopulate, const r2::SArray<const flat::EntityData*>* refEntityData, r2::SArray<Signature>* entitySignatures, const flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>* componentArrays)
+		void DeSerialize(ECSWorld& ecsWorld, const r2::SArray<ecs::Entity>* ecsEntitiesToPopulate, const r2::SArray<const flat::EntityData*>* refEntityData, r2::SArray<Signature>* entitySignatures, const flatbuffers::Vector<flatbuffers::Offset<flat::ComponentArrayData>>* componentArrays)
 		{
 			//We need the mComponentArrays to exist already because we have no reflection in order to load the component arrays from flatbuffers
 			R2_CHECK(componentArrays->size() <= r2::sarr::Size(*mComponentArrays), "Right now these should be the same or the flatbuffer data should have less (since we don't serialize all of them) - ie. mComponentArrays should exist already");
@@ -277,15 +304,12 @@ namespace r2::ecs
 
 				R2_CHECK(componentArrayToLoad != nullptr, "this should not be null!");
 
-				ComponentArrayHydrationFunction defaultHydrationFunction = nullptr;
-				ComponentArrayHydrationFunction hydrationFunction = r2::shashmap::Get(*mComponentHydrationMap, componentArrayToLoad->GetHashName(), defaultHydrationFunction);
-				
 				ComponentType defaultIndex = -1;
 				ComponentType componentTypeIndex = r2::shashmap::Get(*mComponentTypes, componentArrayToLoad->GetHashName(), defaultIndex);
 				
 				R2_CHECK(componentTypeIndex != defaultIndex, "Should never happen");
 
-				componentArrayToLoad->DeSerializeForEntities(ecsEntitiesToPopulate, refEntityData, entitySignatures, componentTypeIndex, componentArray, hydrationFunction);
+				componentArrayToLoad->DeSerializeForEntities(ecsWorld, ecsEntitiesToPopulate, refEntityData, entitySignatures, componentTypeIndex, componentArray);
 			}
 		}
 
@@ -296,12 +320,10 @@ namespace r2::ecs
 			memorySize +=
 				r2::mem::utils::GetMaxMemoryForAllocation(sizeof(ComponentManager), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<IComponentArray*>::MemorySize(maxNumComponents), alignment, headerSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(static_cast<u32>( maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking) +
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentType>::MemorySize(static_cast<u32>(maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking) +
 				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<u64>::MemorySize(static_cast<u32>(maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking) +
-				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<ComponentArrayHydrationFunction>::MemorySize(static_cast<u32>(maxNumComponents * r2::SHashMap<ComponentType>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking)
-				
+				r2::mem::utils::GetMaxMemoryForAllocation(r2::SHashMap<FreeComponentFunc>::MemorySize(static_cast<u32>(maxNumComponents * r2::SHashMap<u32>::LoadFactorMultiplier())), alignment, headerSize, boundsChecking)
 				;
-
 			return memorySize;
 		}
 
@@ -309,7 +331,7 @@ namespace r2::ecs
 		r2::SArray<IComponentArray*>* mComponentArrays;
 		r2::SHashMap<ComponentType>* mComponentTypes; //I guess these are the indices of the component arrays?
 		r2::SHashMap<u64>* mComponentHashNameMap;
-		r2::SHashMap<ComponentArrayHydrationFunction>* mComponentHydrationMap;
+		r2::SHashMap<FreeComponentFunc>* mFreeComponentFuncMap;
 
 		template<typename Component>
 		ComponentArray<Component>* GetComponentArray()
@@ -319,6 +341,24 @@ namespace r2::ecs
 			IComponentArray* componentArrayI = r2::sarr::At(*mComponentArrays, index);
 
 			return static_cast<ComponentArray<Component>*>(componentArrayI);
+		}
+
+		template<typename Component>
+		u64 GetComponentTypeHash() 
+		{
+			u64 defaultComponentHashName = EMPTY_COMPONENT_HASH;
+
+			u64 componentTypeHash = r2::shashmap::Get(*mComponentHashNameMap, typeid(Component).hash_code(), defaultComponentHashName);
+
+			R2_CHECK(componentTypeHash != defaultComponentHashName, "Should never happen");
+
+			if (!r2::shashmap::Has(*mComponentTypes, componentTypeHash))
+			{
+				R2_CHECK(false, "Trying to get a component type hash that we don't have?");
+				return 0;
+			}
+
+			return componentTypeHash;
 		}
 	};
 }

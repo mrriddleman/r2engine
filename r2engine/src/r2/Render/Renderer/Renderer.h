@@ -489,9 +489,6 @@ namespace r2::draw::renderer
 	vb::GPUModelRefHandle UploadModel(const Model* model);
 	void UploadModels(const r2::SArray<const Model*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
 
-	//vb::GPUModelRefHandle UploadAnimModel(const AnimModel* model);
-	//void UploadAnimModels(const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs);
-
 	vb::GPUModelRefHandle GetModelRefHandleForModelAssetName(u64 modelAssetName);
 
 	void UnloadModel(const vb::GPUModelRefHandle& modelRefHandle);
@@ -601,6 +598,7 @@ namespace r2::draw::renderer
 
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles();
+	const r2::draw::Model* GetDefaultModel(u64 assetName);
 #endif
 
 #ifdef R2_DEBUG

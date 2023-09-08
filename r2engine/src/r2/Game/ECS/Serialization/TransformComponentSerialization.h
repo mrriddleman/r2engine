@@ -143,7 +143,7 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<TransformComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<TransformComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		const flat::TransformComponentArrayData* transformComponentArrayData = flatbuffers::GetRoot<flat::TransformComponentArrayData>(componentArrayData->componentArray()->data());
 
@@ -162,7 +162,7 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<TransformComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<InstanceComponentT<TransformComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		const flat::InstancedTransformComponentArrayData* instancedTransformComponentArrayData = flatbuffers::GetRoot<flat::InstancedTransformComponentArrayData>(componentArrayData->componentArray()->data());
 
@@ -176,7 +176,7 @@ namespace r2::ecs
 
 			instancedTransformComponent.numInstances = flatInstancedTransformComponent->transformComponentArray()->size();
 
-			instancedTransformComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, TransformComponent, instancedTransformComponent.numInstances);
+			instancedTransformComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, TransformComponent, instancedTransformComponent.numInstances);
 
 			for (flatbuffers::uoffset_t j = 0; j < instancedTransformComponent.numInstances; ++j)
 			{
@@ -188,18 +188,6 @@ namespace r2::ecs
 			}
 
 			r2::sarr::Push(components, instancedTransformComponent);
-		}
-	}
-
-	template<>
-	inline void CleanupDeserializeComponentArray(r2::SArray<InstanceComponentT<TransformComponent>>& components)
-	{
-		s32 size = r2::sarr::Size(components);
-
-		for (s32 i = size - 1; i >= 0; --i)
-		{
-			const InstanceComponentT<TransformComponent>& instancedTransformComponent = r2::sarr::At(components, i);
-			FREE(instancedTransformComponent.instances, *MEM_ENG_SCRATCH_PTR);
 		}
 	}
 }

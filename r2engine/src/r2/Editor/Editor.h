@@ -19,6 +19,7 @@ namespace r2::evt
 namespace r2::ecs
 {
 	class ECSCoordinator;
+	class SceneGraph;
 }
 
 namespace r2::draw
@@ -30,7 +31,7 @@ namespace r2::draw
 
 namespace r2
 {
-	class SceneGraph;
+	
 	class Level;
 
 	class Editor
@@ -59,21 +60,15 @@ namespace r2
 		void PostEditorEvent(r2::evt::EditorEvent& e);
 
 		std::string GetAppLevelPath() const;
-		SceneGraph& GetSceneGraph();
+		ecs::SceneGraph& GetSceneGraph();
 		ecs::ECSCoordinator* GetECSCoordinator();
-		r2::mem::MallocArena& GetMemoryArena();
 
 	private:
 
 		void AddModelToLevel(u64 modelAssetName, const r2::draw::Model& model);
 		void AddSoundBankToLevel(u64 soundBankAssetName);
 
-		r2::mem::MemoryArea::Handle mEditorMemoryAreaHandle;
-		r2::mem::MallocArena mMallocArena;
-
 		Level* mCurrentEditorLevel;
-
-		std::vector<void*> mComponentAllocations;
 
 		std::vector<std::unique_ptr<edit::EditorWidget>> mEditorWidgets;
 		std::vector<std::unique_ptr<edit::EditorAction>> mUndoStack;

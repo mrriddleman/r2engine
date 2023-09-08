@@ -50,7 +50,7 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<EditorComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<EditorComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
 		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");

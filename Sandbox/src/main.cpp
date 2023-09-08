@@ -53,21 +53,21 @@
 #include "r2/Audio/AudioEngine.h"
 #include <mutex>
 
-struct DummyComponent
-{
-    int dummy;
-};
+//struct DummyComponent
+//{
+//    int dummy;
+//};
 
-namespace r2::ecs
-{
-    class ECSCoordinator;
-
-	template<>
-	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
-	{
-		R2_CHECK(false, "You need to implement a serializer for this type");
-	}
-}
+//namespace r2::ecs
+//{
+//    class ECSCoordinator;
+//
+//	template<>
+//	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
+//	{
+//		R2_CHECK(false, "You need to implement a serializer for this type");
+//	}
+//}
 
 namespace
 {
@@ -759,15 +759,15 @@ public:
 			    r2::ecs::AudioEmitterActionComponent audioEmitterActionComponent;
 			    audioEmitterActionComponent.action = r2::ecs::AEA_PLAY;
 
-			    if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
-			    {
-                    if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<r2::ecs::AudioEmitterComponent>(2))
-                    {
-                        MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(2, audioEmitterActionComponent);
-                    }
+			    //if (MENG.GetECSWorld().GetECSCoordinator()->NumLivingEntities() > 0)
+			    //{
+       //             if (MENG.GetECSWorld().GetECSCoordinator()->HasComponent<r2::ecs::AudioEmitterComponent>(2))
+       //             {
+       //                 MENG.GetECSWorld().GetECSCoordinator()->AddComponent<r2::ecs::AudioEmitterActionComponent>(2, audioEmitterActionComponent);
+       //             }
 
-				    
-			    }
+				   // 
+			    //}
 			    
                 /*r2::audio::AudioEngine audioEngine;
 

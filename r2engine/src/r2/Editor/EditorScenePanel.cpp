@@ -105,7 +105,7 @@ namespace r2::edit
 
 	void ScenePanel::AddAllChildrenForEntity(SceneTreeNode& parent)
 	{
-		r2::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
+		r2::ecs::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
 
 		r2::SArray<ecs::Entity>* children = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 
@@ -133,7 +133,7 @@ namespace r2::edit
 		{
 			mSceneGraphData.clear();
 
-			r2::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
+			r2::ecs::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
 
 			r2::SArray<ecs::Entity>* rootEntities = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, ecs::Entity, ecs::MAX_NUM_ENTITIES);
 			r2::SArray<u32>* rootIndices = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, u32, ecs::MAX_NUM_ENTITIES);
@@ -376,7 +376,7 @@ namespace r2::edit
 
 		bool open = true;
 
-		r2::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
+		r2::ecs::SceneGraph& sceneGraph = mnoptrEditor->GetSceneGraph();
 
 		if (!ImGui::Begin("ScenePanel", &open))
 		{

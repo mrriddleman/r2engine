@@ -55,7 +55,7 @@ namespace r2::ecs
 		return mEntityManager->GetSignature(e);
 	}
 
-	void ECSCoordinator::LoadAllECSDataFromLevel(const Level& level, const flat::LevelData* flatLevelData)
+	void ECSCoordinator::LoadAllECSDataFromLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* flatLevelData)
 	{
 
 
@@ -83,7 +83,7 @@ namespace r2::ecs
 			r2::sarr::Push(*entitySignatures, {});
 		}
 
-		mComponentManager->DeSerialize(level.GetEntities(), flatEntities, entitySignatures, flatLevelData->componentArrays());
+		mComponentManager->DeSerialize(ecsWorld, level.GetEntities(), flatEntities, entitySignatures, flatLevelData->componentArrays());
 
 		//now set the entity signatures
 		const r2::SArray<ecs::Entity>* newEntities = level.GetEntities();

@@ -3,8 +3,14 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/ECS/Components/HierarchyComponent.h"
+#include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+#include "r2/Game/ECS/Systems/SceneGraphSystem.h"
+#include "r2/Game/ECS/Systems/SceneGraphTransformUpdateSystem.h"
 
-namespace r2
+
+namespace r2::ecs
 {
 	SceneGraph::SceneGraph()
 		:mnoptrECSCoordinator(nullptr)
@@ -15,10 +21,31 @@ namespace r2
 
 	SceneGraph::~SceneGraph()
 	{
-
 		R2_CHECK(mnoptrSceneGraphSystem == nullptr, "Did you forget to Shutdown the SceneGraph?");
 		R2_CHECK(mnoptrECSCoordinator == nullptr, "Did you forget to Shutdown the SceneGraph?");
 		R2_CHECK(mnoptrSceneGraphTransformUpdateSystem == nullptr, "We haven't initialized the SceneGraph yet!");
+	}
+
+	bool SceneGraph::Init(ecs::SceneGraphSystem* sceneGraphSystem, ecs::SceneGraphTransformUpdateSystem* sceneGraphtransformUpdateSystem, ecs::ECSCoordinator* coordinator)
+	{
+		R2_CHECK(sceneGraphSystem != nullptr, "sceneGraphSystem is nullptr");
+		R2_CHECK(sceneGraphtransformUpdateSystem != nullptr, "sceneGraphtransformUpdateSystem is nullptr");
+		R2_CHECK(coordinator != nullptr, "coordinator is nullptr");
+
+		mnoptrSceneGraphSystem = sceneGraphSystem;
+		mnoptrSceneGraphTransformUpdateSystem = sceneGraphtransformUpdateSystem;
+		mnoptrECSCoordinator = coordinator;
+
+		mnoptrSceneGraphSystem->SetSceneGraph(this);
+
+		return true;
+	}
+
+	void SceneGraph::Shutdown()
+	{
+		mnoptrSceneGraphSystem = nullptr;
+		mnoptrSceneGraphTransformUpdateSystem = nullptr;
+		mnoptrECSCoordinator = nullptr;
 	}
 
 	void SceneGraph::Update()
@@ -64,9 +91,9 @@ namespace r2
 		mnoptrECSCoordinator->DestroyEntity(entity);
 	}
 
-	void SceneGraph::LoadLevel(const Level& level, const flat::LevelData* levelData)
+	void SceneGraph::LoadLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData)
 	{
-		mnoptrECSCoordinator->LoadAllECSDataFromLevel(level, levelData);
+		mnoptrECSCoordinator->LoadAllECSDataFromLevel(ecsWorld, level, levelData);
 
 		ecs::TransformDirtyComponent dirty;
 
@@ -313,15 +340,5 @@ namespace r2
 	r2::ecs::ECSCoordinator* SceneGraph::GetECSCoordinator() const
 	{
 		return mnoptrECSCoordinator;
-	}
-
-	u64 SceneGraph::MemorySize(const r2::mem::utils::MemoryProperties& memProperties)
-	{
-		u64 memorySize = 0;
-
-		memorySize += ecs::ECSCoordinator::MemorySizeOfSystemType<ecs::SceneGraphSystem>(memProperties);
-		memorySize += ecs::ECSCoordinator::MemorySizeOfSystemType<ecs::SceneGraphTransformUpdateSystem>(memProperties);
-
-		return memorySize;
 	}
 }

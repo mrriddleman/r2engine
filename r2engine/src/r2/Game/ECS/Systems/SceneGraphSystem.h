@@ -3,13 +3,9 @@
 
 #include "r2/Game/ECS/System.h"
 
-namespace r2
-{
-	class SceneGraph;
-}
-
 namespace r2::ecs
 {
+	class SceneGraph;
 	class SceneGraphSystem : public System
 	{
 	public:

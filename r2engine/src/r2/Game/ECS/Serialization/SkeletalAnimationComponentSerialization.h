@@ -9,6 +9,8 @@
 #include "r2/Core/Memory/InternalEngineMemory.h"
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Containers/SArray.h"
+#include "r2/Core/Engine.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace r2::ecs
 {
@@ -120,11 +122,12 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<SkeletalAnimationComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<SkeletalAnimationComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		const flat::SkeletalAnimationComponentArrayData* skeletalAnimationComponentArrayData = flatbuffers::GetRoot<flat::SkeletalAnimationComponentArrayData>(componentArrayData->componentArray()->data());
 
 		const auto* componentVector = skeletalAnimationComponentArrayData->skeletalAnimationComponentArray();
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
@@ -142,16 +145,25 @@ namespace r2::ecs
 
 			DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatSkeletalAnimationComponent);
 
+			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
+			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+			skeletalAnimationComponent.animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+
+			skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+
+			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
 			r2::sarr::Push(components, skeletalAnimationComponent);
 		}
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		const flat::InstancedSkeletalAnimationComponentArrayData* instancedSkeletalAnimationComponentArrayData = flatbuffers::GetRoot<flat::InstancedSkeletalAnimationComponentArrayData>(componentArrayData->componentArray()->data());
 
 		const auto* componentVector = instancedSkeletalAnimationComponentArrayData->instancedSkeletalAnimationComponentArray();
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		for (size_t i = 0; i < componentVector->size(); ++i)
 		{
@@ -164,7 +176,7 @@ namespace r2::ecs
 			instancedSkeletalAnimationComponent.numInstances = numInstances;
 
 			//this is a problem right here - how do we free this?
-			instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, SkeletalAnimationComponent, numInstances);
+			instancedSkeletalAnimationComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, SkeletalAnimationComponent, numInstances);
 
 			for (size_t j = 0; j < numInstances; ++j)
 			{
@@ -180,25 +192,22 @@ namespace r2::ecs
 
 				DeSerializeSkeletalAnimationComponent(skeletalAnimationComponent, flatInstancedSkeletalAnimationComponent->skeletalAnimationComponentArray()->Get(j));
 
+				r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
+				r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+				skeletalAnimationComponent.animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+
+				skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+				
+				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
+
+				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
+
 				r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
 			}
 
 			r2::sarr::Push(components, instancedSkeletalAnimationComponent);
 		}
 	}
-
-	template<>
-	inline void CleanupDeserializeComponentArray(r2::SArray<InstanceComponentT<SkeletalAnimationComponent>>& components)
-	{
-		s32 size = r2::sarr::Size(components);
-
-		for (s32 i = size - 1; i >= 0; --i)
-		{
-			const InstanceComponentT<SkeletalAnimationComponent>& instancedSkeletalAnimationComponent = r2::sarr::At(components, i);
-			FREE(instancedSkeletalAnimationComponent.instances, *MEM_ENG_SCRATCH_PTR);
-		}
-	}
-
 
 }
 

@@ -166,6 +166,12 @@ namespace r2
 		}
 
 		template<typename T>
+		T* GetAssetData(u64 assetName)
+		{
+			return GetAssetData<T>({ assetName, GetAssetCacheSlot() });
+		}
+
+		template<typename T>
 		const T* GetAssetDataConst(r2::asset::AssetHandle assetHandle)
 		{
 			return GetAssetData<T>(assetHandle);

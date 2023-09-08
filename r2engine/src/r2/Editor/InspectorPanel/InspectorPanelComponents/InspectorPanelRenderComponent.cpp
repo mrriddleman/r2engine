@@ -4,16 +4,23 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelRenderComponent.h"
 
 #include "r2/Core/Engine.h"
+#include "r2/Core/File/PathUtils.h"
 
 #include "r2/Game/ECS/ECSCoordinator.h"
-#include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/Components/RenderComponent.h"
+#include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
-#include "r2/Core/File/PathUtils.h"
 
 #include "r2/Render/Model/Model.h"
 #include "r2/Render/Renderer/RendererTypes.h"
 #include "r2/Render/Renderer/Renderer.h"
+
+#include "r2/Core/Engine.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
+
+
 #include "imgui.h"
 
 namespace r2::edit
@@ -231,6 +238,9 @@ namespace r2::edit
 
 	void RenderComponentInstance(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity entity, int id, r2::ecs::RenderComponent& renderComponent)
 	{
+
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+
 //		const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(entity);
 
 		//std::string nodeName = std::string("Entity - ") + std::to_string(entity) + std::string(" - Debug Bone Instance - ") + std::to_string(id);
@@ -286,11 +296,114 @@ namespace r2::edit
 			{
 				for (u32 i = 0; i < rModelFiles.size(); ++i)
 				{
-					std::string nextModelFileName = GetModelNameForAssetFile(rModelFiles[i]);
+					r2::asset::AssetFile* assetFile = rModelFiles[i];
+					std::string nextModelFileName = GetModelNameForAssetFile(assetFile);
 
 					if (ImGui::Selectable(nextModelFileName.c_str(), nextModelFileName == modelFileName))
 					{
-						//@TODO(Serge): implement
+						if (nextModelFileName != modelFileName)
+						{
+							//@TODO(Serge): implement
+							std::filesystem::path assetFilePath = assetFile->FilePath();
+							auto assetHandle = assetFile->GetAssetHandle(0);
+							const r2::draw::Model* renderModel = nullptr;
+
+							if (assetFilePath.extension().string() == ".modl")
+							{
+								renderModel = r2::draw::renderer::GetDefaultModel(assetHandle);
+							}
+							else
+							{
+								renderModel = gameAssetManager.GetAssetData<r2::draw::Model>(assetHandle);
+							}
+
+							R2_CHECK(renderModel != nullptr, "Should never happen");
+
+							renderComponent.assetModelHash = renderModel->assetName;
+
+							renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelHash);
+
+							if (!r2::draw::renderer::IsModelRefHandleValid(renderComponent.gpuModelRefHandle))
+							{
+								renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(renderModel);
+							}
+							
+							renderComponent.isAnimated = renderModel->optrBoneInfo != nullptr;
+
+							if (renderComponent.isAnimated)
+							{
+								renderComponent.drawParameters.layer = draw::DL_CHARACTER;
+							}
+							else
+							{
+								renderComponent.drawParameters.layer = draw::DL_WORLD;
+							}
+
+							//@TODO(Serge): figure out how the override materials will work here
+							//				I think we'll have to delete the array and make a new one based on 
+							//				the new renderModel's materialNames
+
+
+							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
+							if (renderComponent.isAnimated && !coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
+							{
+								//add the skeletal animation component
+								r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
+								newSkeletalAnimationComponent.animModel = renderModel;
+								newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
+
+								R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+								newSkeletalAnimationComponent.startingAnimationIndex = 0;
+								newSkeletalAnimationComponent.shouldLoop = true;
+								newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
+								newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
+								newSkeletalAnimationComponent.startTime = 0;
+								newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+
+								coordinator->AddComponent<r2::ecs::SkeletalAnimationComponent>(entity, newSkeletalAnimationComponent);
+							}
+							else if (renderComponent.isAnimated && coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
+							{
+								//in this case we need to make sure that the old skeletal animation component is setup correctly
+								r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+								animationComponent.animModel = renderModel;
+								animationComponent.animModelAssetName = renderModel->assetName;
+
+								R2_CHECK(renderModel->optrAnimations&& r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+								//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
+								animationComponent.startingAnimationIndex = 0;
+								animationComponent.shouldLoop = true;
+								animationComponent.shouldUseSameTransformsForAllInstances = true;
+								animationComponent.currentAnimationIndex = animationComponent.startingAnimationIndex;
+								animationComponent.startTime = 0;
+
+								if (r2::sarr::Capacity(*animationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
+								{
+									ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
+
+									animationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+									r2::sarr::Clear(*animationComponent.shaderBones);
+								}
+
+							}
+							else if (!renderComponent.isAnimated && coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
+							{
+								//remove the skeletal animation component
+
+								//free the shader bones first since that's not included when we remove the component
+								r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+								ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
+								animationComponent.shaderBones = nullptr;
+
+								coordinator->RemoveComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+							}
+							else //!renderComponent.isAnimated && !coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity)
+							{
+								//nothing to do?
+							}
+						}
 					}
 				}
 
@@ -300,7 +413,6 @@ namespace r2::edit
 
 			//@TODO(Serge): make this into a ImGui::Combo
 		//	ImGui::Text("Model Type: %s", GetIsAnimatedString(renderComponent.isAnimated).c_str());
-
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));
 			ImGui::Text("Primitive Type: ");

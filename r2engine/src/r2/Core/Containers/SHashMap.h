@@ -13,7 +13,9 @@
 #include <limits>
 
 #define MAKE_SHASHMAP(arena, T, capacity) r2::shashmap::CreateSHashMap<T>(arena, capacity, __FILE__, __LINE__, "")
+#define MAKE_SHASHMAP_VERBOSE(arena, T, capacity, file, line, desc) r2::shashmap::CreateSHashMap<T>(arena, capacity, file, line, desc)
 #define MAKE_SHASHMAP_IN_PLACE(T, placement, capacity) r2::shashmap::CreateHashMapInPlace<T>(placement, capacity)
+
 namespace
 {
     const f64 MAX_LOAD_FACTOR = 0.75;

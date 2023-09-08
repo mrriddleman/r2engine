@@ -1,10 +1,17 @@
 #ifndef __ECS_WORLD_H__
-#define __ECS_WORLS_H__
+#define __ECS_WORLD_H__
 
 #include "r2/Core/Memory/Memory.h"
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
+
+#define ECS_WORLD_ALLOC(ecsWorld, T) r2::ecs::ECSWorldAlloc<T>(ecsWorld, __FILE__, __LINE__, "" )
+#define ECS_WORLD_ALLOC_PARAMS(ecsWorld, T, ...) r2::ecs::ECSWorldAllocParams<T>(ecsWorld, __FILE__, __LINE__, "", __VA_ARGS__)
+#define ECS_WORLD_ALLOC_BYTES(ecsWorld, numBytes, alignment) r2::ecs::ECSWorldAllocBytes(ecsWorld, numBytes, alignment, __FILE__, __LINE__, "")
+#define ECS_WORLD_MAKE_SARRAY(ecsWorld, T, capacity) r2::ecs::ECSWorldMakeSArray<T>(ecsWorld, capacity, __FILE__, __LINE__, "")
+#define ECS_WORLD_MAKE_SHASHMAP(ecsWorld, T, capacity) r2::ecs::ECSWorldMakeSHashMap<T>(ecsWorld, capacity, __FILE__, __LINE__, "")
+#define ECS_WORLD_FREE(ecsWorld, objPtr) r2::ecs::ECSWorldFree(ecsWorld, objPtr, __FILE__, __LINE__, "")
 
 namespace r2
 {
@@ -24,6 +31,8 @@ namespace r2::ecs
 	class SkeletalAnimationSystem;
 	class AudioListenerSystem;
 	class AudioEmitterSystem;
+	class SceneGraphSystem;
+	class SceneGraphTransformUpdateSystem;
 
 #ifdef R2_DEBUG
 	class DebugBonesRenderSystem;
@@ -46,11 +55,20 @@ namespace r2::ecs
 		bool LoadLevel(const Level& level, const flat::LevelData* levelData);
 		bool UnloadLevel(const Level& level);
 
-		r2::ecs::ECSCoordinator* GetECSCoordinator() const;
-		SceneGraph& GetSceneGraph();
+		r2::ecs::ECSCoordinator* GetECSCoordinator();
+		r2::ecs::SceneGraph& GetSceneGraph();
 
 		u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
 
+
+		//@NOTE(Serge): no one should use this except the below helper methods
+		struct ECSWorldAllocation
+		{
+			void* memPtr;
+		};
+
+		inline r2::mem::MallocArena& GetECSComponentArena() { return mMallocArena; }
+		inline std::vector<ECSWorldAllocation>& GetComponentAllocations() { return mComponentAllocations; }
 	private:
 
 		static const u32 ALIGNMENT = 16;
@@ -60,11 +78,15 @@ namespace r2::ecs
 		void UnRegisterEngineComponents();
 		void UnRegisterEngineSystems();
 
-		void* HydrateRenderComponents(void* tempRenderComponents);
-		void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
-		void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
-		void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
+		//void* HydrateRenderComponents(void* tempRenderComponents);
+		//void* HydrateSkeletalAnimationComponents(void* tempSkeletalAnimationComponents);
+		//void* HydrateInstancedSkeletalAnimationComponents(void* tempInstancedSkeletalAnimationComponents);
+		//void* HydrateInstancedTransformComponents(void* tempInstancedTransformComponents);
 
+		void FreeRenderComponent(void* renderComponent);
+		void FreeSkeletalAnimationComponent(void* skeletalAnimationComponent);
+		void FreeInstancedSkeletalAnimationComponent(void* instancedSkeletalAnimationComponent);
+		void FreeInstancedTransformComponent(void* instancedTransformComponent);
 
 		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
 
@@ -78,18 +100,83 @@ namespace r2::ecs
 		r2::ecs::AudioListenerSystem* moptrAudioListenerSystem;
 		r2::ecs::AudioEmitterSystem* moptrAudioEmitterSystem;
 
+		r2::ecs::SceneGraphSystem* moptrSceneGraphSystem;
+		r2::ecs::SceneGraphTransformUpdateSystem* moptrSceneGraphTransformUpdateSystem;
+
 #ifdef R2_DEBUG
 		r2::ecs::DebugRenderSystem* moptrDebugRenderSystem;
 		r2::ecs::DebugBonesRenderSystem* moptrDebugBonesRenderSystem;
 #endif
 
-		SceneGraph mSceneGraph;
+		r2::ecs::SceneGraph mSceneGraph;
 
 		//@TEMPORARY: This is temporary since we don't know how much memory will be needed for the component allocations
 		//will need to change this later
 		r2::mem::MallocArena mMallocArena;
-		std::vector<void*> mComponentAllocations;
+		std::vector<ECSWorldAllocation> mComponentAllocations;
 	};
+
+	template<typename T>
+	inline T* ECSWorldAlloc(ECSWorld& ecsWorld, const char* file, u32 line, const char* desc)
+	{
+		T* newObj = ALLOC_VERBOSE(T, ecsWorld.GetECSComponentArena(), file, line, desc);
+		ecsWorld.GetComponentAllocations().push_back({ newObj });
+
+		return newObj;
+	}
+
+	template<typename T, class... Args>
+	inline T* ECSWorldAllocParams(ECSWorld& ecsWorld, const char* file, u32 line, const char* desc, Args&&... args)
+	{
+		T* newObj = ALLOC_PARAMS_VERBOSE(T, ecsWorld.GetECSComponentArena(), file, line, desc, std::forward<Args>(args)...);
+		ecsWorld.GetComponentAllocations().push_back({ newObj });
+		return newObj;
+	}
+
+	inline byte* ECSWorldAllocBytes(ECSWorld& ecsWorld, u32 numBytes, u32 alignment, const char* file, u32 line, const char* desc)
+	{
+		byte* bytes = ALLOC_BYTESN_VERBOSE(ecsWorld.GetECSComponentArena(), numBytes, alignment, file, line, desc);
+		ecsWorld.GetComponentAllocations().push_back({static_cast<void*>(bytes)});
+		return bytes;
+	}
+
+	template<typename T>
+	inline SArray<T>* ECSWorldMakeSArray(ECSWorld& ecsWorld, u32 capacity, const char* file, u32 line, const char* desc)
+	{
+		SArray<T>* sarray = MAKE_SARRAY_VERBOSE(ecsWorld.GetECSComponentArena(), T, capacity, file, line, desc);
+		ecsWorld.GetComponentAllocations().push_back({ sarray });
+		return sarray;
+	}
+
+	template<typename T>
+	inline SHashMap<T>* ECSWorldMakeSHashMap(ECSWorld& ecsWorld, u32 capacity, const char* file, u32 line, const char* desc)
+	{
+		const auto realCapacity = SHashMap<u32>::LoadFactorMultiplier()* capacity;
+		SHashMap<T>* map = MAKE_SHASHMAP_VERBOSE(ecsWorld.GetECSComponentArena(), T, realCapacity, file, line, desc);
+		ecsWorld.GetComponentAllocations().push_back({ map });
+		return map;
+	}
+
+	inline void ECSWorldFree(ECSWorld& ecsWorld, void* objPtr, const char* file, u32 line, const char* desc)
+	{
+		const auto& componentAllocations = ecsWorld.GetComponentAllocations();
+
+		auto iter = std::find_if(componentAllocations.begin(), componentAllocations.end(), [objPtr](const ECSWorld::ECSWorldAllocation& allocation) {
+			return allocation.memPtr == objPtr;
+		});
+
+		if (iter != componentAllocations.end())
+		{
+			FREE_VERBOSE(iter->memPtr, ecsWorld.GetECSComponentArena(), file, line, desc);
+		}
+		else
+		{
+			R2_CHECK(false, "You're trying to deallocate a ptr that isn't in our list of allocations");
+		}
+	}
 }
+
+
+
 
 #endif

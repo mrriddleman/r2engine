@@ -15,23 +15,23 @@
 
 namespace r2::ecs
 {
-	using ComponentArrayHydrationFunction = std::function<void*(void*)>;
+	using FreeComponentFunc = std::function<void(void* componentPtr)>;
 
 	class IComponentArray
 	{
 	public:
 		virtual ~IComponentArray() = default;
-		virtual void EntityDestroyed(Entity entity) = 0;
-		virtual void DestoryAllEntities() = 0;
+		virtual void EntityDestroyed(Entity entity, FreeComponentFunc freeComponentFunc) = 0;
+		virtual void DestoryAllEntities(FreeComponentFunc freeComponentFunc) = 0;
 		virtual u64 GetHashName() = 0;
 		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const = 0;
 		virtual void DeSerializeForEntities(
+			ECSWorld& ecsWorld,
 			const r2::SArray<Entity>* entitiesToAddComponentsTo,
 			const r2::SArray<const flat::EntityData*>* refEntityData,
 			r2::SArray<Signature>* entitySignatures,
 			ComponentType componentType,
-			const flat::ComponentArrayData* componentArrayData,
-			ComponentArrayHydrationFunction hydrateFunction) = 0;
+			const flat::ComponentArrayData* componentArrayData) = 0;
 
 		b32 mShouldSerialize;
 	};
@@ -91,6 +91,8 @@ namespace r2::ecs
 		template<class ARENA>
 		void Shutdown(ARENA& arena)
 		{
+			R2_CHECK(r2::sarr::IsEmpty(*mComponentArray), "Should contain no more components at this point");
+
 			FREE(mIndexToEntityMap, arena);
 			FREE(mEntityToIndexMap, arena);
 			FREE(mComponentArray, arena);
@@ -117,13 +119,19 @@ namespace r2::ecs
 			r2::shashmap::Set(*mIndexToEntityMap, index, entity);
 		}
 
-		void RemoveComponent(Entity entity)
+		void RemoveComponent(Entity entity, FreeComponentFunc freeFunc)
 		{
 			R2_CHECK(r2::sarr::At(*mEntityToIndexMap, entity) != -1, "We should already have this entity in the component array");
 
 			s32 defaultIndex = -1;
 			auto indexOfRemovedEntity = r2::sarr::At(*mEntityToIndexMap, entity);
 			R2_CHECK(indexOfRemovedEntity != defaultIndex, "This must exist!");
+
+			if (freeFunc)
+			{
+				Component& component = r2::sarr::At(*mComponentArray, indexOfRemovedEntity);
+				freeFunc(&component);
+			}
 
 			s32 indexOfLastElement = r2::sarr::Size(*mComponentArray) - 1;
 
@@ -164,7 +172,7 @@ namespace r2::ecs
 			return &r2::sarr::At(*mComponentArray, index);
 		}
 
-		void SetComponent(Entity entity, const Component& component)
+		void SetComponent(Entity entity, const Component& component, FreeComponentFunc freeFunc)
 		{
 			R2_CHECK(r2::sarr::At(*mEntityToIndexMap, entity) != -1, "We should already have this entity in the component array");
 
@@ -172,20 +180,34 @@ namespace r2::ecs
 			s32 index = r2::sarr::At(*mEntityToIndexMap, entity);
 			R2_CHECK(index != defaultIndex, "Should never happen!");
 
+			if (freeFunc)
+			{
+				freeFunc(&r2::sarr::At(*mComponentArray, index));
+			}
 
 			r2::sarr::At(*mComponentArray, index) = component;
 		}
 
-		void EntityDestroyed(Entity entity) override
+		void EntityDestroyed(Entity entity, FreeComponentFunc freeComponentFunc) override
 		{
 			if (r2::sarr::At(*mEntityToIndexMap, entity) != -1)
 			{
-				RemoveComponent(entity);
+				RemoveComponent(entity, freeComponentFunc);
 			}
 		}
 
-		void DestoryAllEntities() override
+		void DestoryAllEntities(FreeComponentFunc freeComponentFunc) override
 		{
+			const auto numComponents = r2::sarr::Size(*mComponentArray);
+
+			if (freeComponentFunc)
+			{
+				for (u32 i = 0; i < numComponents; ++i)
+				{
+					freeComponentFunc(&r2::sarr::At(*mComponentArray, i));
+				}
+			}
+
 			r2::sarr::Clear(*mComponentArray);
 			r2::sarr::Clear(*mEntityToIndexMap);
 			r2::sarr::Fill(*mEntityToIndexMap, static_cast<s32>(-1));
@@ -226,12 +248,12 @@ namespace r2::ecs
 		}
 
 		void DeSerializeForEntities(
+			ECSWorld& ecsWorld,
 			const r2::SArray<Entity>* entitiesToAddComponentsTo,
 			const r2::SArray<const flat::EntityData*>* refEntityData,
 			r2::SArray<Signature>* entitySignatures,
 			ComponentType componentType,
-			const flat::ComponentArrayData* componentArrayData,
-			ComponentArrayHydrationFunction hydrateFunction) override
+			const flat::ComponentArrayData* componentArrayData) override
 		{
 			R2_CHECK(componentArrayData != nullptr, "Can't be nullptr");
 			R2_CHECK(entitiesToAddComponentsTo != nullptr, "Can't be nullptr");
@@ -245,14 +267,9 @@ namespace r2::ecs
 
 			R2_CHECK(mHashName == componentArrayData->componentType(), "These should be the same");
 
-			DeSerializeComponentArray(*tempComponents, entitiesToAddComponentsTo, refEntityData, componentArrayData);
+			DeSerializeComponentArray(ecsWorld, *tempComponents, entitiesToAddComponentsTo, refEntityData, componentArrayData);
 
 			r2::SArray<Component>* realComponents = tempComponents;
-
-			if (hydrateFunction)
-			{
-				realComponents = static_cast<r2::SArray<Component>*>( hydrateFunction(static_cast<void*>(tempComponents)) );
-			}
 
 			const auto* entityToIndexMap = componentArrayData->entityToIndexMap();
 
@@ -291,8 +308,6 @@ namespace r2::ecs
 					
 				}
 			}
-			
-			CleanupDeserializeComponentArray(*tempComponents);
 
 			FREE(tempComponents, *MEM_ENG_SCRATCH_PTR);
 		}

@@ -479,6 +479,7 @@ namespace r2::draw::renderer
 
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles(Renderer& renderer);
+	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName);
 #endif
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light);
@@ -2703,126 +2704,6 @@ namespace r2::draw::renderer
 			}
 		}
 	}
-
-	//vb::GPUModelRefHandle UploadAnimModel(Renderer& renderer, const AnimModel* model)
-	//{
-	//	if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
-	//	{
-	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
-	//		return vb::InvalidGPUModelRefHandle;
-	//	}
-
-	//	if (!model)
-	//	{
-	//		return vb::InvalidGPUModelRefHandle;
-	//	}
-
-	//	vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *model);
-
-	//	if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
-	//	{
-	//		return cachedHandle;
-	//	}
-
-	//	vb::GPUModelRefHandle result = vbsys::UploadAnimModelToVertexBuffer(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, *model, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
-
-	//	vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
-
-	//	R2_CHECK(modelRef != nullptr, "?");
-	//	//now resolve the material name
-
-	//	r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-	//	const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
-
-	//	for (u32 i = 0; i < numMaterialNames; ++i)
-	//	{
-	//		auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
-
-	//		const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
-
-	//		const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-	//		R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
-
-	//		r2::sarr::Push(*modelRef->materialNames, materialName);
-
-	//		ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-
-	//		R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
-
-	//		r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-	//	}
-
-	//	return result;
-	//}
-
-	//void UploadAnimModels(Renderer& renderer, const r2::SArray<const AnimModel*>& models, r2::SArray<vb::GPUModelRefHandle>& modelRefs)
-	//{
-	//	if (!renderer.mVertexBufferLayoutSystem || !renderer.mVertexBufferLayoutHandles)
-	//	{
-	//		R2_CHECK(false, "We haven't initialized the renderer yet!");
-	//		return;
-	//	}
-
-	//	if (r2::sarr::IsEmpty(models))
-	//	{
-	//		return;
-	//	}
-
-	//	//this one is a bit weird now since we need all of them to be not loaded or all to be loaded
-	//	vb::GPUModelRefHandle cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, 0));
-	//	if (vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle))
-	//	{
-	//		r2::sarr::Push(modelRefs, cachedHandle);
-	//		for (u32 i = 1; i < r2::sarr::Size(models); ++i)
-	//		{
-	//			cachedHandle = vbsys::GetModelRefHandle(*renderer.mVertexBufferLayoutSystem, *r2::sarr::At(models, i));
-	//			R2_CHECK(vbsys::IsModelRefHandleValid(*renderer.mVertexBufferLayoutSystem, cachedHandle), "This must be the case now");
-	//			r2::sarr::Push(modelRefs, cachedHandle);
-	//		}
-
-	//		return;
-	//	}
-
-	//	const auto startingModelRefOffset = r2::sarr::Size(modelRefs);
-
-	//	vbsys::UploadAllAnimModels(*renderer.mVertexBufferLayoutSystem, renderer.mAnimVertexModelConfigHandle, models, modelRefs, renderer.mPreRenderBucket, renderer.mPrePostRenderCommandArena);
-
-	//	const auto numModelRefs = r2::sarr::Size(modelRefs);
-
-
-	//	r2::asset::AssetLib& assetLib = CENG.GetAssetLib();
-
-
-	//	for (u32 i = startingModelRefOffset; i < numModelRefs; ++i)
-	//	{
-	//		vb::GPUModelRefHandle result = r2::sarr::At(modelRefs, i);
-
-	//		vb::GPUModelRef* modelRef = vbsys::GetGPUModelRefPtr(*renderer.mVertexBufferLayoutSystem, result);
-
-	//		const AnimModel* model = r2::sarr::At(models, i - startingModelRefOffset);
-
-	//		const auto numMaterialNames = r2::sarr::Size(*model->model.optrMaterialNames);
-
-	//		for (u32 i = 0; i < numMaterialNames; ++i)
-	//		{
-	//			auto materialName = r2::sarr::At(*model->model.optrMaterialNames, i);
-
-	//			const byte* manifestData = r2::asset::lib::GetManifestData(assetLib, materialName.packName);
-
-	//			const flat::MaterialParamsPack* materialParamsPack = flat::GetMaterialParamsPack(manifestData);
-	//			R2_CHECK(materialParamsPack != nullptr, "This should never be nullptr");
-
-	//			r2::sarr::Push(*modelRef->materialNames, materialName);
-
-	//			ShaderHandle shaderHandle = shadersystem::FindShaderHandle(r2::mat::GetShaderNameForMaterialName(materialParamsPack, materialName.name));
-
-	//			R2_CHECK(shaderHandle != InvalidShader, "This can never be the case - you forgot to load the shader?");
-
-	//			r2::sarr::Push(*modelRef->shaderHandles, shaderHandle);
-	//		}
-	//	}
-	//}
 
 	void UnloadModel(Renderer& renderer, const vb::GPUModelRefHandle& modelRefHandle)
 	{
@@ -8490,6 +8371,11 @@ namespace r2::draw::renderer
 	{
 		return r2::draw::modlche::GetFileList(*renderer.mModelCache);
 	}
+
+	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName)
+	{
+		return r2::draw::modlche::GetModel(renderer.mModelCache, { assetName, renderer.mModelCache->mModelCache->GetSlot() });
+	}
 #endif
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light)
@@ -9053,6 +8939,11 @@ namespace r2::draw::renderer
 	r2::asset::FileList GetModelFiles()
 	{
 		return GetModelFiles(MENG.GetCurrentRendererRef());
+	}
+
+	const r2::draw::Model* GetDefaultModel(u64 assetName)
+	{
+		return GetDefaultModel(MENG.GetCurrentRendererRef(), assetName);
 	}
 #endif
 

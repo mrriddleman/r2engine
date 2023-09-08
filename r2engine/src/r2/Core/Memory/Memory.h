@@ -25,8 +25,10 @@
 #define ALLOC_BYTES(ARENA, n, alignment, file, line, description) r2::mem::utils::AllocBytes(ARENA, n, alignment, file, line, description)
 
 #define ALLOC_BYTESN(ARENA, n, alignment) r2::mem::utils::AllocBytes(ARENA, n, alignment, __FILE__, __LINE__, "")
+#define ALLOC_BYTESN_VERBOSE(ARENA, n, alignment, file, line, desc) r2::mem::utils::AllocBytes(ARENA, n, alignment, file, line, desc)
 
 #define ALLOC_PARAMS(type, ARENA, ...) r2::mem::utils::AllocParams<type>(ARENA, __FILE__, __LINE__, "", __VA_ARGS__)
+#define ALLOC_PARAMS_VERBOSE(type, ARENA, file, line, desc, ...) r2::mem::utils::AllocParams<type>(ARENA, file, line, desc, __VA_ARGS__)
 #define FREE(objPtr, ARENA) r2::mem::utils::Dealloc(objPtr, ARENA, __FILE__, __LINE__, "")
 #define FREE_VERBOSE(objPtr, ARENA, file, line, desc) r2::mem::utils::Dealloc(objPtr, ARENA, file, line, desc)
 #define ALLOC_ARRAY(type, ARENA) r2::mem::utils::AllocArray<r2::mem::utils::TypeAndCount<type>::Type>(ARENA, r2::mem::utils::TypeAndCount<type>::Count, __FILE__, __LINE__, "", r2::mem::utils::IntToType<r2::mem::utils::IsPOD<r2::mem::utils::TypeAndCount<type>::Type>::Value>())
@@ -524,7 +526,7 @@ namespace r2
             template<typename T, class ARENA>
             void DeallocArray(T* array, ARENA& arena, const char* file, s32 line, const char* description, NonPODType)
             {
-                assert(array != nullptr);
+                R2_CHECK(array != nullptr, "the array is nullptr!");
                 
                 u64 length = *(((u64*)array) - 1);
                 

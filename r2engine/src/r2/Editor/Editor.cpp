@@ -8,6 +8,7 @@
 #include "r2/Editor/EditorScenePanel.h"
 #include "r2/Editor/EditorEvents/EditorEvent.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Game/ECS/Components/AudioListenerComponent.h"
 #include "r2/Game/ECS/Components/AudioEmitterComponent.h"
 #include "r2/Game/ECS/Components/AudioParameterComponent.h"
@@ -16,8 +17,7 @@
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
-#include "r2/Game/ECS/Systems/RenderSystem.h"
-#include "r2/Game/ECS/Systems/SkeletalAnimationSystem.h"
+#include "r2/Game/ECS/Components/TransformComponent.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "r2/Editor/EditorEvents/EditorLevelEvents.h"
 
@@ -37,6 +37,7 @@
 
 #include "r2/Render/Model/Materials/MaterialParamsPackHelpers.h"
 #include "r2/Core/Assets/AssetTypes.h"
+#include "r2/Render/Renderer/Renderer.h"
 
 //@TEST: for test code only - REMOVE!
 #include "r2/Core/Application.h"
@@ -45,9 +46,7 @@
 namespace r2
 {
 	Editor::Editor()
-		:mEditorMemoryAreaHandle(r2::mem::MemoryArea::Invalid)
-		,mMallocArena(r2::mem::utils::MemBoundary())
-		, mCurrentEditorLevel(nullptr)
+		:mCurrentEditorLevel(nullptr)
 	{
 		
 	}
@@ -84,11 +83,6 @@ namespace r2
 		}
 
 		mEditorWidgets.clear();
-
-		for (auto iter = mComponentAllocations.rbegin(); iter != mComponentAllocations.rend(); ++iter)
-		{
-			FREE(*iter, mMallocArena);
-		}
 	}
 
 	void Editor::OnEvent(evt::Event& e)
@@ -288,6 +282,7 @@ namespace r2
 		dispatcher.Dispatch<r2::evt::EditorEntityCreatedEvent>([this](const r2::evt::EditorEntityCreatedEvent& e)
 			{
 				GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
+				r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 
 				r2::asset::Asset microbatAsset = r2::asset::Asset("micro_bat.rmdl", r2::asset::RMODEL);
 
@@ -324,15 +319,13 @@ namespace r2
 				skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
 
 
-				skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+				skeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 				r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-				mComponentAllocations.push_back(skeletalAnimationComponent.shaderBones);
 
 				ecs::DebugBoneComponent debugBoneComponent;
 				debugBoneComponent.color = glm::vec4(1, 1, 0, 1);
-				debugBoneComponent.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+				debugBoneComponent.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 				r2::sarr::Clear(*debugBoneComponent.debugBones);
-				mComponentAllocations.push_back(debugBoneComponent.debugBones);
 
 				ecs::Entity theNewEntity = e.GetEntity();
 
@@ -370,8 +363,7 @@ namespace r2
 				{
 					ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
 					instancedTransformComponent.numInstances = 2;
-					instancedTransformComponent.instances = MAKE_SARRAY(mMallocArena, ecs::TransformComponent, 2);
-					mComponentAllocations.push_back(instancedTransformComponent.instances);
+					instancedTransformComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::TransformComponent, 2);
 
 					ecs::TransformComponent transformInstance1;
 					transformInstance1.localTransform.position = glm::vec3(2, 1, 2);
@@ -395,20 +387,17 @@ namespace r2
 				{
 					ecs::InstanceComponentT<ecs::DebugBoneComponent> instancedDebugBoneComponent;
 					instancedDebugBoneComponent.numInstances = 2;
-					instancedDebugBoneComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugBoneComponent, 2);
-					mComponentAllocations.push_back(instancedDebugBoneComponent.instances);
+					instancedDebugBoneComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::DebugBoneComponent, 2);
 
 					ecs::DebugBoneComponent debugBoneInstance1;
 					debugBoneInstance1.color = glm::vec4(1, 0, 0, 1);
-					debugBoneInstance1.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+					debugBoneInstance1.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 					r2::sarr::Clear(*debugBoneInstance1.debugBones);
-					mComponentAllocations.push_back(debugBoneInstance1.debugBones);
 
 					ecs::DebugBoneComponent debugBoneInstance2;
 					debugBoneInstance2.color = glm::vec4(1, 0, 1, 1);
-					debugBoneInstance2.debugBones = MAKE_SARRAY(mMallocArena, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
+					debugBoneInstance2.debugBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::DebugBone, r2::sarr::Size(*skeletalAnimationComponent.animModel->optrBoneInfo));
 					r2::sarr::Clear(*debugBoneInstance2.debugBones);
-					mComponentAllocations.push_back(debugBoneInstance2.debugBones);
 
 					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance1);
 					r2::sarr::Push(*instancedDebugBoneComponent.instances, debugBoneInstance2);
@@ -420,8 +409,7 @@ namespace r2
 				{
 					ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
 					instancedSkeletalAnimationComponent.numInstances = 2;
-					instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, 2);
-					mComponentAllocations.push_back(instancedSkeletalAnimationComponent.instances);
+					instancedSkeletalAnimationComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::SkeletalAnimationComponent, 2);
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance1;
 					skeletalAnimationInstance1.animModelAssetName = microbatAsset.HashID();
@@ -433,9 +421,9 @@ namespace r2
 					
 					skeletalAnimationInstance1.currentAnimationIndex = skeletalAnimationInstance1.startingAnimationIndex;
 
-					skeletalAnimationInstance1.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->optrBoneInfo));
+					skeletalAnimationInstance1.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance1.animModel->optrBoneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance1.shaderBones);
-					mComponentAllocations.push_back(skeletalAnimationInstance1.shaderBones);
+
 
 
 					ecs::SkeletalAnimationComponent skeletalAnimationInstance2;
@@ -449,9 +437,8 @@ namespace r2
 					skeletalAnimationInstance2.currentAnimationIndex = skeletalAnimationInstance2.startingAnimationIndex;
 
 
-					skeletalAnimationInstance2.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->optrBoneInfo));
+					skeletalAnimationInstance2.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*skeletalAnimationInstance2.animModel->optrBoneInfo));
 					r2::sarr::Clear(*skeletalAnimationInstance2.shaderBones);
-					mComponentAllocations.push_back(skeletalAnimationInstance2.shaderBones);
 
 					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance1);
 					r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationInstance2);
@@ -473,8 +460,7 @@ namespace r2
 
 					ecs::InstanceComponentT<ecs::DebugRenderComponent> instancedDebugRenderComponent;
 					instancedDebugRenderComponent.numInstances = 2;
-					instancedDebugRenderComponent.instances = MAKE_SARRAY(mMallocArena, ecs::DebugRenderComponent, 2);
-					mComponentAllocations.push_back(instancedDebugRenderComponent.instances);
+					instancedDebugRenderComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, ecs::DebugRenderComponent, 2);
 
 					ecs::DebugRenderComponent debugRenderComponent1;
 					debugRenderComponent1.color = glm::vec4(1, 0, 0, 1);
@@ -519,7 +505,7 @@ namespace r2
 		}
 	}
 
-	SceneGraph& Editor::GetSceneGraph()
+	ecs::SceneGraph& Editor::GetSceneGraph()
 	{
 		return MENG.GetECSWorld().GetSceneGraph();
 	}
@@ -527,11 +513,6 @@ namespace r2
 	ecs::ECSCoordinator* Editor::GetECSCoordinator()
 	{
 		return MENG.GetECSWorld().GetECSCoordinator();
-	}
-
-	r2::mem::MallocArena& Editor::GetMemoryArena()
-	{
-		return mMallocArena;
 	}
 
 	void Editor::AddModelToLevel(u64 modelHandle, const r2::draw::Model& model)

@@ -1,12 +1,7 @@
 #ifndef __SCENE_GRAPH_H__
 #define __SCENE_GRAPH_H__
 
-#include "r2/Game/ECS/Components/HierarchyComponent.h"
-#include "r2/Game/ECS/Components/TransformComponent.h"
-#include "r2/Game/ECS/Components/TransformDirtyComponent.h"
-#include "r2/Game/ECS/ECSCoordinator.h"
-#include "r2/Game/ECS/Systems/SceneGraphSystem.h"
-#include "r2/Game/ECS/Systems/SceneGraphTransformUpdateSystem.h"
+#include "r2/Game/ECS/Entity.h"
 
 namespace flat
 {
@@ -16,6 +11,14 @@ namespace flat
 namespace r2
 {
 	class Level;
+}
+
+namespace r2::ecs
+{
+	class SceneGraphSystem;
+	class SceneGraphTransformUpdateSystem;
+	class ECSCoordinator;
+	class ECSWorld;
 
 	class SceneGraph
 	{
@@ -23,63 +26,9 @@ namespace r2
 		SceneGraph();
 		~SceneGraph();
 
-		template <class ARENA>
-		bool Init(ARENA& arena, ecs::ECSCoordinator* coordinator)
-		{
-			if (coordinator == nullptr)
-			{
-				R2_CHECK(false, "Passed in a null coordinator");
-				return false;
-			}
-
-			mnoptrECSCoordinator = coordinator;
-
-			mnoptrSceneGraphSystem = (ecs::SceneGraphSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
-			
-			if (mnoptrSceneGraphSystem == nullptr)
-			{
-				R2_CHECK(false, "Couldn't register the SceneGraphSystem");
-				return false;
-			}
-
-			mnoptrSceneGraphSystem->SetSceneGraph(this);
-
-			ecs::Signature systemSignature;
-
-			const auto heirarchyComponentType = coordinator->GetComponentType<ecs::HierarchyComponent>();
-			const auto transformComponentType = coordinator->GetComponentType<ecs::TransformComponent>();
-			systemSignature.set(heirarchyComponentType);
-			systemSignature.set(transformComponentType);
-
-			coordinator->SetSystemSignature<ecs::SceneGraphSystem>(systemSignature);
-
-			mnoptrSceneGraphTransformUpdateSystem = (ecs::SceneGraphTransformUpdateSystem*)coordinator->RegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
-
-			if (mnoptrSceneGraphTransformUpdateSystem == nullptr)
-			{
-				R2_CHECK(false, "Couldn't register the SceneGraphTransformUpdateSystem");
-				return false;
-			}
-
-			ecs::Signature systemUpdateSignature;
-			systemUpdateSignature.set(heirarchyComponentType);
-			systemUpdateSignature.set(transformComponentType);
-			systemUpdateSignature.set(coordinator->GetComponentType<ecs::TransformDirtyComponent>());
-
-			coordinator->SetSystemSignature<ecs::SceneGraphTransformUpdateSystem>(systemUpdateSignature);
-
-			return true;
-		}
-
-		template <class ARENA>
-		void Shutdown(ARENA& arena)
-		{
-			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphTransformUpdateSystem>(arena);
-			mnoptrECSCoordinator->UnRegisterSystem<ARENA, ecs::SceneGraphSystem>(arena);
-			mnoptrSceneGraphSystem = nullptr;
-			mnoptrECSCoordinator = nullptr;
-			mnoptrSceneGraphTransformUpdateSystem = nullptr;
-		}
+		
+		bool Init(ecs::SceneGraphSystem* sceneGraphSystem, ecs::SceneGraphTransformUpdateSystem* sceneGraphtransformUpdateSystem, ecs::ECSCoordinator* coordinator);
+		void Shutdown();
 
 		void Update();
 
@@ -87,7 +36,7 @@ namespace r2
 		ecs::Entity CreateEntity(ecs::Entity parent);
 		void DestroyEntity(ecs::Entity entity);
 
-		void LoadLevel(const Level& level, const flat::LevelData* levelData);
+		void LoadLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData);
 		void UnloadLevel(const Level& level);
 
 		void Attach(ecs::Entity entity, ecs::Entity parent);
@@ -102,9 +51,6 @@ namespace r2
 		ecs::Entity GetParent(ecs::Entity entity);
 
 		ecs::ECSCoordinator* GetECSCoordinator() const;
-
-
-		static u64 MemorySize(const r2::mem::utils::MemoryProperties& memProperties);
 
 	private:
 

@@ -19,6 +19,8 @@ namespace flat
 
 namespace r2::ecs
 {
+	class ECSWorld;
+
 	class ECSCoordinator
 	{
 	public:
@@ -77,7 +79,7 @@ namespace r2::ecs
 
 		u32 NumLivingEntities() const;
 
-		void LoadAllECSDataFromLevel(const Level& level, const flat::LevelData* levelData);
+		void LoadAllECSDataFromLevel(ECSWorld& ecsWorld, const Level& level, const flat::LevelData* levelData);
 		void UnloadAllECSDataFromLevel(const Level& level);
 
 		template<typename Component>
@@ -91,9 +93,9 @@ namespace r2::ecs
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize, ComponentArrayHydrationFunction hydrationFunction)
+		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize, FreeComponentFunc freeComponentFunc)
 		{
-			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize, hydrationFunction);
+			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize, freeComponentFunc);
 		}
 
 		template<class ARENA, typename Component>

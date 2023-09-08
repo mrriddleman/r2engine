@@ -9,24 +9,20 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Render/Renderer/Renderer.h"
 #include "r2/Render/Model/Model_generated.h"
+#include "r2/Core/Engine.h"
+#include "r2/Game/GameAssetManager/GameAssetManager.h"
 
 namespace r2::ecs
 {
 	/*
-		struct RenderMaterialOverride
-		{
-			u64 materialSystemName;
-			u64 materialName;
-		};
-
 		struct RenderComponent
 		{
 			u64 assetModelHash;
-			r2::draw::PrimitiveType primitiveType;
+			u32 primitiveType;
+			b32 isAnimated; //@TODO(Serge): see if we can get rid of this
 			r2::draw::DrawParameters drawParameters;
 			r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
-			r2::SArray<r2::draw::MaterialHandle>* optrOverrideMaterials;
-			r2::SArray<RenderMaterialOverride>* optrMaterialOverrideNames;
+			r2::SArray<r2::mat::MaterialName>* optrMaterialOverrideNames;
 		};
 	*/
 
@@ -113,8 +109,8 @@ namespace r2::ecs
 					const auto& materialOverride = r2::sarr::At(*renderComponent.optrMaterialOverrideNames, j);
 
 					flat::MaterialNameBuilder overrideMaterialBuilder(fbb);
-					overrideMaterialBuilder.add_name(materialOverride.name);//.add_materialName(materialOverride.materialName);
-					overrideMaterialBuilder.add_materialPackName(materialOverride.packName);//.add_materialSystem(materialOverride.materialSystemName);
+					overrideMaterialBuilder.add_name(materialOverride.name);
+					overrideMaterialBuilder.add_materialPackName(materialOverride.packName);
 
 					flatOverrideMaterials.push_back(overrideMaterialBuilder.Finish());
 				}
@@ -146,11 +142,13 @@ namespace r2::ecs
 	}
 
 	template<>
-	inline void DeSerializeComponentArray(r2::SArray<RenderComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<RenderComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		const flat::RenderComponentArrayData* renderComponentArrayData = flatbuffers::GetRoot<flat::RenderComponentArrayData>(componentArrayData->componentArray()->data());
 
 		const auto* componentVector = renderComponentArrayData->renderComponentArray();
+
+		GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
 		{
@@ -161,6 +159,15 @@ namespace r2::ecs
 			renderComponent.optrMaterialOverrideNames = nullptr;
 
 			renderComponent.assetModelHash = flatRenderComponent->assetModelHash();
+
+			//@NOTE(Serge): we may want to move this to the LevelManager and just get the gpuModelRefHandle here
+			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
+			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+			const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+			renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
+
+			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != renderComponent.gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
+
 			renderComponent.isAnimated = flatRenderComponent->isAnimated();
 			renderComponent.primitiveType = flatRenderComponent->primitiveType();
 
@@ -192,9 +199,9 @@ namespace r2::ecs
 			renderComponent.drawParameters.cullState.cullingEnabled = flatRenderComponent->drawParams()->cullState()->cullingEnabled();
 			renderComponent.drawParameters.cullState.frontFace = flatRenderComponent->drawParams()->cullState()->frontFace();
 
-			if (flatRenderComponent->overrideMaterials())
+			if (flatRenderComponent->overrideMaterials() && flatRenderComponent->overrideMaterials()->size() > 0)
 			{
-				renderComponent.optrMaterialOverrideNames = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, r2::mat::MaterialName, flatRenderComponent->overrideMaterials()->size());
+				renderComponent.optrMaterialOverrideNames = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::mat::MaterialName, flatRenderComponent->overrideMaterials()->size());
 
 				for (flatbuffers::uoffset_t j = 0; j < flatRenderComponent->overrideMaterials()->size(); j++)
 				{
@@ -210,24 +217,6 @@ namespace r2::ecs
 
 			r2::sarr::Push(components, renderComponent);
 
-		}
-	}
-
-	template<>
-	inline void CleanupDeserializeComponentArray(r2::SArray<RenderComponent>& components)
-	{
-		s32 size = r2::sarr::Size(components);
-
-		for (s32 i = size - 1; i >= 0; --i)
-		{
-			RenderComponent& renderComponent = r2::sarr::At(components, i);
-
-			if (renderComponent.optrMaterialOverrideNames)
-			{
-				FREE(renderComponent.optrMaterialOverrideNames, *MEM_ENG_SCRATCH_PTR);
-				renderComponent.optrMaterialOverrideNames = nullptr;
-			}
-			
 		}
 	}
 }

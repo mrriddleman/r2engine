@@ -4,8 +4,8 @@
 #include "r2/Core/Containers/SArray.h"
 #include "r2/Core/Logging/Log.h"
 #include "r2/Game/ECS/Entity.h"
-
 #include "flatbuffers/flatbuffers.h"
+#include "r2/Game/ECSWorld/ECSWorld.h"
 
 namespace flat
 {
@@ -21,18 +21,10 @@ namespace r2::ecs
 	}
 
 	template<typename Component>
-	inline void DeSerializeComponentArray(r2::SArray<Component>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+	inline void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<Component>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
 	{
 		R2_CHECK(false, "You need to implement a deserializer for this type");
 	}
-
-
-	template<typename Component>
-	inline void CleanupDeserializeComponentArray(r2::SArray<Component>& components)
-	{
-
-	}
-
 
 }
 
