@@ -5,20 +5,39 @@
 
 #include "r2/Core/Engine.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
+#include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+
 #include "r2/Core/File/PathUtils.h"
 
 #include "imgui.h"
 
 namespace r2::edit
 {
-	void DisplayAnimationDetails(int id, const r2::draw::Animation* animation)
+	void DisplayAnimationDetails(r2::ecs::SkeletalAnimationComponent& animationComponent, u32& animationIndex, int id, const r2::draw::Animation* animation)
 	{
 		R2_CHECK(animation != nullptr, "Should never happen");
 
 		ImGui::PushID(id);
-		ImGui::Text("Animation Name: %s", animation->animationName.c_str());
+
+		if (ImGui::BeginCombo("##label animation", animation->animationName.c_str()))
+		{
+			const u32 numAnimations = r2::sarr::Size(*animationComponent.animModel->optrAnimations);
+
+			for (u32 i = 0; i < numAnimations; ++i)
+			{
+				const r2::draw::Animation* nextAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, i);
+				if (ImGui::Selectable(nextAnimation->animationName.c_str(), animation->assetName == nextAnimation->assetName))
+				{
+					animationIndex = i;
+					animation = nextAnimation;
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+
 		ImGui::Text("Duration: %f", animation->duration);
 		ImGui::Text("Ticks Per Second: %f", animation->ticksPerSeconds);
 		ImGui::PopID();
@@ -38,7 +57,7 @@ namespace r2::edit
 		{
 			if (ImGui::TreeNodeEx("Current Animation"))
 			{
-				DisplayAnimationDetails(id, r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex));
+				DisplayAnimationDetails(animationComponent, animationComponent.currentAnimationIndex, id, r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.currentAnimationIndex));
 
 				ImGui::TreePop();
 			}
@@ -47,15 +66,9 @@ namespace r2::edit
 			{
 				const r2::draw::Animation* startingAnimation = r2::sarr::At(*animationComponent.animModel->optrAnimations, animationComponent.startingAnimationIndex);
 				R2_CHECK(startingAnimation != nullptr, "This should never happen");
-				DisplayAnimationDetails(id+1, startingAnimation);
+				DisplayAnimationDetails(animationComponent, animationComponent.startingAnimationIndex, id+1, startingAnimation);
 				ImGui::TreePop();
 			}
-
-			//@TODO(Serge): we should somehow be able to change the Model - maybe this will be done in the Render Component
-			//				right now we're not doing that. 
-			//				We should also be able to change the starting animation - however we have no way of filtering the animations
-			//				When we do the Animation System refactor, we'll need a way of tying an animated model with the animations
-			//				Perhaps with some kind of character class or something. Not doing this yet.
 
 			int startTime = animationComponent.startTime;
 			ImGui::Text("Start Time: ");
@@ -72,15 +85,6 @@ namespace r2::edit
 			{
 				animationComponent.shouldLoop = shouldLoop;
 			}
-
-			//bool useSameAnimationForAllInstances = animationComponent.shouldUseSameTransformsForAllInstances;
-
-			//@TODO(Serge): This is a bit problematic atm, need to rethink later. Maybe this should force the other
-			//				instances to use the current animation or something - would make more sense. Or get rid of it
-			//if (ImGui::Checkbox("Use Animation Data for all instances", &useSameAnimationForAllInstances))
-			//{
-			//	animationComponent.shouldUseSameTransformsForAllInstances = useSameAnimationForAllInstances;
-			//}
 
 			ImGui::TreePop();
 		}
