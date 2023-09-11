@@ -76,7 +76,8 @@ namespace r2::ecs
 			numInstances += instancedTransformComponent->numInstances;
 			for (size_t i = 0; i < instancedTransformComponent->numInstances; i++)
 			{
-				r2::sarr::Push(*mBatch.transforms, r2::sarr::At(*instancedTransformComponent->instances, i).modelMatrix);
+				const auto& tranformComponent = r2::sarr::At(*instancedTransformComponent->instances, i);
+				r2::sarr::Push(*mBatch.transforms, tranformComponent.modelMatrix);
 			}
 		}
 

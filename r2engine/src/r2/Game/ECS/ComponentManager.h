@@ -80,6 +80,12 @@ namespace r2::ecs
 
 			ComponentArray<Component>* componentArray = GetComponentArray<Component>();
 
+			FreeComponentFunc defaultFreeFunc = nullptr;
+
+			FreeComponentFunc freeFunc = r2::shashmap::Get(*mFreeComponentFuncMap, componentTypeHash, defaultFreeFunc);
+
+			componentArray->DestoryAllEntities(freeFunc);
+
 			componentArray->Shutdown<ARENA>(arena);
 
 			ComponentType defaultType = -1;

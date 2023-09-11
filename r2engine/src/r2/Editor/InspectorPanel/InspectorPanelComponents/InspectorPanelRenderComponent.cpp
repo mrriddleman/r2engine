@@ -10,6 +10,7 @@
 #include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
+#include "r2/Game/ECS/Components/DebugBoneComponent.h"
 
 #include "r2/Game/GameAssetManager/GameAssetManager.h"
 
@@ -20,6 +21,8 @@
 #include "r2/Core/Engine.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
 
+//this is dumb but...
+#include "r2/Render/Animation/AnimationPlayer.h"
 
 #include "imgui.h"
 
@@ -236,6 +239,246 @@ namespace r2::edit
 		return "";
 	}
 
+	void UpdateSkeletalAnimationComponentIfNecessary(
+		const r2::draw::Model* renderModel,
+		bool useSameBoneTransformsForInstances,
+		r2::ecs::ECSCoordinator* coordinator,
+		r2::ecs::Entity entity,
+		int id,
+		r2::ecs::RenderComponent& renderComponent)
+	{
+		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+
+		bool hasSkeletalAnimationComponent = coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+		bool hasDebugBoneComponent = coordinator->HasComponent<r2::ecs::DebugBoneComponent>(entity);
+		bool updateShaderBones = false;
+
+		if (renderComponent.isAnimated && !hasSkeletalAnimationComponent)
+		{
+			//add the skeletal animation component
+			r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
+			newSkeletalAnimationComponent.animModel = renderModel;
+			newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
+
+			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+			newSkeletalAnimationComponent.startingAnimationIndex = 0;
+			newSkeletalAnimationComponent.shouldLoop = true;
+			newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
+			newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
+			newSkeletalAnimationComponent.startTime = 0;
+			newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+
+			coordinator->AddComponent<r2::ecs::SkeletalAnimationComponent>(entity, newSkeletalAnimationComponent);
+
+			updateShaderBones = true;
+
+			
+		}
+		else if (renderComponent.isAnimated && hasSkeletalAnimationComponent)
+		{
+			//in this case we need to make sure that the old skeletal animation component is setup correctly
+			r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+			animationComponent.animModel = renderModel;
+			animationComponent.animModelAssetName = renderModel->assetName;
+
+			R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+			//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
+			animationComponent.startingAnimationIndex = 0;
+			animationComponent.shouldLoop = true;
+			animationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
+			animationComponent.currentAnimationIndex = animationComponent.startingAnimationIndex;
+			animationComponent.startTime = 0;
+
+			if (r2::sarr::Capacity(*animationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
+			{
+				ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
+
+				animationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+				
+			}
+			r2::sarr::Clear(*animationComponent.shaderBones);
+
+			updateShaderBones = true;
+			
+			
+		}
+		else if (!renderComponent.isAnimated && hasSkeletalAnimationComponent)
+		{
+			//remove the skeletal animation component
+
+			//free the shader bones first since that's not included when we remove the component
+			coordinator->RemoveComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+
+			if (hasDebugBoneComponent)
+			{
+				coordinator->RemoveComponent<r2::ecs::DebugBoneComponent>(entity);
+			}
+		}
+		else //!renderComponent.isAnimated && !coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity)
+		{
+			//nothing to do?
+		}
+
+		//@NOTE(Serge): use the animation player to populate the shaderBones - this is necessary since we won't go through an Update cycle before we draw next
+		if (updateShaderBones)
+		{
+			r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
+			r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
+			if (hasDebugBoneComponent)
+			{
+				r2::ecs::DebugBoneComponent& debugBoneComponent = coordinator->GetComponent<r2::ecs::DebugBoneComponent>(entity);
+				debugBones = debugBoneComponent.debugBones;
+			}
+
+			auto ticks = CENG.GetTicks();
+			r2::draw::PlayAnimationForAnimModel(
+				ticks,
+				animationComponent.startTime,
+				animationComponent.shouldLoop,
+				*renderModel,
+				r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
+				*animationComponent.shaderBones,
+				debugBones, 0);
+		}
+
+		bool hasInstancedSkeletalAnimationComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<r2::ecs::SkeletalAnimationComponent>>(entity);
+		bool hasInstancedTransformComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<ecs::TransformComponent>>(entity);
+
+		bool isInstanced = (hasInstancedSkeletalAnimationComponent || hasInstancedTransformComponent);
+
+		if (renderComponent.isAnimated && hasInstancedSkeletalAnimationComponent)
+		{
+			//change
+			r2::ecs::InstanceComponentT<r2::ecs::SkeletalAnimationComponent>& instancedAnimationComponent = coordinator->GetComponent<r2::ecs::InstanceComponentT<r2::ecs::SkeletalAnimationComponent>>(entity);
+
+			const auto numInstances = instancedAnimationComponent.numInstances;
+
+			for (u32 i = 0; i < numInstances; ++i)
+			{
+				r2::ecs::SkeletalAnimationComponent& nextAnimationComponent = r2::sarr::At(*instancedAnimationComponent.instances, i);
+
+				nextAnimationComponent.animModel = renderModel;
+				nextAnimationComponent.animModelAssetName = renderModel->assetName;
+
+				R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+				//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
+				nextAnimationComponent.startingAnimationIndex = 0;
+				nextAnimationComponent.shouldLoop = true;
+				nextAnimationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
+				nextAnimationComponent.currentAnimationIndex = nextAnimationComponent.startingAnimationIndex;
+				nextAnimationComponent.startTime = 0;
+
+				if (r2::sarr::Capacity(*nextAnimationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
+				{
+					ECS_WORLD_FREE(ecsWorld, nextAnimationComponent.shaderBones);
+
+					nextAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
+				}
+				r2::sarr::Clear(*nextAnimationComponent.shaderBones);
+
+				if (updateShaderBones && !useSameBoneTransformsForInstances)
+				{
+					r2::ecs::SkeletalAnimationComponent& animationComponent = r2::sarr::At(*instancedAnimationComponent.instances, i);
+					r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
+
+					auto* instancedDebugBoneComponent = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity);
+
+					if (instancedDebugBoneComponent)
+					{
+						r2::ecs::DebugBoneComponent& debugBoneComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, i);;
+						debugBones = debugBoneComponent.debugBones;
+					}
+
+					auto ticks = CENG.GetTicks();
+					r2::draw::PlayAnimationForAnimModel(
+						ticks,
+						animationComponent.startTime,
+						animationComponent.shouldLoop,
+						*renderModel,
+						r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
+						*animationComponent.shaderBones,
+						debugBones, 0);
+				}
+			}
+		}
+		else if (renderComponent.isAnimated && !hasInstancedSkeletalAnimationComponent && hasInstancedTransformComponent)
+		{
+			//add
+			r2::ecs::InstanceComponentT<r2::ecs::SkeletalAnimationComponent> instancedAnimationComponent;
+
+			const r2::ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<r2::ecs::InstanceComponentT<ecs::TransformComponent>>(entity);
+
+			instancedAnimationComponent.numInstances = instancedTransformComponent.numInstances;
+
+			instancedAnimationComponent.instances = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::ecs::SkeletalAnimationComponent, instancedAnimationComponent.numInstances);
+
+			for (u32 i = 0; i < instancedTransformComponent.numInstances; i++)
+			{
+				r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
+				newSkeletalAnimationComponent.animModel = renderModel;
+				newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
+
+				R2_CHECK(renderModel->optrAnimations&& r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
+
+				newSkeletalAnimationComponent.startingAnimationIndex = 0;
+				newSkeletalAnimationComponent.shouldLoop = true;
+				newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = useSameBoneTransformsForInstances;
+				newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
+				newSkeletalAnimationComponent.startTime = 0;
+				newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
+
+				r2::sarr::Push(*instancedAnimationComponent.instances, newSkeletalAnimationComponent);
+
+				if (updateShaderBones && !useSameBoneTransformsForInstances)
+				{
+					r2::ecs::SkeletalAnimationComponent& animationComponent = newSkeletalAnimationComponent;
+					r2::SArray<r2::draw::DebugBone>* debugBones = nullptr;
+
+					auto* instancedDebugBoneComponent = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity);
+
+					if (instancedDebugBoneComponent)
+					{
+						r2::ecs::DebugBoneComponent& debugBoneComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, i);;
+						debugBones = debugBoneComponent.debugBones;
+					}
+
+					auto ticks = CENG.GetTicks();
+					r2::draw::PlayAnimationForAnimModel(
+						ticks,
+						animationComponent.startTime,
+						animationComponent.shouldLoop,
+						*renderModel,
+						r2::sarr::At(*renderModel->optrAnimations, animationComponent.currentAnimationIndex),
+						*animationComponent.shaderBones,
+						debugBones, 0);
+				}
+			}
+
+			coordinator->AddComponent<r2::ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(entity, instancedAnimationComponent);
+
+		}
+		else if (!renderComponent.isAnimated && hasInstancedSkeletalAnimationComponent)
+		{
+			//remove
+			coordinator->RemoveComponent<r2::ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(entity);
+
+			if (coordinator->HasComponent<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity))
+			{
+				coordinator->RemoveComponent<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(entity);
+			}
+		}
+		else//!renderComponent.isAnimated && !hasInstancedSkeletalAnimationComponent
+		{
+			//nothing to do
+		}
+
+
+
+	}
+
 	void RenderComponentInstance(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity entity, int id, r2::ecs::RenderComponent& renderComponent)
 	{
 
@@ -254,15 +497,30 @@ namespace r2::edit
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 			const r2::draw::Model* model = nullptr;
-			model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
+			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			const r2::asset::AssetFile* currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
-
-			//@HACK - because we have different model types (normal vs primitive) we need to do this. We need to consolidate the two formats into one
-			if (currentModelAssetfile == nullptr)
+			if (gameAssetManager.HasAsset({ renderComponent.assetModelHash , r2::asset::RMODEL}))
 			{
-				currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::MODEL));
+				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
+				currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 			}
+			else
+			{
+				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelHash);
+				r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
+				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
+				for (u32 i = 0; i < numPrimitiveModels; ++i)
+				{
+					r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
+
+					if (assetFile->GetAssetHandle(0) == renderComponent.assetModelHash)
+					{
+						currentModelAssetfile = assetFile;
+						break;
+					}
+				}
+			}
+
 
 			std::string modelFileName = GetModelNameForAssetFile(currentModelAssetfile);
 
@@ -343,66 +601,9 @@ namespace r2::edit
 							//				I think we'll have to delete the array and make a new one based on 
 							//				the new renderModel's materialNames
 
-
+							bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
-							if (renderComponent.isAnimated && !coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
-							{
-								//add the skeletal animation component
-								r2::ecs::SkeletalAnimationComponent newSkeletalAnimationComponent;
-								newSkeletalAnimationComponent.animModel = renderModel;
-								newSkeletalAnimationComponent.animModelAssetName = renderModel->assetName;
-
-								R2_CHECK(renderModel->optrAnimations && r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
-
-								newSkeletalAnimationComponent.startingAnimationIndex = 0;
-								newSkeletalAnimationComponent.shouldLoop = true;
-								newSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances = true;
-								newSkeletalAnimationComponent.currentAnimationIndex = newSkeletalAnimationComponent.startingAnimationIndex;
-								newSkeletalAnimationComponent.startTime = 0;
-								newSkeletalAnimationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Size(*renderModel->optrBoneInfo));
-
-								coordinator->AddComponent<r2::ecs::SkeletalAnimationComponent>(entity, newSkeletalAnimationComponent);
-							}
-							else if (renderComponent.isAnimated && coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
-							{
-								//in this case we need to make sure that the old skeletal animation component is setup correctly
-								r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
-								animationComponent.animModel = renderModel;
-								animationComponent.animModelAssetName = renderModel->assetName;
-
-								R2_CHECK(renderModel->optrAnimations&& r2::sarr::Size(*renderModel->optrAnimations) > 0, "we need to have animations");
-
-								//Put the starting animation index back to 0 since we don't know how many animations we have vs what we used to have
-								animationComponent.startingAnimationIndex = 0;
-								animationComponent.shouldLoop = true;
-								animationComponent.shouldUseSameTransformsForAllInstances = true;
-								animationComponent.currentAnimationIndex = animationComponent.startingAnimationIndex;
-								animationComponent.startTime = 0;
-
-								if (r2::sarr::Capacity(*animationComponent.shaderBones) != r2::sarr::Capacity(*renderModel->optrBoneInfo))
-								{
-									ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
-
-									animationComponent.shaderBones = ECS_WORLD_MAKE_SARRAY(ecsWorld, r2::draw::ShaderBoneTransform, r2::sarr::Capacity(*renderModel->optrBoneInfo));
-									r2::sarr::Clear(*animationComponent.shaderBones);
-								}
-
-							}
-							else if (!renderComponent.isAnimated && coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity))
-							{
-								//remove the skeletal animation component
-
-								//free the shader bones first since that's not included when we remove the component
-								r2::ecs::SkeletalAnimationComponent& animationComponent = coordinator->GetComponent<r2::ecs::SkeletalAnimationComponent>(entity);
-								ECS_WORLD_FREE(ecsWorld, animationComponent.shaderBones);
-								animationComponent.shaderBones = nullptr;
-
-								coordinator->RemoveComponent<r2::ecs::SkeletalAnimationComponent>(entity);
-							}
-							else //!renderComponent.isAnimated && !coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(entity)
-							{
-								//nothing to do?
-							}
+							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, entity, id, renderComponent);
 						}
 					}
 				}
@@ -486,6 +687,21 @@ namespace r2::edit
 				{
 					renderComponent.drawParameters.flags.Remove(r2::draw::eDrawFlags::DEPTH_TEST);
 				}
+			}
+
+			bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+			if (ImGui::Checkbox("Use Same Bone Transforms for all instances", &useSameBoneTransformsForAllInstances))
+			{
+				if (useSameBoneTransformsForAllInstances)
+				{
+					renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+				}
+				else
+				{
+					renderComponent.drawParameters.flags.Remove(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+				}
+
+				UpdateSkeletalAnimationComponentIfNecessary(model, useSameBoneTransformsForAllInstances, coordinator, entity, id, renderComponent);
 			}
 
 			if (ImGui::TreeNode("Stencil State"))

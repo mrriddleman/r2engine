@@ -41,14 +41,14 @@ namespace r2::ecs
 			const InstanceComponentT<TransformComponent>* instancedTranformsComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
 			const InstanceComponentT<DebugBoneComponent>* instanceDebugBonesComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<DebugBoneComponent>>(e);
 			
+			const SkeletalAnimationComponent* animationComponent = mnoptrCoordinator->GetComponentPtr<SkeletalAnimationComponent>(e);
+
 			r2::draw::renderer::DrawDebugBones(*debugBoneComponent.debugBones, transformComponent.modelMatrix, debugBoneComponent.color);
 			
-			if(instancedTranformsComponent && instanceDebugBonesComponent)
+			if(instancedTranformsComponent && instanceDebugBonesComponent && animationComponent)
 			{
-				const SkeletalAnimationComponent& animationComponent = mnoptrCoordinator->GetComponent<SkeletalAnimationComponent>(e);
-
 				const u32 numModels = instancedTranformsComponent->numInstances;
-				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent.animModel->optrBoneInfo);
+				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent->animModel->optrBoneInfo);
 
 				for (u32 j = 0; j < numModels; ++j)
 				{

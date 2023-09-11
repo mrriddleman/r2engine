@@ -521,9 +521,9 @@ namespace r2::ecs
 
 		ecs::Signature skeletalAnimationSystemSignature;
 		skeletalAnimationSystemSignature.set(skeletalAnimationComponentType);
-#ifdef R2_DEBUG
-		skeletalAnimationSystemSignature.set(debugBoneComponentType);
-#endif
+//#ifdef R2_DEBUG
+//		skeletalAnimationSystemSignature.set(debugBoneComponentType);
+//#endif
 		mECSCoordinator->SetSystemSignature<ecs::SkeletalAnimationSystem>(skeletalAnimationSystemSignature);
 
 #ifdef R2_DEBUG

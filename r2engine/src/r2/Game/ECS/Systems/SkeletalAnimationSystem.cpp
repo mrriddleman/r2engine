@@ -36,17 +36,13 @@ namespace r2::ecs
 			r2::SArray<r2::draw::DebugBone>* debugBonesToUse = nullptr;
 #ifdef R2_DEBUG
 			DebugBoneComponent* debugBoneComponent = mnoptrCoordinator->GetComponentPtr<DebugBoneComponent>(e);
-			R2_CHECK(debugBoneComponent != nullptr, "Should not be nullptr right now");
-			R2_CHECK(debugBoneComponent->debugBones != nullptr, "These should not be null");
-
 			InstanceComponentT<DebugBoneComponent>* instancedDebugBoneComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<DebugBoneComponent>>(e);
 
-			if (instancedAnimationComponent)
+			if (debugBoneComponent)
 			{
-				R2_CHECK(instancedDebugBoneComponent != nullptr, "This needs to exist in this case");
+				R2_CHECK(debugBoneComponent->debugBones != nullptr, "These should not be null");
+				debugBonesToUse = debugBoneComponent->debugBones;
 			}
-
-			debugBonesToUse = debugBoneComponent->debugBones;
 #endif
 
 			R2_CHECK(animationComponent.shaderBones != nullptr, "These should not be null");
@@ -69,7 +65,10 @@ namespace r2::ecs
 
 			r2::sarr::Clear(*animationComponent.shaderBones);
 #ifdef R2_DEBUG
-			r2::sarr::Clear(*debugBonesToUse);
+			if (debugBonesToUse)
+			{
+				r2::sarr::Clear(*debugBonesToUse);
+			}
 #endif
 			const auto ticks = CENG.GetTicks();
 			
@@ -89,10 +88,13 @@ namespace r2::ecs
 				{
 					SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedAnimationComponent->instances, j);
 #ifdef R2_DEBUG
-					DebugBoneComponent& debugBonesComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, j);
+					if (instancedDebugBoneComponent && debugBonesToUse)
+					{
+						DebugBoneComponent& debugBonesComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, j);
 
-					debugBonesToUse = debugBonesComponent.debugBones;
-					r2::sarr::Clear(*debugBonesToUse);
+						debugBonesToUse = debugBonesComponent.debugBones;
+						r2::sarr::Clear(*debugBonesToUse);
+					}
 #endif
 					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
 
