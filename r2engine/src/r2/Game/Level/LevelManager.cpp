@@ -393,11 +393,10 @@ namespace r2
 		for (flatbuffers::uoffset_t i = 0; i < numModelFiles; ++i)
 		{
 			r2::asset::Asset modelAsset = r2::asset::Asset::MakeAssetFromFilePath(modelFiles->Get(i)->binPath()->str().c_str(), r2::asset::RMODEL);
-			r2::sarr::Push(*modelAssets, gameAssetManager.LoadAsset(modelAsset));
-
-			//@NOTE(Serge): maybe we should be uploading the model to the GPU - however that would require us knowing 
-			//				what kind of model it is. Maybe we need to make a universal model so this doesn't keep happening.
-			//				Since each entity loads and uploads their models when hydrating, this isn't important at the moment.
+			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+			r2::sarr::Push(*modelAssets, modelHandle);
+			const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+			r2::draw::renderer::UploadModel(model);
 		}
 
 		f64 endModelLoading = CENG.GetTicks();

@@ -295,7 +295,7 @@ namespace r2
 				AddModelToLevel(microbatAsset.HashID(), *microbatAnimModel);
 
 				ecs::RenderComponent renderComponent;
-				renderComponent.assetModelHash = microbatAsset.HashID();
+				renderComponent.assetModelName = microbatAsset.HashID();
 				renderComponent.optrMaterialOverrideNames = nullptr;
 				renderComponent.gpuModelRefHandle = gpuModelRefHandle;
 				renderComponent.primitiveType = (u32)draw::PrimitiveType::TRIANGLES;

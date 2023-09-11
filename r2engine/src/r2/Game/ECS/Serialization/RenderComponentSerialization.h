@@ -120,7 +120,7 @@ namespace r2::ecs
 
 			flat::RenderComponentDataBuilder renderComponentBuilder(fbb);
 
-			renderComponentBuilder.add_assetModelHash(renderComponent.assetModelHash);
+			renderComponentBuilder.add_assetModelHash(renderComponent.assetModelName);
 			renderComponentBuilder.add_primitiveType(renderComponent.primitiveType);
 			renderComponentBuilder.add_isAnimated(renderComponent.isAnimated);
 			renderComponentBuilder.add_drawParams(flatDrawParams);
@@ -158,13 +158,13 @@ namespace r2::ecs
 			renderComponent.gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
 			renderComponent.optrMaterialOverrideNames = nullptr;
 
-			renderComponent.assetModelHash = flatRenderComponent->assetModelHash();
+			renderComponent.assetModelName = flatRenderComponent->assetModelHash();
 
 			//@NOTE(Serge): we may want to move this to the LevelManager and just get the gpuModelRefHandle here
-			r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
-			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-			const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-			renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
+			//r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
+			//r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
+			//const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
+			renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelName);
 
 			R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != renderComponent.gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
 

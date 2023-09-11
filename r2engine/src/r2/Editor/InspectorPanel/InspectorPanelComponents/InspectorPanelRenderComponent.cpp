@@ -499,21 +499,21 @@ namespace r2::edit
 			const r2::draw::Model* model = nullptr;
 			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			if (gameAssetManager.HasAsset({ renderComponent.assetModelHash , r2::asset::RMODEL}))
+			if (gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL}))
 			{
-				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelHash);
+				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelName);
 				currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
 			}
 			else
 			{
-				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelHash);
+				model = r2::draw::renderer::GetDefaultModel(renderComponent.assetModelName);
 				r2::asset::FileList primitiveModels = r2::draw::renderer::GetModelFiles();
 				const auto numPrimitiveModels = r2::sarr::Size(*primitiveModels);
 				for (u32 i = 0; i < numPrimitiveModels; ++i)
 				{
 					r2::asset::AssetFile* assetFile = r2::sarr::At(*primitiveModels, i);
 
-					if (assetFile->GetAssetHandle(0) == renderComponent.assetModelHash)
+					if (assetFile->GetAssetHandle(0) == renderComponent.assetModelName)
 					{
 						currentModelAssetfile = assetFile;
 						break;
@@ -577,9 +577,9 @@ namespace r2::edit
 
 							R2_CHECK(renderModel != nullptr, "Should never happen");
 
-							renderComponent.assetModelHash = renderModel->assetName;
+							renderComponent.assetModelName = renderModel->assetName;
 
-							renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelHash);
+							renderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(renderComponent.assetModelName);
 
 							if (!r2::draw::renderer::IsModelRefHandleValid(renderComponent.gpuModelRefHandle))
 							{
