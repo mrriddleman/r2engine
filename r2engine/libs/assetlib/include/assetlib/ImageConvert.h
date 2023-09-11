@@ -5,13 +5,10 @@
 #include "assetlib/TextureMetaData_generated.h"
 #include <filesystem>
 
-
 namespace flat
 {
 	enum MipMapFilter : int;
 }
-
-
 
 namespace r2::assets::assetlib
 {

@@ -9,7 +9,6 @@
 #include "r2/Core/Assets/AssetLib.h"
 #include "r2/Core/Assets/AssetLoaders/MeshAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/ModelAssetLoader.h"
-#include "r2/Core/Assets/AssetLoaders/RAnimationAssetLoader.h"
 #include "r2/Core/Assets/AssetLoaders/RModelAssetLoader.h"
 
 #include "r2/Core/Memory/Memory.h"
@@ -78,9 +77,6 @@ namespace r2
 
 			r2::asset::RModelAssetLoader* rmodelLoader = (r2::asset::RModelAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RModelAssetLoader>();
 			mAssetCache->RegisterAssetLoader(rmodelLoader);
-
-			r2::asset::RAnimationAssetLoader* ranimationLoader = (r2::asset::RAnimationAssetLoader*)mAssetCache->MakeAssetLoader<r2::asset::RAnimationAssetLoader>();
-			mAssetCache->RegisterAssetLoader(ranimationLoader);
 
 			mAssetCache->RegisterAssetFreedCallback(std::bind(&GameAssetManager::RemoveAssetCacheRecord, this, std::placeholders::_1));
 
