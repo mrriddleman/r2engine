@@ -57,6 +57,11 @@ namespace r2::edit
 			{
 				//This should probably be an action?
 				coordinator->RemoveComponent<r2::ecs::TransformComponent>(theEntity);
+
+				if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity))
+				{
+					coordinator->RemoveComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity);
+				}
 			},
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 			{
@@ -141,7 +146,8 @@ namespace r2::edit
 				newRenderComponent.drawParameters.layer = draw::DL_WORLD;
 				newRenderComponent.drawParameters.flags.Clear();
 				newRenderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
-				
+				newRenderComponent.optrMaterialOverrideNames = nullptr;
+
 				r2::draw::renderer::SetDefaultDrawParameters(newRenderComponent.drawParameters);
 
 				coordinator->AddComponent<ecs::RenderComponent>(theEntity, newRenderComponent);
@@ -177,16 +183,6 @@ namespace r2::edit
 			},
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 			{
-				/*
-					r2::audio::AudioEngine::EventInstanceHandle eventInstanceHandle;
-					char eventName[r2::fs::FILE_PATH_LENGTH];
-					AudioEmitterParameter parameters[MAX_AUDIO_EMITTER_PARAMETERS];
-					u32 numParameters;
-					AudioEmitterStartCondition startCondition;
-					b32 allowFadeoutWhenStopping;
-					b32 releaseAfterPlay;
-				*/
-
 				ecs::AudioEmitterComponent audioEmitterComponent;
 
 				audioEmitterComponent.eventInstanceHandle = r2::audio::AudioEngine::InvalidEventInstanceHandle;
@@ -216,30 +212,6 @@ namespace r2::edit
 			},
 			[](r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
 			{
-				/*
-					r2::draw::DebugModelType debugModelType;
-
-					//for Arrow this is headBaseRadius
-					float radius;
-
-					//for Arrow this is length
-					//for Cone and Cylinder - this is height
-					//for a line - this is length of the line
-					glm::vec3 scale;
-
-					//For Lines, this is used for the direction of p1
-					//we use the scale to determine the p1 of the line
-					//for Quads, this will be the normal
-					glm::vec3 direction;
-
-					//some offset to give the position of the render debug component
-					glm::vec3 offset;
-
-					glm::vec4 color;
-					b32 filled;
-					b32 depthTest;
-				*/
-
 				ecs::DebugRenderComponent newDebugRenderComponent;
 				newDebugRenderComponent.debugModelType = draw::DEBUG_CUBE;
 				newDebugRenderComponent.radius = 1.0f;

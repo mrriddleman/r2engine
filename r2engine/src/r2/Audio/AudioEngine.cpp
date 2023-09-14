@@ -1164,6 +1164,20 @@ namespace r2::audio
         return true;
     }
 
+    bool AudioEngine::HasEvent(const char* eventName)
+    {
+		if (!gImpl)
+		{
+			R2_CHECK(false, "We haven't initialized the AudioEngine yet!");
+			return false;
+		}
+
+		FMOD::Studio::EventDescription* description = nullptr;
+		gImpl->mStudioSystem->getEvent(eventName, &description);
+
+        return description != nullptr;
+    }
+
     bool AudioEngine::PauseEvent(const EventInstanceHandle& eventInstanceHandle)
     {
 		if (!gImpl)

@@ -118,6 +118,8 @@ namespace r2::audio
         static bool PlayEvent(const EventInstanceHandle& eventInstanceHandle, bool releaseAfterPlay = false);
         static bool PlayEvent(const EventInstanceHandle& eventInstanceHandle, const Attributes3D& attributes3D, bool releaseAfterPlay = false);
 
+        static bool HasEvent(const char* eventName);
+
         static bool PauseEvent(const EventInstanceHandle& eventInstance);
         static bool StopEvent(const EventInstanceHandle& eventInstance, bool allowFadeOut);
 

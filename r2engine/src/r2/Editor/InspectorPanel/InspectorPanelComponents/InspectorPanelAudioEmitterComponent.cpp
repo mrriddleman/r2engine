@@ -63,7 +63,6 @@ namespace r2::edit
 		{
 			audioEngine.PlayEvent(eventInstanceHandle, true);
 		}
-		
 	}
 
 	void InspectorPanelAudioEmitterComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
@@ -100,6 +99,14 @@ namespace r2::edit
 		}
 		ImGui::SameLine();
 
+		bool hasAudioEvent = audioEngine.HasEvent(audioEmitterComponent.eventName);
+
+		if (!hasAudioEvent)
+		{
+			ImGui::BeginDisabled(true);
+			ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+		}
+
 		if (ImGui::SmallButton(">Preview"))
 		{
 			PreviewAudioEmitterComponent(coordinator, theEntity, audioEmitterComponent);
@@ -123,9 +130,18 @@ namespace r2::edit
 			ImGui::EndCombo();
 		}
 
+		if (!hasAudioEvent)
+		{
+			ImGui::PopStyleVar();
+			ImGui::EndDisabled();
+		}
+
 		std::vector<audio::AudioEngine::AudioEngineParameterDesc> parameters;
 
-		audioEngine.GetEventParameters(audioEmitterComponent.eventName, parameters);
+		if (hasAudioEvent)
+		{
+			audioEngine.GetEventParameters(audioEmitterComponent.eventName, parameters);
+		}
 
 		if (!parameters.empty())
 		{
