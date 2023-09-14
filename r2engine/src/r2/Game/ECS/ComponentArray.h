@@ -13,6 +13,10 @@
 #include "r2/Game/ECS/Serialization/ComponentArraySerialization.h"
 #include "r2/Game/ECS/Component.h"
 
+#ifdef R2_EDITOR
+#include <string>
+#endif
+
 namespace r2::ecs
 {
 	using FreeComponentFunc = std::function<void(void* componentPtr)>;
@@ -24,6 +28,10 @@ namespace r2::ecs
 		virtual void EntityDestroyed(Entity entity, FreeComponentFunc freeComponentFunc) = 0;
 		virtual void DestoryAllEntities(FreeComponentFunc freeComponentFunc) = 0;
 		virtual u64 GetHashName() = 0;
+#ifdef R2_EDITOR
+		virtual std::string GetComponentName() const = 0;
+#endif
+		virtual b32 IsInstanced() const = 0;
 		virtual flatbuffers::Offset<flat::ComponentArrayData> Serialize(flatbuffers::FlatBufferBuilder& builder) const = 0;
 		virtual void DeSerializeForEntities(
 			ECSWorld& ecsWorld,
@@ -57,10 +65,14 @@ namespace r2::ecs
 		}
 
 		template<class ARENA>
-		bool Init(ARENA& arena, u32 maxNumEntities, u64 hashName)
+		bool Init(ARENA& arena, u32 maxNumEntities, u64 hashName, const char* componentName, b32 isInstanced)
 		{
 			mHashName = hashName;
-
+#ifdef R2_EDITOR
+			mComponentName = componentName;
+#endif
+			mIsInstanced = isInstanced;
+			mPadding = false;
 			mComponentArray = MAKE_SARRAY(arena, Component, maxNumEntities);
 
 			if (mComponentArray == nullptr)
@@ -315,6 +327,16 @@ namespace r2::ecs
 		{
 			return mHashName;
 		}
+#ifdef R2_EDITOR
+		std::string GetComponentName() const override
+		{
+			return mComponentName;
+		}
+#endif
+		b32 IsInstanced() const override
+		{
+			return mIsInstanced;
+		}
 
 		static u64 MemorySize(u32 maxNumEntities, u64 alignment, u32 headerSize, u32 boundsChecking)
 		{
@@ -339,6 +361,11 @@ namespace r2::ecs
 
 	private:
 		u64 mHashName;
+		b32 mIsInstanced;
+		b32 mPadding;
+#ifdef R2_EDITOR
+		std::string mComponentName;
+#endif
 		r2::SArray<Component>* mComponentArray;
 		r2::SArray<s32>* mEntityToIndexMap;
 		r2::SHashMap<Entity>* mIndexToEntityMap;

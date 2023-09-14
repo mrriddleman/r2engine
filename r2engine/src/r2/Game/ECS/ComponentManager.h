@@ -30,12 +30,13 @@ namespace r2::ecs
 		ComponentManager()
 			: mComponentArrays(nullptr)
 			, mComponentTypes(nullptr)
-			,mComponentHashNameMap(nullptr)
+			, mComponentHashNameMap(nullptr)
+			, mFreeComponentFuncMap(nullptr)
 		{
 		}
 
 		template<class ARENA, typename Component>
-		void RegisterComponentType(ARENA& arena, const char* componentName, bool shouldSerialize, FreeComponentFunc freeComponentFunc)
+		void RegisterComponentType(ARENA& arena, const char* componentName, bool shouldSerialize, bool isInstanced, FreeComponentFunc freeComponentFunc)
 		{
 			auto componentTypeHash = STRING_ID(componentName);
 
@@ -50,7 +51,7 @@ namespace r2::ecs
 			R2_CHECK(componentArray != nullptr, "componentArray is nullptr");
 			componentArray->mShouldSerialize = shouldSerialize;
 
-			bool isInitialized = componentArray->Init(arena, MAX_NUM_ENTITIES, componentTypeHash);
+			bool isInitialized = componentArray->Init(arena, MAX_NUM_ENTITIES, componentTypeHash, componentName, isInstanced);
 
 			R2_CHECK(isInitialized, "Couldn't initialize the componentArray!");
 
@@ -180,6 +181,33 @@ namespace r2::ecs
 			R2_CHECK(index != defaultIndex, "Should not be the same!");
 
 			return index;
+		}
+
+		ComponentType GetComponentType(u64 componentTypeHash) const
+		{
+			R2_CHECK(componentTypeHash != EMPTY_COMPONENT_HASH, "Should not happen");
+
+			ComponentType defaultIndex = -1;
+
+			ComponentType index = r2::shashmap::Get(*mComponentTypes, componentTypeHash, defaultIndex);
+
+			R2_CHECK(index != defaultIndex, "Should not be the same!");
+
+			return index;
+		}
+
+		template<typename Component>
+		u64 GetComponentTypeHash() const
+		{
+			R2_CHECK(r2::shashmap::Has(*mComponentHashNameMap, typeid(Component).hash_code()), "We don't have that type!");
+
+			u64 defaultComponentHashName = EMPTY_COMPONENT_HASH;
+
+			u64 componentTypeHash = r2::shashmap::Get(*mComponentHashNameMap, typeid(Component).hash_code(), defaultComponentHashName);
+
+			R2_CHECK(componentTypeHash != EMPTY_COMPONENT_HASH, "Should not happen");
+
+			return componentTypeHash;
 		}
 
 		template<typename Component>
@@ -333,24 +361,76 @@ namespace r2::ecs
 			return memorySize;
 		}
 
-	private:
-		r2::SArray<IComponentArray*>* mComponentArrays;
-		r2::SHashMap<ComponentType>* mComponentTypes; //I guess these are the indices of the component arrays?
-		r2::SHashMap<u64>* mComponentHashNameMap;
-		r2::SHashMap<FreeComponentFunc>* mFreeComponentFuncMap;
-
-		template<typename Component>
-		ComponentArray<Component>* GetComponentArray()
+#ifdef R2_EDITOR
+		std::vector<std::string> GetAllRegisteredComponentNames() const
 		{
-			ComponentType index = GetComponentType<Component>();
+			std::vector<std::string> componentNames;
 
-			IComponentArray* componentArrayI = r2::sarr::At(*mComponentArrays, index);
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
 
-			return static_cast<ComponentArray<Component>*>(componentArrayI);
+			for (u32 i = 0; i < numComponentArrays; ++i)
+			{
+				componentNames.push_back(r2::sarr::At(*mComponentArrays, i)->GetComponentName());
+			}
+
+			return componentNames;
 		}
 
+		std::vector<u64> GetAllRegisteredComponentTypeHashes() const
+		{
+			std::vector<u64> componentTypeHashes;
+
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
+
+			for (u32 i = 0; i < numComponentArrays; ++i)
+			{
+				componentTypeHashes.push_back(r2::sarr::At(*mComponentArrays, i)->GetHashName());
+			}
+
+			return componentTypeHashes;
+		}
+
+		std::vector<std::string> GetAllRegisteredNonInstancedComponentNames() const
+		{
+			std::vector<std::string> componentNames;
+
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
+
+			for (u32 i = 0; i < numComponentArrays; ++i)
+			{
+				IComponentArray* componentArray = r2::sarr::At(*mComponentArrays, i);
+
+				if (!componentArray->IsInstanced())
+				{
+					componentNames.push_back(componentArray->GetComponentName());
+				}
+			}
+
+			return componentNames;
+		}
+
+		std::vector<u64> GetAllRegisteredNonInstancedComponentTypeHashes() const
+		{
+			std::vector<u64> componentTypeHashes;
+
+			const auto numComponentArrays = r2::sarr::Size(*mComponentArrays);
+
+			for (u32 i = 0; i < numComponentArrays; ++i)
+			{
+				IComponentArray* componentArray = r2::sarr::At(*mComponentArrays, i);
+
+				if (!componentArray->IsInstanced())
+				{
+					componentTypeHashes.push_back(componentArray->GetHashName());
+				}
+			}
+
+			return componentTypeHashes;
+		}
+
+#endif
 		template<typename Component>
-		u64 GetComponentTypeHash() 
+		u64 GetComponentTypeHash()
 		{
 			u64 defaultComponentHashName = EMPTY_COMPONENT_HASH;
 
@@ -365,6 +445,21 @@ namespace r2::ecs
 			}
 
 			return componentTypeHash;
+		}
+	private:
+		r2::SArray<IComponentArray*>* mComponentArrays;
+		r2::SHashMap<ComponentType>* mComponentTypes; //I guess these are the indices of the component arrays?
+		r2::SHashMap<u64>* mComponentHashNameMap;
+		r2::SHashMap<FreeComponentFunc>* mFreeComponentFuncMap;
+
+		template<typename Component>
+		ComponentArray<Component>* GetComponentArray()
+		{
+			ComponentType index = GetComponentType<Component>();
+
+			IComponentArray* componentArrayI = r2::sarr::At(*mComponentArrays, index);
+
+			return static_cast<ComponentArray<Component>*>(componentArrayI);
 		}
 	};
 }

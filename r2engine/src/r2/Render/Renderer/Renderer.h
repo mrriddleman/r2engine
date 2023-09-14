@@ -567,6 +567,8 @@ namespace r2::draw::renderer
 	void SetDefaultBlendState(DrawParameters& drawParameters);
 	void SetDefaultCullState(DrawParameters& drawParameters);
 
+	void SetDefaultDrawParameters(DrawParameters& drawParameters);
+
 	void SetColorCorrection(const ColorCorrection& cc);
 	void SetColorGradingLUT(const tex::Texture* lut, u32 numSwatches);
 	void EnableColorGrading(bool isEnabled);

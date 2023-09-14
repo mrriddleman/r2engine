@@ -88,12 +88,16 @@ namespace r2::ecs
 				{
 					SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedAnimationComponent->instances, j);
 #ifdef R2_DEBUG
-					if (instancedDebugBoneComponent && debugBonesToUse)
+					if (instancedDebugBoneComponent)
 					{
 						DebugBoneComponent& debugBonesComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, j);
 
 						debugBonesToUse = debugBonesComponent.debugBones;
 						r2::sarr::Clear(*debugBonesToUse);
+					}
+					else
+					{
+						debugBonesToUse = nullptr;
 					}
 #endif
 					r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);

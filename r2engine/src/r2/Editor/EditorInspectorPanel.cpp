@@ -16,6 +16,7 @@ namespace r2::edit
 
 	InspectorPanel::InspectorPanel()
 		:mEntitySelected(ecs::INVALID_ENTITY)
+		,mCurrentComponentIndexToAdd(-1)
 	{
 
 	}
@@ -73,6 +74,64 @@ namespace r2::edit
 
 				InspectorPanelEditorComponent(mnoptrEditor, mEntitySelected, coordinator);
 
+				//Add Component here
+				std::vector<std::string> componentNames = coordinator->GetAllRegisteredNonInstancedComponentNames();
+				std::vector<u64> componentTypeHashes = coordinator->GetAllRegisteredNonInstancedComponentTypeHashes();
+
+				std::string currentComponentName = "";
+				if (mCurrentComponentIndexToAdd >= 0)
+				{
+					currentComponentName = componentNames[mCurrentComponentIndexToAdd];
+				}
+
+				if (ImGui::BeginCombo("##label components", currentComponentName.c_str()))
+				{
+					for (s32 i = 0; i < componentNames.size(); i++)
+					{
+						if (ImGui::Selectable(componentNames[i].c_str(), mCurrentComponentIndexToAdd == i))
+						{
+							mCurrentComponentIndexToAdd = i;
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::SameLine();
+
+				InspectorPanelComponentWidget* inspectorPanelComponentWidget = nullptr;
+				
+				if (mCurrentComponentIndexToAdd >= 0 && !coordinator->HasComponent(mEntitySelected, componentTypeHashes[mCurrentComponentIndexToAdd]))
+				{
+					for (u32 i = 0; i < mComponentWidgets.size(); ++i)
+					{
+						if (mComponentWidgets[i].GetComponentTypeHash() == componentTypeHashes[mCurrentComponentIndexToAdd])
+						{
+							inspectorPanelComponentWidget = &mComponentWidgets[i];
+						}
+					}
+				}
+
+				ImGui::SameLine();
+
+				const bool hasAddComponentFunc = inspectorPanelComponentWidget && inspectorPanelComponentWidget->HasAddComponentFunc();
+				if (!hasAddComponentFunc)
+				{
+					ImGui::BeginDisabled(true);
+					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
+				}
+
+				if (ImGui::Button("Add Component"))
+				{
+					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mEntitySelected);
+				}
+
+				if (!hasAddComponentFunc)
+				{
+					ImGui::PopStyleVar();
+					ImGui::EndDisabled();
+				}
+
 				for (size_t i=0; i < mComponentWidgets.size(); ++i)
 				{
 					if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
@@ -90,10 +149,12 @@ namespace r2::edit
 		const std::string& componentName,
 		u32 sortOrder,
 		r2::ecs::ComponentType componentType,
+		u64 componentTypeHash,
 		InspectorPanelComponentWidgetFunc componentWidgetFunc,
-		InspectorPanelRemoveComponentFunc removeComponentFunc)
+		InspectorPanelRemoveComponentFunc removeComponentFunc,
+		InspectorPanelAddComponentFunc addComponentFunc)
 	{
-		InspectorPanelComponentWidget componentWidget{ componentName, componentType, componentWidgetFunc, removeComponentFunc };
+		InspectorPanelComponentWidget componentWidget{ componentName, componentType, componentTypeHash, componentWidgetFunc, removeComponentFunc, addComponentFunc };
 
 		componentWidget.SetSortOrder(sortOrder);
 

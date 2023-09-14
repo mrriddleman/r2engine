@@ -92,10 +92,19 @@ namespace r2::ecs
 			return signature.test(componentType);
 		}
 
-		template<class ARENA, typename Component>
-		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize, FreeComponentFunc freeComponentFunc)
+		bool HasComponent(Entity entity, u64 componentTypeHash) const
 		{
-			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize, freeComponentFunc);
+			const auto signature = mEntityManager->GetSignature(entity);
+
+			ComponentType componentType = mComponentManager->GetComponentType(componentTypeHash);
+
+			return signature.test(componentType);
+		}
+
+		template<class ARENA, typename Component>
+		void RegisterComponent(ARENA& arena, const char* componentName, bool shouldSerialize, bool isInstanced, FreeComponentFunc freeComponentFunc)
+		{
+			mComponentManager->RegisterComponentType<ARENA, Component>(arena, componentName, shouldSerialize, isInstanced, freeComponentFunc);
 		}
 
 		template<class ARENA, typename Component>
@@ -164,6 +173,34 @@ namespace r2::ecs
 		{
 			return mComponentManager->GetComponentType<Component>();
 		}
+
+		template<typename Component>
+		u64 GetComponentTypeHash() const
+		{
+			return mComponentManager->GetComponentTypeHash<Component>();
+		}
+
+#ifdef R2_EDITOR
+		std::vector<std::string> GetAllRegisteredComponentNames() const
+		{
+			return mComponentManager->GetAllRegisteredComponentNames();
+		}
+
+		std::vector<u64> GetAllRegisteredComponentTypeHashes() const
+		{
+			return mComponentManager->GetAllRegisteredComponentTypeHashes();
+		}
+
+		std::vector<std::string> GetAllRegisteredNonInstancedComponentNames() const
+		{
+			return mComponentManager->GetAllRegisteredNonInstancedComponentNames();
+		}
+
+		std::vector<u64> GetAllRegisteredNonInstancedComponentTypeHashes() const
+		{
+			return mComponentManager->GetAllRegisteredNonInstancedComponentTypeHashes();
+		}
+#endif
 
 		template<class ARENA, typename SystemType>
 		SystemType* RegisterSystem(ARENA& arena)

@@ -88,6 +88,14 @@ namespace r2::ecs
 		void FreeInstancedSkeletalAnimationComponent(void* instancedSkeletalAnimationComponent);
 		void FreeInstancedTransformComponent(void* instancedTransformComponent);
 
+#ifdef R2_DEBUG
+		void FreeDebugBoneComponent(void* debugBoneComponent);
+		void FreeInstancedDebugRenderComponent(void* instancedDebugRenderComponent);
+		void FreeInstancedDebugBoneComponent(void* instancedDebugBoneComponent);
+
+#endif // R2_DEBUG
+
+
 		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
 
 		r2::mem::MemoryArea::Handle mMemoryAreaHandle;
@@ -159,7 +167,7 @@ namespace r2::ecs
 
 	inline void ECSWorldFree(ECSWorld& ecsWorld, void* objPtr, const char* file, u32 line, const char* desc)
 	{
-		const auto& componentAllocations = ecsWorld.GetComponentAllocations();
+		auto& componentAllocations = ecsWorld.GetComponentAllocations();
 
 		auto iter = std::find_if(componentAllocations.begin(), componentAllocations.end(), [objPtr](const ECSWorld::ECSWorldAllocation& allocation) {
 			return allocation.memPtr == objPtr;
@@ -167,7 +175,11 @@ namespace r2::ecs
 
 		if (iter != componentAllocations.end())
 		{
-			FREE_VERBOSE(iter->memPtr, ecsWorld.GetECSComponentArena(), file, line, desc);
+			void* memPtr = iter->memPtr;
+			
+			componentAllocations.erase(iter);
+			
+			FREE_VERBOSE(memPtr, ecsWorld.GetECSComponentArena(), file, line, desc);
 		}
 		else
 		{
@@ -175,8 +187,5 @@ namespace r2::ecs
 		}
 	}
 }
-
-
-
 
 #endif

@@ -8869,6 +8869,13 @@ namespace r2::draw::renderer
 		cmd::SetDefaultCullState(drawParameters.cullState);
 	}
 
+	void SetDefaultDrawParameters(DrawParameters& drawParameters)
+	{
+		cmd::SetDefaultStencilState(drawParameters.stencilState);
+		cmd::SetDefaultBlendState(drawParameters.blendState);
+		cmd::SetDefaultCullState(drawParameters.cullState);
+	}
+
 	///More draw functions...
 	ShaderHandle GetDepthShaderHandle(bool isDynamic)
 	{

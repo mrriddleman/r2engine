@@ -236,224 +236,154 @@ namespace r2::ecs
 		return mSceneGraph;
 	}
 
-	//void* ECSWorld::HydrateRenderComponents(void* data)
-	//{
-	//	r2::SArray<ecs::RenderComponent>* tempRenderComponents = static_cast<r2::SArray<ecs::RenderComponent>*>(data);
-
-	//	const auto numRenderComponents = r2::sarr::Size(*tempRenderComponents);
-
-	//	GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-	//	for (u32 i = 0; i < numRenderComponents; ++i)
-	//	{
-	//		ecs::RenderComponent& renderComponent = r2::sarr::At(*tempRenderComponents, i);
-
-	//		r2::asset::Asset modelAsset = r2::asset::Asset(renderComponent.assetModelHash, r2::asset::RMODEL);
-
-	//		r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-
-	//		r2::draw::vb::GPUModelRefHandle gpuModelRefHandle = r2::draw::vb::InvalidGPUModelRefHandle;
-
-	//		const r2::draw::Model* model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle); 
-	//		gpuModelRefHandle = r2::draw::renderer::UploadModel(model);
-
-	//		R2_CHECK(r2::draw::vb::InvalidGPUModelRefHandle != gpuModelRefHandle, "We don't have a valid gpuModelRefHandle!");
-
-	//		renderComponent.gpuModelRefHandle = gpuModelRefHandle;
-	//	}
-
-	//	return tempRenderComponents;
-	//}
-
-	//void* ECSWorld::HydrateSkeletalAnimationComponents(void* data)
-	//{
-	//	r2::SArray<ecs::SkeletalAnimationComponent>* tempSkeletalAnimationComponents = static_cast<r2::SArray<ecs::SkeletalAnimationComponent>*>(data);
-
-	//	if (!tempSkeletalAnimationComponents)
-	//	{
-	//		return nullptr;
-	//	}
-
-	//	GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-	//	const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempSkeletalAnimationComponents);
-
-	//	for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
-	//	{
-	//		ecs::SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*tempSkeletalAnimationComponents, i);
-
-	//		r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
-
-	//		r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-
-	//		const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-
-	//		skeletalAnimationComponent.animModel = animModel;
-	//		skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
-
-	//		//@HACK!!! - we should have some kind of proper scheme to allocate this memory
-	//		skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
-	//		mComponentAllocations.push_back({ skeletalAnimationComponent.shaderBones });
-
-	//		r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-	//	}
-
-	//	return tempSkeletalAnimationComponents;
-	//}
-
-	//void* ECSWorld::HydrateInstancedSkeletalAnimationComponents(void* data)
-	//{
-	//	r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* tempInstancedSkeletalAnimationComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>*>(data);
-	//	if (!tempInstancedSkeletalAnimationComponents)
-	//	{
-	//		return nullptr;
-	//	}
-
-	//	//@TODO(Serge): technically, we don't need to allocate this at all since the component array has the memory for it - figure out a way to not allocate the array again
-	//	r2::SArray<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>* instancedSkeletalAnimationComponents = nullptr;
-
-	//	instancedSkeletalAnimationComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>, r2::sarr::Size(*tempInstancedSkeletalAnimationComponents));
-	//	mComponentAllocations.push_back({ instancedSkeletalAnimationComponents});
-
-	//	GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
-
-	//	const auto numSkeletalAnimationComponents = r2::sarr::Size(*tempInstancedSkeletalAnimationComponents);
-
-	//	for (u32 i = 0; i < numSkeletalAnimationComponents; ++i)
-	//	{
-	//		const ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>& tempInstancedSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponents, i);
-
-	//		ecs::InstanceComponentT<ecs::SkeletalAnimationComponent> instancedSkeletalAnimationComponent;
-	//		instancedSkeletalAnimationComponent.numInstances = tempInstancedSkeletalAnimationComponent.numInstances;
-
-	//		instancedSkeletalAnimationComponent.instances = MAKE_SARRAY(mMallocArena, ecs::SkeletalAnimationComponent, tempInstancedSkeletalAnimationComponent.numInstances);
-	//		mComponentAllocations.push_back({ instancedSkeletalAnimationComponent.instances });
-
-
-	//		for (u32 j = 0; j < tempInstancedSkeletalAnimationComponent.numInstances; ++j)
-	//		{
-	//			const ecs::SkeletalAnimationComponent& tempSkeletalAnimationComponent = r2::sarr::At(*tempInstancedSkeletalAnimationComponent.instances, j);
-
-	//			ecs::SkeletalAnimationComponent skeletalAnimationComponent;
-	//			skeletalAnimationComponent.animModelAssetName = tempSkeletalAnimationComponent.animModelAssetName;
-	//			skeletalAnimationComponent.shouldLoop = tempSkeletalAnimationComponent.shouldLoop;
-	//			skeletalAnimationComponent.shouldUseSameTransformsForAllInstances = tempSkeletalAnimationComponent.shouldUseSameTransformsForAllInstances;
-	//			skeletalAnimationComponent.startingAnimationIndex = tempSkeletalAnimationComponent.startingAnimationIndex;
-	//			skeletalAnimationComponent.startTime = tempSkeletalAnimationComponent.startTime;
-
-
-	//			r2::asset::Asset modelAsset = r2::asset::Asset(skeletalAnimationComponent.animModelAssetName, r2::asset::RMODEL);
-
-	//			r2::draw::ModelHandle modelHandle = gameAssetManager.LoadAsset(modelAsset);
-
-	//			const r2::draw::Model* animModel = gameAssetManager.GetAssetDataConst<r2::draw::Model>(modelHandle);
-
-	//			skeletalAnimationComponent.animModel = animModel;
-	//			skeletalAnimationComponent.currentAnimationIndex = skeletalAnimationComponent.startingAnimationIndex;
-
-
-	//			//@HACK!!! - we should have some kind of proper scheme to allocate this memory
-	//			skeletalAnimationComponent.shaderBones = MAKE_SARRAY(mMallocArena, r2::draw::ShaderBoneTransform, r2::sarr::Size(*animModel->optrBoneInfo));
-	//			mComponentAllocations.push_back({ skeletalAnimationComponent.shaderBones });
-
-	//			r2::sarr::Clear(*skeletalAnimationComponent.shaderBones);
-
-	//			r2::sarr::Push(*instancedSkeletalAnimationComponent.instances, skeletalAnimationComponent);
-	//		}
-
-	//		r2::sarr::Push(*instancedSkeletalAnimationComponents, instancedSkeletalAnimationComponent);
-
-	//	}
-
-	//	return instancedSkeletalAnimationComponents;
-	//}
-
-	//void* ECSWorld::HydrateInstancedTransformComponents(void* data)
-	//{
-	//	r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* tempInstancedTransformComponents = static_cast<r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>*>(data);
-	//	if (!tempInstancedTransformComponents)
-	//	{
-	//		return nullptr;
-	//	}
-
-	//	r2::SArray<ecs::InstanceComponentT<ecs::TransformComponent>>* instancedTransformComponents = nullptr;
-
-	//	instancedTransformComponents = MAKE_SARRAY(mMallocArena, ecs::InstanceComponentT<ecs::TransformComponent>, r2::sarr::Size(*tempInstancedTransformComponents));
-	//	mComponentAllocations.push_back({ instancedTransformComponents });
-
-	//	for (u32 i = 0; i < r2::sarr::Size(*tempInstancedTransformComponents); ++i)
-	//	{
-	//		const ecs::InstanceComponentT<ecs::TransformComponent>& tempInstancedTransformComponent = r2::sarr::At(*tempInstancedTransformComponents, i);
-
-	//		ecs::InstanceComponentT<ecs::TransformComponent> instancedTransformComponent;
-
-	//		instancedTransformComponent.numInstances = tempInstancedTransformComponent.numInstances;
-	//		instancedTransformComponent.instances = MAKE_SARRAY(mMallocArena, ecs::TransformComponent, tempInstancedTransformComponent.numInstances);
-	//		mComponentAllocations.push_back({ instancedTransformComponent.instances });
-
-	//		r2::sarr::Copy(*instancedTransformComponent.instances, *tempInstancedTransformComponent.instances);
-
-	//		r2::sarr::Push(*instancedTransformComponents, instancedTransformComponent);
-	//	}
-
-	//	return instancedTransformComponents;
-	//}
-
-	void ECSWorld::FreeRenderComponent(void* renderComponent)
+	void ECSWorld::FreeRenderComponent(void* data)
 	{
+		ecs::RenderComponent* renderComponent = static_cast<ecs::RenderComponent*>(data);
+		R2_CHECK(renderComponent != nullptr, "Should never happen");
 
+		if (renderComponent->optrMaterialOverrideNames != nullptr)
+		{
+			ECS_WORLD_FREE(*this, renderComponent->optrMaterialOverrideNames);
+			renderComponent->optrMaterialOverrideNames = nullptr;
+		}
 	}
 
-	void ECSWorld::FreeSkeletalAnimationComponent(void* skeletalAnimationComponent)
+	void ECSWorld::FreeSkeletalAnimationComponent(void* data)
 	{
+		ecs::SkeletalAnimationComponent* skeletalAnimationComponent = static_cast<ecs::SkeletalAnimationComponent*>(data);
+		R2_CHECK(skeletalAnimationComponent != nullptr, "Should never happen");
 
+		if (skeletalAnimationComponent->shaderBones != nullptr)
+		{
+			ECS_WORLD_FREE(*this, skeletalAnimationComponent->shaderBones);
+			skeletalAnimationComponent->shaderBones = nullptr;
+		}
 	}
 
-	void ECSWorld::FreeInstancedSkeletalAnimationComponent(void* instancedSkeletalAnimationComponent)
+	void ECSWorld::FreeInstancedSkeletalAnimationComponent(void* data)
 	{
+		ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>* instancedSkeletalAnimationComponent = static_cast<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>*>(data);
+		R2_CHECK(instancedSkeletalAnimationComponent != nullptr, "Should never happen");
 
+		if (instancedSkeletalAnimationComponent->instances != nullptr)
+		{
+			for (u32 i = 0; i < instancedSkeletalAnimationComponent->numInstances; ++i)
+			{
+				ecs::SkeletalAnimationComponent& animationComponent = r2::sarr::At(*instancedSkeletalAnimationComponent->instances, i);
+
+				if (animationComponent.shaderBones != nullptr)
+				{
+					ECS_WORLD_FREE(*this, animationComponent.shaderBones);
+					animationComponent.shaderBones = nullptr;
+				}
+			}
+
+			ECS_WORLD_FREE(*this, instancedSkeletalAnimationComponent->instances);
+			instancedSkeletalAnimationComponent->instances = nullptr;
+			instancedSkeletalAnimationComponent->numInstances = 0;
+		}
 	}
 
-	void ECSWorld::FreeInstancedTransformComponent(void* instancedTransformComponent)
+	void ECSWorld::FreeInstancedTransformComponent(void* data)
 	{
+		ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponent = static_cast<ecs::InstanceComponentT<ecs::TransformComponent>*>(data);
+		R2_CHECK(instancedTransformComponent != nullptr, "Should never happen");
 
+		if (instancedTransformComponent->instances != nullptr)
+		{
+			ECS_WORLD_FREE(*this, instancedTransformComponent->instances);
+			instancedTransformComponent->instances = nullptr;
+			instancedTransformComponent->numInstances = 0;
+		}
 	}
+
+#ifdef R2_DEBUG
+	void ECSWorld::FreeDebugBoneComponent(void* data)
+	{
+		ecs::DebugBoneComponent* debugBoneComponent = static_cast<ecs::DebugBoneComponent*>(data);
+		R2_CHECK(debugBoneComponent != nullptr, "Should never happen");
+
+		if (debugBoneComponent->debugBones != nullptr)
+		{
+			ECS_WORLD_FREE(*this, debugBoneComponent->debugBones);
+			debugBoneComponent->debugBones = nullptr;
+		}
+	}
+
+	void ECSWorld::FreeInstancedDebugRenderComponent(void* data)
+	{
+		ecs::InstanceComponentT<ecs::DebugRenderComponent>* instancedRenderComponent = static_cast<ecs::InstanceComponentT<ecs::DebugRenderComponent>*>(data);
+		R2_CHECK(instancedRenderComponent != nullptr, "Should never happen");
+
+		if (instancedRenderComponent->instances != nullptr)
+		{
+			ECS_WORLD_FREE(*this, instancedRenderComponent->instances);
+			instancedRenderComponent->instances = nullptr;
+			instancedRenderComponent->numInstances = 0;
+		}
+	}
+
+	void ECSWorld::FreeInstancedDebugBoneComponent(void* data)
+	{
+		ecs::InstanceComponentT<ecs::DebugBoneComponent>* instancedDebugBoneComponent = static_cast<ecs::InstanceComponentT<ecs::DebugBoneComponent>*>(data);
+		R2_CHECK(instancedDebugBoneComponent != nullptr, "Should never happen");
+
+		if (instancedDebugBoneComponent->instances != nullptr)
+		{
+			for (u32 i = 0; i < instancedDebugBoneComponent->numInstances; ++i)
+			{
+				ecs::DebugBoneComponent& animationComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, i);
+
+				if (animationComponent.debugBones != nullptr)
+				{
+					ECS_WORLD_FREE(*this, animationComponent.debugBones);
+					animationComponent.debugBones = nullptr;
+				}
+			}
+
+			ECS_WORLD_FREE(*this, instancedDebugBoneComponent->instances);
+			instancedDebugBoneComponent->instances = nullptr;
+			instancedDebugBoneComponent->numInstances = 0;
+		}
+	}
+#endif
 
 	void ECSWorld::RegisterEngineComponents()
 	{
-	//	ecs::ComponentArrayHydrationFunction renderComponentHydrationFunc = std::bind(&ECSWorld::HydrateRenderComponents, this, std::placeholders::_1);
-	//	ecs::ComponentArrayHydrationFunction skeletalAnimationComponentHydrationFunc = std::bind(&ECSWorld::HydrateSkeletalAnimationComponents, this, std::placeholders::_1);
-	//	ecs::ComponentArrayHydrationFunction instancedTransformComponentHydrationFunc = std::bind(&ECSWorld::HydrateInstancedTransformComponents, this, std::placeholders::_1);
-	//	ecs::ComponentArrayHydrationFunction instancedSkeletalAnimationComponentHydrationFunc = std::bind(&ECSWorld::HydrateInstancedSkeletalAnimationComponents, this, std::placeholders::_1);
-
 		FreeComponentFunc freeRenderComponentFunc = std::bind(&ECSWorld::FreeRenderComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeSkeletalAnimationComponentFunc = std::bind(&ECSWorld::FreeSkeletalAnimationComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedSkeletalAnimationComponentFunc = std::bind(&ECSWorld::FreeInstancedSkeletalAnimationComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedTransformComponentFunc = std::bind(&ECSWorld::FreeInstancedTransformComponent, this, std::placeholders::_1);
 
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::HierarchyComponent>(*mArena, "HeirarchyComponent", true, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformComponent>(*mArena, "TransformComponent", true, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena, "TransformDirtyComponent", false, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena, "RenderComponent", true, freeRenderComponentFunc);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena, "SkeletalAnimationComponent", true, freeSkeletalAnimationComponentFunc);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioListenerComponent>(*mArena, "AudioListenerComponent", true, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterComponent>(*mArena, "AudioEmitterComponent", true, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioParameterComponent>(*mArena, "AudioParameterComponent", false, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena, "AudioEmitterActionComponent", false, nullptr);
+#ifdef R2_DEBUG
+		FreeComponentFunc freeDebugBoneComponent = std::bind(&ECSWorld::FreeDebugBoneComponent, this, std::placeholders::_1);
+		FreeComponentFunc freeInstancedDebugBoneComponent = std::bind(&ECSWorld::FreeInstancedDebugBoneComponent, this, std::placeholders::_1);
+		FreeComponentFunc freeInstancedDebugRenderComponent = std::bind(&ECSWorld::FreeInstancedDebugRenderComponent, this, std::placeholders::_1);
+#endif
+
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::HierarchyComponent>(*mArena, "HeirarchyComponent", true, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformComponent>(*mArena, "TransformComponent", true, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::TransformDirtyComponent>(*mArena, "TransformDirtyComponent", false, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::RenderComponent>(*mArena, "RenderComponent", true, false, freeRenderComponentFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SkeletalAnimationComponent>(*mArena, "SkeletalAnimationComponent", true, false, freeSkeletalAnimationComponentFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioListenerComponent>(*mArena, "AudioListenerComponent", true, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterComponent>(*mArena, "AudioEmitterComponent", true, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioParameterComponent>(*mArena, "AudioParameterComponent", false, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena, "AudioEmitterActionComponent", false, false, nullptr);
 
 		//add some more components to the coordinator for the editor to use
 #ifdef R2_EDITOR
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena, "EditorComponent", true, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena, "EditorComponent", true, false, nullptr);
 #endif
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena, "InstancedTranfromComponent", true, freeInstancedTransformComponentFunc);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena, "InstancedSkeletalAnimationComponent", true, freeInstancedSkeletalAnimationComponentFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena, "InstancedTranfromComponent", true, true, freeInstancedTransformComponentFunc);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena, "InstancedSkeletalAnimationComponent", true, true, freeInstancedSkeletalAnimationComponentFunc);
 
 #ifdef R2_DEBUG
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena, "DebugBoneComponent", false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugRenderComponent>(*mArena, "DebugRenderComponent", false, false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::DebugBoneComponent>(*mArena, "DebugBoneComponent", false, false, freeDebugBoneComponent);
 
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(*mArena, "InstancedDebugRenderComponent", false, nullptr);
-		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(*mArena, "InstancedDebugBoneComponent", false, nullptr);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(*mArena, "InstancedDebugRenderComponent", false, true, freeInstancedDebugRenderComponent);
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(*mArena, "InstancedDebugBoneComponent", false, true, freeInstancedDebugBoneComponent);
 #endif
 	}
 
