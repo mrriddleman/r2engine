@@ -10,7 +10,6 @@
 
 namespace r2::edit
 {
-
 	std::string GetStartConditionString(r2::ecs::AudioEmitterStartCondition startCondition)
 	{
 		switch (startCondition)
@@ -32,7 +31,7 @@ namespace r2::edit
 
 	}
 
-	void PreviewAudioEmitterComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity, const r2::ecs::AudioEmitterComponent& audioEmitterComponent)
+	void PreviewAudioEmitterComponent(const r2::ecs::AudioEmitterComponent& audioEmitterComponent, const r2::ecs::TransformComponent* transformComponent)
 	{
 		r2::audio::AudioEngine audioEngine;
 
@@ -46,8 +45,6 @@ namespace r2::edit
 				audioEmitterComponent.parameters[p].parameterName,
 				audioEmitterComponent.parameters[p].parameterValue);
 		}
-
-		const r2::ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<r2::ecs::TransformComponent>(theEntity);
 
 		if (audioEngine.IsEvent3D(audioEmitterComponent.eventName) && transformComponent)
 		{
@@ -65,9 +62,22 @@ namespace r2::edit
 		}
 	}
 
-	void InspectorPanelAudioEmitterComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	InspectorPanelAudioEmitterComponentDataSource::InspectorPanelAudioEmitterComponentDataSource()
+		:InspectorPanelComponentDataSource("Audio Emitter Component", 0, 0)
 	{
-		r2::ecs::AudioEmitterComponent& audioEmitterComponent = coordinator->GetComponent<r2::ecs::AudioEmitterComponent>(theEntity);
+
+	}
+
+	InspectorPanelAudioEmitterComponentDataSource::InspectorPanelAudioEmitterComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+		: InspectorPanelComponentDataSource("Audio Emitter Component", coordinator->GetComponentType<ecs::AudioEmitterComponent>(), coordinator->GetComponentTypeHash<ecs::AudioEmitterComponent>())
+	{
+
+	}
+
+	void InspectorPanelAudioEmitterComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::AudioEmitterComponent* audioEmitterComponentPtr = static_cast<ecs::AudioEmitterComponent*>(componentData);
+		ecs::AudioEmitterComponent& audioEmitterComponent = *audioEmitterComponentPtr;
 
 		r2::audio::AudioEngine audioEngine;
 
@@ -107,9 +117,10 @@ namespace r2::edit
 			ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
 		}
 
-		if (ImGui::SmallButton(">Preview"))
+		if (ImGui::Button(">Preview"))
 		{
-			PreviewAudioEmitterComponent(coordinator, theEntity, audioEmitterComponent);
+			ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<ecs::TransformComponent>(theEntity);
+			PreviewAudioEmitterComponent(audioEmitterComponent, transformComponent);
 		}
 
 		std::string previewStartCondition = GetStartConditionString(audioEmitterComponent.startCondition);
@@ -123,7 +134,7 @@ namespace r2::edit
 				std::string startConditionString = GetStartConditionString(static_cast<r2::ecs::AudioEmitterStartCondition>(i));
 				if (ImGui::Selectable(startConditionString.c_str(), static_cast<r2::ecs::AudioEmitterStartCondition>(i) == audioEmitterComponent.startCondition))
 				{
-					audioEmitterComponent.startCondition = static_cast<r2::ecs::AudioEmitterStartCondition>( i );
+					audioEmitterComponent.startCondition = static_cast<r2::ecs::AudioEmitterStartCondition>(i);
 				}
 			}
 
@@ -167,7 +178,7 @@ namespace r2::edit
 			{
 				ImGui::Text("Parameters");
 			}
-			
+
 			for (size_t i = 0; i < numParams; ++i)
 			{
 				if (ImGui::TreeNodeEx(parameters[i].name.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", parameters[i].name.c_str()))
@@ -198,6 +209,56 @@ namespace r2::edit
 			audioEmitterComponent.releaseAfterPlay = releaseAfterPlay;
 		}
 	}
+
+	bool InspectorPanelAudioEmitterComponentDataSource::InstancesEnabled() const
+	{
+		return false;
+	}
+
+	u32 InspectorPanelAudioEmitterComponentDataSource::GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
+	{
+		return 0;
+	}
+
+	void* InspectorPanelAudioEmitterComponentDataSource::GetComponentData(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return &coordinator->GetComponent<ecs::AudioEmitterComponent>(theEntity);
+	}
+
+	void* InspectorPanelAudioEmitterComponentDataSource::GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return nullptr;
+	}
+
+	void InspectorPanelAudioEmitterComponentDataSource::DeleteComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		coordinator->RemoveComponent<r2::ecs::AudioEmitterComponent>(theEntity);
+	}
+
+	void InspectorPanelAudioEmitterComponentDataSource::DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
+	void InspectorPanelAudioEmitterComponentDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::AudioEmitterComponent audioEmitterComponent;
+
+		audioEmitterComponent.eventInstanceHandle = r2::audio::AudioEngine::InvalidEventInstanceHandle;
+		r2::util::PathCpy(audioEmitterComponent.eventName, "No Event");
+		audioEmitterComponent.numParameters = 0;
+		audioEmitterComponent.startCondition = ecs::PLAY_ON_EVENT;
+		audioEmitterComponent.allowFadeoutWhenStopping = false;
+		audioEmitterComponent.releaseAfterPlay = true;
+
+		coordinator->AddComponent<ecs::AudioEmitterComponent>(theEntity, audioEmitterComponent);
+	}
+
+	void InspectorPanelAudioEmitterComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
 }
 
 #endif

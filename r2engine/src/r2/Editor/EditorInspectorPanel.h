@@ -22,21 +22,16 @@ namespace r2::edit
 		virtual void Update() override;
 		virtual void Render(u32 dockingSpaceID) override;
 
-		//@TODO(Serge): add in the component type hash
-		void RegisterComponentType(
-			const std::string& componentName,
-			u32 sortOrder,
-			r2::ecs::ComponentType componentType,
-			u64 componentTypeHash,
-			InspectorPanelComponentWidgetFunc componentWidget,
-			InspectorPanelRemoveComponentFunc removeComponentFunc,
-			InspectorPanelAddComponentFunc addComponentFunc);
+		void RegisterComponentWidget(const InspectorPanelComponentWidget& inspectorPanelComponentWidget);
 
 		Editor* GetEditor();
 
 	private:
+
+		InspectorPanelComponentWidget* GetComponentWidgetForComponentTypeHash(u64 componentTypeHash);
+
 		std::vector<InspectorPanelComponentWidget> mComponentWidgets;
-		ecs::Entity mEntitySelected;
+		ecs::Entity mSelectedEntity;
 		s32 mCurrentComponentIndexToAdd;
 	};
 }

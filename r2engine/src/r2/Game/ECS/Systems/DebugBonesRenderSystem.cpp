@@ -47,7 +47,11 @@ namespace r2::ecs
 			
 			if(instancedTranformsComponent && instanceDebugBonesComponent && animationComponent)
 			{
-				const u32 numModels = instancedTranformsComponent->numInstances;
+				//@NOTE(Serge): alternatively we could do the min?
+				auto numInstancesToUse = glm::min(instanceDebugBonesComponent->numInstances, instancedTranformsComponent->numInstances);
+				//R2_CHECK(instanceDebugBonesComponent->numInstances <= instancedTranformsComponent->numInstances, "Should always be the case");
+
+				const u32 numModels = numInstancesToUse;//instanceDebugBonesComponent->numInstances;
 				const u32 numBonesPerInstance = r2::sarr::Size(*animationComponent->animModel->optrBoneInfo);
 
 				for (u32 j = 0; j < numModels; ++j)

@@ -338,7 +338,10 @@ namespace r2::ecs
 	void DebugRenderSystem::RenderDebugInstanced(const DebugRenderComponent& c, const TransformComponent& t, const InstanceComponentT<DebugRenderComponent>& instancedDebugRenderComponent,
 		const InstanceComponentT<TransformComponent>& instancedTransformComponent)
 	{
-		R2_CHECK(instancedTransformComponent.numInstances == instancedDebugRenderComponent.numInstances, "We have mismatching transform and debug render instances");
+
+		//@NOTE(Serge): alternatively we could do the min?
+		//R2_CHECK(instancedTransformComponent.numInstances >= instancedDebugRenderComponent.numInstances, "We have mismatching transform and debug render instances");
+		auto numInstancesToUse = glm::min(instancedTransformComponent.numInstances, instancedDebugRenderComponent.numInstances);
 
 		r2::SArray<void*>* tempAllocations = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, void*, 100);
 
@@ -348,7 +351,7 @@ namespace r2::ecs
 
 		numInstancesPerType[c.debugModelType] = 1;
 
-		for (u32 i = 0; i < instancedDebugRenderComponent.numInstances; ++i)
+		for (u32 i = 0; i < numInstancesToUse; ++i)
 		{
 			const DebugRenderComponent& nextDebugRenderComponent = r2::sarr::At(*instancedDebugRenderComponent.instances, i);
 			numInstancesPerType[nextDebugRenderComponent.debugModelType]++;
@@ -365,7 +368,7 @@ namespace r2::ecs
 			}
 		}
 
-		for (u32 i = 0; i < instancedDebugRenderComponent.numInstances; ++i)
+		for (u32 i = 0; i < numInstancesToUse; ++i)
 		{
 			const DebugRenderComponent& nextDebugRenderComponent = r2::sarr::At(*instancedDebugRenderComponent.instances, i);
 

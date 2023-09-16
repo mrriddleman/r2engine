@@ -10,12 +10,13 @@
 #include "r2/Core/Engine.h"
 #include "r2/Core/Application.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 
 namespace r2::edit
 {
 
 	InspectorPanel::InspectorPanel()
-		:mEntitySelected(ecs::INVALID_ENTITY)
+		:mSelectedEntity(ecs::INVALID_ENTITY)
 		,mCurrentComponentIndexToAdd(-1)
 	{
 
@@ -46,7 +47,7 @@ namespace r2::edit
 
 		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
 			{
-				mEntitySelected = e.GetEntity();
+				mSelectedEntity = e.GetEntity();
 				return e.ShouldConsume();
 			});
 	}
@@ -66,13 +67,13 @@ namespace r2::edit
 		{
 			ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
 
-			if (coordinator && mEntitySelected != ecs::INVALID_ENTITY)
+			if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
 			{
-				const ecs::Signature& entitySignature = coordinator->GetSignature(mEntitySelected);
+				const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
 
 				R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
 
-				InspectorPanelEditorComponent(mnoptrEditor, mEntitySelected, coordinator);
+				InspectorPanelEditorComponent(mnoptrEditor, mSelectedEntity, coordinator);
 
 				//Add Component here
 				std::vector<std::string> componentNames = coordinator->GetAllRegisteredNonInstancedComponentNames();
@@ -101,7 +102,7 @@ namespace r2::edit
 
 				InspectorPanelComponentWidget* inspectorPanelComponentWidget = nullptr;
 				
-				if (mCurrentComponentIndexToAdd >= 0 && !coordinator->HasComponent(mEntitySelected, componentTypeHashes[mCurrentComponentIndexToAdd]))
+				if (mCurrentComponentIndexToAdd >= 0 && !coordinator->HasComponent(mSelectedEntity, componentTypeHashes[mCurrentComponentIndexToAdd]))
 				{
 					for (u32 i = 0; i < mComponentWidgets.size(); ++i)
 					{
@@ -114,7 +115,7 @@ namespace r2::edit
 
 				ImGui::SameLine();
 
-				const bool hasAddComponentFunc = inspectorPanelComponentWidget && inspectorPanelComponentWidget->HasAddComponentFunc();
+				const bool hasAddComponentFunc = inspectorPanelComponentWidget && inspectorPanelComponentWidget->CanAddComponent(coordinator, mSelectedEntity);
 				if (!hasAddComponentFunc)
 				{
 					ImGui::BeginDisabled(true);
@@ -123,7 +124,7 @@ namespace r2::edit
 
 				if (ImGui::Button("Add Component"))
 				{
-					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mEntitySelected);
+					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
 				}
 
 				if (!hasAddComponentFunc)
@@ -132,11 +133,47 @@ namespace r2::edit
 					ImGui::EndDisabled();
 				}
 
+				/*if (coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity) &&
+					coordinator->HasComponent<ecs::RenderComponent>(mSelectedEntity))
+				{
+					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
+					
+					R2_CHECK(transformComponentWidget != nullptr, "Should always exist");
+
+					InspectorPanelComponentWidget* animationComponentWidget = nullptr;
+
+					if (coordinator->GetComponent<ecs::RenderComponent>(mSelectedEntity).isAnimated)
+					{
+						animationComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::SkeletalAnimationComponent>());
+					}
+
+					if (transformComponentWidget)
+					{
+						ImGui::SameLine();
+						if (ImGui::Button("Add Instance"))
+						{
+							auto addTransformInstanceFunc = transformComponentWidget->GetAddInstanceComponentFunc();
+
+							addTransformInstanceFunc(mnoptrEditor, mSelectedEntity, coordinator);
+
+							if (animationComponentWidget)
+							{
+								auto addAnimationInstanceFunc = animationComponentWidget->GetAddInstanceComponentFunc();
+
+								if (addAnimationInstanceFunc)
+								{
+									addAnimationInstanceFunc(mnoptrEditor, mSelectedEntity, coordinator);
+								}
+							}
+						}
+					}
+				}*/
+
 				for (size_t i=0; i < mComponentWidgets.size(); ++i)
 				{
 					if (entitySignature.test(mComponentWidgets[i].GetComponentType()))
 					{
-						mComponentWidgets[i].ImGuiDraw(*this, mEntitySelected);
+						mComponentWidgets[i].ImGuiDraw(*this, mSelectedEntity);
 					}
 				}
 			}
@@ -145,18 +182,9 @@ namespace r2::edit
 		}
 	}
 
-	void InspectorPanel::RegisterComponentType(
-		const std::string& componentName,
-		u32 sortOrder,
-		r2::ecs::ComponentType componentType,
-		u64 componentTypeHash,
-		InspectorPanelComponentWidgetFunc componentWidgetFunc,
-		InspectorPanelRemoveComponentFunc removeComponentFunc,
-		InspectorPanelAddComponentFunc addComponentFunc)
+	void InspectorPanel::RegisterComponentWidget(const InspectorPanelComponentWidget& inspectorPanelComponentWidget)
 	{
-		InspectorPanelComponentWidget componentWidget{ componentName, componentType, componentTypeHash, componentWidgetFunc, removeComponentFunc, addComponentFunc };
-
-		componentWidget.SetSortOrder(sortOrder);
+		auto componentType = inspectorPanelComponentWidget.GetComponentType();
 
 		auto iter = std::find_if(mComponentWidgets.begin(), mComponentWidgets.end(), [&](const InspectorPanelComponentWidget& widget)
 			{
@@ -165,13 +193,26 @@ namespace r2::edit
 
 		if (iter == mComponentWidgets.end())
 		{
-			mComponentWidgets.push_back(componentWidget);
+			mComponentWidgets.push_back(inspectorPanelComponentWidget);
 
 			std::sort(mComponentWidgets.begin(), mComponentWidgets.end(), [](const InspectorPanelComponentWidget& w1, const InspectorPanelComponentWidget& w2)
 				{
 					return w1.GetSortOrder() < w2.GetSortOrder();
 				});
 		}
+	}
+
+	InspectorPanelComponentWidget* InspectorPanel::GetComponentWidgetForComponentTypeHash(u64 componentTypeHash)
+	{
+		for (InspectorPanelComponentWidget& componentWidget: mComponentWidgets)
+		{
+			if (componentWidget.GetComponentTypeHash() == componentTypeHash)
+			{
+				return &componentWidget;
+			}
+		}
+
+		return nullptr;
 	}
 
 	Editor* InspectorPanel::GetEditor()

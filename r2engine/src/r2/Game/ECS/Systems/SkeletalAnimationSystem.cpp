@@ -90,6 +90,8 @@ namespace r2::ecs
 #ifdef R2_DEBUG
 					if (instancedDebugBoneComponent)
 					{
+						//@TODO(Serge): fix when we add a new skeletal animation instance
+
 						DebugBoneComponent& debugBonesComponent = r2::sarr::At(*instancedDebugBoneComponent->instances, j);
 
 						debugBonesToUse = debugBonesComponent.debugBones;

@@ -12,10 +12,22 @@ namespace r2::edit
 {
 	const std::string DEFAULT_LISTENER_STRING = "Default Listener";
 
-	void InspectorPanelAudioListenerComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	InspectorPanelAudioListenerComponentDataSource::InspectorPanelAudioListenerComponentDataSource()
+		:InspectorPanelComponentDataSource("Audio Listener Component", 0, 0)
+	{
+
+	}
+
+	InspectorPanelAudioListenerComponentDataSource::InspectorPanelAudioListenerComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+		: InspectorPanelComponentDataSource("Audio Listener Component", coordinator->GetComponentType<ecs::AudioListenerComponent>(), coordinator->GetComponentTypeHash<ecs::AudioListenerComponent>())
+	{
+
+	}
+
+	void InspectorPanelAudioListenerComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{
 		r2::ecs::AudioListenerComponent& audioListenerComponent = coordinator->GetComponent<r2::ecs::AudioListenerComponent>(theEntity);
-		
+
 		std::string listenerPreview = DEFAULT_LISTENER_STRING;
 
 		r2::audio::AudioEngine audioEngine;
@@ -63,6 +75,47 @@ namespace r2::edit
 			ImGui::EndCombo();
 		}
 	}
+
+	bool InspectorPanelAudioListenerComponentDataSource::InstancesEnabled() const
+	{
+		return false;
+	}
+
+	u32 InspectorPanelAudioListenerComponentDataSource::GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
+	{
+		return 0;
+	}
+
+	void* InspectorPanelAudioListenerComponentDataSource::GetComponentData(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return &coordinator->GetComponent<ecs::AudioListenerComponent>(theEntity);
+	}
+
+	void* InspectorPanelAudioListenerComponentDataSource::GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return nullptr;
+	}
+
+	void InspectorPanelAudioListenerComponentDataSource::DeleteComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
+	void InspectorPanelAudioListenerComponentDataSource::DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
+	void InspectorPanelAudioListenerComponentDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
+	void InspectorPanelAudioListenerComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
 }
 
 #endif

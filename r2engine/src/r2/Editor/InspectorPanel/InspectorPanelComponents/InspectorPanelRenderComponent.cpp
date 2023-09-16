@@ -273,6 +273,11 @@ namespace r2::edit
 
 			updateShaderBones = true;
 
+			if (!renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES))
+			{
+				renderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
+			}
+			
 			
 		}
 		else if (renderComponent.isAnimated && hasSkeletalAnimationComponent)
@@ -474,32 +479,34 @@ namespace r2::edit
 		{
 			//nothing to do
 		}
+	}
 
-
+	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource()
+		:InspectorPanelComponentDataSource("Render Component", 0, 0)
+	{
 
 	}
 
-	void RenderComponentInstance(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity entity, int id, r2::ecs::RenderComponent& renderComponent)
+	InspectorPanelRenderComponentDataSource::InspectorPanelRenderComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+		: InspectorPanelComponentDataSource("Render Component", coordinator->GetComponentType<ecs::RenderComponent>(), coordinator->GetComponentTypeHash<ecs::RenderComponent>())
 	{
+
+	}
+
+	void InspectorPanelRenderComponentDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::RenderComponent* renderComponentPtr = coordinator->GetComponentPtr<ecs::RenderComponent>(theEntity);
+		ecs::RenderComponent& renderComponent = *renderComponentPtr;
 
 		r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
 
-//		const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(entity);
-
-		//std::string nodeName = std::string("Entity - ") + std::to_string(entity) + std::string(" - Debug Bone Instance - ") + std::to_string(id);
-		//if (editorComponent)
-		//{
-		//	nodeName = editorComponent->editorName + std::string(" - Debug Bone Instance - ") + std::to_string(id);
-		//}
-
-		//if (ImGui::TreeNodeEx(nodeName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", nodeName.c_str()))
 		{
 			GameAssetManager& gameAssetManager = CENG.GetGameAssetManager();
 
 			const r2::draw::Model* model = nullptr;
 			const r2::asset::AssetFile* currentModelAssetfile = nullptr;
 
-			if (gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL}))
+			if (gameAssetManager.HasAsset({ renderComponent.assetModelName , r2::asset::RMODEL }))
 			{
 				model = gameAssetManager.GetAssetDataConst<r2::draw::Model>(renderComponent.assetModelName);
 				currentModelAssetfile = gameAssetManager.GetAssetFile(r2::asset::Asset(model->assetName, r2::asset::RMODEL));
@@ -539,14 +546,14 @@ namespace r2::edit
 					std::filesystem::path assetFilePath = assetFile->FilePath();
 
 					if (assetFilePath.extension().string() == ".modl" &&
-						(assetFilePath.stem().string() != "FullscreenTriangle" && 
-						 assetFilePath.stem().string() != "Skybox"))
+						(assetFilePath.stem().string() != "FullscreenTriangle" &&
+							assetFilePath.stem().string() != "Skybox"))
 					{
 						rModelFiles.push_back(assetFile);
 					}
 				}
 			}
-			
+
 
 			ImGui::Text("Render model:");
 			ImGui::SameLine();
@@ -585,7 +592,7 @@ namespace r2::edit
 							{
 								renderComponent.gpuModelRefHandle = r2::draw::renderer::UploadModel(renderModel);
 							}
-							
+
 							renderComponent.isAnimated = renderModel->optrBoneInfo != nullptr;
 
 							if (renderComponent.isAnimated)
@@ -603,17 +610,13 @@ namespace r2::edit
 
 							bool useSameBoneTransformsForAllInstances = renderComponent.drawParameters.flags.IsSet(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 							//now we need to either add or remove the skeletal animation component based on if this is a static or dynamic model
-							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, entity, id, renderComponent);
+							UpdateSkeletalAnimationComponentIfNecessary(renderModel, true, coordinator, theEntity, 0, renderComponent);
 						}
 					}
 				}
 
 				ImGui::EndCombo();
 			}
-
-
-			//@TODO(Serge): make this into a ImGui::Combo
-		//	ImGui::Text("Model Type: %s", GetIsAnimatedString(renderComponent.isAnimated).c_str());
 
 			std::string currentPrimitiveType = GetPrimitiveTypeString(static_cast<r2::draw::PrimitiveType>(renderComponent.primitiveType));
 			ImGui::Text("Primitive Type: ");
@@ -701,7 +704,7 @@ namespace r2::edit
 					renderComponent.drawParameters.flags.Remove(r2::draw::eDrawFlags::USE_SAME_BONE_TRANSFORMS_FOR_INSTANCES);
 				}
 
-				UpdateSkeletalAnimationComponentIfNecessary(model, useSameBoneTransformsForAllInstances, coordinator, entity, id, renderComponent);
+				UpdateSkeletalAnimationComponentIfNecessary(model, useSameBoneTransformsForAllInstances, coordinator, theEntity, 0, renderComponent);
 			}
 
 			if (ImGui::TreeNode("Stencil State"))
@@ -862,32 +865,92 @@ namespace r2::edit
 
 				ImGui::TreePop();
 			}
-
-			/*
-				struct RenderComponent
-				{
-					u64 assetModelHash;
-					u32 primitiveType;
-					b32 isAnimated;
-					r2::draw::DrawParameters drawParameters;
-					r2::draw::vb::GPUModelRefHandle gpuModelRefHandle;
-					r2::SArray<r2::mat::MaterialName>* optrMaterialOverrideNames;
-				};
-			*/
-
-			//@TODO(Serge): implement material overrides - no clue how the memory works atm
-
-			
-
-		//	ImGui::TreePop();
 		}
 	}
 
-	void InspectorPanelRenderComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	bool InspectorPanelRenderComponentDataSource::InstancesEnabled() const
 	{
-		r2::ecs::RenderComponent& renderComponent = coordinator->GetComponent<r2::ecs::RenderComponent>(theEntity);
-		RenderComponentInstance(coordinator, theEntity, 0, renderComponent);
+		return false;
 	}
+
+	u32 InspectorPanelRenderComponentDataSource::GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
+	{
+		return 0;
+	}
+
+	void* InspectorPanelRenderComponentDataSource::GetComponentData(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return &coordinator->GetComponent<ecs::RenderComponent>(theEntity);
+	}
+
+	void* InspectorPanelRenderComponentDataSource::GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return nullptr;
+	}
+
+	void InspectorPanelRenderComponentDataSource::DeleteComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::RenderComponent& renderComponent = coordinator->GetComponent<ecs::RenderComponent>(theEntity);
+
+		bool isAnimated = renderComponent.isAnimated;
+
+		coordinator->RemoveComponent<ecs::RenderComponent>(theEntity);
+
+		if (isAnimated)
+		{
+			bool hasAnimationComponent = coordinator->HasComponent<r2::ecs::SkeletalAnimationComponent>(theEntity);
+			if (hasAnimationComponent)
+			{
+				coordinator->RemoveComponent<ecs::SkeletalAnimationComponent>(theEntity);
+			}
+
+			bool hasDebugBoneComponent = coordinator->HasComponent<ecs::DebugBoneComponent>(theEntity);
+			if (hasDebugBoneComponent)
+			{
+				coordinator->RemoveComponent<ecs::DebugBoneComponent>(theEntity);
+			}
+
+			bool hasInstancedSkeletalAnimationComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theEntity);
+			if (hasInstancedSkeletalAnimationComponent)
+			{
+				coordinator->RemoveComponent<ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(theEntity);
+			}
+
+			bool hasInstancedDebugBoneComponent = coordinator->HasComponent<r2::ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theEntity);
+			if (hasInstancedDebugBoneComponent)
+			{
+				coordinator->RemoveComponent<ecs::InstanceComponentT<ecs::DebugBoneComponent>>(theEntity);
+			}
+		}
+	}
+
+	void InspectorPanelRenderComponentDataSource::DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
+	void InspectorPanelRenderComponentDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::RenderComponent newRenderComponent;
+		newRenderComponent.assetModelName = r2::draw::renderer::GetDefaultModel(draw::CUBE)->assetName;
+		newRenderComponent.gpuModelRefHandle = r2::draw::renderer::GetModelRefHandleForModelAssetName(newRenderComponent.assetModelName);
+		newRenderComponent.isAnimated = false;
+		newRenderComponent.primitiveType = static_cast<u32>( r2::draw::PrimitiveType::TRIANGLES );
+		newRenderComponent.drawParameters.layer = draw::DL_WORLD;
+		newRenderComponent.drawParameters.flags.Clear();
+		newRenderComponent.drawParameters.flags.Set(r2::draw::eDrawFlags::DEPTH_TEST);
+		newRenderComponent.optrMaterialOverrideNames = nullptr;
+
+		r2::draw::renderer::SetDefaultDrawParameters(newRenderComponent.drawParameters);
+
+		coordinator->AddComponent<ecs::RenderComponent>(theEntity, newRenderComponent);
+	}
+
+	void InspectorPanelRenderComponentDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+
+	}
+
 }
 
 #endif

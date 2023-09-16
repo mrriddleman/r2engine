@@ -10,95 +10,154 @@
 #include "imgui.h"
 #include <glm/gtc/quaternion.hpp>
 
-
 namespace r2::edit
 {
-	void TransformImGuiWidget(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity entity, int id, r2::ecs::TransformComponent& transformComponent)
+	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource()
+		:InspectorPanelComponentDataSource("Transform Component", 0, 0)
 	{
-		const r2::ecs::EditorComponent* editorComponent = coordinator->GetComponentPtr<r2::ecs::EditorComponent>(entity);
+	}
 
-		std::string nodeName = std::string("Entity - ") + std::to_string(entity) + std::string(" - Transform Instance - ") + std::to_string(id);
-		if (editorComponent)
+	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource(r2::ecs::ECSCoordinator* coordinator)
+		:InspectorPanelComponentDataSource("Transform Component", coordinator->GetComponentType<ecs::TransformComponent>(), coordinator->GetComponentTypeHash<ecs::TransformComponent>())
+	{
+	}
+
+	void InspectorPanelTransformDataSource::DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::TransformComponent* transformComponentPtr = static_cast<ecs::TransformComponent*>(componentData);
+		ecs::TransformComponent& transformComponent = *transformComponentPtr;
+
+		ImGui::Text("Position");
+
+		ImGui::Text("X Pos: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label xpos", &transformComponent.localTransform.position.x, 0.1f);
+
+		ImGui::Text("Y Pos: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label ypos", &transformComponent.localTransform.position.y, 0.1f);
+
+		ImGui::Text("Z Pos: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label zpos", &transformComponent.localTransform.position.z, 0.1f);
+
+		ImGui::Text("Scale");
+
+		ImGui::Text("X Scale: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label xscale", &transformComponent.localTransform.scale.x, 0.01f, 0.01f, 1.0f);
+
+		ImGui::Text("Y Scale: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label yscale", &transformComponent.localTransform.scale.y, 0.01f, 0.01f, 1.0f);
+
+		ImGui::Text("Z Scale: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label zscale", &transformComponent.localTransform.scale.z, 0.01f, 0.01f, 1.0f);
+
+		ImGui::Text("Rotation");
+
+		glm::vec3 eulerAngles = glm::eulerAngles(transformComponent.localTransform.rotation);
+		eulerAngles = glm::degrees(eulerAngles);
+
+		ImGui::Text("X Rot: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label xrot", &eulerAngles.x, 0.1f, -179.999f, 179.999f);
+
+		ImGui::Text("Y Rot: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label yrot", &eulerAngles.y, 0.1f, -179.999f, 179.999f);
+
+		ImGui::Text("Z Rot: ");
+		ImGui::SameLine();
+		ImGui::DragFloat("##label zrot", &eulerAngles.z, 0.1f, -179.999f, 179.999f);
+
+		transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
+
+		if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(theEntity))
 		{
-			nodeName = editorComponent->editorName + std::string(" - Transform Instance - ") + std::to_string(id);
-		}
-		if (ImGui::TreeNodeEx(nodeName.c_str(), ImGuiTreeNodeFlags_SpanFullWidth, "%s", nodeName.c_str()))
-		{
-			ImGui::Text("Position");
-
-			ImGui::Text("X Pos: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label xpos", &transformComponent.localTransform.position.x, 0.1f);
-
-			ImGui::Text("Y Pos: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label ypos", &transformComponent.localTransform.position.y, 0.1f);
-
-			ImGui::Text("Z Pos: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label zpos", &transformComponent.localTransform.position.z, 0.1f);
-
-			ImGui::Text("Scale");
-
-			ImGui::Text("X Scale: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label xscale", &transformComponent.localTransform.scale.x, 0.01f, 0.01f, 1.0f);
-
-			ImGui::Text("Y Scale: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label yscale", &transformComponent.localTransform.scale.y, 0.01f, 0.01f, 1.0f);
-
-			ImGui::Text("Z Scale: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label zscale", &transformComponent.localTransform.scale.z, 0.01f, 0.01f, 1.0f);
-
-			ImGui::Text("Rotation");
-
-			glm::vec3 eulerAngles = glm::eulerAngles(transformComponent.localTransform.rotation);
-			eulerAngles = glm::degrees(eulerAngles);
-
-			ImGui::Text("X Rot: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label xrot", &eulerAngles.x, 0.1f, -179.9f, 179.9f);
-
-			ImGui::Text("Y Rot: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label yrot", &eulerAngles.y, 0.1f, -179.9f, 179.9f);
-
-			ImGui::Text("Z Rot: ");
-			ImGui::SameLine();
-			ImGui::DragFloat("##label zrot", &eulerAngles.z, 0.1f, -179.9f, 179.9f);
-
-			transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
-
-			ImGui::TreePop();
+			ecs::TransformDirtyComponent transformDirtyComponent;
+			coordinator->AddComponent<ecs::TransformDirtyComponent>(theEntity, transformDirtyComponent);
 		}
 	}
 
-	void InspectorPanelTransformComponent(Editor* editor, r2::ecs::Entity theEntity, r2::ecs::ECSCoordinator* coordinator)
+	bool InspectorPanelTransformDataSource::InstancesEnabled() const
 	{
-		r2::ecs::TransformComponent& transformComponent = coordinator->GetComponent<r2::ecs::TransformComponent>(theEntity);
+		return true;
+	}
 
-		//if (ImGui::CollapsingHeader("Transform Component"))
+	u32 InspectorPanelTransformDataSource::GetNumInstances(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
+	{
+		ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponent = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity);
+
+		if (instancedTransformComponent)
 		{
-			TransformImGuiWidget(coordinator, theEntity, 0, transformComponent);
-
-			r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>* instancedTransforms = coordinator->GetComponentPtr<r2::ecs::InstanceComponentT< r2::ecs::TransformComponent>>(theEntity);
-
-			if (instancedTransforms)
-			{
-				const auto numInstances = instancedTransforms->numInstances;
-
-				for (u32 i = 0; i < numInstances; ++i)
-				{
-					r2::ecs::TransformComponent& transformComponent = r2::sarr::At(*instancedTransforms->instances, i);
-					TransformImGuiWidget(coordinator, theEntity, i + 1, transformComponent);
-				}
-			}
-
-			r2::ecs::TransformDirtyComponent dirty;
-			coordinator->AddComponent<r2::ecs::TransformDirtyComponent>(theEntity, dirty);
+			return instancedTransformComponent->numInstances;
 		}
+
+		return 0;
+	}
+
+	void* InspectorPanelTransformDataSource::GetComponentData(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		return &coordinator->GetComponent<ecs::TransformComponent>(theEntity);
+	}
+
+	void* InspectorPanelTransformDataSource::GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponent = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity);
+
+		if (instancedTransformComponent)
+		{
+			R2_CHECK(i < instancedTransformComponent->numInstances, "Trying to access instance: %u but only have %u instances", i, instancedTransformComponent->numInstances);
+
+			return &r2::sarr::At(*instancedTransformComponent->instances, i);
+		}
+
+		return nullptr;
+	}
+
+	void InspectorPanelTransformDataSource::DeleteComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		coordinator->RemoveComponent<r2::ecs::TransformComponent>(theEntity);
+
+		if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity))
+		{
+			coordinator->RemoveComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity);
+		}
+	}
+
+	void InspectorPanelTransformDataSource::DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponent = coordinator->GetComponentPtr<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity);
+		if (!instancedTransformComponent)
+		{
+			return;
+		}
+
+		R2_CHECK(i < instancedTransformComponent->numInstances, "Trying to access instance: %u but only have %u instances", i, instancedTransformComponent->numInstances);
+
+		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedTransformComponent->instances, i);
+		instancedTransformComponent->instances--;
+	}
+
+	void InspectorPanelTransformDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		ecs::TransformComponent newTransformComponent;
+
+		//This should probably be an action?
+		coordinator->AddComponent<ecs::TransformComponent>(theEntity, newTransformComponent);
+	}
+
+	void InspectorPanelTransformDataSource::AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		r2::ecs::InstanceComponentT<ecs::TransformComponent>* instancedTransformComponentToUse = AddNewInstanceCapacity<ecs::TransformComponent>(coordinator, theEntity);
+
+		ecs::TransformComponent newTransformComponent;
+
+		r2::sarr::Push(*instancedTransformComponentToUse->instances, newTransformComponent);
+
+		instancedTransformComponentToUse->numInstances++;
 	}
 }
 
