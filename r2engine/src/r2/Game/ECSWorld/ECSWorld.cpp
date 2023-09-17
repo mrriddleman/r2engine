@@ -372,9 +372,9 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena, "AudioEmitterActionComponent", false, false, nullptr);
 
 		//add some more components to the coordinator for the editor to use
-#ifdef R2_EDITOR
+
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena, "EditorComponent", true, false, nullptr);
-#endif
+
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena, "InstancedTranfromComponent", true, true, freeInstancedTransformComponentFunc);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena, "InstancedSkeletalAnimationComponent", true, true, freeInstancedSkeletalAnimationComponentFunc);
 
@@ -399,9 +399,9 @@ namespace r2::ecs
 
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::SkeletalAnimationComponent>>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::TransformComponent>>(*mArena);
-#ifdef R2_EDITOR
+
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::EditorComponent>(*mArena);
-#endif
+
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioEmitterActionComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioParameterComponent>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::AudioEmitterComponent>(*mArena);

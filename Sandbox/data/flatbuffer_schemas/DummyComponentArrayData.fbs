@@ -1,0 +1,13 @@
+namespace flat;
+
+table DummyComponentData
+{
+	dummyValue:int;
+}
+
+table DummyComponentArrayData
+{
+	dummyComponentArray:[DummyComponentData];
+}
+
+root_type DummyComponentArrayData;

@@ -7,6 +7,8 @@
 
 #include "r2pch.h"
 #include "AppLayer.h"
+#include "r2/Platform/Platform.h"
+#include "r2/Core/Engine.h"
 
 namespace r2
 {
@@ -17,10 +19,17 @@ namespace r2
     void AppLayer::Init()
     {
         mApp->Init();
+
+        r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+
+        mApp->RegisterECSData(ecsWorld);
     }
     
     void AppLayer::Shutdown()
     {
+        r2::ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+        mApp->UnRegisterECSData(ecsWorld);
+
         mApp->Shutdown();
     }
     

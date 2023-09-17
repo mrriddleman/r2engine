@@ -489,7 +489,8 @@ project "Sandbox"
 		"%{includeDirs.glm}",
 		"%{includeDirs.flatbuffers}",
 		"%{includeDirs.texturemetadata}",
-		"%{includeDirs.assetlib}"
+		"%{includeDirs.assetlib}",
+		"${includeDirs.imgui}"
 	}
 
 	links

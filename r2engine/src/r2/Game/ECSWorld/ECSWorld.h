@@ -5,6 +5,7 @@
 #include "r2/Core/Memory/Allocators/StackAllocator.h"
 #include "r2/Core/Memory/Allocators/MallocAllocator.h"
 #include "r2/Game/SceneGraph/SceneGraph.h"
+#include "r2/Game/ECS/Component.h"
 
 #define ECS_WORLD_ALLOC(ecsWorld, T) r2::ecs::ECSWorldAlloc<T>(ecsWorld, __FILE__, __LINE__, "" )
 #define ECS_WORLD_ALLOC_PARAMS(ecsWorld, T, ...) r2::ecs::ECSWorldAllocParams<T>(ecsWorld, __FILE__, __LINE__, "", __VA_ARGS__)
@@ -60,6 +61,33 @@ namespace r2::ecs
 
 		u64 MemorySize(u32 maxNumComponents, u32 maxNumEntities, u32 maxNumSystems);
 
+		template<typename Component>
+		void RegisterComponent(const char* componentName, bool shouldSerialize, bool isInstanced, FreeComponentFunc freeComponentFunc)
+		{
+			mECSCoordinator->RegisterComponent<mem::StackArena, Component>(*mArena, componentName, shouldSerialize, isInstanced, freeComponentFunc);
+		}
+
+		template<typename Component>
+		void UnRegisterComponent()
+		{
+			mECSCoordinator->UnRegisterComponent<mem::StackArena, Component>(*mArena);
+		}
+
+		template<typename SystemType>
+		SystemType* RegisterSystem(ecs::Signature signature)
+		{
+			SystemType* newSystem = mSystemManager->RegisterSystem<r2::mem::StackArena, SystemType>(*mArena);
+			newSystem->mnoptrCoordinator = this;
+			mECSCoordinator->SetSystemSignature<SystemType>(signature);
+
+			return newSystem;
+		}
+
+		template<typename SystemType>
+		void UnRegisterSystem()
+		{
+			mECSCoordinator->UnRegisterSystem<mem::StackArena, SystemType>(*mArena);
+		}
 
 		//@NOTE(Serge): no one should use this except the below helper methods
 		struct ECSWorldAllocation

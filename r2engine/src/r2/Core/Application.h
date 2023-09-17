@@ -46,6 +46,11 @@ namespace r2::asset
     class AssetFile;
 }
 
+namespace r2::ecs
+{
+    class ECSWorld;
+}
+
 namespace r2
 {
     namespace evt
@@ -110,6 +115,10 @@ namespace r2
 
 		virtual std::string GetLevelPackDataBinPath() const = 0;
 		virtual std::string GetLevelPackDataJSONPath() const = 0;
+
+
+        virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
+        virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) = 0;
 
 #ifdef R2_ASSET_PIPELINE
         virtual std::vector<std::string> GetAssetWatchPaths() const = 0;

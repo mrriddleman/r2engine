@@ -45,29 +45,144 @@
 
 #include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
 #include "r2/Game/ECSWorld/ECSWorld.h"
+#include "r2/Game/ECS/ECSCoordinator.h"
 
 #ifdef R2_ASSET_PIPELINE
 #include "r2/Core/Assets/Pipeline/AssetManifest.h"
 #endif
 
 #include "r2/Audio/AudioEngine.h"
-#include <mutex>
 
-//struct DummyComponent
-//{
-//    int dummy;
-//};
+#ifdef R2_EDITOR
+#include "r2/Editor/EditorInspectorPanel.h"
+#include "r2/Editor/Editor.h"
+#include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
+#endif
 
-//namespace r2::ecs
-//{
-//    class ECSCoordinator;
-//
-//	template<>
-//	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
-//	{
-//		R2_CHECK(false, "You need to implement a serializer for this type");
-//	}
-//}
+#include "r2/Game/ECS/ComponentArrayData_generated.h"
+#include "DummyComponentArrayData_generated.h"
+
+#include "../../r2engine/vendor/imgui/imgui.h"
+
+struct DummyComponent
+{
+	int dummyValue;
+};
+
+class InspectorPanelDummyComponentDataSource : public r2::edit::InspectorPanelComponentDataSource
+{
+public:
+
+    InspectorPanelDummyComponentDataSource()
+        :InspectorPanelComponentDataSource("Dummy Component", 0, 0)
+    {}
+
+    InspectorPanelDummyComponentDataSource(r2::ecs::ECSCoordinator* coordinator)
+        :InspectorPanelComponentDataSource("Dummy Component", coordinator->GetComponentType<DummyComponent>(), coordinator->GetComponentTypeHash<DummyComponent>())
+    {}
+
+    virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+    {
+		DummyComponent* dummyComponentPtr = static_cast<DummyComponent*>(componentData);
+        DummyComponent& dummyComponent = *dummyComponentPtr;
+
+        ImGui::Text("Dummy Value:");
+        ImGui::SameLine();
+        ImGui::DragInt("##label dummyvalue", &dummyComponent.dummyValue, 1, -500, 500);
+    }
+
+    virtual bool InstancesEnabled() const override
+    {
+        return false;
+    }
+
+    virtual u32 GetNumInstances(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) const override
+    {
+        return 0;
+    }
+
+    virtual void* GetComponentData(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+    {
+        return &coordinator->GetComponent<DummyComponent>(theEntity);
+    }
+
+    virtual void* GetInstancedComponentData(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+    {
+        return nullptr;
+    }
+
+    virtual void DeleteComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+    {
+        coordinator->RemoveComponent<DummyComponent>(theEntity);
+    }
+
+    virtual void DeleteInstance(u32 i, r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override {}
+
+    virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override
+    {
+        DummyComponent newDummyComponent;
+        newDummyComponent.dummyValue = 0;
+
+        coordinator->AddComponent<DummyComponent>(theEntity, newDummyComponent);
+    }
+
+	virtual void AddNewInstance(r2::ecs::ECSCoordinator* coordinator, r2::ecs::Entity theEntity) override{}
+
+};
+
+
+namespace r2::ecs
+{
+	template<>
+	void SerializeComponentArray<DummyComponent>(flatbuffers::FlatBufferBuilder& builder, const r2::SArray<DummyComponent>& components)
+	{
+		const auto numComponents = r2::sarr::Size(components);
+
+		r2::SArray<flatbuffers::Offset<flat::DummyComponentData>>* dummyComponents = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, flatbuffers::Offset<flat::DummyComponentData>, numComponents);
+
+		for (u32 i = 0; i < numComponents; ++i)
+		{
+			const DummyComponent& dummyComponent = r2::sarr::At(components, i);
+
+			flat::DummyComponentDataBuilder dummyComponentBuilder(builder);
+
+            dummyComponentBuilder.add_dummyValue(dummyComponent.dummyValue);
+
+			r2::sarr::Push(*dummyComponents, dummyComponentBuilder.Finish());
+		}
+
+		auto vec = builder.CreateVector(dummyComponents->mData, dummyComponents->mSize);
+
+		flat::DummyComponentArrayDataBuilder dummyComponentArrayDataBuilder(builder);
+
+        dummyComponentArrayDataBuilder.add_dummyComponentArray(vec);
+
+		builder.Finish(dummyComponentArrayDataBuilder.Finish());
+
+		FREE(dummyComponents, *MEM_ENG_SCRATCH_PTR);
+	}
+
+	template<>
+    void DeSerializeComponentArray(ECSWorld& ecsWorld, r2::SArray<DummyComponent>& components, const r2::SArray<Entity>* entities, const r2::SArray<const flat::EntityData*>* refEntities, const flat::ComponentArrayData* componentArrayData)
+    {
+		R2_CHECK(r2::sarr::Size(components) == 0, "Shouldn't have anything in there yet?");
+		R2_CHECK(componentArrayData != nullptr, "Shouldn't be nullptr");
+
+		const flat::DummyComponentArrayData* dummyComponentArrayData = flatbuffers::GetRoot<flat::DummyComponentArrayData>(componentArrayData->componentArray()->data());
+
+		const auto* componentVector = dummyComponentArrayData->dummyComponentArray();
+
+		for (flatbuffers::uoffset_t i = 0; i < componentVector->size(); ++i)
+		{
+			const flat::DummyComponentData* flatDummyComponent = componentVector->Get(i);
+
+			DummyComponent dummyComponent;
+            dummyComponent.dummyValue = flatDummyComponent->dummyValue();
+
+			r2::sarr::Push(components, dummyComponent);
+		}
+    }
+}
 
 namespace
 {
@@ -1386,6 +1501,16 @@ public:
 		return SANDBOX_LEVELS_DIR_RAW;
 	}
     
+    virtual void RegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
+    {
+        ecsWorld.RegisterComponent<DummyComponent>("DummyComponent", true, false, nullptr);
+    }
+
+    virtual void UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld) override
+    {
+        ecsWorld.UnRegisterComponent<DummyComponent>();
+    }
+
 #ifdef R2_ASSET_PIPELINE
     virtual std::vector<std::string> GetAssetWatchPaths() const override
     {
@@ -1479,7 +1604,10 @@ public:
 #ifdef R2_EDITOR
     virtual void RegisterComponentImGuiWidgets(r2::edit::InspectorPanel& inspectorPanel) const override
     {
+        std::shared_ptr<InspectorPanelDummyComponentDataSource> dummyDataSource = std::make_shared<InspectorPanelDummyComponentDataSource>(inspectorPanel.GetEditor()->GetECSCoordinator());
 
+		r2::edit::InspectorPanelComponentWidget dummyComponentWidget = r2::edit::InspectorPanelComponentWidget(10, dummyDataSource);
+		inspectorPanel.RegisterComponentWidget(dummyComponentWidget);
     }
 #endif
 

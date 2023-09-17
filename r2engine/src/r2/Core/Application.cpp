@@ -179,6 +179,16 @@ namespace r2
 		return "";
 	}
 
+	void Application::RegisterECSData(r2::ecs::ECSWorld& ecsWorld)
+	{
+
+	}
+
+	void Application::UnRegisterECSData(r2::ecs::ECSWorld& ecsWorld)
+	{
+
+	}
+
 #ifdef R2_ASSET_PIPELINE
     std::vector<std::string> Application::GetAssetWatchPaths() const
     {

@@ -19,7 +19,7 @@
 
 namespace r2::ecs
 {
-	using FreeComponentFunc = std::function<void(void* componentPtr)>;
+	
 
 	class IComponentArray
 	{
