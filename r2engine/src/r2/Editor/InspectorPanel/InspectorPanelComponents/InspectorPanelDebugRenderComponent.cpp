@@ -379,7 +379,7 @@ namespace r2::edit
 		newDebugRenderComponent.depthTest = true;
 
 		r2::sarr::Push(*instancedDebugBoneComponentToUse->instances, newDebugRenderComponent);
-		instancedDebugBoneComponentToUse++;
+		instancedDebugBoneComponentToUse->numInstances++;
 	}
 
 }

@@ -138,7 +138,7 @@ namespace r2::edit
 		R2_CHECK(i < instancedTransformComponent->numInstances, "Trying to access instance: %u but only have %u instances", i, instancedTransformComponent->numInstances);
 
 		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedTransformComponent->instances, i);
-		instancedTransformComponent->instances--;
+		instancedTransformComponent->numInstances--;
 	}
 
 	void InspectorPanelTransformDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)

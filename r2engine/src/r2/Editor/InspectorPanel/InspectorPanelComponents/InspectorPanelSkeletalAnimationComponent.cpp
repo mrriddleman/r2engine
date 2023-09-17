@@ -210,7 +210,7 @@ namespace r2::edit
 		R2_CHECK(i < instancedSkeletonAnimationComponent->numInstances, "Trying to access instance: %u but only have %u instances", i, instancedSkeletonAnimationComponent->numInstances);
 
 		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedSkeletonAnimationComponent->instances, i);
-		instancedSkeletonAnimationComponent->instances--;
+		instancedSkeletonAnimationComponent->numInstances--;
 	}
 
 	void InspectorPanelSkeletonAnimationComponentDataSource::AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)

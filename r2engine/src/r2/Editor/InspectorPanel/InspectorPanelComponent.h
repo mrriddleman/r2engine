@@ -48,26 +48,17 @@ namespace r2::edit
 
 		void AddComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity);
 
-		//bool HasAddComponentFunc() const { return mAddComponentFunc != nullptr; }
 		bool CanAddComponent(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const;
 
 		r2::ecs::ComponentType GetComponentType() const;
 
 		u64 GetComponentTypeHash() const;
 
-		//
-		//inline InspectorPanelAddInstanceComponentFunc GetAddInstanceComponentFunc() { return mAddInstanceComponentFunc; }
+		bool CanAddInstancedComponent() const;
+
+		void AddInstancedComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity);
 
 	private:
-
-		//InspectorPanelComponentWidgetFunc mComponentWidgetFunc;
-		//InspectorPanelRemoveComponentFunc mRemoveComponentFunc;
-		//InspectorPanelAddComponentFunc mAddComponentFunc;
-		//InspectorPanelAddInstanceComponentFunc mAddInstanceComponentFunc;
-
-		//r2::ecs::ComponentType mComponentType;
-		//u64 mComponentTypeHash;
-		//std::string mComponentName;
 
 		std::shared_ptr<InspectorPanelComponentDataSource> mComponentDataSource;
 		s32 mSortOrder;

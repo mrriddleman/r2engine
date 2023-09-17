@@ -53,7 +53,7 @@ namespace r2::edit
 		std::shared_ptr<InspectorPanelAudioListenerComponentDataSource> audioListenerDataSource = std::make_shared<InspectorPanelAudioListenerComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelAudioEmitterComponentDataSource> audioEmitterDataSource = std::make_shared<InspectorPanelAudioEmitterComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelDebugBoneComponentDataSource> debugBonesDataSource = std::make_shared<InspectorPanelDebugBoneComponentDataSource>(coordinator);
-		std::shared_ptr<InspectorPanelRenderComponentDataSource> debugRenderDataSource = std::make_shared<InspectorPanelRenderComponentDataSource>(coordinator);
+		std::shared_ptr<InspectorPanelDebugRenderDataSource> debugRenderDataSource = std::make_shared<InspectorPanelDebugRenderDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelHierarchyComponentDataSource> hierarchyDataSource = std::make_shared<InspectorPanelHierarchyComponentDataSource>(editor, coordinator);
 		std::shared_ptr<InspectorPanelRenderComponentDataSource> renderDataSource = std::make_shared<InspectorPanelRenderComponentDataSource>(coordinator);
 		std::shared_ptr<InspectorPanelSkeletonAnimationComponentDataSource> skeletalAnimationDataSource = std::make_shared<InspectorPanelSkeletonAnimationComponentDataSource>(coordinator);
@@ -419,6 +419,16 @@ namespace r2::edit
 	bool InspectorPanelComponentWidget::CanAddComponent(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) const
 	{
 		return mComponentDataSource->CanAddComponent(coordinator, theEntity);
+	}
+
+	bool InspectorPanelComponentWidget::CanAddInstancedComponent() const
+	{
+		return mComponentDataSource->InstancesEnabled();
+	}
+
+	void InspectorPanelComponentWidget::AddInstancedComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
+	{
+		mComponentDataSource->AddNewInstance(coordinator, theEntity);
 	}
 
 	void InspectorPanelComponentWidget::AddComponentToEntity(ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)

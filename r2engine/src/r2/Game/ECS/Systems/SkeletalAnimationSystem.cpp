@@ -88,7 +88,7 @@ namespace r2::ecs
 				{
 					SkeletalAnimationComponent& skeletalAnimationComponent = r2::sarr::At(*instancedAnimationComponent->instances, j);
 #ifdef R2_DEBUG
-					if (instancedDebugBoneComponent)
+					if (instancedDebugBoneComponent && j < instancedDebugBoneComponent->numInstances)
 					{
 						//@TODO(Serge): fix when we add a new skeletal animation instance
 

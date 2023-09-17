@@ -84,7 +84,7 @@ namespace r2::edit
 				{
 					currentComponentName = componentNames[mCurrentComponentIndexToAdd];
 				}
-
+				ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.5);
 				if (ImGui::BeginCombo("##label components", currentComponentName.c_str()))
 				{
 					for (s32 i = 0; i < componentNames.size(); i++)
@@ -97,8 +97,7 @@ namespace r2::edit
 
 					ImGui::EndCombo();
 				}
-
-				ImGui::SameLine();
+				ImGui::PopItemWidth();
 
 				InspectorPanelComponentWidget* inspectorPanelComponentWidget = nullptr;
 				
@@ -122,10 +121,12 @@ namespace r2::edit
 					ImGui::PushStyleVar(ImGuiStyleVar_DisabledAlpha, 0.5);
 				}
 
+				ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.2);
 				if (ImGui::Button("Add Component"))
 				{
 					inspectorPanelComponentWidget->AddComponentToEntity(coordinator, mSelectedEntity);
 				}
+				ImGui::PopItemWidth();
 
 				if (!hasAddComponentFunc)
 				{
@@ -133,7 +134,7 @@ namespace r2::edit
 					ImGui::EndDisabled();
 				}
 
-				/*if (coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity) &&
+				if (coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity) &&
 					coordinator->HasComponent<ecs::RenderComponent>(mSelectedEntity))
 				{
 					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
@@ -150,24 +151,23 @@ namespace r2::edit
 					if (transformComponentWidget)
 					{
 						ImGui::SameLine();
+
+						ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.2);
 						if (ImGui::Button("Add Instance"))
 						{
-							auto addTransformInstanceFunc = transformComponentWidget->GetAddInstanceComponentFunc();
-
-							addTransformInstanceFunc(mnoptrEditor, mSelectedEntity, coordinator);
-
-							if (animationComponentWidget)
+							if (transformComponentWidget->CanAddInstancedComponent())
 							{
-								auto addAnimationInstanceFunc = animationComponentWidget->GetAddInstanceComponentFunc();
+								transformComponentWidget->AddInstancedComponentToEntity(coordinator, mSelectedEntity);
+							}
 
-								if (addAnimationInstanceFunc)
-								{
-									addAnimationInstanceFunc(mnoptrEditor, mSelectedEntity, coordinator);
-								}
+							if (animationComponentWidget && animationComponentWidget->CanAddInstancedComponent())
+							{
+								animationComponentWidget->AddInstancedComponentToEntity(coordinator, mSelectedEntity);
 							}
 						}
+						ImGui::PopItemWidth();
 					}
-				}*/
+				}
 
 				for (size_t i=0; i < mComponentWidgets.size(); ++i)
 				{
