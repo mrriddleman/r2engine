@@ -19,7 +19,9 @@
 #include "CustomFont.h"
 #include "CustomFont.cpp"
 #include <glad/glad.h>
-
+#include "ImGuizmo.h"
+#include "r2/Render/Renderer/Renderer.h"
+#include <glm/gtc/type_ptr.hpp>
 namespace r2
 {
     ImGuiLayer::ImGuiLayer(): Layer("ImGui", true)
@@ -120,9 +122,6 @@ namespace r2
 		ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByTypeFile | IGFD_FileStyleByTypeLink, nullptr, ImVec4(0.8f, 0.8f, 0.8f, 0.8f), ICON_IGFD_FILE); // for all link files
 		ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByTypeDir | IGFD_FileStyleByContainedInFullName, ".git", ImVec4(0.9f, 0.2f, 0.0f, 0.9f), ICON_IGFD_BOOKMARK);
 		ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByTypeFile | IGFD_FileStyleByContainedInFullName, ".git", ImVec4(0.5f, 0.8f, 0.5f, 0.9f), ICON_IGFD_SAVE);
-
-
-		
     }
     
     void ImGuiLayer::Shutdown()
@@ -136,15 +135,21 @@ namespace r2
     {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame((SDL_Window*)r2::draw::rendererimpl::GetWindowHandle());
+		
 		ImGui::NewFrame();
-
+		ImGuizmo::SetOrthographic(false);
+		ImGuizmo::BeginFrame();
 		ImGuiIO& io = ImGui::GetIO();
+		
 		ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
 		if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 		{
-			mDockingSpace = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+			mDockingSpace = ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags); 
 		}
+
+		ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList(ImGui::GetMainViewport()));
+		ImGuizmo::SetRect(ImGui::GetMainViewport()->Pos.x, ImGui::GetMainViewport()->Pos.y, io.DisplaySize.x, io.DisplaySize.y);
     }
     
     void ImGuiLayer::End()
@@ -152,6 +157,7 @@ namespace r2
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(static_cast<f32>(CENG.DisplaySize().width), static_cast<f32>(CENG.DisplaySize().height));
 
+		
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

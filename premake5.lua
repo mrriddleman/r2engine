@@ -27,6 +27,7 @@ includeDirs["cgltf"] = "r2engine/vendor/cgltf"
 includeDirs["assetlib"] = "r2engine/libs/assetlib/include"
 includeDirs["texturemetadata"] = "r2engine/libs/assetlib/include/assetlib"
 includeDirs["ImGuiFileDialog"] = "r2engine/vendor/ImGuiFileDialog"
+includeDirs["ImGuizmo"] = "r2engine/vendor/ImGuizmo"
 
 include "r2engine/vendor/glad"
 include "r2engine/vendor/miniz"
@@ -68,6 +69,8 @@ project "r2engine"
 		"%{prj.name}/vendor/cgltf/*.cpp",
 		"%{prj.name}/vendor/ImGuiFileDialog/*.h",
 		"%{prj.name}/vendor/ImGuiFileDialog/*.cpp",
+		"%{prj.name}/vendor/ImGuizmo/*.h",
+		"%{prj.name}/vendor/ImGuizmo/*.cpp"
 	}
 
 	includedirs
@@ -85,6 +88,7 @@ project "r2engine"
 		"%{includeDirs.assetlib}",
 		"%{includeDirs.texturemetadata}",
 		"%{includeDirs.ImGuiFileDialog}",
+		"%{includeDirs.ImGuizmo}",
 		"%{prj.name}/src/r2/Render/Model",
 		"%{prj.name}/src/r2/Game/ECS"
 	}
@@ -284,7 +288,7 @@ local CWD       = "cd " .. os.getcwd() .. "; " -- We are in current working dire
 	filter "files:r2engine/vendor/cgltf/cgltf.cpp or files:r2engine/vendor/cgltf/cgltf_write.cpp"
 		flags {"NoPCH"}
 
-	filter "files:r2engine/vendor/ImGuiFileDialog/ImGuiFileDialog.cpp"
+	filter "files:r2engine/vendor/ImGuiFileDialog/ImGuiFileDialog.cpp or files:r2engine/vendor/ImGuizmo/ImGuizmo.cpp or files:r2engine/vendor/ImGuizmo/GraphEditor.cpp or files:r2engine/vendor/ImGuizmo/ImCurveEdit.cpp or files:r2engine/vendor/ImGuizmo/ImGradient.cpp or files:r2engine/vendor/ImGuizmo/ImSequencer.cpp"
 		flags {"NoPCH"}
 
 

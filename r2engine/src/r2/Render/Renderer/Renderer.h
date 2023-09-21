@@ -516,6 +516,7 @@ namespace r2::draw::renderer
 	const tex::Texture* GetBlueNoise64Texture();
 
 	void SetRenderCamera(Camera* cameraPtr);
+	Camera* GetRenderCamera();
 
 	void SetOutputMergerType(OutputMerger outputMerger);
 

@@ -476,7 +476,7 @@ namespace r2::draw::renderer
 
 	//Camera and Lighting
 	void SetRenderCamera(Renderer& renderer, Camera* cameraPtr);
-
+	Camera* GetRenderCamera(Renderer& renderer);
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles(Renderer& renderer);
 	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName);
@@ -8366,6 +8366,11 @@ namespace r2::draw::renderer
 		renderer.prevVP = renderer.mnoptrRenderCam->vp;
 	}
 
+	Camera* GetRenderCamera(Renderer& renderer)
+	{
+		return renderer.mnoptrRenderCam;
+	}
+
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles(Renderer& renderer)
 	{
@@ -8957,6 +8962,11 @@ namespace r2::draw::renderer
 	void SetRenderCamera(Camera* cameraPtr)
 	{
 		SetRenderCamera(MENG.GetCurrentRendererRef(), cameraPtr);
+	}
+
+	Camera* GetRenderCamera()
+	{
+		return GetRenderCamera(MENG.GetCurrentRendererRef());
 	}
 
 	void SetOutputMergerType(OutputMerger outputMerger)

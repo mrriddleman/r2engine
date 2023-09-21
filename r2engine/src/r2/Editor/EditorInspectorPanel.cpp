@@ -11,6 +11,11 @@
 #include "r2/Core/Application.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
+#include "ImGuizmo.h"
+#include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+//@HACK: we need this to get the camera but we should be able to get it through the editor or something
+#include "r2/Render/Renderer/Renderer.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace r2::edit
 {
@@ -63,12 +68,15 @@ namespace r2::edit
 
 		bool open = true;
 		
+		
+
 		if (ImGui::Begin("Inspector", &open))
 		{
 			ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
 
 			if (coordinator && mSelectedEntity != ecs::INVALID_ENTITY)
 			{
+
 				const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
 
 				R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
@@ -137,6 +145,36 @@ namespace r2::edit
 				if (coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity) &&
 					coordinator->HasComponent<ecs::RenderComponent>(mSelectedEntity))
 				{
+
+					//ImGuizmo stuff here since it has a position + render component
+					//will need to think about how to deal with instances
+					
+					r2::Camera* camera = r2::draw::renderer::GetRenderCamera();
+
+					ecs::TransformComponent& transformComponent = coordinator->GetComponent<ecs::TransformComponent>(mSelectedEntity);
+
+					glm::mat4 localMat = glm::mat4(1);
+
+					glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformComponent.localTransform.rotation));
+
+					ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale), glm::value_ptr(localMat));
+					
+					
+					if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(localMat)))
+					{
+						ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale));
+
+						transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
+
+						if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(mSelectedEntity))
+						{
+							coordinator->AddComponent<ecs::TransformDirtyComponent>(mSelectedEntity, {});
+						}
+
+					}
+
+					
+
 					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
 					
 					R2_CHECK(transformComponentWidget != nullptr, "Should always exist");
