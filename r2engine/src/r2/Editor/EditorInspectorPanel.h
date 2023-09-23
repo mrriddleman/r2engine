@@ -10,6 +10,11 @@
 #include <unordered_map>
 
 
+namespace r2::ecs
+{
+	struct TransformComponent;
+}
+
 namespace r2::edit
 {
 	class InspectorPanel : public EditorWidget
@@ -31,12 +36,15 @@ namespace r2::edit
 
 		InspectorPanelComponentWidget* GetComponentWidgetForComponentTypeHash(u64 componentTypeHash);
 
+		void ManipulateTransformComponent(r2::ecs::TransformComponent& transformComponent);
+
 		std::vector<InspectorPanelComponentWidget> mComponentWidgets;
 		ecs::Entity mSelectedEntity;
 		s32 mCurrentComponentIndexToAdd;
 
 		u32 mCurrentOperation;
-		u32 mCurrentMode;
+		s32 mCurrentMode;
+		s32 mCurrentInstance;
 	};
 }
 

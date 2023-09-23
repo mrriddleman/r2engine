@@ -27,6 +27,7 @@ namespace r2::edit
 		,mCurrentComponentIndexToAdd(-1)
 		,mCurrentOperation(ImGuizmo::TRANSLATE)
 		,mCurrentMode(ImGuizmo::LOCAL)
+		,mCurrentInstance(-1)
 	{
 
 	}
@@ -57,6 +58,8 @@ namespace r2::edit
 		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
 			{
 				mSelectedEntity = e.GetEntity();
+				mCurrentOperation = ImGuizmo::TRANSLATE;
+				mCurrentInstance = -1;
 				return e.ShouldConsume();
 			});
 
@@ -65,6 +68,36 @@ namespace r2::edit
 				if (mSelectedEntity == r2::ecs::INVALID_ENTITY)
 				{
 					return false;
+				}
+				
+				ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
+				if (!coordinator->HasComponent<r2::ecs::TransformComponent>(mSelectedEntity))
+				{
+					return false;
+				}
+
+				if (coordinator->HasComponent<r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(mSelectedEntity))
+				{
+					s32 numInstances = coordinator->GetComponent<r2::ecs::InstanceComponentT<r2::ecs::TransformComponent>>(mSelectedEntity).numInstances;
+
+					if (keyEvent.KeyCode() == r2::io::KEY_LEFTBRACKET)
+					{
+						mCurrentInstance--;
+
+						if (mCurrentInstance < -1 )
+						{
+							mCurrentInstance = numInstances - 1;
+						}
+					}
+					else if (keyEvent.KeyCode() == r2::io::KEY_RIGHTBRACKET)
+					{
+						mCurrentInstance++;
+
+						if (mCurrentInstance >= numInstances)
+						{
+							mCurrentInstance = -1;
+						}
+					}
 				}
 
 				if (keyEvent.KeyCode() == r2::io::KEY_g)
@@ -298,6 +331,9 @@ namespace r2::edit
 				}
 
 
+
+
+
 				return false;
 			});
 	}
@@ -307,14 +343,38 @@ namespace r2::edit
 
 	}
 
+	void InspectorPanel::ManipulateTransformComponent( r2::ecs::TransformComponent& transformComponent)
+	{
+
+		r2::ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
+
+		r2::Camera* camera = r2::draw::renderer::GetRenderCamera();
+
+		glm::mat4 localMat = glm::mat4(1);
+
+		glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformComponent.localTransform.rotation));
+
+		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale), glm::value_ptr(localMat));
+
+		if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), static_cast<ImGuizmo::OPERATION>(mCurrentOperation), static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat)))
+		{
+			ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale));
+
+			transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
+
+			if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(mSelectedEntity))
+			{
+				coordinator->AddComponent<ecs::TransformDirtyComponent>(mSelectedEntity, {});
+			}
+		}
+	}
+
 	void InspectorPanel::Render(u32 dockingSpaceID)
 	{
 		ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiCond_FirstUseEver);
 
 		bool open = true;
 		
-		
-
 		if (ImGui::Begin("Inspector", &open))
 		{
 			ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
@@ -325,6 +385,12 @@ namespace r2::edit
 				const ecs::Signature& entitySignature = coordinator->GetSignature(mSelectedEntity);
 
 				R2_CHECK(entitySignature.test(coordinator->GetComponentType<r2::ecs::EditorComponent>()), "Should always have an editor component");
+
+				ImGui::Text("Mode: ");
+				ImGui::SameLine();
+				ImGui::RadioButton("LOCAL", &mCurrentMode, ImGuizmo::LOCAL);
+				ImGui::SameLine();
+				ImGui::RadioButton("WORLD", &mCurrentMode, ImGuizmo::WORLD);
 
 				InspectorPanelEditorComponent(mnoptrEditor, mSelectedEntity, coordinator);
 
@@ -393,29 +459,20 @@ namespace r2::edit
 
 					//ImGuizmo stuff here since it has a position + render component
 					//will need to think about how to deal with instances
-					
-					r2::Camera* camera = r2::draw::renderer::GetRenderCamera();
 
-					ecs::TransformComponent& transformComponent = coordinator->GetComponent<ecs::TransformComponent>(mSelectedEntity);
+					ecs::TransformComponent* transformComponent = coordinator->GetComponentPtr<ecs::TransformComponent>(mSelectedEntity);
 
-					glm::mat4 localMat = glm::mat4(1);
-
-					glm::vec3 eulerAngles = glm::degrees(glm::eulerAngles(transformComponent.localTransform.rotation));
-
-					ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale), glm::value_ptr(localMat));
-					
-					if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), static_cast<ImGuizmo::OPERATION>(mCurrentOperation), static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat)))
+					if (mCurrentInstance >= 0 && coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
 					{
-						ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale));
+						const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
 
-						transformComponent.localTransform.rotation = glm::quat(glm::radians(eulerAngles));
-
-						if (!coordinator->HasComponent<ecs::TransformDirtyComponent>(mSelectedEntity))
+						if (mCurrentInstance < instancedTransformComponent.numInstances)
 						{
-							coordinator->AddComponent<ecs::TransformDirtyComponent>(mSelectedEntity, {});
+							transformComponent = &r2::sarr::At(*instancedTransformComponent.instances, mCurrentInstance);
 						}
-
 					}
+
+					ManipulateTransformComponent(*transformComponent);
 
 					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
 					
