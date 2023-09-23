@@ -670,11 +670,12 @@ namespace r2
 				keyData.state = e.key.state;
 				keyData.repeated = e.key.repeat;
 				keyData.code = e.key.keysym.scancode;
+                keyData.modifiers = 0;
 
 				//@NOTE: Right now we make no distinction between left or right versions of these keys
 				if (e.key.keysym.mod & KMOD_ALT)
 				{
-					keyData.modifiers |= io::Key::ALT_PRESSED;
+					keyData.modifiers |= io::ALT_PRESSED;
 				}
 
 				if (e.key.keysym.mod & KMOD_SHIFT)

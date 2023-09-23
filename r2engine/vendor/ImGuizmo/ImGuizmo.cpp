@@ -736,10 +736,10 @@ namespace ImGuizmo
    static Context gContext;
 
    static const vec_t directionUnary[3] = { makeVect(1.f, 0.f, 0.f), makeVect(0.f, 1.f, 0.f), makeVect(0.f, 0.f, 1.f) };
-   static const ImU32 directionColor[3] = { IM_COL32(0xAA, 0, 0, 0xFF), IM_COL32(0, 0xAA, 0, 0xFF), IM_COL32(0, 0, 0xAA, 0XFF) };
+   static const ImU32 directionColor[3] = { IM_COL32(0xDA, 0x19, 0x47, 0xFF), IM_COL32(0x1A, 0x6C, 0xCE, 0XFF), IM_COL32(0x4C, 0xC9, 0x18, 0xFF) };
 
    // Alpha: 100%: FF, 87%: DE, 70%: B3, 54%: 8A, 50%: 80, 38%: 61, 12%: 1F
-   static const ImU32 planeColor[3] = { IM_COL32(0xAA, 0, 0, 0x61), IM_COL32(0, 0xAA, 0, 0x61), IM_COL32(0, 0, 0xAA, 0x61) };
+   static const ImU32 planeColor[3] = { IM_COL32(0xDA, 0x19, 0x47, 0x61), IM_COL32(0x1A, 0x6C, 0xCE, 0x61), IM_COL32(0x4C, 0xC9, 0x18, 0x61) };
    static const ImU32 selectionColor = IM_COL32(0xFF, 0x80, 0x10, 0x8A);
    static const ImU32 inactiveColor = IM_COL32(0x99, 0x99, 0x99, 0x99);
    static const ImU32 translationLineColor = IM_COL32(0xAA, 0xAA, 0xAA, 0xAA);

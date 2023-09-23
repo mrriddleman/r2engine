@@ -9,6 +9,7 @@
 #include "r2/Game/ECS/Entity.h"
 #include <unordered_map>
 
+
 namespace r2::edit
 {
 	class InspectorPanel : public EditorWidget
@@ -33,6 +34,9 @@ namespace r2::edit
 		std::vector<InspectorPanelComponentWidget> mComponentWidgets;
 		ecs::Entity mSelectedEntity;
 		s32 mCurrentComponentIndexToAdd;
+
+		u32 mCurrentOperation;
+		u32 mCurrentMode;
 	};
 }
 

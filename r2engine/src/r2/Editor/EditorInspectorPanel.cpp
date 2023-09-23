@@ -3,15 +3,17 @@
 #if defined(R2_EDITOR) && defined(R2_IMGUI)
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Core/Events/Event.h"
+#include "r2/Core/Events/KeyEvent.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
 #include "imgui.h"
+#include "ImGuizmo.h"
 #include "r2/Core/Engine.h"
 #include "r2/Core/Application.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
-#include "ImGuizmo.h"
+
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 //@HACK: we need this to get the camera but we should be able to get it through the editor or something
 #include "r2/Render/Renderer/Renderer.h"
@@ -23,6 +25,8 @@ namespace r2::edit
 	InspectorPanel::InspectorPanel()
 		:mSelectedEntity(ecs::INVALID_ENTITY)
 		,mCurrentComponentIndexToAdd(-1)
+		,mCurrentOperation(ImGuizmo::TRANSLATE)
+		,mCurrentMode(ImGuizmo::LOCAL)
 	{
 
 	}
@@ -54,6 +58,247 @@ namespace r2::edit
 			{
 				mSelectedEntity = e.GetEntity();
 				return e.ShouldConsume();
+			});
+
+		dispatcher.Dispatch<r2::evt::KeyPressedEvent>([this](const r2::evt::KeyPressedEvent& keyEvent)
+			{
+				if (mSelectedEntity == r2::ecs::INVALID_ENTITY)
+				{
+					return false;
+				}
+
+				if (keyEvent.KeyCode() == r2::io::KEY_g)
+				{
+					//translation
+					mCurrentOperation = ImGuizmo::TRANSLATE;
+					return true;
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_r)
+				{
+					//rotate
+					mCurrentOperation = ImGuizmo::ROTATE;
+					return true;
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_e)
+				{
+					//scale
+					mCurrentOperation = ImGuizmo::SCALE;
+					return true;
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_x && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) != r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_Z))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_X;
+						return true;
+					}
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_y && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) != r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_X | ImGuizmo::TRANSLATE_Y))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_Z;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_X | ImGuizmo::SCALE_Y))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_Z;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_X | ImGuizmo::ROTATE_Y))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_Z;
+						return true;
+					}
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_z && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) != r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Z | ImGuizmo::TRANSLATE_X))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_Y;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_Z | ImGuizmo::SCALE_X))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_Y;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Z | ImGuizmo::ROTATE_X))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_Y;
+						return true;
+					}
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_x && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) == r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_Z) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_X) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_X | ImGuizmo::TRANSLATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_Z;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_Z) ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_X) ||
+						mCurrentOperation == (ImGuizmo::SCALE_X | ImGuizmo::SCALE_Z))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_Y | ImGuizmo::SCALE_Z;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_X) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_X | ImGuizmo::ROTATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z;
+						return true;
+					}
+
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_y && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) == r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_Z) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_X) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_X | ImGuizmo::TRANSLATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_Z) ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_X) ||
+						mCurrentOperation == (ImGuizmo::SCALE_X | ImGuizmo::SCALE_Z))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_Y | ImGuizmo::SCALE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_X) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_X | ImGuizmo::ROTATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_X;
+						return true;
+					}
+				}
+				else if (keyEvent.KeyCode() == r2::io::KEY_z && ((keyEvent.Modifiers() & r2::io::ALT_PRESSED) == r2::io::ALT_PRESSED))
+				{
+					if (mCurrentOperation == ImGuizmo::TRANSLATE ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_X ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Y ||
+						mCurrentOperation == ImGuizmo::TRANSLATE_Z ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_Z) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_Y | ImGuizmo::TRANSLATE_X) ||
+						mCurrentOperation == (ImGuizmo::TRANSLATE_X | ImGuizmo::TRANSLATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::TRANSLATE_Z | ImGuizmo::TRANSLATE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::SCALE ||
+						mCurrentOperation == ImGuizmo::SCALE_X ||
+						mCurrentOperation == ImGuizmo::SCALE_Y ||
+						mCurrentOperation == ImGuizmo::SCALE_Z ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_Z) ||
+						mCurrentOperation == (ImGuizmo::SCALE_Y | ImGuizmo::SCALE_X) ||
+						mCurrentOperation == (ImGuizmo::SCALE_X | ImGuizmo::SCALE_Z))
+					{
+						mCurrentOperation = ImGuizmo::SCALE_Z | ImGuizmo::SCALE_X;
+						return true;
+					}
+					else if (
+						mCurrentOperation == ImGuizmo::ROTATE ||
+						mCurrentOperation == ImGuizmo::ROTATE_X ||
+						mCurrentOperation == ImGuizmo::ROTATE_Y ||
+						mCurrentOperation == ImGuizmo::ROTATE_Z ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_X) ||
+						mCurrentOperation == (ImGuizmo::ROTATE_X | ImGuizmo::ROTATE_Z))
+					{
+						mCurrentOperation = ImGuizmo::ROTATE_Z | ImGuizmo::ROTATE_X;
+						return true;
+					}
+				}
+
+
+				return false;
 			});
 	}
 
@@ -159,8 +404,7 @@ namespace r2::edit
 
 					ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale), glm::value_ptr(localMat));
 					
-					
-					if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(localMat)))
+					if (ImGuizmo::Manipulate(glm::value_ptr(camera->view), glm::value_ptr(camera->proj), static_cast<ImGuizmo::OPERATION>(mCurrentOperation), static_cast<ImGuizmo::MODE>(mCurrentMode), glm::value_ptr(localMat)))
 					{
 						ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localMat), glm::value_ptr(transformComponent.localTransform.position), glm::value_ptr(eulerAngles), glm::value_ptr(transformComponent.localTransform.scale));
 
@@ -172,8 +416,6 @@ namespace r2::edit
 						}
 
 					}
-
-					
 
 					auto* transformComponentWidget = GetComponentWidgetForComponentTypeHash(coordinator->GetComponentTypeHash<ecs::TransformComponent>());
 					
