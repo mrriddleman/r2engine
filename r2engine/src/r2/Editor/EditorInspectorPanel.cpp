@@ -4,6 +4,7 @@
 #include "r2/Editor/EditorInspectorPanel.h"
 #include "r2/Core/Events/Event.h"
 #include "r2/Core/Events/KeyEvent.h"
+#include "r2/Core/Events/MouseEvent.h"
 #include "r2/Editor/Editor.h"
 #include "r2/Game/ECS/ECSCoordinator.h"
 #include "r2/Editor/EditorEvents/EditorEntityEvents.h"
@@ -13,7 +14,7 @@
 #include "r2/Core/Application.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
-
+#include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 //@HACK: we need this to get the camera but we should be able to get it through the editor or something
 #include "r2/Render/Renderer/Renderer.h"
@@ -54,6 +55,16 @@ namespace r2::edit
 	{
 		r2::evt::EventDispatcher dispatcher(e);
 
+		dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
+			{
+
+				printf("XPos: %i, yPos: %i\n", e.XPos(), e.YPos());
+				r2::draw::renderer::EntityInstance entityInstance = r2::draw::renderer::ReadEntityInstanceAtMousePosition(e.XPos(), e.YPos());
+
+				mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, entityInstance.entityId, entityInstance.instanceId, mSelectedEntity, mCurrentInstance));
+
+				return false;
+			});
 
 		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
 			{

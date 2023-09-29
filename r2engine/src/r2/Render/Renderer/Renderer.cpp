@@ -480,6 +480,7 @@ namespace r2::draw::renderer
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles(Renderer& renderer);
 	const r2::draw::Model* GetDefaultModel(Renderer& renderer, u64 assetName);
+	EntityInstance ReadEntityInstanceAtMousePosition(Renderer& renderer, s32 x, s32 y);
 #endif
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light);
@@ -8381,6 +8382,13 @@ namespace r2::draw::renderer
 	{
 		return r2::draw::modlche::GetModel(renderer.mModelCache, { assetName, renderer.mModelCache->mModelCache->GetSlot() });
 	}
+
+	EntityInstance ReadEntityInstanceAtMousePosition(Renderer& renderer, s32 x, s32 y)
+	{
+		//@TODO(Serge): implement for realz
+		return { 0, 0 };
+	}
+
 #endif
 
 	DirectionLightHandle AddDirectionLight(Renderer& renderer, const DirectionLight& light)
@@ -8730,6 +8738,8 @@ namespace r2::draw::renderer
 		return GetDefaultModel(MENG.GetCurrentRendererRef(), defaultModel);
 	}
 
+	
+
 	const r2::SArray<vb::GPUModelRefHandle>* GetDefaultModelRefs()
 	{
 		return GetDefaultModelRefs(MENG.GetCurrentRendererRef());
@@ -8957,6 +8967,12 @@ namespace r2::draw::renderer
 	{
 		return GetDefaultModel(MENG.GetCurrentRendererRef(), assetName);
 	}
+
+	EntityInstance ReadEntityInstanceAtMousePosition(s32 x, s32 y)
+	{
+		return ReadEntityInstanceAtMousePosition(MENG.GetCurrentRendererRef(), x, y);
+	}
+
 #endif
 
 	void SetRenderCamera(Camera* cameraPtr)

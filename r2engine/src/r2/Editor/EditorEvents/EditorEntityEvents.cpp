@@ -53,9 +53,11 @@ namespace r2::evt
 		return ss.str();
 	}
 
-	EditorEntitySelectedEvent::EditorEntitySelectedEvent(ecs::Entity entitySelected, ecs::Entity prevSelectedEntity)
+	EditorEntitySelectedEvent::EditorEntitySelectedEvent(ecs::Entity entitySelected, s32 selectedInstance, ecs::Entity prevSelectedEntity, s32 prevSelectedInstance)
 		:EditorEntityEvent(entitySelected, false)
 		,mPrevSelectedEntity(prevSelectedEntity)
+		,mSelectedInstance(selectedInstance)
+		,mPrevSelectedInstance(prevSelectedInstance)
 	{
 	}
 
@@ -69,6 +71,16 @@ namespace r2::evt
 	ecs::Entity EditorEntitySelectedEvent::GetPreviouslySelectedEntity() const
 	{
 		return mPrevSelectedEntity;
+	}
+
+	s32 EditorEntitySelectedEvent::GetSelectedInstance() const
+	{
+		return mSelectedInstance;
+	}
+
+	s32 EditorEntitySelectedEvent::GetPrevSelectedInstance() const
+	{
+		return mPrevSelectedInstance;
 	}
 
 	EditorEntityNameChangedEvent::EditorEntityNameChangedEvent(ecs::Entity entity, const std::string& newName)

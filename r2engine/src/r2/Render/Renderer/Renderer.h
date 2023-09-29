@@ -602,6 +602,15 @@ namespace r2::draw::renderer
 #ifdef R2_EDITOR
 	r2::asset::FileList GetModelFiles();
 	const r2::draw::Model* GetDefaultModel(u64 assetName);
+
+	struct EntityInstance
+	{
+		u32 entityId;
+		s32 instanceId;
+	};
+
+	EntityInstance ReadEntityInstanceAtMousePosition(s32 x, s32 y);
+
 #endif
 
 #ifdef R2_DEBUG

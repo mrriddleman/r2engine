@@ -417,7 +417,7 @@ namespace r2::edit
 
 		if (mPrevSelectedEntity != mSelectedEntity)
 		{
-			mnoptrEditor->PostNewAction(std::make_unique<edit::SelectedEntityEditorAction>(mnoptrEditor, mSelectedEntity, mPrevSelectedEntity));
+			mnoptrEditor->PostNewAction(std::make_unique<edit::SelectedEntityEditorAction>(mnoptrEditor, mSelectedEntity,-1, mPrevSelectedEntity, -1));
 		}
 	}
 

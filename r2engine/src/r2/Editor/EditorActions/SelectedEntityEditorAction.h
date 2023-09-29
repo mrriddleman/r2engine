@@ -16,14 +16,16 @@ namespace r2::edit
 	class SelectedEntityEditorAction : public EditorAction
 	{
 	public:
-		SelectedEntityEditorAction(Editor* editor, ecs::Entity entitySelected, ecs::Entity prevEntitySelected);
+		SelectedEntityEditorAction(Editor* editor, ecs::Entity entitySelected, s32 instanceSelected, ecs::Entity prevEntitySelected, s32 prevInstanceSelected);
 
 		virtual void Undo() override;
 		virtual void Redo() override;
 
 	private:
 		ecs::Entity mSelectedEntity;
+		s32 mSelectedInstance;
 		ecs::Entity mPrevSelectedEntity;
+		s32 mPrevSelectedInstance;
 	};
 }
 

@@ -1,6 +1,8 @@
 #include "r2pch.h"
 #if defined(R2_EDITOR) && defined(R2_IMGUI)
 #include "r2/Core/Events/Events.h"
+
+
 #include "r2/Editor/Editor.h"
 #include "r2/Editor/EditorMainMenuBar.h"
 #include "r2/Editor/EditorInspectorPanel.h"
@@ -120,6 +122,8 @@ namespace r2
 		{
 			widget->OnEvent(e);
 		}
+
+		
 	}
 
 	void Editor::Update()
