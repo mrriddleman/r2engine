@@ -38,7 +38,10 @@ layout (std430, binding = 1) buffer Materials
 
 layout (std430, binding = 7) buffer MaterialOffsets
 {
-	uvec4 materialOffsets[]; //only x has anything in it right now
+	uvec4 materialOffsets[]; 
+	//x holds the actual material offset
+	//in editor builds - y is the entity ID
+	//in editor builds - z is the instance of the entity ID (-1 for the first one)
 };
 
 uint GetMaterialIndex(uint drawID, vec3 uv)
@@ -57,6 +60,11 @@ Material GetCubemapMaterial(uint drawID)
 {
 	highp uint texIndex =  materialOffsets[drawID].x;
 	return materials[texIndex];
+}
+
+uvec2 GetEntityInstance(uint drawID)
+{
+	return materialOffsets[drawID].yz;
 }
 
 #endif

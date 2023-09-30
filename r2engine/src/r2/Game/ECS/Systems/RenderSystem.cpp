@@ -50,13 +50,14 @@ namespace r2::ecs
 			const InstanceComponentT<TransformComponent>* instancedTransformsComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<TransformComponent>>(e);
 			const InstanceComponentT<SkeletalAnimationComponent>* instancedAnimationComponent = mnoptrCoordinator->GetComponentPtr<InstanceComponentT<SkeletalAnimationComponent>>(e);
 
-			DrawRenderComponent(transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
+			DrawRenderComponent(e, transformComponent, renderComponent, animationComponent, instancedTransformsComponent, instancedAnimationComponent);
 
 			ClearPerFrameData();
 		}
 	}
 
 	void RenderSystem::DrawRenderComponent(
+		ecs::Entity entity,
 		const TransformComponent& transform,
 		const RenderComponent& renderComponent,
 		const SkeletalAnimationComponent* animationComponent,
@@ -149,7 +150,13 @@ namespace r2::ecs
 			shaderBoneTransforms = mBatch.boneTransforms;
 		}
 
-		r2::draw::renderer::DrawModel(renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, numInstances, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms); 
+#ifdef R2_EDITOR
+		r2::draw::renderer::DrawModelEntity(entity, renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, numInstances, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+#else
+		r2::draw::renderer::DrawModel(renderComponent.drawParameters, renderComponent.gpuModelRefHandle, *mBatch.transforms, numInstances, *mBatch.renderMaterialParams, *mBatch.shaderHandles, shaderBoneTransforms);
+#endif
+
+		
 	}
 
 	void RenderSystem::ClearPerFrameData()

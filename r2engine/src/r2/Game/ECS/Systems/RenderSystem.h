@@ -80,6 +80,7 @@ namespace r2::ecs
 	private:
 
 		void DrawRenderComponent(
+			ecs::Entity entity,
 			const TransformComponent& transform,
 			const RenderComponent& renderComponent,
 			const SkeletalAnimationComponent* animationComponent,

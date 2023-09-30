@@ -93,6 +93,10 @@ namespace r2::draw
 		r2::SArray<r2::draw::ShaderBoneTransform>* boneTransforms = nullptr;
 		r2::SArray<cmd::DrawState>* drawState = nullptr; //stuff to help generate the keys
 
+#ifdef R2_EDITOR
+		r2::SArray<u32>* entityIDs = nullptr;
+#endif
+
 		r2::SArray<u32>* numInstances = nullptr;
 		r2::SArray<b32>* useSameBoneTransformsForInstances = nullptr;
 		PrimitiveType primitiveType = PrimitiveType::TRIANGLES;
@@ -610,6 +614,16 @@ namespace r2::draw::renderer
 	};
 
 	EntityInstance ReadEntityInstanceAtMousePosition(s32 x, s32 y);
+
+	void DrawModelEntity(
+		u32 entity,
+		const DrawParameters& drawParameters,
+		const vb::GPUModelRefHandle& modelRefHandles,
+		const r2::SArray<glm::mat4>& modelMatrices,
+		u32 numInstances,
+		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
+		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
+		const r2::SArray<ShaderBoneTransform>* boneTransforms);
 
 #endif
 
