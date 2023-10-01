@@ -1014,6 +1014,11 @@ namespace r2::draw::renderer
 		newRenderer->mMSAAResolveNearestShader = shadersystem::FindShaderHandle(STRING_ID("MSAAResolveNearest"));
 		CheckIfValidShader(*newRenderer, newRenderer->mMSAAResolveNearestShader, "MSAAResolveNearest");
 
+		newRenderer->mEntityColorShader[0] = shadersystem::FindShaderHandle(STRING_ID("StaticEntityColor"));
+		CheckIfValidShader(*newRenderer, newRenderer->mEntityColorShader[0], "StaticEntityColor");
+
+		newRenderer->mEntityColorShader[1] = shadersystem::FindShaderHandle(STRING_ID("DynamicEntityColor"));
+		CheckIfValidShader(*newRenderer, newRenderer->mEntityColorShader[1], "DynamicEntityColor");
 
 	//	newRenderer->mSDSMReduceBoundsComputeShader = shadersystem::FindShaderHandle(STRING_ID("ReduceBounds"));
 	//	CheckIfValidShader(*newRenderer, newRenderer->mSDSMReduceBoundsComputeShader, "ReduceBounds");

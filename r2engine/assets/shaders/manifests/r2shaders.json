@@ -289,6 +289,24 @@
       partPath: ""
     },
     {
+      shaderName: 12911767889037223403,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/EntityColor.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
+      shaderName: 4352147464338430816,
+      vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
+      fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/EntityColor.fs",
+      geometryPath: "",
+      computePath: "",
+      binaryPath: "",
+      partPath: ""
+    },
+    {
       shaderName: 12524640358571599268,
       vertexPath: "",
       fragmentPath: "",

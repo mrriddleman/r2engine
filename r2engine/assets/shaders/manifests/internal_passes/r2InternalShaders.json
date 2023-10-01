@@ -287,7 +287,26 @@
       		computePath: "",
      		binaryPath: "",
       		partPath: ""
-		}
+		},
+		{
+			shaderName: "StaticEntityColor",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/StaticModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/EntityColor.fs",
+			geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
+		},
+		{
+			shaderName: "DynamicEntityColor",
+			vertexPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Common/DynamicModel.vs",
+			fragmentPath: "D:/Projects/r2engine/r2engine/assets/shaders/raw/Editor/EntityColor.fs",
+			geometryPath: "",
+      		computePath: "",
+     		binaryPath: "",
+      		partPath: ""
+		},
+
 
 	],
   	basePath: "D:/Projects/r2engine/r2engine/assets/shaders/raw"

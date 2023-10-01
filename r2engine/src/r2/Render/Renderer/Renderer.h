@@ -274,6 +274,8 @@ namespace r2::draw
 		ShaderHandle mMSAAResolveLinearShader;
 		ShaderHandle mMSAAResolveNormalizedShader;
 
+		ShaderHandle mEntityColorShader[2]; //0 - static, 1 - dynamic
+
 		s32 mStaticDirectionLightBatchUniformLocation;
 		s32 mDynamicDirectionLightBatchUniformLocation;
 
