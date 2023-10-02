@@ -705,6 +705,9 @@ namespace r2::draw::renderer
 	void CreateSMAANeighborhoodBlendingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	void CreateTransparentAccumSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
 	
+#ifdef R2_EDITOR
+	void CreateEditorPickingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY);
+#endif
 
 	void DestroyRenderSurfaces(Renderer& renderer);
 
@@ -1100,6 +1103,11 @@ namespace r2::draw::renderer
 		newRenderer->mSSRBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mSSRBucket != nullptr, "We couldn't create the ssr bucket");
 
+#ifdef R2_EDITOR
+		newRenderer->mEditorPickingBucket = MAKE_CMD_BUCKET(*rendererArena, key::Basic, key::DecodeBasicKey, COMMAND_CAPACITY);
+		R2_CHECK(newRenderer->mEditorPickingBucket != nullptr, "We couldn't create the mEditorPickingBucket bucket");
+#endif
+
 		auto size = CENG.DisplaySize();
 
 		
@@ -1128,7 +1136,7 @@ namespace r2::draw::renderer
 		newRenderer->mFinalBucket = MAKE_CMD_BUCKET(*rendererArena, r2::draw::key::Basic, r2::draw::key::DecodeBasicKey, COMMAND_CAPACITY);
 		R2_CHECK(newRenderer->mFinalBucket != nullptr, "We couldn't create the final command bucket!");
 
-		newRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, 2 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY/4);
+		newRenderer->mCommandArena = MAKE_STACK_ARENA(*rendererArena, 6 * COMMAND_CAPACITY * cmd::LargestCommand() + COMMAND_AUX_MEMORY/4);
 
 		R2_CHECK(newRenderer->mCommandArena != nullptr, "We couldn't create the stack arena for commands");
 
@@ -1348,6 +1356,9 @@ namespace r2::draw::renderer
 		cmdbkt::Sort(*renderer.mCommandBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mTransparentBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mSSRBucket, r2::draw::key::CompareBasicKey);
+#ifdef R2_EDITOR
+		cmdbkt::Sort(*renderer.mEditorPickingBucket, r2::draw::key::CompareBasicKey);
+#endif
 		cmdbkt::Sort(*renderer.mFinalBucket, r2::draw::key::CompareBasicKey);
 		cmdbkt::Sort(*renderer.mPostRenderBucket, r2::draw::key::CompareBasicKey);
 #ifdef R2_DEBUG
@@ -1370,6 +1381,11 @@ namespace r2::draw::renderer
 		cmdbkt::Submit(*renderer.mAmbientOcclusionDenoiseBucket);
 		cmdbkt::Submit(*renderer.mAmbientOcclusionTemporalDenoiseBucket);
 		cmdbkt::Submit(*renderer.mShadowBucket);
+
+#ifdef R2_EDITOR
+		cmdbkt::Submit(*renderer.mEditorPickingBucket);
+#endif
+
 		cmdbkt::Submit(*renderer.mCommandBucket);
 		cmdbkt::Submit(*renderer.mTransparentBucket);
 		cmdbkt::Submit(*renderer.mSSRBucket);
@@ -1401,6 +1417,10 @@ namespace r2::draw::renderer
 		cmdbkt::ClearAll(*renderer.mFinalBucket);
 		cmdbkt::ClearAll(*renderer.mPostRenderBucket);
 		
+#ifdef R2_EDITOR
+		cmdbkt::ClearAll(*renderer.mEditorPickingBucket);
+#endif
+
 		ClearRenderBatches(renderer);
 
 		//This is kinda bad but... speed... 
@@ -1518,6 +1538,11 @@ namespace r2::draw::renderer
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mFinalBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mTransparentBucket);
 		FREE_CMD_BUCKET(*arena, r2::draw::key::Basic, renderer->mCommandBucket);
+
+#ifdef R2_EDITOR
+		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mEditorPickingBucket);
+#endif
+
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mSSRBucket);
 		FREE_CMD_BUCKET(*arena, key::Basic, renderer->mClustersBucket);
 		FREE_CMD_BUCKET(*arena, key::DepthKey, renderer->mAmbientOcclusionTemporalDenoiseBucket);
@@ -2397,6 +2422,11 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::LinearArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::draw::Renderer), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 6 +
+#ifdef R2_EDITOR
+			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::Basic>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
+#endif // R2_EDITOR
+
+
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::ShadowKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(r2::draw::CommandBucket<r2::draw::key::DepthKey>::MemorySize(COMMAND_CAPACITY), ALIGNMENT, headerSize, boundsChecking) * 5 +
 			
@@ -2423,6 +2453,10 @@ namespace r2::draw::renderer
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY * 2 +
 			r2::mem::utils::GetMaxMemoryForAllocation(COMMAND_AUX_MEMORY / 4, ALIGNMENT, headerSize, boundsChecking) +
+
+#ifdef R2_EDITOR
+			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY  +
+#endif
 
 			r2::mem::utils::GetMaxMemoryForAllocation(sizeof(r2::mem::StackArena), ALIGNMENT, headerSize, boundsChecking) +
 			r2::mem::utils::GetMaxMemoryForAllocation(cmd::LargestCommand(), ALIGNMENT, stackHeaderSize, boundsChecking) * COMMAND_CAPACITY *3 + //@TODO(Serge): this is a wild over-estimate - only need 2 DrawBatch commands
@@ -3525,6 +3559,16 @@ namespace r2::draw::renderer
 
 		BeginRenderPass<key::Basic>(renderer, RPT_TRANSPARENT, transparentClearOptions, *renderer.mTransparentBucket, clearKey, *renderer.mCommandArena);
 
+#ifdef R2_EDITOR
+		ClearSurfaceOptions clearEditorPickingOptions;
+		clearEditorPickingOptions.shouldClear = true;
+		clearEditorPickingOptions.flags = cmd::CLEAR_COLOR_BUFFER ;
+		key::Basic clearEditorPickingKey = key::GenerateBasicKey(0, 0, DL_CLEAR, 0, 0, renderer.mEntityColorShader[0]);
+
+		BeginRenderPass<key::Basic>(renderer, RPT_EDITOR_PICKING, clearEditorPickingOptions, *renderer.mEditorPickingBucket, clearEditorPickingKey,*renderer.mCommandArena);
+#endif
+
+
 
 		for (u64 i = 0; i < numStaticDrawBatches; ++i)
 		{
@@ -3569,6 +3613,36 @@ namespace r2::draw::renderer
 			{
 				drawBatch->state.depthFunction = LEQUAL;
 			}
+
+#ifdef R2_EDITOR
+			//@TODO(Serge): make a shader for the skybox for picking
+			if (batchOffset.drawState.layer != DL_SKYBOX)
+			{
+				key::Basic staticEditorPickingKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, 0, batchOffset.cameraDepth, renderer.mEntityColorShader[0]);
+
+				cmd::DrawBatch* editorPickingDrawBatchCMD = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mEditorPickingBucket, staticEditorPickingKey, 0);
+				editorPickingDrawBatchCMD->state.depthFunction = EQUAL;
+
+				editorPickingDrawBatchCMD->state.depthWriteEnabled = false;
+				editorPickingDrawBatchCMD->batchHandle = subCommandsConstantBufferHandle;
+				editorPickingDrawBatchCMD->bufferLayoutHandle = staticVertexBufferLayoutHandle;
+				editorPickingDrawBatchCMD->numSubCommands = batchOffset.numSubCommands;
+				R2_CHECK(editorPickingDrawBatchCMD->numSubCommands > 0, "We should have a count!");
+				editorPickingDrawBatchCMD->startCommandIndex = batchOffset.subCommandsOffset;
+				editorPickingDrawBatchCMD->primitiveType = PrimitiveType::TRIANGLES;
+				editorPickingDrawBatchCMD->subCommands = nullptr;
+				editorPickingDrawBatchCMD->state.depthEnabled = batchOffset.drawState.depthEnabled;
+				editorPickingDrawBatchCMD->state.cullState = batchOffset.drawState.cullState;
+
+				editorPickingDrawBatchCMD->state.polygonOffsetEnabled = false;
+				editorPickingDrawBatchCMD->state.polygonOffset = glm::vec2(0);
+
+				cmd::SetDefaultStencilState(editorPickingDrawBatchCMD->state.stencilState);
+				cmd::SetDefaultBlendState(editorPickingDrawBatchCMD->state.blendState);
+			}
+			
+#endif
+
 
 			if (batchOffset.drawState.layer != DL_SKYBOX)
 			{
@@ -3773,6 +3847,31 @@ namespace r2::draw::renderer
 			drawBatch->state.polygonOffsetEnabled = false;
 			drawBatch->state.polygonOffset = glm::vec2(0);
 			drawBatch->state.stencilState = batchOffset.drawState.stencilState;
+
+#ifdef R2_EDITOR
+			key::Basic dynamicEditorPickingKey = key::GenerateBasicKey(key::Basic::FSL_GAME, 0, batchOffset.drawState.layer, 0, batchOffset.cameraDepth, renderer.mEntityColorShader[1]);
+
+			cmd::DrawBatch* editorPickingDrawBatchCMD = AddCommand<key::Basic, cmd::DrawBatch, mem::StackArena>(*renderer.mCommandArena, *renderer.mEditorPickingBucket, dynamicEditorPickingKey, 0);
+			editorPickingDrawBatchCMD->state.depthFunction = EQUAL;
+
+			editorPickingDrawBatchCMD->state.depthWriteEnabled = false;
+			editorPickingDrawBatchCMD->batchHandle = subCommandsConstantBufferHandle;
+			editorPickingDrawBatchCMD->bufferLayoutHandle = animVertexBufferLayoutHandle;
+			editorPickingDrawBatchCMD->numSubCommands = batchOffset.numSubCommands;
+			R2_CHECK(editorPickingDrawBatchCMD->numSubCommands > 0, "We should have a count!");
+			editorPickingDrawBatchCMD->startCommandIndex = batchOffset.subCommandsOffset;
+			editorPickingDrawBatchCMD->primitiveType = PrimitiveType::TRIANGLES;
+			editorPickingDrawBatchCMD->subCommands = nullptr;
+			editorPickingDrawBatchCMD->state.depthEnabled = batchOffset.drawState.depthEnabled;
+			editorPickingDrawBatchCMD->state.cullState = batchOffset.drawState.cullState;
+
+			editorPickingDrawBatchCMD->state.polygonOffsetEnabled = false;
+			editorPickingDrawBatchCMD->state.polygonOffset = glm::vec2(0);
+
+			cmd::SetDefaultStencilState(editorPickingDrawBatchCMD->state.stencilState);
+			cmd::SetDefaultBlendState(editorPickingDrawBatchCMD->state.blendState);
+#endif
+
 
 			//memcpy(&drawBatch->state.blendState, &batchOffset.drawState.blendState, sizeof(BlendState));
 		//	cmd::SetDefaultBlendState(drawBatch->state.blendState);
@@ -4002,6 +4101,11 @@ namespace r2::draw::renderer
 		
 		//cmd::SetDefaultBlendState(transparentCompositeCMD->state)
 		SetDefaultTransparentCompositeBlendState(transparentCompositeCMD->state.blendState);
+
+
+#ifdef R2_EDITOR
+		EndRenderPass<key::Basic>(renderer, RPT_EDITOR_PICKING, *renderer.mEditorPickingBucket);
+#endif
 
 		EndRenderPass<key::Basic>(renderer, RPT_TRANSPARENT_COMPOSITE, *renderer.mTransparentBucket);
 
@@ -4357,17 +4461,24 @@ namespace r2::draw::renderer
 		renderer.mRenderPasses[RPT_SMAA_BLENDING_WEIGHT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_BLENDING_WEIGHT, passConfig, { RTS_SMAA_EDGE_DETECTION }, RTS_SMAA_BLENDING_WEIGHT, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_SMAA_NEIGHBORHOOD_BLENDING] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_SMAA_NEIGHBORHOOD_BLENDING, passConfig, { RTS_SMAA_BLENDING_WEIGHT, RTS_COMPOSITE }, RTS_SMAA_NEIGHBORHOOD_BLENDING, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_TRANSPARENT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_TRANSPARENT, passConfig, { RTS_SHADOWS, RTS_POINTLIGHT_SHADOWS, RTS_ZPREPASS, RTS_AMBIENT_OCCLUSION_TEMPORAL_DENOISED }, RTS_TRANSPARENT_ACCUM, __FILE__, __LINE__, "");
-		
+
 		RenderPassConfig transparentCompositePassConfig;
 		transparentCompositePassConfig.primitiveType = PrimitiveType::TRIANGLES;
 		transparentCompositePassConfig.flags = RPC_OUTPUT_FIRST_COLOR_ONLY;
 
 		renderer.mRenderPasses[RPT_TRANSPARENT_COMPOSITE] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_TRANSPARENT_COMPOSITE, transparentCompositePassConfig, { RTS_TRANSPARENT_ACCUM, RTS_TRANSPARENT_REVEAL }, RTS_GBUFFER, __FILE__, __LINE__, "");
 		renderer.mRenderPasses[RPT_OUTPUT] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_OUTPUT, passConfig, { RTS_COMPOSITE, RTS_SMAA_NEIGHBORHOOD_BLENDING, RTS_ZPREPASS, RTS_SMAA_EDGE_DETECTION, RTS_SMAA_BLENDING_WEIGHT, RTS_ZPREPASS_SHADOWS }, RTS_OUTPUT, __FILE__, __LINE__, "");
+
+#ifdef R2_EDITOR
+		renderer.mRenderPasses[RPT_EDITOR_PICKING] = rp::CreateRenderPass<r2::mem::LinearArena>(*renderer.mSubAreaArena, RPT_EDITOR_PICKING, passConfig, {}, RTS_EDITOR_PICKING, __FILE__, __LINE__, "");
+#endif
 	}
 
 	void DestroyRenderPasses(Renderer& renderer)
 	{
+#ifdef R2_EDITOR
+		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_EDITOR_PICKING]);
+#endif
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_OUTPUT]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_TRANSPARENT_COMPOSITE]);
 		rp::DestroyRenderPass(*renderer.mSubAreaArena, renderer.mRenderPasses[RPT_TRANSPARENT]);
@@ -7427,6 +7538,9 @@ namespace r2::draw::renderer
 			CreateSMAABlendingWeightSurface(renderer, resolutionX, resolutionY);
 			CreateSMAANeighborhoodBlendingSurface(renderer, resolutionX, resolutionY);
 
+#ifdef R2_EDITOR
+			CreateEditorPickingSurface(renderer, resolutionX, resolutionY);
+#endif
 			renderer.mClusterTileSizes = glm::uvec4(16, 9, 24, resolutionX / 16); //@TODO(Serge): make this smarter
 			
 			renderer.mFlags.Set(RENDERER_FLAG_NEEDS_CLUSTER_VOLUME_TILE_UPDATE);
@@ -7844,10 +7958,37 @@ namespace r2::draw::renderer
 		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_TRANSPARENT_ACCUM], r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
 	}
 
+#ifdef R2_EDITOR
+	void CreateEditorPickingSurface(Renderer& renderer, u32 resolutionX, u32 resolutionY)
+	{
+		ConstrainResolution(resolutionX, resolutionY);
+
+		renderer.mRenderTargets[RTS_EDITOR_PICKING] = rt::CreateRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargetParams[RTS_EDITOR_PICKING], 0, 0, resolutionX, resolutionY, __FILE__, __LINE__, "");
+
+		rt::TextureAttachmentFormat format;
+		format.type = rt::RG32UI;
+		format.swapping = true;
+		format.uploadAllTextures = false;
+		format.filter = tex::FILTER_NEAREST;
+		format.wrapMode = tex::WRAP_MODE_CLAMP_TO_EDGE;
+		format.numLayers = 1;
+		format.numMipLevels = 1;
+		format.hasAlpha = false;
+		format.isHDR = true;
+		format.usesLayeredRenderering = false;
+		format.mipLevelToAttach = 0;
+
+		rt::AddTextureAttachment(renderer.mRenderTargets[RTS_EDITOR_PICKING], format);
+		rt::SetTextureAttachment(renderer.mRenderTargets[RTS_EDITOR_PICKING], r2::sarr::At(*renderer.mRenderTargets[RTS_ZPREPASS].depthStencilAttachments, 0));
+	}
+#endif
+
 	void DestroyRenderSurfaces(Renderer& renderer)
 	{
 		ClearAllShadowMapPages(renderer);
-		
+#ifdef R2_EDITOR
+		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_EDITOR_PICKING]);
+#endif
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_NEIGHBORHOOD_BLENDING]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_BLENDING_WEIGHT]);
 		rt::DestroyRenderTarget<r2::mem::StackArena>(*renderer.mRenderTargetsArena, renderer.mRenderTargets[RTS_SMAA_EDGE_DETECTION]);
@@ -8157,6 +8298,20 @@ namespace r2::draw::renderer
 		renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget = 1;
 
 		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_OUTPUT].numSurfacesPerTarget;
+
+#ifdef R2_EDITOR
+		renderTargetParams[RTS_EDITOR_PICKING].numColorAttachments = 1;
+		renderTargetParams[RTS_EDITOR_PICKING].numDepthAttachments = 0;
+		renderTargetParams[RTS_EDITOR_PICKING].numStencilAttachments = 0;
+		renderTargetParams[RTS_EDITOR_PICKING].numDepthStencilAttachments = 0;
+		renderTargetParams[RTS_EDITOR_PICKING].numRenderBufferAttachments = 0;
+		renderTargetParams[RTS_EDITOR_PICKING].maxPageAllocations = 0;
+		renderTargetParams[RTS_EDITOR_PICKING].numAttachmentRefs = 1; //for depth
+		renderTargetParams[RTS_EDITOR_PICKING].surfaceOffset = surfaceOffset;
+		renderTargetParams[RTS_EDITOR_PICKING].numSurfacesPerTarget = 2; //@NOTE(Serge): maybe this should be 3?
+
+		surfaceOffset += sizeOfTextureAddress * renderTargetParams[RTS_EDITOR_PICKING].numSurfacesPerTarget;
+#endif
 	}
 
 	void UploadAllSurfaces(Renderer& renderer)

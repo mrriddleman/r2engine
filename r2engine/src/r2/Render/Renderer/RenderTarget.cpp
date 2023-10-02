@@ -479,7 +479,7 @@ namespace r2::draw
 				type == RG16F ||
 				type == R32F  ||
 				type == R16F  ||
-				type == RG16  ||
+				type == RG32UI  ||
 				type == R8;
 		}
 

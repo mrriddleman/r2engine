@@ -22,7 +22,7 @@ namespace r2::draw::rt
 		RG32F,
 		R32F,
 		R16F,
-		RG16,
+		RG32UI,
 		STENCIL8,
 		DEPTH24_STENCIL8,
 		DEPTH32F_STENCIL8,
@@ -51,17 +51,9 @@ namespace r2::draw::rt
 	{
 		TextureAttachmentFormat textureAttachmentFormat;
 
-		//TextureAttachmentType type;
-
 		tex::TextureHandle texture[MAX_TEXTURE_ATTACHMENT_HISTORY];
-		//u32 numLayers = 1;
 		u32 numTextures = 1;
 		u32 currentTexture = 0;
-
-	//	b32 uploadAllTextures = false;
-		b32 needsFramebufferUpdate = false;
-	//	u32 mipLevelAttached = 0;
-	//	b32 useLayeredRenderering = false;
 
 		u32 colorAttachmentNumber = 0;
 
@@ -134,9 +126,15 @@ namespace r2::draw
 		RTS_SMAA_NEIGHBORHOOD_BLENDING,
 		RTS_TRANSPARENT_ACCUM,
 		RTS_TRANSPARENT_REVEAL,
-		//need more for composite 
 
+		//need more for composite 
+#ifdef R2_EDITOR
+		RTS_EDITOR_PICKING, //this is last because we won't have it in any released builds
+#endif
 		RTS_OUTPUT, //should be last?
+
+
+
 		NUM_RENDER_TARGET_SURFACES,
 	};
 

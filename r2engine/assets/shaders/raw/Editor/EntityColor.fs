@@ -10,8 +10,6 @@ in VS_OUT
 {
 	flat uint drawID;
 	vec3 texCoords; 
-	
-
 } fs_in;
 
 void main()

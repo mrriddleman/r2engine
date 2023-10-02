@@ -87,9 +87,9 @@ namespace r2::draw::rt::impl
 		{
 			format.internalformat = GL_R16F;
 		}
-		else if (textureAttachmentFormat.type == RG16)
+		else if (textureAttachmentFormat.type == RG32UI)
 		{
-			format.internalformat = GL_RG16;
+			format.internalformat = GL_RG32UI;
 			format.borderColor = glm::vec4(1.0f);
 		}
 		else if (textureAttachmentFormat.type == R8)
@@ -124,7 +124,7 @@ namespace r2::draw::rt::impl
 
 		u32 numTextures = textureAttachmentFormat.swapping ? MAX_TEXTURE_ATTACHMENT_HISTORY : 1;
 		textureAttachment.numTextures = numTextures;
-
+		
 		textureAttachment.format = format;
 
 		bool useMaxPages = true;
@@ -526,7 +526,6 @@ namespace r2::draw::rt::impl
 				if (attachment.numTextures > 1)
 				{
 					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
-					attachment.needsFramebufferUpdate = true;
 				}
 			}
 		}
@@ -540,7 +539,6 @@ namespace r2::draw::rt::impl
 				if (attachment.numTextures > 1)
 				{
 					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
-					attachment.needsFramebufferUpdate = true;
 				}
 			}
 		}
@@ -554,7 +552,6 @@ namespace r2::draw::rt::impl
 				if (attachment.textureAttachmentFormat.numLayers > 1)
 				{
 					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
-					attachment.needsFramebufferUpdate = true;
 				}
 			}
 		}
@@ -567,7 +564,6 @@ namespace r2::draw::rt::impl
 				if (attachment.textureAttachmentFormat.numLayers > 1)
 				{
 					attachment.currentTexture = (attachment.currentTexture + 1) % attachment.numTextures;
-					attachment.needsFramebufferUpdate = true;
 				}
 			}
 		}

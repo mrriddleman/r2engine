@@ -337,6 +337,9 @@ namespace r2::draw
 
 		CommandBucket<key::Basic>* mSSRBucket = nullptr;
 		
+#ifdef R2_EDITOR
+		CommandBucket<key::Basic>* mEditorPickingBucket = nullptr;
+#endif
 
 		r2::mem::StackArena* mCommandArena = nullptr;
 
