@@ -27,6 +27,7 @@ layout (std140, binding = 2) uniform Surfaces
 	Tex2DAddress smaaNeighborhoodBlendingSurface[2];
 	Tex2DAddress transparentAccumSurface;
 	Tex2DAddress transparentRevealSurface;
+	Tex2DAddress editorPickingSurface;
 };
 
 #endif

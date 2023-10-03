@@ -57,12 +57,13 @@ namespace r2::edit
 
 		dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
 			{
+				if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
+				{
+					r2::draw::renderer::EntityInstance entityInstance = r2::draw::renderer::ReadEntityInstanceAtMousePosition(e.XPos(), e.YPos());
 
-				printf("XPos: %i, yPos: %i\n", e.XPos(), e.YPos());
-				r2::draw::renderer::EntityInstance entityInstance = r2::draw::renderer::ReadEntityInstanceAtMousePosition(e.XPos(), e.YPos());
-
-				mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, entityInstance.entityId, entityInstance.instanceId, mSelectedEntity, mCurrentInstance));
-
+					mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, entityInstance.entityId, entityInstance.instanceId, mSelectedEntity, mCurrentInstance));
+				}
+				
 				return false;
 			});
 
@@ -70,7 +71,8 @@ namespace r2::edit
 			{
 				mSelectedEntity = e.GetEntity();
 				mCurrentOperation = ImGuizmo::TRANSLATE;
-				mCurrentInstance = -1;
+				mCurrentInstance = e.GetSelectedInstance();
+
 				return e.ShouldConsume();
 			});
 

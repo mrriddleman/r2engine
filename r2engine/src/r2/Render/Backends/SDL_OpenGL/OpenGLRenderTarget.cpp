@@ -97,6 +97,10 @@ namespace r2::draw::rt::impl
 			format.internalformat = GL_R8;
 
 		}
+		else if (textureAttachmentFormat.type == R32UI)
+		{
+			format.internalformat = GL_R32UI;
+		}
 		else if (textureAttachmentFormat.type == STENCIL8)
 		{
 			format.internalformat = GL_STENCIL_INDEX8;
@@ -567,5 +571,23 @@ namespace r2::draw::rt::impl
 				}
 			}
 		}
+	}
+
+	void ReadPixelEntity(RenderTarget& rt, u32 x, u32 y, u32& entity, s32& instance)
+	{
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, rt.frameBufferID);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+		glm::uvec2 pixelData;
+		glPixelStorei(GL_PACK_ALIGNMENT, 4);
+
+		glReadnPixels(static_cast<s32>(x), static_cast<s32>(rt.height - y-1), 1, 1, GL_RG_INTEGER, GL_UNSIGNED_INT, sizeof(pixelData), &pixelData);
+
+		entity = pixelData.x;
+		
+		instance = static_cast<s32>(pixelData.y);
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		glReadBuffer(GL_BACK);
 	}
 }

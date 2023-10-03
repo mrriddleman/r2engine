@@ -7974,7 +7974,7 @@ namespace r2::draw::renderer
 		format.numLayers = 1;
 		format.numMipLevels = 1;
 		format.hasAlpha = false;
-		format.isHDR = true;
+		format.isHDR = false;
 		format.usesLayeredRenderering = false;
 		format.mipLevelToAttach = 0;
 
@@ -8529,8 +8529,15 @@ namespace r2::draw::renderer
 
 	EntityInstance ReadEntityInstanceAtMousePosition(Renderer& renderer, s32 x, s32 y)
 	{
-		//@TODO(Serge): implement for realz
-		return { 0, 0 };
+		EntityInstance entityInstance;
+		
+		auto* renderTarget = GetRenderTarget(renderer, RTS_EDITOR_PICKING);
+
+		R2_CHECK(renderTarget != nullptr, "Should never happen");
+
+		rt::ReadPixelEntity(*renderTarget, x, y, entityInstance.entityId, entityInstance.instanceId);
+
+		return entityInstance;
 	}
 
 #endif

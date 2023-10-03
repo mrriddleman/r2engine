@@ -61,15 +61,21 @@ vec4 SampleMaterialDiffuse(uint drawID, vec3 uv)
 	vec4 gbufferSurfaceColor = texture(sampler2DArray(gBufferSurface.container), coord) ;
  
 
-	// vec3 editorPickingCoord = vec3(uv.r, uv.g, editorPickingSurface.page);
-	// uvec2 editorPickingColor = texture(usampler2DArray(editorPickingSurface.container), editorPickingCoord).rg;
+	//vec3 editorPickingCoord = vec3(uv.r, uv.g, editorPickingSurface.page);
+	//vec4 editorPickingColor = texture(usampler2DArray(editorPickingSurface.container), editorPickingCoord);
 
-	// if(editorPickingColor.r == 0)
+//return editorPickingColor;
+	 //if(editorPickingColor.r == 0)
 	// {
-	// 	return vec4(1, 0, 0, 1);
+	 //	return vec4(1, 0, 0, 1);
 	// }
 
-	// return vec4(editorPickingColor.r, editorPickingColor.g, 0, 1);
+// if(editorPickingColor == 2)
+// {
+// 	return vec4(editorPickingColor, 0, 0, 1);
+// }
+	
+
 	return vec4(mix( gbufferSurfaceColor.rgb + ssrSurfaceColor.rgb, bloomColor, bloomFilterRadiusIntensity.z), gbufferSurfaceColor.a);
 }
 

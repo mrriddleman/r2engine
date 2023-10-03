@@ -471,6 +471,11 @@ namespace r2::draw
 			impl::SwapTexturesIfNecessary(rt);
 		}
 
+		void ReadPixelEntity(RenderTarget& rt, u32 x, u32 y, u32& entity, s32& instance)
+		{
+			impl::ReadPixelEntity(rt, x, y, entity, instance);
+		}
+
 		bool IsColorAttachment(TextureAttachmentType type)
 		{
 			return 
@@ -480,6 +485,7 @@ namespace r2::draw
 				type == R32F  ||
 				type == R16F  ||
 				type == RG32UI  ||
+				type == R32UI ||
 				type == R8;
 		}
 

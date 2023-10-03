@@ -14,5 +14,8 @@ in VS_OUT
 
 void main()
 {
-	FragColor = GetEntityInstance(fs_in.drawID);
+	uvec2 entityInstance = GetEntityInstance(fs_in.drawID);
+
+	FragColor = entityInstance;//vec4(clamp(float(entityInstance.x), 0.0f, 1.0f), 0.0f, 0.0f, 1.0f);//entityInstance.x;
+
 }

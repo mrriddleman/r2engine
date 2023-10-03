@@ -23,6 +23,7 @@ namespace r2::draw::rt
 		R32F,
 		R16F,
 		RG32UI,
+		R32UI,
 		STENCIL8,
 		DEPTH24_STENCIL8,
 		DEPTH32F_STENCIL8,
@@ -200,6 +201,9 @@ namespace r2::draw
 
 		void SwapTexturesIfNecessary(RenderTarget& rt);
 
+
+		void ReadPixelEntity(RenderTarget& rt, u32 x, u32 y, u32& entity, s32& instance);
+
 	//	void UpdateRenderTargetIfNecessary(RenderTarget& rt);
 
 		bool IsColorAttachment(TextureAttachmentType type);
@@ -209,6 +213,8 @@ namespace r2::draw
 		bool IsStencilAttachment(TextureAttachmentType type);
 
 		bool IsDepthStencilAttachment(TextureAttachmentType type);
+
+
 
 		//private
 		namespace impl
@@ -220,6 +226,8 @@ namespace r2::draw
 			void CreateFrameBufferID(RenderTarget& renderTarget);
 			void DestroyFrameBufferID(RenderTarget& renderTarget);
 			void SwapTexturesIfNecessary(RenderTarget& renderTarget);
+
+			void ReadPixelEntity(RenderTarget& rt, u32 x, u32 y, u32& entity, s32& instance);
 		//	void UpdateRenderTargetIfNecessary(RenderTarget& renderTarget);
 		}
 
