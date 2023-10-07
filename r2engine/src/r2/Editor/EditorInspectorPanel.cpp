@@ -58,6 +58,16 @@ namespace r2::edit
 	{
 		r2::evt::EventDispatcher dispatcher(e);
 
+		dispatcher.Dispatch<r2::evt::EditorEntityDestroyedEvent>([this](const r2::evt::EditorEntityDestroyedEvent& e)
+			{
+				if (e.GetEntity() == mSelectedEntity)
+				{
+					mSelectedEntity = ecs::INVALID_ENTITY;
+					mCurrentInstance = -1;
+				}
+				return e.ShouldConsume();
+			});
+
 		dispatcher.Dispatch<r2::evt::MouseButtonPressedEvent>([this](const r2::evt::MouseButtonPressedEvent& e)
 			{
 				if (e.MouseButton() == r2::io::MOUSE_BUTTON_LEFT)
@@ -76,6 +86,7 @@ namespace r2::edit
 
 				ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
 
+
 				if (e.GetPreviouslySelectedEntity() != ecs::INVALID_ENTITY && coordinator->HasComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity()))
 				{
 					coordinator->RemoveComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity());
@@ -90,6 +101,32 @@ namespace r2::edit
 				mCurrentOperation = ImGuizmo::TRANSLATE;
 				mCurrentInstance = e.GetSelectedInstance();
 
+				if (!coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity))
+				{
+					mSelectedEntity = ecs::INVALID_ENTITY;
+					mCurrentInstance = -1;
+					return e.ShouldConsume();
+				}
+				else
+				{
+					if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
+					{
+						const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
+
+						if (mCurrentInstance >= static_cast<s32>(instancedTransformComponent.numInstances))
+						{
+							mSelectedEntity = ecs::INVALID_ENTITY;
+							mCurrentInstance = -1;
+
+							return e.ShouldConsume();
+						}
+					}
+					else
+					{
+						mCurrentInstance = -1;
+					}
+				}
+
 				if (mSelectedEntity != ecs::INVALID_ENTITY)
 				{
 					ecs::SelectionComponent newSelectionComponent;
@@ -98,7 +135,6 @@ namespace r2::edit
 
 					coordinator->AddComponent<ecs::SelectionComponent>(mSelectedEntity, newSelectionComponent);
 				}
-				
 
 				return e.ShouldConsume();
 			});

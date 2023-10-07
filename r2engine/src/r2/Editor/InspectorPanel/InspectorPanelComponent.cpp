@@ -97,6 +97,11 @@ namespace r2::edit
 
 	void InspectorPanelComponentWidget::ImGuiDraw(InspectorPanel& inspectorPanel, ecs::Entity theEntity)
 	{
+		if (theEntity == ecs::INVALID_ENTITY)
+		{
+			return;
+		}
+
 		Editor* editor = inspectorPanel.GetEditor();
 		R2_CHECK(editor != nullptr, "Should never be nullptr");
 		r2::ecs::ECSCoordinator* coordinator = editor->GetECSCoordinator();
