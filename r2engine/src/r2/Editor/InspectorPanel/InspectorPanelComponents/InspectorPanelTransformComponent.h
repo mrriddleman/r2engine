@@ -3,6 +3,10 @@
 #define __INSPECTOR_PANEL_TRANSFORM_COMPONENT_H__
 
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
+namespace r2
+{
+	class Editor;
+}
 
 namespace r2::edit
 {
@@ -10,7 +14,7 @@ namespace r2::edit
 	{
 	public:
 		InspectorPanelTransformDataSource();
-		InspectorPanelTransformDataSource(r2::ecs::ECSCoordinator* coordinator);
+		InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator);
 
 		virtual void DrawComponentData(void* componentData, r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
 
@@ -25,6 +29,8 @@ namespace r2::edit
 
 		virtual void AddComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
 		virtual void AddNewInstance(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity) override;
+	private:
+		r2::Editor* mnoptrEditor;
 	};
 }
 

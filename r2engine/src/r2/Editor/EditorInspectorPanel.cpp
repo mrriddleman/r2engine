@@ -15,7 +15,10 @@
 #include "r2/Editor/InspectorPanel/InspectorPanelComponents/InspectorPanelEditorComponent.h"
 #include "r2/Editor/InspectorPanel/InspectorPanelComponentDataSource.h"
 #include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
+#include "r2/Game/ECS/Components/TransformComponent.h"
+#include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
+#include "r2/Game/ECS/Components/SelectionComponent.h"
 //@HACK: we need this to get the camera but we should be able to get it through the editor or something
 #include "r2/Render/Renderer/Renderer.h"
 #include <glm/gtc/type_ptr.hpp>
@@ -69,9 +72,69 @@ namespace r2::edit
 
 		dispatcher.Dispatch<r2::evt::EditorEntitySelectedEvent>([this](const r2::evt::EditorEntitySelectedEvent& e)
 			{
+				ecs::ECSWorld& ecsWorld = MENG.GetECSWorld();
+
+				ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
+
+				if (e.GetPreviouslySelectedEntity() != e.GetEntity() && e.GetPreviouslySelectedEntity() != ecs::INVALID_ENTITY)
+				{
+					if (coordinator->HasComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity()))
+					{
+						coordinator->RemoveComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity());
+					}
+				}
+
 				mSelectedEntity = e.GetEntity();
 				mCurrentOperation = ImGuizmo::TRANSLATE;
 				mCurrentInstance = e.GetSelectedInstance();
+
+				if (mSelectedEntity != ecs::INVALID_ENTITY)
+				{
+					//first check to see if the mCurrentInstance is valid
+					if (!coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity))
+					{
+						mSelectedEntity = ecs::INVALID_ENTITY;
+						mCurrentInstance = -1;
+						return e.ShouldConsume();
+					}
+					else
+					{
+						if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
+						{
+							const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
+
+							if (mCurrentInstance >= static_cast<s32>(instancedTransformComponent.numInstances))
+							{
+								mSelectedEntity = ecs::INVALID_ENTITY;
+								mCurrentInstance = -1;
+
+								return e.ShouldConsume();
+							}
+						}
+						else
+						{
+							mCurrentInstance = -1;
+						}
+					}
+
+
+					if (!coordinator->HasComponent<ecs::SelectionComponent>(mSelectedEntity))
+					{
+						ecs::SelectionComponent newSelectionComponent;
+						newSelectionComponent.selectedInstances = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, 1); //@TODO(Serge): multiselect
+						r2::sarr::Push(*newSelectionComponent.selectedInstances, mCurrentInstance);
+
+						coordinator->AddComponent<ecs::SelectionComponent>(mSelectedEntity, newSelectionComponent);
+					}
+					else
+					{
+						ecs::SelectionComponent& selectionComponent = coordinator->GetComponent<ecs::SelectionComponent>(mSelectedEntity);
+						r2::sarr::Clear(*selectionComponent.selectedInstances);
+
+						r2::sarr::Push(*selectionComponent.selectedInstances, mCurrentInstance);
+					}
+				}
+				
 
 				return e.ShouldConsume();
 			});

@@ -7,6 +7,9 @@
 #include "r2/Game/ECS/Components/TransformDirtyComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/Components/SelectionComponent.h"
+#include "r2/Editor/EditorActions/SelectedEntityEditorAction.h"
+#include "r2/Editor/Editor.h"
 #include "imgui.h"
 #include <glm/gtc/quaternion.hpp>
 
@@ -17,8 +20,9 @@ namespace r2::edit
 	{
 	}
 
-	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource(r2::ecs::ECSCoordinator* coordinator)
+	InspectorPanelTransformDataSource::InspectorPanelTransformDataSource(r2::Editor* noptrEditor, r2::ecs::ECSCoordinator* coordinator)
 		:InspectorPanelComponentDataSource("Transform Component", coordinator->GetComponentType<ecs::TransformComponent>(), coordinator->GetComponentTypeHash<ecs::TransformComponent>())
+		,mnoptrEditor(noptrEditor)
 	{
 	}
 
@@ -119,6 +123,15 @@ namespace r2::edit
 
 	void InspectorPanelTransformDataSource::DeleteComponent(r2::ecs::ECSCoordinator* coordinator, ecs::Entity theEntity)
 	{
+		ecs::SelectionComponent* selectionComponent = coordinator->GetComponentPtr<ecs::SelectionComponent>(theEntity);
+
+		if (selectionComponent != nullptr)
+		{
+
+			mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, 0, -1, theEntity, r2::sarr::At(*selectionComponent->selectedInstances, 0)));
+			
+		}
+
 		coordinator->RemoveComponent<r2::ecs::TransformComponent>(theEntity);
 
 		if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(theEntity))
@@ -136,6 +149,18 @@ namespace r2::edit
 		}
 
 		R2_CHECK(i < instancedTransformComponent->numInstances, "Trying to access instance: %u but only have %u instances", i, instancedTransformComponent->numInstances);
+
+
+		ecs::SelectionComponent* selectionComponent = coordinator->GetComponentPtr<ecs::SelectionComponent>(theEntity);
+
+		if (selectionComponent != nullptr)
+		{
+			if (r2::sarr::IndexOf(*selectionComponent->selectedInstances, static_cast<s32>(i)) != -1)
+			{
+				mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, 0, -1, theEntity, static_cast<s32>(i)));
+			}
+		}
+
 
 		r2::sarr::RemoveElementAtIndexShiftLeft(*instancedTransformComponent->instances, i);
 		instancedTransformComponent->numInstances--;

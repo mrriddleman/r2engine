@@ -257,7 +257,9 @@ namespace r2::draw
 			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<glm::mat4>::MemorySize(numModels), alignment, headerSize, boundsChecking);
 
 #ifdef R2_EDITOR
-			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModels), alignment, headerSize, boundsChecking);
+			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<u32>::MemorySize(numModels), alignment, headerSize, boundsChecking); //way overestimate
+			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<EntityInstanceBatchOffset>::MemorySize(numModels), alignment, headerSize, boundsChecking); //way overestimate
+			totalBytes += r2::mem::utils::GetMaxMemoryForAllocation(r2::SArray<s32>::MemorySize(numModels), alignment, headerSize, boundsChecking); //kinda wrong since it should be MAX_ENTITIES * MAX_NUM_INSTANCES
 #endif
 
 		}
@@ -520,6 +522,7 @@ namespace r2::draw::renderer
 	void DrawModel(
 		Renderer& renderer,
 		u32 entityID,
+		const r2::SArray<s32>& entityInstances,
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
@@ -1169,6 +1172,8 @@ namespace r2::draw::renderer
 
 #ifdef R2_EDITOR
 				nextBatch.entityIDs = MAKE_SARRAY(*rendererArena, u32, MAX_NUM_DRAWS);
+				nextBatch.entityInstanceOffsetBatches = MAKE_SARRAY(*rendererArena, EntityInstanceBatchOffset, MAX_NUM_DRAWS);
+				nextBatch.entityInstances = MAKE_SARRAY(*rendererArena, s32, MAX_NUM_DRAWS);
 #endif
 
 				if (i == DrawType::DYNAMIC)
@@ -1500,6 +1505,8 @@ namespace r2::draw::renderer
 			}
 
 #ifdef R2_EDITOR
+			FREE(nextBatch.entityInstances, *arena);
+			FREE(nextBatch.entityInstanceOffsetBatches, *arena);
 			FREE(nextBatch.entityIDs, *arena);
 #endif
 
@@ -3029,15 +3036,26 @@ namespace r2::draw::renderer
 			u32 cameraDepthToModel = GetCameraDepth(renderer, {}, modelMatrix);
 
 			u32 entityID = 0;
-			s32 startingInstance = 0;
+			EntityInstanceBatchOffset entityInstanceBatchOffset;
 #ifdef R2_EDITOR
-			entityID = r2::sarr::At(*renderBatch.entityIDs, modelIndex);
-			startingInstance = ~startingInstance;
+			if (!r2::sarr::IsEmpty(*renderBatch.entityIDs))
+			{
+				entityID = r2::sarr::At(*renderBatch.entityIDs, modelIndex);
+				entityInstanceBatchOffset = r2::sarr::At(*renderBatch.entityInstanceOffsetBatches, modelIndex);
+			}
 #endif
 
 			for (u32 i = 0; i < numInstances; i++)
 			{
-				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, entityID, startingInstance + i, 0));
+				u32 entityInstance = 0;
+#ifdef R2_EDITOR
+				if (entityID != 0 && entityInstanceBatchOffset.start >= 0)
+				{
+					R2_CHECK(numInstances == entityInstanceBatchOffset.numInstances, "Should always be the case");
+					entityInstance = r2::sarr::At(*renderBatch.entityInstances, entityInstanceBatchOffset.start + i);
+				}
+#endif
+				r2::sarr::Push(*materialOffsetsPerObject, glm::uvec4(materialOffset, entityID, entityInstance, 0));
 			}
 			
 			materialOffset += materialBatchInfo.numMaterials;
@@ -4399,6 +4417,8 @@ namespace r2::draw::renderer
 			
 #ifdef R2_EDITOR
 			r2::sarr::Clear(*batch.entityIDs);
+			r2::sarr::Clear(*batch.entityInstanceOffsetBatches);
+			r2::sarr::Clear(*batch.entityInstances);
 #endif
 
 			r2::sarr::Clear(*batch.models);
@@ -5989,6 +6009,7 @@ namespace r2::draw::renderer
 	void DrawModel(
 		Renderer& renderer,
 		u32 entityID,
+		const r2::SArray<s32>& entityInstances,
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandle,
 		const r2::SArray<glm::mat4>& modelMatrices,
@@ -6039,6 +6060,11 @@ namespace r2::draw::renderer
 
 #ifdef R2_EDITOR
 		r2::sarr::Push(*batch.entityIDs, entityID);
+		EntityInstanceBatchOffset entityInstanceBatchOffset;
+		entityInstanceBatchOffset.start = r2::sarr::Size(*batch.entityInstances);
+		entityInstanceBatchOffset.numInstances = r2::sarr::Size(entityInstances);
+		r2::sarr::Push(*batch.entityInstanceOffsetBatches, entityInstanceBatchOffset);
+		r2::sarr::Append(*batch.entityInstances, entityInstances);
 #endif
 
 		r2::sarr::Append(*batch.models, modelMatrices);
@@ -8537,6 +8563,8 @@ namespace r2::draw::renderer
 
 		rt::ReadPixelEntity(*renderTarget, x, y, entityInstance.entityId, entityInstance.instanceId);
 
+
+
 		return entityInstance;
 	}
 
@@ -9006,7 +9034,10 @@ namespace r2::draw::renderer
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
 		//0 is then invalid entity - if we change that - we need to change this
-		DrawModel(MENG.GetCurrentRendererRef(), 0, drawParameters, modelRefHandles, modelMatrices, numInstances, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
+		//Also we should not be doing this silly emptyInstances thing!
+		r2::SArray<s32>* emptyInstances = MAKE_SARRAY(*MEM_ENG_SCRATCH_PTR, s32, 1);
+		DrawModel(MENG.GetCurrentRendererRef(), 0, *emptyInstances, drawParameters, modelRefHandles, modelMatrices, numInstances, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
+		FREE(emptyInstances, *MEM_ENG_SCRATCH_PTR);
 	}
 
 	void DrawModels(
@@ -9127,15 +9158,16 @@ namespace r2::draw::renderer
 
 	void DrawModelEntity(
 		u32 entity,
+		const r2::SArray<s32>& entityInstances,
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		u32 numInstances,
 		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
 		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms)
 	{
-		DrawModel(MENG.GetCurrentRendererRef(), entity, drawParameters, modelRefHandles, modelMatrices, numInstances, renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
+		R2_CHECK(entityInstances.mSize == modelMatrices.mSize, "Should always be true");
+		DrawModel(MENG.GetCurrentRendererRef(), entity, entityInstances, drawParameters, modelRefHandles, modelMatrices, r2::sarr::Size(modelMatrices), renderMaterialParamsPerMesh, shadersPerMesh, boneTransforms);
 	}
 
 #endif

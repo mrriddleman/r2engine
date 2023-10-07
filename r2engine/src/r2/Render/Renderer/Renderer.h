@@ -46,6 +46,12 @@ namespace r2::draw
 		r2::SArray<r2::draw::ShaderHandle>* shaderHandles = nullptr;
 	};
 
+	struct EntityInstanceBatchOffset
+	{
+		s32 start = -1;
+		u32 numInstances = 0;
+	};
+
 	struct ConstantBufferData
 	{
 		r2::draw::ConstantBufferHandle handle = EMPTY_BUFFER;
@@ -95,6 +101,9 @@ namespace r2::draw
 
 #ifdef R2_EDITOR
 		r2::SArray<u32>* entityIDs = nullptr;
+
+		r2::SArray<EntityInstanceBatchOffset>* entityInstanceOffsetBatches = nullptr;
+		r2::SArray<s32>* entityInstances = nullptr;
 #endif
 
 		r2::SArray<u32>* numInstances = nullptr;
@@ -623,10 +632,10 @@ namespace r2::draw::renderer
 
 	void DrawModelEntity(
 		u32 entity,
+		const r2::SArray<s32>& entityInstances,
 		const DrawParameters& drawParameters,
 		const vb::GPUModelRefHandle& modelRefHandles,
 		const r2::SArray<glm::mat4>& modelMatrices,
-		u32 numInstances,
 		const r2::SArray<r2::draw::RenderMaterialParams>& renderMaterialParamsPerMesh,
 		const r2::SArray<r2::draw::ShaderHandle>& shadersPerMesh,
 		const r2::SArray<ShaderBoneTransform>* boneTransforms);

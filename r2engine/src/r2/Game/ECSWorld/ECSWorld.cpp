@@ -8,6 +8,7 @@
 #include "r2/Game/ECS/Components/AudioEmitterComponent.h"
 #include "r2/Game/ECS/Components/AudioParameterComponent.h"
 #include "r2/Game/ECS/Components/AudioEmitterActionComponent.h"
+#include "r2/Game/ECS/Components/EditorComponent.h"
 #include "r2/Game/ECS/Components/InstanceComponent.h"
 #include "r2/Game/ECS/Components/RenderComponent.h"
 #include "r2/Game/ECS/Components/SkeletalAnimationComponent.h"
@@ -28,7 +29,7 @@
 #include "r2/Game/ECS/Systems/DebugRenderSystem.h"
 #endif
 #ifdef R2_EDITOR
-#include "r2/Game/ECS/Components/EditorComponent.h"
+#include "r2/Game/ECS/Components/SelectionComponent.h"
 #endif
 
 #include "r2/Game/Level/LevelManager.h"
@@ -348,6 +349,21 @@ namespace r2::ecs
 	}
 #endif
 
+#ifdef R2_EDITOR
+	void ECSWorld::FreeSelectionComponent(void* data)
+	{
+		ecs::SelectionComponent* selectionComponent = static_cast<ecs::SelectionComponent*>(data);
+
+		R2_CHECK(selectionComponent != nullptr, "Should never happen!");
+
+		if(selectionComponent->selectedInstances != nullptr)
+		{
+			ECS_WORLD_FREE(*this, selectionComponent->selectedInstances);
+			selectionComponent->selectedInstances = nullptr;
+		}
+	}
+#endif
+
 	void ECSWorld::RegisterEngineComponents()
 	{
 		FreeComponentFunc freeRenderComponentFunc = std::bind(&ECSWorld::FreeRenderComponent, this, std::placeholders::_1);
@@ -359,6 +375,10 @@ namespace r2::ecs
 		FreeComponentFunc freeDebugBoneComponent = std::bind(&ECSWorld::FreeDebugBoneComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedDebugBoneComponent = std::bind(&ECSWorld::FreeInstancedDebugBoneComponent, this, std::placeholders::_1);
 		FreeComponentFunc freeInstancedDebugRenderComponent = std::bind(&ECSWorld::FreeInstancedDebugRenderComponent, this, std::placeholders::_1);
+#endif
+
+#ifdef R2_EDITOR
+		FreeComponentFunc freeSelectionComponent = std::bind(&ECSWorld::FreeSelectionComponent, this, std::placeholders::_1);
 #endif
 
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::HierarchyComponent>(*mArena, "HeirarchyComponent", true, false, nullptr);
@@ -385,10 +405,17 @@ namespace r2::ecs
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(*mArena, "InstancedDebugRenderComponent", false, true, freeInstancedDebugRenderComponent);
 		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(*mArena, "InstancedDebugBoneComponent", false, true, freeInstancedDebugBoneComponent);
 #endif
+#ifdef R2_EDITOR
+		mECSCoordinator->RegisterComponent<mem::StackArena, ecs::SelectionComponent>(*mArena, "SelectionComponent", false, false, freeSelectionComponent);
+#endif
 	}
 
 	void ECSWorld::UnRegisterEngineComponents()
 	{
+
+#ifdef R2_EDITOR
+		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::SelectionComponent>(*mArena);
+#endif
 #ifdef R2_DEBUG
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugBoneComponent>>(*mArena);
 		mECSCoordinator->UnRegisterComponent<mem::StackArena, ecs::InstanceComponentT<ecs::DebugRenderComponent>>(*mArena);
@@ -586,9 +613,9 @@ namespace r2::ecs
 		memorySize += ComponentArray<AudioEmitterComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<AudioParameterComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<AudioEmitterActionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
-
-#ifdef R2_EDITOR
 		memorySize += ComponentArray<EditorComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
+#ifdef R2_EDITOR
+		memorySize += ComponentArray<SelectionComponent>::MemorySize(maxNumEntities, ALIGNMENT, stackHeaderSize, boundsChecking);
 #endif
 		memorySize += ComponentArray<InstanceComponentT<ecs::TransformComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);
 		memorySize += ComponentArray<InstanceComponentT<SkeletalAnimationComponent>>::MemorySizeForInstancedComponentArray(maxNumEntities, maxNumInstances, ALIGNMENT, stackHeaderSize, boundsChecking);

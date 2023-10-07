@@ -122,7 +122,11 @@ namespace r2::ecs
 		void FreeInstancedDebugBoneComponent(void* instancedDebugBoneComponent);
 
 #endif // R2_DEBUG
+#ifdef R2_EDITOR
+		void FreeSelectionComponent(void* selectionComponent);
 
+
+#endif
 
 		void PostLoadLevel(const Level& level, const flat::LevelData* levelData);
 

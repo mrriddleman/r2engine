@@ -13,6 +13,10 @@ namespace r2::ecs
 	struct RenderComponent;
 	struct SkeletalAnimationComponent;
 
+#ifdef R2_EDITOR
+	struct SelectionComponent;
+#endif
+
 	template <typename T> struct InstanceComponentT;
 
 
@@ -79,6 +83,16 @@ namespace r2::ecs
 		static u64 MemorySize(u32 maxNumInstancesPerModel, u32 maxNumMaterialsPerModel, u32 maxNumShaderBoneTransforms, const r2::mem::utils::MemoryProperties& memorySize);
 	private:
 
+#ifdef R2_EDITOR
+		void DrawRenderComponentSelected(
+			ecs::Entity entity,
+			const SelectionComponent& selectionComponent,
+			const TransformComponent& transform,
+			const RenderComponent& renderComponent,
+			const SkeletalAnimationComponent* animationComponent,
+			const InstanceComponentT<TransformComponent>* instancedTransformComponent,
+			const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent);
+#endif
 		void DrawRenderComponent(
 			ecs::Entity entity,
 			const TransformComponent& transform,
@@ -86,7 +100,9 @@ namespace r2::ecs
 			const SkeletalAnimationComponent* animationComponent,
 			const InstanceComponentT<TransformComponent>* instancedTransformComponent,
 			const InstanceComponentT<SkeletalAnimationComponent>* instancedSkeletalAnimationComponent);
-		
+
+		void PopulateBatchMaterials(bool hasMaterialOverrides, const RenderComponent& renderComponent);
+
 		void ClearPerFrameData();
 
 		r2::mem::utils::MemBoundary mMemoryBoundary;
