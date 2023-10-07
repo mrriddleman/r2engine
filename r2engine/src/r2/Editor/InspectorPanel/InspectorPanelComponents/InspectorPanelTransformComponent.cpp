@@ -155,7 +155,7 @@ namespace r2::edit
 
 		if (selectionComponent != nullptr)
 		{
-			if (r2::sarr::IndexOf(*selectionComponent->selectedInstances, static_cast<s32>(i)) != -1)
+		//	if (r2::sarr::IndexOf(*selectionComponent->selectedInstances, static_cast<s32>(i)) != -1 || r2::sarr::At(*selectionComponent->selectedInstances, 0) > static_cast<s32>(i))
 			{
 				mnoptrEditor->PostNewAction(std::make_unique<r2::edit::SelectedEntityEditorAction>(mnoptrEditor, 0, -1, theEntity, static_cast<s32>(i)));
 			}

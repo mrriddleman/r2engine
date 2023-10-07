@@ -76,12 +76,14 @@ namespace r2::edit
 
 				ecs::ECSCoordinator* coordinator = mnoptrEditor->GetECSCoordinator();
 
-				if (e.GetPreviouslySelectedEntity() != e.GetEntity() && e.GetPreviouslySelectedEntity() != ecs::INVALID_ENTITY)
+				if (e.GetPreviouslySelectedEntity() != ecs::INVALID_ENTITY && coordinator->HasComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity()))
 				{
-					if (coordinator->HasComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity()))
-					{
-						coordinator->RemoveComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity());
-					}
+					coordinator->RemoveComponent<ecs::SelectionComponent>(e.GetPreviouslySelectedEntity());
+				}
+				
+				if (e.GetEntity() != ecs::INVALID_ENTITY  && coordinator->HasComponent<ecs::SelectionComponent>(e.GetEntity()))
+				{
+					coordinator->RemoveComponent<ecs::SelectionComponent>(e.GetEntity());
 				}
 
 				mSelectedEntity = e.GetEntity();
@@ -90,49 +92,11 @@ namespace r2::edit
 
 				if (mSelectedEntity != ecs::INVALID_ENTITY)
 				{
-					//first check to see if the mCurrentInstance is valid
-					if (!coordinator->HasComponent<ecs::TransformComponent>(mSelectedEntity))
-					{
-						mSelectedEntity = ecs::INVALID_ENTITY;
-						mCurrentInstance = -1;
-						return e.ShouldConsume();
-					}
-					else
-					{
-						if (coordinator->HasComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity))
-						{
-							const ecs::InstanceComponentT<ecs::TransformComponent>& instancedTransformComponent = coordinator->GetComponent<ecs::InstanceComponentT<ecs::TransformComponent>>(mSelectedEntity);
+					ecs::SelectionComponent newSelectionComponent;
+					newSelectionComponent.selectedInstances = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, 1); //@TODO(Serge): multiselect
+					r2::sarr::Push(*newSelectionComponent.selectedInstances, mCurrentInstance);
 
-							if (mCurrentInstance >= static_cast<s32>(instancedTransformComponent.numInstances))
-							{
-								mSelectedEntity = ecs::INVALID_ENTITY;
-								mCurrentInstance = -1;
-
-								return e.ShouldConsume();
-							}
-						}
-						else
-						{
-							mCurrentInstance = -1;
-						}
-					}
-
-
-					if (!coordinator->HasComponent<ecs::SelectionComponent>(mSelectedEntity))
-					{
-						ecs::SelectionComponent newSelectionComponent;
-						newSelectionComponent.selectedInstances = ECS_WORLD_MAKE_SARRAY(ecsWorld, s32, 1); //@TODO(Serge): multiselect
-						r2::sarr::Push(*newSelectionComponent.selectedInstances, mCurrentInstance);
-
-						coordinator->AddComponent<ecs::SelectionComponent>(mSelectedEntity, newSelectionComponent);
-					}
-					else
-					{
-						ecs::SelectionComponent& selectionComponent = coordinator->GetComponent<ecs::SelectionComponent>(mSelectedEntity);
-						r2::sarr::Clear(*selectionComponent.selectedInstances);
-
-						r2::sarr::Push(*selectionComponent.selectedInstances, mCurrentInstance);
-					}
+					coordinator->AddComponent<ecs::SelectionComponent>(mSelectedEntity, newSelectionComponent);
 				}
 				
 
